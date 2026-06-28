@@ -20,6 +20,7 @@ class Inductor:
         candidates.extend(self._find_repeated_predicates(domain))
         candidates.extend(self._find_failed_retrieval_patterns())
         candidates.extend(self._find_causal_patterns(domain))
+        candidates.extend(self._find_uol_patterns(domain))
         return candidates
 
     def _find_repeated_predicates(self, domain: str | None = None) -> list[Model]:
@@ -215,4 +216,27 @@ class Inductor:
             )
             candidates.append(model)
 
+        return candidates
+
+    def _find_uol_patterns(self, domain: str | None = None) -> list[Model]:
+        recent = self._store.claims.find_active(100)
+        from collections import Counter
+        predicate_counts = Counter(c.predicate for c in recent if not domain or c.domain == domain)
+        candidates: list[Model] = []
+        for predicate, count in predicate_counts.items():
+            if count >= self._feedback_threshold:
+                existing = self._store.models.find_by_name(predicate)
+                if any(m.kind.value == "uol_semantic" for m in existing):
+                    continue
+                model = Model(
+                    id=uuid.uuid4().hex[:16],
+                    kind=ModelKind.UOL_SEMANTIC,
+                    name=predicate,
+                    description=f"Auto-induced UOL semantic from {count} observations",
+                    status=ModelStatus.CANDIDATE,
+                    created_at=time.time(),
+                    updated_at=time.time(),
+                )
+                self._store.models.put(model)
+                candidates.append(model)
         return candidates

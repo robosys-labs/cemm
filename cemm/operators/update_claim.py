@@ -29,6 +29,14 @@ class UpdateClaimOperator(BaseOperator):
         existing.updated_at = now
         ctx.store.claims.put(existing)
 
+        if new_status in (ClaimStatus.DISPUTED, ClaimStatus.RETRACTED):
+            self_state = ctx.store.self_store.latest()
+            if self_state:
+                if claim_id not in self_state.epistemic.open_contradiction_claim_ids:
+                    self_state.epistemic.open_contradiction_claim_ids.append(claim_id)
+                self_state.updated_at = time.time()
+                ctx.store.self_store.put(self_state)
+
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.MEMORY_UPDATE,

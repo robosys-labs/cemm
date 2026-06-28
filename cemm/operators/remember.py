@@ -58,6 +58,14 @@ class RememberOperator(BaseOperator):
             ctx.store.entities.put(entity)
         ctx.store.claims.put(claim)
 
+        self_state = ctx.store.self_store.latest()
+        if self_state:
+            self_state.meta_memory.recently_written_claim_ids.append(claim.id)
+            if len(self_state.meta_memory.recently_written_claim_ids) > 100:
+                self_state.meta_memory.recently_written_claim_ids = self_state.meta_memory.recently_written_claim_ids[-100:]
+            self_state.updated_at = time.time()
+            ctx.store.self_store.put(self_state)
+
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.MEMORY_UPDATE,

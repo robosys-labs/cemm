@@ -17,6 +17,7 @@ from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_pragmatic_state
 from ..registry.uol_mapper import UOLMapper
+from .context_inference import ContextInferenceEngine
 
 
 @dataclass
@@ -43,6 +44,7 @@ class Pipeline:
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
         self._uol_mapper = UOLMapper(registry)
+        self._context_inference_engine = ContextInferenceEngine(store, registry)
 
     def run(
         self,
@@ -79,6 +81,8 @@ class Pipeline:
 
         self._resolver.resolve_self(kernel)
         self._frames.apply_frame_rules(kernel)
+        context_inference = self._context_inference_engine.infer(signal, kernel)
+        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
         semantics = interpret_signal(signal, kernel, self._store)
         if semantics is not None:

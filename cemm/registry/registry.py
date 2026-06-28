@@ -83,6 +83,21 @@ class Registry:
     def get_frame_rule(self, key: str) -> RegistryEntry | None:
         return self._frame_rules.get(key)
 
+    def all_by_kind(self, kind: str) -> list[RegistryEntry]:
+        kind_map = {
+            "predicate": self._predicates,
+            "entity_type": self._entity_types,
+            "operator": self._operators,
+            "synthesis_strategy": self._synthesis_strategies,
+            "frame_rule": self._frame_rules,
+            "inductor": self._inductors,
+            "uol_semantic": self._uol_semantics,
+        }
+        store = kind_map.get(kind)
+        if store is None:
+            return []
+        return list(store.values())
+
     def get_uol_semantic(self, key: str) -> RegistryEntry | None:
         return self._uol_semantics.get(key)
 

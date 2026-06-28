@@ -17,6 +17,7 @@ from .operators.retrieve_op import RetrieveOperator
 from .operators.reflect import ReflectOperator
 from .operators.abstain import AbstainOperator
 from .operators.base import OperatorContext
+from .learning.online import OnlineLearner
 from .retrieval.structural import StructuralRetriever, RetrievalQuery
 from .retrieval.ranker import Ranker
 from .types.context_kernel import ContextKernel
@@ -89,6 +90,7 @@ def process_input(
     registry: Registry,
     op_registry: OperatorRegistry,
     pipeline: Pipeline,
+    online_learner: OnlineLearner,
     context_id: str,
     turn_count: list[int],
 ) -> str:
@@ -145,6 +147,17 @@ def process_input(
     op_result = op_registry.execute(kind, ctx)
     output = op_result.output_text
 
+    if op_result.success:
+        online_learner.record_outcome(
+            source_id=ctx.input_signal.source_id,
+            domain="operator_execution",
+            success=True,
+        )
+
+    if kind == ActionKind.ANSWER and ctx.selected_claim_ids:
+        for claim_id in ctx.selected_claim_ids:
+            online_learner.update_claim_confidence(claim_id, feedback_correct=True)
+
     if not output or op_result.success is False:
         synthesis_router = SynthesisRouter()
         syn = synthesis_router.route("template", kernel, store, registry, {
@@ -165,6 +178,7 @@ def main() -> None:
     registry = Registry()
     op_registry = OperatorRegistry()
     pipeline = Pipeline(store, registry)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims)
 
     seed_registry(registry)
     seed_self_state(store)
@@ -180,7 +194,7 @@ def main() -> None:
     turn_count = [0]
 
     if args.eval:
-        output = process_input(args.eval, store, registry, op_registry, pipeline, context_id, turn_count)
+        output = process_input(args.eval, store, registry, op_registry, pipeline, online_learner, context_id, turn_count)
         print(output)
         return
 
@@ -194,7 +208,7 @@ def main() -> None:
             break
         if not text:
             continue
-        output = process_input(text, store, registry, op_registry, pipeline, context_id, turn_count)
+        output = process_input(text, store, registry, op_registry, pipeline, online_learner, context_id, turn_count)
         print(output)
 
 
