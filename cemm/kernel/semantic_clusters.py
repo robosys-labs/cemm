@@ -16,7 +16,7 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
     },
     "user_complaint_general": {
         "speech_act": "complaint",
-        "patterns": ["hate", "cant stand", "terrible", "awful"],
+        "patterns": ["hate", "cant stand", "can't stand", "terrible", "awful"],
         "target": "assistant",
         "affect_baseline": {"valence": -0.3, "arousal": 0.4, "frustration": 0.2, "hostility": 0.1, "playfulness": 0.0},
     },
