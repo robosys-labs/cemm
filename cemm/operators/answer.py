@@ -1,0 +1,53 @@
+from __future__ import annotations
+from .base import BaseOperator, OperatorContext, OperatorResult
+from ..types.action import ActionKind
+from ..types.trace import Trace
+from ..types.signal import Signal, SignalKind, SourceType
+import time, uuid
+
+
+class AnswerOperator(BaseOperator):
+    @property
+    def action_kind(self) -> ActionKind:
+        return ActionKind.ANSWER
+
+    def execute(self, ctx: OperatorContext) -> OperatorResult:
+        if not ctx.kernel.permission.may_execute:
+            return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
+        output = ctx.params.get("answer_text", "")
+        if not output and ctx.selected_claim_ids:
+            claims = [ctx.store.claims.get(cid) for cid in ctx.selected_claim_ids]
+            parts = [
+                f"{c.subject_entity_id} {c.predicate} {c.object_value or c.object_entity_id or ''}"
+                for c in claims if c
+            ]
+            output = "; ".join(parts) if parts else ""
+        result_signal = Signal(
+            id=uuid.uuid4().hex[:16],
+            kind=SignalKind.TRACE,
+            source_id="answer_operator",
+            source_type=SourceType.ASSISTANT,
+            content=output or "I don't have enough information to answer.",
+            observed_at=time.time(),
+            context_id=ctx.kernel.id,
+            salience=0.5,
+            trust=0.9,
+            permission=ctx.kernel.permission,
+        )
+        ctx.store.signals.put(result_signal)
+        trace = Trace(
+            context_id=ctx.kernel.id,
+            action_id="",
+            operator_model_id="answer_operator",
+            selected_claim_ids=ctx.selected_claim_ids,
+            synthesis_verified=True,
+            confidence=0.9,
+            cost_ms=1.0,
+        )
+        return OperatorResult(
+            success=True,
+            output_text=result_signal.content,
+            trace=trace,
+            result_signal=result_signal,
+            cost_ms=1.0,
+        )
