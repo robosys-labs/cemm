@@ -24,6 +24,8 @@ class Registry:
         self._synthesis_strategies: dict[str, RegistryEntry] = {}
         self._frame_rules: dict[str, RegistryEntry] = {}
         self._inductors: dict[str, RegistryEntry] = {}
+        self._context_rules: dict[str, RegistryEntry] = {}
+        self._verifiers: dict[str, RegistryEntry] = {}
         self._uol_semantics: dict[str, RegistryEntry] = {}
         self._alias_map: dict[str, str] = {}
 
@@ -33,7 +35,9 @@ class Registry:
             "entity_type": self._entity_types,
             "operator": self._operators,
             "synthesis_strategy": self._synthesis_strategies,
+            "context_rule": self._context_rules,
             "frame_rule": self._frame_rules,
+            "verifier": self._verifiers,
             "inductor": self._inductors,
             "uol_semantic": self._uol_semantics,
         }
@@ -83,13 +87,24 @@ class Registry:
     def get_frame_rule(self, key: str) -> RegistryEntry | None:
         return self._frame_rules.get(key)
 
+    def get_inductor(self, key: str) -> RegistryEntry | None:
+        return self._inductors.get(key)
+
+    def get_context_rule(self, key: str) -> RegistryEntry | None:
+        return self._context_rules.get(key)
+
+    def get_verifier(self, key: str) -> RegistryEntry | None:
+        return self._verifiers.get(key)
+
     def all_by_kind(self, kind: str) -> list[RegistryEntry]:
         kind_map = {
             "predicate": self._predicates,
             "entity_type": self._entity_types,
             "operator": self._operators,
             "synthesis_strategy": self._synthesis_strategies,
+            "context_rule": self._context_rules,
             "frame_rule": self._frame_rules,
+            "verifier": self._verifiers,
             "inductor": self._inductors,
             "uol_semantic": self._uol_semantics,
         }
@@ -132,7 +147,9 @@ class Registry:
             "entity_types": {k: self._entry_to_dict(v) for k, v in self._entity_types.items()},
             "operators": {k: self._entry_to_dict(v) for k, v in self._operators.items()},
             "synthesis_strategies": {k: self._entry_to_dict(v) for k, v in self._synthesis_strategies.items()},
+            "context_rules": {k: self._entry_to_dict(v) for k, v in self._context_rules.items()},
             "frame_rules": {k: self._entry_to_dict(v) for k, v in self._frame_rules.items()},
+            "verifiers": {k: self._entry_to_dict(v) for k, v in self._verifiers.items()},
             "inductors": {k: self._entry_to_dict(v) for k, v in self._inductors.items()},
             "_alias_map": self._alias_map,
         }
@@ -144,7 +161,7 @@ class Registry:
         reg = cls()
         with open(path) as f:
             data = json.load(f)
-        for kind_name in ("predicates", "entity_types", "operators", "synthesis_strategies", "frame_rules", "inductors"):
+        for kind_name in ("predicates", "entity_types", "operators", "synthesis_strategies", "context_rules", "frame_rules", "verifiers", "inductors"):
             kind_key = kind_name.rstrip("s")
             for key, entry_dict in data.get(kind_name, {}).items():
                 entry = cls._dict_to_entry(entry_dict, kind=kind_key)

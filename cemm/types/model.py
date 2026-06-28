@@ -14,7 +14,9 @@ class ModelKind(str, Enum):
     SIMULATOR = "simulator"
     RANKING_RULE = "ranking_rule"
     FRAME_RULE = "frame_rule"
+    CONTEXT_RULE = "context_rule"
     SYNTHESIS_STRATEGY = "synthesis_strategy"
+    VERIFIER = "verifier"
     INDUCTOR = "inductor"
     UOL_SEMANTIC = "uol_semantic"
 

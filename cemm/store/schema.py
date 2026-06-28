@@ -341,7 +341,10 @@ INDEXES = {
     "idx_actions_operator_status": "CREATE INDEX IF NOT EXISTS idx_actions_operator_status ON actions(operator_model_id, status, created_at)",
     "idx_self_updated": "CREATE INDEX IF NOT EXISTS idx_self_updated ON self_states(updated_at)",
     "idx_source_trust_domain": "CREATE INDEX IF NOT EXISTS idx_source_trust_domain ON source_trust(source_id, domain)",
+    "idx_models_kind_registry_status": "CREATE INDEX IF NOT EXISTS idx_models_kind_registry_status ON models(kind, registry_key, status)",
     "idx_models_uol_key": "CREATE INDEX IF NOT EXISTS idx_models_name_uol ON models(name) WHERE kind='uol_semantic'",
+    "idx_feedback_signal": "CREATE INDEX IF NOT EXISTS idx_feedback_signal ON feedback(signal_id)",
+    "idx_feedback_action": "CREATE INDEX IF NOT EXISTS idx_feedback_action ON feedback(action_id)",
 }
 
 
