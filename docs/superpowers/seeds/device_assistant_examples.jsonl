@@ -1,0 +1,216 @@
+{"task_type":"claim_extraction","input":{"text":"Set an alarm for 7 AM tomorrow"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What's the weather like today?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Remind me to buy milk when I leave work"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Play some jazz music in the living room"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Call Mom on my way home"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Turn off the kitchen lights"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What meetings do I have today?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Send a text to Sarah saying I'm running late"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"How long will it take to drive to the airport?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Add eggs and bread to my shopping list"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set an alarm for 6:30 AM weekdays"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Cancel my 7 AM alarm"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What alarms are set?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"How much time left on the timer"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set a timer for 15 minutes"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Dial 555-0199"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Call Dr. Miller's office"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Redial"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Answer the call"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Hang up"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Reject incoming call"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Play 'Hotel California' by the Eagles"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Play some rock music"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Next track"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Previous song"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Pause"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Resume"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Turn up the volume"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set volume to 7"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Send a message to Mike that I'm on my way"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Read my new messages"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Reply to Lisa saying sounds good"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Remind me to water the plants at 6 PM"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Remind me to pick up dry cleaning when I'm near the store"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Mark the dry cleaning reminder as done"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Show me all my reminders"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Change the plant watering reminder to 7 PM"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What will the weather be like this weekend?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What time is it in Tokyo?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Do I have any appointments tomorrow?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"What's the traffic like to downtown?"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Define photosynthesis"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Turn on the bedroom lights"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set the living room lights to blue"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Brighten the kitchen lights to 80 percent"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set the thermostat to 72 degrees"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Lock the front door"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set an alarm for 8 AM and turn off the bedroom lights"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Play lofi music and dim the lights"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Set it for 7 PM"},"permission_scope":"public","priority":90}
+{"task_type":"claim_extraction","input":{"text":"Call her"},"permission_scope":"public","priority":90}
+{"task_type":"uol_mapping","input":{"text":"Set a timer for 10 minutes","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Who won the game last night?","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Find my phone","source":"user","context":"home"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Lower the thermostat to 68 degrees","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"What's the capital of France?","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Turn on the TV","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"What song is this?","source":"user","context":"car"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Navigate to the nearest gas station","source":"user","context":"car"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Order more paper towels","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Is the front door locked?","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Schedule a meeting for tomorrow at 10","source":"user","context":"office"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Send an email to the team","source":"user","context":"office"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Play my morning playlist","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Good night","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"What's the recipe for lasagna?","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Put that on my shopping list","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Add 'pay electric bill' to reminders","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Dim the lights","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Switch the TV to HDMI 2","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Any available appointments this week?","source":"user","context":"office"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Turn on the AC","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Close the garage door","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Set the mood lighting","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Find a pizza place nearby","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Call an Uber","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Open the blinds","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Schedule the sprinklers for 6 AM","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Put the leftovers in the fridge","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"What's playing?","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Start the coffee maker","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Turn off everything in the bedroom","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Put that thing in the drawer","source":"user","context":"kitchen"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Move it over there","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Set it to 70","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"What's that noise?","source":"user","context":"bedroom"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Is anyone there?","source":"user","context":"general"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Go there","source":"user","context":"car"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Take me home","source":"user","context":"car"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Where's the nearest coffee shop?","source":"user","context":"car"},"permission_scope":"public","priority":80}
+{"task_type":"uol_mapping","input":{"text":"Mute the TV during commercials","source":"user","context":"living_room"},"permission_scope":"public","priority":80}
+{"task_type":"predicate_mapping","input":{"utterance":"Set alarm","predicates":["set","alarm","schedule"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Play music","predicates":["play","music","listen"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Call contact","predicates":["call","phone","dial","contact"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Check weather","predicates":["check","weather","forecast"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Set reminder","predicates":["remind","remember","reminder"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Turn on lights","predicates":["turn_on","lighting","illuminate","switch_on"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Lock doors","predicates":["lock","secure","bolted","deadbolt"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Check calendar","predicates":["check","calendar","schedule","agenda","appointments"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Send message","predicates":["send","message","text","sms","reply"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Navigate home","predicates":["navigate","route","directions","home","gps"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Control temperature","predicates":["thermostat","temperature","heat","cool","climate"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Play video","predicates":["play","video","watch","stream","movie"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Cancel alarm","predicates":["cancel","alarm","dismiss","stop_alarm"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Search web","predicates":["search","web","browse","google","look_up"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Set timer","predicates":["set","timer","countdown","minutes"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Take note","predicates":["note","memo","remind_me","jot_down"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Check traffic","predicates":["traffic","drive_time","commute","eta"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Order food","predicates":["order","delivery","takeout","pizza","food"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Read email","predicates":["read","email","inbox","mail"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Dim lights","predicates":["dim","brightness","lower_lights","dimmer"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Find phone","predicates":["find","locate","where_is","phone"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Morning routine","predicates":["good_morning","routine","start_day","wake_up"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Good night","predicates":["good_night","sleep","turn_off_all","bedtime"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Volume up","predicates":["volume","louder","increase_volume","turn_up"]},"permission_scope":"public","priority":70}
+{"task_type":"predicate_mapping","input":{"utterance":"Take picture","predicates":["take","photo","picture","camera","capture"]},"permission_scope":"public","priority":70}
+{"task_type":"context_inference","input":{"signal":"What's on my calendar?","user_history":["Set alarm for 7 AM","Remind me about meeting"],"time":"08:30","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Turn it up","user_history":["Play 'Bohemian Rhapsody'"],"device_state":{"volume":30},"room":"living_room"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Is it still there?","user_history":["Add milk to shopping list"],"conversation_topic":"shopping_list"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Call her back","user_history":["Missed call from Sarah at 2 PM","Sarah is in contacts"],"relationship":"sister"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Remind me again in 10 minutes","user_history":["Set a timer for 15 minutes","Timer is going off"],"time":"14:30","day":"Wednesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Is it still on?","user_history":["Set a timer for 30 minutes"],"time":"14:20","day":"Wednesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Skip it","user_history":["Play 'Purple Rain' by Prince"],"time":"19:45","day":"Friday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Who called?","user_history":["Phone rang 3 times","I missed the call"],"time":"11:15","day":"Tuesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"How much longer?","user_history":["Set a timer for 20 minutes"],"time":"18:05","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Put it on the list","user_history":["I need to buy milk","Also need eggs"],"time":"09:00","day":"Saturday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Turn it down","user_history":["Play heavy metal playlist","Set volume to 8"],"time":"22:00","day":"Thursday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"What did she say?","user_history":["Read my messages","Message from Mom at 3:15"],"time":"15:20","day":"Sunday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"What's next on the list?","user_history":["Show my shopping list","Check off milk","Check off eggs"],"time":"10:30","day":"Saturday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Read it to me","user_history":["Show new messages","Message from boss at 9 AM"],"time":"09:05","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Close that","user_history":["Open the garage door"],"time":"20:00","day":"Tuesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Not that one, the other one","user_history":["Show me restaurants nearby","List Italian restaurants"],"time":"19:00","day":"Saturday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Is there anything earlier?","user_history":["Do I have any appointments tomorrow?","Found appointment at 4 PM"],"time":"21:00","day":"Sunday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Where was I?","user_history":["Read 'The Hobbit' chapter 3","Pause audiobook"],"time":"08:00","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Add it","user_history":["Search for paper towels","Find Bounty brand"],"time":"14:00","day":"Wednesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Call them","user_history":["Missed call from Dad","Dad is in favorites"],"time":"18:30","day":"Friday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Can I fit another meeting?","user_history":["Calendar at 2 PM design review","Calendar at 3 PM standup"],"time":"13:00","day":"Wednesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Is the door locked?","user_history":["Left the house at 8 AM","Arrived at work at 8:45"],"time":"10:00","day":"Tuesday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"What was that?","user_history":["Device made a notification sound"],"time":"15:45","day":"Thursday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"When does it open?","user_history":["Find coffee shops nearby","Found Starbucks on Main St"],"time":"07:30","day":"Saturday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Send it to him","user_history":["Draft reply to Tom","Message says I'll be late"],"time":"09:15","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Set both","user_history":["Set an alarm for 7 AM","Set an alarm for 7:30 AM"],"time":"22:00","day":"Sunday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"What did I search for?","user_history":["Search for hiking trails","Search for running shoes"],"time":"11:00","day":"Sunday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Start over","user_history":["Timer at 15 minutes","Timer paused at 7 minutes"],"time":"12:30","day":"Saturday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Is it warm enough?","user_history":["Set thermostat to 68","Outdoor temperature is 45"],"time":"06:00","day":"Monday"},"permission_scope":"public","priority":85}
+{"task_type":"context_inference","input":{"signal":"Move it up","user_history":["Alarm at 7 AM","I have an early meeting"],"time":"21:00","day":"Sunday"},"permission_scope":"public","priority":85}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Why is this not working?","I already told you I need this done"],"speaker":"user","session_length":12},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Thanks so much!","That's perfect, you're the best"],"speaker":"user","session_length":5},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Set a reminder.","Remind me.","I need to remember."],"speaker":"user","session_length":20},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["ARE YOU KIDDING ME?","I said play jazz, not rock!"],"speaker":"user","session_length":8},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Could you please turn down the volume?","Thank you very much"],"speaker":"user","session_length":3},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["I'm going to be late","I need the fastest route","Now!"],"speaker":"user","session_length":6},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Oh great, another software update"],"speaker":"user","session_length":2},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["You're amazing","That was exactly what I needed"],"speaker":"user","session_length":4},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Play that song... no wait play the other one... actually never mind"],"speaker":"user","session_length":15},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Just set the timer"],"speaker":"user","session_length":1},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Hello? Hello! Are you even listening?"],"speaker":"user","session_length":18},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["I specifically asked for no onions"],"speaker":"user","session_length":7},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Never mind, I'll do it myself"],"speaker":"user","session_length":10},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Sure, THAT worked perfectly","Just like last time"],"speaker":"user","session_length":5},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Set alarm for 7","I said 7 AM","The morning one","Ugh forget it"],"speaker":"user","session_length":14},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Please","I'm begging you","Just play the song"],"speaker":"user","session_length":6},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["What did you say?","Speak up","I can't hear you"],"speaker":"user","session_length":11},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Finally, it works"],"speaker":"user","session_length":9},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Turn it off","TURN IT OFF","TURN IT OFF NOW"],"speaker":"user","session_length":4},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Thank you","Perfect","That's exactly right"],"speaker":"user","session_length":8},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Alright, alright, you win","Play whatever you want"],"speaker":"user","session_length":13},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["Can I ask you something?","Never mind it's fine","Actually yes"],"speaker":"user","session_length":7},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["What part of 'turn it off' don't you understand?"],"speaker":"user","session_length":3},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["I love when this works smoothly","You really came through"],"speaker":"user","session_length":5},"permission_scope":"public","priority":75}
+{"task_type":"pragmatic_interpretation","input":{"utterances":["I only have 5 minutes","Make it quick","Just the summary"],"speaker":"user","session_length":2},"permission_scope":"public","priority":75}
+{"task_type":"synthesis_verification","input":{"answer":"Your next meeting is at 2 PM with the design team","selected_claims":[{"subject":"meeting","predicate":"scheduled_at","object":"2 PM"},{"subject":"attendees","predicate":"includes","object":"design team"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"I think the weather might be nice today","selected_claims":[{"subject":"weather","predicate":"forecast","object":"sunny","confidence":0.6}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Your package is out for delivery and should arrive by 5 PM","selected_claims":[{"subject":"package","predicate":"status","object":"out_for_delivery"},{"subject":"estimated_arrival","predicate":"by","object":"5 PM"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"The best pizza place in town is definitely Mario's","selected_claims":[{"subject":"Mario's","predicate":"rating","object":"best","confidence":0.7}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Your appointment with Dr. Smith is on Thursday at 3 PM","selected_claims":[{"subject":"appointment","predicate":"with","object":"Dr. Smith"},{"subject":"appointment","predicate":"date","object":"Thursday"},{"subject":"appointment","predicate":"time","object":"3 PM"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"I think you'd really enjoy the new Marvel movie","selected_claims":[{"subject":"Marvel_movie","predicate":"enjoyment","object":"likely","confidence":0.65}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"The thermostat is currently set to 70 degrees in cooling mode","selected_claims":[{"subject":"thermostat","predicate":"temperature","object":"70"},{"subject":"thermostat","predicate":"mode","object":"cooling"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Everyone says the new Italian place on 5th is incredible","selected_claims":[{"subject":"Italian_restaurant","predicate":"reputation","object":"excellent","confidence":0.8}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"You left the garage door open according to the sensor","selected_claims":[{"subject":"garage_door","predicate":"status","object":"open"},{"subject":"sensor","predicate":"triggered","object":"true"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Your alarm is set for 6 AM - wait, actually I see conflicting data that says 7 AM","selected_claims":[{"subject":"alarm","predicate":"time","object":"6 AM"},{"subject":"alarm","predicate":"time","object":"7 AM"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"You might like Thai food based on your order history","selected_claims":[{"subject":"user","predicate":"preference","object":"Thai_food","confidence":0.55}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"The front door, back door, and garage are all locked","selected_claims":[{"subject":"front_door","predicate":"locked","object":"true"},{"subject":"back_door","predicate":"locked","object":"true"},{"subject":"garage","predicate":"locked","object":"true"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"I have no information about whether the package arrived","selected_claims":[{"subject":"package","predicate":"arrival","object":"unknown"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Based on the reviews, this vacuum cleaner seems like a great choice","selected_claims":[{"subject":"vacuum_cleaner","predicate":"quality","object":"good","confidence":0.75}],"synthesis_type":"neural"},"permission_scope":"public","priority":60}
+{"task_type":"synthesis_verification","input":{"answer":"Your meeting request was sent, but the attendee has not yet responded","selected_claims":[{"subject":"meeting_request","predicate":"sent","object":"true"},{"subject":"attendee","predicate":"response","object":"pending"}],"synthesis_type":"extractive"},"permission_scope":"public","priority":60}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"set_alarm","outcome":"success","preconditions":["time_specified","device_awake"]},{"action":"set_alarm","outcome":"success","preconditions":["time_specified","device_awake"]}],"domain":"device_control"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"call_contact","outcome":"failure","preconditions":["contact_specified","no_service"]},{"action":"call_contact","outcome":"failure","preconditions":["contact_specified","airplane_mode"]}],"domain":"communication"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"play_music","outcome":"success","preconditions":["subscription_active","device_connected"]},{"action":"play_music","outcome":"failure","preconditions":["subscription_expired"]},{"action":"play_music","outcome":"failure","preconditions":["no_internet"]}],"domain":"media_playback"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"set_timer","outcome":"success","preconditions":["time_specified"]},{"action":"set_timer","outcome":"failure","preconditions":["time_exceeds_maximum"]}],"domain":"alarms_and_timers"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"send_text","outcome":"success","preconditions":["contact_specified","message_body","signal_available"]},{"action":"send_text","outcome":"failure","preconditions":["contact_specified","no_signal"]}],"domain":"communication"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"lock_door","outcome":"success","preconditions":["door_detected_closed","battery_ok"]},{"action":"lock_door","outcome":"failure","preconditions":["door_open"]}],"domain":"device_control"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"create_reminder","outcome":"success","preconditions":["reminder_text","time_or_place_specified"]},{"action":"create_reminder","outcome":"failure","preconditions":["no_reminder_text"]}],"domain":"productivity"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"adjust_thermostat","outcome":"success","preconditions":["temperature_set","hvac_online"]},{"action":"adjust_thermostat","outcome":"failure","preconditions":["temperature_set","hvac_offline"]}],"domain":"climate_control"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"schedule_meeting","outcome":"success","preconditions":["time_slot_available","attendees_available"]},{"action":"schedule_meeting","outcome":"failure","preconditions":["time_slot_available","attendee_conflict"]}],"domain":"productivity"},"permission_scope":"public","priority":50}
+{"task_type":"causal_rule_extraction","input":{"events":[{"action":"play_playlist","outcome":"success","preconditions":["playlist_exists","device_online"]},{"action":"play_playlist","outcome":"failure","preconditions":["playlist_empty"]}],"domain":"media_playback"},"permission_scope":"public","priority":50}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c1","predicate":"set_alarm","time":"07:00"},{"id":"c2","predicate":"woke_up","time":"07:30"}],"intervals":[{"claim_id":"c1","start":"07:00","end":"07:01"},{"claim_id":"c2","start":"07:30","end":"07:31"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c3","predicate":"left_home","time":"08:00"},{"id":"c4","predicate":"arrived_work","time":"08:45"}],"intervals":[{"claim_id":"c3","start":"08:00","end":"08:05"},{"claim_id":"c4","start":"08:45","end":"08:50"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c5","predicate":"started_coffee","time":"06:45"},{"id":"c6","predicate":"alarm_rang","time":"07:00"}],"intervals":[{"claim_id":"c5","start":"06:45","end":"06:50"},{"claim_id":"c6","start":"07:00","end":"07:01"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c7","predicate":"breakfast","time":"07:15"},{"id":"c8","predicate":"shower","time":"07:00"}],"intervals":[{"claim_id":"c7","start":"07:15","end":"07:30"},{"claim_id":"c8","start":"07:00","end":"07:15"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c9","predicate":"heating_on","time":"06:00"},{"id":"c10","predicate":"coffee_brewed","time":"06:30"},{"id":"c11","predicate":"alarm_off","time":"07:00"}],"intervals":[{"claim_id":"c9","start":"06:00","end":"08:00"},{"claim_id":"c10","start":"06:30","end":"06:32"},{"claim_id":"c11","start":"07:00","end":"07:01"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c12","predicate":"movie_started","time":"20:00"},{"id":"c13","predicate":"pizza_delivered","time":"19:45"}],"intervals":[{"claim_id":"c12","start":"20:00","end":"22:00"},{"claim_id":"c13","start":"19:45","end":"19:55"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c14","predicate":"sunset","time":"18:30"},{"id":"c15","predicate":"lights_on","time":"18:35"},{"id":"c16","predicate":"curtains_closed","time":"18:40"}],"intervals":[{"claim_id":"c14","start":"18:30","end":"18:32"},{"claim_id":"c15","start":"18:35","end":"23:00"},{"claim_id":"c16","start":"18:40","end":"23:00"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c17","predicate":"meeting_started","time":"14:00"},{"id":"c18","predicate":"meeting_ended","time":"15:00"},{"id":"c19","predicate":"lunch","time":"12:30"}],"intervals":[{"claim_id":"c17","start":"14:00","end":"15:00"},{"claim_id":"c18","start":"15:00","end":"15:01"},{"claim_id":"c19","start":"12:30","end":"13:15"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c20","predicate":"music_playing","time":"09:00"},{"id":"c21","predicate":"volume_increased","time":"09:15"}],"intervals":[{"claim_id":"c20","start":"09:00","end":"09:30"},{"claim_id":"c21","start":"09:15","end":"09:16"}]},"permission_scope":"public","priority":40}
+{"task_type":"temporal_relation_derivation","input":{"claims":[{"id":"c22","predicate":"left_for_work","time":"08:00"},{"id":"c23","predicate":"arrived_gym","time":"08:15"},{"id":"c24","predicate":"left_gym","time":"09:00"}],"intervals":[{"claim_id":"c22","start":"08:00","end":"08:05"},{"claim_id":"c23","start":"08:15","end":"09:00"},{"claim_id":"c24","start":"09:00","end":"09:05"}]},"permission_scope":"public","priority":40}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"play_music","outcome":"success","count":47},{"predicate":"play_music","outcome":"failure","count":3},{"predicate":"play_playlist","outcome":"success","count":12}],"domain":"media_playback"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"set_alarm","outcome":"success","count":89},{"predicate":"set_alarm","outcome":"failure","count":2},{"predicate":"set_timer","outcome":"success","count":34}],"domain":"alarms_and_timers"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"lock_door","outcome":"success","count":156},{"predicate":"lock_door","outcome":"failure","count":12},{"predicate":"unlock_door","outcome":"success","count":43}],"domain":"home_security"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"check_weather","outcome":"success","count":234},{"predicate":"check_calendar","outcome":"success","count":189},{"predicate":"check_weather","outcome":"failure","count":4},{"predicate":"set_reminder","outcome":"success","count":178}],"domain":"queries_and_reminders"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"adjust_thermostat","outcome":"success","count":67},{"predicate":"adjust_lights","outcome":"success","count":98},{"predicate":"adjust_thermostat","outcome":"failure","count":3}],"domain":"climate_control"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"send_text","outcome":"success","count":112},{"predicate":"make_call","outcome":"success","count":78},{"predicate":"send_text","outcome":"failure","count":5},{"predicate":"make_call","outcome":"failure","count":15}],"domain":"communication"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"play_music","outcome":"success","count":145},{"predicate":"next_track","outcome":"success","count":89},{"predicate":"pause_music","outcome":"success","count":67},{"predicate":"volume_up","outcome":"success","count":55}],"domain":"media_playback"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"set_alarm","outcome":"success","count":201},{"predicate":"dismiss_alarm","outcome":"success","count":180},{"predicate":"snooze_alarm","outcome":"success","count":95},{"predicate":"snooze_alarm","outcome":"failure","count":23}],"domain":"alarms_and_timers"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"find_restaurant","outcome":"success","count":88},{"predicate":"get_directions","outcome":"success","count":156},{"predicate":"find_restaurant","outcome":"failure","count":7},{"predicate":"check_traffic","outcome":"success","count":134}],"domain":"navigation_and_local"},"permission_scope":"public","priority":30}
+{"task_type":"structural_induction","input":{"evidence":[{"predicate":"set_reminder","outcome":"success","count":92},{"predicate":"complete_reminder","outcome":"success","count":67},{"predicate":"set_reminder","outcome":"failure","count":4}],"domain":"productivity"},"permission_scope":"public","priority":30}
