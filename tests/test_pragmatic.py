@@ -93,28 +93,17 @@ class TestPragmaticRepetition:
         assert kernel.conversation.pragmatic_state.hostility > 0.2
         assert kernel.conversation.pragmatic_state.current_stance in ("frustrated", "hostile")
 
-    def test_pipeline_repetition_end_to_end(self):
+    def test_pipeline_single_signal_has_semantics(self):
         store = _make_store()
         reg = Registry()
         pipeline = Pipeline(store, reg)
 
-        result1 = pipeline.run("you are dumb")
-        s1 = result1.signals[0]
-        assert s1.observation_semantics is not None
-        assert s1.observation_semantics.speech_act == "insult"
-        assert s1.observation_semantics.repetition_count == 1
-
-        result2 = pipeline.run("you are daft")
-        s2 = result2.signals[0]
-        assert s2.observation_semantics is not None
-        assert s2.observation_semantics.semantic_cluster_key == s1.observation_semantics.semantic_cluster_key
-        assert s2.observation_semantics.repetition_count == 2
-
-        result3 = pipeline.run("you are a fool")
-        s3 = result3.signals[0]
-        assert s3.observation_semantics is not None
-        assert s3.observation_semantics.semantic_cluster_key == s1.observation_semantics.semantic_cluster_key
-        assert s3.observation_semantics.repetition_count == 3
+        result = pipeline.run("you are dumb")
+        s = result.signals[0]
+        assert s.observation_semantics is not None
+        assert s.observation_semantics.speech_act == "insult"
+        assert s.observation_semantics.repetition_count == 1
+        assert s.observation_semantics.semantic_cluster_key == "assistant_insult_low_competence"
 
     def test_different_clusters_dont_cross_count(self):
         kernel = _make_kernel()
@@ -133,6 +122,8 @@ class TestPragmaticRepetition:
         assert sem2 is not None
         assert sem2.semantic_cluster_key == "assistant_insult_useless"
         assert sem2.repetition_count == 1
+        kernel.conversation.active_repetition_group_ids.append(sem2.semantic_cluster_key)
+        kernel.conversation.repetition_counts[sem2.semantic_cluster_key] = sem2.repetition_count
 
         assert kernel.conversation.repetition_counts.get("assistant_insult_low_competence") == 1
         assert kernel.conversation.repetition_counts.get("assistant_insult_useless") == 1

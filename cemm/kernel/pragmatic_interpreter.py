@@ -42,11 +42,6 @@ def interpret_signal(
     else:
         repetition_count = 1
 
-    if cluster_key:
-        if cluster_key not in kernel.conversation.active_repetition_group_ids:
-            kernel.conversation.active_repetition_group_ids.append(cluster_key)
-        kernel.conversation.repetition_counts[cluster_key] = repetition_count
-
     cause_ids: list[str] = []
     if speech_act in ("insult", "complaint") and repetition_count > 1 and store is not None:
         cause_ids = _trace_causes(store, kernel)
