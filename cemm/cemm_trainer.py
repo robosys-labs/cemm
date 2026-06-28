@@ -15,8 +15,9 @@ API keys are read from environment variables only.
 
 Example:
   export CEMM_LLM_API_KEY="..."
-  export CEMM_LLM_BASE_URL="https://api.example.com/v1/chat/completions"
-  export CEMM_LLM_MODEL="small-model"
+  # Default endpoint: https://integrate.api.nvidia.com/v1/chat/completions
+  # Default model: meta/llama-3.1-8b-instruct
+  # Other known-good: meta/llama-3.1-70b-instruct, qwen/qwen3-next-80b-a3b-instruct
   python3 cemm_trainer.py ingest examples.jsonl
   python3 cemm_trainer.py run --workers 8
 """
@@ -495,9 +496,9 @@ def main(argv: list[str]) -> int:
 
     config = Config(
         db_path=db_path,
-        base_url=os.getenv("CEMM_LLM_BASE_URL", "https://api.openai.com/v1/chat/completions"),
+        base_url=os.getenv("CEMM_LLM_BASE_URL", "https://integrate.api.nvidia.com/v1/chat/completions"),
         api_key=os.getenv("CEMM_LLM_API_KEY", ""),
-        model=os.getenv("CEMM_LLM_MODEL", "gpt-4o-mini"),
+        model=os.getenv("CEMM_LLM_MODEL", "meta/llama-3.1-8b-instruct"),
         dry_run=bool(args.dry_run),
         timeout_s=int(os.getenv("CEMM_TIMEOUT_S", "60")),
         max_retries=int(os.getenv("CEMM_MAX_RETRIES", "3")),
