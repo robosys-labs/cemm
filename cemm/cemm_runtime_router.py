@@ -166,7 +166,7 @@ def build_context(conn: sqlite3.Connection, session_id: str) -> ContextKernel:
 
 def observe(conn: sqlite3.Connection, content: str, context: ContextKernel) -> str:
     payload = {"content": content, "session_id": context.session_id, "turn_index": context.turn_index}
-    signal_id = stable_id("sig", payload | {"ts": now()})
+    signal_id = stable_id("sig", payload | {"ts": int(time.time() * 1000000)})
     conn.execute(
         """
         INSERT INTO signals (id, kind, source_type, content, context_json, semantics_json, created_at)
@@ -191,6 +191,8 @@ def infer_context(text: str, context: ContextKernel) -> dict[str, Any]:
         inferences.append({"kind": "urgency", "value": "possible_hurry", "confidence": 0.45})
     if "weather" in lower and not any(place in lower for place in ["lagos", "abuja", "london", "new york", "enugu"]):
         inferences.append({"kind": "missing_slot", "value": "location", "confidence": 0.9})
+    if any(word in lower for word in ["actually", "correction", "correction", "wait", "no,"]):
+        inferences.append({"kind": "correction", "value": "possible_supersession", "confidence": 0.8})
     return {"inferences": inferences, "confidence": max([i["confidence"] for i in inferences], default=0.5)}
 
 
@@ -266,6 +268,12 @@ def route(conn: sqlite3.Connection, text: str, context: ContextKernel, context_i
     if context.turn_index == 1 and re.fullmatch(r"(hi|hello|hey|good morning|morning|good afternoon|good evening)[!. ]*", lower):
         return RouteDecision("answer", 0.95, "session greeting", [], [], [])
 
+    any_correction = any(i.get("kind") == "correction" for i in context_info.get("inferences", []))
+    if any_correction:
+        claim = extract_claim(text)
+        if claim:
+            return RouteDecision("remember", claim["confidence"], "correction supersedes previous claim", [], [], [])
+
     claim = extract_claim(text)
     if claim:
         return RouteDecision("remember", claim["confidence"], "user stated a rememberable claim", [], [], [])
@@ -279,6 +287,11 @@ def route(conn: sqlite3.Connection, text: str, context: ContextKernel, context_i
 
     if any(word in lower for word in ["dumb", "daft", "fool"]):
         return RouteDecision("answer", 0.75, "pragmatic negative evaluation", [], [], [])
+
+    small_talk_phrases = ["how are you", "what can you do", "who are you",
+                          "what is your name", "thanks", "thank you", "bye", "goodbye"]
+    if any(phrase in lower for phrase in small_talk_phrases):
+        return RouteDecision("answer", 0.85, "small talk match", [], [], [])
 
     if "?" in text:
         return RouteDecision("abstain", 0.55, "unsupported open question in basic runtime", [], [], [])
@@ -343,7 +356,21 @@ def synthesize(conn: sqlite3.Connection, decision: RouteDecision, text: str, con
     if any(word in lower for word in ["dumb", "daft", "fool"]):
         return "I hear the frustration. Let me focus on fixing the part that failed.", {"strategy": "template", "verified": True}
 
-    return "I’m here.", {"strategy": "template", "verified": True}
+    small_talk = {
+        "how are you": "I'm functioning well, thanks for asking.",
+        "what can you do": "I can remember facts about you and answer based on what I've learned.",
+        "who are you": "I'm CEMM-Basic, a conversational memory system.",
+        "what is your name": "I'm CEMM-Basic.",
+        "thanks": "You're welcome.",
+        "thank you": "You're welcome.",
+        "bye": "Goodbye.",
+        "goodbye": "Goodbye.",
+    }
+    for phrase, response in small_talk.items():
+        if phrase in lower:
+            return response, {"strategy": "template", "verified": True}
+
+    return "I'm here.", {"strategy": "template", "verified": True}
 
 
 def write_action_trace(

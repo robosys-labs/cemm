@@ -176,7 +176,19 @@ def main() -> None:
                         help="Run training: path to SQLite DB (default: cemm_training.sqlite3)")
     parser.add_argument("--workers", type=int, default=2, help="Training worker count")
     parser.add_argument("--dry-run", action="store_true", help="Dry-run mode for training")
+    parser.add_argument("--once", help="Handle one user turn via runtime router")
+    parser.add_argument("--chat", action="store_true", help="Interactive chat via runtime router")
     args = parser.parse_args()
+
+    if args.once:
+        from .cemm_runtime_router import main as router_main
+        router_main(["once", args.once])
+        return
+
+    if args.chat:
+        from .cemm_runtime_router import main as router_main
+        router_main(["chat"])
+        return
 
     store = Store(args.db)
     registry = Registry()
