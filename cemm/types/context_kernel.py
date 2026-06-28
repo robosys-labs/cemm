@@ -21,6 +21,7 @@ class UserState:
     known: bool = False
     active_preference_claim_ids: list[str] = field(default_factory=list)
     trusted_domains: list[str] = field(default_factory=list)
+    session_affect: PragmaticState | None = None
 
 
 @dataclass
@@ -37,6 +38,9 @@ class ConversationState:
     recent_signal_ids: list[str] = field(default_factory=list)
     active_entity_ids: list[str] = field(default_factory=list)
     active_claim_ids: list[str] = field(default_factory=list)
+    active_repetition_group_ids: list[str] = field(default_factory=list)
+    repetition_counts: dict[str, int] = field(default_factory=dict)
+    pragmatic_state: PragmaticState | None = None
 
 
 @dataclass
@@ -84,6 +88,20 @@ class Budget:
             allow_dense_fallback=self.allow_dense_fallback,
             allow_simulation=self.allow_simulation,
         )
+
+
+@dataclass
+class PragmaticState:
+    current_stance: str = "cooperative"
+    target_entity_id: str = ""
+    frustration: float = 0.0
+    hostility: float = 0.0
+    playfulness: float = 0.0
+    repetition_pressure: float = 0.0
+    likely_cause_claim_ids: list[str] = field(default_factory=list)
+    last_updated_signal_id: str = ""
+    last_updated_at: float = 0.0
+    decay_half_life_ms: float = 900000.0
 
 
 @dataclass

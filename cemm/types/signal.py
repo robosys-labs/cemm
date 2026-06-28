@@ -29,6 +29,23 @@ class SourceType(str, Enum):
 
 
 @dataclass
+class ObservationSemantics:
+    speech_act: str = "unknown"
+    target_entity_id: str = ""
+    semantic_cluster_key: str = ""
+    stance: str = "unknown"
+    affect: dict = field(default_factory=lambda: {
+        "valence": 0.0, "arousal": 0.0, "frustration": 0.0,
+        "hostility": 0.0, "playfulness": 0.0,
+    })
+    repetition_group_id: str = ""
+    repetition_count: int = 0
+    cause_hypothesis_claim_ids: list[str] = field(default_factory=list)
+    decay_half_life_ms: float = 900000.0
+    confidence: float = 0.0
+
+
+@dataclass
 class Signal:
     id: str
     kind: SignalKind
@@ -42,3 +59,4 @@ class Signal:
     permission: Permission
     parent_signal_id: str | None = None
     version: str = "erca.signal.v1"
+    observation_semantics: ObservationSemantics | None = None
