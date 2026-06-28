@@ -92,9 +92,11 @@ Each training job has one task type.
 
 ```text
 entity_resolution
+uol_mapping
 predicate_mapping
 claim_extraction
 claim_canonicalization
+context_inference
 pragmatic_interpretation
 frame_classification
 contradiction_detection
@@ -113,7 +115,9 @@ Parallel LLM/agent roles:
 | Agent | Job |
 |---|---|
 | `extractor` | Extract entities, claims, predicates, temporal refs |
+| `uol_mapper` | Map language into entity refs, process atoms, and state atoms |
 | `canonicalizer` | Map extracted structures to registry entries |
+| `contextualist` | Infer temporary context from time, location, session position, world state |
 | `critic` | Find contradictions, missing evidence, invalid frames |
 | `pragmaticist` | Detect speech act, target, affect, repetition, and likely cause |
 | `causalist` | Extract causal preconditions and effects |
@@ -256,7 +260,7 @@ causal pattern appears across examples
 Inductor output:
 
 ```text
-Model(kind = "predicate" | "entity_type" | "operator" | "causal_rule" | "frame_rule" | "ranking_rule" | "synthesis_strategy")
+Model(kind = "predicate" | "uol_semantic" | "entity_type" | "operator" | "causal_rule" | "frame_rule" | "context_rule" | "ranking_rule" | "synthesis_strategy")
 ```
 
 Candidate models remain inactive until:

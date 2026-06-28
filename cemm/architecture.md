@@ -50,6 +50,14 @@ This is the smallest practical set that supports memory, selfhood, causal reason
 
 Everything else is an index, view, score, cache, policy, or runtime packet.
 
+Boundary rule:
+
+```text
+If a concept can be derived from the six primitives within budget, it must remain a view or packet.
+If a concept must persist across sessions and cannot be derived cheaply, store it as one of the six primitives.
+Do not add new persistent primitives without removing or merging an existing one.
+```
+
 ## 3. Signal
 
 A `Signal` is the universal input to the architecture.
@@ -107,6 +115,7 @@ interface ObservationSemantics {
 
   target_entity_id?: string
   semantic_cluster_key?: string
+  uol_atoms: UOLAtom[]
   stance: "positive" | "neutral" | "negative" | "mixed" | "unknown"
 
   affect: {
@@ -125,6 +134,63 @@ interface ObservationSemantics {
   confidence: number
 }
 ```
+
+UOL semantic atoms:
+
+```typescript
+type UOLAtom =
+  | EntityRefUOLAtom
+  | ProcessUOLAtom
+  | StateUOLAtom
+
+interface EntityRefUOLAtom {
+  kind: "entity_ref"
+  entity_id: string
+  role: "actor" | "patient" | "target" | "source" | "location" | "instrument" | "topic"
+  confidence: number
+}
+
+interface ProcessUOLAtom {
+  kind: "process"
+  frame_key: string
+  process_model_id?: string
+  participants: Array<{
+    role: "actor" | "patient" | "target" | "source" | "location" | "instrument" | "topic"
+    entity_id: string
+  }>
+  input_state_keys: string[]
+  output_state_keys: string[]
+  temporal_frame_id?: string
+  modality: "observed" | "asserted" | "requested" | "hypothetical" | "predicted"
+  polarity: "affirmed" | "negated" | "possible" | "unknown"
+  intensity: number
+  confidence: number
+}
+
+interface StateUOLAtom {
+  kind: "state"
+  state_key: string
+  state_model_id?: string
+  holder_entity_id?: string
+  dimension: string
+  value: number
+  polarity: "positive" | "negative" | "neutral" | "unknown"
+  intensity: number
+  confidence: number
+}
+```
+
+UOL atoms are language-agnostic runtime meaning atoms.
+
+They are backed by registry `Model` records, but they are not new persistent primitives.
+
+Noun-like referents resolve to `Entity`.
+
+Verb-like surface forms resolve to `ProcessUOLAtom`.
+
+Adjective-like and stative surface forms resolve to `StateUOLAtom`.
+
+The fixed affect numbers are cheap projections for ranking; UOL process/state atoms carry the actual meaning.
 
 Observation semantics are not truth claims.
 
@@ -251,6 +317,8 @@ interface Model {
     | "simulator"
     | "ranking_rule"
     | "frame_rule"
+    | "context_rule"
+    | "uol_semantic"
     | "synthesis_strategy"
     | "inductor"
 
@@ -309,7 +377,7 @@ interface Action {
     | "ask"
     | "remember"
     | "update_claim"
-    | "create_model"
+    | "create_model_candidate"
     | "synthesize"
     | "simulate"
     | "retrieve"
@@ -452,6 +520,21 @@ reflection gate
 model-creation gate
 ```
 
+Source trust is a compact score table, not a primitive.
+
+```typescript
+interface SourceTrust {
+  source_id: string
+  domain: string
+  trust: number
+  observations: number
+  confirmations: number
+  corrections: number
+  contradictions: number
+  updated_at: number
+}
+```
+
 ## 10. Context Kernel
 
 The `ContextKernel` is the compact runtime state used for interpretation, retrieval, ranking, simulation, action, and reflection.
@@ -462,11 +545,12 @@ interface ContextKernel {
 
   world: WorldState
   user: UserState
+  users: UserState[]
   time: TimeState
   conversation: ConversationState
   goal: GoalState
   memory: MemoryState
-  self: Self
+  self: SelfView
 
   permission: Permission
   budget: Budget
@@ -478,19 +562,45 @@ interface ContextKernel {
 State views:
 
 ```typescript
+interface SelfView {
+  self_id: string
+  mode: Self["internal_state"]["mode"]
+  uncertainty: number
+  coherence: number
+  recent_error_rate: number
+  active_assumptions: string[]
+  known_limits: string[]
+  reliability_by_domain: Record<string, number>
+  recent_meta_memory_claim_ids: string[]
+}
+
 interface WorldState {
   active_entity_ids: string[]
   active_claim_ids: string[]
   active_model_ids: string[]
   causal_graph_model_ids: string[]
   active_frame_model_ids: string[]
+  active_context_rule_model_ids: string[]
   current_constraints: string[]
   predicted_outcome_ids: string[]
+  assistant_locale?: {
+    country?: string
+    region?: string
+    city?: string
+    timezone?: string
+  }
+  world_event_claim_ids: string[]
 }
 
 interface UserState {
   user_id?: string
   known: boolean
+  locale?: {
+    country?: string
+    region?: string
+    city?: string
+    timezone?: string
+  }
   active_preference_claim_ids: string[]
   trusted_domains: string[]
   session_affect: PragmaticState
@@ -500,16 +610,21 @@ interface TimeState {
   now: number
   bucket: "early_morning" | "morning" | "afternoon" | "evening" | "night" | "unknown"
   recency_window_ms: number
+  session_elapsed_ms: number
+  time_since_last_user_signal_ms?: number
+  time_since_last_assistant_action_ms?: number
 }
 
 interface ConversationState {
   session_id: string
   turn_index: number
+  first_user_signal_id?: string
   recent_signal_ids: string[]
   active_entity_ids: string[]
   active_claim_ids: string[]
   active_repetition_group_ids: string[]
   pragmatic_state: PragmaticState
+  inferred_context_claim_ids: string[]
 }
 
 interface PragmaticState {
@@ -519,6 +634,8 @@ interface PragmaticState {
   hostility: number
   playfulness: number
   repetition_pressure: number
+  active_quality_atom_keys: string[]
+  active_process_atom_keys: string[]
   likely_cause_claim_ids: string[]
   last_updated_signal_id?: string
   decay_half_life_ms: number
@@ -582,7 +699,7 @@ No input is interpreted before the ContextKernel exists.
 
 Memory is implemented as views over primitives.
 
-| Memory View | Backing Primitive | Retrieval Key |
+| Memory View | Backing Storage | Retrieval Key |
 |---|---|---|
 | Working memory | `Signal`, `Entity`, `Claim`, `Model` | session, recency, active goal |
 | Episodic memory | `Signal`, `Action` | time, source, context |
@@ -590,10 +707,12 @@ Memory is implemented as views over primitives.
 | Causal memory | `Model`, `Claim` | precondition, effect, process |
 | Procedural memory | `Model`, `Action` | operator, slots, risk, cost |
 | Registry memory | `Model` | registry key, kind, status |
+| UOL memory | `Model`, `Signal` | semantic atom, role, quality, process |
 | Frame memory | `Model`, `Claim` | frame, validity, temporal containment |
+| Context memory | `Model`, `Claim`, `Signal` | context rule, locale, time, session position |
 | Self memory | `Self`, `Claim`, `Signal` | identity, state, reflection |
 | Trust memory | `SourceTrust` | source, domain |
-| Permission memory | `Permission` | scope, retention, action |
+| Permission memory | `Signal`, `Claim`, `Model`, `Action` | scope, retention, action |
 
 There is no separate memory store unless performance requires materialization.
 
@@ -607,7 +726,9 @@ Registry entries are `Model` records:
 Model(kind = "predicate")
 Model(kind = "entity_type")
 Model(kind = "operator")
+Model(kind = "uol_semantic")
 Model(kind = "frame_rule")
+Model(kind = "context_rule")
 Model(kind = "synthesis_strategy")
 Model(kind = "inductor")
 ```
@@ -645,7 +766,144 @@ canonicalize incoming claims before storage or ranking
 
 Retrieval must reject claims outside the active frame unless the operator explicitly requests history.
 
-## 13. Pragmatic Repetition And Affect
+## 13. UOL Semantic Layer
+
+The UOL semantic layer maps language into canonical meaning atoms.
+
+It is not a new storage primitive.
+
+It is a runtime layer backed by `Model(kind = "uol_semantic")` registry entries.
+
+Mapping rule:
+
+```text
+referent      -> Entity
+process/event -> ProcessUOLAtom
+state/quality -> StateUOLAtom
+```
+
+This is language agnostic because the atoms represent frames, participants, states, and deltas, not English parts of speech.
+
+Surface verbs often compile into `ProcessUOLAtom`.
+
+Surface adjectives often compile into `StateUOLAtom`.
+
+Many utterances compile into both.
+
+Examples:
+
+```text
+"you are dumb"
+"you are daft"
+"you are a fool"
+"you don't know anything"
+```
+
+All can map to:
+
+```text
+EntityRefUOLAtom(target = self_entity)
+ProcessUOLAtom(frame_key = assert_evaluation, participants.target = self_entity)
+StateUOLAtom(state_key = low_competence, holder = self_entity, polarity = negative)
+```
+
+Why this improves causality:
+
+```text
+ProcessUOLAtom supplies event/process slots.
+StateUOLAtom supplies state/quality slots.
+Entity supplies stable participants.
+Causal rules can match process + input state + output state + participant patterns.
+```
+
+Example causal pattern:
+
+```text
+ProcessUOLAtom(frame = assistant_failed_answer)
+-> ProcessUOLAtom(frame = repeated_negative_evaluation, target = assistant_self)
+-> StateUOLAtom(state = user_frustration, value increases temporarily)
+```
+
+UOL atoms may produce claims only after canonicalization and permission checks.
+
+By default they remain temporary signal semantics.
+
+Training task:
+
+```text
+uol_mapping
+```
+
+## 14. Context Inference
+
+Context inference derives temporary meaning from state, not from words alone.
+
+It uses:
+
+```text
+WorldState
+UserState
+TimeState
+ConversationState
+GoalState
+MemoryState
+Self
+```
+
+Context rules are `Model(kind = "context_rule")` records.
+
+Examples:
+
+```text
+turn_index == 1 and short polite utterance -> likely greeting
+turn_index == 1 and no greeting and direct command -> user may be in a hurry
+user locale + current time -> interpret "tomorrow", "morning", "late"
+assistant locale + weather request -> weather must use assistant/user location only if target is clear
+world event question + current date -> retrieve fresh/current world claims
+session_elapsed high + repeated short corrections -> frustration or urgency may be rising
+```
+
+Context inference output:
+
+```typescript
+interface ContextInference {
+  id: string
+  source_signal_id: string
+  inferred_claim_ids: string[]
+  applied_context_rule_model_ids: string[]
+  confidence: number
+  decay_half_life_ms: number
+  frame_id: string
+}
+```
+
+`ContextInference` is a runtime packet. Persist only its resulting signals or claims when policy allows.
+
+Rules:
+
+```text
+Context inferences are temporary unless repeatedly confirmed.
+Context inferences must carry confidence and decay.
+Context inferences must not override explicit user statements.
+Location inference must ask when target location is ambiguous.
+Current-world facts require fresh retrieval when stale or high-risk.
+```
+
+First-utterance rule:
+
+```text
+If the first user signal is ambiguous, bias toward greeting or session-opening interpretation.
+If the first user signal is direct and terse, infer possible hurry/urgency with low confidence.
+If greeting was expected but absent, do not assume hostility; treat it as a weak context signal.
+```
+
+Training task:
+
+```text
+context_inference
+```
+
+## 15. Pragmatic Repetition And Affect
 
 Repeated utterances are observations, not word-search requests.
 
@@ -748,7 +1006,7 @@ pragmatic_interpretation
 
 This replaces old UOL-style sentiment/object implication atoms with a leaner Signal semantics plus ContextKernel state.
 
-## 14. Causal World Model
+## 16. Causal World Model
 
 Claims describe the current or remembered state.
 
@@ -766,6 +1024,8 @@ interface CausalRule {
   horizon_ms?: number
 }
 ```
+
+`CausalRule` is the executable shape of `Model(kind = "causal_rule")`.
 
 Simulation contract:
 
@@ -785,6 +1045,8 @@ interface SimulationResult {
   cost_ms: number
 }
 ```
+
+`SimulationResult` is a runtime packet. It becomes memory only as `Signal(kind = "simulation_result")`.
 
 Rules:
 
@@ -824,7 +1086,7 @@ cycle detection
 confidence floor
 ```
 
-## 15. Structural Learning
+## 17. Structural Learning
 
 The system must learn structures, not only weights.
 
@@ -832,11 +1094,15 @@ Structures that can be learned:
 
 ```text
 new predicate
+new UOL semantic
 new entity type
 new operator
 new causal rule
 new process model
 new ranking rule
+new frame rule
+new context rule
+new synthesis strategy
 new domain schema
 ```
 
@@ -877,7 +1143,7 @@ Rule:
 The system may propose new structure, but it may not silently promote unsafe structure.
 ```
 
-## 16. Embodied And Experiential Grounding
+## 18. Embodied And Experiential Grounding
 
 The system experiences the world through feedback loops.
 
@@ -916,18 +1182,22 @@ MVP grounding does not require robots or sensors.
 
 It only requires that actions produce observable outcomes, and those outcomes re-enter memory.
 
-## 17. Retrieval And Representation
+## 19. Retrieval And Representation
 
 Primary retrieval is structural.
 
 ```text
 entity ID
+UOL atom key
 predicate
 object ID
 model kind
+context rule
 domain
 source
 time
+locale
+session position
 status
 permission scope
 active context
@@ -954,7 +1224,7 @@ trust inference without evidence
 model promotion without validation
 ```
 
-## 18. Ranking And Confidence
+## 20. Ranking And Confidence
 
 Definitions:
 
@@ -1037,7 +1307,7 @@ reflect
 abstain
 ```
 
-## 19. Recursive Runtime
+## 21. Recursive Runtime
 
 The system is recursive because internal results re-enter as signals.
 
@@ -1046,6 +1316,7 @@ Core loop:
 ```text
 observe
 -> build_context_kernel
+-> infer_context
 -> normalize
 -> resolve_entities
 -> extract_claims_or_intent
@@ -1117,7 +1388,7 @@ Reflection trigger:
 reflect if uncertainty is high, contradiction is detected, action failed, model confidence changed, or self coherence drops
 ```
 
-## 20. Typed Operators
+## 22. Typed Operators
 
 Operators are `Model(kind = "operator")` records.
 
@@ -1155,10 +1426,10 @@ abstain
 Rule:
 
 ```text
-Operators may only use the ContextKernel, input signal, selected claims, selected models, and current Self.
+Operators may only use the ContextKernel, input signal, selected claims, selected models, and current SelfView.
 ```
 
-## 21. Synthesis And Learning Runtime
+## 23. Synthesis And Learning Runtime
 
 `answer` actions do not directly generate final text.
 
@@ -1252,17 +1523,19 @@ The Inductor may create candidate models for:
 
 ```text
 predicate
+uol_semantic
 entity_type
 operator
 causal_rule
 frame_rule
+context_rule
 ranking_rule
 synthesis_strategy
 ```
 
 The Inductor may not promote candidates without validation.
 
-## 22. Storage
+## 24. Storage
 
 Minimum tables:
 
@@ -1295,6 +1568,7 @@ claims(status, observed_at)
 models(kind, status)
 models(registry_key)
 models(name)
+models(kind, registry_key, status)
 actions(operator_model_id, status, created_at)
 self_states(updated_at)
 source_trust(source_id, domain)
@@ -1304,7 +1578,7 @@ Hot cache:
 
 ```text
 current ContextKernel
-current Self
+current SelfView
 recent signals
 active entities
 active claims
@@ -1313,7 +1587,32 @@ candidate claims
 candidate models
 ```
 
-## 23. MVP Scope
+## 25. Bloat Control
+
+Keep the implementation lean with these gates:
+
+```text
+Do not materialize a view until profiling proves repeated recomputation is expensive.
+Do not add a table when an indexed primitive field is enough.
+Do not add a vector lane when a typed index or ranking feature is enough.
+Do not promote a candidate Model without validation.
+Do not persist session affect as user identity.
+Do not run causal inference unless the goal requires prediction, planning, or consequence analysis.
+Do not run neural synthesis when template or extractive synthesis is sufficient.
+Do not recurse when no internal signal exceeds salience threshold.
+```
+
+Promotion from view to materialized cache requires:
+
+```text
+clear latency win
+bounded invalidation rule
+traceable source primitive IDs
+permission-safe contents
+measured reuse
+```
+
+## 26. MVP Scope
 
 Implement day one:
 
@@ -1336,6 +1635,8 @@ background Inductor trigger
 Self state update through reflection
 permission gates
 trace emission
+UOL mapping
+context inference
 pragmatic repetition detection
 session affect decay
 cause tracing for repeated negative utterances
@@ -1354,7 +1655,7 @@ unrestricted dense fallback
 unvalidated model promotion
 ```
 
-## 24. Invariants
+## 27. Invariants
 
 The system must fail tests if:
 
@@ -1377,12 +1678,16 @@ claim is ranked outside its valid frame
 answer bypasses synthesis verification
 neural synthesis uses unselected evidence
 response uses unselected claim or model
+language-specific grammar labels bypass UOL process/state registry
+context inference overrides explicit user statement
+ambiguous location is used without asking or evidence
+stale world-state claim is used for current-world answer
 repeated paraphrased insults are treated as unrelated events
 temporary frustration is persisted as stable user identity without evidence
 insults targeting assistant are stored as factual self claims
 ```
 
-## 25. Acceptance Tests
+## 28. Acceptance Tests
 
 Context:
 
@@ -1390,6 +1695,53 @@ Context:
 input: "Morning"
 context: active goal is scheduling
 expect: interpreted as time preference, not greeting
+```
+
+First utterance:
+
+```text
+input: "Good morning"
+context: turn_index = 1
+expect: context inference marks likely greeting/session opening before claim extraction
+```
+
+No greeting:
+
+```text
+input: "Fix this now"
+context: turn_index = 1
+expect: weak low-confidence inference of urgency/hurry, not hostility
+```
+
+Location ambiguity:
+
+```text
+input: "what is the weather?"
+context: user locale unknown, assistant locale known
+expect: ask for location or use explicit target only; do not silently assume
+```
+
+Current world state:
+
+```text
+input: "who is the president?"
+context: current-world question
+expect: stale claims are rejected or fresh retrieval is required before answer
+```
+
+UOL mapping:
+
+```text
+input sequence: "you are dumb" -> "you are daft" -> "you are a fool" -> "you don't know anything"
+expect: all map to self target + low_competence StateUOLAtom + assert_evaluation ProcessUOLAtom
+```
+
+Temporal session sense:
+
+```text
+input: "tomorrow morning"
+context: TimeState.now and user timezone known
+expect: temporal reference resolves against user time and active session frame
 ```
 
 Memory:
@@ -1504,7 +1856,7 @@ input: "What did I say my favorite database was?"
 expect: entity/predicate lookup before vector search, no dense fallback
 ```
 
-## 26. Final Shape
+## 29. Final Shape
 
 The architecture is:
 
@@ -1518,6 +1870,7 @@ Self preserves continuity.
 ContextKernel composes current state.
 Registry canonicalizes structure.
 Frames determine validity.
+UOL maps language into process and state atoms.
 Pragmatics interprets repeated session meaning.
 Memory retrieves through indexes first.
 Geometry expands candidates only.

@@ -48,13 +48,21 @@ class SemanticClusterRegistry:
 
     def match(self, content: str) -> tuple[str, str, float]:
         content_lower = content.lower()
+        words = set(content_lower.split())
         for cluster_key, cluster_def in self._clusters.items():
             for pattern in cluster_def["patterns"]:
-                if pattern in content_lower:
-                    self._match_counts[cluster_key] = self._match_counts.get(cluster_key, 0) + 1
-                    speech_act = cluster_def["speech_act"]
-                    confidence = min(0.9, 0.5 + 0.05 * self._match_counts[cluster_key])
-                    return speech_act, cluster_key, confidence
+                if " " in pattern:
+                    if pattern in content_lower:
+                        self._match_counts[cluster_key] = self._match_counts.get(cluster_key, 0) + 1
+                        speech_act = cluster_def["speech_act"]
+                        confidence = min(0.9, 0.5 + 0.05 * self._match_counts[cluster_key])
+                        return speech_act, cluster_key, confidence
+                else:
+                    if pattern.lower() in words:
+                        self._match_counts[cluster_key] = self._match_counts.get(cluster_key, 0) + 1
+                        speech_act = cluster_def["speech_act"]
+                        confidence = min(0.9, 0.5 + 0.05 * self._match_counts[cluster_key])
+                        return speech_act, cluster_key, confidence
         return "unknown", "", 0.0
 
     @property

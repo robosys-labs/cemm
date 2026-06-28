@@ -88,6 +88,27 @@ CREATE TABLE IF NOT EXISTS training_cache (
 
 
 PROMPTS: dict[str, dict[str, str]] = {
+    "uol_mapping": {
+        "agent": "uol_mapper",
+        "system": (
+            "You map language into CEMM UOL atoms. Return strict JSON only. "
+            "Referents become entity refs, process/event meanings become ProcessUOLAtom, "
+            "and state/quality meanings become StateUOLAtom. "
+            "Use language-agnostic frame/state keys, not surface grammar labels."
+        ),
+        "user": (
+            "Map this event or sequence to UOL atoms.\n"
+            "Return JSON: {{\"uol_atoms\":[{{\"kind\":\"entity_ref\",\"entity\":\"\","
+            "\"role\":\"target\",\"confidence\":0.0}},{{\"kind\":\"process\","
+            "\"frame_key\":\"\",\"participants\":[],\"input_state_keys\":[],"
+            "\"output_state_keys\":[],\"modality\":\"asserted\","
+            "\"polarity\":\"affirmed\",\"intensity\":0.0,\"confidence\":0.0}},"
+            "{{\"kind\":\"state\",\"state_key\":\"\",\"holder\":\"\","
+            "\"dimension\":\"\",\"value\":0.0,\"polarity\":\"negative\","
+            "\"intensity\":0.0,\"confidence\":0.0}}],"
+            "\"semantic_cluster_key\":\"\",\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
     "claim_extraction": {
         "agent": "extractor",
         "system": (
@@ -111,6 +132,22 @@ PROMPTS: dict[str, dict[str, str]] = {
             "Map predicates in this payload to canonical registry keys.\n"
             "Return JSON: {{\"mappings\":[{{\"raw\":\"\",\"registry_key\":\"\","
             "\"confidence\":0.0}}],\"new_predicate_candidates\":[]}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "context_inference": {
+        "agent": "contextualist",
+        "system": (
+            "You infer temporary CEMM context from world, user, time, conversation, goal, memory, and self state. "
+            "Return strict JSON only. Do not override explicit user statements. "
+            "Mark ambiguity and decay. Current-world facts require fresh evidence when stale."
+        ),
+        "user": (
+            "Infer bounded context for this signal.\n"
+            "Return JSON: {{\"inferences\":[{{\"kind\":\"\",\"value\":\"\","
+            "\"confidence\":0.0,\"decay_half_life_ms\":900000,"
+            "\"evidence_refs\":[]}}],\"needs_clarification\":false,"
+            "\"clarification_reason\":\"\",\"stale_world_state\":false,"
+            "\"confidence\":0.0,\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
     "pragmatic_interpretation": {

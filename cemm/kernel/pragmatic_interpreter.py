@@ -90,6 +90,7 @@ def update_pragmatic_state(
     current: PragmaticState,
     semantics: ObservationSemantics,
     kernel: ContextKernel,
+    signal_id: str | None = None,
 ) -> PragmaticState:
     elapsed_ms = (kernel.time.now - current.last_updated_at) * 1000.0 if current.last_updated_at > 0 else 0.0
 
@@ -101,7 +102,7 @@ def update_pragmatic_state(
         playfulness=_decay(current.playfulness, elapsed_ms, _HALF_LIVES["playfulness"]),
         repetition_pressure=_decay(current.repetition_pressure, elapsed_ms, _HALF_LIVES["repetition_pressure"]),
         likely_cause_claim_ids=list(current.likely_cause_claim_ids),
-        last_updated_signal_id=semantics.repetition_group_id,
+        last_updated_signal_id=signal_id or current.last_updated_signal_id,
         last_updated_at=kernel.time.now,
         decay_half_life_ms=current.decay_half_life_ms,
     )

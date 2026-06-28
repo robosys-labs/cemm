@@ -75,11 +75,15 @@ class CausalInference:
     @staticmethod
     def _preconditions_match(model: Model, claims: list[Claim], action: str) -> bool:
         if not model.preconditions:
-            return True
-        if action.lower() in model.name.lower():
-            return True
+            return False
+        if not claims:
+            return False
+        action_lower = action.lower()
         for prec in model.preconditions:
+            prec_lower = prec.lower()
             for claim in claims:
-                if prec.lower() in claim.predicate.lower():
+                if prec_lower in claim.predicate.lower():
                     return True
+            if prec_lower in action_lower:
+                return True
         return False

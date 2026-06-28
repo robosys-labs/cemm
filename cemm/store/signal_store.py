@@ -1,11 +1,12 @@
 from __future__ import annotations
 import sqlite3
-from ..types.signal import Signal, SignalKind, SourceType
+import json
+from ..types.signal import Signal, SignalKind, SourceType, ObservationSemantics
 from ..types.permission import Permission, PermissionScope, RetentionPolicy
 
 
 def _row_to_signal(row: sqlite3.Row) -> Signal:
-    return Signal(
+    signal = Signal(
         id=row["id"],
         kind=SignalKind(row["kind"]),
         source_id=row["source_id"],
@@ -27,6 +28,25 @@ def _row_to_signal(row: sqlite3.Row) -> Signal:
         parent_signal_id=row["parent_signal_id"],
         version=row["version"],
     )
+    obs_json = row["observation_semantics_json"]
+    if obs_json:
+        try:
+            data = json.loads(obs_json)
+            signal.observation_semantics = ObservationSemantics(
+                speech_act=data.get("speech_act", "unknown"),
+                target_entity_id=data.get("target_entity_id", ""),
+                semantic_cluster_key=data.get("semantic_cluster_key", ""),
+                stance=data.get("stance", "unknown"),
+                affect=data.get("affect", {}),
+                repetition_group_id=data.get("repetition_group_id", ""),
+                repetition_count=data.get("repetition_count", 0),
+                cause_hypothesis_claim_ids=data.get("cause_hypothesis_claim_ids", []),
+                decay_half_life_ms=data.get("decay_half_life_ms", 900000.0),
+                confidence=data.get("confidence", 0.0),
+            )
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return signal
 
 
 class SignalStore:
@@ -34,13 +54,29 @@ class SignalStore:
         self.conn = conn
 
     def put(self, signal: Signal) -> None:
+        obs_json = None
+        if signal.observation_semantics is not None:
+            obs = signal.observation_semantics
+            obs_json = json.dumps({
+                "speech_act": obs.speech_act,
+                "target_entity_id": obs.target_entity_id,
+                "semantic_cluster_key": obs.semantic_cluster_key,
+                "stance": obs.stance,
+                "affect": obs.affect,
+                "repetition_group_id": obs.repetition_group_id,
+                "repetition_count": obs.repetition_count,
+                "cause_hypothesis_claim_ids": obs.cause_hypothesis_claim_ids,
+                "decay_half_life_ms": obs.decay_half_life_ms,
+                "confidence": obs.confidence,
+            })
         self.conn.execute(
             """INSERT OR REPLACE INTO signals
                (id, kind, source_id, source_type, content, observed_at, context_id,
                 salience, trust, permission_scope, permission_may_store,
                 permission_may_retrieve, permission_may_use, permission_may_share,
-                permission_may_execute, permission_retention, parent_signal_id, version)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                permission_may_execute, permission_retention, parent_signal_id, 
+                observation_semantics_json, version)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 signal.id, signal.kind.value, signal.source_id, signal.source_type.value,
                 signal.content, signal.observed_at, signal.context_id,
@@ -49,7 +85,7 @@ class SignalStore:
                 int(signal.permission.may_store), int(signal.permission.may_retrieve),
                 int(signal.permission.may_use), int(signal.permission.may_share),
                 int(signal.permission.may_execute), signal.permission.retention.value,
-                signal.parent_signal_id, signal.version,
+                signal.parent_signal_id, obs_json, signal.version,
             ),
         )
         self.conn.commit()

@@ -59,6 +59,7 @@ def update_log_odds(
     base_rate: float = 0.5,
 ) -> float:
     total = current_log_odds
+    total += prior_log_odds(base_rate)
     total += source_evidence_weight(source_trust, evidence_count)
     total += direct_confirmation_weight(confirmations, total_observations)
     total += frame_validity_weight(frame_confidence, temporal_overlap)

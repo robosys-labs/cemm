@@ -26,6 +26,10 @@ class TestLogOdds:
         w = source_evidence_weight(0.8, 0)
         assert w == 0.0
 
+    def test_update_log_odds_uses_base_rate(self):
+        result = update_log_odds(current_log_odds=0.0, base_rate=0.9)
+        assert result > 0.0, "base_rate=0.9 should produce positive prior log-odds"
+
 
 class TestScoring:
     def test_score_claim_zero_without_permission(self):
@@ -43,3 +47,7 @@ class TestScoring:
     def test_score_action_zero_without_permission(self):
         s = score_action(permission_valid=False)
         assert s == 0.0
+
+    def test_score_claim_with_zero_salience_defaults(self):
+        s = score_claim(relevance=0.8, trust=0.7, confidence=0.6, salience=0.0, recency=1.0)
+        assert s > 0.0, "score_claim with salience=0 should not zero out the score"

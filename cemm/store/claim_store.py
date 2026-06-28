@@ -5,6 +5,34 @@ from ..types.claim import Claim, ClaimStatus
 from ..types.permission import Permission, PermissionScope, RetentionPolicy
 
 
+def _serialize_object_value(ov: object) -> str | None:
+    if ov is None:
+        return None
+    if isinstance(ov, bool):
+        return "true" if ov else "false"
+    if isinstance(ov, (int, float)):
+        return str(ov)
+    return str(ov)
+
+
+def _deserialize_object_value(ov_str: str | None) -> object:
+    if ov_str is None:
+        return None
+    if ov_str == "true":
+        return True
+    if ov_str == "false":
+        return False
+    try:
+        return int(ov_str)
+    except (ValueError, TypeError):
+        pass
+    try:
+        return float(ov_str)
+    except (ValueError, TypeError):
+        pass
+    return ov_str
+
+
 def _row_to_claim(row: sqlite3.Row) -> Claim:
     return Claim(
         id=row["id"],
@@ -12,7 +40,7 @@ def _row_to_claim(row: sqlite3.Row) -> Claim:
         predicate=row["predicate"],
         predicate_model_id=row["predicate_model_id"],
         object_entity_id=row["object_entity_id"],
-        object_value=row["object_value"],
+        object_value=_deserialize_object_value(row["object_value"]),
         evidence_signal_ids=[],
         source_id=row["source_id"],
         domain=row["domain"],
@@ -41,6 +69,7 @@ def _row_to_claim(row: sqlite3.Row) -> Claim:
 class ClaimStore:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
+        self._cache: dict[str, Claim] = {}
 
     def put(self, claim: Claim) -> None:
         perm = claim.permission or Permission.public()
@@ -56,7 +85,7 @@ class ClaimStore:
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 claim.id, claim.subject_entity_id, claim.predicate, claim.predicate_model_id,
-                claim.object_entity_id, str(claim.object_value) if claim.object_value is not None else None,
+                claim.object_entity_id, _serialize_object_value(claim.object_value),
                 claim.source_id, claim.domain,
                 claim.confidence, claim.confidence_log_odds, claim.trust, claim.salience,
                 claim.status.value, claim.supersedes_claim_id, claim.frame_id,
@@ -80,8 +109,11 @@ class ClaimStore:
                 (claim.id, k, str(v) if v is not None else None),
             )
         self.conn.commit()
+        self._cache[claim.id] = claim
 
     def get(self, claim_id: str) -> Claim | None:
+        if claim_id in self._cache:
+            return self._cache[claim_id]
         row = self.conn.execute("SELECT * FROM claims WHERE id = ?", (claim_id,)).fetchone()
         if row is None:
             return None
@@ -94,6 +126,7 @@ class ClaimStore:
             "SELECT key, value FROM claim_qualifiers WHERE claim_id = ?", (claim_id,)
         ).fetchall()
         claim.qualifiers = {r["key"]: r["value"] for r in q_rows}
+        self._cache[claim_id] = claim
         return claim
 
     def _enrich(self, claim: Claim) -> Claim:

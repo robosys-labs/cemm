@@ -134,6 +134,39 @@ class TestClaimStore:
         found = store.claims.find_by_subject("ent_1")
         assert len(found) == 1
 
+    def test_claim_object_value_type_preserved(self):
+        import time
+        store = self._seed_entity(Store(":memory:"))
+        c_bool = Claim(
+            id="cl_type_bool", subject_entity_id="ent_1", predicate="is_active",
+            object_value=True, evidence_signal_ids=["sig_seed"],
+            source_id="t", domain="test",
+        )
+        store.claims.put(c_bool)
+        loaded = store.claims.get("cl_type_bool")
+        assert loaded is not None
+        assert loaded.object_value is True
+
+        c_int = Claim(
+            id="cl_type_int", subject_entity_id="ent_1", predicate="count",
+            object_value=42, evidence_signal_ids=["sig_seed"],
+            source_id="t", domain="test",
+        )
+        store.claims.put(c_int)
+        loaded = store.claims.get("cl_type_int")
+        assert loaded is not None
+        assert loaded.object_value == 42
+
+        c_str = Claim(
+            id="cl_type_str", subject_entity_id="ent_1", predicate="name",
+            object_value="hello", evidence_signal_ids=["sig_seed"],
+            source_id="t", domain="test",
+        )
+        store.claims.put(c_str)
+        loaded = store.claims.get("cl_type_str")
+        assert loaded is not None
+        assert loaded.object_value == "hello"
+
 
 class TestModelStore:
     def test_put_and_get(self):

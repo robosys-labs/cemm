@@ -3,7 +3,10 @@ from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.action import ActionKind
 from ..types.trace import Trace
 from ..types.signal import Signal, SignalKind, SourceType
+from ..synthesis.verifier import SynthesisVerifier
 import time, uuid
+
+_verifier = SynthesisVerifier()
 
 
 class AnswerOperator(BaseOperator):
@@ -17,9 +20,22 @@ class AnswerOperator(BaseOperator):
         output = ctx.params.get("answer_text", "")
         if not output and ctx.selected_claim_ids:
             claims = [ctx.store.claims.get(cid) for cid in ctx.selected_claim_ids]
+            valid_claims = [c for c in claims if c]
+            verified, issues = _verifier.verify(
+                output or "synthesized",
+                ctx.selected_claim_ids,
+                ctx.selected_model_ids,
+                ctx.kernel,
+                valid_claims,
+            )
+            if not verified and output:
+                return OperatorResult(
+                    success=False,
+                    output_text="Answer blocked by synthesis verification: " + "; ".join(issues),
+                )
             parts = [
                 f"{c.subject_entity_id} {c.predicate} {c.object_value or c.object_entity_id or ''}"
-                for c in claims if c
+                for c in valid_claims
             ]
             output = "; ".join(parts) if parts else ""
         result_signal = Signal(

@@ -103,6 +103,7 @@ synthesis_verification
 self_state_update
 structural_induction
 ranking_judgment
+pragmatic_interpretation
 ```
 
 ## 6. Agent Roles
@@ -117,6 +118,7 @@ Parallel LLM/agent roles:
 | `causalist` | Extract causal preconditions and effects |
 | `synthesis_judge` | Verify answer faithfulness to selected claims/models |
 | `inductor` | Propose candidate models from repeated patterns |
+| `pragmaticist` | Detect speech act, target, affect, repetition, and likely cause |
 | `arbiter` | Resolve disagreement and assign final label |
 
 Use multiple cheap agents first.

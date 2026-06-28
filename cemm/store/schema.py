@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS signals (
     permission_may_execute INTEGER NOT NULL DEFAULT 0,
     permission_retention TEXT NOT NULL DEFAULT 'long_term',
     parent_signal_id TEXT,
+    observation_semantics_json TEXT,
     version TEXT NOT NULL DEFAULT 'erca.signal.v1'
 )
 """

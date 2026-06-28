@@ -84,12 +84,10 @@ class Pipeline:
                 if conv.pragmatic_state is None:
                     from ..types.context_kernel import PragmaticState
                     conv.pragmatic_state = PragmaticState(last_updated_at=start)
-                conv.pragmatic_state = update_pragmatic_state(conv.pragmatic_state, semantics, kernel)
-                conv.pragmatic_state.last_updated_signal_id = signal.id
+                conv.pragmatic_state = update_pragmatic_state(conv.pragmatic_state, semantics, kernel, signal.id)
                 if kernel.user.session_affect is None:
                     kernel.user.session_affect = PragmaticState(last_updated_at=start)
-                kernel.user.session_affect = update_pragmatic_state(kernel.user.session_affect, semantics, kernel)
-                kernel.user.session_affect.last_updated_signal_id = signal.id
+                kernel.user.session_affect = update_pragmatic_state(kernel.user.session_affect, semantics, kernel, signal.id)
 
         self._check_budget(kernel, start)
 
@@ -101,6 +99,8 @@ class Pipeline:
     def _check_budget(self, kernel: ContextKernel, start: float) -> None:
         elapsed = (time.time() - start) * 1000.0
         if elapsed > kernel.budget.latency_target_ms:
-            signal_count = len(kernel.memory.working_signal_ids)
-            if signal_count > kernel.budget.max_claims:
-                kernel.memory.working_signal_ids = kernel.memory.working_signal_ids[:kernel.budget.max_claims]
+            working_ids = kernel.memory.working_signal_ids
+            if len(working_ids) > kernel.budget.max_entities:
+                kernel.memory.working_signal_ids = working_ids[-kernel.budget.max_entities:]
+            if len(kernel.world.active_claim_ids) > kernel.budget.max_claims:
+                kernel.world.active_claim_ids = kernel.world.active_claim_ids[-kernel.budget.max_claims:]

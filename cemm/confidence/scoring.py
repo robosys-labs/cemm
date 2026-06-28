@@ -28,11 +28,12 @@ def score_claim(
 ) -> float:
     if not permission_valid:
         return 0.0
+    effective_salience = max(salience, 0.1)
     return (
         relevance
         * trust
         * confidence
-        * salience
+        * effective_salience
         * recency
     ) - contradiction_penalty
 
