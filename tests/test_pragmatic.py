@@ -127,3 +127,175 @@ class TestPragmaticRepetition:
 
         assert kernel.conversation.repetition_counts.get("assistant_insult_low_competence") == 1
         assert kernel.conversation.repetition_counts.get("assistant_insult_useless") == 1
+
+
+class TestPragmaticDecay:
+    def test_repetition_pressure_decays_by_half_after_half_life(self):
+        kernel = _make_kernel()
+        now = time.time()
+        kernel.time.now = now
+        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
+        pragmatic = kernel.conversation.pragmatic_state
+        pragmatic.repetition_pressure = 0.8
+        pragmatic.last_updated_at = now
+
+        semantics = ObservationSemantics(
+            speech_act="unknown",
+            repetition_count=0,
+            affect={"frustration": 0.0, "hostility": 0.0, "playfulness": 0.0,
+                    "valence": 0.0, "arousal": 0.0},
+            confidence=0.0,
+        )
+
+        half_life_ms = 300000.0
+        kernel.time.now = now + (half_life_ms / 1000.0)
+        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        assert updated.repetition_pressure <= 0.41, (
+            f"Expected ~0.4, got {updated.repetition_pressure}"
+        )
+        assert updated.repetition_pressure > 0.35
+
+    def test_frustration_decays_by_three_quarters_after_two_half_lives(self):
+        kernel = _make_kernel()
+        now = time.time()
+        kernel.time.now = now
+        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
+        pragmatic = kernel.conversation.pragmatic_state
+        pragmatic.frustration = 1.0
+        pragmatic.last_updated_at = now
+
+        semantics = ObservationSemantics(
+            speech_act="unknown",
+            repetition_count=0,
+            affect={"frustration": 0.0, "hostility": 0.0, "playfulness": 0.0,
+                    "valence": 0.0, "arousal": 0.0},
+            confidence=0.0,
+        )
+
+        half_life_ms = 900000.0
+        kernel.time.now = now + (2.0 * half_life_ms / 1000.0)
+        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        assert updated.frustration <= 0.26, (
+            f"Expected ~0.25, got {updated.frustration}"
+        )
+        assert updated.frustration > 0.2
+
+    def test_no_decay_with_zero_elapsed_time(self):
+        kernel = _make_kernel()
+        now = time.time()
+        kernel.time.now = now
+        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
+        pragmatic = kernel.conversation.pragmatic_state
+        pragmatic.frustration = 0.7
+        pragmatic.last_updated_at = now
+
+        semantics = ObservationSemantics(
+            speech_act="unknown",
+            repetition_count=0,
+            affect={"frustration": 0.0, "hostility": 0.0, "playfulness": 0.0,
+                    "valence": 0.0, "arousal": 0.0},
+            confidence=0.0,
+        )
+
+        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        assert updated.frustration == 0.7
+
+    def test_affect_merge_clamps_to_range(self):
+        kernel = _make_kernel()
+        now = time.time()
+        kernel.time.now = now
+        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
+        pragmatic = kernel.conversation.pragmatic_state
+        pragmatic.frustration = 0.9
+
+        semantics = ObservationSemantics(
+            speech_act="insult",
+            repetition_count=0,
+            affect={"frustration": 0.5, "hostility": 0.0, "playfulness": 0.0,
+                    "valence": -0.4, "arousal": 0.5},
+            confidence=0.8,
+            semantic_cluster_key="assistant_insult_low_competence",
+        )
+
+        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        assert updated.frustration == 1.0
+        assert updated.frustration <= 1.0
+
+
+class TestPragmaticCauseTracing:
+    def test_insult_does_not_create_claims(self):
+        store = _make_store()
+        from cemm.registry import Registry
+        from cemm.kernel.pipeline import Pipeline
+        pipeline = Pipeline(store, Registry())
+
+        pipeline.run("you are dumb")
+        pipeline.run("you are daft")
+        pipeline.run("you are a fool")
+
+        all_claims = store.claims.find_active(limit=9999)
+        for claim in all_claims:
+            assert "dumb" not in claim.object_value.lower(), (
+                f"Claim object_value contains insult content: {claim.object_value}"
+            )
+            assert claim.subject_entity_id != "self_main" or claim.domain != "insult", (
+                "Self entity must not have insult claims"
+            )
+
+    def test_insult_not_stored_as_factual_self_claim(self):
+        store = _make_store()
+        from cemm.registry import Registry
+        from cemm.kernel.pipeline import Pipeline
+        pipeline = Pipeline(store, Registry())
+
+        pipeline.run("you are dumb")
+
+        all_claims = store.claims.find_active(limit=9999)
+        for claim in all_claims:
+            assert "dumb" not in claim.object_value.lower(), (
+                f"Insult text leaked into claim: {claim.id} / {claim.object_value}"
+            )
+
+
+class TestPragmaticNonInsult:
+    def test_question_returns_low_confidence(self):
+        kernel = _make_kernel()
+        store = _make_store()
+        signal = _make_signal("What is my favorite database?")
+        semantics = interpret_signal(signal, kernel, store)
+        assert semantics is not None
+        assert semantics.speech_act == "unknown"
+        assert semantics.confidence == 0.0
+
+    def test_question_does_not_change_affect(self):
+        kernel = _make_kernel()
+        store = _make_store()
+        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=kernel.time.now)
+        pragmatic = kernel.conversation.pragmatic_state
+
+        signal = _make_signal("What is my favorite database?")
+        semantics = interpret_signal(signal, kernel, store)
+        assert semantics is not None
+        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        assert updated.frustration == 0.0
+        assert updated.hostility == 0.0
+        assert updated.playfulness == 0.0
+        assert updated.current_stance == "cooperative"
+
+    def test_gratitude_detected(self):
+        kernel = _make_kernel()
+        store = _make_store()
+        signal = _make_signal("thanks for your help")
+        semantics = interpret_signal(signal, kernel, store)
+        assert semantics is not None
+        assert semantics.speech_act == "gratitude"
+        assert semantics.stance == "positive"
+
+    def test_praise_detected(self):
+        kernel = _make_kernel()
+        store = _make_store()
+        signal = _make_signal("that is great")
+        semantics = interpret_signal(signal, kernel, store)
+        assert semantics is not None
+        assert semantics.speech_act in ("claim", "gratitude")
+        assert semantics.stance == "positive"
