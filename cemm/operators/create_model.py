@@ -9,7 +9,7 @@ import time, uuid
 class CreateModelOperator(BaseOperator):
     @property
     def action_kind(self) -> ActionKind:
-        return ActionKind.CREATE_MODEL
+        return ActionKind.CREATE_MODEL_CANDIDATE
 
     def execute(self, ctx: OperatorContext) -> OperatorResult:
         if not ctx.kernel.permission.may_execute:

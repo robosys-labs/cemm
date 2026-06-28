@@ -15,6 +15,8 @@ class Trace:
     frame_rules_applied: bool = False
     synthesis_strategy_model_id: str | None = None
     synthesis_verified: bool = False
+    synthesis_verification_type: str | None = None
+    verifier_model_id: str | None = None
     permission: str = "allowed"
     confidence: float = 0.0
     cost_ms: float = 0.0

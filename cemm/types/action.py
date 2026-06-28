@@ -9,7 +9,7 @@ class ActionKind(str, Enum):
     ASK = "ask"
     REMEMBER = "remember"
     UPDATE_CLAIM = "update_claim"
-    CREATE_MODEL = "create_model"
+    CREATE_MODEL_CANDIDATE = "create_model_candidate"
     SYNTHESIZE = "synthesize"
     SIMULATE = "simulate"
     RETRIEVE = "retrieve"

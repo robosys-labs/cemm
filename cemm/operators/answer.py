@@ -38,6 +38,7 @@ class AnswerOperator(BaseOperator):
                 for c in valid_claims
             ]
             output = "; ".join(parts) if parts else ""
+        cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.TRACE,
@@ -53,17 +54,24 @@ class AnswerOperator(BaseOperator):
         ctx.store.signals.put(result_signal)
         trace = Trace(
             context_id=ctx.kernel.id,
+            input_signal_ids=[ctx.input_signal.id],
+            selected_claim_ids=ctx.selected_claim_ids,
+            selected_model_ids=ctx.selected_model_ids,
             action_id="",
             operator_model_id="answer_operator",
-            selected_claim_ids=ctx.selected_claim_ids,
+            causal_inference_used=bool(ctx.params.get("causal_inference_used")),
+            frame_rules_applied=True,
             synthesis_verified=True,
-            confidence=0.9,
-            cost_ms=1.0,
+            synthesis_verification_type="hard",
+            permission="allowed",
+            confidence=ctx.kernel.self_view.confidence if hasattr(ctx.kernel.self_view, 'confidence') else 0.9,
+            cost_ms=cost_ms,
+            fallback_used=False,
         )
         return OperatorResult(
             success=True,
             output_text=result_signal.content,
             trace=trace,
             result_signal=result_signal,
-            cost_ms=1.0,
+            cost_ms=cost_ms,
         )

@@ -128,6 +128,9 @@ def process_input(
     elif "?" in text or text.lower().startswith("what") or text.lower().startswith("who"):
         kind = ActionKind.ANSWER
         params = {"answer_text": "", "selected_claim_ids": selected_claim_ids}
+    elif text.lower().startswith("reflect") or text.lower().startswith("think"):
+        kind = ActionKind.REFLECT
+        params = {}
     elif len(text.strip()) <= 3:
         kind = ActionKind.ASK
         params = {"question": "Could you elaborate?"}

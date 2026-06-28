@@ -86,7 +86,7 @@ class InvariantGuard:
 
     @classmethod
     def check_memory_mutation_has_trace(cls, action: Action) -> bool:
-        if action.kind.value in ("remember", "update_claim", "create_model"):
+        if action.kind.value in ("remember", "update_claim", "create_model_candidate"):
             if action.trace is None:
                 cls.errors.append(f"Memory mutation action {action.id} has no trace")
                 return False
