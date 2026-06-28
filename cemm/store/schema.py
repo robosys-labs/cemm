@@ -323,6 +323,66 @@ CREATE TABLE IF NOT EXISTS vectors_optional (
 )
 """
 
+TRAINING_LABELS_TABLE = """
+CREATE TABLE IF NOT EXISTS training_labels (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL,
+    arbiter_label_json TEXT,
+    final_confidence REAL,
+    source TEXT NOT NULL DEFAULT 'auto',
+    created_at REAL NOT NULL DEFAULT 0.0,
+    version TEXT NOT NULL DEFAULT 'cemm.training.v1',
+    FOREIGN KEY (job_id) REFERENCES training_jobs(id)
+)
+"""
+
+EVAL_SETS_TABLE = """
+CREATE TABLE IF NOT EXISTS eval_sets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at REAL NOT NULL DEFAULT 0.0,
+    version TEXT NOT NULL DEFAULT 'cemm.eval.v1'
+)
+"""
+
+EVAL_SET_EXAMPLES_TABLE = """
+CREATE TABLE IF NOT EXISTS eval_set_examples (
+    eval_set_id TEXT NOT NULL,
+    example_id TEXT NOT NULL,
+    PRIMARY KEY (eval_set_id, example_id),
+    FOREIGN KEY (eval_set_id) REFERENCES eval_sets(id),
+    FOREIGN KEY (example_id) REFERENCES training_examples(id)
+)
+"""
+
+EVAL_RESULTS_TABLE = """
+CREATE TABLE IF NOT EXISTS eval_results (
+    id TEXT PRIMARY KEY,
+    eval_set_id TEXT NOT NULL,
+    job_id TEXT NOT NULL,
+    score REAL,
+    metrics_json TEXT,
+    created_at REAL NOT NULL DEFAULT 0.0,
+    FOREIGN KEY (eval_set_id) REFERENCES eval_sets(id),
+    FOREIGN KEY (job_id) REFERENCES training_jobs(id)
+)
+"""
+
+PROMOTION_CANDIDATES_TABLE = """
+CREATE TABLE IF NOT EXISTS promotion_candidates (
+    id TEXT PRIMARY KEY,
+    model_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0.0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at REAL NOT NULL DEFAULT 0.0,
+    reviewed_at REAL,
+    version TEXT NOT NULL DEFAULT 'cemm.training.v1',
+    FOREIGN KEY (model_id) REFERENCES models(id)
+)
+"""
+
 
 INDEXES = {
     "idx_signals_source_time": "CREATE INDEX IF NOT EXISTS idx_signals_source_time ON signals(source_id, observed_at)",
@@ -345,6 +405,9 @@ INDEXES = {
     "idx_models_uol_key": "CREATE INDEX IF NOT EXISTS idx_models_name_uol ON models(name) WHERE kind='uol_semantic'",
     "idx_feedback_signal": "CREATE INDEX IF NOT EXISTS idx_feedback_signal ON feedback(signal_id)",
     "idx_feedback_action": "CREATE INDEX IF NOT EXISTS idx_feedback_action ON feedback(action_id)",
+    "idx_train_labels_job": "CREATE INDEX IF NOT EXISTS idx_train_labels_job ON training_labels(job_id)",
+    "idx_eval_results_set": "CREATE INDEX IF NOT EXISTS idx_eval_results_set ON eval_results(eval_set_id)",
+    "idx_promotion_candidates_status": "CREATE INDEX IF NOT EXISTS idx_promotion_candidates_status ON promotion_candidates(status)",
 }
 
 
@@ -374,6 +437,11 @@ def create_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SOURCE_TRUST_TABLE)
     conn.executescript(FEEDBACK_TABLE)
     conn.executescript(VECTORS_TABLE)
+    conn.executescript(TRAINING_LABELS_TABLE)
+    conn.executescript(EVAL_SETS_TABLE)
+    conn.executescript(EVAL_SET_EXAMPLES_TABLE)
+    conn.executescript(EVAL_RESULTS_TABLE)
+    conn.executescript(PROMOTION_CANDIDATES_TABLE)
     conn.commit()
 
 
