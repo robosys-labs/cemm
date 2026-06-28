@@ -29,6 +29,8 @@ class PipelineResult:
 
 
 class Pipeline:
+    _SESSION_DEFAULT_ID: str = "_pipeline_default_session"
+
     def __init__(
         self,
         store: Store,
@@ -40,6 +42,7 @@ class Pipeline:
         self._normalizer = Normalizer(registry)
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
+        self._sessions: dict[str, ContextKernel] = {}
 
     def run(
         self,
@@ -48,6 +51,7 @@ class Pipeline:
         budget_override: dict | None = None,
     ) -> PipelineResult:
         start = time.time()
+        effective_context_id = context_id or self._SESSION_DEFAULT_ID
         signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.INPUT,
@@ -55,14 +59,23 @@ class Pipeline:
             source_type=SourceType.USER,
             content=input_text,
             observed_at=start,
-            context_id=context_id or uuid.uuid4().hex[:16],
+            context_id=effective_context_id,
             salience=0.8,
             trust=0.8,
             permission=Permission.public(),
         )
         self._store.signals.put(signal)
 
-        kernel = self._builder.from_signal(signal)
+        if effective_context_id in self._sessions:
+            kernel = self._sessions[effective_context_id]
+            kernel.time.now = start
+            kernel.conversation.turn_index += 1
+            kernel.conversation.recent_signal_ids.append(signal.id)
+            kernel.memory.working_signal_ids.append(signal.id)
+        else:
+            kernel = self._builder.from_signal(signal)
+            self._sessions[effective_context_id] = kernel
+
         if budget_override:
             for k, v in budget_override.items():
                 if hasattr(kernel.budget, k):
@@ -80,9 +93,6 @@ class Pipeline:
             signal.observation_semantics = semantics
             if semantics.semantic_cluster_key:
                 conv = kernel.conversation
-                if semantics.semantic_cluster_key not in conv.active_repetition_group_ids:
-                    conv.active_repetition_group_ids.append(semantics.semantic_cluster_key)
-                conv.repetition_counts[semantics.semantic_cluster_key] = semantics.repetition_count
                 if conv.pragmatic_state is None:
                     from ..types.context_kernel import PragmaticState
                     conv.pragmatic_state = PragmaticState(last_updated_at=start)
