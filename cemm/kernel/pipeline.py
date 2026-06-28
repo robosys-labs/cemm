@@ -15,6 +15,7 @@ from .normalizer import Normalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_pragmatic_state
+from ..registry.uol_mapper import UOLMapper
 
 
 @dataclass
@@ -40,6 +41,7 @@ class Pipeline:
         self._normalizer = Normalizer(registry)
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
+        self._uol_mapper = UOLMapper(registry)
 
     def run(
         self,
@@ -78,6 +80,12 @@ class Pipeline:
 
         semantics = interpret_signal(signal, kernel, self._store)
         if semantics is not None:
+            uol_atoms = self._uol_mapper.map_signal(signal.content, kernel)
+            semantics.uol_atoms = uol_atoms
+            quality_keys, process_keys = self._uol_mapper.compile_to_pragmatic_keys(uol_atoms)
+            if kernel.conversation.pragmatic_state:
+                kernel.conversation.pragmatic_state.active_quality_atom_keys = quality_keys
+                kernel.conversation.pragmatic_state.active_process_atom_keys = process_keys
             signal.observation_semantics = semantics
             if semantics.semantic_cluster_key:
                 conv = kernel.conversation

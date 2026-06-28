@@ -24,6 +24,7 @@ class Registry:
         self._synthesis_strategies: dict[str, RegistryEntry] = {}
         self._frame_rules: dict[str, RegistryEntry] = {}
         self._inductors: dict[str, RegistryEntry] = {}
+        self._uol_semantics: dict[str, RegistryEntry] = {}
         self._alias_map: dict[str, str] = {}
 
     def register(self, entry: RegistryEntry) -> None:
@@ -34,6 +35,7 @@ class Registry:
             "synthesis_strategy": self._synthesis_strategies,
             "frame_rule": self._frame_rules,
             "inductor": self._inductors,
+            "uol_semantic": self._uol_semantics,
         }
         store = kind_map.get(entry.kind)
         if store is None:
@@ -80,6 +82,15 @@ class Registry:
 
     def get_frame_rule(self, key: str) -> RegistryEntry | None:
         return self._frame_rules.get(key)
+
+    def get_uol_semantic(self, key: str) -> RegistryEntry | None:
+        return self._uol_semantics.get(key)
+
+    def resolve_uol(self, atom_key: str) -> RegistryEntry | None:
+        for entry in self._uol_semantics.values():
+            if entry.canonical_key == atom_key:
+                return entry
+        return None
 
     def all_predicate_keys(self) -> list[str]:
         return list(self._predicates.keys())

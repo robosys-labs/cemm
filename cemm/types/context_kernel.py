@@ -102,6 +102,8 @@ class PragmaticState:
     last_updated_signal_id: str = ""
     last_updated_at: float = 0.0
     decay_half_life_ms: float = 900000.0
+    active_quality_atom_keys: list[str] = field(default_factory=list)
+    active_process_atom_keys: list[str] = field(default_factory=list)
 
 
 @dataclass

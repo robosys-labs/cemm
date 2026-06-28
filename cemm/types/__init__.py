@@ -8,6 +8,7 @@ from .self_state import SelfState, InternalMode
 from .context_kernel import ContextKernel, WorldState, UserState, TimeState, ConversationState, GoalState, MemoryState, Budget
 from .trace import Trace
 from .operator_spec import OperatorSpec
+from .uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
 
 __all__ = [
     "Signal", "SignalKind", "SourceType",
@@ -20,4 +21,5 @@ __all__ = [
     "ContextKernel", "WorldState", "UserState", "TimeState", "ConversationState", "GoalState", "MemoryState", "Budget",
     "Trace",
     "OperatorSpec",
+    "EntityRefUOLAtom", "ProcessUOLAtom", "StateUOLAtom",
 ]

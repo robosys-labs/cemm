@@ -16,6 +16,7 @@ class ModelKind(str, Enum):
     FRAME_RULE = "frame_rule"
     SYNTHESIS_STRATEGY = "synthesis_strategy"
     INDUCTOR = "inductor"
+    UOL_SEMANTIC = "uol_semantic"
 
 
 class ModelStatus(str, Enum):
