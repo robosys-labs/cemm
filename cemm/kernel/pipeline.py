@@ -14,6 +14,7 @@ from .context_kernel_builder import ContextKernelBuilder
 from .normalizer import Normalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
+from .pragmatic_interpreter import interpret_signal, update_pragmatic_state
 
 
 @dataclass
@@ -73,6 +74,24 @@ class Pipeline:
 
         self._resolver.resolve_self(kernel)
         self._frames.apply_frame_rules(kernel)
+
+        semantics = interpret_signal(signal, kernel, self._store)
+        if semantics is not None:
+            signal.observation_semantics = semantics
+            if semantics.semantic_cluster_key:
+                conv = kernel.conversation
+                if semantics.semantic_cluster_key not in conv.active_repetition_group_ids:
+                    conv.active_repetition_group_ids.append(semantics.semantic_cluster_key)
+                conv.repetition_counts[semantics.semantic_cluster_key] = semantics.repetition_count
+                if conv.pragmatic_state is None:
+                    from ..types.context_kernel import PragmaticState
+                    conv.pragmatic_state = PragmaticState(last_updated_at=start)
+                conv.pragmatic_state = update_pragmatic_state(conv.pragmatic_state, semantics, kernel)
+                conv.pragmatic_state.last_updated_signal_id = signal.id
+                if kernel.user.session_affect is None:
+                    kernel.user.session_affect = PragmaticState(last_updated_at=start)
+                kernel.user.session_affect = update_pragmatic_state(kernel.user.session_affect, semantics, kernel)
+                kernel.user.session_affect.last_updated_signal_id = signal.id
 
         self._check_budget(kernel, start)
 
