@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from .permission import Permission
 from .self_state import SelfState
+from .self_view import SelfView
 
 
 @dataclass
@@ -13,6 +14,9 @@ class WorldState:
     active_frame_model_ids: list[str] = field(default_factory=list)
     current_constraints: list[str] = field(default_factory=list)
     predicted_outcome_ids: list[str] = field(default_factory=list)
+    assistant_locale: dict | None = None
+    world_event_claim_ids: list[str] = field(default_factory=list)
+    active_context_rule_model_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -22,6 +26,7 @@ class UserState:
     active_preference_claim_ids: list[str] = field(default_factory=list)
     trusted_domains: list[str] = field(default_factory=list)
     session_affect: PragmaticState | None = None
+    locale: dict | None = None
 
 
 @dataclass
@@ -29,6 +34,9 @@ class TimeState:
     now: float = 0.0
     bucket: str = "unknown"
     recency_window_ms: float = 300000.0
+    session_elapsed_ms: float = 0.0
+    time_since_last_user_signal_ms: float | None = None
+    time_since_last_assistant_action_ms: float | None = None
 
 
 @dataclass
@@ -41,6 +49,8 @@ class ConversationState:
     active_repetition_group_ids: list[str] = field(default_factory=list)
     repetition_counts: dict[str, int] = field(default_factory=dict)
     pragmatic_state: PragmaticState | None = None
+    first_user_signal_id: str | None = None
+    inferred_context_claim_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -116,6 +126,17 @@ class ContextKernel:
     goal: GoalState = field(default_factory=GoalState)
     memory: MemoryState = field(default_factory=MemoryState)
     self_state: SelfState | None = None
+    self_view: SelfView = field(default_factory=SelfView)
+    users: list = field(default_factory=list)
     permission: Permission = field(default_factory=Permission.public)
     budget: Budget = field(default_factory=Budget)
     version: str = "erca.context_kernel.v1"
+
+    @property
+    def all_users(self) -> list:
+        result = list(self.users)
+        if self.user.user_id:
+            existing_ids = {u.user_id for u in result if u.user_id}
+            if self.user.user_id not in existing_ids:
+                result.insert(0, self.user)
+        return result or [self.user]

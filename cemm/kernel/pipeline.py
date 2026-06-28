@@ -6,6 +6,7 @@ from ..types.signal import Signal, SignalKind, SourceType
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
 from ..types.context_kernel import ContextKernel
+from ..types.self_view import SelfView
 from ..types.permission import Permission
 from ..store.store import Store
 from ..registry import Registry
@@ -74,6 +75,7 @@ class Pipeline:
         self_state = self._store.self_store.latest()
         if self_state:
             kernel.self_state = self_state
+        kernel.self_view = SelfView.from_self_state(self_state, kernel.memory.working_claim_ids)
 
         self._resolver.resolve_self(kernel)
         self._frames.apply_frame_rules(kernel)

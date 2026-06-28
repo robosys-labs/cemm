@@ -45,6 +45,7 @@ class ContextKernelBuilder:
     def from_signal(
         signal: Signal,
         self_state: SelfState | None = None,
+        turn_index: int = 0,
     ) -> ContextKernel:
         now = signal.observed_at
         return ContextKernel(
@@ -54,7 +55,7 @@ class ContextKernelBuilder:
             time=TimeState(now=now, bucket=_compute_bucket(now)),
             conversation=ConversationState(
                 session_id=signal.context_id,
-                turn_index=0,
+                turn_index=turn_index,
                 recent_signal_ids=[signal.id],
             ),
             goal=GoalState(),
@@ -63,6 +64,8 @@ class ContextKernelBuilder:
             permission=signal.permission,
             budget=Budget(),
         )
+        kernel.self_view = SelfView.from_self_state(self_state)
+        return kernel
 
     @staticmethod
     def _compute_bucket(timestamp: float) -> str:
