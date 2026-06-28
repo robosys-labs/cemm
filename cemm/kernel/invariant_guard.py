@@ -59,7 +59,10 @@ class InvariantGuard:
         return True
 
     @classmethod
-    def check_recursive_budget(cls, kernel: ContextKernel, depth: int) -> bool:
+    def check_recursive_budget(cls, kernel: ContextKernel | None, depth: int) -> bool:
+        if kernel is None:
+            cls.errors.append("Recursive budget check failed: kernel is None")
+            return False
         if depth > kernel.budget.max_recursive_steps:
             cls.errors.append(f"Recursive depth {depth} exceeds budget {kernel.budget.max_recursive_steps}")
             return False
@@ -113,4 +116,68 @@ class InvariantGuard:
             if not trace.synthesis_verified:
                 cls.errors.append(f"Answer action {action.id} bypassed synthesis verification")
                 return False
+        return True
+
+    @classmethod
+    def check_context_kernel_before_interpretation(cls, kernel: object) -> bool:
+        if kernel is None:
+            cls.errors.append("Input interpreted before ContextKernel exists")
+            return False
+        return True
+
+    @classmethod
+    def check_response_has_input_signal(cls, signal: object | None) -> bool:
+        if signal is None:
+            cls.errors.append("Response has no input signal")
+            return False
+        return True
+
+    @classmethod
+    def check_self_mutation_has_trace(cls, action: Action) -> bool:
+        if action.kind.value in ("reflect",):
+            if action.trace is None:
+                cls.errors.append(f"Self mutation action {action.id} has no trace")
+                return False
+        return True
+
+    @classmethod
+    def check_prediction_not_presented_as_fact(cls, claim: Claim) -> bool:
+        confidence_type = getattr(claim, 'confidence_type', None)
+        if confidence_type == "simulated" and claim.confidence > 0.99:
+            cls.errors.append(f"Prediction {claim.id} exceeds confidence cap 0.99")
+            return False
+        return True
+
+    @classmethod
+    def check_causal_chain_confidence(cls, predictions: list[dict]) -> bool:
+        for p in predictions:
+            if p.get("confidence", 0) > 0.99:
+                cls.errors.append(f"Causal chain confidence {p['confidence']} exceeds cap 0.99")
+                return False
+        return True
+
+    @classmethod
+    def check_self_mode_change_has_trace(cls, old_mode: str, new_mode: str, action: Action | None) -> bool:
+        if old_mode != new_mode:
+            if action is None or action.kind.value != "reflect":
+                cls.errors.append(f"Self mode changed {old_mode}->{new_mode} without reflect action")
+                return False
+        return True
+
+    @classmethod
+    def check_insults_are_not_factual_claims(cls, claim: Claim, self_id: str) -> bool:
+        insult_predicates = ("is_dumb", "is_stupid", "is_useless", "is_idiot")
+        if claim.subject_entity_id == self_id and claim.predicate in insult_predicates:
+            cls.errors.append(f"Insult stored as factual claim {claim.id}")
+            return False
+        return True
+
+    @classmethod
+    def check_temporary_frustration_not_persisted(cls, claim: Claim) -> bool:
+        if claim.predicate in ("is_frustrated", "is_hostile"):
+            if claim.permission and getattr(claim.permission, 'retention', None) is not None:
+                retention = claim.permission.retention.value if hasattr(claim.permission.retention, 'value') else str(claim.permission.retention)
+                if retention in ("long_term",):
+                    cls.errors.append(f"Temporary frustration persisted as stable identity in claim {claim.id}")
+                    return False
         return True

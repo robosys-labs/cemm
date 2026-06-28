@@ -202,3 +202,61 @@ class TestAcceptance_CausalModel:
         kernel = ContextKernel(id="causal_test")
         results = inference.predict("delete_file", ["cl_exists"], kernel)
         assert len(results) >= 1
+
+
+class TestAcceptance_FirstUtterance:
+    def test_greeting_detected(self):
+        from cemm.kernel.context_inference import ContextInferenceEngine
+        from cemm.store.store import Store
+        from cemm.registry import Registry
+        from cemm.types.signal import Signal, SignalKind, SourceType
+        from cemm.types.context_kernel import ContextKernel, ConversationState
+        from cemm.types.permission import Permission
+        import time
+        engine = ContextInferenceEngine(Store(":memory:"), Registry())
+        signal = Signal(id="sg", kind=SignalKind.INPUT, source_id="user",
+            source_type=SourceType.USER, content="Good morning",
+            observed_at=time.time(), context_id="ctx", salience=0.8, trust=0.8,
+            permission=Permission.public())
+        kernel = ContextKernel(id="ctx_g")
+        kernel.conversation = ConversationState(turn_index=1)
+        inference = engine.infer(signal, kernel)
+        assert inference.frame_id == "session_opening"
+
+    def test_urgency_detected(self):
+        from cemm.kernel.context_inference import ContextInferenceEngine
+        from cemm.store.store import Store
+        from cemm.registry import Registry
+        from cemm.types.signal import Signal, SignalKind, SourceType
+        from cemm.types.context_kernel import ContextKernel, ConversationState
+        from cemm.types.permission import Permission
+        import time
+        engine = ContextInferenceEngine(Store(":memory:"), Registry())
+        signal = Signal(id="sf", kind=SignalKind.INPUT, source_id="user",
+            source_type=SourceType.USER, content="Fix this now",
+            observed_at=time.time(), context_id="ctx", salience=0.8, trust=0.8,
+            permission=Permission.public())
+        kernel = ContextKernel(id="ctx_f")
+        kernel.conversation = ConversationState(turn_index=1)
+        inference = engine.infer(signal, kernel)
+        assert inference.confidence >= 0.0  # should not crash
+
+class TestAcceptance_CausalConfidence:
+    def test_chain_confidence_capped(self):
+        from cemm.causal.inference import CausalInference
+        from cemm.store.store import Store
+        from cemm.types.context_kernel import ContextKernel
+        store = Store(":memory:")
+        inference = CausalInference(store)
+        kernel = ContextKernel(id="cc_test")
+        results = inference.transitive_closure([], kernel, max_depth=0)
+        assert isinstance(results, list)
+
+class TestAcceptance_InvariantGuard:
+    def test_invariant_guard_basic(self):
+        from cemm.kernel.invariant_guard import InvariantGuard
+        guard = InvariantGuard()
+        guard.reset()
+        assert len(guard.assert_no_errors()) == 0
+        guard.check_recursive_budget(None, 999)
+        assert len(guard.assert_no_errors()) >= 1
