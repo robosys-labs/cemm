@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sqlite3
 import json
+import time
 from ..types.claim import Claim, ClaimStatus
 from ..types.permission import Permission, PermissionScope, RetentionPolicy
 
@@ -110,6 +111,25 @@ class ClaimStore:
             )
         self.conn.commit()
         self._cache[claim.id] = claim
+
+        from ..causal.temporal import derive_temporal_relations
+        temporal_relations = derive_temporal_relations(claim, self)
+        for tr in temporal_relations:
+            tc = Claim(
+                id=f"temp_{claim.id}_{tr.object_claim_id}",
+                subject_entity_id=claim.subject_entity_id,
+                predicate=tr.relation.value,
+                object_entity_id="",
+                object_value=tr.object_claim_id,
+                evidence_signal_ids=claim.evidence_signal_ids,
+                source_id=claim.source_id,
+                domain="temporal",
+                confidence=tr.confidence,
+                status=ClaimStatus.ACTIVE,
+                observed_at=time.time(),
+                updated_at=time.time(),
+            )
+            self.put(tc)
 
     def get(self, claim_id: str) -> Claim | None:
         if claim_id in self._cache:

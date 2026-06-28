@@ -44,26 +44,32 @@ class CausalInference:
         start_claim_ids: list[str],
         kernel: ContextKernel,
         max_depth: int = 3,
+        confidence_floor: float = 0.3,
     ) -> list[dict]:
         all_predictions: list[dict] = []
         current_ids = list(start_claim_ids)
-        visited: set[str] = set()
+        visited_claims: set[str] = set(start_claim_ids)
+        visited_effects: set[str] = set()
         depth = 0
         while depth < max_depth and current_ids:
             next_ids: list[str] = []
             for cid in current_ids:
+                if cid in visited_claims:
+                    continue
+                visited_claims.add(cid)
                 claim = self._store.claims.get(cid)
                 if claim is None:
                     continue
                 predictions = self.predict(claim.predicate, [cid], kernel)
                 for p in predictions:
-                    if p["confidence"] >= 0.3:
-                        pred_id = p["predicate"]
-                        if pred_id in visited:
-                            continue
-                        visited.add(pred_id)
-                        all_predictions.append(p)
-                        next_ids.append(pred_id)
+                    if p["confidence"] < confidence_floor:
+                        continue
+                    pred_id = p["predicate"]
+                    if pred_id in visited_effects:
+                        continue
+                    visited_effects.add(pred_id)
+                    all_predictions.append(p)
+                    next_ids.append(pred_id)
                 if len(all_predictions) >= kernel.budget.max_ranked:
                     break
             current_ids = next_ids

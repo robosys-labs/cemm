@@ -21,6 +21,7 @@ class Inductor:
         candidates.extend(self._find_failed_retrieval_patterns())
         candidates.extend(self._find_causal_patterns(domain))
         candidates.extend(self._find_uol_patterns(domain))
+        candidates.extend(self._find_slot_completion())
         return candidates
 
     def _find_repeated_predicates(self, domain: str | None = None) -> list[Model]:
@@ -239,4 +240,9 @@ class Inductor:
                 )
                 self._store.models.put(model)
                 candidates.append(model)
+        return candidates
+
+    def _find_slot_completion(self) -> list[Model]:
+        candidates: list[Model] = []
+        recent_goals = []
         return candidates
