@@ -103,7 +103,7 @@ class TestAcceptance_UOLMapping:
         from cemm.types.self_state import SelfState
         mapper = UOLMapper(Registry())
         kernel = ContextKernel(id="uol_test")
-        kernel.self_state = SelfState(id="self_main", name="cemm")
+        kernel.self_view = kernel.self_view.from_self_state(SelfState(id="self_main", name="cemm"))
         atoms = mapper.map_signal("you are dumb", kernel)
         entity_refs = [a for a in atoms if a.kind == "entity_ref"]
         states = [a for a in atoms if a.kind == "state"]

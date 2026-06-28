@@ -29,10 +29,11 @@ def test_semantics_accepts_uol_atoms():
 def test_uol_mapper():
     from cemm.registry.uol_mapper import UOLMapper
     from cemm.registry import Registry
-    from cemm.types.context_kernel import ContextKernel, SelfState
+    from cemm.types.context_kernel import ContextKernel
+    from cemm.types.self_state import SelfState
     mapper = UOLMapper(Registry())
     kernel = ContextKernel(id="test_uol")
-    kernel.self_state = SelfState(id="self_main", name="cemm")
+    kernel.self_view = kernel.self_view.from_self_state(SelfState(id="self_main", name="cemm"))
     atoms = mapper.map_signal("you are dumb", kernel)
     entity_refs = [a for a in atoms if a.kind == "entity_ref"]
     states = [a for a in atoms if a.kind == "state"]

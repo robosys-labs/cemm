@@ -5,9 +5,9 @@ from cemm.store.store import Store
 from cemm.registry import Registry
 from cemm.kernel.pipeline import Pipeline
 from cemm.kernel.semantic_clusters import SemanticClusterRegistry
-from cemm.kernel.pragmatic_interpreter import interpret_signal, update_pragmatic_state
+from cemm.kernel.pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from cemm.types.signal import Signal, SignalKind, SourceType, ObservationSemantics
-from cemm.types.context_kernel import ContextKernel, PragmaticState
+from cemm.types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
 from cemm.types.permission import Permission
 from cemm.types.self_state import SelfState
 
@@ -21,8 +21,8 @@ def _make_store() -> Store:
 def _make_kernel(context_id: str = "test_ctx") -> ContextKernel:
     k = ContextKernel(id=context_id, permission=Permission.public())
     k.time.now = time.time()
-    k.conversation.pragmatic_state = PragmaticState(last_updated_at=k.time.now)
-    k.user.session_affect = PragmaticState(last_updated_at=k.time.now)
+    k.conversation.dynamics = ConversationDynamics(last_updated_at=k.time.now)
+    k.user.affect = UserAffectState(last_updated_at=k.time.now)
     return k
 
 
@@ -51,7 +51,7 @@ class TestPragmaticRepetition:
         kernel = _make_kernel()
         store = _make_store()
         self_state = _make_self_state()
-        kernel.self_state = self_state
+        kernel.self_view = kernel.self_view.from_self_state(self_state)
 
         contents = ["you are dumb", "you are daft", "you are a fool"]
         counts = []
@@ -65,9 +65,8 @@ class TestPragmaticRepetition:
             counts.append(semantics.repetition_count)
             if semantics.semantic_cluster_key not in kernel.conversation.active_repetition_group_ids:
                 kernel.conversation.active_repetition_group_ids.append(semantics.semantic_cluster_key)
-            kernel.conversation.repetition_counts[semantics.semantic_cluster_key] = semantics.repetition_count
-            kernel.conversation.pragmatic_state = update_pragmatic_state(
-                kernel.conversation.pragmatic_state, semantics, kernel
+            kernel.conversation.dynamics = update_conversation_dynamics(
+                kernel.conversation.dynamics, semantics, kernel
             )
 
         assert counts == [1, 2, 3], f"Expected [1, 2, 3], got {counts}"
@@ -76,7 +75,7 @@ class TestPragmaticRepetition:
         kernel = _make_kernel()
         store = _make_store()
         self_state = _make_self_state()
-        kernel.self_state = self_state
+        kernel.self_view = kernel.self_view.from_self_state(self_state)
 
         for i in range(3):
             signal = _make_signal("you are dumb", observed_at=time.time() + i)
@@ -84,14 +83,13 @@ class TestPragmaticRepetition:
             assert semantics is not None
             if semantics.semantic_cluster_key not in kernel.conversation.active_repetition_group_ids:
                 kernel.conversation.active_repetition_group_ids.append(semantics.semantic_cluster_key)
-            kernel.conversation.repetition_counts[semantics.semantic_cluster_key] = semantics.repetition_count
-            kernel.conversation.pragmatic_state = update_pragmatic_state(
-                kernel.conversation.pragmatic_state, semantics, kernel
+            kernel.user.affect = update_user_affect(
+                kernel.user.affect, semantics, kernel
             )
 
-        assert kernel.conversation.pragmatic_state.frustration > 0.5
-        assert kernel.conversation.pragmatic_state.hostility > 0.2
-        assert kernel.conversation.pragmatic_state.current_stance in ("frustrated", "hostile")
+        assert kernel.user.affect.frustration > 0.5
+        assert kernel.user.affect.hostility > 0.2
+        assert kernel.user.affect.current_stance in ("frustrated", "hostile")
 
     def test_pipeline_single_signal_has_semantics(self):
         store = _make_store()
@@ -109,13 +107,12 @@ class TestPragmaticRepetition:
         kernel = _make_kernel()
         store = _make_store()
         self_state = _make_self_state()
-        kernel.self_state = self_state
+        kernel.self_view = kernel.self_view.from_self_state(self_state)
 
         s1 = _make_signal("you are dumb")
         sem1 = interpret_signal(s1, kernel, store)
         assert sem1 is not None
         kernel.conversation.active_repetition_group_ids.append(sem1.semantic_cluster_key)
-        kernel.conversation.repetition_counts[sem1.semantic_cluster_key] = sem1.repetition_count
 
         s2 = _make_signal("you are useless")
         sem2 = interpret_signal(s2, kernel, store)
@@ -123,10 +120,9 @@ class TestPragmaticRepetition:
         assert sem2.semantic_cluster_key == "assistant_insult_useless"
         assert sem2.repetition_count == 1
         kernel.conversation.active_repetition_group_ids.append(sem2.semantic_cluster_key)
-        kernel.conversation.repetition_counts[sem2.semantic_cluster_key] = sem2.repetition_count
 
-        assert kernel.conversation.repetition_counts.get("assistant_insult_low_competence") == 1
-        assert kernel.conversation.repetition_counts.get("assistant_insult_useless") == 1
+        assert "assistant_insult_low_competence" in kernel.conversation.active_repetition_group_ids
+        assert "assistant_insult_useless" in kernel.conversation.active_repetition_group_ids
 
 
 class TestPragmaticDecay:
@@ -134,10 +130,10 @@ class TestPragmaticDecay:
         kernel = _make_kernel()
         now = time.time()
         kernel.time.now = now
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
-        pragmatic = kernel.conversation.pragmatic_state
-        pragmatic.repetition_pressure = 0.8
-        pragmatic.last_updated_at = now
+        kernel.conversation.dynamics = ConversationDynamics(last_updated_at=now)
+        dynamics = kernel.conversation.dynamics
+        dynamics.repetition_pressure = 0.8
+        dynamics.last_updated_at = now
 
         semantics = ObservationSemantics(
             speech_act="unknown",
@@ -149,7 +145,7 @@ class TestPragmaticDecay:
 
         half_life_ms = 300000.0
         kernel.time.now = now + (half_life_ms / 1000.0)
-        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        updated = update_conversation_dynamics(dynamics, semantics, kernel)
         assert updated.repetition_pressure <= 0.41, (
             f"Expected ~0.4, got {updated.repetition_pressure}"
         )
@@ -159,10 +155,10 @@ class TestPragmaticDecay:
         kernel = _make_kernel()
         now = time.time()
         kernel.time.now = now
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
-        pragmatic = kernel.conversation.pragmatic_state
-        pragmatic.frustration = 1.0
-        pragmatic.last_updated_at = now
+        kernel.user.affect = UserAffectState(last_updated_at=now)
+        affect = kernel.user.affect
+        affect.frustration = 1.0
+        affect.last_updated_at = now
 
         semantics = ObservationSemantics(
             speech_act="unknown",
@@ -174,7 +170,7 @@ class TestPragmaticDecay:
 
         half_life_ms = 900000.0
         kernel.time.now = now + (2.0 * half_life_ms / 1000.0)
-        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        updated = update_user_affect(affect, semantics, kernel)
         assert updated.frustration <= 0.26, (
             f"Expected ~0.25, got {updated.frustration}"
         )
@@ -184,10 +180,10 @@ class TestPragmaticDecay:
         kernel = _make_kernel()
         now = time.time()
         kernel.time.now = now
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
-        pragmatic = kernel.conversation.pragmatic_state
-        pragmatic.frustration = 0.7
-        pragmatic.last_updated_at = now
+        kernel.user.affect = UserAffectState(last_updated_at=now)
+        affect = kernel.user.affect
+        affect.frustration = 0.7
+        affect.last_updated_at = now
 
         semantics = ObservationSemantics(
             speech_act="unknown",
@@ -197,16 +193,16 @@ class TestPragmaticDecay:
             confidence=0.0,
         )
 
-        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        updated = update_user_affect(affect, semantics, kernel)
         assert updated.frustration == 0.7
 
     def test_affect_merge_clamps_to_range(self):
         kernel = _make_kernel()
         now = time.time()
         kernel.time.now = now
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
-        pragmatic = kernel.conversation.pragmatic_state
-        pragmatic.frustration = 0.9
+        kernel.user.affect = UserAffectState(last_updated_at=now)
+        affect = kernel.user.affect
+        affect.frustration = 0.9
 
         semantics = ObservationSemantics(
             speech_act="insult",
@@ -217,7 +213,7 @@ class TestPragmaticDecay:
             semantic_cluster_key="assistant_insult_low_competence",
         )
 
-        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        updated = update_user_affect(affect, semantics, kernel)
         assert updated.frustration == 1.0
         assert updated.frustration <= 1.0
 
@@ -270,13 +266,13 @@ class TestPragmaticNonInsult:
     def test_question_does_not_change_affect(self):
         kernel = _make_kernel()
         store = _make_store()
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=kernel.time.now)
-        pragmatic = kernel.conversation.pragmatic_state
+        kernel.user.affect = UserAffectState(last_updated_at=kernel.time.now)
+        affect = kernel.user.affect
 
         signal = _make_signal("What is my favorite database?")
         semantics = interpret_signal(signal, kernel, store)
         assert semantics is not None
-        updated = update_pragmatic_state(pragmatic, semantics, kernel)
+        updated = update_user_affect(affect, semantics, kernel)
         assert updated.frustration == 0.0
         assert updated.hostility == 0.0
         assert updated.playfulness == 0.0

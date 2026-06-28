@@ -25,6 +25,7 @@ class SelfEpistemic:
     open_contradiction_claim_ids: list[str] = field(default_factory=list)
     low_confidence_domain_keys: list[str] = field(default_factory=list)
     calibration_error_by_domain: dict[str, float] = field(default_factory=dict)
+    coverage_gap_claim_ids: list[str] = field(default_factory=list)
 
 
 @dataclass

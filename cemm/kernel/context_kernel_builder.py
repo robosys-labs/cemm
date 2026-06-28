@@ -7,8 +7,6 @@ from ..types.context_kernel import (
 )
 from ..types.signal import Signal
 from ..types.permission import Permission
-from ..types.self_state import SelfState
-from ..types.self_view import SelfView
 
 
 class ContextKernelBuilder:
@@ -20,7 +18,6 @@ class ContextKernelBuilder:
         conversation: ConversationState | None = None,
         goal: GoalState | None = None,
         memory: MemoryState | None = None,
-        self_state: SelfState | None = None,
         permission: Permission | None = None,
         budget: Budget | None = None,
     ) -> ContextKernel:
@@ -30,62 +27,38 @@ class ContextKernelBuilder:
         if budget is None:
             budget = Budget()
         return ContextKernel(
-            id=uuid.uuid4().hex[:16],
-            world=world or WorldState(),
-            user=user or UserState(),
-            time=time_state,
+            id=uuid.uuid4().hex[:16], world=world or WorldState(),
+            user=user or UserState(), time=time_state,
             conversation=conversation or ConversationState(),
-            goal=goal or GoalState(),
-            memory=memory or MemoryState(),
-            self_state=self_state,
-            permission=permission or Permission.public(),
-            budget=budget,
+            goal=goal or GoalState(), memory=memory or MemoryState(),
+            permission=permission or Permission.public(), budget=budget,
         )
 
     @staticmethod
-    def from_signal(
-        signal: Signal,
-        self_state: SelfState | None = None,
-        turn_index: int = 0,
-    ) -> ContextKernel:
+    def from_signal(signal: Signal, turn_index: int = 0) -> ContextKernel:
         now = signal.observed_at
-        kernel = ContextKernel(
-            id=signal.context_id,
-            world=WorldState(),
+        return ContextKernel(
+            id=signal.context_id, world=WorldState(),
             user=UserState(),
             time=TimeState(now=now, bucket=_compute_bucket(now)),
             conversation=ConversationState(
-                session_id=signal.context_id,
-                turn_index=turn_index,
+                session_id=signal.context_id, turn_index=turn_index,
                 recent_signal_ids=[signal.id],
+                first_user_signal_id=signal.id if turn_index == 1 else None,
             ),
-            goal=GoalState(),
-            memory=MemoryState(working_signal_ids=[signal.id]),
-            self_state=self_state,
-            permission=signal.permission,
-            budget=Budget(),
+            goal=GoalState(), memory=MemoryState(working_signal_ids=[signal.id]),
+            permission=signal.permission, budget=Budget(),
         )
-        kernel.self_view = SelfView.from_self_state(self_state)
-        if signal.source_id and signal.source_id != kernel.user.user_id:
-            existing_ids = {u.user_id for u in kernel.users if u.user_id}
-            if signal.source_id not in existing_ids:
-                kernel.users.append(UserState(user_id=signal.source_id, known=True))
-        return kernel
 
     @staticmethod
     def _compute_bucket(timestamp: float) -> str:
         import datetime
         hour = datetime.datetime.fromtimestamp(timestamp).hour
-        if 5 <= hour < 9:
-            return "early_morning"
-        elif 9 <= hour < 12:
-            return "morning"
-        elif 12 <= hour < 17:
-            return "afternoon"
-        elif 17 <= hour < 22:
-            return "evening"
-        elif hour >= 22 or hour < 5:
-            return "night"
+        if 5 <= hour < 9: return "early_morning"
+        elif 9 <= hour < 12: return "morning"
+        elif 12 <= hour < 17: return "afternoon"
+        elif 17 <= hour < 22: return "evening"
+        elif hour >= 22 or hour < 5: return "night"
         return "unknown"
 
 

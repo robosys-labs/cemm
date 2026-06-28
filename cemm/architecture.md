@@ -320,6 +320,7 @@ interface Model {
     | "context_rule"
     | "uol_semantic"
     | "synthesis_strategy"
+    | "verifier"
     | "inductor"
 
   name: string
@@ -422,6 +423,8 @@ interface Trace {
   frame_rules_applied: boolean
   synthesis_strategy_model_id?: string
   synthesis_verified: boolean
+  synthesis_verification_type?: "hard" | "soft" | "none"
+  verifier_model_id?: string
 
   permission: "allowed" | "blocked" | "partial"
   confidence: number
@@ -459,14 +462,15 @@ interface Self {
   }
 
   metacognition: {
-    known_limits: string[]
-    active_assumptions: string[]
+    known_limit_claim_ids: string[]
+    active_assumption_claim_ids: string[]
     reliability_by_domain: Record<string, number>
     preferred_strategies: string[]
   }
 
   epistemic: {
     open_contradiction_claim_ids: string[]
+    coverage_gap_claim_ids: string[]
     low_confidence_domain_keys: string[]
     calibration_error_by_domain: Record<string, number>
   }
@@ -475,7 +479,7 @@ interface Self {
     recently_written_claim_ids: string[]
     recently_superseded_claim_ids: string[]
     frequently_used_model_ids: string[]
-    failed_retrieval_patterns: string[]
+    failed_retrieval_pattern_claim_ids: string[]
   }
 
   current_context_id?: string
@@ -492,6 +496,23 @@ Self state is persistent.
 Self state enters every ContextKernel.
 Self changes only through signals and actions.
 Self does not override permission, evidence, or ranking.
+```
+
+Self mode changes must have behavioral effects and trace.
+
+| Mode | Trigger | Behavioral Effect |
+|---|---|---|
+| `assistant` | default state | optimize for direct answer or action |
+| `researcher` | coverage gaps are large or user asks deep/current question | increase retrieval depth within budget |
+| `planner` | active goal has missing slots or consequences matter | prioritize simulation and clarification |
+| `executor` | user authorizes external action | prioritize tool/action dispatch and verification |
+| `teacher` | user asks for explanation after correction | allow more pedagogical synthesis |
+| `reflector` | high uncertainty, contradiction, failed action, or low coherence | pause external actions and emit reflection signal |
+
+Rule:
+
+```text
+Any mode change must emit Action(kind = "reflect") and a reflection Signal.
 ```
 
 ## 9. Permission
@@ -545,7 +566,6 @@ interface ContextKernel {
 
   world: WorldState
   user: UserState
-  users: UserState[]
   time: TimeState
   conversation: ConversationState
   goal: GoalState
@@ -568,8 +588,9 @@ interface SelfView {
   uncertainty: number
   coherence: number
   recent_error_rate: number
-  active_assumptions: string[]
-  known_limits: string[]
+  active_assumption_claim_ids: string[]
+  known_limit_claim_ids: string[]
+  coverage_gap_claim_ids: string[]
   reliability_by_domain: Record<string, number>
   recent_meta_memory_claim_ids: string[]
 }
@@ -581,7 +602,7 @@ interface WorldState {
   causal_graph_model_ids: string[]
   active_frame_model_ids: string[]
   active_context_rule_model_ids: string[]
-  current_constraints: string[]
+  persistence: boolean
   predicted_outcome_ids: string[]
   assistant_locale?: {
     country?: string
@@ -603,7 +624,7 @@ interface UserState {
   }
   active_preference_claim_ids: string[]
   trusted_domains: string[]
-  session_affect: PragmaticState
+  affect: UserAffectState
 }
 
 interface TimeState {
@@ -623,18 +644,23 @@ interface ConversationState {
   active_entity_ids: string[]
   active_claim_ids: string[]
   active_repetition_group_ids: string[]
-  pragmatic_state: PragmaticState
+  dynamics: ConversationDynamics
   inferred_context_claim_ids: string[]
 }
 
-interface PragmaticState {
+interface UserAffectState {
   current_stance: "cooperative" | "frustrated" | "hostile" | "playful" | "mischievous" | "unknown"
-  target_entity_id?: string
   frustration: number
   hostility: number
   playfulness: number
-  repetition_pressure: number
   active_quality_atom_keys: string[]
+  last_updated_signal_id?: string
+  decay_half_life_ms: number
+}
+
+interface ConversationDynamics {
+  repetition_pressure: number
+  active_repetition_group_ids: string[]
   active_process_atom_keys: string[]
   likely_cause_claim_ids: string[]
   last_updated_signal_id?: string
@@ -693,6 +719,8 @@ Rule:
 
 ```text
 No input is interpreted before the ContextKernel exists.
+MVP is single-user only.
+Multi-user sessions are deferred to v3.0 and require explicit conflict resolution and per-user permission gates.
 ```
 
 ## 11. Memory Architecture
@@ -730,6 +758,7 @@ Model(kind = "uol_semantic")
 Model(kind = "frame_rule")
 Model(kind = "context_rule")
 Model(kind = "synthesis_strategy")
+Model(kind = "verifier")
 Model(kind = "inductor")
 ```
 
@@ -946,7 +975,7 @@ likely cause may be previous answer failure
 Decay rule:
 
 ```text
-pragmatic_state(t) = pragmatic_state(now) * 0.5^(elapsed_ms / decay_half_life_ms)
+affect_or_dynamics(t) = affect_or_dynamics(now) * 0.5^(elapsed_ms / decay_half_life_ms)
 ```
 
 Default decay:
@@ -1040,6 +1069,7 @@ interface SimulationResult {
     object_entity_id?: string
     object_value?: string | number | boolean | null
     confidence: number
+    confidence_type: "simulated"
   }>
   confidence: number
   cost_ms: number
@@ -1055,6 +1085,8 @@ Simulation produces signals, not truth.
 Predictions become claims only after an action explicitly stores them.
 Causal models must cite evidence.
 Low-confidence causal models may rank actions but must not be presented as fact.
+WorldState.persistence defaults to true.
+Causal updates use minimal-change semantics: only listed effects change; all unrelated active claims persist unless a frame rule invalidates them.
 ```
 
 Day-one causal reasoning can be simple:
@@ -1086,6 +1118,27 @@ cycle detection
 confidence floor
 ```
 
+Forward inference confidence:
+
+```text
+single_rule_confidence =
+  product(precondition_confidences) * rule.confidence
+
+chain_confidence =
+  product(step_confidences)
+
+final_simulated_confidence =
+  min(chain_confidence, 0.99)
+```
+
+Predicted claims must carry:
+
+```text
+confidence_type = "simulated"
+```
+
+Responses must qualify simulated claims as predictions, not observations.
+
 ## 17. Structural Learning
 
 The system must learn structures, not only weights.
@@ -1103,6 +1156,7 @@ new ranking rule
 new frame rule
 new context rule
 new synthesis strategy
+new verifier
 new domain schema
 ```
 
@@ -1142,6 +1196,50 @@ Rule:
 ```text
 The system may propose new structure, but it may not silently promote unsafe structure.
 ```
+
+Minimal Inductor contract:
+
+```text
+inputs:
+  active claims
+  feedback events
+  failed retrieval pattern claims
+  Self.epistemic.coverage_gap_claim_ids
+
+outputs:
+  candidate Model records
+```
+
+MVP induction is restricted to three deterministic heuristics:
+
+```text
+1. Synonym aggregation
+   If two predicates share identical subject/object type pairs
+   and co-occur more than 5 times,
+   propose a canonical merge Model(kind = "predicate").
+
+2. Sequential pattern mining
+   If Action A is followed by Signal B within 5 seconds
+   with support > threshold,
+   propose Model(kind = "causal_rule")
+   with confidence = support / (support + failures).
+
+3. Slot completion
+   If a Goal repeatedly has missing_slots
+   and a specific claim fills the slot,
+   propose Model(kind = "context_rule").
+```
+
+Forbidden in MVP:
+
+```text
+novel ontological class invention
+autonomous operator promotion
+unbounded search over arbitrary predicates
+induction over private data without permission
+```
+
+Novel entity types require a separate safe exploration sandbox.
 
 ## 18. Embodied And Experiential Grounding
 
@@ -1222,6 +1320,39 @@ final answer selection
 untraced memory mutation
 trust inference without evidence
 model promotion without validation
+```
+
+Temporal relation cache:
+
+```text
+valid_from/valid_until handle containment.
+Derived temporal relation claims handle overlap and ordering.
+```
+
+When a claim with a temporal interval is stored:
+
+```text
+compare against the 5 most temporally proximate active claims
+derive bounded Allen-style relations
+store derived relations as Claim records
+```
+
+Allowed derived predicates:
+
+```text
+temporally_precedes
+temporally_overlaps
+temporally_during
+temporally_contains
+temporally_meets
+```
+
+Rules:
+
+```text
+Temporal relations are derived cache claims, not primitives.
+They must cite the source interval claims as evidence.
+They are invalidated when either source claim is superseded, retracted, or reframed.
 ```
 
 ## 20. Ranking And Confidence
@@ -1321,10 +1452,10 @@ observe
 -> resolve_entities
 -> extract_claims_or_intent
 -> retrieve_claims_and_models
+-> apply_frame_rules
 -> filter_permissions
 -> rank_claims_and_models
 -> if causal goal: run causal inference
--> if world-state update: apply frame rules
 -> rank_actions
 -> execute_action
 -> write_trace
@@ -1355,6 +1486,8 @@ optional geometric expansion
 
 Frame rules must invalidate superseded world-state claims before ranking actions.
 
+Frame rules must run before permission filtering and ranking.
+
 Internal signals:
 
 ```text
@@ -1380,6 +1513,21 @@ Rule:
 
 ```text
 Recursive steps may update memory or self-state, but may not perform external actions without a fresh permission check.
+```
+
+Recursive budget consumption:
+
+```text
+child_budget.latency_target_ms = parent_budget.latency_target_ms - parent_action.cost_ms
+child_budget.max_recursive_steps = parent_budget.max_recursive_steps - 1
+```
+
+If remaining latency or recursive steps are <= 0:
+
+```text
+abort recursion
+emit Signal(kind = "system")
+write trace warning
 ```
 
 Reflection trigger:
@@ -1427,6 +1575,29 @@ Rule:
 
 ```text
 Operators may only use the ContextKernel, input signal, selected claims, selected models, and current SelfView.
+```
+
+Dispatch contract:
+
+| Action Kind | Resolver |
+|---|---|
+| `answer` | `SynthesisRouter.route()` |
+| `ask` | `ClarificationEngine.generate()` |
+| `remember` | `MemoryStore.save()` |
+| `update_claim` | `ClaimGraph.update()` |
+| `create_model_candidate` | `Inductor.propose()` |
+| `synthesize` | `SynthesisRouter.route()` |
+| `simulate` | `CausalEngine.simulate()` |
+| `retrieve` | `RetrievalPipeline.run()` |
+| `call_tool` | `ToolDispatcher.call()` |
+| `reflect` | `SelfReflectionEngine.run()` |
+| `abstain` | `AbstainPolicy.evaluate()` |
+
+Rule:
+
+```text
+Operator metadata chooses the resolver; resolver code performs the work.
+No Action may execute without a concrete resolver mapping.
 ```
 
 ## 23. Synthesis And Learning Runtime
@@ -1478,6 +1649,34 @@ output does not use blocked private memory
 output preserves uncertainty from disputed or low-confidence claims
 output cites traceable evidence internally
 ```
+
+Verification strategy depends on synthesis path:
+
+```text
+template   -> hard verification
+extractive -> hard verification
+neural     -> soft verification
+abstain    -> no verification
+```
+
+Hard verification:
+
+```text
+output spans must map to selected_claim_ids or selected_model_ids
+failure blocks output
+```
+
+Soft verification:
+
+```text
+run Model(kind = "verifier")
+check contradiction against selected claims/models
+if verifier confidence < 0.70, fall back to extractive or abstain
+if no contradiction is found, pass with synthesis_verification_type = "soft"
+downgrade final response confidence by 0.85
+```
+
+Verifier models are ranked like other models and have their own confidence and calibration history.
 
 Execution behavior:
 
@@ -1531,6 +1730,7 @@ frame_rule
 context_rule
 ranking_rule
 synthesis_strategy
+verifier
 ```
 
 The Inductor may not promote candidates without validation.
@@ -1565,6 +1765,7 @@ claims(object_entity_id)
 claims(domain, source_id)
 claims(frame_id, valid_from, valid_until)
 claims(status, observed_at)
+claims(predicate, valid_from, valid_until)
 models(kind, status)
 models(registry_key)
 models(name)
@@ -1676,12 +1877,17 @@ external action occurs inside recursion without permission
 model is promoted without validation
 claim is ranked outside its valid frame
 answer bypasses synthesis verification
+neural synthesis uses hard verification as if attribution were guaranteed
 neural synthesis uses unselected evidence
 response uses unselected claim or model
 language-specific grammar labels bypass UOL process/state registry
 context inference overrides explicit user statement
 ambiguous location is used without asking or evidence
 stale world-state claim is used for current-world answer
+frame rules run after ranking
+recursive budget is refreshed instead of consumed
+causal chain confidence is missing or exceeds cap
+self mode changes without reflect action trace
 repeated paraphrased insults are treated as unrelated events
 temporary frustration is persisted as stable user identity without evidence
 insults targeting assistant are stored as factual self claims
@@ -1779,11 +1985,32 @@ input: causal planning goal
 expect: bounded transitive closure runs over active causal_graph_model_ids and stops at budget
 ```
 
+Causal confidence:
+
+```text
+input: causal chain A -> B -> C
+expect: simulated confidence equals product of step confidences, capped at 0.99, with confidence_type = "simulated"
+```
+
+Recursive budget:
+
+```text
+event: reflection emits internal signal
+expect: child ContextKernel receives decremented latency and max_recursive_steps; recursion aborts at zero
+```
+
 Frame validity:
 
 ```text
 event: new world-state claim supersedes old world-state claim
 expect: frame rule invalidates old active claim before action ranking
+```
+
+Runtime ordering:
+
+```text
+event: retrieved claim becomes stale through frame rule
+expect: frame rule runs before permission filter and ranking, so stale claim is never selected
 ```
 
 Canonicalization:
@@ -1798,6 +2025,13 @@ Synthesis:
 ```text
 input: answerable question with selected claims
 expect: Synthesis Router chooses template/extractive/neural/abstain and verification blocks unsupported output
+```
+
+Neural synthesis verification:
+
+```text
+input: neural synthesis selected for bounded evidence
+expect: verifier uses soft contradiction check, confidence is downgraded, and low verifier confidence falls back to extractive or abstain
 ```
 
 Pragmatic repetition:
@@ -1826,6 +2060,27 @@ Structural learning:
 ```text
 event: repeated unsupported predicate pattern appears
 expect: candidate Model(kind = "predicate") is created, not silently promoted
+```
+
+Inductor heuristic:
+
+```text
+event: Action A repeatedly followed by Signal B within 5 seconds
+expect: Inductor proposes causal_rule with confidence = support / (support + failures)
+```
+
+Self mode:
+
+```text
+event: contradiction raises uncertainty and switches mode to reflector
+expect: Action(kind = "reflect") and reflection Signal are emitted
+```
+
+Temporal overlap:
+
+```text
+event: claim intervals overlap
+expect: derived Claim(predicate = "temporally_overlaps") is created with both interval claims as evidence
 ```
 
 Induction:

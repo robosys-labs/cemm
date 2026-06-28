@@ -1,8 +1,30 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from .permission import Permission
-from .self_state import SelfState
 from .self_view import SelfView
+
+
+@dataclass
+class UserAffectState:
+    current_stance: str = "cooperative"
+    frustration: float = 0.0
+    hostility: float = 0.0
+    playfulness: float = 0.0
+    active_quality_atom_keys: list[str] = field(default_factory=list)
+    last_updated_signal_id: str = ""
+    last_updated_at: float = 0.0
+    decay_half_life_ms: float = 900000.0
+
+
+@dataclass
+class ConversationDynamics:
+    repetition_pressure: float = 0.0
+    active_repetition_group_ids: list[str] = field(default_factory=list)
+    active_process_atom_keys: list[str] = field(default_factory=list)
+    likely_cause_claim_ids: list[str] = field(default_factory=list)
+    last_updated_signal_id: str = ""
+    last_updated_at: float = 0.0
+    decay_half_life_ms: float = 300000.0
 
 
 @dataclass
@@ -17,6 +39,7 @@ class WorldState:
     assistant_locale: dict | None = None
     world_event_claim_ids: list[str] = field(default_factory=list)
     active_context_rule_model_ids: list[str] = field(default_factory=list)
+    persistence: bool = True
 
 
 @dataclass
@@ -25,7 +48,7 @@ class UserState:
     known: bool = False
     active_preference_claim_ids: list[str] = field(default_factory=list)
     trusted_domains: list[str] = field(default_factory=list)
-    session_affect: PragmaticState | None = None
+    affect: UserAffectState = field(default_factory=UserAffectState)
     locale: dict | None = None
 
 
@@ -47,8 +70,7 @@ class ConversationState:
     active_entity_ids: list[str] = field(default_factory=list)
     active_claim_ids: list[str] = field(default_factory=list)
     active_repetition_group_ids: list[str] = field(default_factory=list)
-    repetition_counts: dict[str, int] = field(default_factory=dict)
-    pragmatic_state: PragmaticState | None = None
+    dynamics: ConversationDynamics = field(default_factory=ConversationDynamics)
     first_user_signal_id: str | None = None
     inferred_context_claim_ids: list[str] = field(default_factory=list)
 
@@ -101,22 +123,6 @@ class Budget:
 
 
 @dataclass
-class PragmaticState:
-    current_stance: str = "cooperative"
-    target_entity_id: str = ""
-    frustration: float = 0.0
-    hostility: float = 0.0
-    playfulness: float = 0.0
-    repetition_pressure: float = 0.0
-    likely_cause_claim_ids: list[str] = field(default_factory=list)
-    last_updated_signal_id: str = ""
-    last_updated_at: float = 0.0
-    decay_half_life_ms: float = 900000.0
-    active_quality_atom_keys: list[str] = field(default_factory=list)
-    active_process_atom_keys: list[str] = field(default_factory=list)
-
-
-@dataclass
 class ContextKernel:
     id: str
     world: WorldState = field(default_factory=WorldState)
@@ -125,18 +131,7 @@ class ContextKernel:
     conversation: ConversationState = field(default_factory=ConversationState)
     goal: GoalState = field(default_factory=GoalState)
     memory: MemoryState = field(default_factory=MemoryState)
-    self_state: SelfState | None = None
     self_view: SelfView = field(default_factory=SelfView)
-    users: list = field(default_factory=list)
     permission: Permission = field(default_factory=Permission.public)
     budget: Budget = field(default_factory=Budget)
     version: str = "erca.context_kernel.v1"
-
-    @property
-    def all_users(self) -> list:
-        result = list(self.users)
-        if self.user.user_id:
-            existing_ids = {u.user_id for u in result if u.user_id}
-            if self.user.user_id not in existing_ids:
-                result.insert(0, self.user)
-        return result or [self.user]

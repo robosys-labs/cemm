@@ -10,8 +10,9 @@ class SelfView:
     uncertainty: float = 0.0
     coherence: float = 1.0
     recent_error_rate: float = 0.0
-    active_assumptions: list[str] = field(default_factory=list)
-    known_limits: list[str] = field(default_factory=list)
+    active_assumption_claim_ids: list[str] = field(default_factory=list)
+    known_limit_claim_ids: list[str] = field(default_factory=list)
+    coverage_gap_claim_ids: list[str] = field(default_factory=list)
     reliability_by_domain: dict[str, float] = field(default_factory=dict)
     recent_meta_memory_claim_ids: list[str] = field(default_factory=list)
     version: str = "erca.self_view.v1"
@@ -26,8 +27,9 @@ class SelfView:
             uncertainty=state.uncertainty,
             coherence=state.coherence,
             recent_error_rate=state.recent_error_rate,
-            active_assumptions=state.metacognition.active_assumptions,
-            known_limits=state.metacognition.known_limits,
+            active_assumption_claim_ids=state.metacognition.active_assumptions,
+            known_limit_claim_ids=state.metacognition.known_limits,
+            coverage_gap_claim_ids=state.epistemic.coverage_gap_claim_ids,
             reliability_by_domain=state.metacognition.reliability_by_domain,
             recent_meta_memory_claim_ids=recent_claim_ids or state.meta_memory.recently_written_claim_ids[-10:],
         )

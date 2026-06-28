@@ -12,9 +12,9 @@ class UOLMapper:
         atoms: list = []
         content_lower = content.lower()
 
-        if kernel.self_state and any(w in content_lower for w in ("you", "your")):
+        if kernel.self_view.self_id and any(w in content_lower for w in ("you", "your")):
             atoms.append(EntityRefUOLAtom(
-                entity_id=kernel.self_state.id,
+                entity_id=kernel.self_view.self_id,
                 role="target",
                 confidence=0.8,
             ))

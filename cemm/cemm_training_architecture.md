@@ -103,8 +103,10 @@ contradiction_detection
 causal_rule_extraction
 operator_selection
 synthesis_verification
+verifier_calibration
 self_state_update
 structural_induction
+temporal_relation_derivation
 ranking_judgment
 ```
 
@@ -227,6 +229,7 @@ predicate alias counts
 entity alias counts
 frame validity statistics
 synthesis verifier thresholds
+self mode calibration
 self calibration metrics
 ```
 
@@ -260,7 +263,7 @@ causal pattern appears across examples
 Inductor output:
 
 ```text
-Model(kind = "predicate" | "uol_semantic" | "entity_type" | "operator" | "causal_rule" | "frame_rule" | "context_rule" | "ranking_rule" | "synthesis_strategy")
+Model(kind = "predicate" | "uol_semantic" | "entity_type" | "operator" | "causal_rule" | "frame_rule" | "context_rule" | "ranking_rule" | "synthesis_strategy" | "verifier")
 ```
 
 Candidate models remain inactive until:
@@ -271,6 +274,31 @@ cost is acceptable
 risk is acceptable
 permission allows use
 promotion policy approves
+```
+
+MVP Inductor is deterministic and limited to:
+
+```text
+Synonym aggregation:
+  same subject/object type pairs + co-occurrence > 5
+  -> candidate Model(kind = "predicate")
+
+Sequential pattern mining:
+  Action A followed by Signal B within 5 seconds
+  -> candidate Model(kind = "causal_rule")
+  confidence = support / (support + failures)
+
+Slot completion:
+  Goal missing slot repeatedly filled by same claim pattern
+  -> candidate Model(kind = "context_rule")
+```
+
+Forbidden in MVP:
+
+```text
+novel ontological class invention
+autonomous operator promotion
+unbounded arbitrary predicate search
 ```
 
 ## 12. Storage
@@ -352,9 +380,15 @@ entity resolution accuracy
 predicate canonicalization accuracy
 frame validity accuracy
 synthesis faithfulness
+synthesis hard-gate pass rate
+synthesis soft-verifier contradiction rate
 operator selection accuracy
 contradiction detection recall
 causal prediction calibration
+causal chain confidence calibration
+frame-rule stale-claim prevention
+recursive budget abort rate
+temporal relation accuracy
 cost per accepted label
 latency per job
 disagreement rate

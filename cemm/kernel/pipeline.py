@@ -15,7 +15,7 @@ from .context_kernel_builder import ContextKernelBuilder
 from .normalizer import Normalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
-from .pragmatic_interpreter import interpret_signal, update_pragmatic_state
+from .pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from ..registry.uol_mapper import UOLMapper
 from .context_inference import ContextInferenceEngine
 
@@ -79,8 +79,9 @@ class Pipeline:
 
         self_state = self._store.self_store.latest()
         if self_state:
-            kernel.self_state = self_state
-        kernel.self_view = SelfView.from_self_state(self_state, kernel.memory.working_claim_ids)
+            kernel.self_view = SelfView.from_self_state(self_state, kernel.memory.working_claim_ids)
+        else:
+            kernel.self_view = SelfView()
 
         self._resolver.resolve_self(kernel)
         self._frames.apply_frame_rules(kernel)
@@ -92,19 +93,15 @@ class Pipeline:
             uol_atoms = self._uol_mapper.map_signal(signal.content, kernel)
             semantics.uol_atoms = uol_atoms
             quality_keys, process_keys = self._uol_mapper.compile_to_pragmatic_keys(uol_atoms)
-            if kernel.conversation.pragmatic_state:
-                kernel.conversation.pragmatic_state.active_quality_atom_keys = quality_keys
-                kernel.conversation.pragmatic_state.active_process_atom_keys = process_keys
+            kernel.user.affect.active_quality_atom_keys = quality_keys
+            if kernel.conversation.dynamics:
+                kernel.conversation.dynamics.active_process_atom_keys = process_keys
             signal.observation_semantics = semantics
             if semantics.semantic_cluster_key:
-                conv = kernel.conversation
-                if conv.pragmatic_state is None:
-                    from ..types.context_kernel import PragmaticState
-                    conv.pragmatic_state = PragmaticState(last_updated_at=start)
-                conv.pragmatic_state = update_pragmatic_state(conv.pragmatic_state, semantics, kernel, signal.id)
-                if kernel.user.session_affect is None:
-                    kernel.user.session_affect = PragmaticState(last_updated_at=start)
-                kernel.user.session_affect = update_pragmatic_state(kernel.user.session_affect, semantics, kernel, signal.id)
+                kernel.user.affect = update_user_affect(kernel.user.affect, semantics, kernel, signal.id)
+                kernel.conversation.dynamics = update_conversation_dynamics(
+                    kernel.conversation.dynamics, semantics, kernel, signal.id
+                )
 
         self._check_budget(kernel, start)
 

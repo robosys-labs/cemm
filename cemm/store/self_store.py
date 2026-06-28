@@ -53,6 +53,7 @@ class SelfStore:
                     "open_contradiction_claim_ids": state.epistemic.open_contradiction_claim_ids,
                     "low_confidence_domain_keys": state.epistemic.low_confidence_domain_keys,
                     "calibration_error_by_domain": state.epistemic.calibration_error_by_domain,
+                    "coverage_gap_claim_ids": state.epistemic.coverage_gap_claim_ids,
                 }),
                 json.dumps({
                     "recently_written_claim_ids": state.meta_memory.recently_written_claim_ids,

@@ -44,9 +44,10 @@ class EntityResolver:
         return entity
 
     def resolve_self(self, kernel: ContextKernel) -> Entity | None:
-        if kernel.self_state is None:
+        self_id = kernel.self_view.self_id
+        if not self_id:
             return None
-        matches = self._store.find_by_name(kernel.self_state.name)
+        matches = self._store.find_by_name(self_id)
         for m in matches:
             if m.type == EntityType.SYSTEM:
                 return m

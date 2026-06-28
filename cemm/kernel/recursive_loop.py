@@ -147,8 +147,9 @@ class RecursiveLoop:
         return triggers
 
     def _run_online_learning(self, kernel: ContextKernel, result) -> None:
-        if kernel.self_state:
-            self._learner.update_self_state(kernel.self_state)
+        self_state = self._store.self_store.latest()
+        if self_state:
+            self._learner.update_self_state(self_state)
 
     def _run_induction(self, kernel: ContextKernel) -> None:
         candidates = self._inductor.maybe_induct()

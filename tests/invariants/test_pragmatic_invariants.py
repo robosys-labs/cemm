@@ -2,9 +2,9 @@ from __future__ import annotations
 import time
 import pytest
 from cemm.kernel.semantic_clusters import SemanticClusterRegistry
-from cemm.kernel.pragmatic_interpreter import interpret_signal, update_pragmatic_state
+from cemm.kernel.pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from cemm.types.signal import Signal, SignalKind, SourceType
-from cemm.types.context_kernel import ContextKernel, PragmaticState
+from cemm.types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
 from cemm.types.permission import Permission
 from cemm.types.self_state import SelfState
 from cemm.store.store import Store
@@ -13,7 +13,7 @@ from cemm.store.store import Store
 def _make_kernel() -> ContextKernel:
     k = ContextKernel(id="invariant_test", permission=Permission.public())
     k.time.now = time.time()
-    k.conversation.pragmatic_state = PragmaticState(last_updated_at=k.time.now)
+    k.conversation.dynamics = ConversationDynamics(last_updated_at=k.time.now)
     return k
 
 
@@ -47,7 +47,7 @@ class TestPragmaticInvariant_RepetitionByMeaning:
         store.self_store.put(SelfState(
             id="self_main", name="cemm", created_at=time.time(), updated_at=time.time()
         ))
-        kernel.self_state = SelfState(id="self_main", name="cemm", created_at=0.0, updated_at=0.0)
+        kernel.self_view = kernel.self_view.from_self_state(SelfState(id="self_main", name="cemm", created_at=0.0, updated_at=0.0))
 
         texts = ["you are dumb", "you are daft", "you are a fool"]
         counts = []
@@ -58,7 +58,9 @@ class TestPragmaticInvariant_RepetitionByMeaning:
             counts.append(sem.repetition_count)
             if sem.semantic_cluster_key and sem.semantic_cluster_key not in kernel.conversation.active_repetition_group_ids:
                 kernel.conversation.active_repetition_group_ids.append(sem.semantic_cluster_key)
-            kernel.conversation.repetition_counts[sem.semantic_cluster_key] = sem.repetition_count
+            kernel.conversation.dynamics = update_conversation_dynamics(
+                kernel.conversation.dynamics, sem, kernel
+            )
 
         assert counts == [1, 2, 3], (
             f"Paraphrased insults must increment repetition_count: {counts}"
@@ -72,7 +74,7 @@ class TestPragmaticInvariant_FrustrationNotPersistedAsIdentity:
         store.self_store.put(SelfState(
             id="self_main", name="cemm", created_at=time.time(), updated_at=time.time()
         ))
-        kernel.self_state = SelfState(id="self_main", name="cemm", created_at=0.0, updated_at=0.0)
+        kernel.self_view = kernel.self_view.from_self_state(SelfState(id="self_main", name="cemm", created_at=0.0, updated_at=0.0))
 
         for i in range(3):
             sig = _make_signal("you are dumb", observed_at=time.time() + i)
@@ -80,12 +82,11 @@ class TestPragmaticInvariant_FrustrationNotPersistedAsIdentity:
             assert sem is not None
             if sem.semantic_cluster_key and sem.semantic_cluster_key not in kernel.conversation.active_repetition_group_ids:
                 kernel.conversation.active_repetition_group_ids.append(sem.semantic_cluster_key)
-            kernel.conversation.repetition_counts[sem.semantic_cluster_key] = sem.repetition_count
-            kernel.conversation.pragmatic_state = update_pragmatic_state(
-                kernel.conversation.pragmatic_state, sem, kernel
+            kernel.user.affect = update_user_affect(
+                kernel.user.affect, sem, kernel
             )
 
-        assert kernel.conversation.pragmatic_state.frustration > 0.5
+        assert kernel.user.affect.frustration > 0.5
 
         all_claims = store.claims.find_active(limit=9999)
         for claim in all_claims:
@@ -96,11 +97,11 @@ class TestPragmaticInvariant_FrustrationNotPersistedAsIdentity:
         kernel = _make_kernel()
         now = time.time()
         kernel.time.now = now
-        kernel.conversation.pragmatic_state = PragmaticState(last_updated_at=now)
-        pragmatic = kernel.conversation.pragmatic_state
-        pragmatic.frustration = 0.9
-        pragmatic.current_stance = "frustrated"
-        pragmatic.last_updated_at = now
+        kernel.user.affect = UserAffectState(last_updated_at=now)
+        affect = kernel.user.affect
+        affect.frustration = 0.9
+        affect.current_stance = "frustrated"
+        affect.last_updated_at = now
 
         null_sem = type('NullSem', (), {
             'speech_act': 'unknown', 'repetition_count': 0,
@@ -113,7 +114,7 @@ class TestPragmaticInvariant_FrustrationNotPersistedAsIdentity:
         })()
 
         kernel.time.now = now + 7200.0
-        updated = update_pragmatic_state(pragmatic, null_sem, kernel)
+        updated = update_user_affect(affect, null_sem, kernel)
         assert updated.current_stance == "cooperative", (
             f"Stance should reset to cooperative after 2h of silence, got {updated.current_stance}"
         )

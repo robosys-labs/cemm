@@ -172,12 +172,15 @@ PROMPTS: dict[str, dict[str, str]] = {
         "agent": "synthesis_judge",
         "system": (
             "You verify whether an answer is supported by selected CEMM claims/models. "
-            "Return strict JSON only."
+            "Return strict JSON only. Template/extractive outputs require hard span support. "
+            "Neural outputs use soft contradiction checking and must report verifier confidence."
         ),
         "user": (
             "Verify the answer against selected evidence.\n"
-            "Return JSON: {{\"supported\":true,\"unsupported_spans\":[],"
+            "Return JSON: {{\"verification_type\":\"hard\",\"supported\":true,\"contradicts_evidence\":false,"
+            "\"unsupported_spans\":[],"
             "\"missing_uncertainty\":false,\"confidence\":0.0,"
+            "\"should_fallback\":false,"
             "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
@@ -193,16 +196,32 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"effects\":[],\"confidence\":0.0}}],\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
+    "temporal_relation_derivation": {
+        "agent": "temporalist",
+        "system": (
+            "You derive bounded Allen-style temporal relations between claim intervals. "
+            "Return strict JSON only. Only use the provided intervals."
+        ),
+        "user": (
+            "Derive temporal relation claims.\n"
+            "Return JSON: {{\"relations\":[{{\"subject_claim_id\":\"\","
+            "\"predicate\":\"temporally_overlaps\",\"object_claim_id\":\"\","
+            "\"confidence\":0.0}}],\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
     "structural_induction": {
         "agent": "inductor",
         "system": (
             "You propose candidate CEMM Model records from repeated patterns. "
-            "Return strict JSON only. Do not promote candidates."
+            "Return strict JSON only. Do not promote candidates. "
+            "Use only MVP heuristics: synonym aggregation, sequential pattern mining, or slot completion. "
+            "Do not invent novel ontological classes."
         ),
         "user": (
             "Propose candidate models from this evidence.\n"
             "Return JSON: {{\"candidate_models\":[{{\"kind\":\"predicate\","
             "\"name\":\"\",\"description\":\"\",\"evidence_refs\":[],"
+            "\"heuristic\":\"synonym_aggregation\",\"support\":0,\"failures\":0,"
             "\"confidence\":0.0,\"risk\":0.0}}],\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
