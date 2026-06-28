@@ -342,11 +342,13 @@ def validate_and_flatten(payload: dict[str, Any]) -> tuple[list[dict[str, Any]],
     return valid_scenarios, flat_tasks
 
 
-def generate_category(config: Config, spec: dict[str, Any], category: dict[str, Any], count: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def generate_category(config: Config, spec: dict[str, Any], category: dict[str, Any], count: int, batch: int = 0) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if config.dry_run:
         payload = generate_dry_run_category(category, count)
     else:
         system, user = build_prompt(spec, category, count)
+        if batch:
+            user += f"\n\nIMPORTANT: This is batch {batch}. Generate scenarios that are DIFFERENT from any previous batch. Cover different sub-topics, different phrasings, and different user goals within this category. DO NOT repeat scenarios from earlier batches."
         key = stable_id(
             "seed",
             {
@@ -354,6 +356,7 @@ def generate_category(config: Config, spec: dict[str, Any], category: dict[str, 
                 "category": category,
                 "count": count,
                 "prompt": user,
+                "batch": batch,
             },
         )
         payload = call_nvidia(config, system, user, key)
@@ -398,7 +401,7 @@ def generate(args: argparse.Namespace) -> None:
         futures = []
         for category in categories:
             count = args.per_category or int(category.get("target_count", 10))
-            futures.append(pool.submit(generate_category, config, spec, category, count))
+            futures.append(pool.submit(generate_category, config, spec, category, count, args.batch))
         for future in concurrent.futures.as_completed(futures):
             scenarios, tasks = future.result()
             all_scenarios.extend(scenarios)
@@ -446,6 +449,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     gen.add_argument("--categories", default="", help="comma-separated category names")
     gen.add_argument("--timeout-s", type=int, default=120)
     gen.add_argument("--max-retries", type=int, default=3)
+    gen.add_argument("--batch", type=int, default=0, help="batch number for prompt variation (0=no variation)")
     gen.add_argument("--temperature", type=float, default=0.7)
     gen.add_argument("--seed", type=int, default=7)
     gen.add_argument("--dry-run", action="store_true")
