@@ -155,6 +155,27 @@ ingest_examples
 -> recommend_promotions
 ```
 
+Runtime integration loop:
+
+```text
+generated seed data
+-> cemm_trainer.py labels/judges examples
+-> trained rules/classifiers/rankers
+-> cemm_runtime_router.py routes live turns
+-> runtime traces become new training examples
+```
+
+The runtime router must support:
+
+```text
+fast deterministic rules
+model-backed operator routing
+template/extractive synthesis
+soft neural fallback
+trace writing
+feedback-to-training export
+```
+
 ## 8. Efficiency Strategy
 
 Use a cascade:
@@ -350,6 +371,8 @@ Start with:
 ```text
 SQLite queue
 JSONL example ingest
+NVIDIA API seed generation
+basic runtime router
 async worker pool
 OpenAI-compatible HTTP adapter
 prompt templates in code
@@ -370,7 +393,58 @@ automatic model promotion
 private data export
 ```
 
-## 15. Success Metrics
+## 15. Seed Generation
+
+Seed generation should create scenarios, not word lists.
+
+Use:
+
+```text
+cemm_seed_spec.json
+cemm_seed_generator.py
+```
+
+Pipeline:
+
+```text
+seed spec
+-> NVIDIA API scenario generation
+-> task-specific JSONL records
+-> cemm_trainer.py ingest
+-> agent labeling / judging
+-> eval and promotion pipeline
+```
+
+Required outputs:
+
+```text
+generated/cemm_generated_scenarios.jsonl
+generated/cemm_generated_training.jsonl
+```
+
+Dry run:
+
+```text
+python3 cemm_seed_generator.py generate --dry-run --per-category 2
+python3 cemm_seed_generator.py validate generated/cemm_generated_training.jsonl
+```
+
+NVIDIA run:
+
+```text
+export NVIDIA_API_KEY="..."
+export NVIDIA_BASE_URL="https://integrate.api.nvidia.com/v1"
+export NVIDIA_MODEL="meta/llama-3.1-70b-instruct"
+python3 cemm_seed_generator.py generate --workers 4 --per-category 20
+```
+
+Trainer ingest:
+
+```text
+python3 cemm_trainer.py ingest generated/cemm_generated_training.jsonl
+```
+
+## 16. Success Metrics
 
 Track:
 
@@ -395,7 +469,7 @@ disagreement rate
 promotion acceptance rate
 ```
 
-## 16. Final Shape
+## 17. Final Shape
 
 CEMM training is not one model.
 

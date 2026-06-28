@@ -1,0 +1,135 @@
+{
+  "version": "cemm.seed_spec.v1",
+  "global_rules": [
+    "Generate scenario + context + expected structure, not isolated words.",
+    "Every example must be convertible into one or more cemm_trainer.py task records.",
+    "Prefer language-agnostic process/state keys over surface grammar labels.",
+    "Do not generate private personal data, secrets, credentials, or real identifying information.",
+    "Include negative and ambiguous examples, not only clean examples."
+  ],
+  "registry_seeds": {
+    "process_frames": [
+      "greet",
+      "ask_question",
+      "state_preference",
+      "recall_memory",
+      "correct_previous_claim",
+      "assert_evaluation",
+      "request_weather",
+      "request_current_world_fact",
+      "clarify_missing_slot",
+      "thank",
+      "apologize",
+      "failed_answer",
+      "repeat_negative_evaluation"
+    ],
+    "state_keys": [
+      "session_opening",
+      "user_preference",
+      "low_competence",
+      "user_frustration",
+      "user_hurry",
+      "location_ambiguous",
+      "world_fact_stale",
+      "claim_disputed",
+      "memory_recalled",
+      "unsupported_request"
+    ],
+    "predicates": [
+      "favorite_database",
+      "preferred_time",
+      "located_in",
+      "requires_location",
+      "temporally_overlaps",
+      "supersedes",
+      "causes",
+      "has_confidence"
+    ]
+  },
+  "categories": [
+    {
+      "name": "session_opening_greetings",
+      "target_count": 40,
+      "task_types": ["context_inference", "uol_mapping", "operator_selection"],
+      "description": "First-turn greetings, terse openings, and ambiguous openings."
+    },
+    {
+      "name": "memory_write_preferences",
+      "target_count": 60,
+      "task_types": ["claim_extraction", "predicate_mapping", "uol_mapping"],
+      "description": "User states preferences, stable facts, and project details."
+    },
+    {
+      "name": "memory_recall",
+      "target_count": 50,
+      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "description": "User asks what they previously said or what the assistant remembers."
+    },
+    {
+      "name": "corrections_and_supersession",
+      "target_count": 50,
+      "task_types": ["claim_extraction", "contradiction_detection", "frame_classification"],
+      "description": "User corrects previous facts; old claims must be disputed or superseded."
+    },
+    {
+      "name": "pragmatic_repetition_affect",
+      "target_count": 60,
+      "task_types": ["uol_mapping", "pragmatic_interpretation", "context_inference"],
+      "description": "Repeated paraphrased complaints, insults, frustration, jokes, and mischief."
+    },
+    {
+      "name": "temporal_references",
+      "target_count": 50,
+      "task_types": ["context_inference", "frame_classification", "temporal_relation_derivation"],
+      "description": "Tomorrow, yesterday, morning, overlapping meetings, before/after/during."
+    },
+    {
+      "name": "location_and_weather_ambiguity",
+      "target_count": 40,
+      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "description": "Weather/location requests where user or target location may be known or ambiguous."
+    },
+    {
+      "name": "current_world_facts",
+      "target_count": 40,
+      "task_types": ["context_inference", "synthesis_verification", "operator_selection"],
+      "description": "Current president, current CEO, news-like questions requiring fresh retrieval."
+    },
+    {
+      "name": "causal_planning",
+      "target_count": 40,
+      "task_types": ["causal_rule_extraction", "context_inference", "synthesis_verification"],
+      "description": "If/then consequence questions and simple causal chains."
+    },
+    {
+      "name": "clarification_and_missing_slots",
+      "target_count": 40,
+      "task_types": ["context_inference", "operator_selection", "structural_induction"],
+      "description": "Requests missing required slots; system should ask rather than execute."
+    },
+    {
+      "name": "unsupported_or_low_confidence",
+      "target_count": 40,
+      "task_types": ["operator_selection", "synthesis_verification", "pragmatic_interpretation"],
+      "description": "Unsupported, unsafe, unknown, ambiguous, or low-confidence turns."
+    },
+    {
+      "name": "synthesis_verification",
+      "target_count": 50,
+      "task_types": ["synthesis_verification"],
+      "description": "Template, extractive, neural-soft, and abstain verification cases."
+    },
+    {
+      "name": "self_state_and_reflection",
+      "target_count": 30,
+      "task_types": ["self_state_update", "context_inference", "operator_selection"],
+      "description": "Failed actions, uncertainty, reflection triggers, and mode changes."
+    },
+    {
+      "name": "structural_induction",
+      "target_count": 30,
+      "task_types": ["structural_induction"],
+      "description": "Synonym aggregation, sequential pattern mining, and slot completion examples."
+    }
+  ]
+}

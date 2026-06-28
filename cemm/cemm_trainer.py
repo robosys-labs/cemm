@@ -15,9 +15,8 @@ API keys are read from environment variables only.
 
 Example:
   export CEMM_LLM_API_KEY="..."
-  # Default endpoint: https://integrate.api.nvidia.com/v1/chat/completions
-  # Default model: meta/llama-3.1-8b-instruct
-  # Other known-good: meta/llama-3.1-70b-instruct, qwen/qwen3-next-80b-a3b-instruct
+  export CEMM_LLM_BASE_URL="https://api.example.com/v1/chat/completions"
+  export CEMM_LLM_MODEL="small-model"
   python3 cemm_trainer.py ingest examples.jsonl
   python3 cemm_trainer.py run --workers 8
 """
@@ -135,6 +134,33 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"confidence\":0.0}}],\"new_predicate_candidates\":[]}}\n\nPayload:\n{payload}"
         ),
     },
+    "entity_resolution": {
+        "agent": "entity_resolver",
+        "system": (
+            "You resolve entity mentions to canonical CEMM entities. Return strict JSON only. "
+            "Mark ambiguity instead of inventing identity."
+        ),
+        "user": (
+            "Resolve entities in this payload.\n"
+            "Return JSON: {{\"entities\":[{{\"mention\":\"\",\"entity_key\":\"\","
+            "\"type\":\"unknown\",\"confidence\":0.0}}],\"ambiguous\":false,"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "claim_canonicalization": {
+        "agent": "canonicalizer",
+        "system": (
+            "You canonicalize extracted CEMM claims. Return strict JSON only. "
+            "Map predicates, entities, qualifiers, and frames where possible."
+        ),
+        "user": (
+            "Canonicalize these claims.\n"
+            "Return JSON: {{\"claims\":[{{\"subject_entity_key\":\"\","
+            "\"predicate_model_key\":\"\",\"object_entity_key\":\"\","
+            "\"object_value\":null,\"frame_key\":\"\",\"confidence\":0.0}}],"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
     "context_inference": {
         "agent": "contextualist",
         "system": (
@@ -149,6 +175,45 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"evidence_refs\":[]}}],\"needs_clarification\":false,"
             "\"clarification_reason\":\"\",\"stale_world_state\":false,"
             "\"confidence\":0.0,\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "frame_classification": {
+        "agent": "frame_classifier",
+        "system": (
+            "You classify CEMM frame validity. Return strict JSON only. "
+            "Determine whether claims are active, superseded, disputed, stale, or out of frame."
+        ),
+        "user": (
+            "Classify frame validity.\n"
+            "Return JSON: {{\"frame_decisions\":[{{\"claim_id\":\"\","
+            "\"decision\":\"active\",\"reason\":\"\",\"confidence\":0.0}}],"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "contradiction_detection": {
+        "agent": "critic",
+        "system": (
+            "You detect contradictions between CEMM claims. Return strict JSON only. "
+            "Do not mark mere difference as contradiction."
+        ),
+        "user": (
+            "Detect contradictions.\n"
+            "Return JSON: {{\"contradictions\":[{{\"claim_a\":\"\","
+            "\"claim_b\":\"\",\"type\":\"direct\",\"confidence\":0.0}}],"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "operator_selection": {
+        "agent": "operator_router",
+        "system": (
+            "You select the cheapest valid CEMM operator/action for a turn. Return strict JSON only. "
+            "Prefer ask or abstain when slots, evidence, or permission are insufficient."
+        ),
+        "user": (
+            "Select operator.\n"
+            "Return JSON: {{\"action_kind\":\"answer\",\"operator_model_key\":\"\","
+            "\"required_slots\":[],\"missing_slots\":[],\"confidence\":0.0,"
+            "\"reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
     "pragmatic_interpretation": {
@@ -185,6 +250,18 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
+    "verifier_calibration": {
+        "agent": "verifier_calibrator",
+        "system": (
+            "You calibrate a CEMM verifier decision against evidence and known outcome. Return strict JSON only."
+        ),
+        "user": (
+            "Calibrate verifier output.\n"
+            "Return JSON: {{\"calibrated_confidence\":0.0,\"overconfident\":false,"
+            "\"underconfident\":false,\"recommended_threshold\":0.7,"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
     "causal_rule_extraction": {
         "agent": "causalist",
         "system": (
@@ -210,6 +287,20 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"confidence\":0.0}}],\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
+    "self_state_update": {
+        "agent": "self_state_judge",
+        "system": (
+            "You propose bounded CEMM SelfView/Self updates from traces. Return strict JSON only. "
+            "Mode changes require a reflect action."
+        ),
+        "user": (
+            "Propose self-state update.\n"
+            "Return JSON: {{\"mode\":\"assistant\",\"mode_change_required\":false,"
+            "\"reflect_action_required\":false,\"uncertainty\":0.0,"
+            "\"coherence\":1.0,\"coverage_gap_claims\":[],"
+            "\"confidence\":0.0,\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
     "structural_induction": {
         "agent": "inductor",
         "system": (
@@ -224,6 +315,18 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"name\":\"\",\"description\":\"\",\"evidence_refs\":[],"
             "\"heuristic\":\"synonym_aggregation\",\"support\":0,\"failures\":0,"
             "\"confidence\":0.0,\"risk\":0.0}}],\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "ranking_judgment": {
+        "agent": "ranker_judge",
+        "system": (
+            "You judge CEMM candidate ranking quality. Return strict JSON only. "
+            "Consider relevance, trust, confidence, permission, recency, risk, and cost."
+        ),
+        "user": (
+            "Judge candidate ranking.\n"
+            "Return JSON: {{\"best_candidate_id\":\"\",\"ranking_errors\":[],"
+            "\"confidence\":0.0,\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
 }
@@ -496,9 +599,9 @@ def main(argv: list[str]) -> int:
 
     config = Config(
         db_path=db_path,
-        base_url=os.getenv("CEMM_LLM_BASE_URL", "https://integrate.api.nvidia.com/v1/chat/completions"),
+        base_url=os.getenv("CEMM_LLM_BASE_URL", "https://api.openai.com/v1/chat/completions"),
         api_key=os.getenv("CEMM_LLM_API_KEY", ""),
-        model=os.getenv("CEMM_LLM_MODEL", "meta/llama-3.1-8b-instruct"),
+        model=os.getenv("CEMM_LLM_MODEL", "gpt-4o-mini"),
         dry_run=bool(args.dry_run),
         timeout_s=int(os.getenv("CEMM_TIMEOUT_S", "60")),
         max_retries=int(os.getenv("CEMM_MAX_RETRIES", "3")),

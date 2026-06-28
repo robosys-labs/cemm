@@ -1536,6 +1536,43 @@ Reflection trigger:
 reflect if uncertainty is high, contradiction is detected, action failed, model confidence changed, or self coherence drops
 ```
 
+Basic conversation router:
+
+```text
+cemm_runtime_router.py
+```
+
+The router is the day-one executable conversation spine:
+
+```text
+Signal
+-> ContextKernel
+-> ContextInference
+-> UOL mapping
+-> Claim extraction/retrieval
+-> Operator routing
+-> Synthesis
+-> Trace write
+```
+
+Routing order:
+
+```text
+deterministic rules
+-> trained small classifiers/rankers
+-> optional LLM task call
+-> abstain/ask when confidence is low
+```
+
+The router must remain thinner than the model:
+
+```text
+it coordinates experts
+it does not hide memory mutation
+it writes traces for every turn
+it uses template/extractive synthesis before neural fallback
+```
+
 ## 22. Typed Operators
 
 Operators are `Model(kind = "operator")` records.
