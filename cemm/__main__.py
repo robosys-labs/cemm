@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import sys
 import argparse
 import time
@@ -171,6 +172,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="CEMM — Contextual Event Memory Model")
     parser.add_argument("--db", default=":memory:", help="SQLite database path")
     parser.add_argument("--eval", help="Single query to evaluate and exit")
+    parser.add_argument("--train", nargs="?", const="cemm_training.sqlite3",
+                        help="Run training: path to SQLite DB (default: cemm_training.sqlite3)")
+    parser.add_argument("--workers", type=int, default=2, help="Training worker count")
+    parser.add_argument("--dry-run", action="store_true", help="Dry-run mode for training")
     args = parser.parse_args()
 
     store = Store(args.db)
@@ -191,6 +196,19 @@ def main() -> None:
 
     context_id = f"session_{int(time.time())}"
     turn_count = [0]
+
+    if args.train:
+        if not os.path.exists(args.train):
+            print(f"No training DB at {args.train}. Create one via:")
+            print(f"  python -m cemm.cemm_trainer ingest examples.jsonl")
+            print(f"  python -m cemm.cemm_trainer run --workers 4")
+            return
+        from . import cemm_trainer as _ct
+        _cargs = ["run", "--db", args.train, "--workers",
+                  str(args.workers), "--poll-s", "2.0"]
+        if args.dry_run:
+            _cargs.append("--dry-run")
+        raise SystemExit(_ct.main(_cargs))
 
     if args.eval:
         output = process_input(args.eval, store, registry, op_registry, pipeline, online_learner, context_id, turn_count)
