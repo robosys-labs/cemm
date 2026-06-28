@@ -45,18 +45,20 @@ class Pipeline:
         self._frames = FrameEngine(store.claims)
         self._uol_mapper = UOLMapper(registry)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
+        self._turn_count: int = 0
 
     def run(
         self,
         input_text: str,
         context_id: str | None = None,
         budget_override: dict | None = None,
+        source_id: str = "user",
     ) -> PipelineResult:
         start = time.time()
         signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.INPUT,
-            source_id="user",
+            source_id=source_id,
             source_type=SourceType.USER,
             content=input_text,
             observed_at=start,
@@ -67,7 +69,8 @@ class Pipeline:
         )
         self._store.signals.put(signal)
 
-        kernel = self._builder.from_signal(signal)
+        self._turn_count += 1
+        kernel = self._builder.from_signal(signal, turn_index=self._turn_count)
 
         if budget_override:
             for k, v in budget_override.items():

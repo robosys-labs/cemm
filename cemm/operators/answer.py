@@ -28,7 +28,7 @@ class AnswerOperator(BaseOperator):
                 ctx.kernel,
                 valid_claims,
             )
-            if not verified and output:
+            if not verified:
                 return OperatorResult(
                     success=False,
                     output_text="Answer blocked by synthesis verification: " + "; ".join(issues),

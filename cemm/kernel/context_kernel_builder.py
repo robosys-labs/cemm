@@ -8,6 +8,7 @@ from ..types.context_kernel import (
 from ..types.signal import Signal
 from ..types.permission import Permission
 from ..types.self_state import SelfState
+from ..types.self_view import SelfView
 
 
 class ContextKernelBuilder:
@@ -48,7 +49,7 @@ class ContextKernelBuilder:
         turn_index: int = 0,
     ) -> ContextKernel:
         now = signal.observed_at
-        return ContextKernel(
+        kernel = ContextKernel(
             id=signal.context_id,
             world=WorldState(),
             user=UserState(),
@@ -65,6 +66,10 @@ class ContextKernelBuilder:
             budget=Budget(),
         )
         kernel.self_view = SelfView.from_self_state(self_state)
+        if signal.source_id and signal.source_id != kernel.user.user_id:
+            existing_ids = {u.user_id for u in kernel.users if u.user_id}
+            if signal.source_id not in existing_ids:
+                kernel.users.append(UserState(user_id=signal.source_id, known=True))
         return kernel
 
     @staticmethod

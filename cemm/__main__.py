@@ -154,10 +154,6 @@ def process_input(
             success=True,
         )
 
-    if kind == ActionKind.ANSWER and ctx.selected_claim_ids:
-        for claim_id in ctx.selected_claim_ids:
-            online_learner.update_claim_confidence(claim_id, feedback_correct=True)
-
     if not output or op_result.success is False:
         synthesis_router = SynthesisRouter()
         syn = synthesis_router.route("template", kernel, store, registry, {

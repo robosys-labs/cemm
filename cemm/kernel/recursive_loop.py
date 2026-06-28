@@ -8,7 +8,8 @@ from ..learning.online import OnlineLearner
 from ..learning.inductor import Inductor
 from ..retrieval.structural import StructuralRetriever
 from ..retrieval.ranker import Ranker
-from .pipeline import Pipeline
+from .pipeline import Pipeline, PipelineResult
+from ..types.action import Action
 
 
 class RecursiveLoop:
@@ -60,7 +61,7 @@ class RecursiveLoop:
         if kernel.budget.max_recursive_steps > 0:
             recursion_depth = 0
             while recursion_depth < kernel.budget.max_recursive_steps:
-                triggers = self._find_recursion_triggers(kernel)
+                triggers = self._find_recursion_triggers(kernel, result.actions)
                 if not triggers:
                     break
                 new_signals = []
@@ -88,17 +89,16 @@ class RecursiveLoop:
 
         return kernel, internal_signals
 
-    def _find_recursion_triggers(self, kernel: ContextKernel) -> list[Signal]:
-        triggers = []
-        for action_id in kernel.world.active_claim_ids:
-            action = self._store.actions.get(action_id)
-            if action and action.status.value == "failed":
+    def _find_recursion_triggers(self, kernel: ContextKernel, actions: list[Action] | None = None) -> list[Signal]:
+        triggers: list[Signal] = []
+        for action in (actions or []):
+            if action.status.value == "failed":
                 triggers.append(Signal(
-                    id=f"recurse_{action_id}",
+                    id=f"recurse_{action.id}",
                     kind=SignalKind.ACTION_RESULT,
                     source_id="recursive_loop",
                     source_type=SourceType.SYSTEM,
-                    content=f"Action {action_id} failed",
+                    content=f"Action {action.id} failed",
                     observed_at=time.time(),
                     context_id=kernel.id,
                     salience=0.8,
