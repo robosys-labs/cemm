@@ -47,6 +47,14 @@ class RecursiveLoop:
 
         internal_signals = [s for s in result.signals if s.kind in self._INTERNAL_SIGNAL_KINDS]
 
+        from .invariant_guard import InvariantGuard
+        guard = InvariantGuard()
+        guard.reset()
+        for action in result.actions:
+            guard.check_action_has_trace(action)
+            guard.check_memory_mutation_has_trace(action)
+        guard.check_recursive_budget(kernel, 0)
+
         self._run_online_learning(kernel, result)
 
         if kernel.budget.max_recursive_steps > 0:
