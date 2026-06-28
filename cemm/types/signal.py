@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Literal
 from .permission import Permission
 from .uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
 
@@ -62,3 +63,37 @@ class Signal:
     parent_signal_id: str | None = None
     version: str = "erca.signal.v1"
     observation_semantics: ObservationSemantics | None = None
+
+
+FeedbackTargetKind = Literal["entity", "claim", "model", "action", "synthesis"]
+
+
+@dataclass
+class FeedbackSignal:
+    id: str
+    signal: Signal
+    target_kind: FeedbackTargetKind
+    target_id: str
+    rating: float = 0.0
+    correction_text: str | None = None
+
+    def __post_init__(self) -> None:
+        self.signal.kind = SignalKind.FEEDBACK
+
+    @classmethod
+    def create(
+        cls,
+        signal: Signal,
+        target_kind: str,
+        target_id: str,
+        rating: float = 0.0,
+        correction_text: str | None = None,
+    ) -> FeedbackSignal:
+        return cls(
+            id=signal.id,
+            signal=signal,
+            target_kind=target_kind,  # type: ignore
+            target_id=target_id,
+            rating=rating,
+            correction_text=correction_text,
+        )

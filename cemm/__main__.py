@@ -182,7 +182,7 @@ def main() -> None:
     registry = Registry()
     op_registry = OperatorRegistry()
     pipeline = Pipeline(store, registry)
-    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
 
     seed_registry(registry)
     seed_self_state(store)

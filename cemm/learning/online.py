@@ -2,9 +2,11 @@ from __future__ import annotations
 from ..store.source_trust_store import SourceTrustStore
 from ..store.self_store import SelfStore
 from ..store.claim_store import ClaimStore
+from ..store.model_store import ModelStore
 from ..types.self_state import SelfState
 from ..types.claim import Claim, ClaimStatus
-from ..confidence.log_odds import update_log_odds, probability
+from ..types.model import Model
+from ..confidence.log_odds import update_log_odds, probability, log_odds
 import time
 
 
@@ -14,10 +16,12 @@ class OnlineLearner:
         source_trust_store: SourceTrustStore,
         self_store: SelfStore,
         claim_store: ClaimStore,
+        model_store: ModelStore | None = None,
     ) -> None:
         self._source_trust = source_trust_store
         self._self_store = self_store
         self._claims = claim_store
+        self._models = model_store
 
     def record_outcome(
         self,
@@ -46,6 +50,28 @@ class OnlineLearner:
         claim.confidence = probability(new_log_odds)
         claim.updated_at = time.time()
         self._claims.put(claim)
+
+    def update_causal_model_confidence(
+        self,
+        model_id: str,
+        prediction_matched: bool,
+    ) -> None:
+        if self._models is None:
+            return
+        model = self._models.get(model_id)
+        if model is None:
+            return
+        current_log = log_odds(model.confidence)
+        new_log = update_log_odds(
+            current_log_odds=current_log,
+            confirmations=1 if prediction_matched else 0,
+            total_observations=1,
+            contradiction_strength=0.0 if prediction_matched else 0.3,
+        )
+        model.confidence = probability(new_log)
+        model.trust = max(0.0, min(1.0, model.trust + (0.05 if prediction_matched else -0.05)))
+        model.updated_at = time.time()
+        self._models.put(model)
 
     def update_self_state(self, self_state: SelfState) -> None:
         self_state.updated_at = time.time()
