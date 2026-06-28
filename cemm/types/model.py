@@ -33,7 +33,7 @@ class Model:
     id: str
     kind: ModelKind
     name: str
-    description: str
+    description: str = ""
     input_types: list[str] = field(default_factory=list)
     output_types: list[str] = field(default_factory=list)
     preconditions: list[str] = field(default_factory=list)

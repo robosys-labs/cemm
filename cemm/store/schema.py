@@ -378,8 +378,7 @@ CREATE TABLE IF NOT EXISTS promotion_candidates (
     status TEXT NOT NULL DEFAULT 'pending',
     created_at REAL NOT NULL DEFAULT 0.0,
     reviewed_at REAL,
-    version TEXT NOT NULL DEFAULT 'cemm.training.v1',
-    FOREIGN KEY (model_id) REFERENCES models(id)
+    version TEXT NOT NULL DEFAULT 'cemm.training.v1'
 )
 """
 
