@@ -34,7 +34,7 @@ class ObservationSemantics:
     target_entity_id: str = ""
     semantic_cluster_key: str = ""
     stance: str = "unknown"
-    affect: dict = field(default_factory=lambda: {
+    affect: dict[str, float] = field(default_factory=lambda: {
         "valence": 0.0, "arousal": 0.0, "frustration": 0.0,
         "hostility": 0.0, "playfulness": 0.0,
     })
