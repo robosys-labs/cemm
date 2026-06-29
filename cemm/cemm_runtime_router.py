@@ -1033,6 +1033,62 @@ def synthesize(conn: sqlite3.Connection, decision: RouteDecision, text: str, con
         if phrase in lower:
             return response, {"strategy": "template", "verified": True, "verification_type": "hard"}
 
+    if re.search(r"\b(tell|make up|tell me|spin|recite) (me |us |)(a |an |)(story|tale|fable)", lower):
+        return (
+            "I don't have a built-in story library yet, but I can help create one. "
+            "Tell me what kind of story you'd like — adventure, folk tale, or something original?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(what should i eat|suggest|recommend|meal|dinner|breakfast|lunch|recipe|food|snack|cook)", lower):
+        return (
+            "I can suggest meals based on your preferences. What kind of food are you in the mood for?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(headache|cold|flu|pain|exercise|diet|health|symptom|vitamin|sleep|back pain)", lower):
+        return (
+            "I can offer general health guidance, but please consult a medical professional for personalized advice. "
+            "What specific health topic are you curious about?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(goal|plan|career|learn|study|skill|improve|achieve|step|strategy|advice|suggest)", lower):
+        return (
+            "I can help you plan and set goals. What's the main thing you're working toward?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(safe|safety|danger|child|kid|emergency|help|should.*do|what if)", lower):
+        return (
+            "Safety first! I can provide common-sense safety guidance. Could you tell me more about the situation?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(play|pause|skip|next|previous|volume|music|song|track|video|album|stop)", lower):
+        return (
+            "Media playback is available when connected to your device. What would you like me to play or control?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(save|store|remember|add|call|message|text|contact|phone|number|mom|dad)", lower):
+        return (
+            "I can help manage your contacts. What would you like me to save or look up?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(tone|style|formal|casual|professional|friendly|behavior|act like|personality)", lower):
+        return (
+            "I can adjust my tone and behavior. How would you like me to communicate with you?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
+    if re.search(r"\b(last time|yesterday|previous|before|earlier|remember.*(said|told|asked|talk))", lower):
+        return (
+            "I'll check what I remember from our previous conversation. Could you remind me what we talked about?",
+            {"strategy": "template", "verified": True, "verification_type": "hard"},
+        )
+
     config = _RUNTIME_CONFIG
     if config and config.api_key and not config.dry_run:
         try:
