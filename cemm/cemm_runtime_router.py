@@ -1057,7 +1057,20 @@ def synthesize(conn: sqlite3.Connection, decision: RouteDecision, text: str, con
             envelope = json.loads(raw)
             answer = envelope["choices"][0]["message"]["content"].strip()
             if answer:
-                return answer, {"strategy": "llm", "verified": True, "verification_type": "soft", "llm_model": config.model}
+                # Run synthesis verification
+                from cemm.synthesis_verifier import verify_neural_response
+                vr = verify_neural_response(answer, text, ck)
+                if vr.get("should_fallback"):
+                    # Verifier rejected the answer — fall back to abstain
+                    return (
+                        "I'm not confident enough to answer that accurately.",
+                        {"strategy": "llm_fallback_abstain", "verified": True,
+                         "verification_type": "soft", "verifier": vr,
+                         "llm_model": config.model},
+                    )
+                return answer, {"strategy": "llm", "verified": True,
+                                "verification_type": "soft", "verifier": vr,
+                                "llm_model": config.model}
         except Exception:
             pass
     return "I am here.", {"strategy": "template", "verified": True, "verification_type": "hard"}
@@ -1171,6 +1184,7 @@ def handle_turn(conn: sqlite3.Connection, content: str, session_id: str) -> dict
     trace_id = write_action_trace(conn, signal_id, context, decision, response, semantics, verification)
     cluster_key = uol.get("semantic_cluster_key", "")
     update_self_after_turn(conn, context, decision, stored_claim_id, trace_id, cluster_key)
+    emit_training_example(conn, content, response, context, context_info, uol, decision, verification)
     return {
         "response": response,
         "signal_id": signal_id,
@@ -1241,6 +1255,57 @@ def export_training(conn: sqlite3.Connection, out_path: Path) -> int:
     return len(examples)
 
 
+_TRAINING_QUEUE_PATH: Path | None = None
+
+
+def set_training_queue(path: Path | None) -> None:
+    global _TRAINING_QUEUE_PATH
+    _TRAINING_QUEUE_PATH = path
+
+
+def emit_training_example(
+    conn: sqlite3.Connection,
+    content: str,
+    response: str,
+    context: ContextKernel,
+    context_info: dict[str, Any],
+    uol: dict[str, Any],
+    decision: RouteDecision,
+    verification: dict[str, Any],
+) -> None:
+    if _TRAINING_QUEUE_PATH is None:
+        return
+    strategy = verification.get("strategy", "")
+    if strategy != "llm":
+        return
+
+    ck = dataclasses.asdict(context)
+    payload = {
+        "category": "runtime_llm_fallback",
+        "signal": {"kind": "input", "content": content, "source_type": "user"},
+        "context": ck,
+        "response": response,
+        "context_info": context_info,
+        "uol": uol,
+        "decision": dataclasses.asdict(decision),
+    }
+    task_types = [
+        "context_inference", "uol_mapping", "operator_selection",
+        "pragmatic_interpretation", "synthesis_verification", "self_state_update",
+    ]
+    _TRAINING_QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with _TRAINING_QUEUE_PATH.open("a", encoding="utf-8") as f:
+        for tt in task_types:
+            record = {
+                "task_type": tt,
+                "permission_scope": "session_private",
+                "payload": payload,
+                "source": "runtime_continuous",
+                "created_at": now(),
+            }
+            f.write(json.dumps(record, sort_keys=True) + "\n")
+
+
 def call_llm(config: RuntimeConfig, task_type: str, payload: dict[str, Any]) -> dict[str, Any]:
     if config.dry_run:
         return {"task_type": task_type, "confidence": 0.0, "dry_run": True}
@@ -1276,6 +1341,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="CEMM context-grounded runtime router")
     parser.add_argument("--db", default="cemm_runtime.sqlite3")
     parser.add_argument("--session-id", default="default")
+    parser.add_argument("--training-queue", default=None, help="path to continuous training queue JSONL")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     once = sub.add_parser("once", help="handle one user turn")
@@ -1309,6 +1375,8 @@ def main(argv: list[str]) -> int:
     # pylint: disable-next=global-statement
     global _RUNTIME_CONFIG
     _RUNTIME_CONFIG = config
+    if args.training_queue:
+        set_training_queue(Path(args.training_queue))
 
     if args.cmd == "once":
         result = handle_turn(conn, args.text, args.session_id)
