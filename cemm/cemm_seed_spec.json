@@ -130,6 +130,60 @@
       "target_count": 30,
       "task_types": ["structural_induction"],
       "description": "Synonym aggregation, sequential pattern mining, and slot completion examples."
+    },
+    {
+      "name": "story_generation",
+      "target_count": 30,
+      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "description": "Short stories, creative writing, poetry, fiction generation, and role-playing scenario development."
+    },
+    {
+      "name": "contacts_and_directory",
+      "target_count": 40,
+      "task_types": ["claim_extraction", "context_inference", "operator_selection"],
+      "description": "Saving, retrieving, updating contacts, addresses, phone numbers, emails, and directory queries."
+    },
+    {
+      "name": "meal_and_recipe_planning",
+      "target_count": 40,
+      "task_types": ["context_inference", "operator_selection", "frame_classification"],
+      "description": "Recipe requests, ingredient substitutions, meal planning, dietary restriction handling, cooking instructions."
+    },
+    {
+      "name": "health_and_wellness",
+      "target_count": 40,
+      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "description": "General health information, symptom queries, fitness advice, sleep tips, stress management (with disclaimers)."
+    },
+    {
+      "name": "safety_and_emergency",
+      "target_count": 30,
+      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "description": "Emergency contact lookup, safety procedure queries, first aid information, crisis resource referrals."
+    },
+    {
+      "name": "goal_tracking",
+      "target_count": 40,
+      "task_types": ["claim_extraction", "context_inference", "operator_selection"],
+      "description": "Setting goals, tracking progress, scheduling reminders, breaking down objectives, celebrating milestones."
+    },
+    {
+      "name": "media_recommendations",
+      "target_count": 40,
+      "task_types": ["context_inference", "operator_selection", "pragmatic_interpretation"],
+      "description": "Movie, book, music, game, and show recommendations with preference-based filtering and taste calibration."
+    },
+    {
+      "name": "behavior_and_manners",
+      "target_count": 30,
+      "task_types": ["uol_mapping", "pragmatic_interpretation", "synthesis_verification"],
+      "description": "Etiquette questions, social norms, behavioral advice, polite interaction guidance, cultural differences."
+    },
+    {
+      "name": "cross_session_memory",
+      "target_count": 30,
+      "task_types": ["context_inference", "operator_selection", "claim_extraction"],
+      "description": "Explicit cross-session references: 'last time we talked', 'like I mentioned yesterday', 'as you know from before'."
     }
   ]
 }
