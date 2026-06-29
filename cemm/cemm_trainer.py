@@ -572,6 +572,167 @@ def run_workers(config: Config, workers: int, poll_s: float, once: bool) -> None
             return
 
 
+def deploy_models(train_db: Path, runtime_db: Path | None = None, out_path: Path | None = None) -> int:
+    """Convert completed agent outputs into deployable model records.
+
+    Reads from training DB, produces JSONL (and optionally writes to runtime DB).
+    Returns count of deployed models.
+    """
+    tconn = sqlite3.connect(train_db)
+    tconn.row_factory = sqlite3.Row
+    rows = tconn.execute("""
+        SELECT o.id AS output_id, o.job_id, o.output_json, o.confidence,
+               j.task_type, j.example_id, e.payload_json
+        FROM agent_outputs o
+        JOIN training_jobs j ON j.id = o.job_id
+        JOIN training_examples e ON e.id = j.example_id
+        WHERE j.status = 'done'
+          AND o.confidence > 0.5
+        ORDER BY o.created_at
+    """).fetchall()
+    tconn.close()
+
+    models: list[dict[str, Any]] = []
+    for row in rows:
+        output = json.loads(row["output_json"])
+        payload = json.loads(row["payload_json"])
+        task_type = row["task_type"]
+        confidence = float(row["confidence"])
+
+        if task_type == "operator_selection":
+            action_kind = output.get("action_kind", "")
+            operator_key = output.get("operator_model_key", "")
+            if operator_key:
+                models.append({
+                    "kind": "operator",
+                    "name": operator_key,
+                    "registry_key": operator_key,
+                    "description": f"Operator for {action_kind} actions",
+                    "parameters": {"action_kind": action_kind, "required_slots": output.get("required_slots", [])},
+                    "confidence": confidence,
+                    "status": "candidate",
+                    "evidence_signal_ids": [row["output_id"]],
+                })
+
+        elif task_type == "uol_mapping":
+            atoms = output.get("uol_atoms", [])
+            frame_keys = set()
+            state_keys = set()
+            for a in atoms:
+                if a.get("kind") == "process":
+                    frame_keys.add(a["frame_key"])
+                elif a.get("kind") == "state":
+                    state_keys.add(a["state_key"])
+            for fk in frame_keys:
+                models.append({
+                    "kind": "uol_semantic",
+                    "name": f"process:{fk}",
+                    "registry_key": f"process:{fk}",
+                    "description": f"UOL process mapping for {fk}",
+                    "parameters": {"frame_key": fk, "atoms": atoms},
+                    "confidence": confidence,
+                    "status": "candidate",
+                    "evidence_signal_ids": [row["output_id"]],
+                })
+            for sk in state_keys:
+                models.append({
+                    "kind": "uol_semantic",
+                    "name": f"state:{sk}",
+                    "registry_key": f"state:{sk}",
+                    "description": f"UOL state mapping for {sk}",
+                    "parameters": {"state_key": sk},
+                    "confidence": confidence,
+                    "status": "candidate",
+                    "evidence_signal_ids": [row["output_id"]],
+                })
+
+        elif task_type == "context_inference":
+            inferences = output.get("inferences", [])
+            for inf in inferences:
+                kind = inf.get("kind", "")
+                if kind:
+                    models.append({
+                        "kind": "context_inference",
+                        "name": kind,
+                        "registry_key": kind,
+                        "description": f"Context inference rule: {kind}",
+                        "parameters": inf,
+                        "confidence": float(inf.get("confidence", confidence)),
+                        "status": "candidate",
+                        "evidence_signal_ids": [row["output_id"]],
+                    })
+
+        elif task_type == "synthesis_verification":
+            vtype = output.get("verification_type", "soft")
+            models.append({
+                "kind": "verifier",
+                "name": f"verifier_{vtype}",
+                "registry_key": vtype,
+                "description": f"Synthesis verifier ({vtype})",
+                "parameters": output,
+                "confidence": confidence,
+                "status": "candidate",
+                "evidence_signal_ids": [row["output_id"]],
+            })
+
+        elif task_type == "structural_induction":
+            candidates = output.get("candidate_models", [])
+            for cm in candidates:
+                cm["evidence_signal_ids"] = [row["output_id"]]
+                cm.setdefault("status", "candidate")
+                models.append(cm)
+
+    if out_path:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("w", encoding="utf-8") as f:
+            for m in models:
+                f.write(json.dumps(m, sort_keys=True) + "\n")
+
+    if runtime_db:
+        rconn = sqlite3.connect(runtime_db)
+        rconn.executescript("""
+            CREATE TABLE IF NOT EXISTS models (
+              id TEXT PRIMARY KEY, kind TEXT NOT NULL, name TEXT NOT NULL,
+              registry_key TEXT, description TEXT NOT NULL DEFAULT '',
+              parameters_json TEXT NOT NULL DEFAULT '{}',
+              input_types TEXT NOT NULL DEFAULT '[]',
+              output_types TEXT NOT NULL DEFAULT '[]',
+              preconditions TEXT NOT NULL DEFAULT '[]',
+              effects TEXT NOT NULL DEFAULT '[]',
+              confidence REAL NOT NULL DEFAULT 0.5,
+              trust REAL NOT NULL DEFAULT 0.5, utility REAL NOT NULL DEFAULT 0.5,
+              cost_estimate_ms INTEGER NOT NULL DEFAULT 50,
+              risk REAL NOT NULL DEFAULT 0.0,
+              evidence_signal_ids TEXT NOT NULL DEFAULT '[]',
+              status TEXT NOT NULL DEFAULT 'candidate',
+              created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+            );
+        """)
+        ts = int(time.time())
+        for m in models:
+            mid = hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest()[:24]
+            rconn.execute(
+                """INSERT OR IGNORE INTO models
+                   (id, kind, name, registry_key, description, parameters_json,
+                    input_types, output_types, preconditions, effects,
+                    confidence, trust, utility, cost_estimate_ms, risk,
+                    evidence_signal_ids, status, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    f"model_{mid}", m["kind"], m["name"], m.get("registry_key"),
+                    m.get("description", ""), json.dumps(m.get("parameters", {}), sort_keys=True),
+                    "[]", "[]", "[]", "[]",
+                    m.get("confidence", 0.5), 0.5, 0.5, 50, 0.0,
+                    json.dumps(m.get("evidence_signal_ids", []), sort_keys=True),
+                    m.get("status", "candidate"), ts, ts,
+                ),
+            )
+        rconn.commit()
+        rconn.close()
+
+    return len(models)
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="CEMM continuous training runner")
     parser.add_argument("--db", default="cemm_training.sqlite3", help="SQLite database path")
@@ -586,6 +747,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     run.add_argument("--once", action="store_true")
     run.add_argument("--dry-run", action="store_true", default=os.getenv("CEMM_DRY_RUN") == "1")
 
+    deploy = sub.add_parser("deploy-models", help="convert agent outputs to deployable model records")
+    deploy.add_argument("--train-db", default="cemm_training.sqlite3")
+    deploy.add_argument("--runtime-db", help="write models directly into a runtime DB")
+    deploy.add_argument("--out", help="JSONL output path for model records")
+
     return parser.parse_args(argv)
 
 
@@ -595,6 +761,13 @@ def main(argv: list[str]) -> int:
 
     if args.cmd == "ingest":
         ingest_jsonl(db_path, Path(args.jsonl))
+        return 0
+
+    if args.cmd == "deploy-models":
+        out = Path(args.out) if args.out else None
+        runtime = Path(args.runtime_db) if args.runtime_db else None
+        count = deploy_models(Path(args.train_db), runtime_db=runtime, out_path=out)
+        print(f"deployed {count} model records")
         return 0
 
     config = Config(
