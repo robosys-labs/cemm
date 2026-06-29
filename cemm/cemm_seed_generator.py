@@ -25,11 +25,13 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import copy
 import dataclasses
 import hashlib
 import json
 import os
 import random
+import re
 import sqlite3
 import sys
 import time
@@ -109,7 +111,7 @@ def load_spec(path: Path) -> dict[str, Any]:
 
 def response_schema_hint() -> str:
     return """
-Return strict JSON only:
+Return ONLY valid JSON. Do NOT include any explanatory text, markdown formatting, or code fences. Your entire response must be parseable as JSON:
 {
   "scenarios": [
     {
@@ -208,7 +210,6 @@ def call_nvidia(config: Config, system: str, user: str, cache_key: str) -> dict[
             {"role": "user", "content": user},
         ],
         "temperature": config.temperature,
-        "response_format": {"type": "json_object"},
     }
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
@@ -434,6 +435,119 @@ def validate(args: argparse.Namespace) -> None:
     print(json.dumps({"total": total, "by_task_type": counts}, indent=2, sort_keys=True))
 
 
+MUTATION_MAP: dict[str, str] = {
+    "you": "u", "your": "ur", "are": "re", "why": "y",
+    "please": "pls", "thanks": "thx", "thank you": "ty",
+    "what": "wat", "the": "teh", "because": "cuz",
+    "going to": "gonna", "want to": "wanna", "got to": "gotta",
+    "do not know": "dunno", "let me": "lemme", "kind of": "kinda",
+    "sort of": "sorta", "give me": "gimme",
+    "before": "b4", "great": "gr8", "later": "l8r", "message": "msg",
+    "favorite": "favourite", "color": "colour", "center": "centre",
+}
+
+
+def mutate_utterance(text: str, rng: random.Random) -> str:
+    if not text:
+        return text
+    lower = text.lower()
+    words = lower.split()
+    mutated: list[str] = []
+    for w in words:
+        m = w.strip(".,!?;:")
+        if not m:
+            continue
+        if m in MUTATION_MAP and rng.random() < 0.5:
+            mutated.append(MUTATION_MAP[m])
+        elif rng.random() < 0.15:
+            chars = list(m)
+            if len(chars) >= 3 and rng.random() < 0.4:
+                idx = rng.randint(1, len(chars) - 2)
+                chars[idx] = chars[idx] * rng.randint(2, 3)
+            elif len(chars) >= 3 and rng.random() < 0.3:
+                idx = rng.randint(0, len(chars) - 2)
+                chars[idx], chars[idx + 1] = chars[idx + 1], chars[idx]
+            mutated.append("".join(chars))
+        else:
+            mutated.append(m)
+    result = " ".join(mutated)
+    if text[0].isupper():
+        result = result.capitalize()
+    return result
+
+
+def mutate_scenario(scenario: dict[str, Any], rng: random.Random) -> dict[str, Any]:
+    new = copy.deepcopy(scenario)
+    for turn in new.get("conversation", []):
+        raw = turn.get("content")
+        if isinstance(raw, str):
+            turn["content"] = mutate_utterance(raw, rng)
+        elif isinstance(raw, dict) and "text" in raw:
+            raw["text"] = mutate_utterance(raw["text"], rng)
+    for te in new.get("task_examples", []):
+        if "signal" in te:
+            sc = te["signal"].get("content")
+            if isinstance(sc, str):
+                te["signal"]["content"] = mutate_utterance(sc, rng)
+            elif isinstance(sc, dict) and "text" in sc:
+                sc["text"] = mutate_utterance(sc["text"], rng)
+    return new
+
+
+def mutate_task_record(record: dict[str, Any], rng: random.Random) -> dict[str, Any]:
+    new = copy.deepcopy(record)
+    if "signal" in new:
+        sc = new["signal"].get("content")
+        if isinstance(sc, str):
+            new["signal"]["content"] = mutate_utterance(sc, rng)
+        elif isinstance(sc, dict) and "text" in sc:
+            sc["text"] = mutate_utterance(sc["text"], rng)
+    if "input" in new and isinstance(new["input"], str):
+        new["input"] = mutate_utterance(new["input"], rng)
+    return new
+
+
+def mutate(args: argparse.Namespace) -> None:
+    scenarios_path = Path(args.scenarios)
+    tasks_path = Path(args.tasks)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    count = args.count
+
+    rng = random.Random(args.seed)
+    all_scenarios: list[dict[str, Any]] = []
+    all_tasks: list[dict[str, Any]] = []
+
+    with scenarios_path.open("r", encoding="utf-8") as f:
+        clean_scenarios = [json.loads(line.strip()) for line in f if line.strip()]
+    with tasks_path.open("r", encoding="utf-8") as f:
+        clean_tasks = [json.loads(line.strip()) for line in f if line.strip()]
+
+    task_by_scenario: dict[str, list[dict[str, Any]]] = {}
+    for t in clean_tasks:
+        task_by_scenario.setdefault(t.get("scenario_id", ""), []).append(t)
+
+    for scenario in clean_scenarios:
+        for v in range(count):
+            vseed = rng.randint(0, 2**31)
+            vrng = random.Random(vseed)
+            all_scenarios.append(mutate_scenario(scenario, vrng))
+        sid = scenario.get("scenario_id", "")
+        for task in task_by_scenario.get(sid, []):
+            for v in range(count):
+                vseed = rng.randint(0, 2**31)
+                vrng = random.Random(vseed)
+                all_tasks.append(mutate_task_record(task, vrng))
+
+    scenario_out = out_dir / "cemm_generated_scenarios.jsonl"
+    task_out = out_dir / "cemm_generated_training.jsonl"
+    write_jsonl(scenario_out, all_scenarios)
+    write_jsonl(task_out, all_tasks)
+    print(f"mutated {len(clean_scenarios)} scenarios x{count} = {len(all_scenarios)} scenarios")
+    print(f"mutated {len(clean_tasks)} tasks x{count} = {len(all_tasks)} task records")
+    print(f"wrote to {scenario_out} and {task_out}")
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate CEMM seed training data with NVIDIA API")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -457,6 +571,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     val = sub.add_parser("validate", help="validate generated task JSONL")
     val.add_argument("jsonl")
 
+    mut = sub.add_parser("mutate", help="create noisy variants of scenarios for robustness training")
+    mut.add_argument("--scenarios", required=True, help="path to clean scenarios JSONL")
+    mut.add_argument("--tasks", required=True, help="path to clean task records JSONL")
+    mut.add_argument("--out-dir", default="generated_noisy")
+    mut.add_argument("--count", type=int, default=2, help="noisy variants per clean example")
+    mut.add_argument("--seed", type=int, default=42)
+
     return parser.parse_args(argv)
 
 
@@ -467,6 +588,9 @@ def main(argv: list[str]) -> int:
         return 0
     if args.cmd == "validate":
         validate(args)
+        return 0
+    if args.cmd == "mutate":
+        mutate(args)
         return 0
     raise AssertionError(args.cmd)
 
