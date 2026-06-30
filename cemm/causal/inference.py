@@ -124,8 +124,6 @@ class CausalInference:
     def _preconditions_match(model: Model, claims: list[Claim], action: str, graph_predicates: list[str] | None = None) -> bool:
         if not model.preconditions:
             return False
-        if not claims:
-            return False
         action_lower = action.lower()
         for prec in model.preconditions:
             prec_lower = prec.lower()

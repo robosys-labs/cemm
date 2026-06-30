@@ -138,6 +138,48 @@ def seed_registry(registry: Registry) -> None:
         ))
 
 
+def seed_causal_models(store: Store) -> None:
+    """Seed a small causal rule model so CausalInference can produce predictions."""
+    from .types.model import Model, ModelKind, ModelStatus
+    from .types.permission import Permission
+    from .types.signal import Signal, SignalKind, SourceType
+    existing = store.models.find_by_kind(
+        ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value,
+    )
+    if existing:
+        return
+    seed_signal = Signal(
+        id="seed_causal_rain_flooding",
+        kind=SignalKind.SYSTEM,
+        source_id="seed",
+        source_type=SourceType.SYSTEM,
+        content="seed causal model: rain causes flooding",
+        observed_at=time.time(),
+        context_id="seed",
+        salience=0.5,
+        trust=1.0,
+        permission=Permission.public(),
+    )
+    store.signals.put(seed_signal)
+    model = Model(
+        id="causal_rain_flooding",
+        name="rain causes flooding",
+        registry_key="causal_causes",
+        kind=ModelKind.CAUSAL_RULE,
+        status=ModelStatus.ACTIVE,
+        preconditions=["rain"],
+        effects=["flooding"],
+        confidence=0.8,
+        trust=0.9,
+        risk=0.1,
+        evidence_signal_ids=[seed_signal.id],
+        permission=Permission.public(),
+        created_at=time.time(),
+        updated_at=time.time(),
+    )
+    store.models.put(model)
+
+
 def seed_self_state(store: Store, knowledge_path: str | None = None) -> None:
     existing_state = store.self_store.latest()
     if existing_state is None:
@@ -377,7 +419,7 @@ def process_input(
             if seg and seg.claim_candidates:
                 cand = seg.claim_candidates[0]
                 params = {
-                    "subject_entity_id": "user",
+                    "subject_entity_id": cand.get("subject", "user") or "user",
                     "predicate": cand.get("predicate", "noted"),
                     "object_value": cand.get("object", ""),
                     "domain": "general",
@@ -556,6 +598,7 @@ def main() -> None:
 
     seed_registry(registry)
     seed_self_state(store)
+    seed_causal_models(store)
 
     for op_class in [
         AnswerOperator, AskOperator, RememberOperator, UpdateClaimOperator,

@@ -319,7 +319,11 @@ class SemanticInterpreter:
         if marker_index is None:
             return inferred
 
-        source_phrase = self._expand_entity_phrase(words, marker_index - 1, -1)
+        command_words = {"remember", "save", "store", "note", "reflect", "think", "ponder", "contemplate", "retrieve", "search", "recall", "find", "lookup"}
+        source_start = marker_index - 1
+        while source_start >= 0 and words[source_start] in command_words:
+            source_start -= 1
+        source_phrase = self._expand_entity_phrase(words, source_start, -1) if source_start >= 0 else ""
         target_start = marker_index + 1
         if target_start < len(words) and words[target_start] in ("by", "to", "with"):
             target_start += 1
@@ -358,11 +362,12 @@ class SemanticInterpreter:
             "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
             "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just",
         }
+        command_words = {"remember", "save", "store", "note", "reflect", "think", "ponder", "contemplate", "retrieve", "search", "recall", "find", "lookup"}
         phrase = [words[center_index]]
         i = center_index + direction
         while 0 <= i < len(words):
             w = words[i]
-            if w in stop_words:
+            if w in stop_words or w in command_words:
                 break
             if direction < 0:
                 phrase.insert(0, w)
