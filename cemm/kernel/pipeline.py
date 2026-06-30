@@ -24,6 +24,8 @@ from ..registry.uol_mapper import UOLMapper
 from .context_inference import ContextInferenceEngine
 from .semantic_interpreter import SemanticInterpreter
 from .grounding import GroundingPipeline
+from .decision_router import DecisionRouter
+from ..causal.inference import CausalInference
 from ..retrieval.structural import StructuralRetriever
 from ..retrieval.ranker import Ranker
 
@@ -66,6 +68,8 @@ class Pipeline:
         )
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
+        self._causal_inference = CausalInference(store)
+        self._decision_router = DecisionRouter()
         self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
         self._turn_count: int = 0
@@ -179,6 +183,34 @@ class Pipeline:
             confidence=sum(s for _, s in ranked_claims[:5]) / len(ranked_claims[:5]) if ranked_claims else 0.5,
         )
 
+        # Infer: causal inference + slot inference
+        inference_packet = InferencePacket(
+            id=uuid.uuid4().hex[:16],
+            inference_graph_input_signal_ids=[signal.id],
+        )
+        if semantic_event_graph and semantic_event_graph.causal_edges:
+            inference_packet = self._causal_inference.predict(
+                signal.content,
+                semantic_event_graph.claim_refs,
+                kernel,
+                graph=semantic_event_graph,
+            )
+
+        # Decide: choose action based on grounded graph, memory, inference
+        decision_packet = self._decision_router.run(
+            graph=semantic_event_graph,
+            kernel=kernel,
+            grounded_graph=grounded_graph,
+            memory_packet=memory_packet,
+            inference_packet=inference_packet,
+            input_text=signal.content,
+            observation_semantics=signal.observation_semantics,
+            context_inference=context_inference,
+        )
+
+        # Pass decision to kernel for downstream action execution
+        kernel.goal.action_kind = decision_packet.action_kind
+
         self._check_budget(kernel, start)
 
         result = PipelineResult(
@@ -189,6 +221,8 @@ class Pipeline:
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             context_inference=context_inference,
+            inference_packet=inference_packet,
+            decision_packet=decision_packet,
         )
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0

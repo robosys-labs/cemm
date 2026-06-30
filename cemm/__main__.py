@@ -304,15 +304,13 @@ def process_input(
             )
             actionable_signals.append(mode_signal)
 
-    inference_packet = InferencePacket()
+    inference_packet = pipeline_result.inference_packet or InferencePacket()
     sim_result = None
     graph = pipeline_result.semantic_event_graph
-    if graph and (graph.causal_edges or kernel.goal.required_slots):
-        causal = CausalInference(store)
-        inference_packet = causal.predict(text, selected_claim_ids, kernel, graph=graph)
-        if graph.causal_edges:
-            sim_engine = SimulationEngine(store)
-            sim_result = sim_engine.simulate(text, kernel)
+    # Pipeline already ran causal inference; only run simulation if causal edges exist
+    if graph and graph.causal_edges:
+        sim_engine = SimulationEngine(store)
+        sim_result = sim_engine.simulate(text, kernel)
     predictions = inference_packet.predictions
 
     if text.lower() in ("exit", "quit", "bye"):
@@ -322,8 +320,8 @@ def process_input(
     # No hardcoded fallbacks or confidence threshold bypass.
     kind: ActionKind | None = None
     params: dict = {}
-    decision: DecisionPacket | None = None
-    if pipeline_result.semantic_event_graph:
+    decision: DecisionPacket | None = pipeline_result.decision_packet
+    if decision is None and pipeline_result.semantic_event_graph:
         decision_router = DecisionRouter()
         decision = decision_router.run(
             graph=pipeline_result.semantic_event_graph,
@@ -335,6 +333,11 @@ def process_input(
             observation_semantics=input_signal.observation_semantics,
             context_inference=context_inference,
         )
+
+    kind: ActionKind | None = None
+    params: dict = {}
+    ap: ActionPlan | None = None
+    if decision:
         _action_kind_map = {
             "answer": ActionKind.ANSWER,
             "ask": ActionKind.ASK,
