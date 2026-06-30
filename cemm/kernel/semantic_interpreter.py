@@ -53,6 +53,12 @@ class SemanticInterpreter:
             default=0.5,
         )
 
+        # Infer entity refs from causal/temporal processes when the UOL mapper
+        # did not produce entity atoms. This keeps downstream causal inference
+        # and simulation from operating on "unknown" cause/effect IDs.
+        if not entity_refs and processes:
+            entity_refs = self._infer_entity_refs_from_processes(signal.content, processes)
+
         claim_refs = self._lookup_claim_refs(entity_refs, kernel)
         claim_candidates = self._extract_claim_candidates_from_atoms(signal.content, processes, entity_refs)
         model_refs = self._lookup_model_refs(processes)
@@ -123,6 +129,11 @@ class SemanticInterpreter:
                 if ref.get("role") == "actor":
                     subject = ref.get("entity_id", "") or ref.get("entity", "user")
                     break
+            if subject == "user":
+                for ref in entity_refs:
+                    if ref.get("role") in ("cause", "source"):
+                        subject = ref.get("entity_id", "") or ref.get("entity", "user")
+                        break
             obj = ""
             words = content_lower.split()
             for i, w in enumerate(words):
@@ -229,3 +240,76 @@ class SemanticInterpreter:
                 })
                 break
         return edges
+
+    def _infer_entity_refs_from_processes(
+        self, content: str, processes: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Infer entity refs from causal/temporal processes when no entity atoms are present."""
+        inferred: list[dict[str, Any]] = []
+        content_lower = content.lower().strip()
+        words = content_lower.split()
+        if len(words) < 3:
+            return inferred
+
+        causal_map = {
+            "causal_causes": ("causes", "caused", "cause"),
+            "causal_caused_by": ("caused by", "caused", "by"),
+            "causal_leads_to": ("leads to", "leads", "lead to"),
+            "causal_because": ("because",),
+            "causal_so": ("so",),
+        }
+        temporal_map = {
+            "temporal_before": ("before",),
+            "temporal_after": ("after",),
+            "temporal_during": ("during",),
+            "temporal_overlaps": ("overlaps", "while"),
+            "temporal_starts": ("starts", "begins"),
+            "temporal_finishes": ("finishes", "ends"),
+        }
+
+        is_causal = any(proc.get("frame_key", "").startswith("causal_") for proc in processes)
+        relation_words: set[str] = set()
+        for proc in processes:
+            frame_key = proc.get("frame_key", "")
+            relation_words.update(causal_map.get(frame_key, ()))
+            relation_words.update(temporal_map.get(frame_key, ()))
+
+        if not relation_words:
+            return inferred
+
+        marker_index: int | None = None
+        for i, w in enumerate(words):
+            if w in relation_words:
+                marker_index = i
+                break
+            if i + 1 < len(words):
+                bigram = f"{w} {words[i + 1]}"
+                if bigram in relation_words:
+                    marker_index = i
+                    break
+
+        if marker_index is None:
+            return inferred
+
+        source_word = words[marker_index - 1] if marker_index > 0 else ""
+        target_start = marker_index + 1
+        if target_start < len(words) and words[target_start] in ("by", "to", "with"):
+            target_start += 1
+        target_word = words[target_start] if target_start < len(words) else ""
+
+        if source_word:
+            inferred.append({
+                "kind": "entity_ref",
+                "entity_id": source_word,
+                "role": "cause" if is_causal else "source",
+                "confidence": 0.6,
+            })
+        if target_word:
+            inferred.append({
+                "kind": "entity_ref",
+                "entity_id": target_word,
+                "role": "effect" if is_causal else "target",
+                "confidence": 0.6,
+            })
+
+        return inferred
