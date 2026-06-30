@@ -25,6 +25,7 @@ from .operators.reflect import ReflectOperator
 from .operators.abstain import AbstainOperator
 from .operators.call_tool import CallToolOperator
 from .operators.base import OperatorContext
+from .types.action import Action
 from .learning.online import OnlineLearner
 from .retrieval.structural import StructuralRetriever, RetrievalQuery
 from .retrieval.ranker import Ranker
@@ -439,13 +440,29 @@ def process_input(
     guard = InvariantGuard()
     guard.reset()
     if op_result.trace:
-        if kind == ActionKind.ANSWER:
-            if not op_result.trace.synthesis_verified:
-                guard.errors.append(
-                    f"Answer action bypassed synthesis verification"
-                )
+        synthetic_action = Action(
+            id=op_result.trace.action_id or uuid.uuid4().hex[:16],
+            kind=kind,
+            operator_model_id=op_result.trace.operator_model_id or "",
+            trace=op_result.trace,
+        )
+        guard.check_action_has_trace(synthetic_action)
+        guard.check_memory_mutation_has_trace(synthetic_action)
+        guard.check_synthesis_verification(synthetic_action, op_result.trace)
         if inference_packet and inference_packet.predictions:
             guard.check_causal_chain_confidence(inference_packet.predictions)
+    guard.check_response_has_input_signal(input_signal)
+    if mode_change_action:
+        guard.check_self_mutation_has_trace(mode_change_action)
+        guard.check_self_mode_change_has_trace(
+            kernel.self_view.mode, kernel.self_view.mode, mode_change_action
+        )
+    for claim_id in ctx.selected_claim_ids:
+        claim = store.claims.get(claim_id)
+        if claim:
+            guard.check_private_claim_used_with_permission(claim, kernel)
+            guard.check_disputed_not_presented_certain(claim)
+            guard.check_stale_claim_not_used(claim, kernel)
     if guard.errors:
         for err in guard.errors:
             print(f"[INVARIANT] {err}", file=sys.stderr)
