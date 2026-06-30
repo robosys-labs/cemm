@@ -292,6 +292,9 @@ def process_input(
                     "answer_text": "",
                     "selected_claim_ids": list(ap.selected_claim_ids) if ap else selected_claim_ids,
                 }
+                if sim_result is not None:
+                    params["simulation_claims"] = sim_result.predicted_claims
+                    params["simulation_confidence"] = sim_result.confidence
 
     # Phase 1: Induction-driven routing (fallback when Phase 0 abstains)
     # Uses candidate CAUSAL_RULE models from structural learning to inform decisions
