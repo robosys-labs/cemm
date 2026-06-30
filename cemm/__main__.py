@@ -38,7 +38,7 @@ from .synthesis.router import SynthesisRouter
 from .kernel.recursive_loop import RecursiveLoop
 from .kernel.mode_controller import ModeController
 from .kernel.decision_router import DecisionRouter
-from .types.packets import DecisionPacket
+from .types.packets import DecisionPacket, InferencePacket
 from .learning.inductor import Inductor
 
 _ACTION_CONFIDENCE_THRESHOLD = 0.5
@@ -205,6 +205,8 @@ def process_input(
     # Use pipeline-provided ranked claims if available
     selected_claim_ids = pipeline_result.ranked_claim_ids
     selected_model_ids = pipeline_result.ranked_model_ids
+    grounded_graph = pipeline_result.grounded_graph
+    memory_packet = pipeline_result.memory_packet
 
     # Fallback: manual retrieval if pipeline didn't populate
     fallback_retriever = StructuralRetriever(store)
@@ -246,15 +248,16 @@ def process_input(
             )
             actionable_signals.append(mode_signal)
 
-    predictions: list[dict] = []
+    inference_packet = InferencePacket()
     sim_result = None
     graph = pipeline_result.semantic_event_graph
     if graph and (graph.causal_edges or kernel.goal.required_slots):
         causal = CausalInference(store)
-        predictions = causal.predict(text, selected_claim_ids, kernel)
+        inference_packet = causal.predict(text, selected_claim_ids, kernel)
         if graph.causal_edges:
             sim_engine = SimulationEngine(store)
             sim_result = sim_engine.simulate(text, kernel)
+    predictions = inference_packet.predictions
 
     if text.lower() in ("exit", "quit", "bye"):
         return "Goodbye!"
@@ -267,19 +270,28 @@ def process_input(
         decision = decision_router.run(
             graph=pipeline_result.semantic_event_graph,
             kernel=kernel,
-            selected_claim_ids=selected_claim_ids,
-            selected_model_ids=selected_model_ids,
-            predictions=predictions if predictions else None,
+            grounded_graph=grounded_graph,
+            memory_packet=memory_packet,
+            inference_packet=inference_packet if inference_packet.predictions else None,
         )
-        if decision.confidence >= _ACTION_CONFIDENCE_THRESHOLD and decision.action_kind != ActionKind.ABSTAIN:
-            kind = decision.action_kind
+        _action_kind_map = {
+            "answer": ActionKind.ANSWER,
+            "ask": ActionKind.ASK,
+            "remember": ActionKind.REMEMBER,
+            "update": ActionKind.UPDATE_CLAIM,
+            "act": ActionKind.CALL_TOOL,
+            "abstain": ActionKind.ABSTAIN,
+        }
+        if decision.confidence >= _ACTION_CONFIDENCE_THRESHOLD and decision.action_kind != "abstain":
+            kind = _action_kind_map.get(decision.action_kind)
+            ap = decision.action_plan
             if kind == ActionKind.ASK:
                 params = {"question": "Could you elaborate?"}
             elif kind == ActionKind.ANSWER:
-                params = {"answer_text": "", "selected_claim_ids": decision.selected_claim_ids}
-                if sim_result is not None:
-                    params["simulation_claims"] = sim_result.predicted_claims
-                    params["simulation_confidence"] = sim_result.confidence
+                params = {
+                    "answer_text": "",
+                    "selected_claim_ids": list(ap.selected_claim_ids) if ap else selected_claim_ids,
+                }
 
     # Phase 1: Induction-driven routing (fallback when Phase 0 abstains)
     # Uses candidate CAUSAL_RULE models from structural learning to inform decisions
