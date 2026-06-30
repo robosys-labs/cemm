@@ -109,6 +109,10 @@ class Pipeline:
         else:
             kernel.self_view = SelfView()
 
+        # Contextualize: infer context from signal + kernel before interpretation
+        context_inference = self._context_inference_engine.infer(signal, kernel)
+        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
+
         # Interpret: SemanticEventGraph + UOL atoms
         semantic_event_graph = self._semantic_interpreter.run(signal, kernel)
         semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
@@ -128,10 +132,6 @@ class Pipeline:
 
         # Ground entities, time, frame, permission
         grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel)
-
-        # Infer context from signal + grounded graph + kernel (not raw text alone)
-        context_inference = self._context_inference_engine.infer(signal, kernel)
-        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
         # Seed entity IDs from graph for graph-grounded retrieval
         for ref in semantic_event_graph.entity_refs:

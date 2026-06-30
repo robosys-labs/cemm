@@ -468,21 +468,26 @@ class TestPhase3Recursive:
 
 
 class TestRuntimeOrdering:
-    def test_ground_before_infer_in_pipeline(self) -> None:
+    def test_contextualize_before_interpret_before_ground_in_pipeline(self) -> None:
         import inspect
         from cemm.kernel.pipeline import Pipeline
         source = inspect.getsource(Pipeline.run)
+        contextualize_line = None
+        interpret_line = None
         ground_line = None
-        infer_line = None
         for i, line in enumerate(source.split("\n")):
+            if "self._context_inference_engine.infer" in line:
+                contextualize_line = i
+            if "self._semantic_interpreter.run" in line:
+                interpret_line = i
             if "self._grounding_pipeline.run" in line:
                 ground_line = i
-            if "self._context_inference_engine.infer" in line:
-                infer_line = i
+        assert contextualize_line is not None, "ContextInference not found in run()"
+        assert interpret_line is not None, "SemanticInterpreter not found in run()"
         assert ground_line is not None, "Ground pipeline not found in run()"
-        assert infer_line is not None, "ContextInference not found in run()"
-        assert ground_line < infer_line, (
-            f"Ground at line {ground_line} must run before Infer at line {infer_line}"
+        assert contextualize_line < interpret_line < ground_line, (
+            f"Contextualize at line {contextualize_line} must run before "
+            f"Interpret at line {interpret_line} before Ground at line {ground_line}"
         )
 
     def test_semantic_event_graph_exists_before_retrieval(self) -> None:
