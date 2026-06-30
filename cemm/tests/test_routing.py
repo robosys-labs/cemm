@@ -24,31 +24,37 @@ from cemm.operators.retrieve_op import RetrieveOperator
 from cemm.operators.reflect import ReflectOperator
 from cemm.operators.abstain import AbstainOperator
 from cemm.operators.call_tool import CallToolOperator
-from cemm.__main__ import seed_registry
+from cemm.__main__ import seed_registry, seed_self_state, process_input
+
+
+_OPERATORS = [
+    AnswerOperator(), AskOperator(), RememberOperator(),
+    UpdateClaimOperator(), CreateModelOperator(), SynthesizeOperator(),
+    SimulateOperator(), RetrieveOperator(), ReflectOperator(),
+    AbstainOperator(), CallToolOperator(),
+]
+
+
+def _setup_routing_test():
+    store = Store(":memory:")
+    registry = Registry()
+    op_registry = OperatorRegistry()
+    pipeline = Pipeline(store, registry)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
+    inductor = Inductor(store, registry=registry)
+    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
+    seed_registry(registry)
+    seed_self_state(store)
+    for op in _OPERATORS:
+        op_registry.register(op)
+    return store, registry, op_registry, pipeline, online_learner, recursive_loop
 
 
 def test_decision_router_abstain_is_respected() -> None:
     """When DecisionRouter returns abstain at confidence >= threshold,
     process_input must route through AbstainOperator (producing a SemanticAnswerGraph
     before text) rather than falling through to AnswerOperator with empty claims."""
-    store = Store(":memory:")
-    registry = Registry()
-    op_registry = OperatorRegistry()
-    pipeline = Pipeline(store, registry)
-    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-    inductor = Inductor(store)
-    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
-    seed_registry(registry)
-
-    for op in [
-        AnswerOperator(), AskOperator(), RememberOperator(),
-        UpdateClaimOperator(), CreateModelOperator(), SynthesizeOperator(),
-        SimulateOperator(), RetrieveOperator(), ReflectOperator(),
-        AbstainOperator(), CallToolOperator(),
-    ]:
-        op_registry.register(op)
-
-    from cemm.__main__ import process_input
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
 
     output = process_input(
         "xyzzy nonsense input", store, registry, op_registry, pipeline,
@@ -67,26 +73,7 @@ def test_self_reference_injection_still_answers() -> None:
     """Self-referential queries like 'who are you?' should still produce
     an answer via memory_packet update -> DecisionRouter answer path,
     not fall through to Phase 2 hardcoded routing."""
-    store = Store(":memory:")
-    registry = Registry()
-    op_registry = OperatorRegistry()
-    pipeline = Pipeline(store, registry)
-    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-    inductor = Inductor(store)
-    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
-    seed_registry(registry)
-
-    for op in [
-        AnswerOperator(), AskOperator(), RememberOperator(),
-        UpdateClaimOperator(), CreateModelOperator(), SynthesizeOperator(),
-        SimulateOperator(), RetrieveOperator(), ReflectOperator(),
-        AbstainOperator(), CallToolOperator(),
-    ]:
-        op_registry.register(op)
-
-    from cemm.__main__ import seed_self_state, process_input
-
-    seed_self_state(store)
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
 
     output = process_input(
         "who are you?", store, registry, op_registry, pipeline,
@@ -97,3 +84,56 @@ def test_self_reference_injection_still_answers() -> None:
     assert "do not have enough" not in output, (
         f"Expected answer, got abstain: {output!r}"
     )
+
+
+def test_process_input_greeting_routes_to_answer() -> None:
+    """Greeting input should be routed to AnswerOperator and produce a non-empty response."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "hello", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output, "Greeting must produce non-empty output"
+    assert "do not have enough" not in output, (
+        f"Expected answer, got abstain: {output!r}"
+    )
+
+
+def test_process_input_remember_routes_to_remember() -> None:
+    """Explicit remember input should be routed to RememberOperator."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "remember I like coffee", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output, "Remember input must produce non-empty output"
+
+
+def test_process_input_question_routes_to_ask_or_answer() -> None:
+    """Open question should be routed to Ask or Answer, not hardcoded fallback."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "what do I like", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output, "Question must produce non-empty output"
+
+
+def test_process_input_causal_statement_routes_to_remember() -> None:
+    """Causal statement should produce a claim candidate and route to Remember."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "rain causes flooding", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output, "Causal statement must produce non-empty output"
+
+
+def test_process_input_empty_abstains() -> None:
+    """Empty input should be handled gracefully by the pipeline."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output is not None
