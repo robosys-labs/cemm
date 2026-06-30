@@ -202,6 +202,12 @@ class RecursiveLoop:
         self_state = self._store.self_store.latest()
         if self_state:
             self._learner.update_self_state(self_state)
+        if hasattr(self._learner, "update_source_trust"):
+            self._learner.update_source_trust(kernel)
+        if hasattr(self._learner, "update_operator_reliability"):
+            self._learner.update_operator_reliability(kernel)
+        if hasattr(self._learner, "update_ranking_weights"):
+            self._learner.update_ranking_weights(kernel)
 
     def _run_induction(self, kernel: ContextKernel) -> None:
         from ..training.promoter import Promoter

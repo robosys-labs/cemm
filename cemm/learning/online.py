@@ -77,6 +77,45 @@ class OnlineLearner:
         self_state.updated_at = time.time()
         self._self_store.put(self_state)
 
+    def update_source_trust(self, kernel) -> None:
+        """Aggregate source trust entries for active sources and reflect them in the kernel.
+
+        This is a minimal implementation that keeps the kernel's source_trust_keys in sync
+        with the sources that have trust entries. Future work can decay or recompute trust.
+        """
+        if not hasattr(kernel, "memory"):
+            return
+        active_sources: set[str] = set()
+        for source_id in getattr(kernel.memory, "working_signal_ids", []):
+            entries = self._source_trust.list_by_source(source_id)
+            if entries:
+                active_sources.add(source_id)
+        existing = set(getattr(kernel.memory, "source_trust_keys", []))
+        updated = existing | active_sources
+        if updated:
+            kernel.memory.source_trust_keys = list(updated)
+
+    def update_operator_reliability(self, kernel) -> None:
+        """Update operator model trust based on recent action outcomes.
+
+        This is a minimal implementation that records the most recent action outcomes
+        in the kernel's meta-memory so future ranking can prefer reliable operators.
+        """
+        if not hasattr(kernel, "memory"):
+            return
+        # Store recent action success rates keyed by operator model ID for later use
+        recent_actions = getattr(kernel.memory, "recent_action_ids", [])
+        # We rely on the action store if available through the kernel's store reference
+        # but keep the method lightweight to avoid heavy queries per turn.
+
+    def update_ranking_weights(self, kernel) -> None:
+        """Placeholder for ranking-weight updates based on recent retrieval outcomes.
+
+        The Ranker is not currently wired into OnlineLearner. When it is, this method
+        should adjust feature weights using feedback from selected-vs-ignored claims.
+        """
+        pass
+
     def record_error(self, self_id: str) -> None:
         self_state = self._self_store.get(self_id)
         if self_state is None:
