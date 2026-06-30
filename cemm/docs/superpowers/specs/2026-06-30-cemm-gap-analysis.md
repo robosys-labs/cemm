@@ -140,19 +140,19 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - ArtifactStore dead code removed from DecisionRouter ✓
 
 ### What's wrong (verified):
-- `process_input()` routing cascade can still bypass SAG via Phase 2/3 fallbacks ✗
-- DecisionRouter abstain below threshold (0.5) is not authoritative ✗
+- `process_input()` routing cascade can still bypass SAG via Phase 2/3 fallbacks ✓ — hardcoded exit/bye and unconditional short-input fallbacks removed
+- DecisionRouter abstain below threshold (0.5) is not authoritative ✓ — DecisionRouter is now sole decision mechanism
 - Two parallel runtimes (basic + full) with divergent schemas — basic runtime archived, but archived file still present ✗
 - Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived ✗
-- SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; can still be improved for multi-word entities and full NER ✗
-- No typed latent spaces exist — runtime types and encoder added; deeper CEMM-SLC integration remains ✗
-- Causal inference never fires (empty `causal_edges`) — now fires when causal edges present; needs real causal models to produce predictions ✗
+- SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; multi-word entity inference added ✗ (still not full NER)
+- No typed latent spaces exist — runtime types and encoder added; answer_latent populated ✗ (deeper CEMM-SLC integration remains)
+- Causal inference never fires (empty `causal_edges`) — now fires and produces predictions from seeded causal models ✗ (only one seed model)
 - Simulation never runs (empty `causal_edges`) — same as causal inference ✗
 - `PipelineResult` missing `inference_packet` and `decision_packet` ✓
 - Trace never sets `semantic_event_graph_id` ✓
 - 16 of 19 InvariantGuard checks never called at runtime — most relevant checks now called ✗
 - Context inference runs after Ground, not during Contextualize ✓
-- Training export can produce SAG-less records for non-answer/abstain operators ✗
+- Training export can produce SAG-less records for non-answer/abstain operators ✓ — all operators now return a semantic_answer_graph
 - 11 of 25 PROMPTS task types never produced by decomposition ✗
 - 18 of 25 PROMPTS task types produce no deployable records ✗
 - Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG — archived ✗
