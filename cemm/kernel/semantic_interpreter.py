@@ -319,25 +319,54 @@ class SemanticInterpreter:
         if marker_index is None:
             return inferred
 
-        source_word = words[marker_index - 1] if marker_index > 0 else ""
+        source_phrase = self._expand_entity_phrase(words, marker_index - 1, -1)
         target_start = marker_index + 1
         if target_start < len(words) and words[target_start] in ("by", "to", "with"):
             target_start += 1
-        target_word = words[target_start] if target_start < len(words) else ""
+        target_phrase = self._expand_entity_phrase(words, target_start, 1)
 
-        if source_word:
+        if source_phrase:
             inferred.append({
                 "kind": "entity_ref",
-                "entity_id": source_word,
+                "entity_id": source_phrase,
                 "role": "cause" if is_causal else "source",
                 "confidence": 0.6,
             })
-        if target_word:
+        if target_phrase:
             inferred.append({
                 "kind": "entity_ref",
-                "entity_id": target_word,
+                "entity_id": target_phrase,
                 "role": "effect" if is_causal else "target",
                 "confidence": 0.6,
             })
 
         return inferred
+
+    def _expand_entity_phrase(
+        self, words: list[str], center_index: int, direction: int,
+    ) -> str:
+        """Expand a single-word entity into a short phrase by including adjacent modifiers.
+
+        direction: -1 for left (source), +1 for right (target).
+        """
+        if not (0 <= center_index < len(words)):
+            return ""
+        stop_words = {
+            "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
+            "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+            "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
+            "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
+            "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just",
+        }
+        phrase = [words[center_index]]
+        i = center_index + direction
+        while 0 <= i < len(words):
+            w = words[i]
+            if w in stop_words:
+                break
+            if direction < 0:
+                phrase.insert(0, w)
+            else:
+                phrase.append(w)
+            i += direction
+        return " ".join(phrase)

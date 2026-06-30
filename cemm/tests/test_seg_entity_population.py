@@ -38,3 +38,18 @@ def test_causal_input_populates_claim_candidates():
     assert seg.claim_candidates
     candidate = seg.claim_candidates[0]
     assert candidate["subject"] != "user" or candidate["predicate"] != "causes"
+
+
+def test_causal_input_extracts_multiword_cause():
+    store = Store(":memory:")
+    registry = Registry()
+    seed_registry(registry)
+    seed_self_state(store)
+    pipeline = Pipeline(store, registry)
+    result = pipeline.run("heavy rain causes flooding", context_id="ctx")
+    seg = result.semantic_event_graph
+    assert seg.causal_edges
+    edge = seg.causal_edges[0]
+    assert edge["cause_id"] == "heavy rain", f"Expected 'heavy rain', got {edge['cause_id']!r}"
+    assert edge["effect_id"] == "flooding"
+    assert any(e.get("entity_id") == "heavy rain" for e in seg.entity_refs)
