@@ -265,6 +265,7 @@ def process_input(
     # Phase 0: Graph-grounded DecisionRouter (primary decision mechanism)
     kind: ActionKind | None = None
     params: dict = {}
+    decision: DecisionPacket | None = None
     if pipeline_result.semantic_event_graph:
         decision_router = DecisionRouter(artifact_store=ArtifactStore(store))
         decision = decision_router.run(
@@ -416,6 +417,24 @@ def process_input(
     for sig in actionable_signals:
         if sig.salience >= 0.7 and sig.kind == SignalKind.REFLECTION:
             output += f"\n[{sig.kind.value}] {sig.content}"
+
+    # Export training data if CEMM_EXPORT_PATH is set
+    _export_path = os.environ.get("CEMM_EXPORT_PATH")
+    if _export_path and op_result.trace:
+        from .kernel.training_export import serialize_turn, write_turn_to_jsonl
+        turn_data = serialize_turn(
+            input_text=text,
+            output_text=output,
+            kernel=kernel,
+            input_signal=input_signal,
+            trace=op_result.trace,
+            semantic_event_graph=pipeline_result.semantic_event_graph,
+            grounded_graph=grounded_graph,
+            memory_packet=memory_packet,
+            inference_packet=inference_packet,
+            decision_packet=decision if decision and decision.confidence > 0 else None,
+        )
+        write_turn_to_jsonl(_export_path, turn_data)
 
     return output
 

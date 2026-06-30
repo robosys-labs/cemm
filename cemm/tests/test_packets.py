@@ -10,6 +10,7 @@ from cemm.types.packets import (
 )
 from cemm.types.semantic_event_graph import SemanticEventGraph, SemanticEdge
 from cemm.types.context_kernel import ContextKernel, TimeState, GoalState, MemoryState, Budget, Permission as KernelPermission
+from cemm.types.signal import Signal, SignalKind, SourceType
 from cemm.types.permission import Permission
 from cemm.kernel.grounding import GroundingPipeline
 from cemm.kernel.entity_resolver import EntityResolver
@@ -262,3 +263,78 @@ def test_pipeline_result_packet_fields():
     assert result.grounded_graph.semantic_event_graph_id == "gg1"
     assert result.memory_packet is not None
     assert "c1" in result.memory_packet.selected_claim_ids
+
+
+# ── packet IDs ────────────────────────────────────────────────
+
+
+def test_packets_have_auto_ids():
+    gg = GroundedGraph(semantic_event_graph_id="g1")
+    mp = MemoryPacket()
+    ip = InferencePacket()
+    ap = ActionPlan(action_kind="answer")
+    dp = DecisionPacket(action_kind="answer")
+    for pkt in [gg, mp, ip, ap, dp]:
+        assert pkt.id, f"{type(pkt).__name__} missing id"
+        assert len(pkt.id) == 16
+
+
+def test_packet_to_dict():
+    from cemm.types.packets import packet_to_dict
+    gg = GroundedGraph(semantic_event_graph_id="g1", entity_ids=["e1"])
+    d = packet_to_dict(gg)
+    assert d["semantic_event_graph_id"] == "g1"
+    assert d["entity_ids"] == ["e1"]
+    assert "id" in d
+
+
+# ── training export serialization ─────────────────────────────
+
+
+def test_serialize_turn():
+    from cemm.kernel.training_export import serialize_turn, write_turn_to_jsonl
+    import json, tempfile, os
+
+    kernel = ContextKernel(
+        id="tk", self_state_id="self",
+        time=TimeState(now=time.time()),
+        goal=GoalState(),
+        memory=MemoryState(),
+        budget=Budget(),
+        permission=Permission.public(),
+    )
+    signal = Signal(
+        id="sig_1", kind=SignalKind.INPUT,
+        source_id="user", source_type=SourceType.USER,
+        content="hello", observed_at=time.time(),
+        context_id="c1", salience=0.8, trust=0.9,
+        permission=Permission.public(),
+    )
+
+    from cemm.types.trace import Trace
+    trace = Trace(context_id="c1", grounded_graph_id="gg1")
+    gg = GroundedGraph(semantic_event_graph_id="seg1")
+
+    result = serialize_turn(
+        input_text="hello",
+        output_text="hi there",
+        kernel=kernel,
+        input_signal=signal,
+        trace=trace,
+        grounded_graph=gg,
+    )
+    assert result["task_type"] == "full_turn_export"
+    assert result["payload"]["input_text"] == "hello"
+    assert result["payload"]["grounded_graph"]["semantic_event_graph_id"] == "seg1"
+    assert result["payload"]["trace"]["grounded_graph_id"] == "gg1"
+
+    # Test JSONL write
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
+        tmppath = f.name
+    try:
+        write_turn_to_jsonl(tmppath, result)
+        with open(tmppath) as f:
+            line = json.loads(f.readline())
+        assert line["task_type"] == "full_turn_export"
+    finally:
+        os.unlink(tmppath)

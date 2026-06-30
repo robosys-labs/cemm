@@ -70,8 +70,8 @@ class ActionPlan:
 
 @dataclass
 class DecisionPacket:
-    id: str = field(default_factory=_gen_id)
     action_kind: str
+    id: str = field(default_factory=_gen_id)
     semantic_answer_graph_id: str | None = None
     action_plan: ActionPlan | None = None
     confidence: float = 0.5
