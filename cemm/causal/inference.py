@@ -3,6 +3,7 @@ from ..store.store import Store
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.claim import Claim
 from ..types.context_kernel import ContextKernel
+from ..types.packets import InferencePacket
 
 
 class CausalInference:
@@ -14,7 +15,7 @@ class CausalInference:
         action_or_event: str,
         active_claim_ids: list[str],
         kernel: ContextKernel,
-    ) -> list[dict]:
+    ) -> InferencePacket:
         models = self._store.models.find_by_kind(
             ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value,
         )
@@ -37,7 +38,18 @@ class CausalInference:
 
         predictions.sort(key=lambda p: p["confidence"], reverse=True)
         max_ranked = kernel.budget.max_ranked
-        return predictions[:max_ranked]
+        predictions = predictions[:max_ranked]
+
+        confidence = sum(p["confidence"] for p in predictions) / max(len(predictions), 1) if predictions else 0.5
+
+        return InferencePacket(
+            implications=[],
+            contradictions=[],
+            predictions=predictions,
+            missing_slots=list(kernel.goal.missing_slots) if kernel.goal else [],
+            state_deltas={},
+            confidence=confidence,
+        )
 
     def transitive_closure(
         self,
@@ -45,7 +57,7 @@ class CausalInference:
         kernel: ContextKernel,
         max_depth: int = 3,
         confidence_floor: float = 0.3,
-    ) -> list[dict]:
+    ) -> InferencePacket:
         all_predictions: list[dict] = []
         current_ids = list(start_claim_ids)
         visited_claims: set[str] = set(start_claim_ids)
@@ -60,8 +72,8 @@ class CausalInference:
                 claim = self._store.claims.get(cid)
                 if claim is None:
                     continue
-                predictions = self.predict(claim.predicate, [cid], kernel)
-                for p in predictions:
+                packet = self.predict(claim.predicate, [cid], kernel)
+                for p in packet.predictions:
                     if p["confidence"] < confidence_floor:
                         continue
                     pred_id = p["predicate"]
@@ -76,7 +88,16 @@ class CausalInference:
             depth += 1
             if len(all_predictions) >= kernel.budget.max_ranked:
                 break
-        return all_predictions[:kernel.budget.max_ranked]
+        all_predictions = all_predictions[:kernel.budget.max_ranked]
+        confidence = sum(p["confidence"] for p in all_predictions) / max(len(all_predictions), 1) if all_predictions else 0.5
+        return InferencePacket(
+            implications=[],
+            contradictions=[],
+            predictions=all_predictions,
+            missing_slots=[],
+            state_deltas={},
+            confidence=confidence,
+        )
 
     @staticmethod
     def _preconditions_match(model: Model, claims: list[Claim], action: str) -> bool:
