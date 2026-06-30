@@ -62,6 +62,7 @@ class SemanticInterpreter:
         claim_refs = self._lookup_claim_refs(entity_refs, kernel)
         claim_candidates = self._extract_claim_candidates_from_atoms(signal.content, processes, entity_refs)
         model_refs = self._lookup_model_refs(processes)
+        action_refs = self._extract_action_refs(processes)
         temporal_edges = self._extract_temporal_edges_from_atoms(processes, entity_refs)
         causal_edges = self._extract_causal_edges_from_atoms(processes, entity_refs)
 
@@ -75,7 +76,7 @@ class SemanticInterpreter:
             claim_refs=claim_refs,
             claim_candidates=claim_candidates,
             model_refs=model_refs,
-            action_refs=[],
+            action_refs=action_refs,
             temporal_edges=temporal_edges,
             causal_edges=causal_edges,
             permission_scope=kernel.permission.scope.value,
@@ -165,6 +166,14 @@ class SemanticInterpreter:
             frame_key = proc.get("frame_key", "")
             if not frame_key:
                 continue
+            # Prefer registry-key lookup first, then fall back to name search.
+            model = self._store.models.find_by_registry_key(frame_key)
+            if model and model.id not in seen:
+                model_ids.append(model.id)
+                seen.add(model.id)
+                if len(model_ids) >= 10:
+                    break
+                continue
             models = self._store.models.find_by_name(frame_key)
             for m in models:
                 if m.id not in seen:
@@ -175,6 +184,25 @@ class SemanticInterpreter:
             if len(model_ids) >= 10:
                 break
         return model_ids
+
+    def _extract_action_refs(self, processes: list[dict[str, Any]]) -> list[str]:
+        """Map actionable processes to action references for downstream routing."""
+        action_keys = {
+            "command_remember": "remember",
+            "command_reflect": "reflect",
+            "command_retrieve": "retrieve",
+            "greeting": "greeting",
+            "session_exit": "session_exit",
+        }
+        refs: list[str] = []
+        seen: set[str] = set()
+        for proc in processes:
+            frame_key = proc.get("frame_key", "")
+            action = action_keys.get(frame_key)
+            if action and action not in seen:
+                refs.append(action)
+                seen.add(action)
+        return refs
 
     def _extract_temporal_edges_from_atoms(
         self, processes: list[dict[str, Any]], entity_refs: list[dict[str, Any]],
