@@ -221,6 +221,28 @@ class Pipeline:
             inference_packet=inference_packet,
             decision_packet=decision_packet,
         )
+        # Validate runtime packets against schemas
+        from ..kernel.packet_validator import validate_packet
+        from dataclasses import asdict
+
+        validation_errors: list[str] = []
+        if result.semantic_event_graph:
+            validation_errors.extend(validate_packet(asdict(result.semantic_event_graph), "semantic_event_graph") or [])
+        if result.grounded_graph:
+            validation_errors.extend(validate_packet(asdict(result.grounded_graph), "grounded_graph") or [])
+        if result.memory_packet:
+            validation_errors.extend(validate_packet(asdict(result.memory_packet), "memory_packet") or [])
+        if result.inference_packet:
+            validation_errors.extend(validate_packet(asdict(result.inference_packet), "inference_packet") or [])
+        if result.decision_packet:
+            validation_errors.extend(validate_packet(asdict(result.decision_packet), "decision_packet") or [])
+        if validation_errors:
+            result.abstained = True
+            if result.kernel is not None:
+                result.kernel.self_view.recent_error_rate = min(
+                    1.0, result.kernel.self_view.recent_error_rate + 0.1
+                )
+
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0
         return result
