@@ -7,7 +7,7 @@ from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
 from ..types.context_kernel import ContextKernel
 from ..types.semantic_event_graph import SemanticEventGraph
-from ..types.packets import GroundedGraph, MemoryPacket
+from ..types.packets import GroundedGraph, MemoryPacket, RankingTraceEntry
 from ..types.self_view import SelfView
 from ..types.permission import Permission
 from ..store.store import Store
@@ -127,7 +127,7 @@ class Pipeline:
         self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
         # Ground entities, time, frame, permission
-        self._grounding_pipeline.run(semantic_event_graph, kernel)
+        grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel)
 
         # Seed entity IDs from graph for graph-grounded retrieval
         for ref in semantic_event_graph.entity_refs:
@@ -155,6 +155,21 @@ class Pipeline:
         kernel.world.active_claim_ids = kernel.memory.working_claim_ids
         kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
 
+        memory_packet = MemoryPacket(
+            selected_signal_ids=[signal.id],
+            selected_claim_ids=list(kernel.memory.working_claim_ids),
+            selected_model_ids=list(kernel.memory.candidate_model_ids),
+            ranking_trace=[
+                RankingTraceEntry(
+                    candidate_id=c.id,
+                    score=s,
+                    reason=f"ranked {s:.3f}",
+                )
+                for c, s in (ranked_claims if isinstance(ranked_claims, list) else [])
+            ] if ranked_claims else [],
+            confidence=sum(s for _, s in ranked_claims[:5]) / max(len(ranked_claims[:5]), 1) if ranked_claims else 0.5,
+        )
+
         self._check_budget(kernel, start)
 
         result = PipelineResult(
@@ -162,6 +177,8 @@ class Pipeline:
             ranked_claim_ids=kernel.memory.working_claim_ids,
             ranked_model_ids=[m.id for m in retrieval_result.models],
             semantic_event_graph=semantic_event_graph,
+            grounded_graph=grounded_graph,
+            memory_packet=memory_packet,
         )
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0
