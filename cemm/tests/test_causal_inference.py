@@ -52,3 +52,14 @@ def test_causal_inference_populates_predictions():
     assert result is not None
     assert result.inference_packet is not None
     assert any("flood" in p.get("predicate", "").lower() for p in result.inference_packet.predictions), result.inference_packet.predictions
+
+
+def test_simulation_runs_for_causal_input():
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup()
+    output = process_input("rain causes flooding", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    result = recursive_loop._last_result
+    assert result is not None
+    assert result.semantic_event_graph is not None
+    assert result.semantic_event_graph.causal_edges
+    assert result.inference_packet is not None
+    assert result.inference_packet.predictions
