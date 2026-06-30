@@ -28,17 +28,18 @@ class SimulationEngine:
         kernel: ContextKernel,
     ) -> SimulationResult:
         start = time.time()
-        predictions = self._inference.predict(
+        packet = self._inference.predict(
             action_or_event,
             kernel.world.active_claim_ids,
             kernel,
         )
+        preds = packet.predictions
         signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.SIMULATION_RESULT,
             source_id="simulation_engine",
             source_type=SourceType.SIMULATOR,
-            content=f"Simulation result for '{action_or_event}': {len(predictions)} predictions",
+            content=f"Simulation result for '{action_or_event}': {len(preds)} predictions",
             observed_at=time.time(),
             context_id=kernel.id,
             salience=0.5,
@@ -46,12 +47,12 @@ class SimulationEngine:
             permission=kernel.permission,
         )
         self._store.signals.put(signal)
-        model_ids = list({p["model_id"] for p in predictions if "model_id" in p})
+        model_ids = list({p["model_id"] for p in preds if "model_id" in p})
         return SimulationResult(
             signal_id=signal.id,
             model_ids=model_ids,
             input_claim_ids=kernel.world.active_claim_ids,
-            predicted_claims=predictions,
-            confidence=0.5 if not predictions else sum(p["confidence"] for p in predictions) / len(predictions),
+            predicted_claims=preds,
+            confidence=0.5 if not preds else sum(p["confidence"] for p in preds) / len(preds),
             cost_ms=(time.time() - start) * 1000.0,
         )

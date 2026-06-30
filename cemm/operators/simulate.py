@@ -18,7 +18,8 @@ class SimulateOperator(BaseOperator):
         engine = CausalInference(ctx.store)
         action_or_event = ctx.params.get("action_or_event", "")
         active_claim_ids = ctx.selected_claim_ids or ctx.kernel.world.active_claim_ids
-        predictions = engine.predict(action_or_event, active_claim_ids, ctx.kernel)
+        packet = engine.predict(action_or_event, active_claim_ids, ctx.kernel)
+        predictions = packet.predictions
 
         output = f"Simulated: {action_or_event}\n"
         for p in predictions:
