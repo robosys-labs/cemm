@@ -5,9 +5,11 @@ from ..types.trace import Trace
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
+from ..latent.encoder import LatentEncoder
 import time, uuid
 
 _pipeline = RealizationPipeline()
+_latent_encoder = LatentEncoder()
 
 
 class AnswerOperator(BaseOperator):
@@ -29,6 +31,11 @@ class AnswerOperator(BaseOperator):
         # Propagate confidence from kernel self-view uncertainty to SAG
         seg_confidence = ctx.params.get("seg_confidence", 0.0)
         sag_confidence = max(seg_confidence, 1.0 - ctx.kernel.self_view.uncertainty) if seg_confidence > 0 else max(0.5, 1.0 - ctx.kernel.self_view.uncertainty)
+        answer_latent = _latent_encoder.encode_answer(
+            intent=intent or ("abstain" if not selected_claims else "answer"),
+            selected_claim_ids=selected_claims,
+            selected_model_ids=ctx.selected_model_ids or [],
+        )
         answer_graph = SemanticAnswerGraph(
             id=uuid.uuid4().hex[:16],
             intent=intent or ("abstain" if not selected_claims else "answer"),
@@ -37,6 +44,7 @@ class AnswerOperator(BaseOperator):
             selected_claim_ids=selected_claims,
             selected_model_ids=ctx.selected_model_ids or [],
             confidence=sag_confidence,
+            answer_latent=answer_latent,
         )
         simulation_claims = ctx.params.get("simulation_claims")
         if simulation_claims:
@@ -47,6 +55,9 @@ class AnswerOperator(BaseOperator):
             })
         result = _pipeline.run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
         if not result.success:
+            abstain_latent = _latent_encoder.encode_answer(
+                intent="abstain", selected_claim_ids=[], selected_model_ids=[],
+            )
             result = _pipeline.run(
                 SemanticAnswerGraph(
                     id=uuid.uuid4().hex[:16],
@@ -54,6 +65,7 @@ class AnswerOperator(BaseOperator):
                     source_signal_ids=[ctx.input_signal.id],
                     context_id=ctx.kernel.id,
                     confidence=sag_confidence,
+                    answer_latent=abstain_latent,
                 ),
                 ctx.kernel, ctx.store, ctx.registry,
             )
