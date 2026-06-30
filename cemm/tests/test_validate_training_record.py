@@ -79,3 +79,51 @@ def test_validate_synthesis_verification_passes_complete() -> None:
         "output_text": "some output",
         "selected_evidence": {"claim_ids": ["c1"]},
     })
+
+
+def test_validate_self_state_update_requires_self_state() -> None:
+    with pytest.raises(ValueError, match="missing self_state"):
+        validate_training_record("self_state_update", {"context_kernel": {"id": "test"}})
+
+
+def test_validate_memory_retrieval_ranking_requires_memory_packet() -> None:
+    with pytest.raises(ValueError, match="missing memory_packet"):
+        validate_training_record("memory_retrieval_ranking", {"context_kernel": {"id": "test"}})
+
+
+def test_validate_causal_rule_extraction_requires_inference_packet() -> None:
+    with pytest.raises(ValueError, match="missing inference_packet"):
+        validate_training_record("causal_rule_extraction", {
+            "context_kernel": {"id": "test"},
+            "semantic_event_graph": {"id": "seg1"},
+        })
+
+
+def test_validate_verifier_calibration_requires_output_text_and_evidence() -> None:
+    with pytest.raises(ValueError, match="missing output_text"):
+        validate_training_record("verifier_calibration", {"context_kernel": {"id": "test"}})
+    with pytest.raises(ValueError, match="missing selected_evidence"):
+        validate_training_record("verifier_calibration", {
+            "context_kernel": {"id": "test"},
+            "output_text": "some output",
+        })
+
+
+def test_validate_claim_canonicalization_requires_seg() -> None:
+    with pytest.raises(ValueError, match="missing semantic_event_graph"):
+        validate_training_record("claim_canonicalization", {"context_kernel": {"id": "test"}})
+
+
+def test_validate_contradiction_detection_requires_sag() -> None:
+    with pytest.raises(ValueError, match="missing semantic_answer_graph"):
+        validate_training_record("contradiction_detection", {"context_kernel": {"id": "test"}})
+
+
+def test_validate_structural_induction_requires_seg() -> None:
+    with pytest.raises(ValueError, match="missing semantic_event_graph"):
+        validate_training_record("structural_induction", {"context_kernel": {"id": "test"}})
+
+
+def test_validate_ranking_judgment_requires_memory_packet() -> None:
+    with pytest.raises(ValueError, match="missing memory_packet"):
+        validate_training_record("ranking_judgment", {"context_kernel": {"id": "test"}})

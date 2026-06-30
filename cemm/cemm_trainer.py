@@ -486,6 +486,40 @@ SAG_REQUIRED_TASKS = {
     "operator_selection",
 }
 
+SELF_REQUIRED_TASKS = {
+    "self_state_update",
+}
+
+MEMORY_REQUIRED_TASKS = {
+    "memory_retrieval_ranking",
+}
+
+INFERENCE_REQUIRED_TASKS = {
+    "next_event_prediction",
+    "causal_effect_prediction",
+    "causal_rule_extraction",
+}
+
+CONTRADICTION_REQUIRED_TASKS = {
+    "contradiction_detection",
+}
+
+VERIFIER_REQUIRED_TASKS = {
+    "verifier_calibration",
+}
+
+CANONICALIZATION_REQUIRED_TASKS = {
+    "claim_canonicalization",
+}
+
+STRUCTURAL_INDUCTION_REQUIRED_TASKS = {
+    "structural_induction",
+}
+
+RANKING_JUDGMENT_REQUIRED_TASKS = {
+    "ranking_judgment",
+}
+
 
 def validate_training_record(task_type: str, payload: dict) -> None:
     if "context_kernel" not in payload:
@@ -497,6 +531,25 @@ def validate_training_record(task_type: str, payload: dict) -> None:
     if task_type in SAG_REQUIRED_TASKS and "semantic_answer_graph" not in payload:
         required_by = "text->answer" if task_type == "text_to_answer" else task_type
         raise ValueError(f"{task_type}: missing SemanticAnswerGraph (required to prevent {required_by} training)")
+    if task_type in SELF_REQUIRED_TASKS and "self_state" not in payload:
+        raise ValueError(f"{task_type}: missing self_state")
+    if task_type in MEMORY_REQUIRED_TASKS and "memory_packet" not in payload:
+        raise ValueError(f"{task_type}: missing memory_packet")
+    if task_type in INFERENCE_REQUIRED_TASKS and "inference_packet" not in payload:
+        raise ValueError(f"{task_type}: missing inference_packet")
+    if task_type in CONTRADICTION_REQUIRED_TASKS and "semantic_answer_graph" not in payload:
+        raise ValueError(f"{task_type}: missing semantic_answer_graph")
+    if task_type in VERIFIER_REQUIRED_TASKS:
+        if "output_text" not in payload:
+            raise ValueError(f"{task_type}: missing output_text")
+        if "selected_evidence" not in payload:
+            raise ValueError(f"{task_type}: missing selected_evidence")
+    if task_type in CANONICALIZATION_REQUIRED_TASKS and "semantic_event_graph" not in payload:
+        raise ValueError(f"{task_type}: missing semantic_event_graph")
+    if task_type in STRUCTURAL_INDUCTION_REQUIRED_TASKS and "semantic_event_graph" not in payload:
+        raise ValueError(f"{task_type}: missing semantic_event_graph")
+    if task_type in RANKING_JUDGMENT_REQUIRED_TASKS and "memory_packet" not in payload:
+        raise ValueError(f"{task_type}: missing memory_packet")
     if task_type == "synthesis_verification":
         if "output_text" not in payload:
             raise ValueError("synthesis_verification: missing output_text")
