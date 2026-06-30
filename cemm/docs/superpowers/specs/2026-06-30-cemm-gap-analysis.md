@@ -72,20 +72,20 @@ The codebase has a solid semantic substrate: 18 type definitions, 11 operators, 
 
 | ID | Gap | Location | Root Cause | Status |
 |---|---|---|---|---|
-| G25 | SemanticEventGraph shallow population — no temporal/causal/claim/model edges | `kernel/semantic_interpreter.py:38-48` | `SemanticInterpreter.run()` only populates `entity_refs`, `processes`, `states` from UOL atoms. `claim_refs`, `claim_candidates`, `model_refs`, `action_refs`, `temporal_edges`, `causal_edges` are always empty. | **OPEN** — Critical: downstream `CausalInference` is gated on `graph.causal_edges` (`__main__.py:259`), which is always empty, so causal inference never fires. `SimulationEngine` is also gated on `graph.causal_edges` (`__main__.py:262`), so simulation never runs. |
-| G26 | No typed latent spaces exist | N/A | Architecture defines 10 typed latent spaces (entity, process, state, claim, model, context, self, memory, action, answer). No `LatentSpaceSpec`, no latent encoders, no latent training. `SemanticAnswerGraph.answer_latent` is always `[]`. | **OPEN** — Critical: the "trainable component that learns LLM-like behavior over higher-order meaning" does not exist. |
-| G27 | Two parallel runtimes with divergent schemas, kernels, and stub functions | `cemm_runtime_router.py` vs `__main__.py` + `kernel/pipeline.py` | Basic runtime uses deprecated dict-based `ContextKernel`, has stub functions (`map_uol` returns `{"uol_atoms": [], "semantic_cluster_key": "utterance"}`, `extract_claim` returns `None`, `find_recall_predicate` returns `None`, `route` always returns abstain at 0.4). Full package runtime uses typed `ContextKernel` with proper pipeline. | **OPEN** — Critical: basic runtime is non-functional for semantic processing. Training data exported from basic runtime has empty UOL atoms and no real semantic graphs. |
-| G28 | `PipelineResult` missing `inference_packet` and `decision_packet` fields | `kernel/pipeline.py:31-43` | Pipeline only carries `semantic_event_graph`, `grounded_graph`, `memory_packet`. Infer/Decide happen in `process_input()`, not in pipeline. | **OPEN** — Violates `runtime-packet-construction-design.md` spec. |
-| G29 | Trace never sets `semantic_event_graph_id` | `operators/answer.py:96-99`, `operators/abstain.py:64` | Operators set `semantic_answer_graph_id` but not `semantic_event_graph_id`. The field exists in `Trace` but is never populated by any operator. | **OPEN** — Breaks traceability chain from input signal to semantic event graph. |
-| G30 | 16 of 19 `InvariantGuard` checks never called at runtime | `kernel/invariant_guard.py`, `kernel/recursive_loop.py:56-59` | Only 3 checks called in `RecursiveLoop.run_once()`: `check_action_has_trace`, `check_memory_mutation_has_trace`, `check_recursive_budget`. The other 16 checks exist but are never invoked. | **OPEN** — Architecture invariants are documented but not enforced at runtime. |
-| G31 | `emit_training_example` in basic runtime only emits for LLM strategy | `cemm_runtime_router.py:1066-1068` | `if strategy != "llm": return` — template-based turns are never exported for training. | **OPEN** — Training data from basic runtime is biased toward LLM fallback examples only. |
-| G32 | Context inference runs after Ground, not during Contextualize | `kernel/pipeline.py:129` | `ContextInferenceEngine.infer()` runs at line 129, after Interpret (line 109) and after Ground (line 126). Architecture places context inference as part of Contextualize, before Interpret. | **OPEN** — Context inference results not available during interpretation. |
-| G33 | `OnlineLearner.record_outcome` only called on success | `__main__.py:409-414` | `if op_result.success: online_learner.record_outcome(...)` — failures not recorded. | **OPEN** — Online trust learning has no negative signal. |
-| G34 | `RecursiveLoop._run_online_learning` only updates self state | `kernel/recursive_loop.py:201-204` | Only calls `self._learner.update_self_state()`. Source trust, operator reliability, and ranking weights are not updated despite architecture specifying them as safe online updates. | **OPEN** — Most online learning capabilities are unused. |
-| G35 | Two separate verifiers with inconsistent logic | `synthesis/verifier.py` vs `kernel/realization_verifier.py` | `SynthesisVerifier` checks empty output, disputed/retracted claims, no evidence. `realization_verifier` checks claim coverage, uncertainty preservation, private evidence protection. Operators run both sequentially with different criteria. | **OPEN** — Inconsistent verification behavior. |
-| G36 | Basic runtime `synthesize()` can call LLM directly, sending raw context JSON | `cemm_runtime_router.py:793-828` | Sends `dataclasses.asdict(context)` as user message to LLM, not SEG/SAG. Violates training architecture §2: "text → answer" is an invalid training shortcut. | **OPEN** — LLM fallback in basic runtime bypasses semantic architecture entirely. |
-| G37 | No JSON schema validators for runtime packet construction | `kernel/packet_validator.py` exists but only used by `scripts/validate_gold_examples.py` | Packet validator exists but is never called during runtime pipeline execution or training export. | **OPEN** — Packets are not validated at runtime. |
-| G38 | `_self_ref_patterns` in `process_input` includes overly broad patterns | `__main__.py:197` | `"you"` and `"yourself"` in pattern list match any text containing these common words, injecting self entity unnecessarily. | **OPEN** — May cause false self-referential detection for normal queries. |
+| G25 | SemanticEventGraph shallow population — no temporal/causal/claim/model edges | `kernel/semantic_interpreter.py:38-48` | `SemanticInterpreter` now populates `claim_refs`, `claim_candidates`, `model_refs`, `action_refs`, `temporal_edges`, and `causal_edges`. For causal/temporal inputs without entity atoms, it infers source/cause and target/effect entity refs from the text. | **FIXED** — downstream CausalInference and Simulation are no longer gated on empty `causal_edges`. |
+| G26 | No typed latent spaces exist | N/A | Added `LatentSpaceSpec`, `TypedLatents`, and `LatentEncoder` under `cemm/latent/`. `AnswerOperator` populates `SemanticAnswerGraph.answer_latent`. The existing `training/tl1_hash_encoder.py` provides the deterministic baseline. | **FIXED** — Runtime typed latent space types and encoder exist; answer latents are populated. |
+| G27 | Two parallel runtimes with divergent schemas, kernels, and stub functions | `cemm_runtime_router.py` vs `__main__.py` + `kernel/pipeline.py` | The basic runtime file is archived under `docs/archive/`. The active runtime is `__main__.py` + `kernel/pipeline.py`. | **ARCHIVED** — Basic runtime is no longer active; future work should remove the archived file or merge useful parts. |
+| G28 | `PipelineResult` missing `inference_packet` and `decision_packet` fields | `kernel/pipeline.py:31-43` | `PipelineResult` now carries `inference_packet` and `decision_packet`, populated by `CausalInference` and `DecisionRouter` inside the pipeline. | **FIXED** — Satisfies `runtime-packet-construction-design.md` spec. |
+| G29 | Trace never sets `semantic_event_graph_id` | `operators/answer.py:96-99`, `operators/abstain.py:64` | All operators now pass `semantic_event_graph_id=ctx.semantic_event_graph_id` in their `Trace` constructors. | **FIXED** — Traceability chain is preserved. |
+| G30 | 16 of 19 `InvariantGuard` checks never called at runtime | `kernel/invariant_guard.py`, `kernel/recursive_loop.py:56-59` | `process_input` now calls `check_synthesis_verification`, `check_action_has_trace`, `check_memory_mutation_has_trace`, `check_response_has_input_signal`, `check_self_mutation_has_trace`, `check_self_mode_change_has_trace`, and per-claim checks for private/disputed/stale claims. | **FIXED** — Most relevant checks are now invoked at runtime. |
+| G31 | `emit_training_example` in basic runtime only emits for LLM strategy | `cemm_runtime_router.py:1066-1068` | Basic runtime is archived. Full runtime uses `training_export.py` for all operator traces. | **ARCHIVED** — Not applicable to active code. |
+| G32 | Context inference runs after Ground, not during Contextualize | `kernel/pipeline.py:129` | Pipeline reordered: `ContextInferenceEngine.infer()` runs before Interpret and Ground. | **FIXED** — Context inference results are available during interpretation. |
+| G33 | `OnlineLearner.record_outcome` only called on success | `__main__.py:409-414` | `record_outcome` is now called for both success and failure outcomes. | **FIXED** — Online trust learning receives both positive and negative signals. |
+| G34 | `RecursiveLoop._run_online_learning` only updates self state | `kernel/recursive_loop.py:201-204` | `RecursiveLoop._run_online_learning` now calls `update_self_state`, `update_source_trust`, `update_operator_reliability`, and `update_ranking_weights` (last two are minimal hooks). | **FIXED** — All four online learning updates are invoked per turn. |
+| G35 | Two separate verifiers with inconsistent logic | `synthesis/verifier.py` vs `kernel/realization_verifier.py` | `SynthesisVerifier` is now a thin wrapper that delegates to `kernel.realization_verifier.verify`. | **FIXED** — Single verification code path. |
+| G36 | Basic runtime `synthesize()` can call LLM directly, sending raw context JSON | `cemm_runtime_router.py:793-828` | Basic runtime is archived. Full runtime uses `RealizationPipeline` with SAG verification. | **ARCHIVED** — Not applicable to active code. |
+| G37 | No JSON schema validators for runtime packet construction | `kernel/packet_validator.py` exists but only used by `scripts/validate_gold_examples.py` | `Pipeline.run` now validates `semantic_event_graph`, `grounded_graph`, `memory_packet`, `inference_packet`, and `decision_packet` against `PACKET_SCHEMAS` after construction. | **FIXED** — Packets are validated at runtime. |
+| G38 | `_self_ref_patterns` in `process_input` includes overly broad patterns | `__main__.py:197` | Patterns narrowed to explicit self-reference phrases; `UOLMapper` also restricts second-person pronoun→self mapping to the same phrase set. | **FIXED** — False positives for normal queries reduced. |
 
 ## Test Coverage Analysis
 
@@ -142,24 +142,25 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 ### What's wrong (verified):
 - `process_input()` routing cascade can still bypass SAG via Phase 2/3 fallbacks ✗
 - DecisionRouter abstain below threshold (0.5) is not authoritative ✗
-- Two parallel runtimes (basic + full) with divergent schemas ✗
-- Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) ✗
-- SemanticEventGraph never populated with temporal/causal/claim/model edges ✗
-- No typed latent spaces exist ✗
-- Causal inference never fires (empty `causal_edges`) ✗
-- Simulation never runs (empty `causal_edges`) ✗
-- `PipelineResult` missing `inference_packet` and `decision_packet` ✗
-- Trace never sets `semantic_event_graph_id` ✗
-- 16 of 19 InvariantGuard checks never called at runtime ✗
-- Context inference runs after Ground, not during Contextualize ✗
+- Two parallel runtimes (basic + full) with divergent schemas — basic runtime archived, but archived file still present ✗
+- Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived ✗
+- SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; can still be improved for multi-word entities and full NER ✗
+- No typed latent spaces exist — runtime types and encoder added; deeper CEMM-SLC integration remains ✗
+- Causal inference never fires (empty `causal_edges`) — now fires when causal edges present; needs real causal models to produce predictions ✗
+- Simulation never runs (empty `causal_edges`) — same as causal inference ✗
+- `PipelineResult` missing `inference_packet` and `decision_packet` ✓
+- Trace never sets `semantic_event_graph_id` ✓
+- 16 of 19 InvariantGuard checks never called at runtime — most relevant checks now called ✗
+- Context inference runs after Ground, not during Contextualize ✓
 - Training export can produce SAG-less records for non-answer/abstain operators ✗
 - 11 of 25 PROMPTS task types never produced by decomposition ✗
 - 18 of 25 PROMPTS task types produce no deployable records ✗
-- Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG ✗
-- `OnlineLearner.record_outcome` only on success ✗
-- Online learning only updates self state, not source trust or ranking weights ✗
-- Two separate verifiers with inconsistent logic ✗
-- No runtime packet validation ✗
+- Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG — archived ✗
+- `OnlineLearner.record_outcome` only on success ✓
+- Online learning only updates self state, not source trust or ranking weights ✓
+- Two separate verifiers with inconsistent logic ✓
+- `_self_ref_patterns` in `process_input` includes overly broad patterns ✓
+- No JSON schema validators for runtime packet construction ✓
 
 ## Recommended Fix Priority
 
