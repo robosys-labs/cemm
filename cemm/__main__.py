@@ -316,9 +316,6 @@ def process_input(
         sim_result = sim_engine.simulate(text, kernel)
     predictions = inference_packet.predictions
 
-    if text.lower() in ("exit", "quit", "bye"):
-        return "Goodbye!"
-
     # DecisionRouter is the sole, authoritative decision mechanism.
     # No hardcoded fallbacks or confidence threshold bypass.
     kind: ActionKind | None = None

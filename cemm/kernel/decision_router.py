@@ -257,8 +257,8 @@ class DecisionRouter:
                     reason="context frame session_exit fallback",
                 )
 
-        # Short input or question mark: route to ask/answer
-        if input_text and len(input_text.strip()) <= 3:
+        # Short input fallback: only when the graph has no meaningful signal.
+        if input_text and len(input_text.strip()) <= 3 and graph.confidence < 0.3:
             return DecisionPacket(
                 action_kind="ask",
                 action_plan=ActionPlan(
@@ -268,7 +268,7 @@ class DecisionRouter:
                     risk=0.0,
                 ),
                 confidence=0.7,
-                reason="short input — clarification needed",
+                reason="short input with low graph confidence — clarification needed",
             )
 
         return DecisionPacket(

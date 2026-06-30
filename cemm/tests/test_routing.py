@@ -137,3 +137,14 @@ def test_process_input_empty_abstains() -> None:
         online_learner, recursive_loop, "test_session", [0],
     )
     assert output is not None
+
+
+def test_exit_input_routes_through_decision_router() -> None:
+    """Exit keywords should not be handled by a hardcoded return; they must go through the router."""
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup_routing_test()
+    output = process_input(
+        "bye", store, registry, op_registry, pipeline,
+        online_learner, recursive_loop, "test_session", [0],
+    )
+    assert output is not None
+    assert output != "Goodbye!", f"Hardcoded exit path still active: {output!r}"
