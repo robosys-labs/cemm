@@ -159,15 +159,15 @@ class Pipeline:
             selected_signal_ids=[signal.id],
             selected_claim_ids=list(kernel.memory.working_claim_ids),
             selected_model_ids=list(kernel.memory.candidate_model_ids),
-            ranking_trace=[
-                RankingTraceEntry(
-                    candidate_id=c.id,
-                    score=s,
-                    reason=f"ranked {s:.3f}",
-                )
-                for c, s in (ranked_claims if isinstance(ranked_claims, list) else [])
-            ] if ranked_claims else [],
-            confidence=sum(s for _, s in ranked_claims[:5]) / max(len(ranked_claims[:5]), 1) if ranked_claims else 0.5,
+    ranking_trace=[
+        RankingTraceEntry(
+            candidate_id=c.id,
+            score=s,
+            reason=f"ranked {s:.3f}",
+        )
+        for c, s in ranked_claims
+    ] if ranked_claims else [],
+            confidence=sum(s for _, s in ranked_claims[:5]) / len(ranked_claims[:5]) if ranked_claims else 0.5,
         )
 
         self._check_budget(kernel, start)
