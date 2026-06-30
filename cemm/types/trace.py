@@ -21,3 +21,10 @@ class Trace:
     confidence: float = 0.0
     cost_ms: float = 0.0
     fallback_used: bool = False
+    semantic_event_graph_id: str | None = None
+    semantic_answer_graph_id: str | None = None
+    grounded_graph_id: str | None = None
+    memory_packet_id: str | None = None
+    inference_packet_id: str | None = None
+    realization_strategy: str | None = None
+    realization_verified: bool = False

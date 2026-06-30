@@ -6,9 +6,12 @@ from ..types.signal import Signal, SignalKind, SourceType
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
 from ..types.context_kernel import ContextKernel
+from ..types.semantic_event_graph import SemanticEventGraph
+from ..types.packets import GroundedGraph, MemoryPacket
 from ..types.self_view import SelfView
 from ..types.permission import Permission
 from ..store.store import Store
+from ..store.artifact_store import ArtifactStore
 from ..registry import Registry
 from ..confidence.scoring import score_action
 from .context_kernel_builder import ContextKernelBuilder
@@ -18,6 +21,10 @@ from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from ..registry.uol_mapper import UOLMapper
 from .context_inference import ContextInferenceEngine
+from .semantic_interpreter import SemanticInterpreter
+from .grounding import GroundingPipeline
+from ..retrieval.structural import StructuralRetriever
+from ..retrieval.ranker import Ranker
 
 
 @dataclass
@@ -29,6 +36,11 @@ class PipelineResult:
     confidence: float = 0.0
     cost_ms: float = 0.0
     abstained: bool = False
+    ranked_claim_ids: list[str] = field(default_factory=list)
+    ranked_model_ids: list[str] = field(default_factory=list)
+    semantic_event_graph: SemanticEventGraph | None = None
+    grounded_graph: GroundedGraph | None = None
+    memory_packet: MemoryPacket | None = None
 
 
 class Pipeline:
@@ -44,7 +56,14 @@ class Pipeline:
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
         self._uol_mapper = UOLMapper(registry)
+        self._artifact_store = ArtifactStore(store)
+        self._semantic_interpreter = SemanticInterpreter(
+            self._uol_mapper, artifact_store=self._artifact_store,
+        )
+        self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
+        self._retriever = StructuralRetriever(store)
+        self._ranker = Ranker()
         self._turn_count: int = 0
 
     def run(
@@ -72,6 +91,9 @@ class Pipeline:
         self._turn_count += 1
         kernel = self._builder.from_signal(signal, turn_index=self._turn_count)
 
+        # Normalize (local var only, keep raw signal content stable)
+        normalized_content = self._normalizer.normalize_predicate(signal.content)
+
         if budget_override:
             for k, v in budget_override.items():
                 if hasattr(kernel.budget, k):
@@ -83,11 +105,8 @@ class Pipeline:
         else:
             kernel.self_view = SelfView()
 
-        self._resolver.resolve_self(kernel)
-        self._frames.apply_frame_rules(kernel)
-        context_inference = self._context_inference_engine.infer(signal, kernel)
-        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
-
+        # Interpret: SemanticEventGraph + UOL atoms
+        semantic_event_graph = self._semantic_interpreter.run(signal, kernel)
         semantics = interpret_signal(signal, kernel, self._store)
         if semantics is not None:
             uol_atoms = self._uol_mapper.map_signal(signal.content, kernel)
@@ -103,9 +122,47 @@ class Pipeline:
                     kernel.conversation.dynamics, semantics, kernel, signal.id
                 )
 
+        # Infer context from signal + graph + kernel (not raw text alone)
+        context_inference = self._context_inference_engine.infer(signal, kernel)
+        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
+
+        # Ground entities, time, frame, permission
+        self._grounding_pipeline.run(semantic_event_graph, kernel)
+
+        # Seed entity IDs from graph for graph-grounded retrieval
+        for ref in semantic_event_graph.entity_refs:
+            eid = ref.get("entity_id", "")
+            if eid and eid not in kernel.memory.working_entity_ids:
+                kernel.memory.working_entity_ids.append(eid)
+
+        # Retrieve claims and models
+        retrieval_result = self._retriever.retrieve_for_kernel(kernel)
+
+        # Graph-grounded retrieval enrichment
+        graph_result = self._retriever.retrieve_for_graph(semantic_event_graph, kernel)
+
+        # Merge: deduplicate by claim ID, prefer graph results
+        seen_ids = {c.id for c in retrieval_result.claims}
+        for c in graph_result.claims:
+            if c.id not in seen_ids:
+                retrieval_result.claims.append(c)
+                seen_ids.add(c.id)
+
+        # Rank claims and models with graph context
+        ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
+        ranked_models = self._ranker.rank_models(retrieval_result.models, kernel)
+        kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
+        kernel.world.active_claim_ids = kernel.memory.working_claim_ids
+        kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
+
         self._check_budget(kernel, start)
 
-        result = PipelineResult(kernel=kernel)
+        result = PipelineResult(
+            kernel=kernel,
+            ranked_claim_ids=kernel.memory.working_claim_ids,
+            ranked_model_ids=[m.id for m in retrieval_result.models],
+            semantic_event_graph=semantic_event_graph,
+        )
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0
         return result
