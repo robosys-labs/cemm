@@ -240,11 +240,13 @@ def process_input(
 
     # Self-referential detection: if input refers to the system, inject
     # self entity into kernel entity lists so self-knowledge claims are retrieved.
-    _self_ref_patterns = ("who are you", "what are you", "your name", "tell me about yourself",
-                          "what is your", "describe yourself", "introduce yourself",
-                          "who made you", "who created you", "what can you do",
-                          "about yourself", "about you", "your capabilities",
-                          "yourself", "cemm")
+    _self_ref_patterns = (
+        "who are you", "what are you", "what do you know", "what do you like",
+        "what do you think", "what do you prefer", "what do you want", "what do you need",
+        "tell me about yourself", "describe yourself", "introduce yourself",
+        "who made you", "who created you", "what can you do", "what is your name",
+        "your name", "your capabilities", "about yourself",
+    )
     text_lower = text.strip().lower()
     if any(pattern in text_lower for pattern in _self_ref_patterns):
         self_entity = store.entities.get("self_main")
