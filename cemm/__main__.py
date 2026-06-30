@@ -463,6 +463,20 @@ def process_input(
             guard.check_private_claim_used_with_permission(claim, kernel)
             guard.check_disputed_not_presented_certain(claim)
             guard.check_stale_claim_not_used(claim, kernel)
+            guard.check_claim_has_evidence(claim)
+    for model_id in ctx.selected_model_ids:
+        model = store.models.get(model_id)
+        if model:
+            guard.check_model_has_evidence(model)
+            guard.check_model_promoted_with_validation(model)
+    if op_result.new_claim_ids:
+        for claim_id in op_result.new_claim_ids:
+            claim = store.claims.get(claim_id)
+            if claim:
+                guard.check_prediction_not_presented_as_fact(claim)
+                if kernel.self_view.self_id:
+                    guard.check_insults_are_not_factual_claims(claim, kernel.self_view.self_id)
+                guard.check_temporary_frustration_not_persisted(claim)
     if guard.errors:
         for err in guard.errors:
             print(f"[INVARIANT] {err}", file=sys.stderr)

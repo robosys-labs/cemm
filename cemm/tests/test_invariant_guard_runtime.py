@@ -61,3 +61,54 @@ def test_invariant_guard_runs_after_operator_execution():
 
     assert "reset" in calls
     assert "check_action_has_trace" in calls
+
+
+def test_invariant_guard_checks_claim_evidence():
+    """Selected claims should have their evidence checked."""
+    from cemm.kernel.invariant_guard import InvariantGuard
+    calls = []
+    original_claim_check = InvariantGuard.check_claim_has_evidence
+
+    def capture_claim(cls, claim):
+        calls.append("check_claim_has_evidence")
+        return original_claim_check.__func__(cls, claim)
+
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup()
+    InvariantGuard.check_claim_has_evidence = classmethod(capture_claim)
+    try:
+        # First turn stores a claim
+        process_input("remember I like coffee", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+        # Second turn retrieves it as selected evidence
+        process_input("what do I like", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    finally:
+        InvariantGuard.check_claim_has_evidence = original_claim_check
+
+    assert "check_claim_has_evidence" in calls
+
+
+def test_invariant_guard_checks_new_claims():
+    """New claims created by RememberOperator should be checked for insults and simulation caps."""
+    from cemm.kernel.invariant_guard import InvariantGuard
+    calls = []
+    original_insult_check = InvariantGuard.check_insults_are_not_factual_claims
+    original_frustration_check = InvariantGuard.check_temporary_frustration_not_persisted
+
+    def capture_insult(cls, claim, self_id):
+        calls.append("check_insults_are_not_factual_claims")
+        return original_insult_check.__func__(cls, claim, self_id)
+
+    def capture_frustration(cls, claim):
+        calls.append("check_temporary_frustration_not_persisted")
+        return original_frustration_check.__func__(cls, claim)
+
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup()
+    InvariantGuard.check_insults_are_not_factual_claims = classmethod(capture_insult)
+    InvariantGuard.check_temporary_frustration_not_persisted = classmethod(capture_frustration)
+    try:
+        process_input("remember I like coffee", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    finally:
+        InvariantGuard.check_insults_are_not_factual_claims = original_insult_check
+        InvariantGuard.check_temporary_frustration_not_persisted = original_frustration_check
+
+    assert "check_insults_are_not_factual_claims" in calls
+    assert "check_temporary_frustration_not_persisted" in calls
