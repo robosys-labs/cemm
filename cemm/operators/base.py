@@ -18,6 +18,9 @@ class OperatorContext:
     registry: Registry
     selected_claim_ids: list[str] = field(default_factory=list)
     selected_model_ids: list[str] = field(default_factory=list)
+    grounded_graph_id: str | None = None
+    memory_packet_id: str | None = None
+    inference_packet_id: str | None = None
     params: dict = field(default_factory=dict)
     budget_override: dict | None = None
 

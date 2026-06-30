@@ -390,6 +390,9 @@ def process_input(
         registry=registry,
         selected_claim_ids=selected_claim_ids,
         selected_model_ids=selected_model_ids,
+        grounded_graph_id=grounded_graph.id if grounded_graph else None,
+        memory_packet_id=memory_packet.id if memory_packet else None,
+        inference_packet_id=inference_packet.id if inference_packet else None,
         params=params,
     )
     op_result = op_registry.execute(kind, ctx)
