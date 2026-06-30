@@ -68,9 +68,10 @@ def _row_to_claim(row: sqlite3.Row) -> Claim:
 
 
 class ClaimStore:
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: sqlite3.Connection, store: object = None) -> None:
         self.conn = conn
         self._cache: dict[str, Claim] = {}
+        self._parent_store = store
 
     def put(self, claim: Claim) -> None:
         perm = claim.permission or Permission.public()
@@ -113,7 +114,7 @@ class ClaimStore:
         self._cache[claim.id] = claim
 
         from ..causal.temporal import derive_temporal_relations
-        temporal_relations = derive_temporal_relations(claim, self)
+        temporal_relations = derive_temporal_relations(claim, self._parent_store or self)
         for tr in temporal_relations:
             tc = Claim(
                 id=f"temp_{claim.id}_{tr.object_claim_id}",

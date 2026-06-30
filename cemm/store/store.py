@@ -23,7 +23,7 @@ class Store:
         create_indexes(self.conn)
         self.signals = SignalStore(self.conn)
         self.entities = EntityStore(self.conn)
-        self.claims = ClaimStore(self.conn)
+        self.claims = ClaimStore(self.conn, store=self)
         self.models = ModelStore(self.conn)
         self.actions = ActionStore(self.conn)
         self.self_store = SelfStore(self.conn)

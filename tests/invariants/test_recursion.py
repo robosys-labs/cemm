@@ -15,7 +15,7 @@ def test_recursive_budget_check():
     learner = OnlineLearner(store.source_trust, store.self_store, store.claims)
     inductor = Inductor(store)
     loop = RecursiveLoop(pipeline, store, learner, inductor)
-    kernel, signals = loop.run_once("test", "inv_rec")
+    kernel, signals, actionable = loop.run_once("test", "inv_rec")
     assert kernel is not None
     guard = InvariantGuard()
     guard.reset()

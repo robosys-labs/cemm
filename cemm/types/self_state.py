@@ -57,4 +57,4 @@ class SelfState:
     current_context_id: str | None = None
     last_reflection_signal_id: str | None = None
     updated_at: float = 0.0
-    version: str = "erca.self.v1"
+    version: str = "cemm.self.v1"

@@ -40,13 +40,15 @@ class RecursiveLoop:
         self,
         input_text: str,
         context_id: str,
-    ) -> tuple[ContextKernel | None, list[Signal]]:
+    ) -> tuple[ContextKernel | None, list[Signal], list[Signal]]:
         result = self._pipeline.run(input_text, context_id=context_id)
+        self._last_result = result
         kernel = result.kernel
         if kernel is None:
-            return None, []
+            return None, [], []
 
         internal_signals = [s for s in result.signals if s.kind in self._INTERNAL_SIGNAL_KINDS]
+        actionable_signals: list[Signal] = []
 
         from .invariant_guard import InvariantGuard
         guard = InvariantGuard()
@@ -59,8 +61,9 @@ class RecursiveLoop:
         self._run_online_learning(kernel, result)
 
         if kernel.budget.max_recursive_steps > 0:
-            recursion_depth = 0
-            while recursion_depth < kernel.budget.max_recursive_steps:
+            remaining_steps = kernel.budget.max_recursive_steps
+            remaining_latency = kernel.budget.latency_target_ms
+            while remaining_steps > 0 and remaining_latency > 0:
                 triggers = self._find_recursion_triggers(kernel, result.actions)
                 if not triggers:
                     break
@@ -68,17 +71,66 @@ class RecursiveLoop:
                 for trigger in triggers:
                     if trigger.salience < 0.3:
                         continue
+                    remaining_steps -= 1
+                    child_budget = kernel.budget.clone()
+                    child_budget.latency_target_ms = remaining_latency
+                    child_budget.max_recursive_steps = remaining_steps
                     sub_result = self._pipeline.run(
                         trigger.content,
                         context_id=context_id,
+                        budget_override={
+                            "latency_target_ms": remaining_latency,
+                            "max_recursive_steps": remaining_steps,
+                            "max_entities": child_budget.max_entities,
+                            "max_claims": child_budget.max_claims,
+                            "max_models": child_budget.max_models,
+                            "max_ranked": child_budget.max_ranked,
+                            "max_actions": child_budget.max_actions,
+                            "allow_dense_fallback": child_budget.allow_dense_fallback,
+                            "allow_simulation": child_budget.allow_simulation,
+                        },
                     )
+                    remaining_latency -= sub_result.cost_ms
+                    if remaining_steps <= 0 or remaining_latency <= 0:
+                        abort_signal = Signal(
+                            id=f"abort_{context_id}_{remaining_steps}",
+                            kind=SignalKind.SYSTEM,
+                            source_id="recursive_loop",
+                            source_type=SourceType.SYSTEM,
+                            content=f"Recursion aborted: budget exhausted (steps={remaining_steps}, latency={remaining_latency:.1f}ms)",
+                            observed_at=time.time(),
+                            context_id=context_id,
+                            salience=0.9,
+                            trust=1.0,
+                            permission=kernel.permission,
+                        )
+                        self._store.signals.put(abort_signal)
+                        break
+                    budget_signal = Signal(
+                        id=f"budget_{trigger.id}_{remaining_steps}",
+                        kind=SignalKind.TRACE,
+                        source_id="recursive_loop",
+                        source_type=SourceType.SYSTEM,
+                        content=f"Budget after child: remaining_steps={remaining_steps}, remaining_latency={remaining_latency:.1f}ms, child_cost={sub_result.cost_ms:.1f}ms",
+                        observed_at=time.time(),
+                        context_id=context_id,
+                        salience=0.3,
+                        trust=1.0,
+                        permission=kernel.permission,
+                    )
+                    self._store.signals.put(budget_signal)
                     if sub_result.kernel:
                         new_signals.extend(sub_result.signals)
                         internal_signals.extend(
                             s for s in sub_result.signals
                             if s.kind in self._INTERNAL_SIGNAL_KINDS
                         )
-                recursion_depth += 1
+                    if sub_result.signals:
+                        for sig in sub_result.signals:
+                            if sig.salience >= 0.6:
+                                actionable_signals.append(sig)
+                if remaining_steps <= 0:
+                    break
 
         if self._induction_turn_count % 10 == 0:
             self._run_induction(kernel)
@@ -87,7 +139,7 @@ class RecursiveLoop:
         if kernel.memory.candidate_model_ids:
             self._run_induction(kernel)
 
-        return kernel, internal_signals
+        return kernel, internal_signals, actionable_signals
 
     def _find_recursion_triggers(self, kernel: ContextKernel, actions: list[Action] | None = None) -> list[Signal]:
         triggers: list[Signal] = []
@@ -152,6 +204,31 @@ class RecursiveLoop:
             self._learner.update_self_state(self_state)
 
     def _run_induction(self, kernel: ContextKernel) -> None:
+        from ..training.promoter import Promoter
+        from ..training.evaluator import Evaluator
         candidates = self._inductor.maybe_induct()
+        promoter = Promoter(self._store)
+        evaluator = Evaluator(self._store)
         for model in candidates:
-            self._store.models.put(model)
+            existing = self._store.conn.execute(
+                "SELECT id FROM eval_results WHERE model_id = ? LIMIT 1",
+                (model.id,),
+            ).fetchone()
+            if existing:
+                continue
+            eval_set = evaluator.create_eval_set(
+                f"induction_{model.kind.value}",
+                f"Auto-eval for inducted {model.kind.value}",
+            )
+            evaluator.record_result(
+                eval_set_id=eval_set.id,
+                job_id=model.id,
+                score=model.confidence,
+                model_id=model.id,
+                metrics={"kind": model.kind.value, "support_estimate": model.confidence},
+            )
+            promoter.create_candidate(
+                model.id,
+                reason=f"induction: {model.description}",
+                score=model.confidence,
+            )

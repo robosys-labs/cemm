@@ -35,4 +35,4 @@ class Claim:
     observed_at: float = 0.0
     updated_at: float = 0.0
     permission: Permission | None = None
-    version: str = "erca.claim.v1"
+    version: str = "cemm.claim.v1"

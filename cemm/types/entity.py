@@ -26,4 +26,4 @@ class Entity:
     created_from_signal_id: str
     created_at: float
     updated_at: float
-    version: str = "erca.entity.v1"
+    version: str = "cemm.entity.v1"

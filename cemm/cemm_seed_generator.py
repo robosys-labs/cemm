@@ -25,13 +25,11 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-import copy
 import dataclasses
 import hashlib
 import json
 import os
 import random
-import re
 import sqlite3
 import sys
 import time
@@ -42,6 +40,12 @@ from typing import Any
 
 
 ALLOWED_TASK_TYPES = {
+    "semantic_graph_extraction",
+    "semantic_graph_denoising",
+    "semantic_latent_target",
+    "semantic_answer_composition",
+    "semantic_text_realization",
+    "next_event_prediction",
     "uol_mapping",
     "claim_extraction",
     "predicate_mapping",
@@ -49,7 +53,11 @@ ALLOWED_TASK_TYPES = {
     "pragmatic_interpretation",
     "synthesis_verification",
     "causal_rule_extraction",
+    "causal_effect_prediction",
+    "tool_handoff_planning",
+    "procedure_model_induction",
     "temporal_relation_derivation",
+    "memory_retrieval_ranking",
     "structural_induction",
     "entity_resolution",
     "claim_canonicalization",
@@ -111,7 +119,7 @@ def load_spec(path: Path) -> dict[str, Any]:
 
 def response_schema_hint() -> str:
     return """
-Return ONLY valid JSON. Do NOT include any explanatory text, markdown formatting, or code fences. Your entire response must be parseable as JSON:
+Return strict JSON only:
 {
   "scenarios": [
     {
@@ -131,17 +139,18 @@ Return ONLY valid JSON. Do NOT include any explanatory text, markdown formatting
       "expected": {
         "uol_atoms": [],
         "claims": [],
-        "operator": "answer|ask|remember|update_claim|retrieve|reflect|abstain",
+        "action_kind": "answer|ask|remember|update|act|abstain",
         "synthesis_strategy": "template|extractive|neural|abstain",
         "notes": ""
       },
       "task_examples": [
         {
-          "task_type": "context_inference",
+          "task_type": "semantic_graph_extraction",
           "permission_scope": "session_private",
           "priority": 50,
           "signal": {"kind": "input", "content": "text", "source_type": "user"},
-          "context": {}
+          "context_kernel": {},
+          "expected_semantic_event_graph": {}
         }
       ]
     }
@@ -161,8 +170,9 @@ def build_prompt(spec: dict[str, Any], category: dict[str, Any], count: int) -> 
     registry = json.dumps(spec.get("registry_seeds", {}), indent=2, sort_keys=True)
     allowed = ", ".join(sorted(ALLOWED_TASK_TYPES))
     system = (
-        "You generate high-quality seed training data for CEMM, the Contextual Event Memory Model. "
-        "CEMM is not trained on words alone; it learns from scenario + context + expected structure. "
+        "You generate high-quality seed training data for CEMM-SLC, the Contextual Event Memory Model "
+        "with a Semantic Latent Core. CEMM is not trained on words alone; it learns from signal + "
+        "ContextKernel + SemanticEventGraph + memory + SemanticAnswerGraph. "
         "You must output strict JSON only."
     )
     user = f"""
@@ -210,6 +220,7 @@ def call_nvidia(config: Config, system: str, user: str, cache_key: str) -> dict[
             {"role": "user", "content": user},
         ],
         "temperature": config.temperature,
+        "response_format": {"type": "json_object"},
     }
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
@@ -259,6 +270,75 @@ def dry_task_record(category: str, task_type: str, idx: int) -> dict[str, Any]:
                 "context": {"target": "assistant_self"},
             }
         )
+    elif task_type == "semantic_graph_extraction":
+        if category == "math_tool_handoff":
+            base["signal"] = {"kind": "input", "content": "What is 17.5% of 420000?", "source_type": "user"}
+            base["context_kernel"] = {"conversation": {"turn_index": 1}, "permission": {"scope": "session_private"}}
+            base["expected_semantic_event_graph"] = {
+                "processes": [{"frame_key": "compute_percentage"}],
+                "states": [{"state_key": "exact_computation_required"}],
+            }
+        elif category == "scheduling_procedure_skill":
+            base["signal"] = {
+                "kind": "input",
+                "content": "Schedule a virtual meeting with ada@example.com and ben@example.com next week.",
+                "source_type": "user",
+            }
+            base["context_kernel"] = {"conversation": {"turn_index": 1}, "permission": {"scope": "session_private"}}
+            base["expected_semantic_event_graph"] = {
+                "entity_refs": [{"entity_id": "ada", "role": "participant"}, {"entity_id": "ben", "role": "participant"}],
+                "processes": [{"frame_key": "schedule_virtual_meeting"}],
+                "states": [{"state_key": "missing_duration"}, {"state_key": "missing_title"}],
+            }
+        else:
+            base["signal"] = {"kind": "input", "content": "My favorite database is Postgres.", "source_type": "user"}
+            base["context_kernel"] = {
+                "conversation": {"turn_index": 2},
+                "user": {"known": True},
+                "permission": {"scope": "session_private"},
+            }
+            base["expected_semantic_event_graph"] = {
+                "entity_refs": [{"entity_id": "user", "role": "actor"}],
+                "processes": [{"frame_key": "state_preference"}],
+                "states": [{"state_key": "user_preference"}],
+            }
+    elif task_type == "semantic_graph_denoising":
+        base["corrupted_graph"] = {"processes": [{"frame_key": "favorite"}], "states": []}
+        base["context_kernel"] = {"permission": {"scope": "session_private"}}
+    elif task_type == "semantic_latent_target":
+        base["semantic_event_graphs"] = [
+            {"id": "g1", "processes": [{"frame_key": "assert_evaluation"}], "states": [{"state_key": "low_competence"}]},
+            {"id": "g2", "processes": [{"frame_key": "assert_evaluation"}], "states": [{"state_key": "low_competence"}]},
+        ]
+        base["target"] = "align paraphrased negative evaluations while preserving target and intensity"
+    elif task_type == "semantic_answer_composition":
+        if category == "math_tool_handoff":
+            base["question_graph"] = {"processes": [{"frame_key": "compute_percentage"}]}
+            base["tool_result"] = {"tool_id": "calculator.basic", "result": 73500}
+        elif category == "scheduling_procedure_skill":
+            base["question_graph"] = {"processes": [{"frame_key": "schedule_virtual_meeting"}]}
+            base["missing_slots"] = ["duration", "title"]
+            base["selected_models"] = [{"registry_key": "schedule_virtual_meeting", "kind": "procedure_model"}]
+        else:
+            base["question_graph"] = {"processes": [{"frame_key": "recall_memory"}]}
+            base["selected_claims"] = [{"id": "claim_fav_db", "subject": "user", "predicate": "favorite_database", "object": "Postgres"}]
+    elif task_type == "semantic_text_realization":
+        if category == "math_tool_handoff":
+            base["semantic_answer_graph"] = {"intent": "answer", "states": [{"state_key": "computed_result", "value": 73500}]}
+            base["tool_result"] = {"tool_id": "calculator.basic", "result": 73500}
+        else:
+            base["semantic_answer_graph"] = {
+                "intent": "answer",
+                "selected_claim_ids": ["claim_fav_db"],
+                "states": [{"state_key": "favorite_database", "holder_entity_id": "user"}],
+            }
+            base["selected_claims"] = [{"id": "claim_fav_db", "predicate": "favorite_database", "object": "Postgres"}]
+    elif task_type == "next_event_prediction":
+        base["recent_events"] = [
+            {"semantic_cluster_key": "failed_answer"},
+            {"semantic_cluster_key": "negative_evaluation.assistant_competence"},
+        ]
+        base["context_kernel"] = {"conversation": {"turn_index": 3}, "user": {"affect": {"frustration": 0.7}}}
     elif task_type == "claim_extraction":
         base["signal"] = {"kind": "input", "content": f"My seed preference {idx} is Postgres.", "source_type": "user"}
     elif task_type == "predicate_mapping":
@@ -269,10 +349,62 @@ def dry_task_record(category: str, task_type: str, idx: int) -> dict[str, Any]:
     elif task_type == "pragmatic_interpretation":
         base["sequence"] = [{"speaker": "user", "content": "you are dumb"}, {"speaker": "user", "content": "you are a fool"}]
     elif task_type == "synthesis_verification":
-        base["answer"] = "Your favorite database is Postgres."
-        base["selected_claims"] = [{"subject": "user", "predicate": "favorite_database", "object": "Postgres"}]
+        if category == "math_tool_handoff":
+            base["answer"] = "17.5% of 420000 is 73500."
+            base["tool_result"] = {"tool_id": "calculator.basic", "result": 73500}
+        else:
+            base["answer"] = "Your favorite database is Postgres."
+            base["selected_claims"] = [{"subject": "user", "predicate": "favorite_database", "object": "Postgres"}]
     elif task_type == "causal_rule_extraction":
         base["sequence"] = [{"event": "assistant_failed_answer"}, {"event": "user_repeats_negative_evaluation"}]
+    elif task_type == "causal_effect_prediction":
+        base["causal_models"] = [{"preconditions": ["assistant_failed_answer"], "effects": ["user_frustration_increases"], "confidence": 0.7}]
+        base["current_event"] = "assistant_failed_answer"
+    elif task_type == "tool_handoff_planning":
+        if category == "scheduling_procedure_skill":
+            base["signal"] = {
+                "kind": "input",
+                "content": "Schedule a virtual meeting with ada@example.com and ben@example.com next week.",
+                "source_type": "user",
+            }
+            base["semantic_event_graph"] = {
+                "processes": [{"frame_key": "schedule_virtual_meeting"}],
+                "states": [{"state_key": "calendar_availability_required"}],
+            }
+            base["available_tool_models"] = [
+                {"tool_id": "calendar.availability", "input_schema": "participants,time_window"},
+                {"tool_id": "calendar.create_event", "input_schema": "participants,start,end,title"},
+                {"tool_id": "meeting_link.generate", "input_schema": "event_id"},
+            ]
+        else:
+            base["signal"] = {"kind": "input", "content": "What is 17.5% of 420000?", "source_type": "user"}
+            base["semantic_event_graph"] = {
+                "processes": [{"frame_key": "compute_percentage"}],
+                "states": [{"state_key": "exact_computation_required"}],
+            }
+            base["available_tool_models"] = [{"tool_id": "calculator.basic", "input_schema": "expression"}]
+    elif task_type == "procedure_model_induction":
+        base["workflow_traces"] = [
+            {
+                "goal": "schedule_virtual_meeting",
+                "slots": ["participants", "time_window", "duration", "title"],
+                "tool_sequence": ["calendar.availability", "calendar.create_event", "meeting_link.generate"],
+                "outcome": "success",
+            }
+        ]
+    elif task_type == "memory_retrieval_ranking":
+        base["query_graph"] = {"processes": [{"frame_key": "recall_memory"}], "states": [{"state_key": "favorite_database"}]}
+        base["candidates"] = [
+            {"id": "claim_good", "predicate": "favorite_database", "object": "Postgres", "confidence": 0.92},
+            {"id": "claim_bad", "predicate": "favorite_color", "object": "Blue", "confidence": 0.9},
+        ]
+    elif task_type == "operator_selection":
+        if category == "scheduling_procedure_skill":
+            base["semantic_event_graph"] = {"processes": [{"frame_key": "schedule_virtual_meeting"}]}
+            base["grounded_graph"] = {"missing_slots": ["duration", "title"], "permission": {"scope": "session_private"}}
+            base["expected_action_kind"] = "ask"
+        else:
+            base["signal"] = {"kind": "input", "content": f"Seed example {idx} for {task_type}", "source_type": "user"}
     elif task_type == "temporal_relation_derivation":
         base["claims"] = [
             {"id": f"claim_{idx}_a", "valid_from": 1000, "valid_until": 4000},
@@ -299,7 +431,7 @@ def generate_dry_run_category(category: dict[str, Any], count: int) -> dict[str,
                 "expected": {
                     "uol_atoms": [],
                     "claims": [],
-                    "operator": "answer",
+                    "action_kind": "answer",
                     "synthesis_strategy": "template",
                     "notes": "dry-run generated scaffold",
                 },
@@ -343,13 +475,11 @@ def validate_and_flatten(payload: dict[str, Any]) -> tuple[list[dict[str, Any]],
     return valid_scenarios, flat_tasks
 
 
-def generate_category(config: Config, spec: dict[str, Any], category: dict[str, Any], count: int, batch: int = 0) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def generate_category(config: Config, spec: dict[str, Any], category: dict[str, Any], count: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if config.dry_run:
         payload = generate_dry_run_category(category, count)
     else:
         system, user = build_prompt(spec, category, count)
-        if batch:
-            user += f"\n\nIMPORTANT: This is batch {batch}. Generate scenarios that are DIFFERENT from any previous batch. Cover different sub-topics, different phrasings, and different user goals within this category. DO NOT repeat scenarios from earlier batches."
         key = stable_id(
             "seed",
             {
@@ -357,7 +487,6 @@ def generate_category(config: Config, spec: dict[str, Any], category: dict[str, 
                 "category": category,
                 "count": count,
                 "prompt": user,
-                "batch": batch,
             },
         )
         payload = call_nvidia(config, system, user, key)
@@ -402,7 +531,7 @@ def generate(args: argparse.Namespace) -> None:
         futures = []
         for category in categories:
             count = args.per_category or int(category.get("target_count", 10))
-            futures.append(pool.submit(generate_category, config, spec, category, count, args.batch))
+            futures.append(pool.submit(generate_category, config, spec, category, count))
         for future in concurrent.futures.as_completed(futures):
             scenarios, tasks = future.result()
             all_scenarios.extend(scenarios)
@@ -435,119 +564,6 @@ def validate(args: argparse.Namespace) -> None:
     print(json.dumps({"total": total, "by_task_type": counts}, indent=2, sort_keys=True))
 
 
-MUTATION_MAP: dict[str, str] = {
-    "you": "u", "your": "ur", "are": "re", "why": "y",
-    "please": "pls", "thanks": "thx", "thank you": "ty",
-    "what": "wat", "the": "teh", "because": "cuz",
-    "going to": "gonna", "want to": "wanna", "got to": "gotta",
-    "do not know": "dunno", "let me": "lemme", "kind of": "kinda",
-    "sort of": "sorta", "give me": "gimme",
-    "before": "b4", "great": "gr8", "later": "l8r", "message": "msg",
-    "favorite": "favourite", "color": "colour", "center": "centre",
-}
-
-
-def mutate_utterance(text: str, rng: random.Random) -> str:
-    if not text:
-        return text
-    lower = text.lower()
-    words = lower.split()
-    mutated: list[str] = []
-    for w in words:
-        m = w.strip(".,!?;:")
-        if not m:
-            continue
-        if m in MUTATION_MAP and rng.random() < 0.5:
-            mutated.append(MUTATION_MAP[m])
-        elif rng.random() < 0.15:
-            chars = list(m)
-            if len(chars) >= 3 and rng.random() < 0.4:
-                idx = rng.randint(1, len(chars) - 2)
-                chars[idx] = chars[idx] * rng.randint(2, 3)
-            elif len(chars) >= 3 and rng.random() < 0.3:
-                idx = rng.randint(0, len(chars) - 2)
-                chars[idx], chars[idx + 1] = chars[idx + 1], chars[idx]
-            mutated.append("".join(chars))
-        else:
-            mutated.append(m)
-    result = " ".join(mutated)
-    if text[0].isupper():
-        result = result.capitalize()
-    return result
-
-
-def mutate_scenario(scenario: dict[str, Any], rng: random.Random) -> dict[str, Any]:
-    new = copy.deepcopy(scenario)
-    for turn in new.get("conversation", []):
-        raw = turn.get("content")
-        if isinstance(raw, str):
-            turn["content"] = mutate_utterance(raw, rng)
-        elif isinstance(raw, dict) and "text" in raw:
-            raw["text"] = mutate_utterance(raw["text"], rng)
-    for te in new.get("task_examples", []):
-        if "signal" in te:
-            sc = te["signal"].get("content")
-            if isinstance(sc, str):
-                te["signal"]["content"] = mutate_utterance(sc, rng)
-            elif isinstance(sc, dict) and "text" in sc:
-                sc["text"] = mutate_utterance(sc["text"], rng)
-    return new
-
-
-def mutate_task_record(record: dict[str, Any], rng: random.Random) -> dict[str, Any]:
-    new = copy.deepcopy(record)
-    if "signal" in new:
-        sc = new["signal"].get("content")
-        if isinstance(sc, str):
-            new["signal"]["content"] = mutate_utterance(sc, rng)
-        elif isinstance(sc, dict) and "text" in sc:
-            sc["text"] = mutate_utterance(sc["text"], rng)
-    if "input" in new and isinstance(new["input"], str):
-        new["input"] = mutate_utterance(new["input"], rng)
-    return new
-
-
-def mutate(args: argparse.Namespace) -> None:
-    scenarios_path = Path(args.scenarios)
-    tasks_path = Path(args.tasks)
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    count = args.count
-
-    rng = random.Random(args.seed)
-    all_scenarios: list[dict[str, Any]] = []
-    all_tasks: list[dict[str, Any]] = []
-
-    with scenarios_path.open("r", encoding="utf-8") as f:
-        clean_scenarios = [json.loads(line.strip()) for line in f if line.strip()]
-    with tasks_path.open("r", encoding="utf-8") as f:
-        clean_tasks = [json.loads(line.strip()) for line in f if line.strip()]
-
-    task_by_scenario: dict[str, list[dict[str, Any]]] = {}
-    for t in clean_tasks:
-        task_by_scenario.setdefault(t.get("scenario_id", ""), []).append(t)
-
-    for scenario in clean_scenarios:
-        for v in range(count):
-            vseed = rng.randint(0, 2**31)
-            vrng = random.Random(vseed)
-            all_scenarios.append(mutate_scenario(scenario, vrng))
-        sid = scenario.get("scenario_id", "")
-        for task in task_by_scenario.get(sid, []):
-            for v in range(count):
-                vseed = rng.randint(0, 2**31)
-                vrng = random.Random(vseed)
-                all_tasks.append(mutate_task_record(task, vrng))
-
-    scenario_out = out_dir / "cemm_generated_scenarios.jsonl"
-    task_out = out_dir / "cemm_generated_training.jsonl"
-    write_jsonl(scenario_out, all_scenarios)
-    write_jsonl(task_out, all_tasks)
-    print(f"mutated {len(clean_scenarios)} scenarios x{count} = {len(all_scenarios)} scenarios")
-    print(f"mutated {len(clean_tasks)} tasks x{count} = {len(all_tasks)} task records")
-    print(f"wrote to {scenario_out} and {task_out}")
-
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate CEMM seed training data with NVIDIA API")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -563,20 +579,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     gen.add_argument("--categories", default="", help="comma-separated category names")
     gen.add_argument("--timeout-s", type=int, default=120)
     gen.add_argument("--max-retries", type=int, default=3)
-    gen.add_argument("--batch", type=int, default=0, help="batch number for prompt variation (0=no variation)")
     gen.add_argument("--temperature", type=float, default=0.7)
     gen.add_argument("--seed", type=int, default=7)
     gen.add_argument("--dry-run", action="store_true")
 
     val = sub.add_parser("validate", help="validate generated task JSONL")
     val.add_argument("jsonl")
-
-    mut = sub.add_parser("mutate", help="create noisy variants of scenarios for robustness training")
-    mut.add_argument("--scenarios", required=True, help="path to clean scenarios JSONL")
-    mut.add_argument("--tasks", required=True, help="path to clean task records JSONL")
-    mut.add_argument("--out-dir", default="generated_noisy")
-    mut.add_argument("--count", type=int, default=2, help="noisy variants per clean example")
-    mut.add_argument("--seed", type=int, default=42)
 
     return parser.parse_args(argv)
 
@@ -588,9 +596,6 @@ def main(argv: list[str]) -> int:
         return 0
     if args.cmd == "validate":
         validate(args)
-        return 0
-    if args.cmd == "mutate":
-        mutate(args)
         return 0
     raise AssertionError(args.cmd)
 

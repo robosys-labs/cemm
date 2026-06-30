@@ -1,16 +1,45 @@
-# CEMM End-to-End Pipeline
+# CEMM-SLC End-to-End Pipeline
 
-This workspace now has three layers:
+This workspace has four practical layers:
 
 ```text
 1. cemm_seed_generator.py
-   Generates scenario/context/task seed data.
+   Generates scenario/context/semantic task seed data.
 
 2. cemm_trainer.py
-   Labels, judges, verifies, and induces structure from task data.
+   Labels, judges, verifies, denoises, ranks, and induces structure from task data.
 
 3. cemm_runtime_router.py
-   Runs a basic live conversation loop using CEMM routing logic.
+   Runs a basic live conversation loop using CEMM routing and trace logic.
+
+4. Future promoted artifacts
+   Replace deterministic runtime internals with trained semantic modules.
+```
+
+Planning and tests:
+
+```text
+cemm_implementation_plan.md
+cemm_original_work_subplans.md
+cemm_acceptance_tests.md
+```
+
+The target model shape is:
+
+```text
+Signal + ContextKernel + Memory
+-> SemanticEventGraph
+-> typed latent computation
+-> SemanticAnswerGraph or Action
+-> optional text realization
+```
+
+It is not:
+
+```text
+text -> text
+text -> action
+embedding -> text answer
 ```
 
 ## 1. Generate Seed Data
@@ -32,6 +61,22 @@ export NVIDIA_MODEL="meta/llama-3.1-70b-instruct"
 python3 cemm_seed_generator.py generate --workers 4 --per-category 20 --out-dir generated
 ```
 
+Seed data should include:
+
+```text
+ContextKernel examples
+SemanticEventGraph examples
+UOL process/state mappings
+claim extraction examples
+memory retrieval ranking examples
+causal effect examples
+SemanticAnswerGraph examples
+text realization examples
+synthesis verification examples
+self-state update examples
+structural induction examples
+```
+
 ## 2. Label And Judge
 
 ```bash
@@ -43,7 +88,22 @@ Dry run:
 
 ```bash
 python3 cemm_trainer.py ingest generated/cemm_generated_training.jsonl
-python3 cemm_trainer.py run --workers 8 --dry-run
+python3 cemm_trainer.py run --workers 8 --dry-run --once
+```
+
+The trainer currently produces labeled/judged artifacts through task prompts.
+
+It is intentionally not yet a custom GPU trainer.
+
+The promotion path should come later:
+
+```text
+agent labels
+-> validated training labels
+-> eval sets
+-> trained component artifact
+-> promotion candidate
+-> runtime loader
 ```
 
 ## 3. Run Basic Conversation Router
@@ -54,10 +114,6 @@ Single turn:
 python3 cemm_runtime_router.py once "Good morning"
 python3 cemm_runtime_router.py once "My favorite database is Postgres."
 python3 cemm_runtime_router.py once "What is my favorite database?"
-python3 cemm_runtime_router.py once "how are you"
-python3 cemm_runtime_router.py once "who are you"
-python3 cemm_runtime_router.py once "what can you do"
-python3 cemm_runtime_router.py once "where are you"
 ```
 
 Interactive:
@@ -66,63 +122,50 @@ Interactive:
 python3 cemm_runtime_router.py chat
 ```
 
-Inspect context:
-
-```bash
-python3 cemm_runtime_router.py show-context
-python3 cemm_runtime_router.py show-context --json
-```
-
-## Runtime Path
+Current runtime path:
 
 ```text
-connect/seed_entities
--> build_context (creates 9-section ContextKernel + SelfView)
--> observe (writes signal)
--> normalize (slang/typo/contraction map + repeat-char reduction)
--> infer_context (context-grounded, permission-aware)
--> map_uol (process/state atoms)
--> extract_or_retrieve_claims
--> route_operator (ContextKernel + signals + permissions)
--> synthesize (self-grounded via SelfView)
--> write_action_trace (full ContextKernel in trace_json)
--> update_self_after_turn (uncertainty, coherence, load, epistemic)
+observe
+-> build_context_kernel
+-> interpret
+-> ground
+-> retrieve
+-> infer
+-> decide
+-> realize
+-> update
 ```
 
-## What Works In The Basic Router
+The runtime path is context-grounded. The router receives:
 
 ```text
-greetings (hi+/hello+/hey+)
-remember user facts
-recall user facts
-weather/location clarification
-correction supersession ("actually", "wait", "no,")
-negative evaluation routing
-informal opener ("what's going on/up")
-assistant location question ("where are you")
-self-grounded identity ("who are you" → self_state.identity.name)
-self-grounded status ("how are you" → SelfView.uncertainty/coherence)
-self-grounded capability ("what can you do" → SelfView.known_limit_claim_ids)
-world-grounded location ("where are you" → world_state.assistant_location or env vars)
-static small talk (thanks, bye, etc.)
-trace writing
-SQLite memory (signals, claims with supersede, actions, traces, self_state, world_state)
-entity seeding (entities + entity_aliases tables)
+world state
+user state
+time state
+conversation state
+goal state
+memory state
+self state
+permission state
+compute budget
 ```
 
-## ContextKernel Sections
+The trained router should learn:
 
 ```text
-world         — assistant_location, knowledge_freshness, active_frame_ids
-user          — entity_id, location, affect (valence/arousal/frustration/hostility)
-time          — now_unix, bucket, session_elapsed_s, since_last_user_signal_s
-conversation  — session_id, turn_index, phase, recent_signal_ids, active_repetition_groups
-goal          — active_goal_id, required_slots, missing_slots, success_criteria
-memory        — working_signal_ids, candidate_claim_ids, active_frame_ids, source_trust
-self_state    — dict with identity, internal (mode/uncertainty/coherence/load), epistemic, meta_memory, historical_arc
-self_view     — SelfView dataclass computed from self_state (architected type from types/self_view.py)
-permission    — scope, can_use_user_memory, can_write_user_memory, can_call_external_tools
-budget        — latency_target_ms, max_claim_candidates, max_recent_signals
+signal + ContextKernel + SemanticEventGraph + selected memory -> typed action or SemanticAnswerGraph
+```
+
+In training files, the existing task name `operator_selection` means:
+
+```text
+train the foundational Decide step
+```
+
+It should not learn:
+
+```text
+signal text -> action
 ```
 
 ## 4. Feed Runtime Back Into Training
@@ -131,24 +174,105 @@ After using the router, export grounded runtime examples:
 
 ```bash
 python3 cemm_runtime_router.py export-training --out generated/cemm_runtime_training.jsonl
+python3 cemm_trainer.py ingest generated/cemm_runtime_training.jsonl
+python3 cemm_trainer.py run --workers 8 --dry-run --once
 ```
 
-Each turn generates 5-7 training examples (context_inference, uol_mapping, operator_selection,
-plus conditional claim_extraction, predicate_mapping, pragmatic_interpretation,
-synthesis_verification, self_state_update) — all with the full ContextKernel attached.
-
-## Next Model Step
-
-Replace the current deterministic router functions with trained components:
+Runtime exports include:
 
 ```text
-ContextInferenceModel
-UOLMapper
-ClaimExtractor
-MemoryRanker
-OperatorRouter
-SynthesisVerifier
+full ContextKernel
+semantics
+SemanticEventGraph
+selected claims
+SemanticAnswerGraph
+realized text
+synthesis verification
+self-state update context
 ```
 
-The runtime API stays stable while the internals become learned.
+## 5. What Works Now
 
+The current bootstrap runtime supports:
+
+```text
+greetings
+remember user facts
+recall user facts
+weather/location clarification
+fresh-world abstention when tools are disabled
+simple frustration/repetition handling
+SemanticEventGraph trace objects
+SemanticAnswerGraph trace objects
+SQLite memory
+self-state updates
+runtime-to-training export
+```
+
+## 6. What Is Still Missing
+
+The current runtime does not yet contain the trained CEMM-SLC model.
+
+Missing components:
+
+```text
+Interpret model artifact
+Ground model artifact
+Retrieve ranker artifact
+Infer model artifact
+Decide model artifact
+Realize model artifact
+Verifier artifact
+promotion/evaluation registry
+```
+
+The deterministic router remains the fallback path.
+
+## 7. Promotion Plan
+
+The detailed phased plan lives in:
+
+```text
+cemm_implementation_plan.md
+```
+
+Do not replace the whole runtime at once.
+
+Promote components in this order:
+
+```text
+1. Interpret
+2. Ground
+3. Retrieve
+4. Infer
+5. Decide
+6. Realize
+7. Update
+8. Learn
+```
+
+Each promoted artifact must include:
+
+```text
+schema version
+registry version
+training data snapshot
+eval results
+known failure modes
+fallback behavior
+permission constraints
+```
+
+## 8. Regression Gates
+
+Fail the pipeline if:
+
+```text
+training example lacks ContextKernel
+router trains on text-only action labels
+text realization bypasses SemanticAnswerGraph
+runtime answer uses unselected claims
+embedding output overrides permission or frame validity
+generated labels are promoted without eval
+private runtime traces are exported as public data
+```

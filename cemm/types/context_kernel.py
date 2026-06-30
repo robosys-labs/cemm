@@ -125,6 +125,7 @@ class Budget:
 @dataclass
 class ContextKernel:
     id: str
+    self_state_id: str | None = None
     world: WorldState = field(default_factory=WorldState)
     user: UserState = field(default_factory=UserState)
     time: TimeState = field(default_factory=TimeState)
@@ -134,4 +135,8 @@ class ContextKernel:
     self_view: SelfView = field(default_factory=SelfView)
     permission: Permission = field(default_factory=Permission.public)
     budget: Budget = field(default_factory=Budget)
-    version: str = "erca.context_kernel.v1"
+    version: str = "cemm.context_kernel.v1"
+
+    @property
+    def self(self) -> SelfView:
+        return self.self_view

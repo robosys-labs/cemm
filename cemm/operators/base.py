@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.signal import Signal
 from ..types.trace import Trace
+from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.context_kernel import ContextKernel
 from ..types.operator_spec import OperatorSpec
 from ..store.store import Store
@@ -21,6 +22,8 @@ class OperatorContext:
     grounded_graph_id: str | None = None
     memory_packet_id: str | None = None
     inference_packet_id: str | None = None
+    semantic_event_graph_id: str | None = None
+    decision_packet_id: str | None = None
     params: dict = field(default_factory=dict)
     budget_override: dict | None = None
 
@@ -36,6 +39,7 @@ class OperatorResult:
     action: Action | None = None
     cost_ms: float = 0.0
     fallback_used: bool = False
+    semantic_answer_graph: SemanticAnswerGraph | None = None
 
 
 class BaseOperator(ABC):

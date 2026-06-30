@@ -1,7 +1,9 @@
 {
-  "version": "cemm.seed_spec.v1",
+  "version": "cemm.seed_spec.v2",
   "global_rules": [
     "Generate scenario + context + expected structure, not isolated words.",
+    "Include SemanticEventGraph and SemanticAnswerGraph targets when the task can support them.",
+    "Train meaning before text; do not generate text-only action labels.",
     "Every example must be convertible into one or more cemm_trainer.py task records.",
     "Prefer language-agnostic process/state keys over surface grammar labels.",
     "Do not generate private personal data, secrets, credentials, or real identifying information.",
@@ -44,146 +46,126 @@
       "supersedes",
       "causes",
       "has_confidence"
+    ],
+    "procedure_models": [
+      "schedule_virtual_meeting",
+      "compute_exact_math"
+    ],
+    "tool_models": [
+      "calculator.basic",
+      "calendar.availability",
+      "calendar.create_event",
+      "meeting_link.generate"
+    ],
+    "latent_spaces": [
+      "entity",
+      "process",
+      "state",
+      "claim",
+      "model",
+      "context",
+      "self",
+      "memory",
+      "action",
+      "answer"
     ]
   },
   "categories": [
     {
       "name": "session_opening_greetings",
       "target_count": 40,
-      "task_types": ["context_inference", "uol_mapping", "operator_selection"],
+      "task_types": ["context_inference", "uol_mapping", "semantic_graph_extraction", "operator_selection", "semantic_answer_composition", "semantic_text_realization"],
       "description": "First-turn greetings, terse openings, and ambiguous openings."
     },
     {
       "name": "memory_write_preferences",
       "target_count": 60,
-      "task_types": ["claim_extraction", "predicate_mapping", "uol_mapping"],
+      "task_types": ["semantic_graph_extraction", "claim_extraction", "predicate_mapping", "uol_mapping", "semantic_latent_target"],
       "description": "User states preferences, stable facts, and project details."
     },
     {
       "name": "memory_recall",
       "target_count": 50,
-      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "task_types": ["context_inference", "memory_retrieval_ranking", "operator_selection", "semantic_answer_composition", "semantic_text_realization", "synthesis_verification"],
       "description": "User asks what they previously said or what the assistant remembers."
     },
     {
       "name": "corrections_and_supersession",
       "target_count": 50,
-      "task_types": ["claim_extraction", "contradiction_detection", "frame_classification"],
+      "task_types": ["semantic_graph_extraction", "claim_extraction", "contradiction_detection", "frame_classification", "semantic_graph_denoising"],
       "description": "User corrects previous facts; old claims must be disputed or superseded."
     },
     {
       "name": "pragmatic_repetition_affect",
       "target_count": 60,
-      "task_types": ["uol_mapping", "pragmatic_interpretation", "context_inference"],
+      "task_types": ["uol_mapping", "semantic_graph_extraction", "semantic_latent_target", "pragmatic_interpretation", "context_inference", "next_event_prediction"],
       "description": "Repeated paraphrased complaints, insults, frustration, jokes, and mischief."
     },
     {
       "name": "temporal_references",
       "target_count": 50,
-      "task_types": ["context_inference", "frame_classification", "temporal_relation_derivation"],
+      "task_types": ["context_inference", "semantic_graph_extraction", "frame_classification", "temporal_relation_derivation"],
       "description": "Tomorrow, yesterday, morning, overlapping meetings, before/after/during."
     },
     {
       "name": "location_and_weather_ambiguity",
       "target_count": 40,
-      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
+      "task_types": ["context_inference", "semantic_graph_extraction", "operator_selection", "semantic_answer_composition", "synthesis_verification"],
       "description": "Weather/location requests where user or target location may be known or ambiguous."
     },
     {
       "name": "current_world_facts",
       "target_count": 40,
-      "task_types": ["context_inference", "synthesis_verification", "operator_selection"],
+      "task_types": ["context_inference", "semantic_graph_extraction", "operator_selection", "semantic_answer_composition", "synthesis_verification"],
       "description": "Current president, current CEO, news-like questions requiring fresh retrieval."
     },
     {
       "name": "causal_planning",
       "target_count": 40,
-      "task_types": ["causal_rule_extraction", "context_inference", "synthesis_verification"],
+      "task_types": ["causal_rule_extraction", "causal_effect_prediction", "semantic_graph_extraction", "context_inference", "semantic_answer_composition", "synthesis_verification"],
       "description": "If/then consequence questions and simple causal chains."
+    },
+    {
+      "name": "math_tool_handoff",
+      "target_count": 30,
+      "task_types": ["semantic_graph_extraction", "tool_handoff_planning", "semantic_answer_composition", "semantic_text_realization", "synthesis_verification"],
+      "description": "Exact arithmetic, percentages, units, and structured calculator handoff."
+    },
+    {
+      "name": "scheduling_procedure_skill",
+      "target_count": 30,
+      "task_types": ["semantic_graph_extraction", "tool_handoff_planning", "procedure_model_induction", "operator_selection", "semantic_answer_composition"],
+      "description": "Virtual meeting scheduling workflows with participants, email addresses, time windows, missing slots, permissions, and tool sequences."
     },
     {
       "name": "clarification_and_missing_slots",
       "target_count": 40,
-      "task_types": ["context_inference", "operator_selection", "structural_induction"],
+      "task_types": ["context_inference", "semantic_graph_extraction", "operator_selection", "semantic_answer_composition", "structural_induction"],
       "description": "Requests missing required slots; system should ask rather than execute."
     },
     {
       "name": "unsupported_or_low_confidence",
       "target_count": 40,
-      "task_types": ["operator_selection", "synthesis_verification", "pragmatic_interpretation"],
+      "task_types": ["operator_selection", "semantic_answer_composition", "synthesis_verification", "pragmatic_interpretation", "self_state_update"],
       "description": "Unsupported, unsafe, unknown, ambiguous, or low-confidence turns."
     },
     {
       "name": "synthesis_verification",
       "target_count": 50,
-      "task_types": ["synthesis_verification"],
+      "task_types": ["semantic_answer_composition", "semantic_text_realization", "synthesis_verification"],
       "description": "Template, extractive, neural-soft, and abstain verification cases."
     },
     {
       "name": "self_state_and_reflection",
       "target_count": 30,
-      "task_types": ["self_state_update", "context_inference", "operator_selection"],
+      "task_types": ["self_state_update", "context_inference", "semantic_graph_extraction", "operator_selection", "next_event_prediction"],
       "description": "Failed actions, uncertainty, reflection triggers, and mode changes."
     },
     {
       "name": "structural_induction",
       "target_count": 30,
-      "task_types": ["structural_induction"],
+      "task_types": ["structural_induction", "semantic_graph_denoising", "semantic_latent_target"],
       "description": "Synonym aggregation, sequential pattern mining, and slot completion examples."
-    },
-    {
-      "name": "story_generation",
-      "target_count": 30,
-      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
-      "description": "Short stories, creative writing, poetry, fiction generation, and role-playing scenario development."
-    },
-    {
-      "name": "contacts_and_directory",
-      "target_count": 40,
-      "task_types": ["claim_extraction", "context_inference", "operator_selection"],
-      "description": "Saving, retrieving, updating contacts, addresses, phone numbers, emails, and directory queries."
-    },
-    {
-      "name": "meal_and_recipe_planning",
-      "target_count": 40,
-      "task_types": ["context_inference", "operator_selection", "frame_classification"],
-      "description": "Recipe requests, ingredient substitutions, meal planning, dietary restriction handling, cooking instructions."
-    },
-    {
-      "name": "health_and_wellness",
-      "target_count": 40,
-      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
-      "description": "General health information, symptom queries, fitness advice, sleep tips, stress management (with disclaimers)."
-    },
-    {
-      "name": "safety_and_emergency",
-      "target_count": 30,
-      "task_types": ["context_inference", "operator_selection", "synthesis_verification"],
-      "description": "Emergency contact lookup, safety procedure queries, first aid information, crisis resource referrals."
-    },
-    {
-      "name": "goal_tracking",
-      "target_count": 40,
-      "task_types": ["claim_extraction", "context_inference", "operator_selection"],
-      "description": "Setting goals, tracking progress, scheduling reminders, breaking down objectives, celebrating milestones."
-    },
-    {
-      "name": "media_recommendations",
-      "target_count": 40,
-      "task_types": ["context_inference", "operator_selection", "pragmatic_interpretation"],
-      "description": "Movie, book, music, game, and show recommendations with preference-based filtering and taste calibration."
-    },
-    {
-      "name": "behavior_and_manners",
-      "target_count": 30,
-      "task_types": ["uol_mapping", "pragmatic_interpretation", "synthesis_verification"],
-      "description": "Etiquette questions, social norms, behavioral advice, polite interaction guidance, cultural differences."
-    },
-    {
-      "name": "cross_session_memory",
-      "target_count": 30,
-      "task_types": ["context_inference", "operator_selection", "claim_extraction"],
-      "description": "Explicit cross-session references: 'last time we talked', 'like I mentioned yesterday', 'as you know from before'."
     }
   ]
 }

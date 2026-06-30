@@ -5,11 +5,9 @@ from ..types.trace import Trace
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
-from ..synthesis.verifier import SynthesisVerifier
 import time, uuid
 
 _pipeline = RealizationPipeline()
-_verifier = SynthesisVerifier()
 
 
 class AnswerOperator(BaseOperator):
@@ -22,6 +20,15 @@ class AnswerOperator(BaseOperator):
             return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
         intent = ctx.params.get("intent", "")
         selected_claims = ctx.selected_claim_ids or []
+        decision_reason = ctx.params.get("decision_reason", "")
+        # If decision router detected greeting/acknowledgment, set intent accordingly
+        if "greeting" in decision_reason.lower() and not selected_claims:
+            intent = "greeting"
+        elif "acknowledgment" in decision_reason.lower() and not selected_claims:
+            intent = "acknowledgment"
+        # Propagate confidence from kernel self-view uncertainty to SAG
+        seg_confidence = ctx.params.get("seg_confidence", 0.0)
+        sag_confidence = max(seg_confidence, 1.0 - ctx.kernel.self_view.uncertainty) if seg_confidence > 0 else max(0.5, 1.0 - ctx.kernel.self_view.uncertainty)
         answer_graph = SemanticAnswerGraph(
             id=uuid.uuid4().hex[:16],
             intent=intent or ("abstain" if not selected_claims else "answer"),
@@ -29,6 +36,7 @@ class AnswerOperator(BaseOperator):
             context_id=ctx.kernel.id,
             selected_claim_ids=selected_claims,
             selected_model_ids=ctx.selected_model_ids or [],
+            confidence=sag_confidence,
         )
         simulation_claims = ctx.params.get("simulation_claims")
         if simulation_claims:
@@ -45,24 +53,19 @@ class AnswerOperator(BaseOperator):
                     intent="abstain",
                     source_signal_ids=[ctx.input_signal.id],
                     context_id=ctx.kernel.id,
+                    confidence=sag_confidence,
                 ),
                 ctx.kernel, ctx.store, ctx.registry,
             )
         output = result.output
-        claims = [ctx.store.claims.get(cid) for cid in selected_claims]
-        valid_claims = [c for c in claims if c]
-        verified, issues = _verifier.verify(
-            output,
-            selected_claims,
-            ctx.selected_model_ids or [],
-            ctx.kernel,
-            valid_claims,
-            intent=answer_graph.intent,
-        )
-        if not verified:
+        # Unified verification is already done inside RealizationPipeline.run()
+        # Check the result's verified flag
+        if not result.verified:
+            verification_meta = result.metadata.get("verification", {})
+            issues = verification_meta.get("details", ["unverified output"])
             return OperatorResult(
                 success=False,
-                output_text="Answer blocked by synthesis verification: " + "; ".join(issues),
+                output_text="Answer blocked by realization verification: " + "; ".join(issues),
             )
         cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         result_signal = Signal(
@@ -90,12 +93,13 @@ class AnswerOperator(BaseOperator):
             synthesis_verified=True,
             synthesis_verification_type="hard",
             permission="allowed",
-            confidence=max(0.0, min(1.0, 1.0 - ctx.kernel.self_view.uncertainty)),
+            confidence=max(0.0, min(1.0, sag_confidence)),
             cost_ms=cost_ms,
             fallback_used=False,
             grounded_graph_id=ctx.grounded_graph_id,
             memory_packet_id=ctx.memory_packet_id,
             inference_packet_id=ctx.inference_packet_id,
+            semantic_event_graph_id=ctx.semantic_event_graph_id,
             semantic_answer_graph_id=answer_graph.id,
         )
         return OperatorResult(
@@ -104,4 +108,5 @@ class AnswerOperator(BaseOperator):
             trace=trace,
             result_signal=result_signal,
             cost_ms=cost_ms,
+            semantic_answer_graph=answer_graph,
         )

@@ -28,10 +28,14 @@ def test_semantics_accepts_uol_atoms():
 
 def test_uol_mapper():
     from cemm.registry.uol_mapper import UOLMapper
-    from cemm.registry import Registry
+    from cemm.registry import Registry, RegistryEntry
     from cemm.types.context_kernel import ContextKernel
     from cemm.types.self_state import SelfState
-    mapper = UOLMapper(Registry())
+    registry = Registry()
+    registry.register(RegistryEntry(model_id="uol_low", canonical_key="low_competence", kind="uol_semantic", aliases=["dumb", "stupid", "fool", "idiot", "useless", "broken"]))
+    registry.register(RegistryEntry(model_id="uol_high", canonical_key="high_quality", kind="uol_semantic", aliases=["great", "awesome", "excellent", "amazing", "helpful"]))
+    registry.register(RegistryEntry(model_id="uol_eval", canonical_key="assert_evaluation", kind="uol_semantic", aliases=["is", "are", "was", "were"]))
+    mapper = UOLMapper(registry)
     kernel = ContextKernel(id="test_uol")
     kernel.self_view = kernel.self_view.from_self_state(SelfState(id="self_main", name="cemm"))
     atoms = mapper.map_signal("you are dumb", kernel)

@@ -1,0 +1,152 @@
+{
+  "version": "1.0.0",
+  "description": "TL1 deterministic typed feature space registry",
+  "encoder": "feature hashing (hash_mod)",
+  "num_buckets": 65536,
+  "namespaces": {
+    "entity_type": {
+      "kind": "categorical",
+      "source_fields": ["entity_refs[].kind"],
+      "examples": ["planet", "moon", "person", "artifact", "system"]
+    },
+    "entity_name": {
+      "kind": "categorical",
+      "source_fields": ["entity_refs[].name"],
+      "notes": "canonical casefolded entity name"
+    },
+    "process_frame_key": {
+      "kind": "categorical",
+      "source_fields": ["processes[].frame_key"],
+      "examples": ["orbital_relation", "question_about_code", "explain_relation", "request_clarification"]
+    },
+    "participant_role": {
+      "kind": "categorical",
+      "source_fields": ["processes[].participants[].role"]
+    },
+    "state_key": {
+      "kind": "categorical",
+      "source_fields": ["states[].state_key"]
+    },
+    "state_holder": {
+      "kind": "categorical",
+      "source_fields": ["states[].holder"]
+    },
+    "state_dimension": {
+      "kind": "categorical",
+      "source_fields": ["states[].dimension"]
+    },
+    "temporal_relation": {
+      "kind": "categorical",
+      "source_fields": ["temporal_edges[].relation"]
+    },
+    "causal_relation": {
+      "kind": "categorical",
+      "source_fields": ["causal_edges[].relation"]
+    },
+    "confidence_bucket": {
+      "kind": "bucketized",
+      "source_fields": ["*.confidence"],
+      "num_buckets": 4,
+      "bucket_labels": ["0.00-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.00"]
+    },
+    "permission_scope": {
+      "kind": "categorical",
+      "source_fields": ["*.permission_scope", "*.permission"],
+      "examples": ["public", "user_private", "system_private"]
+    },
+    "sag_intent": {
+      "kind": "categorical",
+      "source_fields": ["semantic_answer_graph.intent"],
+      "examples": ["answer", "ask", "abstain", "reflect"]
+    },
+    "verification_type": {
+      "kind": "categorical",
+      "source_fields": ["semantic_answer_graph.verification.verification_type"],
+      "examples": ["hard", "soft", "none"]
+    },
+    "verification_supported": {
+      "kind": "categorical",
+      "source_fields": ["semantic_answer_graph.verification.supported"]
+    },
+    "active_frame_id": {
+      "kind": "categorical",
+      "source_fields": ["grounded_graph.active_frame_ids[]"]
+    },
+    "grounded_entity": {
+      "kind": "categorical",
+      "source_fields": ["grounded_graph.entity_ids[]"]
+    },
+    "resolved_location": {
+      "kind": "categorical",
+      "source_fields": ["grounded_graph.resolved_location_ids[]"]
+    },
+    "missing_slot": {
+      "kind": "categorical",
+      "source_fields": ["*.missing_slots[]"]
+    },
+    "memory_candidate_id": {
+      "kind": "categorical",
+      "source_fields": ["memory_packet.ranking_trace[].candidate_id"]
+    },
+    "ranking_reason": {
+      "kind": "categorical",
+      "source_fields": ["memory_packet.ranking_trace[].reason"]
+    },
+    "ranking_score_bucket": {
+      "kind": "bucketized",
+      "source_fields": ["memory_packet.ranking_trace[].score"],
+      "num_buckets": 4
+    },
+    "selected_signal": {
+      "kind": "categorical",
+      "source_fields": ["memory_packet.selected_signal_ids[]"]
+    },
+    "selected_claim": {
+      "kind": "categorical",
+      "source_fields": ["memory_packet.selected_claim_ids[]"]
+    },
+    "implication_predicate": {
+      "kind": "categorical",
+      "source_fields": ["inference_packet.implications[].predicate"],
+      "examples": ["causes_tidal_heating", "sustains_orbit"]
+    },
+    "prediction_predicate": {
+      "kind": "categorical",
+      "source_fields": ["inference_packet.predictions[].predicate"]
+    },
+    "contradiction": {
+      "kind": "categorical",
+      "source_fields": ["inference_packet.contradictions[].claim_id"]
+    },
+    "state_delta": {
+      "kind": "categorical",
+      "source_fields": ["inference_packet.state_deltas keys"]
+    },
+    "action_kind": {
+      "kind": "categorical",
+      "source_fields": ["decision_packet.action_kind"],
+      "examples": ["answer", "ask", "abstain", "remember", "update"]
+    },
+    "action_selected_claim": {
+      "kind": "categorical",
+      "source_fields": ["decision_packet.action_plan.selected_claim_ids[]"]
+    },
+    "action_missing_slot": {
+      "kind": "categorical",
+      "source_fields": ["decision_packet.action_plan.missing_slots[]"]
+    },
+    "action_required_slot": {
+      "kind": "categorical",
+      "source_fields": ["decision_packet.action_plan.required_slots[]"]
+    },
+    "execution_allowed": {
+      "kind": "categorical",
+      "source_fields": ["decision_packet.action_plan.execution_allowed"]
+    },
+    "action_risk_bucket": {
+      "kind": "bucketized",
+      "source_fields": ["decision_packet.action_plan.risk"],
+      "num_buckets": 4
+    }
+  }
+}

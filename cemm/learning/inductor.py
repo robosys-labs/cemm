@@ -3,14 +3,16 @@ from ..store.store import Store
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.claim import Claim, ClaimStatus
 from ..types.signal import Signal, SignalKind, SourceType
+from ..registry.registry import Registry, RegistryEntry
 import math, time, uuid
 from collections import Counter, defaultdict
 
 
 class Inductor:
-    def __init__(self, store: Store, feedback_threshold: int = 5) -> None:
+    def __init__(self, store: Store, feedback_threshold: int = 5, registry: Registry | None = None) -> None:
         self._store = store
         self._feedback_threshold = feedback_threshold
+        self._registry = registry
 
     def set_threshold(self, value: int) -> None:
         self._feedback_threshold = value
@@ -21,6 +23,7 @@ class Inductor:
         candidates.extend(self._find_failed_retrieval_patterns())
         candidates.extend(self._find_causal_patterns(domain))
         candidates.extend(self._find_uol_patterns(domain))
+        candidates.extend(self._find_sequential_patterns())
         candidates.extend(self._find_slot_completion())
         return candidates
 
@@ -240,9 +243,152 @@ class Inductor:
                 )
                 self._store.models.put(model)
                 candidates.append(model)
+                if self._registry is not None:
+                    existing_entry = self._registry.get_uol_semantic(predicate)
+                    if existing_entry is None:
+                        self._registry.register(RegistryEntry(
+                            model_id=model.id,
+                            canonical_key=predicate,
+                            kind="uol_semantic",
+                            aliases=[predicate],
+                            description=f"Auto-induced UOL semantic from {count} observations",
+                        ))
+        return candidates
+
+    def _find_sequential_patterns(self) -> list[Model]:
+        """Find repeated Action → Signal patterns (causal induction).
+
+        Acceptance test: Action A repeatedly followed by Signal B within 5 seconds
+        → candidate causal_rule with confidence = support / (support + failures)
+        """
+        recent_actions = self._store.actions.recent(200)
+        if len(recent_actions) < self._feedback_threshold:
+            return []
+
+        now = time.time()
+        pattern_support: dict[tuple[str, str], int] = defaultdict(int)
+        pattern_signal_ids: dict[tuple[str, str], list[str]] = defaultdict(list)
+        action_result_counts: dict[str, int] = defaultdict(int)
+
+        for action in recent_actions:
+            if not action.result_signal_id:
+                continue
+            sig = self._store.signals.get(action.result_signal_id)
+            if not sig:
+                continue
+            action_result_counts[action.kind.value] += 1
+            time_diff = abs(sig.observed_at - action.created_at)
+            if time_diff <= 5.0:
+                key = (action.kind.value, sig.kind.value)
+                pattern_support[key] += 1
+                pattern_signal_ids[key].append(sig.id)
+
+        candidates: list[Model] = []
+        for (ak, sk), support in pattern_support.items():
+            if support < self._feedback_threshold:
+                continue
+            total_with_result = action_result_counts.get(ak, 0)
+            failures = max(total_with_result - support, 0)
+            confidence = support / max(support + failures, 1)
+
+            existing = self._store.models.find_by_name(f"causal:{ak}->{sk}")
+            if any(m.status == ModelStatus.ACTIVE for m in existing):
+                continue
+
+            sig_ids = pattern_signal_ids.get((ak, sk), [])
+            model = Model(
+                id=uuid.uuid4().hex[:16],
+                kind=ModelKind.CAUSAL_RULE,
+                name=f"causal:{ak}->{sk}",
+                description=(
+                    f"Sequential pattern: {ak} -> {sk} "
+                    f"(support={support}, failures={failures})"
+                ),
+                preconditions=[f"action_kind:{ak}"],
+                effects=[f"signal_kind:{sk}"],
+                evidence_signal_ids=sig_ids,
+                confidence=round(confidence, 3),
+                status=ModelStatus.CANDIDATE,
+                created_at=now,
+                updated_at=now,
+            )
+            self._store.models.put(model)
+            candidates.append(model)
+
         return candidates
 
     def _find_slot_completion(self) -> list[Model]:
+        """Find repeated slot-completion patterns: system ASK → user input.
+
+        Skips intermediary system signals (TRACE, MEMORY_UPDATE, SIMULATION_RESULT)
+        to find the user's response after an ACTION_RESULT within the same context.
+        Uses observation_semantics to classify completion categories:
+        - entity_completion: user response includes a target_entity_id
+        - value_completion: user response has speech_act in {answer, provide, confirm}
+        - generic_response: user responded but no specific slot metadata
+        """
+        recent_signals = self._store.signals.recent(200)
+        if len(recent_signals) < self._feedback_threshold:
+            return []
+
+        by_context: dict[str, list[Signal]] = defaultdict(list)
+        for sig in recent_signals:
+            by_context[sig.context_id].append(sig)
+        for ctx in by_context:
+            by_context[ctx].sort(key=lambda s: s.observed_at)
+
+        skip_kinds = {
+            SignalKind.TRACE, SignalKind.MEMORY_UPDATE,
+            SignalKind.SIMULATION_RESULT, SignalKind.SYSTEM,
+        }
+        now = time.time()
+        completion_counts: Counter = Counter()
+        completion_signal_ids: dict[str, list[str]] = defaultdict(list)
+        for ctx, signals in by_context.items():
+            for i in range(len(signals) - 1):
+                a = signals[i]
+                if a.kind != SignalKind.ACTION_RESULT:
+                    continue
+                for j in range(i + 1, len(signals)):
+                    b = signals[j]
+                    gap = b.observed_at - a.observed_at
+                    if gap > 5.0:
+                        break
+                    if b.kind in skip_kinds:
+                        continue
+                    if b.source_type == SourceType.USER:
+                        obs = b.observation_semantics
+                        if obs and (obs.target_entity_id or obs.semantic_cluster_key):
+                            completion_counts["entity_completion"] += 1
+                            completion_signal_ids["entity_completion"].extend([a.id, b.id])
+                        elif obs and obs.speech_act in ("answer", "provide", "confirm"):
+                            completion_counts["value_completion"] += 1
+                            completion_signal_ids["value_completion"].extend([a.id, b.id])
+                        else:
+                            completion_counts["generic_response"] += 1
+                            completion_signal_ids["generic_response"].extend([a.id, b.id])
+                    break
+
         candidates: list[Model] = []
-        recent_goals = []
+        for pattern, count in completion_counts.items():
+            if count < self._feedback_threshold:
+                continue
+            existing = self._store.models.find_by_name(f"completion:{pattern}")
+            if any(m.status == ModelStatus.ACTIVE for m in existing):
+                continue
+            sig_ids = list(set(completion_signal_ids.get(pattern, [])))
+            model = Model(
+                id=uuid.uuid4().hex[:16],
+                kind=ModelKind.CONTEXT_RULE,
+                name=f"completion:{pattern}",
+                description=f"Slot completion pattern: {pattern} ({count} occurrences)",
+                evidence_signal_ids=sig_ids,
+                confidence=min(1.0, count / 20),
+                status=ModelStatus.CANDIDATE,
+                created_at=now,
+                updated_at=now,
+            )
+            self._store.models.put(model)
+            candidates.append(model)
+
         return candidates

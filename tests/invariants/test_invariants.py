@@ -27,7 +27,7 @@ class TestInvariant1_ContextBeforeInterpretation:
         assert kernel.memory is not None
         assert kernel.permission is not None
         assert kernel.budget is not None
-        assert kernel.version == "erca.context_kernel.v1"
+        assert kernel.version == "cemm.context_kernel.v1"
 
 
 class TestInvariant2_ResponseHasInputSignal:
@@ -48,7 +48,7 @@ class TestInvariant2_ResponseHasInputSignal:
         assert signal.id == "sig_001"
         assert signal.kind == SignalKind.INPUT
         assert signal.content == "Hello"
-        assert signal.version == "erca.signal.v1"
+        assert signal.version == "cemm.signal.v1"
 
     def test_action_links_to_input_signal(self):
         action = Action(
@@ -76,7 +76,7 @@ class TestInvariant3_ClaimHasEvidenceSignal:
     def test_claim_has_required_fields(self):
         claim = Claim(id="cl_002", subject_entity_id="ent_1", predicate="test", source_id="s", domain="d")
         assert claim.status == ClaimStatus.ACTIVE
-        assert claim.version == "erca.claim.v1"
+        assert claim.version == "cemm.claim.v1"
 
 
 class TestInvariant4_ModelHasEvidenceSignal:
@@ -114,7 +114,7 @@ class TestInvariant5_MemoryMutationHasActionTrace:
 class TestInvariant6_SelfMutationHasSignalAndTrace:
     def test_self_state_versioned(self):
         state = SelfState(id="self_001")
-        assert state.version == "erca.self.v1"
+        assert state.version == "cemm.self.v1"
 
     def test_self_state_mutable(self):
         state = SelfState(id="self_001", mode=InternalMode.ASSISTANT)

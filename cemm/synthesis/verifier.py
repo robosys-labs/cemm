@@ -12,12 +12,18 @@ class SynthesisVerifier:
         selected_model_ids: list[str],
         kernel: ContextKernel,
         claims: list[Claim] | None = None,
+        intent: str = "",
     ) -> tuple[bool, list[str]]:
         issues: list[str] = []
         if not output.strip():
             issues.append("Empty output")
             return False, issues
 
+        if intent in ("abstain", "ask"):
+            if selected_claim_ids:
+                issues.append("Abstain/Ask output selects claims as evidence")
+                return False, issues
+            return True, []
         if not selected_claim_ids and not selected_model_ids:
             issues.append("No evidence selected for synthesis")
             return False, issues

@@ -2,9 +2,17 @@ from __future__ import annotations
 from ..types.signal import Signal, SignalKind, SourceType, ObservationSemantics
 from ..types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
 from ..store.store import Store
+from ..registry.registry import Registry
 from .semantic_clusters import SemanticClusterRegistry
 
 _DEFAULT_REGISTRY = SemanticClusterRegistry()
+_SPEECH_ACT_TO_FRAME_KEY = {
+    "greeting": "greeting",
+    "acknowledgment": "acknowledgment",
+    "clarification": "request_clarification",
+    "exit": "session_exit",
+    "command": "command_remember",
+}
 
 
 def interpret_signal(
@@ -12,13 +20,23 @@ def interpret_signal(
     kernel: ContextKernel,
     store: Store | None = None,
     registry: SemanticClusterRegistry | None = None,
+    main_registry: Registry | None = None,
 ) -> ObservationSemantics | None:
     if signal.source_type != SourceType.USER or signal.kind != SignalKind.INPUT:
         return None
-    reg = registry if registry is not None else _DEFAULT_REGISTRY
-    speech_act, cluster_key, confidence = reg.match(signal.content)
-    if not cluster_key:
+    if registry is not None:
+        reg = registry
+    elif main_registry is not None:
+        reg = SemanticClusterRegistry(registry=main_registry)
+    else:
+        reg = _DEFAULT_REGISTRY
+    ranked = reg.match_ranked(signal.content)
+    if not ranked:
         return ObservationSemantics(speech_act="unknown", stance="unknown", confidence=0.0)
+    best = ranked[0]
+    cluster_key = best.cluster_key
+    speech_act = best.speech_act
+    confidence = best.confidence
     cluster_def = reg.clusters.get(cluster_key, {})
     affect_baseline = cluster_def.get("affect_baseline", {})
     target = cluster_def.get("target", "")
@@ -36,12 +54,14 @@ def interpret_signal(
         cause_ids = _trace_causes(store, kernel)
     valence = affect_baseline.get("valence", 0)
     stance = "negative" if valence < 0 else "positive" if valence > 0 else "neutral"
+    frame_key = _SPEECH_ACT_TO_FRAME_KEY.get(speech_act, "")
     return ObservationSemantics(
         speech_act=speech_act, target_entity_id=target_entity_id,
         semantic_cluster_key=cluster_key, stance=stance,
         affect=dict(affect_baseline), repetition_group_id=cluster_key,
         repetition_count=repetition_count,
         cause_hypothesis_claim_ids=cause_ids, confidence=confidence,
+        frame_key=frame_key,
     )
 
 

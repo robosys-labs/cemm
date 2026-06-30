@@ -48,8 +48,24 @@ def serialize_turn(
         payload["inference_packet"] = packet_to_dict(inference_packet)
     if decision_packet:
         payload["decision_packet"] = packet_to_dict(decision_packet)
+        payload["action_plan"] = asdict(decision_packet.action_plan) if decision_packet.action_plan else {}
     if trace:
         payload["trace"] = asdict(trace)
+        if trace.selected_claim_ids or trace.selected_model_ids:
+            payload["selected_evidence"] = {
+                "selected_claim_ids": trace.selected_claim_ids,
+                "selected_model_ids": trace.selected_model_ids,
+            }
+        payload["realization_metadata"] = {
+            "strategy": trace.realization_strategy,
+            "verified": trace.realization_verified,
+        }
+        payload["verification_metadata"] = {
+            "synthesis_strategy_model_id": trace.synthesis_strategy_model_id,
+            "synthesis_verified": trace.synthesis_verified,
+            "synthesis_verification_type": trace.synthesis_verification_type,
+            "verifier_model_id": trace.verifier_model_id,
+        }
 
     return {
         "id": uuid.uuid4().hex[:16],

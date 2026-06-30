@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
+
+if TYPE_CHECKING:
+    from .semantic_answer_graph import SemanticAnswerGraph
 
 
 def _gen_id() -> str:
@@ -49,6 +52,8 @@ class InferencePacket:
     predictions: list[dict[str, Any]] = field(default_factory=list)
     missing_slots: list[str] = field(default_factory=list)
     state_deltas: dict[str, Any] = field(default_factory=dict)
+    inference_graph_input_signal_ids: list[str] = field(default_factory=list)
+    inference_graph_output_model_ids: list[str] = field(default_factory=list)
     confidence: float = 0.5
     version: str = "cemm.inference_packet.v1"
 
@@ -73,6 +78,7 @@ class DecisionPacket:
     action_kind: str
     id: str = field(default_factory=_gen_id)
     semantic_answer_graph_id: str | None = None
+    semantic_answer_graph: SemanticAnswerGraph | None = None
     action_plan: ActionPlan | None = None
     confidence: float = 0.5
     reason: str = ""

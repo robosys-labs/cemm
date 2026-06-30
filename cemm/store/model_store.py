@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sqlite3
+import time
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.permission import Permission, PermissionScope, RetentionPolicy
 
@@ -19,6 +20,7 @@ def _row_to_model(row: sqlite3.Row) -> Model:
         status=ModelStatus(row["status"]),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
+        artifact_json=row["artifact_json"],
         permission=Permission(
             scope=PermissionScope(row["permission_scope"]),
             retention=RetentionPolicy(row["permission_retention"]),
@@ -41,8 +43,8 @@ class ModelStore:
                (id, kind, name, description, registry_key, confidence, trust,
                 utility, cost_estimate_ms, risk, status, created_at, updated_at,
                 permission_scope, permission_retention, permission_may_store,
-                permission_may_retrieve, permission_may_use, version)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                permission_may_retrieve, permission_may_use, version, artifact_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 model.id, model.kind.value, model.name, model.description,
                 model.registry_key, model.confidence, model.trust, model.utility,
@@ -50,7 +52,7 @@ class ModelStore:
                 model.created_at, model.updated_at,
                 perm.scope.value, perm.retention.value,
                 int(perm.may_store), int(perm.may_retrieve), int(perm.may_use),
-                model.version,
+                model.version, model.artifact_json,
             ),
         )
         self.conn.execute("DELETE FROM model_input_types WHERE model_id = ?", (model.id,))
@@ -116,3 +118,10 @@ class ModelStore:
             "SELECT * FROM models WHERE name = ? ORDER BY updated_at DESC", (name,)
         ).fetchall()
         return [self._enrich(_row_to_model(r)) for r in rows]
+
+    def update_artifact(self, model_id: str, artifact_json: str) -> None:
+        self.conn.execute(
+            "UPDATE models SET artifact_json = ?, updated_at = ? WHERE id = ?",
+            (artifact_json, time.time(), model_id),
+        )
+        self.conn.commit()

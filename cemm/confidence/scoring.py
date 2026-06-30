@@ -24,6 +24,7 @@ def score_claim(
     salience: float = 0.0,
     recency: float = 1.0,
     permission_valid: bool = True,
+    frame_validity: float = 1.0,
     contradiction_penalty: float = 0.0,
 ) -> float:
     if not permission_valid:
@@ -35,6 +36,7 @@ def score_claim(
         * confidence
         * effective_salience
         * recency
+        * frame_validity
     ) - contradiction_penalty
 
 
@@ -47,14 +49,8 @@ def score_model(
     cost_penalty: float = 0.0,
     risk_penalty: float = 0.0,
 ) -> float:
-    if not permission_valid:
-        return 0.0
-    return (
-        applicability
-        * trust
-        * confidence
-        * utility
-    ) - cost_penalty - risk_penalty
+    pv = 1.0 if permission_valid else 0.0
+    return (applicability * trust * confidence * utility * pv) - cost_penalty - risk_penalty
 
 
 def score_action(
@@ -67,10 +63,5 @@ def score_action(
     risk_cost: float = 0.0,
     uncertainty_penalty: float = 0.0,
 ) -> float:
-    if not permission_valid:
-        return 0.0
-    return (
-        expected_user_value
-        * confidence
-        * self_coherence
-    ) - latency_cost - compute_cost - risk_cost - uncertainty_penalty
+    pv = 1.0 if permission_valid else 0.0
+    return (expected_user_value * confidence * pv * self_coherence) - latency_cost - compute_cost - risk_cost - uncertainty_penalty

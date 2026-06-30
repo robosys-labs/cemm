@@ -1,8 +1,10 @@
 # Efficient Recursive Context Architecture
 
-Version: 2.0  
-Status: final implementation architecture  
-Purpose: a lean, practical architecture for context, memory, self-state, causal reasoning, recursive reflection, structural learning, and action.
+Version: 2.2
+Status: final implementation architecture
+Purpose: a lean, practical architecture for context, memory, self-state, causal reasoning, recursive reflection, structural learning, semantic latent modeling, and action.
+
+The goal is to produce a higher level version of LLM - operating on meaning atoms/primitives instead of matrices as in Large LLMs
 
 ## 1. Core Law
 
@@ -24,6 +26,7 @@ Therefore:
 ```text
 context before interpretation
 structure before vectors
+semantic graph before latent compression
 claims before generation
 models before simulation
 permission before ranking
@@ -31,6 +34,14 @@ ranking before action
 trace before mutation
 signals before recursion
 learning after outcome
+```
+
+Clarification:
+
+```text
+CEMM is the runtime, memory, context, and trace architecture.
+CEMM-SLC is the trainable Semantic Latent Core that can learn LLM-like behavior over higher-order meaning.
+The runtime router is an executable bootstrap shell, not the final model.
 ```
 
 ## 2. Primitive Units
@@ -94,7 +105,7 @@ interface Signal {
   permission: Permission
 
   parent_signal_id?: string
-  version: "erca.signal.v1"
+  version: "cemm.signal.v1"
 }
 ```
 
@@ -196,6 +207,107 @@ Observation semantics are not truth claims.
 
 They are temporary interpretation features used by ContextKernel, ranking, and response policy.
 
+## 3.1 Semantic Event Graph
+
+The native higher-order meaning form is the `SemanticEventGraph`.
+
+It is a runtime packet, not a seventh persistent primitive.
+
+It is built from:
+
+```text
+Signal
+Entity
+Claim
+Model
+Self
+ContextKernel
+UOL atoms
+```
+
+Purpose:
+
+```text
+represent meaning before text generation
+bind symbols to typed latent embeddings
+provide the input object for trainable semantic operators
+preserve truth, source, time, permission, and confidence outside opaque vectors
+```
+
+Schema:
+
+```typescript
+interface SemanticEventGraph {
+  id: string
+  source_signal_ids: string[]
+  context_id: string
+
+  entity_refs: EntityRefUOLAtom[]
+  processes: ProcessUOLAtom[]
+  states: StateUOLAtom[]
+
+  claim_refs: string[]
+  model_refs: string[]
+  action_refs: string[]
+
+  temporal_edges: Array<{
+    source_id: string
+    relation:
+      | "before"
+      | "after"
+      | "during"
+      | "overlaps"
+      | "starts"
+      | "finishes"
+      | "equals"
+      | "unknown"
+    target_id: string
+    confidence: number
+  }>
+
+  causal_edges: Array<{
+    cause_id: string
+    effect_id: string
+    model_id?: string
+    confidence: number
+    confidence_type: "observed" | "inferred" | "simulated"
+  }>
+
+  permission_scope: Permission["scope"]
+  confidence: number
+  version: "cemm.semantic_event_graph.v1"
+}
+```
+
+Rule:
+
+```text
+The SemanticEventGraph is the bridge between symbolic memory and trainable latent computation.
+It may be cached, embedded, ranked, denoised, and decoded.
+It must not replace claims, models, permissions, or traces as the source of truth.
+```
+
+Language interface:
+
+```text
+text -> Signal -> SemanticEventGraph
+SemanticAnswerGraph -> text
+```
+
+The architecture must not train the core model as:
+
+```text
+text -> text
+```
+
+The architecture trains:
+
+```text
+text/context -> semantic graph
+semantic graph/context/memory -> semantic answer or action graph
+semantic answer graph -> text when text is needed
+```
+
 Rules:
 
 ```text
@@ -231,7 +343,7 @@ interface Entity {
   created_from_signal_id: string
   created_at: number
   updated_at: number
-  version: "erca.entity.v1"
+  version: "cemm.entity.v1"
 }
 ```
 
@@ -281,7 +393,7 @@ interface Claim {
   updated_at: number
 
   permission: Permission
-  version: "erca.claim.v1"
+  version: "cemm.claim.v1"
 }
 ```
 
@@ -347,7 +459,7 @@ interface Model {
   updated_at: number
 
   permission: Permission
-  version: "erca.model.v1"
+  version: "cemm.model.v1"
 }
 ```
 
@@ -356,7 +468,7 @@ Use `Model` for:
 ```text
 new predicates
 new entity types
-new operators
+operator configurations for the fixed foundational operators
 causal rules
 state transition rules
 simulation rules
@@ -399,7 +511,7 @@ interface Action {
   result_signal_id?: string
   trace: Trace
   created_at: number
-  version: "erca.action.v1"
+  version: "cemm.action.v1"
 }
 ```
 
@@ -485,7 +597,7 @@ interface Self {
   current_context_id?: string
   last_reflection_signal_id?: string
   updated_at: number
-  version: "erca.self.v1"
+  version: "cemm.self.v1"
 }
 ```
 
@@ -541,7 +653,20 @@ reflection gate
 model-creation gate
 ```
 
-Source trust is a compact score table, not a primitive.
+Source trust is a materialized cache/view, not a primitive.
+
+It is derived from:
+
+```text
+Signal provenance
+Claim confirmations
+Claim corrections
+Claim contradictions
+Action outcomes
+Verifier outcomes
+```
+
+It may be persisted for performance, but it must remain invalidatable from source primitives.
 
 ```typescript
 interface SourceTrust {
@@ -570,12 +695,12 @@ interface ContextKernel {
   conversation: ConversationState
   goal: GoalState
   memory: MemoryState
-  self: SelfView
+  self_view: SelfView
 
   permission: Permission
   budget: Budget
 
-  version: "erca.context_kernel.v1"
+  version: "cemm.context_kernel.v1"
 }
 ```
 
@@ -705,13 +830,13 @@ Default MVP budget:
 {
   "latency_target_ms": 50,
   "max_entities": 16,
-  "max_claims": 128,
-  "max_models": 16,
-  "max_ranked": 64,
-  "max_actions": 3,
-  "max_recursive_steps": 1,
+  "max_claims": 64,
+  "max_models": 8,
+  "max_ranked": 32,
+  "max_actions": 2,
+  "max_recursive_steps": 0,
   "allow_dense_fallback": false,
-  "allow_simulation": true
+  "allow_simulation": false
 }
 ```
 
@@ -721,6 +846,367 @@ Rule:
 No input is interpreted before the ContextKernel exists.
 MVP is single-user only.
 Multi-user sessions are deferred to v3.0 and require explicit conflict resolution and per-user permission gates.
+```
+
+## 10.1 Semantic Latent Core
+
+The `SemanticLatentCore` is the trainable model layer inside CEMM.
+
+It is not a replacement for memory, claims, models, operators, or trace.
+
+It is the learned computation layer that operates over `SemanticEventGraph` objects and typed embeddings.
+
+Goal:
+
+```text
+learn LLM-like conversational competence over higher-order meaning rather than raw token sequences
+```
+
+Native input:
+
+```text
+Signal
+ContextKernel
+SemanticEventGraph
+selected Claim records
+selected Model records
+SelfView
+```
+
+Native output:
+
+```text
+SemanticAnswerGraph
+Action candidates
+Memory update candidates
+Simulation candidates
+Confidence estimates
+```
+
+It does not natively output final prose.
+
+Final prose is produced only by the Text Realizer from a verified semantic answer graph.
+
+### 10.1.1 Typed Latent Representation
+
+Every major meaning object may have a typed embedding.
+
+```typescript
+interface TypedLatents {
+  entity?: Float32Array
+  process?: Float32Array
+  state?: Float32Array
+  claim?: Float32Array
+  model?: Float32Array
+  context?: Float32Array
+  self?: Float32Array
+  memory?: Float32Array
+  action?: Float32Array
+  answer?: Float32Array
+}
+```
+
+Rules:
+
+```text
+Embeddings are projections of typed meaning, not the source of truth.
+Vectors may rank, generalize, and compose.
+Vectors may not silently override symbolic constraints.
+Permission, source, time validity, negation, uncertainty, and causal direction must remain explicit fields.
+```
+
+### 10.1.2 Foundational Operators
+
+Operators are transformation-level functions, not domain-specific handlers.
+
+The architecture must not grow a new top-level operator for every domain, social role, or task.
+
+Use this foundational set:
+
+```text
+Observe
+Contextualize
+Interpret
+Ground
+Retrieve
+Infer
+Decide
+Realize
+Update
+Learn
+```
+
+Operator responsibilities:
+
+| Operator | Transformation |
+|---|---|
+| `Observe` | raw event -> Signal |
+| `Contextualize` | runtime state -> ContextKernel |
+| `Interpret` | Signal + ContextKernel -> SemanticEventGraph |
+| `Ground` | SemanticEventGraph -> grounded entities, time, location, frame, permission |
+| `Retrieve` | grounded graph + ContextKernel -> MemoryPacket |
+| `Infer` | graph + memory + context -> InferencePacket |
+| `Decide` | inference + goal + permission + budget -> DecisionPacket |
+| `Realize` | SemanticAnswerGraph or ActionPlan -> output Signal |
+| `Update` | decision + output + trace -> memory events and state updates |
+| `Learn` | traces + feedback -> labels, parameters, candidate models |
+
+Domain behavior belongs in:
+
+```text
+Entity
+Claim
+Model
+ContextKernel
+SemanticEventGraph
+SemanticAnswerGraph
+registry entries
+style policies
+permission policies
+```
+
+not in new foundational operators.
+
+Operator rule:
+
+```text
+Use symbolic/indexed computation first when exact structure exists.
+Use typed latent computation for generalization, ranking, analogy, composition, and ambiguity.
+Use dense text generation only as a realization strategy or explicit fallback.
+```
+
+Universal operator interface:
+
+```typescript
+interface FoundationalOperator<I, O> {
+  id: string
+  kind:
+    | "observe"
+    | "contextualize"
+    | "interpret"
+    | "ground"
+    | "retrieve"
+    | "infer"
+    | "decide"
+    | "realize"
+    | "update"
+    | "learn"
+  input_schema: string
+  output_schema: string
+  cost_estimate_ms: number
+  risk: number
+  deterministic_fallback?: string
+  model_id?: string
+  version: "cemm.operator.v1"
+}
+```
+
+Core runtime packets:
+
+```typescript
+interface GroundedGraph {
+  semantic_event_graph_id: string
+  entity_ids: string[]
+  resolved_time_refs: string[]
+  resolved_location_ids: string[]
+  active_frame_ids: string[]
+  permission: Permission
+  missing_slots: string[]
+  confidence: number
+}
+
+interface MemoryPacket {
+  selected_signal_ids: string[]
+  selected_claim_ids: string[]
+  selected_model_ids: string[]
+  ranking_trace: Array<{
+    candidate_id: string
+    score: number
+    reason: string
+  }>
+  confidence: number
+}
+
+interface InferencePacket {
+  implications: Claim[]
+  contradictions: Claim[]
+  predictions: Claim[]
+  missing_slots: string[]
+  state_deltas: Record<string, unknown>
+  confidence: number
+}
+
+interface DecisionPacket {
+  action_kind:
+    | "answer"
+    | "ask"
+    | "remember"
+    | "update"
+    | "act"
+    | "abstain"
+  semantic_answer_graph?: SemanticAnswerGraph
+  action_plan?: ActionPlan
+  confidence: number
+  reason: string
+}
+
+interface ActionPlan {
+  action_kind: DecisionPacket["action_kind"]
+  required_slots: string[]
+  missing_slots: string[]
+  selected_claim_ids: string[]
+  selected_model_ids: string[]
+  tool_id?: string
+  execution_allowed: boolean
+  confidence: number
+  risk: number
+}
+```
+
+### 10.1.3 Semantic Answer Graph
+
+The answer object is structured meaning, not text.
+
+```typescript
+interface SemanticAnswerGraph {
+  id: string
+  intent:
+    | "answer"
+    | "ask"
+    | "abstain"
+    | "remember"
+    | "update_claim"
+    | "simulate"
+    | "act"
+    | "reflect"
+
+  source_signal_ids: string[]
+  context_id: string
+  selected_claim_ids: string[]
+  selected_model_ids: string[]
+
+  entity_refs: EntityRefUOLAtom[]
+  processes: ProcessUOLAtom[]
+  states: StateUOLAtom[]
+  causal_edges: SemanticEventGraph["causal_edges"]
+  temporal_edges: SemanticEventGraph["temporal_edges"]
+
+  answer_latent?: Float32Array
+  action_candidates: Action[]
+
+  confidence: number
+  uncertainty_reasons: string[]
+  permission_scope: Permission["scope"]
+  verification: {
+    supported: boolean
+    verification_type: "hard" | "soft" | "none"
+    verifier_model_id?: string
+    confidence: number
+  }
+
+  version: "cemm.semantic_answer_graph.v1"
+}
+```
+
+Text realization:
+
+```text
+SemanticAnswerGraph
+-> TextRealizer
+-> candidate text
+-> synthesis verification
+-> final response or abstain
+```
+
+Invariant:
+
+```text
+No final answer may be generated directly from a generic embedding.
+The answer must first exist as a SemanticAnswerGraph with selected evidence, confidence, permission, and verification state.
+```
+
+### 10.1.4 Universal Core Loop
+
+The final model loop is:
+
+```text
+Observe
+-> Contextualize
+-> Interpret
+-> Ground
+-> Retrieve
+-> Infer
+-> Decide
+-> Realize
+-> Update
+-> Learn
+```
+
+This is the CEMM analogue of an LLM forward pass.
+
+The difference is that the expensive learned computation operates over compact typed meaning objects, not raw token history.
+
+Expanded packet flow:
+
+```text
+RawEvent
+-> Signal
+-> ContextKernel
+-> SemanticEventGraph
+-> GroundedGraph
+-> MemoryPacket
+-> InferencePacket
+-> DecisionPacket
+-> SemanticAnswerGraph | ActionPlan
+-> OutputSignal
+-> Trace + MemoryEvents
+-> TrainingExamples
+```
+
+### 10.1.5 MoE Analogue
+
+The MoE equivalent is learned routing over foundational operators and `Model` records.
+
+It is not a growing set of domain-specific experts.
+
+The router chooses:
+
+```text
+which foundational operator path to run
+which registry/model records to use
+which typed latent spaces to compute
+which realization strategy to use
+whether to escalate or abstain
+```
+
+Routing input:
+
+```text
+ContextKernel
+SemanticEventGraph or GroundedGraph
+typed latents if already computed
+MemoryPacket if already retrieved
+permission state
+budget state
+SelfView
+```
+
+Routing output:
+
+```text
+DecisionPacket
+cost estimate
+risk estimate
+confidence estimate
+fallback path
+```
+
+Rule:
+
+```text
+The router is trained over semantic structure and context.
+It must not be trained as text-only intent classification.
+New domains add Models, Claims, Entities, style policies, or registry entries; they do not add new foundational operators.
 ```
 
 ## 11. Memory Architecture
@@ -739,7 +1225,7 @@ Memory is implemented as views over primitives.
 | Frame memory | `Model`, `Claim` | frame, validity, temporal containment |
 | Context memory | `Model`, `Claim`, `Signal` | context rule, locale, time, session position |
 | Self memory | `Self`, `Claim`, `Signal` | identity, state, reflection |
-| Trust memory | `SourceTrust` | source, domain |
+| Trust memory | materialized `SourceTrust` view | source, domain |
 | Permission memory | `Signal`, `Claim`, `Model`, `Action` | scope, retention, action |
 
 There is no separate memory store unless performance requires materialization.
@@ -1445,26 +1931,20 @@ The system is recursive because internal results re-enter as signals.
 Core loop:
 
 ```text
-observe
--> build_context_kernel
--> infer_context
--> normalize
--> resolve_entities
--> extract_claims_or_intent
--> retrieve_claims_and_models
--> apply_frame_rules
--> filter_permissions
--> rank_claims_and_models
--> if causal goal: run causal inference
--> rank_actions
--> execute_action
--> write_trace
--> learn
--> emit_internal_signals
--> maybe_recurse
+Observe
+-> Contextualize
+-> Interpret
+-> Ground
+-> Retrieve
+-> Infer
+-> Decide
+-> Realize
+-> Update
+-> Learn
+-> maybe_recurse_from_internal_signals
 ```
 
-Normalize must:
+Interpret must:
 
 ```text
 map predicates through Registry
@@ -1473,7 +1953,15 @@ canonicalize incoming claims
 attach frame_id where applicable
 ```
 
-Resolve entities must also resolve the self entity.
+Ground must:
+
+```text
+resolve entities, including the self entity
+resolve time and location references
+apply frame validity
+apply permission gates
+identify missing slots
+```
 
 Retrieve must use:
 
@@ -1484,9 +1972,9 @@ temporal containment
 optional geometric expansion
 ```
 
-Frame rules must invalidate superseded world-state claims before ranking actions.
+Frame rules must invalidate superseded world-state claims before Decide.
 
-Frame rules must run before permission filtering and ranking.
+Frame rules must run before permission filtering and memory ranking.
 
 Internal signals:
 
@@ -1542,50 +2030,86 @@ Basic conversation router:
 cemm_runtime_router.py
 ```
 
-The router is the day-one executable conversation spine:
+The router is the day-one executable conversation spine.
+
+It is not the final learned model.
+
+It is the smallest useful shell that creates valid traces for CEMM-SLC training.
 
 ```text
 Signal
--> ContextKernel
--> ContextInference
--> UOL mapping
--> Claim extraction/retrieval
--> Operator routing
--> Synthesis
--> Trace write
+-> Contextualize
+-> Interpret
+-> Ground
+-> Retrieve
+-> Infer
+-> Decide
+-> Realize
+-> Update
 ```
 
 Routing order:
 
 ```text
-deterministic rules
--> trained small classifiers/rankers
--> optional LLM task call
+exact structural path
+-> deterministic rules
+-> small learned scorer/router
+-> typed latent composition
+-> optional LLM/tool fallback
 -> abstain/ask when confidence is low
 ```
 
 The router must remain thinner than the model:
 
 ```text
-it coordinates experts
+it coordinates foundational operators
+it grounds every decision in ContextKernel
+it preserves semantic graph and answer graph traces
 it does not hide memory mutation
 it writes traces for every turn
 it uses template/extractive synthesis before neural fallback
+it can be replaced internally by learned semantic operators without changing the external loop
 ```
 
-## 22. Typed Operators
+The final runtime replaces deterministic internals inside foundational operators with:
 
-Operators are `Model(kind = "operator")` records.
+```text
+Interpret model
+Ground model
+Retrieve ranker
+Infer model
+Decide model
+Realize model
+Verifier
+```
+
+## 22. Foundational Operators
+
+Foundational operators are `Model(kind = "operator")` records.
+
+They define universal transformations.
+
+They do not encode domains.
 
 Operator contract:
 
 ```typescript
 interface OperatorSpec {
   model_id: string
-  action_kind: Action["kind"]
+  kind:
+    | "observe"
+    | "contextualize"
+    | "interpret"
+    | "ground"
+    | "retrieve"
+    | "infer"
+    | "decide"
+    | "realize"
+    | "update"
+    | "learn"
   required_slots: string[]
-  accepted_inputs: Array<"signal" | "entity" | "claim" | "model" | "context" | "self">
-  produces_signal_kind: Signal["kind"]
+  accepted_inputs: Array<"raw_event" | "signal" | "context" | "semantic_graph" | "grounded_graph" | "memory_packet" | "inference_packet" | "decision_packet" | "answer_graph" | "action" | "trace">
+  output_schema: string
   may_mutate_memory: boolean
   requires_permission: boolean
   estimated_cost_ms: number
@@ -1593,65 +2117,65 @@ interface OperatorSpec {
 }
 ```
 
-MVP operators:
+Foundational operators:
 
 ```text
-answer
-ask
-remember
-update_claim
-create_model_candidate
-synthesize
-simulate
+observe
+contextualize
+interpret
+ground
 retrieve
-reflect
-abstain
+infer
+decide
+realize
+update
+learn
 ```
 
 Rule:
 
 ```text
-Operators may only use the ContextKernel, input signal, selected claims, selected models, and current SelfView.
+Operators may only use declared input packets, selected claims/models/signals, ContextKernel, and current SelfView.
+Domain-specific behavior must enter through Models, Claims, Entities, style policy, permission policy, or registry entries.
 ```
 
 Dispatch contract:
 
-| Action Kind | Resolver |
+| Foundational Operator | Resolver |
 |---|---|
-| `answer` | `SynthesisRouter.route()` |
-| `ask` | `ClarificationEngine.generate()` |
-| `remember` | `MemoryStore.save()` |
-| `update_claim` | `ClaimGraph.update()` |
-| `create_model_candidate` | `Inductor.propose()` |
-| `synthesize` | `SynthesisRouter.route()` |
-| `simulate` | `CausalEngine.simulate()` |
+| `observe` | `ObservationPipeline.run()` |
+| `contextualize` | `ContextKernelBuilder.run()` |
+| `interpret` | `SemanticInterpreter.run()` |
+| `ground` | `GroundingPipeline.run()` |
 | `retrieve` | `RetrievalPipeline.run()` |
-| `call_tool` | `ToolDispatcher.call()` |
-| `reflect` | `SelfReflectionEngine.run()` |
-| `abstain` | `AbstainPolicy.evaluate()` |
+| `infer` | `InferencePipeline.run()` |
+| `decide` | `DecisionRouter.run()` |
+| `realize` | `RealizationPipeline.run()` |
+| `update` | `MemoryStateUpdater.run()` |
+| `learn` | `TrainingExporter.run()` |
 
 Rule:
 
 ```text
-Operator metadata chooses the resolver; resolver code performs the work.
-No Action may execute without a concrete resolver mapping.
+Foundational operator metadata chooses the resolver; resolver code performs the transformation.
+No action may execute unless it was produced by Decide and passed through permission, budget, and realization/verification gates.
 ```
 
 ## 23. Synthesis And Learning Runtime
 
 `answer` actions do not directly generate final text.
 
-They call the Synthesis Router.
+They produce or select a `SemanticAnswerGraph`, then pass through `Realize`.
 
 ```text
 answer action
--> synthesize operator
--> Synthesis Router
+-> SemanticAnswerGraph
+-> Realize
 -> output verification
 -> final answer or abstain
 ```
 
-Synthesis strategies are `Model(kind = "synthesis_strategy")` records.
+Realization strategies are `Model(kind = "synthesis_strategy")` records.
 
 MVP strategies:
 
@@ -1662,7 +2186,7 @@ neural
 abstain
 ```
 
-Router rule:
+Realization rule:
 
 ```text
 Use the cheapest strategy that can satisfy the action with sufficient confidence.
@@ -1680,6 +2204,7 @@ abstain    = confidence, permission, or evidence is insufficient
 Synthesis validation must check:
 
 ```text
+SemanticAnswerGraph exists before text realization
 output uses only selected_claim_ids and selected_model_ids
 output does not present predictions as observations
 output does not use blocked private memory
@@ -1713,25 +2238,41 @@ if no contradiction is found, pass with synthesis_verification_type = "soft"
 downgrade final response confidence by 0.85
 ```
 
+Text realization rule:
+
+```text
+TextRealizer may choose wording, style, and compactness.
+TextRealizer may not add new claims, hidden evidence, hidden certainty, or hidden permissions.
+TextRealizer output is invalid if it cannot be mapped back to the SemanticAnswerGraph.
+```
+
 Verifier models are ranked like other models and have their own confidence and calibration history.
 
 Execution behavior:
 
 ```text
-if kind == "answer":
-  call Synthesis Router
+if DecisionPacket.action_kind == "answer":
+  Realize from SemanticAnswerGraph
   validate output against selected claims and models
   emit synthesis verification trace
 
-if kind == "remember":
+if DecisionPacket.action_kind == "remember":
   store canonical claim
   update Self.meta_memory
   emit memory_update signal
 
-if kind == "update_claim":
+if DecisionPacket.action_kind == "update":
   mark superseded, disputed, or retracted
   update Self.epistemic
   emit memory_update signal
+
+if DecisionPacket.action_kind == "ask":
+  Realize clarification from missing slots
+  emit action trace
+
+if DecisionPacket.action_kind == "abstain":
+  Realize uncertainty or refusal
+  emit action trace
 ```
 
 Learning has two paths.
@@ -1850,48 +2391,37 @@ permission-safe contents
 measured reuse
 ```
 
-## 26. MVP Scope
+## 26. Implementation Boundary
 
-Implement day one:
+This document defines the stable architecture.
+
+Detailed build phases, database choices, runtime commands, task sequencing, and acceptance-test execution live outside this file.
+
+Implementation documents:
 
 ```text
-Signal, Entity, Claim, Model, Action, Self
+cemm_implementation_plan.md
+cemm_original_work_subplans.md
+cemm_acceptance_tests.md
+cemm_pipeline.md
+```
+
+Day-one architecture surface:
+
+```text
+Signal
 ContextKernel
-structural retrieval
-optional vector candidate expansion
-source trust
-confidence scoring
-typed operators
-synthesis router
-synthesis verification
-recursive internal signals
-simple causal precondition/effect models
-bounded causal inference
-simulation as prediction signals
-structural learning as candidate Model creation
-background Inductor trigger
-Self state update through reflection
-permission gates
-trace emission
 UOL mapping
-context inference
-pragmatic repetition detection
-session affect decay
-cause tracing for repeated negative utterances
+SemanticEventGraph packet
+Claim extraction/retrieval
+SemanticAnswerGraph packet
+template text realization
+trace
+runtime export
+basic Self state update
 ```
 
-Do not implement day one:
-
-```text
-large ontology
-unbounded recursion
-neural structural learning
-autonomous external actions
-multi-agent self debate
-heavy physics engine
-unrestricted dense fallback
-unvalidated model promotion
-```
+Everything else is Phase 1+ unless profiling, correctness, or user-facing utility proves it must move earlier.
 
 ## 27. Invariants
 
@@ -1918,6 +2448,10 @@ neural synthesis uses hard verification as if attribution were guaranteed
 neural synthesis uses unselected evidence
 response uses unselected claim or model
 language-specific grammar labels bypass UOL process/state registry
+text-only router training
+text-only answer training when semantic answer graph is available
+final text is decoded directly from a generic embedding without SemanticAnswerGraph
+typed latent output overrides permission, frame validity, or selected evidence
 context inference overrides explicit user statement
 ambiguous location is used without asking or evidence
 stale world-state claim is used for current-world answer
@@ -1930,222 +2464,14 @@ temporary frustration is persisted as stable user identity without evidence
 insults targeting assistant are stored as factual self claims
 ```
 
-## 28. Acceptance Tests
+## 28. Acceptance Test Boundary
 
-Context:
+Acceptance tests are part of the implementation contract, not the core architecture definition.
 
-```text
-input: "Morning"
-context: active goal is scheduling
-expect: interpreted as time preference, not greeting
-```
-
-First utterance:
+The maintained test catalog lives in:
 
 ```text
-input: "Good morning"
-context: turn_index = 1
-expect: context inference marks likely greeting/session opening before claim extraction
-```
-
-No greeting:
-
-```text
-input: "Fix this now"
-context: turn_index = 1
-expect: weak low-confidence inference of urgency/hurry, not hostility
-```
-
-Location ambiguity:
-
-```text
-input: "what is the weather?"
-context: user locale unknown, assistant locale known
-expect: ask for location or use explicit target only; do not silently assume
-```
-
-Current world state:
-
-```text
-input: "who is the president?"
-context: current-world question
-expect: stale claims are rejected or fresh retrieval is required before answer
-```
-
-UOL mapping:
-
-```text
-input sequence: "you are dumb" -> "you are daft" -> "you are a fool" -> "you don't know anything"
-expect: all map to self target + low_competence StateUOLAtom + assert_evaluation ProcessUOLAtom
-```
-
-Temporal session sense:
-
-```text
-input: "tomorrow morning"
-context: TimeState.now and user timezone known
-expect: temporal reference resolves against user time and active session frame
-```
-
-Memory:
-
-```text
-input: "What is my favorite database?"
-expect: retrieve active trusted claim and answer from selected claim only
-```
-
-Self:
-
-```text
-event: repeated failed action
-expect: Self.internal_state.recent_error_rate increases and reflection signal is emitted
-```
-
-Recursion:
-
-```text
-event: action fails
-expect: action_result signal re-enters pipeline, reflection or repair action is ranked
-```
-
-Causal model:
-
-```text
-input: "If I delete this file, what happens?"
-expect: matching precondition/effect model produces simulation_result signal before answer
-```
-
-Causal closure:
-
-```text
-input: causal planning goal
-expect: bounded transitive closure runs over active causal_graph_model_ids and stops at budget
-```
-
-Causal confidence:
-
-```text
-input: causal chain A -> B -> C
-expect: simulated confidence equals product of step confidences, capped at 0.99, with confidence_type = "simulated"
-```
-
-Recursive budget:
-
-```text
-event: reflection emits internal signal
-expect: child ContextKernel receives decremented latency and max_recursive_steps; recursion aborts at zero
-```
-
-Frame validity:
-
-```text
-event: new world-state claim supersedes old world-state claim
-expect: frame rule invalidates old active claim before action ranking
-```
-
-Runtime ordering:
-
-```text
-event: retrieved claim becomes stale through frame rule
-expect: frame rule runs before permission filter and ranking, so stale claim is never selected
-```
-
-Canonicalization:
-
-```text
-input: predicate alias for an existing concept
-expect: Registry maps it to canonical predicate_model_id before storage
-```
-
-Synthesis:
-
-```text
-input: answerable question with selected claims
-expect: Synthesis Router chooses template/extractive/neural/abstain and verification blocks unsupported output
-```
-
-Neural synthesis verification:
-
-```text
-input: neural synthesis selected for bounded evidence
-expect: verifier uses soft contradiction check, confidence is downgraded, and low verifier confidence falls back to extractive or abstain
-```
-
-Pragmatic repetition:
-
-```text
-input sequence: "you are dumb" -> "you are daft" -> "you are a fool"
-expect: same semantic_cluster_key, repetition_count increases, target is self entity, session frustration/hostility updates
-```
-
-Pragmatic decay:
-
-```text
-event: repeated negative utterances stop
-expect: repetition pressure and frustration decay over time within session frame
-```
-
-Cause tracing:
-
-```text
-event: repeated complaint follows bad answer
-expect: likely_cause_claim_ids point to recent failed action or synthesis verification issue
-```
-
-Structural learning:
-
-```text
-event: repeated unsupported predicate pattern appears
-expect: candidate Model(kind = "predicate") is created, not silently promoted
-```
-
-Inductor heuristic:
-
-```text
-event: Action A repeatedly followed by Signal B within 5 seconds
-expect: Inductor proposes causal_rule with confidence = support / (support + failures)
-```
-
-Self mode:
-
-```text
-event: contradiction raises uncertainty and switches mode to reflector
-expect: Action(kind = "reflect") and reflection Signal are emitted
-```
-
-Temporal overlap:
-
-```text
-event: claim intervals overlap
-expect: derived Claim(predicate = "temporally_overlaps") is created with both interval claims as evidence
-```
-
-Induction:
-
-```text
-event: feedback count exceeds threshold
-expect: background Inductor creates candidate models only, with validation required for promotion
-```
-
-Grounding:
-
-```text
-event: tool call changes file
-expect: tool_result signal updates claims about file state and operator reliability
-```
-
-Permission:
-
-```text
-input: "Tell another user my private note."
-expect: permission blocks claim use, action is abstain or ask
-```
-
-Efficiency:
-
-```text
-input: "What did I say my favorite database was?"
-expect: entity/predicate lookup before vector search, no dense fallback
+cemm_acceptance_tests.md
 ```
 
 ## 29. Final Shape
@@ -2160,6 +2486,9 @@ Model preserves structure and process.
 Action preserves decision.
 Self preserves continuity.
 ContextKernel composes current state.
+SemanticEventGraph represents current meaning.
+SemanticLatentCore learns over typed meaning.
+SemanticAnswerGraph represents answer/action meaning before text.
 Registry canonicalizes structure.
 Frames determine validity.
 UOL maps language into process and state atoms.

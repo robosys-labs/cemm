@@ -4,6 +4,7 @@ from ..types.model import Model, ModelKind, ModelStatus
 from ..types.claim import Claim
 from ..types.context_kernel import ContextKernel
 from ..types.packets import InferencePacket
+from ..types.semantic_event_graph import SemanticEventGraph
 
 
 class CausalInference:
@@ -15,6 +16,7 @@ class CausalInference:
         action_or_event: str,
         active_claim_ids: list[str],
         kernel: ContextKernel,
+        graph: SemanticEventGraph | None = None,
     ) -> InferencePacket:
         models = self._store.models.find_by_kind(
             ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value,
@@ -25,15 +27,31 @@ class CausalInference:
             if claim:
                 active_claims.append(claim)
 
+        graph_predicates: list[str] = []
+        if graph:
+            for proc in graph.processes:
+                fk = proc.get("frame_key", "")
+                if fk:
+                    graph_predicates.append(fk)
+            for state in graph.states:
+                sk = state.get("state_key", "")
+                if sk:
+                    graph_predicates.append(sk)
+            for ref in graph.entity_refs:
+                role = ref.get("role", "")
+                if role:
+                    graph_predicates.append(role)
+
         predictions: list[dict] = []
         for model in models:
-            if not self._preconditions_match(model, active_claims, action_or_event):
+            if not self._preconditions_match(model, active_claims, action_or_event, graph_predicates):
                 continue
             for effect in model.effects:
                 predictions.append({
                     "model_id": model.id,
                     "predicate": effect,
                     "confidence": model.confidence * model.trust,
+                    "risk": model.risk,
                 })
 
         predictions.sort(key=lambda p: p["confidence"], reverse=True)
@@ -42,14 +60,17 @@ class CausalInference:
 
         confidence = sum(p["confidence"] for p in predictions) / max(len(predictions), 1) if predictions else 0.5
 
+        used_model_ids = [m.id for m in models]
         return InferencePacket(
             implications=[],
             contradictions=[],
             predictions=predictions,
             missing_slots=list(kernel.goal.missing_slots) if kernel.goal else [],
             state_deltas={},
+            inference_graph_output_model_ids=used_model_ids,
             confidence=confidence,
         )
+
 
     def transitive_closure(
         self,
@@ -100,7 +121,7 @@ class CausalInference:
         )
 
     @staticmethod
-    def _preconditions_match(model: Model, claims: list[Claim], action: str) -> bool:
+    def _preconditions_match(model: Model, claims: list[Claim], action: str, graph_predicates: list[str] | None = None) -> bool:
         if not model.preconditions:
             return False
         if not claims:
@@ -113,4 +134,8 @@ class CausalInference:
                     return True
             if prec_lower in action_lower:
                 return True
+            if graph_predicates:
+                for gp in graph_predicates:
+                    if prec_lower in gp.lower():
+                        return True
         return False

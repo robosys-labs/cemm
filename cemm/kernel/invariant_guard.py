@@ -111,6 +111,15 @@ class InvariantGuard:
         return True
 
     @classmethod
+    def check_context_not_override_explicit(cls, inferred_claim: Claim, explicit_claim: Claim) -> bool:
+        if (inferred_claim.subject_entity_id == explicit_claim.subject_entity_id
+                and inferred_claim.predicate == explicit_claim.predicate
+                and inferred_claim.object_value != explicit_claim.object_value):
+            cls.errors.append(f"Context inference {inferred_claim.id} overrides explicit claim {explicit_claim.id}")
+            return False
+        return True
+
+    @classmethod
     def check_synthesis_verification(cls, action: Action, trace: Trace) -> bool:
         if action.kind.value == "answer":
             if not trace.synthesis_verified:

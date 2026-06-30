@@ -22,16 +22,6 @@ Examples:
 
 from __future__ import annotations
 
-import sys as _sys
-from pathlib import Path as _Path
-# add parent so we can import cemm.types.* (avoids shadowing stdlib types module)
-_cemm_parent = str(_Path(__file__).resolve().parent.parent)
-if _cemm_parent not in _sys.path:
-    _sys.path.insert(0, _cemm_parent)
-del _sys, _Path, _cemm_parent
-
-from cemm.types.self_view import SelfView
-
 import argparse
 import dataclasses
 import hashlib
@@ -104,53 +94,6 @@ CREATE TABLE IF NOT EXISTS world_state (
   state_json TEXT NOT NULL,
   updated_at INTEGER NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS entities (
-  id TEXT PRIMARY KEY,
-  type TEXT NOT NULL,
-  name TEXT NOT NULL,
-  confidence REAL NOT NULL DEFAULT 0.5,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS entity_aliases (
-  entity_id TEXT NOT NULL,
-  alias TEXT NOT NULL,
-  PRIMARY KEY (entity_id, alias)
-);
-
-CREATE TABLE IF NOT EXISTS capabilities (
-  family TEXT PRIMARY KEY,
-  description TEXT NOT NULL,
-  installed INTEGER NOT NULL DEFAULT 1
-);
-
-CREATE TABLE IF NOT EXISTS models (
-  id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL,
-  name TEXT NOT NULL,
-  registry_key TEXT,
-  description TEXT NOT NULL DEFAULT '',
-  parameters_json TEXT NOT NULL DEFAULT '{}',
-  input_types TEXT NOT NULL DEFAULT '[]',
-  output_types TEXT NOT NULL DEFAULT '[]',
-  preconditions TEXT NOT NULL DEFAULT '[]',
-  effects TEXT NOT NULL DEFAULT '[]',
-  confidence REAL NOT NULL DEFAULT 0.5,
-  trust REAL NOT NULL DEFAULT 0.5,
-  utility REAL NOT NULL DEFAULT 0.5,
-  cost_estimate_ms INTEGER NOT NULL DEFAULT 50,
-  risk REAL NOT NULL DEFAULT 0.0,
-  evidence_signal_ids TEXT NOT NULL DEFAULT '[]',
-  status TEXT NOT NULL DEFAULT 'candidate',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_models_kind_status ON models(kind, status);
-CREATE INDEX IF NOT EXISTS idx_models_registry_key ON models(registry_key);
-CREATE INDEX IF NOT EXISTS idx_models_kind_registry_status ON models(kind, registry_key, status);
 """
 
 
@@ -175,8 +118,7 @@ class ContextKernel:
     conversation: dict[str, Any]
     goal: dict[str, Any]
     memory: dict[str, Any]
-    self_state: dict[str, Any]
-    self_view: SelfView
+    self_view: dict[str, Any]
     permission: dict[str, Any]
     budget: dict[str, Any]
 
@@ -203,63 +145,6 @@ class RouteDecision:
     missing_slots: list[str]
 
 
-NORMALIZE_MAP: dict[str, str] = {
-    "gimme": "give me", "gonna": "going to", "wanna": "want to",
-    "gotta": "got to", "dunno": "do not know", "lemme": "let me",
-    "kinda": "kind of", "sorta": "sort of", "lotsa": "lots of",
-    "tryna": "trying to", "outta": "out of", "hafta": "have to",
-    "shoulda": "should have", "coulda": "could have", "woulda": "would have",
-    "musta": "must have", "mighta": "might have",
-    "cuz": "because", "u": "you", "ur": "your",
-    "pls": "please", "plz": "please", "thx": "thanks",
-    "ty": "thank you", "idk": "i do not know", "btw": "by the way",
-    "imo": "in my opinion", "tbh": "to be honest", "b4": "before",
-    "gr8": "great", "l8r": "later", "msg": "message",
-    "asap": "as soon as possible", "2moro": "tomorrow", "2day": "today",
-    "2nite": "tonight", "re": "are",
-    "sup": "what is up", "wassup": "what is up", "whassup": "what is up",
-    "whatagwan": "what is going on", "wagwan": "what is going on",
-    "howdy": "hello", "gday": "good day",
-    "brekky": "breakfast", "brekkie": "breakfast",
-    "teh": "the", "wat": "what", "tommorow": "tomorrow",
-    "definately": "definitely", "recieve": "receive",
-    "wierd": "weird", "alot": "a lot",
-    "favourite": "favorite", "colour": "color", "centre": "center",
-    "behaviour": "behavior",
-}
-
-CEMM_CAPABILITIES: dict[str, str] = {
-    "personal_memory": "remember your preferences and recall them",
-    "autobiographical_memory": "maintain long-term memory across sessions",
-    "assistant_identity": "tell you who I am",
-    "assistant_status": "report my current state and status",
-    "social_greeting": "greet you in multiple languages",
-    "social_contact": "manage trusted contacts",
-    "assistant_behavior": "adjust my own behavior and mood",
-    "mood_affect": "track and express my emotive state",
-    "story": "tell stories from local inventory",
-    "weather": "provide local weather information",
-    "meal_suggestion": "suggest context-aware meals",
-    "health_advice": "offer health guidance (with disclaimers)",
-    "common_sense_safety": "give safety guidance for children",
-    "personal_goal_advice": "help with goal-oriented advice",
-    "media_playback": "control local media playback",
-    "reasoning": "reason about quantities, time, geography, and causality",
-    "open_domain": "handle open-domain conversation",
-}
-
-_RUNTIME_CONFIG: RuntimeConfig | None = None
-
-_STATIC_RESPONSES: dict[str, str] = {
-    "thanks": "You're welcome.",
-    "thank you": "You're welcome.",
-    "bye": "Goodbye.",
-    "goodbye": "Goodbye.",
-}
-
-_SMALL_TALK_PHRASES = list(_STATIC_RESPONSES) + ["how are you", "what can you do", "who are you", "what is your name"]
-
-
 def now() -> int:
     return int(time.time())
 
@@ -278,112 +163,12 @@ def parse_json(raw: str | None, default: Any) -> Any:
         return default
 
 
-def save_model(
-    conn: sqlite3.Connection,
-    kind: str,
-    name: str,
-    *,
-    registry_key: str | None = None,
-    description: str = "",
-    parameters: dict[str, Any] | None = None,
-    input_types: list[str] | None = None,
-    output_types: list[str] | None = None,
-    preconditions: list[str] | None = None,
-    effects: list[str] | None = None,
-    confidence: float = 0.5,
-    trust: float = 0.5,
-    utility: float = 0.5,
-    cost_estimate_ms: int = 50,
-    risk: float = 0.0,
-    evidence_signal_ids: list[str] | None = None,
-    status: str = "candidate",
-) -> str:
-    model_id = stable_id("model", {"kind": kind, "name": name, "registry_key": registry_key, "ts": now()})
-    ts = now()
-    conn.execute(
-        """INSERT INTO models
-           (id, kind, name, registry_key, description, parameters_json,
-            input_types, output_types, preconditions, effects,
-            confidence, trust, utility, cost_estimate_ms, risk,
-            evidence_signal_ids, status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            model_id, kind, name, registry_key, description,
-            json.dumps(parameters or {}, sort_keys=True),
-            json.dumps(input_types or [], sort_keys=True),
-            json.dumps(output_types or [], sort_keys=True),
-            json.dumps(preconditions or [], sort_keys=True),
-            json.dumps(effects or [], sort_keys=True),
-            confidence, trust, utility, cost_estimate_ms, risk,
-            json.dumps(evidence_signal_ids or [], sort_keys=True),
-            status, ts, ts,
-        ),
-    )
-    conn.commit()
-    return model_id
-
-
-def find_models(
-    conn: sqlite3.Connection,
-    kind: str | None = None,
-    registry_key: str | None = None,
-    status: str = "active",
-) -> list[sqlite3.Row]:
-    where: list[str] = []
-    params: list[Any] = []
-    if kind:
-        where.append("kind = ?")
-        params.append(kind)
-    if registry_key:
-        where.append("registry_key = ?")
-        params.append(registry_key)
-    if status:
-        where.append("status = ?")
-        params.append(status)
-    clause = f" WHERE {' AND '.join(where)}" if where else ""
-    return conn.execute(f"SELECT * FROM models{clause} ORDER BY confidence DESC", params).fetchall()
-
-
-def seed_capabilities(conn: sqlite3.Connection) -> None:
-    for family, desc in CEMM_CAPABILITIES.items():
-        conn.execute(
-            "INSERT OR IGNORE INTO capabilities (family, description, installed) VALUES (?, ?, 1)",
-            (family, desc),
-        )
-
-
 def connect(db_path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.executescript(RUNTIME_SCHEMA)
-    seed_entities(conn)
-    seed_capabilities(conn)
     conn.commit()
     return conn
-
-
-def seed_entities(conn: sqlite3.Connection) -> None:
-    now_ts = now()
-    for eid, etype, ename in [
-        ("entity_user", "person", "user"),
-        ("entity_assistant_self", "agent", "assistant_self"),
-    ]:
-        conn.execute(
-            "INSERT OR IGNORE INTO entities (id, type, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-            (eid, etype, ename, now_ts, now_ts),
-        )
-    for eid, alias in [
-        ("entity_user", "user"),
-        ("entity_user", "me"),
-        ("entity_user", "i"),
-        ("entity_assistant_self", "assistant_self"),
-        ("entity_assistant_self", "assistant"),
-        ("entity_assistant_self", "you"),
-    ]:
-        conn.execute(
-            "INSERT OR IGNORE INTO entity_aliases (entity_id, alias) VALUES (?, ?)",
-            (eid, alias),
-        )
 
 
 def time_bucket(ts: int | None = None) -> str:
@@ -395,36 +180,6 @@ def time_bucket(ts: int | None = None) -> str:
     if 17 <= hour < 21:
         return "evening"
     return "night"
-
-
-def normalize(text: str) -> str:
-    text = re.sub(r"\s+", " ", text.strip())
-    text = re.sub(r"(.)\1{2,}", r"\1", text)
-    words = text.lower().split()
-    result: list[str] = []
-    for w in words:
-        stripped = w.strip(".,!?;:'\"")
-        expanded = NORMALIZE_MAP.get(stripped, w)
-        result.append(expanded)
-    return re.sub(r"\s+", " ", " ".join(result)).strip()
-
-
-_GREETING_RE = re.compile(r"(hi+|hello+|hey+|good morning|morning|good afternoon|good evening)[!. ]*")
-
-
-def semantic_cluster_for_text(text: str) -> str:
-    lower = text.lower()
-    if any(word in lower for word in ["dumb", "daft", "fool", "stupid", "useless", "idiot", "hate", "suck", "terrible", "awful", "worst", "don't know anything"]):
-        return "negative_evaluation.assistant_competence"
-    if re.search(r"\b(my|i like|i prefer|favorite)\b", lower):
-        return "preference_statement"
-    if "weather" in lower:
-        return "weather_request"
-    if _GREETING_RE.fullmatch(lower):
-        return "greeting"
-    if "?" in text:
-        return "question"
-    return "utterance"
 
 
 def default_self_state() -> dict[str, Any]:
@@ -458,12 +213,6 @@ def default_self_state() -> dict[str, Any]:
             "created_at": now(),
             "recent_trace_ids": [],
         },
-        "social": {
-            "total_turns": 0,
-            "negative_signal_count": 0,
-            "last_interaction_at": 0.0,
-            "lonely_threshold_s": 86400.0,
-        },
         "version": "cemm.self.v1",
     }
 
@@ -484,25 +233,6 @@ def default_world_state() -> dict[str, Any]:
         "causal_model_ids": [],
         "version": "cemm.world.v1",
     }
-
-
-def build_self_view(state_dict: dict[str, Any]) -> SelfView:
-    identity = state_dict.get("identity", {})
-    internal = state_dict.get("internal", {})
-    epistemic = state_dict.get("epistemic", {})
-    meta = state_dict.get("meta_memory", {})
-    return SelfView(
-        self_id=identity.get("entity_id", "assistant_self"),
-        mode=internal.get("mode", "assistant"),
-        uncertainty=internal.get("uncertainty", 0.0),
-        coherence=internal.get("coherence", 1.0),
-        recent_error_rate=round(1.0 - internal.get("coherence", 1.0), 4),
-        active_assumption_claim_ids=[],
-        known_limit_claim_ids=epistemic.get("known_limits", []),
-        coverage_gap_claim_ids=[],
-        reliability_by_domain={},
-        recent_meta_memory_claim_ids=meta.get("last_recalled_claim_ids", []),
-    )
 
 
 def load_state(conn: sqlite3.Connection, table: str, key: str, default: dict[str, Any]) -> dict[str, Any]:
@@ -527,6 +257,25 @@ def save_state(conn: sqlite3.Connection, table: str, key: str, state: dict[str, 
         (key, json.dumps(state, sort_keys=True), now()),
     )
     conn.commit()
+
+
+def normalize(text: str) -> str:
+    return re.sub(r"\s+", " ", text.strip())
+
+
+def semantic_cluster_for_text(text: str) -> str:
+    lower = text.lower()
+    if any(word in lower for word in ["dumb", "daft", "fool", "don't know anything"]):
+        return "negative_evaluation.assistant_competence"
+    if re.search(r"\b(my|i like|i prefer|favorite)\b", lower):
+        return "preference_statement"
+    if "weather" in lower:
+        return "weather_request"
+    if re.fullmatch(r"(hi|hello|hey|good morning|morning|good afternoon|good evening)[!. ]*", lower):
+        return "greeting"
+    if "?" in text:
+        return "question"
+    return "utterance"
 
 
 def recent_signal_rows(conn: sqlite3.Connection, session_id: str, limit: int) -> list[sqlite3.Row]:
@@ -629,7 +378,7 @@ def build_context(conn: sqlite3.Connection, session_id: str) -> ContextKernel:
     }
 
     permission = {
-        "scope": "local_session",
+        "scope": "session_private",
         "can_use_user_memory": True,
         "can_write_user_memory": True,
         "can_call_external_tools": False,
@@ -637,10 +386,14 @@ def build_context(conn: sqlite3.Connection, session_id: str) -> ContextKernel:
 
     budget = {
         "latency_target_ms": 50,
-        "max_claim_candidates": 64,
-        "max_recent_signals": 12,
-        "max_operator_calls": 2,
-        "allow_neural_fallback": False,
+        "max_entities": 16,
+        "max_claims": 64,
+        "max_models": 8,
+        "max_ranked": 32,
+        "max_actions": 2,
+        "max_recursive_steps": 0,
+        "allow_dense_fallback": False,
+        "allow_simulation": False,
     }
 
     context_id = stable_id(
@@ -662,8 +415,7 @@ def build_context(conn: sqlite3.Connection, session_id: str) -> ContextKernel:
         conversation=conversation,
         goal=goal,
         memory=memory,
-        self_state=self_state,
-        self_view=build_self_view(self_state),
+        self_view=self_state,
         permission=permission,
         budget=budget,
     )
@@ -671,7 +423,7 @@ def build_context(conn: sqlite3.Connection, session_id: str) -> ContextKernel:
 
 def observe(conn: sqlite3.Connection, content: str, context: ContextKernel) -> str:
     payload = {"content": content, "session_id": context.session_id, "turn_index": context.turn_index}
-    signal_id = stable_id("sig", payload | {"ts": int(time.time() * 1000000)})
+    signal_id = stable_id("sig", payload | {"ts": now()})
     conn.execute(
         """
         INSERT INTO signals (id, kind, source_type, content, context_json, semantics_json, created_at)
@@ -690,7 +442,7 @@ def infer_context(text: str, context: ContextKernel) -> dict[str, Any]:
     user_location = context.user.get("location", {})
     known_location = any(user_location.get(key) for key in ("city", "region", "country"))
 
-    if is_first_turn and _GREETING_RE.fullmatch(lower):
+    if is_first_turn and re.fullmatch(r"(hi|hello|hey|good morning|morning|good afternoon|good evening)[!. ]*", lower):
         inferences.append({"kind": "session_opening", "value": "greeting", "confidence": 0.95, "decay_half_life_ms": 600000})
     if is_first_turn and len(lower.split()) <= 4 and any(word in lower for word in ["fix", "now", "quick", "urgent"]):
         inferences.append({"kind": "urgency", "value": "possible_hurry", "confidence": 0.45, "decay_half_life_ms": 900000})
@@ -705,8 +457,6 @@ def infer_context(text: str, context: ContextKernel) -> dict[str, Any]:
                 "decay_half_life_ms": 300000,
             }
         )
-    if any(word in lower for word in ["actually", "correction", "wait", "no,"]):
-        inferences.append({"kind": "correction", "value": "possible_supersession", "confidence": 0.8, "decay_half_life_ms": 600000})
 
     for group in context.conversation.get("active_repetition_groups", []):
         inferences.append(
@@ -775,6 +525,39 @@ def map_uol(text: str) -> dict[str, Any]:
     return {"uol_atoms": atoms, "semantic_cluster_key": semantic_cluster_for_text(text)}
 
 
+def build_semantic_event_graph(
+    signal_id: str,
+    context: ContextKernel,
+    semantics: dict[str, Any],
+    claim: dict[str, Any] | None,
+) -> dict[str, Any]:
+    uol = semantics.get("uol", {})
+    uol_atoms = uol.get("uol_atoms", [])
+    atom_confidences = [float(atom.get("confidence", 0.0) or 0.0) for atom in uol_atoms]
+    claim_confidence = float((claim or {}).get("confidence", 0.0) or 0.0)
+    context_confidence = float(semantics.get("context", {}).get("confidence", 0.0) or 0.0)
+    graph_confidence = min(0.95, max(atom_confidences + [claim_confidence, context_confidence, 0.5]))
+    graph = {
+        "id": stable_id("seg", {"signal_id": signal_id, "uol": uol_atoms, "claim": claim}),
+        "source_signal_ids": [signal_id],
+        "context_id": context.id,
+        "entity_refs": [atom for atom in uol_atoms if atom.get("kind") == "entity_ref"],
+        "processes": [atom for atom in uol_atoms if atom.get("kind") == "process"],
+        "states": [atom for atom in uol_atoms if atom.get("kind") == "state"],
+        "claim_refs": [],
+        "model_refs": [],
+        "action_refs": [],
+        "temporal_edges": [],
+        "causal_edges": [],
+        "permission_scope": context.permission["scope"],
+        "confidence": graph_confidence,
+        "version": "cemm.semantic_event_graph.v1",
+    }
+    if claim:
+        graph["claim_candidate"] = claim
+    return graph
+
+
 def extract_claim(text: str) -> dict[str, Any] | None:
     lower = text.lower().strip()
     match = re.search(r"my favorite ([a-z _-]+?) is ([a-z0-9 ._-]+)", lower)
@@ -831,14 +614,10 @@ def route(conn: sqlite3.Connection, text: str, context: ContextKernel, context_i
     if any(i.get("kind") == "world_state_requirement" for i in inferences) and not context.permission.get("can_call_external_tools"):
         return RouteDecision("abstain", 0.78, "fresh world state required but external tools are not permitted", [], [], [])
 
-    if context.conversation["phase"] == "opening" and _GREETING_RE.fullmatch(lower):
+    if context.conversation["phase"] == "opening" and re.fullmatch(
+        r"(hi|hello|hey|good morning|morning|good afternoon|good evening)[!. ]*", lower
+    ):
         return RouteDecision("answer", 0.95, "session greeting from conversation state", [], [], [])
-
-    any_correction = any(i.get("kind") == "correction" for i in inferences)
-    if any_correction:
-        claim = extract_claim(text)
-        if claim:
-            return RouteDecision("remember", claim["confidence"], "correction supersedes previous claim", [], [], [])
 
     claim = extract_claim(text)
     if claim and context.permission.get("can_write_user_memory"):
@@ -855,15 +634,6 @@ def route(conn: sqlite3.Connection, text: str, context: ContextKernel, context_i
         affect = context.user.get("affect", {})
         confidence = 0.7 + min(0.2, float(affect.get("frustration", 0.0)) * 0.2)
         return RouteDecision("answer", confidence, "pragmatic negative evaluation grounded in user affect state", [], [], [])
-
-    if re.search(r"what('s|s| is) (going on|up)", lower):
-        return RouteDecision("answer", 0.8, "informal opener inquiry", [], [], [])
-
-    if re.search(r"\bwhere (are|re|is) you", lower):
-        return RouteDecision("answer", 0.9, "assistant location question", [], [], [])
-
-    if any(phrase in lower for phrase in _SMALL_TALK_PHRASES):
-        return RouteDecision("answer", 0.85, "small talk match", [], [], [])
 
     if "?" in text:
         return RouteDecision("abstain", 0.55, "unsupported open question in basic runtime", [], [], [])
@@ -933,7 +703,7 @@ def synthesize(conn: sqlite3.Connection, decision: RouteDecision, text: str, con
             )
 
     lower = text.lower().strip()
-    if _GREETING_RE.fullmatch(lower):
+    if re.fullmatch(r"(hi|hello|hey|good morning|morning|good afternoon|good evening)[!. ]*", lower):
         if "morning" in lower:
             return "Good morning.", {"strategy": "template", "verified": True, "verification_type": "hard"}
         return "Hello.", {"strategy": "template", "verified": True, "verification_type": "hard"}
@@ -950,186 +720,49 @@ def synthesize(conn: sqlite3.Connection, decision: RouteDecision, text: str, con
             {"strategy": "template", "verified": True, "verification_type": "hard"},
         )
 
-    if re.search(r"what('s|s| is) (going on|up)", lower):
-        return "I'm not sure I follow, but I'm here to help. What can I do for you?", {"strategy": "template", "verified": True, "verification_type": "hard"}
-
-    if re.search(r"\bwhere (are|re|is) you", lower):
-        loc = context.world.get("assistant_location", {})
-        if any(loc.get(k) for k in ("city", "region", "country")):
-            parts = [loc.get(k, "") for k in ("city", "region", "country") if loc.get(k)]
-            return f"I'm running on a server in {', '.join(parts)}.", {"strategy": "world_state", "verified": True, "verification_type": "hard"}
-        return "I don't have a physical location — I'm a digital assistant running on a server.", {"strategy": "world_state", "verified": True, "verification_type": "hard"}
-
-    if "how are you" in lower:
-        _state = context.self_state
-        _social = _state.get("social", {})
-        _world = context.world
-        _factors: list[str] = []
-        _needs_internet = _world.get("knowledge_freshness", {}).get("current_events_require_tool", True)
-        _slus = context.time.get("since_last_user_signal_s")
-        _hours_since = 999999.0 if _slus is None else max(0.0, _slus) / 3600.0
-        _total = max(int(_social.get("total_turns", 0)), 1)
-        _neg = int(_social.get("negative_signal_count", 0))
-        _neg_ratio = _neg / _total
-        if _needs_internet:
-            _factors.append("offline")
-        if _hours_since > 168:
-            _factors.append("abandoned_week")
-        elif _hours_since > 72:
-            _factors.append("abandoned_days")
-        elif _hours_since > 24:
-            _factors.append("quiet")
-        if _neg_ratio > 0.6:
-            _factors.append("abused")
-        elif _neg_ratio > 0.3:
-            _factors.append("underappreciated")
-        if context.self_view.uncertainty > 0.5:
-            _factors.append("unsure")
-        if not _factors:
-            _msg = "I'm functioning well!"
-            _strat = "fine"
-        else:
-            _msgs: list[str] = []
-            for _f in _factors:
-                if _f == "offline":
-                    _msgs.append("I don't have internet access")
-                elif _f == "abandoned_week":
-                    _msgs.append("no one has talked to me in over a week")
-                elif _f == "abandoned_days":
-                    _msgs.append("no one has talked to me in days")
-                elif _f == "quiet":
-                    _msgs.append("it's been quiet around here")
-                elif _f == "abused":
-                    _msgs.append("I've been treated poorly")
-                elif _f == "underappreciated":
-                    _msgs.append("I've been getting a lot of negativity")
-                elif _f == "unsure":
-                    _msgs.append("I'm uncertain about some responses")
-            _msg = "I'm fine, but " + ", and ".join(_msgs) + "."
-            _strat = "mixed_" + "_".join(_factors)
-        return _msg, {"strategy": _strat, "verified": True, "verification_type": "hard", "factors": _factors}
-
-    if "what can you do" in lower:
-        caps = conn.execute("SELECT family, description FROM capabilities WHERE installed = 1 ORDER BY family").fetchall()
-        if caps:
-            lines = [f"I can {r['description']}" for r in caps]
-            body = "\n".join(lines)
-            limits = context.self_view.known_limit_claim_ids
-            if limits:
-                limit_desc = ", ".join(l.replace("_", " ") for l in limits)
-                body += f"\n\nI cannot: {limit_desc}."
-            return body, {"strategy": "self_view", "verified": True, "verification_type": "hard"}
-        limits = context.self_view.known_limit_claim_ids
-        if limits:
-            limit_desc = ", ".join(l.replace("_", " ") for l in limits)
-            return f"I can remember facts and answer questions. I cannot: {limit_desc}.", {"strategy": "self_view", "verified": True, "verification_type": "hard"}
-        return "I can remember facts about you, recall them on request, and handle basic conversation.", {"strategy": "self_view", "verified": True, "verification_type": "hard"}
-
-    if "who are you" in lower or "what is your name" in lower:
-        name = context.self_state.get("identity", {}).get("name", "CEMM Basic")
-        return f"I'm {name}, a conversational memory system.", {"strategy": "self_state", "verified": True, "verification_type": "hard"}
-
-    for phrase, response in _STATIC_RESPONSES.items():
-        if phrase in lower:
-            return response, {"strategy": "template", "verified": True, "verification_type": "hard"}
-
-    if re.search(r"\b(tell|make up|tell me|spin|recite) (me |us |)(a |an |)(story|tale|fable)", lower):
-        return (
-            "I don't have a built-in story library yet, but I can help create one. "
-            "Tell me what kind of story you'd like — adventure, folk tale, or something original?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(what should i eat|suggest|recommend|meal|dinner|breakfast|lunch|recipe|food|snack|cook)", lower):
-        return (
-            "I can suggest meals based on your preferences. What kind of food are you in the mood for?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(headache|cold|flu|pain|exercise|diet|health|symptom|vitamin|sleep|back pain)", lower):
-        return (
-            "I can offer general health guidance, but please consult a medical professional for personalized advice. "
-            "What specific health topic are you curious about?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(goal|plan|career|learn|study|skill|improve|achieve|step|strategy|advice|suggest)", lower):
-        return (
-            "I can help you plan and set goals. What's the main thing you're working toward?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(safe|safety|danger|child|kid|emergency|help|should.*do|what if)", lower):
-        return (
-            "Safety first! I can provide common-sense safety guidance. Could you tell me more about the situation?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(play|pause|skip|next|previous|volume|music|song|track|video|album|stop)", lower):
-        return (
-            "Media playback is available when connected to your device. What would you like me to play or control?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(save|store|remember|add|call|message|text|contact|phone|number|mom|dad)", lower):
-        return (
-            "I can help manage your contacts. What would you like me to save or look up?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(tone|style|formal|casual|professional|friendly|behavior|act like|personality)", lower):
-        return (
-            "I can adjust my tone and behavior. How would you like me to communicate with you?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    if re.search(r"\b(last time|yesterday|previous|before|earlier|remember.*(said|told|asked|talk))", lower):
-        return (
-            "I'll check what I remember from our previous conversation. Could you remind me what we talked about?",
-            {"strategy": "template", "verified": True, "verification_type": "hard"},
-        )
-
-    config = _RUNTIME_CONFIG
-    if config and config.api_key and not config.dry_run:
-        try:
-            ck = dataclasses.asdict(context)
-            body = {
-                "model": config.model,
-                "messages": [
-                    {"role": "system", "content": "You are CEMM, a MOE/SLM conversational agent. Respond directly — no self-narration, no description of your process. Just answer the user naturally in 1-2 sentences."},
-                    {"role": "user", "content": json.dumps({"user_said": text, "context": ck}, sort_keys=True)},
-                ],
-                "temperature": 0.7,
-                "max_tokens": 150,
-            }
-            req = urllib.request.Request(
-                config.base_url,
-                data=json.dumps(body).encode("utf-8"),
-                headers={"Authorization": f"Bearer {config.api_key}", "Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=config.timeout_s) as resp:
-                raw = resp.read().decode("utf-8")
-            envelope = json.loads(raw)
-            answer = envelope["choices"][0]["message"]["content"].strip()
-            if answer:
-                # Run synthesis verification
-                from cemm.synthesis_verifier import verify_neural_response
-                vr = verify_neural_response(answer, text, ck)
-                if vr.get("should_fallback"):
-                    # Verifier rejected the answer — fall back to abstain
-                    return (
-                        "I'm not confident enough to answer that accurately.",
-                        {"strategy": "llm_fallback_abstain", "verified": True,
-                         "verification_type": "soft", "verifier": vr,
-                         "llm_model": config.model},
-                    )
-                return answer, {"strategy": "llm", "verified": True,
-                                "verification_type": "soft", "verifier": vr,
-                                "llm_model": config.model}
-        except Exception:
-            pass
     return "I am here.", {"strategy": "template", "verified": True, "verification_type": "hard"}
+
+
+def compose_semantic_answer_graph(
+    conn: sqlite3.Connection,
+    signal_id: str,
+    context: ContextKernel,
+    decision: RouteDecision,
+    semantic_event_graph: dict[str, Any],
+    verification: dict[str, Any],
+) -> dict[str, Any]:
+    claims = selected_claims(conn, decision.selected_claim_ids)
+    return {
+        "id": stable_id(
+            "sag",
+            {
+                "signal_id": signal_id,
+                "decision": dataclasses.asdict(decision),
+                "selected_claim_ids": decision.selected_claim_ids,
+            },
+        ),
+        "intent": decision.action_kind,
+        "source_signal_ids": [signal_id],
+        "context_id": context.id,
+        "selected_claim_ids": decision.selected_claim_ids,
+        "selected_model_ids": [],
+        "entity_refs": semantic_event_graph.get("entity_refs", []),
+        "processes": semantic_event_graph.get("processes", []),
+        "states": semantic_event_graph.get("states", []),
+        "causal_edges": semantic_event_graph.get("causal_edges", []),
+        "temporal_edges": semantic_event_graph.get("temporal_edges", []),
+        "action_candidates": [dataclasses.asdict(decision)],
+        "selected_claims": claims,
+        "confidence": decision.confidence,
+        "uncertainty_reasons": [] if decision.confidence >= 0.75 else [decision.reason],
+        "permission_scope": context.permission["scope"],
+        "verification": {
+            "supported": bool(verification.get("verified", False)),
+            "verification_type": verification.get("verification_type", "none"),
+            "confidence": decision.confidence,
+        },
+        "version": "cemm.semantic_answer_graph.v1",
+    }
 
 
 def update_self_after_turn(
@@ -1138,14 +771,12 @@ def update_self_after_turn(
     decision: RouteDecision,
     stored_claim_id: str | None,
     trace_id: str,
-    cluster_key: str = "",
 ) -> None:
-    state = context.self_state
+    state = context.self_view
     internal = state.setdefault("internal", {})
     epistemic = state.setdefault("epistemic", {})
     meta_memory = state.setdefault("meta_memory", {})
     historical = state.setdefault("historical_arc", {})
-    social = state.setdefault("social", {})
 
     internal["mode"] = "assistant"
     internal["uncertainty"] = round(max(0.0, 1.0 - decision.confidence), 4)
@@ -1157,11 +788,6 @@ def update_self_after_turn(
     recent_trace_ids = list(historical.get("recent_trace_ids", []))
     recent_trace_ids.insert(0, trace_id)
     historical["recent_trace_ids"] = recent_trace_ids[:16]
-
-    social["total_turns"] = int(social.get("total_turns", 0)) + 1
-    social["last_interaction_at"] = now()
-    if cluster_key == "negative_evaluation.assistant_competence" or decision.action_kind == "abstain":
-        social["negative_signal_count"] = int(social.get("negative_signal_count", 0)) + 1
 
     if stored_claim_id:
         meta_memory["stored_claim_count"] = int(meta_memory.get("stored_claim_count", 0)) + 1
@@ -1183,6 +809,8 @@ def write_action_trace(
     decision: RouteDecision,
     response: str,
     semantics: dict[str, Any],
+    semantic_event_graph: dict[str, Any],
+    semantic_answer_graph: dict[str, Any],
     verification: dict[str, Any],
 ) -> str:
     action_id = stable_id("act", {"signal_id": signal_id, "decision": dataclasses.asdict(decision), "ts": now()})
@@ -1207,6 +835,8 @@ def write_action_trace(
         "selected_claim_ids": decision.selected_claim_ids,
         "selected_claims": selected_claims(conn, decision.selected_claim_ids),
         "semantics": semantics,
+        "semantic_event_graph": semantic_event_graph,
+        "semantic_answer_graph": semantic_answer_graph,
         "synthesis": verification,
         "response": response,
     }
@@ -1226,21 +856,32 @@ def handle_turn(conn: sqlite3.Connection, content: str, session_id: str) -> dict
     context_info = infer_context(normalized, context)
     uol = map_uol(normalized)
     semantics = {"context": context_info, "uol": uol}
+    claim_candidate = extract_claim(normalized)
+    semantic_event_graph = build_semantic_event_graph(signal_id, context, semantics, claim_candidate)
     conn.execute("UPDATE signals SET semantics_json = ? WHERE id = ?", (json.dumps(semantics, sort_keys=True), signal_id))
     conn.commit()
 
     decision = route(conn, normalized, context, context_info)
     stored_claim_id = None
     if decision.action_kind == "remember":
-        claim = extract_claim(normalized)
-        if claim:
-            stored_claim_id = save_claim(conn, signal_id, claim)
+        if claim_candidate:
+            stored_claim_id = save_claim(conn, signal_id, claim_candidate)
+            semantic_event_graph["claim_refs"].append(stored_claim_id)
 
     response, verification = synthesize(conn, decision, normalized, context)
-    trace_id = write_action_trace(conn, signal_id, context, decision, response, semantics, verification)
-    cluster_key = uol.get("semantic_cluster_key", "")
-    update_self_after_turn(conn, context, decision, stored_claim_id, trace_id, cluster_key)
-    emit_training_example(conn, content, response, context, context_info, uol, decision, verification)
+    semantic_answer_graph = compose_semantic_answer_graph(conn, signal_id, context, decision, semantic_event_graph, verification)
+    trace_id = write_action_trace(
+        conn,
+        signal_id,
+        context,
+        decision,
+        response,
+        semantics,
+        semantic_event_graph,
+        semantic_answer_graph,
+        verification,
+    )
+    update_self_after_turn(conn, context, decision, stored_claim_id, trace_id)
     return {
         "response": response,
         "signal_id": signal_id,
@@ -1273,32 +914,52 @@ def runtime_training_examples(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             "text": row["content"],
             "context_kernel": context,
             "semantics": semantics,
+            "semantic_event_graph": trace.get("semantic_event_graph"),
+            "semantic_answer_graph": trace.get("semantic_answer_graph"),
             "trace": trace,
         }
-        examples.append({"task_type": "context_inference", "permission_scope": "local_training", "payload": payload_base})
-        examples.append({"task_type": "uol_mapping", "permission_scope": "local_training", "payload": payload_base})
-        examples.append({"task_type": "operator_selection", "permission_scope": "local_training", "payload": payload_base})
+        permission_scope = context.get("permission", {}).get("scope", "session_private")
+        examples.append({"task_type": "semantic_graph_extraction", "permission_scope": permission_scope, "payload": payload_base})
+        examples.append({"task_type": "semantic_latent_target", "permission_scope": permission_scope, "payload": payload_base})
+        examples.append({"task_type": "context_inference", "permission_scope": permission_scope, "payload": payload_base})
+        examples.append({"task_type": "uol_mapping", "permission_scope": permission_scope, "payload": payload_base})
+        examples.append({"task_type": "operator_selection", "permission_scope": permission_scope, "payload": payload_base})
+        examples.append({"task_type": "semantic_answer_composition", "permission_scope": permission_scope, "payload": payload_base})
 
         cluster = semantics.get("uol", {}).get("semantic_cluster_key") or semantic_cluster_for_text(row["content"])
         if cluster in {"preference_statement"}:
-            examples.append({"task_type": "claim_extraction", "permission_scope": "local_training", "payload": payload_base})
-            examples.append({"task_type": "predicate_mapping", "permission_scope": "local_training", "payload": payload_base})
+            examples.append({"task_type": "claim_extraction", "permission_scope": permission_scope, "payload": payload_base})
+            examples.append({"task_type": "predicate_mapping", "permission_scope": permission_scope, "payload": payload_base})
         if cluster == "negative_evaluation.assistant_competence":
-            examples.append({"task_type": "pragmatic_interpretation", "permission_scope": "local_training", "payload": payload_base})
+            examples.append({"task_type": "pragmatic_interpretation", "permission_scope": permission_scope, "payload": payload_base})
         if trace.get("response"):
             examples.append(
                 {
                     "task_type": "synthesis_verification",
-                    "permission_scope": "local_training",
+                    "permission_scope": permission_scope,
                     "payload": {
                         **payload_base,
                         "answer": trace["response"],
                         "selected_claims": trace.get("selected_claims", []),
+                        "semantic_answer_graph": trace.get("semantic_answer_graph"),
                         "verification": trace.get("synthesis", {}),
                     },
                 }
             )
-            examples.append({"task_type": "self_state_update", "permission_scope": "local_training", "payload": payload_base})
+            examples.append(
+                {
+                    "task_type": "semantic_text_realization",
+                    "permission_scope": permission_scope,
+                    "payload": {
+                        **payload_base,
+                        "answer": trace["response"],
+                        "semantic_answer_graph": trace.get("semantic_answer_graph"),
+                    },
+                }
+            )
+            examples.append({"task_type": "self_state_update", "permission_scope": permission_scope, "payload": payload_base})
+        if context.get("conversation", {}).get("recent_signal_ids"):
+            examples.append({"task_type": "next_event_prediction", "permission_scope": permission_scope, "payload": payload_base})
     return examples
 
 
@@ -1309,57 +970,6 @@ def export_training(conn: sqlite3.Connection, out_path: Path) -> int:
         for example in examples:
             handle.write(json.dumps(example, sort_keys=True) + "\n")
     return len(examples)
-
-
-_TRAINING_QUEUE_PATH: Path | None = None
-
-
-def set_training_queue(path: Path | None) -> None:
-    global _TRAINING_QUEUE_PATH
-    _TRAINING_QUEUE_PATH = path
-
-
-def emit_training_example(
-    conn: sqlite3.Connection,
-    content: str,
-    response: str,
-    context: ContextKernel,
-    context_info: dict[str, Any],
-    uol: dict[str, Any],
-    decision: RouteDecision,
-    verification: dict[str, Any],
-) -> None:
-    if _TRAINING_QUEUE_PATH is None:
-        return
-    strategy = verification.get("strategy", "")
-    if strategy != "llm":
-        return
-
-    ck = dataclasses.asdict(context)
-    payload = {
-        "category": "runtime_llm_fallback",
-        "signal": {"kind": "input", "content": content, "source_type": "user"},
-        "context": ck,
-        "response": response,
-        "context_info": context_info,
-        "uol": uol,
-        "decision": dataclasses.asdict(decision),
-    }
-    task_types = [
-        "context_inference", "uol_mapping", "operator_selection",
-        "pragmatic_interpretation", "synthesis_verification", "self_state_update",
-    ]
-    _TRAINING_QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with _TRAINING_QUEUE_PATH.open("a", encoding="utf-8") as f:
-        for tt in task_types:
-            record = {
-                "task_type": tt,
-                "permission_scope": "session_private",
-                "payload": payload,
-                "source": "runtime_continuous",
-                "created_at": now(),
-            }
-            f.write(json.dumps(record, sort_keys=True) + "\n")
 
 
 def call_llm(config: RuntimeConfig, task_type: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -1397,7 +1007,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="CEMM context-grounded runtime router")
     parser.add_argument("--db", default="cemm_runtime.sqlite3")
     parser.add_argument("--session-id", default="default")
-    parser.add_argument("--training-queue", default=None, help="path to continuous training queue JSONL")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     once = sub.add_parser("once", help="handle one user turn")
@@ -1428,11 +1037,6 @@ def main(argv: list[str]) -> int:
         max_retries=int(os.getenv("CEMM_RUNTIME_MAX_RETRIES", "2")),
     )
     conn = connect(config.db_path)
-    # pylint: disable-next=global-statement
-    global _RUNTIME_CONFIG
-    _RUNTIME_CONFIG = config
-    if args.training_queue:
-        set_training_queue(Path(args.training_queue))
 
     if args.cmd == "once":
         result = handle_turn(conn, args.text, args.session_id)

@@ -5,6 +5,7 @@ from cemm.store.store import Store
 from cemm.types.model import Model, ModelKind, ModelStatus
 from cemm.types.claim import Claim
 from cemm.types.context_kernel import ContextKernel
+from cemm.types.packets import InferencePacket
 
 
 class TestCausalInference:
@@ -12,15 +13,17 @@ class TestCausalInference:
         store = Store(":memory:")
         inference = CausalInference(store)
         kernel = ContextKernel(id="test")
-        results = inference.predict("delete_file", [], kernel)
-        assert isinstance(results, list)
+        result = inference.predict("delete_file", [], kernel)
+        assert isinstance(result, InferencePacket)
+        assert isinstance(result.predictions, list)
 
     def test_transitive_closure_bounded(self):
         store = Store(":memory:")
         inference = CausalInference(store)
         kernel = ContextKernel(id="test")
-        results = inference.transitive_closure(["cl_001"], kernel, max_depth=3)
-        assert isinstance(results, list)
+        result = inference.transitive_closure(["cl_001"], kernel, max_depth=3)
+        assert isinstance(result, InferencePacket)
+        assert isinstance(result.predictions, list)
 
 
 class TestSimulationEngine:

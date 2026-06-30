@@ -41,6 +41,7 @@ class Evaluator:
     def record_result(
         self, eval_set_id: str, job_id: str,
         score: float | None = None, metrics: dict[str, Any] | None = None,
+        model_id: str | None = None,
     ) -> EvalResult:
         r_id = uuid.uuid4().hex[:16]
         now = time.time()
@@ -49,9 +50,9 @@ class Evaluator:
             (job_id,),
         )
         self._conn.execute(
-            "INSERT INTO eval_results (id, eval_set_id, job_id, score, metrics_json, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (r_id, eval_set_id, job_id, score,
+            "INSERT INTO eval_results (id, eval_set_id, job_id, model_id, score, metrics_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (r_id, eval_set_id, job_id, model_id, score,
              json.dumps(metrics) if metrics else None, now),
         )
         self._conn.commit()

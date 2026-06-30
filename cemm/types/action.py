@@ -40,4 +40,4 @@ class Action:
     result_signal_id: str | None = None
     trace: Trace | None = None
     created_at: float = 0.0
-    version: str = "erca.action.v1"
+    version: str = "cemm.action.v1"

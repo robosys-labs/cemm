@@ -7,7 +7,8 @@ from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
 from ..types.context_kernel import ContextKernel
 from ..types.semantic_event_graph import SemanticEventGraph
-from ..types.packets import GroundedGraph, MemoryPacket, RankingTraceEntry
+from ..types.packets import GroundedGraph, MemoryPacket, RankingTraceEntry, InferencePacket, DecisionPacket
+from ..types.context_inference import ContextInference
 from ..types.self_view import SelfView
 from ..types.permission import Permission
 from ..store.store import Store
@@ -41,6 +42,9 @@ class PipelineResult:
     semantic_event_graph: SemanticEventGraph | None = None
     grounded_graph: GroundedGraph | None = None
     memory_packet: MemoryPacket | None = None
+    inference_packet: InferencePacket | None = None
+    decision_packet: DecisionPacket | None = None
+    context_inference: ContextInference | None = None
 
 
 class Pipeline:
@@ -58,7 +62,7 @@ class Pipeline:
         self._uol_mapper = UOLMapper(registry)
         self._artifact_store = ArtifactStore(store)
         self._semantic_interpreter = SemanticInterpreter(
-            self._uol_mapper, artifact_store=self._artifact_store,
+            self._uol_mapper, artifact_store=self._artifact_store, store=store,
         )
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
@@ -107,7 +111,7 @@ class Pipeline:
 
         # Interpret: SemanticEventGraph + UOL atoms
         semantic_event_graph = self._semantic_interpreter.run(signal, kernel)
-        semantics = interpret_signal(signal, kernel, self._store)
+        semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
         if semantics is not None:
             uol_atoms = self._uol_mapper.map_signal(signal.content, kernel)
             semantics.uol_atoms = uol_atoms
@@ -122,12 +126,12 @@ class Pipeline:
                     kernel.conversation.dynamics, semantics, kernel, signal.id
                 )
 
-        # Infer context from signal + graph + kernel (not raw text alone)
-        context_inference = self._context_inference_engine.infer(signal, kernel)
-        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
-
         # Ground entities, time, frame, permission
         grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel)
+
+        # Infer context from signal + grounded graph + kernel (not raw text alone)
+        context_inference = self._context_inference_engine.infer(signal, kernel)
+        self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
         # Seed entity IDs from graph for graph-grounded retrieval
         for ref in semantic_event_graph.entity_refs:
@@ -155,6 +159,11 @@ class Pipeline:
         kernel.world.active_claim_ids = kernel.memory.working_claim_ids
         kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
 
+        # Update self-view uncertainty based on available evidence
+        n_claims = len(kernel.memory.working_claim_ids)
+        n_models = len(kernel.memory.candidate_model_ids)
+        kernel.self_view.uncertainty = max(0.2, 1.0 - min(1.0, (n_claims + n_models * 0.5) / 10.0))
+
         memory_packet = MemoryPacket(
             selected_signal_ids=[signal.id],
             selected_claim_ids=list(kernel.memory.working_claim_ids),
@@ -179,6 +188,7 @@ class Pipeline:
             semantic_event_graph=semantic_event_graph,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
+            context_inference=context_inference,
         )
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0

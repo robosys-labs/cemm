@@ -15,7 +15,7 @@ class SelfView:
     coverage_gap_claim_ids: list[str] = field(default_factory=list)
     reliability_by_domain: dict[str, float] = field(default_factory=dict)
     recent_meta_memory_claim_ids: list[str] = field(default_factory=list)
-    version: str = "erca.self_view.v1"
+    version: str = "cemm.self_view.v1"
 
     @classmethod
     def from_self_state(cls, state: SelfState | None, recent_claim_ids: list[str] | None = None) -> SelfView:

@@ -5,6 +5,7 @@ from ..types.claim import Claim, ClaimStatus
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.entity import Entity
 from ..types.context_kernel import ContextKernel
+from ..types.semantic_event_graph import SemanticEventGraph
 
 
 @dataclass
@@ -32,6 +33,17 @@ class RetrievalResult:
 class StructuralRetriever:
     def __init__(self, store: Store) -> None:
         self._store = store
+
+    @staticmethod
+    def filter_frame_valid(claims: list[Claim], now: float) -> list[Claim]:
+        filtered: list[Claim] = []
+        for c in claims:
+            if c.valid_from is not None and c.valid_from > now:
+                continue
+            if c.valid_until is not None and c.valid_until < now:
+                continue
+            filtered.append(c)
+        return filtered
 
     def retrieve(self, query: RetrievalQuery, kernel: ContextKernel | None = None) -> RetrievalResult:
         result = RetrievalResult()
@@ -73,6 +85,7 @@ class StructuralRetriever:
                 c for c in result.claims
                 if c.status == ClaimStatus.ACTIVE
             ]
+            result.claims = self.filter_frame_valid(result.claims, kernel.time.now)
 
         result.total_count = len(result.claims) + len(result.models)
         return result
@@ -98,5 +111,44 @@ class StructuralRetriever:
             if m:
                 result.models.append(m)
 
+        result.claims = self.filter_frame_valid(result.claims, kernel.time.now)
+        result.total_count = len(result.claims) + len(result.models)
+        return result
+
+    def retrieve_for_graph(self, graph: SemanticEventGraph, kernel: ContextKernel) -> RetrievalResult:
+        result = RetrievalResult()
+        seen = set()
+
+        # Extract entity names/IDs from graph's entity_refs as retrieval queries
+        for ref in graph.entity_refs:
+            eid = ref.get("entity_id", "")
+            if eid and eid not in seen:
+                seen.add(eid)
+                claims = self._store.claims.find_by_subject(eid, limit=kernel.budget.max_claims)
+                result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
+
+        # Extract process frame_key values and use as frame_id queries
+        for proc in graph.processes:
+            frame_key = proc.get("frame_key", "")
+            if frame_key:
+                frame_query = RetrievalQuery(frame_id=frame_key)
+                frame_result = self.retrieve(frame_query, kernel)
+                for c in frame_result.claims:
+                    if c.id not in seen:
+                        result.claims.append(c)
+                        seen.add(c.id)
+
+        # Extract state_key values and use as domain queries
+        for state in graph.states:
+            state_key = state.get("state_key", "")
+            if state_key:
+                domain_query = RetrievalQuery(domain=state_key)
+                domain_result = self.retrieve(domain_query, kernel)
+                for c in domain_result.claims:
+                    if c.id not in seen:
+                        result.claims.append(c)
+                        seen.add(c.id)
+
+        result.claims = self.filter_frame_valid(result.claims, kernel.time.now)
         result.total_count = len(result.claims) + len(result.models)
         return result

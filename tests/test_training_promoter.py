@@ -3,6 +3,27 @@ from cemm.training.promoter import Promoter
 from cemm.store.store import Store
 from cemm.types.model import Model, ModelKind, ModelStatus
 import time
+import uuid
+
+
+def _seed_eval(store: Store, model_id: str, score: float) -> None:
+    now = time.time()
+    store.conn.execute("CREATE TABLE IF NOT EXISTS training_jobs (id TEXT PRIMARY KEY)")
+    eval_set_id = uuid.uuid4().hex[:16]
+    store.conn.execute(
+        "INSERT INTO eval_sets (id, name, created_at) VALUES (?, ?, ?)",
+        (eval_set_id, "test_set", now),
+    )
+    job_id = uuid.uuid4().hex[:16]
+    store.conn.execute(
+        "INSERT OR IGNORE INTO training_jobs (id) VALUES (?)", (job_id,),
+    )
+    store.conn.execute(
+        "INSERT INTO eval_results (id, eval_set_id, job_id, model_id, score, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (uuid.uuid4().hex[:16], eval_set_id, job_id, model_id, score, now),
+    )
+    store.conn.commit()
 
 
 class TestPromoter:
@@ -19,7 +40,7 @@ class TestPromoter:
         c = p.create_candidate("nonexistent_model", "test", score=0.5)
         assert c.status == "pending"
 
-    def test_approve_promotion(self):
+    def test_approve_promotion_with_eval(self):
         store = Store(":memory:")
         now = time.time()
         model = Model(
@@ -27,6 +48,7 @@ class TestPromoter:
             status=ModelStatus.CANDIDATE, created_at=now, updated_at=now,
         )
         store.models.put(model)
+        _seed_eval(store, "model_to_promote", 0.9)
         p = Promoter(store)
         c = p.create_candidate("model_to_promote", "Good", score=0.9)
         success = p.approve(c.id)
@@ -39,6 +61,19 @@ class TestPromoter:
             "SELECT status FROM models WHERE id = ?", ("model_to_promote",)
         ).fetchone()
         assert model_row[0] == "active"
+
+    def test_rejects_without_eval(self):
+        store = Store(":memory:")
+        now = time.time()
+        model = Model(
+            id="no_eval_model", kind=ModelKind.PREDICATE, name="test",
+            status=ModelStatus.CANDIDATE, created_at=now, updated_at=now,
+        )
+        store.models.put(model)
+        p = Promoter(store)
+        c = p.create_candidate("no_eval_model", "No eval", score=0.9)
+        success = p.approve(c.id)
+        assert success is False
 
     def test_reject_promotion(self):
         store = Store(":memory:")

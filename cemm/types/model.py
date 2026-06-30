@@ -19,6 +19,8 @@ class ModelKind(str, Enum):
     VERIFIER = "verifier"
     INDUCTOR = "inductor"
     UOL_SEMANTIC = "uol_semantic"
+    PROCEDURE = "procedure"
+    TOOL = "tool"
 
 
 class ModelStatus(str, Enum):
@@ -51,4 +53,5 @@ class Model:
     created_at: float = 0.0
     updated_at: float = 0.0
     permission: Permission | None = None
-    version: str = "erca.model.v1"
+    artifact_json: str | None = None
+    version: str = "cemm.model.v1"

@@ -47,6 +47,11 @@ class EntityResolver:
         self_id = kernel.self_view.self_id
         if not self_id:
             return None
+        # Try by ID first (most direct match)
+        entity = self._store.get(self_id)
+        if entity and entity.type == EntityType.SYSTEM:
+            return entity
+        # Fallback: match by name
         matches = self._store.find_by_name(self_id)
         for m in matches:
             if m.type == EntityType.SYSTEM:

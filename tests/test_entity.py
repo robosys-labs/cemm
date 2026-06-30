@@ -12,7 +12,7 @@ class TestEntity:
         )
         assert e.id == "e1"
         assert e.type == EntityType.PERSON
-        assert e.version == "erca.entity.v1"
+        assert e.version == "cemm.entity.v1"
 
     def test_entity_type_values(self):
         assert EntityType.UNKNOWN.value == "unknown"

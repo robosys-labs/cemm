@@ -30,5 +30,4 @@ class ExtractiveStrategy:
             output=output,
             strategy="extractive",
             cost_ms=1.0,
-            verified=True,
         )

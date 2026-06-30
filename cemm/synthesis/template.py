@@ -28,7 +28,6 @@ class TemplateStrategy:
             output=rendered,
             strategy="template",
             cost_ms=0.5,
-            verified=True,
         )
 
     @staticmethod
@@ -38,8 +37,9 @@ class TemplateStrategy:
             "confirmation": "I've noted that: {subject} {predicate} {object}.",
             "clarification": "Could you clarify what you mean by {term}?",
             "capability": "I can help with questions about {domain}.",
+            "acknowledgment": "Got it! What else would you like to know or share?",
         }
-        return templates.get(key, "I'm not sure how to respond to that.")
+        return templates.get(key, "")
 
     @staticmethod
     def _apply(template: str, variables: dict) -> str:

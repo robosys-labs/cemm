@@ -10,6 +10,9 @@ from .context_kernel import ContextKernel, WorldState, UserState, TimeState, Con
 from .trace import Trace
 from .operator_spec import OperatorSpec
 from .uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
+from .semantic_event_graph import SemanticEdge, SemanticEventGraph
+from .semantic_answer_graph import AnswerVerification, SemanticAnswerGraph
+from .packets import GroundedGraph, MemoryPacket, InferencePacket, DecisionPacket, ActionPlan, RankingTraceEntry
 
 __all__ = [
     "Signal", "SignalKind", "SourceType",
@@ -24,4 +27,7 @@ __all__ = [
     "Trace",
     "OperatorSpec",
     "EntityRefUOLAtom", "ProcessUOLAtom", "StateUOLAtom",
+    "SemanticEdge", "SemanticEventGraph",
+    "AnswerVerification", "SemanticAnswerGraph",
+    "GroundedGraph", "MemoryPacket", "InferencePacket", "DecisionPacket", "ActionPlan", "RankingTraceEntry",
 ]

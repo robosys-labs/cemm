@@ -29,6 +29,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import re
 import queue
 import sqlite3
 import sys
@@ -206,11 +207,13 @@ PROMPTS: dict[str, dict[str, str]] = {
     "operator_selection": {
         "agent": "operator_router",
         "system": (
-            "You select the cheapest valid CEMM operator/action for a turn. Return strict JSON only. "
-            "Prefer ask or abstain when slots, evidence, or permission are insufficient."
+            "You select the cheapest valid CEMM foundational operator/action from the SemanticEventGraph and ContextKernel. "
+            "Return strict JSON only. "
+            "Prefer ask or abstain when slots, evidence, or permission are insufficient. "
+            "Do not select actions based on surface text alone — use the semantic graph structure."
         ),
         "user": (
-            "Select operator.\n"
+            "Select operator from SemanticEventGraph.\n"
             "Return JSON: {{\"action_kind\":\"answer\",\"operator_model_key\":\"\","
             "\"required_slots\":[],\"missing_slots\":[],\"confidence\":0.0,"
             "\"reason\":\"\"}}\n\nPayload:\n{payload}"
@@ -329,7 +332,176 @@ PROMPTS: dict[str, dict[str, str]] = {
             "\"confidence\":0.0,\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
         ),
     },
+    "semantic_graph_extraction": {
+        "agent": "semantic_graph_builder",
+        "system": "You build a SemanticEventGraph from a signal and context.",
+        "user": "Signal: {signal}\nContext: {context_kernel}\nBuild the semantic event graph with entity refs, processes, states, and confidence.",
+    },
+    "semantic_graph_denoising": {
+        "agent": "semantic_graph_denoiser",
+        "system": "You remove noise from a SemanticEventGraph.",
+        "user": "Graph: {semantic_event_graph}\nReturn only the confirmed, high-confidence atoms and edges.",
+    },
+    "semantic_latent_target": {
+        "agent": "latent_teacher",
+        "system": "You generate typed latent supervision targets from a SemanticEventGraph.",
+        "user": "Graph: {semantic_event_graph}\nGenerate entity, process, state, claim, and context latent targets.",
+    },
+    "semantic_answer_composition": {
+        "agent": "semantic_answerer",
+        "system": "You compose a SemanticAnswerGraph from a SemanticEventGraph, context, and selected memory.",
+        "user": "Event Graph: {semantic_event_graph}\nContext: {context_kernel}\nMemory: {selected_claims}\nIntent: {intent}\nCompose the answer graph.",
+    },
+    "semantic_text_realization": {
+        "agent": "text_realizer",
+        "system": "You generate natural language text from a SemanticAnswerGraph.",
+        "user": "Answer Graph: {semantic_answer_graph}\nGenerate natural text from the answer graph. Map back to selected claims.",
+    },
+    "next_event_prediction": {
+        "agent": "event_predictor",
+        "system": "You predict likely next semantic events from recent graph history.",
+        "user": "Recent graphs: {recent_event_graphs}\nPredict the most likely next process, state change, or entity involvement.",
+    },
+    "causal_effect_prediction": {
+        "agent": "causal_predictor",
+        "system": "You predict causal effects from a semantic event graph.",
+        "user": "Graph: {semantic_event_graph}\nIdentify cause-effect edges and predict likely outcomes.",
+    },
+    "memory_retrieval_ranking": {
+        "agent": "memory_ranker",
+        "system": "You rank memory candidates by relevance to the current semantic context.",
+        "user": "Query Graph: {semantic_event_graph}\nCandidates: {candidates}\nRank by relevance, trust, confidence, salience, recency, frame validity, and permission.",
+    },
+    "tool_handoff_planning": {
+        "agent": "tool_planner",
+        "system": (
+            "You plan CEMM tool handoff through the fixed foundational operators. Return strict JSON only. "
+            "Do not invent new top-level operators. Use ToolSchemaModel and ActionPlan concepts."
+        ),
+        "user": (
+            "Plan tool handoff for this payload.\n"
+            "Return JSON: {{\"tool_required\":false,\"tool_schema_model_key\":\"\","
+            "\"action_kind\":\"act\",\"required_slots\":[],\"missing_slots\":[],"
+            "\"structured_tool_input\":{{}},\"requires_confirmation\":false,"
+            "\"permission_needed\":\"session_private\",\"confidence\":0.0,"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
+    "procedure_model_induction": {
+        "agent": "procedure_inductor",
+        "system": (
+            "You propose candidate CEMM ProcedureModel records from repeated workflow evidence. "
+            "Return strict JSON only. Do not promote candidates. Do not invent new foundational operators."
+        ),
+        "user": (
+            "Propose procedure model candidates.\n"
+            "Return JSON: {{\"candidate_procedure_models\":[{{\"registry_key\":\"\","
+            "\"required_slots\":[],\"optional_slots\":[],\"preconditions\":[],"
+            "\"tool_sequence\":[],\"confirmation_policy\":\"risky_only\","
+            "\"success_criteria\":[],\"failure_modes\":[],\"evidence_refs\":[],"
+            "\"support\":0,\"failures\":0,\"confidence\":0.0,\"risk\":0.0}}],"
+            "\"uncertainty_reason\":\"\"}}\n\nPayload:\n{payload}"
+        ),
+    },
 }
+
+
+ARTIFACT_TASK_MAP: dict[str, str] = {
+    "uol_mapping": "uol_semantic",
+    "semantic_graph_extraction": "uol_semantic",
+    "operator_selection": "operator",
+    "semantic_answer_composition": "operator",
+    "semantic_text_realization": "synthesis_strategy",
+    "context_inference": "context_rule",
+    "frame_classification": "frame_rule",
+    "claim_extraction": "predicate",
+}
+
+
+def build_artifact(conn: sqlite3.Connection, task_type: str) -> str | None:
+    rows = conn.execute(
+        """
+        SELECT ao.output_json, ao.confidence, tj.payload_json, tj.id AS job_id
+        FROM agent_outputs ao
+        JOIN training_jobs tj ON tj.id = ao.job_id
+        WHERE tj.task_type = ?
+        ORDER BY ao.created_at DESC
+        LIMIT 100
+        """,
+        (task_type,),
+    ).fetchall()
+    if not rows:
+        return None
+
+    examples = []
+    for row in rows:
+        try:
+            output = json.loads(row["output_json"])
+            payload = json.loads(row["payload_json"])
+        except (json.JSONDecodeError, TypeError):
+            continue
+        examples.append({
+            "job_id": row["job_id"],
+            "task_type": task_type,
+            "input": payload,
+            "output": output,
+            "confidence": row["confidence"],
+        })
+
+    artifact = {
+        "version": "cemm.artifact.v1",
+        "task_type": task_type,
+        "model_kind": ARTIFACT_TASK_MAP.get(task_type, "predicate"),
+        "example_count": len(examples),
+        "examples": examples,
+    }
+    return json.dumps(artifact, sort_keys=True)
+
+
+GRAPH_REQUIRED_TASKS: set[str] = {
+    "semantic_answer_composition",
+    "semantic_text_realization",
+    "operator_selection",
+}
+
+SEG_REQUIRED_TASKS: set[str] = {
+    "semantic_graph_extraction",
+    "semantic_graph_denoising",
+    "semantic_latent_target",
+    "claim_extraction",
+    "entity_resolution",
+    "uol_mapping",
+    "context_inference",
+    "pragmatic_interpretation",
+    "semantic_answer_composition",
+    "operator_selection",
+    "temporal_relation_derivation",
+    "frame_classification",
+}
+
+SAG_REQUIRED_TASKS = {
+    "text_to_answer",
+    "semantic_answer_composition",
+    "semantic_text_realization",
+    "operator_selection",
+}
+
+
+def validate_training_record(task_type: str, payload: dict) -> None:
+    if "context_kernel" not in payload:
+        raise ValueError(f"{task_type}: missing ContextKernel")
+    if task_type in SEG_REQUIRED_TASKS and "semantic_event_graph" not in payload:
+        raise ValueError(f"{task_type}: missing SemanticEventGraph")
+    if task_type in GRAPH_REQUIRED_TASKS and "semantic_event_graph" not in payload:
+        raise ValueError(f"{task_type}: missing SemanticEventGraph")
+    if task_type in SAG_REQUIRED_TASKS and "semantic_answer_graph" not in payload:
+        required_by = "text->answer" if task_type == "text_to_answer" else task_type
+        raise ValueError(f"{task_type}: missing SemanticAnswerGraph (required to prevent {required_by} training)")
+    if task_type == "synthesis_verification":
+        if "output_text" not in payload:
+            raise ValueError("synthesis_verification: missing output_text")
+        if "selected_evidence" not in payload:
+            raise ValueError("synthesis_verification: missing selected_evidence")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -360,6 +532,54 @@ def connect(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
+def _decompose_full_turn(payload: dict) -> list[tuple[str, dict]]:
+    sub_payload = payload.get("payload", {})
+    ck = sub_payload.get("context_kernel", {})
+    signal_id = sub_payload.get("input_signal_id", "")
+    input_text = sub_payload.get("input_text", "")
+    output_text = sub_payload.get("output_text", "")
+    seg = sub_payload.get("semantic_event_graph", {})
+    sag = sub_payload.get("semantic_answer_graph", {})
+    selected_evidence = sub_payload.get("selected_evidence", {})
+    result: list[tuple[str, dict]] = []
+
+    base = {
+        "context_kernel": ck,
+        "input_signal_id": signal_id,
+        "input_text": input_text,
+        "output_text": output_text,
+    }
+
+    if seg:
+        result.append(("semantic_graph_extraction", {**base, "semantic_event_graph": seg}))
+        result.append(("semantic_graph_denoising", {**base, "semantic_event_graph": seg}))
+        result.append(("semantic_latent_target", {**base, "semantic_event_graph": seg}))
+        result.append(("claim_extraction", {**base, "semantic_event_graph": seg}))
+        result.append(("entity_resolution", {**base, "semantic_event_graph": seg}))
+        result.append(("uol_mapping", {**base, "semantic_event_graph": seg}))
+        result.append(("context_inference", {**base, "semantic_event_graph": seg}))
+        result.append(("pragmatic_interpretation", {**base, "semantic_event_graph": seg}))
+
+        if seg.get("temporal_edges"):
+            result.append(("temporal_relation_derivation", {**base, "semantic_event_graph": seg}))
+
+        if seg.get("processes"):
+            result.append(("frame_classification", {**base, "semantic_event_graph": seg}))
+
+        if sag:
+            result.append(("semantic_answer_composition", {**base, "semantic_event_graph": seg, "semantic_answer_graph": sag}))
+            result.append(("operator_selection", {**base, "semantic_event_graph": seg, "semantic_answer_graph": sag}))
+            result.append(("semantic_text_realization", {**base, "semantic_answer_graph": sag}))
+
+    if output_text:
+        result.append(("synthesis_verification", {
+            **base, "output_text": output_text,
+            "selected_evidence": selected_evidence,
+        }))
+
+    return result
+
+
 def ingest_jsonl(db_path: Path, jsonl_path: Path) -> None:
     conn = connect(db_path)
     created = 0
@@ -370,8 +590,30 @@ def ingest_jsonl(db_path: Path, jsonl_path: Path) -> None:
                 continue
             payload = json.loads(line)
             task_type = payload.get("task_type")
+            if task_type == "full_turn_export":
+                sub_examples = _decompose_full_turn(payload)
+                for sub_task_type, sub_payload in sub_examples:
+                    if sub_task_type not in PROMPTS:
+                        continue
+                    validate_training_record(sub_task_type, sub_payload)
+                    permission_scope = payload.get("permission_scope", "public")
+                    example_id = stable_id("ex", {"task_type": sub_task_type, "payload": sub_payload})
+                    job = {"example_id": example_id, "task_type": sub_task_type}
+                    job_id = stable_id("job", job)
+                    ts = now()
+                    conn.execute(
+                        "INSERT OR IGNORE INTO training_examples (id, task_type, payload_json, permission_scope, created_at) VALUES (?, ?, ?, ?, ?)",
+                        (example_id, sub_task_type, json.dumps(sub_payload, sort_keys=True), permission_scope, ts),
+                    )
+                    conn.execute(
+                        "INSERT OR IGNORE INTO training_jobs (id, example_id, task_type, status, priority, attempts, created_at, updated_at) VALUES (?, ?, ?, 'queued', ?, 0, ?, ?)",
+                        (job_id, example_id, sub_task_type, int(sub_payload.get("priority", 100)), ts, ts),
+                    )
+                    created += 1
+                continue
             if task_type not in PROMPTS:
                 raise ValueError(f"line {line_no}: unknown task_type {task_type!r}")
+            validate_training_record(task_type, payload)
             permission_scope = payload.get("permission_scope", "public")
             example_id = stable_id("ex", payload)
             job = {"example_id": example_id, "task_type": task_type}
@@ -399,6 +641,7 @@ def ingest_jsonl(db_path: Path, jsonl_path: Path) -> None:
 
 
 def fetch_jobs(conn: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
+    conn.execute("BEGIN IMMEDIATE")
     rows = conn.execute(
         """
         SELECT j.id AS job_id, j.task_type, e.payload_json
@@ -429,6 +672,43 @@ def cache_key(task_type: str, prompt_version: str, model: str, payload_json: str
             "payload_json": payload_json,
         },
     )
+
+
+def _check_cache(conn: sqlite3.Connection, cache_key: str) -> str | None:
+    row = conn.execute(
+        "SELECT output_json FROM training_cache WHERE cache_key = ?",
+        (cache_key,),
+    ).fetchone()
+    return row[0] if row else None
+
+
+def _write_cache(conn: sqlite3.Connection, cache_key: str, output_json: str) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO training_cache (cache_key, output_json, created_at) VALUES (?, ?, ?)",
+        (cache_key, output_json, now()),
+    )
+    conn.commit()
+
+
+def _parse_json_output(text: str) -> dict[str, Any] | None:
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if len(lines) > 2:
+            text = "\n".join(lines[1:-1])
+        else:
+            return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 def render_prompt(task_type: str, payload_json: str) -> tuple[str, str, str]:
@@ -472,8 +752,11 @@ def call_llm(config: Config, system: str, user: str) -> dict[str, Any]:
                 raw = resp.read().decode("utf-8")
             envelope = json.loads(raw)
             content = envelope["choices"][0]["message"]["content"]
-            return json.loads(content)
-        except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError) as exc:
+            parsed = _parse_json_output(content)
+            if parsed is not None:
+                return parsed
+            raise ValueError(f"failed to parse LLM output as JSON: {content[:200]}")
+        except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError, ValueError) as exc:
             last_error = exc
             time.sleep(min(2 ** attempt, 10))
     raise RuntimeError(f"provider call failed: {last_error}")
@@ -486,21 +769,30 @@ def run_one(config: Config, job: sqlite3.Row) -> dict[str, Any]:
     key = cache_key(task_type, prompt_version, config.model, payload_json)
 
     conn = connect(config.db_path)
-    cached = conn.execute("SELECT output_json FROM training_cache WHERE cache_key = ?", (key,)).fetchone()
+    cached = _check_cache(conn, key)
     agent, system, user = render_prompt(task_type, payload_json)
     ts = now()
     run_id = stable_id("run", {"job_id": job["job_id"], "agent": agent, "ts": ts})
 
     started = time.time()
     try:
-        if cached:
-            output = json.loads(cached["output_json"])
+        if cached is not None:
+            output = json.loads(cached)
         else:
-            output = call_llm(config, system, user)
-            conn.execute(
-                "INSERT OR REPLACE INTO training_cache (cache_key, output_json, created_at) VALUES (?, ?, ?)",
-                (key, json.dumps(output, sort_keys=True), ts),
-            )
+            retries = max(config.max_retries, 1)
+            output = None
+            last_error: Exception | None = None
+            for attempt in range(retries):
+                try:
+                    output = call_llm(config, system, user)
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    if attempt < retries - 1:
+                        time.sleep(min(2 ** attempt, 10))
+            if output is None:
+                raise RuntimeError(f"job failed after {retries} retries: {last_error}")
+            _write_cache(conn, key, json.dumps(output, sort_keys=True))
 
         confidence = float(output.get("confidence", 0.0) or 0.0)
         cost_ms = int((time.time() - started) * 1000)
@@ -538,7 +830,7 @@ def run_one(config: Config, job: sqlite3.Row) -> dict[str, Any]:
             (run_id, job["job_id"], agent, config.model, cost_ms, str(exc), ts),
         )
         conn.execute(
-            "UPDATE training_jobs SET status = 'queued', updated_at = ? WHERE id = ?",
+            "UPDATE training_jobs SET status = 'failed', updated_at = ? WHERE id = ?",
             (now(), job["job_id"]),
         )
         conn.commit()
@@ -682,6 +974,34 @@ def deploy_models(train_db: Path, runtime_db: Path | None = None, out_path: Path
                 cm.setdefault("status", "candidate")
                 models.append(cm)
 
+        elif task_type == "frame_classification":
+            frame_key = output.get("frame_key", "")
+            if frame_key:
+                models.append({
+                    "kind": "frame_rule",
+                    "name": f"frame_{frame_key}",
+                    "registry_key": frame_key,
+                    "description": f"Frame classification rule for {frame_key}",
+                    "parameters": output,
+                    "confidence": confidence,
+                    "status": "candidate",
+                    "evidence_signal_ids": [row["output_id"]],
+                })
+
+        elif task_type == "predicate_mapping":
+            predicate_map = output.get("predicate_map", {})
+            if predicate_map:
+                models.append({
+                    "kind": "predicate_mapping",
+                    "name": "predicate_mapping_v1",
+                    "registry_key": "predicate_mapping",
+                    "description": "Learned predicate mapping rules",
+                    "parameters": {"predicate_map": predicate_map},
+                    "confidence": confidence,
+                    "status": "candidate",
+                    "evidence_signal_ids": [row["output_id"]],
+                })
+
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with out_path.open("w", encoding="utf-8") as f:
@@ -752,6 +1072,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     deploy.add_argument("--runtime-db", help="write models directly into a runtime DB")
     deploy.add_argument("--out", help="JSONL output path for model records")
 
+    build = sub.add_parser("build-artifact", help="build artifact JSON for a task type")
+    build.add_argument("task_type", help="task type to build artifact for")
+    build.add_argument("--out", help="output path (prints to stdout if omitted)")
+
     return parser.parse_args(argv)
 
 
@@ -768,6 +1092,19 @@ def main(argv: list[str]) -> int:
         runtime = Path(args.runtime_db) if args.runtime_db else None
         count = deploy_models(Path(args.train_db), runtime_db=runtime, out_path=out)
         print(f"deployed {count} model records")
+        return 0
+
+    if args.cmd == "build-artifact":
+        conn = connect(db_path)
+        artifact_json = build_artifact(conn, args.task_type)
+        if artifact_json is None:
+            print(f"no outputs found for task_type={args.task_type}")
+            return 1
+        if args.out:
+            Path(args.out).write_text(artifact_json, encoding="utf-8")
+            print(f"artifact written to {args.out}")
+        else:
+            print(artifact_json)
         return 0
 
     config = Config(

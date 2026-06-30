@@ -7,8 +7,9 @@ import os
 import sys
 import argparse
 import time
+import uuid
 from .store.store import Store
-from .store.artifact_store import ArtifactStore
+
 from .registry import Registry, RegistryEntry
 from .kernel.pipeline import Pipeline, PipelineResult
 from .operators.registry import OperatorRegistry
@@ -22,6 +23,7 @@ from .operators.simulate import SimulateOperator
 from .operators.retrieve_op import RetrieveOperator
 from .operators.reflect import ReflectOperator
 from .operators.abstain import AbstainOperator
+from .operators.call_tool import CallToolOperator
 from .operators.base import OperatorContext
 from .learning.online import OnlineLearner
 from .retrieval.structural import StructuralRetriever, RetrievalQuery
@@ -32,9 +34,9 @@ from .types.model import ModelKind, ModelStatus
 from .types.permission import Permission
 from .types.signal import Signal, SignalKind, SourceType
 from .types.self_state import SelfState
+from .types.semantic_answer_graph import SemanticAnswerGraph
 from .causal.inference import CausalInference
 from .causal.simulation import SimulationEngine
-from .synthesis.router import SynthesisRouter
 from .kernel.recursive_loop import RecursiveLoop
 from .kernel.mode_controller import ModeController
 from .kernel.decision_router import DecisionRouter
@@ -46,22 +48,70 @@ _ACTION_CONFIDENCE_THRESHOLD = 0.5
 
 def seed_registry(registry: Registry) -> None:
     predicates = [
-        ("favorite_database", "fav_db", "preferred_db", "likes"),
+        ("favorite_database", "fav_db", "preferred_db"),
+        ("likes", "like", "enjoy", "love", "loves"),
         ("is_a", "isa", "is_a_type_of"),
+        ("has", "have", "own", "owns"),
         ("belongs_to", "belongs", "owned_by"),
         ("causes", "leads_to", "results_in"),
         ("precedes", "before", "comes_before"),
         ("located_at", "located_in", "at"),
         ("created_by", "authored_by", "made_by"),
-        ("used_for", "used_in"),
+        ("used_for", "used_in", "use"),
         ("part_of", "component_of"),
         ("started_at", "started_on", "began_at"),
+        ("favorite", "favourite", "fav"),
+        ("prefers", "prefer", "preferred"),
+        ("noted", "noted_as"),
     ]
     for i, (canonical, *aliases) in enumerate(predicates):
         registry.register(RegistryEntry(
             model_id=f"pred_{i}",
             canonical_key=canonical,
             kind="predicate",
+            aliases=list(aliases),
+        ))
+
+    uol_semantics = [
+        ("greeting", ["hello", "hi", "hey", "greetings", "howdy", "sup", "morning", "afternoon", "evening"]),
+        ("session_exit", ["exit", "quit", "bye", "goodbye", "stop", "done"]),
+        ("command_remember", ["remember", "save", "store", "note"]),
+        ("command_reflect", ["reflect", "think", "ponder", "contemplate"]),
+        ("command_retrieve", ["retrieve", "search", "recall", "find", "lookup"]),
+        ("assert_evaluation", ["is", "are", "was", "were"]),
+        ("request_clarification", ["what", "who", "where", "when", "why", "how",
+                                    "huh", "what do you mean", "how do you mean",
+                                    "what in the world", "what the", "come again",
+                                    "confused", "don't understand", "don't get it",
+                                    "lost", "not following"]),
+        ("ask_question", ["?", "which"]),
+        ("unknown_intent", []),
+        ("state_preference", ["prefer", "like", "favorite", "love"]),
+        ("low_competence", ["dumb", "stupid", "fool", "idiot", "useless", "broken"]),
+        ("high_quality", ["great", "awesome", "excellent", "amazing", "helpful"]),
+        ("temporal_before", ["before", "prior_to"]),
+        ("temporal_after", ["after", "then", "next", "following"]),
+        ("temporal_during", ["during", "while"]),
+        ("temporal_overlaps", ["overlaps", "concurrent"]),
+        ("temporal_starts", ["starts", "begins"]),
+        ("temporal_finishes", ["finishes", "ends", "completes"]),
+        ("causal_causes", ["causes", "cause", "caused"]),
+        ("causal_caused_by", ["caused_by", "due_to"]),
+        ("causal_leads_to", ["leads_to", "leads", "results_in", "results"]),
+        ("causal_because", ["because", "since"]),
+        ("causal_so", ["so", "therefore"]),
+        ("uncertainty_marker", ["might", "may", "could", "possibly", "probably", "likely",
+                                 "unclear", "uncertain", "not sure", "based on available information",
+                                 "it appears", "it seems", "suggests"]),
+        ("acknowledgment", ["ok", "okay", "sure", "right", "yeah", "yes", "yup", "got it",
+                            "understood", "makes sense", "i see", "gotcha", "cool", "nice"]),
+        ("discourse_marker", ["oh", "well", "so", "hmm", "anyway", "actually", "btw", "honestly"]),
+    ]
+    for i, (canonical, aliases) in enumerate(uol_semantics):
+        registry.register(RegistryEntry(
+            model_id=f"uol_{i}",
+            canonical_key=canonical,
+            kind="uol_semantic",
             aliases=list(aliases),
         ))
 
@@ -75,6 +125,7 @@ def seed_registry(registry: Registry) -> None:
         ("simulate", SimulateOperator(), ["action_or_event"]),
         ("retrieve", RetrieveOperator(), []),
         ("reflect", ReflectOperator(), []),
+        ("call_tool", CallToolOperator(), ["tool_id"]),
         ("abstain", AbstainOperator(), ["reason"]),
     ]
     for key, op, _ in operators:
@@ -190,9 +241,10 @@ def process_input(
     # Self-referential detection: if input refers to the system, inject
     # self entity into kernel entity lists so self-knowledge claims are retrieved.
     _self_ref_patterns = ("who are you", "what are you", "your name", "tell me about yourself",
-                          "who are", "what is your", "describe yourself", "introduce yourself",
+                          "what is your", "describe yourself", "introduce yourself",
                           "who made you", "who created you", "what can you do",
-                          "you", "yourself", "ceMM", "cemm")
+                          "about yourself", "about you", "your capabilities",
+                          "yourself", "cemm")
     text_lower = text.strip().lower()
     if any(pattern in text_lower for pattern in _self_ref_patterns):
         self_entity = store.entities.get("self_main")
@@ -207,6 +259,7 @@ def process_input(
     selected_model_ids = pipeline_result.ranked_model_ids
     grounded_graph = pipeline_result.grounded_graph
     memory_packet = pipeline_result.memory_packet
+    context_inference = pipeline_result.context_inference
 
     # Fallback: manual retrieval if pipeline didn't populate
     fallback_retriever = StructuralRetriever(store)
@@ -224,6 +277,9 @@ def process_input(
         ranked_claims = fallback_ranker.rank_claims(retrieval_result.claims, kernel, graph=graph)
         selected_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
         selected_model_ids = [m.id for m in retrieval_result.models]
+        if memory_packet and selected_claim_ids:
+            memory_packet.selected_claim_ids = list(selected_claim_ids)
+            memory_packet.selected_model_ids = list(selected_model_ids)
 
     # Mode Controller: evaluate self state and transition if needed
     mode_controller = ModeController()
@@ -253,7 +309,7 @@ def process_input(
     graph = pipeline_result.semantic_event_graph
     if graph and (graph.causal_edges or kernel.goal.required_slots):
         causal = CausalInference(store)
-        inference_packet = causal.predict(text, selected_claim_ids, kernel)
+        inference_packet = causal.predict(text, selected_claim_ids, kernel, graph=graph)
         if graph.causal_edges:
             sim_engine = SimulationEngine(store)
             sim_result = sim_engine.simulate(text, kernel)
@@ -262,18 +318,22 @@ def process_input(
     if text.lower() in ("exit", "quit", "bye"):
         return "Goodbye!"
 
-    # Phase 0: Graph-grounded DecisionRouter (primary decision mechanism)
+    # DecisionRouter is the sole, authoritative decision mechanism.
+    # No hardcoded fallbacks or confidence threshold bypass.
     kind: ActionKind | None = None
     params: dict = {}
     decision: DecisionPacket | None = None
     if pipeline_result.semantic_event_graph:
-        decision_router = DecisionRouter(artifact_store=ArtifactStore(store))
+        decision_router = DecisionRouter()
         decision = decision_router.run(
             graph=pipeline_result.semantic_event_graph,
             kernel=kernel,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             inference_packet=inference_packet if inference_packet.predictions else None,
+            input_text=text,
+            observation_semantics=input_signal.observation_semantics,
+            context_inference=context_inference,
         )
         _action_kind_map = {
             "answer": ActionKind.ANSWER,
@@ -282,107 +342,75 @@ def process_input(
             "update": ActionKind.UPDATE_CLAIM,
             "act": ActionKind.CALL_TOOL,
             "abstain": ActionKind.ABSTAIN,
+            "reflect": ActionKind.REFLECT,
+            "retrieve": ActionKind.RETRIEVE,
+            "synthesize": ActionKind.SYNTHESIZE,
+            "simulate": ActionKind.SIMULATE,
+            "create_model_candidate": ActionKind.CREATE_MODEL_CANDIDATE,
         }
-        if decision.confidence >= _ACTION_CONFIDENCE_THRESHOLD and decision.action_kind != "abstain":
-            kind = _action_kind_map.get(decision.action_kind)
-            ap = decision.action_plan
-            if kind == ActionKind.ASK:
-                params = {"question": "Could you elaborate?"}
-            elif kind == ActionKind.ANSWER:
-                params = {
-                    "answer_text": "",
-                    "selected_claim_ids": list(ap.selected_claim_ids) if ap else selected_claim_ids,
-                }
-                if sim_result is not None:
-                    params["simulation_claims"] = sim_result.predicted_claims
-                    params["simulation_confidence"] = sim_result.confidence
-
-    # Phase 1: Induction-driven routing (fallback when Phase 0 abstains)
-    # Uses candidate CAUSAL_RULE models from structural learning to inform decisions
-    if kind is None:
-        causal_candidates = store.models.find_by_kind(
-            ModelKind.CAUSAL_RULE.value, ModelStatus.CANDIDATE.value,
-        )
-        if causal_candidates:
-            scored = fallback_ranker.rank_models(causal_candidates, kernel)
-            for model, score in scored:
-                if score >= _ACTION_CONFIDENCE_THRESHOLD / 2:
-                    kind = ActionKind.ASK
-                    params = {
-                        "question": "I need more information based on observed patterns.",
-                        "causal_model_id": model.id,
-                        "causal_confidence": score,
-                    }
-                    break
-
-    # Phase 2: Hardcoded routing for explicit commands (fallback when Phase 0/1 abstains)
-    if kind is None:
-        if text.lower().startswith("remember ") or text.lower().startswith("save "):
-            kind = ActionKind.REMEMBER
-            parts = text.split(maxsplit=2)
-            params = {
-                "subject_entity_id": "user",
-                "predicate": parts[1] if len(parts) > 1 else "noted",
-                "object_value": parts[2] if len(parts) > 2 else "",
-                "domain": "general",
-            }
-        elif text.lower().startswith("reflect") or text.lower().startswith("think"):
-            kind = ActionKind.REFLECT
-            params = {}
-            if sim_result is not None:
-                params["simulation_claims"] = sim_result.predicted_claims
-        elif len(text.strip()) <= 3:
-            kind = ActionKind.ASK
+        kind = _action_kind_map.get(decision.action_kind)
+        ap = decision.action_plan
+        if kind == ActionKind.ASK:
             params = {"question": "Could you elaborate?"}
-        elif "?" in text or text.lower().startswith("what") or text.lower().startswith("who"):
-            kind = ActionKind.ANSWER
-            params = {"answer_text": "", "selected_claim_ids": selected_claim_ids}
+        elif kind == ActionKind.ANSWER:
+            # For conversational intents (greeting/acknowledgment), don't pass claims
+            # — the response is a template, not evidence-backed
+            reason_lower = decision.reason.lower()
+            is_conversational = "greeting" in reason_lower or "acknowledgment" in reason_lower
+            answer_claim_ids = [] if is_conversational else (list(ap.selected_claim_ids) if ap else selected_claim_ids)
+            params = {
+                "answer_text": "",
+                "selected_claim_ids": answer_claim_ids,
+                "seg_confidence": pipeline_result.semantic_event_graph.confidence if pipeline_result.semantic_event_graph else 0.0,
+                "decision_reason": decision.reason,
+            }
             if sim_result is not None:
                 params["simulation_claims"] = sim_result.predicted_claims
                 params["simulation_confidence"] = sim_result.confidence
-
-    # Phase 2: Model-driven routing for everything else
-    # If a trained operator model has sufficient confidence, use it.
-    # Otherwise fall through to the hardcoded default.
-    if kind is None:
-        operator_models = store.models.find_by_kind(
-            ModelKind.OPERATOR.value, ModelStatus.ACTIVE.value,
-        )
-        scored_operators = fallback_ranker.rank_models(operator_models, kernel)
-        for model, score in scored_operators:
-            if score < _ACTION_CONFIDENCE_THRESHOLD:
-                break
-            if model.registry_key:
-                action_kind_map = {
-                    "answer": ActionKind.ANSWER,
-                    "ask": ActionKind.ASK,
-                    "remember": ActionKind.REMEMBER,
-                    "abstain": ActionKind.ABSTAIN,
-                    "reflect": ActionKind.REFLECT,
-                    "synthesize": ActionKind.SYNTHESIZE,
-                    "retrieve": ActionKind.RETRIEVE,
+        elif kind == ActionKind.ABSTAIN:
+            params = {"reason": decision.reason}
+        elif kind == ActionKind.REMEMBER:
+            seg = pipeline_result.semantic_event_graph
+            if seg and seg.claim_candidates:
+                cand = seg.claim_candidates[0]
+                params = {
+                    "subject_entity_id": "user",
+                    "predicate": cand.get("predicate", "noted"),
+                    "object_value": cand.get("object", ""),
+                    "domain": "general",
                 }
-                mapped = action_kind_map.get(model.registry_key)
-                if mapped:
-                    kind = mapped
-                    params = {
-                        "answer_text": "",
-                        "selected_claim_ids": selected_claim_ids,
-                        "operator_model_id": model.id,
-                        "operator_confidence": score,
-                    }
-                    if sim_result is not None:
-                        params["simulation_claims"] = sim_result.predicted_claims
-                        params["simulation_confidence"] = sim_result.confidence
-                    break
+            else:
+                stripped = text.strip()
+                cmd_entry = registry.get_uol_semantic("command_remember")
+                cmd_aliases = [cmd_entry.canonical_key] + cmd_entry.aliases if cmd_entry else ["remember", "save", "store", "note"]
+                params = {
+                    "subject_entity_id": "user",
+                    "predicate": "noted",
+                    "object_value": stripped,
+                    "domain": "general",
+                }
+                for alias in cmd_aliases:
+                    if stripped.lower().startswith(alias + " "):
+                        rest = stripped[len(alias) + 1:]
+                        parts = rest.split(maxsplit=1)
+                        params = {
+                            "subject_entity_id": "user",
+                            "predicate": parts[0] if parts else "noted",
+                            "object_value": parts[1] if len(parts) > 1 else "",
+                            "domain": "general",
+                        }
+                        break
+        elif kind == ActionKind.REFLECT:
+            params = {}
+            if sim_result is not None:
+                params["simulation_claims"] = sim_result.predicted_claims
+        elif kind == ActionKind.RETRIEVE:
+            params = {}
 
-    # Phase 3: Hardcoded default if nothing matched
+    # Safety net: if no SEG was produced, abstain
     if kind is None:
-        kind = ActionKind.ANSWER
-        params = {"answer_text": "", "selected_claim_ids": selected_claim_ids}
-        if sim_result is not None:
-            params["simulation_claims"] = sim_result.predicted_claims
-            params["simulation_confidence"] = sim_result.confidence
+        kind = ActionKind.ABSTAIN
+        params = {"reason": "No semantic event graph produced"}
 
     ctx = OperatorContext(
         kernel=kernel,
@@ -394,10 +422,28 @@ def process_input(
         grounded_graph_id=grounded_graph.id if grounded_graph else None,
         memory_packet_id=memory_packet.id if memory_packet else None,
         inference_packet_id=inference_packet.id if inference_packet else None,
+        semantic_event_graph_id=pipeline_result.semantic_event_graph.id if pipeline_result.semantic_event_graph else None,
+        decision_packet_id=decision.id if decision else None,
         params=params,
     )
     op_result = op_registry.execute(kind, ctx)
     output = op_result.output_text
+
+    # Invariant checks after operator execution
+    from .kernel.invariant_guard import InvariantGuard
+    guard = InvariantGuard()
+    guard.reset()
+    if op_result.trace:
+        if kind == ActionKind.ANSWER:
+            if not op_result.trace.synthesis_verified:
+                guard.errors.append(
+                    f"Answer action bypassed synthesis verification"
+                )
+        if inference_packet and inference_packet.predictions:
+            guard.check_causal_chain_confidence(inference_packet.predictions)
+    if guard.errors:
+        for err in guard.errors:
+            print(f"[INVARIANT] {err}", file=sys.stderr)
 
     if op_result.success:
         online_learner.record_outcome(
@@ -405,13 +451,25 @@ def process_input(
             domain="operator_execution",
             success=True,
         )
+    else:
+        online_learner.record_outcome(
+            source_id=ctx.input_signal.source_id,
+            domain="operator_execution",
+            success=False,
+        )
 
     if not output:
-        synthesis_router = SynthesisRouter()
-        syn = synthesis_router.realize(kernel, store, registry, {
-            "template_key": "greeting",
-        })
-        output = syn.output
+        from .synthesis.realizer import RealizationPipeline as _RP
+        fallback_sag = SemanticAnswerGraph(
+            id=uuid.uuid4().hex[:16],
+            intent="abstain",
+            source_signal_ids=[input_signal.id],
+            context_id=kernel.id,
+            confidence=max(0.5, 1.0 - kernel.self_view.uncertainty),
+        )
+        fallback_pipeline = _RP()
+        fallback_result = fallback_pipeline.run(fallback_sag, kernel, store, registry)
+        output = fallback_result.output
 
     # Re-entry: append actionable signal summaries to output
     for sig in actionable_signals:
@@ -422,6 +480,9 @@ def process_input(
     _export_path = os.environ.get("CEMM_EXPORT_PATH")
     if _export_path and op_result.trace:
         from .kernel.training_export import serialize_turn, write_turn_to_jsonl
+        sag_for_export = op_result.semantic_answer_graph
+        if sag_for_export is None and decision is not None:
+            sag_for_export = decision.semantic_answer_graph
         turn_data = serialize_turn(
             input_text=text,
             output_text=output,
@@ -429,6 +490,7 @@ def process_input(
             input_signal=input_signal,
             trace=op_result.trace,
             semantic_event_graph=pipeline_result.semantic_event_graph,
+            semantic_answer_graph=sag_for_export,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             inference_packet=inference_packet,
@@ -447,29 +509,16 @@ def main() -> None:
                         help="Run training: path to SQLite DB (default: cemm_training.sqlite3)")
     parser.add_argument("--workers", type=int, default=2, help="Training worker count")
     parser.add_argument("--dry-run", action="store_true", help="Dry-run mode for training")
-    parser.add_argument("--once", help="Handle one user turn via runtime router")
-    parser.add_argument("--chat", action="store_true", help="Interactive chat via runtime router")
-    parser.add_argument("--legacy", action="store_true",
-                        help="Use legacy cemm_runtime_router instead of full architecture")
+    parser.add_argument("--once", help="Handle one user turn")
+    parser.add_argument("--chat", action="store_true", help="Interactive chat mode")
     args = parser.parse_args()
-
-    # Legacy path: delegate to simplified router (deprecated, kept for backwards compat)
-    if args.legacy:
-        if args.once:
-            from .cemm_runtime_router import main as router_main
-            router_main(["once", args.once])
-            return
-        if args.chat:
-            from .cemm_runtime_router import main as router_main
-            router_main(["chat"])
-            return
 
     store = Store(args.db)
     registry = Registry()
     op_registry = OperatorRegistry()
     pipeline = Pipeline(store, registry)
     online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-    inductor = Inductor(store)
+    inductor = Inductor(store, registry=registry)
     recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
 
     seed_registry(registry)
@@ -478,7 +527,7 @@ def main() -> None:
     for op_class in [
         AnswerOperator, AskOperator, RememberOperator, UpdateClaimOperator,
         CreateModelOperator, SynthesizeOperator, SimulateOperator,
-        RetrieveOperator, ReflectOperator, AbstainOperator,
+        RetrieveOperator, ReflectOperator, CallToolOperator, AbstainOperator,
     ]:
         op_registry.register(op_class())
 

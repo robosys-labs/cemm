@@ -12,5 +12,5 @@ def test_recursive_loop_creates_kernel():
     learner = OnlineLearner(store.source_trust, store.self_store, store.claims)
     inductor = Inductor(store)
     loop = RecursiveLoop(pipeline, store, learner, inductor)
-    kernel, signals = loop.run_once("hello", "test_rec")
+    kernel, signals, actionable = loop.run_once("hello", "test_rec")
     assert kernel is not None

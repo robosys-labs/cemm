@@ -3,6 +3,8 @@ from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.action import ActionKind
 from ..types.claim import Claim, ClaimStatus
 from ..types.signal import Signal, SignalKind, SourceType
+from ..types.trace import Trace
+from ..types.semantic_answer_graph import SemanticAnswerGraph
 import time, uuid
 
 
@@ -50,8 +52,34 @@ class UpdateClaimOperator(BaseOperator):
             permission=ctx.kernel.permission,
         )
         ctx.store.signals.put(result_signal)
+        answer_graph = SemanticAnswerGraph(
+            id=uuid.uuid4().hex[:16],
+            intent="update_claim",
+            source_signal_ids=[ctx.input_signal.id],
+            context_id=ctx.kernel.id,
+            selected_claim_ids=[claim_id],
+        )
+        cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
+        trace = Trace(
+            context_id=ctx.kernel.id,
+            input_signal_ids=[ctx.input_signal.id],
+            selected_claim_ids=[claim_id],
+            action_id="",
+            operator_model_id="update_claim_operator",
+            permission="allowed",
+            confidence=0.7,
+            cost_ms=cost_ms,
+            grounded_graph_id=ctx.grounded_graph_id,
+            memory_packet_id=ctx.memory_packet_id,
+            inference_packet_id=ctx.inference_packet_id,
+            semantic_event_graph_id=ctx.semantic_event_graph_id,
+            semantic_answer_graph_id=answer_graph.id,
+        )
         return OperatorResult(
             success=True,
             output_text=f"Claim {claim_id} marked as {new_status_str}",
+            trace=trace,
             result_signal=result_signal,
+            cost_ms=cost_ms,
+            semantic_answer_graph=answer_graph,
         )

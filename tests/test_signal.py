@@ -14,7 +14,7 @@ class TestSignal:
             permission=Permission.public(),
         )
         assert s.id == "s1"
-        assert s.version == "erca.signal.v1"
+        assert s.version == "cemm.signal.v1"
 
     def test_kind_values(self):
         assert SignalKind.INPUT.value == "input"

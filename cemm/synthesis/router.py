@@ -1,9 +1,14 @@
+# CEMM-ARCH: Refer to cemm_architecture_gap_trace.md and AGENTS.md before modifying.
+# Cheapest-first cascade: template → extractive → neural → abstain.
+
 from __future__ import annotations
 from ..types.context_kernel import ContextKernel
 from ..store.store import Store
 from ..registry import Registry
 from .template import TemplateStrategy
 from .extractive import ExtractiveStrategy
+from .neural import NeuralStrategy
+from .abstain import AbstainStrategy
 from .result import SynthesisResult
 
 
@@ -12,6 +17,8 @@ class SynthesisRouter:
         self._strategies = {
             "template": TemplateStrategy(),
             "extractive": ExtractiveStrategy(),
+            "neural": NeuralStrategy(),
+            "abstain": AbstainStrategy(),
         }
 
     def route(
@@ -43,4 +50,17 @@ class SynthesisRouter:
         extractive = self._strategies["extractive"]
         if extractive.can_handle(params):
             return "extractive"
-        return "template"
+        neural = self._strategies["neural"]
+        if neural.can_handle(params):
+            return "neural"
+        return "abstain"
+
+    def realize(
+        self,
+        kernel: ContextKernel,
+        store: Store,
+        registry: Registry,
+        params: dict,
+    ) -> SynthesisResult:
+        strategy = self.select_strategy(kernel, store, registry, params)
+        return self.route(strategy, kernel, store, registry, params)

@@ -27,6 +27,8 @@ class Registry:
         self._context_rules: dict[str, RegistryEntry] = {}
         self._verifiers: dict[str, RegistryEntry] = {}
         self._uol_semantics: dict[str, RegistryEntry] = {}
+        self._procedures: dict[str, RegistryEntry] = {}
+        self._tools: dict[str, RegistryEntry] = {}
         self._alias_map: dict[str, str] = {}
 
     def register(self, entry: RegistryEntry) -> None:
@@ -40,6 +42,8 @@ class Registry:
             "verifier": self._verifiers,
             "inductor": self._inductors,
             "uol_semantic": self._uol_semantics,
+            "procedure": self._procedures,
+            "tool": self._tools,
         }
         store = kind_map.get(entry.kind)
         if store is None:
@@ -107,11 +111,19 @@ class Registry:
             "verifier": self._verifiers,
             "inductor": self._inductors,
             "uol_semantic": self._uol_semantics,
+            "procedure": self._procedures,
+            "tool": self._tools,
         }
         store = kind_map.get(kind)
         if store is None:
             return []
         return list(store.values())
+
+    def get_procedure(self, key: str) -> RegistryEntry | None:
+        return self._procedures.get(key)
+
+    def get_tool(self, key: str) -> RegistryEntry | None:
+        return self._tools.get(key)
 
     def get_uol_semantic(self, key: str) -> RegistryEntry | None:
         return self._uol_semantics.get(key)
@@ -151,6 +163,8 @@ class Registry:
             "frame_rules": {k: self._entry_to_dict(v) for k, v in self._frame_rules.items()},
             "verifiers": {k: self._entry_to_dict(v) for k, v in self._verifiers.items()},
             "inductors": {k: self._entry_to_dict(v) for k, v in self._inductors.items()},
+            "procedures": {k: self._entry_to_dict(v) for k, v in self._procedures.items()},
+            "tools": {k: self._entry_to_dict(v) for k, v in self._tools.items()},
             "_alias_map": self._alias_map,
         }
         with open(path, "w") as f:
@@ -161,7 +175,7 @@ class Registry:
         reg = cls()
         with open(path) as f:
             data = json.load(f)
-        for kind_name in ("predicates", "entity_types", "operators", "synthesis_strategies", "context_rules", "frame_rules", "verifiers", "inductors"):
+        for kind_name in ("predicates", "entity_types", "operators", "synthesis_strategies", "context_rules", "frame_rules", "verifiers", "inductors", "procedures", "tools"):
             kind_key = kind_name.rstrip("s")
             for key, entry_dict in data.get(kind_name, {}).items():
                 entry = cls._dict_to_entry(entry_dict, kind=kind_key)

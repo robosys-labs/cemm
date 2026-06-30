@@ -44,8 +44,9 @@ class ObservationSemantics:
     repetition_count: int = 0
     cause_hypothesis_claim_ids: list[str] = field(default_factory=list)
     decay_half_life_ms: float = 900000.0
-    confidence: float = 0.0
+    confidence: float = 0.5
     uol_atoms: list = field(default_factory=list)  # list of EntityRefUOLAtom | ProcessUOLAtom | StateUOLAtom
+    frame_key: str = ""
 
 
 @dataclass
@@ -61,7 +62,7 @@ class Signal:
     trust: float
     permission: Permission
     parent_signal_id: str | None = None
-    version: str = "erca.signal.v1"
+    version: str = "cemm.signal.v1"
     observation_semantics: ObservationSemantics | None = None
 
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.action import ActionKind
 from ..types.signal import Signal, SignalKind, SourceType
+from ..types.trace import Trace
+from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..causal.inference import CausalInference
 import time, uuid
 
@@ -39,9 +41,35 @@ class SimulateOperator(BaseOperator):
             permission=ctx.kernel.permission,
         )
         ctx.store.signals.put(result_signal)
+        answer_graph = SemanticAnswerGraph(
+            id=uuid.uuid4().hex[:16],
+            intent="simulate",
+            source_signal_ids=[ctx.input_signal.id],
+            context_id=ctx.kernel.id,
+            selected_claim_ids=list(active_claim_ids),
+        )
+        cost_ms = 2.0
+        trace = Trace(
+            context_id=ctx.kernel.id,
+            input_signal_ids=[ctx.input_signal.id],
+            selected_claim_ids=list(active_claim_ids),
+            action_id="",
+            operator_model_id="simulate_operator",
+            causal_inference_used=True,
+            permission="allowed",
+            confidence=0.6,
+            cost_ms=cost_ms,
+            grounded_graph_id=ctx.grounded_graph_id,
+            memory_packet_id=ctx.memory_packet_id,
+            inference_packet_id=ctx.inference_packet_id,
+            semantic_event_graph_id=ctx.semantic_event_graph_id,
+            semantic_answer_graph_id=answer_graph.id,
+        )
         return OperatorResult(
             success=True,
             output_text=output,
+            trace=trace,
             result_signal=result_signal,
-            cost_ms=2.0,
+            cost_ms=cost_ms,
+            semantic_answer_graph=answer_graph,
         )

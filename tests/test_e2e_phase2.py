@@ -17,7 +17,7 @@ from cemm.types.entity import Entity, EntityType
 from cemm.types.model import ModelKind, ModelStatus
 from cemm.types.claim import Claim, ClaimStatus
 from cemm.types.signal import Signal, SignalKind, SourceType
-from cemm.types.permission import Permission
+from cemm.types.permission import Permission, PermissionScope
 from cemm.types.context_kernel import ContextKernel
 
 SEED_EVENTS = 200
@@ -374,7 +374,9 @@ class TestE2E_EdgeCases:
         ranked = ranker.rank_claims(q_result.claims, unknown_kernel)
         assert len(ranked) == 0, "Private claim should be filtered for anonymous kernel"
 
-        known_kernel = ContextKernel(id="known", permission=Permission.public())
+        known_kernel = ContextKernel(id="known", permission=Permission(
+            scope=PermissionScope.USER_PRIVATE, may_execute=True,
+        ))
         known_kernel.user.known = True
         ranked_known = ranker.rank_claims(q_result.claims, known_kernel)
         assert len(ranked_known) > 0, "Private claim should be visible to known kernel"

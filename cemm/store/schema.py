@@ -118,7 +118,8 @@ CREATE TABLE IF NOT EXISTS models (
     permission_may_store INTEGER NOT NULL DEFAULT 1,
     permission_may_retrieve INTEGER NOT NULL DEFAULT 1,
     permission_may_use INTEGER NOT NULL DEFAULT 1,
-    version TEXT NOT NULL DEFAULT 'erca.model.v1'
+    version TEXT NOT NULL DEFAULT 'erca.model.v1',
+    artifact_json TEXT
 )
 """
 
@@ -361,6 +362,7 @@ CREATE TABLE IF NOT EXISTS eval_results (
     id TEXT PRIMARY KEY,
     eval_set_id TEXT NOT NULL,
     job_id TEXT NOT NULL,
+    model_id TEXT,
     score REAL,
     metrics_json TEXT,
     created_at REAL NOT NULL DEFAULT 0.0,
@@ -383,6 +385,41 @@ CREATE TABLE IF NOT EXISTS promotion_candidates (
 """
 
 
+TRAINING_JOBS_TABLE = """
+CREATE TABLE IF NOT EXISTS training_jobs (
+    id TEXT PRIMARY KEY,
+    task_type TEXT NOT NULL DEFAULT '',
+    payload_json TEXT,
+    created_at REAL NOT NULL DEFAULT 0.0,
+    version TEXT NOT NULL DEFAULT 'cemm.training.v1'
+)
+"""
+
+AGENT_RUNS_TABLE = """
+CREATE TABLE IF NOT EXISTS agent_runs (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL,
+    agent TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    cost_ms REAL NOT NULL DEFAULT 0.0,
+    error TEXT,
+    created_at REAL NOT NULL DEFAULT 0.0,
+    FOREIGN KEY (job_id) REFERENCES training_jobs(id)
+)
+"""
+
+AGENT_OUTPUTS_TABLE = """
+CREATE TABLE IF NOT EXISTS agent_outputs (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL,
+    output_json TEXT,
+    confidence REAL,
+    created_at REAL NOT NULL DEFAULT 0.0,
+    FOREIGN KEY (job_id) REFERENCES training_jobs(id)
+)
+"""
+
 INDEXES = {
     "idx_signals_source_time": "CREATE INDEX IF NOT EXISTS idx_signals_source_time ON signals(source_id, observed_at)",
     "idx_signals_context_kind": "CREATE INDEX IF NOT EXISTS idx_signals_context_kind ON signals(context_id, kind)",
@@ -392,6 +429,7 @@ INDEXES = {
     "idx_claims_predicate_model": "CREATE INDEX IF NOT EXISTS idx_claims_predicate_model ON claims(predicate_model_id)",
     "idx_claims_object_entity": "CREATE INDEX IF NOT EXISTS idx_claims_object_entity ON claims(object_entity_id)",
     "idx_claims_domain_source": "CREATE INDEX IF NOT EXISTS idx_claims_domain_source ON claims(domain, source_id)",
+    "idx_claims_predicate_time": "CREATE INDEX IF NOT EXISTS idx_claims_predicate_valid ON claims(predicate, valid_from, valid_until)",
     "idx_claims_frame_time": "CREATE INDEX IF NOT EXISTS idx_claims_frame_time ON claims(frame_id, valid_from, valid_until)",
     "idx_claims_status_time": "CREATE INDEX IF NOT EXISTS idx_claims_status_time ON claims(status, observed_at)",
     "idx_models_kind_status": "CREATE INDEX IF NOT EXISTS idx_models_kind_status ON models(kind, status)",
@@ -406,6 +444,7 @@ INDEXES = {
     "idx_feedback_action": "CREATE INDEX IF NOT EXISTS idx_feedback_action ON feedback(action_id)",
     "idx_train_labels_job": "CREATE INDEX IF NOT EXISTS idx_train_labels_job ON training_labels(job_id)",
     "idx_eval_results_set": "CREATE INDEX IF NOT EXISTS idx_eval_results_set ON eval_results(eval_set_id)",
+    "idx_eval_results_model": "CREATE INDEX IF NOT EXISTS idx_eval_results_model ON eval_results(model_id)",
     "idx_promotion_candidates_status": "CREATE INDEX IF NOT EXISTS idx_promotion_candidates_status ON promotion_candidates(status)",
 }
 
@@ -441,7 +480,17 @@ def create_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(EVAL_SET_EXAMPLES_TABLE)
     conn.executescript(EVAL_RESULTS_TABLE)
     conn.executescript(PROMOTION_CANDIDATES_TABLE)
+    conn.executescript(TRAINING_JOBS_TABLE)
+    conn.executescript(AGENT_RUNS_TABLE)
+    conn.executescript(AGENT_OUTPUTS_TABLE)
+    _migrate_artifact_json(conn)
     conn.commit()
+
+def _migrate_artifact_json(conn: sqlite3.Connection) -> None:
+    try:
+        conn.execute("ALTER TABLE models ADD COLUMN artifact_json TEXT")
+    except Exception:
+        pass
 
 
 def get_required_indexes() -> dict[str, str]:
