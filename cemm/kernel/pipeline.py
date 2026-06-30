@@ -208,9 +208,6 @@ class Pipeline:
             context_inference=context_inference,
         )
 
-        # Pass decision to kernel for downstream action execution
-        kernel.goal.action_kind = decision_packet.action_kind
-
         self._check_budget(kernel, start)
 
         result = PipelineResult(
