@@ -142,8 +142,8 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 ### What's wrong (verified):
 - `process_input()` routing cascade can still bypass SAG via Phase 2/3 fallbacks ✓ — hardcoded exit/bye and unconditional short-input fallbacks removed
 - DecisionRouter abstain below threshold (0.5) is not authoritative ✓ — DecisionRouter is now sole decision mechanism
-- Two parallel runtimes (basic + full) with divergent schemas — basic runtime archived, but archived file still present ✗
-- Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived ✗
+- Two parallel runtimes (basic + full) with divergent schemas — basic runtime archived and sent to Recycle Bin ✓
+- Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived and removed ✓
 - SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; multi-word entity inference added; model refs now match causal input semantics ✗ (still not full NER)
 - No typed latent spaces exist — runtime types and encoder added; answer_latent populated ✗ (deeper CEMM-SLC integration remains)
 - Causal inference never fires (empty `causal_edges`) — now fires and produces predictions from multiple seeded causal models ✗ (still not full learned models)
@@ -155,7 +155,7 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - Training export can produce SAG-less records for non-answer/abstain operators ✓ — all operators now return a semantic_answer_graph
 - 11 of 25 PROMPTS task types never produced by decomposition ✓ — training export now emits one record per task type
 - 18 of 25 PROMPTS task types produce no deployable records ✓ — each record includes required payload and passes validation
-- Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG — archived ✗
+- Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG — archived and removed ✓
 - `OnlineLearner.record_outcome` only on success ✓
 - Online learning only updates self state, not source trust or ranking weights ✓
 - Two separate verifiers with inconsistent logic ✓
