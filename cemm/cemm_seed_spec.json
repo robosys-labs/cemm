@@ -23,7 +23,15 @@
       "thank",
       "apologize",
       "failed_answer",
-      "repeat_negative_evaluation"
+      "repeat_negative_evaluation",
+      "playful_acknowledgment",
+      "confusion",
+      "self_correction",
+      "simplification_request",
+      "reassurance",
+      "self_identity_query",
+      "self_capability_query",
+      "self_knowledge_query"
     ],
     "state_keys": [
       "session_opening",
@@ -154,6 +162,12 @@
       "target_count": 50,
       "task_types": ["semantic_answer_composition", "semantic_text_realization", "synthesis_verification"],
       "description": "Template, extractive, neural-soft, and abstain verification cases."
+    },
+    {
+      "name": "noisy_casual_conversation",
+      "target_count": 40,
+      "task_types": ["context_inference", "uol_mapping", "semantic_graph_extraction", "pragmatic_interpretation", "operator_selection", "semantic_text_realization"],
+      "description": "Casual, noisy, abbreviated, and mixed-language turns such as typos, slang, abbreviations, emoji, and playful corrections."
     },
     {
       "name": "self_state_and_reflection",
