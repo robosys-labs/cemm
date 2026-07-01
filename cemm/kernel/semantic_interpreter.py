@@ -61,7 +61,7 @@ class SemanticInterpreter:
 
         claim_refs = self._lookup_claim_refs(entity_refs, kernel)
         claim_candidates = self._extract_claim_candidates_from_atoms(signal.content, processes, entity_refs)
-        model_refs = self._lookup_model_refs(processes)
+        model_refs = self._lookup_model_refs(processes, entity_refs, signal.content)
         action_refs = self._extract_action_refs(processes)
         temporal_edges = self._extract_temporal_edges_from_atoms(processes, entity_refs)
         causal_edges = self._extract_causal_edges_from_atoms(processes, entity_refs)
@@ -157,9 +157,15 @@ class SemanticInterpreter:
             return []
         return []
 
-    def _lookup_model_refs(self, processes: list[dict[str, Any]]) -> list[str]:
+    def _lookup_model_refs(
+        self,
+        processes: list[dict[str, Any]],
+        entity_refs: list[dict[str, Any]],
+        content: str,
+    ) -> list[str]:
         if not self._store:
             return []
+        from ..types.model import ModelKind, ModelStatus
         model_ids: list[str] = []
         seen: set[str] = set()
         for proc in processes:
@@ -183,6 +189,33 @@ class SemanticInterpreter:
                         break
             if len(model_ids) >= 10:
                 break
+
+        # Match entity phrases against model preconditions/effects so the
+        # correct model is selected when many models share the same registry key.
+        if self._store and len(model_ids) < 10:
+            entity_phrases = {
+                (ref.get("entity_id", "") or ref.get("entity", "")).lower()
+                for ref in entity_refs
+            }
+            entity_phrases.discard("")
+            # Also include individual words from the content to catch short keywords
+            for word in content.lower().split():
+                if len(word) > 3:
+                    entity_phrases.add(word)
+            if entity_phrases:
+                for model in self._store.models.find_by_kind(
+                    ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value, limit=100
+                ):
+                    for phrase in entity_phrases:
+                        preconditions = [p.lower() for p in (model.preconditions or [])]
+                        effects = [e.lower() for e in (model.effects or [])]
+                        if any(phrase in pre or phrase in eff for pre in preconditions for eff in effects):
+                            if model.id not in seen:
+                                model_ids.append(model.id)
+                                seen.add(model.id)
+                            break
+                    if len(model_ids) >= 10:
+                        break
         return model_ids
 
     def _extract_action_refs(self, processes: list[dict[str, Any]]) -> list[str]:

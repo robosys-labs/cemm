@@ -86,3 +86,15 @@ def test_study_causal_model_produces_predictions():
     assert result is not None
     assert result.inference_packet is not None
     assert any("pass" in p.get("predicate", "").lower() for p in result.inference_packet.predictions), result.inference_packet.predictions
+
+
+def test_causal_model_ref_matches_input_semantics():
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup()
+    output = process_input("heat causes melting", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    assert output is not None
+    result = recursive_loop._last_result
+    assert result is not None
+    assert result.semantic_event_graph is not None
+    assert "causal_heat_melt" in result.semantic_event_graph.model_refs, result.semantic_event_graph.model_refs
+    assert result.inference_packet is not None
+    assert any("melt" in p.get("predicate", "").lower() for p in result.inference_packet.predictions), result.inference_packet.predictions
