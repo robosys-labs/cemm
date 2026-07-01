@@ -212,6 +212,7 @@ class RecursiveLoop:
     def _run_induction(self, kernel: ContextKernel) -> None:
         from ..training.promoter import Promoter
         from ..training.evaluator import Evaluator
+        from ..types.model import ModelKind
         candidates = self._inductor.maybe_induct()
         promoter = Promoter(self._store)
         evaluator = Evaluator(self._store)
@@ -233,8 +234,12 @@ class RecursiveLoop:
                 model_id=model.id,
                 metrics={"kind": model.kind.value, "support_estimate": model.confidence},
             )
-            promoter.create_candidate(
+            candidate = promoter.create_candidate(
                 model.id,
                 reason=f"induction: {model.description}",
                 score=model.confidence,
             )
+            # Auto-promote high-confidence, low-risk causal rules so the system can
+            # learn from repeated observations without manual gatekeeping.
+            if model.kind == ModelKind.CAUSAL_RULE and candidate.score >= 0.8:
+                promoter.approve(candidate.id)

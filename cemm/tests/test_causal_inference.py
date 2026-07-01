@@ -98,3 +98,48 @@ def test_causal_model_ref_matches_input_semantics():
     assert "causal_heat_melt" in result.semantic_event_graph.model_refs, result.semantic_event_graph.model_refs
     assert result.inference_packet is not None
     assert any("melt" in p.get("predicate", "").lower() for p in result.inference_packet.predictions), result.inference_packet.predictions
+
+
+def test_learned_causal_model_is_auto_promoted():
+    store = Store(":memory:")
+    registry = Registry()
+    seed_registry(registry)
+    seed_self_state(store)
+    import time
+    from cemm.types.claim import Claim, ClaimStatus
+    from cemm.types.entity import Entity, EntityType
+    from cemm.types.permission import Permission
+    from cemm.learning.inductor import Inductor
+    from cemm.learning.online import OnlineLearner
+    from cemm.kernel.recursive_loop import RecursiveLoop
+    from cemm.types.model import ModelKind, ModelStatus
+
+    pipeline = Pipeline(store, registry)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
+    inductor = Inductor(store, registry=registry)
+    inductor.set_threshold(3)
+    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
+
+    store.entities.put(Entity(id="user", type=EntityType.PERSON, name="user", aliases=[], confidence=1.0, created_from_signal_id="test", created_at=time.time(), updated_at=time.time()))
+    for i in range(3):
+        claim = Claim(
+            id=f"c{i}",
+            subject_entity_id="user",
+            predicate="ate_sugar",
+            object_value="hyper",
+            object_entity_id="hyper",
+            source_id="test",
+            qualifiers={"outcome": "success"},
+            confidence=0.9,
+            trust=0.9,
+            status=ClaimStatus.ACTIVE,
+            observed_at=time.time(),
+            permission=Permission.public(),
+        )
+        store.claims.put(claim)
+
+    recursive_loop._run_induction(None)
+
+    active = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
+    inducted = [m for m in active if m.name == "ate_sugar"]
+    assert inducted, f"No active inducted causal model found among {active!r}"
