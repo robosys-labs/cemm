@@ -10,13 +10,20 @@ from cemm.learning.ner_tagger import NERTagger
 
 
 PERSONS = ["Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry"]
+PERSONS_MULTI = ["Dr. Smith", "Jane Doe", "John Williams", "Mary Johnson", "Professor Brown"]
 PLACES = ["Paris", "London", "Berlin", "Tokyo", "Madrid", "Rome", "Cairo", "Sydney"]
+PLACES_MULTI = ["New York", "San Francisco", "Los Angeles", "United States", "European Union"]
 ORGS = ["Google", "Microsoft", "Apple", "Amazon", "Meta", "OpenAI", "IBM", "Intel"]
+ORGS_MULTI = ["Microsoft Corporation", "Google LLC", "Apple Inc.", "OpenAI LP", "IBM Research"]
 TIMES = ["today", "tomorrow", "yesterday", "Monday", "Tuesday", "morning", "evening"]
 
 VERBS = ["visited", "saw", "met", "joined", "left", "arrived", "called", "founded"]
 PREPS = ["in", "at", "on", "with", "from", "to"]
 ARTICLES = ["the", "a"]
+
+ALL_PERSONS = PERSONS + PERSONS_MULTI
+ALL_PLACES = PLACES + PLACES_MULTI
+ALL_ORGS = ORGS + ORGS_MULTI
 
 
 def _tag_sentence(words: list[str], annotations: list[tuple[int, int, str]]) -> list[str]:
@@ -47,10 +54,10 @@ def _generate_sentences(count: int = 400) -> tuple[list[list[str]], list[list[st
     ]
     for _ in range(count):
         template = random.choice(templates)
-        per = random.choice(PERSONS)
-        per2 = random.choice(PERSONS)
-        loc = random.choice(PLACES)
-        org = random.choice(ORGS)
+        per = random.choice(ALL_PERSONS)
+        per2 = random.choice(ALL_PERSONS)
+        loc = random.choice(ALL_PLACES)
+        org = random.choice(ALL_ORGS)
         time_word = random.choice(TIMES)
         verb = random.choice(VERBS)
         prep = random.choice(PREPS)
@@ -61,15 +68,28 @@ def _generate_sentences(count: int = 400) -> tuple[list[list[str]], list[list[st
         )
         words = text.split()
         annotations: list[tuple[int, int, str]] = []
-        for i, w in enumerate(words):
-            if w in PERSONS:
-                annotations.append((i, i + 1, "PER"))
-            elif w in PLACES:
-                annotations.append((i, i + 1, "LOC"))
-            elif w in ORGS:
-                annotations.append((i, i + 1, "ORG"))
-            elif w in TIMES:
-                annotations.append((i, i + 1, "TIME"))
+        # Multi-token entity lookup using phrase matching.
+        known = [
+            (ALL_PERSONS, "PER"),
+            (ALL_PLACES, "LOC"),
+            (ALL_ORGS, "ORG"),
+            (TIMES, "TIME"),
+        ]
+        i = 0
+        while i < len(words):
+            matched = False
+            for entity_list, label in known:
+                for entity in sorted(entity_list, key=lambda e: -len(e.split())):
+                    entity_tokens = entity.split()
+                    if words[i:i + len(entity_tokens)] == entity_tokens:
+                        annotations.append((i, i + len(entity_tokens), label))
+                        i += len(entity_tokens)
+                        matched = True
+                        break
+                if matched:
+                    break
+            if not matched:
+                i += 1
         sentences.append(words)
         labels.append(_tag_sentence(words, annotations))
     return sentences, labels
@@ -82,7 +102,7 @@ def main() -> None:
     tagger.train(sentences, labels, epochs=10)
 
     # Simple sanity check
-    test_words = "Alice visited Paris on Monday".split()
+    test_words = "Alice visited New York on Monday".split()
     entities = tagger.extract_entities(test_words)
     print(f"Test: {test_words}")
     for ent in entities:

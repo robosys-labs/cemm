@@ -44,3 +44,18 @@ def test_learned_ner_populates_entity_refs_in_seg():
     assert "alice" in entity_ids, entity_ids
     assert "paris" in entity_ids, entity_ids
     assert "monday" in entity_ids, entity_ids
+
+
+def test_learned_ner_extracts_multi_word_entities():
+    store = Store(":memory:")
+    registry = Registry()
+    seed_registry(registry)
+    seed_self_state(store)
+    pipeline = Pipeline(store, registry)
+    result = pipeline.run("Jane Doe visited New York and works at Google LLC", context_id="ctx")
+    seg = result.semantic_event_graph
+    assert seg is not None
+    entity_ids = {ref.get("entity_id", ref.get("entity", "")) for ref in seg.entity_refs}
+    assert "jane doe" in entity_ids, entity_ids
+    assert "new york" in entity_ids, entity_ids
+    assert "google llc" in entity_ids, entity_ids
