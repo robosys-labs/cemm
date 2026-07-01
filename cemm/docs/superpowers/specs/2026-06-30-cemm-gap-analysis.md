@@ -150,7 +150,7 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - Simulation never runs (empty `causal_edges`) — same as causal inference ✗
 - `PipelineResult` missing `inference_packet` and `decision_packet` ✓
 - Trace never sets `semantic_event_graph_id` ✓
-- 16 of 19 InvariantGuard checks never called at runtime — most relevant checks now called ✗
+- 16 of 19 InvariantGuard checks never called at runtime ✓ — all 19 checks now have a runtime call site
 - Context inference runs after Ground, not during Contextualize ✓
 - Training export can produce SAG-less records for non-answer/abstain operators ✓ — all operators now return a semantic_answer_graph
 - 11 of 25 PROMPTS task types never produced by decomposition ✓ — training export now emits one record per task type

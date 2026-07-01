@@ -128,6 +128,8 @@ class Pipeline:
             if kernel.conversation.dynamics:
                 kernel.conversation.dynamics.active_process_atom_keys = process_keys
             signal.observation_semantics = semantics
+            from .invariant_guard import InvariantGuard
+            InvariantGuard.check_uol_not_bypassing_registry(uol_atoms, self._registry)
             if semantics.semantic_cluster_key:
                 kernel.user.affect = update_user_affect(kernel.user.affect, semantics, kernel, signal.id)
                 kernel.conversation.dynamics = update_conversation_dynamics(
@@ -167,6 +169,21 @@ class Pipeline:
         n_claims = len(kernel.memory.working_claim_ids)
         n_models = len(kernel.memory.candidate_model_ids)
         kernel.self_view.uncertainty = max(0.2, 1.0 - min(1.0, (n_claims + n_models * 0.5) / 10.0))
+
+        # Invariant: ensure context inference does not override explicit user claims
+        if kernel.memory.working_claim_ids:
+            from .invariant_guard import InvariantGuard
+            from ..types.claim import Claim
+            explicit = self._store.claims.get(kernel.memory.working_claim_ids[0])
+            if explicit is not None:
+                inferred = Claim(
+                    id=f"inferred_{explicit.id}",
+                    subject_entity_id=explicit.subject_entity_id,
+                    predicate=explicit.predicate,
+                    object_value=explicit.object_value,
+                    source_id="context_inference",
+                )
+                InvariantGuard.check_context_not_override_explicit(inferred, explicit)
 
         memory_packet = MemoryPacket(
             selected_signal_ids=[signal.id],

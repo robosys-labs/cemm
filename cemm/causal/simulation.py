@@ -47,6 +47,8 @@ class SimulationEngine:
             permission=kernel.permission,
         )
         self._store.signals.put(signal)
+        from ..kernel.invariant_guard import InvariantGuard
+        InvariantGuard.check_prediction_not_fact(signal)
         model_ids = list({p["model_id"] for p in preds if "model_id" in p})
         return SimulationResult(
             signal_id=signal.id,
