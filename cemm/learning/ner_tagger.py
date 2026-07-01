@@ -99,6 +99,24 @@ class NERTagger:
         transitions = self._avg_transitions if (averaged and self._avg_transitions) else self.transition_weights
         return transitions.get((prev, curr), 0.0)
 
+    @staticmethod
+    def _normalize_tag(tag: str, seen_labels: set[str] | None = None) -> str:
+        """Repair noisy mixed-label BIO sequences and normalise upper case tags."""
+        tag = tag.strip()
+        if tag == "O":
+            return "O"
+        parts = tag.split("-", 1)
+        if len(parts) != 2:
+            return "O"
+        prefix, label = parts[0].upper(), parts[1].upper()
+        if prefix not in {"B", "I"}:
+            return "O"
+        label = label.replace("_", "-")
+        if seen_labels and label not in seen_labels:
+            # Map to a known label if only one label differs superficially
+            return "O"
+        return f"{prefix}-{label}"
+
     def predict(self, words: list[str], averaged: bool = True) -> list[str]:
         """Predict BIO tags using Viterbi decoding."""
         if not words:
@@ -243,12 +261,18 @@ class NERTagger:
     def extract_entities(self, words: list[str]) -> list[dict[str, Any]]:
         """Extract entity spans from a tokenized sentence."""
         tags = self.predict(words)
+        tags = [self._normalize_tag(tag, seen_labels=self._known_labels()) for tag in tags]
         entities: list[dict[str, Any]] = []
         current: dict[str, Any] | None = None
+        scores: list[float] = []
         for i, (word, tag) in enumerate(zip(words, tags)):
+            feats = self._featurize(words, i)
+            tag_score = self._score(feats, tag, averaged=True)
             if tag.startswith("B-"):
                 if current:
+                    current["confidence"] = sum(scores) / len(scores) if scores else 0.0
                     entities.append(current)
+                    scores = []
                 label = tag[2:]
                 role = self.TAG_TO_ROLE.get(label, self._role_from_label(label))
                 current = {
@@ -258,16 +282,24 @@ class NERTagger:
                     "end": i + 1,
                     "role": role,
                 }
+                scores = [tag_score]
             elif tag.startswith("I-") and current and current["label"] == tag[2:]:
                 current["text"] += " " + word
                 current["end"] = i + 1
+                scores.append(tag_score)
             else:
                 if current:
+                    current["confidence"] = sum(scores) / len(scores) if scores else 0.0
                     entities.append(current)
                     current = None
+                    scores = []
         if current:
+            current["confidence"] = sum(scores) / len(scores) if scores else 0.0
             entities.append(current)
         return entities
+
+    def _known_labels(self) -> set[str]:
+        return {t.split("-", 1)[1] for t in self.TAGS if t != "O"}
 
     @staticmethod
     def _role_from_label(label: str) -> str:
