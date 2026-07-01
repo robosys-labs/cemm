@@ -25,7 +25,7 @@ from .operators.reflect import ReflectOperator
 from .operators.abstain import AbstainOperator
 from .operators.call_tool import CallToolOperator
 from .operators.base import OperatorContext
-from .types.action import Action
+from .types.action import Action, ActionStatus
 from .learning.online import OnlineLearner
 from .retrieval.structural import StructuralRetriever, RetrievalQuery
 from .retrieval.ranker import Ranker
@@ -298,23 +298,8 @@ def process_input(
         permission=kernel.permission,
     )
 
-    # Self-referential detection: if input refers to the system, inject
-    # self entity into kernel entity lists so self-knowledge claims are retrieved.
-    _self_ref_patterns = (
-        "who are you", "what are you", "what do you know", "what do you like",
-        "what do you think", "what do you prefer", "what do you want", "what do you need",
-        "tell me about yourself", "describe yourself", "introduce yourself",
-        "who made you", "who created you", "what can you do", "what is your name",
-        "your name", "your capabilities", "about yourself",
-    )
-    text_lower = text.strip().lower()
-    if any(pattern in text_lower for pattern in _self_ref_patterns):
-        self_entity = store.entities.get("self_main")
-        if self_entity:
-            if self_entity.id not in kernel.memory.working_entity_ids:
-                kernel.memory.working_entity_ids.append(self_entity.id)
-            if self_entity.id not in kernel.world.active_entity_ids:
-                kernel.world.active_entity_ids.append(self_entity.id)
+    # Self-referential queries are handled by the UOL mapper and grounding pipeline,
+    # which produce entity refs for self and seed them into kernel memory/world.
 
     # Use pipeline-provided ranked claims if available
     selected_claim_ids = pipeline_result.ranked_claim_ids
@@ -488,8 +473,26 @@ def process_input(
         decision_packet_id=decision.id if decision else None,
         params=params,
     )
+    op_start = time.time()
     op_result = op_registry.execute(kind, ctx)
+    op_cost_ms = (time.time() - op_start) * 1000.0
     output = op_result.output_text
+
+    # Fix trace metadata for the operator result.
+    if op_result.trace:
+        spec = op_registry.get_spec(kind)
+        op_result.trace.operator_model_id = spec.model_id if spec else kind.value
+        op_result.trace.action_id = uuid.uuid4().hex[:16]
+        op_result.trace.cost_ms = op_cost_ms
+        op_result.trace.frame_rules_applied = grounded_graph is not None
+        op_result.trace.causal_inference_used = bool(
+            inference_packet
+            and (inference_packet.predictions or inference_packet.implications or inference_packet.contradictions)
+        )
+        if not op_result.trace.semantic_event_graph_id:
+            op_result.trace.semantic_event_graph_id = ctx.semantic_event_graph_id
+        if op_result.semantic_answer_graph and not op_result.trace.semantic_answer_graph_id:
+            op_result.trace.semantic_answer_graph_id = op_result.semantic_answer_graph.id
 
     # Populate full typed latent snapshot in the trace for CEMM-SLC integration.
     if op_result.trace:
@@ -518,6 +521,25 @@ def process_input(
             answer_model_ids=sag_for_export.selected_model_ids if sag_for_export else [],
         )
 
+    # Persist action audit record (after latents are attached for complete trace).
+    if op_result.trace:
+        action = Action(
+            id=op_result.trace.action_id,
+            kind=kind,
+            operator_model_id=op_result.trace.operator_model_id,
+            input_signal_ids=[input_signal.id],
+            selected_claim_ids=list(ctx.selected_claim_ids),
+            selected_model_ids=list(ctx.selected_model_ids),
+            confidence=decision.confidence if decision else op_result.trace.confidence,
+            risk=ap.risk if ap else 0.0,
+            cost_ms=op_cost_ms,
+            status=ActionStatus.EXECUTED if op_result.success else ActionStatus.FAILED,
+            result_signal_id=op_result.result_signal.id if op_result.result_signal else None,
+            trace=op_result.trace,
+            created_at=time.time(),
+        )
+        store.actions.put(action)
+
     # Invariant checks after operator execution
     from .kernel.invariant_guard import InvariantGuard
     guard = InvariantGuard()
@@ -538,7 +560,7 @@ def process_input(
     if mode_change_action:
         guard.check_self_mutation_has_trace(mode_change_action)
         guard.check_self_mode_change_has_trace(
-            kernel.self_view.mode, kernel.self_view.mode, mode_change_action
+            old_mode, kernel.self_view.mode, mode_change_action
         )
     for claim_id in ctx.selected_claim_ids:
         claim = store.claims.get(claim_id)

@@ -33,6 +33,10 @@ class DecisionRouter:
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
         selected_model_ids = memory_packet.selected_model_ids if memory_packet else []
+        predictions = inference_packet.predictions if inference_packet else []
+        missing_slots = (grounded_graph.missing_slots if grounded_graph else
+                         kernel.goal.missing_slots if kernel.goal else [])
+        required_slots = list(kernel.goal.required_slots) if kernel.goal else []
 
         # If answer candidates are provided, rank them and use the best one
         if answer_candidates:
@@ -49,7 +53,7 @@ class DecisionRouter:
                             action_kind="ask",
                             execution_allowed=True,
                             confidence=best.confidence,
-                            risk=0.0,
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                         ),
                         confidence=best.confidence,
                         reason=f"answer candidate intent=ask (score={best.confidence:.2f})",
@@ -62,21 +66,19 @@ class DecisionRouter:
                             selected_model_ids=selected_model_ids,
                             execution_allowed=False,
                             confidence=best.confidence,
-                            risk=0.0,
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                         ),
                         confidence=best.confidence,
                         reason=f"best answer candidate intent=abstain (score={best.confidence:.2f})",
                     )
 
         # Command intent detection: explicit user commands take priority
-        cmd_intent = self._detect_command_intent(input_text, graph, selected_claim_ids)
+        cmd_intent = self._detect_command_intent(
+            input_text, graph, kernel, selected_claim_ids,
+            predictions=predictions, missing_slots=missing_slots,
+        )
         if cmd_intent:
             return cmd_intent
-
-        predictions = inference_packet.predictions if inference_packet else []
-        missing_slots = (grounded_graph.missing_slots if grounded_graph else
-                         kernel.goal.missing_slots if kernel.goal else [])
-        required_slots = list(kernel.goal.required_slots) if kernel.goal else []
 
         if missing_slots:
             return DecisionPacket(
@@ -87,7 +89,7 @@ class DecisionRouter:
                     missing_slots=missing_slots,
                     execution_allowed=True,
                     confidence=0.9,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.9,
                 reason="missing required slots",
@@ -101,7 +103,7 @@ class DecisionRouter:
                     action_kind="remember",
                     execution_allowed=True,
                     confidence=0.7,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.7,
                 reason="SEG contains claim candidates for storage",
@@ -118,7 +120,7 @@ class DecisionRouter:
                     selected_model_ids=selected_model_ids,
                     execution_allowed=True,
                     confidence=min(0.9, graph.confidence),
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=min(0.9, graph.confidence),
                 reason="self query answered from selected self claims",
@@ -136,7 +138,7 @@ class DecisionRouter:
                             action_kind="ask",
                             execution_allowed=True,
                             confidence=0.7,
-                            risk=0.0,
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                         ),
                         confidence=0.7,
                         reason="graph indicates clarification needed",
@@ -165,7 +167,7 @@ class DecisionRouter:
                     selected_model_ids=selected_model_ids,
                     execution_allowed=True,
                     confidence=confidence,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=confidence,
                 reason="selected evidence available with graph confidence {:.2f}".format(graph_confidence),
@@ -179,7 +181,7 @@ class DecisionRouter:
                         action_kind="ask",
                         execution_allowed=True,
                         confidence=0.7,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.7,
                     reason="graph indicates clarification needed",
@@ -194,7 +196,7 @@ class DecisionRouter:
                         action_kind="answer",
                         execution_allowed=True,
                         confidence=0.7,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.7,
                     reason=f"speech_act greeting fallback (conf={observation_semantics.confidence:.2f})",
@@ -206,7 +208,7 @@ class DecisionRouter:
                         action_kind="answer",
                         execution_allowed=True,
                         confidence=0.65,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.65,
                     reason=f"speech_act acknowledgment fallback (conf={observation_semantics.confidence:.2f})",
@@ -218,7 +220,7 @@ class DecisionRouter:
                         action_kind="ask",
                         execution_allowed=True,
                         confidence=0.65,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.65,
                     reason=f"speech_act clarification fallback (conf={observation_semantics.confidence:.2f})",
@@ -230,7 +232,7 @@ class DecisionRouter:
                         action_kind="abstain",
                         execution_allowed=False,
                         confidence=0.9,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.9,
                     reason=f"speech_act exit fallback (conf={observation_semantics.confidence:.2f})",
@@ -244,7 +246,7 @@ class DecisionRouter:
                         action_kind="answer",
                         execution_allowed=True,
                         confidence=context_inference.confidence,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=context_inference.confidence,
                     reason=f"context frame {context_inference.frame_id} fallback",
@@ -256,7 +258,7 @@ class DecisionRouter:
                         action_kind="ask",
                         execution_allowed=True,
                         confidence=context_inference.confidence,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=context_inference.confidence,
                     reason="context frame clarification fallback",
@@ -268,7 +270,7 @@ class DecisionRouter:
                         action_kind="abstain",
                         execution_allowed=False,
                         confidence=context_inference.confidence,
-                        risk=0.0,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=context_inference.confidence,
                     reason="context frame session_exit fallback",
@@ -282,7 +284,7 @@ class DecisionRouter:
                     action_kind="ask",
                     execution_allowed=True,
                     confidence=0.7,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.7,
                 reason="short input with low graph confidence — clarification needed",
@@ -295,14 +297,20 @@ class DecisionRouter:
                 selected_model_ids=selected_model_ids,
                 execution_allowed=False,
                 confidence=max(0.4, min(0.6, graph.confidence)),
-                risk=0.0,
+                risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
             ),
             confidence=max(0.4, min(0.6, graph.confidence)),
             reason="insufficient graph-grounded evidence (confidence={:.2f})".format(graph.confidence),
         )
 
     def _detect_command_intent(
-        self, input_text: str, graph: SemanticEventGraph, selected_claim_ids: list[str] | None = None,
+        self,
+        input_text: str,
+        graph: SemanticEventGraph,
+        kernel: ContextKernel,
+        selected_claim_ids: list[str] | None = None,
+        predictions: list[dict[str, Any]] | None = None,
+        missing_slots: list[str] | None = None,
     ) -> DecisionPacket | None:
         frame_keys = {p.get("frame_key", "") for p in graph.processes}
         has_claims = bool(selected_claim_ids)
@@ -314,7 +322,7 @@ class DecisionRouter:
                     action_kind="abstain",
                     execution_allowed=False,
                     confidence=0.95,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.95,
                 reason="session exit detected in SEG processes",
@@ -328,7 +336,7 @@ class DecisionRouter:
                     action_kind="remember",
                     execution_allowed=True,
                     confidence=0.85,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.85,
                 reason="remember command detected in SEG processes",
@@ -341,7 +349,7 @@ class DecisionRouter:
                     action_kind="reflect",
                     execution_allowed=True,
                     confidence=0.8,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.8,
                 reason="reflect command detected in SEG processes",
@@ -354,7 +362,7 @@ class DecisionRouter:
                     action_kind="retrieve",
                     execution_allowed=True,
                     confidence=0.8,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.8,
                 reason="retrieve command detected in SEG processes",
@@ -368,7 +376,7 @@ class DecisionRouter:
                     action_kind="answer",
                     execution_allowed=True,
                     confidence=0.75,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.75,
                 reason="greeting detected in SEG processes",
@@ -381,7 +389,7 @@ class DecisionRouter:
                     action_kind="answer",
                     execution_allowed=True,
                     confidence=0.7,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.7,
                 reason="acknowledgment detected in SEG processes",
@@ -396,10 +404,30 @@ class DecisionRouter:
                     action_kind="ask",
                     execution_allowed=True,
                     confidence=0.6,
-                    risk=0.0,
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                 ),
                 confidence=0.6,
                 reason="discourse marker — clarification needed",
             )
 
         return None
+
+    def _estimate_risk(
+        self,
+        graph: SemanticEventGraph,
+        kernel: ContextKernel,
+        confidence: float | None = None,
+        missing_slots: list[str] | None = None,
+        predictions: list[dict[str, Any]] | None = None,
+    ) -> float:
+        if confidence is None:
+            confidence = graph.confidence
+        risk = (1.0 - confidence) * 0.5
+        if missing_slots:
+            risk += min(0.3, len(missing_slots) * 0.1)
+        if predictions:
+            risk += min(0.3, len(predictions) * 0.1)
+        uncertainty = getattr(kernel.self_view, "uncertainty", 0.0)
+        if uncertainty > 0.5:
+            risk += (uncertainty - 0.5) * 0.2
+        return min(1.0, max(0.0, risk))

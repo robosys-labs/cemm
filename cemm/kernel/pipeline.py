@@ -140,7 +140,7 @@ class Pipeline:
                 )
 
         # Ground entities, time, frame, permission
-        grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel)
+        grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel, content=signal.content)
 
         # Seed entity IDs from graph for graph-grounded retrieval
         for ref in semantic_event_graph.entity_refs:
@@ -161,10 +161,13 @@ class Pipeline:
                 retrieval_result.claims.append(c)
                 seen_ids.add(c.id)
 
+        # Apply frame rules before ranking (architecture requires frame rules before permission/ranking)
+        retrieval_result.claims = self._frames.filter_valid(retrieval_result.claims, kernel)
+
         # Rank claims and models with graph context
         ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
         ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
-        kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
+        kernel.memory.working_claim_ids = [c.id for c, score in ranked_claims[:kernel.budget.max_ranked] if score > 0]
         kernel.world.active_claim_ids = kernel.memory.working_claim_ids
         kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
 

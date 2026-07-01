@@ -753,15 +753,50 @@ Closed in this pass:
 - Casual pragmatic acts (`playful_acknowledgment`, `confusion`, `self_correction`, `simplification_request`, `reassurance`) are represented as semantic clusters and UOL frame keys.
 - Self and capability answers route through selected self evidence (`self_identity_query`, `self_capability_query`, `self_knowledge_query`).
 - NER training accepts mixed label sets, normalizes noisy tags, and reports per-entity confidence.
-- Graph-referenced claims receive an entity-overlap relevance boost and grounded location roles are captured in `GroundedGraph`.
-- Full test suite now passes (271 passed, 6.58s).
+- Graph-referenced claims receive an explicit graph-confidence relevance boost and grounded location roles are captured in `GroundedGraph`.
+- UOL atoms are enriched with process participants, model IDs, state holders, and both input and output state keys.
+- `GroundedPipeline` resolves simple time references (`now`, `today`, `yesterday`, `tomorrow`) into `resolved_time_refs`.
+- Hardcoded self-reference injection in `__main__.py` was removed; self entities are seeded organically by the UOL mapper.
+- Causal rules are no longer auto-promoted without validation; they remain candidates until risk/evaluator gates pass.
+- `Budget.allow_simulation` defaults to `False` and `ActionPlan.risk` is computed from confidence, missing slots, predictions, and self-view uncertainty.
+- Full test suite now passes (277 passed).
 
 Remaining / Phase 1+:
 - Learned multilingual semantic parsing remains a training target.
-- Frame-specific risk/cost scoring remains limited until more validated models exist.
+- Frame-specific risk/cost scoring has signature support but remains limited until more validated models exist.
 - Typed latent persistence and graph memory views are not yet implemented.
 - Promotion gate and evaluator integration remain open.
 - No executable version of the full `cemm_acceptance_tests.md` checklist yet.
+
+## 2026-07-01 Re-validation Update
+
+A deeper trace of the current codebase was performed after the remediation pass. The findings below supersede or clarify several earlier observations.
+
+### Stale baseline
+- `cemm_runtime_router.py` has been removed from the codebase. The canonical runtime is now `kernel/pipeline.py` invoked from `__main__.py`. References in this document to the old basic runtime should be treated as historical/resolved.
+- The "Additional Observed Runtime Weaknesses" that describe `cemm_runtime_router.py` (static fallback, exit handling, dead `call_llm()`, basic/package divergence) are therefore outdated.
+
+### Newly closed in this re-validation pass
+- `RecursiveLoop` now subtracts the parent pipeline's own cost from the recursive latency budget before spawning child pipelines (`kernel/recursive_loop.py:66`).
+- `UOLMapper._enrich_atoms` now populates `output_state_keys` for effect/process-change frames (temporal, causal, claim, preference, evaluation, command), instead of leaving it empty (`registry/uol_mapper.py:230-245`).
+
+### Missed / residual gaps
+- `DecisionRouter` still routes from `observation_semantics` speech-act labels and `context_inference.frame_id` fallbacks when the graph is weak.
+- `__main__.py` strips selected claims from answer params for conversational intents based on the `decision.reason` string (`__main__.py:405-407`).
+- `ModeController` is invoked after `DecisionRouter` and is not itself routed through the decision graph.
+- `RecursiveLoop` runs induction every 10 turns and whenever `kernel.memory.candidate_model_ids` is non-empty, regardless of whether the turn needs it.
+- No typed latent persistence table exists; latents are only embedded in `Trace.typed_latents`.
+- No `ObservationPipeline` for tool/web/sensor signals.
+- No executable version of `cemm_acceptance_tests.md`.
+- `ModelKind` still lacks `semantic_encoder` and `text_realizer`.
+- `ContextKernel` has `self_state_id` but not a full `self_state` object.
+- `SynthesizeOperator` still exposes a direct `strategy` bypass.
+
+### Updated severity ranking
+- **Closed**: permission validity in ranker, self-reference routing, NER hardening, noisy text normalization, casual pragmatic acts, graph relevance boost, grounded location roles, time refs, `allow_simulation` default, `ActionPlan.risk`, full test suite, parent-cost accounting, `output_state_keys` wiring.
+- **Partial**: core loop ordering, UOL enrichment, context inference, causal gating, recursive budget, frame filtering, training task types, realization pipeline, invariant tests, typed latents in trace.
+- **Open**: promotion gate, evaluator integration, executable acceptance tests, typed latent persistence, foundational operator specs, observation pipeline, metrics, `ModelKind` missing encoder/realizer.
+- **Stale**: all references to `cemm_runtime_router.py` as the current runtime.
 
 ## Fix Strategy
 

@@ -42,7 +42,7 @@ def _generate_sentences(count: int = 400) -> tuple[list[list[str]], list[list[st
         ("{PER} {verb} {PREP} {LOC}"),
         ("{PER} {verb} {ORG}"),
         ("{PER} {verb} {PREP} {ORG} {TIME}"),
-        ("{PER} and {PER} {verb} {LOC}"),
+        ("{PER} and {PER2} {verb} {LOC}"),
         ("{PER} {verb} {PREP} {LOC} {TIME}"),
         ("{ORG} hired {PER}"),
         ("{PER} works at {ORG}"),
@@ -145,6 +145,9 @@ def main() -> None:
         # Map synthetic labels to full tag set by keeping their coarse label; they are already in B-/I- form.
         combined_sentences = real_sentences + synthetic_sentences
         combined_labels = real_labels + synthetic_labels
+        for tag in ["B-PER", "I-PER", "B-LOC", "I-LOC", "B-ORG", "I-ORG", "B-TIME", "I-TIME"]:
+            if tag not in bio_tags:
+                bio_tags.append(tag)
         tagger = NERTagger(tags=bio_tags, tag_to_role=tag_to_role, dim=1024)
         metrics = tagger.train(combined_sentences, combined_labels, epochs=3, validation_split=0.1)
         print(f"Training complete — best val token accuracy: {metrics['best_token_acc']:.2%} at epoch {metrics['best_epoch']}")

@@ -260,6 +260,34 @@ def dry_task_record(category: str, task_type: str, idx: int) -> dict[str, Any]:
         "priority": 50,
         "category": category,
     }
+    if category == "noisy_casual_chat":
+        return {
+            "task_type": task_type,
+            "permission_scope": "local_training",
+            "priority": 50,
+            "category": category,
+            "context_kernel": {
+                "conversation": {"turn_index": 2},
+                "permission": {"scope": "local_training"},
+            },
+            "input_text": "heyyy lol what??",
+            "semantic_event_graph": {
+                "source_signal_ids": ["seed_sig"],
+                "context_id": "seed_ctx",
+                "entity_refs": [],
+                "processes": [
+                    {"kind": "process", "frame_key": "request_clarification", "confidence": 0.8}
+                ],
+                "states": [],
+                "permission_scope": "local_training",
+                "confidence": 0.8,
+            },
+            "observation_semantics": {
+                "speech_act": "confusion",
+                "semantic_cluster_key": "confusion",
+                "confidence": 0.8,
+            },
+        }
     if task_type == "uol_mapping":
         base.update(
             {

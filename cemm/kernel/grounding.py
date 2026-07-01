@@ -12,7 +12,12 @@ class GroundingPipeline:
         self._resolver = resolver
         self._frames = frames
 
-    def run(self, graph: SemanticEventGraph, kernel: ContextKernel) -> GroundedGraph:
+    def run(
+        self,
+        graph: SemanticEventGraph,
+        kernel: ContextKernel,
+        content: str | None = None,
+    ) -> GroundedGraph:
         self._resolver.resolve_self(kernel)
         resolved_ids: list[str] = []
         for ref in graph.entity_refs:
@@ -34,10 +39,24 @@ class GroundingPipeline:
         return GroundedGraph(
             semantic_event_graph_id=graph.id,
             entity_ids=resolved_ids,
-            resolved_time_refs=[],
+            resolved_time_refs=self._resolve_time_refs(content, kernel),
             resolved_location_ids=location_ids,
             active_frame_ids=list(kernel.memory.active_frame_ids) if kernel.memory else [],
             permission=kernel.permission.scope.value if kernel.permission else "public",
             missing_slots=list(kernel.goal.missing_slots) if kernel.goal else [],
             confidence=graph.confidence,
         )
+
+    def _resolve_time_refs(self, content: str | None, kernel: ContextKernel) -> list[str]:
+        refs: list[str] = []
+        if not content:
+            return refs
+        now = kernel.time.now
+        content_lower = content.lower()
+        if any(w in content_lower for w in ("now", "today", "currently")):
+            refs.append(f"now:{now}")
+        if "yesterday" in content_lower:
+            refs.append(f"yesterday:{now - 86400}")
+        if "tomorrow" in content_lower:
+            refs.append(f"tomorrow:{now + 86400}")
+        return refs

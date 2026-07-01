@@ -49,13 +49,13 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
     },
     "conversational_acknowledgment": {
         "speech_act": "acknowledgment",
-        "patterns": ["ok", "sure", "yeah", "cool", "got it", "i see", "right", "understood", "noted", "sounds good", "great", "nice"],
+        "patterns": ["ok", "sure", "yeah", "cool", "got it", "i see", "right", "understood", "noted", "sounds good", "nice"],
         "target": "assistant",
         "affect_baseline": {"valence": 0.1, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
     "conversational_clarification": {
         "speech_act": "clarification",
-        "patterns": ["what", "huh", "how do you mean", "what do you mean", "what in the world", "what the", "confused", "don't understand", "don't get it", "lost", "not following", "come again", "what?"],
+        "patterns": ["what", "huh", "how do you mean", "what do you mean", "what in the world", "what the", "confused", "don't understand", "don't get it", "lost", "not following", "come again"],
         "target": "assistant",
         "affect_baseline": {"valence": -0.1, "arousal": 0.2, "frustration": 0.1, "hostility": 0.0, "playfulness": 0.0},
     },
@@ -182,6 +182,16 @@ class SemanticClusterRegistry:
                                     best_pattern = pattern
                                     best_type = "fuzzy_phrase"
                 else:
+                    # Special case: "what" in clarification should only match
+                    # as a standalone question, not inside longer sentences.
+                    if pattern_lower == "what" and cluster_key == "conversational_clarification":
+                        if len(words) == 1 and "what" in words:
+                            conf = 0.9
+                            if conf > best_conf:
+                                best_conf = conf
+                                best_pattern = pattern
+                                best_type = "exact_word"
+                        continue
                     if pattern_lower in words:
                         conf = 0.9
                         if conf > best_conf:

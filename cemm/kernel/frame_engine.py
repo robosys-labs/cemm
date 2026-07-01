@@ -34,6 +34,20 @@ class FrameEngine:
                 kernel.memory.working_claim_ids.remove(cid)
         return invalidated
 
+    def is_valid(self, claim: Claim, kernel: ContextKernel) -> bool:
+        """Return True if the claim is valid under the current kernel frame/time."""
+        now = kernel.time.now
+        if claim.status != ClaimStatus.ACTIVE:
+            return False
+        if claim.valid_from is not None and now < claim.valid_from:
+            return False
+        if claim.valid_until is not None and now > claim.valid_until:
+            return False
+        return True
+
+    def filter_valid(self, claims: list[Claim], kernel: ContextKernel) -> list[Claim]:
+        return [c for c in claims if self.is_valid(c, kernel)]
+
     def check_supersession(self, new_claim: Claim, kernel: ContextKernel) -> list[Claim]:
         existing = self._claim_store.find_contradictions(
             new_claim.subject_entity_id, new_claim.predicate

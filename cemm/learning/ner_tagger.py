@@ -35,6 +35,26 @@ class NERTagger:
         self._avg_transitions: dict[tuple[str, str], float] | None = None
         self._update_count = 0
 
+    @staticmethod
+    def _normalize_word(word: str) -> str:
+        import unicodedata
+        return "".join(
+            c for c in unicodedata.normalize("NFKD", word.strip(".,!?;:\"'()[]{}"))
+            if not unicodedata.combining(c)
+        )
+
+    @staticmethod
+    def normalize_tokens(words: list[str]) -> list[str]:
+        return [w for w in (NERTagger._normalize_word(word) for word in words) if w]
+
+    def _ensure_tags(self, labels: list[list[str]]) -> None:
+        for seq in labels:
+            for tag in seq:
+                if tag not in self.TAGS:
+                    self.TAGS.append(tag)
+                    self.weights[tag] = {}
+                    self._weight_sum[tag] = {}
+
     def _shape(self, word: str) -> str:
         return "".join(
             "X" if c.isupper() else "x" if c.islower() else "d" if c.isdigit() else "c"
@@ -42,7 +62,8 @@ class NERTagger:
         )
 
     def _featurize(self, words: list[str], position: int) -> list[str]:
-        w = words[position]
+        norm_words = [self._normalize_word(w) for w in words]
+        w = norm_words[position]
         wl = w.lower()
         features = [
             f"w={wl}",
@@ -64,23 +85,23 @@ class NERTagger:
             for i in range(max(0, len(wl) - n + 1)):
                 features.append(f"c{n}={wl[i:i + n]}")
         if position > 0:
-            features.append(f"w-1={words[position - 1].lower()}")
-            features.append(f"shape-1={self._shape(words[position - 1])}")
+            features.append(f"w-1={norm_words[position - 1].lower()}")
+            features.append(f"shape-1={self._shape(norm_words[position - 1])}")
         else:
             features.append("w-1=<s>")
             features.append("shape-1=<s>")
         if position > 1:
-            features.append(f"w-2={words[position - 2].lower()}")
+            features.append(f"w-2={norm_words[position - 2].lower()}")
         else:
             features.append("w-2=<s>")
         if position < len(words) - 1:
-            features.append(f"w+1={words[position + 1].lower()}")
-            features.append(f"shape+1={self._shape(words[position + 1])}")
+            features.append(f"w+1={norm_words[position + 1].lower()}")
+            features.append(f"shape+1={self._shape(norm_words[position + 1])}")
         else:
             features.append("w+1=</s>")
             features.append("shape+1=</s>")
         if position < len(words) - 2:
-            features.append(f"w+2={words[position + 2].lower()}")
+            features.append(f"w+2={norm_words[position + 2].lower()}")
         else:
             features.append("w+2=</s>")
         return features
@@ -201,6 +222,8 @@ class NERTagger:
             raise ValueError("sentences and labels must have the same length")
         if not sentences:
             return {"best_token_acc": 0.0, "best_epoch": 0}
+
+        self._ensure_tags(labels)
 
         # Split into train/validation
         split_idx = int(len(sentences) * (1 - validation_split))

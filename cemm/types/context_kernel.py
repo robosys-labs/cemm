@@ -107,7 +107,7 @@ class Budget:
     max_actions: int = 3
     max_recursive_steps: int = 1
     allow_dense_fallback: bool = False
-    allow_simulation: bool = True
+    allow_simulation: bool = False
 
     def clone(self) -> "Budget":
         return Budget(

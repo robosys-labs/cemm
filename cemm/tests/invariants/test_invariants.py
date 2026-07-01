@@ -119,6 +119,7 @@ def test_invariant_private_claim_requires_permission() -> None:
     pub_kernel = _kernel()
     pub_kernel.permission = Permission.public()
     ranked = ranker.rank_claims([claim], pub_kernel)
+    # Permission validity is a hard filter — private claims are excluded.
     assert len(ranked) == 0
 
 

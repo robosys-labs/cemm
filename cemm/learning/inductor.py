@@ -75,7 +75,7 @@ class Inductor:
         for signal in recent_signals:
             if not signal.content:
                 continue
-            if domain and signal.domain != domain:
+            if domain and getattr(signal, "domain", None) != domain:
                 continue
             content = " " + signal.content.lower().strip() + " "
             for connector in self.CAUSAL_CONNECTORS:

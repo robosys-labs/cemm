@@ -170,6 +170,12 @@
       "description": "Casual, noisy, abbreviated, and mixed-language turns such as typos, slang, abbreviations, emoji, and playful corrections."
     },
     {
+      "name": "noisy_casual_chat",
+      "target_count": 40,
+      "task_types": ["uol_mapping", "pragmatic_interpretation", "context_inference", "semantic_graph_extraction"],
+      "description": "Noisy casual turns with abbreviations, typos, emoji, multilingual greetings, clarification, playful acknowledgments, self-correction, and reassurance."
+    },
+    {
       "name": "self_state_and_reflection",
       "target_count": 30,
       "task_types": ["self_state_update", "context_inference", "semantic_graph_extraction", "operator_selection", "next_event_prediction"],

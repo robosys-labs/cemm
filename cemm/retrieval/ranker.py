@@ -62,7 +62,7 @@ class Ranker:
                         frame_validity = max(0.5, proc.get("confidence", 0.5))
                         break
                 if claim.id in graph.claim_refs:
-                    relevance = max(relevance, relevance * graph.confidence)
+                    relevance = max(relevance, min(1.0, 0.7 + 0.3 * graph.confidence))
             contradiction_penalty = 0.0
             if claim.status == ClaimStatus.DISPUTED:
                 contradiction_penalty = abs(contradiction_weight(0.5))

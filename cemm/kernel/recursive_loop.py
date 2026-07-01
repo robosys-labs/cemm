@@ -62,7 +62,9 @@ class RecursiveLoop:
 
         if kernel.budget.max_recursive_steps > 0:
             remaining_steps = kernel.budget.max_recursive_steps
-            remaining_latency = kernel.budget.latency_target_ms
+            # Account for the parent pipeline's own cost before launching children.
+            remaining_latency = max(0.0, kernel.budget.latency_target_ms - result.cost_ms)
+            parent_cost_ms = result.cost_ms
             while remaining_steps > 0 and remaining_latency > 0:
                 triggers = self._find_recursion_triggers(kernel, result.actions)
                 if not triggers:
@@ -97,7 +99,11 @@ class RecursiveLoop:
                             kind=SignalKind.SYSTEM,
                             source_id="recursive_loop",
                             source_type=SourceType.SYSTEM,
-                            content=f"Recursion aborted: budget exhausted (steps={remaining_steps}, latency={remaining_latency:.1f}ms)",
+                            content=(
+                                f"Recursion aborted: budget exhausted "
+                                f"(steps={remaining_steps}, latency={remaining_latency:.1f}ms, "
+                                f"parent_cost={parent_cost_ms:.1f}ms)"
+                            ),
                             observed_at=time.time(),
                             context_id=context_id,
                             salience=0.9,
@@ -111,7 +117,11 @@ class RecursiveLoop:
                         kind=SignalKind.TRACE,
                         source_id="recursive_loop",
                         source_type=SourceType.SYSTEM,
-                        content=f"Budget after child: remaining_steps={remaining_steps}, remaining_latency={remaining_latency:.1f}ms, child_cost={sub_result.cost_ms:.1f}ms",
+                        content=(
+                            f"Budget after child: remaining_steps={remaining_steps}, "
+                            f"remaining_latency={remaining_latency:.1f}ms, "
+                            f"parent_cost={parent_cost_ms:.1f}ms, child_cost={sub_result.cost_ms:.1f}ms"
+                        ),
                         observed_at=time.time(),
                         context_id=context_id,
                         salience=0.3,
@@ -212,7 +222,7 @@ class RecursiveLoop:
     def _run_induction(self, kernel: ContextKernel) -> None:
         from ..training.promoter import Promoter
         from ..training.evaluator import Evaluator
-        from ..types.model import ModelKind
+        from ..types.model import ModelKind, ModelStatus
         candidates = self._inductor.maybe_induct()
         promoter = Promoter(self._store)
         evaluator = Evaluator(self._store)
@@ -239,7 +249,8 @@ class RecursiveLoop:
                 reason=f"induction: {model.description}",
                 score=model.confidence,
             )
-            # Auto-promote high-confidence, low-risk causal rules so the system can
-            # learn from repeated observations without manual gatekeeping.
-            if model.kind == ModelKind.CAUSAL_RULE and candidate.score >= 0.8:
-                promoter.approve(candidate.id)
+            # Run the promotion gate once: eval, risk, and permission checks.
+            approved = promoter.approve(candidate.id)
+            if approved:
+                model.status = ModelStatus.ACTIVE
+                self._store.models.put(model)

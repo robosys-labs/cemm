@@ -12,6 +12,14 @@ class UOLMapper:
         self._registry = registry
         self._matcher = SemanticMatcher(registry)
         self._cluster_reg = SemanticClusterRegistry(registry=registry)
+        self._self_query_frames = {
+            "self_identity_query": ["who are you", "what are you", "what is your name", "introduce yourself"],
+            "self_capability_query": ["what do you do", "what can you do", "your capabilities", "how do you work"],
+            "self_knowledge_query": ["what do you know", "what do you know about yourself"],
+        }
+        self._self_ref_phrases = tuple(
+            phrase for phrases in self._self_query_frames.values() for phrase in phrases
+        )
 
     def map_signal(self, content: str, kernel: ContextKernel) -> list:
         atoms: list = []
@@ -27,22 +35,30 @@ class UOLMapper:
             extra_forms = latest_signal.normalized.normalized_forms
 
         # Entity detection (pronoun-based, not registry-driven)
-        # Only map second-person pronouns to self when the input is clearly a
-        # self-reference query, to avoid false positives like "do you like pizza?".
-        _self_ref_phrases = (
-            "who are you", "what are you", "what do you know", "what do you like",
-            "what do you think", "what do you prefer", "what do you want", "what do you need",
-            "tell me about yourself", "describe yourself", "introduce yourself",
-            "who made you", "who created you", "what can you do", "what is your name",
-            "your name", "your capabilities", "about yourself", "what do you know about yourself",
+        # Map second-person pronouns to self when the input is clearly a
+        # self-reference query or an insult targeting the assistant.
+        _insult_phrases = ("dumb", "stupid", "fool", "idiot", "useless", "broken")
+        _targets_self = (
+            any(phrase in content_lower for phrase in self._self_ref_phrases)
+            or (any(w in _insult_phrases for w in words) and any(w in ("you", "your", "yourself") for w in words))
         )
-        if kernel.self_view.self_id and any(phrase in content_lower for phrase in _self_ref_phrases):
+        if kernel.self_view.self_id and _targets_self:
+            for frame_key, phrases in self._self_query_frames.items():
+                if any(phrase in content_lower for phrase in phrases):
+                    atoms.append(ProcessUOLAtom(
+                        frame_key=frame_key,
+                        modality="observed",
+                        polarity="affirmed",
+                        intensity=0.7,
+                        confidence=0.85,
+                    ))
+                    break
             for w in words:
                 if w in ("you", "your", "yourself", "yours"):
                     atoms.append(EntityRefUOLAtom(
                         entity_id=kernel.self_view.self_id,
                         role="target",
-                        confidence=0.8,
+                        confidence=0.85,
                     ))
                     break
 
@@ -164,6 +180,7 @@ class UOLMapper:
             ))
 
         atoms = self._cluster_fallback(content, atoms)
+        self._enrich_atoms(atoms, kernel, content_lower)
         return atoms
 
     def _cluster_fallback(self, content: str, atoms: list) -> list:
@@ -194,6 +211,59 @@ class UOLMapper:
             confidence=best.confidence,
         ))
         return atoms
+
+    def _enrich_atoms(self, atoms: list, kernel: ContextKernel, content_lower: str) -> None:
+        self_id = getattr(kernel.self_view, "self_id", None)
+        has_self_query = self_id and any(p in content_lower for p in self._self_ref_phrases)
+        has_user = any(w in content_lower for w in ("i", "me", "my", "mine", "myself"))
+        entity_atoms = [a for a in atoms if isinstance(a, EntityRefUOLAtom)]
+        user_atom = next((a for a in entity_atoms if a.entity_id == "user"), None)
+        self_atom = next((a for a in entity_atoms if self_id and a.entity_id == self_id), None)
+        state_atoms = [a for a in atoms if isinstance(a, StateUOLAtom)]
+        state_keys = [a.state_key for a in state_atoms if a.state_key]
+
+        for atom in atoms:
+            if isinstance(atom, StateUOLAtom):
+                atom.state_model_id = atom.state_model_id or atom.state_key
+                if atom.state_key in {"low_competence", "high_quality"}:
+                    atom.holder_entity_id = self_id
+                elif atom.state_key == "user_state":
+                    atom.holder_entity_id = "user"
+                elif has_self_query:
+                    atom.holder_entity_id = self_id
+
+        # Frames that create or change a state get output_state_keys; others get input_state_keys.
+        _output_frame_keys = {"state_preference", "assert_evaluation", "command_remember", "command_retrieve", "command_reflect"}
+        _output_prefixes = ("temporal_", "causal_", "claim_")
+
+        for atom in atoms:
+            if not isinstance(atom, ProcessUOLAtom):
+                continue
+            atom.process_model_id = atom.process_model_id or atom.frame_key
+            if state_keys:
+                if (
+                    atom.frame_key in _output_frame_keys
+                    or any(atom.frame_key.startswith(p) for p in _output_prefixes)
+                ):
+                    atom.output_state_keys = list(state_keys)
+                else:
+                    atom.input_state_keys = list(state_keys)
+            participants: list[dict] = []
+            seen: set[tuple[str, str]] = set()
+            if has_user or user_atom:
+                participants.append({"entity_id": "user", "role": "actor"})
+                seen.add(("user", "actor"))
+            if has_self_query or self_atom:
+                participants.append({"entity_id": self_id, "role": "target"})
+                seen.add((self_id, "target"))
+            for ref in entity_atoms:
+                if ref.entity_id in ("user", self_id):
+                    continue
+                key = (ref.entity_id, ref.role)
+                if key not in seen:
+                    seen.add(key)
+                    participants.append({"entity_id": ref.entity_id, "role": ref.role})
+            atom.participants = participants
 
     def compile_to_pragmatic_keys(self, atoms: list) -> tuple[list[str], list[str]]:
         quality_keys = []

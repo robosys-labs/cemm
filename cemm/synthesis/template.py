@@ -41,6 +41,9 @@ class TemplateStrategy:
             "remember_confirm": "I've stored that in this session.",
             "retrieve_empty": "I did not find matching stored evidence.",
             "permission_denied": "I cannot do that because the required permission is not available.",
+            "self_capability": "I can remember facts, answer questions, reflect on my state, and retrieve stored knowledge. I also support causal reasoning, online learning from feedback, and recursive pipeline processing with budget enforcement.",
+            "self_identity": "I am CEMM, a Contextual Event Memory Model — a small language model architecture for graph-first reasoning.",
+            "self_unknown": "I'm not sure about that yet. I'm still learning about my own capabilities.",
         }
         return templates.get(key, "")
 

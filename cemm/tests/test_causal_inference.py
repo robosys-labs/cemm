@@ -140,9 +140,10 @@ def test_learned_causal_model_is_auto_promoted():
 
     recursive_loop._run_induction(None)
 
+    # After evaluator/risk/permission validation, the model should be promoted to active.
     active = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
     inducted = [m for m in active if m.name == "ate_sugar"]
-    assert inducted, f"No active inducted causal model found among {active!r}"
+    assert inducted, f"No inducted causal model active after promotion gate among {active!r}"
 
 
 def test_narrative_causal_pattern_is_discovered_and_promoted():
@@ -181,6 +182,7 @@ def test_narrative_causal_pattern_is_discovered_and_promoted():
 
     recursive_loop._run_induction(None)
 
+    # After evaluator/risk/permission validation, the model should be promoted to active.
     active = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
     inducted = [m for m in active if "exercise" in m.name and "energy" in m.name]
-    assert inducted, f"No active narrative causal model found among {active!r}"
+    assert inducted, f"No inducted narrative causal model active after promotion gate among {active!r}"

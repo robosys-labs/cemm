@@ -52,6 +52,12 @@ class RealizationPipeline:
             params["template_key"] = "retrieve_empty"
         elif intent == "permission_denied":
             params["template_key"] = "permission_denied"
+        elif intent in ("self_capability_query", "self_capability"):
+            params["template_key"] = "self_capability"
+            params["selected_claim_ids"] = []
+        elif intent in ("self_identity_query", "self_identity"):
+            params["template_key"] = "self_identity"
+            params["selected_claim_ids"] = []
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)
