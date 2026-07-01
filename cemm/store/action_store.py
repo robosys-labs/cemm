@@ -3,6 +3,24 @@ import sqlite3
 import json
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
+from ..types.latent_space import TypedLatents
+
+
+def _typed_latents_from_dict(data: dict | None) -> TypedLatents | None:
+    if data is None:
+        return None
+    return TypedLatents(
+        entity=data.get("entity", []),
+        process=data.get("process", []),
+        state=data.get("state", []),
+        claim=data.get("claim", []),
+        model=data.get("model", []),
+        context=data.get("context", []),
+        self=data.get("self", []),
+        memory=data.get("memory", []),
+        action=data.get("action", []),
+        answer=data.get("answer", []),
+    )
 
 
 def _row_to_action(row: sqlite3.Row) -> Action:
@@ -10,7 +28,8 @@ def _row_to_action(row: sqlite3.Row) -> Action:
     if row["trace_json"]:
         try:
             td = json.loads(row["trace_json"])
-            trace = Trace(**td)
+            typed_latents = _typed_latents_from_dict(td.pop("typed_latents", None))
+            trace = Trace(**td, typed_latents=typed_latents)
         except (json.JSONDecodeError, TypeError):
             pass
     return Action(
@@ -103,4 +122,16 @@ class ActionStore:
             "confidence": trace.confidence,
             "cost_ms": trace.cost_ms,
             "fallback_used": trace.fallback_used,
+            "typed_latents": {
+                "entity": trace.typed_latents.entity,
+                "process": trace.typed_latents.process,
+                "state": trace.typed_latents.state,
+                "claim": trace.typed_latents.claim,
+                "model": trace.typed_latents.model,
+                "context": trace.typed_latents.context,
+                "self": trace.typed_latents.self,
+                "memory": trace.typed_latents.memory,
+                "action": trace.typed_latents.action,
+                "answer": trace.typed_latents.answer,
+            } if trace.typed_latents else None,
         }

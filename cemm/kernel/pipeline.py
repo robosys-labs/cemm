@@ -160,7 +160,7 @@ class Pipeline:
 
         # Rank claims and models with graph context
         ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
-        ranked_models = self._ranker.rank_models(retrieval_result.models, kernel)
+        ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
         kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
         kernel.world.active_claim_ids = kernel.memory.working_claim_ids
         kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]

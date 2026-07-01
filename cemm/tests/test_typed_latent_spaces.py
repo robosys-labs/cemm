@@ -135,3 +135,118 @@ def test_trace_contains_full_typed_latents(tmp_path, monkeypatch):
     assert len(typed_latents["entity"]) == 64
     assert len(typed_latents["process"]) == 64
     assert len(typed_latents["self"]) == 64
+
+
+def test_trace_typed_latents_round_trip_via_action_store():
+    from cemm.store.store import Store
+    from cemm.types.trace import Trace
+    from cemm.types.latent_space import TypedLatents
+    from cemm.types.action import Action, ActionKind, ActionStatus
+    import time
+
+    store = Store(":memory:")
+    latents = TypedLatents(
+        entity=[0.1] * 64,
+        process=[0.2] * 64,
+        state=[0.3] * 64,
+        claim=[0.4] * 64,
+        model=[0.5] * 64,
+        context=[0.6] * 64,
+        self=[0.7] * 64,
+        memory=[0.8] * 64,
+        action=[0.9] * 64,
+        answer=[1.0] * 64,
+    )
+    trace = Trace(context_id="ctx", typed_latents=latents)
+    action = Action(
+        id="a1",
+        kind=ActionKind.ANSWER,
+        operator_model_id="op",
+        status=ActionStatus.EXECUTED,
+        trace=trace,
+        created_at=time.time(),
+    )
+    store.actions.put(action)
+    loaded = store.actions.get("a1")
+    assert loaded is not None
+    assert loaded.trace is not None
+    assert loaded.trace.typed_latents is not None
+    assert loaded.trace.typed_latents.entity == [0.1] * 64
+    assert loaded.trace.typed_latents.answer == [1.0] * 64
+
+
+def test_latent_similarity_boosts_model_in_ranking():
+    from cemm.store.store import Store
+    from cemm.types.trace import Trace
+    from cemm.types.latent_space import TypedLatents
+    from cemm.types.action import Action, ActionKind, ActionStatus
+    from cemm.types.model import Model, ModelKind, ModelStatus
+    from cemm.types.context_kernel import ContextKernel
+    from cemm.types.self_view import SelfView
+    from cemm.retrieval.ranker import Ranker
+    from cemm.latent.encoder import LatentEncoder
+    import time
+
+    store = Store(":memory:")
+    ranker = Ranker()
+    encoder = LatentEncoder(dim=64)
+
+    model = Model(
+        id="m1",
+        kind=ModelKind.OPERATOR,
+        name="answer",
+        status=ModelStatus.ACTIVE,
+        registry_key="answer",
+        trust=0.5,
+        confidence=0.5,
+        utility=0.5,
+        cost_estimate_ms=10,
+        risk=0.1,
+        created_at=time.time(),
+        updated_at=time.time(),
+    )
+    store.models.put(model)
+
+    # Build a kernel and compute its latent snapshot.
+    kernel = ContextKernel(
+        id="ctx",
+        self_view=SelfView(mode="assistant", uncertainty=0.3),
+    )
+    kernel.memory.working_entity_ids = ["e1"]
+    kernel.memory.working_claim_ids = ["c1"]
+    kernel.world.active_entity_ids = ["e2"]
+
+    current = ranker._kernel_latent_snapshot(kernel)
+    # _kernel_latent_snapshot concatenates entity, context, self, memory (4 x 64).
+    # _flatten_latents concatenates all 10 typed spaces; the first 256 dims must
+    # match the kernel snapshot for cosine similarity to be ~1.0.
+    zeros = [0.0] * 64
+    latents = TypedLatents(
+        entity=current[:64],
+        process=current[64:128],
+        state=current[128:192],
+        claim=current[192:256],
+        model=zeros,
+        context=current[64:128],
+        self=current[128:192],
+        memory=current[192:256],
+        action=zeros,
+        answer=zeros,
+    )
+    trace = Trace(context_id="ctx", typed_latents=latents, selected_model_ids=["m1"])
+    action = Action(
+        id="a1",
+        kind=ActionKind.ANSWER,
+        operator_model_id="op",
+        status=ActionStatus.EXECUTED,
+        trace=trace,
+        created_at=time.time(),
+    )
+    store.actions.put(action)
+
+    ranked_with_store = ranker.rank_models([model], kernel, store=store)
+    ranked_without_store = ranker.rank_models([model], kernel, store=None)
+    assert ranked_with_store
+    assert ranked_without_store
+    assert ranked_with_store[0][0].id == "m1"
+    assert ranked_with_store[0][1] > ranked_without_store[0][1]

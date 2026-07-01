@@ -1,4 +1,6 @@
 from __future__ import annotations
+import math
+from ..types.action import Action, ActionStatus
 from ..types.claim import Claim, ClaimStatus
 from ..types.model import Model
 from ..types.context_kernel import ContextKernel
@@ -8,6 +10,7 @@ from ..confidence.scoring import (
 from ..confidence.log_odds import contradiction_weight
 from ..types.permission import PermissionScope
 from ..types.semantic_event_graph import SemanticEventGraph
+from ..store.store import Store
 
 
 class Ranker:
@@ -64,7 +67,9 @@ class Ranker:
         self,
         models: list[Model],
         kernel: ContextKernel,
+        store: Store | None = None,
     ) -> list[tuple[Model, float]]:
+        latent_bonus = self._compute_latent_model_bonus(models, kernel, store)
         scored: list[tuple[Model, float]] = []
         for model in models:
             permission_valid = self._model_permitted(model, kernel)
@@ -79,9 +84,78 @@ class Ranker:
                 cost_penalty=model.cost_estimate_ms / 1000.0,
                 risk_penalty=model.risk * 2.0,
             )
+            s += latent_bonus.get(model.id, 0.0)
             scored.append((model, s))
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[: kernel.budget.max_ranked]
+
+    @staticmethod
+    def _cosine_similarity(a: list[float], b: list[float]) -> float:
+        if not a or not b:
+            return 0.0
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)
+
+    def _compute_latent_model_bonus(
+        self,
+        models: list[Model],
+        kernel: ContextKernel,
+        store: Store | None,
+    ) -> dict[str, float]:
+        """Return a small score bonus for models used in similar successful contexts.
+
+        Looks at recent actions with stored typed latent snapshots and boosts a model
+        if the historical context is similar to the current kernel.
+        """
+        bonuses: dict[str, float] = {}
+        if store is None:
+            return bonuses
+        current_latents = self._kernel_latent_snapshot(kernel)
+        if not current_latents:
+            return bonuses
+        recent_actions = store.actions.recent(50)
+        model_ids = {m.id for m in models}
+        for action in recent_actions:
+            if action.status != ActionStatus.EXECUTED:
+                continue
+            if not action.trace or not action.trace.typed_latents:
+                continue
+            hist = self._flatten_latents(action.trace.typed_latents)
+            if not hist:
+                continue
+            sim = self._cosine_similarity(current_latents, hist)
+            if sim < 0.5:
+                continue
+            for mid in action.trace.selected_model_ids:
+                if mid in model_ids:
+                    bonuses[mid] = max(bonuses.get(mid, 0.0), sim * 0.1)
+        return bonuses
+
+    @staticmethod
+    def _flatten_latents(typed_latents) -> list[float]:
+        """Concatenate all typed latent vectors into a single vector."""
+        vec: list[float] = []
+        for field in ["entity", "process", "state", "claim", "model", "context", "self", "memory", "action", "answer"]:
+            part = getattr(typed_latents, field, None)
+            if part:
+                vec.extend(part)
+        return vec
+
+    @staticmethod
+    def _kernel_latent_snapshot(kernel: ContextKernel) -> list[float]:
+        """Build a latent snapshot from the current kernel for similarity comparison."""
+        from ..latent.encoder import LatentEncoder
+        encoder = LatentEncoder(dim=64)
+        parts: list[float] = []
+        parts.extend(encoder.encode("entity", kernel.memory.working_entity_ids + kernel.world.active_entity_ids))
+        parts.extend(encoder.encode("context", [kernel.id]))
+        parts.extend(encoder.encode("self", [kernel.self_view.mode, str(round(kernel.self_view.uncertainty, 2))]))
+        parts.extend(encoder.encode("memory", kernel.memory.working_claim_ids))
+        return parts
 
     @staticmethod
     def _scope_permits(claim_scope: PermissionScope | None, kernel_scope: PermissionScope) -> bool:
