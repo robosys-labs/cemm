@@ -49,17 +49,19 @@ class SemanticMatcher:
         content: str,
         kinds: list[str] | None = None,
         position_bias: bool = True,
+        extra_forms: list[str] | None = None,
     ) -> list[MatchResult]:
         """Match content against all registry entries of given kinds.
 
         Returns all matches ranked by probability (highest first).
         Supports both word-level and sentence-level fuzzy matching.
+        If extra_forms is provided, the highest score per alias is kept across all forms.
         """
         content_lower = content.lower().strip()
         raw_words = content_lower.split()
         # Strip punctuation from each word for matching, keep originals for position
         words = [_strip_punct(w) for w in raw_words]
-        if not any(words):
+        if not any(words) and not extra_forms:
             return []
 
         if kinds is None:
@@ -70,23 +72,33 @@ class SemanticMatcher:
             entries.extend(self._registry.all_by_kind(kind))
 
         results: list[MatchResult] = []
-
-        for entry in entries:
-            all_aliases = [entry.canonical_key] + entry.aliases
-            for alias in all_aliases:
-                alias_lower = alias.lower()
-
-                if " " in alias_lower:
-                    phrase_results = self._match_phrase(
-                        alias_lower, content_lower, words, entry,
-                    )
-                    results.extend(phrase_results)
-                else:
-                    word_results = self._match_word_all_positions(
-                        alias_lower, words, entry, position_bias,
-                    )
-                    results.extend(word_results)
-
+        best: dict[tuple[str, str, str], MatchResult] = {}
+        forms = [content_lower] + (extra_forms or [])
+        for form in forms:
+            if not form:
+                continue
+            form_words = [_strip_punct(w) for w in form.lower().split()]
+            for entry in entries:
+                all_aliases = [entry.canonical_key] + entry.aliases
+                for alias in all_aliases:
+                    alias_lower = alias.lower()
+                    if " " in alias_lower:
+                        phrase_results = self._match_phrase(
+                            alias_lower, form.lower(), form_words, entry,
+                        )
+                        for r in phrase_results:
+                            key = (r.canonical_key, r.alias_matched, r.match_type)
+                            if key not in best or best[key].probability < r.probability:
+                                best[key] = r
+                    else:
+                        word_results = self._match_word_all_positions(
+                            alias_lower, form_words, entry, position_bias,
+                        )
+                        for r in word_results:
+                            key = (r.canonical_key, r.alias_matched, r.match_type)
+                            if key not in best or best[key].probability < r.probability:
+                                best[key] = r
+        results = list(best.values())
         results.sort(key=lambda r: r.probability, reverse=True)
         return results
 
@@ -95,9 +107,10 @@ class SemanticMatcher:
         content: str,
         kinds: list[str] | None = None,
         min_probability: float = 0.3,
+        extra_forms: list[str] | None = None,
     ) -> MatchResult | None:
         """Return the highest-probability match above threshold, or None."""
-        results = self.match(content, kinds)
+        results = self.match(content, kinds, extra_forms=extra_forms)
         for r in results:
             if r.probability >= min_probability:
                 return r
@@ -107,9 +120,10 @@ class SemanticMatcher:
         self,
         content: str,
         kinds: list[str] | None = None,
+        extra_forms: list[str] | None = None,
     ) -> dict[str, list[MatchResult]]:
         """Match and group results by canonical_key, each group sorted by probability."""
-        results = self.match(content, kinds)
+        results = self.match(content, kinds, extra_forms=extra_forms)
         grouped: dict[str, list[MatchResult]] = {}
         for r in results:
             grouped.setdefault(r.canonical_key, []).append(r)

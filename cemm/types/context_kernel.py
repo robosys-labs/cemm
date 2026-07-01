@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import Any
 from .permission import Permission
 from .self_view import SelfView
 
@@ -135,6 +136,7 @@ class ContextKernel:
     self_view: SelfView = field(default_factory=SelfView)
     permission: Permission = field(default_factory=Permission.public)
     budget: Budget = field(default_factory=Budget)
+    latest_signal: Any | None = None
     version: str = "cemm.context_kernel.v1"
 
     @property

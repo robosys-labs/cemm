@@ -20,6 +20,12 @@ class UOLMapper:
         if not words:
             return atoms
 
+        # Use normalized signal forms when available for robust noisy/casual matching
+        extra_forms = []
+        latest_signal = getattr(kernel, "latest_signal", None)
+        if latest_signal and latest_signal.normalized:
+            extra_forms = latest_signal.normalized.normalized_forms
+
         # Entity detection (pronoun-based, not registry-driven)
         # Only map second-person pronouns to self when the input is clearly a
         # self-reference query, to avoid false positives like "do you like pizza?".
@@ -48,8 +54,8 @@ class UOLMapper:
             ))
 
         # Semantic matching against all registry UOL entries with probability ranking
-        uol_matches = self._matcher.match(content, kinds=["uol_semantic"])
-        grouped = self._matcher.match_grouped(content, kinds=["uol_semantic"])
+        uol_matches = self._matcher.match(content, kinds=["uol_semantic"], extra_forms=extra_forms)
+        grouped = self._matcher.match_grouped(content, kinds=["uol_semantic"], extra_forms=extra_forms)
 
         # Map UOL semantic frame_keys to atom types
         state_keys = {"low_competence", "high_quality"}
@@ -133,7 +139,7 @@ class UOLMapper:
                 ))
 
         # Claim structure detection via registry predicates with probability ranking
-        pred_grouped = self._matcher.match_grouped(content, kinds=["predicate"])
+        pred_grouped = self._matcher.match_grouped(content, kinds=["predicate"], extra_forms=extra_forms)
         for canonical_key, matches in pred_grouped.items():
             if not matches:
                 continue

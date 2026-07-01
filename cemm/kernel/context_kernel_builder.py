@@ -48,6 +48,7 @@ class ContextKernelBuilder:
             ),
             goal=GoalState(), memory=MemoryState(working_signal_ids=[signal.id]),
             permission=signal.permission, budget=Budget(),
+            latest_signal=signal,
         )
 
     @staticmethod

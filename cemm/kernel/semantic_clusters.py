@@ -106,15 +106,15 @@ class SemanticClusterRegistry:
         self._registry = registry
         self._matcher = SemanticMatcher(registry) if registry else None
 
-    def match(self, content: str) -> tuple[str, str, float]:
+    def match(self, content: str, extra_forms: list[str] | None = None) -> tuple[str, str, float]:
         """Backward-compatible single-match API. Returns (speech_act, cluster_key, confidence)."""
-        ranked = self.match_ranked(content)
+        ranked = self.match_ranked(content, extra_forms=extra_forms)
         if ranked:
             best = ranked[0]
             return best.speech_act, best.cluster_key, best.confidence
         return "unknown", "", 0.0
 
-    def match_ranked(self, content: str) -> list[ClusterMatch]:
+    def match_ranked(self, content: str, extra_forms: list[str] | None = None) -> list[ClusterMatch]:
         """Return all cluster matches ranked by confidence (highest first)."""
         if not content.strip():
             return []
@@ -144,7 +144,7 @@ class SemanticClusterRegistry:
                             best_pattern = pattern
                             best_type = "exact_phrase"
                     elif self._matcher:
-                        alias_results = self._matcher.match(content, kinds=[])
+                        alias_results = self._matcher.match(content, kinds=[], extra_forms=extra_forms)
                         for r in alias_results:
                             if r.alias_matched == pattern_lower:
                                 if r.probability > best_conf:

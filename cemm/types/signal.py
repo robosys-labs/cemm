@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any, Literal
 from .permission import Permission
 from .uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
+from .normalized_signal import NormalizedSignal
 
 
 class SignalKind(str, Enum):
@@ -64,6 +65,7 @@ class Signal:
     parent_signal_id: str | None = None
     version: str = "cemm.signal.v1"
     observation_semantics: ObservationSemantics | None = None
+    normalized: NormalizedSignal | None = None
 
 
 FeedbackTargetKind = Literal["entity", "claim", "model", "action", "synthesis"]

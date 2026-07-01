@@ -30,7 +30,8 @@ def interpret_signal(
         reg = SemanticClusterRegistry(registry=main_registry)
     else:
         reg = _DEFAULT_REGISTRY
-    ranked = reg.match_ranked(signal.content)
+    extra_forms = signal.normalized.normalized_forms if signal.normalized else []
+    ranked = reg.match_ranked(signal.content, extra_forms=extra_forms)
     if not ranked:
         return ObservationSemantics(speech_act="unknown", stance="unknown", confidence=0.0)
     best = ranked[0]

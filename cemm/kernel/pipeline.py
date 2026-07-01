@@ -17,6 +17,7 @@ from ..registry import Registry
 from ..confidence.scoring import score_action
 from .context_kernel_builder import ContextKernelBuilder
 from .normalizer import Normalizer
+from .text_normalizer import TextNormalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
@@ -66,6 +67,7 @@ class Pipeline:
         self._semantic_interpreter = SemanticInterpreter(
             self._uol_mapper, artifact_store=self._artifact_store, store=store,
         )
+        self._text_normalizer = TextNormalizer()
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
         self._causal_inference = CausalInference(store)
@@ -95,6 +97,7 @@ class Pipeline:
             permission=Permission.public(),
         )
         self._store.signals.put(signal)
+        signal.normalized = self._text_normalizer.normalize(signal.content)
 
         self._turn_count += 1
         kernel = self._builder.from_signal(signal, turn_index=self._turn_count)
