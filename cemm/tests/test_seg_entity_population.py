@@ -53,3 +53,17 @@ def test_causal_input_extracts_multiword_cause():
     assert edge["cause_id"] == "heavy rain", f"Expected 'heavy rain', got {edge['cause_id']!r}"
     assert edge["effect_id"] == "flooding"
     assert any(e.get("entity_id") == "heavy rain" for e in seg.entity_refs)
+
+
+def test_named_entities_extracted_for_proper_nouns():
+    store = Store(":memory:")
+    registry = Registry()
+    seed_registry(registry)
+    seed_self_state(store)
+    pipeline = Pipeline(store, registry)
+    result = pipeline.run("Alice visited Paris on Tuesday", context_id="ctx")
+    seg = result.semantic_event_graph
+    entity_ids = {ref.get("entity_id", ref.get("entity", "")) for ref in seg.entity_refs}
+    assert "alice" in entity_ids, entity_ids
+    assert "paris" in entity_ids, entity_ids
+    assert "tuesday" in entity_ids, entity_ids

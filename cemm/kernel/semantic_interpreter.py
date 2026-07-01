@@ -58,6 +58,10 @@ class SemanticInterpreter:
         # and simulation from operating on "unknown" cause/effect IDs.
         if not entity_refs and processes:
             entity_refs = self._infer_entity_refs_from_processes(signal.content, processes)
+        # Fallback to rule-based named entity extraction when the UOL mapper and
+        # process inference both fail to produce entity refs.
+        if not entity_refs:
+            entity_refs = self._extract_named_entities(signal.content)
 
         claim_refs = self._lookup_claim_refs(entity_refs, kernel)
         claim_candidates = self._extract_claim_candidates_from_atoms(signal.content, processes, entity_refs)
@@ -408,3 +412,78 @@ class SemanticInterpreter:
                 phrase.append(w)
             i += direction
         return " ".join(phrase)
+
+    def _extract_named_entities(self, content: str) -> list[dict[str, Any]]:
+        """Extract simple named entities from content when the UOL mapper provides none.
+
+        This is a minimal, rule-based fallback: capitalized proper-noun phrases,
+        temporal expressions, and numbers. It does not replace a real NER model but
+        ensures the SemanticEventGraph has entity refs for downstream retrieval and
+        grounding.
+        """
+        entities: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        words = content.split()
+        stop_words = {
+            "The", "A", "An", "And", "Or", "But", "If", "Then", "Than", "To", "Of", "In", "On", "At", "For",
+            "With", "By", "From", "As", "Is", "Are", "Was", "Were", "Be", "Been", "Being", "Have", "Has", "Had",
+            "Do", "Does", "Did", "Will", "Would", "Could", "Should", "May", "Might", "Can", "This", "That", "These",
+            "Those", "I", "You", "He", "She", "It", "We", "They", "Me", "Him", "Her", "Us", "Them", "What", "Which",
+            "Who", "When", "Where", "Why", "How", "All", "Each", "Every", "Some", "Any", "No", "Not", "Only", "Just",
+        }
+
+        # Capitalized proper-noun phrases (naive, English-centric)
+        i = 0
+        while i < len(words):
+            word = words[i].strip(".,!?;:\"'")
+            if word and word[0].isupper() and word not in stop_words:
+                phrase = [word]
+                j = i + 1
+                while j < len(words):
+                    next_word = words[j].strip(".,!?;:\"'")
+                    if not next_word or next_word in stop_words or not next_word[0].isupper():
+                        break
+                    phrase.append(next_word)
+                    j += 1
+                entity_text = " ".join(phrase).lower()
+                if entity_text not in seen:
+                    entities.append({
+                        "kind": "entity_ref",
+                        "entity_id": entity_text,
+                        "role": "entity",
+                        "confidence": 0.6,
+                    })
+                    seen.add(entity_text)
+                i = j
+            else:
+                i += 1
+
+        # Temporal expressions
+        temporal_words = {
+            "today", "tomorrow", "yesterday", "now", "later", "soon", "morning", "afternoon", "evening", "night",
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+        }
+        for raw in words:
+            w = raw.lower().strip(".,!?;:\"'")
+            if w in temporal_words and w not in seen:
+                entities.append({
+                    "kind": "entity_ref",
+                    "entity_id": w,
+                    "role": "time",
+                    "confidence": 0.5,
+                })
+                seen.add(w)
+
+        # Numeric quantities (cardinals)
+        for raw in words:
+            w = raw.strip(".,!?;:\"'")
+            if w.isdigit() and w not in seen:
+                entities.append({
+                    "kind": "entity_ref",
+                    "entity_id": w,
+                    "role": "quantity",
+                    "confidence": 0.5,
+                })
+                seen.add(w)
+
+        return entities

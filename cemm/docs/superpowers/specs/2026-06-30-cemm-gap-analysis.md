@@ -144,7 +144,7 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - DecisionRouter abstain below threshold (0.5) is not authoritative ✓ — DecisionRouter is now sole decision mechanism
 - Two parallel runtimes (basic + full) with divergent schemas — basic runtime archived and sent to Recycle Bin ✓
 - Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived and removed ✓
-- SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; multi-word entity inference added; model refs now match causal input semantics ✗ (still not full NER)
+- SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; multi-word entity inference added; model refs match causal input semantics; basic rule-based NER extracts proper nouns, temporal expressions, and numbers ✗ (still not a learned NER model)
 - No typed latent spaces exist — runtime types and encoder added; answer_latent populated ✗ (deeper CEMM-SLC integration remains)
 - Causal inference never fires (empty `causal_edges`) — now fires and produces predictions from multiple seeded causal models ✗ (still not full learned models)
 - Simulation never runs (empty `causal_edges`) — now runs on causal inputs ✗ (still limited to seeded patterns)
