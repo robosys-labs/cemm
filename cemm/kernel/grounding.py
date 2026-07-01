@@ -25,14 +25,17 @@ class GroundingPipeline:
                     resolved_ids.append(resolved[0].id)
         invalidated_ids = self._frames.apply_frame_rules(kernel)
         graph.permission_scope = kernel.permission.scope.value
+        location_ids = []
         for ref in graph.entity_refs:
             ref["frame_valid"] = ref.get("entity_id", "") not in invalidated_ids
+            if ref.get("role") == "location" and ref.get("entity_id"):
+                location_ids.append(ref["entity_id"])
 
         return GroundedGraph(
             semantic_event_graph_id=graph.id,
             entity_ids=resolved_ids,
             resolved_time_refs=[],
-            resolved_location_ids=[],
+            resolved_location_ids=location_ids,
             active_frame_ids=list(kernel.memory.active_frame_ids) if kernel.memory else [],
             permission=kernel.permission.scope.value if kernel.permission else "public",
             missing_slots=list(kernel.goal.missing_slots) if kernel.goal else [],

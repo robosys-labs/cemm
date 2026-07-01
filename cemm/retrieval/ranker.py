@@ -23,7 +23,18 @@ class Ranker:
     ) -> list[tuple[Claim, float]]:
         scored: list[tuple[Claim, float]] = []
         now = kernel.time.now
-        goal_terms = goal_keywords or []
+        goal_terms = list(goal_keywords or [])
+        if graph:
+            for proc in graph.processes:
+                fk = proc.get("frame_key", "")
+                if fk and fk not in goal_terms:
+                    goal_terms.append(fk)
+            for ref in graph.entity_refs:
+                name = ref.get("name", "")
+                if name and name not in goal_terms:
+                    goal_terms.append(name)
+        # Keep short goal terms from swamping relevance
+        goal_terms = [g for g in goal_terms if len(g) > 1 or g.isalnum()]
 
         for claim in claims:
             permission_valid = self._claim_permitted(claim, kernel)
@@ -33,9 +44,16 @@ class Ranker:
             if claim.observed_at > 0:
                 age_hours = (now - claim.observed_at) / 3600.0
                 recency = max(0.01, 1.0 - (age_hours / 720.0))
+            entity_overlap = 0
+            if graph:
+                claim_entities = {claim.subject_entity_id, claim.object_entity_id}
+                graph_entities = {ref.get("entity_id", "") for ref in graph.entity_refs}
+                entity_overlap = len(claim_entities & graph_entities)
             relevance = compute_relevance(
                 claim_predicate=claim.predicate,
                 goal_keywords=goal_terms,
+                entity_overlap=entity_overlap,
+                total_goal_entities=max(1, len(graph.entity_refs)) if graph else 1,
             )
             frame_validity = 1.0
             if graph:
