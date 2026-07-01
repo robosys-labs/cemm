@@ -71,6 +71,36 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
         "target": "assistant",
         "affect_baseline": {"valence": 0.0, "arousal": 0.2, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
+    "playful_acknowledgment": {
+        "speech_act": "playful_acknowledgment",
+        "patterns": ["lol nice", "lol ok", "haha okay", "lmao", "fair enough"],
+        "target": "assistant",
+        "affect_baseline": {"valence": 0.25, "arousal": 0.25, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.5},
+    },
+    "confusion": {
+        "speech_act": "confusion",
+        "patterns": ["wait what", "uh what", "i am confused", "im confused", "that lost me"],
+        "target": "assistant",
+        "affect_baseline": {"valence": -0.1, "arousal": 0.25, "frustration": 0.15, "hostility": 0.0, "playfulness": 0.0},
+    },
+    "self_correction": {
+        "speech_act": "self_correction",
+        "patterns": ["my bad", "sorry i meant", "i mean", "correction"],
+        "target": "user",
+        "affect_baseline": {"valence": 0.0, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
+    },
+    "simplification_request": {
+        "speech_act": "simplification_request",
+        "patterns": ["explain that simpler", "say that simpler", "simplify", "too complex"],
+        "target": "assistant",
+        "affect_baseline": {"valence": -0.05, "arousal": 0.15, "frustration": 0.1, "hostility": 0.0, "playfulness": 0.0},
+    },
+    "reassurance": {
+        "speech_act": "reassurance",
+        "patterns": ["no worries", "all good", "its fine", "it's fine"],
+        "target": "assistant",
+        "affect_baseline": {"valence": 0.25, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.1},
+    },
 }
 
 

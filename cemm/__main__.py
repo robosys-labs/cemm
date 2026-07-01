@@ -107,6 +107,10 @@ def seed_registry(registry: Registry) -> None:
         ("acknowledgment", ["ok", "okay", "sure", "right", "yeah", "yes", "yup", "got it",
                             "understood", "makes sense", "i see", "gotcha", "cool", "nice"]),
         ("discourse_marker", ["oh", "well", "so", "hmm", "anyway", "actually", "btw", "honestly"]),
+        ("playful_acknowledgment", ["lol nice", "lol ok", "haha okay", "fair enough"]),
+        ("self_correction", ["my bad", "sorry i meant", "i mean", "correction"]),
+        ("simplification_request", ["explain simpler", "simplify", "too complex"]),
+        ("reassurance", ["no worries", "all good", "it's fine", "its fine"]),
     ]
     for i, (canonical, aliases) in enumerate(uol_semantics):
         registry.register(RegistryEntry(

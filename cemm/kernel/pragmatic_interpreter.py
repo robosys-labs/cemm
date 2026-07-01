@@ -12,6 +12,11 @@ _SPEECH_ACT_TO_FRAME_KEY = {
     "clarification": "request_clarification",
     "exit": "session_exit",
     "command": "command_remember",
+    "playful_acknowledgment": "playful_acknowledgment",
+    "confusion": "request_clarification",
+    "self_correction": "self_correction",
+    "simplification_request": "simplification_request",
+    "reassurance": "reassurance",
 }
 
 
