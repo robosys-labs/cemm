@@ -484,6 +484,33 @@ def process_input(
     op_result = op_registry.execute(kind, ctx)
     output = op_result.output_text
 
+    # Populate full typed latent snapshot in the trace for CEMM-SLC integration.
+    if op_result.trace:
+        from .latent.encoder import LatentEncoder
+        latent_encoder = LatentEncoder(dim=64)
+        sag_for_export = op_result.semantic_answer_graph
+        seg_for_export = pipeline_result.semantic_event_graph
+        selected_claims = [store.claims.get(cid) for cid in ctx.selected_claim_ids]
+        selected_claims = [c for c in selected_claims if c is not None]
+        selected_models = [store.models.get(mid) for mid in ctx.selected_model_ids]
+        selected_models = [m for m in selected_models if m is not None]
+        claim_tuples = [(c.predicate, c.object_value) for c in selected_claims]
+        op_result.trace.typed_latents = latent_encoder.encode_typed(
+            entity_ids=kernel.memory.working_entity_ids + kernel.world.active_entity_ids,
+            process_keys=[p.get("frame_key", "") for p in (seg_for_export.processes if seg_for_export else [])],
+            state_keys=[s.get("state_key", "") for s in (seg_for_export.states if seg_for_export else [])],
+            claim_tuples=claim_tuples,
+            model_keys=[m.id for m in selected_models],
+            context_id=kernel.id,
+            self_mode=kernel.self_view.mode,
+            self_uncertainty=kernel.self_view.uncertainty,
+            memory_claim_ids=kernel.memory.working_claim_ids,
+            action_kind=kind.value,
+            answer_intent=sag_for_export.intent if sag_for_export else "",
+            answer_claim_ids=sag_for_export.selected_claim_ids if sag_for_export else [],
+            answer_model_ids=sag_for_export.selected_model_ids if sag_for_export else [],
+        )
+
     # Invariant checks after operator execution
     from .kernel.invariant_guard import InvariantGuard
     guard = InvariantGuard()

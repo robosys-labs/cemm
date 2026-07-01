@@ -90,3 +90,48 @@ def test_process_input_sets_answer_latent():
     # The answer operator result should carry a SAG with a non-empty answer_latent
     assert recursive_loop._last_result is not None
     assert recursive_loop._last_result.decision_packet is not None
+
+
+def test_trace_contains_full_typed_latents(tmp_path, monkeypatch):
+    import os
+    import json
+    from cemm.store.store import Store
+    from cemm.registry import Registry
+    from cemm.kernel.pipeline import Pipeline
+    from cemm.learning.online import OnlineLearner
+    from cemm.learning.inductor import Inductor
+    from cemm.kernel.recursive_loop import RecursiveLoop
+    from cemm.operators.registry import OperatorRegistry
+    from cemm.operators.answer import AnswerOperator
+    from cemm.operators.ask import AskOperator
+    from cemm.operators.remember import RememberOperator
+    from cemm.operators.abstain import AbstainOperator
+    from cemm.__main__ import seed_registry, seed_self_state, process_input
+
+    export_file = tmp_path / "export.jsonl"
+    monkeypatch.setenv("CEMM_EXPORT_PATH", str(export_file))
+
+    store = Store(":memory:")
+    registry = Registry()
+    op_registry = OperatorRegistry()
+    pipeline = Pipeline(store, registry)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
+    inductor = Inductor(store, registry=registry)
+    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
+    seed_registry(registry)
+    seed_self_state(store)
+    for op in [AnswerOperator(), AskOperator(), RememberOperator(), AbstainOperator()]:
+        op_registry.register(op)
+    output = process_input("hello", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    assert output
+    assert export_file.exists()
+    records = [json.loads(line) for line in export_file.read_text().splitlines()]
+    full_turn = next((r for r in records if r.get("task_type") == "full_turn_export"), None)
+    assert full_turn is not None
+    trace = full_turn["payload"]["trace"]
+    typed_latents = trace["typed_latents"]
+    assert typed_latents is not None
+    assert len(typed_latents["answer"]) == 64
+    assert len(typed_latents["entity"]) == 64
+    assert len(typed_latents["process"]) == 64
+    assert len(typed_latents["self"]) == 64

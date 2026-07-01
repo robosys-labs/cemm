@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+from .latent_space import TypedLatents
+
 
 @dataclass
 class Trace:
@@ -28,3 +30,4 @@ class Trace:
     inference_packet_id: str | None = None
     realization_strategy: str | None = None
     realization_verified: bool = False
+    typed_latents: TypedLatents | None = None
