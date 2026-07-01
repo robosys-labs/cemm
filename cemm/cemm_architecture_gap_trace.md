@@ -743,6 +743,26 @@ Lower but important:
 - No graph memory views.
 - No executable version of new acceptance tests.
 
+## 2026-07-01 Remediation Pass
+
+Closed in this pass:
+- Trainer prompt rendering no longer crashes on graph-first tasks; all prompts render with a safe context.
+- Ask, remember, and retrieve user-facing outputs now realize through `SemanticAnswerGraph` and carry verification metadata.
+- Runtime export includes accurate `realization_metadata` and `verification_metadata` with detailed trace dictionaries.
+- Raw-preserving noisy text normalization emits a `NormalizedSignal` packet before interpretation without mutating `Signal.content`.
+- Casual pragmatic acts (`playful_acknowledgment`, `confusion`, `self_correction`, `simplification_request`, `reassurance`) are represented as semantic clusters and UOL frame keys.
+- Self and capability answers route through selected self evidence (`self_identity_query`, `self_capability_query`, `self_knowledge_query`).
+- NER training accepts mixed label sets, normalizes noisy tags, and reports per-entity confidence.
+- Graph-referenced claims receive an entity-overlap relevance boost and grounded location roles are captured in `GroundedGraph`.
+- Full test suite now passes (271 passed, 6.58s).
+
+Remaining / Phase 1+:
+- Learned multilingual semantic parsing remains a training target.
+- Frame-specific risk/cost scoring remains limited until more validated models exist.
+- Typed latent persistence and graph memory views are not yet implemented.
+- Promotion gate and evaluator integration remain open.
+- No executable version of the full `cemm_acceptance_tests.md` checklist yet.
+
 ## Fix Strategy
 
 Do not attempt to "make current deterministic code smarter" first. The right sequence is:
