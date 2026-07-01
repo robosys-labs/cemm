@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 from typing import Any
 
 from ..registry.uol_mapper import UOLMapper
@@ -9,6 +10,23 @@ from ..store.store import Store
 from ..types.semantic_event_graph import SemanticEventGraph, SemanticEdge
 from ..types.signal import Signal
 from ..types.context_kernel import ContextKernel
+
+
+def _load_default_ner_tagger() -> "NERTagger | None":
+    """Load the bundled learned NER tagger if available."""
+    try:
+        from ..learning.ner_tagger import NERTagger
+    except ImportError:
+        return None
+    # Locate bundled weights relative to this source file.
+    weights_path = Path(__file__).with_name("data") / "models" / "ner_tagger_weights.json"
+    if weights_path.exists():
+        return NERTagger.load(weights_path)
+    # Fallback for development layout where data is under the package root.
+    alt_path = Path(__file__).parents[1] / "data" / "models" / "ner_tagger_weights.json"
+    if alt_path.exists():
+        return NERTagger.load(alt_path)
+    return None
 
 
 class SemanticInterpreter:
@@ -21,6 +39,7 @@ class SemanticInterpreter:
         self._uol_mapper = uol_mapper
         self._artifact_store = artifact_store
         self._store = store
+        self._ner_tagger = _load_default_ner_tagger()
 
     def run(self, signal: Signal, kernel: ContextKernel) -> SemanticEventGraph:
         if self._artifact_store:
@@ -414,16 +433,31 @@ class SemanticInterpreter:
         return " ".join(phrase)
 
     def _extract_named_entities(self, content: str) -> list[dict[str, Any]]:
-        """Extract simple named entities from content when the UOL mapper provides none.
+        """Extract named entities from content when the UOL mapper provides none.
 
-        This is a minimal, rule-based fallback: capitalized proper-noun phrases,
-        temporal expressions, and numbers. It does not replace a real NER model but
-        ensures the SemanticEventGraph has entity refs for downstream retrieval and
-        grounding.
+        Uses a learned NER tagger if available; otherwise falls back to a minimal
+        rule-based extractor for capitalized phrases, temporal expressions, and numbers.
         """
-        entities: list[dict[str, Any]] = []
-        seen: set[str] = set()
         words = content.split()
+        if self._ner_tagger is not None:
+            entities: list[dict[str, Any]] = []
+            seen: set[str] = set()
+            for ent in self._ner_tagger.extract_entities(words):
+                text = ent["text"].lower()
+                if text in seen:
+                    continue
+                seen.add(text)
+                entities.append({
+                    "kind": "entity_ref",
+                    "entity_id": text,
+                    "role": ent["role"],
+                    "confidence": 0.7,
+                })
+            if entities:
+                return entities
+
+        entities = []
+        seen = set()
         stop_words = {
             "The", "A", "An", "And", "Or", "But", "If", "Then", "Than", "To", "Of", "In", "On", "At", "For",
             "With", "By", "From", "As", "Is", "Are", "Was", "Were", "Be", "Been", "Being", "Have", "Has", "Had",
