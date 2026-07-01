@@ -63,3 +63,26 @@ def test_simulation_runs_for_causal_input():
     assert result.semantic_event_graph.causal_edges
     assert result.inference_packet is not None
     assert result.inference_packet.predictions
+
+
+def test_multiple_seed_causal_models_exist():
+    store = Store(":memory:")
+    from cemm.types.model import ModelKind, ModelStatus
+    seed_causal_models(store)
+    models = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
+    assert len(models) >= 4
+    ids = {m.id for m in models}
+    assert "causal_rain_flooding" in ids
+    assert "causal_heat_melt" in ids
+    assert "causal_study_pass" in ids
+    assert "causal_exercise_energy" in ids
+
+
+def test_study_causal_model_produces_predictions():
+    store, registry, op_registry, pipeline, online_learner, recursive_loop = _setup()
+    output = process_input("studying causes passing the exam", store, registry, op_registry, pipeline, online_learner, recursive_loop, "ctx", [0])
+    assert output is not None
+    result = recursive_loop._last_result
+    assert result is not None
+    assert result.inference_packet is not None
+    assert any("pass" in p.get("predicate", "").lower() for p in result.inference_packet.predictions), result.inference_packet.predictions

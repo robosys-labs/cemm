@@ -146,8 +146,8 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - Basic runtime has stub functions (`map_uol`, `extract_claim`, `route` all return constants) — archived ✗
 - SemanticEventGraph never populated with temporal/causal/claim/model edges — now populated for causal/temporal/actionable inputs; multi-word entity inference added ✗ (still not full NER)
 - No typed latent spaces exist — runtime types and encoder added; answer_latent populated ✗ (deeper CEMM-SLC integration remains)
-- Causal inference never fires (empty `causal_edges`) — now fires and produces predictions from seeded causal models ✗ (only one seed model)
-- Simulation never runs (empty `causal_edges`) — same as causal inference ✗
+- Causal inference never fires (empty `causal_edges`) — now fires and produces predictions from multiple seeded causal models ✗ (still not full learned models)
+- Simulation never runs (empty `causal_edges`) — now runs on causal inputs ✗ (still limited to seeded patterns)
 - `PipelineResult` missing `inference_packet` and `decision_packet` ✓
 - Trace never sets `semantic_event_graph_id` ✓
 - 16 of 19 InvariantGuard checks never called at runtime ✓ — all 19 checks now have a runtime call site
