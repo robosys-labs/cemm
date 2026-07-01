@@ -61,8 +61,9 @@ class UOLMapper:
         state_keys = {"low_competence", "high_quality"}
         command_keys = {"command_remember", "command_reflect", "command_retrieve"}
         intent_keys = {"greeting", "session_exit"}
-        conversational_keys = {"acknowledgment", "discourse_marker"}
+        conversational_keys = {"acknowledgment", "discourse_marker", "playful_acknowledgment"}
         relation_prefixes = ("temporal_", "causal_")
+        self_query_keys = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
 
         emitted_keys: set[str] = set()
 
@@ -127,6 +128,14 @@ class UOLMapper:
                     modality="observed",
                     polarity="affirmed",
                     intensity=0.5,
+                    confidence=prob,
+                ))
+            elif canonical_key in self_query_keys:
+                atoms.append(ProcessUOLAtom(
+                    frame_key=canonical_key,
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.7,
                     confidence=prob,
                 ))
             elif any(canonical_key.startswith(p) for p in relation_prefixes):

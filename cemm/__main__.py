@@ -111,6 +111,9 @@ def seed_registry(registry: Registry) -> None:
         ("self_correction", ["my bad", "sorry i meant", "i mean", "correction"]),
         ("simplification_request", ["explain simpler", "simplify", "too complex"]),
         ("reassurance", ["no worries", "all good", "it's fine", "its fine"]),
+        ("self_identity_query", ["who are you", "what are you", "tell me about yourself", "what is your name"]),
+        ("self_capability_query", ["what can you do", "your capabilities", "what do you know", "how do you work"]),
+        ("self_knowledge_query", ["what do you know about yourself", "describe yourself", "what are you made of"]),
     ]
     for i, (canonical, aliases) in enumerate(uol_semantics):
         registry.register(RegistryEntry(

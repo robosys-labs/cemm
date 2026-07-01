@@ -107,6 +107,23 @@ class DecisionRouter:
                 reason="SEG contains claim candidates for storage",
             )
 
+        # Self-query: answer from selected self claims when available
+        self_query_frames = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
+        if any(proc.get("frame_key") in self_query_frames for proc in graph.processes) and selected_claim_ids:
+            return DecisionPacket(
+                action_kind="answer",
+                action_plan=ActionPlan(
+                    action_kind="answer",
+                    selected_claim_ids=selected_claim_ids,
+                    selected_model_ids=selected_model_ids,
+                    execution_allowed=True,
+                    confidence=min(0.9, graph.confidence),
+                    risk=0.0,
+                ),
+                confidence=min(0.9, graph.confidence),
+                reason="self query answered from selected self claims",
+            )
+
         # If user is asking for clarification and there are no claim candidates,
         # route to ask even if claims were retrieved (e.g. "how do you mean?"
         # retrieves self_main claims via "you" pronoun but is a question, not a query)
