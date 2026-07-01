@@ -74,12 +74,14 @@ def _task_payload(
         payload["realization_metadata"] = {
             "strategy": trace.realization_strategy,
             "verified": trace.realization_verified,
+            "details": trace.realization_details,
         }
         payload["verification_metadata"] = {
             "synthesis_strategy_model_id": trace.synthesis_strategy_model_id,
             "synthesis_verified": trace.synthesis_verified,
             "synthesis_verification_type": trace.synthesis_verification_type,
             "verifier_model_id": trace.verifier_model_id,
+            "details": trace.verification_details,
         }
     return payload
 
@@ -115,12 +117,14 @@ def serialize_turn(
         base_payload["realization_metadata"] = {
             "strategy": trace.realization_strategy,
             "verified": trace.realization_verified,
+            "details": trace.realization_details,
         }
         base_payload["verification_metadata"] = {
             "synthesis_strategy_model_id": trace.synthesis_strategy_model_id,
             "synthesis_verified": trace.synthesis_verified,
             "synthesis_verification_type": trace.synthesis_verification_type,
             "verifier_model_id": trace.verifier_model_id,
+            "details": trace.verification_details,
         }
     if semantic_event_graph:
         base_payload["semantic_event_graph"] = packet_to_dict(semantic_event_graph)
