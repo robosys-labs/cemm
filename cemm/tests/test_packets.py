@@ -315,7 +315,7 @@ def test_serialize_turn():
     trace = Trace(context_id="c1", grounded_graph_id="gg1")
     gg = GroundedGraph(semantic_event_graph_id="seg1")
 
-    result = serialize_turn(
+    results = serialize_turn(
         input_text="hello",
         output_text="hi there",
         kernel=kernel,
@@ -323,6 +323,8 @@ def test_serialize_turn():
         trace=trace,
         grounded_graph=gg,
     )
+    assert isinstance(results, list)
+    result = results[0]
     assert result["task_type"] == "full_turn_export"
     assert result["payload"]["input_text"] == "hello"
     assert result["payload"]["grounded_graph"]["semantic_event_graph_id"] == "seg1"

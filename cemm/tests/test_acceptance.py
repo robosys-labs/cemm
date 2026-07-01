@@ -313,7 +313,7 @@ class TestPhase0Export:
             fallback_used=False,
             semantic_answer_graph_id=sag.id,
         )
-        export = serialize_turn(
+        exports = serialize_turn(
             input_text="My favorite database is Postgres.",
             output_text="Your favorite database is Postgres.",
             kernel=kernel,
@@ -322,6 +322,8 @@ class TestPhase0Export:
             semantic_event_graph=seg,
             semantic_answer_graph=sag,
         )
+        assert isinstance(exports, list)
+        export = exports[0]
         payload = export.get("payload", {})
         assert "context_kernel" in payload
         assert "input_text" in payload

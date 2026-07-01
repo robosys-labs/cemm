@@ -558,7 +558,7 @@ def process_input(
         sag_for_export = op_result.semantic_answer_graph
         if sag_for_export is None and decision is not None:
             sag_for_export = decision.semantic_answer_graph
-        turn_data = serialize_turn(
+        records = serialize_turn(
             input_text=text,
             output_text=output,
             kernel=kernel,
@@ -570,8 +570,11 @@ def process_input(
             memory_packet=memory_packet,
             inference_packet=inference_packet,
             decision_packet=decision if decision and decision.confidence > 0 else None,
+            observation_semantics=input_signal.observation_semantics,
+            context_inference=pipeline_result.context_inference if pipeline_result else None,
         )
-        write_turn_to_jsonl(_export_path, turn_data)
+        for record in records:
+            write_turn_to_jsonl(_export_path, record)
 
     return output
 
