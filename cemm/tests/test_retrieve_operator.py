@@ -15,6 +15,7 @@ from cemm.operators.base import OperatorContext
 from cemm.types.signal import Signal, SignalKind, SourceType
 from cemm.types.permission import Permission
 from cemm.types.claim import Claim, ClaimStatus
+from cemm.types.entity import Entity, EntityType
 from cemm.types.self_view import SelfView
 from cemm.types.context_kernel import (
     ContextKernel, WorldState, UserState, TimeState,
@@ -78,6 +79,11 @@ def test_retrieve_operator_success(MockRanker: MagicMock, MockRetriever: MagicMo
 
     store = Store(":memory:")
     registry = Registry()
+    store.entities.put(Entity(
+        id="entity_user", type=EntityType.PERSON, name="entity_user", aliases=[],
+        confidence=0.9, created_from_signal_id="sig0", created_at=time.time(), updated_at=time.time(),
+    ))
+    store.claims.put(claim)
     kernel = _kernel(store)
     signal = _signal(kernel)
 
@@ -90,10 +96,8 @@ def test_retrieve_operator_success(MockRanker: MagicMock, MockRetriever: MagicMo
     result = op.execute(ctx)
 
     assert result.success
-    assert "1 results" in result.output_text
     assert "likes" in result.output_text
     assert "ice_cream" in result.output_text
-    assert "0.950" in result.output_text
     mock_retriever_instance.retrieve.assert_called_once()
     mock_ranker_instance.rank_claims.assert_called_once()
 
@@ -123,7 +127,7 @@ def test_retrieve_operator_default_limit(MockRanker: MagicMock, MockRetriever: M
     result = op.execute(ctx)
 
     assert result.success
-    assert "0 results" in result.output_text
+    assert "did not find" in result.output_text.lower()
     # Default limit should be 64
     assert mock_retriever_instance.retrieve.call_args[0][0].limit == 64
 

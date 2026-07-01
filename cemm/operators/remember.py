@@ -6,6 +6,7 @@ from ..types.signal import Signal, SignalKind, SourceType
 from ..types.entity import Entity, EntityType
 from ..types.trace import Trace
 from ..types.semantic_answer_graph import SemanticAnswerGraph
+from ..synthesis.realizer import RealizationPipeline
 import time, uuid
 
 
@@ -87,7 +88,10 @@ class RememberOperator(BaseOperator):
             source_signal_ids=[ctx.input_signal.id],
             context_id=ctx.kernel.id,
             selected_claim_ids=[claim.id],
+            confidence=0.7,
         )
+        result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+        output = result.output if result.success and result.verified else "I've stored that in this session."
         cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         trace = Trace(
             context_id=ctx.kernel.id,
@@ -95,6 +99,8 @@ class RememberOperator(BaseOperator):
             selected_claim_ids=[claim.id],
             action_id="",
             operator_model_id="remember_operator",
+            synthesis_verified=result.verified,
+            synthesis_verification_type="hard",
             permission="allowed",
             confidence=0.7,
             cost_ms=cost_ms,
@@ -103,10 +109,17 @@ class RememberOperator(BaseOperator):
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
             semantic_answer_graph_id=answer_graph.id,
+            realization_strategy=result.strategy,
+            realization_verified=result.verified,
+            realization_details={
+                "source_answer_graph_id": result.metadata.get("source_answer_graph_id"),
+                "strategy": result.strategy,
+            },
+            verification_details=result.metadata.get("verification", {}),
         )
         return OperatorResult(
             success=True,
-            output_text=f"Remembered: {subject_id} {predicate}",
+            output_text=output,
             trace=trace,
             result_signal=result_signal,
             new_claim_ids=[claim.id],

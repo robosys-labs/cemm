@@ -30,4 +30,6 @@ class Trace:
     inference_packet_id: str | None = None
     realization_strategy: str | None = None
     realization_verified: bool = False
+    realization_details: dict = field(default_factory=dict)
+    verification_details: dict = field(default_factory=dict)
     typed_latents: TypedLatents | None = None

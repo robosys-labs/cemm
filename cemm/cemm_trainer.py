@@ -764,10 +764,35 @@ def _parse_json_output(text: str) -> dict[str, Any] | None:
     return None
 
 
+def _prompt_context(payload: dict[str, Any]) -> dict[str, str]:
+    context: dict[str, Any] = dict(payload)
+    context.setdefault("payload", payload)
+    context.setdefault("signal", payload.get("input_text", ""))
+    context.setdefault("context_kernel", payload.get("context_kernel", {}))
+    context.setdefault("semantic_event_graph", payload.get("semantic_event_graph", {}))
+    context.setdefault("semantic_answer_graph", payload.get("semantic_answer_graph", {}))
+    context.setdefault("intent", payload.get("semantic_answer_graph", {}).get("intent", "") if isinstance(payload.get("semantic_answer_graph"), dict) else "")
+    context.setdefault("selected_claims", payload.get("selected_evidence", {}).get("selected_claim_ids", []))
+    context.setdefault("candidates", payload.get("memory_packet", {}).get("ranking_trace", []))
+    context.setdefault("recent_event_graphs", payload.get("recent_event_graphs", [payload.get("semantic_event_graph", {})]))
+    return {
+        key: json.dumps(value, indent=2, sort_keys=True) if isinstance(value, (dict, list)) else str(value)
+        for key, value in context.items()
+    }
+
+
 def render_prompt(task_type: str, payload_json: str) -> tuple[str, str, str]:
     prompt = PROMPTS[task_type]
-    payload_pretty = json.dumps(json.loads(payload_json), indent=2, sort_keys=True)
-    return prompt["agent"], prompt["system"], prompt["user"].format(payload=payload_pretty)
+    payload = json.loads(payload_json)
+    payload_pretty = json.dumps(payload, indent=2, sort_keys=True)
+    context = _prompt_context(payload)
+    context["payload"] = payload_pretty
+    try:
+        user = prompt["user"].format(**context)
+    except KeyError as exc:
+        missing = exc.args[0]
+        raise KeyError(f"{task_type} prompt references missing key {{{missing}}}") from exc
+    return prompt["agent"], prompt["system"], user
 
 
 def call_llm(config: Config, system: str, user: str) -> dict[str, Any]:

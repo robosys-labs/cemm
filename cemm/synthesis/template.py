@@ -38,6 +38,9 @@ class TemplateStrategy:
             "clarification": "Could you clarify what you mean by {term}?",
             "capability": "I can help with questions about {domain}.",
             "acknowledgment": "Got it! What else would you like to know or share?",
+            "remember_confirm": "I've stored that in this session.",
+            "retrieve_empty": "I did not find matching stored evidence.",
+            "permission_denied": "I cannot do that because the required permission is not available.",
         }
         return templates.get(key, "")
 

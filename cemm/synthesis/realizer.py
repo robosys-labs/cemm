@@ -34,11 +34,24 @@ class RealizationPipeline:
         elif intent == "acknowledgment":
             params["template_key"] = "acknowledgment"
         elif intent == "ask":
-            params["template_key"] = "clarification"
-            params.setdefault("variables", {"term": "that"})
+            clarification = next(
+                (e.get("question") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),
+                None,
+            )
+            if clarification:
+                params["template"] = clarification
+            else:
+                params["template_key"] = "clarification"
+                params.setdefault("variables", {"term": "that"})
         elif intent == "abstain" and not answer_graph.selected_claim_ids:
             reason = answer_graph.uncertainty_reasons[0] if answer_graph.uncertainty_reasons else ""
             params["template"] = reason or "I don't have enough information to answer."
+        elif intent == "remember":
+            params["template_key"] = "remember_confirm"
+        elif intent == "retrieve" and not answer_graph.selected_claim_ids:
+            params["template_key"] = "retrieve_empty"
+        elif intent == "permission_denied":
+            params["template_key"] = "permission_denied"
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)

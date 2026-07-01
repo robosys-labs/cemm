@@ -102,8 +102,8 @@ class AnswerOperator(BaseOperator):
             operator_model_id="answer_operator",
             causal_inference_used=bool(ctx.params.get("causal_inference_used")),
             frame_rules_applied=True,
-            synthesis_verified=True,
-            synthesis_verification_type="hard",
+            synthesis_verified=result.verified,
+            synthesis_verification_type="hard" if result.strategy in ("template", "extractive") else "soft",
             permission="allowed",
             confidence=max(0.0, min(1.0, sag_confidence)),
             cost_ms=cost_ms,
@@ -113,6 +113,13 @@ class AnswerOperator(BaseOperator):
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
             semantic_answer_graph_id=answer_graph.id,
+            realization_strategy=result.strategy,
+            realization_verified=result.verified,
+            realization_details={
+                "source_answer_graph_id": result.metadata.get("source_answer_graph_id"),
+                "strategy": result.strategy,
+            },
+            verification_details=result.metadata.get("verification", {}),
         )
         return OperatorResult(
             success=True,

@@ -4,6 +4,7 @@ from ..types.action import ActionKind
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.trace import Trace
 from ..types.semantic_answer_graph import SemanticAnswerGraph
+from ..synthesis.realizer import RealizationPipeline
 import time, uuid
 
 
@@ -22,13 +23,17 @@ class AskOperator(BaseOperator):
             source_signal_ids=[ctx.input_signal.id],
             context_id=ctx.kernel.id,
             uncertainty_reasons=["clarification needed"],
+            confidence=0.7,
         )
+        answer_graph.entity_refs.append({"kind": "clarification", "question": question})
+        result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+        output = result.output if result.success and result.verified else question
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.TRACE,
             source_id="ask_operator",
             source_type=SourceType.ASSISTANT,
-            content=question,
+            content=output,
             observed_at=time.time(),
             context_id=ctx.kernel.id,
             salience=0.6,
@@ -42,6 +47,8 @@ class AskOperator(BaseOperator):
             input_signal_ids=[ctx.input_signal.id],
             action_id="",
             operator_model_id="ask_operator",
+            synthesis_verified=result.verified,
+            synthesis_verification_type="hard",
             permission="allowed",
             confidence=0.7,
             cost_ms=cost_ms,
@@ -50,10 +57,17 @@ class AskOperator(BaseOperator):
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
             semantic_answer_graph_id=answer_graph.id,
+            realization_strategy=result.strategy,
+            realization_verified=result.verified,
+            realization_details={
+                "source_answer_graph_id": result.metadata.get("source_answer_graph_id"),
+                "strategy": result.strategy,
+            },
+            verification_details=result.metadata.get("verification", {}),
         )
         return OperatorResult(
             success=True,
-            output_text=question,
+            output_text=output,
             trace=trace,
             result_signal=result_signal,
             cost_ms=cost_ms,
