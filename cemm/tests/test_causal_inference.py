@@ -143,3 +143,44 @@ def test_learned_causal_model_is_auto_promoted():
     active = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
     inducted = [m for m in active if m.name == "ate_sugar"]
     assert inducted, f"No active inducted causal model found among {active!r}"
+
+
+def test_narrative_causal_pattern_is_discovered_and_promoted():
+    store = Store(":memory:")
+    registry = Registry()
+    seed_registry(registry)
+    seed_self_state(store)
+    import time
+    from cemm.types.permission import Permission
+    from cemm.types.signal import Signal, SignalKind, SourceType
+    from cemm.learning.inductor import Inductor
+    from cemm.learning.online import OnlineLearner
+    from cemm.kernel.recursive_loop import RecursiveLoop
+    from cemm.types.model import ModelKind, ModelStatus
+
+    pipeline = Pipeline(store, registry)
+    online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
+    inductor = Inductor(store, registry=registry)
+    inductor.set_threshold(3)
+    recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
+
+    for i in range(3):
+        signal = Signal(
+            id=f"s{i}",
+            kind=SignalKind.INPUT,
+            source_id="test",
+            source_type=SourceType.USER,
+            content="exercise leads to energy",
+            observed_at=time.time(),
+            context_id="ctx",
+            salience=0.8,
+            trust=0.9,
+            permission=Permission.public(),
+        )
+        store.signals.put(signal)
+
+    recursive_loop._run_induction(None)
+
+    active = store.models.find_by_kind(ModelKind.CAUSAL_RULE.value, ModelStatus.ACTIVE.value)
+    inducted = [m for m in active if "exercise" in m.name and "energy" in m.name]
+    assert inducted, f"No active narrative causal model found among {active!r}"

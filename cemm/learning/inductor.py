@@ -17,14 +17,104 @@ class Inductor:
     def set_threshold(self, value: int) -> None:
         self._feedback_threshold = value
 
+    CAUSAL_CONNECTORS = [
+        " causes ", " cause ", "causes ",
+        " leads to ", " lead to ",
+        " results in ", " result in ",
+        " produces ", " produce ",
+        " makes ", " make ",
+        " triggers ", " trigger ",
+        " creates ", " create ",
+        " generates ", " generate ",
+    ]
+
     def maybe_induct(self, domain: str | None = None) -> list[Model]:
         candidates: list[Model] = []
         candidates.extend(self._find_repeated_predicates(domain))
         candidates.extend(self._find_failed_retrieval_patterns())
         candidates.extend(self._find_causal_patterns(domain))
+        candidates.extend(self._find_narrative_causal_patterns(domain))
         candidates.extend(self._find_uol_patterns(domain))
         candidates.extend(self._find_sequential_patterns())
         candidates.extend(self._find_slot_completion())
+        return candidates
+
+    @staticmethod
+    def _extract_causal_phrase(words: list[str], direction: str) -> str:
+        """Naive phrase extraction: keep content words until a stop word or connector."""
+        stop = {
+            "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
+            "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+            "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
+            "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
+            "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just",
+        }
+        if direction == "left":
+            phrase = []
+            for w in reversed(words):
+                if w in stop or w in {
+                    "causes", "cause", "leads", "lead", "results", "result", "produces", "produce",
+                    "makes", "make", "triggers", "trigger", "creates", "create", "generates", "generate",
+                }:
+                    break
+                phrase.insert(0, w)
+            return "_".join(phrase) if phrase else ""
+        phrase = []
+        for w in words:
+            if w in stop:
+                if phrase:
+                    break
+                continue
+            phrase.append(w)
+        return "_".join(phrase) if phrase else ""
+
+    def _find_narrative_causal_patterns(self, domain: str | None = None) -> list[Model]:
+        """Discover causal rules from explicit causal language in signals."""
+        recent_signals = self._store.signals.recent(1000)
+        counts: dict[tuple[str, str], list[Signal]] = defaultdict(list)
+        for signal in recent_signals:
+            if not signal.content:
+                continue
+            if domain and signal.domain != domain:
+                continue
+            content = " " + signal.content.lower().strip() + " "
+            for connector in self.CAUSAL_CONNECTORS:
+                if connector not in content:
+                    continue
+                parts = content.split(connector, 1)
+                if len(parts) != 2:
+                    continue
+                left_words = parts[0].strip().split()
+                right_words = parts[1].strip().split()
+                left_phrase = self._extract_causal_phrase(left_words, "left")
+                right_phrase = self._extract_causal_phrase(right_words, "right")
+                if not left_phrase or not right_phrase:
+                    continue
+                counts[(left_phrase, right_phrase)].append(signal)
+
+        candidates: list[Model] = []
+        for (left, right), signals in counts.items():
+            if len(signals) < self._feedback_threshold:
+                continue
+            name = f"causal:{left}->{right}"
+            if self._existing_causal_rule(name, right, None):
+                continue
+            now = time.time()
+            model = Model(
+                id=uuid.uuid4().hex[:16],
+                kind=ModelKind.CAUSAL_RULE,
+                name=name,
+                description=f"Narrative causal rule: {left} -> {right} (from {len(signals)} signals)",
+                preconditions=[f"process:{left}"],
+                effects=[f"process:{right}"],
+                evidence_signal_ids=[s.id for s in signals],
+                confidence=min(1.0, 0.5 + 0.1 * len(signals)),
+                status=ModelStatus.CANDIDATE,
+                created_at=now,
+                updated_at=now,
+            )
+            self._store.models.put(model)
+            candidates.append(model)
         return candidates
 
     def _find_repeated_predicates(self, domain: str | None = None) -> list[Model]:
