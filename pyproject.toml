@@ -14,3 +14,6 @@ dev = [
     "pytest>=8.0",
     "pytest-xdist>=3.0",
 ]
+train = [
+    "datasets>=4.0",
+]
