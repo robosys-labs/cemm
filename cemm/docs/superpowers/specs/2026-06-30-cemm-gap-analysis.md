@@ -153,8 +153,8 @@ Zero coverage            : RecursiveLoop.run_once(), OnlineLearner,
 - 16 of 19 InvariantGuard checks never called at runtime — most relevant checks now called ✗
 - Context inference runs after Ground, not during Contextualize ✓
 - Training export can produce SAG-less records for non-answer/abstain operators ✓ — all operators now return a semantic_answer_graph
-- 11 of 25 PROMPTS task types never produced by decomposition ✗
-- 18 of 25 PROMPTS task types produce no deployable records ✗
+- 11 of 25 PROMPTS task types never produced by decomposition ✓ — training export now emits one record per task type
+- 18 of 25 PROMPTS task types produce no deployable records ✓ — each record includes required payload and passes validation
 - Basic runtime `synthesize()` can call LLM with raw context, bypassing SEG/SAG — archived ✗
 - `OnlineLearner.record_outcome` only on success ✓
 - Online learning only updates self state, not source trust or ranking weights ✓
