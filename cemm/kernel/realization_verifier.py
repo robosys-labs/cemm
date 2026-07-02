@@ -14,13 +14,46 @@ Pass criteria (from cemm_original_work_subplans.md §8.4):
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.claim import Claim, ClaimStatus
 from ..registry.registry import Registry
 from ..registry.semantic_matcher import SemanticMatcher, MatchResult
+
+
+# ── Registry-driven verification policy ──────────────────────────────
+# Intents that produce template-based conversational responses without
+# evidence retrieval are listed in uol_semantics.json (a Model-kind
+# registry data file), not hardcoded in operator-level code.
+# Architectural invariants (abstain/ask must not select claims) remain
+# as code below — they derive from the SAG intent enum, not domain policy.
+
+_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_no_evidence_intents() -> frozenset[str]:
+    """Load the set of intents that bypass evidence/uncertainty verification.
+
+    Sourced from the ``no_evidence_intents`` key in ``uol_semantics.json``.
+    This is a registry-level verification policy (Model kind = "verifier"),
+    not operator-level domain behavior.
+    """
+    if not _UOL_SEMANTICS_PATH.exists():
+        return frozenset()
+    data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+    return frozenset(data.get("no_evidence_intents", []))
+
+
+_NO_EVIDENCE_INTENTS = _load_no_evidence_intents()
+
+# Architectural invariant: abstain/ask are SAG enum values that must
+# never select claims.  This is an operator-level constraint from the
+# architecture (§10.1.3), not a domain policy — it stays as code.
+_CLAIM_FORBIDDEN_INTENTS = frozenset({"abstain", "ask"})
 
 
 @dataclass
@@ -88,14 +121,9 @@ def _check_uncertainty(
     Returns (preserved, details).
     """
     details: list[str] = []
-    # Abstain/ask and fixed conversational intents don't need uncertainty markers
-    if sag.intent in (
-        "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
-        "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
-        "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
-        "teaching_offer", "capability_summary", "unknown_entity_response",
-        "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement",
-    ):
+    # Conversational intents from the registry's verification policy
+    # bypass uncertainty marker checks — they produce template responses.
+    if sag.intent in _NO_EVIDENCE_INTENTS:
         return True, details
     needs_uncertainty = (
         sag.confidence < 0.7
@@ -248,14 +276,12 @@ def _check_evidence_integrity(
     details: list[str] = []
     intent = sag.intent
 
-    if intent in (
-        "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
-        "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
-        "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
-        "teaching_offer", "capability_summary", "unknown_entity_response",
-        "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement",
-    ):
-        if intent in ("abstain", "ask") and sag.selected_claim_ids:
+    # Registry-driven policy: conversational intents bypass evidence checks.
+    if intent in _NO_EVIDENCE_INTENTS:
+        # Architectural invariant (§10.1.3): abstain/ask are SAG enum
+        # values that must never select claims as evidence.  This is an
+        # operator-level constraint, not a domain policy.
+        if intent in _CLAIM_FORBIDDEN_INTENTS and sag.selected_claim_ids:
             details.append("Abstain/Ask output selects claims as evidence")
             return False, details
         return True, details

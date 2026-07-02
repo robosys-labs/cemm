@@ -82,5 +82,12 @@
   "pure_acknowledgment_phrases": [
     "ok", "okay", "sure", "yeah", "yes", "yup", "right", "got it", "i see", "understood",
     "noted", "sounds good", "nice", "cool", "alright", "all right", "fine", "k"
+  ],
+  "no_evidence_intents": [
+    "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
+    "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
+    "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
+    "teaching_offer", "capability_summary", "unknown_entity_response",
+    "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement"
   ]
 }
