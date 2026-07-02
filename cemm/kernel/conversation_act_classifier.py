@@ -12,6 +12,7 @@ from ..types.context_kernel import ContextKernel
 from ..types.signal import Signal
 from ..registry.semantic_matcher import SemanticMatcher
 from ..registry.registry import Registry
+from ..registry.act_type_policy import DISCOURSE_FRAMES as _DISCOURSE_FRAMES, is_social as _is_social_act
 from .text_match import tokenize_surface
 from .intent_parser import parse_intent, CompositionalIntent
 
@@ -225,7 +226,6 @@ class ConversationActClassifier:
         # Precision filter: discourse acts (acknowledgment, greeting, etc.) are
         # turn-level acts. Discard when matched only via embedded words in long
         # inputs — e.g. "okay" in "if it's okay to eat" is not an acknowledgment.
-        _DISCOURSE_FRAMES = {"acknowledgment", "greeting", "playful_acknowledgment", "session_exit"}
         ordered_tokens = _tokenize_surface(content_lower)
         if len(ordered_tokens) >= 4:
             first_token = ordered_tokens[0] if ordered_tokens else ""
@@ -362,8 +362,7 @@ class ConversationActClassifier:
             if word_count <= 6:
                 if expected_type == "social_status":
                     # "I'm good", "fine", "not bad" → user_state_report
-                    social_acts = {"phatic_checkin", "greeting", "acknowledgment"}
-                    if not any(a.act_type in social_acts for a in acts):
+                    if not any(_is_social_act(a.act_type) for a in acts):
                         acts.insert(0, ConversationAct(
                             act_type="user_state_report",
                             confidence=0.7,

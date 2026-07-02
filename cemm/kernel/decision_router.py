@@ -19,6 +19,14 @@ from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.signal import ObservationSemantics
 from .answer_graph_ranker import best_candidate
 from ..registry.uol_mapper import UOLMapper
+from ..registry.act_type_policy import (
+    is_simple_answer as _is_simple_answer,
+    is_identity_query as _is_identity_query,
+    is_assertion as _is_assertion,
+    get_response_mode as _get_response_mode,
+    get_default_template as _get_default_template,
+    QUESTION_FRAMES as _QUESTION_FRAMES,
+)
 
 
 _PURE_ACKNOWLEDGMENT_PHRASES_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
@@ -78,11 +86,11 @@ class DecisionRouter:
         input_lower = input_text.lower().strip() if input_text else ""
         # Language-agnostic question detection: terminal "?" is a surface signal,
         # and question frames in the SEG are the structural signal. No English
-        # prefixes are used in routing.
-        question_frames = {"ask_question", "request_clarification", "unknown_intent"}
+        # prefixes are used in routing. Question frames are sourced from the
+        # registry data file (uol_semantics.json → question_frames).
         is_question = (
             input_lower.endswith("?")
-            or bool(graph_frame_keys & question_frames)
+            or bool(graph_frame_keys & _QUESTION_FRAMES)
             or bool(conversation_act and conversation_act.act_type == "evidence_query")
         )
 
@@ -96,17 +104,8 @@ class DecisionRouter:
 
             # Simple answer routing: act → intent, response_mode
             # All these acts produce an "answer" with no evidence retrieval needed.
-            _SIMPLE_ANSWER_ACTS = {
-                "greeting", "phatic_checkin", "acknowledgment", "playful_acknowledgment",
-                "user_state_report", "chat_mode_statement",
-                "story_request", "creative_request",
-                "confusion_repair", "playful_repair", "self_correction", "simplification_request",
-                "frustration_signal", "teachability_complaint",
-                "teaching_offer",
-                "assistant_evaluation",
-                "meta_question_intent",
-            }
-            if act in _SIMPLE_ANSWER_ACTS:
+            # The set is sourced from act_type_metadata in uol_semantics.json.
+            if _is_simple_answer(act):
                 intent = "frustration_response" if act == "frustration_signal" else act
                 return self._make_answer_packet(
                     intent=intent,
@@ -117,7 +116,8 @@ class DecisionRouter:
                 )
 
             # Capability query: use curated summary, not raw claim join
-            if act in ("capability_query", "self_capability_query", "self_capability_skeptical_query"):
+            # These acts share the capability_summary response_mode from metadata.
+            if _get_response_mode(act) == "capability_summary":
                 return self._make_answer_packet(
                     intent="capability_summary",
                     response_mode="capability_summary",
@@ -127,7 +127,9 @@ class DecisionRouter:
                 )
 
             # Self/user identity and knowledge queries: route to evidence answer
-            if act in ("self_identity_query", "self_knowledge_query", "user_identity_query", "user_name_query"):
+            # Only identity_query acts (self_identity, self_knowledge, user_identity,
+            # user_name) route here — generic evidence_query falls through to old routing.
+            if _is_identity_query(act):
                 if selected_claim_ids:
                     return self._make_answer_packet(
                         intent=act,
@@ -155,7 +157,7 @@ class DecisionRouter:
                 )
 
             # Claim/preference assertions: route to remember when claim candidates exist
-            if act in ("claim_assertion", "preference_assertion") and graph.claim_candidates:
+            if _is_assertion(act) and graph.claim_candidates:
                 return DecisionPacket(
                     action_kind="remember",
                     action_plan=ActionPlan(
@@ -539,7 +541,7 @@ class DecisionRouter:
         # retrieves self_main claims via "you" pronoun but is a question, not a query)
         if not graph.claim_candidates:
             for proc in graph.processes:
-                if proc.get("frame_key") in ("request_clarification", "ask_question", "unknown_intent"):
+                if proc.get("frame_key") in _QUESTION_FRAMES:
                     return DecisionPacket(
                         action_kind="ask",
                         action_plan=ActionPlan(
@@ -588,7 +590,7 @@ class DecisionRouter:
                 )
 
         for proc in graph.processes:
-            if proc.get("frame_key") in ("request_clarification", "ask_question", "unknown_intent"):
+            if proc.get("frame_key") in _QUESTION_FRAMES:
                 return DecisionPacket(
                     action_kind="ask",
                     action_plan=ActionPlan(

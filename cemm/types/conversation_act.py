@@ -3,6 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..registry.act_type_policy import (
+    requires_evidence as _requires_evidence,
+    allows_memory_write as _allows_memory_write,
+    is_social as _is_social,
+    is_creative as _is_creative,
+    is_repair as _is_repair,
+    is_evaluative as _is_evaluative,
+    get_response_mode as _get_response_mode,
+)
+
 
 @dataclass
 class ConversationAct:
@@ -23,108 +33,36 @@ class ConversationAct:
 
     @property
     def requires_evidence(self) -> bool:
-        return self.act_type in (
-            "evidence_query",
-            "memory_query",
-            "self_capability_query",
-            "self_capability_skeptical_query",
-            "self_identity_query",
-            "self_knowledge_query",
-            "user_identity_query",
-            "user_name_query",
-            "open_domain_entity_query",
-        )
+        return _requires_evidence(self.act_type)
 
     @property
     def allows_memory_write(self) -> bool:
-        return self.act_type in (
-            "claim_assertion",
-            "preference_assertion",
-            "explicit_remember",
-            "definition_teaching",
-            "command_alias_teaching",
-            "user_state_report",
-        )
+        return _allows_memory_write(self.act_type)
 
     @property
     def is_social(self) -> bool:
-        return self.act_type in (
-            "greeting",
-            "phatic_checkin",
-            "acknowledgment",
-            "playful_acknowledgment",
-            "user_state_report",
-            "chat_mode_statement",
-        )
+        return _is_social(self.act_type)
 
     @property
     def is_creative(self) -> bool:
-        return self.act_type in (
-            "story_request",
-            "creative_request",
-        )
+        return _is_creative(self.act_type)
 
     @property
     def is_repair(self) -> bool:
-        return self.act_type in (
-            "confusion_repair",
-            "playful_repair",
-            "self_correction",
-            "simplification_request",
-            "teachability_complaint",
-        )
+        return _is_repair(self.act_type)
 
     @property
     def is_evaluative(self) -> bool:
-        return self.act_type in (
-            "assistant_evaluation",
-            "meta_critique",
-            "self_capability_skeptical_query",
-        )
+        return _is_evaluative(self.act_type)
 
     @property
     def response_mode(self) -> str:
-        """Map act_type to a response mode for the realizer."""
-        mode_map = {
-            "greeting": "social_response",
-            "phatic_checkin": "social_response",
-            "acknowledgment": "social_response",
-            "playful_acknowledgment": "social_response",
-            "user_state_report": "social_response",
-            "chat_mode_statement": "social_response",
-            "story_request": "creative_response",
-            "creative_request": "creative_response",
-            "confusion_repair": "repair_response",
-            "playful_repair": "repair_response",
-            "self_correction": "repair_response",
-            "simplification_request": "repair_response",
-            "frustration_signal": "repair_response",
-            "teachability_complaint": "repair_response",
-            "capability_query": "capability_summary",
-            "self_capability_query": "capability_summary",
-            "self_capability_skeptical_query": "capability_summary",
-            "self_identity_query": "evidence_answer",
-            "self_knowledge_query": "evidence_answer",
-            "user_identity_query": "evidence_answer",
-            "user_name_query": "evidence_answer",
-            "memory_query": "evidence_answer",
-            "evidence_query": "evidence_answer",
-            "open_domain_entity_query": "unknown_entity_response",
-            "teaching_offer": "teaching_prompt",
-            "claim_assertion": "memory_write",
-            "preference_assertion": "memory_write",
-            "explicit_remember": "memory_write",
-            "definition_teaching": "teaching_prompt",
-            "command_alias_teaching": "teaching_prompt",
-            "assistant_evaluation": "evaluation_response",
-            "meta_question_intent": "social_response",
-            "meta_critique": "meta_response",
-            "command": "tool_action",
-            "tool_request": "tool_action",
-            "exit": "abstain",
-            "unknown": "general_conversation",
-        }
-        return mode_map.get(self.act_type, "general_conversation")
+        """Map act_type to a response mode for the realizer.
+
+        Delegates to the registry-driven act_type_policy module so
+        adding a new act type only requires editing uol_semantics.json.
+        """
+        return _get_response_mode(self.act_type)
 
 
 @dataclass

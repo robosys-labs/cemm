@@ -4,6 +4,7 @@ import re
 
 from ..kernel.realization_verifier import verify, VerificationResult
 from ..registry import Registry
+from ..registry.act_type_policy import get_intent_template
 from ..store.store import Store
 from ..types.context_kernel import ContextKernel
 from ..types.semantic_answer_graph import SemanticAnswerGraph
@@ -178,24 +179,20 @@ class RealizationPipeline:
         source_text = _source_text(answer_graph, store)
         source_text_lower = source_text.lower().strip()
 
-        # Map SAG intent to template_key for conversational responses
-        # when no explicit template or claims are provided
+        # Map SAG intent to template_key for conversational responses.
+        # Conditional branches handle intents that need runtime state (turn index,
+        # affect, repetition pressure, source text analysis).  All flat intent→
+        # template mappings are sourced from intent_template_default in
+        # uol_semantics.json via get_intent_template().
         intent = answer_graph.intent
+
+        # ── Conditional branches (runtime state required) ───────────────
         if intent == "greeting":
-            if kernel.conversation.turn_index > 1:
-                params["template_key"] = "greeting_returning"
-            else:
-                params["template_key"] = "greeting"
+            params["template_key"] = "greeting_returning" if kernel.conversation.turn_index > 1 else "greeting"
         elif intent == "phatic_checkin":
-            if kernel.conversation.turn_index > 1:
-                params["template_key"] = "phatic_checkin_returning"
-            else:
-                params["template_key"] = "phatic_checkin"
+            params["template_key"] = "phatic_checkin_returning" if kernel.conversation.turn_index > 1 else "phatic_checkin"
         elif intent == "acknowledgment":
-            if kernel.conversation.turn_index > 1:
-                params["template_key"] = "acknowledgment_followup"
-            else:
-                params["template_key"] = "acknowledgment"
+            params["template_key"] = "acknowledgment_followup" if kernel.conversation.turn_index > 1 else "acknowledgment"
         elif intent == "playful_acknowledgment":
             if (
                 kernel.user.affect.playfulness > 0.7
@@ -207,8 +204,6 @@ class RealizationPipeline:
                 params["template_key"] = "playful_acknowledgment_followup"
             else:
                 params["template_key"] = "playful_acknowledgment"
-        elif intent == "low_competence_repair":
-            params["template_key"] = "low_competence_repair"
         elif intent == "frustration_response":
             likely_cause = _likely_cause_text(kernel, store)
             if kernel.conversation.dynamics.repetition_pressure >= 0.4 and likely_cause:
@@ -236,14 +231,6 @@ class RealizationPipeline:
                 params["template_key"] = "clarify_previous_meaning"
             else:
                 params["template_key"] = "confusion_repair"
-        elif intent == "playful_repair":
-            params["template_key"] = "playful_repair"
-        elif intent == "teaching_offer":
-            params["template_key"] = "teaching_offer"
-        elif intent == "capability_summary":
-            params["template_key"] = "capability_summary"
-        elif intent == "unknown_entity_response":
-            params["template_key"] = "unknown_entity_response"
         elif intent == "ask" or intent == "ask_meaning":
             clarification = next(
                 (e.get("question") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),
@@ -263,8 +250,6 @@ class RealizationPipeline:
                 params["template_key"] = "live_world_limit"
             else:
                 params["template_key"] = "abstain"
-        elif intent == "remember":
-            params["template_key"] = "remember_confirm"
         elif intent in ("learn_command_alias", "learn_lexeme", "learn_correction"):
             params["template_key"] = intent
             teaching_event = next(
@@ -277,44 +262,35 @@ class RealizationPipeline:
             })
         elif intent == "retrieve" and not answer_graph.selected_claim_ids:
             params["template_key"] = "retrieve_empty"
-        elif intent == "permission_denied":
-            params["template_key"] = "permission_denied"
         elif intent == "self_identity" and answer_graph.selected_claim_ids:
             params["template_key"] = "self_identity"
             params.setdefault("variables", _self_identity_variables(answer_graph, store))
         elif intent == "self_capability" and answer_graph.selected_claim_ids:
             params["template_key"] = "self_capability"
             params.setdefault("variables", _capability_variables(semantic_claim_atoms))
-        elif intent == "self_knowledge":
-            params["template_key"] = "self_knowledge"
         elif intent == "user_identity":
             params["template_key"] = "user_identity"
             params.setdefault("variables", _self_identity_variables(answer_graph, store))
         elif intent == "user_name":
             params["template_key"] = "user_name"
             params.setdefault("variables", _name_variables(answer_graph, store))
-        elif intent in ("user_identity_unknown", "user_name_unknown"):
-            params["template_key"] = intent
-        elif intent == "self_query_unknown":
-            params["template_key"] = "self_query_unknown"
-        elif intent == "meta_question_intent":
-            params["template_key"] = "meta_question_intent"
-        elif intent == "teachability_complaint":
-            params["template_key"] = "teachability_complaint"
-        elif intent == "chat_mode_statement":
-            params["template_key"] = "chat_mode_statement"
-        elif intent in ("general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question", "creative_request"):
-            if intent == "general_conversation":
-                topic = _topic_from_scoped_help(source_text_lower)
-                if topic:
-                    params["template_key"] = "scoped_help_response"
-                    params.setdefault("variables", {"topic": topic})
-                elif _is_situational_checkin(source_text_lower):
-                    params["template_key"] = "situational_checkin"
-                else:
-                    params["template_key"] = intent
+        elif intent == "general_conversation":
+            topic = _topic_from_scoped_help(source_text_lower)
+            if topic:
+                params["template_key"] = "scoped_help_response"
+                params.setdefault("variables", {"topic": topic})
+            elif _is_situational_checkin(source_text_lower):
+                params["template_key"] = "situational_checkin"
             else:
                 params["template_key"] = intent
+        else:
+            # ── Data-driven fallback for flat intent→template mappings ────
+            # All non-conditional intents are sourced from intent_template_default
+            # in uol_semantics.json.  Adding a new flat-mapped intent only requires
+            # adding an entry to that JSON key — no code change needed here.
+            template_key = get_intent_template(intent)
+            if template_key:
+                params["template_key"] = template_key
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)
