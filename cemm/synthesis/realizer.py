@@ -297,7 +297,13 @@ class RealizationPipeline:
             params["template_key"] = intent
         elif intent == "self_query_unknown":
             params["template_key"] = "self_query_unknown"
-        elif intent in ("general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question"):
+        elif intent == "meta_question_intent":
+            params["template_key"] = "meta_question_intent"
+        elif intent == "teachability_complaint":
+            params["template_key"] = "teachability_complaint"
+        elif intent == "chat_mode_statement":
+            params["template_key"] = "chat_mode_statement"
+        elif intent in ("general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question", "creative_request"):
             if intent == "general_conversation":
                 topic = _topic_from_scoped_help(source_text_lower)
                 if topic:

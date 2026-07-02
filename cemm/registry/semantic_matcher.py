@@ -154,7 +154,7 @@ class SemanticMatcher:
                     word_position=i,
                     entry=entry,
                 ))
-            elif len(word) >= 4 and len(alias) >= 4:
+            elif len(word) >= 5 and len(alias) >= 5:
                 # Proportional distance threshold based on word length
                 max_len = max(len(word), len(alias))
                 if max_len <= 3:

@@ -87,6 +87,8 @@ class WordSimilarityMatcher:
         if max_len <= 3:
             return False  # Too ambiguous for similarity alone.
         dist = self._levenshtein(word, known)
+        if max_len <= 4:
+            return dist <= 0  # exact match only — distance 1 is too ambiguous for short words
         if max_len <= 5:
             return dist <= 1
         # For longer words combine edit distance with a minimum shape overlap.

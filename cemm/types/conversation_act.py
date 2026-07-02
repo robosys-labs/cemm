@@ -117,6 +117,7 @@ class ConversationAct:
             "definition_teaching": "teaching_prompt",
             "command_alias_teaching": "teaching_prompt",
             "assistant_evaluation": "evaluation_response",
+            "meta_question_intent": "social_response",
             "meta_critique": "meta_response",
             "command": "tool_action",
             "tool_request": "tool_action",

@@ -157,6 +157,7 @@ _FRAME_PRIORITY: list[str] = [
     "food_recommendation_request",
     "recommendation_request",
     "assistance_request",
+    "meta_question_intent",
     "greeting",
     "acknowledgment",
     "playful_acknowledgment",
@@ -220,6 +221,25 @@ class ConversationActClassifier:
                         break
                 if frame_key in frame_keys:
                     break
+
+        # Precision filter: discourse acts (acknowledgment, greeting, etc.) are
+        # turn-level acts. Discard when matched only via embedded words in long
+        # inputs — e.g. "okay" in "if it's okay to eat" is not an acknowledgment.
+        _DISCOURSE_FRAMES = {"acknowledgment", "greeting", "playful_acknowledgment", "session_exit"}
+        ordered_tokens = _tokenize_surface(content_lower)
+        if len(ordered_tokens) >= 4:
+            first_token = ordered_tokens[0] if ordered_tokens else ""
+            for df in _DISCOURSE_FRAMES:
+                if df not in frame_keys:
+                    continue
+                # Keep if semantic matcher matched at position 0 or via phrase
+                matches = grouped.get(df, [])
+                if any(m.word_position == 0 or m.word_position == -1 for m in matches):
+                    continue
+                # Keep if first token is an exact alias
+                if first_token in self._frame_aliases.get(df, []):
+                    continue
+                frame_keys.discard(df)
 
         # Distinguish content questions from clarification requests.
         # If the input starts with a question word and has more than 2 words,
@@ -295,7 +315,12 @@ class ConversationActClassifier:
         # Fallback: use observation_semantics speech_act
         if not acts and signal.observation_semantics:
             sem = signal.observation_semantics
-            if sem.speech_act == "greeting":
+            # Discourse acts are turn-level: skip acknowledgment fallback for
+            # long inputs where the word is embedded (e.g. "if it's okay to eat")
+            _word_count = len(content_lower.split())
+            if sem.speech_act == "acknowledgment" and _word_count >= 4:
+                pass
+            elif sem.speech_act == "greeting":
                 acts.append(ConversationAct(act_type="greeting", confidence=sem.confidence))
             elif sem.speech_act == "acknowledgment":
                 acts.append(ConversationAct(act_type="acknowledgment", confidence=sem.confidence))

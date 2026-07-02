@@ -246,7 +246,7 @@ class SemanticClusterRegistry:
                             best_type = "exact_word"
                     else:
                         for w in words:
-                            if len(w) >= 4 and len(pattern_lower) >= 4:
+                            if len(w) >= 5 and len(pattern_lower) >= 5:
                                 from ..registry.semantic_matcher import _levenshtein
                                 dist = _levenshtein(w, pattern_lower)
                                 max_allowed = 1 if len(w) <= 5 else 2

@@ -104,6 +104,7 @@ class DecisionRouter:
                 "frustration_signal", "teachability_complaint",
                 "teaching_offer",
                 "assistant_evaluation",
+                "meta_question_intent",
             }
             if act in _SIMPLE_ANSWER_ACTS:
                 intent = "frustration_response" if act == "frustration_signal" else act
