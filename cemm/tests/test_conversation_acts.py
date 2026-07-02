@@ -98,6 +98,68 @@ class TestConversationActClassification:
         assert result.conversation_act.act_type == "frustration_signal"
         assert result.conversation_act.is_repair or result.conversation_act.response_mode == "repair_response"
 
+    def test_substring_does_not_trigger_greeting(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("Nothing just chatting")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type != "greeting"
+
+    def test_discourse_marker_i_mean_does_not_force_self_correction(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("I mean can you help me grow my career?")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type != "self_correction"
+        decision = result.decision_packet
+        assert decision is not None
+        assert decision.action_kind == "answer"
+        assert decision.action_plan is not None
+        assert decision.action_plan.params.get("response_mode") == "general_conversation"
+
+    def test_whats_going_on_is_not_confusion_repair(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("what's going on")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type != "confusion_repair"
+        decision = result.decision_packet
+        assert decision is not None
+        assert decision.action_kind == "answer"
+
+    def test_what_does_that_mean_is_clarification_not_evidence_query(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("what does that mean?")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type == "confusion_repair"
+
+    def test_weather_question_is_not_treated_as_unknown_entity(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("what is the weather today?")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type == "evidence_query"
+        decision = result.decision_packet
+        assert decision is not None
+        assert decision.action_kind == "abstain"
+
+    def test_recent_match_question_is_not_routed_as_general_chat(self) -> None:
+        store = _make_store()
+        registry = _make_registry()
+        pipeline = Pipeline(store, registry)
+        result = pipeline.run("who won the last match?")
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type == "evidence_query"
+        decision = result.decision_packet
+        assert decision is not None
+        assert decision.action_kind == "abstain"
+
 
 class TestRetrievalGating:
     def test_social_turn_does_not_retrieve(self) -> None:

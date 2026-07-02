@@ -12,6 +12,7 @@ from pathlib import Path
 from ..types.context_kernel import ContextKernel
 from ..types.context_inference import ContextInference
 from ..types.signal import Signal
+from .text_match import tokenize_surface
 from ..types.model import ModelKind, ModelStatus
 from ..store.store import Store
 from ..registry import Registry
@@ -79,7 +80,7 @@ class ContextInferenceEngine:
                 prec_lower = prec.lower()
                 if prec_lower.startswith("keyword:"):
                     keyword = prec_lower[len("keyword:"):]
-                    if keyword not in content_lower:
+                    if keyword not in tokenize_surface(content_lower):
                         matched = False
                         break
                 elif prec_lower.startswith("regex:"):

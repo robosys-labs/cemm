@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from ..kernel.realization_verifier import verify, VerificationResult
 from ..registry import Registry
 from ..store.store import Store
@@ -94,6 +96,68 @@ def _capability_variables(atoms: list[dict]) -> dict[str, str]:
     return {"capabilities": _join_objects(categories)}
 
 
+def _source_text(answer_graph: SemanticAnswerGraph, store: Store) -> str:
+    for signal_id in answer_graph.source_signal_ids:
+        signal = store.signals.get(signal_id)
+        if signal and signal.content:
+            return str(signal.content)
+    return ""
+
+
+def _topic_from_scoped_help(text: str) -> str:
+    tokens = re.findall(r"[a-z0-9']+", text.lower())
+    joined = " ".join(tokens)
+    match = re.search(r"\b(help|assist)\s+me\b(?P<tail>.*)", joined)
+    if not match:
+        return ""
+    tail_tokens = [
+        t for t in re.findall(r"[a-z0-9']+", match.group("tail"))
+        if t not in {"a", "an", "the", "to", "with", "for", "please", "though", "then", "really", "just"}
+    ]
+    topic = " ".join(tail_tokens).strip()
+    if topic.startswith("grow my "):
+        return "growing your " + topic[len("grow my "):]
+    if topic.startswith("grow "):
+        return "growing " + topic[len("grow "):]
+    return topic
+
+
+def _likely_cause_text(kernel: ContextKernel, store: Store) -> str:
+    for cause_id in kernel.conversation.dynamics.likely_cause_claim_ids:
+        claim = store.claims.get(cause_id)
+        if not claim:
+            continue
+        if claim.object_value and str(claim.object_value).strip().lower() != "failure":
+            return _clean_object(str(claim.object_value))
+        subject = str(claim.subject_entity_id or "").replace("_", " ").strip()
+        if subject:
+            return subject
+    return ""
+
+
+def _is_situational_checkin(text: str) -> bool:
+    normalized = " ".join(re.findall(r"[a-z0-9']+", text.lower()))
+    return normalized in {
+        "what's going on",
+        "whats going on",
+        "what is going on",
+        "what's up",
+        "whats up",
+    }
+
+
+def _is_fresh_world_limit(answer_graph: SemanticAnswerGraph, source_text: str) -> bool:
+    reasons = " ".join(answer_graph.uncertainty_reasons).lower()
+    text = source_text.lower()
+    if "fresh-world query requires live retrieval" in reasons:
+        return True
+    markers = (
+        "today", "tonight", "tomorrow", "latest", "current", "recent",
+        "weather", "forecast", "temperature", "who won", "score", "match",
+    )
+    return any(marker in text for marker in markers)
+
+
 class RealizationPipeline:
     def __init__(self, router: SynthesisRouter | None = None) -> None:
         self._router = router or SynthesisRouter()
@@ -111,24 +175,67 @@ class RealizationPipeline:
             "answer_graph": answer_graph,
         }
         semantic_claim_atoms = _claim_atoms(answer_graph, store)
+        source_text = _source_text(answer_graph, store)
+        source_text_lower = source_text.lower().strip()
 
         # Map SAG intent to template_key for conversational responses
         # when no explicit template or claims are provided
         intent = answer_graph.intent
         if intent == "greeting":
-            params["template_key"] = "greeting"
+            if kernel.conversation.turn_index > 1:
+                params["template_key"] = "greeting_returning"
+            else:
+                params["template_key"] = "greeting"
         elif intent == "phatic_checkin":
-            params["template_key"] = "phatic_checkin"
+            if kernel.conversation.turn_index > 1:
+                params["template_key"] = "phatic_checkin_returning"
+            else:
+                params["template_key"] = "phatic_checkin"
         elif intent == "acknowledgment":
-            params["template_key"] = "acknowledgment"
+            if kernel.conversation.turn_index > 1:
+                params["template_key"] = "acknowledgment_followup"
+            else:
+                params["template_key"] = "acknowledgment"
         elif intent == "playful_acknowledgment":
-            params["template_key"] = "playful_acknowledgment"
+            if (
+                kernel.user.affect.playfulness > 0.7
+                or (
+                    kernel.user.affect.current_stance == "playful"
+                    and kernel.user.affect.playfulness > 0.65
+                )
+            ):
+                params["template_key"] = "playful_acknowledgment_followup"
+            else:
+                params["template_key"] = "playful_acknowledgment"
         elif intent == "low_competence_repair":
             params["template_key"] = "low_competence_repair"
         elif intent == "frustration_response":
-            params["template_key"] = "frustration_response"
+            likely_cause = _likely_cause_text(kernel, store)
+            if kernel.conversation.dynamics.repetition_pressure >= 0.4 and likely_cause:
+                params["template_key"] = "frustration_response_causal_loop"
+                params.setdefault("variables", {"cause": likely_cause})
+            elif kernel.conversation.dynamics.repetition_pressure >= 0.4:
+                params["template_key"] = "frustration_response_repetition"
+            elif (
+                kernel.user.affect.current_stance in {"frustrated", "hostile"}
+                or kernel.user.affect.frustration > 0.5
+                or kernel.user.affect.hostility > 0.4
+            ):
+                params["template_key"] = "frustration_response_followup"
+            else:
+                params["template_key"] = "frustration_response"
         elif intent == "confusion_repair":
-            params["template_key"] = "confusion_repair"
+            if any(
+                phrase in source_text_lower for phrase in (
+                    "what does that mean",
+                    "what does this mean",
+                    "what did you mean by that",
+                    "what do you mean by that",
+                )
+            ):
+                params["template_key"] = "clarify_previous_meaning"
+            else:
+                params["template_key"] = "confusion_repair"
         elif intent == "playful_repair":
             params["template_key"] = "playful_repair"
         elif intent == "teaching_offer":
@@ -152,7 +259,10 @@ class RealizationPipeline:
                 params["template_key"] = "ask_meaning"
                 params.setdefault("variables", {"term": term})
         elif intent == "abstain" and not answer_graph.selected_claim_ids:
-            params["template_key"] = "abstain"
+            if _is_fresh_world_limit(answer_graph, source_text):
+                params["template_key"] = "live_world_limit"
+            else:
+                params["template_key"] = "abstain"
         elif intent == "remember":
             params["template_key"] = "remember_confirm"
         elif intent in ("learn_command_alias", "learn_lexeme", "learn_correction"):
@@ -188,7 +298,17 @@ class RealizationPipeline:
         elif intent == "self_query_unknown":
             params["template_key"] = "self_query_unknown"
         elif intent in ("general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question"):
-            params["template_key"] = intent
+            if intent == "general_conversation":
+                topic = _topic_from_scoped_help(source_text_lower)
+                if topic:
+                    params["template_key"] = "scoped_help_response"
+                    params.setdefault("variables", {"topic": topic})
+                elif _is_situational_checkin(source_text_lower):
+                    params["template_key"] = "situational_checkin"
+                else:
+                    params["template_key"] = intent
+            else:
+                params["template_key"] = intent
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)

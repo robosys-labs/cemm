@@ -1,4 +1,5 @@
 from __future__ import annotations
+import copy
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -28,7 +29,7 @@ from .semantic_interpreter import SemanticInterpreter
 from .grounding import GroundingPipeline
 from .decision_router import DecisionRouter
 from .conversation_act_classifier import ConversationActClassifier
-from ..types.conversation_act import ConversationAct
+from ..types.conversation_act import ConversationAct, ConversationActPacket
 from ..causal.inference import CausalInference
 from ..retrieval.structural import StructuralRetriever, RetrievalResult
 from ..retrieval.ranker import Ranker
@@ -51,7 +52,7 @@ class PipelineResult:
     inference_packet: InferencePacket | None = None
     decision_packet: DecisionPacket | None = None
     context_inference: ContextInference | None = None
-    conversation_act: ConversationAct | None = None
+    conversation_act: ConversationActPacket | None = None
 
 
 class Pipeline:
@@ -86,7 +87,8 @@ class Pipeline:
         self._conversation_act_classifier = ConversationActClassifier(registry)
         self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
-        self._turn_count: int = 0
+        self._turn_counts: dict[str, int] = {}
+        self._session_state: dict[str, dict] = {}
 
     def run(
         self,
@@ -111,9 +113,39 @@ class Pipeline:
         self._store.signals.put(signal)
         signal.normalized = self._text_normalizer.normalize(signal.content)
 
-        self._turn_count += 1
-        kernel = self._builder.from_signal(signal, turn_index=self._turn_count)
+        turn_index = self._turn_counts.get(signal.context_id, 0) + 1
+        self._turn_counts[signal.context_id] = turn_index
+        kernel = self._builder.from_signal(signal, turn_index=turn_index)
         kernel.latest_signal = signal
+
+        prior_session = self._session_state.get(signal.context_id)
+        if prior_session:
+            kernel.user.affect = copy.deepcopy(prior_session.get("user_affect", kernel.user.affect))
+            kernel.conversation.dynamics = copy.deepcopy(
+                prior_session.get("conversation_dynamics", kernel.conversation.dynamics)
+            )
+            kernel.conversation.active_repetition_group_ids = list(
+                prior_session.get("active_repetition_group_ids", kernel.conversation.active_repetition_group_ids)
+            )
+            previous_recent = list(prior_session.get("recent_signal_ids", []))
+            kernel.conversation.recent_signal_ids = previous_recent + [signal.id]
+            kernel.conversation.first_user_signal_id = prior_session.get(
+                "first_user_signal_id", kernel.conversation.first_user_signal_id
+            )
+            last_user_at = prior_session.get("last_user_at")
+            if last_user_at is not None:
+                kernel.time.time_since_last_user_signal_ms = max(
+                    0.0, (signal.observed_at - float(last_user_at)) * 1000.0,
+                )
+            kernel.conversation.pending_assistant_question = prior_session.get(
+                "pending_assistant_question", ""
+            )
+            kernel.conversation.expected_user_answer_type = prior_session.get(
+                "expected_user_answer_type", ""
+            )
+            kernel.conversation.last_assistant_response_mode = prior_session.get(
+                "last_assistant_response_mode", ""
+            )
 
         if budget_override:
             for k, v in budget_override.items():
@@ -152,11 +184,27 @@ class Pipeline:
                 kernel.conversation.dynamics = update_conversation_dynamics(
                     kernel.conversation.dynamics, semantics, kernel, signal.id
                 )
+                kernel.conversation.active_repetition_group_ids = list(
+                    kernel.conversation.dynamics.active_repetition_group_ids
+                )
 
-        # Classify ConversationAct before retrieval so retrieval is task-shaped
+        # Classify ConversationActPacket before retrieval so retrieval is task-shaped
         conversation_act = self._conversation_act_classifier.classify(
             signal, kernel, uol_atoms=uol_atoms if semantics else None,
         )
+
+        # Clear pending question if the user answered it or the topic shifted
+        if kernel.conversation.pending_assistant_question:
+            if conversation_act.discourse_relation == "answer_to_pending":
+                kernel.conversation.pending_assistant_question = ""
+                kernel.conversation.expected_user_answer_type = ""
+            elif conversation_act.primary.act_type not in ("unknown", "chat_mode_statement"):
+                # Topic shifted — clear stale pending question
+                kernel.conversation.pending_assistant_question = ""
+                kernel.conversation.expected_user_answer_type = ""
+
+        # Update last response mode for next turn's context
+        kernel.conversation.last_assistant_response_mode = conversation_act.response_mode
 
         # Suppress claim candidates for social/creative/repair/teaching turns.
         # "unknown" turns are permissive — claim candidates may flow through.
@@ -305,6 +353,18 @@ class Pipeline:
                 result.kernel.self_view.recent_error_rate = min(
                     1.0, result.kernel.self_view.recent_error_rate + 0.1
                 )
+
+        self._session_state[signal.context_id] = {
+            "user_affect": copy.deepcopy(kernel.user.affect),
+            "conversation_dynamics": copy.deepcopy(kernel.conversation.dynamics),
+            "active_repetition_group_ids": list(kernel.conversation.active_repetition_group_ids),
+            "recent_signal_ids": list(kernel.conversation.recent_signal_ids),
+            "first_user_signal_id": kernel.conversation.first_user_signal_id,
+            "last_user_at": signal.observed_at,
+            "pending_assistant_question": kernel.conversation.pending_assistant_question,
+            "expected_user_answer_type": kernel.conversation.expected_user_answer_type,
+            "last_assistant_response_mode": kernel.conversation.last_assistant_response_mode,
+        }
 
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0

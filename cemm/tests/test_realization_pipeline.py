@@ -153,3 +153,26 @@ def test_self_capability_realization_uses_claim_atoms_not_raw_joining() -> None:
     assert ";" not in result.output
     # The capability output should use curated categories, not raw claim text
     assert "process meaning" in result.output or "understand" in result.output or "reason" in result.output
+
+
+def test_frustration_repetition_with_likely_cause_mentions_cause() -> None:
+    store = Store(":memory:")
+    kernel = _make_kernel(store)
+    kernel.conversation.turn_index = 3
+    kernel.conversation.dynamics.repetition_pressure = 0.5
+
+    cause_id = _store_self_claim(store, "causes", "retrieval failure")
+    kernel.conversation.dynamics.likely_cause_claim_ids = [cause_id]
+
+    sag = SemanticAnswerGraph(
+        id=uuid.uuid4().hex[:16],
+        intent="frustration_response",
+        source_signal_ids=["sig1"],
+        context_id=kernel.id,
+        confidence=0.9,
+    )
+
+    result = RealizationPipeline().run(sag, kernel, store, Registry())
+
+    assert result.success
+    assert "retrieval failure" in result.output.lower()

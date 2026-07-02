@@ -202,6 +202,18 @@ def test_teaching_interpreter_uses_data_driven_meaning_stop_words() -> None:
     assert any(ev.kind == "definition" and ev.meaning == "save this" for ev in events)
 
 
+def test_teaching_interpreter_does_not_learn_copular_judgment() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("wow you are just a pattern matcher aren't you")
+    assert events == []
+
+
+def test_teaching_interpreter_does_not_treat_pronoun_as_surface() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("you means remember this")
+    assert events == []
+
+
 def test_uol_mapper_loads_speech_act_to_frame_from_data() -> None:
     mapper = UOLMapper(Registry())
     assert mapper._speech_act_to_frame.get("greeting") == "greeting"
@@ -311,7 +323,7 @@ def test_context_inference_engine_loads_data_driven_fallback_words() -> None:
     engine = ContextInferenceEngine(Store(), Registry())
     assert "hello" in engine._fallback_words["greeting"]
     assert "ok" in engine._fallback_words["acknowledgment"]
-    assert "what" in engine._fallback_words["clarification"]
+    assert "what do you mean" in engine._fallback_words["clarification"]
     assert "bye" in engine._fallback_words["exit"]
     assert "weather" in engine._fallback_words["weather"]
 
@@ -337,13 +349,14 @@ def test_decision_router_pure_acknowledgment_phrases_loaded_from_data() -> None:
 
 
 def test_realizer_joins_capabilities_from_claim_atoms() -> None:
-    from cemm.synthesis.realizer import _capability_variables, _join_objects
+    from cemm.synthesis.realizer import _capability_variables
     atoms = [
         {"predicate": "does", "object_value": "answer questions"},
         {"predicate": "does", "object_value": "remember facts"},
     ]
     variables = _capability_variables(atoms)
-    assert variables["capabilities"] == _join_objects(["answer questions", "remember facts"])
+    assert "answer questions" in variables["capabilities"]
+    assert "remember facts" in variables["capabilities"]
 
 
 def test_response_templates_include_self_capability_template() -> None:

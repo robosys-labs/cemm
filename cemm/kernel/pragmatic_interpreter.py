@@ -1,9 +1,27 @@
 from __future__ import annotations
+import json
+from pathlib import Path
 from ..types.signal import Signal, SignalKind, SourceType, ObservationSemantics
 from ..types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
 from ..store.store import Store
 from ..registry.registry import Registry
 from .semantic_clusters import SemanticClusterRegistry
+
+_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_failure_markers() -> set[str]:
+    """Load failure marker cues from UOL semantic metadata."""
+    if not _UOL_SEMANTICS_PATH.exists():
+        return set()
+    data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+    for entry in data.get("uol_semantics", []):
+        if entry.get("cue_type") == "failure_marker":
+            return set(entry.get("aliases", []))
+    return set()
+
+
+_FAILURE_MARKERS = _load_failure_markers()
 
 _DEFAULT_REGISTRY = SemanticClusterRegistry()
 _SPEECH_ACT_TO_FRAME_KEY = {
@@ -72,13 +90,34 @@ def interpret_signal(
 
 
 def _trace_causes(store: Store, kernel: ContextKernel) -> list[str]:
-    recent_ids = kernel.memory.working_claim_ids[-5:]
+    def _looks_like_failure_cause(claim) -> bool:
+        if claim is None or claim.domain != "causal":
+            return False
+        text_parts = [
+            str(claim.subject_entity_id or ""),
+            str(claim.predicate or ""),
+            str(claim.object_value or ""),
+        ]
+        text = " ".join(text_parts).lower()
+        return any(marker in text for marker in _FAILURE_MARKERS)
+
+    candidate_ids: list[str] = []
+    candidate_ids.extend(kernel.memory.working_claim_ids[-5:])
+
+    self_state = store.self_store.latest()
+    if self_state is not None:
+        candidate_ids.extend(self_state.meta_memory.recently_written_claim_ids[-10:])
+
+    seen: set[str] = set()
     result: list[str] = []
-    for cid in recent_ids:
+    for cid in reversed(candidate_ids):
+        if cid in seen:
+            continue
+        seen.add(cid)
         claim = store.claims.get(cid)
-        if claim is not None and claim.domain == "causal" and claim.object_value == "failure":
+        if _looks_like_failure_cause(claim):
             result.append(cid)
-    return result
+    return result[:3]
 
 
 def _decay(value: float, elapsed_ms: float, half_life_ms: float) -> float:
@@ -112,11 +151,30 @@ def update_user_affect(
     affect.frustration = max(0.0, min(1.0, affect.frustration + sem_affect.get("frustration", 0.0)))
     affect.hostility = max(0.0, min(1.0, affect.hostility + sem_affect.get("hostility", 0.0)))
     affect.playfulness = max(0.0, min(1.0, affect.playfulness + sem_affect.get("playfulness", 0.0)))
+
+    # Conflicting affect should not accumulate without resistance:
+    # sharp negative turns cool lingering playfulness, while playful turns
+    # can soften mild negativity without erasing it.
+    negative_push = sem_affect.get("frustration", 0.0) + (sem_affect.get("hostility", 0.0) * 0.75)
+    if negative_push > 0.0:
+        cool_factor = max(0.15, 1.0 - min(0.85, negative_push * 0.9))
+        affect.playfulness = max(0.0, min(1.0, affect.playfulness * cool_factor))
+
+    playful_push = sem_affect.get("playfulness", 0.0)
+    if playful_push > 0.0:
+        soften_factor = max(0.65, 1.0 - min(0.35, playful_push * 0.25))
+        affect.frustration = max(0.0, min(1.0, affect.frustration * soften_factor))
+        affect.hostility = max(0.0, min(1.0, affect.hostility * soften_factor))
+
     f, h, p = affect.frustration, affect.hostility, affect.playfulness
-    if h > 0.5: affect.current_stance = "hostile"
-    elif f > 0.5: affect.current_stance = "frustrated"
-    elif p > 0.5: affect.current_stance = "playful"
-    else: affect.current_stance = "cooperative"
+    if h >= 0.45 and h >= f and h >= p:
+        affect.current_stance = "hostile"
+    elif f >= 0.4 and f >= p:
+        affect.current_stance = "frustrated"
+    elif p >= 0.55 and p > max(f, h) + 0.1:
+        affect.current_stance = "playful"
+    else:
+        affect.current_stance = "cooperative"
     return affect
 
 

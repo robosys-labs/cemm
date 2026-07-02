@@ -1,13 +1,47 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from ..registry.registry import Registry
 from ..registry.semantic_matcher import SemanticMatcher, MatchResult
+from .text_match import phrase_in_text
 
 
+_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_frame_aliases() -> dict[str, list[str]]:
+    """Load UOL semantic frame aliases from the JSON data file."""
+    if not _UOL_SEMANTICS_PATH.exists():
+        return {}
+    data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+    return {
+        entry["canonical_key"]: entry.get("aliases", [])
+        for entry in data.get("uol_semantics", [])
+    }
+
+
+_FRAME_ALIASES = _load_frame_aliases()
+
+
+def _aliases(key: str, *extra: str) -> list[str]:
+    """Get aliases for a UOL frame key, plus any extra language-specific patterns."""
+    result = list(_FRAME_ALIASES.get(key, []))
+    for e in extra:
+        if e not in result:
+            result.append(e)
+    return result
+
+
+# Cluster definitions map to UOL frame keys for pattern sourcing.
+# Only cluster-level metadata (speech_act, target, affect_baseline) is defined here.
+# Patterns are derived from UOL frame aliases — the single source of truth.
 _BUILTIN_CLUSTERS: dict[str, dict] = {
     "assistant_insult_low_competence": {
         "speech_act": "insult",
-        "patterns": ["dumb", "daft", "stupid", "fool", "idiot", "foolish"],
+        "frame_key": "low_competence",
+        "patterns": _aliases("low_competence", "daft", "foolish"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.4, "arousal": 0.5, "frustration": 0.3, "hostility": 0.2, "playfulness": 0.0},
     },
@@ -25,79 +59,89 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
     },
     "user_correction_factual": {
         "speech_act": "correction",
-        "patterns": ["wrong", "incorrect", "lie", "mistaken"],
+        "patterns": _aliases("assert_evaluation", "lie", "mistaken"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.2, "arousal": 0.3, "frustration": 0.1, "hostility": 0.0, "playfulness": 0.0},
     },
     "user_gratitude": {
         "speech_act": "gratitude",
-        "patterns": ["thanks", "thank you", "thankyou", "helpful", "appreciate"],
+        "patterns": _aliases("high_quality", "thanks", "thank you", "thankyou", "appreciate"),
         "target": "system",
         "affect_baseline": {"valence": 0.5, "arousal": 0.2, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.1},
     },
     "user_praise": {
         "speech_act": "claim",
-        "patterns": ["great", "awesome", "love it", "love this", "excellent", "amazing"],
+        "patterns": _aliases("high_quality", "love it", "love this"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.6, "arousal": 0.3, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.2},
     },
     "conversational_greeting": {
         "speech_act": "greeting",
-        "patterns": ["hello", "hi", "hey", "howdy", "greetings", "sup", "morning", "afternoon", "evening", "hi there", "oh hi", "lol hello"],
+        "frame_key": "greeting",
+        "patterns": _aliases("greeting", "hi there", "oh hi", "lol hello"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.3, "arousal": 0.2, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.1},
     },
     "conversational_acknowledgment": {
         "speech_act": "acknowledgment",
-        "patterns": ["ok", "sure", "yeah", "cool", "got it", "i see", "right", "understood", "noted", "sounds good", "nice"],
+        "frame_key": "acknowledgment",
+        "patterns": _aliases("acknowledgment", "noted", "sounds good"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.1, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
     "conversational_clarification": {
         "speech_act": "clarification",
-        "patterns": ["what", "huh", "how do you mean", "what do you mean", "what in the world", "what the", "confused", "don't understand", "don't get it", "lost", "not following", "come again"],
+        "frame_key": "request_clarification",
+        "patterns": _aliases("request_clarification"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.1, "arousal": 0.2, "frustration": 0.1, "hostility": 0.0, "playfulness": 0.0},
     },
     "conversational_exit": {
         "speech_act": "exit",
-        "patterns": ["exit", "quit", "bye", "goodbye", "stop", "done", "see you", "later"],
+        "frame_key": "session_exit",
+        "patterns": _aliases("session_exit", "see you", "later"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.0, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
     "conversational_command_remember": {
         "speech_act": "command",
-        "patterns": ["remember", "save", "store", "note", "rember", "remembr"],
+        "frame_key": "command_remember",
+        "patterns": _aliases("command_remember", "rember", "remembr"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.0, "arousal": 0.2, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
     "playful_acknowledgment": {
         "speech_act": "playful_acknowledgment",
-        "patterns": ["lol", "lol nice", "lol ok", "haha okay", "lmao", "fair enough"],
+        "frame_key": "playful_acknowledgment",
+        "patterns": _aliases("playful_acknowledgment", "lmao"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.25, "arousal": 0.25, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.5},
     },
     "confusion": {
         "speech_act": "confusion",
-        "patterns": ["wait what", "uh what", "i am confused", "im confused", "that lost me"],
+        "frame_key": "confusion_repair",
+        "patterns": _aliases("confusion_repair", "wait what", "uh what", "that lost me"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.1, "arousal": 0.25, "frustration": 0.15, "hostility": 0.0, "playfulness": 0.0},
     },
     "self_correction": {
         "speech_act": "self_correction",
-        "patterns": ["my bad", "sorry i meant", "i mean", "correction"],
+        "frame_key": "self_correction",
+        "patterns": _aliases("self_correction"),
         "target": "user",
         "affect_baseline": {"valence": 0.0, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.0},
     },
     "simplification_request": {
         "speech_act": "simplification_request",
-        "patterns": ["explain that simpler", "say that simpler", "simplify", "too complex"],
+        "frame_key": "simplification_request",
+        "patterns": _aliases("simplification_request", "explain that simpler", "say that simpler"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.05, "arousal": 0.15, "frustration": 0.1, "hostility": 0.0, "playfulness": 0.0},
     },
     "reassurance": {
         "speech_act": "reassurance",
-        "patterns": ["no worries", "all good", "its fine", "it's fine"],
+        "frame_key": "reassurance",
+        "patterns": _aliases("reassurance"),
         "target": "assistant",
         "affect_baseline": {"valence": 0.25, "arousal": 0.1, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.1},
     },
@@ -167,7 +211,7 @@ class SemanticClusterRegistry:
                 pattern_lower = pattern.lower()
 
                 if " " in pattern_lower:
-                    if pattern_lower in content_no_punct or pattern_lower in content_lower:
+                    if phrase_in_text(pattern_lower, content_lower):
                         conf = 0.95
                         if conf > best_conf:
                             best_conf = conf

@@ -13,7 +13,7 @@ from ..types.packets import (
     MemoryPacket,
 )
 from ..types.context_inference import ContextInference
-from ..types.conversation_act import ConversationAct
+from ..types.conversation_act import ConversationAct, ConversationActPacket
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.signal import ObservationSemantics
@@ -29,6 +29,23 @@ def _load_pure_acknowledgment_phrases() -> set[str]:
         return set()
     data = json.loads(_PURE_ACKNOWLEDGMENT_PHRASES_PATH.read_text(encoding="utf-8"))
     return set(data.get("pure_acknowledgment_phrases", []))
+
+
+def _load_cue_sets() -> dict[str, set[str]]:
+    """Load cue sets from UOL semantic entries with cue_type metadata."""
+    if not _PURE_ACKNOWLEDGMENT_PHRASES_PATH.exists():
+        return {}
+    data = json.loads(_PURE_ACKNOWLEDGMENT_PHRASES_PATH.read_text(encoding="utf-8"))
+    cue_sets: dict[str, set[str]] = {}
+    for entry in data.get("uol_semantics", []):
+        cue_type = entry.get("cue_type")
+        if not cue_type:
+            continue
+        cue_sets.setdefault(cue_type, set()).update(entry.get("aliases", []))
+    return cue_sets
+
+
+_CUE_SETS = _load_cue_sets()
 
 
 class DecisionRouter:
@@ -47,7 +64,7 @@ class DecisionRouter:
         input_text: str = "",
         observation_semantics: ObservationSemantics | None = None,
         context_inference: ContextInference | None = None,
-        conversation_act: ConversationAct | None = None,
+        conversation_act: ConversationActPacket | ConversationAct | None = None,
         store: Any | None = None,
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
@@ -66,6 +83,7 @@ class DecisionRouter:
         is_question = (
             input_lower.endswith("?")
             or bool(graph_frame_keys & question_frames)
+            or bool(conversation_act and conversation_act.act_type == "evidence_query")
         )
 
         # ── Stage 1: ConversationAct-based routing (primary authority) ──
@@ -80,10 +98,12 @@ class DecisionRouter:
             # All these acts produce an "answer" with no evidence retrieval needed.
             _SIMPLE_ANSWER_ACTS = {
                 "greeting", "phatic_checkin", "acknowledgment", "playful_acknowledgment",
+                "user_state_report", "chat_mode_statement",
                 "story_request", "creative_request",
                 "confusion_repair", "playful_repair", "self_correction", "simplification_request",
-                "frustration_signal",
+                "frustration_signal", "teachability_complaint",
                 "teaching_offer",
+                "assistant_evaluation",
             }
             if act in _SIMPLE_ANSWER_ACTS:
                 intent = "frustration_response" if act == "frustration_signal" else act
@@ -96,7 +116,7 @@ class DecisionRouter:
                 )
 
             # Capability query: use curated summary, not raw claim join
-            if act in ("capability_query", "self_capability_query"):
+            if act in ("capability_query", "self_capability_query", "self_capability_skeptical_query"):
                 return self._make_answer_packet(
                     intent="capability_summary",
                     response_mode="capability_summary",
@@ -149,6 +169,18 @@ class DecisionRouter:
 
             # Open-domain entity query: check for evidence, else unknown_entity_response
             if act == "open_domain_entity_query":
+                if self._is_fresh_world_query(input_text):
+                    return DecisionPacket(
+                        action_kind="abstain",
+                        action_plan=ActionPlan(
+                            action_kind="abstain",
+                            execution_allowed=False,
+                            confidence=0.8,
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                        ),
+                        confidence=0.8,
+                        reason="fresh-world query requires live retrieval",
+                    )
                 if selected_claim_ids:
                     return self._make_answer_packet(
                         intent="evidence_answer",
@@ -276,6 +308,15 @@ class DecisionRouter:
                     confidence=0.7,
                     reason="SEG contains claim candidates for storage",
                 )
+
+        if "assistance_request" in graph_frame_keys and self._has_scoped_assistance_content(input_text):
+            return self._make_answer_packet(
+                intent="general_conversation",
+                response_mode="general_conversation",
+                confidence=0.72,
+                graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                reason="assistance request includes task scope",
+            )
 
         # Predicate-aware query handlers: self identity/capability and user identity/name.
         # Evidence must exist AND match the requested predicate/frame; otherwise ask/abstain.
@@ -417,24 +458,18 @@ class DecisionRouter:
                 )
 
         if "assistance_request" in graph_frame_keys:
-            # If the user is asking about the assistant's capabilities (e.g., "how can you help"),
-            # answer as a self-capability query rather than asking for task scope.
-            text_lower = input_text.lower().strip("?")
-            if any(phrase in text_lower for phrase in (
-                "how can you help", "how do you help", "can you help me", "what can you help with",
-                "how could you help", "what help can you offer", "can you assist me", "what do you assist with",
-            )):
+            if self._has_scoped_assistance_content(input_text):
                 return DecisionPacket(
                     action_kind="answer",
                     action_plan=ActionPlan(
                         action_kind="answer",
                         execution_allowed=True,
-                        confidence=0.8,
-                        params={"intent": "self_capability"},
+                        confidence=0.72,
+                        params={"intent": "general_conversation", "response_mode": "general_conversation"},
                         risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
-                    confidence=0.8,
-                    reason="assistance_request interpreted as self-capability query",
+                    confidence=0.72,
+                    reason="assistance request includes task scope",
                 )
             return DecisionPacket(
                 action_kind="ask",
@@ -471,6 +506,18 @@ class DecisionRouter:
         # immediately asking for clarification. This keeps the assistant useful for
         # open-domain chat and prevents the "Could you elaborate?" loop.
         if is_question and not selected_claim_ids and not graph.claim_candidates:
+            if self._is_fresh_world_query(input_text):
+                return DecisionPacket(
+                    action_kind="abstain",
+                    action_plan=ActionPlan(
+                        action_kind="abstain",
+                        execution_allowed=False,
+                        confidence=0.8,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.8,
+                    reason="fresh-world query requires live retrieval",
+                )
             intent = self._classify_general_question(input_text, graph, kernel)
             if intent:
                 return DecisionPacket(
@@ -479,7 +526,7 @@ class DecisionRouter:
                         action_kind="answer",
                         execution_allowed=True,
                         confidence=0.7,
-                        params={"intent": intent},
+                        params={"intent": intent, "response_mode": "general_conversation"},
                         risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
                     confidence=0.7,
@@ -677,6 +724,40 @@ class DecisionRouter:
         """
         text = input_text.lower().strip("?.,!;:\"'()[]{} ")
         return text in self._pure_acknowledgment_phrases
+
+    def _has_scoped_assistance_content(self, input_text: str) -> bool:
+        import re
+
+        tokens = re.findall(r"[a-z0-9']+", input_text.lower())
+        joined = " ".join(tokens)
+        assistance_cues = _CUE_SETS.get("assistance_marker", set())
+        stopword_cues = _CUE_SETS.get("stopword", set())
+        for marker in assistance_cues:
+            marker_norm = " ".join(re.findall(r"[a-z0-9']+", marker.lower()))
+            if marker_norm in joined:
+                tail = joined[joined.index(marker_norm) + len(marker_norm):]
+                tail_tokens = [
+                    t for t in re.findall(r"[a-z0-9']+", tail)
+                    if t not in stopword_cues
+                ]
+                if len(tail_tokens) >= 2:
+                    return True
+        return False
+
+    def _is_fresh_world_query(self, input_text: str) -> bool:
+        import re
+
+        normalized = " ".join(re.findall(r"[a-z0-9']+", input_text.lower()))
+        tokens = set(normalized.split())
+        fresh_markers = _CUE_SETS.get("fresh_world_marker", set())
+        question_starter_cues = _CUE_SETS.get("question_starter", set())
+        if not (tokens & fresh_markers):
+            return False
+        text_tokens = normalized.split()
+        first_token = text_tokens[0] if text_tokens else ""
+        return first_token in question_starter_cues or any(
+            normalized.startswith(qs) for qs in question_starter_cues if len(qs) > 2
+        )
 
     def _classify_general_question(
         self, input_text: str, graph: SemanticEventGraph, kernel: ContextKernel,

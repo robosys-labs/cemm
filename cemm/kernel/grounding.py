@@ -1,10 +1,31 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from ..types.context_kernel import ContextKernel
 from ..types.packets import GroundedGraph
 from ..types.semantic_event_graph import SemanticEventGraph
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
+from .text_match import tokenize_surface
+
+
+_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_temporal_cues() -> set[str]:
+    """Load temporal reference cues from UOL semantic metadata."""
+    if not _UOL_SEMANTICS_PATH.exists():
+        return set()
+    data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+    for entry in data.get("uol_semantics", []):
+        if entry.get("cue_type") == "temporal_reference":
+            return set(entry.get("aliases", []))
+    return set()
+
+
+_TEMPORAL_CUES = _load_temporal_cues()
 
 
 class GroundingPipeline:
@@ -52,11 +73,18 @@ class GroundingPipeline:
         if not content:
             return refs
         now = kernel.time.now
-        content_lower = content.lower()
-        if any(w in content_lower for w in ("now", "today", "currently")):
-            refs.append(f"now:{now}")
-        if "yesterday" in content_lower:
-            refs.append(f"yesterday:{now - 86400}")
-        if "tomorrow" in content_lower:
-            refs.append(f"tomorrow:{now + 86400}")
+        tokens = set(tokenize_surface(content.lower()))
+        # Use UOL metadata temporal cues instead of hardcoded English tokens
+        if tokens & _TEMPORAL_CUES:
+            # Map specific temporal tokens to their offsets
+            temporal_map = {
+                "now": now,
+                "today": now,
+                "currently": now,
+                "yesterday": now - 86400,
+                "tomorrow": now + 86400,
+            }
+            for token, offset in temporal_map.items():
+                if token in tokens:
+                    refs.append(f"{token}:{offset}")
         return refs

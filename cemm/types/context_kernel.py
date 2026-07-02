@@ -74,6 +74,12 @@ class ConversationState:
     dynamics: ConversationDynamics = field(default_factory=ConversationDynamics)
     first_user_signal_id: str | None = None
     inferred_context_claim_ids: list[str] = field(default_factory=list)
+    # Pending-question state: set when the assistant asks the user a question,
+    # cleared when the user responds or the topic shifts. Enables contextual
+    # interpretation of short answers like "I'm good" after "How are you?".
+    pending_assistant_question: str = ""
+    expected_user_answer_type: str = ""  # e.g. "social_status", "entity_name", "yes_no", "preference"
+    last_assistant_response_mode: str = ""  # e.g. "social_response", "evidence_answer", "capability_summary"
 
 
 @dataclass
