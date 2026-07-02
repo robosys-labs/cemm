@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from ..types.context_kernel import ContextKernel
@@ -18,9 +20,20 @@ from .answer_graph_ranker import best_candidate
 from ..registry.uol_mapper import UOLMapper
 
 
+_PURE_ACKNOWLEDGMENT_PHRASES_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_pure_acknowledgment_phrases() -> set[str]:
+    if not _PURE_ACKNOWLEDGMENT_PHRASES_PATH.exists():
+        return set()
+    data = json.loads(_PURE_ACKNOWLEDGMENT_PHRASES_PATH.read_text(encoding="utf-8"))
+    return set(data.get("pure_acknowledgment_phrases", []))
+
+
 class DecisionRouter:
     def __init__(self, uol_mapper: UOLMapper | None = None) -> None:
         self._uol_mapper = uol_mapper
+        self._pure_acknowledgment_phrases = _load_pure_acknowledgment_phrases()
 
     def run(
         self,
@@ -532,13 +545,13 @@ class DecisionRouter:
         )
 
     def _is_pure_acknowledgment(self, input_text: str) -> bool:
-        """Return True if the input is only an acknowledgment word/punctuation."""
+        """Return True if the input is only an acknowledgment word/punctuation.
+
+        Phrases are loaded from cemm/data/uol_semantics.json so they can be
+        language-specific without hardcoding English surface forms.
+        """
         text = input_text.lower().strip("?.,!;:\"'()[]{} ")
-        pure_acknowledgments = {
-            "ok", "okay", "sure", "yeah", "yes", "yup", "right", "got it", "i see", "understood",
-            "noted", "sounds good", "nice", "cool", "alright", "all right", "fine", "k",
-        }
-        return text in pure_acknowledgments
+        return text in self._pure_acknowledgment_phrases
 
     def _classify_general_question(
         self, input_text: str, graph: SemanticEventGraph, kernel: ContextKernel,

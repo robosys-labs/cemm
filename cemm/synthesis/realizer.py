@@ -60,34 +60,18 @@ def _self_identity_variables(answer_graph: SemanticAnswerGraph, store: Store) ->
     return {"name": "CEMM", "role": "assistant"}
 
 
-def _self_capability_surface(atoms: list[dict]) -> str:
-    by_predicate: dict[str, list[str]] = {}
-    for atom in atoms:
-        obj = _clean_object(str(atom.get("object_value", "")))
-        if not obj:
-            continue
-        by_predicate.setdefault(str(atom.get("predicate", "")), []).append(obj)
+def _capability_variables(atoms: list[dict]) -> dict[str, str]:
+    """Join selected capability claim objects into a single template variable.
 
-    sentences: list[str] = []
-    if by_predicate.get("does"):
-        sentences.append(f"I can {_join_objects(by_predicate['does'])}.")
-    if by_predicate.get("capability"):
-        sentences.append(f"I can also support {_join_objects(by_predicate['capability'])}.")
-    if by_predicate.get("purpose") and not sentences:
-        sentences.append(f"My purpose is to {_join_objects(by_predicate['purpose'])}.")
-    if by_predicate.get("knows_about"):
-        sentences.append(f"I can work with {_join_objects(by_predicate['knows_about'])}.")
-    if not sentences:
-        available = [
-            _clean_object(str(atom.get("object_value", "")))
-            for atom in atoms
-            if atom.get("object_value")
-        ]
-        if available:
-            sentences.append(f"I can {_join_objects(available)}.")
-        else:
-            sentences.append("I can answer from selected, verified memory and reasoning traces.")
-    return " ".join(sentences)
+    The actual user-facing sentence is rendered from the language-indexed
+    response_templates.json file, not from hardcoded English strings.
+    """
+    available = [
+        _clean_object(str(atom.get("object_value", "")))
+        for atom in atoms
+        if atom.get("object_value")
+    ]
+    return {"capabilities": _join_objects(available) if available else "help"}
 
 
 class RealizationPipeline:
@@ -155,7 +139,8 @@ class RealizationPipeline:
             params["template_key"] = "self_identity"
             params.setdefault("variables", _self_identity_variables(answer_graph, store))
         elif intent == "self_capability" and answer_graph.selected_claim_ids:
-            params["template"] = _self_capability_surface(semantic_claim_atoms)
+            params["template_key"] = "self_capability"
+            params.setdefault("variables", _capability_variables(semantic_claim_atoms))
         elif intent == "self_knowledge":
             params["template_key"] = "self_knowledge"
         elif intent == "user_identity":

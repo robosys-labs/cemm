@@ -1,8 +1,14 @@
 # CEMM-ARCH: Refer to cemm_architecture_gap_trace.md and AGENTS.md before modifying.
 # Fix 1: Model-driven inference. Loads context_rule models from ModelStore
-# and scores them against signal content before falling back to hardcoded rules.
+# and scores them against signal content before falling back to data-driven rules.
 
 from __future__ import annotations
+import json
+import re
+import time
+import uuid
+from pathlib import Path
+
 from ..types.context_kernel import ContextKernel
 from ..types.context_inference import ContextInference
 from ..types.signal import Signal
@@ -11,10 +17,36 @@ from ..store.store import Store
 from ..registry import Registry
 from ..retrieval.ranker import Ranker
 from ..confidence.scoring import score_model
-import uuid, time
 
 
 _INFERENCE_CONFIDENCE_THRESHOLD = 0.6
+_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
+
+
+def _load_uol_semantics() -> dict:
+    if not _UOL_SEMANTICS_PATH.exists():
+        return {}
+    return json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+
+
+def _load_fallback_words() -> dict[str, set[str]]:
+    """Load fallback word sets from the UOL semantics data file.
+
+    This keeps the context-inference fallback language-indexed and data-driven,
+    avoiding hardcoded English surface forms.
+    """
+    data = _load_uol_semantics()
+    frame_aliases = {
+        entry["canonical_key"]: entry.get("aliases", [])
+        for entry in data.get("uol_semantics", [])
+    }
+    return {
+        "greeting": set(frame_aliases.get("greeting", [])),
+        "acknowledgment": set(frame_aliases.get("acknowledgment", [])),
+        "clarification": set(frame_aliases.get("request_clarification", [])),
+        "exit": set(frame_aliases.get("session_exit", [])),
+        "weather": set(frame_aliases.get("weather_query", [])),
+    }
 
 
 class ContextInferenceEngine:
@@ -22,6 +54,7 @@ class ContextInferenceEngine:
         self._store = store
         self._registry = registry
         self._ranker = Ranker()
+        self._fallback_words = _load_fallback_words()
 
     def infer(self, signal: Signal, kernel: ContextKernel) -> ContextInference:
         inference = ContextInference(
@@ -66,13 +99,14 @@ class ContextInferenceEngine:
                     inference.frame_id = model.registry_key
                 inference.applied_context_rule_model_ids.append(model.id)
 
-        # Phase 2: Fallback — hardcoded rules (only if no model exceeded threshold)
+        # Phase 2: Fallback — data-driven rules (only if no model exceeded threshold)
         if not inference.applied_context_rule_model_ids:
-            greeting_words = {"hello", "hi", "hey", "howdy", "greetings", "sup", "morning", "afternoon", "evening"}
-            acknowledgment_words = {"ok", "sure", "yeah", "cool", "right", "understood", "noted", "great", "nice"}
-            clarification_words = {"what", "huh", "confused", "lost", "why", "how"}
-            exit_words = {"exit", "quit", "bye", "goodbye", "stop", "done"}
             words_set = set(content_lower.replace("?", "").split())
+            greeting_words = self._fallback_words["greeting"]
+            acknowledgment_words = self._fallback_words["acknowledgment"]
+            clarification_words = self._fallback_words["clarification"]
+            exit_words = self._fallback_words["exit"]
+            weather_words = self._fallback_words["weather"]
 
             if words_set & exit_words:
                 inference.confidence = max(inference.confidence, 0.7)
@@ -93,9 +127,8 @@ class ContextInferenceEngine:
                 inference.confidence = max(inference.confidence, 0.3)
                 inference.frame_id = "session_opening"
 
-            if "weather" in content_lower:
-                if not kernel.user.locale:
-                    inference.confidence = max(inference.confidence, 0.4)
+            if words_set & weather_words and not kernel.user.locale:
+                inference.confidence = max(inference.confidence, 0.4)
 
             context_rules = self._registry.all_by_kind("context_rule")
             for rule in context_rules:

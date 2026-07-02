@@ -303,3 +303,83 @@ def test_decision_router_classifies_intent_from_graph_frames() -> None:
     kernel = ContextKernel(id="ctx-1", user=UserState())
     intent = router._classify_general_question("tell me a story", graph, kernel)
     assert intent == "story_request"
+
+
+def test_context_inference_engine_loads_data_driven_fallback_words() -> None:
+    from cemm.kernel.context_inference import ContextInferenceEngine
+    from cemm.store.store import Store
+    engine = ContextInferenceEngine(Store(), Registry())
+    assert "hello" in engine._fallback_words["greeting"]
+    assert "ok" in engine._fallback_words["acknowledgment"]
+    assert "what" in engine._fallback_words["clarification"]
+    assert "bye" in engine._fallback_words["exit"]
+    assert "weather" in engine._fallback_words["weather"]
+
+
+def test_context_inference_engine_data_driven_fallback_detects_greeting() -> None:
+    from cemm.kernel.context_inference import ContextInferenceEngine
+    from cemm.store.store import Store
+    engine = ContextInferenceEngine(Store(), Registry())
+    signal = _make_signal("hello")
+    kernel = ContextKernel(id="ctx-1", user=UserState())
+    kernel.conversation.turn_index = 1
+    inference = engine.infer(signal, kernel)
+    assert inference.frame_id == "session_opening"
+
+
+def test_decision_router_pure_acknowledgment_phrases_loaded_from_data() -> None:
+    from cemm.kernel.decision_router import DecisionRouter
+    router = DecisionRouter()
+    assert "ok" in router._pure_acknowledgment_phrases
+    assert "got it" in router._pure_acknowledgment_phrases
+    assert router._is_pure_acknowledgment("OK")
+    assert not router._is_pure_acknowledgment("OK tell me a story")
+
+
+def test_realizer_joins_capabilities_from_claim_atoms() -> None:
+    from cemm.synthesis.realizer import _capability_variables, _join_objects
+    atoms = [
+        {"predicate": "does", "object_value": "answer questions"},
+        {"predicate": "does", "object_value": "remember facts"},
+    ]
+    variables = _capability_variables(atoms)
+    assert variables["capabilities"] == _join_objects(["answer questions", "remember facts"])
+
+
+def test_response_templates_include_self_capability_template() -> None:
+    data = json.loads(Path("cemm/data/response_templates.json").read_text(encoding="utf-8"))
+    en_templates = data.get("en", {})
+    assert "self_capability" in en_templates
+    assert "{capabilities}" in en_templates["self_capability"]
+
+
+def test_teaching_interpreter_loads_command_alias_delimiters() -> None:
+    interpreter = TeachingInterpreter()
+    assert " do " in interpreter._command_alias_delimiters
+
+
+def test_teaching_interpreter_extracts_command_alias_with_data_driven_delimiter() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter._extract_command_alias("when i say zibble, remember this", "when i say")
+    assert len(events) == 1
+    assert events[0].surface == "zibble"
+    assert events[0].meaning == "remember this"
+
+
+def test_operator_messages_data_file_exists() -> None:
+    data = json.loads(Path("cemm/data/operator_messages.json").read_text(encoding="utf-8"))
+    en_remember = data.get("en", {}).get("remember", {})
+    assert "permission_denied_execute" in en_remember
+    assert "permission_denied_storage" in en_remember
+    assert "insufficient_information" in en_remember
+    assert "question_not_stored" in en_remember
+    assert "predicate_missing" in en_remember
+
+
+def test_remember_operator_uses_data_driven_messages() -> None:
+    from cemm.operators.remember import RememberOperator
+    from cemm.types.context_kernel import ContextKernel, UserState
+    operator = RememberOperator()
+    ctx = type("Ctx", (), {"kernel": ContextKernel(id="ctx-1", user=UserState())})()
+    operator._ctx = ctx
+    assert operator._message("insufficient_information") == "I don't have enough information to store."

@@ -42,7 +42,8 @@
     {"canonical_key": "user_name_query", "aliases": ["what's my name", "what is my name", "do you know my name", "whats my name"]},
     {"canonical_key": "story_request", "aliases": ["story", "stories", "tell me a story", "tell me a tale", "narrative", "tell me a narrative", "tell me stories"]},
     {"canonical_key": "food_recommendation_request", "aliases": ["should i eat", "what should i eat", "what to eat", "what do you recommend i eat", "what food", "recommend a meal", "what should i have for", "what should i have for dinner", "what should i have for lunch", "what should i have for breakfast"]},
-    {"canonical_key": "recommendation_request", "aliases": ["recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend", "can you recommend", "recommend something"]}
+    {"canonical_key": "recommendation_request", "aliases": ["recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend", "can you recommend", "recommend something"]},
+    {"canonical_key": "weather_query", "aliases": ["weather", "forecast", "temperature", "rain", "sunny", "cloudy"]}
   ],
   "speech_act_to_frame": {
     "greeting": "greeting",
@@ -50,5 +51,9 @@
     "clarification": "request_clarification",
     "exit": "session_exit",
     "command": "command_remember"
-  }
+  },
+  "pure_acknowledgment_phrases": [
+    "ok", "okay", "sure", "yeah", "yes", "yup", "right", "got it", "i see", "understood",
+    "noted", "sounds good", "nice", "cool", "alright", "all right", "fine", "k"
+  ]
 }

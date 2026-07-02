@@ -69,6 +69,7 @@ class TeachingInterpreter:
         self._correction_triggers = patterns.get("correction_triggers", set())
         self._surface_stop_words = patterns.get("surface_stop_words", set())
         self._meaning_stop_words = patterns.get("meaning_stop_words", set())
+        self._command_alias_delimiters = patterns.get("command_alias_delimiters", set())
         role_cues = patterns.get("role_cues", {})
         self._process_cues = set(role_cues.get("process", []))
         self._state_cues = set(role_cues.get("state", []))
@@ -150,13 +151,17 @@ class TeachingInterpreter:
         return " ".join(meaning_words)
 
     def _extract_command_alias(self, text: str, trigger: str) -> list[TeachingEvent]:
-        """Extract 'when I say X, do Y' style command aliases."""
+        """Extract 'when I say X, do Y' style command aliases.
+
+        The delimiter that separates the surface form from the command (e.g.,
+        " do ") is loaded from cemm/data/teaching_patterns.json so it can be
+        language-specific without hardcoding English surface forms.
+        """
         events: list[TeachingEvent] = []
         parts = text.split(trigger)
         if len(parts) < 2:
             return events
         after = parts[1].strip()
-        # Split on comma or "do"
         chunks = after.split(",")
         if not chunks:
             return events
@@ -165,8 +170,11 @@ class TeachingInterpreter:
         command = ""
         if len(chunks) > 1:
             command = chunks[1].strip()
-        elif " do " in after:
-            command = after.split(" do ", 1)[1].strip()
+        else:
+            for delimiter in self._command_alias_delimiters:
+                if delimiter in after:
+                    command = after.split(delimiter, 1)[1].strip()
+                    break
         if alias and command:
             events.append(TeachingEvent(
                 kind="command_alias",

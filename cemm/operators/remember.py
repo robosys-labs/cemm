@@ -1,4 +1,9 @@
 from __future__ import annotations
+import json
+import time
+import uuid
+from pathlib import Path
+
 from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.action import ActionKind
 from ..types.claim import Claim, ClaimStatus
@@ -8,7 +13,16 @@ from ..types.trace import Trace
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
 from ..synthesis.template import TemplateStrategy
-import time, uuid
+
+
+_OPERATOR_MESSAGES_PATH = Path(__file__).parents[1] / "data" / "operator_messages.json"
+
+
+def _load_operator_messages(language: str = "en") -> dict:
+    if not _OPERATOR_MESSAGES_PATH.exists():
+        return {}
+    data = json.loads(_OPERATOR_MESSAGES_PATH.read_text(encoding="utf-8"))
+    return data.get(language, data.get("en", {}))
 
 
 class RememberOperator(BaseOperator):
@@ -16,11 +30,19 @@ class RememberOperator(BaseOperator):
     def action_kind(self) -> ActionKind:
         return ActionKind.REMEMBER
 
+    def _message(self, message_id: str, variables: dict | None = None) -> str:
+        ctx = self._ctx
+        locale = getattr(ctx.kernel.user, "locale", None) if ctx.kernel.user else None
+        language = (locale or {}).get("language", "en")
+        messages = _load_operator_messages(language).get("remember", {})
+        return messages.get(message_id, message_id).format(**(variables or {}))
+
     def execute(self, ctx: OperatorContext) -> OperatorResult:
+        self._ctx = ctx
         if not ctx.kernel.permission.may_execute:
-            return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
+            return OperatorResult(success=False, output_text=self._message("permission_denied_execute"))
         if not ctx.kernel.permission.may_store:
-            return OperatorResult(success=False, output_text="Permission denied: storage not allowed")
+            return OperatorResult(success=False, output_text=self._message("permission_denied_storage"))
         now = time.time()
         subject_id = ctx.params.get("subject_entity_id", "")
         predicate = ctx.params.get("predicate", "")
@@ -41,17 +63,17 @@ class RememberOperator(BaseOperator):
         if not raw_text or len(raw_text) < 2:
             return OperatorResult(
                 success=False,
-                output_text="I don't have enough information to store.",
+                output_text=self._message("insufficient_information"),
             )
         if raw_text.endswith("?"):
             return OperatorResult(
                 success=False,
-                output_text="Questions are not stored as claims.",
+                output_text=self._message("question_not_stored"),
             )
         if not predicate:
             return OperatorResult(
                 success=False,
-                output_text="I couldn't determine a predicate for this fact.",
+                output_text=self._message("predicate_missing"),
             )
 
         # Profile lane: facts about the user are stored with subject "user" and a
@@ -127,7 +149,7 @@ class RememberOperator(BaseOperator):
             kind=SignalKind.MEMORY_UPDATE,
             source_id="remember_operator",
             source_type=SourceType.ASSISTANT,
-            content=f"Stored claim: {subject_id} {predicate}",
+            content=self._message("stored_claim", {"subject_id": subject_id, "predicate": predicate}),
             observed_at=now,
             context_id=ctx.kernel.id,
             salience=0.5,

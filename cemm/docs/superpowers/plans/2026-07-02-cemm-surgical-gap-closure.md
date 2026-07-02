@@ -472,8 +472,13 @@ Remaining architectural gaps (closed in a follow-up pass):
 - SAG-less training export paths → `__main__.py` passes `semantic_answer_graph` to `serialize_turn`; `training_export.py` includes SAG-derived records and trace metadata.
 - Hardcoded English stop words, command words, causal/temporal relation markers, target prepositions, and named-entity extraction lists in `kernel/semantic_interpreter.py` → moved to `cemm/data/semantic_interpreter_words.json`.
 - Hardcoded English causal connectors and phrase-extraction stop words in `learning/inductor.py` → moved to `cemm/data/semantic_interpreter_words.json`.
-- Hardcoded English open-domain conversational intent phrases in `kernel/decision_router.py` (`_classify_general_question`) → replaced with data-driven SEG/UOL frame detection; new frames `story_request`, `food_recommendation_request`, and `recommendation_request` added to `cemm/data/uol_semantics.json`.
+- Hardcoded English open-domain conversational intent phrases in `kernel/decision_router.py` (`_classify_general_question`) → replaced with data-driven SEG/UOL frame detection; new frames `story_request`, `food_recommendation_request`, `recommendation_request`, and `weather_query` added to `cemm/data/uol_semantics.json`.
+- Hardcoded English fallback word sets in `kernel/context_inference.py` (greeting, acknowledgment, clarification, exit, weather) → loaded from `cemm/data/uol_semantics.json` frame aliases.
+- Hardcoded English pure-acknowledgment phrase set in `kernel/decision_router.py` (`_is_pure_acknowledgment`) → moved to `cemm/data/uol_semantics.json` under `pure_acknowledgment_phrases`.
+- Hardcoded English self-capability output sentences in `synthesis/realizer.py` (`_self_capability_surface`) → replaced with template-based rendering using `cemm/data/response_templates.json` (`self_capability` template).
+- Hardcoded English command-alias delimiter in `kernel/teaching_interpreter.py` (`_extract_command_alias`) → moved to `cemm/data/teaching_patterns.json` under `command_alias_delimiters`.
+- Hardcoded English operator output strings in `operators/remember.py` → moved to `cemm/data/operator_messages.json` (language-indexed, keyed by operator and message id).
 
 Tests: `cemm/tests/test_data_driven_semantic_layer.py` covers all of the above.
 
-All identified deterministic shortcut gaps in this pass are now closed. The remaining architectural work is expanding the data files with non-English language seeds and generalizing the last English-specific stop-word heuristics (e.g., `teaching_interpreter._extract_command_alias`) when a language-agnostic pattern is available.
+All identified deterministic shortcut gaps in this pass are now closed. The remaining architectural work is expanding the data files with non-English language seeds.
