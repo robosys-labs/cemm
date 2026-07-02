@@ -144,6 +144,7 @@ class ConversationActPacket:
     discourse_relation: str = "none"  # none, elaboration, contrast, sequence, answer_to_pending
     expected_response_to_previous: str = ""  # set when answering a pending assistant question
     raw_text: str = ""
+    diagnostics: dict = field(default_factory=dict)
 
     @property
     def requires_evidence(self) -> bool:

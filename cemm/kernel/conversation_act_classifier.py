@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,9 @@ from ..registry.semantic_matcher import SemanticMatcher
 from ..registry.registry import Registry
 from .text_match import tokenize_surface
 from .intent_parser import parse_intent, CompositionalIntent
+
+_logger = logging.getLogger("cemm.classifier")
+_DEBUG = os.environ.get("CEMM_DEBUG", "").lower() in ("1", "true", "yes")
 
 
 _UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
@@ -56,6 +61,14 @@ def _load_uol_metadata() -> tuple[
         if cue_type:
             cue_sets.setdefault(cue_type, set())
             cue_sets[cue_type].update(frame_aliases[key])
+    if _DEBUG:
+        _logger.debug(
+            "UOL metadata loaded: %d frames, %d act_types, %d cue_sets [%s]",
+            len(frame_aliases),
+            len(frame_to_act),
+            len(cue_sets),
+            ", ".join(f"{k}={len(v)}" for k, v in sorted(cue_sets.items())),
+        )
     return frame_aliases, frame_to_act, frame_polarity, frame_intensity, cue_sets
 
 
@@ -427,10 +440,26 @@ class ConversationActClassifier:
         primary = acts[0]
         secondary = acts[1:]
 
+        # ── Collect diagnostics for tracing/debugging ────────────────
+        diagnostics: dict[str, Any] = {
+            "matched_frame_keys": sorted(frame_keys),
+            "content_question": is_content_question,
+            "pure_clarification": is_pure_clarification,
+            "fresh_world_query": _is_fresh_world_query(content_lower, frame_keys),
+            "scoped_assistance": _is_scoped_assistance_request(content_lower),
+            "cue_set_sizes": {k: len(v) for k, v in _CUE_SETS.items()},
+            "acts": [
+                {"act_type": a.act_type, "polarity": a.polarity, "confidence": a.confidence}
+                for a in acts
+            ],
+            "discourse_relation": discourse_relation,
+        }
+
         return ConversationActPacket(
             primary=primary,
             secondary=secondary,
             discourse_relation=discourse_relation,
             expected_response_to_previous=expected_response,
             raw_text=signal.content,
+            diagnostics=diagnostics,
         )

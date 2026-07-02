@@ -47,13 +47,15 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
     },
     "assistant_insult_useless": {
         "speech_act": "insult",
-        "patterns": ["useless", "worthless", "broken"],
+        "frame_key": "useless_assistant",
+        "patterns": _aliases("useless_assistant"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.5, "arousal": 0.4, "frustration": 0.4, "hostility": 0.3, "playfulness": 0.0},
     },
     "user_complaint_general": {
         "speech_act": "complaint",
-        "patterns": ["hate", "cant stand", "can't stand", "terrible", "awful"],
+        "frame_key": "user_complaint",
+        "patterns": _aliases("user_complaint"),
         "target": "assistant",
         "affect_baseline": {"valence": -0.3, "arousal": 0.4, "frustration": 0.2, "hostility": 0.1, "playfulness": 0.0},
     },

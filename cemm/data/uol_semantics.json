@@ -16,6 +16,7 @@
     {"canonical_key": "assistance_request", "aliases": ["help", "assist", "support", "guide"], "act_type": "capability_query", "intensity": 0.6},
     {"canonical_key": "state_preference", "aliases": ["prefer", "like", "favorite", "love"], "act_type": "preference_assertion", "intensity": 0.6},
     {"canonical_key": "low_competence", "aliases": ["dumb", "stupid", "fool", "idiot"], "act_type": "frustration_signal", "polarity": "negative", "intensity": 0.8},
+    {"canonical_key": "useless_assistant", "aliases": ["useless", "worthless", "broken"], "act_type": "frustration_signal", "polarity": "negative", "intensity": 0.8},
     {"canonical_key": "high_quality", "aliases": ["great", "awesome", "excellent", "amazing", "helpful"], "act_type": "assistant_evaluation", "polarity": "positive", "intensity": 0.7},
     {"canonical_key": "temporal_before", "aliases": ["before", "prior_to"], "act_type": "unknown"},
     {"canonical_key": "temporal_after", "aliases": ["after", "then", "next", "following"], "act_type": "unknown"},
@@ -49,6 +50,7 @@
     {"canonical_key": "confusion_repair", "aliases": ["what in the world", "what the", "what on earth", "what the heck", "what the hell", "i'm confused", "im confused", "this makes no sense", "i don't get this", "i don't follow", "you lost me"], "act_type": "confusion_repair", "intensity": 0.6},
     {"canonical_key": "playful_repair", "aliases": ["lol what", "lol huh", "haha what", "lmao what", "lol wait", "haha wait", "lol come again"], "act_type": "playful_repair", "intensity": 0.6},
     {"canonical_key": "frustration_signal", "aliases": ["you are dumb", "you are stupid", "you are useless", "you are broken", "this is dumb", "this is stupid", "you suck", "you're dumb", "you're stupid", "you're useless", "useless", "broken", "honestly it seems you can't do much"], "act_type": "frustration_signal", "polarity": "negative", "intensity": 0.8},
+    {"canonical_key": "user_complaint", "aliases": ["hate", "cant stand", "can't stand", "terrible", "awful", "horrible", "worst", "hate this", "hate it"], "act_type": "user_complaint", "polarity": "negative", "intensity": 0.7},
     {"canonical_key": "open_domain_entity_query", "aliases": ["do you know", "have you heard of", "tell me about", "who is", "what is", "where is", "what do you know about"], "act_type": "open_domain_entity_query", "intensity": 0.7},
 
     {"canonical_key": "grammatical_negation", "aliases": ["not", "never", "no", "nobody", "nothing", "nowhere", "neither", "nor", "cannot", "cant", "wont", "dont", "doesnt", "isnt", "arent", "wasnt", "werent"], "act_type": "unknown", "cue_type": "negation"},

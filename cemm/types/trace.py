@@ -33,3 +33,4 @@ class Trace:
     realization_details: dict = field(default_factory=dict)
     verification_details: dict = field(default_factory=dict)
     typed_latents: TypedLatents | None = None
+    classification_diagnostics: dict = field(default_factory=dict)
