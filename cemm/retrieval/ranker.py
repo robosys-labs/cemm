@@ -66,6 +66,22 @@ class Ranker:
             contradiction_penalty = 0.0
             if claim.status == ClaimStatus.DISPUTED:
                 contradiction_penalty = abs(contradiction_weight(0.5))
+            semantic_compatibility_penalty = 0.0
+            if graph:
+                process_keys = {p.get("frame_key", "") for p in graph.processes}
+                query_predicates = {p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "").startswith("claim_")}
+                query_predicates = {k.replace("claim_", "") for k in query_predicates}
+                if process_keys & {"self_identity_query", "user_identity_query", "user_name_query"}:
+                    if claim.predicate not in {"name", "preferred_name", "called", "known_as", "identity_name"}:
+                        semantic_compatibility_penalty += 0.4
+                elif process_keys & {"self_capability_query", "self_knowledge_query"}:
+                    if claim.predicate not in {"capability", "can", "does", "function", "role"}:
+                        semantic_compatibility_penalty += 0.4
+                elif query_predicates and claim.predicate not in query_predicates:
+                    semantic_compatibility_penalty += 0.2
+                # Unknown lexeme / teaching frames should not retrieve claims at all.
+                if process_keys & {"command_alias_teaching", "definition_teaching", "correction", "unknown_intent"}:
+                    semantic_compatibility_penalty += 0.5
             s = score_claim(
                 relevance=relevance,
                 trust=claim.trust,
@@ -75,6 +91,7 @@ class Ranker:
                 permission_valid=permission_valid,
                 frame_validity=frame_validity,
                 contradiction_penalty=contradiction_penalty,
+                semantic_compatibility_penalty=semantic_compatibility_penalty,
             )
             scored.append((claim, s))
 

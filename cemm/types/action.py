@@ -16,6 +16,9 @@ class ActionKind(str, Enum):
     CALL_TOOL = "call_tool"
     REFLECT = "reflect"
     ABSTAIN = "abstain"
+    LEARN_LEXEME = "learn_lexeme"
+    LEARN_COMMAND_ALIAS = "learn_command_alias"
+    LEARN_CORRECTION = "learn_correction"
 
 
 class ActionStatus(str, Enum):

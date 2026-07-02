@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from ..types.context_kernel import ContextKernel
 from ..types.packets import (
     ActionPlan,
@@ -30,6 +32,7 @@ class DecisionRouter:
         input_text: str = "",
         observation_semantics: ObservationSemantics | None = None,
         context_inference: ContextInference | None = None,
+        store: Any | None = None,
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
         selected_model_ids = memory_packet.selected_model_ids if memory_packet else []
@@ -37,6 +40,13 @@ class DecisionRouter:
         missing_slots = (grounded_graph.missing_slots if grounded_graph else
                          kernel.goal.missing_slots if kernel.goal else [])
         required_slots = list(kernel.goal.required_slots) if kernel.goal else []
+        graph_frame_keys = {p.get("frame_key", "") for p in graph.processes}
+
+        # Teaching/learning intent detection: definitions, aliases, and corrections
+        # take precedence so CEMM learns surface-to-meaning mappings before answering.
+        teaching_intent = self._detect_teaching_intent(graph, input_text)
+        if teaching_intent:
+            return teaching_intent
 
         # If answer candidates are provided, rank them and use the best one
         if answer_candidates:
@@ -109,22 +119,99 @@ class DecisionRouter:
                 reason="SEG contains claim candidates for storage",
             )
 
-        # Self-query: answer from selected self claims when available
+        # Predicate-aware query handlers: self identity/capability and user identity/name.
+        # Evidence must exist AND match the requested predicate/frame; otherwise ask/abstain.
         self_query_frames = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
-        if any(proc.get("frame_key") in self_query_frames for proc in graph.processes) and selected_claim_ids:
-            return DecisionPacket(
-                action_kind="answer",
-                action_plan=ActionPlan(
+        user_query_frames = {"user_identity_query", "user_name_query"}
+        identity_predicates = {"name", "preferred_name", "called", "known_as", "identity_name"}
+        capability_predicates = {"capability", "can", "does", "function", "role"}
+
+        def _claims_for_ids(claim_ids: list[str]) -> list:
+            if not store or not claim_ids:
+                return []
+            return [c for c in (store.claims.get(cid) for cid in claim_ids) if c is not None]
+
+        def _evidence_matches_frame(frame: str, claim_ids: list[str]) -> bool:
+            claims = _claims_for_ids(claim_ids)
+            if not claims:
+                return False
+            if frame in {"self_identity_query", "user_identity_query", "user_name_query"}:
+                return all(c.predicate in identity_predicates for c in claims)
+            if frame in {"self_capability_query", "self_knowledge_query"}:
+                return all(c.predicate in capability_predicates for c in claims)
+            return True
+
+        matched_self_frame = next(
+            (p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "") in self_query_frames),
+            "",
+        )
+        if matched_self_frame:
+            if selected_claim_ids and _evidence_matches_frame(matched_self_frame, selected_claim_ids):
+                intent = matched_self_frame.replace("_query", "")
+                return DecisionPacket(
                     action_kind="answer",
-                    selected_claim_ids=selected_claim_ids,
-                    selected_model_ids=selected_model_ids,
-                    execution_allowed=True,
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        execution_allowed=True,
+                        confidence=min(0.9, graph.confidence),
+                        params={"intent": intent},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
                     confidence=min(0.9, graph.confidence),
-                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                ),
-                confidence=min(0.9, graph.confidence),
-                reason="self query answered from selected self claims",
-            )
+                    reason=f"self query ({matched_self_frame}) answered from verified claims",
+                )
+            else:
+                return DecisionPacket(
+                    action_kind="ask",
+                    action_plan=ActionPlan(
+                        action_kind="ask",
+                        execution_allowed=True,
+                        confidence=0.7,
+                        params={"intent": "self_query_unknown"},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.7,
+                    reason=f"self query ({matched_self_frame}) without matching evidence",
+                )
+
+        matched_user_frame = next(
+            (p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "") in user_query_frames),
+            "",
+        )
+        if matched_user_frame:
+            if selected_claim_ids and _evidence_matches_frame(matched_user_frame, selected_claim_ids):
+                intent = "user_identity" if matched_user_frame == "user_identity_query" else "user_name"
+                return DecisionPacket(
+                    action_kind="answer",
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        execution_allowed=True,
+                        confidence=min(0.9, graph.confidence),
+                        params={"intent": intent},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=min(0.9, graph.confidence),
+                    reason=f"user query ({matched_user_frame}) answered from verified claims",
+                )
+            else:
+                intent = "user_identity_unknown" if matched_user_frame == "user_identity_query" else "user_name_unknown"
+                return DecisionPacket(
+                    action_kind="answer",
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        selected_model_ids=selected_model_ids,
+                        execution_allowed=True,
+                        confidence=0.7,
+                        params={"intent": intent},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.7,
+                    reason=f"user query ({matched_user_frame}) without matching evidence",
+                )
 
         # If user is asking for clarification and there are no claim candidates,
         # route to ask even if claims were retrieved (e.g. "how do you mean?"
@@ -330,17 +417,28 @@ class DecisionRouter:
 
         # Explicit commands take priority over conversational intents
         if "command_remember" in frame_keys:
-            return DecisionPacket(
-                action_kind="remember",
-                action_plan=ActionPlan(
-                    action_kind="remember",
-                    execution_allowed=True,
-                    confidence=0.85,
-                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                ),
-                confidence=0.85,
-                reason="remember command detected in SEG processes",
+            # Interrogative guard: "do you remember me?" is not a remember command
+            input_lower = input_text.lower().strip() if input_text else ""
+            is_question = (
+                input_lower.endswith("?")
+                or any(input_lower.startswith(p) for p in (
+                    "do you ", "can you ", "could you ", "did you ",
+                    "have you ", "are you ", "is ", "what ", "whats ",
+                    "who ", "where ", "when ", "why ", "how ",
+                ))
             )
+            if not is_question:
+                return DecisionPacket(
+                    action_kind="remember",
+                    action_plan=ActionPlan(
+                        action_kind="remember",
+                        execution_allowed=True,
+                        confidence=0.85,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.85,
+                    reason="remember command detected in SEG processes",
+                )
 
         if "command_reflect" in frame_keys:
             return DecisionPacket(
@@ -410,6 +508,68 @@ class DecisionRouter:
                 reason="discourse marker — clarification needed",
             )
 
+        return None
+
+    def _detect_teaching_intent(
+        self,
+        graph: SemanticEventGraph,
+        input_text: str,
+    ) -> DecisionPacket | None:
+        """Route surface teaching patterns (definition, alias, correction) to learning actions."""
+        for proc in graph.processes:
+            frame_key = proc.get("frame_key", "")
+            params = proc.get("params", {})
+            if frame_key == "command_alias_teaching":
+                return DecisionPacket(
+                    action_kind="learn_command_alias",
+                    action_plan=ActionPlan(
+                        action_kind="learn_command_alias",
+                        execution_allowed=True,
+                        confidence=proc.get("confidence", 0.6),
+                        params={"teaching_event": params},
+                    ),
+                    confidence=proc.get("confidence", 0.6),
+                    reason="user defined a command alias",
+                )
+            if frame_key == "definition_teaching":
+                return DecisionPacket(
+                    action_kind="learn_lexeme",
+                    action_plan=ActionPlan(
+                        action_kind="learn_lexeme",
+                        execution_allowed=True,
+                        confidence=proc.get("confidence", 0.6),
+                        params={"teaching_event": params},
+                    ),
+                    confidence=proc.get("confidence", 0.6),
+                    reason="user defined a word or alias",
+                )
+            if frame_key == "correction":
+                return DecisionPacket(
+                    action_kind="learn_correction",
+                    action_plan=ActionPlan(
+                        action_kind="learn_correction",
+                        execution_allowed=True,
+                        confidence=proc.get("confidence", 0.7),
+                        params={"teaching_event": params},
+                    ),
+                    confidence=proc.get("confidence", 0.7),
+                    reason="user corrected a previous meaning",
+                )
+        # Unknown lexeme gap: if the surface signal contained unknown tokens and the
+        # user appears to be asking about them, ask for clarification rather than guess.
+        if input_text.endswith("?"):
+            for entity in graph.entity_refs:
+                if entity.get("role") == "unknown_lexeme":
+                    return DecisionPacket(
+                        action_kind="ask",
+                        action_plan=ActionPlan(
+                            action_kind="ask",
+                            execution_allowed=True,
+                            confidence=0.6,
+                        ),
+                        confidence=0.6,
+                        reason=f"ask meaning of unknown term '{entity.get('entity_id', '')}'",
+                    )
         return None
 
     def _estimate_risk(

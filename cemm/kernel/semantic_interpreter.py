@@ -10,6 +10,8 @@ from ..store.store import Store
 from ..types.semantic_event_graph import SemanticEventGraph, SemanticEdge
 from ..types.signal import Signal
 from ..types.context_kernel import ContextKernel
+from ..learning.surface_tagger import SurfaceTagger
+from ..learning.lexeme_memory import LexemeMemory
 
 
 def _load_default_ner_tagger() -> "NERTagger | None":
@@ -35,11 +37,14 @@ class SemanticInterpreter:
         uol_mapper: UOLMapper,
         artifact_store: ArtifactStore | None = None,
         store: Store | None = None,
+        lexeme_memory: LexemeMemory | None = None,
     ) -> None:
         self._uol_mapper = uol_mapper
         self._artifact_store = artifact_store
         self._store = store
+        self._lexeme_memory = lexeme_memory
         self._ner_tagger = _load_default_ner_tagger()
+        self._surface_tagger = SurfaceTagger(self._ner_tagger)
 
     def run(self, signal: Signal, kernel: ContextKernel) -> SemanticEventGraph:
         if self._artifact_store:
@@ -81,6 +86,10 @@ class SemanticInterpreter:
         # process inference both fail to produce entity refs.
         if not entity_refs:
             entity_refs = self._extract_named_entities(signal.content)
+
+        # Surface semantic layer: enrich entity refs with tagged spans, unknown
+        # lexemes, and learned aliases from the surface tagger.
+        entity_refs = self._merge_surface_semantics(signal, entity_refs)
 
         claim_refs = self._lookup_claim_refs(entity_refs, kernel)
         claim_candidates = self._extract_claim_candidates_from_atoms(signal.content, processes, entity_refs)
@@ -431,6 +440,29 @@ class SemanticInterpreter:
                 phrase.append(w)
             i += direction
         return " ".join(phrase)
+
+    def _merge_surface_semantics(
+        self, signal: Signal, entity_refs: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Enrich entity refs with surface-tagged semantic spans and unknown lexemes."""
+        unknowns: list[str] = []
+        if signal.normalized and signal.normalized.unknown_tokens:
+            unknowns = signal.normalized.unknown_tokens
+        words = signal.content.split()
+        seen = {e.get("entity_id", "").lower() for e in entity_refs}
+        seen.discard("")
+        for span in self._surface_tagger.extract_semantic_spans(words, unknowns):
+            text = span.get("text", "").lower()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            entity_refs.append({
+                "kind": "entity_ref",
+                "entity_id": text,
+                "role": span.get("role", "entity"),
+                "confidence": span.get("confidence", 0.6),
+            })
+        return entity_refs
 
     def _extract_named_entities(self, content: str) -> list[dict[str, Any]]:
         """Extract named entities from content when the UOL mapper provides none.

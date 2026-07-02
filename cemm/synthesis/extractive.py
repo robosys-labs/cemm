@@ -17,7 +17,7 @@ class ExtractiveStrategy:
         params: dict,
     ) -> SynthesisResult:
         claim_ids = params.get("claim_ids") or params.get("selected_claim_ids") or []
-        max_claims = params.get("max_claims", 5)
+        max_claims = params.get("max_claims", min(len(claim_ids), 10) or 5)
         parts = []
         for cid in claim_ids[:max_claims]:
             claim = store.claims.get(cid)

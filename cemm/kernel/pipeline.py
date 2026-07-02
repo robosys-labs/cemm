@@ -22,6 +22,8 @@ from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from ..registry.uol_mapper import UOLMapper
+from ..kernel.teaching_interpreter import TeachingInterpreter
+from ..learning.lexeme_memory import LexemeMemory
 from .context_inference import ContextInferenceEngine
 from .semantic_interpreter import SemanticInterpreter
 from .grounding import GroundingPipeline
@@ -62,10 +64,17 @@ class Pipeline:
         self._normalizer = Normalizer(registry)
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
-        self._uol_mapper = UOLMapper(registry)
+        self._lexeme_memory = LexemeMemory()
+        self._teaching_interpreter = TeachingInterpreter()
+        self._uol_mapper = UOLMapper(
+            registry,
+            lexeme_memory=self._lexeme_memory,
+            teaching_interpreter=self._teaching_interpreter,
+        )
         self._artifact_store = ArtifactStore(store)
         self._semantic_interpreter = SemanticInterpreter(
             self._uol_mapper, artifact_store=self._artifact_store, store=store,
+            lexeme_memory=self._lexeme_memory,
         )
         self._text_normalizer = TextNormalizer()
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
@@ -229,6 +238,7 @@ class Pipeline:
             input_text=signal.content,
             observation_semantics=signal.observation_semantics,
             context_inference=context_inference,
+            store=self._store,
         )
 
         self._check_budget(kernel, start)

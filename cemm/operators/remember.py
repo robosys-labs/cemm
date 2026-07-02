@@ -28,6 +28,29 @@ class RememberOperator(BaseOperator):
         domain = ctx.params.get("domain", "general")
         qualifiers = ctx.params.get("qualifiers", {})
 
+        # Memory write gates: do not store questions, raw commands, or empty facts.
+        raw_text = str(object_value or "").strip()
+        if not raw_text or len(raw_text) < 2:
+            return OperatorResult(
+                success=False,
+                output_text="I don't have enough information to store.",
+            )
+        if raw_text.endswith("?"):
+            return OperatorResult(
+                success=False,
+                output_text="Questions are not stored as claims.",
+            )
+        if raw_text.lower() in ("remember", "save", "store", "note"):
+            return OperatorResult(
+                success=False,
+                output_text="Please tell me what you'd like me to remember.",
+            )
+        if not predicate:
+            return OperatorResult(
+                success=False,
+                output_text="I couldn't determine a predicate for this fact.",
+            )
+
         claim = Claim(
             id=uuid.uuid4().hex[:16],
             subject_entity_id=subject_id,

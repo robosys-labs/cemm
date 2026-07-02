@@ -23,6 +23,7 @@ class ProcessUOLAtom:
     polarity: str = "affirmed"
     intensity: float = 0.5
     confidence: float = 0.5
+    params: dict = field(default_factory=dict)
 
 
 @dataclass

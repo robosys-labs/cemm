@@ -24,6 +24,7 @@ from .operators.retrieve_op import RetrieveOperator
 from .operators.reflect import ReflectOperator
 from .operators.abstain import AbstainOperator
 from .operators.call_tool import CallToolOperator
+from .operators.learn import LearnOperator
 from .operators.base import OperatorContext
 from .types.action import Action, ActionStatus
 from .learning.online import OnlineLearner
@@ -114,6 +115,8 @@ def seed_registry(registry: Registry) -> None:
         ("self_identity_query", ["who are you", "what are you", "tell me about yourself", "what is your name"]),
         ("self_capability_query", ["what can you do", "your capabilities", "what do you know", "how do you work"]),
         ("self_knowledge_query", ["what do you know about yourself", "describe yourself", "what are you made of"]),
+        ("user_identity_query", ["do you remember me", "do you know me", "do you know who i am", "who am i"]),
+        ("user_name_query", ["what's my name", "what is my name", "do you know my name", "whats my name"]),
     ]
     for i, (canonical, aliases) in enumerate(uol_semantics):
         registry.register(RegistryEntry(
@@ -376,6 +379,7 @@ def process_input(
             input_text=text,
             observation_semantics=input_signal.observation_semantics,
             context_inference=context_inference,
+            store=store,
         )
 
     kind: ActionKind | None = None
@@ -394,6 +398,9 @@ def process_input(
             "synthesize": ActionKind.SYNTHESIZE,
             "simulate": ActionKind.SIMULATE,
             "create_model_candidate": ActionKind.CREATE_MODEL_CANDIDATE,
+            "learn_lexeme": ActionKind.LEARN_LEXEME,
+            "learn_command_alias": ActionKind.LEARN_COMMAND_ALIAS,
+            "learn_correction": ActionKind.LEARN_CORRECTION,
         }
         kind = _action_kind_map.get(decision.action_kind)
         ap = decision.action_plan
@@ -411,6 +418,8 @@ def process_input(
                 "seg_confidence": pipeline_result.semantic_event_graph.confidence if pipeline_result.semantic_event_graph else 0.0,
                 "decision_reason": decision.reason,
             }
+            if ap and ap.params:
+                params["intent"] = ap.params.get("intent", "")
             if sim_result is not None:
                 params["simulation_claims"] = sim_result.predicted_claims
                 params["simulation_confidence"] = sim_result.confidence
@@ -428,31 +437,53 @@ def process_input(
                 }
             else:
                 stripped = text.strip()
-                cmd_entry = registry.get_uol_semantic("command_remember")
-                cmd_aliases = [cmd_entry.canonical_key] + cmd_entry.aliases if cmd_entry else ["remember", "save", "store", "note"]
-                params = {
-                    "subject_entity_id": "user",
-                    "predicate": "noted",
-                    "object_value": stripped,
-                    "domain": "general",
-                }
-                for alias in cmd_aliases:
-                    if stripped.lower().startswith(alias + " "):
-                        rest = stripped[len(alias) + 1:]
-                        parts = rest.split(maxsplit=1)
-                        params = {
-                            "subject_entity_id": "user",
-                            "predicate": parts[0] if parts else "noted",
-                            "object_value": parts[1] if len(parts) > 1 else "",
-                            "domain": "general",
-                        }
-                        break
+                # Interrogative guard: never fallback-store questions as claims.
+                # "Do you remember me?" should not become user noted Do you remember me?
+                is_question = (
+                    stripped.endswith("?")
+                    or any(stripped.lower().startswith(p) for p in (
+                        "do you ", "can you ", "could you ", "did you ",
+                        "have you ", "are you ", "is ", "what ", "whats ",
+                        "who ", "where ", "when ", "why ", "how ",
+                    ))
+                )
+                if is_question:
+                    # Redirect to abstain — questions must not be stored as claims.
+                    kind = ActionKind.ABSTAIN
+                    params = {"reason": "Question cannot be stored as a claim"}
+                else:
+                    cmd_entry = registry.get_uol_semantic("command_remember")
+                    cmd_aliases = [cmd_entry.canonical_key] + cmd_entry.aliases if cmd_entry else ["remember", "save", "store", "note"]
+                    params = {
+                        "subject_entity_id": "user",
+                        "predicate": "noted",
+                        "object_value": stripped,
+                        "domain": "general",
+                    }
+                    for alias in cmd_aliases:
+                        if stripped.lower().startswith(alias + " "):
+                            rest = stripped[len(alias) + 1:]
+                            parts = rest.split(maxsplit=1)
+                            params = {
+                                "subject_entity_id": "user",
+                                "predicate": parts[0] if parts else "noted",
+                                "object_value": parts[1] if len(parts) > 1 else "",
+                                "domain": "general",
+                            }
+                            break
         elif kind == ActionKind.REFLECT:
             params = {}
             if sim_result is not None:
                 params["simulation_claims"] = sim_result.predicted_claims
         elif kind == ActionKind.RETRIEVE:
             params = {}
+        elif kind in (
+            ActionKind.LEARN_LEXEME,
+            ActionKind.LEARN_COMMAND_ALIAS,
+            ActionKind.LEARN_CORRECTION,
+        ):
+            params = dict(ap.params) if ap and ap.params else {}
+            params["action_kind"] = kind
 
     # Safety net: if no SEG was produced, abstain
     if kind is None:
@@ -464,6 +495,7 @@ def process_input(
         input_signal=input_signal,
         store=store,
         registry=registry,
+        lexeme_memory=pipeline._lexeme_memory,
         selected_claim_ids=selected_claim_ids,
         selected_model_ids=selected_model_ids,
         grounded_graph_id=grounded_graph.id if grounded_graph else None,
@@ -675,6 +707,12 @@ def main() -> None:
         RetrieveOperator, ReflectOperator, CallToolOperator, AbstainOperator,
     ]:
         op_registry.register(op_class())
+
+    # Learning operators share the pipeline's lexeme memory.
+    learn_lexeme_memory = pipeline._lexeme_memory
+    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_LEXEME))
+    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_COMMAND_ALIAS))
+    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_CORRECTION))
 
     context_id = f"session_{int(time.time())}"
     turn_count = [0]

@@ -29,6 +29,8 @@ from cemm.operators.retrieve_op import RetrieveOperator
 from cemm.operators.simulate import SimulateOperator
 from cemm.operators.synthesize import SynthesizeOperator
 from cemm.operators.call_tool import CallToolOperator
+from cemm.operators.learn import LearnOperator
+from cemm.types.action import ActionKind
 from cemm.__main__ import process_input, seed_registry, seed_self_state
 
 # Global state — single session for demo
@@ -49,6 +51,12 @@ for op in [
     RetrieveOperator(), SimulateOperator(), SynthesizeOperator(), CallToolOperator(),
 ]:
     _op_registry.register(op)
+
+# Learning operators share the pipeline's lexeme memory.
+_learn_mem = _pipeline._lexeme_memory
+_op_registry.register(LearnOperator(lexeme_memory=_learn_mem, action_kind=ActionKind.LEARN_LEXEME))
+_op_registry.register(LearnOperator(lexeme_memory=_learn_mem, action_kind=ActionKind.LEARN_COMMAND_ALIAS))
+_op_registry.register(LearnOperator(lexeme_memory=_learn_mem, action_kind=ActionKind.LEARN_CORRECTION))
 
 _context_id = "web_demo"
 _turn_count = [0]

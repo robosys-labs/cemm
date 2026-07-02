@@ -29,6 +29,7 @@ def score_claim(
     temporal_containment: float = 1.0,
     risk_penalty: float = 0.0,
     cost_penalty: float = 0.0,
+    semantic_compatibility_penalty: float = 0.0,
 ) -> float:
     if not permission_valid:
         return 0.0
@@ -41,7 +42,7 @@ def score_claim(
         * recency
         * frame_validity
         * temporal_containment
-    ) - contradiction_penalty - risk_penalty - cost_penalty
+    ) - contradiction_penalty - risk_penalty - cost_penalty - semantic_compatibility_penalty
 
 
 def score_model(

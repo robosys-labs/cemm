@@ -5,13 +5,22 @@ from ..types.context_kernel import ContextKernel
 from .registry import Registry
 from .semantic_matcher import SemanticMatcher
 from ..kernel.semantic_clusters import SemanticClusterRegistry
+from ..kernel.teaching_interpreter import TeachingInterpreter, TeachingEvent
+from ..learning.lexeme_memory import LexemeMemory, LexemeStatus
 
 
 class UOLMapper:
-    def __init__(self, registry: Registry) -> None:
+    def __init__(
+        self,
+        registry: Registry,
+        lexeme_memory: LexemeMemory | None = None,
+        teaching_interpreter: TeachingInterpreter | None = None,
+    ) -> None:
         self._registry = registry
         self._matcher = SemanticMatcher(registry)
         self._cluster_reg = SemanticClusterRegistry(registry=registry)
+        self._lexeme_memory = lexeme_memory
+        self._teaching_interpreter = teaching_interpreter or TeachingInterpreter()
         self._self_query_frames = {
             "self_identity_query": ["who are you", "what are you", "what is your name", "introduce yourself"],
             "self_capability_query": ["what do you do", "what can you do", "your capabilities", "how do you work"],
@@ -19,6 +28,19 @@ class UOLMapper:
         }
         self._self_ref_phrases = tuple(
             phrase for phrases in self._self_query_frames.values() for phrase in phrases
+        )
+        self._user_query_frames = {
+            "user_identity_query": ["do you remember me", "do you know me", "do you know who i am", "who am i"],
+            "user_name_query": ["what's my name", "what is my name", "do you know my name"],
+        }
+        self._user_query_phrases = tuple(
+            phrase for phrases in self._user_query_frames.values() for phrase in phrases
+        )
+        # Interrogative prefixes that indicate a question, not a command.
+        self._interrogative_prefixes = (
+            "do you ", "can you ", "could you ", "did you ",
+            "have you ", "are you ", "is ", "what ", "whats ",
+            "who ", "where ", "when ", "why ", "how ",
         )
 
     def map_signal(self, content: str, kernel: ContextKernel) -> list:
@@ -42,6 +64,19 @@ class UOLMapper:
             any(phrase in content_lower for phrase in self._self_ref_phrases)
             or (any(w in _insult_phrases for w in words) and any(w in ("you", "your", "yourself") for w in words))
         )
+        # User-identity query detection (e.g. "do you remember me?", "what's my name?")
+        if any(phrase in content_lower for phrase in self._user_query_phrases):
+            for frame_key, phrases in self._user_query_frames.items():
+                if any(phrase in content_lower for phrase in phrases):
+                    atoms.append(ProcessUOLAtom(
+                        frame_key=frame_key,
+                        modality="observed",
+                        polarity="affirmed",
+                        intensity=0.7,
+                        confidence=0.85,
+                    ))
+                    break
+
         if kernel.self_view.self_id and _targets_self:
             for frame_key, phrases in self._self_query_frames.items():
                 if any(phrase in content_lower for phrase in phrases):
@@ -80,6 +115,7 @@ class UOLMapper:
         conversational_keys = {"acknowledgment", "discourse_marker", "playful_acknowledgment"}
         relation_prefixes = ("temporal_", "causal_")
         self_query_keys = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
+        user_query_keys = {"user_identity_query", "user_name_query"}
 
         emitted_keys: set[str] = set()
 
@@ -106,6 +142,14 @@ class UOLMapper:
                     confidence=prob,
                 ))
             elif canonical_key in command_keys:
+                # Interrogative guard: do not emit command atoms for questions.
+                # "do you remember me?" is a question, not a remember command.
+                is_question = (
+                    content_lower.endswith("?")
+                    or any(content_lower.startswith(p) for p in self._interrogative_prefixes)
+                )
+                if is_question and canonical_key == "command_remember":
+                    continue
                 atoms.append(ProcessUOLAtom(
                     frame_key=canonical_key,
                     modality="observed",
@@ -154,6 +198,14 @@ class UOLMapper:
                     intensity=0.7,
                     confidence=prob,
                 ))
+            elif canonical_key in user_query_keys:
+                atoms.append(ProcessUOLAtom(
+                    frame_key=canonical_key,
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.7,
+                    confidence=prob,
+                ))
             elif any(canonical_key.startswith(p) for p in relation_prefixes):
                 atoms.append(ProcessUOLAtom(
                     frame_key=canonical_key,
@@ -179,8 +231,77 @@ class UOLMapper:
                 confidence=best.probability,
             ))
 
+        # Detect teaching/learning surface patterns and emit teaching atoms
+        atoms = self._apply_teaching_interpreter(content, atoms)
+
+        # Resolve learned lexeme/command aliases into process atoms
+        atoms = self._apply_lexeme_memory(content, atoms)
+
         atoms = self._cluster_fallback(content, atoms)
         self._enrich_atoms(atoms, kernel, content_lower)
+        return atoms
+
+    def _apply_teaching_interpreter(self, content: str, atoms: list) -> list:
+        """Detect definition/alias/correction patterns and emit teaching process atoms."""
+        events = self._teaching_interpreter.interpret(content)
+        for ev in events:
+            if ev.kind == "command_alias":
+                atoms.append(ProcessUOLAtom(
+                    frame_key="command_alias_teaching",
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.7,
+                    confidence=ev.confidence,
+                    params=ev.to_dict(),
+                ))
+            elif ev.kind == "definition":
+                atoms.append(ProcessUOLAtom(
+                    frame_key="definition_teaching",
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.7,
+                    confidence=ev.confidence,
+                    params=ev.to_dict(),
+                ))
+            elif ev.kind == "correction":
+                atoms.append(ProcessUOLAtom(
+                    frame_key="correction",
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.8,
+                    confidence=ev.confidence,
+                    params=ev.to_dict(),
+                ))
+        return atoms
+
+    def _apply_lexeme_memory(self, content: str, atoms: list) -> list:
+        """If a learned active command alias appears in the input, emit a command atom.
+
+        Questions are guarded so a learned alias word does not collapse a
+        question like "do you remember zibble?" into an imperative command.
+        """
+        if not self._lexeme_memory:
+            return atoms
+        content_lower = content.lower().strip()
+        is_question = (
+            content_lower.endswith("?")
+            or any(content_lower.startswith(p) for p in self._interrogative_prefixes)
+        )
+        if is_question:
+            return atoms
+        words = content_lower.split()
+        for w in words:
+            lex = self._lexeme_memory.lookup_active(w)
+            if lex and lex.role == "command_alias":
+                atoms.append(ProcessUOLAtom(
+                    frame_key="command_remember",
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.7,
+                    confidence=lex.trust,
+                    params={"alias_surface": lex.surface, "alias_meaning": lex.maps_to},
+                ))
+                break
         return atoms
 
     def _cluster_fallback(self, content: str, atoms: list) -> list:
@@ -203,6 +324,15 @@ class UOLMapper:
         frame_key = speech_act_to_frame.get(best.speech_act, "")
         if not frame_key:
             return atoms
+        # Interrogative guard for cluster fallback too
+        if frame_key == "command_remember":
+            cl = content.lower().strip()
+            is_question = (
+                cl.endswith("?")
+                or any(cl.startswith(p) for p in self._interrogative_prefixes)
+            )
+            if is_question:
+                return atoms
         atoms.append(ProcessUOLAtom(
             frame_key=frame_key,
             modality="observed",

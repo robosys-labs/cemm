@@ -23,11 +23,22 @@ class AnswerOperator(BaseOperator):
         intent = ctx.params.get("intent", "")
         selected_claims = ctx.selected_claim_ids or []
         decision_reason = ctx.params.get("decision_reason", "")
+        reason_lower = decision_reason.lower()
         # If decision router detected greeting/acknowledgment, set intent accordingly
-        if "greeting" in decision_reason.lower() and not selected_claims:
+        if "greeting" in reason_lower and not selected_claims:
             intent = "greeting"
-        elif "acknowledgment" in decision_reason.lower() and not selected_claims:
+        elif "acknowledgment" in reason_lower and not selected_claims:
             intent = "acknowledgment"
+        elif "unknown term" in reason_lower or "ask meaning" in reason_lower:
+            intent = "ask_meaning"
+            term = "that"
+            if "unknown term" in reason_lower:
+                parts = decision_reason.split("'", 2)
+                if len(parts) > 2:
+                    term = parts[1]
+            unknown_term = term
+        else:
+            unknown_term = ""
         # Propagate confidence from kernel self-view uncertainty to SAG
         seg_confidence = ctx.params.get("seg_confidence", 0.0)
         sag_confidence = max(seg_confidence, 1.0 - ctx.kernel.self_view.uncertainty) if seg_confidence > 0 else max(0.5, 1.0 - ctx.kernel.self_view.uncertainty)
@@ -46,6 +57,13 @@ class AnswerOperator(BaseOperator):
             confidence=sag_confidence,
             answer_latent=answer_latent,
         )
+        if unknown_term:
+            answer_graph.entity_refs.append({
+                "kind": "clarification",
+                "question": f"What do you mean by '{unknown_term}'?",
+                "term": unknown_term,
+                "role": "unknown_lexeme",
+            })
         simulation_claims = ctx.params.get("simulation_claims")
         if simulation_claims:
             answer_graph.entity_refs.append({

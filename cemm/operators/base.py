@@ -9,6 +9,7 @@ from ..types.context_kernel import ContextKernel
 from ..types.operator_spec import OperatorSpec
 from ..store.store import Store
 from ..registry import Registry
+from ..learning.lexeme_memory import LexemeMemory
 
 
 @dataclass
@@ -17,6 +18,7 @@ class OperatorContext:
     input_signal: Signal
     store: Store
     registry: Registry
+    lexeme_memory: LexemeMemory | None = None
     selected_claim_ids: list[str] = field(default_factory=list)
     selected_model_ids: list[str] = field(default_factory=list)
     grounded_graph_id: str | None = None

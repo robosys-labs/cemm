@@ -9,6 +9,33 @@ from .router import SynthesisRouter
 from .result import SynthesisResult
 
 
+def _name_variables(answer_graph: SemanticAnswerGraph, store: Store) -> dict:
+    for cid in answer_graph.selected_claim_ids:
+        claim = store.claims.get(cid)
+        if claim and claim.object_value:
+            return {"name": str(claim.object_value)}
+    return {"name": "you"}
+
+
+def _self_identity_variables(answer_graph: SemanticAnswerGraph, store: Store) -> dict:
+    for cid in answer_graph.selected_claim_ids:
+        claim = store.claims.get(cid)
+        if claim and claim.object_value:
+            return {"name": str(claim.object_value), "role": claim.predicate}
+    return {"name": "CEMM", "role": "assistant"}
+
+
+def _self_capability_variables(answer_graph: SemanticAnswerGraph, store: Store) -> dict:
+    capabilities = []
+    for cid in answer_graph.selected_claim_ids:
+        claim = store.claims.get(cid)
+        if claim and claim.object_value:
+            capabilities.append(str(claim.object_value))
+    if not capabilities:
+        capabilities = ["answer questions, remember facts, and reason about claims"]
+    return {"capabilities": ", ".join(capabilities)}
+
+
 class RealizationPipeline:
     def __init__(self, router: SynthesisRouter | None = None) -> None:
         self._router = router or SynthesisRouter()
@@ -33,16 +60,20 @@ class RealizationPipeline:
             params["template_key"] = "greeting"
         elif intent == "acknowledgment":
             params["template_key"] = "acknowledgment"
-        elif intent == "ask":
+        elif intent == "ask" or intent == "ask_meaning":
             clarification = next(
                 (e.get("question") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),
                 None,
             )
+            term = next(
+                (e.get("term") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),
+                "that",
+            )
             if clarification:
                 params["template"] = clarification
             else:
-                params["template_key"] = "clarification"
-                params.setdefault("variables", {"term": "that"})
+                params["template_key"] = "ask_meaning"
+                params.setdefault("variables", {"term": term})
         elif intent == "abstain" and not answer_graph.selected_claim_ids:
             reason = answer_graph.uncertainty_reasons[0] if answer_graph.uncertainty_reasons else ""
             params["template"] = reason or "I don't have enough information to answer."
@@ -52,12 +83,24 @@ class RealizationPipeline:
             params["template_key"] = "retrieve_empty"
         elif intent == "permission_denied":
             params["template_key"] = "permission_denied"
-        elif intent in ("self_capability_query", "self_capability"):
-            params["template_key"] = "self_capability"
-            params["selected_claim_ids"] = []
-        elif intent in ("self_identity_query", "self_identity"):
+        elif intent == "self_identity" and answer_graph.selected_claim_ids:
             params["template_key"] = "self_identity"
-            params["selected_claim_ids"] = []
+            params.setdefault("variables", _self_identity_variables(answer_graph, store))
+        elif intent == "self_capability" and answer_graph.selected_claim_ids:
+            params["template_key"] = "self_capability"
+            params.setdefault("variables", _self_capability_variables(answer_graph, store))
+        elif intent == "self_knowledge":
+            params["template_key"] = "self_knowledge"
+        elif intent == "user_identity":
+            params["template_key"] = "user_identity"
+            params.setdefault("variables", _self_identity_variables(answer_graph, store))
+        elif intent == "user_name":
+            params["template_key"] = "user_name"
+            params.setdefault("variables", _name_variables(answer_graph, store))
+        elif intent in ("user_identity_unknown", "user_name_unknown"):
+            params["template_key"] = intent
+        elif intent == "self_query_unknown":
+            params["template_key"] = "self_query_unknown"
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)

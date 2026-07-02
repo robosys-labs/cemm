@@ -119,13 +119,32 @@ class StructuralRetriever:
         result = RetrievalResult()
         seen = set()
 
+        # Detect query-specific predicate constraints
+        frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        _identity_predicates = {"name", "preferred_name", "called", "known_as", "identity_name"}
+        _capability_predicates = {"capability", "can", "does", "function", "role"}
+        constrain_predicates: set[str] | None = None
+        if frame_keys & {"user_name_query", "user_identity_query", "self_identity_query"}:
+            constrain_predicates = _identity_predicates
+        elif frame_keys & {"self_capability_query", "self_knowledge_query"}:
+            constrain_predicates = _capability_predicates
+        # Teaching/alias frames are stored as lexeme models, not claims; skip claim retrieval.
+        if frame_keys & {"command_alias_teaching", "definition_teaching", "correction"}:
+            return result
+
         # Extract entity names/IDs from graph's entity_refs as retrieval queries
         for ref in graph.entity_refs:
             eid = ref.get("entity_id", "")
             if eid and eid not in seen:
                 seen.add(eid)
-                claims = self._store.claims.find_by_subject(eid, limit=kernel.budget.max_claims)
-                result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
+                if constrain_predicates:
+                    # Predicate-constrained retrieval: only get name-related claims
+                    for pred in constrain_predicates:
+                        claims = self._store.claims.find_by_subject(eid, pred, kernel.budget.max_claims)
+                        result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
+                else:
+                    claims = self._store.claims.find_by_subject(eid, limit=kernel.budget.max_claims)
+                    result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
 
         # Extract process frame_key values and use as frame_id queries
         for proc in graph.processes:
