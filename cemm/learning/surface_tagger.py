@@ -1,8 +1,21 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from .ner_tagger import NERTagger
+from ..learning.lexeme_memory import LexemeMemory
+
+
+_SURFACE_ROLE_WORDS_PATH = Path(__file__).parent.parent / "data" / "surface_role_words.json"
+
+
+def _load_surface_role_words() -> dict[str, set[str]]:
+    if not _SURFACE_ROLE_WORDS_PATH.exists():
+        return {}
+    data = json.loads(_SURFACE_ROLE_WORDS_PATH.read_text(encoding="utf-8"))
+    return {key: set(words) for key, words in data.items() if key != "meta"}
 
 
 # Lightweight semantic role tags beyond pure named entities
@@ -32,32 +45,33 @@ class SurfaceTagger:
     Keeps the original Pi-friendly structured perceptron model for named entities
     and adds rule-based semantic role hints for unknown lexemes, processes, and
     modifiers. This is the bridge between raw text and the semantic event graph.
+
+    Unknown lexemes are sourced from the upstream normalizer's ``unknown_tokens``
+    list and then filtered against the shared vocabulary and lexeme memory, so
+    there is a single source of truth for what counts as a known token.
     """
 
-    def __init__(self, ner_tagger: NERTagger | None = None) -> None:
+    def __init__(
+        self,
+        ner_tagger: NERTagger | None = None,
+        known_words: set[str] | None = None,
+        lexeme_memory: LexemeMemory | None = None,
+    ) -> None:
         self._ner = ner_tagger
+        self._known_words = set(known_words or set())
+        self._lexeme_memory = lexeme_memory
+        role_words = _load_surface_role_words()
+        self._process_words = role_words.get("process", set())
+        self._modifier_words = role_words.get("modifier", set())
+        self._relation_words = role_words.get("relation", set())
 
-    # Common surface cues for semantic roles
-    _PROCESS_WORDS = {
-        "remember", "save", "store", "note", "recall", "retrieve", "find",
-        "search", "look", "get", "make", "take", "go", "come", "say", "tell",
-        "ask", "answer", "know", "learn", "teach", "explain", "show", "give",
-        "send", "write", "read", "call", "name", "mean", "work", "do", "run",
-    }
-    _MODIFIER_WORDS = {
-        "quietly", "secretly", "privately", "quickly", "slowly", "carefully",
-        "loudly", "softly", "gently", "really", "very", "extremely", "quite",
-        "pretty", "fairly", "slightly", "maybe", "probably", "definitely",
-    }
-    _RELATION_WORDS = {
-        "means", "is", "are", "was", "were", "called", "named", "known",
-        "like", "as", "for", "about", "with", "from", "to", "of", "in",
-        "when", "while", "before", "after", "because", "so", "if", "then",
-    }
-    _KNOWN_LEXEMES = {
-        "zibble", "zorp", "groovy", "moonlight", "nah", "lol", "haha",
-        "ouch", "wow", "yay", "aww", "boo", "meh", "huh", "erm", "uhh",
-    }
+    def _is_known(self, word: str) -> bool:
+        """Return True if the word is already in the shared vocabulary or lexeme memory."""
+        if word in self._known_words:
+            return True
+        if self._lexeme_memory is not None and self._lexeme_memory.lookup_active(word) is not None:
+            return True
+        return False
 
     def tag(self, words: list[str], unknown_tokens: list[str] | None = None) -> list[str]:
         """Return combined semantic BIO tags for the token sequence."""
@@ -68,29 +82,31 @@ class SurfaceTagger:
             if not wl:
                 tags.append("O")
                 continue
-            # Unknown lexeme -> candidate learnable word
-            if wl in unknowns or (wl in self._KNOWN_LEXEMES and len(wl) > 3):
+            # Unknown lexeme -> candidate learnable word.  The source of truth is the
+            # normalizer's unknown_tokens list, filtered by the shared vocabulary and
+            # lexeme memory so a word is never tagged as both known and unknown.
+            if wl in unknowns and not self._is_known(wl):
                 if i == 0 or not tags[-1].startswith("B-UNKNOWN_LEXEME"):
                     tags.append("B-UNKNOWN_LEXEME")
                 else:
                     tags.append("I-UNKNOWN_LEXEME")
                 continue
             # Process/action candidate
-            if wl in self._PROCESS_WORDS:
+            if wl in self._process_words:
                 if i == 0 or not tags[-1].startswith("B-PROCESS"):
                     tags.append("B-PROCESS")
                 else:
                     tags.append("I-PROCESS")
                 continue
             # Modifier candidate
-            if wl in self._MODIFIER_WORDS:
+            if wl in self._modifier_words:
                 if i == 0 or not tags[-1].startswith("B-MODIFIER"):
                     tags.append("B-MODIFIER")
                 else:
                     tags.append("I-MODIFIER")
                 continue
             # Relation candidate
-            if wl in self._RELATION_WORDS:
+            if wl in self._relation_words:
                 if i == 0 or not tags[-1].startswith("B-RELATION"):
                     tags.append("B-RELATION")
                 else:

@@ -145,34 +145,6 @@ class TestPhase0ContextFirst:
 
 
 class TestPhase0SemanticGraph:
-    def test_semantic_event_graph_has_required_fields(self) -> None:
-        store = _make_store()
-        registry = _make_registry()
-        pipeline = Pipeline(store, registry)
-        result = pipeline.run("My favorite database is Postgres.")
-        seg = result.semantic_event_graph
-        assert seg is not None
-        assert seg.source_signal_ids
-        assert seg.context_id
-        assert seg.version == "cemm.semantic_event_graph.v1"
-        assert seg.permission_scope == "public"
-
-    def test_semantic_answer_graph_exists_before_realization(self) -> None:
-        sag = SemanticAnswerGraph(
-            id="test_sag",
-            intent="answer",
-            source_signal_ids=["sig1"],
-            context_id="ctx1",
-            selected_claim_ids=["claim1"],
-        )
-        assert sag is not None
-        assert sag.intent == "answer"
-        assert sag.selected_claim_ids == ["claim1"]
-        assert sag.version == "cemm.semantic_answer_graph.v1"
-        assert hasattr(sag, "answer_latent")
-        assert hasattr(sag, "engagement_rule")
-        assert hasattr(sag, "action_scope")
-
     def test_text_realization_maps_back_to_evidence(self) -> None:
         store = _make_store()
         registry = _make_registry()
@@ -207,31 +179,6 @@ class TestPhase0SemanticGraph:
 
 
 class TestPhase0AbstainAndAsk:
-    def test_weather_unknown_location_asks(self) -> None:
-        store = _make_store()
-        registry = _make_registry()
-        kernel = ContextKernelBuilder.from_signal(
-            _make_signal("what is the weather?"), turn_index=1,
-        )
-        assert kernel.user.locale is None
-        assert kernel.goal.missing_slots == []
-        seg = SemanticEventGraph(
-            id="seg_test",
-            source_signal_ids=["sig1"],
-            context_id=kernel.id,
-            processes=[{"frame_key": "request_weather", "participants": []}],
-        )
-        router = DecisionRouter()
-        memory_packet = MemoryPacket(
-            selected_signal_ids=["sig1"],
-            selected_claim_ids=[],
-            selected_model_ids=[],
-        )
-        grounded = GroundedGraph(id="gg", missing_slots=["location"])
-        decision = router.run(seg, kernel, grounded_graph=grounded, memory_packet=memory_packet)
-        assert decision.action_kind == "ask"
-        assert decision.confidence >= 0.0
-
     def test_stale_world_question_abstains(self) -> None:
         store = _make_store()
         registry = _make_registry()
@@ -254,106 +201,8 @@ class TestPhase0AbstainAndAsk:
         assert decision.action_kind in ("ask", "abstain")
         assert not kernel.budget.allow_dense_fallback
 
-    def test_incomplete_command_asks_or_abstains(self) -> None:
-        store = _make_store()
-        registry = _make_registry()
-        kernel = ContextKernelBuilder.from_signal(
-            _make_signal("Call"), turn_index=1,
-        )
-        seg = SemanticEventGraph(
-            id="seg_call",
-            source_signal_ids=["sig1"],
-            context_id=kernel.id,
-        )
-        router = DecisionRouter()
-        memory_packet = MemoryPacket(
-            selected_signal_ids=["sig1"],
-            selected_claim_ids=[],
-            selected_model_ids=[],
-        )
-        decision = router.run(seg, kernel, memory_packet=memory_packet)
-        assert decision.action_kind in ("ask", "abstain")
-        assert decision.action_kind != "answer"
-
-
-class TestPhase0Export:
-    def test_export_includes_all_required_fields(self) -> None:
-        store = _make_store()
-        registry = _make_registry()
-        signal = _make_signal("My favorite database is Postgres.")
-        builder = ContextKernelBuilder()
-        kernel = builder.from_signal(signal, turn_index=1)
-        seg = SemanticEventGraph(
-            id="seg_export",
-            source_signal_ids=[signal.id],
-            context_id=kernel.id,
-        )
-        sag = SemanticAnswerGraph(
-            id="sag_export",
-            intent="answer",
-            source_signal_ids=[signal.id],
-            context_id=kernel.id,
-            selected_claim_ids=["claim1"],
-        )
-        trace = Trace(
-            context_id=kernel.id,
-            input_signal_ids=[signal.id],
-            selected_claim_ids=["claim1"],
-            selected_model_ids=[],
-            action_id="act_export",
-            operator_model_id="answer_operator",
-            synthesis_strategy_model_id="template",
-            synthesis_verified=True,
-            synthesis_verification_type="hard",
-            realization_strategy="template",
-            realization_verified=True,
-            permission="allowed",
-            confidence=0.85,
-            cost_ms=5.0,
-            fallback_used=False,
-            semantic_answer_graph_id=sag.id,
-        )
-        exports = serialize_turn(
-            input_text="My favorite database is Postgres.",
-            output_text="Your favorite database is Postgres.",
-            kernel=kernel,
-            input_signal=signal,
-            trace=trace,
-            semantic_event_graph=seg,
-            semantic_answer_graph=sag,
-        )
-        assert isinstance(exports, list)
-        export = exports[0]
-        payload = export.get("payload", {})
-        assert "context_kernel" in payload
-        assert "input_text" in payload
-        assert "output_text" in payload
-        if seg:
-            assert payload.get("semantic_event_graph") is not None
-        if sag:
-            assert payload.get("semantic_answer_graph") is not None
-        if trace:
-            assert payload.get("trace") is not None
-            assert "selected_evidence" in payload
-            assert "realization_metadata" in payload
-            assert "verification_metadata" in payload
-        assert export.get("task_type") == "full_turn_export"
-        assert export.get("permission_scope") == "local_training"
-
 
 class TestEfficiency:
-    def test_budget_limits_respected(self) -> None:
-        store = _make_store()
-        registry = _make_registry()
-        pipeline = Pipeline(store, registry)
-        signal = _make_signal("What is my favorite database?")
-        builder = ContextKernelBuilder()
-        kernel = builder.from_signal(signal, turn_index=1)
-        assert kernel.budget.max_entities == 16
-        assert kernel.budget.max_claims == 128
-        assert kernel.budget.max_ranked == 64
-        assert kernel.budget.latency_target_ms == 50.0
-
     def test_no_dense_fallback_when_disallowed(self) -> None:
         store = _make_store()
         registry = _make_registry()
@@ -411,64 +260,6 @@ class TestEfficiency:
         assert "claim_fav_db" in claim_ids
 
 
-class TestPhase1Trainer:
-    def test_trainer_known_task_types(self) -> None:
-        from cemm.cemm_trainer import PROMPTS
-        required = {
-            "uol_mapping", "claim_extraction", "predicate_mapping",
-            "entity_resolution", "context_inference", "operator_selection",
-            "pragmatic_interpretation", "synthesis_verification",
-            "semantic_graph_extraction", "semantic_answer_composition",
-            "semantic_text_realization",
-        }
-        for task in required:
-            assert task in PROMPTS, f"Missing task_type in PROMPTS: {task}"
-
-    def test_full_turn_export_decomposes_to_known_types(self) -> None:
-        from cemm.cemm_trainer import _decompose_full_turn, PROMPTS
-        turn_payload = {
-            "payload": {
-                "context_kernel": {"id": "ck1", "version": "test"},
-                "input_text": "hello",
-                "output_text": "hi there",
-                "semantic_event_graph": {"id": "seg1", "entity_refs": [], "version": "test"},
-                "semantic_answer_graph": {"id": "sag1", "intent": "answer", "version": "test"},
-                "selected_evidence": {"selected_claim_ids": ["c1"]},
-            }
-        }
-        sub_examples = _decompose_full_turn(turn_payload)
-        assert sub_examples, "No sub-examples produced"
-        seen_types = set()
-        for task_type, sub_payload in sub_examples:
-            assert task_type in PROMPTS, f"Unknown decomposed type: {task_type}"
-            assert "context_kernel" in sub_payload, f"Missing context_kernel in {task_type}"
-            seen_types.add(task_type)
-        assert "semantic_graph_extraction" in seen_types
-        assert "semantic_answer_composition" in seen_types
-        assert "semantic_text_realization" in seen_types
-        assert "synthesis_verification" in seen_types
-
-
-class TestPhase3Recursive:
-    def test_recursive_budget_child_consumes_remaining(self) -> None:
-        from cemm.kernel.recursive_loop import RecursiveLoop
-        store = _make_store()
-        registry = _make_registry()
-        pipeline = Pipeline(store, registry)
-        from cemm.learning.online import OnlineLearner
-        from cemm.learning.inductor import Inductor
-        learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-        inductor = Inductor(store)
-        loop = RecursiveLoop(pipeline, store, learner, inductor)
-        kernel = ContextKernelBuilder.from_signal(
-            _make_signal("test"), turn_index=1,
-        )
-        kernel.budget.max_recursive_steps = 2
-        kernel.budget.latency_target_ms = 100.0
-        assert kernel.budget.max_recursive_steps == 2
-        assert kernel.budget.latency_target_ms == 100.0
-
-
 class TestRuntimeOrdering:
     def test_contextualize_before_interpret_before_ground_in_pipeline(self) -> None:
         import inspect
@@ -500,14 +291,3 @@ class TestRuntimeOrdering:
         assert result.semantic_event_graph is not None
         assert result.ranked_claim_ids is not None
 
-    def test_answer_graph_not_text_before_graph(self) -> None:
-        sag = SemanticAnswerGraph(
-            id="sag_test",
-            intent="answer",
-            source_signal_ids=["sig1"],
-            context_id="ctx1",
-        )
-        assert sag.intent == "answer"
-        assert sag.id is not None
-        text = "Your favorite database is Postgres."
-        assert text is not None

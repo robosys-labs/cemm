@@ -66,6 +66,7 @@ class ActionPlan:
     missing_slots: list[str] = field(default_factory=list)
     selected_claim_ids: list[str] = field(default_factory=list)
     selected_model_ids: list[str] = field(default_factory=list)
+    params: dict[str, Any] = field(default_factory=dict)
     tool_id: str | None = None
     execution_allowed: bool = False
     confidence: float = 0.5

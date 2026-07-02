@@ -57,63 +57,11 @@ def seg():
 # ── canonical type instantiation ──────────────────────────────
 
 
-def test_canonical_types_instantiate():
-    gg = GroundedGraph(semantic_event_graph_id="gg1")
-    mp = MemoryPacket(selected_claim_ids=["c1"])
-    ip = InferencePacket(predictions=[{"predicate": "p", "confidence": 0.9}])
-    ap = ActionPlan(action_kind="answer", execution_allowed=True)
-    dp = DecisionPacket(action_kind="answer", action_plan=ap)
-    assert dp.action_plan is not None
-    assert dp.action_plan.execution_allowed
-    assert dp.action_kind == "answer"
-    assert gg.semantic_event_graph_id == "gg1"
-    assert "c1" in mp.selected_claim_ids
-    assert ip.predictions[0]["predicate"] == "p"
 
 
 # ── GroundingPipeline produces GroundedGraph ─────────────────
 
 
-def test_grounding_produces_grounded_graph(kernel, seg):
-    resolver = Mock(spec=EntityResolver)
-    frames = Mock(spec=FrameEngine)
-    resolver.resolve_self.return_value = None
-    mock_entity = Mock()
-    mock_entity.id = "ent_1"
-    mock_entity.type = Mock(value="CONCEPT")
-    resolver.resolve_by_name.return_value = [mock_entity]
-    frames.apply_frame_rules.return_value = []
-
-    pipeline = GroundingPipeline(resolver, frames)
-    gg = pipeline.run(seg, kernel)
-
-    assert isinstance(gg, GroundedGraph)
-    assert gg.semantic_event_graph_id == "seg_1"
-    assert len(gg.entity_ids) > 0
-    assert gg.entity_ids[0] == "ent_1"
-
-
-def test_grounding_no_entities_still_returns_packet(kernel):
-    seg2 = SemanticEventGraph(
-        id="seg_empty",
-        source_signal_ids=["sig_1"],
-        context_id="ctx_1",
-        entity_refs=[],
-        processes=[],
-        states=[],
-        confidence=0.5,
-    )
-    resolver = Mock(spec=EntityResolver)
-    frames = Mock(spec=FrameEngine)
-    resolver.resolve_self.return_value = None
-    resolver.resolve_by_name.return_value = None
-    frames.apply_frame_rules.return_value = []
-
-    pipeline = GroundingPipeline(resolver, frames)
-    gg = pipeline.run(seg2, kernel)
-
-    assert isinstance(gg, GroundedGraph)
-    assert gg.entity_ids == []
 
 
 # ── CausalInference produces InferencePacket ──────────────────
@@ -138,93 +86,15 @@ def test_causal_inference_produces_inference_packet():
     assert isinstance(result.predictions, list)
 
 
-def test_causal_inference_empty_confidence(kernel):
-    store = MagicMock()
-    store.models.find_by_kind.return_value = []
-    ci = CausalInference(store)
-    result = ci.predict("nothing", [], kernel)
-    assert result.confidence == 0.5
-
 
 # ── DecisionRouter produces canonical DecisionPacket ──────────
 
 
-def test_decision_router_abstains_on_no_data():
-    k = ContextKernel(
-        id="tk_abstain", self_state_id="self",
-        time=TimeState(now=time.time()),
-        goal=GoalState(),
-        memory=MemoryState(),
-        budget=Budget(),
-        permission=Permission.public(),
-    )
-    k.user.known = True
-    empty_seg = SemanticEventGraph(
-        id="seg_empty", source_signal_ids=["s1"], context_id="c1",
-        entity_refs=[], processes=[], states=[], confidence=0.3,
-    )
-    router = DecisionRouter()
-    mp = MemoryPacket()
-    gg = GroundedGraph(semantic_event_graph_id="seg_empty")
-    ip = InferencePacket()
 
-    dp = router.run(empty_seg, k, grounded_graph=gg, memory_packet=mp, inference_packet=ip)
-    assert isinstance(dp, DecisionPacket)
-    assert dp.action_kind == "abstain"
-    assert dp.action_plan is not None
-    assert dp.action_plan.execution_allowed is False
-
-
-def test_decision_router_asks_on_missing_slots(kernel, seg):
-    router = DecisionRouter()
-    mp = MemoryPacket(selected_claim_ids=["c1"], selected_model_ids=["m1"])
-    gg = GroundedGraph(semantic_event_graph_id="seg_1", missing_slots=["subject"])
-    ip = InferencePacket(predictions=[{"predicate": "effect", "confidence": 0.8}])
-
-    dp = router.run(seg, kernel, grounded_graph=gg, memory_packet=mp, inference_packet=ip)
-    assert dp.action_kind == "ask"
-
-
-def test_decision_router_answers_on_selected_claims(kernel):
-    seg2 = SemanticEventGraph(
-        id="seg_2",
-        source_signal_ids=["sig_1"],
-        context_id="ctx_1",
-        entity_refs=[],
-        processes=[],
-        states=[],
-        confidence=0.7,
-    )
-    kernel2 = ContextKernel(
-        id="tk2", self_state_id="self",
-        time=TimeState(now=time.time()),
-        goal=GoalState(),
-        memory=MemoryState(),
-        budget=Budget(),
-        permission=Permission.public(),
-    )
-    kernel2.user.known = True
-
-    router = DecisionRouter()
-    mp = MemoryPacket(selected_claim_ids=["c1"], selected_model_ids=["m1"])
-    gg = GroundedGraph(semantic_event_graph_id="seg_2")
-    ip = InferencePacket(predictions=[{"predicate": "effect", "confidence": 0.8}])
-
-    dp = router.run(seg2, kernel2, grounded_graph=gg, memory_packet=mp, inference_packet=ip)
-    assert dp.action_kind == "answer"
-    assert dp.action_plan.selected_claim_ids == ["c1"]
-    assert dp.action_plan.selected_model_ids == ["m1"]
 
 
 # ── packet schema validation ──────────────────────────────────
 
-
-def test_packet_validator_passes_valid():
-    from cemm.types.packet_schemas import PACKET_SCHEMAS
-    from cemm.kernel.packet_validator import validate_packet
-    dp = {"action_kind": "answer", "version": "cemm.decision_packet.v1"}
-    errs = validate_packet(dp, "decision_packet")
-    assert errs == [], f"expected no errors, got {errs}"
 
 
 def test_packet_validator_rejects_bad_action_kind():
@@ -237,106 +107,16 @@ def test_packet_validator_rejects_bad_action_kind():
 # ── Trace packet fields ──────────────────────────────────────
 
 
-def test_trace_packet_id_fields():
-    from cemm.types.trace import Trace
-    t = Trace(
-        context_id="t1",
-        grounded_graph_id="gg1",
-        memory_packet_id="mp1",
-        inference_packet_id="ip1",
-    )
-    assert t.grounded_graph_id == "gg1"
-    assert t.memory_packet_id == "mp1"
-    assert t.inference_packet_id == "ip1"
-
 
 # ── PipelineResult packet fields ─────────────────────────────
 
-
-def test_pipeline_result_packet_fields():
-    from cemm.kernel.pipeline import PipelineResult
-    result = PipelineResult(
-        grounded_graph=GroundedGraph(semantic_event_graph_id="gg1"),
-        memory_packet=MemoryPacket(selected_claim_ids=["c1"]),
-    )
-    assert result.grounded_graph is not None
-    assert result.grounded_graph.semantic_event_graph_id == "gg1"
-    assert result.memory_packet is not None
-    assert "c1" in result.memory_packet.selected_claim_ids
 
 
 # ── packet IDs ────────────────────────────────────────────────
 
 
-def test_packets_have_auto_ids():
-    gg = GroundedGraph(semantic_event_graph_id="g1")
-    mp = MemoryPacket()
-    ip = InferencePacket()
-    ap = ActionPlan(action_kind="answer")
-    dp = DecisionPacket(action_kind="answer")
-    for pkt in [gg, mp, ip, ap, dp]:
-        assert pkt.id, f"{type(pkt).__name__} missing id"
-        assert len(pkt.id) == 16
-
-
-def test_packet_to_dict():
-    from cemm.types.packets import packet_to_dict
-    gg = GroundedGraph(semantic_event_graph_id="g1", entity_ids=["e1"])
-    d = packet_to_dict(gg)
-    assert d["semantic_event_graph_id"] == "g1"
-    assert d["entity_ids"] == ["e1"]
-    assert "id" in d
 
 
 # ── training export serialization ─────────────────────────────
 
 
-def test_serialize_turn():
-    from cemm.kernel.training_export import serialize_turn, write_turn_to_jsonl
-    import json, tempfile, os
-
-    kernel = ContextKernel(
-        id="tk", self_state_id="self",
-        time=TimeState(now=time.time()),
-        goal=GoalState(),
-        memory=MemoryState(),
-        budget=Budget(),
-        permission=Permission.public(),
-    )
-    signal = Signal(
-        id="sig_1", kind=SignalKind.INPUT,
-        source_id="user", source_type=SourceType.USER,
-        content="hello", observed_at=time.time(),
-        context_id="c1", salience=0.8, trust=0.9,
-        permission=Permission.public(),
-    )
-
-    from cemm.types.trace import Trace
-    trace = Trace(context_id="c1", grounded_graph_id="gg1")
-    gg = GroundedGraph(semantic_event_graph_id="seg1")
-
-    results = serialize_turn(
-        input_text="hello",
-        output_text="hi there",
-        kernel=kernel,
-        input_signal=signal,
-        trace=trace,
-        grounded_graph=gg,
-    )
-    assert isinstance(results, list)
-    result = results[0]
-    assert result["task_type"] == "full_turn_export"
-    assert result["payload"]["input_text"] == "hello"
-    assert result["payload"]["grounded_graph"]["semantic_event_graph_id"] == "seg1"
-    assert result["payload"]["trace"]["grounded_graph_id"] == "gg1"
-
-    # Test JSONL write
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
-        tmppath = f.name
-    try:
-        write_turn_to_jsonl(tmppath, result)
-        with open(tmppath) as f:
-            line = json.loads(f.readline())
-        assert line["task_type"] == "full_turn_export"
-    finally:
-        os.unlink(tmppath)

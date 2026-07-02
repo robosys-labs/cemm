@@ -1,0 +1,215 @@
+from __future__ import annotations
+
+import time
+import uuid
+
+import pytest
+
+from cemm.kernel.training_export import serialize_turn
+from cemm.kernel.teaching_interpreter import TeachingInterpreter
+from cemm.learning.surface_tagger import SurfaceTagger
+from cemm.registry import Registry, RegistryEntry
+from cemm.registry.uol_mapper import UOLMapper
+from cemm.types.claim import Claim
+from cemm.types.context_kernel import ContextKernel
+from cemm.types.entity import Entity, EntityType
+from cemm.types.permission import Permission
+from cemm.types.semantic_answer_graph import SemanticAnswerGraph
+from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.self_view import SelfView
+from cemm.types.signal import Signal, SignalKind, SourceType
+from cemm.types.trace import Trace
+from cemm.kernel.context_kernel_builder import ContextKernelBuilder
+
+
+def _make_signal(text: str) -> Signal:
+    return Signal(
+        id=uuid.uuid4().hex[:16],
+        kind=SignalKind.INPUT,
+        source_id="test",
+        source_type=SourceType.USER,
+        content=text,
+        observed_at=time.time(),
+        context_id=uuid.uuid4().hex[:16],
+        salience=0.8,
+        trust=0.8,
+        permission=Permission.public(),
+    )
+
+
+def _make_kernel() -> ContextKernel:
+    signal = _make_signal("hello")
+    kernel = ContextKernelBuilder.from_signal(signal, turn_index=1)
+    kernel.self_view = SelfView(
+        self_id="cemm",
+        mode="assistant",
+        uncertainty=0.0,
+        coherence=1.0,
+        recent_error_rate=0.0,
+    )
+    return kernel
+
+
+# ── UOL semantics and predicates are loaded from JSON ─────────────────────
+
+
+def test_uol_mapper_detects_self_query_from_data() -> None:
+    mapper = UOLMapper(Registry())
+    kernel = _make_kernel()
+    atoms = mapper.map_signal("what are you", kernel)
+    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    assert "self_identity_query" in frame_keys
+
+
+def test_uol_mapper_detects_user_query_from_data() -> None:
+    mapper = UOLMapper(Registry())
+    kernel = _make_kernel()
+    atoms = mapper.map_signal("what is my name", kernel)
+    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    assert "user_name_query" in frame_keys
+
+
+def test_uol_mapper_guards_command_on_question_mark() -> None:
+    mapper = UOLMapper(Registry())
+    kernel = _make_kernel()
+    atoms = mapper.map_signal("remember me?", kernel)
+    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    # Question mark should prevent command_remember emission.
+    assert "command_remember" not in frame_keys
+
+
+def test_uol_mapper_uses_data_driven_insults() -> None:
+    registry = Registry()
+    registry.register(RegistryEntry(
+        model_id="uol_low_competence",
+        canonical_key="low_competence",
+        kind="uol_semantic",
+        aliases=["dumb", "stupid", "fool", "idiot", "useless", "broken"],
+    ))
+    mapper = UOLMapper(registry)
+    kernel = _make_kernel()
+    atoms = mapper.map_signal("you are broken", kernel)
+    state_keys = {atom.state_key for atom in atoms if atom.kind == "state"}
+    assert "low_competence" in state_keys
+
+
+def test_uol_mapper_uses_data_driven_pronouns() -> None:
+    mapper = UOLMapper(Registry())
+    kernel = _make_kernel()
+    atoms = mapper.map_signal("i like rain", kernel)
+    entity_ids = {atom.entity_id for atom in atoms if atom.kind == "entity_ref"}
+    assert "user" in entity_ids
+
+
+# ── Surface tagger uses JSON word lists ───────────────────────────────────
+
+
+def test_surface_tagger_tags_process_word_from_data() -> None:
+    tagger = SurfaceTagger()
+    tags = tagger.tag(["remember", "this"])
+    assert tags == ["B-PROCESS", "O"]
+
+
+def test_surface_tagger_tags_modifier_word_from_data() -> None:
+    tagger = SurfaceTagger()
+    tags = tagger.tag(["quickly", "eat"])
+    assert tags == ["B-MODIFIER", "O"]
+
+
+def test_surface_tagger_tags_relation_word_from_data() -> None:
+    tagger = SurfaceTagger()
+    tags = tagger.tag(["before", "lunch"])
+    assert tags == ["B-RELATION", "O"]
+
+
+# ── Teaching interpreter uses JSON patterns ───────────────────────────────
+
+
+def test_teaching_interpreter_definition_trigger_from_data() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("zibble means save this")
+    assert any(ev.kind == "definition" and ev.surface == "zibble" for ev in events)
+
+
+def test_teaching_interpreter_correction_trigger_from_data() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("no, zibble means save this")
+    assert any(ev.kind == "correction" and ev.surface == "zibble" for ev in events)
+
+
+def test_teaching_interpreter_command_trigger_from_data() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("when i say zibble, remember this")
+    assert any(ev.kind == "command_alias" and ev.surface == "zibble" for ev in events)
+
+
+# ── Training export includes the SAG ───────────────────────────────────────
+
+
+def test_serialize_turn_includes_semantic_answer_graph() -> None:
+    kernel = _make_kernel()
+    seg = SemanticEventGraph(
+        id="seg_1",
+        source_signal_ids=["sig_1"],
+        context_id=kernel.id,
+    )
+    sag = SemanticAnswerGraph(
+        id="sag_1",
+        intent="answer",
+        source_signal_ids=["sig_1"],
+        context_id=kernel.id,
+        selected_claim_ids=["claim_1"],
+    )
+    records = serialize_turn(
+        input_text="hello",
+        output_text="hi there",
+        kernel=kernel,
+        input_signal=_make_signal("hello"),
+        semantic_event_graph=seg,
+        semantic_answer_graph=sag,
+    )
+    assert any(r["task_type"] == "semantic_text_realization" for r in records)
+    realization_record = next(r for r in records if r["task_type"] == "semantic_text_realization")
+    assert realization_record["payload"]["semantic_answer_graph"]["id"] == "sag_1"
+
+
+def test_serialize_turn_includes_trace() -> None:
+    kernel = _make_kernel()
+    trace = Trace(
+        context_id=kernel.id,
+        input_signal_ids=["sig_1"],
+        semantic_answer_graph_id="sag_1",
+        realization_strategy="template",
+        realization_verified=True,
+    )
+    records = serialize_turn(
+        input_text="hello",
+        output_text="hi there",
+        kernel=kernel,
+        input_signal=_make_signal("hello"),
+        trace=trace,
+    )
+    full_turn = next(r for r in records if r["task_type"] == "full_turn_export")
+    assert full_turn["payload"]["trace"]["semantic_answer_graph_id"] == "sag_1"
+    assert full_turn["payload"]["realization_metadata"]["verified"] is True
+
+
+def test_teaching_interpreter_uses_data_driven_meaning_stop_words() -> None:
+    interpreter = TeachingInterpreter()
+    events = interpreter.interpret("zibble means save this but not that")
+    assert any(ev.kind == "definition" and ev.meaning == "save this" for ev in events)
+
+
+def test_uol_mapper_loads_speech_act_to_frame_from_data() -> None:
+    mapper = UOLMapper(Registry())
+    assert mapper._speech_act_to_frame.get("greeting") == "greeting"
+    assert mapper._speech_act_to_frame.get("command") == "command_remember"
+
+
+def test_operator_seed_data_loaded_from_json() -> None:
+    from cemm.__main__ import _load_seed_data
+    operators = _load_seed_data("operators")
+    keys = {op["canonical_key"] for op in operators}
+    assert "answer" in keys
+    assert "remember" in keys
+    assert "learn" in keys

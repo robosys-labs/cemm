@@ -38,13 +38,20 @@ class SemanticInterpreter:
         artifact_store: ArtifactStore | None = None,
         store: Store | None = None,
         lexeme_memory: LexemeMemory | None = None,
+        text_normalizer: Any | None = None,
     ) -> None:
         self._uol_mapper = uol_mapper
         self._artifact_store = artifact_store
         self._store = store
         self._lexeme_memory = lexeme_memory
+        self._text_normalizer = text_normalizer
         self._ner_tagger = _load_default_ner_tagger()
-        self._surface_tagger = SurfaceTagger(self._ner_tagger)
+        known_words = getattr(text_normalizer, "_known_words", None)
+        self._surface_tagger = SurfaceTagger(
+            self._ner_tagger,
+            known_words=known_words,
+            lexeme_memory=lexeme_memory,
+        )
 
     def run(self, signal: Signal, kernel: ContextKernel) -> SemanticEventGraph:
         if self._artifact_store:
@@ -169,10 +176,12 @@ class SemanticInterpreter:
                         break
             obj = ""
             words = content_lower.split()
+            predicate_markers = {predicate}
+            if predicate.endswith("s") and len(predicate) > 1:
+                predicate_markers.add(predicate[:-1])
+            predicate_markers.update(self._get_predicate_aliases(predicate))
             for i, w in enumerate(words):
-                if w in (predicate, ) or any(
-                    w == alias for alias in self._get_predicate_aliases(predicate)
-                ):
+                if w in predicate_markers:
                     if i + 1 < len(words):
                         obj = words[i + 1]
                     break

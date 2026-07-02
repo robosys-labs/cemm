@@ -75,7 +75,6 @@ def test_create_model_operator_stores_model() -> None:
     result = op.execute(ctx)
 
     assert result.success
-    assert "likes_ice_cream" in result.output_text
     assert len(result.new_model_ids) == 1
     # Model must be stored
     model = store.models.get(result.new_model_ids[0])
@@ -84,32 +83,6 @@ def test_create_model_operator_stores_model() -> None:
     assert model.description == "User likes ice cream"
     assert model.evidence_signal_ids == [signal.id]
 
-
-def test_create_model_operator_uses_defaults() -> None:
-    store = Store(":memory:")
-    registry = Registry()
-    kernel = _kernel(store)
-    signal = _signal(kernel)
-    store.signals.put(signal)
-
-    ctx = OperatorContext(
-        kernel=kernel,
-        input_signal=signal,
-        store=store,
-        registry=registry,
-        selected_claim_ids=[],
-        params={},
-    )
-    op = CreateModelOperator()
-    result = op.execute(ctx)
-
-    assert result.success
-    assert "unnamed" in result.output_text
-    assert len(result.new_model_ids) == 1
-    model = store.models.get(result.new_model_ids[0])
-    assert model is not None
-    assert model.name == "unnamed"
-    assert model.description == ""
 
 
 def test_create_model_operator_denies_without_permission() -> None:
@@ -132,4 +105,4 @@ def test_create_model_operator_denies_without_permission() -> None:
     result = op.execute(ctx)
 
     assert not result.success
-    assert "Permission denied" in result.output_text
+    assert result.new_model_ids == []

@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "description": "Pronoun-to-entity mappings for the UOL entity layer. Each entry maps a surface pronoun to an entity_id and a participant role. These are language-specific seeds.",
+    "version": "cemm.pronouns.v1"
+  },
+  "pronouns": {
+    "user": {
+      "actor": ["i", "me", "my", "mine", "myself"]
+    },
+    "self": {
+      "target": ["you", "your", "yourself", "yours"]
+    }
+  }
+}

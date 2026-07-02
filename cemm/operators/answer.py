@@ -21,24 +21,32 @@ class AnswerOperator(BaseOperator):
         if not ctx.kernel.permission.may_execute:
             return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
         intent = ctx.params.get("intent", "")
-        selected_claims = ctx.selected_claim_ids or []
+        selected_claims = ctx.params.get("selected_claim_ids", ctx.selected_claim_ids) or []
         decision_reason = ctx.params.get("decision_reason", "")
         reason_lower = decision_reason.lower()
-        # If decision router detected greeting/acknowledgment, set intent accordingly
-        if "greeting" in reason_lower and not selected_claims:
-            intent = "greeting"
-        elif "acknowledgment" in reason_lower and not selected_claims:
-            intent = "acknowledgment"
-        elif "unknown term" in reason_lower or "ask meaning" in reason_lower:
-            intent = "ask_meaning"
-            term = "that"
-            if "unknown term" in reason_lower:
-                parts = decision_reason.split("'", 2)
-                if len(parts) > 2:
-                    term = parts[1]
-            unknown_term = term
-        else:
-            unknown_term = ""
+        unknown_term = ""
+        # If decision router detected greeting/acknowledgment and no explicit intent was
+        # passed, set intent accordingly. Do not override a content intent the router
+        # already chose (e.g., story_request inside an acknowledgment utterance).
+        if not intent:
+            if "self_identity_query" in reason_lower:
+                intent = "self_identity"
+            elif "self_capability_query" in reason_lower:
+                intent = "self_capability"
+            elif "self_knowledge_query" in reason_lower:
+                intent = "self_knowledge"
+            elif "greeting" in reason_lower and not selected_claims:
+                intent = "greeting"
+            elif "acknowledgment" in reason_lower and not selected_claims:
+                intent = "acknowledgment"
+            elif "unknown term" in reason_lower or "ask meaning" in reason_lower:
+                intent = "ask_meaning"
+                term = "that"
+                if "unknown term" in reason_lower:
+                    parts = decision_reason.split("'", 2)
+                    if len(parts) > 2:
+                        term = parts[1]
+                unknown_term = term
         # Propagate confidence from kernel self-view uncertainty to SAG
         seg_confidence = ctx.params.get("seg_confidence", 0.0)
         sag_confidence = max(seg_confidence, 1.0 - ctx.kernel.self_view.uncertainty) if seg_confidence > 0 else max(0.5, 1.0 - ctx.kernel.self_view.uncertainty)
@@ -76,27 +84,36 @@ class AnswerOperator(BaseOperator):
             abstain_latent = _latent_encoder.encode_answer(
                 intent="abstain", selected_claim_ids=[], selected_model_ids=[],
             )
-            result = _pipeline.run(
-                SemanticAnswerGraph(
-                    id=uuid.uuid4().hex[:16],
-                    intent="abstain",
-                    source_signal_ids=[ctx.input_signal.id],
-                    context_id=ctx.kernel.id,
-                    confidence=sag_confidence,
-                    answer_latent=abstain_latent,
-                ),
-                ctx.kernel, ctx.store, ctx.registry,
+            answer_graph = SemanticAnswerGraph(
+                id=uuid.uuid4().hex[:16],
+                intent="abstain",
+                source_signal_ids=[ctx.input_signal.id],
+                context_id=ctx.kernel.id,
+                confidence=sag_confidence,
+                answer_latent=abstain_latent,
             )
+            result = _pipeline.run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
         output = result.output
         # Unified verification is already done inside RealizationPipeline.run()
         # Check the result's verified flag
+        blocked_verification = None
         if not result.verified:
             verification_meta = result.metadata.get("verification", {})
-            issues = verification_meta.get("details", ["unverified output"])
-            return OperatorResult(
-                success=False,
-                output_text="Answer blocked by realization verification: " + "; ".join(issues),
+            blocked_verification = verification_meta
+            abstain_latent = _latent_encoder.encode_answer(
+                intent="abstain", selected_claim_ids=[], selected_model_ids=[],
             )
+            answer_graph = SemanticAnswerGraph(
+                id=uuid.uuid4().hex[:16],
+                intent="abstain",
+                source_signal_ids=[ctx.input_signal.id],
+                context_id=ctx.kernel.id,
+                confidence=max(0.5, min(0.7, sag_confidence)),
+                uncertainty_reasons=["unverified synthesis"],
+                answer_latent=abstain_latent,
+            )
+            result = _pipeline.run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+            output = result.output
         cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
@@ -136,6 +153,7 @@ class AnswerOperator(BaseOperator):
             realization_details={
                 "source_answer_graph_id": result.metadata.get("source_answer_graph_id"),
                 "strategy": result.strategy,
+                "blocked_verification": blocked_verification,
             },
             verification_details=result.metadata.get("verification", {}),
         )

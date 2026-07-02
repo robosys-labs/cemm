@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import uuid
+
 from ..learning.lexeme_memory import LexemeMemory
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.trace import Trace
+from ..types.semantic_answer_graph import SemanticAnswerGraph
+from ..synthesis.realizer import RealizationPipeline
+from ..synthesis.template import TemplateStrategy
 from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.permission import Permission
+
+
+_pipeline = RealizationPipeline()
 
 
 class LearnOperator(BaseOperator):
@@ -63,28 +71,42 @@ class LearnOperator(BaseOperator):
                 role="command_alias",
                 maps_to=meaning,
                 confidence=confidence,
-                source="user",
             )
-            output = f"Got it. When you say '{surface}', I'll remember that."
+            sag_intent = "learn_command_alias"
         elif kind == "correction":
             lexeme_memory.learn(
                 surface=surface,
                 role=role,
                 maps_to=meaning,
                 confidence=confidence,
-                source="user",
             )
             lexeme_memory.reinforce(surface, meaning, delta=0.15)
-            output = f"Thanks. I've updated '{surface}' to mean '{meaning}'."
+            sag_intent = "learn_correction"
         else:
             lexeme_memory.learn(
                 surface=surface,
                 role=role,
                 maps_to=meaning,
                 confidence=confidence,
-                source="user",
             )
-            output = f"Got it. '{surface}' means '{meaning}'."
+            sag_intent = "learn_lexeme"
+
+        answer_graph = SemanticAnswerGraph(
+            id=uuid.uuid4().hex[:16],
+            intent=sag_intent,
+            source_signal_ids=[ctx.input_signal.id],
+            context_id=ctx.kernel.id,
+            selected_claim_ids=[],
+            confidence=confidence,
+            entity_refs=[{"kind": "teaching_event", "surface": surface, "meaning": meaning, "role": role}],
+        )
+        result = _pipeline.run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+        language = TemplateStrategy._detect_language(ctx.kernel)
+        fallback_template = TemplateStrategy._load_template(sag_intent, language)
+        fallback_output = TemplateStrategy._apply(
+            fallback_template, {"surface": surface, "meaning": meaning}
+        )
+        output = result.output if result.success and result.verified else fallback_output
 
         action = Action(
             id="",
@@ -93,15 +115,24 @@ class LearnOperator(BaseOperator):
             input_signal_ids=[ctx.input_signal.id],
             confidence=confidence,
             status=ActionStatus.EXECUTED,
-            trace=Trace(intent="learn", reason=f"learned {surface} -> {meaning}"),
+            trace=Trace(
+                context_id=ctx.kernel.id,
+                input_signal_ids=[ctx.input_signal.id],
+                operator_model_id="LearnOperator",
+                semantic_answer_graph_id=answer_graph.id,
+                realization_strategy=result.strategy,
+                realization_verified=result.verified,
+                confidence=confidence,
+                permission="allowed" if ctx.kernel.permission.may_execute else "denied",
+            ),
             created_at=0.0,
         )
 
         result_signal = Signal(
-            id="",
-            kind=SignalKind.OUTPUT,
-            source_id="cemm",
-            source_type=SourceType.CEMM,
+            id=uuid.uuid4().hex[:16],
+            kind=SignalKind.ACTION_RESULT,
+            source_id="learn_operator",
+            source_type=SourceType.ASSISTANT,
             content=output,
             observed_at=0.0,
             context_id=ctx.input_signal.context_id,
@@ -115,4 +146,5 @@ class LearnOperator(BaseOperator):
             output_text=output,
             action=action,
             result_signal=result_signal,
+            semantic_answer_graph=answer_graph,
         )

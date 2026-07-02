@@ -73,7 +73,7 @@ _BUILTIN_CLUSTERS: dict[str, dict] = {
     },
     "playful_acknowledgment": {
         "speech_act": "playful_acknowledgment",
-        "patterns": ["lol nice", "lol ok", "haha okay", "lmao", "fair enough"],
+        "patterns": ["lol", "lol nice", "lol ok", "haha okay", "lmao", "fair enough"],
         "target": "assistant",
         "affect_baseline": {"valence": 0.25, "arousal": 0.25, "frustration": 0.0, "hostility": 0.0, "playfulness": 0.5},
     },

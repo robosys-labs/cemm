@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "description": "Canonical operator metadata for the operator registry. These are canonical, not language-specific, and are wired to their implementing classes in cemm/__main__.py.",
+    "version": "cemm.operators.v1"
+  },
+  "operators": [
+    {"canonical_key": "answer", "params": ["answer_text"]},
+    {"canonical_key": "ask", "params": ["question"]},
+    {"canonical_key": "remember", "params": ["subject_entity_id", "predicate"]},
+    {"canonical_key": "update_claim", "params": ["claim_id", "status"]},
+    {"canonical_key": "create_model", "params": ["name", "kind"]},
+    {"canonical_key": "synthesize", "params": ["strategy"]},
+    {"canonical_key": "simulate", "params": ["action_or_event"]},
+    {"canonical_key": "retrieve", "params": []},
+    {"canonical_key": "reflect", "params": []},
+    {"canonical_key": "call_tool", "params": ["tool_id"]},
+    {"canonical_key": "abstain", "params": ["reason"]},
+    {"canonical_key": "learn", "params": []}
+  ]
+}

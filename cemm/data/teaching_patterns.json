@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "description": "Surface cue words and stop words used by the TeachingInterpreter. These are language-specific seeds; other languages can be added as parallel entries.",
+    "version": "cemm.teaching_patterns.v1"
+  },
+  "definition_triggers": ["means", "is", "are", "was", "refers to", "stands for", "short for"],
+  "command_triggers": ["when i say", "say", "call", "use", "from now on", "let's say", "if i say"],
+  "correction_triggers": ["no", "not", "wrong", "actually", "correction", "i mean", "i meant"],
+  "surface_stop_words": ["this", "that", "these", "those", "the", "a", "an"],
+  "meaning_stop_words": ["but", "and", "or", "so", "then", "because", "when", "if"]
+}

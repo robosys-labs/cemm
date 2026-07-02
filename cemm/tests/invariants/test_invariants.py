@@ -245,7 +245,7 @@ def test_invariant_latent_respects_permission() -> None:
     op = AskOperator()
     result = op.execute(ctx)
     assert not result.success
-    assert "Permission denied" in result.output_text
+    assert result.result_signal is None
 
 
 # --- Invariant #30: causal confidence capped ---

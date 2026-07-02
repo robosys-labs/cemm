@@ -1,11 +1,14 @@
 from __future__ import annotations
+
+import time
+import uuid
+
 from .base import BaseOperator, OperatorContext, OperatorResult
+from ..synthesis.realizer import RealizationPipeline
 from ..types.action import ActionKind
+from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.trace import Trace
-from ..types.semantic_answer_graph import SemanticAnswerGraph
-from ..synthesis.realizer import RealizationPipeline
-import time, uuid
 
 _pipeline = RealizationPipeline()
 
@@ -27,13 +30,14 @@ class AbstainOperator(BaseOperator):
         )
         result = _pipeline.run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
         output = result.output
+        blocked_verification = None
+
         if not result.success:
-            output = f"I can't answer that. Reason: {reason}"
+            output = "I don't have enough verified information to answer."
 
         if not result.verified:
-            verification_meta = result.metadata.get("verification", {})
-            issues = verification_meta.get("details", ["unverified output"])
-            output = f"I can't answer that. Reason: verification blocked — {'; '.join(issues)}"
+            blocked_verification = result.metadata.get("verification", {})
+            output = "I don't have enough verified information to answer."
 
         cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         result_signal = Signal(
@@ -65,6 +69,14 @@ class AbstainOperator(BaseOperator):
             memory_packet_id=ctx.memory_packet_id,
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
+            realization_strategy=result.strategy,
+            realization_verified=result.verified,
+            realization_details={
+                "source_answer_graph_id": result.metadata.get("source_answer_graph_id"),
+                "strategy": result.strategy,
+                "blocked_verification": blocked_verification,
+            },
+            verification_details=result.metadata.get("verification", {}),
         )
         return OperatorResult(
             success=True,

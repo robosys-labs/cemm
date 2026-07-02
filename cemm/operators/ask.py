@@ -5,6 +5,7 @@ from ..types.signal import Signal, SignalKind, SourceType
 from ..types.trace import Trace
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
+from ..synthesis.template import TemplateStrategy
 import time, uuid
 
 
@@ -16,7 +17,7 @@ class AskOperator(BaseOperator):
     def execute(self, ctx: OperatorContext) -> OperatorResult:
         if not ctx.kernel.permission.may_execute:
             return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
-        question = ctx.params.get("question", "Could you clarify?")
+        question = ctx.params.get("question")
         answer_graph = SemanticAnswerGraph(
             id=uuid.uuid4().hex[:16],
             intent="ask",
@@ -25,9 +26,13 @@ class AskOperator(BaseOperator):
             uncertainty_reasons=["clarification needed"],
             confidence=0.7,
         )
-        answer_graph.entity_refs.append({"kind": "clarification", "question": question})
+        if question:
+            answer_graph.entity_refs.append({"kind": "clarification", "question": question})
         result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
-        output = result.output if result.success and result.verified else question
+        language = TemplateStrategy._detect_language(ctx.kernel)
+        fallback_template = TemplateStrategy._load_template("ask_meaning", language)
+        fallback_output = TemplateStrategy._apply(fallback_template, {"term": "that"})
+        output = result.output if result.success and result.verified else (question or fallback_output)
         result_signal = Signal(
             id=uuid.uuid4().hex[:16],
             kind=SignalKind.TRACE,

@@ -1,0 +1,11 @@
+# Never commit API keys or credentials
+test_nvidia_models.py
+*.env
+.env
+
+# Python/runtime artefacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.sqlite3
+*.log

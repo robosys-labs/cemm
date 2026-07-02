@@ -6,8 +6,10 @@ from __future__ import annotations
 import os
 import sys
 import argparse
+import json
 import time
 import uuid
+from pathlib import Path
 from .store.store import Store
 
 from .registry import Registry, RegistryEntry
@@ -48,25 +50,22 @@ from .learning.inductor import Inductor
 _ACTION_CONFIDENCE_THRESHOLD = 0.5
 
 
+def _load_seed_data(name: str) -> list[dict[str, Any]]:
+    """Load seed entries (predicates, UOL semantics, etc.) from cemm/data/*.json."""
+    data_dir = Path(__file__).parent / "data"
+    path = data_dir / f"{name}.json"
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get(name, [])
+
+
 def seed_registry(registry: Registry) -> None:
-    predicates = [
-        ("favorite_database", "fav_db", "preferred_db"),
-        ("likes", "like", "enjoy", "love", "loves"),
-        ("is_a", "isa", "is_a_type_of"),
-        ("has", "have", "own", "owns"),
-        ("belongs_to", "belongs", "owned_by"),
-        ("causes", "leads_to", "results_in"),
-        ("precedes", "before", "comes_before"),
-        ("located_at", "located_in", "at"),
-        ("created_by", "authored_by", "made_by"),
-        ("used_for", "used_in", "use"),
-        ("part_of", "component_of"),
-        ("started_at", "started_on", "began_at"),
-        ("favorite", "favourite", "fav"),
-        ("prefers", "prefer", "preferred"),
-        ("noted", "noted_as"),
-    ]
-    for i, (canonical, *aliases) in enumerate(predicates):
+    predicates = _load_seed_data("predicates")
+    for i, entry in enumerate(predicates):
+        canonical = entry["canonical_key"]
+        aliases = entry.get("aliases", [])
         registry.register(RegistryEntry(
             model_id=f"pred_{i}",
             canonical_key=canonical,
@@ -74,51 +73,10 @@ def seed_registry(registry: Registry) -> None:
             aliases=list(aliases),
         ))
 
-    uol_semantics = [
-        ("greeting", ["hello", "hi", "hey", "greetings", "howdy", "sup", "morning", "afternoon", "evening"]),
-        ("session_exit", ["exit", "quit", "bye", "goodbye", "stop", "done"]),
-        ("command_remember", ["remember", "save", "store", "note"]),
-        ("command_reflect", ["reflect", "think", "ponder", "contemplate"]),
-        ("command_retrieve", ["retrieve", "search", "recall", "find", "lookup"]),
-        ("assert_evaluation", ["is", "are", "was", "were"]),
-        ("request_clarification", ["what", "who", "where", "when", "why", "how",
-                                    "huh", "what do you mean", "how do you mean",
-                                    "what in the world", "what the", "come again",
-                                    "confused", "don't understand", "don't get it",
-                                    "lost", "not following"]),
-        ("ask_question", ["?", "which"]),
-        ("unknown_intent", []),
-        ("state_preference", ["prefer", "like", "favorite", "love"]),
-        ("low_competence", ["dumb", "stupid", "fool", "idiot", "useless", "broken"]),
-        ("high_quality", ["great", "awesome", "excellent", "amazing", "helpful"]),
-        ("temporal_before", ["before", "prior_to"]),
-        ("temporal_after", ["after", "then", "next", "following"]),
-        ("temporal_during", ["during", "while"]),
-        ("temporal_overlaps", ["overlaps", "concurrent"]),
-        ("temporal_starts", ["starts", "begins"]),
-        ("temporal_finishes", ["finishes", "ends", "completes"]),
-        ("causal_causes", ["causes", "cause", "caused"]),
-        ("causal_caused_by", ["caused_by", "due_to"]),
-        ("causal_leads_to", ["leads_to", "leads", "results_in", "results"]),
-        ("causal_because", ["because", "since"]),
-        ("causal_so", ["so", "therefore"]),
-        ("uncertainty_marker", ["might", "may", "could", "possibly", "probably", "likely",
-                                 "unclear", "uncertain", "not sure", "based on available information",
-                                 "it appears", "it seems", "suggests"]),
-        ("acknowledgment", ["ok", "okay", "sure", "right", "yeah", "yes", "yup", "got it",
-                            "understood", "makes sense", "i see", "gotcha", "cool", "nice"]),
-        ("discourse_marker", ["oh", "well", "so", "hmm", "anyway", "actually", "btw", "honestly"]),
-        ("playful_acknowledgment", ["lol nice", "lol ok", "haha okay", "fair enough"]),
-        ("self_correction", ["my bad", "sorry i meant", "i mean", "correction"]),
-        ("simplification_request", ["explain simpler", "simplify", "too complex"]),
-        ("reassurance", ["no worries", "all good", "it's fine", "its fine"]),
-        ("self_identity_query", ["who are you", "what are you", "tell me about yourself", "what is your name"]),
-        ("self_capability_query", ["what can you do", "your capabilities", "what do you know", "how do you work"]),
-        ("self_knowledge_query", ["what do you know about yourself", "describe yourself", "what are you made of"]),
-        ("user_identity_query", ["do you remember me", "do you know me", "do you know who i am", "who am i"]),
-        ("user_name_query", ["what's my name", "what is my name", "do you know my name", "whats my name"]),
-    ]
-    for i, (canonical, aliases) in enumerate(uol_semantics):
+    uol_semantics = _load_seed_data("uol_semantics")
+    for i, entry in enumerate(uol_semantics):
+        canonical = entry["canonical_key"]
+        aliases = entry.get("aliases", [])
         registry.register(RegistryEntry(
             model_id=f"uol_{i}",
             canonical_key=canonical,
@@ -126,20 +84,12 @@ def seed_registry(registry: Registry) -> None:
             aliases=list(aliases),
         ))
 
-    operators = [
-        ("answer", AnswerOperator(), ["answer_text"]),
-        ("ask", AskOperator(), ["question"]),
-        ("remember", RememberOperator(), ["subject_entity_id", "predicate"]),
-        ("update_claim", UpdateClaimOperator(), ["claim_id", "status"]),
-        ("create_model", CreateModelOperator(), ["name", "kind"]),
-        ("synthesize", SynthesizeOperator(), ["strategy"]),
-        ("simulate", SimulateOperator(), ["action_or_event"]),
-        ("retrieve", RetrieveOperator(), []),
-        ("reflect", ReflectOperator(), []),
-        ("call_tool", CallToolOperator(), ["tool_id"]),
-        ("abstain", AbstainOperator(), ["reason"]),
-    ]
-    for key, op, _ in operators:
+    # Operator registration is canonical (not language-specific). The metadata
+    # is loaded from cemm/data/operators.json; the implementing classes are
+    # imported here so import paths remain in code while the canonical list is
+    # data-driven.
+    for entry in _load_seed_data("operators"):
+        key = entry["canonical_key"]
         registry.register(RegistryEntry(
             model_id=f"op_{key}",
             canonical_key=key,
@@ -211,6 +161,20 @@ def seed_self_state(store: Store, knowledge_path: str | None = None) -> None:
         )
         store.self_store.put(state)
 
+    if store.signals.get("seed") is None:
+        store.signals.put(Signal(
+            id="seed",
+            kind=SignalKind.SYSTEM,
+            source_id="seed",
+            source_type=SourceType.SYSTEM,
+            content="seed self knowledge",
+            observed_at=time.time(),
+            context_id="seed",
+            salience=0.5,
+            trust=1.0,
+            permission=Permission.public(),
+        ))
+
     # Seed self-knowledge entity + claims from JSON config
     import json, uuid
     path = knowledge_path or os.path.join(os.path.dirname(__file__), "self_knowledge.json")
@@ -254,6 +218,7 @@ def seed_self_state(store: Store, knowledge_path: str | None = None) -> None:
                 object_entity_id=claim_cfg.get("object_entity_id"),
                 domain=claim_cfg.get("domain", "self_knowledge"),
                 source_id="seed",
+                evidence_signal_ids=["seed"],
                 confidence=claim_cfg.get("confidence", 0.95),
                 trust=claim_cfg.get("trust", 0.95),
                 salience=0.8,
@@ -405,7 +370,8 @@ def process_input(
         kind = _action_kind_map.get(decision.action_kind)
         ap = decision.action_plan
         if kind == ActionKind.ASK:
-            params = {"question": "Could you elaborate?"}
+            params = dict(ap.params) if ap and ap.params else {}
+            params.setdefault("question", "Could you elaborate?")
         elif kind == ActionKind.ANSWER:
             # For conversational intents (greeting/acknowledgment), don't pass claims
             # — the response is a template, not evidence-backed

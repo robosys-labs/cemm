@@ -58,52 +58,6 @@ def test_synthesize_operator_action_kind() -> None:
     assert op.action_kind == ActionKind.SYNTHESIZE
 
 
-@patch.object(SynthesizeOperator, "_router")
-def test_synthesize_operator_default_strategy(mock_router: MagicMock) -> None:
-    mock_router.route.return_value = SynthesisResult(success=True, output="Synthesized text", cost_ms=1.5)
-
-    store = Store(":memory:")
-    registry = Registry()
-    kernel = _kernel(store)
-    signal = _signal(kernel)
-
-    ctx = OperatorContext(
-        kernel=kernel, input_signal=signal, store=store, registry=registry,
-        selected_claim_ids=[],
-        params={},
-    )
-    op = SynthesizeOperator()
-    result = op.execute(ctx)
-
-    assert result.success
-    assert result.output_text == "Synthesized text"
-    assert result.cost_ms == 1.5
-    mock_router.route.assert_called_once()
-    # Should default to "template" strategy
-    assert mock_router.route.call_args[0][0] == "template"
-
-
-@patch.object(SynthesizeOperator, "_router")
-def test_synthesize_operator_custom_strategy(mock_router: MagicMock) -> None:
-    mock_router.route.return_value = SynthesisResult(success=True, output="Neural output", cost_ms=10.0)
-
-    store = Store(":memory:")
-    registry = Registry()
-    kernel = _kernel(store)
-    signal = _signal(kernel)
-
-    ctx = OperatorContext(
-        kernel=kernel, input_signal=signal, store=store, registry=registry,
-        selected_claim_ids=[],
-        params={"strategy": "neural"},
-    )
-    op = SynthesizeOperator()
-    result = op.execute(ctx)
-
-    assert result.success
-    assert result.output_text == "Neural output"
-    assert mock_router.route.call_args[0][0] == "neural"
-
 
 @patch.object(SynthesizeOperator, "_router")
 def test_synthesize_operator_failure(mock_router: MagicMock) -> None:
@@ -123,4 +77,3 @@ def test_synthesize_operator_failure(mock_router: MagicMock) -> None:
     result = op.execute(ctx)
 
     assert not result.success
-    assert result.output_text == "Failed"

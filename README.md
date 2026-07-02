@@ -37,7 +37,7 @@ cemm/
 cd C:\dev\cemm
 
 # Run tests
-python -m pytest tests/ -v
+python -m pytest cemm/tests -q
 
 # Start interactive session
 python -m cemm
@@ -49,6 +49,7 @@ python -m cemm
 python -m cemm                    # Interactive chat
 python -m cemm --eval "What is my favorite database?"  # Single query
 python -m cemm --db path/to/db.sqlite                   # Persistent store
+python -m cemm.web_demo           # Browser demo at http://127.0.0.1:5000
 ```
 
 ## Architecture

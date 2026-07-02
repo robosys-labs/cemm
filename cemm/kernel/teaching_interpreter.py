@@ -1,6 +1,22 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
+
+
+_TEACHING_PATTERNS_PATH = Path(__file__).parent.parent / "data" / "teaching_patterns.json"
+
+
+def _load_teaching_patterns() -> dict[str, set[str]]:
+    if not _TEACHING_PATTERNS_PATH.exists():
+        return {}
+    data = json.loads(_TEACHING_PATTERNS_PATH.read_text(encoding="utf-8"))
+    return {
+        key: set(words) if isinstance(words, list) else words
+        for key, words in data.items()
+        if key != "meta"
+    }
 
 
 class TeachingEvent:
@@ -46,30 +62,44 @@ class TeachingInterpreter:
     store them based on permission, confidence, and context.
     """
 
-    _DEFINITION_TRIGGERS = {
-        "means", "is", "are", "was", "refers to", "stands for", "short for",
-    }
-    _COMMAND_TRIGGERS = {
-        "when i say", "say", "call", "use", "from now on", "let's say", "if i say",
-    }
-    _CORRECTION_TRIGGERS = {
-        "no", "not", "wrong", "actually", "correction", "i mean", "i meant",
-    }
-
     def __init__(self) -> None:
-        pass
+        patterns = _load_teaching_patterns()
+        self._definition_triggers = patterns.get("definition_triggers", set())
+        self._command_triggers = patterns.get("command_triggers", set())
+        self._correction_triggers = patterns.get("correction_triggers", set())
+        self._surface_stop_words = patterns.get("surface_stop_words", set())
+        self._meaning_stop_words = patterns.get("meaning_stop_words", set())
 
     def interpret(self, text: str) -> list[TeachingEvent]:
         """Return candidate teaching events from the input text."""
         events: list[TeachingEvent] = []
         lower = text.lower().strip()
-        words = lower.split()
+        words = [w.strip(".,!?;:\"'()[]{}") for w in lower.split()]
         if not words:
             return events
 
+        is_correction = any(w in self._correction_triggers for w in words[:3])
+
+        # "no, X means Y" / correction
+        if is_correction:
+            for i, w in enumerate(words):
+                if w in self._definition_triggers:
+                    surface = self._extract_surface(words, i)
+                    meaning = self._extract_meaning(words, i)
+                    if surface and meaning:
+                        events.append(TeachingEvent(
+                            kind="correction",
+                            surface=surface,
+                            meaning=meaning,
+                            role=self._infer_role(surface, meaning),
+                            confidence=0.7,
+                        ))
+            if events:
+                return events
+
         # "X means Y" / "X is Y" / "X refers to Y"
         for i, w in enumerate(words):
-            if w in self._DEFINITION_TRIGGERS:
+            if w in self._definition_triggers:
                 surface = self._extract_surface(words, i)
                 meaning = self._extract_meaning(words, i)
                 if surface and meaning:
@@ -83,25 +113,9 @@ class TeachingInterpreter:
                     ))
 
         # "when I say X, do Y" / "call this X"
-        for trigger in self._COMMAND_TRIGGERS:
+        for trigger in self._command_triggers:
             if trigger in lower:
                 events.extend(self._extract_command_alias(lower, trigger))
-
-        # "no, X means Y" / correction
-        if any(w in self._CORRECTION_TRIGGERS for w in words[:3]):
-            # Find the corrected definition
-            for i, w in enumerate(words):
-                if w in self._DEFINITION_TRIGGERS:
-                    surface = self._extract_surface(words, i)
-                    meaning = self._extract_meaning(words, i)
-                    if surface and meaning:
-                        events.append(TeachingEvent(
-                            kind="correction",
-                            surface=surface,
-                            meaning=meaning,
-                            role=self._infer_role(surface, meaning),
-                            confidence=0.7,
-                        ))
 
         return events
 
@@ -112,7 +126,7 @@ class TeachingInterpreter:
         # Walk left from trigger to collect the first noun/unknown token
         for i in range(trigger_index - 1, -1, -1):
             w = words[i].strip(".,!?;:\"'()[]{}")
-            if w and w not in {"this", "that", "these", "those", "the", "a", "an"}:
+            if w and w not in self._surface_stop_words:
                 return w
         return ""
 
@@ -121,12 +135,12 @@ class TeachingInterpreter:
         rest = words[trigger_index + 1:]
         if not rest:
             return ""
-        # Stop at sentence boundaries or trailing punctuation
-        stop_words = {"but", "and", "or", "so", "then", "because", "when", "if"}
+        # Stop at sentence boundaries or trailing punctuation; boundary words are
+        # loaded from cemm/data/teaching_patterns.json.
         meaning_words: list[str] = []
         for w in rest:
             bare = w.strip(".,!?;:\"'()[]{}")
-            if bare in stop_words:
+            if bare in self._meaning_stop_words:
                 break
             meaning_words.append(bare)
         return " ".join(meaning_words)

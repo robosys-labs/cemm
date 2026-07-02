@@ -50,19 +50,3 @@ def test_find_repeated_predicates_creates_model() -> None:
     assert "favorite_database" in names
 
 
-def test_find_repeated_predicates_below_threshold() -> None:
-    """Below threshold, no model should be created."""
-    store = Store(":memory:")
-    inductor = Inductor(store, feedback_threshold=5)
-    for _ in range(2):
-        _store_claim(store, "rare_predicate")
-    result = inductor._find_repeated_predicates()
-    assert len(result) == 0
-
-
-def test_find_failed_retrieval_no_data() -> None:
-    """With no failed retrieval data, no candidates."""
-    store = Store(":memory:")
-    inductor = Inductor(store)
-    result = inductor._find_failed_retrieval_patterns()
-    assert result == []

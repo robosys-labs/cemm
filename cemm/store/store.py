@@ -7,6 +7,7 @@ from .schema import create_schema, create_indexes
 from .signal_store import SignalStore
 from .entity_store import EntityStore
 from .claim_store import ClaimStore
+from .profile_store import ProfileStore
 from .model_store import ModelStore
 from .action_store import ActionStore
 from .self_store import SelfStore
@@ -24,6 +25,7 @@ class Store:
         self.signals = SignalStore(self.conn)
         self.entities = EntityStore(self.conn)
         self.claims = ClaimStore(self.conn, store=self)
+        self.profile = ProfileStore(self.claims)
         self.models = ModelStore(self.conn)
         self.actions = ActionStore(self.conn)
         self.self_store = SelfStore(self.conn)

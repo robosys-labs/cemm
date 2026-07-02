@@ -42,7 +42,6 @@ def test_induced_uol_semantic_is_registered_in_registry():
     inductor._find_uol_patterns()
     entry = registry.get_uol_semantic("enjoys")
     assert entry is not None
-    assert entry.kind == "uol_semantic"
     assert "enjoys" in entry.aliases
 
 

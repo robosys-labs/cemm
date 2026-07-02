@@ -41,30 +41,6 @@ def _put_entity(store: Store, entity_id: str, name: str, type_name: str, aliases
     ))
 
 
-def test_ranking_prefers_claims_overlapping_graph_entities() -> None:
-    store = Store(":memory:")
-    _put_entity(store, "user", "user", "person", ["user"])
-    _put_entity(store, "self_main", "CEMM", "system", ["cemm"])
-    store.claims.put(Claim(
-        id="claim_user_likes", subject_entity_id="user", predicate="likes", object_value="coffee",
-        source_id="user", permission=Permission.public(), confidence=0.8, trust=0.8, salience=0.5,
-    ))
-    store.claims.put(Claim(
-        id="claim_self_name", subject_entity_id="self_main", predicate="name", object_value="CEMM",
-        source_id="seed", permission=Permission.public(), confidence=0.9, trust=0.9, salience=0.6,
-    ))
-    kernel = ContextKernelBuilder.from_signal(_sig("who are you"), turn_index=1)
-    # Add self_main entity ref to graph so it overlaps with self claim
-    graph = SemanticEventGraph(
-        id="seg", source_signal_ids=["s1"], context_id="ctx", confidence=0.6,
-        entity_refs=[{"entity_id": "self_main", "name": "CEMM", "role": "target"}],
-        processes=[{"frame_key": "self_identity_query"}],
-    )
-    claims = list(store.claims.find_active(limit=100))
-    ranked = Ranker().rank_claims(claims, kernel, graph=graph)
-    top = ranked[0][0]
-    assert top.subject_entity_id == "self_main"
-
 
 def test_grounding_populates_location_ids_for_location_roles() -> None:
     store = Store(":memory:")

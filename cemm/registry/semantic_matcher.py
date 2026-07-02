@@ -154,7 +154,7 @@ class SemanticMatcher:
                     word_position=i,
                     entry=entry,
                 ))
-            elif len(word) >= 2 and len(alias) >= 2:
+            elif len(word) >= 4 and len(alias) >= 4:
                 # Proportional distance threshold based on word length
                 max_len = max(len(word), len(alias))
                 if max_len <= 3:
@@ -208,35 +208,40 @@ class SemanticMatcher:
         if len(alias_words) < 2:
             return results
 
-        matched_count = 0
-        total_dist = 0
-        for aw in alias_words:
-            best_dist = self._max_dist + 1
-            for w in words:
-                if w == aw:
-                    best_dist = 0
-                    break
-                if len(w) >= 3 and abs(len(w) - len(aw)) <= self._max_dist:
-                    d = _levenshtein(w, aw)
-                    if d < best_dist:
-                        best_dist = d
-            if best_dist <= self._max_dist:
-                matched_count += 1
-                total_dist += best_dist
+        if len(words) < len(alias_words):
+            return results
 
-        if matched_count > 0:
+        best_prob = 0.0
+        for start in range(0, len(words) - len(alias_words) + 1):
+            window = words[start:start + len(alias_words)]
+            matched_count = 0
+            total_dist = 0
+            for aw, w in zip(alias_words, window):
+                if w == aw:
+                    matched_count += 1
+                    continue
+                if len(w) < 4 or len(aw) < 4:
+                    continue
+                max_allowed = 1 if max(len(w), len(aw)) <= 5 else self._max_dist
+                if abs(len(w) - len(aw)) > max_allowed:
+                    continue
+                dist = _levenshtein(w, aw)
+                if dist <= max_allowed:
+                    matched_count += 1
+                    total_dist += dist
+
             coverage = matched_count / len(alias_words)
-            # Require at least 60% word coverage to avoid false positives
-            # e.g. "sure" should not match "not sure" (coverage=50%)
-            if coverage < 0.6:
-                return results
-            avg_dist = total_dist / matched_count if matched_count > 0 else self._max_dist
-            prob = coverage * (1.0 - avg_dist / max(len(alias_words[0]), 3))
-            prob = max(0.3, min(0.9, prob))
+            if coverage < 0.8:
+                continue
+            avg_dist = total_dist / matched_count if matched_count else self._max_dist
+            prob = coverage * (1.0 - avg_dist / max(max(len(w) for w in alias_words), 4))
+            best_prob = max(best_prob, prob)
+
+        if best_prob >= 0.3:
             results.append(MatchResult(
                 canonical_key=entry.canonical_key,
                 alias_matched=alias,
-                probability=prob,
+                probability=max(0.3, min(0.9, best_prob)),
                 match_type="fuzzy_phrase",
                 word_position=-1,
                 entry=entry,

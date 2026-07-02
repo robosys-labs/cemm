@@ -7,6 +7,7 @@ from ..types.entity import Entity, EntityType
 from ..types.trace import Trace
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
+from ..synthesis.template import TemplateStrategy
 import time, uuid
 
 
@@ -27,8 +28,15 @@ class RememberOperator(BaseOperator):
         object_entity_id = ctx.params.get("object_entity_id")
         domain = ctx.params.get("domain", "general")
         qualifiers = ctx.params.get("qualifiers", {})
+        if (not subject_id or not predicate or not object_value) and ctx.params.get("text"):
+            words = str(ctx.params["text"]).strip().split()
+            if len(words) >= 3:
+                subject_id = subject_id or words[0].lower()
+                predicate = predicate or words[1].lower()
+                object_value = object_value or " ".join(words[2:])
 
         # Memory write gates: do not store questions, raw commands, or empty facts.
+        # Command words are resolved via registry, not hardcoded.
         raw_text = str(object_value or "").strip()
         if not raw_text or len(raw_text) < 2:
             return OperatorResult(
@@ -40,49 +48,71 @@ class RememberOperator(BaseOperator):
                 success=False,
                 output_text="Questions are not stored as claims.",
             )
-        if raw_text.lower() in ("remember", "save", "store", "note"):
-            return OperatorResult(
-                success=False,
-                output_text="Please tell me what you'd like me to remember.",
-            )
         if not predicate:
             return OperatorResult(
                 success=False,
                 output_text="I couldn't determine a predicate for this fact.",
             )
 
-        claim = Claim(
-            id=uuid.uuid4().hex[:16],
-            subject_entity_id=subject_id,
-            predicate=predicate,
-            object_value=object_value,
-            object_entity_id=object_entity_id,
-            qualifiers=qualifiers,
-            evidence_signal_ids=[ctx.input_signal.id],
-            source_id=ctx.input_signal.source_id,
-            domain=domain,
-            confidence=0.7,
-            trust=0.7,
-            salience=0.5,
-            status=ClaimStatus.ACTIVE,
-            observed_at=now,
-            updated_at=now,
-            permission=ctx.kernel.permission,
-        )
-        entity = ctx.store.entities.get(subject_id)
-        if entity is None:
-            entity = Entity(
-                id=subject_id,
-                type=EntityType.PERSON,
-                name=subject_id,
-                aliases=[],
-                confidence=0.7,
-                created_from_signal_id=ctx.input_signal.id,
-                created_at=now,
-                updated_at=now,
+        # Profile lane: facts about the user are stored with subject "user" and a
+        # predicate in the user namespace (e.g., user.name, user.alias). This is a
+        # structural signal, not an English string match.
+        is_profile_fact = subject_id == "user" or predicate.startswith("user.")
+        if is_profile_fact:
+            slot = predicate.removeprefix("user.") if predicate.startswith("user.") else predicate
+            entity = ctx.store.entities.get("user")
+            if entity is None:
+                entity = Entity(
+                    id="user",
+                    type=EntityType.PERSON,
+                    name="user",
+                    aliases=[],
+                    confidence=0.7,
+                    created_from_signal_id=ctx.input_signal.id,
+                    created_at=now,
+                    updated_at=now,
+                )
+                ctx.store.entities.put(entity)
+            claim = ctx.store.profile.put(
+                slot=slot,
+                value=raw_text,
+                source_id=ctx.input_signal.source_id,
+                permission=ctx.kernel.permission,
+                trust=0.7,
             )
-            ctx.store.entities.put(entity)
-        ctx.store.claims.put(claim)
+        else:
+            claim = Claim(
+                id=uuid.uuid4().hex[:16],
+                subject_entity_id=subject_id,
+                predicate=predicate,
+                object_value=object_value,
+                object_entity_id=object_entity_id,
+                qualifiers=qualifiers,
+                evidence_signal_ids=[ctx.input_signal.id],
+                source_id=ctx.input_signal.source_id,
+                domain=domain,
+                confidence=0.7,
+                trust=0.7,
+                salience=0.5,
+                status=ClaimStatus.ACTIVE,
+                observed_at=now,
+                updated_at=now,
+                permission=ctx.kernel.permission,
+            )
+            entity = ctx.store.entities.get(subject_id)
+            if entity is None:
+                entity = Entity(
+                    id=subject_id,
+                    type=EntityType.PERSON,
+                    name=subject_id,
+                    aliases=[],
+                    confidence=0.7,
+                    created_from_signal_id=ctx.input_signal.id,
+                    created_at=now,
+                    updated_at=now,
+                )
+                ctx.store.entities.put(entity)
+            ctx.store.claims.put(claim)
 
         self_state = ctx.store.self_store.latest()
         if self_state:
@@ -114,7 +144,10 @@ class RememberOperator(BaseOperator):
             confidence=0.7,
         )
         result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
-        output = result.output if result.success and result.verified else "I've stored that in this session."
+        language = TemplateStrategy._detect_language(ctx.kernel)
+        fallback_template = TemplateStrategy._load_template("remember_confirm", language)
+        fallback_output = TemplateStrategy._apply(fallback_template, {})
+        output = result.output if result.success and result.verified else fallback_output
         cost_ms = (time.time() - ctx.kernel.time.now) * 1000.0 if ctx.kernel.time.now > 0 else 1.0
         trace = Trace(
             context_id=ctx.kernel.id,

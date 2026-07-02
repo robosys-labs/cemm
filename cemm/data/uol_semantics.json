@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "description": "UOL semantic frame aliases. Each entry maps a canonical frame key to surface aliases used by the SemanticMatcher. These are language-specific seeds; new languages can be added as parallel entries.",
+    "version": "cemm.uol_semantics.v1"
+  },
+  "uol_semantics": [
+    {"canonical_key": "greeting", "aliases": ["hello", "hi", "hey", "greetings", "howdy", "sup", "morning", "afternoon", "evening"]},
+    {"canonical_key": "session_exit", "aliases": ["exit", "quit", "bye", "goodbye", "stop", "done"]},
+    {"canonical_key": "command_remember", "aliases": ["remember", "save", "store", "note"]},
+    {"canonical_key": "command_reflect", "aliases": ["reflect", "think", "ponder", "contemplate"]},
+    {"canonical_key": "command_retrieve", "aliases": ["retrieve", "search", "recall", "find", "lookup"]},
+    {"canonical_key": "assert_evaluation", "aliases": ["is", "are", "was", "were"]},
+    {"canonical_key": "request_clarification", "aliases": ["what", "who", "where", "when", "why", "how", "huh", "what do you mean", "how do you mean", "what in the world", "what the", "come again", "confused", "don't understand", "don't get it", "lost", "not following"]},
+    {"canonical_key": "ask_question", "aliases": ["?", "which"]},
+    {"canonical_key": "unknown_intent", "aliases": []},
+    {"canonical_key": "assistance_request", "aliases": ["help", "assist", "support", "guide"]},
+    {"canonical_key": "state_preference", "aliases": ["prefer", "like", "favorite", "love"]},
+    {"canonical_key": "low_competence", "aliases": ["dumb", "stupid", "fool", "idiot", "useless", "broken"]},
+    {"canonical_key": "high_quality", "aliases": ["great", "awesome", "excellent", "amazing", "helpful"]},
+    {"canonical_key": "temporal_before", "aliases": ["before", "prior_to"]},
+    {"canonical_key": "temporal_after", "aliases": ["after", "then", "next", "following"]},
+    {"canonical_key": "temporal_during", "aliases": ["during", "while"]},
+    {"canonical_key": "temporal_overlaps", "aliases": ["overlaps", "concurrent"]},
+    {"canonical_key": "temporal_starts", "aliases": ["starts", "begins"]},
+    {"canonical_key": "temporal_finishes", "aliases": ["finishes", "ends", "completes"]},
+    {"canonical_key": "causal_causes", "aliases": ["causes", "cause", "caused"]},
+    {"canonical_key": "causal_caused_by", "aliases": ["caused_by", "due_to"]},
+    {"canonical_key": "causal_leads_to", "aliases": ["leads_to", "leads", "results_in", "results"]},
+    {"canonical_key": "causal_because", "aliases": ["because", "since"]},
+    {"canonical_key": "causal_so", "aliases": ["so", "therefore"]},
+    {"canonical_key": "uncertainty_marker", "aliases": ["might", "may", "could", "possibly", "probably", "likely", "unclear", "uncertain", "not sure", "based on available information", "it appears", "it seems", "suggests"]},
+    {"canonical_key": "acknowledgment", "aliases": ["ok", "okay", "sure", "right", "yeah", "yes", "yup", "got it", "understood", "makes sense", "i see", "gotcha", "cool", "nice"]},
+    {"canonical_key": "discourse_marker", "aliases": ["oh", "well", "so", "hmm", "anyway", "actually", "btw", "honestly"]},
+    {"canonical_key": "playful_acknowledgment", "aliases": ["lol", "lol nice", "lol ok", "haha okay", "fair enough"]},
+    {"canonical_key": "self_correction", "aliases": ["my bad", "sorry i meant", "i mean", "correction"]},
+    {"canonical_key": "simplification_request", "aliases": ["explain simpler", "simplify", "too complex"]},
+    {"canonical_key": "reassurance", "aliases": ["no worries", "all good", "it's fine", "its fine"]},
+    {"canonical_key": "self_identity_query", "aliases": ["who are you", "what are you", "tell me about yourself", "what is your name"]},
+    {"canonical_key": "self_capability_query", "aliases": ["what can you do", "what do you do", "your capabilities", "what do you know", "how do you work", "how can you help", "how do you help", "can you help me", "what can you help with", "how could you help", "what help can you offer", "can you assist me", "what do you assist with"]},
+    {"canonical_key": "self_knowledge_query", "aliases": ["what do you know about yourself", "describe yourself", "what are you made of"]},
+    {"canonical_key": "user_identity_query", "aliases": ["do you remember me", "do you know me", "do you know who i am", "who am i"]},
+    {"canonical_key": "user_name_query", "aliases": ["what's my name", "what is my name", "do you know my name", "whats my name"]}
+  ],
+  "speech_act_to_frame": {
+    "greeting": "greeting",
+    "acknowledgment": "acknowledgment",
+    "clarification": "request_clarification",
+    "exit": "session_exit",
+    "command": "command_remember"
+  }
+}

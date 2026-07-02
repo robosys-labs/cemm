@@ -41,6 +41,30 @@ class DecisionRouter:
                          kernel.goal.missing_slots if kernel.goal else [])
         required_slots = list(kernel.goal.required_slots) if kernel.goal else []
         graph_frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        graph_state_keys = {s.get("state_key", "") for s in graph.states}
+        input_lower = input_text.lower().strip() if input_text else ""
+        # Language-agnostic question detection: terminal "?" is a surface signal,
+        # and question frames in the SEG are the structural signal. No English
+        # prefixes are used in routing.
+        question_frames = {"ask_question", "request_clarification", "unknown_intent"}
+        is_question = (
+            input_lower.endswith("?")
+            or bool(graph_frame_keys & question_frames)
+        )
+
+        if "low_competence" in graph_state_keys:
+            return DecisionPacket(
+                action_kind="answer",
+                action_plan=ActionPlan(
+                    action_kind="answer",
+                    execution_allowed=True,
+                    confidence=0.75,
+                    params={"intent": "low_competence_repair"},
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                ),
+                confidence=0.75,
+                reason="low competence/frustration signal handled conversationally",
+            )
 
         # Teaching/learning intent detection: definitions, aliases, and corrections
         # take precedence so CEMM learns surface-to-meaning mappings before answering.
@@ -86,6 +110,7 @@ class DecisionRouter:
         cmd_intent = self._detect_command_intent(
             input_text, graph, kernel, selected_claim_ids,
             predictions=predictions, missing_slots=missing_slots,
+            is_question=is_question,
         )
         if cmd_intent:
             return cmd_intent
@@ -106,7 +131,7 @@ class DecisionRouter:
             )
 
         # Claim candidates from SEG: route to remember to store new knowledge
-        if graph.claim_candidates and not selected_claim_ids:
+        if graph.claim_candidates and not selected_claim_ids and not is_question:
             return DecisionPacket(
                 action_kind="remember",
                 action_plan=ActionPlan(
@@ -123,36 +148,78 @@ class DecisionRouter:
         # Evidence must exist AND match the requested predicate/frame; otherwise ask/abstain.
         self_query_frames = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
         user_query_frames = {"user_identity_query", "user_name_query"}
-        identity_predicates = {"name", "preferred_name", "called", "known_as", "identity_name"}
-        capability_predicates = {"capability", "can", "does", "function", "role"}
+        identity_predicates = {
+            "name", "preferred_name", "called", "known_as", "identity_name",
+            "answers_identity_as", "is_a",
+        }
+        capability_predicates = {
+            "capability", "can", "does", "function", "role", "knows_about",
+            "limitation", "architecture", "purpose",
+        }
 
         def _claims_for_ids(claim_ids: list[str]) -> list:
             if not store or not claim_ids:
                 return []
             return [c for c in (store.claims.get(cid) for cid in claim_ids) if c is not None]
 
-        def _evidence_matches_frame(frame: str, claim_ids: list[str]) -> bool:
+        def _matching_evidence_ids(frame: str, claim_ids: list[str]) -> list[str]:
             claims = _claims_for_ids(claim_ids)
+            if frame in {"user_identity_query", "user_name_query"} and store is not None:
+                # Profile lane takes priority for user identity/name queries.
+                for slot in ("name", "alias"):
+                    value = store.profile.get(slot)
+                    if value:
+                        for claim in store.claims.find_by_subject("user"):
+                            if claim.domain == "profile" and claim.predicate == f"user.{slot}":
+                                return [claim.id]
             if not claims:
-                return False
+                return []
             if frame in {"self_identity_query", "user_identity_query", "user_name_query"}:
-                return all(c.predicate in identity_predicates for c in claims)
+                return [c.id for c in claims if c.predicate in identity_predicates]
             if frame in {"self_capability_query", "self_knowledge_query"}:
-                return all(c.predicate in capability_predicates for c in claims)
-            return True
+                return [c.id for c in claims if c.predicate in capability_predicates]
+            return [c.id for c in claims]
+
+        self_id = getattr(kernel.self_view, "self_id", "")
+        def _targets_self(proc: dict[str, Any]) -> bool:
+            participants = proc.get("participants", []) or []
+            return any(p.get("entity_id") == self_id and p.get("role") == "target" for p in participants)
 
         matched_self_frame = next(
-            (p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "") in self_query_frames),
+            (
+                p.get("frame_key", "")
+                for p in graph.processes
+                if p.get("frame_key", "") in self_query_frames and _targets_self(p)
+            ),
             "",
         )
         if matched_self_frame:
-            if selected_claim_ids and _evidence_matches_frame(matched_self_frame, selected_claim_ids):
+            matching_claim_ids = _matching_evidence_ids(matched_self_frame, selected_claim_ids)
+            if matched_self_frame == "self_identity_query" and matching_claim_ids:
+                claims_by_id = {c.id: c for c in _claims_for_ids(matching_claim_ids)}
+                for preferred_predicate in ("answers_identity_as", "name", "is_a"):
+                    preferred = [
+                        cid for cid in matching_claim_ids
+                        if claims_by_id.get(cid) and claims_by_id[cid].predicate == preferred_predicate
+                    ]
+                    if preferred:
+                        matching_claim_ids = preferred[:1]
+                        break
+            if matched_self_frame == "self_capability_query" and matching_claim_ids:
+                claims_by_id = {c.id: c for c in _claims_for_ids(matching_claim_ids)}
+                preferred = [
+                    cid for cid in matching_claim_ids
+                    if claims_by_id.get(cid) and claims_by_id[cid].predicate in {"does", "capability"}
+                ]
+                if preferred:
+                    matching_claim_ids = preferred[:4]
+            if matching_claim_ids:
                 intent = matched_self_frame.replace("_query", "")
                 return DecisionPacket(
                     action_kind="answer",
                     action_plan=ActionPlan(
                         action_kind="answer",
-                        selected_claim_ids=selected_claim_ids,
+                        selected_claim_ids=matching_claim_ids,
                         selected_model_ids=selected_model_ids,
                         execution_allowed=True,
                         confidence=min(0.9, graph.confidence),
@@ -181,13 +248,16 @@ class DecisionRouter:
             "",
         )
         if matched_user_frame:
-            if selected_claim_ids and _evidence_matches_frame(matched_user_frame, selected_claim_ids):
+            matching_claim_ids = _matching_evidence_ids(matched_user_frame, selected_claim_ids)
+            if matching_claim_ids:
+                matching_claim_ids = matching_claim_ids[:1]
+            if matching_claim_ids:
                 intent = "user_identity" if matched_user_frame == "user_identity_query" else "user_name"
                 return DecisionPacket(
                     action_kind="answer",
                     action_plan=ActionPlan(
                         action_kind="answer",
-                        selected_claim_ids=selected_claim_ids,
+                        selected_claim_ids=matching_claim_ids,
                         selected_model_ids=selected_model_ids,
                         execution_allowed=True,
                         confidence=min(0.9, graph.confidence),
@@ -211,6 +281,76 @@ class DecisionRouter:
                     ),
                     confidence=0.7,
                     reason=f"user query ({matched_user_frame}) without matching evidence",
+                )
+
+        if "assistance_request" in graph_frame_keys:
+            # If the user is asking about the assistant's capabilities (e.g., "how can you help"),
+            # answer as a self-capability query rather than asking for task scope.
+            text_lower = input_text.lower().strip("?")
+            if any(phrase in text_lower for phrase in (
+                "how can you help", "how do you help", "can you help me", "what can you help with",
+                "how could you help", "what help can you offer", "can you assist me", "what do you assist with",
+            )):
+                return DecisionPacket(
+                    action_kind="answer",
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        execution_allowed=True,
+                        confidence=0.8,
+                        params={"intent": "self_capability"},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.8,
+                    reason="assistance_request interpreted as self-capability query",
+                )
+            return DecisionPacket(
+                action_kind="ask",
+                action_plan=ActionPlan(
+                    action_kind="ask",
+                    execution_allowed=True,
+                    confidence=0.72,
+                    params={
+                        "intent": "assistance_request",
+                        "question": "What would you like help with?",
+                    },
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                ),
+                confidence=0.72,
+                reason="assistance request needs task scope",
+            )
+
+        if "playful_acknowledgment" in graph_frame_keys:
+            return DecisionPacket(
+                action_kind="answer",
+                action_plan=ActionPlan(
+                    action_kind="answer",
+                    execution_allowed=True,
+                    confidence=0.7,
+                    params={"intent": "playful_acknowledgment"},
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                ),
+                confidence=0.7,
+                reason="playful acknowledgment handled conversationally",
+            )
+
+        # General conversational question fallback: when the user asks a real question
+        # but no stored claim or model covers it, answer conversationally rather than
+        # immediately asking for clarification. This keeps the assistant useful for
+        # open-domain chat and prevents the "Could you elaborate?" loop.
+        if is_question and not selected_claim_ids and not graph.claim_candidates:
+            intent = self._classify_general_question(input_text, graph)
+            if intent:
+                return DecisionPacket(
+                    action_kind="answer",
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        execution_allowed=True,
+                        confidence=0.7,
+                        params={"intent": intent},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.7,
+                    reason=f"general conversational question (intent={intent})",
                 )
 
         # If user is asking for clarification and there are no claim candidates,
@@ -390,6 +530,28 @@ class DecisionRouter:
             reason="insufficient graph-grounded evidence (confidence={:.2f})".format(graph.confidence),
         )
 
+    def _is_pure_acknowledgment(self, input_text: str) -> bool:
+        """Return True if the input is only an acknowledgment word/punctuation."""
+        text = input_text.lower().strip("?.,!;:\"'()[]{} ")
+        pure_acknowledgments = {
+            "ok", "okay", "sure", "yeah", "yes", "yup", "right", "got it", "i see", "understood",
+            "noted", "sounds good", "nice", "cool", "alright", "all right", "fine", "k",
+        }
+        return text in pure_acknowledgments
+
+    def _classify_general_question(self, input_text: str, graph: SemanticEventGraph) -> str:
+        """Map an open-domain question to a conversational answer intent."""
+        text_lower = input_text.lower().strip("?")
+        if any(phrase in text_lower for phrase in ("story", "stories", "tell me a story", "tell me a tale", "narrative")):
+            return "story_request"
+        if any(phrase in text_lower for phrase in ("should i eat", "what should i eat", "what to eat", "what do you recommend i eat", "what food", "recommend a meal", "what should i have for")):
+            return "food_recommendation"
+        if any(phrase in text_lower for phrase in ("recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend")):
+            return "recommendation_request"
+        if any(phrase in text_lower for phrase in ("how can you help", "how do you help", "can you help me", "what can you help with")):
+            return "self_capability"
+        return "general_conversation"
+
     def _detect_command_intent(
         self,
         input_text: str,
@@ -398,6 +560,7 @@ class DecisionRouter:
         selected_claim_ids: list[str] | None = None,
         predictions: list[dict[str, Any]] | None = None,
         missing_slots: list[str] | None = None,
+        is_question: bool = False,
     ) -> DecisionPacket | None:
         frame_keys = {p.get("frame_key", "") for p in graph.processes}
         has_claims = bool(selected_claim_ids)
@@ -415,30 +578,22 @@ class DecisionRouter:
                 reason="session exit detected in SEG processes",
             )
 
-        # Explicit commands take priority over conversational intents
-        if "command_remember" in frame_keys:
-            # Interrogative guard: "do you remember me?" is not a remember command
-            input_lower = input_text.lower().strip() if input_text else ""
-            is_question = (
-                input_lower.endswith("?")
-                or any(input_lower.startswith(p) for p in (
-                    "do you ", "can you ", "could you ", "did you ",
-                    "have you ", "are you ", "is ", "what ", "whats ",
-                    "who ", "where ", "when ", "why ", "how ",
-                ))
-            )
-            if not is_question:
-                return DecisionPacket(
+        # Explicit commands take priority over conversational intents.
+        # A remember command is only valid when the surface is not a question.
+        # Question detection is language-agnostic: terminal "?" or question frames
+        # in the SEG (ask_question, request_clarification, unknown_intent).
+        if "command_remember" in frame_keys and not is_question:
+            return DecisionPacket(
+                action_kind="remember",
+                action_plan=ActionPlan(
                     action_kind="remember",
-                    action_plan=ActionPlan(
-                        action_kind="remember",
-                        execution_allowed=True,
-                        confidence=0.85,
-                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                    ),
+                    execution_allowed=True,
                     confidence=0.85,
-                    reason="remember command detected in SEG processes",
-                )
+                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                ),
+                confidence=0.85,
+                reason="remember command detected in SEG processes",
+            )
 
         if "command_reflect" in frame_keys:
             return DecisionPacket(
@@ -466,6 +621,9 @@ class DecisionRouter:
                 reason="retrieve command detected in SEG processes",
             )
 
+        if "assistance_request" in frame_keys:
+            return None
+
         # Conversational intents after commands — only when no claims selected
         if not has_claims and "greeting" in frame_keys:
             return DecisionPacket(
@@ -481,6 +639,24 @@ class DecisionRouter:
             )
 
         if not has_claims and "acknowledgment" in frame_keys:
+            # Don't let a trailing "OK" or "sure" override a content request like
+            # "OK can you tell me stories?" or "OK what should I eat?". If the rest
+            # of the sentence is not just acknowledgment, classify the content.
+            if not self._is_pure_acknowledgment(input_text):
+                content_intent = self._classify_general_question(input_text, graph)
+                if content_intent:
+                    return DecisionPacket(
+                        action_kind="answer",
+                        action_plan=ActionPlan(
+                            action_kind="answer",
+                            execution_allowed=True,
+                            confidence=0.7,
+                            params={"intent": content_intent},
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                        ),
+                        confidence=0.7,
+                        reason=f"acknowledgment + content request (intent={content_intent})",
+                    )
             return DecisionPacket(
                 action_kind="answer",
                 action_plan=ActionPlan(
@@ -555,22 +731,74 @@ class DecisionRouter:
                     confidence=proc.get("confidence", 0.7),
                     reason="user corrected a previous meaning",
                 )
-        # Unknown lexeme gap: if the surface signal contained unknown tokens and the
-        # user appears to be asking about them, ask for clarification rather than guess.
+        # Unknown lexeme gap: only ask for meaning when the unknown term is clearly the
+        # focus of the question (e.g., "what does 'zibble' mean?"), not when a common
+        # word is embedded in a general question. This prevents the "Could you elaborate?"
+        # loop caused by treating everyday words as teachable unknowns.
         if input_text.endswith("?"):
+            known_frames = {p.get("frame_key", "") for p in graph.processes}
+            if known_frames & {
+                "self_identity_query", "self_capability_query", "self_knowledge_query",
+                "user_identity_query", "user_name_query",
+            }:
+                return None
             for entity in graph.entity_refs:
                 if entity.get("role") == "unknown_lexeme":
-                    return DecisionPacket(
-                        action_kind="ask",
-                        action_plan=ActionPlan(
+                    _punct = '.,!?;:"' + "'()[]{}"
+                    term = entity.get("entity_id", "").strip(_punct).lower()
+                    if not term or len(term) <= 3:
+                        continue
+                    if self._is_unknown_term_focus(input_text, term):
+                        return DecisionPacket(
                             action_kind="ask",
-                            execution_allowed=True,
+                            action_plan=ActionPlan(
+                                action_kind="ask",
+                                execution_allowed=True,
+                                confidence=0.6,
+                                params={"question": f"What do you mean by '{term}'?"},
+                            ),
                             confidence=0.6,
-                        ),
-                        confidence=0.6,
-                        reason=f"ask meaning of unknown term '{entity.get('entity_id', '')}'",
-                    )
+                            reason=f"ask meaning of unknown term '{term}'",
+                        )
         return None
+
+    def _is_unknown_term_focus(self, input_text: str, term: str) -> bool:
+        """Return True if the input is explicitly asking about the term itself."""
+        text_lower = input_text.lower()
+        q = chr(34)
+        sq = chr(39)
+        patterns = [
+            f"what does {term} mean",
+            f"what does {q}{term}{q} mean",
+            f"what does {sq}{term}{sq} mean",
+            f"what do you mean by {term}",
+            f"what do you mean by {q}{term}{q}",
+            f"what do you mean by {sq}{term}{sq}",
+            f"what is {term}",
+            f"what is {q}{term}{q}",
+            f"what is {sq}{term}{sq}",
+            f"what\'s {term}",
+            f"what\'s {q}{term}{q}",
+            f"what\'s {sq}{term}{sq}",
+            f"who is {term}",
+            f"who\'s {term}",
+            f"define {term}",
+            f"define {q}{term}{q}",
+            f"define {sq}{term}{sq}",
+            f"meaning of {term}",
+            f"meaning of {q}{term}{q}",
+            f"meaning of {sq}{term}{sq}",
+            f"{term} means",
+            f"{term} is a",
+            f"{term} is the",
+        ]
+        for pattern in patterns:
+            if pattern in text_lower:
+                return True
+        words = text_lower.strip("?").split()
+        if len(words) <= 3 and term in words:
+            return True
+        return False
 
     def _estimate_risk(
         self,

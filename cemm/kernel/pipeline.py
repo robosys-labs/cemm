@@ -72,11 +72,12 @@ class Pipeline:
             teaching_interpreter=self._teaching_interpreter,
         )
         self._artifact_store = ArtifactStore(store)
+        self._text_normalizer = TextNormalizer(lexeme_memory=self._lexeme_memory)
         self._semantic_interpreter = SemanticInterpreter(
             self._uol_mapper, artifact_store=self._artifact_store, store=store,
             lexeme_memory=self._lexeme_memory,
+            text_normalizer=self._text_normalizer,
         )
-        self._text_normalizer = TextNormalizer()
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
         self._causal_inference = CausalInference(store)
@@ -176,7 +177,7 @@ class Pipeline:
         # Rank claims and models with graph context
         ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
         ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
-        kernel.memory.working_claim_ids = [c.id for c, score in ranked_claims[:kernel.budget.max_ranked] if score > 0]
+        kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
         kernel.world.active_claim_ids = kernel.memory.working_claim_ids
         kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
 

@@ -1,2 +1,0 @@
-{"task_type":"claim_extraction","permission_scope":"public","priority":50,"signal":{"kind":"input","content":"My favorite database is Postgres.","source_type":"user"}}
-{"task_type":"synthesis_verification","permission_scope":"public","priority":60,"answer":"Your favorite database is Postgres.","selected_claims":[{"subject":"user","predicate":"favorite_database","object":"Postgres","confidence":0.93}]}

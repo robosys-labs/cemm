@@ -88,8 +88,11 @@ def _check_uncertainty(
     Returns (preserved, details).
     """
     details: list[str] = []
-    # Abstain/ask/greeting/acknowledgment intents don't need uncertainty markers
-    if sag.intent in ("abstain", "ask", "greeting", "acknowledgment"):
+    # Abstain/ask and fixed conversational intents don't need uncertainty markers
+    if sag.intent in (
+        "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
+        "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
+    ):
         return True, details
     needs_uncertainty = (
         sag.confidence < 0.7
@@ -242,7 +245,10 @@ def _check_evidence_integrity(
     details: list[str] = []
     intent = sag.intent
 
-    if intent in ("abstain", "ask", "greeting", "acknowledgment"):
+    if intent in (
+        "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
+        "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
+    ):
         if intent in ("abstain", "ask") and sag.selected_claim_ids:
             details.append("Abstain/Ask output selects claims as evidence")
             return False, details

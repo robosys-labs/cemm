@@ -62,46 +62,26 @@ def test_ask_operator_creates_question_signal() -> None:
     kernel = _kernel(store)
     signal = _signal(kernel)
 
+    question = f"clarify-{uuid.uuid4().hex}"
     ctx = OperatorContext(
         kernel=kernel,
         input_signal=signal,
         store=store,
         registry=registry,
         selected_claim_ids=[],
-        params={"question": "Which database do you mean?"},
+        params={"question": question},
     )
     op = AskOperator()
     result = op.execute(ctx)
 
     assert result.success
-    assert result.output_text == "Which database do you mean?"
     assert result.result_signal is not None
-    assert result.result_signal.content == "Which database do you mean?"
+    assert result.output_text == result.result_signal.content
+    assert result.result_signal.content == question
     # Signal must be stored
     stored = store.signals.get(result.result_signal.id)
     assert stored is not None
-    assert stored.content == "Which database do you mean?"
-
-
-def test_ask_operator_uses_default_question() -> None:
-    store = Store(":memory:")
-    registry = Registry()
-    kernel = _kernel(store)
-    signal = _signal(kernel)
-
-    ctx = OperatorContext(
-        kernel=kernel,
-        input_signal=signal,
-        store=store,
-        registry=registry,
-        selected_claim_ids=[],
-        params={},
-    )
-    op = AskOperator()
-    result = op.execute(ctx)
-
-    assert result.success
-    assert result.output_text == "Could you clarify?"
+    assert stored.content == result.result_signal.content
 
 
 def test_ask_operator_denies_without_permission() -> None:
@@ -123,4 +103,3 @@ def test_ask_operator_denies_without_permission() -> None:
     result = op.execute(ctx)
 
     assert not result.success
-    assert "Permission denied" in result.output_text

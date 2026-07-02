@@ -17,6 +17,10 @@ from cemm.operators.ask import AskOperator
 from cemm.operators.remember import RememberOperator
 from cemm.operators.registry import OperatorRegistry
 from cemm.operators.retrieve_op import RetrieveOperator
+from cemm.operators.base import OperatorContext
+from cemm.synthesis.result import SynthesisResult
+from cemm.types.signal import Signal, SignalKind, SourceType
+from cemm.types.permission import Permission
 from cemm.store.store import Store
 from cemm.registry import Registry
 
@@ -41,16 +45,6 @@ def _turn(text: str):
     return output, loop
 
 
-def test_ask_output_has_sag_and_realization_metadata() -> None:
-    output, loop = _turn("what is the weather?")
-    assert output
-    result = loop._last_result
-    decision = result.decision_packet
-    assert decision is not None
-    assert decision.action_kind in {"ask", "abstain", "remember"}
-    assert decision.action_plan is not None
-
-
 def test_remember_output_is_realized_from_sag_not_manual_text() -> None:
     output, loop = _turn("remember I like coffee")
     assert output
@@ -63,3 +57,44 @@ def test_retrieve_output_is_realized_from_sag_not_manual_text() -> None:
     process_input("remember I like coffee", store, registry, op_registry, pipeline, learner, loop, "ctx_retrieve", [0])
     output = process_input("what do I like?", store, registry, op_registry, pipeline, learner, loop, "ctx_retrieve", [1])
     assert output
+
+
+def test_abstain_operator_keeps_verification_diagnostics_internal(monkeypatch) -> None:
+    store, registry, _, pipeline, _, _ = _runtime()
+    kernel = pipeline.run("unanswerable input", context_id="ctx_abstain").kernel
+    assert kernel is not None
+    signal = Signal(
+        id="sig_abstain",
+        kind=SignalKind.INPUT,
+        source_id="user",
+        source_type=SourceType.USER,
+        content="unanswerable input",
+        observed_at=time.time(),
+        context_id=kernel.id,
+        salience=0.8,
+        trust=0.8,
+        permission=Permission.public(),
+    )
+
+    def fake_run(*args, **kwargs):
+        return SynthesisResult(
+            success=True,
+            output="",
+            verified=False,
+            metadata={"verification": {"details": ["No evidence selected for synthesis"]}},
+        )
+
+    import cemm.operators.abstain as abstain_module
+
+    monkeypatch.setattr(abstain_module._pipeline, "run", fake_run)
+    result = AbstainOperator().execute(OperatorContext(
+        kernel=kernel,
+        input_signal=signal,
+        store=store,
+        registry=registry,
+        params={"reason": "internal reason"},
+    ))
+
+    assert result.success
+    assert "verification" not in result.output_text.lower()
+    assert "no evidence selected" not in result.output_text.lower()

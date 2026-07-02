@@ -130,8 +130,28 @@ class LexemeMemory:
         self._surface_index[surface.lower()].append(lex)
         return lex
 
-    def lookup(self, surface: str) -> list[LexemeModel]:
-        return self._surface_index.get(surface.lower(), [])
+    def learn(
+        self,
+        surface: str,
+        role: str,
+        maps_to: str = "",
+        confidence: float = 0.5,
+        scope: str = LexemeScope.USER.value,
+    ) -> LexemeModel:
+        return self.record(
+            surface=surface,
+            canonical=surface.lower(),
+            role=role,
+            maps_to=maps_to,
+            scope=scope,
+            confidence=confidence,
+            trust=confidence,
+            status=LexemeStatus.ACTIVE.value,
+        )
+
+    def lookup(self, surface: str) -> LexemeModel | None:
+        lexes = self._surface_index.get(surface.lower(), [])
+        return lexes[-1] if lexes else None
 
     def lookup_active(self, surface: str) -> LexemeModel | None:
         for lex in self._surface_index.get(surface.lower(), []):
@@ -159,6 +179,14 @@ class LexemeMemory:
         for lex in self._surface_index.get(surface.lower(), []):
             if lex.status != LexemeStatus.REJECTED.value:
                 lex.status = LexemeStatus.REJECTED.value
+                lex.updated_at = time.time()
+                return lex
+        return None
+
+    def suspend(self, surface: str) -> LexemeModel | None:
+        for lex in self._surface_index.get(surface.lower(), []):
+            if lex.status == LexemeStatus.ACTIVE.value:
+                lex.status = LexemeStatus.CANDIDATE.value
                 lex.updated_at = time.time()
                 return lex
         return None

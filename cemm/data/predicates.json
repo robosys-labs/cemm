@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "description": "Canonical predicate aliases used by the SemanticMatcher. These are language-specific seeds; other languages can be added as parallel entries.",
+    "version": "cemm.predicates.v1"
+  },
+  "predicates": [
+    {"canonical_key": "favorite_database", "aliases": ["fav_db", "preferred_db"]},
+    {"canonical_key": "likes", "aliases": ["like", "enjoy", "love", "loves"]},
+    {"canonical_key": "is_a", "aliases": ["isa", "is_a_type_of"]},
+    {"canonical_key": "has", "aliases": ["have", "own", "owns"]},
+    {"canonical_key": "belongs_to", "aliases": ["belongs", "owned_by"]},
+    {"canonical_key": "causes", "aliases": ["leads_to", "results_in"]},
+    {"canonical_key": "precedes", "aliases": ["before", "comes_before"]},
+    {"canonical_key": "located_at", "aliases": ["located_in", "at"]},
+    {"canonical_key": "created_by", "aliases": ["authored_by", "made_by"]},
+    {"canonical_key": "used_for", "aliases": ["used_in", "use"]},
+    {"canonical_key": "part_of", "aliases": ["component_of"]},
+    {"canonical_key": "started_at", "aliases": ["started_on", "began_at"]},
+    {"canonical_key": "favorite", "aliases": ["favourite", "fav"]},
+    {"canonical_key": "prefers", "aliases": ["prefer", "preferred"]},
+    {"canonical_key": "noted", "aliases": ["noted_as"]}
+  ]
+}

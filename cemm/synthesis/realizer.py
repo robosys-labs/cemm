@@ -9,6 +9,41 @@ from .router import SynthesisRouter
 from .result import SynthesisResult
 
 
+def _claim_atoms(answer_graph: SemanticAnswerGraph, store: Store) -> list[dict]:
+    atoms: list[dict] = []
+    for cid in answer_graph.selected_claim_ids:
+        claim = store.claims.get(cid)
+        if not claim:
+            continue
+        atoms.append({
+            "claim_id": claim.id,
+            "subject_entity_id": claim.subject_entity_id,
+            "predicate": claim.predicate,
+            "object_value": str(claim.object_value or claim.object_entity_id or ""),
+            "confidence": claim.confidence,
+            "trust": claim.trust,
+        })
+    return atoms
+
+
+def _clean_object(text: str) -> str:
+    text = text.strip()
+    if text.startswith("it "):
+        return text[3:]
+    return text
+
+
+def _join_objects(values: list[str]) -> str:
+    values = [v for v in values if v]
+    if not values:
+        return ""
+    if len(values) == 1:
+        return values[0]
+    if len(values) == 2:
+        return f"{values[0]} and {values[1]}"
+    return ", ".join(values[:-1]) + f", and {values[-1]}"
+
+
 def _name_variables(answer_graph: SemanticAnswerGraph, store: Store) -> dict:
     for cid in answer_graph.selected_claim_ids:
         claim = store.claims.get(cid)
@@ -25,15 +60,34 @@ def _self_identity_variables(answer_graph: SemanticAnswerGraph, store: Store) ->
     return {"name": "CEMM", "role": "assistant"}
 
 
-def _self_capability_variables(answer_graph: SemanticAnswerGraph, store: Store) -> dict:
-    capabilities = []
-    for cid in answer_graph.selected_claim_ids:
-        claim = store.claims.get(cid)
-        if claim and claim.object_value:
-            capabilities.append(str(claim.object_value))
-    if not capabilities:
-        capabilities = ["answer questions, remember facts, and reason about claims"]
-    return {"capabilities": ", ".join(capabilities)}
+def _self_capability_surface(atoms: list[dict]) -> str:
+    by_predicate: dict[str, list[str]] = {}
+    for atom in atoms:
+        obj = _clean_object(str(atom.get("object_value", "")))
+        if not obj:
+            continue
+        by_predicate.setdefault(str(atom.get("predicate", "")), []).append(obj)
+
+    sentences: list[str] = []
+    if by_predicate.get("does"):
+        sentences.append(f"I can {_join_objects(by_predicate['does'])}.")
+    if by_predicate.get("capability"):
+        sentences.append(f"I can also support {_join_objects(by_predicate['capability'])}.")
+    if by_predicate.get("purpose") and not sentences:
+        sentences.append(f"My purpose is to {_join_objects(by_predicate['purpose'])}.")
+    if by_predicate.get("knows_about"):
+        sentences.append(f"I can work with {_join_objects(by_predicate['knows_about'])}.")
+    if not sentences:
+        available = [
+            _clean_object(str(atom.get("object_value", "")))
+            for atom in atoms
+            if atom.get("object_value")
+        ]
+        if available:
+            sentences.append(f"I can {_join_objects(available)}.")
+        else:
+            sentences.append("I can answer from selected, verified memory and reasoning traces.")
+    return " ".join(sentences)
 
 
 class RealizationPipeline:
@@ -52,6 +106,7 @@ class RealizationPipeline:
             "selected_model_ids": answer_graph.selected_model_ids,
             "answer_graph": answer_graph,
         }
+        semantic_claim_atoms = _claim_atoms(answer_graph, store)
 
         # Map SAG intent to template_key for conversational responses
         # when no explicit template or claims are provided
@@ -60,6 +115,10 @@ class RealizationPipeline:
             params["template_key"] = "greeting"
         elif intent == "acknowledgment":
             params["template_key"] = "acknowledgment"
+        elif intent == "playful_acknowledgment":
+            params["template_key"] = "playful_acknowledgment"
+        elif intent == "low_competence_repair":
+            params["template_key"] = "low_competence_repair"
         elif intent == "ask" or intent == "ask_meaning":
             clarification = next(
                 (e.get("question") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),
@@ -75,10 +134,19 @@ class RealizationPipeline:
                 params["template_key"] = "ask_meaning"
                 params.setdefault("variables", {"term": term})
         elif intent == "abstain" and not answer_graph.selected_claim_ids:
-            reason = answer_graph.uncertainty_reasons[0] if answer_graph.uncertainty_reasons else ""
-            params["template"] = reason or "I don't have enough information to answer."
+            params["template_key"] = "abstain"
         elif intent == "remember":
             params["template_key"] = "remember_confirm"
+        elif intent in ("learn_command_alias", "learn_lexeme", "learn_correction"):
+            params["template_key"] = intent
+            teaching_event = next(
+                (e for e in answer_graph.entity_refs if e.get("kind") == "teaching_event"),
+                {},
+            )
+            params.setdefault("variables", {
+                "surface": teaching_event.get("surface", "that"),
+                "meaning": teaching_event.get("meaning", "that"),
+            })
         elif intent == "retrieve" and not answer_graph.selected_claim_ids:
             params["template_key"] = "retrieve_empty"
         elif intent == "permission_denied":
@@ -87,8 +155,7 @@ class RealizationPipeline:
             params["template_key"] = "self_identity"
             params.setdefault("variables", _self_identity_variables(answer_graph, store))
         elif intent == "self_capability" and answer_graph.selected_claim_ids:
-            params["template_key"] = "self_capability"
-            params.setdefault("variables", _self_capability_variables(answer_graph, store))
+            params["template"] = _self_capability_surface(semantic_claim_atoms)
         elif intent == "self_knowledge":
             params["template_key"] = "self_knowledge"
         elif intent == "user_identity":
@@ -101,10 +168,14 @@ class RealizationPipeline:
             params["template_key"] = intent
         elif intent == "self_query_unknown":
             params["template_key"] = "self_query_unknown"
+        elif intent in ("general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question"):
+            params["template_key"] = intent
 
         strategy = self._router.select_strategy(kernel, store, registry, params)
         result = self._router.route(strategy, kernel, store, registry, params)
         result.metadata["source_answer_graph_id"] = answer_graph.id
+        if semantic_claim_atoms:
+            result.metadata["semantic_claim_atoms"] = semantic_claim_atoms
 
         # Build claim_id -> claim_text map and claim objects for verification
         claim_text_map: dict[str, str] = {}
