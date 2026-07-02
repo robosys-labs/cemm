@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,15 @@ from ..types.signal import Signal
 from ..types.context_kernel import ContextKernel
 from ..learning.surface_tagger import SurfaceTagger
 from ..learning.lexeme_memory import LexemeMemory
+
+
+_SEMANTIC_INTERPRETER_WORDS_PATH = Path(__file__).parents[1] / "data" / "semantic_interpreter_words.json"
+
+
+def _load_semantic_interpreter_words() -> dict[str, Any]:
+    if not _SEMANTIC_INTERPRETER_WORDS_PATH.exists():
+        return {}
+    return json.loads(_SEMANTIC_INTERPRETER_WORDS_PATH.read_text(encoding="utf-8"))
 
 
 def _load_default_ner_tagger() -> "NERTagger | None":
@@ -52,6 +62,18 @@ class SemanticInterpreter:
             known_words=known_words,
             lexeme_memory=lexeme_memory,
         )
+        words = _load_semantic_interpreter_words()
+        self._stop_words = set(words.get("stop_words", []))
+        self._stop_words_caseful = {w.capitalize() for w in self._stop_words}
+        self._command_words = set(words.get("command_words", []))
+        self._causal_relations = {
+            k: tuple(v) for k, v in words.get("causal_relations", {}).items()
+        }
+        self._temporal_relations = {
+            k: tuple(v) for k, v in words.get("temporal_relations", {}).items()
+        }
+        self._causal_edge_relations = dict(words.get("causal_edge_relations", {}))
+        self._target_prepositions = set(words.get("target_prepositions", []))
 
     def run(self, signal: Signal, kernel: ContextKernel) -> SemanticEventGraph:
         if self._artifact_store:
@@ -320,16 +342,9 @@ class SemanticInterpreter:
             for ref in entity_refs
         ]
         entity_ids = [e for e in entity_ids if e]
-        causal_map = {
-            "causal_causes": "causes",
-            "causal_caused_by": "caused_by",
-            "causal_leads_to": "leads_to",
-            "causal_because": "because",
-            "causal_so": "so",
-        }
         for proc in processes:
             frame_key = proc.get("frame_key", "")
-            relation = causal_map.get(frame_key)
+            relation = self._causal_edge_relations.get(frame_key)
             if relation:
                 cause_id = entity_ids[0] if entity_ids else "unknown"
                 effect_id = entity_ids[1] if len(entity_ids) > 1 else "unknown"
@@ -353,28 +368,12 @@ class SemanticInterpreter:
         if len(words) < 3:
             return inferred
 
-        causal_map = {
-            "causal_causes": ("causes", "caused", "cause"),
-            "causal_caused_by": ("caused by", "caused", "by"),
-            "causal_leads_to": ("leads to", "leads", "lead to"),
-            "causal_because": ("because",),
-            "causal_so": ("so",),
-        }
-        temporal_map = {
-            "temporal_before": ("before",),
-            "temporal_after": ("after",),
-            "temporal_during": ("during",),
-            "temporal_overlaps": ("overlaps", "while"),
-            "temporal_starts": ("starts", "begins"),
-            "temporal_finishes": ("finishes", "ends"),
-        }
-
         is_causal = any(proc.get("frame_key", "").startswith("causal_") for proc in processes)
         relation_words: set[str] = set()
         for proc in processes:
             frame_key = proc.get("frame_key", "")
-            relation_words.update(causal_map.get(frame_key, ()))
-            relation_words.update(temporal_map.get(frame_key, ()))
+            relation_words.update(self._causal_relations.get(frame_key, ()))
+            relation_words.update(self._temporal_relations.get(frame_key, ()))
 
         if not relation_words:
             return inferred
@@ -393,13 +392,12 @@ class SemanticInterpreter:
         if marker_index is None:
             return inferred
 
-        command_words = {"remember", "save", "store", "note", "reflect", "think", "ponder", "contemplate", "retrieve", "search", "recall", "find", "lookup"}
         source_start = marker_index - 1
-        while source_start >= 0 and words[source_start] in command_words:
+        while source_start >= 0 and words[source_start] in self._command_words:
             source_start -= 1
         source_phrase = self._expand_entity_phrase(words, source_start, -1) if source_start >= 0 else ""
         target_start = marker_index + 1
-        if target_start < len(words) and words[target_start] in ("by", "to", "with"):
+        if target_start < len(words) and words[target_start] in self._target_prepositions:
             target_start += 1
         target_phrase = self._expand_entity_phrase(words, target_start, 1)
 
@@ -429,19 +427,11 @@ class SemanticInterpreter:
         """
         if not (0 <= center_index < len(words)):
             return ""
-        stop_words = {
-            "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
-            "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
-            "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
-            "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
-            "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just",
-        }
-        command_words = {"remember", "save", "store", "note", "reflect", "think", "ponder", "contemplate", "retrieve", "search", "recall", "find", "lookup"}
         phrase = [words[center_index]]
         i = center_index + direction
         while 0 <= i < len(words):
             w = words[i]
-            if w in stop_words or w in command_words:
+            if w in self._stop_words or w in self._command_words:
                 break
             if direction < 0:
                 phrase.insert(0, w)
@@ -499,24 +489,18 @@ class SemanticInterpreter:
 
         entities = []
         seen = set()
-        stop_words = {
-            "The", "A", "An", "And", "Or", "But", "If", "Then", "Than", "To", "Of", "In", "On", "At", "For",
-            "With", "By", "From", "As", "Is", "Are", "Was", "Were", "Be", "Been", "Being", "Have", "Has", "Had",
-            "Do", "Does", "Did", "Will", "Would", "Could", "Should", "May", "Might", "Can", "This", "That", "These",
-            "Those", "I", "You", "He", "She", "It", "We", "They", "Me", "Him", "Her", "Us", "Them", "What", "Which",
-            "Who", "When", "Where", "Why", "How", "All", "Each", "Every", "Some", "Any", "No", "Not", "Only", "Just",
-        }
 
-        # Capitalized proper-noun phrases (naive, English-centric)
+        # Capitalized proper-noun phrases (naive; stop words are loaded from
+        # cemm/data/semantic_interpreter_words.json).
         i = 0
         while i < len(words):
             word = words[i].strip(".,!?;:\"'")
-            if word and word[0].isupper() and word not in stop_words:
+            if word and word[0].isupper() and word not in self._stop_words_caseful:
                 phrase = [word]
                 j = i + 1
                 while j < len(words):
                     next_word = words[j].strip(".,!?;:\"'")
-                    if not next_word or next_word in stop_words or not next_word[0].isupper():
+                    if not next_word or next_word in self._stop_words_caseful or not next_word[0].isupper():
                         break
                     phrase.append(next_word)
                     j += 1

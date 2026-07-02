@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "description": "Surface word cues used by SemanticInterpreter for entity extraction, causal/temporal relation inference, and command-word stripping. Language-specific seeds; other languages can be added as parallel entries.",
+    "version": "cemm.semantic_interpreter_words.v1"
+  },
+  "stop_words": [
+    "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
+    "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+    "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
+    "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
+    "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just"
+  ],
+  "command_words": [
+    "remember", "save", "store", "note", "reflect", "think", "ponder", "contemplate", "retrieve", "search",
+    "recall", "find", "lookup"
+  ],
+  "causal_relations": {
+    "causal_causes": ["causes", "caused", "cause"],
+    "causal_caused_by": ["caused by", "caused", "by"],
+    "causal_leads_to": ["leads to", "leads", "lead to"],
+    "causal_because": ["because"],
+    "causal_so": ["so"]
+  },
+  "temporal_relations": {
+    "temporal_before": ["before"],
+    "temporal_after": ["after"],
+    "temporal_during": ["during"],
+    "temporal_overlaps": ["overlaps", "while"],
+    "temporal_starts": ["starts", "begins"],
+    "temporal_finishes": ["finishes", "ends"]
+  },
+  "causal_edge_relations": {
+    "causal_causes": "causes",
+    "causal_caused_by": "caused_by",
+    "causal_leads_to": "leads_to",
+    "causal_because": "because",
+    "causal_so": "so"
+  },
+  "causal_connectors": [
+    " causes ", " cause ", "causes ",
+    " leads to ", " lead to ",
+    " results in ", " result in ",
+    " produces ", " produce ",
+    " makes ", " make ",
+    " triggers ", " trigger ",
+    " creates ", " create ",
+    " generates ", " generate "
+  ],
+  "causal_phrase_connectors": [
+    "causes", "cause", "leads", "lead", "results", "result", "produces", "produce",
+    "makes", "make", "triggers", "trigger", "creates", "create", "generates", "generate"
+  ],
+  "target_prepositions": ["by", "to", "with"]
+}

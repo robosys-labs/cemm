@@ -466,11 +466,13 @@ git commit -m "test(gap-closure): invariant regression tests for surgical gap cl
 Remaining architectural gaps (closed in a follow-up pass):
 - Hardcoded UOL semantic aliases in `__main__.py` and `registry/uol_mapper.py` → moved to `cemm/data/uol_semantics.json` and `cemm/data/predicates.json`; `UOLMapper` now loads query frames, pronouns, insult aliases, and question aliases from JSON.
 - Hardcoded word lists in `surface_tagger.py` → moved to `cemm/data/surface_role_words.json`.
-- Hardcoded word lists in `teaching_interpreter.py` → moved to `cemm/data/teaching_patterns.json`.
+- Hardcoded word lists in `teaching_interpreter.py` → moved to `cemm/data/teaching_patterns.json` (triggers, stop words, role cues, meaning stop words).
 - Hardcoded realization templates in `synthesis/template.py` → moved to `cemm/data/response_templates.json` (language-indexed, UOL-intent-keyed).
 - Hardcoded canonical operator registration in `__main__.py` → metadata moved to `cemm/data/operators.json`.
 - SAG-less training export paths → `__main__.py` passes `semantic_answer_graph` to `serialize_turn`; `training_export.py` includes SAG-derived records and trace metadata.
+- Hardcoded English stop words, command words, causal/temporal relation markers, target prepositions, and named-entity extraction lists in `kernel/semantic_interpreter.py` → moved to `cemm/data/semantic_interpreter_words.json`.
+- Hardcoded English causal connectors and phrase-extraction stop words in `learning/inductor.py` → moved to `cemm/data/semantic_interpreter_words.json`.
 
 Tests: `cemm/tests/test_data_driven_semantic_layer.py` covers all of the above.
 
-All identified deterministic shortcut gaps in this pass are now closed. The remaining architectural work is expanding the data files with non-English language seeds and moving the last bits of English-specific stop-word logic (e.g., `teaching_interpreter._extract_command_alias`) to data when it is generalized.
+All identified deterministic shortcut gaps in this pass are now closed. The remaining architectural work is expanding the data files with non-English language seeds and generalizing the last English-specific stop-word heuristics (e.g., `teaching_interpreter._extract_command_alias`) when a language-agnostic pattern is available.

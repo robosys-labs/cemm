@@ -15,11 +15,12 @@ from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.signal import ObservationSemantics
 from .answer_graph_ranker import best_candidate
+from ..registry.uol_mapper import UOLMapper
 
 
 class DecisionRouter:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, uol_mapper: UOLMapper | None = None) -> None:
+        self._uol_mapper = uol_mapper
 
     def run(
         self,
@@ -338,7 +339,7 @@ class DecisionRouter:
         # immediately asking for clarification. This keeps the assistant useful for
         # open-domain chat and prevents the "Could you elaborate?" loop.
         if is_question and not selected_claim_ids and not graph.claim_candidates:
-            intent = self._classify_general_question(input_text, graph)
+            intent = self._classify_general_question(input_text, graph, kernel)
             if intent:
                 return DecisionPacket(
                     action_kind="answer",
@@ -539,17 +540,36 @@ class DecisionRouter:
         }
         return text in pure_acknowledgments
 
-    def _classify_general_question(self, input_text: str, graph: SemanticEventGraph) -> str:
-        """Map an open-domain question to a conversational answer intent."""
-        text_lower = input_text.lower().strip("?")
-        if any(phrase in text_lower for phrase in ("story", "stories", "tell me a story", "tell me a tale", "narrative")):
-            return "story_request"
-        if any(phrase in text_lower for phrase in ("should i eat", "what should i eat", "what to eat", "what do you recommend i eat", "what food", "recommend a meal", "what should i have for")):
-            return "food_recommendation"
-        if any(phrase in text_lower for phrase in ("recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend")):
-            return "recommendation_request"
-        if any(phrase in text_lower for phrase in ("how can you help", "how do you help", "can you help me", "what can you help with")):
-            return "self_capability"
+    def _classify_general_question(
+        self, input_text: str, graph: SemanticEventGraph, kernel: ContextKernel,
+    ) -> str:
+        """Map an open-domain question to a conversational answer intent.
+
+        Intent classification is data-driven: it prefers UOL semantic frames
+        already present in the SEG, and falls back to a UOLMapper match against
+        the language-specific aliases in cemm/data/uol_semantics.json.
+        """
+        frame_to_intent = {
+            "story_request": "story_request",
+            "food_recommendation_request": "food_recommendation",
+            "recommendation_request": "recommendation_request",
+            "self_capability_query": "self_capability",
+        }
+        graph_frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        for frame_key, intent in frame_to_intent.items():
+            if frame_key in graph_frame_keys:
+                return intent
+
+        if self._uol_mapper is not None:
+            uol_atoms = self._uol_mapper.map_signal(input_text, kernel)
+            atom_frame_keys = {
+                atom.frame_key for atom in uol_atoms
+                if hasattr(atom, "frame_key")
+            }
+            for frame_key, intent in frame_to_intent.items():
+                if frame_key in atom_frame_keys:
+                    return intent
+
         return "general_conversation"
 
     def _detect_command_intent(
@@ -643,7 +663,7 @@ class DecisionRouter:
             # "OK can you tell me stories?" or "OK what should I eat?". If the rest
             # of the sentence is not just acknowledgment, classify the content.
             if not self._is_pure_acknowledgment(input_text):
-                content_intent = self._classify_general_question(input_text, graph)
+                content_intent = self._classify_general_question(input_text, graph, kernel)
                 if content_intent:
                     return DecisionPacket(
                         action_kind="answer",

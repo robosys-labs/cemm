@@ -81,7 +81,7 @@ class Pipeline:
         self._grounding_pipeline = GroundingPipeline(self._resolver, self._frames)
         self._context_inference_engine = ContextInferenceEngine(store, registry)
         self._causal_inference = CausalInference(store)
-        self._decision_router = DecisionRouter()
+        self._decision_router = DecisionRouter(uol_mapper=self._uol_mapper)
         self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
         self._turn_count: int = 0

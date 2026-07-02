@@ -39,7 +39,10 @@
     {"canonical_key": "self_capability_query", "aliases": ["what can you do", "what do you do", "your capabilities", "what do you know", "how do you work", "how can you help", "how do you help", "can you help me", "what can you help with", "how could you help", "what help can you offer", "can you assist me", "what do you assist with"]},
     {"canonical_key": "self_knowledge_query", "aliases": ["what do you know about yourself", "describe yourself", "what are you made of"]},
     {"canonical_key": "user_identity_query", "aliases": ["do you remember me", "do you know me", "do you know who i am", "who am i"]},
-    {"canonical_key": "user_name_query", "aliases": ["what's my name", "what is my name", "do you know my name", "whats my name"]}
+    {"canonical_key": "user_name_query", "aliases": ["what's my name", "what is my name", "do you know my name", "whats my name"]},
+    {"canonical_key": "story_request", "aliases": ["story", "stories", "tell me a story", "tell me a tale", "narrative", "tell me a narrative", "tell me stories"]},
+    {"canonical_key": "food_recommendation_request", "aliases": ["should i eat", "what should i eat", "what to eat", "what do you recommend i eat", "what food", "recommend a meal", "what should i have for", "what should i have for dinner", "what should i have for lunch", "what should i have for breakfast"]},
+    {"canonical_key": "recommendation_request", "aliases": ["recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend", "can you recommend", "recommend something"]}
   ],
   "speech_act_to_frame": {
     "greeting": "greeting",

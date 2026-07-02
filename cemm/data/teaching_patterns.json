@@ -7,5 +7,10 @@
   "command_triggers": ["when i say", "say", "call", "use", "from now on", "let's say", "if i say"],
   "correction_triggers": ["no", "not", "wrong", "actually", "correction", "i mean", "i meant"],
   "surface_stop_words": ["this", "that", "these", "those", "the", "a", "an"],
-  "meaning_stop_words": ["but", "and", "or", "so", "then", "because", "when", "if"]
+  "meaning_stop_words": ["but", "and", "or", "so", "then", "because", "when", "if"],
+  "role_cues": {
+    "process": ["remember", "save", "store", "note", "recall", "retrieve", "do", "run", "go", "say", "tell", "ask", "answer", "make", "take", "get", "call"],
+    "state": ["is", "are", "was", "were", "be", "feel", "seem", "look", "sound", "happy", "sad", "angry", "tired", "busy", "beautiful", "good", "bad", "groovy"],
+    "modifier": ["quietly", "secretly", "privately", "quickly", "slowly", "carefully", "loudly", "softly", "gently", "really", "very", "extremely", "quite", "pretty", "fairly", "slightly", "maybe", "probably", "definitely"]
+  }
 }

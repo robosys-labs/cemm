@@ -1,11 +1,25 @@
 from __future__ import annotations
+import json
+import math
+import time
+import uuid
+from collections import Counter, defaultdict
+from pathlib import Path
+
 from ..store.store import Store
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.claim import Claim, ClaimStatus
 from ..types.signal import Signal, SignalKind, SourceType
 from ..registry.registry import Registry, RegistryEntry
-import math, time, uuid
-from collections import Counter, defaultdict
+
+
+_SEMANTIC_INTERPRETER_WORDS_PATH = Path(__file__).parents[1] / "data" / "semantic_interpreter_words.json"
+
+
+def _load_semantic_interpreter_words() -> dict:
+    if not _SEMANTIC_INTERPRETER_WORDS_PATH.exists():
+        return {}
+    return json.loads(_SEMANTIC_INTERPRETER_WORDS_PATH.read_text(encoding="utf-8"))
 
 
 class Inductor:
@@ -13,20 +27,13 @@ class Inductor:
         self._store = store
         self._feedback_threshold = feedback_threshold
         self._registry = registry
+        words = _load_semantic_interpreter_words()
+        self._causal_connectors = list(words.get("causal_connectors", []))
+        self._causal_phrase_connectors = set(words.get("causal_phrase_connectors", []))
+        self._stop_words = set(words.get("stop_words", []))
 
     def set_threshold(self, value: int) -> None:
         self._feedback_threshold = value
-
-    CAUSAL_CONNECTORS = [
-        " causes ", " cause ", "causes ",
-        " leads to ", " lead to ",
-        " results in ", " result in ",
-        " produces ", " produce ",
-        " makes ", " make ",
-        " triggers ", " trigger ",
-        " creates ", " create ",
-        " generates ", " generate ",
-    ]
 
     def maybe_induct(self, domain: str | None = None) -> list[Model]:
         candidates: list[Model] = []
@@ -39,29 +46,18 @@ class Inductor:
         candidates.extend(self._find_slot_completion())
         return candidates
 
-    @staticmethod
-    def _extract_causal_phrase(words: list[str], direction: str) -> str:
+    def _extract_causal_phrase(self, words: list[str], direction: str) -> str:
         """Naive phrase extraction: keep content words until a stop word or connector."""
-        stop = {
-            "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
-            "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
-            "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
-            "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them", "what", "which",
-            "who", "when", "where", "why", "how", "all", "each", "every", "some", "any", "no", "not", "only", "just",
-        }
         if direction == "left":
             phrase = []
             for w in reversed(words):
-                if w in stop or w in {
-                    "causes", "cause", "leads", "lead", "results", "result", "produces", "produce",
-                    "makes", "make", "triggers", "trigger", "creates", "create", "generates", "generate",
-                }:
+                if w in self._stop_words or w in self._causal_phrase_connectors:
                     break
                 phrase.insert(0, w)
             return "_".join(phrase) if phrase else ""
         phrase = []
         for w in words:
-            if w in stop:
+            if w in self._stop_words:
                 if phrase:
                     break
                 continue
@@ -78,7 +74,7 @@ class Inductor:
             if domain and getattr(signal, "domain", None) != domain:
                 continue
             content = " " + signal.content.lower().strip() + " "
-            for connector in self.CAUSAL_CONNECTORS:
+            for connector in self._causal_connectors:
                 if connector not in content:
                     continue
                 parts = content.split(connector, 1)

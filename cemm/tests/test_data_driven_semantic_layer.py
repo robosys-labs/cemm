@@ -213,3 +213,52 @@ def test_operator_seed_data_loaded_from_json() -> None:
     assert "answer" in keys
     assert "remember" in keys
     assert "learn" in keys
+
+
+def test_semantic_interpreter_loads_data_driven_words() -> None:
+    from cemm.kernel.semantic_interpreter import SemanticInterpreter
+    interpreter = SemanticInterpreter(UOLMapper(Registry()))
+    assert "the" in interpreter._stop_words
+    assert "remember" in interpreter._command_words
+    assert interpreter._causal_edge_relations.get("causal_causes") == "causes"
+    assert "before" in interpreter._temporal_relations.get("temporal_before", ())
+
+
+def test_semantic_interpreter_entity_expansion_uses_data_driven_stop_words() -> None:
+    from cemm.kernel.semantic_interpreter import SemanticInterpreter
+    interpreter = SemanticInterpreter(UOLMapper(Registry()))
+    words = ["remember", "the", "blue", "house", "and", "garden"]
+    assert interpreter._expand_entity_phrase(words, 3, 1) == "house"
+    assert interpreter._expand_entity_phrase(words, 3, -1) == "blue house"
+
+
+def test_inductor_loads_data_driven_causal_connectors() -> None:
+    from cemm.learning.inductor import Inductor
+    from cemm.store.store import Store
+    store = Store()
+    inductor = Inductor(store)
+    assert " causes " in inductor._causal_connectors
+    assert "cause" in inductor._causal_phrase_connectors
+    assert "the" in inductor._stop_words
+
+
+def test_teaching_interpreter_loads_data_driven_role_cues() -> None:
+    from cemm.kernel.teaching_interpreter import TeachingInterpreter
+    interpreter = TeachingInterpreter()
+    assert "remember" in interpreter._process_cues
+    assert "is" in interpreter._state_cues
+    assert "quietly" in interpreter._modifier_cues
+
+
+def test_teaching_interpreter_role_inference_uses_data_driven_cues() -> None:
+    from cemm.kernel.teaching_interpreter import TeachingInterpreter
+    interpreter = TeachingInterpreter()
+    assert interpreter._infer_role("x", "quickly") == "modifier"
+    assert interpreter._infer_role("x", "is good") == "state"
+    assert interpreter._infer_role("x", "remember") == "process"
+
+
+def test_semantic_interpreter_loads_data_driven_target_prepositions() -> None:
+    from cemm.kernel.semantic_interpreter import SemanticInterpreter
+    interpreter = SemanticInterpreter(UOLMapper(Registry()))
+    assert {"by", "to", "with"}.issubset(interpreter._target_prepositions)

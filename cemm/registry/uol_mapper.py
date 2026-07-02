@@ -175,7 +175,7 @@ class UOLMapper:
         # Map UOL semantic frame_keys to atom types
         state_keys = {"low_competence", "high_quality"}
         command_keys = {"command_remember", "command_reflect", "command_retrieve"}
-        intent_keys = {"greeting", "session_exit", "assistance_request"}
+        intent_keys = {"greeting", "session_exit", "assistance_request", "story_request", "food_recommendation_request", "recommendation_request"}
         conversational_keys = {"acknowledgment", "discourse_marker", "playful_acknowledgment"}
         relation_prefixes = ("temporal_", "causal_")
         self_query_keys = {"self_identity_query", "self_capability_query", "self_knowledge_query"}

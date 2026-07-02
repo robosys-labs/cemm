@@ -69,6 +69,10 @@ class TeachingInterpreter:
         self._correction_triggers = patterns.get("correction_triggers", set())
         self._surface_stop_words = patterns.get("surface_stop_words", set())
         self._meaning_stop_words = patterns.get("meaning_stop_words", set())
+        role_cues = patterns.get("role_cues", {})
+        self._process_cues = set(role_cues.get("process", []))
+        self._state_cues = set(role_cues.get("state", []))
+        self._modifier_cues = set(role_cues.get("modifier", []))
 
     def interpret(self, text: str) -> list[TeachingEvent]:
         """Return candidate teaching events from the input text."""
@@ -174,15 +178,16 @@ class TeachingInterpreter:
         return events
 
     def _infer_role(self, surface: str, meaning: str) -> str:
-        """Infer whether the learned surface is a process, state, modifier, etc."""
+        """Infer whether the learned surface is a process, state, modifier, etc.
+
+        Cues are loaded from cemm/data/teaching_patterns.json so they can be
+        language-specific without hardcoding English surface forms.
+        """
         meaning_lower = meaning.lower()
-        process_cues = {"remember", "save", "store", "note", "recall", "retrieve", "do", "run", "go", "say", "tell", "ask", "answer", "make", "take", "get", "call"}
-        state_cues = {"is", "are", "was", "were", "be", "feel", "seem", "look", "sound", "happy", "sad", "angry", "tired", "busy", "beautiful", "good", "bad", "groovy"}
-        modifier_cues = {"quietly", "secretly", "privately", "quickly", "slowly", "carefully", "loudly", "softly", "gently", "really", "very", "extremely", "quite", "pretty", "fairly", "slightly", "maybe", "probably", "definitely"}
-        if any(c in modifier_cues for c in meaning_lower.split()):
+        if any(c in self._modifier_cues for c in meaning_lower.split()):
             return "modifier"
-        if any(c in state_cues for c in meaning_lower.split()):
+        if any(c in self._state_cues for c in meaning_lower.split()):
             return "state"
-        if any(c in process_cues for c in meaning_lower.split()):
+        if any(c in self._process_cues for c in meaning_lower.split()):
             return "process"
         return "unknown"
