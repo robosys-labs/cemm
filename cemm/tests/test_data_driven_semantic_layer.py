@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import time
 import uuid
+from pathlib import Path
 
 import pytest
 
@@ -11,7 +13,7 @@ from cemm.learning.surface_tagger import SurfaceTagger
 from cemm.registry import Registry, RegistryEntry
 from cemm.registry.uol_mapper import UOLMapper
 from cemm.types.claim import Claim
-from cemm.types.context_kernel import ContextKernel
+from cemm.types.context_kernel import ContextKernel, UserState
 from cemm.types.entity import Entity, EntityType
 from cemm.types.permission import Permission
 from cemm.types.semantic_answer_graph import SemanticAnswerGraph
@@ -262,3 +264,35 @@ def test_semantic_interpreter_loads_data_driven_target_prepositions() -> None:
     from cemm.kernel.semantic_interpreter import SemanticInterpreter
     interpreter = SemanticInterpreter(UOLMapper(Registry()))
     assert {"by", "to", "with"}.issubset(interpreter._target_prepositions)
+
+
+def test_uol_semantics_includes_conversation_intent_frames() -> None:
+    data = json.loads(Path("cemm/data/uol_semantics.json").read_text(encoding="utf-8"))
+    keys = {entry["canonical_key"] for entry in data.get("uol_semantics", [])}
+    assert "story_request" in keys
+    assert "food_recommendation_request" in keys
+    assert "recommendation_request" in keys
+
+
+def test_uol_mapper_emits_conversation_intent_atoms() -> None:
+    from cemm.registry.uol_mapper import UOLMapper
+    from cemm.types.context_kernel import ContextKernel
+    mapper = UOLMapper(Registry())
+    kernel = ContextKernel(id="ctx-1", user=UserState())
+    atoms = mapper.map_signal("tell me a story", kernel)
+    frame_keys = {a.frame_key for a in atoms if hasattr(a, "frame_key")}
+    assert "story_request" in frame_keys
+
+
+def test_decision_router_classifies_intent_from_graph_frames() -> None:
+    from cemm.kernel.decision_router import DecisionRouter
+    from cemm.types.semantic_event_graph import SemanticEventGraph
+    from cemm.types.context_kernel import ContextKernel
+    router = DecisionRouter(uol_mapper=UOLMapper(Registry()))
+    graph = SemanticEventGraph(
+        id="g1", context_id="ctx-1", source_signal_ids=["s1"],
+        processes=[{"frame_key": "story_request", "confidence": 0.8}],
+    )
+    kernel = ContextKernel(id="ctx-1", user=UserState())
+    intent = router._classify_general_question("tell me a story", graph, kernel)
+    assert intent == "story_request"
