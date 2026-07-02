@@ -202,18 +202,54 @@ class DecisionRouter:
                     reason="open_domain_entity_query without evidence → unknown_entity_response",
                 )
 
-            # Exit
+            # Exit — social closure, not abstention (P0-2)
             if act == "exit":
-                return DecisionPacket(
-                    action_kind="abstain",
-                    action_plan=ActionPlan(
-                        action_kind="abstain",
-                        execution_allowed=False,
-                        confidence=0.95,
-                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                    ),
+                return self._make_answer_packet(
+                    intent="session_exit",
+                    response_mode="social_response",
                     confidence=0.95,
-                    reason="conversation_act=exit",
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="conversation_act=exit → social closure",
+                )
+
+            # Safety response — deescalate/refuse (P0-4)
+            if act == "safety_response":
+                return self._make_answer_packet(
+                    intent="safety_deescalation",
+                    response_mode="safety_response",
+                    confidence=0.95,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="conversation_act=safety_response → deescalate",
+                )
+
+            # Social conflict clarification — ask for idiom clarification
+            if act == "social_conflict_clarify":
+                return self._make_answer_packet(
+                    intent="social_conflict_clarify",
+                    response_mode="social_response",
+                    confidence=0.8,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="conversation_act=social_conflict_clarify → ask clarification",
+                )
+
+            # Reciprocal phatic check-in — answer with reciprocal checkin
+            if act == "reciprocal_phatic_checkin":
+                return self._make_answer_packet(
+                    intent="reciprocal_phatic_checkin",
+                    response_mode="social_response",
+                    confidence=0.85,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="conversation_act=reciprocal_phatic_checkin → reciprocal social response",
+                )
+
+            # Retrospective repair — acknowledge and reset
+            if act == "retrospective_repair":
+                return self._make_answer_packet(
+                    intent="retrospective_repair",
+                    response_mode="repair_response",
+                    confidence=0.8,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="conversation_act=retrospective_repair → acknowledge and reset",
                 )
 
         if "low_competence" in graph_state_keys:

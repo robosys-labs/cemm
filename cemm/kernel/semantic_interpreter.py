@@ -11,6 +11,7 @@ from ..store.store import Store
 from ..types.semantic_event_graph import SemanticEventGraph, SemanticEdge
 from ..types.signal import Signal
 from ..types.context_kernel import ContextKernel
+from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame
 from ..learning.surface_tagger import SurfaceTagger
 from ..learning.lexeme_memory import LexemeMemory
 
@@ -77,7 +78,15 @@ class SemanticInterpreter:
         self._causal_edge_relations = dict(words.get("causal_edge_relations", {}))
         self._target_prepositions = set(words.get("target_prepositions", []))
 
-    def run(self, signal: Signal, kernel: ContextKernel) -> SemanticEventGraph:
+    def run(
+        self,
+        signal: Signal,
+        kernel: ContextKernel,
+        meaning_percept: MeaningPerceptPacket | None = None,
+        situation_frame: SituationFrame | None = None,
+    ) -> SemanticEventGraph:
+        # When a MeaningPerceptPacket is available, use its pre-bound atoms
+        # to enrich the graph and skip redundant NER/SurfaceTagger calls.
         if self._artifact_store:
             artifact = self._artifact_store.get_active_artifact("uol_semantic")
             if artifact:
@@ -86,13 +95,19 @@ class SemanticInterpreter:
                     output = best.get("output", {})
                     atoms_data: list[dict[str, Any]] = output.get("uol_atoms", [])
                     if atoms_data:
-                        return self._build_graph(signal, kernel, atoms_data)
+                        graph = self._build_graph(signal, kernel, atoms_data)
+                        if meaning_percept:
+                            graph = self._enrich_with_percept(graph, meaning_percept, situation_frame)
+                        return graph
 
         atoms = self._uol_mapper.map_signal(signal.content, kernel)
-        return self._build_graph(
+        graph = self._build_graph(
             signal, kernel,
             [a.__dict__ for a in atoms],
         )
+        if meaning_percept:
+            graph = self._enrich_with_percept(graph, meaning_percept, situation_frame)
+        return graph
 
     def _build_graph(
         self,
@@ -471,6 +486,95 @@ class SemanticInterpreter:
                 "confidence": span.get("confidence", 0.6),
             })
         return entity_refs
+
+    def _enrich_with_percept(
+        self,
+        graph: SemanticEventGraph,
+        percept: MeaningPerceptPacket,
+        situation: SituationFrame | None = None,
+    ) -> SemanticEventGraph:
+        """Enrich SemanticEventGraph with pre-bound atoms from MeaningPerceptPacket.
+
+        Per §8.13: SemanticInterpreter should consume MeaningPerceptPacket +
+        SituationFrame, not raw text only. When a percept is available, we use
+        its pre-bound referents/actions/states to enrich entity_refs, processes,
+        and states — skipping the redundant internal SurfaceTagger/NER calls
+        that _build_graph would otherwise make.
+        """
+        seen_entities = {e.get("entity_id", "").lower() for e in graph.entity_refs}
+        seen_entities.discard("")
+
+        # Add referents from percept that aren't already in entity_refs
+        for ref in percept.referents:
+            text = ref.surface.lower()
+            if text and text not in seen_entities:
+                seen_entities.add(text)
+                graph.entity_refs.append({
+                    "kind": "entity_ref",
+                    "entity_id": text,
+                    "role": ref.role,
+                    "entity_type": ref.entity_type,
+                    "confidence": ref.confidence,
+                    "source": ref.source,
+                })
+
+        # Add action atoms as processes
+        seen_processes = {p.get("frame_key", "") for p in graph.processes}
+        for action in percept.actions:
+            if action.action_key and action.action_key not in seen_processes:
+                seen_processes.add(action.action_key)
+                graph.processes.append({
+                    "kind": "process",
+                    "frame_key": action.action_key,
+                    "surface": action.surface,
+                    "modality": action.modality,
+                    "polarity": action.polarity,
+                    "confidence": action.confidence,
+                })
+
+        # Add state atoms
+        seen_states = {s.get("state_key", "") for s in graph.states}
+        for state in percept.states:
+            if state.state_key and state.state_key not in seen_states:
+                seen_states.add(state.state_key)
+                graph.states.append({
+                    "kind": "state",
+                    "state_key": state.state_key,
+                    "surface": state.surface,
+                    "holder_role": state.holder_role,
+                    "dimension": state.dimension,
+                    "polarity": state.polarity,
+                    "confidence": state.confidence,
+                })
+
+        # Add unknown lexemes as entity_refs with role=unknown_lexeme
+        for lex in percept.unknown_lexemes:
+            surface = lex.get("surface", "").lower()
+            if surface and surface not in seen_entities:
+                seen_entities.add(surface)
+                graph.entity_refs.append({
+                    "kind": "entity_ref",
+                    "entity_id": surface,
+                    "role": "unknown_lexeme",
+                    "confidence": lex.get("confidence", 0.5),
+                })
+
+        # Enrich with situation frame outcomes if available
+        if situation and situation.expected_outcomes:
+            for outcome in situation.expected_outcomes:
+                if outcome.event_key and outcome.event_key not in seen_processes:
+                    seen_processes.add(outcome.event_key)
+                    graph.processes.append({
+                        "kind": "process",
+                        "frame_key": outcome.event_key,
+                        "confidence": outcome.confidence,
+                    })
+
+        # Boost graph confidence if percept has high confidence
+        if percept.confidence > graph.confidence:
+            graph.confidence = percept.confidence
+
+        return graph
 
     def _extract_named_entities(self, content: str) -> list[dict[str, Any]]:
         """Extract named entities from content when the UOL mapper provides none.

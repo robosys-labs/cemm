@@ -1,0 +1,123 @@
+"""RetrievalPlanner — explicit retrieval plan from SituationFrame + ConversationAct.
+
+Implements §14 from architecture_new.md and §8.7 from cemm_foundational_fixes.md.
+
+Do not let ConversationAct.requires_evidence directly control retrieval.
+Create an explicit retrieval plan that considers the situation frame, safety
+frame, and conversation act type.
+
+Examples:
+    "hiii" -> mode=none
+    "I am fine, you?" -> mode=none
+    "what can you do?" -> mode=self_knowledge
+    "who is Obama?" -> mode=world_memory, freshness_required
+    "Obidike is looking for my trouble" -> mode=lexeme_memory
+    "what's my name?" -> mode=profile
+"""
+
+from __future__ import annotations
+
+from ..types.meaning_percept import RetrievalPlan, SituationFrame, SafetyFrame
+from ..types.conversation_act import ConversationActPacket
+
+
+class RetrievalPlanner:
+    """Plans retrieval based on situation and conversation act, not just requires_evidence."""
+
+    def plan(
+        self,
+        conversation_act: ConversationActPacket | None = None,
+        situation: SituationFrame | None = None,
+        safety_frame: SafetyFrame | None = None,
+        has_unknown_lexemes: bool = False,
+        has_idiom_candidates: bool = False,
+    ) -> RetrievalPlan:
+        """Build a retrieval plan from the current turn's analysis."""
+        act_type = conversation_act.act_type if conversation_act else "unknown"
+
+        # Safety frames: no retrieval except safety policy
+        if safety_frame and safety_frame.category != "none":
+            return RetrievalPlan(
+                mode="none",
+                reason=f"safety_frame={safety_frame.category} — no retrieval needed",
+            )
+
+        # Social/exit/repair/creative turns: no retrieval
+        if conversation_act and (
+            conversation_act.is_social
+            or conversation_act.is_creative
+            or conversation_act.is_repair
+        ):
+            return RetrievalPlan(
+                mode="none",
+                reason=f"act_type={act_type} — social/creative/repair, no retrieval",
+            )
+
+        # Exit: no retrieval
+        if act_type == "exit":
+            return RetrievalPlan(
+                mode="none",
+                reason="exit — no retrieval",
+            )
+
+        # Unknown lexemes or idiom candidates: lexeme memory
+        if has_unknown_lexemes or has_idiom_candidates:
+            return RetrievalPlan(
+                mode="lexeme_memory",
+                reason="unknown lexemes or idiom candidates — check lexeme memory",
+            )
+
+        # Self-related queries
+        if act_type in ("self_identity_query", "self_knowledge_query", "self_capability_query"):
+            return RetrievalPlan(
+                mode="self_knowledge",
+                reason=f"act_type={act_type} — self knowledge retrieval",
+            )
+
+        # User profile queries
+        if act_type in ("user_identity_query", "user_name_query"):
+            return RetrievalPlan(
+                mode="profile",
+                reason=f"act_type={act_type} — profile retrieval",
+            )
+
+        # Open-domain entity queries
+        if act_type == "open_domain_entity_query":
+            return RetrievalPlan(
+                mode="world_memory",
+                freshness_required=True,
+                reason="open_domain_entity_query — world memory with freshness check",
+            )
+
+        # Evidence queries
+        if act_type in ("evidence_query", "memory_query"):
+            return RetrievalPlan(
+                mode="world_memory",
+                reason=f"act_type={act_type} — world memory retrieval",
+            )
+
+        # Teaching: no retrieval needed
+        if act_type in ("teaching_offer", "definition_teaching", "command_alias_teaching"):
+            return RetrievalPlan(
+                mode="none",
+                reason=f"act_type={act_type} — teaching, no retrieval",
+            )
+
+        # Default: no retrieval for unknown acts
+        if act_type == "unknown":
+            return RetrievalPlan(
+                mode="none",
+                reason="unknown act — no retrieval by default",
+            )
+
+        # Fallback: check if evidence is required
+        if conversation_act and conversation_act.requires_evidence:
+            return RetrievalPlan(
+                mode="world_memory",
+                reason=f"act_type={act_type} requires evidence",
+            )
+
+        return RetrievalPlan(
+            mode="none",
+            reason=f"act_type={act_type} — no retrieval needed",
+        )

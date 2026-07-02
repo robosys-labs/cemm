@@ -10,6 +10,7 @@ from typing import Any
 from ..types.conversation_act import ConversationAct, ConversationActPacket
 from ..types.context_kernel import ContextKernel
 from ..types.signal import Signal
+from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame
 from ..registry.semantic_matcher import SemanticMatcher
 from ..registry.registry import Registry
 from ..registry.act_type_policy import DISCOURSE_FRAMES as _DISCOURSE_FRAMES, is_social as _is_social_act
@@ -169,6 +170,58 @@ _FRAME_PRIORITY: list[str] = [
     "high_quality",
 ]
 
+# P1-14: Functional priority for primary act selection.
+# Lower number = higher priority. This replaces confidence-only sorting
+# to prevent general_conversation from overriding safety/exit/social/repair.
+_FUNCTIONAL_PRIORITY: dict[str, int] = {
+    "safety_response": 0,
+    "exit": 1,
+    "retrospective_repair": 2,
+    "answer_to_pending": 3,
+    "self_correction": 4,
+    "confusion_repair": 5,
+    "playful_repair": 6,
+    "simplification_request": 7,
+    "frustration_signal": 8,
+    "teachability_complaint": 9,
+    "low_competence_repair": 10,
+    "user_complaint": 11,
+    "social_conflict_clarify": 12,
+    "self_identity_query": 13,
+    "self_knowledge_query": 14,
+    "self_capability_query": 15,
+    "self_capability_skeptical_query": 16,
+    "user_identity_query": 17,
+    "user_name_query": 18,
+    "meta_critique": 19,
+    "meta_question_intent": 20,
+    "reciprocal_phatic_checkin": 21,
+    "user_state_report": 22,
+    "phatic_checkin": 23,
+    "greeting": 24,
+    "story_request": 25,
+    "food_recommendation": 26,
+    "recommendation_request": 27,
+    "creative_request": 28,
+    "teaching_offer": 29,
+    "definition_teaching": 30,
+    "command_alias_teaching": 31,
+    "explicit_remember": 32,
+    "claim_assertion": 33,
+    "preference_assertion": 34,
+    "open_domain_entity_query": 35,
+    "evidence_query": 36,
+    "memory_query": 37,
+    "capability_query": 38,
+    "acknowledgment": 39,
+    "playful_acknowledgment": 40,
+    "chat_mode_statement": 41,
+    "assistant_evaluation": 42,
+    "general_conversation": 43,
+    "open_question": 44,
+    "unknown": 45,
+}
+
 
 class ConversationActClassifier:
     """Classify a signal into a ConversationAct using UOL frames and surface features.
@@ -187,6 +240,9 @@ class ConversationActClassifier:
         signal: Signal,
         kernel: ContextKernel,
         uol_atoms: list | None = None,
+        meaning_percept: MeaningPerceptPacket | None = None,
+        situation_frame: SituationFrame | None = None,
+        safety_frame: SafetyFrame | None = None,
     ) -> ConversationActPacket:
         content_lower = signal.content.lower().strip()
         extra_forms = []
@@ -455,12 +511,100 @@ class ConversationActClassifier:
                     intensity=0.7,
                 ))
 
+        # ── Detect reciprocal phatic check-in (P0-5) ─────────────────
+        # "I am fine, you?" / "fine, you?" / "good, what about you?"
+        # These should produce user_state_report + reciprocal_phatic_checkin
+        reciprocal_patterns = [
+            r"(?:i'?m|i am)\s+(?:fine|good|okay|ok|alright|all right|good)\s*[,.]?\s*(?:you|u|how about you|what about you|and you)\??$",
+            r"(?:fine|good|okay|ok|alright|not bad|doing well)\s*[,.]?\s*(?:you|u|how about you|what about you|and you)\??$",
+            r"(?:i'?m|i am)\s+(?:fine|good|okay|ok|alright|not bad)\s*[,.]?\s*(?:you too|same to you)\??$",
+        ]
+        is_reciprocal_phatic = any(re.search(p, content_lower) for p in reciprocal_patterns)
+        if is_reciprocal_phatic:
+            # Add user_state_report and reciprocal_phatic_checkin
+            has_state_report = any(a.act_type == "user_state_report" for a in acts)
+            if not has_state_report:
+                acts.append(ConversationAct(
+                    act_type="user_state_report",
+                    confidence=0.8,
+                    polarity="positive",
+                    intensity=0.4,
+                ))
+            acts.append(ConversationAct(
+                act_type="reciprocal_phatic_checkin",
+                confidence=0.85,
+                polarity="positive",
+                intensity=0.5,
+            ))
+            discourse_relation = "answer_to_pending"
+            expected_response = pending_q or "social_checkin"
+
+        # ── Detect retrospective repair (P0-6) ─────────────────────────
+        # "I just wanted to know..." / "I was only asking..." / "that's not what I meant"
+        retro_repair_patterns = [
+            r"i just wanted to (?:know|ask|understand)",
+            r"i was (?:just )?(?:asking|wondering|trying to)",
+            r"i only (?:wanted to|meant to|asked)",
+            r"that'?s not what i meant",
+            r"that'?s not what i was (?:asking|looking) for",
+            r"i didn'?t mean (?:that|it)",
+            r"i wasn'?t (?:asking|trying) to",
+            r"all i (?:wanted|asked) was",
+            r"i was just (?:saying|pointing out)",
+        ]
+        is_retro_repair = any(re.search(p, content_lower) for p in retro_repair_patterns)
+        if is_retro_repair:
+            acts.append(ConversationAct(
+                act_type="retrospective_repair",
+                confidence=0.8,
+                polarity="neutral",
+                intensity=0.6,
+            ))
+            if discourse_relation == "none":
+                discourse_relation = "repair_previous"
+
+        # ── Detect social conflict / idiom clarification need ──────────
+        # "Obidike is looking for my trouble" -> ask for clarification
+        trouble_patterns = [
+            r"looking for (?:my|trouble)",
+            r"looking for .+ trouble",
+            r"picking on me",
+            r"bothering me",
+            r"provoking me",
+            r"starting (?:trouble|a fight|problems)",
+        ]
+        is_social_conflict = any(re.search(p, content_lower) for p in trouble_patterns)
+        if is_social_conflict and not any(a.act_type == "safety_response" for a in acts):
+            acts.append(ConversationAct(
+                act_type="social_conflict_clarify",
+                confidence=0.7,
+                polarity="negative",
+                intensity=0.6,
+            ))
+
+        # ── Safety frame override (P0-7) ──────────────────────────────
+        # If a safety frame was detected, it must take priority over all other acts
+        if safety_frame and safety_frame.category != "none":
+            acts.insert(0, ConversationAct(
+                act_type="safety_response",
+                confidence=0.95,
+                polarity="negative",
+                intensity=0.9,
+            ))
+
         # ── Build packet ──────────────────────────────────────────────
         if not acts:
             acts.append(ConversationAct(act_type="unknown", confidence=0.5))
 
-        # Sort by confidence descending; highest is primary
-        acts.sort(key=lambda a: a.confidence, reverse=True)
+        # P1-14: Sort by functional priority as a tiebreaker, not primary sort.
+        # When confidences are close (within 0.15), functional priority decides.
+        # This prevents general_conversation from overriding safety/exit/social/repair
+        # while still allowing high-confidence specific matches to win.
+        def _sort_key(a: ConversationAct) -> tuple:
+            # Group acts into confidence bands of 0.15
+            band = int(a.confidence / 0.15)
+            return (-band, _FUNCTIONAL_PRIORITY.get(a.act_type, 99), -a.confidence)
+        acts.sort(key=_sort_key)
         primary = acts[0]
         secondary = acts[1:]
 

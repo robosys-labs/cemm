@@ -594,6 +594,21 @@ def process_input(
         if sig.salience >= 0.7 and sig.kind == SignalKind.REFLECTION:
             output += f"\n[{sig.kind.value}] {sig.content}"
 
+    # ── OutputStateUpdater (v3 step 14) ──────────────────────────────
+    # Update conversation state from ACTUAL realized output, not predicted mode.
+    # This fixes the bug where pending_assistant_question was set from
+    # decision metadata rather than the actual question text the assistant asked.
+    assistant_intent = ap.params.get("intent", "") if ap and ap.params else ""
+    assistant_response_mode = ap.params.get("response_mode", "") if ap and ap.params else ""
+    output_update = pipeline._output_state_updater.update(
+        kernel=kernel,
+        output_text=output,
+        output_signal_id=op_result.result_signal.id if op_result.result_signal else "",
+        assistant_intent=assistant_intent,
+        response_mode=assistant_response_mode,
+    )
+    pipeline._output_state_updater.apply(kernel, output_update)
+
     # Export training data if CEMM_EXPORT_PATH is set
     _export_path = os.environ.get("CEMM_EXPORT_PATH")
     if _export_path and op_result.trace:

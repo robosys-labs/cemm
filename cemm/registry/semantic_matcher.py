@@ -190,19 +190,13 @@ class SemanticMatcher:
         words: list[str],
         entry: RegistryEntry,
     ) -> list[MatchResult]:
-        results: list[MatchResult] = []
+        """Token-window phrase matching — no raw substring matching.
 
-        if alias in content_lower:
-            prob = 0.95
-            results.append(MatchResult(
-                canonical_key=entry.canonical_key,
-                alias_matched=alias,
-                probability=prob,
-                match_type="exact_phrase",
-                word_position=-1,
-                entry=entry,
-            ))
-            return results
+        All phrase matching must go through token-sequence comparison to
+        prevent false matches from substrings embedded in longer words.
+        (P0-1 from cemm_foundational_fixes.md)
+        """
+        results: list[MatchResult] = []
 
         alias_words = alias.split()
         if len(alias_words) < 2:
@@ -212,14 +206,17 @@ class SemanticMatcher:
             return results
 
         best_prob = 0.0
+        best_position = -1
         for start in range(0, len(words) - len(alias_words) + 1):
             window = words[start:start + len(alias_words)]
             matched_count = 0
             total_dist = 0
+            all_exact = True
             for aw, w in zip(alias_words, window):
                 if w == aw:
                     matched_count += 1
                     continue
+                all_exact = False
                 if len(w) < 4 or len(aw) < 4:
                     continue
                 max_allowed = 1 if max(len(w), len(aw)) <= 5 else self._max_dist
@@ -230,20 +227,28 @@ class SemanticMatcher:
                     matched_count += 1
                     total_dist += dist
 
-            coverage = matched_count / len(alias_words)
-            if coverage < 0.8:
-                continue
-            avg_dist = total_dist / matched_count if matched_count else self._max_dist
-            prob = coverage * (1.0 - avg_dist / max(max(len(w) for w in alias_words), 4))
+            if all_exact and matched_count == len(alias_words):
+                prob = 0.95
+                best_position = start
+            else:
+                coverage = matched_count / len(alias_words)
+                if coverage < 0.8:
+                    continue
+                avg_dist = total_dist / matched_count if matched_count else self._max_dist
+                prob = coverage * (1.0 - avg_dist / max(max(len(w) for w in alias_words), 4))
             best_prob = max(best_prob, prob)
+            if prob >= 0.95:
+                best_position = start
+                break
 
         if best_prob >= 0.3:
+            match_type = "exact_phrase" if best_prob >= 0.95 else "fuzzy_phrase"
             results.append(MatchResult(
                 canonical_key=entry.canonical_key,
                 alias_matched=alias,
-                probability=max(0.3, min(0.9, best_prob)),
-                match_type="fuzzy_phrase",
-                word_position=-1,
+                probability=max(0.3, min(0.95, best_prob)),
+                match_type=match_type,
+                word_position=best_position,
                 entry=entry,
             ))
 

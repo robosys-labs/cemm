@@ -29,7 +29,14 @@ from .semantic_interpreter import SemanticInterpreter
 from .grounding import GroundingPipeline
 from .decision_router import DecisionRouter
 from .conversation_act_classifier import ConversationActClassifier
+from .meaning_perceptor import MeaningPerceptor
+from .situation_frame_builder import SituationFrameBuilder
+from .outcome_evaluator import OutcomeEvaluator
+from .safety_frame_detector import SafetyFrameDetector
+from .retrieval_planner import RetrievalPlanner
+from .output_state_updater import OutputStateUpdater
 from ..types.conversation_act import ConversationAct, ConversationActPacket
+from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame, RetrievalPlan
 from ..causal.inference import CausalInference
 from ..retrieval.structural import StructuralRetriever, RetrievalResult
 from ..retrieval.ranker import Ranker
@@ -53,6 +60,10 @@ class PipelineResult:
     decision_packet: DecisionPacket | None = None
     context_inference: ContextInference | None = None
     conversation_act: ConversationActPacket | None = None
+    meaning_percept: MeaningPerceptPacket | None = None
+    situation_frame: SituationFrame | None = None
+    safety_frame: SafetyFrame | None = None
+    retrieval_plan: RetrievalPlan | None = None
 
 
 class Pipeline:
@@ -87,6 +98,17 @@ class Pipeline:
         self._conversation_act_classifier = ConversationActClassifier(registry)
         self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
+        # New v3 components
+        self._meaning_perceptor = MeaningPerceptor(
+            ner_tagger=self._semantic_interpreter._ner_tagger,
+            surface_tagger=self._semantic_interpreter._surface_tagger,
+            lexeme_memory=self._lexeme_memory,
+        )
+        self._situation_frame_builder = SituationFrameBuilder()
+        self._outcome_evaluator = OutcomeEvaluator()
+        self._safety_frame_detector = SafetyFrameDetector()
+        self._retrieval_planner = RetrievalPlanner()
+        self._output_state_updater = OutputStateUpdater()
         self._turn_counts: dict[str, int] = {}
         self._session_state: dict[str, dict] = {}
 
@@ -162,9 +184,39 @@ class Pipeline:
         context_inference = self._context_inference_engine.infer(signal, kernel)
         self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
+        # ── Build MeaningPerceptPacket (v3 step 3) ───────────────────
+        # NER + unknown lexemes + POS-lite roles + pronouns/deixis + affect
+        # Must happen before UOL mapping, before retrieval, before decision.
+        meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
+
+        # ── Build SituationFrame (v3 step 4) ──────────────────────────
+        # Actor/action/object/place/state/need + event schema candidates
+        situation_frame = self._situation_frame_builder.build(meaning_percept, kernel)
+
+        # ── Evaluate outcomes and valences (v3 step 4b) ───────────────
+        outcomes, valences = self._outcome_evaluator.evaluate(situation_frame)
+        situation_frame.expected_outcomes = outcomes
+        situation_frame.valences = valences
+
+        # ── Detect SafetyFrame (v3 step 5) ────────────────────────────
+        safety_frame = self._safety_frame_detector.detect(
+            situation=situation_frame,
+            input_text=signal.content,
+            valences=valences,
+        )
+        if safety_frame:
+            situation_frame.safety_frame = safety_frame
+
         # Interpret: SemanticEventGraph + UOL atoms (single authority)
-        semantic_event_graph = self._semantic_interpreter.run(signal, kernel)
+        # §8.13: SemanticInterpreter now consumes MeaningPerceptPacket + SituationFrame
+        # to enrich the graph with pre-bound atoms, skipping redundant NER/SurfaceTagger.
+        semantic_event_graph = self._semantic_interpreter.run(
+            signal, kernel,
+            meaning_percept=meaning_percept,
+            situation_frame=situation_frame,
+        )
         semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
+        uol_atoms: list | None = None
         if semantics is not None:
             # NOTE: SemanticInterpreter.run() already calls UOLMapper internally.
             # This second call is needed to get raw UOL atoms for pragmatic key
@@ -188,9 +240,13 @@ class Pipeline:
                     kernel.conversation.dynamics.active_repetition_group_ids
                 )
 
-        # Classify ConversationActPacket before retrieval so retrieval is task-shaped
+        # Classify ConversationActPacket — now consumes MeaningPercept + SituationFrame + SafetyFrame
         conversation_act = self._conversation_act_classifier.classify(
-            signal, kernel, uol_atoms=uol_atoms if semantics else None,
+            signal, kernel,
+            uol_atoms=uol_atoms,
+            meaning_percept=meaning_percept,
+            situation_frame=situation_frame,
+            safety_frame=safety_frame,
         )
 
         # Clear pending question if the user answered it or the topic shifted
@@ -220,9 +276,18 @@ class Pipeline:
             if eid and eid not in kernel.memory.working_entity_ids:
                 kernel.memory.working_entity_ids.append(eid)
 
-        # Retrieve claims and models — gated by ConversationAct
-        # Social, creative, repair, and teaching-offer turns need no evidence retrieval
-        if conversation_act.requires_evidence or conversation_act.act_type == "unknown":
+        # ── Build RetrievalPlan (v3 step 8) ───────────────────────────
+        # Explicit retrieval plan replaces implicit requires_evidence gating
+        retrieval_plan = self._retrieval_planner.plan(
+            conversation_act=conversation_act,
+            situation=situation_frame,
+            safety_frame=safety_frame,
+            has_unknown_lexemes=bool(meaning_percept.unknown_lexemes),
+            has_idiom_candidates=bool(meaning_percept.idiom_candidates),
+        )
+
+        # Retrieve claims and models — gated by RetrievalPlan
+        if retrieval_plan.mode != "none":
             retrieval_result = self._retriever.retrieve_for_kernel(kernel)
 
             # Graph-grounded retrieval enrichment
@@ -242,8 +307,8 @@ class Pipeline:
         retrieval_result.claims = self._frames.filter_valid(retrieval_result.claims, kernel)
 
         # Rank claims and models with graph context
-        # Skip ranking entirely for non-evidence turns to keep working_claim_ids empty
-        if conversation_act.requires_evidence or conversation_act.act_type == "unknown":
+        # Skip ranking entirely when retrieval plan says none
+        if retrieval_plan.mode != "none":
             ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
             ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
             kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
@@ -331,6 +396,10 @@ class Pipeline:
             conversation_act=conversation_act,
             inference_packet=inference_packet,
             decision_packet=decision_packet,
+            meaning_percept=meaning_percept,
+            situation_frame=situation_frame,
+            safety_frame=safety_frame,
+            retrieval_plan=retrieval_plan,
         )
         # Validate runtime packets against schemas
         from ..kernel.packet_validator import validate_packet

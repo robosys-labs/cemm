@@ -1,8 +1,10 @@
 # Efficient Recursive Context Architecture
 
-Version: 2.2  
-Status: final implementation architecture  
+Version: 2.2
+Status: final implementation architecture
 Purpose: a lean, practical architecture for context, memory, self-state, causal reasoning, recursive reflection, structural learning, semantic latent modeling, and action.
+
+The goal is to produce a higher level version of LLM - operating on meaning atoms/primitives instead of matrices as in Large LLMs
 
 ## 1. Core Law
 

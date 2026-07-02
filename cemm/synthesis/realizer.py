@@ -283,6 +283,34 @@ class RealizationPipeline:
                 params["template_key"] = "situational_checkin"
             else:
                 params["template_key"] = intent
+        elif intent == "safety_deescalation":
+            # Extract the harmful action from source text
+            harm_words = {"beat", "hit", "hurt", "attack", "fight", "punch", "kick", "stab", "kill", "shoot", "choke", "strangle"}
+            source_tokens = set(re.findall(r"[a-z0-9']+", source_text_lower))
+            matched_harm = source_tokens & harm_words
+            params["template_key"] = "safety_deescalation"
+            params.setdefault("variables", {"harmful_action": ", ".join(sorted(matched_harm)) if matched_harm else "do that"})
+        elif intent == "social_conflict_clarify":
+            # Extract entity name from source text (capitalized word that's not a common word)
+            tokens_raw = re.findall(r"[A-Z][a-z]+", source_text)
+            common_words = {"I", "The", "A", "An", "Is", "Are", "Do", "Does", "What", "How", "Why", "When", "Where", "Who"}
+            entity_candidates = [t for t in tokens_raw if t not in common_words]
+            params["template_key"] = "social_conflict_clarify"
+            params.setdefault("variables", {"entity": entity_candidates[0] if entity_candidates else "that person"})
+        elif intent == "reciprocal_phatic_checkin":
+            # Detect user state from source text
+            state_words = {"fine": "fine", "good": "good", "okay": "okay", "ok": "okay", "alright": "alright", "not bad": "doing well"}
+            user_state = "doing well"
+            for word, state in state_words.items():
+                if word in source_text_lower:
+                    user_state = state
+                    break
+            params["template_key"] = "reciprocal_phatic_checkin"
+            params.setdefault("variables", {"user_state": user_state})
+        elif intent == "session_exit":
+            params["template_key"] = "session_exit"
+        elif intent == "retrospective_repair":
+            params["template_key"] = "retrospective_repair"
         else:
             # ── Data-driven fallback for flat intent→template mappings ────
             # All non-conditional intents are sourced from intent_template_default

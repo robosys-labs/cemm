@@ -53,6 +53,12 @@
     "story_request": "Sure - here's a short one: a curious traveler found a door that only opened when asked a kind question. What happens next is up to you.",
     "recommendation_request": "I don't have your preferences on file, so I'll suggest something safe: keep it simple and see how it feels. Tell me what you're leaning toward and I can reason it through with you.",
     "food_recommendation": "A simple, fresh option usually works - maybe a grain bowl, soup, or sandwich. What are you in the mood for?",
-    "open_question": "I don't have a verified answer for that yet. Want to tell me what you think, or should I look into it?"
+    "open_question": "I don't have a verified answer for that yet. Want to tell me what you think, or should I look into it?",
+    "session_exit": "Bye for now.",
+    "reciprocal_phatic_checkin": "Glad you're {user_state}. I'm here and running smoothly.",
+    "safety_deescalation": "No — don't {harmful_action}. Step away if you can, calm things down, and tell me what happened.",
+    "social_conflict_clarify": "Do you mean {entity} is bothering or provoking you?",
+    "retrospective_repair": "I hear you — I misunderstood what you were getting at. Let me try again. What were you looking for?",
+    "unknown_self_label": "I hear the frustration. Are you saying I misunderstood you or gave a bad answer?"
   }
 }

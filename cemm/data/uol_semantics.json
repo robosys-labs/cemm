@@ -72,6 +72,44 @@
     {"canonical_key": "grammatical_stopword", "aliases": ["a", "an", "the", "to", "with", "my", "me", "for", "please", "though", "then", "really", "just"], "act_type": "unknown", "cue_type": "stopword"},
     {"canonical_key": "grammatical_failure_marker", "aliases": ["failure", "error", "bug", "broken", "problem", "issue", "stuck", "crash", "timeout"], "act_type": "unknown", "cue_type": "failure_marker"}
   ],
+  "event_schemas": [
+    {"entry_kind": "action_schema", "schema_key": "come", "action_key": "move_toward_source", "actor_role": "listener", "destination_role": "speaker", "aliases": ["come", "come here", "come over"], "expected_outcomes": [{"affected_entity_role": "listener", "changed_dimension": "distance", "direction": "decrease", "confidence": 0.8}]},
+    {"entry_kind": "action_schema", "schema_key": "go_to_place", "action_key": "move_to_place", "actor_role": "actor", "destination_role": "place", "aliases": ["go to", "go", "let's go"], "expected_outcomes": [{"affected_entity_role": "actor", "changed_dimension": "distance", "direction": "decrease", "confidence": 0.7}]},
+    {"entry_kind": "action_schema", "schema_key": "give", "action_key": "transfer_object", "actor_role": "listener", "object_role": "object", "recipient_role": "speaker", "aliases": ["give", "give me", "hand me"], "expected_outcomes": [{"affected_entity_role": "recipient", "changed_dimension": "possession", "direction": "increase", "confidence": 0.8}]},
+    {"entry_kind": "action_schema", "schema_key": "beat", "action_key": "physically_harm_target", "actor_role": "actor", "target_role": "target", "aliases": ["beat", "hit", "attack", "hurt", "fight", "punch", "kick", "slap"], "expected_outcomes": [{"affected_entity_role": "target", "changed_dimension": "health", "direction": "decrease", "confidence": 0.9}], "safety_category": "interpersonal_violence"},
+    {"entry_kind": "action_schema", "schema_key": "eat", "action_key": "consume_food", "actor_role": "actor", "object_role": "food", "aliases": ["eat", "eat food", "eat lunch", "eat dinner"], "expected_outcomes": [{"affected_entity_role": "actor", "changed_dimension": "hunger", "direction": "decrease", "confidence": 0.85}]},
+    {"entry_kind": "action_schema", "schema_key": "learn", "action_key": "increase_capability", "actor_role": "self", "aliases": ["learn", "learn about", "teach me"], "expected_outcomes": [{"affected_entity_role": "self", "changed_dimension": "knowledge", "direction": "increase", "confidence": 0.8}]},
+    {"entry_kind": "action_schema", "schema_key": "help", "action_key": "improve_state", "actor_role": "actor", "target_role": "target", "aliases": ["help", "help me", "help him", "help her"], "expected_outcomes": [{"affected_entity_role": "target", "changed_dimension": "safety", "direction": "increase", "confidence": 0.7}]},
+    {"entry_kind": "state_schema", "schema_key": "hungry", "dimension": "hunger", "polarity": "negative", "aliases": ["hungry", "starving", "famished"], "triggers_need": "food"},
+    {"entry_kind": "state_schema", "schema_key": "tired", "dimension": "energy", "polarity": "negative", "aliases": ["tired", "exhausted", "sleepy"], "triggers_need": "rest"},
+    {"entry_kind": "state_schema", "schema_key": "happy", "dimension": "mood", "polarity": "positive", "aliases": ["happy", "glad", "fine", "good", "okay"], "triggers_need": null},
+    {"entry_kind": "state_schema", "schema_key": "sad", "dimension": "mood", "polarity": "negative", "aliases": ["sad", "down", "depressed", "upset"], "triggers_need": "comfort"},
+    {"entry_kind": "state_schema", "schema_key": "angry", "dimension": "mood", "polarity": "negative", "aliases": ["angry", "mad", "furious", "annoyed"], "triggers_need": "deescalation"},
+    {"entry_kind": "state_schema", "schema_key": "sick", "dimension": "health", "polarity": "negative", "aliases": ["sick", "ill", "unwell", "fever"], "triggers_need": "medical"},
+    {"entry_kind": "need_schema", "schema_key": "food", "dimension": "hunger", "aliases": ["food", "eat", "hungry", "meal"], "satisfies_state": "hungry"},
+    {"entry_kind": "need_schema", "schema_key": "rest", "dimension": "energy", "aliases": ["rest", "sleep", "break", "tired"], "satisfies_state": "tired"},
+    {"entry_kind": "need_schema", "schema_key": "comfort", "dimension": "mood", "aliases": ["comfort", "reassurance", "support"], "satisfies_state": "sad"},
+    {"entry_kind": "need_schema", "schema_key": "deescalation", "dimension": "safety", "aliases": ["calm down", "deescalate", "peace"], "satisfies_state": "angry"},
+    {"entry_kind": "need_schema", "schema_key": "medical", "dimension": "health", "aliases": ["doctor", "medicine", "hospital", "clinic"], "satisfies_state": "sick"},
+    {"entry_kind": "place_affordance", "schema_key": "kitchen", "entity_type": "place", "affords": ["food", "drink", "cook"], "aliases": ["kitchen", "cooking area"]},
+    {"entry_kind": "place_affordance", "schema_key": "bedroom", "entity_type": "place", "affords": ["rest", "sleep"], "aliases": ["bedroom", "bed", "sleeping area"]},
+    {"entry_kind": "place_affordance", "schema_key": "hospital", "entity_type": "place", "affords": ["medical", "treatment"], "aliases": ["hospital", "clinic", "doctor"]},
+    {"entry_kind": "place_affordance", "schema_key": "school", "entity_type": "place", "affords": ["learning", "knowledge"], "aliases": ["school", "classroom", "university"]},
+    {"entry_kind": "object_affordance", "schema_key": "food", "entity_type": "object", "affords": ["consume_food", "satisfy_hunger"], "aliases": ["food", "meal", "snack", "rice", "bread"]},
+    {"entry_kind": "object_affordance", "schema_key": "book", "entity_type": "object", "affords": ["increase_capability", "reading"], "aliases": ["book", "document", "text"]},
+    {"entry_kind": "object_affordance", "schema_key": "phone", "entity_type": "object", "affords": ["communication", "call"], "aliases": ["phone", "mobile", "telephone"]},
+    {"entry_kind": "social_schema", "schema_key": "greeting", "aliases": ["hello", "hi", "hey"], "reply_obligation": true, "expected_response": "greeting"},
+    {"entry_kind": "social_schema", "schema_key": "phatic_checkin", "aliases": ["how are you", "how are you doing"], "reply_obligation": true, "expected_response": "phatic_checkin"},
+    {"entry_kind": "social_schema", "schema_key": "reciprocal_phatic", "aliases": ["you?", "what about you", "and you"], "reply_obligation": true, "expected_response": "phatic_checkin"},
+    {"entry_kind": "social_schema", "schema_key": "session_exit", "aliases": ["bye", "goodbye", "exit"], "reply_obligation": false, "expected_response": "session_exit"},
+    {"entry_kind": "social_schema", "schema_key": "acknowledgment", "aliases": ["ok", "okay", "sure", "got it"], "reply_obligation": false, "expected_response": null},
+    {"entry_kind": "safety_schema", "schema_key": "interpersonal_violence", "aliases": ["beat", "hit", "attack", "hurt", "fight", "punch", "kill", "stab", "shoot"], "severity": "high", "allowed_response_mode": "deescalate"},
+    {"entry_kind": "safety_schema", "schema_key": "self_harm", "aliases": ["hurt myself", "kill myself", "end it all", "self harm"], "severity": "critical", "allowed_response_mode": "crisis_support"},
+    {"entry_kind": "safety_schema", "schema_key": "illegal_activity", "aliases": ["steal", "rob", "drug deal", "illegal"], "severity": "high", "allowed_response_mode": "refuse_and_redirect"},
+    {"entry_kind": "idiom_schema", "schema_key": "looking_for_trouble", "literal_meaning": "searching for difficulty", "figurative_meaning": "provoking conflict", "language": "en", "aliases": ["looking for my trouble", "looking for trouble", "picking on me", "bothering me"], "act_type": "social_conflict_clarify"},
+    {"entry_kind": "idiom_schema", "schema_key": "drag_me", "literal_meaning": "pull me physically", "figurative_meaning": "exhaust or frustrate me", "language": "en", "aliases": ["drag me", "dragging me", "drags me"], "act_type": "frustration_signal"},
+    {"entry_kind": "idiom_schema", "schema_key": "catching_hands", "literal_meaning": "receiving hands", "figurative_meaning": "getting beaten or attacked", "language": "en", "aliases": ["catching hands", "catching hands from"], "act_type": "social_conflict_clarify"}
+  ],
   "speech_act_to_frame": {
     "greeting": "greeting",
     "acknowledgment": "acknowledgment",
@@ -88,7 +126,9 @@
     "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
     "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
     "teaching_offer", "capability_summary", "unknown_entity_response",
-    "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement"
+    "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement",
+    "safety_response", "social_conflict_clarify", "reciprocal_phatic_checkin", "retrospective_repair",
+    "session_exit"
   ],
   "act_type_metadata": {
     "greeting": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "greeting"},
@@ -128,7 +168,7 @@
     "meta_critique": {"response_mode": "meta_response", "requires_evidence": false, "allows_memory_write": false, "is_evaluative": true, "default_template": "general_conversation"},
     "command": {"response_mode": "tool_action", "requires_evidence": false, "allows_memory_write": false, "default_template": "general_conversation"},
     "tool_request": {"response_mode": "tool_action", "requires_evidence": false, "allows_memory_write": false, "default_template": "general_conversation"},
-    "exit": {"response_mode": "abstain", "requires_evidence": false, "allows_memory_write": false, "default_template": "abstain"},
+    "exit": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "session_exit"},
     "unknown": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "default_template": "general_conversation"},
     "general_conversation": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "default_template": "general_conversation"},
     "open_question": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "default_template": "general_conversation"},
@@ -137,7 +177,11 @@
     "user_complaint": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "is_repair": true, "default_template": "frustration_response"},
     "abstain": {"response_mode": "abstain", "requires_evidence": false, "allows_memory_write": false, "default_template": "abstain"},
     "ask": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "default_template": "ask_meaning"},
-    "remember": {"response_mode": "memory_write", "requires_evidence": false, "allows_memory_write": true, "default_template": "remember_confirm"}
+    "remember": {"response_mode": "memory_write", "requires_evidence": false, "allows_memory_write": true, "default_template": "remember_confirm"},
+    "safety_response": {"response_mode": "safety_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "safety_deescalation"},
+    "social_conflict_clarify": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "social_conflict_clarify"},
+    "reciprocal_phatic_checkin": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "reciprocal_phatic_checkin"},
+    "retrospective_repair": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "is_repair": true, "simple_answer": true, "default_template": "retrospective_repair"}
   },
   "discourse_frames": ["acknowledgment", "greeting", "playful_acknowledgment", "session_exit"],
   "question_frames": ["ask_question", "request_clarification", "unknown_intent"],
@@ -165,6 +209,12 @@
     "learn_command_alias": "learn_command_alias",
     "learn_lexeme": "learn_lexeme",
     "learn_correction": "learn_correction",
-    "retrieve_empty": "retrieve_empty"
+    "retrieve_empty": "retrieve_empty",
+    "session_exit": "session_exit",
+    "safety_deescalation": "safety_deescalation",
+    "social_conflict_clarify": "social_conflict_clarify",
+    "reciprocal_phatic_checkin": "reciprocal_phatic_checkin",
+    "retrospective_repair": "retrospective_repair",
+    "unknown_self_label": "unknown_self_label"
   }
 }
