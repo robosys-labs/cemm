@@ -43,7 +43,13 @@
     {"canonical_key": "story_request", "aliases": ["story", "stories", "tell me a story", "tell me a tale", "narrative", "tell me a narrative", "tell me stories"]},
     {"canonical_key": "food_recommendation_request", "aliases": ["should i eat", "what should i eat", "what to eat", "what do you recommend i eat", "what food", "recommend a meal", "what should i have for", "what should i have for dinner", "what should i have for lunch", "what should i have for breakfast"]},
     {"canonical_key": "recommendation_request", "aliases": ["recommend", "suggestion", "suggest", "what should i choose", "what should i pick", "what do you recommend", "can you recommend", "recommend something"]},
-    {"canonical_key": "weather_query", "aliases": ["weather", "forecast", "temperature", "rain", "sunny", "cloudy"]}
+    {"canonical_key": "weather_query", "aliases": ["weather", "forecast", "temperature", "rain", "sunny", "cloudy"]},
+    {"canonical_key": "phatic_checkin", "aliases": ["how are you", "how do you do", "how's it going", "hows it going", "how are things", "what's up", "whats up", "how are you doing", "how you doing", "how's your day", "hows your day", "how are you today"]},
+    {"canonical_key": "teaching_offer", "aliases": ["i wanted to tell you about", "let me tell you about", "i want to tell you about", "i want to teach you about", "let me teach you about", "i'd like to tell you about", "i'd like to teach you", "i have something to tell you", "can i tell you about", "i want to share something"]},
+    {"canonical_key": "confusion_repair", "aliases": ["what in the world", "what the", "what on earth", "what the heck", "what the hell", "i'm confused", "im confused", "this makes no sense", "i don't get this", "i don't follow", "you lost me"]},
+    {"canonical_key": "playful_repair", "aliases": ["lol what", "lol huh", "haha what", "lmao what", "lol wait", "haha wait", "lol come again"]},
+    {"canonical_key": "frustration_signal", "aliases": ["you are dumb", "you are stupid", "you are useless", "you are broken", "this is dumb", "this is stupid", "you suck", "you're dumb", "you're stupid", "you're useless", "honestly it seems you can't do much"]},
+    {"canonical_key": "open_domain_entity_query", "aliases": ["do you know", "have you heard of", "tell me about", "who is", "what is", "where is", "what do you know about"]}
   ],
   "speech_act_to_frame": {
     "greeting": "greeting",

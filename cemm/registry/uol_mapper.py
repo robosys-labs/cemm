@@ -175,8 +175,17 @@ class UOLMapper:
         # Map UOL semantic frame_keys to atom types
         state_keys = {"low_competence", "high_quality"}
         command_keys = {"command_remember", "command_reflect", "command_retrieve"}
-        intent_keys = {"greeting", "session_exit", "assistance_request", "story_request", "food_recommendation_request", "recommendation_request"}
-        conversational_keys = {"acknowledgment", "discourse_marker", "playful_acknowledgment"}
+        intent_keys = {
+            "greeting", "session_exit", "assistance_request", "story_request",
+            "food_recommendation_request", "recommendation_request",
+            "phatic_checkin", "teaching_offer", "open_domain_entity_query",
+        }
+        conversational_keys = {
+            "acknowledgment", "discourse_marker", "playful_acknowledgment",
+            "reassurance", "confusion_repair", "playful_repair",
+        }
+        repair_keys = {"self_correction", "simplification_request"}
+        frustration_keys = {"frustration_signal"}
         relation_prefixes = ("temporal_", "causal_")
         self_query_keys = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
         user_query_keys = {"user_identity_query", "user_name_query"}
@@ -251,6 +260,30 @@ class UOLMapper:
                     modality="observed",
                     polarity="affirmed",
                     intensity=0.5,
+                    confidence=prob,
+                ))
+            elif canonical_key in repair_keys:
+                atoms.append(ProcessUOLAtom(
+                    frame_key=canonical_key,
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.6,
+                    confidence=prob,
+                ))
+            elif canonical_key in frustration_keys:
+                # Emit as state (negative polarity) rather than process
+                atoms.append(StateUOLAtom(
+                    state_key="low_competence" if canonical_key == "low_competence" else "frustration_signal",
+                    polarity="negative",
+                    intensity=0.8,
+                    confidence=prob,
+                ))
+                # Also emit as process so the SEG can route it
+                atoms.append(ProcessUOLAtom(
+                    frame_key="frustration_signal",
+                    modality="observed",
+                    polarity="affirmed",
+                    intensity=0.8,
                     confidence=prob,
                 ))
             elif canonical_key in self_query_keys:

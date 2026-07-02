@@ -275,11 +275,13 @@ def process_input(
     grounded_graph = pipeline_result.grounded_graph
     memory_packet = pipeline_result.memory_packet
     context_inference = pipeline_result.context_inference
+    conversation_act = pipeline_result.conversation_act
 
-    # Fallback: manual retrieval if pipeline didn't populate
-    fallback_retriever = StructuralRetriever(store)
-    fallback_ranker = Ranker()
-    if not selected_claim_ids:
+    # Fallback: manual retrieval if pipeline didn't populate AND the turn requires evidence
+    # Social/creative/repair turns should not trigger fallback retrieval.
+    if not selected_claim_ids and (conversation_act is None or conversation_act.requires_evidence or conversation_act.act_type == "unknown"):
+        fallback_retriever = StructuralRetriever(store)
+        fallback_ranker = Ranker()
         graph = pipeline_result.semantic_event_graph
         retrieval_result = fallback_retriever.retrieve_for_kernel(kernel)
         if graph:
@@ -344,6 +346,7 @@ def process_input(
             input_text=text,
             observation_semantics=input_signal.observation_semantics,
             context_inference=context_inference,
+            conversation_act=conversation_act,
             store=store,
         )
 
@@ -373,11 +376,13 @@ def process_input(
             params = dict(ap.params) if ap and ap.params else {}
             params.setdefault("question", "Could you elaborate?")
         elif kind == ActionKind.ANSWER:
-            # For conversational intents (greeting/acknowledgment), don't pass claims
-            # — the response is a template, not evidence-backed
-            reason_lower = decision.reason.lower()
-            is_conversational = "greeting" in reason_lower or "acknowledgment" in reason_lower
-            answer_claim_ids = [] if is_conversational else (list(ap.selected_claim_ids) if ap else selected_claim_ids)
+            # Use action_plan.params as the authoritative contract.
+            # Do not recompile or infer intent from reason strings.
+            answer_claim_ids = list(ap.selected_claim_ids) if ap else selected_claim_ids
+            # For non-evidence response modes, don't pass claims
+            response_mode = ap.params.get("response_mode", "") if ap and ap.params else ""
+            if response_mode in ("social_response", "creative_response", "repair_response", "capability_summary", "teaching_prompt", "unknown_entity_response"):
+                answer_claim_ids = []
             params = {
                 "answer_text": "",
                 "selected_claim_ids": answer_claim_ids,
@@ -386,12 +391,15 @@ def process_input(
             }
             if ap and ap.params:
                 params["intent"] = ap.params.get("intent", "")
+                params["response_mode"] = ap.params.get("response_mode", "")
             if sim_result is not None:
                 params["simulation_claims"] = sim_result.predicted_claims
                 params["simulation_confidence"] = sim_result.confidence
         elif kind == ActionKind.ABSTAIN:
             params = {"reason": decision.reason}
         elif kind == ActionKind.REMEMBER:
+            # Use action_plan.params as authoritative. Only use claim_candidates
+            # from the SEG — no fallback raw text storage.
             seg = pipeline_result.semantic_event_graph
             if seg and seg.claim_candidates:
                 cand = seg.claim_candidates[0]
@@ -401,42 +409,13 @@ def process_input(
                     "object_value": cand.get("object", ""),
                     "domain": "general",
                 }
+            elif ap and ap.params:
+                params = dict(ap.params)
             else:
-                stripped = text.strip()
-                # Interrogative guard: never fallback-store questions as claims.
-                # "Do you remember me?" should not become user noted Do you remember me?
-                is_question = (
-                    stripped.endswith("?")
-                    or any(stripped.lower().startswith(p) for p in (
-                        "do you ", "can you ", "could you ", "did you ",
-                        "have you ", "are you ", "is ", "what ", "whats ",
-                        "who ", "where ", "when ", "why ", "how ",
-                    ))
-                )
-                if is_question:
-                    # Redirect to abstain — questions must not be stored as claims.
-                    kind = ActionKind.ABSTAIN
-                    params = {"reason": "Question cannot be stored as a claim"}
-                else:
-                    cmd_entry = registry.get_uol_semantic("command_remember")
-                    cmd_aliases = [cmd_entry.canonical_key] + cmd_entry.aliases if cmd_entry else ["remember", "save", "store", "note"]
-                    params = {
-                        "subject_entity_id": "user",
-                        "predicate": "noted",
-                        "object_value": stripped,
-                        "domain": "general",
-                    }
-                    for alias in cmd_aliases:
-                        if stripped.lower().startswith(alias + " "):
-                            rest = stripped[len(alias) + 1:]
-                            parts = rest.split(maxsplit=1)
-                            params = {
-                                "subject_entity_id": "user",
-                                "predicate": parts[0] if parts else "noted",
-                                "object_value": parts[1] if len(parts) > 1 else "",
-                                "domain": "general",
-                            }
-                            break
+                # No claim candidates and no action_plan params: redirect to abstain.
+                # Do NOT fall back to storing raw text as a claim.
+                kind = ActionKind.ABSTAIN
+                params = {"reason": "No structured claim candidate available for storage"}
         elif kind == ActionKind.REFLECT:
             params = {}
             if sim_result is not None:
@@ -636,6 +615,7 @@ def process_input(
             decision_packet=decision if decision and decision.confidence > 0 else None,
             observation_semantics=input_signal.observation_semantics,
             context_inference=pipeline_result.context_inference if pipeline_result else None,
+            conversation_act=pipeline_result.conversation_act if pipeline_result else None,
         )
         for record in records:
             write_turn_to_jsonl(_export_path, record)

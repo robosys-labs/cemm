@@ -22,24 +22,13 @@ class AnswerOperator(BaseOperator):
             return OperatorResult(success=False, output_text="Permission denied: execution not allowed")
         intent = ctx.params.get("intent", "")
         selected_claims = ctx.params.get("selected_claim_ids", ctx.selected_claim_ids) or []
-        decision_reason = ctx.params.get("decision_reason", "")
-        reason_lower = decision_reason.lower()
+        # Use intent from action_plan.params directly — do not infer from reason strings.
         unknown_term = ""
-        # If decision router detected greeting/acknowledgment and no explicit intent was
-        # passed, set intent accordingly. Do not override a content intent the router
-        # already chose (e.g., story_request inside an acknowledgment utterance).
         if not intent:
-            if "self_identity_query" in reason_lower:
-                intent = "self_identity"
-            elif "self_capability_query" in reason_lower:
-                intent = "self_capability"
-            elif "self_knowledge_query" in reason_lower:
-                intent = "self_knowledge"
-            elif "greeting" in reason_lower and not selected_claims:
-                intent = "greeting"
-            elif "acknowledgment" in reason_lower and not selected_claims:
-                intent = "acknowledgment"
-            elif "unknown term" in reason_lower or "ask meaning" in reason_lower:
+            # Only fall back to reason-based inference if no explicit intent was provided
+            decision_reason = ctx.params.get("decision_reason", "")
+            reason_lower = decision_reason.lower()
+            if "unknown term" in reason_lower or "ask meaning" in reason_lower:
                 intent = "ask_meaning"
                 term = "that"
                 if "unknown term" in reason_lower:

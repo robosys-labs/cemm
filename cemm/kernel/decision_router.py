@@ -13,6 +13,7 @@ from ..types.packets import (
     MemoryPacket,
 )
 from ..types.context_inference import ContextInference
+from ..types.conversation_act import ConversationAct
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.signal import ObservationSemantics
@@ -46,6 +47,7 @@ class DecisionRouter:
         input_text: str = "",
         observation_semantics: ObservationSemantics | None = None,
         context_inference: ContextInference | None = None,
+        conversation_act: ConversationAct | None = None,
         store: Any | None = None,
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
@@ -65,6 +67,119 @@ class DecisionRouter:
             input_lower.endswith("?")
             or bool(graph_frame_keys & question_frames)
         )
+
+        # ── Stage 1: ConversationAct-based routing (primary authority) ──
+        # When a ConversationAct is provided, use it as the primary routing signal.
+        # This prevents social, creative, repair, and teaching turns from falling
+        # through into evidence answer, clarification, or remember.
+        if conversation_act and conversation_act.act_type != "unknown":
+            act = conversation_act.act_type
+            response_mode = conversation_act.response_mode
+
+            # Simple answer routing: act → intent, response_mode
+            # All these acts produce an "answer" with no evidence retrieval needed.
+            _SIMPLE_ANSWER_ACTS = {
+                "greeting", "phatic_checkin", "acknowledgment", "playful_acknowledgment",
+                "story_request", "creative_request",
+                "confusion_repair", "playful_repair", "self_correction", "simplification_request",
+                "frustration_signal",
+                "teaching_offer",
+            }
+            if act in _SIMPLE_ANSWER_ACTS:
+                intent = "frustration_response" if act == "frustration_signal" else act
+                return self._make_answer_packet(
+                    intent=intent,
+                    response_mode=response_mode,
+                    confidence=conversation_act.confidence,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason=f"conversation_act={act} → {response_mode}",
+                )
+
+            # Capability query: use curated summary, not raw claim join
+            if act in ("capability_query", "self_capability_query"):
+                return self._make_answer_packet(
+                    intent="capability_summary",
+                    response_mode="capability_summary",
+                    confidence=0.8,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason=f"conversation_act={act} → capability_summary",
+                )
+
+            # Self/user identity and knowledge queries: route to evidence answer
+            if act in ("self_identity_query", "self_knowledge_query", "user_identity_query", "user_name_query"):
+                if selected_claim_ids:
+                    return self._make_answer_packet(
+                        intent=act,
+                        response_mode="evidence_answer",
+                        confidence=min(0.9, graph.confidence),
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                        reason=f"conversation_act={act} with evidence → evidence_answer",
+                    )
+                # No evidence: fall through to old routing which handles unknown identity/name
+
+            # Explicit remember command: route to remember with claim candidates
+            if act == "explicit_remember" and graph.claim_candidates:
+                return DecisionPacket(
+                    action_kind="remember",
+                    action_plan=ActionPlan(
+                        action_kind="remember",
+                        execution_allowed=True,
+                        confidence=0.8,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.8,
+                    reason="conversation_act=explicit_remember with claim candidates",
+                )
+
+            # Claim/preference assertions: route to remember when claim candidates exist
+            if act in ("claim_assertion", "preference_assertion") and graph.claim_candidates:
+                return DecisionPacket(
+                    action_kind="remember",
+                    action_plan=ActionPlan(
+                        action_kind="remember",
+                        execution_allowed=True,
+                        confidence=0.75,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.75,
+                    reason=f"conversation_act={act} with claim candidates → remember",
+                )
+
+            # Open-domain entity query: check for evidence, else unknown_entity_response
+            if act == "open_domain_entity_query":
+                if selected_claim_ids:
+                    return self._make_answer_packet(
+                        intent="evidence_answer",
+                        response_mode="evidence_answer",
+                        confidence=min(0.9, graph.confidence),
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                        reason="open_domain_entity_query with evidence → evidence_answer",
+                    )
+                return self._make_answer_packet(
+                    intent="unknown_entity_response",
+                    response_mode="unknown_entity_response",
+                    confidence=0.7,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="open_domain_entity_query without evidence → unknown_entity_response",
+                )
+
+            # Exit
+            if act == "exit":
+                return DecisionPacket(
+                    action_kind="abstain",
+                    action_plan=ActionPlan(
+                        action_kind="abstain",
+                        execution_allowed=False,
+                        confidence=0.95,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=0.95,
+                    reason="conversation_act=exit",
+                )
 
         if "low_competence" in graph_state_keys:
             return DecisionPacket(
@@ -144,19 +259,23 @@ class DecisionRouter:
                 reason="missing required slots",
             )
 
-        # Claim candidates from SEG: route to remember to store new knowledge
+        # Claim candidates from SEG: route to remember to store new knowledge.
+        # Gate: only store when the conversation act allows memory writes.
         if graph.claim_candidates and not selected_claim_ids and not is_question:
-            return DecisionPacket(
-                action_kind="remember",
-                action_plan=ActionPlan(
+            if conversation_act and not conversation_act.allows_memory_write:
+                pass  # fall through to conversational handling
+            else:
+                return DecisionPacket(
                     action_kind="remember",
-                    execution_allowed=True,
+                    action_plan=ActionPlan(
+                        action_kind="remember",
+                        execution_allowed=True,
+                        confidence=0.7,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
                     confidence=0.7,
-                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                ),
-                confidence=0.7,
-                reason="SEG contains claim candidates for storage",
-            )
+                    reason="SEG contains claim candidates for storage",
+                )
 
         # Predicate-aware query handlers: self identity/capability and user identity/name.
         # Evidence must exist AND match the requested predicate/frame; otherwise ask/abstain.
@@ -386,33 +505,39 @@ class DecisionRouter:
                     )
 
         if selected_claim_ids:
-            base_confidence = 0.8
-            graph_confidence = getattr(graph, 'confidence', 0.5)
-            confidence = min(0.95, base_confidence * (0.5 + 0.5 * graph_confidence))
+            # Gate: only answer from claims when the conversation act requires evidence
+            # or is unknown. Social/creative/repair turns must not trigger evidence answers.
+            if conversation_act and not conversation_act.requires_evidence and conversation_act.act_type != "unknown":
+                pass  # fall through to non-evidence handling below
+            else:
+                base_confidence = 0.8
+                graph_confidence = getattr(graph, 'confidence', 0.5)
+                confidence = min(0.95, base_confidence * (0.5 + 0.5 * graph_confidence))
 
-            if predictions:
-                avg_pred = sum(p.get("confidence", 0) for p in predictions) / max(len(predictions), 1)
-                if avg_pred > 0.5:
-                    confidence = min(0.95, confidence * 1.15)
-                else:
-                    confidence = max(0.4, confidence * 0.85)
+                if predictions:
+                    avg_pred = sum(p.get("confidence", 0) for p in predictions) / max(len(predictions), 1)
+                    if avg_pred > 0.5:
+                        confidence = min(0.95, confidence * 1.15)
+                    else:
+                        confidence = max(0.4, confidence * 0.85)
 
-            if graph.temporal_edges:
-                confidence = min(0.95, confidence * 1.1)
+                if graph.temporal_edges:
+                    confidence = min(0.95, confidence * 1.1)
 
-            return DecisionPacket(
-                action_kind="answer",
-                action_plan=ActionPlan(
+                return DecisionPacket(
                     action_kind="answer",
-                    selected_claim_ids=selected_claim_ids,
-                    selected_model_ids=selected_model_ids,
-                    execution_allowed=True,
+                    action_plan=ActionPlan(
+                        action_kind="answer",
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        execution_allowed=True,
+                        confidence=confidence,
+                        params={"intent": "evidence_answer", "response_mode": "evidence_answer"},
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
                     confidence=confidence,
-                    risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
-                ),
-                confidence=confidence,
-                reason="selected evidence available with graph confidence {:.2f}".format(graph_confidence),
-            )
+                    reason="selected evidence available with graph confidence {:.2f}".format(graph_confidence),
+                )
 
         for proc in graph.processes:
             if proc.get("frame_key") in ("request_clarification", "ask_question", "unknown_intent"):
@@ -852,3 +977,35 @@ class DecisionRouter:
         if uncertainty > 0.5:
             risk += (uncertainty - 0.5) * 0.2
         return min(1.0, max(0.0, risk))
+
+    def _make_answer_packet(
+        self,
+        intent: str,
+        response_mode: str,
+        confidence: float,
+        graph: SemanticEventGraph,
+        kernel: ContextKernel,
+        missing_slots: list[str] | None = None,
+        predictions: list[dict[str, Any]] | None = None,
+        selected_claim_ids: list[str] | None = None,
+        selected_model_ids: list[str] | None = None,
+        reason: str = "",
+    ) -> DecisionPacket:
+        """Build a standard answer DecisionPacket with intent and response_mode params."""
+        params: dict[str, Any] = {"intent": intent, "response_mode": response_mode}
+        return DecisionPacket(
+            action_kind="answer",
+            action_plan=ActionPlan(
+                action_kind="answer",
+                selected_claim_ids=selected_claim_ids or [],
+                selected_model_ids=selected_model_ids or [],
+                execution_allowed=True,
+                confidence=confidence,
+                params=params,
+                risk=self._estimate_risk(
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                ),
+            ),
+            confidence=confidence,
+            reason=reason,
+        )

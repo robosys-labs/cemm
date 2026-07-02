@@ -8,14 +8,17 @@ from .ner_tagger import NERTagger
 from ..learning.lexeme_memory import LexemeMemory
 
 
-_SURFACE_ROLE_WORDS_PATH = Path(__file__).parent.parent / "data" / "surface_role_words.json"
+_DEFAULT_VOCAB_PATH = Path(__file__).parent.parent / "data" / "vocab.json"
 
 
-def _load_surface_role_words() -> dict[str, set[str]]:
-    if not _SURFACE_ROLE_WORDS_PATH.exists():
+def _load_default_semantic_role_cues(vocab_path: Path | None = None) -> dict[str, set[str]]:
+    """Load semantic role cues from the shared vocabulary file."""
+    path = vocab_path or _DEFAULT_VOCAB_PATH
+    if not path.exists():
         return {}
-    data = json.loads(_SURFACE_ROLE_WORDS_PATH.read_text(encoding="utf-8"))
-    return {key: set(words) for key, words in data.items() if key != "meta"}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    cues = data.get("semantic_role_cues", {})
+    return {key: set(words) for key, words in cues.items()}
 
 
 # Lightweight semantic role tags beyond pure named entities
@@ -56,14 +59,16 @@ class SurfaceTagger:
         ner_tagger: NERTagger | None = None,
         known_words: set[str] | None = None,
         lexeme_memory: LexemeMemory | None = None,
+        semantic_role_cues: dict[str, set[str]] | None = None,
     ) -> None:
         self._ner = ner_tagger
         self._known_words = set(known_words or set())
         self._lexeme_memory = lexeme_memory
-        role_words = _load_surface_role_words()
+        role_words = semantic_role_cues or _load_default_semantic_role_cues()
         self._process_words = role_words.get("process", set())
         self._modifier_words = role_words.get("modifier", set())
         self._relation_words = role_words.get("relation", set())
+        self._state_words = role_words.get("state", set())
 
     def _is_known(self, word: str) -> bool:
         """Return True if the word is already in the shared vocabulary or lexeme memory."""
@@ -111,6 +116,13 @@ class SurfaceTagger:
                     tags.append("B-RELATION")
                 else:
                     tags.append("I-RELATION")
+                continue
+            # State candidate
+            if wl in self._state_words:
+                if i == 0 or not tags[-1].startswith("B-STATE"):
+                    tags.append("B-STATE")
+                else:
+                    tags.append("I-STATE")
                 continue
             tags.append("O")
         return tags

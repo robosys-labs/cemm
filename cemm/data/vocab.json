@@ -50,5 +50,28 @@
     "adn": "and",
     "taht": "that",
     "wiht": "with"
+  },
+  "semantic_role_cues": {
+    "process": [
+      "remember", "save", "store", "note", "recall", "retrieve", "find",
+      "search", "look", "get", "make", "take", "go", "come", "say", "tell",
+      "ask", "answer", "know", "learn", "teach", "explain", "show", "give",
+      "send", "write", "read", "call", "name", "mean", "work", "do", "run"
+    ],
+    "modifier": [
+      "quietly", "secretly", "privately", "quickly", "slowly", "carefully",
+      "loudly", "softly", "gently", "really", "very", "extremely", "quite",
+      "pretty", "fairly", "slightly", "maybe", "probably", "definitely"
+    ],
+    "relation": [
+      "means", "is", "are", "was", "were", "called", "named", "known",
+      "like", "as", "for", "about", "with", "from", "to", "of", "in",
+      "when", "while", "before", "after", "because", "so", "if", "then"
+    ],
+    "state": [
+      "is", "are", "was", "were", "be", "feel", "seem", "look", "sound",
+      "happy", "sad", "angry", "tired", "busy", "beautiful", "good", "bad",
+      "groovy", "fine", "great", "nice"
+    ]
   }
 }

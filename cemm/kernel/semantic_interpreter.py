@@ -57,10 +57,12 @@ class SemanticInterpreter:
         self._text_normalizer = text_normalizer
         self._ner_tagger = _load_default_ner_tagger()
         known_words = getattr(text_normalizer, "_known_words", None)
+        semantic_role_cues = getattr(text_normalizer, "_semantic_role_cues", None)
         self._surface_tagger = SurfaceTagger(
             self._ner_tagger,
             known_words=known_words,
             lexeme_memory=lexeme_memory,
+            semantic_role_cues=semantic_role_cues,
         )
         words = _load_semantic_interpreter_words()
         self._stop_words = set(words.get("stop_words", []))
@@ -289,6 +291,13 @@ class SemanticInterpreter:
             "command_retrieve": "retrieve",
             "greeting": "greeting",
             "session_exit": "session_exit",
+            "phatic_checkin": "phatic_checkin",
+            "teaching_offer": "teaching_offer",
+            "confusion_repair": "confusion_repair",
+            "playful_repair": "playful_repair",
+            "frustration_signal": "frustration_signal",
+            "story_request": "story_request",
+            "open_domain_entity_query": "open_domain_entity_query",
         }
         refs: list[str] = []
         seen: set[str] = set()

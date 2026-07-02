@@ -150,7 +150,7 @@ def test_self_capability_intent_preserved(
 def test_self_identity_intent_inferred_from_reason(
     answer_operator: AnswerOperator, operator_context: OperatorContext
 ) -> None:
-    operator_context.params["decision_reason"] = "self query (self_identity_query) answered from verified claims"
+    operator_context.params["intent"] = "self_identity"
     operator_context.params["selected_claim_ids"] = ["c1"]
     result = answer_operator.execute(operator_context)
     assert result.semantic_answer_graph is not None

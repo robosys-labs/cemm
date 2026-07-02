@@ -6,6 +6,7 @@ from typing import Any
 
 
 _TEACHING_PATTERNS_PATH = Path(__file__).parent.parent / "data" / "teaching_patterns.json"
+_VOCAB_PATH = Path(__file__).parent.parent / "data" / "vocab.json"
 
 
 def _load_teaching_patterns() -> dict[str, set[str]]:
@@ -17,6 +18,21 @@ def _load_teaching_patterns() -> dict[str, set[str]]:
         for key, words in data.items()
         if key != "meta"
     }
+
+
+def _load_role_cues(vocab_path: Path | None = None) -> dict[str, set[str]]:
+    """Load semantic role cues from the shared vocabulary file.
+
+    Teaching role inference and surface tagging share the same process,
+    modifier, and state cues so that a taught word is classified consistently
+    with how it will be tagged at runtime.
+    """
+    path = vocab_path or _VOCAB_PATH
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    cues = data.get("semantic_role_cues", {})
+    return {key: set(words) for key, words in cues.items()}
 
 
 class TeachingEvent:
@@ -60,9 +76,12 @@ class TeachingInterpreter:
     and corrections ("no, zibble means ..."). The interpreter produces candidate
     teaching events, not committed memory. Downstream layers decide whether to
     store them based on permission, confidence, and context.
+
+    Role cues are loaded from the shared vocabulary file so that teaching role
+    inference and surface tagging use the same semantic categories.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, role_cues: dict[str, set[str]] | None = None) -> None:
         patterns = _load_teaching_patterns()
         self._definition_triggers = patterns.get("definition_triggers", set())
         self._command_triggers = patterns.get("command_triggers", set())
@@ -70,10 +89,10 @@ class TeachingInterpreter:
         self._surface_stop_words = patterns.get("surface_stop_words", set())
         self._meaning_stop_words = patterns.get("meaning_stop_words", set())
         self._command_alias_delimiters = patterns.get("command_alias_delimiters", set())
-        role_cues = patterns.get("role_cues", {})
-        self._process_cues = set(role_cues.get("process", []))
-        self._state_cues = set(role_cues.get("state", []))
-        self._modifier_cues = set(role_cues.get("modifier", []))
+        cues = role_cues or _load_role_cues()
+        self._process_cues = cues.get("process", set())
+        self._state_cues = cues.get("state", set())
+        self._modifier_cues = cues.get("modifier", set())
 
     def interpret(self, text: str) -> list[TeachingEvent]:
         """Return candidate teaching events from the input text."""

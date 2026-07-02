@@ -125,10 +125,12 @@ class TextNormalizer:
             self._known_words = set(data.get("known_words", []))
             self._noisy_map = dict(data.get("noisy_map", {}))
             self._typo_map = dict(data.get("typo_map", {}))
+            self._semantic_role_cues = dict(data.get("semantic_role_cues", {}))
         else:
             self._known_words = set()
             self._noisy_map = {}
             self._typo_map = {}
+            self._semantic_role_cues = {}
 
     def normalize(self, text: str) -> NormalizedSignal:
         raw = text

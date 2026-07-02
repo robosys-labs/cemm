@@ -27,10 +27,17 @@
     "user_name": "Your name is {name}.",
     "user_identity_unknown": "I know you as the current user in this session, but I don't have a stored identity for you yet.",
     "user_name_unknown": "I know you as the current user in this session, but I don't know your name yet.",
-    "general_conversation": "I don't have stored evidence for that, but I'm happy to talk it through. What angle are you most curious about?",
-    "story_request": "I don't have a specific story stored, but I can make one up: a curious traveler found a door that only opened when asked a kind question. What happens next is up to you.",
+    "general_conversation": "That's an interesting topic. I'm happy to talk it through — what angle are you most curious about?",
+    "phatic_checkin": "I'm here and running normally. How are you doing?",
+    "confusion_repair": "I think we got crossed up there. Let me try again — what were you looking for?",
+    "playful_repair": "Fair, that came out weird. Let me try again.",
+    "teaching_offer": "Go ahead — I'm listening. I'll turn what you tell me into structured memory.",
+    "unknown_entity_response": "I recognize that as a name, but I don't have verified facts about it yet. You can teach me, or I can try a lookup if one is available.",
+    "frustration_response": "I hear you. Let me keep it simple and try to do better.",
+    "capability_summary": "I can chat, remember what you teach me, answer from stored knowledge, learn new words or commands, and show traces of how I reached an answer.",
+    "story_request": "Sure — here's a short one: a curious traveler found a door that only opened when asked a kind question. What happens next is up to you.",
     "recommendation_request": "I don't have your preferences on file, so I'll suggest something safe: keep it simple and see how it feels. Tell me what you're leaning toward and I can reason it through with you.",
-    "food_recommendation": "I don't know your taste or location, but a simple, fresh option usually works—maybe a grain bowl, soup, or sandwich. What are you in the mood for?",
-    "open_question": "I don't have a verified answer for that. Want to tell me what you think, or should I store the question for later?"
+    "food_recommendation": "A simple, fresh option usually works — maybe a grain bowl, soup, or sandwich. What are you in the mood for?",
+    "open_question": "I don't have a verified answer for that yet. Want to tell me what you think, or should I look into it?"
   }
 }

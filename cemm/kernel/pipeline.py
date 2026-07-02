@@ -16,7 +16,6 @@ from ..store.artifact_store import ArtifactStore
 from ..registry import Registry
 from ..confidence.scoring import score_action
 from .context_kernel_builder import ContextKernelBuilder
-from .normalizer import Normalizer
 from .text_normalizer import TextNormalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
@@ -28,8 +27,10 @@ from .context_inference import ContextInferenceEngine
 from .semantic_interpreter import SemanticInterpreter
 from .grounding import GroundingPipeline
 from .decision_router import DecisionRouter
+from .conversation_act_classifier import ConversationActClassifier
+from ..types.conversation_act import ConversationAct
 from ..causal.inference import CausalInference
-from ..retrieval.structural import StructuralRetriever
+from ..retrieval.structural import StructuralRetriever, RetrievalResult
 from ..retrieval.ranker import Ranker
 
 
@@ -50,6 +51,7 @@ class PipelineResult:
     inference_packet: InferencePacket | None = None
     decision_packet: DecisionPacket | None = None
     context_inference: ContextInference | None = None
+    conversation_act: ConversationAct | None = None
 
 
 class Pipeline:
@@ -61,7 +63,6 @@ class Pipeline:
         self._store = store
         self._registry = registry
         self._builder = ContextKernelBuilder()
-        self._normalizer = Normalizer(registry)
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
         self._lexeme_memory = LexemeMemory()
@@ -82,6 +83,7 @@ class Pipeline:
         self._context_inference_engine = ContextInferenceEngine(store, registry)
         self._causal_inference = CausalInference(store)
         self._decision_router = DecisionRouter(uol_mapper=self._uol_mapper)
+        self._conversation_act_classifier = ConversationActClassifier(registry)
         self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
         self._turn_count: int = 0
@@ -111,9 +113,7 @@ class Pipeline:
 
         self._turn_count += 1
         kernel = self._builder.from_signal(signal, turn_index=self._turn_count)
-
-        # Normalize (local var only, keep raw signal content stable)
-        normalized_content = self._normalizer.normalize_predicate(signal.content)
+        kernel.latest_signal = signal
 
         if budget_override:
             for k, v in budget_override.items():
@@ -130,10 +130,14 @@ class Pipeline:
         context_inference = self._context_inference_engine.infer(signal, kernel)
         self._context_inference_engine.apply_to_kernel(context_inference, kernel)
 
-        # Interpret: SemanticEventGraph + UOL atoms
+        # Interpret: SemanticEventGraph + UOL atoms (single authority)
         semantic_event_graph = self._semantic_interpreter.run(signal, kernel)
         semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
         if semantics is not None:
+            # NOTE: SemanticInterpreter.run() already calls UOLMapper internally.
+            # This second call is needed to get raw UOL atoms for pragmatic key
+            # compilation and observation_semantics. Future refactor: have
+            # SemanticInterpreter return atoms directly to eliminate the duplicate.
             uol_atoms = self._uol_mapper.map_signal(signal.content, kernel)
             semantics.uol_atoms = uol_atoms
             quality_keys, process_keys = self._uol_mapper.compile_to_pragmatic_keys(uol_atoms)
@@ -149,6 +153,16 @@ class Pipeline:
                     kernel.conversation.dynamics, semantics, kernel, signal.id
                 )
 
+        # Classify ConversationAct before retrieval so retrieval is task-shaped
+        conversation_act = self._conversation_act_classifier.classify(
+            signal, kernel, uol_atoms=uol_atoms if semantics else None,
+        )
+
+        # Suppress claim candidates for social/creative/repair/teaching turns.
+        # "unknown" turns are permissive — claim candidates may flow through.
+        if semantic_event_graph and conversation_act.act_type != "unknown" and not conversation_act.allows_memory_write:
+            semantic_event_graph.claim_candidates = []
+
         # Ground entities, time, frame, permission
         grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel, content=signal.content)
 
@@ -158,11 +172,16 @@ class Pipeline:
             if eid and eid not in kernel.memory.working_entity_ids:
                 kernel.memory.working_entity_ids.append(eid)
 
-        # Retrieve claims and models
-        retrieval_result = self._retriever.retrieve_for_kernel(kernel)
+        # Retrieve claims and models — gated by ConversationAct
+        # Social, creative, repair, and teaching-offer turns need no evidence retrieval
+        if conversation_act.requires_evidence or conversation_act.act_type == "unknown":
+            retrieval_result = self._retriever.retrieve_for_kernel(kernel)
 
-        # Graph-grounded retrieval enrichment
-        graph_result = self._retriever.retrieve_for_graph(semantic_event_graph, kernel)
+            # Graph-grounded retrieval enrichment
+            graph_result = self._retriever.retrieve_for_graph(semantic_event_graph, kernel)
+        else:
+            retrieval_result = RetrievalResult(claims=[], models=[])
+            graph_result = RetrievalResult(claims=[], models=[])
 
         # Merge: deduplicate by claim ID, prefer graph results
         seen_ids = {c.id for c in retrieval_result.claims}
@@ -175,11 +194,19 @@ class Pipeline:
         retrieval_result.claims = self._frames.filter_valid(retrieval_result.claims, kernel)
 
         # Rank claims and models with graph context
-        ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
-        ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
-        kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
-        kernel.world.active_claim_ids = kernel.memory.working_claim_ids
-        kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
+        # Skip ranking entirely for non-evidence turns to keep working_claim_ids empty
+        if conversation_act.requires_evidence or conversation_act.act_type == "unknown":
+            ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
+            ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
+            kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
+            kernel.world.active_claim_ids = kernel.memory.working_claim_ids
+            kernel.memory.candidate_model_ids = [m.id for m, _ in ranked_models[:kernel.budget.max_ranked]]
+        else:
+            ranked_claims = []
+            ranked_models = []
+            kernel.memory.working_claim_ids = []
+            kernel.world.active_claim_ids = []
+            kernel.memory.candidate_model_ids = []
 
         # Update self-view uncertainty based on available evidence
         n_claims = len(kernel.memory.working_claim_ids)
@@ -229,7 +256,7 @@ class Pipeline:
                 graph=semantic_event_graph,
             )
 
-        # Decide: choose action based on grounded graph, memory, inference
+        # Decide: choose action based on grounded graph, memory, inference, conversation act
         decision_packet = self._decision_router.run(
             graph=semantic_event_graph,
             kernel=kernel,
@@ -239,6 +266,7 @@ class Pipeline:
             input_text=signal.content,
             observation_semantics=signal.observation_semantics,
             context_inference=context_inference,
+            conversation_act=conversation_act,
             store=self._store,
         )
 
@@ -252,6 +280,7 @@ class Pipeline:
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             context_inference=context_inference,
+            conversation_act=conversation_act,
             inference_packet=inference_packet,
             decision_packet=decision_packet,
         )

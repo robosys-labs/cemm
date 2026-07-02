@@ -92,6 +92,8 @@ def _check_uncertainty(
     if sag.intent in (
         "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
         "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
+        "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
+        "teaching_offer", "capability_summary", "unknown_entity_response",
     ):
         return True, details
     needs_uncertainty = (
@@ -248,6 +250,8 @@ def _check_evidence_integrity(
     if intent in (
         "abstain", "ask", "greeting", "acknowledgment", "playful_acknowledgment", "low_competence_repair",
         "general_conversation", "story_request", "recommendation_request", "food_recommendation", "open_question",
+        "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
+        "teaching_offer", "capability_summary", "unknown_entity_response",
     ):
         if intent in ("abstain", "ask") and sag.selected_claim_ids:
             details.append("Abstain/Ask output selects claims as evidence")

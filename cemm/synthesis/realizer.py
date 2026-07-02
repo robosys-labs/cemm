@@ -61,17 +61,37 @@ def _self_identity_variables(answer_graph: SemanticAnswerGraph, store: Store) ->
 
 
 def _capability_variables(atoms: list[dict]) -> dict[str, str]:
-    """Join selected capability claim objects into a single template variable.
+    """Build capability template variables from curated categories.
 
-    The actual user-facing sentence is rendered from the language-indexed
-    response_templates.json file, not from hardcoded English strings.
+    Instead of raw-joining all capability claim objects, group them into
+    stable categories so the output is a concise summary.
     """
-    available = [
-        _clean_object(str(atom.get("object_value", "")))
-        for atom in atoms
-        if atom.get("object_value")
-    ]
-    return {"capabilities": _join_objects(available) if available else "help"}
+    if not atoms:
+        return {"capabilities": "chat, remember what you teach me, answer from stored knowledge, and learn new words or commands"}
+
+    # Map raw capability text to stable categories
+    category_map = {
+        "language-agnostic understanding via universal object language": "understand language",
+        "knowledge compression from runtime traces": "learn from traces",
+        "model-driven inference routing": "reason about causes",
+        "turn signals into semantic graphs, select evidence, decide actions, realize verified answers, and export traces for training": "process meaning",
+        "answer general open-domain questions conversationally when no specific stored claim applies": "answer open-domain questions",
+        "tell stories, give light recommendations, and explain my own reasoning in plain language": "chat and explain reasoning",
+    }
+
+    categories: list[str] = []
+    for atom in atoms:
+        raw = _clean_object(str(atom.get("object_value", "")))
+        if not raw:
+            continue
+        category = category_map.get(raw.lower(), raw)
+        if category not in categories:
+            categories.append(category)
+
+    if not categories:
+        return {"capabilities": "chat, remember what you teach me, answer from stored knowledge, and learn new words or commands"}
+
+    return {"capabilities": _join_objects(categories)}
 
 
 class RealizationPipeline:
@@ -97,12 +117,26 @@ class RealizationPipeline:
         intent = answer_graph.intent
         if intent == "greeting":
             params["template_key"] = "greeting"
+        elif intent == "phatic_checkin":
+            params["template_key"] = "phatic_checkin"
         elif intent == "acknowledgment":
             params["template_key"] = "acknowledgment"
         elif intent == "playful_acknowledgment":
             params["template_key"] = "playful_acknowledgment"
         elif intent == "low_competence_repair":
             params["template_key"] = "low_competence_repair"
+        elif intent == "frustration_response":
+            params["template_key"] = "frustration_response"
+        elif intent == "confusion_repair":
+            params["template_key"] = "confusion_repair"
+        elif intent == "playful_repair":
+            params["template_key"] = "playful_repair"
+        elif intent == "teaching_offer":
+            params["template_key"] = "teaching_offer"
+        elif intent == "capability_summary":
+            params["template_key"] = "capability_summary"
+        elif intent == "unknown_entity_response":
+            params["template_key"] = "unknown_entity_response"
         elif intent == "ask" or intent == "ask_meaning":
             clarification = next(
                 (e.get("question") for e in answer_graph.entity_refs if e.get("kind") == "clarification"),

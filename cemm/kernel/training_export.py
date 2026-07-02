@@ -8,6 +8,7 @@ from typing import Any
 
 from ..types.context_kernel import ContextKernel
 from ..types.context_inference import ContextInference
+from ..types.conversation_act import ConversationAct
 from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.packets import (
@@ -100,6 +101,7 @@ def serialize_turn(
     decision_packet: DecisionPacket | None = None,
     observation_semantics: ObservationSemantics | None = None,
     context_inference: ContextInference | None = None,
+    conversation_act: ConversationAct | None = None,
 ) -> list[dict[str, Any]]:
     base_payload: dict[str, Any] = {
         "context_kernel": asdict(kernel),
@@ -144,6 +146,8 @@ def serialize_turn(
         base_payload["observation_semantics"] = asdict(observation_semantics)
     if context_inference:
         base_payload["context_inference"] = asdict(context_inference)
+    if conversation_act:
+        base_payload["conversation_act"] = asdict(conversation_act)
 
     records: list[dict[str, Any]] = []
     records.append(_make_record("full_turn_export", dict(base_payload)))

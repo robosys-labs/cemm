@@ -38,3 +38,24 @@ class TestSurfaceTagger:
         spans = tagger.extract_semantic_spans(["what", "is", "a", "zibble"], unknown_tokens=["zibble"])
         roles = {span["role"] for span in spans}
         assert "unknown_lexeme" in roles
+
+    def test_semantic_role_cues_from_vocab_json(self) -> None:
+        tagger = SurfaceTagger()
+        # "remember" is in the shared vocab.json semantic_role_cues.process list.
+        assert "remember" in tagger._process_words
+        # "quietly" is in the modifier list.
+        assert "quietly" in tagger._modifier_words
+        # "is" is in the relation list.
+        assert "is" in tagger._relation_words
+
+    def test_custom_semantic_role_cues(self) -> None:
+        custom = {"process": {"launch"}, "modifier": {"recently"}, "relation": {"near"}}
+        tagger = SurfaceTagger(semantic_role_cues=custom)
+        tags = tagger.tag(["launch", "near", "recently"])
+        assert tags == ["B-PROCESS", "B-RELATION", "B-MODIFIER"]
+
+    def test_state_word_tagged(self) -> None:
+        tagger = SurfaceTagger()
+        tags = tagger.tag(["i", "feel", "happy"])
+        # "feel" is a state cue; relation cues like "is" take precedence where they overlap.
+        assert "B-STATE" in tags
