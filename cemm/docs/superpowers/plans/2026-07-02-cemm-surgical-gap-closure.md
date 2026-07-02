@@ -472,6 +472,7 @@ Remaining architectural gaps (closed in a follow-up pass):
 - SAG-less training export paths → `__main__.py` passes `semantic_answer_graph` to `serialize_turn`; `training_export.py` includes SAG-derived records and trace metadata.
 - Hardcoded English stop words, command words, causal/temporal relation markers, target prepositions, and named-entity extraction lists in `kernel/semantic_interpreter.py` → moved to `cemm/data/semantic_interpreter_words.json`.
 - Hardcoded English causal connectors and phrase-extraction stop words in `learning/inductor.py` → moved to `cemm/data/semantic_interpreter_words.json`.
+- Hardcoded English open-domain conversational intent phrases in `kernel/decision_router.py` (`_classify_general_question`) → replaced with data-driven SEG/UOL frame detection; new frames `story_request`, `food_recommendation_request`, and `recommendation_request` added to `cemm/data/uol_semantics.json`.
 
 Tests: `cemm/tests/test_data_driven_semantic_layer.py` covers all of the above.
 

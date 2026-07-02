@@ -277,9 +277,16 @@ def test_uol_semantics_includes_conversation_intent_frames() -> None:
 def test_uol_mapper_emits_conversation_intent_atoms() -> None:
     from cemm.registry.uol_mapper import UOLMapper
     from cemm.types.context_kernel import ContextKernel
-    mapper = UOLMapper(Registry())
+    registry = Registry()
+    registry.register(RegistryEntry(
+        model_id="story_request_1",
+        canonical_key="story_request",
+        kind="uol_semantic",
+        aliases=["story", "stories", "tell me a story"],
+    ))
+    mapper = UOLMapper(registry)
     kernel = ContextKernel(id="ctx-1", user=UserState())
-    atoms = mapper.map_signal("tell me a story", kernel)
+    atoms = mapper.map_signal("story", kernel)
     frame_keys = {a.frame_key for a in atoms if hasattr(a, "frame_key")}
     assert "story_request" in frame_keys
 
