@@ -64,6 +64,48 @@ class TimeState:
 
 
 @dataclass
+class DiscourseEntry:
+    """Records one turn's actual realized output for discourse repair tracking."""
+    turn_id: str = ""
+    input_signal_id: str = ""
+    output_signal_id: str = ""
+    user_text: str = ""
+    assistant_text: str = ""
+    assistant_intent: str = ""
+    assistant_response_mode: str = ""
+    assistant_decision_reason: str = ""
+    act_types: list[str] = field(default_factory=list)
+    selected_claim_ids: list[str] = field(default_factory=list)
+    timestamp: float = 0.0
+    status: str = "completed"  # completed, failed, repaired
+    error_type: str = ""
+    repair_target_turn_id: str = ""
+
+
+@dataclass
+class DiscourseStateStack:
+    """Tracks actual assistant outputs so future repair can target failed turns."""
+    entries: list[DiscourseEntry] = field(default_factory=list)
+    max_depth: int = 12
+
+    def push(self, entry: DiscourseEntry) -> None:
+        self.entries.append(entry)
+        if len(self.entries) > self.max_depth:
+            self.entries = self.entries[-self.max_depth:]
+
+    @property
+    def last_entry(self) -> DiscourseEntry | None:
+        return self.entries[-1] if self.entries else None
+
+    @property
+    def last_failed_entry(self) -> DiscourseEntry | None:
+        for entry in reversed(self.entries):
+            if entry.status == "failed":
+                return entry
+        return None
+
+
+@dataclass
 class ConversationState:
     session_id: str = ""
     turn_index: int = 0
@@ -80,6 +122,11 @@ class ConversationState:
     pending_assistant_question: str = ""
     expected_user_answer_type: str = ""  # e.g. "social_status", "entity_name", "yes_no", "preference"
     last_assistant_response_mode: str = ""  # e.g. "social_response", "evidence_answer", "capability_summary"
+    # v3.3: Discourse state stack for tracking actual realized outputs
+    discourse_stack: DiscourseStateStack = field(default_factory=DiscourseStateStack)
+    repair_target_turn_id: str = ""
+    active_teaching_target: str = ""
+    active_unknown_concept: str = ""
 
 
 @dataclass

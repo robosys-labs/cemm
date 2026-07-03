@@ -51,11 +51,42 @@ _DEFAULT_RELATION_PREDICATES = {
     "causes": "causes",
     "before": "before",
     "after": "after",
+    "means": "means",
+    "is": "is",
 }
 
 _BLOCKED_SUBJECTS = {"i", "me", "my", "you", "your", "he", "she", "it", "we", "they", "this", "that"}
 
 _TOPIC_PRONOUNS = {"it", "that", "this", "he", "she", "they"}
+
+# v3.3: Contraction expansion for better surface pattern matching
+_CONTRACTIONS = {
+    "don't": "do not", "doesn't": "does not", "didn't": "did not",
+    "isn't": "is not", "aren't": "are not",
+    "wasn't": "was not", "weren't": "were not",
+    "can't": "cannot", "cannot": "cannot", "won't": "will not",
+    "wouldn't": "would not", "shouldn't": "should not",
+    "couldn't": "could not", "mightn't": "might not",
+    "it's": "it is", "that's": "that is", "there's": "there is",
+    "what's": "what is", "who's": "who is", "where's": "where is",
+    "how's": "how is", "when's": "when is",
+    "i'm": "i am", "you're": "you are", "they're": "they are",
+    "we're": "we are", "he's": "he is", "she's": "she is",
+    "let's": "let us",
+}
+
+
+def _expand_contractions(text: str) -> str:
+    """Expand English contractions to improve surface pattern matching."""
+    result = text
+    for contraction, expansion in _CONTRACTIONS.items():
+        result = re.sub(
+            r"\b" + re.escape(contraction) + r"\b",
+            expansion,
+            result,
+            flags=re.IGNORECASE,
+        )
+    return result
 
 
 # ── Clause segmentation ─────────────────────────────────────────────────────
@@ -168,6 +199,14 @@ _CLAUSE_PATTERNS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(
         r"^(\w[\w ]*?)\s+is\s+a(?:n)?\s+(\w[\w ]*?)$",
         re.IGNORECASE), "is_a", "subj_obj"),
+    # X means Y (definition teaching)
+    (re.compile(
+        r"^(\w[\w ]*?)\s+means\s+(\w[\w ]*?)$",
+        re.IGNORECASE), "means", "subj_obj"),
+    # X is Y (without article — for multi-word predicates like "X is blue green")
+    (re.compile(
+        r"^(\w[\w ]*?)\s+is\s+(\w[\w ]*?)$",
+        re.IGNORECASE), "is", "subj_obj"),
     # ── No-subject patterns (for relative clauses with inherited subject) ──
     (re.compile(
         r"^is\s+shaped\s+like\s+(?:a\s+|an\s+)?(\w[\w ]*?)$",
@@ -308,6 +347,8 @@ class EntityFactExtractor:
             "preference_assertion",
             "definition_teaching",
             "teaching_offer",
+            "teaching_instruction_query",
+            "explicit_remember",
             "entity_description",
             "unknown",
         }
@@ -320,6 +361,8 @@ class EntityFactExtractor:
             "frustration_signal",
             "story_request",
             "creative_request",
+            "user_state_report",
+            "safety_response",
         }
         act_types = set(conversation_act.act_types)
         if act_types & allowed:
@@ -452,7 +495,7 @@ class EntityFactExtractor:
         kernel: ContextKernel | None,
         active_topic: str | None,
     ) -> list[EntityFactCandidate]:
-        raw_text = percept.raw_text.strip()
+        raw_text = _expand_contractions(percept.raw_text.strip())
         if not raw_text:
             return []
 
@@ -488,6 +531,8 @@ class EntityFactExtractor:
                     if not subj_raw or not obj_raw:
                         break
                     subj = self._resolve_subject(subj_raw, kernel, active_topic)
+                    if not subj:
+                        break
                     obj = self._preserve_case(obj_raw, percept)
                     candidates.append(EntityFactCandidate(
                         subject_entity_id=subj.lower().replace(" ", "_"),
@@ -506,6 +551,8 @@ class EntityFactExtractor:
                     if not subj_raw:
                         break
                     subj = self._resolve_subject(subj_raw, kernel, active_topic)
+                    if not subj:
+                        break
                     candidates.append(EntityFactCandidate(
                         subject_entity_id=subj.lower().replace(" ", "_"),
                         predicate=predicate_name,
@@ -626,13 +673,25 @@ class EntityFactExtractor:
     # ── Helpers ─────────────────────────────────────────────────────────────
 
     def _resolve_subject(self, surface: str, kernel: ContextKernel | None, active_topic: str | None) -> str:
-        """Resolve a subject surface, handling pronoun coreference."""
+        """Resolve a subject surface, handling pronoun coreference.
+
+        v3.3: Validates that the resolved topic is non-empty and not itself
+        a blocked subject (e.g. pronoun resolving to another pronoun).
+        """
         surface_lower = surface.lower().strip()
         if surface_lower in _TOPIC_PRONOUNS:
+            # Try kernel topic first
             if kernel and kernel.topic.active_topic_surface:
-                return kernel.topic.active_topic_surface
+                resolved = kernel.topic.active_topic_surface
+                if resolved and resolved.lower() not in _BLOCKED_SUBJECTS:
+                    return resolved
+            # Fall back to active_topic parameter
             if active_topic:
-                return active_topic
+                resolved = active_topic
+                if resolved and resolved.lower() not in _BLOCKED_SUBJECTS:
+                    return resolved
+            # No valid topic — pronoun has no referent, skip
+            return ""
         return surface
 
     def _resolve_ref(self, key: str, referents: dict[str, ReferentAtom]) -> ReferentAtom | None:

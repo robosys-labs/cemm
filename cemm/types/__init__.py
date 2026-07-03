@@ -17,6 +17,8 @@ from .meaning_percept import (
     ReferentAtom, ActionAtom, StateAtom, RelationAtom, NeedAtom, AffordanceAtom,
     OutcomeAtom, ValenceAtom, EventSchema, SituationFrame, MeaningPerceptPacket,
     SafetyFrame, RetrospectiveRepairFrame, RetrievalPlan, OutputStateUpdate,
+    QualityAtom, QuantityAtom, TimeAtom, PlaceAtom, IntentAtom,
+    ModalityAtom, EvidenceAtom, SourceAtom,
 )
 
 __all__ = [
@@ -38,4 +40,6 @@ __all__ = [
     "ReferentAtom", "ActionAtom", "StateAtom", "RelationAtom", "NeedAtom", "AffordanceAtom",
     "OutcomeAtom", "ValenceAtom", "EventSchema", "SituationFrame", "MeaningPerceptPacket",
     "SafetyFrame", "RetrospectiveRepairFrame", "RetrievalPlan", "OutputStateUpdate",
+    "QualityAtom", "QuantityAtom", "TimeAtom", "PlaceAtom", "IntentAtom",
+    "ModalityAtom", "EvidenceAtom", "SourceAtom",
 ]

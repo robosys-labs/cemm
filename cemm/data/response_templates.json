@@ -59,6 +59,10 @@
     "safety_deescalation": "No — don't {harmful_action}. Step away if you can, calm things down, and tell me what happened.",
     "social_conflict_clarify": "Do you mean {entity} is bothering or provoking you?",
     "retrospective_repair": "I hear you — I misunderstood what you were getting at. Let me try again. What were you looking for?",
+    "teaching_instruction": "You can teach me by telling me what something means, or by correcting me when I get it wrong. For example: 'water means H2O' or 'when I say X, I mean Y.' I'll store it as structured memory.",
+    "teaching_protocol": "You can teach me by saying things like \"X means Y\", \"X is a type of Y\", or \"when I say X, do Y.\" I'll turn what you tell me into structured memory and confirm what I learned.",
+    "self_category": "I'm not a robot in the human sense — I'm a teachable semantic system. I process meaning through structured atoms, learn from what you tell me, and reason from stored knowledge. I don't pretend to be more than I am.",
+    "concept_unknown": "I don't have a stored definition for {term} yet. You can teach me by saying \"{term} is ...\" and I'll remember it.",
     "unknown_self_label": "I hear the frustration. Are you saying I misunderstood you or gave a bad answer?"
   }
 }

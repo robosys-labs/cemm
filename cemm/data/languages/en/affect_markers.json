@@ -1,0 +1,11 @@
+{
+  "frustration": ["ugh", "argh", "seriously", "come on", "really", "urgh", "urghh", "ughh",
+                  "canned responses", "same response", "generic response", "template response",
+                  "scripted", "copy paste", "robotic", "pattern matcher"],
+  "playful": ["lol", "haha", "heh", "lmao", "rofl"],
+  "sadness": ["sigh", "alas", "unfortunately"],
+  "anger": ["damn", "crap", "hell"],
+  "surprise": ["wow", "whoa", "omg", "oh my"],
+  "repair": ["what", "wait what", "lol what", "huh", "what are you talking about",
+             "what do you mean", "i don't get it", "come again"]
+}

@@ -119,6 +119,11 @@ def serialize_turn(
     situation_frame: SituationFrame | None = None,
     safety_frame: SafetyFrame | None = None,
     retrieval_plan: RetrievalPlan | None = None,
+    act_resolution_plan: Any = None,
+    error_attribution: Any = None,
+    correction_label: dict[str, Any] | None = None,
+    discourse_stack: Any = None,
+    semantic_model_store_deltas: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     base_payload: dict[str, Any] = {
         "context_kernel": asdict(kernel),
@@ -173,9 +178,44 @@ def serialize_turn(
         base_payload["safety_frame"] = asdict(safety_frame)
     if retrieval_plan:
         base_payload["retrieval_plan"] = asdict(retrieval_plan)
+    if act_resolution_plan:
+        base_payload["act_resolution_plan"] = asdict(act_resolution_plan)
+    if error_attribution:
+        base_payload["error_attribution"] = asdict(error_attribution)
+    if correction_label:
+        base_payload["correction_label"] = correction_label
+    if discourse_stack:
+        entries = discourse_stack.entries[-3:] if hasattr(discourse_stack, "entries") else []
+        base_payload["discourse_stack"] = [asdict(e) for e in entries]
+    if semantic_model_store_deltas:
+        base_payload["semantic_model_store_deltas"] = semantic_model_store_deltas
 
     records: list[dict[str, Any]] = []
     records.append(_make_record("full_turn_export", dict(base_payload)))
+
+    # v3.3 Phase 10: Surface binding learning record
+    if semantic_model_store_deltas:
+        records.append(_make_record(
+            "surface_binding_learning",
+            _task_payload(base_payload, "surface_binding_learning", semantic_model_store_deltas=semantic_model_store_deltas, kernel=kernel, trace=trace),
+        ))
+
+    # v3.3 Phase 9: Error attribution and correction label records
+    if error_attribution:
+        records.append(_make_record(
+            "error_attribution",
+            _task_payload(base_payload, "error_attribution", error_attribution=error_attribution, kernel=kernel, trace=trace),
+        ))
+    if correction_label:
+        records.append(_make_record(
+            "correction_label",
+            _task_payload(base_payload, "correction_label", correction_label=correction_label, kernel=kernel, trace=trace),
+        ))
+    if act_resolution_plan:
+        records.append(_make_record(
+            "act_resolution_planning",
+            _task_payload(base_payload, "act_resolution_planning", act_resolution_plan=act_resolution_plan, decision_packet=decision_packet, kernel=kernel, trace=trace),
+        ))
 
     # v3.1 operational meaning-spine tasks. These make the new foundational
     # packets trainable instead of invisible runtime features.

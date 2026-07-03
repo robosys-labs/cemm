@@ -1,0 +1,8 @@
+{
+  "hungry": {"need_key": "food", "intensity": 0.8},
+  "thirsty": {"need_key": "water", "intensity": 0.8},
+  "tired": {"need_key": "rest", "intensity": 0.7},
+  "confused": {"need_key": "clarity", "intensity": 0.7},
+  "lost": {"need_key": "clarity", "intensity": 0.6},
+  "help": {"need_key": "help", "intensity": 0.6}
+}

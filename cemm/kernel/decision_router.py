@@ -74,6 +74,7 @@ class DecisionRouter:
         context_inference: ContextInference | None = None,
         conversation_act: ConversationActPacket | ConversationAct | None = None,
         store: Any | None = None,
+        act_resolution_plan: Any = None,
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
         selected_model_ids = memory_packet.selected_model_ids if memory_packet else []
@@ -94,7 +95,83 @@ class DecisionRouter:
             or bool(conversation_act and conversation_act.act_type == "evidence_query")
         )
 
-        # ── Stage 1: ConversationAct-based routing (primary authority) ──
+        # ── Stage 0: ActResolutionPlan-based routing (highest authority) ──
+        # When an ActResolutionPlan is provided, use it as the primary routing
+        # signal. Priority: SafetyTask → highest-priority ReplyObligation →
+        # MemoryUpdatePlan → AnswerTask → fall through to ConversationAct.
+        if act_resolution_plan is not None:
+            # Safety tasks always win
+            if act_resolution_plan.safety_tasks:
+                return self._make_answer_packet(
+                    intent="safety_deescalation",
+                    response_mode="safety_response",
+                    confidence=act_resolution_plan.safety_tasks[0].confidence,
+                    graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                    reason="act_resolution_plan: safety_task override",
+                )
+
+            # Memory updates with no answer tasks → remember
+            if act_resolution_plan.memory_updates and not act_resolution_plan.answer_tasks:
+                if graph.claim_candidates:
+                    return DecisionPacket(
+                        action_kind="remember",
+                        action_plan=ActionPlan(
+                            action_kind="remember",
+                            execution_allowed=True,
+                            confidence=act_resolution_plan.confidence,
+                            risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                        ),
+                        confidence=act_resolution_plan.confidence,
+                        reason="act_resolution_plan: memory_updates only → remember",
+                    )
+
+            # Highest-priority obligation drives the answer
+            if act_resolution_plan.obligations:
+                top_obligation = act_resolution_plan.obligations[0]
+                top_act = top_obligation.act_type
+
+                # Memory acts → remember with claim candidates
+                if top_act in ("claim_assertion", "preference_assertion",
+                               "definition_teaching", "command_alias_teaching",
+                               "explicit_remember", "memory_write"):
+                    if graph.claim_candidates:
+                        return DecisionPacket(
+                            action_kind="remember",
+                            action_plan=ActionPlan(
+                                action_kind="remember",
+                                execution_allowed=True,
+                                confidence=top_obligation.confidence,
+                                risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                            ),
+                            confidence=top_obligation.confidence,
+                            reason=f"act_resolution_plan: obligation={top_act} → remember",
+                        )
+
+                # Answer obligations with evidence
+                if top_obligation.requires_evidence and selected_claim_ids:
+                    return self._make_answer_packet(
+                        intent=top_obligation.intent,
+                        response_mode=top_obligation.response_mode,
+                        confidence=top_obligation.confidence,
+                        selected_claim_ids=selected_claim_ids,
+                        selected_model_ids=selected_model_ids,
+                        graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                        reason=f"act_resolution_plan: obligation={top_act} with evidence → answer",
+                    )
+
+                # Simple answer obligations (no evidence needed)
+                if not top_obligation.requires_evidence:
+                    return self._make_answer_packet(
+                        intent=top_obligation.intent,
+                        response_mode=top_obligation.response_mode,
+                        confidence=top_obligation.confidence,
+                        graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                        reason=f"act_resolution_plan: obligation={top_act} → answer",
+                    )
+
+            # Fall through to ConversationAct-based routing if plan didn't resolve
+
+        # ── Stage 1: ConversationAct-based routing (fallback) ──
         # When a ConversationAct is provided, use it as the primary routing signal.
         # This prevents social, creative, repair, and teaching turns from falling
         # through into evidence answer, clarification, or remember.

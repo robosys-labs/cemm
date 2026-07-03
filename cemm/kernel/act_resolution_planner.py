@@ -21,7 +21,7 @@ from typing import Any
 
 from ..registry.act_type_policy import get_response_mode
 from ..types.conversation_act import ConversationAct, ConversationActPacket
-from ..types.meaning_percept import RetrievalPlan, SafetyFrame, SituationFrame
+from ..types.meaning_percept import MeaningPerceptPacket, SafetyFrame, SituationFrame
 from .entity_fact_extractor import EntityFactCandidate
 
 
@@ -118,6 +118,9 @@ class ActResolutionPlanner:
         "evidence_query": 68,
         "memory_query": 68,
         "teaching_offer": 66,
+        "teaching_instruction_query": 71,
+        "self_category_query": 73,
+        "concept_query": 69,
         "story_request": 62,
         "creative_request": 62,
         "phatic_checkin": 55,
@@ -141,9 +144,10 @@ class ActResolutionPlanner:
         self,
         conversation_act: ConversationActPacket | None,
         situation: SituationFrame | None = None,
-        retrieval_plan: RetrievalPlan | None = None,
         safety_frame: SafetyFrame | None = None,
         fact_candidates: list[EntityFactCandidate] | None = None,
+        meaning_percept: MeaningPerceptPacket | None = None,
+        retrieval_plan: Any = None,
     ) -> ActResolutionPlan:
         result = ActResolutionPlan()
         facts = list(fact_candidates or [])
@@ -168,7 +172,7 @@ class ActResolutionPlanner:
 
         acts = conversation_act.all_acts if conversation_act else [ConversationAct()]
         for act in acts:
-            self._resolve_act(act, result, retrieval_plan, facts)
+            self._resolve_act(act, result, facts)
 
         if not result.obligations and not result.memory_updates and facts:
             result.memory_updates.append(MemoryUpdatePlan(
@@ -187,14 +191,18 @@ class ActResolutionPlanner:
                 confidence=0.6,
             ))
 
-        self._select_answer_task(result, retrieval_plan)
+        self._select_answer_task(result)
+
+        if retrieval_plan is not None:
+            result.requires_retrieval = retrieval_plan.mode != "none"
+            result.retrieval_mode = retrieval_plan.mode
+
         return result
 
     def _resolve_act(
         self,
         act: ConversationAct,
         result: ActResolutionPlan,
-        retrieval_plan: RetrievalPlan | None,
         fact_candidates: list[EntityFactCandidate],
     ) -> None:
         act_type = act.act_type
@@ -247,7 +255,7 @@ class ActResolutionPlanner:
             response_mode=response_mode,
             intent=intent,
             selected_act_type=act_type,
-            retrieval_mode=retrieval_plan.mode if retrieval_plan else "none",
+            retrieval_mode="none",
             priority=priority,
             confidence=act.confidence,
         ))
@@ -255,12 +263,7 @@ class ActResolutionPlanner:
     def _select_answer_task(
         self,
         result: ActResolutionPlan,
-        retrieval_plan: RetrievalPlan | None,
     ) -> None:
-        if retrieval_plan:
-            result.retrieval_mode = retrieval_plan.mode
-            result.requires_retrieval = retrieval_plan.mode not in ("", "none")
-
         if not result.obligations:
             result.selected_response_mode = "general_conversation"
             result.selected_intent = "general_conversation"
@@ -283,6 +286,12 @@ class ActResolutionPlanner:
         return "claim"
 
     def _intent_for_act(self, act_type: str, response_mode: str) -> str:
+        if act_type == "teaching_instruction_query":
+            return "teaching_instruction"
+        if act_type == "self_category_query":
+            return "self_category"
+        if act_type == "concept_query":
+            return "concept_unknown"
         if response_mode == "capability_summary":
             return "capability_summary"
         if response_mode == "unknown_entity_response":

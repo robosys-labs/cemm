@@ -352,6 +352,11 @@ def verify(
         claim_cov = 1.0
         claim_details = []
 
+    # Template-only responses (no selected claims) skip claim coverage entirely
+    if not sag.selected_claim_ids:
+        claim_cov = 1.0
+        claim_details = []
+
     details.extend(claim_details)
 
     uncert_ok, uncert_details = _check_uncertainty(output_text, sag, registry)

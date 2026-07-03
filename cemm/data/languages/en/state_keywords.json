@@ -1,0 +1,17 @@
+{
+  "hungry": {"state_key": "hungry", "dimension": "hunger", "polarity": "negative"},
+  "thirsty": {"state_key": "thirsty", "dimension": "hunger", "polarity": "negative"},
+  "fine": {"state_key": "fine", "dimension": "happiness", "polarity": "positive"},
+  "good": {"state_key": "good", "dimension": "happiness", "polarity": "positive"},
+  "okay": {"state_key": "okay", "dimension": "happiness", "polarity": "positive"},
+  "ok": {"state_key": "ok", "dimension": "happiness", "polarity": "positive"},
+  "sick": {"state_key": "sick", "dimension": "health", "polarity": "negative"},
+  "ill": {"state_key": "ill", "dimension": "health", "polarity": "negative"},
+  "tired": {"state_key": "tired", "dimension": "health", "polarity": "negative"},
+  "angry": {"state_key": "angry", "dimension": "happiness", "polarity": "negative"},
+  "happy": {"state_key": "happy", "dimension": "happiness", "polarity": "positive"},
+  "sad": {"state_key": "sad", "dimension": "happiness", "polarity": "negative"},
+  "confused": {"state_key": "confused", "dimension": "knowledge", "polarity": "negative"},
+  "lost": {"state_key": "lost", "dimension": "knowledge", "polarity": "negative"},
+  "fine_about": {"state_key": "fine", "dimension": "happiness", "polarity": "positive"}
+}

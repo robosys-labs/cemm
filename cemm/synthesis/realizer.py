@@ -283,6 +283,14 @@ class RealizationPipeline:
                 params["template_key"] = "situational_checkin"
             else:
                 params["template_key"] = intent
+        elif intent == "evidence_query" and not answer_graph.selected_claim_ids:
+            # No evidence found — check for scoped help before falling back
+            topic = _topic_from_scoped_help(source_text_lower)
+            if topic:
+                params["template_key"] = "scoped_help_response"
+                params.setdefault("variables", {"topic": topic})
+            else:
+                params["template_key"] = "abstain"
         elif intent == "safety_deescalation":
             # Extract the harmful action from source text
             harm_words = {"beat", "hit", "hurt", "attack", "fight", "punch", "kick", "stab", "kill", "shoot", "choke", "strangle"}

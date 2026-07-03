@@ -1,0 +1,51 @@
+{
+  "act_type_metadata": {
+    "greeting": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "greeting"},
+    "phatic_checkin": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "phatic_checkin"},
+    "acknowledgment": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "acknowledgment"},
+    "user_state_report": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": true, "simple_answer": true, "default_template": "general_conversation"},
+    "evidence_query": {"response_mode": "evidence_answer", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "evidence_answer"},
+    "open_domain_entity_query": {"response_mode": "unknown_entity_response", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "unknown_entity_response"},
+    "memory_query": {"response_mode": "evidence_answer", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "evidence_answer"},
+    "capability_query": {"response_mode": "capability_summary", "requires_evidence": false, "allows_memory_write": false, "simple_answer": false, "default_template": "capability_summary"},
+    "self_capability_query": {"response_mode": "capability_summary", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "capability_summary"},
+    "self_identity_query": {"response_mode": "evidence_answer", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "self_identity"},
+    "self_knowledge_query": {"response_mode": "evidence_answer", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "self_knowledge"},
+    "claim_assertion": {"response_mode": "memory_write", "requires_evidence": false, "allows_memory_write": true, "simple_answer": true, "default_template": "remember_confirm"},
+    "preference_assertion": {"response_mode": "memory_write", "requires_evidence": false, "allows_memory_write": true, "simple_answer": true, "default_template": "remember_confirm"},
+    "explicit_remember": {"response_mode": "memory_write", "requires_evidence": false, "allows_memory_write": true, "simple_answer": true, "default_template": "remember_confirm"},
+    "teaching_offer": {"response_mode": "teaching_prompt", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "teaching_offer"},
+    "teaching_instruction_query": {"response_mode": "teaching_prompt", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "teaching_instruction"},
+    "self_category_query": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "self_category"},
+    "concept_query": {"response_mode": "unknown_entity_response", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "concept_unknown"},
+    "confusion_repair": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "confusion_repair"},
+    "frustration_signal": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "frustration_response"},
+    "safety_response": {"response_mode": "safety_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "safety_deescalation"},
+    "general_conversation": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "general_conversation"},
+    "unknown": {"response_mode": "general_conversation", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "general_conversation"}
+  },
+  "capability_domains": {
+    "conversation": {"description": "General conversation and social interaction", "base_confidence": 0.5},
+    "knowledge": {"description": "Evidence-based answers from stored claims", "base_confidence": 0.7},
+    "memory": {"description": "Storing and retrieving user-provided facts", "base_confidence": 0.8},
+    "teaching": {"description": "Learning new definitions and corrections", "base_confidence": 0.75},
+    "repair": {"description": "Repairing misunderstandings and confusion", "base_confidence": 0.6},
+    "safety": {"description": "Safety intervention and deescalation", "base_confidence": 0.95},
+    "capability": {"description": "Self-awareness of own capabilities", "base_confidence": 0.85},
+    "creative": {"description": "Creative and story generation", "base_confidence": 0.5}
+  },
+  "response_modes": {
+    "social_response": {"capability_scope": "conversation", "base_confidence": 0.6, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "general_conversation"},
+    "evidence_answer": {"capability_scope": "knowledge", "base_confidence": 0.7, "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "evidence_answer"},
+    "unknown_entity_response": {"capability_scope": "knowledge", "base_confidence": 0.4, "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "unknown_entity_response"},
+    "memory_write": {"capability_scope": "memory", "base_confidence": 0.8, "requires_evidence": false, "allows_memory_write": true, "simple_answer": true, "default_template": "remember_confirm"},
+    "teaching_prompt": {"capability_scope": "teaching", "base_confidence": 0.75, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "teaching_offer"},
+    "repair_response": {"capability_scope": "repair", "base_confidence": 0.6, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "confusion_repair"},
+    "capability_summary": {"capability_scope": "capability", "base_confidence": 0.85, "requires_evidence": false, "allows_memory_write": false, "simple_answer": false, "default_template": "capability_summary"},
+    "safety_response": {"capability_scope": "safety", "base_confidence": 0.95, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "safety_deescalation"},
+    "creative_response": {"capability_scope": "creative", "base_confidence": 0.5, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "story_request"},
+    "general_conversation": {"capability_scope": "conversation", "base_confidence": 0.5, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "general_conversation"},
+    "tool_action": {"capability_scope": "conversation", "base_confidence": 0.4, "requires_evidence": false, "allows_memory_write": false, "simple_answer": false, "default_template": "general_conversation"},
+    "abstain": {"capability_scope": "conversation", "base_confidence": 0.3, "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "abstain"}
+  }
+}

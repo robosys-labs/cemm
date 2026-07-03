@@ -53,6 +53,10 @@
     {"canonical_key": "user_complaint", "aliases": ["hate", "cant stand", "can't stand", "terrible", "awful", "horrible", "worst", "hate this", "hate it"], "act_type": "user_complaint", "polarity": "negative", "intensity": 0.7},
     {"canonical_key": "meta_question_intent", "aliases": ["i want to ask", "i need to ask", "i have a question", "i have questions", "let me ask", "can i ask", "i'd like to ask", "i would like to ask"], "act_type": "meta_question_intent", "polarity": "neutral", "intensity": 0.5},
     {"canonical_key": "open_domain_entity_query", "aliases": ["do you know", "have you heard of", "tell me about", "who is", "what is", "where is", "what do you know about"], "act_type": "open_domain_entity_query", "intensity": 0.7},
+    {"canonical_key": "teaching_instruction_query", "aliases": ["how can i teach you", "how do i teach you", "how do you learn", "how can you learn", "what can i teach you", "what should i teach you", "how do you get taught", "how can i train you", "how do i train you"], "act_type": "teaching_instruction_query", "intensity": 0.7},
+    {"canonical_key": "user_state_report", "aliases": ["i'm good", "im good", "i'm fine", "im fine", "i'm okay", "im okay", "i'm doing well", "im doing well", "not bad", "doing good", "i'm alright", "im alright", "i'm great", "im great"], "act_type": "user_state_report", "polarity": "positive", "intensity": 0.5},
+    {"canonical_key": "self_category_query", "aliases": ["are you a robot", "are you human", "are you ai", "are you an ai", "are you a machine", "are you real", "are you a person", "are you a bot", "are you conscious", "are you alive"], "act_type": "self_category_query", "intensity": 0.7},
+    {"canonical_key": "concept_query", "aliases": ["what is a", "what is an", "what does", "what are", "define", "definition of", "meaning of", "explain what", "explain what a"], "act_type": "concept_query", "intensity": 0.7},
 
     {"canonical_key": "grammatical_negation", "aliases": ["not", "never", "no", "nobody", "nothing", "nowhere", "neither", "nor", "cannot", "cant", "can't", "wont", "won't", "dont", "don't", "doesnt", "doesn't", "isnt", "isn't", "arent", "aren't", "wasnt", "wasn't", "werent", "weren't"], "act_type": "unknown", "cue_type": "negation"},
     {"canonical_key": "grammatical_affirmative", "aliases": ["yes", "yeah", "yep", "sure", "ok", "okay"], "act_type": "unknown", "cue_type": "affirmative"},
@@ -127,8 +131,9 @@
     "phatic_checkin", "confusion_repair", "playful_repair", "frustration_signal", "frustration_response",
     "teaching_offer", "capability_summary", "unknown_entity_response",
     "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement",
-    "safety_response", "social_conflict_clarify", "reciprocal_phatic_checkin", "retrospective_repair",
-    "session_exit"
+    "safety_response", "safety_deescalation", "social_conflict_clarify", "reciprocal_phatic_checkin", "retrospective_repair",
+    "session_exit", "teaching_instruction_query", "self_category_query", "concept_query",
+    "self_category", "teaching_instruction", "concept_unknown", "teaching_protocol"
   ],
   "act_type_metadata": {
     "greeting": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "greeting"},
@@ -181,7 +186,10 @@
     "safety_response": {"response_mode": "safety_response", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "safety_deescalation"},
     "social_conflict_clarify": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "social_conflict_clarify"},
     "reciprocal_phatic_checkin": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "reciprocal_phatic_checkin"},
-    "retrospective_repair": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "is_repair": true, "simple_answer": true, "default_template": "retrospective_repair"}
+    "retrospective_repair": {"response_mode": "repair_response", "requires_evidence": false, "allows_memory_write": false, "is_repair": true, "simple_answer": true, "default_template": "retrospective_repair"},
+    "teaching_instruction_query": {"response_mode": "teaching_prompt", "requires_evidence": false, "allows_memory_write": false, "simple_answer": true, "default_template": "teaching_instruction"},
+    "self_category_query": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "self_category"},
+    "concept_query": {"response_mode": "unknown_entity_response", "requires_evidence": true, "allows_memory_write": false, "simple_answer": false, "default_template": "concept_unknown"}
   },
   "discourse_frames": ["acknowledgment", "greeting", "playful_acknowledgment", "session_exit"],
   "question_frames": ["ask_question", "request_clarification", "unknown_intent"],
@@ -215,6 +223,9 @@
     "social_conflict_clarify": "social_conflict_clarify",
     "reciprocal_phatic_checkin": "reciprocal_phatic_checkin",
     "retrospective_repair": "retrospective_repair",
+    "teaching_instruction": "teaching_instruction",
+    "self_category": "self_category",
+    "concept_unknown": "concept_unknown",
     "unknown_self_label": "unknown_self_label"
   }
 }

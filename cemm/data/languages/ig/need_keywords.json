@@ -1,0 +1,7 @@
+{
+  "afọ": {"need_key": "food", "intensity": 0.8},
+  "enyu": {"need_key": "water", "intensity": 0.8},
+  "mgbagwoju": {"need_key": "clarity", "intensity": 0.7},
+  "nyere": {"need_key": "help", "intensity": 0.6},
+  "aka": {"need_key": "help", "intensity": 0.6}
+}

@@ -1,0 +1,23 @@
+{
+  "bịa": "move_toward_source",
+  "bia": "move_toward_source",
+  "ga": "move_to_place",
+  "nye": "transfer_object",
+  "were": "acquire_object",
+  "nyere": "improve_state",
+  "mụta": "increase_capability",
+  "muta": "increase_capability",
+  "cheta": "memory_write",
+  "chefu": "memory_loss",
+  "rie": "consume_food",
+  "ṅụ": "consume_liquid",
+  "nu": "consume_liquid",
+  "gafee": "change_location",
+  "ziga": "transfer_to_target",
+  "chọta": "search_locate",
+  "chota": "search_locate",
+  "ju": "request_information",
+  "gwa": "provide_information",
+  "gosi": "display_information",
+  "kuziri": "transfer_knowledge"
+}

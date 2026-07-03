@@ -1,0 +1,15 @@
+{
+  "afọ": {"state_key": "hungry", "dimension": "hunger", "polarity": "negative"},
+  "enyu": {"state_key": "thirsty", "dimension": "hunger", "polarity": "negative"},
+  "ọma": {"state_key": "good", "dimension": "happiness", "polarity": "positive"},
+  "oma": {"state_key": "good", "dimension": "happiness", "polarity": "positive"},
+  "ọjọ": {"state_key": "bad", "dimension": "happiness", "polarity": "negative"},
+  "ojo": {"state_key": "bad", "dimension": "happiness", "polarity": "negative"},
+  "arịa": {"state_key": "sick", "dimension": "health", "polarity": "negative"},
+  "aria": {"state_key": "sick", "dimension": "health", "polarity": "negative"},
+  "iwe": {"state_key": "angry", "dimension": "happiness", "polarity": "negative"},
+  "ọṅụ": {"state_key": "happy", "dimension": "happiness", "polarity": "positive"},
+  "onu": {"state_key": "happy", "dimension": "happiness", "polarity": "positive"},
+  "nwute": {"state_key": "sad", "dimension": "happiness", "polarity": "negative"},
+  "mgbagwoju": {"state_key": "confused", "dimension": "knowledge", "polarity": "negative"}
+}

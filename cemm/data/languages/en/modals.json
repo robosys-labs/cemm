@@ -1,0 +1,10 @@
+{
+  "should": "proposed",
+  "can": "proposed",
+  "could": "proposed",
+  "would": "proposed",
+  "shall": "proposed",
+  "must": "desired",
+  "need": "desired",
+  "have to": "desired"
+}

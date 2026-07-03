@@ -127,6 +127,92 @@ class ValenceAtom:
     confidence: float = 0.5
 
 
+# ── Extension Atoms (v3.3) ────────────────────────────────────────────────
+
+@dataclass
+class QualityAtom:
+    """Property/attribute of an entity — color, shape, size, texture, etc."""
+    surface: str = ""
+    quality_key: str = ""  # color, shape, size, texture, weight, age, etc.
+    target_entity_role: str = ""
+    value: str = ""
+    confidence: float = 0.5
+
+
+@dataclass
+class QuantityAtom:
+    """Numeric/measurement — count, weight, distance, etc."""
+    surface: str = ""
+    quantity_key: str = ""  # count, weight, distance, temperature, duration, etc.
+    value: float = 0.0
+    unit: str = ""
+    target_entity_role: str = ""
+    confidence: float = 0.5
+
+
+@dataclass
+class TimeAtom:
+    """Temporal reference — past, future, now, before, after, etc."""
+    surface: str = ""
+    time_key: str = ""  # past, present, future, before, after, during, now, then
+    tense: str = ""  # past, present, future, imperative
+    reference_point: str = ""  # utterance_time, prior_event, etc.
+    confidence: float = 0.5
+
+
+@dataclass
+class PlaceAtom:
+    """Spatial reference — here, there, north, inside, etc."""
+    surface: str = ""
+    place_key: str = ""  # here, there, near, far, inside, outside, north, south, etc.
+    spatial_relation: str = ""  # deictic, topological, directional
+    reference_entity_role: str = ""
+    confidence: float = 0.5
+
+
+@dataclass
+class IntentAtom:
+    """Pragmatic purpose — question, assertion, repair, teach, etc."""
+    surface: str = ""
+    intent_key: str = ""  # question, assertion, repair, teach, command, request
+    is_question: bool = False
+    is_command: bool = False
+    is_teaching: bool = False
+    is_repair: bool = False
+    target: str = ""  # self, user, entity, world
+    confidence: float = 0.5
+
+
+@dataclass
+class ModalityAtom:
+    """Modal operator — can, must, should, might, would, etc."""
+    surface: str = ""
+    modality_key: str = ""  # can, must, should, might, would, will, may
+    modality_type: str = ""  # ability, obligation, possibility, permission, intention
+    polarity: str = "affirmed"  # affirmed, negated
+    confidence: float = 0.5
+
+
+@dataclass
+class EvidenceAtom:
+    """Source/support for a claim — because, since, therefore, etc."""
+    surface: str = ""
+    evidence_key: str = ""  # because, since, therefore, thus, hence, according_to
+    evidence_type: str = ""  # causal, inferential, testimonial, perceptual
+    supports_claim: str = ""
+    confidence: float = 0.5
+
+
+@dataclass
+class SourceAtom:
+    """Origin of information — user, system, external, etc."""
+    surface: str = ""
+    source_key: str = ""  # user, system, external, tool, web, file, sensor
+    source_type: str = ""  # direct, indirect, inferred
+    reliability: float = 0.5
+    confidence: float = 0.5
+
+
 # ── EventSchema ───────────────────────────────────────────────────────────
 
 @dataclass
@@ -239,6 +325,16 @@ class MeaningPerceptPacket:
     relations: list[RelationAtom] = field(default_factory=list)
     needs: list[NeedAtom] = field(default_factory=list)
     affordances: list[AffordanceAtom] = field(default_factory=list)
+
+    # v3.3 extension atoms
+    qualities: list[QualityAtom] = field(default_factory=list)
+    quantities: list[QuantityAtom] = field(default_factory=list)
+    times: list[TimeAtom] = field(default_factory=list)
+    places: list[PlaceAtom] = field(default_factory=list)
+    intents: list[IntentAtom] = field(default_factory=list)
+    modalities: list[ModalityAtom] = field(default_factory=list)
+    evidence: list[EvidenceAtom] = field(default_factory=list)
+    sources: list[SourceAtom] = field(default_factory=list)
 
     unknown_lexemes: list[dict[str, Any]] = field(default_factory=list)
     idiom_candidates: list[dict[str, Any]] = field(default_factory=list)

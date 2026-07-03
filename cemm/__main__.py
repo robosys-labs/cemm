@@ -324,6 +324,7 @@ def process_input(
     inference_packet = pipeline_result.inference_packet or InferencePacket()
     sim_result = None
     graph = pipeline_result.semantic_event_graph
+    act_resolution_plan = pipeline_result.act_resolution_plan
     # Pipeline already ran causal inference; only run simulation if causal edges exist
     if graph and graph.causal_edges:
         sim_engine = SimulationEngine(store)
@@ -380,8 +381,11 @@ def process_input(
             # Do not recompile or infer intent from reason strings.
             answer_claim_ids = list(ap.selected_claim_ids) if ap else selected_claim_ids
             # For non-evidence response modes, don't pass claims
+            # v3.3 W5 fix: don't strip claims for teaching_instruction_query intent
             response_mode = ap.params.get("response_mode", "") if ap and ap.params else ""
-            if response_mode in ("social_response", "creative_response", "repair_response", "capability_summary", "teaching_prompt", "unknown_entity_response"):
+            intent = ap.params.get("intent", "") if ap and ap.params else ""
+            strip_modes = ("social_response", "creative_response", "repair_response", "capability_summary", "unknown_entity_response")
+            if response_mode in strip_modes and intent != "teaching_instruction_query":
                 answer_claim_ids = []
             params = {
                 "answer_text": "",
@@ -398,10 +402,45 @@ def process_input(
         elif kind == ActionKind.ABSTAIN:
             params = {"reason": decision.reason}
         elif kind == ActionKind.REMEMBER:
-            # Use action_plan.params as authoritative. Only use claim_candidates
-            # from the SEG — no fallback raw text storage.
+            # v3.3: Use batch memory update when multiple fact candidates available.
+            # Falls back to single-claim path when only one candidate exists.
             seg = pipeline_result.semantic_event_graph
-            if seg and seg.claim_candidates:
+            all_candidates: list = []
+            if act_resolution_plan and act_resolution_plan.memory_updates:
+                for mu in act_resolution_plan.memory_updates:
+                    all_candidates.extend(mu.candidates)
+            if len(all_candidates) > 1:
+                # Batch path: convert EntityFactCandidates to batch tasks
+                from ..kernel.memory_update_planner import MemoryUpdateBatch, MemoryUpdateTask
+                batch = MemoryUpdateBatch(
+                    source_signal_id=input_signal.id,
+                    context_id=kernel.id,
+                )
+                for cand in all_candidates:
+                    batch.add(MemoryUpdateTask(
+                        subject_entity_id=cand.subject_entity_id,
+                        predicate=cand.predicate,
+                        object_value=cand.object_value,
+                        object_entity_id=cand.object_entity_id,
+                        qualifiers=cand.qualifiers,
+                        domain=cand.domain,
+                        confidence=cand.confidence,
+                        trust=cand.trust,
+                        evidence_span=cand.evidence_span,
+                        reason=cand.reason or "act_resolution_planner",
+                    ))
+                params = {"batch_tasks": batch}
+            elif all_candidates:
+                cand = all_candidates[0]
+                params = {
+                    "subject_entity_id": cand.subject_entity_id or "user",
+                    "predicate": cand.predicate,
+                    "object_value": cand.object_value,
+                    "object_entity_id": cand.object_entity_id,
+                    "qualifiers": cand.qualifiers,
+                    "domain": cand.domain,
+                }
+            elif seg and seg.claim_candidates:
                 cand = seg.claim_candidates[0]
                 params = {
                     "subject_entity_id": cand.get("subject", "user") or "user",
@@ -609,6 +648,52 @@ def process_input(
     )
     pipeline._output_state_updater.apply(kernel, output_update)
 
+    # ── DiscourseStateStack push (v3.3) ──────────────────────────────
+    # Record the actual realized output for future repair targeting.
+    # This must happen after realization so we have the real assistant text.
+    from .types.context_kernel import DiscourseEntry
+    discourse_entry = DiscourseEntry(
+        turn_id=input_signal.id,
+        input_signal_id=input_signal.id,
+        output_signal_id=op_result.result_signal.id if op_result.result_signal else "",
+        user_text=text,
+        assistant_text=output,
+        assistant_intent=assistant_intent,
+        assistant_response_mode=assistant_response_mode,
+        assistant_decision_reason=decision.reason if decision else "",
+        act_types=list(pipeline_result.conversation_act.act_types) if pipeline_result and pipeline_result.conversation_act else [],
+        selected_claim_ids=list(ctx.selected_claim_ids),
+        timestamp=time.time(),
+        status="completed",
+    )
+    kernel.conversation.discourse_stack.push(discourse_entry)
+
+    # ── Error Attribution (v3.3 Phase 9) ──────────────────────────────
+    # Re-evaluate with full realization metadata now that we have the SAG
+    # and trace. The pipeline already did a preliminary evaluation; this
+    # pass enriches with realization data and exports correction labels.
+    correction_label = None
+    if pipeline_result and pipeline_result.error_attribution:
+        from .kernel.error_attribution_engine import ErrorAttributionEngine
+        ea_engine = ErrorAttributionEngine()
+        correction_label = ea_engine.export_correction_label(
+            pipeline_result.error_attribution,
+            current_input=text,
+        )
+        # Store correction label on the discourse entry for training export
+        discourse_entry.error_type = pipeline_result.error_attribution.error_type
+
+        # v3.3 Phase 10: Feed correction to promotion gate for dual-signal training
+        from .kernel.training_tasks import CorrectionLabel
+        cl = CorrectionLabel(
+            input_surface=pipeline_result.error_attribution.previous_user_text,
+            correct_act_type=pipeline_result.error_attribution.correct_act_type or "",
+            previous_intent=pipeline_result.error_attribution.previous_intent or "",
+            error_type=pipeline_result.error_attribution.error_type,
+            turn_id=discourse_entry.turn_id,
+        )
+        pipeline.promotion_gate.add_correction(cl)
+
     # Persist the post-output conversation state. Pipeline.run() persists a
     # pre-output snapshot before the final assistant text exists, so the output
     # updater must write its state transition back into the session store here.
@@ -630,6 +715,10 @@ def process_input(
             "last_taught_entity_surface": kernel.topic.last_taught_entity_surface,
             "last_questioned_attribute": kernel.topic.last_questioned_attribute,
         },
+        "discourse_stack": kernel.conversation.discourse_stack,
+        "repair_target_turn_id": kernel.conversation.repair_target_turn_id,
+        "active_teaching_target": kernel.conversation.active_teaching_target,
+        "active_unknown_concept": kernel.conversation.active_unknown_concept,
     }
 
     # Export training data if CEMM_EXPORT_PATH is set
@@ -658,7 +747,14 @@ def process_input(
             situation_frame=pipeline_result.situation_frame if pipeline_result else None,
             safety_frame=pipeline_result.safety_frame if pipeline_result else None,
             retrieval_plan=pipeline_result.retrieval_plan if pipeline_result else None,
+            act_resolution_plan=pipeline_result.act_resolution_plan if pipeline_result else None,
+            error_attribution=pipeline_result.error_attribution if pipeline_result else None,
+            correction_label=correction_label if pipeline_result and pipeline_result.error_attribution else None,
+            discourse_stack=kernel.conversation.discourse_stack,
+            semantic_model_store_deltas=pipeline.semantic_model_store.get_deltas() if pipeline_result else None,
         )
+        if pipeline_result:
+            pipeline.semantic_model_store.clear_deltas()
         for record in records:
             write_turn_to_jsonl(_export_path, record)
 

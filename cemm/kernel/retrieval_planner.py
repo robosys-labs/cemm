@@ -17,6 +17,8 @@ Examples:
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..types.meaning_percept import RetrievalPlan, SituationFrame, SafetyFrame
 from ..types.conversation_act import ConversationActPacket
 
@@ -31,8 +33,35 @@ class RetrievalPlanner:
         safety_frame: SafetyFrame | None = None,
         has_unknown_lexemes: bool = False,
         has_idiom_candidates: bool = False,
+        act_resolution_plan: Any = None,
     ) -> RetrievalPlan:
-        """Build a retrieval plan from the current turn's analysis."""
+        """Build a retrieval plan from the current turn's analysis.
+
+        When act_resolution_plan is provided, use its retrieval_mode and
+        requires_retrieval as the primary signal instead of re-deriving
+        from conversation_act.act_type.
+        """
+        # ── ActResolutionPlan takes priority when available ──
+        if act_resolution_plan is not None:
+            # Safety tasks always mean no retrieval
+            if act_resolution_plan.safety_tasks:
+                return RetrievalPlan(
+                    mode="none",
+                    reason="act_resolution_plan: safety_task present — no retrieval",
+                )
+            # If the plan already determined retrieval mode, use it
+            if act_resolution_plan.retrieval_mode and act_resolution_plan.retrieval_mode != "none":
+                return RetrievalPlan(
+                    mode=act_resolution_plan.retrieval_mode,
+                    reason=f"act_resolution_plan: retrieval_mode={act_resolution_plan.retrieval_mode}",
+                )
+            # Memory-only turns: no retrieval needed
+            if act_resolution_plan.memory_updates and not act_resolution_plan.answer_tasks:
+                return RetrievalPlan(
+                    mode="none",
+                    reason="act_resolution_plan: memory_updates only — no retrieval",
+                )
+
         act_type = conversation_act.act_type if conversation_act else "unknown"
 
         # Safety frames: no retrieval except safety policy

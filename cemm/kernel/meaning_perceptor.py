@@ -30,6 +30,7 @@ from ..types.context_kernel import ContextKernel
 from ..learning.surface_tagger import SurfaceTagger
 from ..learning.ner_tagger import NERTagger
 from ..learning.lexeme_memory import LexemeMemory
+from .language_adapter import LanguageAdapter, get_adapter, PronounMapping
 
 
 # Pronoun to entity type mapping
@@ -159,7 +160,7 @@ _AFFECT_MARKERS = {
 
 
 def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9']+", text.lower())
+    return re.findall(r"[^\W\d_]+", text.lower(), re.UNICODE)
 
 
 class MeaningPerceptor:
@@ -170,10 +171,12 @@ class MeaningPerceptor:
         ner_tagger: NERTagger | None = None,
         surface_tagger: SurfaceTagger | None = None,
         lexeme_memory: LexemeMemory | None = None,
+        language_adapter: LanguageAdapter | None = None,
     ) -> None:
         self._ner_tagger = ner_tagger
         self._surface_tagger = surface_tagger
         self._lexeme_memory = lexeme_memory
+        self._adapter = language_adapter or get_adapter("en")
 
     def perceive(
         self,
@@ -248,18 +251,18 @@ class MeaningPerceptor:
                 confidence=ent.get("confidence", 0.5),
             ))
 
-        # Build referents from pronouns
+        # Build referents from pronouns (via LanguageAdapter)
         token_set = set(tokens)
-        for pronoun, (etype, role, source) in _PRONOUN_MAP.items():
-            if pronoun in token_set:
-                packet.referents.append(ReferentAtom(
-                    surface=pronoun,
-                    entity_type=etype,
-                    role=role,
-                    known=True,
-                    source=source,
-                    confidence=0.9,
-                ))
+        pronoun_results = self._adapter.map_pronouns(tokens)
+        for pronoun, mapping in pronoun_results:
+            packet.referents.append(ReferentAtom(
+                surface=pronoun,
+                entity_type=mapping.entity_type,
+                role=mapping.role,
+                known=True,
+                source=mapping.source,
+                confidence=0.9,
+            ))
 
         # Detect capitalized tokens as person/place candidates.
         # Phone keyboards auto-capitalize the first word of every sentence, so
@@ -276,7 +279,7 @@ class MeaningPerceptor:
             if not clean or not clean[0].isupper():
                 continue
             lower = clean.lower()
-            if lower in _ENTITY_EXCLUDE:
+            if self._adapter.is_entity_exclude(lower):
                 continue
             if lower in known_words:
                 continue
@@ -296,72 +299,55 @@ class MeaningPerceptor:
                 confidence=confidence,
             ))
 
-        # Detect deictic words
-        for deictic in _DEICTIC_WORDS:
-            if deictic in token_set:
-                packet.referents.append(ReferentAtom(
-                    surface=deictic,
-                    entity_type="place" if deictic in ("here", "there", "this", "that") else "abstract",
-                    role="place" if deictic in ("here", "there") else "topic",
-                    known=True,
-                    source="deixis",
-                    confidence=0.7,
-                ))
+        # Detect deictic words (via LanguageAdapter)
+        deictic_words = self._adapter.map_deictics(tokens)
+        for deictic in deictic_words:
+            packet.referents.append(ReferentAtom(
+                surface=deictic,
+                entity_type="place" if deictic in ("here", "there", "this", "that") else "abstract",
+                role="place" if deictic in ("here", "there") else "topic",
+                known=True,
+                source="deixis",
+                confidence=0.7,
+            ))
 
-        # Build actions from action keywords
-        for token in tokens:
-            if token in _ACTION_KEYWORDS:
-                # Determine modality from context
-                modality = "observed"
-                if any(m in token_set for m in ("should", "can", "could", "would", "shall")):
-                    modality = "proposed"
-                elif any(m in token_set for m in ("must", "need", "have to")):
-                    modality = "desired"
-                # Determine polarity
-                polarity = "affirmed"
-                if any(n in token_set for n in ("not", "never", "dont", "don't", "no")):
-                    polarity = "negated"
-                packet.actions.append(ActionAtom(
-                    surface=token,
-                    action_key=_ACTION_KEYWORDS[token],
-                    modality=modality,
-                    polarity=polarity,
-                    confidence=0.7,
-                ))
+        # Build actions from action keywords (via LanguageAdapter)
+        action_results = self._adapter.map_actions(tokens)
+        modality = self._adapter.detect_modality(tokens)
+        negated = self._adapter.detect_negation(tokens)
+        for surface, action_key in action_results:
+            packet.actions.append(ActionAtom(
+                surface=surface,
+                action_key=action_key,
+                modality=modality,
+                polarity="negated" if negated else "affirmed",
+                confidence=0.7,
+            ))
 
-        # Build states from state keywords
-        for token in tokens:
-            if token in _STATE_KEYWORDS:
-                state_key, dimension, polarity = _STATE_KEYWORDS[token]
-                # Determine holder based on pronoun context
-                holder = "user"
-                if "you" in token_set or "your" in token_set:
-                    holder = "self"
-                elif "he" in token_set or "she" in token_set or "him" in token_set or "her" in token_set:
-                    holder = "third_party"
-                packet.states.append(StateAtom(
-                    surface=token,
-                    state_key=state_key,
-                    holder_role=holder,
-                    dimension=dimension,
-                    polarity=polarity,
-                    intensity=0.6 if polarity == "positive" else 0.7,
-                    confidence=0.7,
-                ))
+        # Build states from state keywords (via LanguageAdapter)
+        state_results = self._adapter.map_states(tokens)
+        holder = self._adapter.detect_holder(tokens)
+        for surface, mapping in state_results:
+            packet.states.append(StateAtom(
+                surface=surface,
+                state_key=mapping.state_key,
+                holder_role=holder,
+                dimension=mapping.dimension,
+                polarity=mapping.polarity,
+                intensity=0.6 if mapping.polarity == "positive" else 0.7,
+                confidence=0.7,
+            ))
 
-        # Build needs from need keywords
-        for token in tokens:
-            if token in _NEED_KEYWORDS:
-                need_key, intensity = _NEED_KEYWORDS[token]
-                holder = "user"
-                if "you" in token_set:
-                    holder = "self"
-                packet.needs.append(NeedAtom(
-                    holder_role=holder,
-                    need_key=need_key,
-                    intensity=intensity,
-                    confidence=0.7,
-                ))
+        # Build needs from need keywords (via LanguageAdapter)
+        need_results = self._adapter.map_needs(tokens)
+        need_holder = self._adapter.detect_holder(tokens)
+        for surface, need_key, intensity in need_results:
+            packet.needs.append(NeedAtom(
+                holder_role=need_holder,
+                need_key=need_key,
+                intensity=intensity,
+                confidence=0.7,
+            ))
 
         # Detect unknown lexemes
         for token in unknown_tokens:
@@ -401,15 +387,14 @@ class MeaningPerceptor:
                         "confidence": 0.4,
                     })
 
-        # Detect affect markers
-        for affect_type, markers in _AFFECT_MARKERS.items():
-            for marker in markers:
-                if marker in raw_text.lower():
-                    packet.affect_markers.append({
-                        "type": affect_type,
-                        "surface": marker,
-                        "confidence": 0.6,
-                    })
+        # Detect affect markers (via LanguageAdapter)
+        affect_results = self._adapter.detect_affect(raw_text.lower())
+        for affect_type, marker in affect_results:
+            packet.affect_markers.append({
+                "type": affect_type,
+                "surface": marker,
+                "confidence": 0.6,
+            })
 
         # Set attention target
         if packet.referents:

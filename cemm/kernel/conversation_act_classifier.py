@@ -13,6 +13,7 @@ from ..types.signal import Signal
 from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame
 from ..registry.semantic_matcher import SemanticMatcher
 from ..registry.registry import Registry
+from ..registry.semantic_model_store import SemanticModelStore
 from ..registry.act_type_policy import DISCOURSE_FRAMES as _DISCOURSE_FRAMES, is_social as _is_social_act
 from .text_match import tokenize_surface
 from .intent_parser import parse_intent, CompositionalIntent
@@ -147,6 +148,10 @@ _FRAME_PRIORITY: list[str] = [
     "playful_repair",
     "phatic_checkin",
     "teaching_offer",
+    "teaching_instruction_query",
+    "self_category_query",
+    "concept_query",
+    "user_state_report",
     "self_correction",
     "simplification_request",
     "self_capability_query",
@@ -202,24 +207,27 @@ _FUNCTIONAL_PRIORITY: dict[str, int] = {
     "story_request": 25,
     "food_recommendation": 26,
     "recommendation_request": 27,
-    "creative_request": 28,
-    "teaching_offer": 29,
-    "definition_teaching": 30,
-    "command_alias_teaching": 31,
-    "explicit_remember": 32,
-    "claim_assertion": 33,
-    "preference_assertion": 34,
-    "open_domain_entity_query": 35,
-    "evidence_query": 36,
-    "memory_query": 37,
-    "capability_query": 38,
-    "acknowledgment": 39,
-    "playful_acknowledgment": 40,
-    "chat_mode_statement": 41,
-    "assistant_evaluation": 42,
-    "general_conversation": 43,
-    "open_question": 44,
-    "unknown": 45,
+    "teaching_instruction_query": 28,
+    "self_category_query": 29,
+    "concept_query": 30,
+    "creative_request": 31,
+    "teaching_offer": 32,
+    "definition_teaching": 33,
+    "command_alias_teaching": 34,
+    "explicit_remember": 35,
+    "claim_assertion": 36,
+    "preference_assertion": 37,
+    "open_domain_entity_query": 38,
+    "evidence_query": 39,
+    "memory_query": 40,
+    "capability_query": 41,
+    "acknowledgment": 42,
+    "playful_acknowledgment": 43,
+    "chat_mode_statement": 44,
+    "assistant_evaluation": 45,
+    "general_conversation": 46,
+    "open_question": 47,
+    "unknown": 48,
 }
 
 
@@ -231,9 +239,10 @@ class ConversationActClassifier:
     evidence (if any) to fetch.
     """
 
-    def __init__(self, registry: Registry) -> None:
+    def __init__(self, registry: Registry, semantic_model_store: SemanticModelStore | None = None) -> None:
         self._matcher = SemanticMatcher(registry)
         self._frame_aliases = _FRAME_ALIASES
+        self._semantic_model_store = semantic_model_store
 
     def classify(
         self,
@@ -278,6 +287,20 @@ class ConversationActClassifier:
                         break
                 if frame_key in frame_keys:
                     break
+
+        # v3.3 Phase 3: Learned bindings from SemanticModelStore.
+        # These are surface→act_type/frame_key mappings learned from user
+        # interactions. They take priority over seed aliases but are checked
+        # after atom-based and semantic matcher frame keys.
+        if self._semantic_model_store:
+            for form in content_forms:
+                bindings = self._semantic_model_store.lookup_surface(form)
+                if not bindings:
+                    continue
+                for binding in bindings:
+                    if binding.maps_to_frame_key and binding.maps_to_frame_key not in frame_keys:
+                        frame_keys.add(binding.maps_to_frame_key)
+                break  # Only check first form that has bindings
 
         # Precision filter: discourse acts (acknowledgment, greeting, etc.) are
         # turn-level acts. Discard when matched only via embedded words in long
@@ -328,6 +351,8 @@ class ConversationActClassifier:
         if _is_scoped_assistance_request(content_lower):
             frame_keys.discard("self_capability_query")
             frame_keys.discard("assistance_request")
+            frame_keys.discard("ask_question")
+            frame_keys.discard("open_domain_entity_query")
 
         # Entity mentions for open_domain_entity_query
         entity_mentions: list[dict[str, Any]] = []
@@ -368,6 +393,14 @@ class ConversationActClassifier:
                 entity_mentions=entity_mentions if mapped_act == "open_domain_entity_query" else [],
             ))
 
+        # Scoped assistance requests that didn't match any specific frame
+        # get general_conversation so the realizer can produce a scoped help response
+        if not acts and _is_scoped_assistance_request(content_lower):
+            acts.append(ConversationAct(
+                act_type="general_conversation",
+                confidence=0.7,
+            ))
+
         # Fallback: use observation_semantics speech_act
         if not acts and signal.observation_semantics:
             sem = signal.observation_semantics
@@ -405,6 +438,108 @@ class ConversationActClassifier:
             preference_cues = _CUE_SETS.get("preference_marker", set())
             if any(_phrase_matches(p, content_lower) for p in preference_cues):
                 acts.append(ConversationAct(act_type="preference_assertion", confidence=0.65))
+
+        # ── Structural act inference (v3.3) ───────────────────────────
+        # Use atom graph patterns to infer acts when alias matching fails.
+        # This is the first step toward alias-free structural classification.
+        if not acts and meaning_percept:
+            # Rule 1: Self-target + question + entity-category referent → self_category_query
+            if meaning_percept.intents:
+                top_intent = meaning_percept.intents[0]
+                if top_intent.is_question and top_intent.target == "self":
+                    referents = meaning_percept.referents or []
+                    has_category_ref = any(
+                        r.entity_type in {"category", "object", "abstract", "unknown"}
+                        for r in referents
+                    )
+                    has_capability_intent = any(
+                        a.action_key in {"increase_capability", "transfer_knowledge"}
+                        for a in (meaning_percept.actions or [])
+                    )
+                    if has_capability_intent:
+                        # Rule 2: Self-target + question + teaching/process atoms → teaching_instruction_query
+                        acts.append(ConversationAct(
+                            act_type="teaching_instruction_query",
+                            confidence=top_intent.confidence * 0.75,
+                        ))
+                    elif has_category_ref and not top_intent.is_capability_query:
+                        acts.append(ConversationAct(
+                            act_type="self_category_query",
+                            confidence=top_intent.confidence * 0.75,
+                        ))
+                    elif entity_mentions:
+                        acts.append(ConversationAct(
+                            act_type="open_domain_entity_query",
+                            confidence=top_intent.confidence * 0.8,
+                            entity_mentions=entity_mentions,
+                        ))
+                    else:
+                        acts.append(ConversationAct(
+                            act_type="evidence_query",
+                            confidence=top_intent.confidence * 0.7,
+                        ))
+                # Rule 3: Question + unknown entity referent + no person/place → concept_query
+                elif top_intent.is_question:
+                    referents = meaning_percept.referents or []
+                    has_unknown_entity = any(
+                        r.entity_type == "unknown" and r.source == "ner"
+                        for r in referents
+                    )
+                    has_person_or_place = any(
+                        r.entity_type in ("person", "place")
+                        for r in referents
+                    )
+                    if has_unknown_entity and not has_person_or_place:
+                        acts.append(ConversationAct(
+                            act_type="concept_query",
+                            confidence=top_intent.confidence * 0.7,
+                            entity_mentions=entity_mentions,
+                        ))
+                    elif entity_mentions:
+                        acts.append(ConversationAct(
+                            act_type="open_domain_entity_query",
+                            confidence=top_intent.confidence * 0.8,
+                            entity_mentions=entity_mentions,
+                        ))
+                    else:
+                        acts.append(ConversationAct(
+                            act_type="evidence_query",
+                            confidence=top_intent.confidence * 0.7,
+                        ))
+                elif top_intent.is_command:
+                    acts.append(ConversationAct(
+                        act_type="unknown",
+                        confidence=top_intent.confidence * 0.6,
+                    ))
+                elif top_intent.is_teaching:
+                    acts.append(ConversationAct(
+                        act_type="teaching_offer",
+                        confidence=top_intent.confidence * 0.7,
+                    ))
+                elif top_intent.is_repair:
+                    acts.append(ConversationAct(
+                        act_type="confusion_repair",
+                        confidence=top_intent.confidence * 0.7,
+                    ))
+            # NeedAtom without a matching act → infer from need type
+            elif meaning_percept.needs:
+                top_need = meaning_percept.needs[0]
+                if top_need.need_key in ("food", "rest", "comfort"):
+                    acts.append(ConversationAct(
+                        act_type="chat_mode_statement",
+                        confidence=0.5,
+                    ))
+            # ActionAtom with safety category → safety_response
+            if not acts and meaning_percept.actions:
+                for action_atom in meaning_percept.actions:
+                    if action_atom.action_key in ("physically_harm_target", "self_harm"):
+                        acts.append(ConversationAct(
+                            act_type="safety_response",
+                            confidence=0.9,
+                            polarity="negative",
+                            intensity=0.9,
+                        ))
+                        break
 
         # ── Pending-question resolution ────────────────────────────────
         pending_q = kernel.conversation.pending_assistant_question

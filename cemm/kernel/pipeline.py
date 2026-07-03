@@ -37,6 +37,12 @@ from .retrieval_planner import RetrievalPlanner
 from .output_state_updater import OutputStateUpdater
 from .entity_fact_extractor import EntityFactExtractor
 from .act_resolution_planner import ActResolutionPlanner, ActResolutionPlan
+from .reaction_detector import ReactionDetector, ReactionSignal
+from .response_planner import ResponsePlanner, ResponsePlan
+from .error_attribution_engine import ErrorAttributionEngine, ErrorAttributionResult
+from ..registry.semantic_model_store import SemanticModelStore
+from .language_detection import detect_and_get_adapter
+from .promotion_gate import PromotionGate
 from ..types.conversation_act import ConversationActPacket
 from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame, RetrievalPlan
 from ..causal.inference import CausalInference
@@ -68,6 +74,9 @@ class PipelineResult:
     retrieval_plan: RetrievalPlan | None = None
     act_resolution_plan: ActResolutionPlan | None = None
     retrieval_execution: RetrievalExecutionResult | None = None
+    reaction_signal: ReactionSignal | None = None
+    response_plan: ResponsePlan | None = None
+    error_attribution: ErrorAttributionResult | None = None
 
 
 class Pipeline:
@@ -82,11 +91,13 @@ class Pipeline:
         self._resolver = EntityResolver(store.entities)
         self._frames = FrameEngine(store.claims)
         self._lexeme_memory = LexemeMemory()
+        self._semantic_model_store = SemanticModelStore(lexeme_memory=self._lexeme_memory)
         self._teaching_interpreter = TeachingInterpreter()
         self._uol_mapper = UOLMapper(
             registry,
             lexeme_memory=self._lexeme_memory,
             teaching_interpreter=self._teaching_interpreter,
+            semantic_model_store=self._semantic_model_store,
         )
         self._artifact_store = ArtifactStore(store)
         self._text_normalizer = TextNormalizer(lexeme_memory=self._lexeme_memory)
@@ -99,7 +110,9 @@ class Pipeline:
         self._context_inference_engine = ContextInferenceEngine(store, registry)
         self._causal_inference = CausalInference(store)
         self._decision_router = DecisionRouter(uol_mapper=self._uol_mapper)
-        self._conversation_act_classifier = ConversationActClassifier(registry)
+        self._conversation_act_classifier = ConversationActClassifier(
+            registry, semantic_model_store=self._semantic_model_store,
+        )
         self._ranker = Ranker()
         # New v3 components
         self._meaning_perceptor = MeaningPerceptor(
@@ -114,9 +127,21 @@ class Pipeline:
         self._output_state_updater = OutputStateUpdater()
         self._entity_fact_extractor = EntityFactExtractor()
         self._act_resolution_planner = ActResolutionPlanner()
+        self._reaction_detector = ReactionDetector()
+        self._response_planner = ResponsePlanner()
+        self._error_attribution_engine = ErrorAttributionEngine()
+        self._promotion_gate = PromotionGate(semantic_model_store=self._semantic_model_store)
         self._retrieval_executor = RetrievalExecutor(store)
         self._turn_counts: dict[str, int] = {}
         self._session_state: dict[str, dict] = {}
+
+    @property
+    def semantic_model_store(self) -> SemanticModelStore:
+        return self._semantic_model_store
+
+    @property
+    def promotion_gate(self) -> PromotionGate:
+        return self._promotion_gate
 
     def run(
         self,
@@ -183,6 +208,13 @@ class Pipeline:
                 kernel.topic.last_taught_entity_id = prior_topic.get("last_taught_entity_id", "")
                 kernel.topic.last_taught_entity_surface = prior_topic.get("last_taught_entity_surface", "")
                 kernel.topic.last_questioned_attribute = prior_topic.get("last_questioned_attribute", "")
+            # v3.3: Restore discourse stack for repair targeting
+            prior_discourse = prior_session.get("discourse_stack")
+            if prior_discourse:
+                kernel.conversation.discourse_stack = prior_discourse
+            kernel.conversation.repair_target_turn_id = prior_session.get("repair_target_turn_id", "")
+            kernel.conversation.active_teaching_target = prior_session.get("active_teaching_target", "")
+            kernel.conversation.active_unknown_concept = prior_session.get("active_unknown_concept", "")
 
         if budget_override:
             for k, v in budget_override.items():
@@ -202,6 +234,9 @@ class Pipeline:
         # ── Build MeaningPerceptPacket (v3 step 3) ───────────────────
         # NER + unknown lexemes + POS-lite roles + pronouns/deixis + affect
         # Must happen before UOL mapping, before retrieval, before decision.
+        # v3.3 Phase 4: Detect language and select appropriate adapter
+        detected_lang, lang_adapter = detect_and_get_adapter(signal.content)
+        self._meaning_perceptor._adapter = lang_adapter
         meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
 
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
@@ -279,6 +314,17 @@ class Pipeline:
                     kernel.conversation.dynamics.active_repetition_group_ids
                 )
 
+        # ── ReactionDetector (v3.3: pre-classification) ──────────────
+        # Lightweight detection of whether the current input is a reaction
+        # to the previous assistant output. Runs before classification using
+        # only MeaningPerceptPacket + DiscourseStateStack.
+        reaction_signal = self._reaction_detector.detect(
+            percept=meaning_percept,
+            discourse_stack=kernel.conversation.discourse_stack,
+        )
+        if reaction_signal.is_reaction:
+            kernel.conversation.repair_target_turn_id = reaction_signal.target_turn_id
+
         # Classify ConversationActPacket — now consumes MeaningPercept + SituationFrame + SafetyFrame
         conversation_act = self._conversation_act_classifier.classify(
             signal, kernel,
@@ -301,12 +347,27 @@ class Pipeline:
         # Update last response mode for next turn's context
         kernel.conversation.last_assistant_response_mode = conversation_act.response_mode
 
+        # ── ActResolutionPlanner (v3.3: moved BEFORE retrieval) ─────────
+        # Resolve multi-act ConversationActPacket into typed runtime tasks
+        # BEFORE retrieval so the retrieval plan can use obligations instead
+        # of re-deriving from conversation_act.act_type.
+        act_resolution_plan = self._act_resolution_planner.plan(
+            conversation_act=conversation_act,
+            situation=situation_frame,
+            safety_frame=safety_frame,
+            fact_candidates=fact_candidates,
+            meaning_percept=meaning_percept,
+        )
+
         # Suppress claim candidates for social/creative/repair/teaching turns.
         # "unknown" turns are permissive — claim candidates may flow through.
         # Check all acts in the packet, not just the primary — a secondary
         # claim_assertion should preserve candidates even if primary is social.
+        # v3.3: Also consult act_resolution_plan.memory_updates — if the plan
+        # has memory tasks, preserve candidates even if the primary act is social.
         if semantic_event_graph and "unknown" not in conversation_act.act_types:
-            if not any(act.allows_memory_write for act in conversation_act.all_acts):
+            has_memory_plan = bool(act_resolution_plan and act_resolution_plan.memory_updates)
+            if not any(act.allows_memory_write for act in conversation_act.all_acts) and not has_memory_plan:
                 semantic_event_graph.claim_candidates = []
 
         # Ground entities, time, frame, permission
@@ -326,6 +387,7 @@ class Pipeline:
             safety_frame=safety_frame,
             has_unknown_lexemes=bool(meaning_percept.unknown_lexemes),
             has_idiom_candidates=bool(meaning_percept.idiom_candidates),
+            act_resolution_plan=act_resolution_plan,
         )
 
         # Retrieve claims and models — gated by RetrievalPlan via RetrievalExecutor
@@ -402,18 +464,36 @@ class Pipeline:
                 graph=semantic_event_graph,
             )
 
-        # ── ActResolutionPlanner (v3.1 step 10a) ──────────────────────
-        # Resolve multi-act ConversationActPacket into typed runtime tasks:
-        # reply obligations, memory update plans, answer tasks, safety tasks.
-        act_resolution_plan = self._act_resolution_planner.plan(
+        # v3.3: Plan response specification from act resolution and capability model
+        has_evidence = bool(memory_packet and memory_packet.selected_claim_ids)
+        response_plan = self._response_planner.plan(
             conversation_act=conversation_act,
-            situation=situation_frame,
-            retrieval_plan=retrieval_plan,
+            act_resolution_plan=act_resolution_plan,
             safety_frame=safety_frame,
-            fact_candidates=fact_candidates,
+            has_evidence=has_evidence,
         )
 
+        # v3.3 Phase 9: Error attribution — evaluate reaction signal against
+        # previous discourse state. Runs before decision routing so that
+        # safety_missed errors can influence the current turn's routing.
+        error_attribution = self._error_attribution_engine.evaluate(
+            reaction_signal=reaction_signal,
+            conversation_act=conversation_act,
+            discourse_stack=kernel.conversation.discourse_stack,
+            decision_packet=None,
+            sag=None,
+            realization_metadata=None,
+        )
+        if error_attribution:
+            self._error_attribution_engine.apply(
+                error_attribution,
+                kernel.conversation.discourse_stack,
+                kernel.self_view,
+                semantic_model_store=self._semantic_model_store,
+            )
+
         # Decide: choose action based on grounded graph, memory, inference, conversation act
+        # v3.3: DecisionRouter now receives act_resolution_plan as primary routing signal
         decision_packet = self._decision_router.run(
             graph=semantic_event_graph,
             kernel=kernel,
@@ -425,6 +505,7 @@ class Pipeline:
             context_inference=context_inference,
             conversation_act=conversation_act,
             store=self._store,
+            act_resolution_plan=act_resolution_plan,
         )
 
         self._check_budget(kernel, start)
@@ -446,6 +527,9 @@ class Pipeline:
             retrieval_plan=retrieval_plan,
             act_resolution_plan=act_resolution_plan,
             retrieval_execution=retrieval_execution,
+            reaction_signal=reaction_signal,
+            response_plan=response_plan,
+            error_attribution=error_attribution,
         )
         # Validate runtime packets against schemas
         from ..kernel.packet_validator import validate_packet
@@ -487,10 +571,18 @@ class Pipeline:
                 "last_taught_entity_surface": kernel.topic.last_taught_entity_surface,
                 "last_questioned_attribute": kernel.topic.last_questioned_attribute,
             },
+            "discourse_stack": kernel.conversation.discourse_stack,
+            "repair_target_turn_id": kernel.conversation.repair_target_turn_id,
+            "active_teaching_target": kernel.conversation.active_teaching_target,
+            "active_unknown_concept": kernel.conversation.active_unknown_concept,
         }
 
         result.signals.append(signal)
         result.cost_ms = (time.time() - start) * 1000.0
+
+        # v3.3 Phase 3: Promote ready bindings at end of turn
+        self._semantic_model_store.promote_ready()
+
         return result
 
     def _check_budget(self, kernel: ContextKernel, start: float) -> None:

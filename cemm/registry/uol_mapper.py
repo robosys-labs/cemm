@@ -10,6 +10,7 @@ from ..kernel.semantic_clusters import SemanticClusterRegistry
 from ..kernel.teaching_interpreter import TeachingInterpreter, TeachingEvent
 from ..kernel.text_match import any_phrase_in_text, any_token_in_text, phrase_in_text, tokenize_surface
 from ..learning.lexeme_memory import LexemeMemory, LexemeStatus
+from .semantic_model_store import SemanticModelStore
 
 
 _UOL_SEMANTICS_PATH = Path(__file__).parent.parent / "data" / "uol_semantics.json"
@@ -28,12 +29,14 @@ class UOLMapper:
         registry: Registry,
         lexeme_memory: LexemeMemory | None = None,
         teaching_interpreter: TeachingInterpreter | None = None,
+        semantic_model_store: SemanticModelStore | None = None,
     ) -> None:
         self._registry = registry
         self._matcher = SemanticMatcher(registry)
         self._cluster_reg = SemanticClusterRegistry(registry=registry)
         self._lexeme_memory = lexeme_memory
         self._teaching_interpreter = teaching_interpreter or TeachingInterpreter()
+        self._semantic_model_store = semantic_model_store
         # Data-driven semantic frames: the JSON file is the source of truth for
         # language-specific surface aliases. UOLMapper loads it directly so it can
         # detect frames even when the registry is empty (e.g., in unit tests).
@@ -196,6 +199,26 @@ class UOLMapper:
                 role="actor",
                 confidence=0.8,
             ))
+
+        # v3.3 Phase 3: Learned bindings from SemanticModelStore.
+        # Check learned surface→frame_key bindings before the semantic matcher.
+        # These are user-taught or correction-derived mappings with lifecycle.
+        if self._semantic_model_store:
+            for form in content_forms:
+                bindings = self._semantic_model_store.lookup_surface(form)
+                if not bindings:
+                    continue
+                for binding in bindings:
+                    if binding.maps_to_frame_key:
+                        atoms.append(ProcessUOLAtom(
+                            frame_key=binding.maps_to_frame_key,
+                            modality="observed",
+                            polarity="affirmed",
+                            intensity=0.7,
+                            confidence=binding.confidence,
+                            params={"source": "learned_binding", "binding_id": binding.id},
+                        ))
+                break  # Only check first form that has bindings
 
         # Semantic matching against all registry UOL entries with probability ranking
         uol_matches = self._matcher.match(content, kinds=["uol_semantic"], extra_forms=extra_forms)
