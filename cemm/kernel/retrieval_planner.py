@@ -1,6 +1,6 @@
 """RetrievalPlanner — explicit retrieval plan from SituationFrame + ConversationAct.
 
-Implements §14 from architecture_new.md and §8.7 from cemm_foundational_fixes.md.
+Implements §14 from architecture.md and §8.7 from cemm_foundational_fixes.md.
 
 Do not let ConversationAct.requires_evidence directly control retrieval.
 Create an explicit retrieval plan that considers the situation frame, safety

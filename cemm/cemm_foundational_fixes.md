@@ -8,7 +8,7 @@
 
 ## 0. Executive Summary
 
-CEMM is a multilanguage architecture system. Always keep the core loop in mind and the foundational atoms/primtives from the new architecture C:\dev\cemm\cemm\architecture_new.md
+CEMM is a multilanguage architecture system. Always keep the core loop in mind and the foundational atoms/primtives from the new architecture C:\dev\cemm\cemm\architecture.md
 
 
 CEMM's current failures are not primarily caused by missing phrases, weak templates, or insufficient NER accuracy. Those matter, but they are secondary.

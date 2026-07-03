@@ -24,6 +24,8 @@ class LoadedActionSchema:
     actor_role: str = ""
     target_role: str = ""
     object_role: str = ""
+    place_role: str = ""
+    source_role: str = ""
     destination_role: str = ""
     recipient_role: str = ""
     aliases: list[str] = field(default_factory=list)
@@ -147,6 +149,8 @@ def load_event_schemas(path: Path | None = None) -> EventSchemaStore:
                 actor_role=entry.get("actor_role", ""),
                 target_role=entry.get("target_role", ""),
                 object_role=entry.get("object_role", ""),
+                place_role=entry.get("place_role", ""),
+                source_role=entry.get("source_role", ""),
                 destination_role=entry.get("destination_role", ""),
                 recipient_role=entry.get("recipient_role", ""),
                 aliases=entry.get("aliases", []),

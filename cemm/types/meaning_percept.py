@@ -1,6 +1,6 @@
 """Foundational meaning atoms and runtime packets for the event-centered semantic layer.
 
-These dataclasses implement the primitives defined in architecture_new.md §5-§9
+These dataclasses implement the primitives defined in architecture.md §5-§9
 and cemm_foundational_fixes.md §4. They are the pre-UOL semantic substrate
 that must exist before ConversationAct classification.
 
@@ -100,7 +100,7 @@ class AffordanceAtom:
 class OutcomeAtom:
     """Predicted result of an event — state changes for affected entities.
 
-    Combines the simplified fields from architecture_new.md §6.7 with the
+    Combines the simplified fields from architecture.md §6.7 with the
     structured fields from cemm_foundational_fixes.md §4.7.
     """
     affected_entity_role: str = ""

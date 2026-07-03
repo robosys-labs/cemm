@@ -91,6 +91,19 @@ class GoalState:
 
 
 @dataclass
+class TopicState:
+    """Tracks the active conversation topic for pronoun coreference and multi-turn learning."""
+    active_topic_entity_id: str = ""
+    active_topic_surface: str = ""
+    active_topic_type: str = ""  # e.g. "person", "place", "object", "concept"
+    last_taught_entity_id: str = ""
+    last_taught_entity_surface: str = ""
+    last_questioned_attribute: str = ""  # e.g. "shape", "color", "is_a"
+    last_updated_signal_id: str = ""
+    last_updated_at: float = 0.0
+
+
+@dataclass
 class MemoryState:
     working_signal_ids: list[str] = field(default_factory=list)
     working_entity_ids: list[str] = field(default_factory=list)
@@ -138,6 +151,7 @@ class ContextKernel:
     time: TimeState = field(default_factory=TimeState)
     conversation: ConversationState = field(default_factory=ConversationState)
     goal: GoalState = field(default_factory=GoalState)
+    topic: TopicState = field(default_factory=TopicState)
     memory: MemoryState = field(default_factory=MemoryState)
     self_view: SelfView = field(default_factory=SelfView)
     permission: Permission = field(default_factory=Permission.public)

@@ -1,10 +1,10 @@
 """SituationFrameBuilder — builds SituationFrame from MeaningPerceptPacket.
 
-Implements §8.3 from cemm_foundational_fixes.md and §9 from architecture_new.md.
+Implements §8.3 from cemm_foundational_fixes.md and §9 from architecture.md.
 
-The SituationFrame is the per-turn situation model that replaces raw-text-to-act
-routing. It binds actor/action/object/place/state/need from the MeaningPerceptPacket
-and identifies event schema candidates, missing slots, and uncertainty reasons.
+The builder manages event schema loading and merging (seed + JSON). Role binding
+is delegated to FrameBinder, which replaces first-match slot filling with
+traceable candidate scoring. The public build() API remains stable.
 """
 
 from __future__ import annotations
@@ -14,17 +14,12 @@ import uuid
 from ..types.meaning_percept import (
     MeaningPerceptPacket,
     SituationFrame,
-    ReferentAtom,
-    ActionAtom,
-    StateAtom,
-    NeedAtom,
-    AffordanceAtom,
     OutcomeAtom,
-    ValenceAtom,
     EventSchema,
 )
 from ..types.context_kernel import ContextKernel
 from .event_schema_loader import load_event_schemas, EventSchemaStore
+from .frame_binder import FrameBinder
 
 
 # Seed event schemas — foundational child-learning mappings
@@ -187,106 +182,31 @@ class SituationFrameBuilder:
                     confidence=0.7,
                 )
 
+        # FrameBinder is the authority for semantic role binding. It keeps the
+        # public SituationFrameBuilder API stable while replacing first-match
+        # slot filling with traceable candidate scoring.
+        self._frame_binder = FrameBinder(
+            event_schema_store=self._event_store,
+            schemas=self._schemas,
+        )
+
     def build(
         self,
         percept: MeaningPerceptPacket,
         kernel: ContextKernel,
     ) -> SituationFrame:
-        """Build a SituationFrame from the meaning percept and kernel context."""
+        """Build a SituationFrame from the meaning percept and kernel context.
+
+        Delegates to FrameBinder for atom-based role binding with traceable
+        candidate scoring. The old first-match slot filling is replaced by
+        scored role assignment, but the public API remains stable.
+        """
         frame = SituationFrame(
             id=uuid.uuid4().hex[:16],
             signal_id=percept.signal_id,
             context_id=percept.context_id,
         )
-
-        # Bind actor — first referent with role=actor or the user
-        for ref in percept.referents:
-            if ref.role == "actor":
-                frame.actor = ref
-                break
-        if not frame.actor and percept.referents:
-            # Default: user is the actor
-            for ref in percept.referents:
-                if ref.entity_type == "user":
-                    frame.actor = ref
-                    break
-
-        # Bind action — first action atom
-        if percept.actions:
-            frame.action = percept.actions[0]
-
-        # Bind target — first referent with role=target
-        for ref in percept.referents:
-            if ref.role == "target":
-                frame.target = ref
-                break
-
-        # Bind object — first referent with role=object
-        for ref in percept.referents:
-            if ref.role == "object":
-                frame.object = ref
-                break
-
-        # Bind place — first referent with entity_type=place or role=place
-        for ref in percept.referents:
-            if ref.entity_type == "place" or ref.role == "place":
-                frame.place = ref
-                break
-
-        # Bind recipient — first referent with role=recipient
-        for ref in percept.referents:
-            if ref.role == "recipient":
-                frame.recipient = ref
-                break
-
-        # Copy state reports
-        frame.state_reports = list(percept.states)
-
-        # Copy needs
-        frame.needs = list(percept.needs)
-
-        # Match event schema candidates
-        if frame.action:
-            schema = self._schemas.get(frame.action.action_key)
-            if schema:
-                frame.event_schema_ids.append(schema.schema_key)
-                # Copy expected outcomes from schema
-                frame.expected_outcomes.extend(schema.expected_outcomes)
-
-        # Identify missing slots based on schema
-        if frame.action and frame.action.action_key in self._schemas:
-            schema = self._schemas[frame.action.action_key]
-            if schema.actor_role and not frame.actor:
-                frame.missing_slots.append("actor")
-            if schema.object_role and not frame.object:
-                frame.missing_slots.append("object")
-            if schema.target_role and not frame.target:
-                frame.missing_slots.append("target")
-            if schema.destination_role and not frame.destination:
-                frame.missing_slots.append("destination")
-
-        # Add uncertainty reasons
-        if percept.unknown_lexemes:
-            for lex in percept.unknown_lexemes:
-                frame.uncertainty_reasons.append(
-                    f"unknown_lexeme:{lex['surface']}"
-                )
-        if percept.idiom_candidates:
-            for idiom in percept.idiom_candidates:
-                frame.uncertainty_reasons.append(
-                    f"idiom_candidate:{idiom['surface']}"
-                )
-        if frame.missing_slots:
-            frame.uncertainty_reasons.append(
-                f"missing_slots:{','.join(frame.missing_slots)}"
-            )
-
-        # Compute confidence
-        filled_slots = sum(1 for s in [frame.actor, frame.action, frame.target,
-                                        frame.object, frame.place, frame.recipient] if s)
-        frame.confidence = min(0.9, 0.3 + filled_slots * 0.1)
-
-        return frame
+        return self._frame_binder.bind(percept, kernel, base_frame=frame).frame
 
     def get_schema(self, action_key: str) -> EventSchema | None:
         """Retrieve a seed event schema by action key."""

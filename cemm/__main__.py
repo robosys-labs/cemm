@@ -609,6 +609,29 @@ def process_input(
     )
     pipeline._output_state_updater.apply(kernel, output_update)
 
+    # Persist the post-output conversation state. Pipeline.run() persists a
+    # pre-output snapshot before the final assistant text exists, so the output
+    # updater must write its state transition back into the session store here.
+    pipeline._session_state[input_signal.context_id] = {
+        "user_affect": kernel.user.affect,
+        "conversation_dynamics": kernel.conversation.dynamics,
+        "active_repetition_group_ids": list(kernel.conversation.active_repetition_group_ids),
+        "recent_signal_ids": list(kernel.conversation.recent_signal_ids),
+        "first_user_signal_id": kernel.conversation.first_user_signal_id,
+        "last_user_at": input_signal.observed_at,
+        "pending_assistant_question": kernel.conversation.pending_assistant_question,
+        "expected_user_answer_type": kernel.conversation.expected_user_answer_type,
+        "last_assistant_response_mode": kernel.conversation.last_assistant_response_mode,
+        "topic_state": {
+            "active_topic_entity_id": kernel.topic.active_topic_entity_id,
+            "active_topic_surface": kernel.topic.active_topic_surface,
+            "active_topic_type": kernel.topic.active_topic_type,
+            "last_taught_entity_id": kernel.topic.last_taught_entity_id,
+            "last_taught_entity_surface": kernel.topic.last_taught_entity_surface,
+            "last_questioned_attribute": kernel.topic.last_questioned_attribute,
+        },
+    }
+
     # Export training data if CEMM_EXPORT_PATH is set
     _export_path = os.environ.get("CEMM_EXPORT_PATH")
     if _export_path and op_result.trace:
@@ -631,6 +654,10 @@ def process_input(
             observation_semantics=input_signal.observation_semantics,
             context_inference=pipeline_result.context_inference if pipeline_result else None,
             conversation_act=pipeline_result.conversation_act if pipeline_result else None,
+            meaning_percept=pipeline_result.meaning_percept if pipeline_result else None,
+            situation_frame=pipeline_result.situation_frame if pipeline_result else None,
+            safety_frame=pipeline_result.safety_frame if pipeline_result else None,
+            retrieval_plan=pipeline_result.retrieval_plan if pipeline_result else None,
         )
         for record in records:
             write_turn_to_jsonl(_export_path, record)

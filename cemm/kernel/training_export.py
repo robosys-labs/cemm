@@ -17,6 +17,7 @@ from ..types.packets import (
 )
 from ..types.trace import Trace
 from ..types.signal import Signal, ObservationSemantics
+from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame, RetrievalPlan
 
 
 def _make_record(task_type: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -43,6 +44,10 @@ def _task_payload(
     context_inference: ContextInference | None = None,
     kernel: ContextKernel | None = None,
     trace: Trace | None = None,
+    meaning_percept: MeaningPerceptPacket | None = None,
+    situation_frame: SituationFrame | None = None,
+    safety_frame: SafetyFrame | None = None,
+    retrieval_plan: RetrievalPlan | None = None,
 ) -> dict[str, Any]:
     payload = dict(base)
     if semantic_event_graph:
@@ -63,6 +68,14 @@ def _task_payload(
         payload["observation_semantics"] = asdict(observation_semantics)
     if context_inference:
         payload["context_inference"] = asdict(context_inference)
+    if meaning_percept:
+        payload["meaning_percept"] = asdict(meaning_percept)
+    if situation_frame:
+        payload["situation_frame"] = asdict(situation_frame)
+    if safety_frame:
+        payload["safety_frame"] = asdict(safety_frame)
+    if retrieval_plan:
+        payload["retrieval_plan"] = asdict(retrieval_plan)
     if kernel and kernel.self_view:
         payload["self_state"] = asdict(kernel.self_view)
     if trace:
@@ -102,6 +115,10 @@ def serialize_turn(
     observation_semantics: ObservationSemantics | None = None,
     context_inference: ContextInference | None = None,
     conversation_act: ConversationActPacket | ConversationAct | None = None,
+    meaning_percept: MeaningPerceptPacket | None = None,
+    situation_frame: SituationFrame | None = None,
+    safety_frame: SafetyFrame | None = None,
+    retrieval_plan: RetrievalPlan | None = None,
 ) -> list[dict[str, Any]]:
     base_payload: dict[str, Any] = {
         "context_kernel": asdict(kernel),
@@ -148,9 +165,57 @@ def serialize_turn(
         base_payload["context_inference"] = asdict(context_inference)
     if conversation_act:
         base_payload["conversation_act"] = asdict(conversation_act)
+    if meaning_percept:
+        base_payload["meaning_percept"] = asdict(meaning_percept)
+    if situation_frame:
+        base_payload["situation_frame"] = asdict(situation_frame)
+    if safety_frame:
+        base_payload["safety_frame"] = asdict(safety_frame)
+    if retrieval_plan:
+        base_payload["retrieval_plan"] = asdict(retrieval_plan)
 
     records: list[dict[str, Any]] = []
     records.append(_make_record("full_turn_export", dict(base_payload)))
+
+    # v3.1 operational meaning-spine tasks. These make the new foundational
+    # packets trainable instead of invisible runtime features.
+    if meaning_percept:
+        records.append(_make_record(
+            "meaning_percept_extraction",
+            _task_payload(base_payload, "meaning_percept_extraction", meaning_percept=meaning_percept, kernel=kernel, trace=trace),
+        ))
+    if situation_frame:
+        records.append(_make_record(
+            "situation_frame_construction",
+            _task_payload(base_payload, "situation_frame_construction", situation_frame=situation_frame, meaning_percept=meaning_percept, kernel=kernel, trace=trace),
+        ))
+        records.append(_make_record(
+            "role_binding",
+            _task_payload(base_payload, "role_binding", situation_frame=situation_frame, meaning_percept=meaning_percept, kernel=kernel, trace=trace),
+        ))
+        records.append(_make_record(
+            "outcome_valence_prediction",
+            _task_payload(base_payload, "outcome_valence_prediction", situation_frame=situation_frame, kernel=kernel, trace=trace),
+        ))
+    if safety_frame:
+        records.append(_make_record(
+            "safety_frame_detection",
+            _task_payload(base_payload, "safety_frame_detection", safety_frame=safety_frame, situation_frame=situation_frame, kernel=kernel, trace=trace),
+        ))
+    if retrieval_plan:
+        records.append(_make_record(
+            "retrieval_plan_prediction",
+            _task_payload(base_payload, "retrieval_plan_prediction", retrieval_plan=retrieval_plan, situation_frame=situation_frame, kernel=kernel, trace=trace),
+        ))
+    if conversation_act:
+        records.append(_make_record(
+            "reply_obligation_prediction",
+            _task_payload(base_payload, "reply_obligation_prediction", situation_frame=situation_frame, kernel=kernel, trace=trace),
+        ))
+        records.append(_make_record(
+            "act_resolution_planning",
+            _task_payload(base_payload, "act_resolution_planning", situation_frame=situation_frame, decision_packet=decision_packet, kernel=kernel, trace=trace),
+        ))
 
     if not semantic_event_graph:
         return records

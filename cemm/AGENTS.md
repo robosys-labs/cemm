@@ -6,15 +6,16 @@ This file is the highest-priority local implementation guide for CEMM work. If a
 
 Use these root files as the active contract:
 
-- `architecture.md` - stable CEMM-SLC architecture.
-- `cemm_training_architecture.md` - continuous training architecture.
+- `architecture.md` - stable CEMM v3.0 architecture.
+- `cemm_training_architecture.md` - continuous training architecture v3.0.
+- `cemm_foundational_fixes.md` - foundational atom fixes and §references used by code.
+- `cemm_v3_1_operational_meaning_spine.md` - v3.1 operational spine alignment doc.
 - `cemm_pipeline.md` - active end-to-end pipeline.
 - `cemm_acceptance_tests.md` - acceptance contract to convert into executable tests.
 - `cemm_implementation_plan.md` - proposed implementation phases.
 - `cemm_architecture_gap_trace.md` - current gap analysis.
-- `docs/superpowers/plans/2026-06-29-cemm-slc-architecture-alignment.md` - active implementation plan.
 
-Historical or deprecated material under `docs/archive/` is not implementation guidance. Do not follow old plans that describe CEMM as a basic deterministic conversational MVP, or plans that say to copy files from `new/` directly into root.
+Historical or deprecated material under `docs/archive/` is not implementation guidance. This includes archived superpowers plans and specs under `docs/archive/superpowers/`. Do not follow old plans that describe CEMM as a basic deterministic conversational MVP, or plans that say to copy files from `new/` directly into root.
 
 ## Core Identity
 

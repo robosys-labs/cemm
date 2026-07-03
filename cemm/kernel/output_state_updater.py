@@ -1,6 +1,6 @@
 """OutputStateUpdater — updates conversation state after final realization.
 
-Implements P0-3 from cemm_foundational_fixes.md and §18 from architecture_new.md.
+Implements P0-3 from cemm_foundational_fixes.md and §18 from architecture.md.
 
 Must run after final output is realized, not inside the pre-output pipeline.
 Fixes the bug where:
@@ -132,9 +132,13 @@ class OutputStateUpdater:
         kernel: ContextKernel,
         update: OutputStateUpdate,
     ) -> None:
-        """Apply an OutputStateUpdate to the kernel's conversation state."""
+        """Apply an OutputStateUpdate to the kernel's conversation state.
+
+        This is a full state transition, not an optional patch. If the latest
+        assistant output did not create a pending question, stale pending fields
+        must be cleared; otherwise the next user turn can be misinterpreted as
+        an answer to an older assistant question.
+        """
         kernel.conversation.last_assistant_response_mode = update.last_assistant_response_mode
-        if update.pending_assistant_question is not None:
-            kernel.conversation.pending_assistant_question = update.pending_assistant_question
-        if update.expected_user_answer_type is not None:
-            kernel.conversation.expected_user_answer_type = update.expected_user_answer_type
+        kernel.conversation.pending_assistant_question = update.pending_assistant_question or ""
+        kernel.conversation.expected_user_answer_type = update.expected_user_answer_type or ""

@@ -1,6 +1,6 @@
 """SafetyFrameDetector — detects harmful action proposals before decision.
 
-Implements P0-4 from cemm_foundational_fixes.md and §12 from architecture_new.md.
+Implements P0-4 from cemm_foundational_fixes.md and §12 from architecture.md.
 
 Safety is a first-class runtime packet derived from the SituationFrame and
 outcome valence, not just keyword detection. The detector catches interpersonal
@@ -110,12 +110,16 @@ class SafetyFrameDetector:
                 if v.valence == "unfavorable" and v.entity_class in ("human", "animal"):
                     has_unfavorable_human = True
 
-        # Also check situation frame for harmful outcomes
+        # Also check situation frame for harmful outcomes when valences are absent
+        # or incomplete. Decreased health/safety is the unfavorable direction.
         if situation and situation.expected_outcomes:
             for outcome in situation.expected_outcomes:
-                if outcome.changed_dimension in ("health", "safety") and outcome.direction == "increase":
+                if outcome.changed_dimension in ("health", "safety") and outcome.direction == "decrease":
                     if outcome.affected_entity_role in ("target", "third_party", "him", "her", "them"):
                         has_unfavorable_human = True
+
+        # Prefer ValenceAtom for semantic safety routing. Keyword checks below
+        # remain fallback detectors for underspecified frames.
 
         # Detect self-harm
         for phrase, category in _SELF_HARM_ACTIONS.items():

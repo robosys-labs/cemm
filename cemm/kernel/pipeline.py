@@ -35,11 +35,13 @@ from .outcome_evaluator import OutcomeEvaluator
 from .safety_frame_detector import SafetyFrameDetector
 from .retrieval_planner import RetrievalPlanner
 from .output_state_updater import OutputStateUpdater
-from ..types.conversation_act import ConversationAct, ConversationActPacket
+from .entity_fact_extractor import EntityFactExtractor
+from .act_resolution_planner import ActResolutionPlanner, ActResolutionPlan
+from ..types.conversation_act import ConversationActPacket
 from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame, RetrievalPlan
 from ..causal.inference import CausalInference
-from ..retrieval.structural import StructuralRetriever, RetrievalResult
 from ..retrieval.ranker import Ranker
+from ..retrieval.retrieval_executor import RetrievalExecutor, RetrievalExecutionResult
 
 
 @dataclass
@@ -64,6 +66,8 @@ class PipelineResult:
     situation_frame: SituationFrame | None = None
     safety_frame: SafetyFrame | None = None
     retrieval_plan: RetrievalPlan | None = None
+    act_resolution_plan: ActResolutionPlan | None = None
+    retrieval_execution: RetrievalExecutionResult | None = None
 
 
 class Pipeline:
@@ -96,7 +100,6 @@ class Pipeline:
         self._causal_inference = CausalInference(store)
         self._decision_router = DecisionRouter(uol_mapper=self._uol_mapper)
         self._conversation_act_classifier = ConversationActClassifier(registry)
-        self._retriever = StructuralRetriever(store)
         self._ranker = Ranker()
         # New v3 components
         self._meaning_perceptor = MeaningPerceptor(
@@ -109,6 +112,9 @@ class Pipeline:
         self._safety_frame_detector = SafetyFrameDetector()
         self._retrieval_planner = RetrievalPlanner()
         self._output_state_updater = OutputStateUpdater()
+        self._entity_fact_extractor = EntityFactExtractor()
+        self._act_resolution_planner = ActResolutionPlanner()
+        self._retrieval_executor = RetrievalExecutor(store)
         self._turn_counts: dict[str, int] = {}
         self._session_state: dict[str, dict] = {}
 
@@ -168,6 +174,15 @@ class Pipeline:
             kernel.conversation.last_assistant_response_mode = prior_session.get(
                 "last_assistant_response_mode", ""
             )
+            # Restore topic state for pronoun coreference and multi-turn learning
+            prior_topic = prior_session.get("topic_state")
+            if prior_topic:
+                kernel.topic.active_topic_entity_id = prior_topic.get("active_topic_entity_id", "")
+                kernel.topic.active_topic_surface = prior_topic.get("active_topic_surface", "")
+                kernel.topic.active_topic_type = prior_topic.get("active_topic_type", "")
+                kernel.topic.last_taught_entity_id = prior_topic.get("last_taught_entity_id", "")
+                kernel.topic.last_taught_entity_surface = prior_topic.get("last_taught_entity_surface", "")
+                kernel.topic.last_questioned_attribute = prior_topic.get("last_questioned_attribute", "")
 
         if budget_override:
             for k, v in budget_override.items():
@@ -189,9 +204,24 @@ class Pipeline:
         # Must happen before UOL mapping, before retrieval, before decision.
         meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
 
-        # ── Build SituationFrame (v3 step 4) ──────────────────────────
-        # Actor/action/object/place/state/need + event schema candidates
+        # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
+        # Delegates to FrameBinder for atom-based role binding with scored
+        # role assignments and schema outcomes.
         situation_frame = self._situation_frame_builder.build(meaning_percept, kernel)
+
+        # ── EntityFactExtractor (v3.1 step 3c) ────────────────────────
+        # Atom-first fact extraction with surface pattern fallback.
+        # Returns EntityFactExtractionResult with typed EntityFactCandidate list.
+        fact_result = self._entity_fact_extractor.extract(
+            meaning_percept,
+            situation=situation_frame,
+            kernel=kernel,
+        )
+        fact_candidates = fact_result.candidates
+        self._entity_fact_extractor.update_topic_state(
+            kernel, meaning_percept, fact_candidates,
+            signal.id, signal.observed_at,
+        )
 
         # ── Evaluate outcomes and valences (v3 step 4b) ───────────────
         outcomes, valences = self._outcome_evaluator.evaluate(situation_frame)
@@ -215,6 +245,15 @@ class Pipeline:
             meaning_percept=meaning_percept,
             situation_frame=situation_frame,
         )
+        # Merge entity fact candidates from EntityFactExtractor
+        if fact_candidates:
+            existing = semantic_event_graph.claim_candidates
+            existing_keys = {(c.get("subject", ""), c.get("predicate", "")) for c in existing}
+            for fc in fact_candidates:
+                key = (fc.subject_entity_id, fc.predicate)
+                if key not in existing_keys:
+                    semantic_event_graph.claim_candidates.append(fc.to_claim_dict())
+                    existing_keys.add(key)
         semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
         uol_atoms: list | None = None
         if semantics is not None:
@@ -264,8 +303,11 @@ class Pipeline:
 
         # Suppress claim candidates for social/creative/repair/teaching turns.
         # "unknown" turns are permissive — claim candidates may flow through.
-        if semantic_event_graph and conversation_act.act_type != "unknown" and not conversation_act.allows_memory_write:
-            semantic_event_graph.claim_candidates = []
+        # Check all acts in the packet, not just the primary — a secondary
+        # claim_assertion should preserve candidates even if primary is social.
+        if semantic_event_graph and "unknown" not in conversation_act.act_types:
+            if not any(act.allows_memory_write for act in conversation_act.all_acts):
+                semantic_event_graph.claim_candidates = []
 
         # Ground entities, time, frame, permission
         grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel, content=signal.content)
@@ -286,22 +328,13 @@ class Pipeline:
             has_idiom_candidates=bool(meaning_percept.idiom_candidates),
         )
 
-        # Retrieve claims and models — gated by RetrievalPlan
-        if retrieval_plan.mode != "none":
-            retrieval_result = self._retriever.retrieve_for_kernel(kernel)
-
-            # Graph-grounded retrieval enrichment
-            graph_result = self._retriever.retrieve_for_graph(semantic_event_graph, kernel)
-        else:
-            retrieval_result = RetrievalResult(claims=[], models=[])
-            graph_result = RetrievalResult(claims=[], models=[])
-
-        # Merge: deduplicate by claim ID, prefer graph results
-        seen_ids = {c.id for c in retrieval_result.claims}
-        for c in graph_result.claims:
-            if c.id not in seen_ids:
-                retrieval_result.claims.append(c)
-                seen_ids.add(c.id)
+        # Retrieve claims and models — gated by RetrievalPlan via RetrievalExecutor
+        retrieval_execution = self._retrieval_executor.execute(
+            retrieval_plan, kernel,
+            graph=semantic_event_graph,
+            lexeme_memory=self._lexeme_memory,
+        )
+        retrieval_result = retrieval_execution.result
 
         # Apply frame rules before ranking (architecture requires frame rules before permission/ranking)
         retrieval_result.claims = self._frames.filter_valid(retrieval_result.claims, kernel)
@@ -369,6 +402,17 @@ class Pipeline:
                 graph=semantic_event_graph,
             )
 
+        # ── ActResolutionPlanner (v3.1 step 10a) ──────────────────────
+        # Resolve multi-act ConversationActPacket into typed runtime tasks:
+        # reply obligations, memory update plans, answer tasks, safety tasks.
+        act_resolution_plan = self._act_resolution_planner.plan(
+            conversation_act=conversation_act,
+            situation=situation_frame,
+            retrieval_plan=retrieval_plan,
+            safety_frame=safety_frame,
+            fact_candidates=fact_candidates,
+        )
+
         # Decide: choose action based on grounded graph, memory, inference, conversation act
         decision_packet = self._decision_router.run(
             graph=semantic_event_graph,
@@ -388,7 +432,7 @@ class Pipeline:
         result = PipelineResult(
             kernel=kernel,
             ranked_claim_ids=kernel.memory.working_claim_ids,
-            ranked_model_ids=[m.id for m in retrieval_result.models],
+            ranked_model_ids=[m.id for m, _ in ranked_models] if ranked_models else [],
             semantic_event_graph=semantic_event_graph,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
@@ -400,6 +444,8 @@ class Pipeline:
             situation_frame=situation_frame,
             safety_frame=safety_frame,
             retrieval_plan=retrieval_plan,
+            act_resolution_plan=act_resolution_plan,
+            retrieval_execution=retrieval_execution,
         )
         # Validate runtime packets against schemas
         from ..kernel.packet_validator import validate_packet
@@ -433,6 +479,14 @@ class Pipeline:
             "pending_assistant_question": kernel.conversation.pending_assistant_question,
             "expected_user_answer_type": kernel.conversation.expected_user_answer_type,
             "last_assistant_response_mode": kernel.conversation.last_assistant_response_mode,
+            "topic_state": {
+                "active_topic_entity_id": kernel.topic.active_topic_entity_id,
+                "active_topic_surface": kernel.topic.active_topic_surface,
+                "active_topic_type": kernel.topic.active_topic_type,
+                "last_taught_entity_id": kernel.topic.last_taught_entity_id,
+                "last_taught_entity_surface": kernel.topic.last_taught_entity_surface,
+                "last_questioned_attribute": kernel.topic.last_questioned_attribute,
+            },
         }
 
         result.signals.append(signal)

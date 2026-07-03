@@ -1,6 +1,6 @@
 """OutcomeEvaluator — predicts outcomes and valences from SituationFrame.
 
-Implements §8.4 from cemm_foundational_fixes.md and §7 from architecture_new.md.
+Implements §8.4 from cemm_foundational_fixes.md and §7 from architecture.md.
 
 Evaluates expected outcomes for affected entities and determines whether
 they are favorable or unfavorable (valence). Valence is entity-relative:

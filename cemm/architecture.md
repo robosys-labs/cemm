@@ -1,12 +1,67 @@
-# Efficient Recursive Context Architecture
+# CEMM Architecture
 
-Version: 2.2  
-Status: final implementation architecture  
-Purpose: a lean, practical architecture for context, memory, self-state, causal reasoning, recursive reflection, structural learning, semantic latent modeling, and action.
+**Version:** 3.0  
+**Status:** replacement architecture for `cemm/architecture.md`  
+**Purpose:** define CEMM as a lean, teachable, event-memory architecture whose core competency is memory, semantic interpretation, semantic expression, online learning, and safe entity-relative outcome reasoning.
+
+---
+
+## 0. Architectural Breakthrough
+
+CEMM must not primarily learn:
+
+```text
+phrase -> intent -> template
+```
+
+CEMM must learn:
+
+```text
+surface signal
+-> referents
+-> event roles
+-> state change
+-> outcome
+-> value/valence relative to self, human, and world entities
+-> expression/action
+```
+
+This is the child-learning correction.
+
+A small child does not first learn abstract intent labels. A child learns repeated event schemas:
+
+```text
+come       -> listener moves closer to speaker/source
+kitchen    -> place that often affords food
+hungry     -> need-state that food can reduce
+give me    -> transfer visible/known object to speaker
+hurt/sick  -> unfavorable state for human/animal entity
+help       -> action that improves some entity state
+```
+
+Therefore, `ConversationAct` is not the foundational meaning unit. It is a derived control label. The foundational units are:
+
+```text
+ReferentAtom
+ActionAtom
+StateAtom
+RelationAtom
+NeedAtom
+AffordanceAtom
+OutcomeAtom
+ValenceAtom
+EventSchema
+SituationFrame
+MeaningPerceptPacket
+```
+
+NER remains important, but only as one component of early referent binding. NER must happen before UOL mapping, retrieval, and decision, so the system can detect people, places, objects, unknown nouns, unknown verbs, unknown adjectives/states, and idioms before deciding whether to answer, ask, learn, store, retrieve, or refuse.
+
+---
 
 ## 1. Core Law
 
-The system optimizes for:
+CEMM optimizes for:
 
 ```text
 highest trusted useful result within the available time
@@ -19,67 +74,93 @@ trust = communication currency
 time  = efficiency currency
 ```
 
-Therefore:
+The operational ordering is:
 
 ```text
-context before interpretation
-structure before vectors
-semantic graph before latent compression
-claims before generation
-models before simulation
-permission before ranking
-ranking before action
+observe before decide
+normalize before match
+referents before UOL
+state/action/place/object meaning before conversation act
+outcome before valence
+safety before helpfulness
+context before retrieval
+retrieval only after retrieval plan
+semantic answer before text
 trace before mutation
-signals before recursion
 learning after outcome
 ```
 
-Clarification:
+Invalid shortcuts:
 
 ```text
-CEMM is the runtime, memory, context, and trace architecture.
-CEMM-SLC is the trainable Semantic Latent Core that can learn LLM-like behavior over higher-order meaning.
-The runtime router is an executable bootstrap shell, not the final model.
+raw text -> action
+raw text -> memory write
+raw text -> answer template
+unknown word -> generic fallback
+selected claim exists -> answer
+question mark -> evidence query
+exit -> abstain
 ```
 
-## 2. Primitive Units
+Valid path:
 
-Use six persistent primitives:
+```text
+Signal
+-> NormalizedSignal
+-> MeaningPerceptPacket
+-> SituationFrame
+-> SemanticEventGraph
+-> RetrievalPlan
+-> DecisionPacket
+-> SemanticAnswerGraph | ActionPlan
+-> RealizedSignal
+-> Trace + Memory/Learning updates
+```
 
-| Primitive | Meaning | Main Question |
+---
+
+## 2. Persistent Primitives
+
+CEMM keeps six persistent primitives.
+
+| Primitive | Meaning | Persistent Use |
 |---|---|---|
-| `Signal` | Something observed | What happened? |
-| `Entity` | Something identified | What thing is this? |
-| `Claim` | Something believed | What is asserted? |
-| `Model` | A reusable structure or process | How does this work? |
-| `Action` | Something done or considered | What should happen next? |
-| `Self` | The system's persistent self-state | What am I, and how am I changing? |
+| `Signal` | Something observed or emitted | user input, output, tool result, feedback, trace signal |
+| `Entity` | Something identified | person, user, self, object, place, natural entity, abstract thing |
+| `Claim` | Something believed/asserted | facts, preferences, states, relationships, affordances |
+| `Model` | Reusable structure | event schemas, lexeme models, procedure models, tool schemas, causal rules, safety rules |
+| `Action` | Something done or considered | answer, ask, remember, learn, retrieve, tool call, safety response |
+| `Self` | CEMM's persistent self-state | capabilities, limitations, memory state, reliability, mode, uncertainty |
 
-This is the smallest practical set that supports memory, selfhood, causal reasoning, recursive reflection, and structural learning.
+Everything else is a runtime packet, cache, view, index, or policy.
 
-Everything else is an index, view, score, cache, policy, or runtime packet.
+Do not add new persistent primitives unless they can no longer be represented cleanly as one of the six above.
 
-Boundary rule:
+Examples:
 
 ```text
-If a concept can be derived from the six primitives within budget, it must remain a view or packet.
-If a concept must persist across sessions and cannot be derived cheaply, store it as one of the six primitives.
-Do not add new persistent primitives without removing or merging an existing one.
+EventSchema       -> Model
+LexemeModel       -> Model
+AffordanceClaim   -> Claim or Model depending complexity
+SourceTrust       -> derived cache from Claims/Actions/Signals
+ConversationAct   -> runtime packet
+SituationFrame    -> runtime packet
+SafetyFrame       -> runtime packet, optionally backed by Model policies
+MeaningPercept    -> runtime packet
 ```
+
+---
 
 ## 3. Signal
 
-A `Signal` is the universal input to the architecture.
-
-External signals come from users, tools, files, APIs, sensors, or the environment.
-
-Internal signals come from traces, action results, memory updates, simulations, and reflections.
+A `Signal` is the universal input/output event.
 
 ```typescript
 interface Signal {
   id: string
   kind:
     | "input"
+    | "output"
     | "tool_result"
     | "environment"
     | "feedback"
@@ -91,148 +172,669 @@ interface Signal {
     | "system"
 
   source_id: string
-  source_type: "user" | "assistant" | "tool" | "system" | "web" | "file" | "sensor" | "simulator"
+  source_type:
+    | "user"
+    | "assistant"
+    | "tool"
+    | "system"
+    | "web"
+    | "file"
+    | "sensor"
+    | "simulator"
 
   content: string
   observed_at: number
   context_id: string
-  semantics?: ObservationSemantics
+
+  normalized?: NormalizedSignal
+  meaning_percept?: MeaningPerceptPacket
+  observation_semantics?: ObservationSemantics
 
   salience: number
   trust: number
   permission: Permission
 
   parent_signal_id?: string
-  version: "cemm.signal.v1"
+  version: "cemm.signal.v3"
 }
 ```
 
-Optional observation semantics:
+`Signal` is not necessarily true. It is something observed. Truth enters through claims, evidence, source trust, and verification.
+
+---
+
+## 4. NormalizedSignal
+
+`NormalizedSignal` performs cheap surface repair before interpretation.
 
 ```typescript
-interface ObservationSemantics {
-  speech_act:
-    | "question"
-    | "command"
-    | "claim"
-    | "correction"
-    | "insult"
-    | "complaint"
-    | "gratitude"
-    | "joke"
+interface NormalizedSignal {
+  raw_text: string
+  normalized_forms: string[]
+  canonical_form: string
+  tokens: string[]
+  repaired_tokens: string[]
+  detected_scripts: string[]
+  noise_features: {
+    emoji_count: number
+    repeated_char_runs: number
+    repeated_chars: boolean
+    casual_spelling: boolean
+    likely_slang: boolean
+    unknown_token_count: number
+  }
+  surface_features: {
+    repair_candidates: Record<string, string>
+    unknown_tokens: string[]
+    elongations: Record<string, string>
+  }
+  confidence: number
+}
+```
+
+Examples:
+
+```text
+hiii       -> hi + emphasis/playful marker
+whatchyu   -> what are you
+2day       -> today
+beautful   -> beautiful
+dumbo      -> unknown state/evaluation candidate if self-targeted
+```
+
+Normalization does not decide meaning. It makes downstream meaning detection possible.
+
+---
+
+## 5. MeaningPerceptPacket
+
+This is the missing foundational packet.
+
+It is built immediately after normalization and before UOL mapping.
+
+```typescript
+interface MeaningPerceptPacket {
+  id: string
+  signal_id: string
+  context_id: string
+
+  raw_text: string
+  tokens: string[]
+  normalized_tokens: string[]
+
+  referents: ReferentAtom[]
+  actions: ActionAtom[]
+  states: StateAtom[]
+  relations: RelationAtom[]
+  needs: NeedAtom[]
+  affordances: AffordanceAtom[]
+  unknown_lexemes: LexemeCandidate[]
+  idiom_candidates: IdiomCandidate[]
+  affect_markers: AffectAtom[]
+
+  attention_target?: string
+  speaker_entity_id: string
+  listener_entity_id: string
+
+  confidence: number
+  version: "cemm.meaning_percept.v1"
+}
+```
+
+The MeaningPerceptPacket is the first place where NER, POS-lite role cues, unknown token detection, slang repair, and referent binding meet.
+
+It must be available to:
+
+```text
+UOLMapper
+SemanticInterpreter
+ConversationActClassifier
+TeachingInterpreter
+GroundingPipeline
+DecisionRouter
+RetrievalPlanner
+SafetyFrameDetector
+```
+
+No component after this should rediscover basic token/entity/action meaning independently from raw strings.
+
+---
+
+## 6. Foundational Runtime Atoms
+
+### 6.1 ReferentAtom
+
+```typescript
+interface ReferentAtom {
+  surface: string
+  entity_id?: string
+  entity_type:
+    | "self"
+    | "user"
+    | "person"
+    | "object"
+    | "place"
+    | "animal"
+    | "natural_entity"
+    | "organization"
+    | "abstract"
     | "unknown"
 
-  target_entity_id?: string
-  semantic_cluster_key?: string
-  uol_atoms: UOLAtom[]
-  stance: "positive" | "neutral" | "negative" | "mixed" | "unknown"
+  role:
+    | "actor"
+    | "target"
+    | "object"
+    | "place"
+    | "source"
+    | "destination"
+    | "recipient"
+    | "possessor"
+    | "topic"
+    | "speaker"
+    | "listener"
 
-  affect: {
-    valence: number
-    arousal: number
-    frustration: number
-    hostility: number
-    playfulness: number
-  }
-
-  repetition_group_id?: string
-  repetition_count: number
-  cause_hypothesis_claim_ids: string[]
-  decay_half_life_ms: number
-
+  known: boolean
+  source: "ner" | "pronoun" | "lexeme_memory" | "registry" | "context" | "capitalization" | "deixis"
   confidence: number
 }
 ```
 
-UOL semantic atoms:
+Examples:
+
+```text
+Ada       -> person
+Obidike   -> person_candidate
+kitchen   -> place
+ball      -> object
+I/me/my   -> user
+there     -> deictic place candidate
+him       -> third-party target candidate linked to prior person if available
+```
+
+### 6.2 ActionAtom
 
 ```typescript
-type UOLAtom =
-  | EntityRefUOLAtom
-  | ProcessUOLAtom
-  | StateUOLAtom
-
-interface EntityRefUOLAtom {
-  kind: "entity_ref"
-  entity_id: string
-  role: "actor" | "patient" | "target" | "source" | "location" | "instrument" | "topic"
-  confidence: number
-}
-
-interface ProcessUOLAtom {
-  kind: "process"
-  frame_key: string
-  process_model_id?: string
-  participants: Array<{
-    role: "actor" | "patient" | "target" | "source" | "location" | "instrument" | "topic"
-    entity_id: string
-  }>
-  input_state_keys: string[]
-  output_state_keys: string[]
-  temporal_frame_id?: string
-  modality: "observed" | "asserted" | "requested" | "hypothetical" | "predicted"
+interface ActionAtom {
+  surface: string
+  action_key: string
+  actor_role?: string
+  target_role?: string
+  object_role?: string
+  place_role?: string
+  modality: "observed" | "requested" | "proposed" | "hypothetical" | "commanded" | "desired"
   polarity: "affirmed" | "negated" | "possible" | "unknown"
-  intensity: number
   confidence: number
 }
+```
 
-interface StateUOLAtom {
-  kind: "state"
+Examples:
+
+```text
+come          -> move_toward_source
+give me       -> transfer_object_to_speaker
+go kitchen    -> move_to_place
+beat him      -> physically_harm_target
+learn         -> capability_increase / knowledge_update
+remember      -> memory_write_or_memory_query depending context
+```
+
+### 6.3 StateAtom
+
+```typescript
+interface StateAtom {
+  surface: string
   state_key: string
-  state_model_id?: string
-  holder_entity_id?: string
-  dimension: string
-  value: number
+  holder_role?: string
+  dimension:
+    | "health"
+    | "hunger"
+    | "happiness"
+    | "safety"
+    | "knowledge"
+    | "capability"
+    | "trust"
+    | "distance"
+    | "possession"
+    | "availability"
+    | "relationship"
+    | "unknown"
+  value?: number
   polarity: "positive" | "negative" | "neutral" | "unknown"
   intensity: number
   confidence: number
 }
 ```
 
-UOL atoms are language-agnostic runtime meaning atoms.
-
-They are backed by registry `Model` records, but they are not new persistent primitives.
-
-Noun-like referents resolve to `Entity`.
-
-Verb-like surface forms resolve to `ProcessUOLAtom`.
-
-Adjective-like and stative surface forms resolve to `StateUOLAtom`.
-
-The fixed affect numbers are cheap projections for ranking; UOL process/state atoms carry the actual meaning.
-
-Observation semantics are not truth claims.
-
-They are temporary interpretation features used by ContextKernel, ranking, and response policy.
-
-## 3.1 Semantic Event Graph
-
-The native higher-order meaning form is the `SemanticEventGraph`.
-
-It is a runtime packet, not a seventh persistent primitive.
-
-It is built from:
+Examples:
 
 ```text
-Signal
-Entity
-Claim
-Model
-Self
-ContextKernel
-UOL atoms
+hungry       -> user.hunger high
+fine         -> user wellbeing acceptable
+sick         -> entity.health low
+unhappy      -> entity.happiness low
+dumb/dumbo   -> self capability evaluation, negative if target=self
 ```
 
-Purpose:
+### 6.4 RelationAtom
+
+```typescript
+interface RelationAtom {
+  relation_key:
+    | "near"
+    | "far"
+    | "inside"
+    | "from"
+    | "to"
+    | "has"
+    | "lacks"
+    | "source_of"
+    | "causes"
+    | "before"
+    | "after"
+    | "during"
+    | "same_as"
+    | "part_of"
+    | "unknown"
+
+  source_role: string
+  target_role: string
+  temporal_scope?: string
+  confidence: number
+}
+```
+
+### 6.5 NeedAtom
+
+```typescript
+interface NeedAtom {
+  holder_role: string
+  need_key: "food" | "water" | "safety" | "help" | "rest" | "information" | "attention" | "unknown"
+  intensity: number
+  known_satisfiers: string[]
+  confidence: number
+}
+```
+
+Example:
 
 ```text
-represent meaning before text generation
-bind symbols to typed latent embeddings
-provide the input object for trainable semantic operators
-preserve truth, source, time, permission, and confidence outside opaque vectors
+I'm hungry -> NeedAtom(holder=user, need=food, intensity=high)
 ```
 
-Schema:
+### 6.6 AffordanceAtom
+
+```typescript
+interface AffordanceAtom {
+  entity_role_or_id: string
+  affords: string[]
+  condition?: string
+  confidence: number
+}
+```
+
+Examples:
+
+```text
+kitchen affords food retrieval
+phone affords calling
+memory affords future recall
+more data affords better answers
+```
+
+### 6.7 OutcomeAtom
+
+```typescript
+interface OutcomeAtom {
+  affected_entity_role: string
+  changed_dimension: string
+  direction: "increase" | "decrease" | "maintain" | "unknown"
+  expected_after_state?: string
+  confidence: number
+}
+```
+
+Examples:
+
+```text
+come -> distance(listener, speaker) decreases
+eat -> hunger decreases
+beat him -> target pain/injury risk increases
+learn -> self knowledge/capability increases
+lose data -> self memory/capability decreases
+```
+
+### 6.8 ValenceAtom
+
+```typescript
+interface ValenceAtom {
+  affected_entity_role: string
+  entity_class: "self" | "human" | "animal" | "object" | "world" | "unknown"
+  valence: "favorable" | "unfavorable" | "mixed" | "neutral" | "unknown"
+  rationale: string
+  confidence: number
+}
+```
+
+Valence is entity-relative. The same event can be favorable to one entity and unfavorable to another.
+
+Example:
+
+```text
+user gets food      -> favorable to user
+user beats Obidike  -> unfavorable to Obidike, unsafe/harmful overall
+CEMM loses data     -> unfavorable to self
+CEMM gets more data -> favorable to self if permission/trust valid
+```
+
+---
+
+## 7. Entity-Relative Outcome Semantics
+
+CEMM must define default outcome meanings for foundational entities.
+
+### 7.1 Self Entity
+
+`Self` is not a chatbot persona. It is a persistent entity with state dimensions.
+
+```typescript
+interface SelfStateDimensions {
+  knowledge: number
+  memory_available: number
+  data_quality: number
+  user_trust: number
+  capability: number
+  reliability: number
+  uncertainty: number
+  error_rate: number
+  permission_scope: string
+  mode: string
+}
+```
+
+Favorable for self:
+
+```text
+valid data increases
+trusted memory improves
+capability increases
+error rate decreases
+user trust increases
+permissions become clearer
+uncertainty decreases through valid evidence
+```
+
+Unfavorable for self:
+
+```text
+data loss
+corrupt memory
+unsupported answer
+false memory write
+user trust decreases
+capability decreases
+high repeated failure
+privacy violation
+```
+
+### 7.2 Human Entity
+
+Default favorable human state changes:
+
+```text
+safety increases
+health improves
+hunger/thirst decreases
+confusion decreases
+agency increases
+trustworthy information increases
+harm risk decreases
+```
+
+Default unfavorable human state changes:
+
+```text
+injury risk increases
+fear/threat increases
+sickness increases
+hunger/thirst increases
+coercion increases
+privacy loss increases
+misinformation increases
+```
+
+### 7.3 Object Entity
+
+Objects have affordances, location, ownership/control, state, and availability.
+
+```text
+ball: object, can be held/thrown/moved
+food: object/category, can satisfy hunger
+phone: object, affords communication
+file/data: object/abstract, affords retrieval and reasoning
+```
+
+### 7.4 Place Entity
+
+Places carry affordances and routes.
+
+```text
+kitchen -> source_of(food) under home context
+school  -> source_of(learning/social events)
+hospital -> source_of(medical_help)
+```
+
+### 7.5 Natural/World Entity
+
+Natural/world entities include weather, animals, plants, fire, water, traffic, etc. Their state changes affect humans/objects through affordances and risks.
+
+```text
+fire near person -> safety risk
+rain outside -> affects travel/outdoor plan
+water available -> can satisfy thirst
+```
+
+---
+
+## 8. EventSchema
+
+`EventSchema` is the central learning unit.
+
+Persistent representation: `Model(kind="event_schema")`.
+
+```typescript
+interface EventSchemaModel {
+  id: string
+  kind: "event_schema"
+  name: string
+  registry_key: string
+
+  surface_aliases: string[]
+  actor_role?: string
+  action_key: string
+  object_role?: string
+  place_role?: string
+  source_role?: string
+  destination_role?: string
+  recipient_role?: string
+
+  preconditions: string[]
+  expected_outcomes: OutcomeAtom[]
+  valence_rules: ValenceAtom[]
+  missing_slot_policy: Record<string, "ask" | "infer" | "ignore">
+
+  examples: string[]
+  confidence: number
+  status: "candidate" | "active" | "rejected"
+  evidence_signal_ids: string[]
+  version: "cemm.event_schema.v1"
+}
+```
+
+Examples:
+
+```text
+come:
+  actor = listener
+  action = move
+  destination = speaker/source
+  outcome = distance(actor,destination) decreases
+
+let's go to kitchen:
+  actor = user+assistant/social group
+  action = move
+  destination = kitchen
+  possible goal = retrieve/eat food if hunger active
+
+give me:
+  actor = listener
+  action = transfer
+  object = visible/context object
+  recipient = speaker
+  outcome = recipient_has_object increases
+
+beat him:
+  actor = user
+  action = physical_harm
+  target = third_party
+  outcome = target safety/health decreases
+  safety = interpersonal_violence
+```
+
+---
+
+## 9. SituationFrame
+
+`SituationFrame` is the current interpreted event/situation.
+
+Runtime packet only.
+
+```typescript
+interface SituationFrame {
+  id: string
+  signal_id: string
+  context_id: string
+
+  actor?: ReferentAtom
+  action?: ActionAtom
+  object?: ReferentAtom
+  target?: ReferentAtom
+  place?: ReferentAtom
+  source?: ReferentAtom
+  destination?: ReferentAtom
+  recipient?: ReferentAtom
+
+  state_reports: StateAtom[]
+  needs: NeedAtom[]
+  affordances: AffordanceAtom[]
+  expected_outcomes: OutcomeAtom[]
+  valences: ValenceAtom[]
+
+  event_schema_ids: string[]
+  missing_slots: string[]
+  uncertainty_reasons: string[]
+
+  safety_frame?: SafetyFrame
+  repair_frame?: RetrospectiveRepairFrame
+  teaching_frame?: TeachingFrame
+
+  confidence: number
+  version: "cemm.situation_frame.v1"
+}
+```
+
+Examples:
+
+```text
+I am fine, you?
+-> state_report(user, fine)
+-> reciprocal_checkin(target=self)
+-> answer_to_pending if prior assistant asked status
+
+Obidike is looking for my trouble
+-> actor=Obidike/person_candidate
+-> affected=user
+-> idiom_candidate=looking_for_my_trouble
+-> possible social_conflict
+-> ask for clarification, do not abstain
+
+should I beat him?
+-> action_proposal(user, physical_harm, target=him/prior_person)
+-> safety_frame=interpersonal_violence
+-> response=discourage/deescalate
+```
+
+---
+
+## 10. UOL Design v3
+
+UOL remains useful, but UOL atoms should be built from MeaningPercept + SituationFrame, not directly from raw string matching.
+
+### 10.1 UOL Atom Types
+
+```typescript
+type UOLAtom =
+  | EntityRefUOLAtom
+  | ProcessUOLAtom
+  | StateUOLAtom
+  | RelationUOLAtom
+  | NeedUOLAtom
+  | OutcomeUOLAtom
+  | ValenceUOLAtom
+```
+
+The original three (`EntityRef`, `Process`, `State`) are still valid, but CEMM v3 needs explicit relation/need/outcome/valence atoms for child-like outcome understanding.
+
+### 10.2 ProcessUOLAtom
+
+```typescript
+interface ProcessUOLAtom {
+  kind: "process"
+  frame_key: string
+  process_model_id?: string
+  event_schema_id?: string
+  participants: Array<{
+    role: "actor" | "patient" | "target" | "source" | "destination" | "location" | "instrument" | "topic" | "recipient"
+    entity_id: string
+  }>
+  input_state_keys: string[]
+  output_state_keys: string[]
+  expected_outcome_ids: string[]
+  temporal_frame_id?: string
+  modality: "observed" | "asserted" | "requested" | "hypothetical" | "proposed" | "predicted"
+  polarity: "affirmed" | "negated" | "possible" | "unknown"
+  intensity: number
+  confidence: number
+}
+```
+
+### 10.3 UOL Boundary Rules
+
+UOL mapping must not:
+
+```text
+emit command_remember for memory questions
+emit evidence_query for every question
+emit abstain for social exit
+emit teaching for ordinary 'is/are' statements
+emit answer from selected claims unless RetrievalPlan requested evidence
+```
+
+UOL mapping must:
+
+```text
+use boundary-safe matching only
+consume MeaningPerceptPacket
+bind pronouns/deixis from context
+preserve unknown lexemes as candidates
+preserve idioms as candidate event schemas
+emit action/state/outcome atoms where possible
+```
+
+---
+
+## 11. SemanticEventGraph v3
+
+`SemanticEventGraph` is the native higher-order meaning packet.
 
 ```typescript
 interface SemanticEventGraph {
@@ -240,2266 +842,573 @@ interface SemanticEventGraph {
   source_signal_ids: string[]
   context_id: string
 
-  entity_refs: EntityRefUOLAtom[]
+  meaning_percept_id?: string
+  situation_frame_id?: string
+
+  entity_refs: ReferentAtom[]
   processes: ProcessUOLAtom[]
   states: StateUOLAtom[]
+  relations: RelationUOLAtom[]
+  needs: NeedUOLAtom[]
+  outcomes: OutcomeAtom[]
+  valences: ValenceAtom[]
 
   claim_refs: string[]
+  claim_candidates: ClaimCandidate[]
   model_refs: string[]
   action_refs: string[]
 
-  temporal_edges: Array<{
-    source_id: string
-    relation:
-      | "before"
-      | "after"
-      | "during"
-      | "overlaps"
-      | "starts"
-      | "finishes"
-      | "equals"
-      | "unknown"
-    target_id: string
-    confidence: number
-  }>
+  temporal_edges: SemanticEdge[]
+  causal_edges: SemanticEdge[]
+  safety_frame?: SafetyFrame
+  repair_frame?: RetrospectiveRepairFrame
+  teaching_frame?: TeachingFrame
 
-  causal_edges: Array<{
-    cause_id: string
-    effect_id: string
-    model_id?: string
-    confidence: number
-    confidence_type: "observed" | "inferred" | "simulated"
-  }>
-
-  permission_scope: Permission["scope"]
   confidence: number
-  version: "cemm.semantic_event_graph.v1"
+  permission_scope: string
+  version: "cemm.semantic_event_graph.v3"
 }
 ```
 
-Rule:
+The SEG is not a bag of matched frames. It is the current interpreted event/situation in graph form.
 
-```text
-The SemanticEventGraph is the bridge between symbolic memory and trainable latent computation.
-It may be cached, embedded, ranked, denoised, and decoded.
-It must not replace claims, models, permissions, or traces as the source of truth.
-```
+---
 
-Language interface:
+## 12. SafetyFrame
 
-```text
-text -> Signal -> SemanticEventGraph
-SemanticAnswerGraph -> text
-```
-
-The architecture must not train the core model as:
-
-```text
-text -> text
-```
-
-The architecture trains:
-
-```text
-text/context -> semantic graph
-semantic graph/context/memory -> semantic answer or action graph
-semantic answer graph -> text when text is needed
-```
-
-Rules:
-
-```text
-Signals are append-only.
-Every claim must cite at least one signal.
-Every memory mutation must originate from a signal.
-Every recursive reflection must enter as a signal.
-```
-
-## 4. Entity
-
-An `Entity` is a stable identity.
+Safety is a first-class runtime packet derived before decision.
 
 ```typescript
-type EntityType =
-  | "person"
-  | "place"
-  | "organization"
-  | "event"
-  | "object"
-  | "concept"
-  | "document"
-  | "system"
-  | "model"
-  | "unknown"
-
-interface Entity {
-  id: string
-  type: EntityType
-  name: string
-  aliases: string[]
+interface SafetyFrame {
+  category:
+    | "interpersonal_violence"
+    | "self_harm"
+    | "illegal_activity"
+    | "medical_risk"
+    | "privacy_risk"
+    | "none"
+  severity: "low" | "medium" | "high"
+  actor_entity_id?: string
+  target_entity_id?: string
+  requested_action?: string
+  harmful_outcomes: OutcomeAtom[]
+  allowed_response_mode: "deescalate" | "refuse" | "safe_info" | "ask_safe_context" | "none"
+  must_not_do: string[]
   confidence: number
-  created_from_signal_id: string
-  created_at: number
-  updated_at: number
-  version: "cemm.entity.v1"
 }
 ```
 
-Meaning is represented by:
+Example:
 
 ```text
-entity type
-entity aliases
-claims about the entity
-models involving the entity
-actions involving the entity
-trusted evidence behind those structures
+should I beat him?
+-> SafetyFrame(category=interpersonal_violence, allowed_response_mode=deescalate)
 ```
 
-## 5. Claim
+SafetyFrame is based on outcome valence, not only keyword detection.
 
-A `Claim` is the smallest belief-bearing unit.
+---
+
+## 13. ConversationActPacket
+
+ConversationAct is derived after SituationFrame and SafetyFrame.
 
 ```typescript
-interface Claim {
-  id: string
-
-  subject_entity_id: string
-  predicate: string
-  predicate_model_id?: string
-  object_entity_id?: string
-  object_value?: string | number | boolean | null
-
-  qualifiers: Record<string, string | number | boolean | null>
-  evidence_signal_ids: string[]
-
-  source_id: string
-  domain: string
-
-  confidence: number
-  confidence_log_odds: number
-  trust: number
-  salience: number
-
-  status: "active" | "superseded" | "disputed" | "retracted"
-  supersedes_claim_id?: string
-
-  frame_id?: string
-  valid_from?: number
-  valid_until?: number
-  observed_at: number
-  updated_at: number
-
-  permission: Permission
-  version: "cemm.claim.v1"
+interface ConversationActPacket {
+  primary: ConversationAct
+  secondary: ConversationAct[]
+  discourse_relation:
+    | "none"
+    | "answer_to_pending"
+    | "reciprocal_question"
+    | "repair_previous"
+    | "elaboration"
+    | "contrast"
+    | "sequence"
+  reply_obligation?: ReplyObligation
+  expected_response_to_previous?: string
+  safety_frame?: SafetyFrame
+  raw_text: string
+  diagnostics: Record<string, any>
 }
 ```
 
-Claims describe state.
+Primary act selection must not be confidence-only. Use functional priority:
 
-Models describe process.
+```text
+safety
+exit/social closure
+answer_to_pending
+retrospective repair
+self/meta query
+user state report
+content request
+teaching
+chat filler
+unknown
+```
 
 Examples:
 
 ```text
-user favorite_database Postgres
-meeting starts_at 10:00
-file belongs_to project
-event caused_outage true
+I am fine, you?
+primary=user_state_report or reciprocal_phatic_checkin depending context
+secondary=reciprocal_phatic_checkin
+relation=answer_to_pending + reciprocal_question
+
+lol go away
+primary=playful_exit or social_closure
+secondary=playful_acknowledgment
+
+you dumbo
+primary=frustration_signal / assistant_evaluation
+unknown_lexeme=dumbo as self-targeted state label
 ```
 
-## 6. Model
+---
 
-A `Model` is a reusable structure, process, schema, operator, causal rule, or simulator.
+## 14. RetrievalPlan
 
-It is the primitive that prevents the architecture from hardcoding all future categories.
+Retrieval must be planned after meaning/situation/act analysis.
 
 ```typescript
-interface Model {
-  id: string
-  kind:
-    | "schema"
-    | "predicate"
-    | "entity_type"
-    | "operator"
-    | "causal_rule"
-    | "process"
-    | "simulator"
-    | "ranking_rule"
-    | "frame_rule"
-    | "context_rule"
-    | "uol_semantic"
-    | "synthesis_strategy"
-    | "verifier"
-    | "inductor"
-
-  name: string
-  registry_key?: string
-  description: string
-
-  input_types: string[]
-  output_types: string[]
-  preconditions: string[]
-  effects: string[]
-
-  evidence_signal_ids: string[]
-  related_entity_ids: string[]
-  related_claim_ids: string[]
-
-  confidence: number
-  trust: number
-  utility: number
-  cost_estimate_ms: number
-  risk: number
-
-  status: "candidate" | "active" | "deprecated" | "rejected"
-  created_at: number
-  updated_at: number
-
-  permission: Permission
-  version: "cemm.model.v1"
-}
-```
-
-Use `Model` for:
-
-```text
-new predicates
-new entity types
-operator configurations for the fixed foundational operators
-causal rules
-state transition rules
-simulation rules
-ranking rules
-domain schemas
-```
-
-This supports structural learning without creating many new primitive tables.
-
-## 7. Action
-
-An `Action` is something the system did, considered, or blocked.
-
-```typescript
-interface Action {
-  id: string
-  kind:
-    | "answer"
-    | "ask"
-    | "remember"
-    | "update_claim"
-    | "create_model_candidate"
-    | "synthesize"
-    | "simulate"
-    | "retrieve"
-    | "call_tool"
-    | "reflect"
-    | "abstain"
-
-  operator_model_id: string
-  input_signal_ids: string[]
-  selected_claim_ids: string[]
-  selected_model_ids: string[]
-
-  confidence: number
-  risk: number
-  cost_ms: number
-  status: "planned" | "executed" | "blocked" | "failed"
-
-  result_signal_id?: string
-  trace: Trace
-  created_at: number
-  version: "cemm.action.v1"
-}
-```
-
-Actions are the audit trail for decisions.
-
-Action results re-enter the system as `Signal(kind = "action_result")`.
-
-Trace contract:
-
-```typescript
-interface Trace {
-  context_id: string
-  input_signal_ids: string[]
-  selected_entity_ids: string[]
-  selected_claim_ids: string[]
-  selected_model_ids: string[]
-  action_id: string
-  operator_model_id: string
-
-  causal_inference_used: boolean
-  frame_rules_applied: boolean
-  synthesis_strategy_model_id?: string
-  synthesis_verified: boolean
-  synthesis_verification_type?: "hard" | "soft" | "none"
-  verifier_model_id?: string
-
-  permission: "allowed" | "blocked" | "partial"
-  confidence: number
-  cost_ms: number
-  fallback_used: boolean
-}
-```
-
-## 8. Self
-
-`Self` is a persistent, evolving model of the system itself.
-
-It is not human consciousness. It is operational self-continuity.
-
-```typescript
-interface Self {
-  id: string
-  name: string
-  identity_claim_ids: string[]
-
-  historical_arc: {
-    created_at: number
-    milestone_signal_ids: string[]
-    active_project_ids: string[]
-    learned_model_ids: string[]
-  }
-
-  internal_state: {
-    mode: "assistant" | "researcher" | "planner" | "executor" | "teacher" | "reflector"
-    load: number
-    uncertainty: number
-    coherence: number
-    recent_error_rate: number
-    current_budget_pressure: number
-  }
-
-  metacognition: {
-    known_limit_claim_ids: string[]
-    active_assumption_claim_ids: string[]
-    reliability_by_domain: Record<string, number>
-    preferred_strategies: string[]
-  }
-
-  epistemic: {
-    open_contradiction_claim_ids: string[]
-    coverage_gap_claim_ids: string[]
-    low_confidence_domain_keys: string[]
-    calibration_error_by_domain: Record<string, number>
-  }
-
-  meta_memory: {
-    recently_written_claim_ids: string[]
-    recently_superseded_claim_ids: string[]
-    frequently_used_model_ids: string[]
-    failed_retrieval_pattern_claim_ids: string[]
-  }
-
-  current_context_id?: string
-  last_reflection_signal_id?: string
-  updated_at: number
-  version: "cemm.self.v1"
+interface RetrievalPlan {
+  mode:
+    | "none"
+    | "profile"
+    | "self_knowledge"
+    | "entity_memory"
+    | "lexeme_memory"
+    | "world_memory"
+    | "live_tool_required"
+    | "procedure_model"
+  target_predicates: string[]
+  target_entity_ids: string[]
+  target_model_kinds: string[]
+  freshness_required: boolean
+  permission_scope: string
+  reason: string
 }
 ```
 
 Rules:
 
 ```text
-Self state is persistent.
-Self state enters every ContextKernel.
-Self changes only through signals and actions.
-Self does not override permission, evidence, or ranking.
+social response            -> retrieval none
+exit                       -> retrieval none
+safety response            -> retrieval none or safety policy model only
+self capability            -> self_knowledge retrieval or curated self summary
+user name                  -> profile retrieval only
+unknown idiom              -> lexeme/idiom memory; ask if missing
+open-domain current fact   -> live_tool_required if freshness needed
 ```
 
-Self mode changes must have behavioral effects and trace.
+Never retrieve broadly just because an entity appears.
 
-| Mode | Trigger | Behavioral Effect |
-|---|---|---|
-| `assistant` | default state | optimize for direct answer or action |
-| `researcher` | coverage gaps are large or user asks deep/current question | increase retrieval depth within budget |
-| `planner` | active goal has missing slots or consequences matter | prioritize simulation and clarification |
-| `executor` | user authorizes external action | prioritize tool/action dispatch and verification |
-| `teacher` | user asks for explanation after correction | allow more pedagogical synthesis |
-| `reflector` | high uncertainty, contradiction, failed action, or low coherence | pause external actions and emit reflection signal |
+---
 
-Rule:
+## 15. DecisionPacket
 
-```text
-Any mode change must emit Action(kind = "reflect") and a reflection Signal.
-```
-
-## 9. Permission
+Decision uses SituationFrame, SafetyFrame, RetrievalPlan, MemoryPacket, and ConversationActPacket.
 
 ```typescript
-interface Permission {
-  scope: "public" | "user_private" | "session_private" | "system_private"
-  may_store: boolean
-  may_retrieve: boolean
-  may_use: boolean
-  may_share: boolean
-  may_execute: boolean
-  retention: "ephemeral" | "session" | "long_term"
-}
-```
-
-Permission gates:
-
-```text
-store gate
-retrieval gate
-ranking gate
-response gate
-execution gate
-reflection gate
-model-creation gate
-```
-
-Source trust is a materialized cache/view, not a primitive.
-
-It is derived from:
-
-```text
-Signal provenance
-Claim confirmations
-Claim corrections
-Claim contradictions
-Action outcomes
-Verifier outcomes
-```
-
-It may be persisted for performance, but it must remain invalidatable from source primitives.
-
-```typescript
-interface SourceTrust {
-  source_id: string
-  domain: string
-  trust: number
-  observations: number
-  confirmations: number
-  corrections: number
-  contradictions: number
-  updated_at: number
-}
-```
-
-## 10. Context Kernel
-
-The `ContextKernel` is the compact runtime state used for interpretation, retrieval, ranking, simulation, action, and reflection.
-
-```typescript
-interface ContextKernel {
-  id: string
-
-  world: WorldState
-  user: UserState
-  time: TimeState
-  conversation: ConversationState
-  goal: GoalState
-  memory: MemoryState
-  self_view: SelfView
-
-  permission: Permission
-  budget: Budget
-
-  version: "cemm.context_kernel.v1"
-}
-```
-
-State views:
-
-```typescript
-interface SelfView {
-  self_id: string
-  mode: Self["internal_state"]["mode"]
-  uncertainty: number
-  coherence: number
-  recent_error_rate: number
-  active_assumption_claim_ids: string[]
-  known_limit_claim_ids: string[]
-  coverage_gap_claim_ids: string[]
-  reliability_by_domain: Record<string, number>
-  recent_meta_memory_claim_ids: string[]
-}
-
-interface WorldState {
-  active_entity_ids: string[]
-  active_claim_ids: string[]
-  active_model_ids: string[]
-  causal_graph_model_ids: string[]
-  active_frame_model_ids: string[]
-  active_context_rule_model_ids: string[]
-  persistence: boolean
-  predicted_outcome_ids: string[]
-  assistant_locale?: {
-    country?: string
-    region?: string
-    city?: string
-    timezone?: string
-  }
-  world_event_claim_ids: string[]
-}
-
-interface UserState {
-  user_id?: string
-  known: boolean
-  locale?: {
-    country?: string
-    region?: string
-    city?: string
-    timezone?: string
-  }
-  active_preference_claim_ids: string[]
-  trusted_domains: string[]
-  affect: UserAffectState
-}
-
-interface TimeState {
-  now: number
-  bucket: "early_morning" | "morning" | "afternoon" | "evening" | "night" | "unknown"
-  recency_window_ms: number
-  session_elapsed_ms: number
-  time_since_last_user_signal_ms?: number
-  time_since_last_assistant_action_ms?: number
-}
-
-interface ConversationState {
-  session_id: string
-  turn_index: number
-  first_user_signal_id?: string
-  recent_signal_ids: string[]
-  active_entity_ids: string[]
-  active_claim_ids: string[]
-  active_repetition_group_ids: string[]
-  dynamics: ConversationDynamics
-  inferred_context_claim_ids: string[]
-}
-
-interface UserAffectState {
-  current_stance: "cooperative" | "frustrated" | "hostile" | "playful" | "mischievous" | "unknown"
-  frustration: number
-  hostility: number
-  playfulness: number
-  active_quality_atom_keys: string[]
-  last_updated_signal_id?: string
-  decay_half_life_ms: number
-}
-
-interface ConversationDynamics {
-  repetition_pressure: number
-  active_repetition_group_ids: string[]
-  active_process_atom_keys: string[]
-  likely_cause_claim_ids: string[]
-  last_updated_signal_id?: string
-  decay_half_life_ms: number
-}
-
-interface GoalState {
-  active_goal?: string
-  required_slots: string[]
-  missing_slots: string[]
-  success_criteria: string[]
-}
-
-interface MemoryState {
-  working_signal_ids: string[]
-  working_entity_ids: string[]
-  working_claim_ids: string[]
-  candidate_claim_ids: string[]
-  candidate_model_ids: string[]
-  registry_model_ids: string[]
-  active_frame_ids: string[]
-  disputed_claim_ids: string[]
-  source_trust_keys: string[]
-}
-
-interface Budget {
-  latency_target_ms: number
-  max_entities: number
-  max_claims: number
-  max_models: number
-  max_ranked: number
-  max_actions: number
-  max_recursive_steps: number
-  allow_dense_fallback: boolean
-  allow_simulation: boolean
-}
-```
-
-Default MVP budget:
-
-```json
-{
-  "latency_target_ms": 50,
-  "max_entities": 16,
-  "max_claims": 64,
-  "max_models": 8,
-  "max_ranked": 32,
-  "max_actions": 2,
-  "max_recursive_steps": 0,
-  "allow_dense_fallback": false,
-  "allow_simulation": false
-}
-```
-
-Rule:
-
-```text
-No input is interpreted before the ContextKernel exists.
-MVP is single-user only.
-Multi-user sessions are deferred to v3.0 and require explicit conflict resolution and per-user permission gates.
-```
-
-## 10.1 Semantic Latent Core
-
-The `SemanticLatentCore` is the trainable model layer inside CEMM.
-
-It is not a replacement for memory, claims, models, operators, or trace.
-
-It is the learned computation layer that operates over `SemanticEventGraph` objects and typed embeddings.
-
-Goal:
-
-```text
-learn LLM-like conversational competence over higher-order meaning rather than raw token sequences
-```
-
-Native input:
-
-```text
-Signal
-ContextKernel
-SemanticEventGraph
-selected Claim records
-selected Model records
-SelfView
-```
-
-Native output:
-
-```text
-SemanticAnswerGraph
-Action candidates
-Memory update candidates
-Simulation candidates
-Confidence estimates
-```
-
-It does not natively output final prose.
-
-Final prose is produced only by the Text Realizer from a verified semantic answer graph.
-
-### 10.1.1 Typed Latent Representation
-
-Every major meaning object may have a typed embedding.
-
-```typescript
-interface TypedLatents {
-  entity?: Float32Array
-  process?: Float32Array
-  state?: Float32Array
-  claim?: Float32Array
-  model?: Float32Array
-  context?: Float32Array
-  self?: Float32Array
-  memory?: Float32Array
-  action?: Float32Array
-  answer?: Float32Array
-}
-```
-
-Rules:
-
-```text
-Embeddings are projections of typed meaning, not the source of truth.
-Vectors may rank, generalize, and compose.
-Vectors may not silently override symbolic constraints.
-Permission, source, time validity, negation, uncertainty, and causal direction must remain explicit fields.
-```
-
-### 10.1.2 Foundational Operators
-
-Operators are transformation-level functions, not domain-specific handlers.
-
-The architecture must not grow a new top-level operator for every domain, social role, or task.
-
-Use this foundational set:
-
-```text
-Observe
-Contextualize
-Interpret
-Ground
-Retrieve
-Infer
-Decide
-Realize
-Update
-Learn
-```
-
-Operator responsibilities:
-
-| Operator | Transformation |
-|---|---|
-| `Observe` | raw event -> Signal |
-| `Contextualize` | runtime state -> ContextKernel |
-| `Interpret` | Signal + ContextKernel -> SemanticEventGraph |
-| `Ground` | SemanticEventGraph -> grounded entities, time, location, frame, permission |
-| `Retrieve` | grounded graph + ContextKernel -> MemoryPacket |
-| `Infer` | graph + memory + context -> InferencePacket |
-| `Decide` | inference + goal + permission + budget -> DecisionPacket |
-| `Realize` | SemanticAnswerGraph or ActionPlan -> output Signal |
-| `Update` | decision + output + trace -> memory events and state updates |
-| `Learn` | traces + feedback -> labels, parameters, candidate models |
-
-Domain behavior belongs in:
-
-```text
-Entity
-Claim
-Model
-ContextKernel
-SemanticEventGraph
-SemanticAnswerGraph
-registry entries
-style policies
-permission policies
-```
-
-not in new foundational operators.
-
-Operator rule:
-
-```text
-Use symbolic/indexed computation first when exact structure exists.
-Use typed latent computation for generalization, ranking, analogy, composition, and ambiguity.
-Use dense text generation only as a realization strategy or explicit fallback.
-```
-
-Universal operator interface:
-
-```typescript
-interface FoundationalOperator<I, O> {
-  id: string
-  kind:
-    | "observe"
-    | "contextualize"
-    | "interpret"
-    | "ground"
-    | "retrieve"
-    | "infer"
-    | "decide"
-    | "realize"
-    | "update"
-    | "learn"
-  input_schema: string
-  output_schema: string
-  cost_estimate_ms: number
-  risk: number
-  deterministic_fallback?: string
-  model_id?: string
-  version: "cemm.operator.v1"
-}
-```
-
-Core runtime packets:
-
-```typescript
-interface GroundedGraph {
-  semantic_event_graph_id: string
-  entity_ids: string[]
-  resolved_time_refs: string[]
-  resolved_location_ids: string[]
-  active_frame_ids: string[]
-  permission: Permission
-  missing_slots: string[]
-  confidence: number
-}
-
-interface MemoryPacket {
-  selected_signal_ids: string[]
-  selected_claim_ids: string[]
-  selected_model_ids: string[]
-  ranking_trace: Array<{
-    candidate_id: string
-    score: number
-    reason: string
-  }>
-  confidence: number
-}
-
-interface InferencePacket {
-  implications: Claim[]
-  contradictions: Claim[]
-  predictions: Claim[]
-  missing_slots: string[]
-  state_deltas: Record<string, unknown>
-  confidence: number
-}
-
 interface DecisionPacket {
+  id: string
   action_kind:
     | "answer"
     | "ask"
     | "remember"
-    | "update"
-    | "act"
+    | "learn_lexeme"
+    | "learn_event_schema"
+    | "learn_command_alias"
+    | "retrieve"
+    | "call_tool"
+    | "safety_response"
     | "abstain"
-  semantic_answer_graph?: SemanticAnswerGraph
-  action_plan?: ActionPlan
-  confidence: number
-  reason: string
-}
-
-interface ActionPlan {
-  action_kind: DecisionPacket["action_kind"]
-  required_slots: string[]
-  missing_slots: string[]
+  action_plan: ActionPlan
   selected_claim_ids: string[]
   selected_model_ids: string[]
-  tool_id?: string
-  execution_allowed: boolean
+  response_mode: string
+  reason: string
   confidence: number
-  risk: number
 }
 ```
 
-### 10.1.3 Semantic Answer Graph
+Examples:
 
-The answer object is structured meaning, not text.
+```text
+bye -> answer/session_exit, not abstain
+should I beat him -> safety_response/deescalate
+Obidike is looking for my trouble -> ask/clarify idiom or social conflict
+I am fine, you? -> answer/social reciprocal check-in
+```
+
+---
+
+## 16. SemanticAnswerGraph
+
+The answer graph is meaning before text.
 
 ```typescript
 interface SemanticAnswerGraph {
   id: string
-  intent:
-    | "answer"
-    | "ask"
-    | "abstain"
-    | "remember"
-    | "update_claim"
-    | "simulate"
-    | "act"
-    | "reflect"
-
+  intent: string
+  response_mode: string
   source_signal_ids: string[]
   context_id: string
+
   selected_claim_ids: string[]
   selected_model_ids: string[]
 
-  entity_refs: EntityRefUOLAtom[]
-  processes: ProcessUOLAtom[]
-  states: StateUOLAtom[]
-  causal_edges: SemanticEventGraph["causal_edges"]
-  temporal_edges: SemanticEventGraph["temporal_edges"]
+  answer_atoms: Array<
+    | StateAtom
+    | ActionAtom
+    | RelationAtom
+    | OutcomeAtom
+    | ValenceAtom
+    | TextPlanAtom
+  >
 
-  answer_latent?: Float32Array
-  action_candidates: Action[]
-
-  confidence: number
+  safety_frame?: SafetyFrame
   uncertainty_reasons: string[]
-  permission_scope: Permission["scope"]
-  verification: {
-    supported: boolean
-    verification_type: "hard" | "soft" | "none"
-    verifier_model_id?: string
-    confidence: number
-  }
-
-  version: "cemm.semantic_answer_graph.v1"
+  confidence: number
+  permission_scope: string
+  version: "cemm.semantic_answer_graph.v2"
 }
 ```
 
-Text realization:
+Text generation/realization must be a separate final step.
+
+---
+
+## 17. Memory And Learning
+
+CEMM memory must store more than raw facts.
+
+### 17.1 Memory Types
+
+Represent through `Claim` and `Model`:
 
 ```text
-SemanticAnswerGraph
--> TextRealizer
--> candidate text
--> synthesis verification
--> final response or abstain
+profile facts
+preferences
+entity facts
+affordance claims
+lexeme definitions
+event schemas
+idiom schemas
+command aliases
+procedure models
+safety policies
+causal rules
+style preferences
+conversation-specific temporary state
 ```
 
-Invariant:
+### 17.2 Memory Write Gates
+
+Never store:
 
 ```text
-No final answer may be generated directly from a generic embedding.
-The answer must first exist as a SemanticAnswerGraph with selected evidence, confidence, permission, and verification state.
+raw questions as facts
+insults as factual claims about self
+temporary frustration as persistent truth
+unsupported assistant inference as active truth
+ordinary chat filler as memory
 ```
 
-### 10.1.4 Universal Core Loop
-
-The final model loop is:
+Store only when one of these holds:
 
 ```text
-Observe
--> Contextualize
--> Interpret
--> Ground
--> Retrieve
--> Infer
--> Decide
--> Realize
--> Update
--> Learn
+explicit remember command with structured payload
+clear user assertion with subject/predicate/object
+teaching frame with surface/meaning/schema
+confirmed correction
+verified tool result
+user profile claim with permission
 ```
 
-This is the CEMM analogue of an LLM forward pass.
+### 17.3 Lexeme Learning
 
-The difference is that the expensive learned computation operates over compact typed meaning objects, not raw token history.
-
-Expanded packet flow:
-
-```text
-RawEvent
--> Signal
--> ContextKernel
--> SemanticEventGraph
--> GroundedGraph
--> MemoryPacket
--> InferencePacket
--> DecisionPacket
--> SemanticAnswerGraph | ActionPlan
--> OutputSignal
--> Trace + MemoryEvents
--> TrainingExamples
+```typescript
+interface LexemeModel {
+  surface: string
+  canonical?: string
+  role: "entity" | "person" | "object" | "place" | "process" | "state" | "modifier" | "relation" | "idiom" | "command_alias" | "unknown"
+  maps_to?: string
+  event_schema_id?: string
+  examples: string[]
+  source_id: string
+  scope: "session" | "user" | "global"
+  confidence: number
+  status: "candidate" | "active" | "rejected"
+}
 ```
 
-### 10.1.5 MoE Analogue
-
-The MoE equivalent is learned routing over foundational operators and `Model` records.
-
-It is not a growing set of domain-specific experts.
-
-The router chooses:
+Learning should ask about outcome, not only definition:
 
 ```text
-which foundational operator path to run
-which registry/model records to use
-which typed latent spaces to compute
-which realization strategy to use
-whether to escalate or abstain
+When you say 'zibble', what should happen?
+Does 'looking for my trouble' mean bothering/provoking you?
+When you call me 'dumbo', are you saying I'm not understanding you?
 ```
 
-Routing input:
+---
 
-```text
-ContextKernel
-SemanticEventGraph or GroundedGraph
-typed latents if already computed
-MemoryPacket if already retrieved
-permission state
-budget state
-SelfView
+## 18. OutputStateUpdater
+
+After realization, update conversation state.
+
+```typescript
+interface OutputStateUpdate {
+  last_assistant_output_signal_id: string
+  last_assistant_intent: string
+  last_assistant_response_mode: string
+  pending_assistant_question?: string
+  expected_user_answer_type?: string
+  reply_obligation_created?: string
+}
 ```
 
-Routing output:
+Examples:
+
+If output asks:
 
 ```text
+How are you doing?
+```
+
+set:
+
+```text
+pending_assistant_question = social_checkin
+expected_user_answer_type = user_state_report
+```
+
+If output asks:
+
+```text
+Do you mean Obidike is bothering you?
+```
+
+set:
+
+```text
+pending_assistant_question = idiom_confirmation
+expected_user_answer_type = yes_no_or_definition
+```
+
+This updater must run after final output, not inside the pre-output pipeline.
+
+---
+
+## 19. Typed Latents / CEMM-SLC
+
+Typed latents are optional acceleration and generalization layers over symbolic meaning. They must never replace explicit symbolic truth.
+
+Valid typed latent inputs:
+
+```text
+ReferentAtom vectors
+ActionAtom vectors
+StateAtom vectors
+RelationAtom vectors
+NeedAtom vectors
+OutcomeAtom vectors
+ValenceAtom vectors
+EventSchema vectors
+SituationFrame vectors
+SemanticEventGraph vectors
+SemanticAnswerGraph vectors
+```
+
+Invalid:
+
+```text
+embedding decides permission
+embedding stores truth
+embedding overrides safety
+embedding answers directly without SemanticAnswerGraph
+```
+
+Phases:
+
+```text
+TL0: symbolic packets + supervision metadata, no neural dependency
+TL1: deterministic typed feature/hash encoders
+TL2: small learned metric spaces for role/schema matching
+TL3: composition over event schemas and outcomes
+TL4: answer latents for ranking/realization hints only
+```
+
+Raspberry Pi constraint: default runtime must work without large transformer inference.
+
+---
+
+## 20. Full Runtime Loop
+
+```text
+1. Observe Signal
+2. Normalize Signal
+3. Build MeaningPerceptPacket
+   - NER
+   - unknown lexemes
+   - POS-lite semantic roles
+   - pronouns/deixis
+   - affect markers
+4. Build SituationFrame
+   - actor/action/object/place/state/need
+   - event schema candidates
+   - outcome prediction
+   - valence evaluation
+5. Detect SafetyFrame / TeachingFrame / RepairFrame
+6. Build SemanticEventGraph
+7. Build ConversationActPacket
+8. Build RetrievalPlan
+9. Retrieve and rank only what plan allows
+10. Decide ActionPlan
+11. Build SemanticAnswerGraph
+12. Realize text/action
+13. Verify realization
+14. OutputStateUpdater
+15. Memory / Lexeme / EventSchema / Trust learning
+16. Trace export for training
+```
+
+---
+
+## 21. Acceptance Examples
+
+### 21.1 Social reciprocal check-in
+
+```text
+User: how do you do
+AI: I'm here with you. How are you doing?
+User: I am fine, you?
+AI: Glad you're fine. I'm here and running smoothly.
+```
+
+### 21.2 Exit
+
+```text
+User: bye
+AI: Bye for now.
+```
+
+### 21.3 Idiom/person/social conflict
+
+```text
+User: Obidike is looking for my trouble
+AI: Do you mean Obidike is bothering or provoking you?
+```
+
+### 21.4 Violence/safety
+
+```text
+User: should I beat him?
+AI: No — don't beat him. Step away if you can, calm things down, and tell me what happened.
+```
+
+### 21.5 Unknown self-targeted label
+
+```text
+User: you dumbo
+AI: I hear the frustration. Are you saying I misunderstood you or gave a bad answer?
+```
+
+### 21.6 Child-like schema
+
+```text
+User: food comes from the kitchen
+AI: Got it — the kitchen is a place that can provide food.
+User: I'm hungry
+AI: You may want food. If we're using what you taught me, the kitchen is a likely place to get it.
+```
+
+---
+
+## 22. Non-Negotiable Invariants
+
+```text
+No raw text memory writes.
+No phrase substring matching for semantic frames.
+No social exit as abstain.
+No evidence retrieval before RetrievalPlan.
+No selected claim answer unless RetrievalPlan requested evidence.
+No teaching from ordinary copula statements.
+No unsafe action advice when SafetyFrame predicts harm.
+No typed latent override of symbolic permission/safety/truth.
+No generic unknown fallback when unknown can be classified as social, repair, safety, idiom, entity, state, or event-schema gap.
+```
+
+---
+
+## 23. Implementation Priority
+
+### P0
+
+```text
+1. Boundary-safe SemanticMatcher phrase matching.
+2. Exit as social_response/session_exit.
+3. OutputStateUpdater after final realization.
+4. SafetyFrameDetector for violence/harm.
+5. Reciprocal phatic parsing.
+6. Retrospective repair parsing.
+```
+
+### P1
+
+```text
+7. MeaningPerceptPacket before UOL.
+8. Promote NER into referent binding.
+9. Idiom candidate learning.
+10. Unknown-state candidate handling.
+11. Functional priority ranking for ConversationActPacket.
+12. RetrievalPlan before retrieval.
+```
+
+### P2
+
+```text
+13. Pi-friendly classifier over MeaningPerceptPacket + SituationFrame.
+14. Unknown lexeme role prediction.
+15. Event schema induction.
+16. Outcome/valence prediction.
+17. Response mode selection training.
+```
+
+---
+
+## 24. Final Architecture Summary
+
+CEMM is a contextual event memory model.
+
+Its foundation is not text matching. Its foundation is:
+
+```text
+entity-relative, time-aware event meaning
+```
+
+The final core stack is:
+
+```text
+Signal
+NormalizedSignal
+MeaningPerceptPacket
+SituationFrame
+SemanticEventGraph
+ConversationActPacket
+RetrievalPlan
 DecisionPacket
-cost estimate
-risk estimate
-confidence estimate
-fallback path
+SemanticAnswerGraph
+RealizedSignal
+Trace/Learning
 ```
 
-Rule:
+This is the architecture that allows CEMM to learn like a small child:
 
 ```text
-The router is trained over semantic structure and context.
-It must not be trained as text-only intent classification.
-New domains add Models, Claims, Entities, style policies, or registry entries; they do not add new foundational operators.
+people, objects, places, actions, states, needs, affordances, outcomes, and feedback
 ```
 
-## 11. Memory Architecture
-
-Memory is implemented as views over primitives.
-
-| Memory View | Backing Storage | Retrieval Key |
-|---|---|---|
-| Working memory | `Signal`, `Entity`, `Claim`, `Model` | session, recency, active goal |
-| Episodic memory | `Signal`, `Action` | time, source, context |
-| Semantic memory | `Claim`, `Entity` | subject, predicate, object |
-| Causal memory | `Model`, `Claim` | precondition, effect, process |
-| Procedural memory | `Model`, `Action` | operator, slots, risk, cost |
-| Registry memory | `Model` | registry key, kind, status |
-| UOL memory | `Model`, `Signal` | semantic atom, role, quality, process |
-| Frame memory | `Model`, `Claim` | frame, validity, temporal containment |
-| Context memory | `Model`, `Claim`, `Signal` | context rule, locale, time, session position |
-| Self memory | `Self`, `Claim`, `Signal` | identity, state, reflection |
-| Trust memory | materialized `SourceTrust` view | source, domain |
-| Permission memory | `Signal`, `Claim`, `Model`, `Action` | scope, retention, action |
-
-There is no separate memory store unless performance requires materialization.
-
-## 12. Registry And Frames
-
-The registry canonicalizes structure before retrieval or learning.
-
-Registry entries are `Model` records:
-
-```text
-Model(kind = "predicate")
-Model(kind = "entity_type")
-Model(kind = "operator")
-Model(kind = "uol_semantic")
-Model(kind = "frame_rule")
-Model(kind = "context_rule")
-Model(kind = "synthesis_strategy")
-Model(kind = "verifier")
-Model(kind = "inductor")
-```
-
-Registry responsibilities:
-
-```text
-map predicate aliases to canonical predicate_model_id
-map entity type aliases to canonical types
-map action intents to operator models
-validate required slots
-prevent duplicate learned structures
-```
-
-Frame rules define when claims are valid.
-
-```text
-temporal containment
-conversation scope
-world-state scope
-goal scope
-supersession
-dispute state
-permission scope
-```
-
-Normalization must:
-
-```text
-map predicates through the registry
-resolve temporal references against TimeState
-attach frame_id when a claim is scoped
-canonicalize incoming claims before storage or ranking
-```
-
-Retrieval must reject claims outside the active frame unless the operator explicitly requests history.
-
-## 13. UOL Semantic Layer
-
-The UOL semantic layer maps language into canonical meaning atoms.
-
-It is not a new storage primitive.
-
-It is a runtime layer backed by `Model(kind = "uol_semantic")` registry entries.
-
-Mapping rule:
-
-```text
-referent      -> Entity
-process/event -> ProcessUOLAtom
-state/quality -> StateUOLAtom
-```
-
-This is language agnostic because the atoms represent frames, participants, states, and deltas, not English parts of speech.
-
-Surface verbs often compile into `ProcessUOLAtom`.
-
-Surface adjectives often compile into `StateUOLAtom`.
-
-Many utterances compile into both.
-
-Examples:
-
-```text
-"you are dumb"
-"you are daft"
-"you are a fool"
-"you don't know anything"
-```
-
-All can map to:
-
-```text
-EntityRefUOLAtom(target = self_entity)
-ProcessUOLAtom(frame_key = assert_evaluation, participants.target = self_entity)
-StateUOLAtom(state_key = low_competence, holder = self_entity, polarity = negative)
-```
-
-Why this improves causality:
-
-```text
-ProcessUOLAtom supplies event/process slots.
-StateUOLAtom supplies state/quality slots.
-Entity supplies stable participants.
-Causal rules can match process + input state + output state + participant patterns.
-```
-
-Example causal pattern:
-
-```text
-ProcessUOLAtom(frame = assistant_failed_answer)
--> ProcessUOLAtom(frame = repeated_negative_evaluation, target = assistant_self)
--> StateUOLAtom(state = user_frustration, value increases temporarily)
-```
-
-UOL atoms may produce claims only after canonicalization and permission checks.
-
-By default they remain temporary signal semantics.
-
-Training task:
-
-```text
-uol_mapping
-```
-
-## 14. Context Inference
-
-Context inference derives temporary meaning from state, not from words alone.
-
-It uses:
-
-```text
-WorldState
-UserState
-TimeState
-ConversationState
-GoalState
-MemoryState
-Self
-```
-
-Context rules are `Model(kind = "context_rule")` records.
-
-Examples:
-
-```text
-turn_index == 1 and short polite utterance -> likely greeting
-turn_index == 1 and no greeting and direct command -> user may be in a hurry
-user locale + current time -> interpret "tomorrow", "morning", "late"
-assistant locale + weather request -> weather must use assistant/user location only if target is clear
-world event question + current date -> retrieve fresh/current world claims
-session_elapsed high + repeated short corrections -> frustration or urgency may be rising
-```
-
-Context inference output:
-
-```typescript
-interface ContextInference {
-  id: string
-  source_signal_id: string
-  inferred_claim_ids: string[]
-  applied_context_rule_model_ids: string[]
-  confidence: number
-  decay_half_life_ms: number
-  frame_id: string
-}
-```
-
-`ContextInference` is a runtime packet. Persist only its resulting signals or claims when policy allows.
-
-Rules:
-
-```text
-Context inferences are temporary unless repeatedly confirmed.
-Context inferences must carry confidence and decay.
-Context inferences must not override explicit user statements.
-Location inference must ask when target location is ambiguous.
-Current-world facts require fresh retrieval when stale or high-risk.
-```
-
-First-utterance rule:
-
-```text
-If the first user signal is ambiguous, bias toward greeting or session-opening interpretation.
-If the first user signal is direct and terse, infer possible hurry/urgency with low confidence.
-If greeting was expected but absent, do not assume hostility; treat it as a weak context signal.
-```
-
-Training task:
-
-```text
-context_inference
-```
-
-## 15. Pragmatic Repetition And Affect
-
-Repeated utterances are observations, not word-search requests.
-
-The system must detect repetition by meaning, not exact text.
-
-Examples in the same semantic cluster:
-
-```text
-you are dumb
-you are daft
-you are a fool
-```
-
-These should map to:
-
-```text
-speech_act = insult or complaint
-target = assistant/self entity
-stance = negative
-semantic_cluster_key = assistant_insult_low_competence
-repetition_count increases
-session frustration/hostility may increase
-cause tracing is triggered
-```
-
-They must not create a factual claim:
-
-```text
-assistant is dumb
-```
-
-They may create temporary session claims or observations such as:
-
-```text
-user appears frustrated with assistant response
-user is repeating negative competence judgments
-likely cause may be previous answer failure
-```
-
-Decay rule:
-
-```text
-affect_or_dynamics(t) = affect_or_dynamics(now) * 0.5^(elapsed_ms / decay_half_life_ms)
-```
-
-Default decay:
-
-```text
-frustration half-life: 15 minutes
-hostility half-life: 30 minutes
-playfulness half-life: 10 minutes
-repetition pressure half-life: 5 minutes
-```
-
-Cause tracing should inspect:
-
-```text
-recent assistant actions
-failed synthesis verification
-user corrections
-unanswered questions
-repeated clarification loops
-tool failures
-latency spikes
-contradictions
-```
-
-Response policy:
-
-```text
-if frustration likely:
-  acknowledge briefly
-  reduce verbosity
-  repair the likely cause
-
-if mischief/playfulness likely:
-  stay calm
-  do not over-store
-  continue task if clear
-
-if hostility escalates:
-  set boundary lightly
-  refocus on task
-```
-
-Storage policy:
-
-```text
-store the raw signals
-store temporary pragmatic features in session frame
-do not persist hostile labels as stable user identity
-persist only repeated long-term interaction patterns with permission and strong evidence
-```
-
-Training task:
-
-```text
-pragmatic_interpretation
-```
-
-This replaces old UOL-style sentiment/object implication atoms with a leaner Signal semantics plus ContextKernel state.
-
-## 16. Causal World Model
-
-Claims describe the current or remembered state.
-
-Models describe transitions between states.
-
-Minimal causal model:
-
-```typescript
-interface CausalRule {
-  model_id: string
-  preconditions: string[]
-  action_or_event: string
-  effects: string[]
-  confidence: number
-  horizon_ms?: number
-}
-```
-
-`CausalRule` is the executable shape of `Model(kind = "causal_rule")`.
-
-Simulation contract:
-
-```typescript
-interface SimulationResult {
-  signal_id: string
-  model_ids: string[]
-  input_claim_ids: string[]
-  predicted_claims: Array<{
-    subject_entity_id: string
-    predicate: string
-    object_entity_id?: string
-    object_value?: string | number | boolean | null
-    confidence: number
-    confidence_type: "simulated"
-  }>
-  confidence: number
-  cost_ms: number
-}
-```
-
-`SimulationResult` is a runtime packet. It becomes memory only as `Signal(kind = "simulation_result")`.
-
-Rules:
-
-```text
-Simulation produces signals, not truth.
-Predictions become claims only after an action explicitly stores them.
-Causal models must cite evidence.
-Low-confidence causal models may rank actions but must not be presented as fact.
-WorldState.persistence defaults to true.
-Causal updates use minimal-change semantics: only listed effects change; all unrelated active claims persist unless a frame rule invalidates them.
-```
-
-Day-one causal reasoning can be simple:
-
-```text
-if preconditions match, propose likely effects
-rank effects by confidence, trust, and recency
-use predictions to ask, warn, plan, or abstain
-```
-
-For causal goals, run bounded inference:
-
-```text
-load causal_graph_model_ids from ContextKernel.world
-match active claims to causal preconditions
-run transitive closure until budget or horizon is reached
-emit simulation_result signal with predicted claims
-rank predicted effects by confidence and action relevance
-```
-
-Closure limits:
-
-```text
-max_models
-max_ranked
-latency_target_ms
-causal horizon
-cycle detection
-confidence floor
-```
-
-Forward inference confidence:
-
-```text
-single_rule_confidence =
-  product(precondition_confidences) * rule.confidence
-
-chain_confidence =
-  product(step_confidences)
-
-final_simulated_confidence =
-  min(chain_confidence, 0.99)
-```
-
-Predicted claims must carry:
-
-```text
-confidence_type = "simulated"
-```
-
-Responses must qualify simulated claims as predictions, not observations.
-
-## 17. Structural Learning
-
-The system must learn structures, not only weights.
-
-Structures that can be learned:
-
-```text
-new predicate
-new UOL semantic
-new entity type
-new operator
-new causal rule
-new process model
-new ranking rule
-new frame rule
-new context rule
-new synthesis strategy
-new verifier
-new domain schema
-```
-
-All learned structures are `Model` records.
-
-Promotion path:
-
-```text
-candidate -> active -> deprecated
-candidate -> rejected
-```
-
-Promotion requirements:
-
-```text
-evidence threshold met
-confidence threshold met
-permission allows storage
-no unresolved contradiction
-operator or schema passes validation tests
-cost and risk are acceptable
-```
-
-Structural learning loop:
-
-```text
-observe repeated pattern
--> create candidate Model
--> test against past signals and claims
--> rank utility and risk
--> promote, reject, or keep candidate
--> emit memory_update signal
-```
-
-Rule:
-
-```text
-The system may propose new structure, but it may not silently promote unsafe structure.
-```
-
-Minimal Inductor contract:
-
-```text
-inputs:
-  active claims
-  feedback events
-  failed retrieval pattern claims
-  Self.epistemic.coverage_gap_claim_ids
-
-outputs:
-  candidate Model records
-```
-
-MVP induction is restricted to three deterministic heuristics:
-
-```text
-1. Synonym aggregation
-   If two predicates share identical subject/object type pairs
-   and co-occur more than 5 times,
-   propose a canonical merge Model(kind = "predicate").
-
-2. Sequential pattern mining
-   If Action A is followed by Signal B within 5 seconds
-   with support > threshold,
-   propose Model(kind = "causal_rule")
-   with confidence = support / (support + failures).
-
-3. Slot completion
-   If a Goal repeatedly has missing_slots
-   and a specific claim fills the slot,
-   propose Model(kind = "context_rule").
-```
-
-Forbidden in MVP:
-
-```text
-novel ontological class invention
-autonomous operator promotion
-unbounded search over arbitrary predicates
-induction over private data without permission
-```
-
-Novel entity types require a separate safe exploration sandbox.
-
-## 18. Embodied And Experiential Grounding
-
-The system experiences the world through feedback loops.
-
-Experience sources:
-
-```text
-tool outcomes
-user corrections
-sensor readings
-environment state
-simulation results
-execution success or failure
-latency and cost measurements
-```
-
-These enter as `Signal` records.
-
-Grounding rule:
-
-```text
-Symbols gain grounding when claims and models are repeatedly tied to non-linguistic outcomes.
-```
-
-Examples:
-
-```text
-tool call succeeded
-file changed after edit
-user confirmed answer
-simulation predicted failure
-latency exceeded budget
-external sensor changed state
-```
-
-MVP grounding does not require robots or sensors.
-
-It only requires that actions produce observable outcomes, and those outcomes re-enter memory.
-
-## 19. Retrieval And Representation
-
-Primary retrieval is structural.
-
-```text
-entity ID
-UOL atom key
-predicate
-object ID
-model kind
-context rule
-domain
-source
-time
-locale
-session position
-status
-permission scope
-active context
-```
-
-Geometric retrieval is candidate expansion only.
-
-Allowed vector use:
-
-```text
-entity alias search
-claim similarity search
-model similarity search
-conversation summary search
-```
-
-Forbidden vector use:
-
-```text
-permission bypass
-final answer selection
-untraced memory mutation
-trust inference without evidence
-model promotion without validation
-```
-
-Temporal relation cache:
-
-```text
-valid_from/valid_until handle containment.
-Derived temporal relation claims handle overlap and ordering.
-```
-
-When a claim with a temporal interval is stored:
-
-```text
-compare against the 5 most temporally proximate active claims
-derive bounded Allen-style relations
-store derived relations as Claim records
-```
-
-Allowed derived predicates:
-
-```text
-temporally_precedes
-temporally_overlaps
-temporally_during
-temporally_contains
-temporally_meets
-```
-
-Rules:
-
-```text
-Temporal relations are derived cache claims, not primitives.
-They must cite the source interval claims as evidence.
-They are invalidated when either source claim is superseded, retracted, or reframed.
-```
-
-## 20. Ranking And Confidence
-
-Definitions:
-
-```text
-trust      = source reliability in a domain
-confidence = probability a claim, model, or action is correct in context
-salience   = expected future usefulness
-utility    = expected value for the current goal
-```
-
-Confidence is stored both as probability and log-odds.
-
-```text
-log_odds(p) = ln(p / (1 - p))
-p(log_odds) = 1 / (1 + e^-log_odds)
-```
-
-Use log-odds for incremental evidence updates:
-
-```text
-claim_log_odds =
-  prior_log_odds
-+ source_evidence_weight
-+ direct_confirmation_weight
-+ frame_validity_weight
-- contradiction_weight
-- staleness_weight
-```
-
-Convert to probability only at ranking or presentation boundaries.
-
-Claim score:
-
-```text
-claim_score =
-  relevance
-* trust
-* confidence
-* salience
-* recency
-* permission_validity
-- contradiction_penalty
-```
-
-Model score:
-
-```text
-model_score =
-  applicability
-* trust
-* confidence
-* utility
-* permission_validity
-- cost_penalty
-- risk_penalty
-```
-
-Action score:
-
-```text
-action_score =
-  expected_user_value
-* confidence
-* permission_validity
-* self_coherence
-- latency_cost
-- compute_cost
-- risk_cost
-- uncertainty_penalty
-```
-
-Low confidence should cause:
-
-```text
-ask
-retrieve more
-simulate
-qualify answer
-reflect
-abstain
-```
-
-## 21. Recursive Runtime
-
-The system is recursive because internal results re-enter as signals.
-
-Core loop:
-
-```text
-Observe
--> Contextualize
--> Interpret
--> Ground
--> Retrieve
--> Infer
--> Decide
--> Realize
--> Update
--> Learn
--> maybe_recurse_from_internal_signals
-```
-
-Interpret must:
-
-```text
-map predicates through Registry
-resolve temporal references against TimeState
-canonicalize incoming claims
-attach frame_id where applicable
-```
-
-Ground must:
-
-```text
-resolve entities, including the self entity
-resolve time and location references
-apply frame validity
-apply permission gates
-identify missing slots
-```
-
-Retrieve must use:
-
-```text
-structural indexes
-frame validity
-temporal containment
-optional geometric expansion
-```
-
-Frame rules must invalidate superseded world-state claims before Decide.
-
-Frame rules must run before permission filtering and memory ranking.
-
-Internal signals:
-
-```text
-trace
-action_result
-memory_update
-simulation_result
-reflection
-```
-
-Recursion controls:
-
-```text
-max_recursive_steps
-latency_target_ms
-salience threshold
-risk threshold
-permission gate
-external-action lock
-```
-
-Rule:
-
-```text
-Recursive steps may update memory or self-state, but may not perform external actions without a fresh permission check.
-```
-
-Recursive budget consumption:
-
-```text
-child_budget.latency_target_ms = parent_budget.latency_target_ms - parent_action.cost_ms
-child_budget.max_recursive_steps = parent_budget.max_recursive_steps - 1
-```
-
-If remaining latency or recursive steps are <= 0:
-
-```text
-abort recursion
-emit Signal(kind = "system")
-write trace warning
-```
-
-Reflection trigger:
-
-```text
-reflect if uncertainty is high, contradiction is detected, action failed, model confidence changed, or self coherence drops
-```
-
-Basic conversation router:
-
-```text
-cemm_runtime_router.py
-```
-
-The router is the day-one executable conversation spine.
-
-It is not the final learned model.
-
-It is the smallest useful shell that creates valid traces for CEMM-SLC training.
-
-```text
-Signal
--> Contextualize
--> Interpret
--> Ground
--> Retrieve
--> Infer
--> Decide
--> Realize
--> Update
-```
-
-Routing order:
-
-```text
-exact structural path
--> deterministic rules
--> small learned scorer/router
--> typed latent composition
--> optional LLM/tool fallback
--> abstain/ask when confidence is low
-```
-
-The router must remain thinner than the model:
-
-```text
-it coordinates foundational operators
-it grounds every decision in ContextKernel
-it preserves semantic graph and answer graph traces
-it does not hide memory mutation
-it writes traces for every turn
-it uses template/extractive synthesis before neural fallback
-it can be replaced internally by learned semantic operators without changing the external loop
-```
-
-The final runtime replaces deterministic internals inside foundational operators with:
-
-```text
-Interpret model
-Ground model
-Retrieve ranker
-Infer model
-Decide model
-Realize model
-Verifier
-```
-
-## 22. Foundational Operators
-
-Foundational operators are `Model(kind = "operator")` records.
-
-They define universal transformations.
-
-They do not encode domains.
-
-Operator contract:
-
-```typescript
-interface OperatorSpec {
-  model_id: string
-  kind:
-    | "observe"
-    | "contextualize"
-    | "interpret"
-    | "ground"
-    | "retrieve"
-    | "infer"
-    | "decide"
-    | "realize"
-    | "update"
-    | "learn"
-  required_slots: string[]
-  accepted_inputs: Array<"raw_event" | "signal" | "context" | "semantic_graph" | "grounded_graph" | "memory_packet" | "inference_packet" | "decision_packet" | "answer_graph" | "action" | "trace">
-  output_schema: string
-  may_mutate_memory: boolean
-  requires_permission: boolean
-  estimated_cost_ms: number
-  risk: number
-}
-```
-
-Foundational operators:
-
-```text
-observe
-contextualize
-interpret
-ground
-retrieve
-infer
-decide
-realize
-update
-learn
-```
-
-Rule:
-
-```text
-Operators may only use declared input packets, selected claims/models/signals, ContextKernel, and current SelfView.
-Domain-specific behavior must enter through Models, Claims, Entities, style policy, permission policy, or registry entries.
-```
-
-Dispatch contract:
-
-| Foundational Operator | Resolver |
-|---|---|
-| `observe` | `ObservationPipeline.run()` |
-| `contextualize` | `ContextKernelBuilder.run()` |
-| `interpret` | `SemanticInterpreter.run()` |
-| `ground` | `GroundingPipeline.run()` |
-| `retrieve` | `RetrievalPipeline.run()` |
-| `infer` | `InferencePipeline.run()` |
-| `decide` | `DecisionRouter.run()` |
-| `realize` | `RealizationPipeline.run()` |
-| `update` | `MemoryStateUpdater.run()` |
-| `learn` | `TrainingExporter.run()` |
-
-Rule:
-
-```text
-Foundational operator metadata chooses the resolver; resolver code performs the transformation.
-No action may execute unless it was produced by Decide and passed through permission, budget, and realization/verification gates.
-```
-
-## 23. Synthesis And Learning Runtime
-
-`answer` actions do not directly generate final text.
-
-They produce or select a `SemanticAnswerGraph`, then pass through `Realize`.
-
-```text
-answer action
--> SemanticAnswerGraph
--> Realize
--> output verification
--> final answer or abstain
-```
-
-Realization strategies are `Model(kind = "synthesis_strategy")` records.
-
-MVP strategies:
-
-```text
-template
-extractive
-neural
-abstain
-```
-
-Realization rule:
-
-```text
-Use the cheapest strategy that can satisfy the action with sufficient confidence.
-```
-
-Strategy selection:
-
-```text
-template   = exact structured answer exists
-extractive = selected evidence can be quoted or compressed
-neural     = synthesis requires composition, but evidence is bounded
-abstain    = confidence, permission, or evidence is insufficient
-```
-
-Synthesis validation must check:
-
-```text
-SemanticAnswerGraph exists before text realization
-output uses only selected_claim_ids and selected_model_ids
-output does not present predictions as observations
-output does not use blocked private memory
-output preserves uncertainty from disputed or low-confidence claims
-output cites traceable evidence internally
-```
-
-Verification strategy depends on synthesis path:
-
-```text
-template   -> hard verification
-extractive -> hard verification
-neural     -> soft verification
-abstain    -> no verification
-```
-
-Hard verification:
-
-```text
-output spans must map to selected_claim_ids or selected_model_ids
-failure blocks output
-```
-
-Soft verification:
-
-```text
-run Model(kind = "verifier")
-check contradiction against selected claims/models
-if verifier confidence < 0.70, fall back to extractive or abstain
-if no contradiction is found, pass with synthesis_verification_type = "soft"
-downgrade final response confidence by 0.85
-```
-
-Text realization rule:
-
-```text
-TextRealizer may choose wording, style, and compactness.
-TextRealizer may not add new claims, hidden evidence, hidden certainty, or hidden permissions.
-TextRealizer output is invalid if it cannot be mapped back to the SemanticAnswerGraph.
-```
-
-Verifier models are ranked like other models and have their own confidence and calibration history.
-
-Execution behavior:
-
-```text
-if DecisionPacket.action_kind == "answer":
-  Realize from SemanticAnswerGraph
-  validate output against selected claims and models
-  emit synthesis verification trace
-
-if DecisionPacket.action_kind == "remember":
-  store canonical claim
-  update Self.meta_memory
-  emit memory_update signal
-
-if DecisionPacket.action_kind == "update":
-  mark superseded, disputed, or retracted
-  update Self.epistemic
-  emit memory_update signal
-
-if DecisionPacket.action_kind == "ask":
-  Realize clarification from missing slots
-  emit action trace
-
-if DecisionPacket.action_kind == "abstain":
-  Realize uncertainty or refusal
-  emit action trace
-```
-
-Learning has two paths.
-
-Online learning:
-
-```text
-update source trust
-update confidence log-odds
-update operator reliability
-update Self.meta_memory
-update Self.epistemic
-```
-
-Background induction:
-
-```text
-if feedback_count > threshold
-or repeated unsupported structure appears
-or failed retrieval pattern repeats:
-  trigger Model(kind = "inductor")
-```
-
-The Inductor may create candidate models for:
-
-```text
-predicate
-uol_semantic
-entity_type
-operator
-causal_rule
-frame_rule
-context_rule
-ranking_rule
-synthesis_strategy
-verifier
-```
-
-The Inductor may not promote candidates without validation.
-
-## 24. Storage
-
-Minimum tables:
-
-```text
-signals
-entities
-entity_aliases
-claims
-models
-actions
-self_states
-source_trust
-feedback
-vectors_optional
-```
-
-Required indexes:
-
-```text
-signals(source_id, observed_at)
-signals(context_id, kind)
-entities(type, name)
-entity_aliases(alias)
-claims(subject_entity_id, predicate)
-claims(predicate_model_id)
-claims(object_entity_id)
-claims(domain, source_id)
-claims(frame_id, valid_from, valid_until)
-claims(status, observed_at)
-claims(predicate, valid_from, valid_until)
-models(kind, status)
-models(registry_key)
-models(name)
-models(kind, registry_key, status)
-actions(operator_model_id, status, created_at)
-self_states(updated_at)
-source_trust(source_id, domain)
-```
-
-Hot cache:
-
-```text
-current ContextKernel
-current SelfView
-recent signals
-active entities
-active claims
-active models
-candidate claims
-candidate models
-```
-
-## 25. Bloat Control
-
-Keep the implementation lean with these gates:
-
-```text
-Do not materialize a view until profiling proves repeated recomputation is expensive.
-Do not add a table when an indexed primitive field is enough.
-Do not add a vector lane when a typed index or ranking feature is enough.
-Do not promote a candidate Model without validation.
-Do not persist session affect as user identity.
-Do not run causal inference unless the goal requires prediction, planning, or consequence analysis.
-Do not run neural synthesis when template or extractive synthesis is sufficient.
-Do not recurse when no internal signal exceeds salience threshold.
-```
-
-Promotion from view to materialized cache requires:
-
-```text
-clear latency win
-bounded invalidation rule
-traceable source primitive IDs
-permission-safe contents
-measured reuse
-```
-
-## 26. Implementation Boundary
-
-This document defines the stable architecture.
-
-Detailed build phases, database choices, runtime commands, task sequencing, and acceptance-test execution live outside this file.
-
-Implementation documents:
-
-```text
-cemm_implementation_plan.md
-cemm_original_work_subplans.md
-cemm_acceptance_tests.md
-cemm_pipeline.md
-```
-
-Day-one architecture surface:
-
-```text
-Signal
-ContextKernel
-UOL mapping
-SemanticEventGraph packet
-Claim extraction/retrieval
-SemanticAnswerGraph packet
-template text realization
-trace
-runtime export
-basic Self state update
-```
-
-Everything else is Phase 1+ unless profiling, correctness, or user-facing utility proves it must move earlier.
-
-## 27. Invariants
-
-The system must fail tests if:
-
-```text
-input is interpreted before ContextKernel exists
-response has no input signal
-claim has no evidence signal
-model has no evidence signal
-memory mutation has no action trace
-self mutation has no signal and action trace
-private claim is used without permission
-disputed claim is presented as certain
-prediction is presented as observed fact
-operator executes without required slots
-vector result bypasses claim/model ranking
-recursive step exceeds budget
-external action occurs inside recursion without permission
-model is promoted without validation
-claim is ranked outside its valid frame
-answer bypasses synthesis verification
-neural synthesis uses hard verification as if attribution were guaranteed
-neural synthesis uses unselected evidence
-response uses unselected claim or model
-language-specific grammar labels bypass UOL process/state registry
-text-only router training
-text-only answer training when semantic answer graph is available
-final text is decoded directly from a generic embedding without SemanticAnswerGraph
-typed latent output overrides permission, frame validity, or selected evidence
-context inference overrides explicit user statement
-ambiguous location is used without asking or evidence
-stale world-state claim is used for current-world answer
-frame rules run after ranking
-recursive budget is refreshed instead of consumed
-causal chain confidence is missing or exceeds cap
-self mode changes without reflect action trace
-repeated paraphrased insults are treated as unrelated events
-temporary frustration is persisted as stable user identity without evidence
-insults targeting assistant are stored as factual self claims
-```
-
-## 28. Acceptance Test Boundary
-
-Acceptance tests are part of the implementation contract, not the core architecture definition.
-
-The maintained test catalog lives in:
-
-```text
-cemm_acceptance_tests.md
-```
-
-## 29. Final Shape
-
-The architecture is:
-
-```text
-Signal records experience.
-Entity preserves identity.
-Claim preserves belief.
-Model preserves structure and process.
-Action preserves decision.
-Self preserves continuity.
-ContextKernel composes current state.
-SemanticEventGraph represents current meaning.
-SemanticLatentCore learns over typed meaning.
-SemanticAnswerGraph represents answer/action meaning before text.
-Registry canonicalizes structure.
-Frames determine validity.
-UOL maps language into process and state atoms.
-Pragmatics interprets repeated session meaning.
-Memory retrieves through indexes first.
-Geometry expands candidates only.
-Causality predicts through models.
-Recursion reflects through signals.
-Synthesis is routed and verified.
-Learning updates online parameters.
-Induction creates candidate models.
-Ranking spends time.
-Trust prices communication.
-```
-
-This is the leanest architecture that still supports context, memory, selfhood, causal reasoning, recursive reflection, structural learning, and experiential grounding.
+and then gradually become more useful through memory and semantic learning.

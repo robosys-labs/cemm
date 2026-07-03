@@ -1,6 +1,6 @@
 """MeaningPerceptor — builds MeaningPerceptPacket from signal + NER + lexeme memory.
 
-Implements §8.2 from cemm_foundational_fixes.md and §5 from architecture_new.md.
+Implements §8.2 from cemm_foundational_fixes.md and §5 from architecture.md.
 
 The MeaningPerceptPacket is the first place where NER, POS-lite role cues,
 unknown token detection, slang repair, and referent binding meet. It must be
@@ -63,6 +63,28 @@ _PRONOUN_MAP: dict[str, tuple[str, str, str]] = {
 # Deictic words
 _DEICTIC_WORDS = {"here", "there", "this", "that", "those", "these", "now", "then"}
 
+# Words that should never be treated as entity candidates even when capitalized.
+# This includes pronouns, stopwords, common sentence starters, greetings/fillers,
+# and affect markers. Phone keyboards auto-capitalize the first word of every
+# sentence, so we cannot rely on capitalization alone for proper-noun detection.
+_ENTITY_EXCLUDE: frozenset[str] = frozenset({
+    # pronouns
+    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
+    "my", "your", "his", "its", "our", "their", "mine", "yours", "ours", "theirs",
+    "myself", "yourself", "himself", "herself", "itself", "ourselves", "yourselves", "themselves",
+    # articles / determiners / prepositions / conjunctions
+    "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
+    "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+    "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
+    "those", "what", "which", "who", "when", "where", "why", "how", "all", "each", "every", "some", "any",
+    "no", "not", "only", "just", "so", "very", "too", "also", "am", "about", "actually", "wait",
+    # greetings / fillers / acknowledgements (common sentence starters)
+    "hi", "hey", "hello", "bye", "goodbye", "oh", "well", "hmm", "uh", "um",
+    "yeah", "yup", "ok", "okay", "sure", "right", "yes", "nah",
+    "lol", "haha", "heh", "lmao", "rofl", "wow", "yay", "aww", "boo", "meh", "huh",
+    "please", "thanks", "thank", "urgh", "urghh", "ugh", "ughh", "argh", "seriously", "really",
+})
+
 # State keywords mapped to state keys and dimensions
 _STATE_KEYWORDS: dict[str, tuple[str, str, str]] = {
     # surface -> (state_key, dimension, polarity)
@@ -124,11 +146,15 @@ _ACTION_KEYWORDS: dict[str, str] = {
 
 # Affect markers
 _AFFECT_MARKERS = {
-    "frustration": {"ugh", "argh", "seriously", "come on", "really"},
+    "frustration": {"ugh", "argh", "seriously", "come on", "really", "urgh", "urghh", "ughh",
+                    "canned responses", "same response", "generic response", "template response",
+                    "scripted", "copy paste", "robotic", "pattern matcher"},
     "playful": {"lol", "haha", "heh", "lmao", "rofl"},
     "sadness": {"sigh", "alas", "unfortunately"},
     "anger": {"damn", "crap", "hell"},
     "surprise": {"wow", "whoa", "omg", "oh my"},
+    "repair": {"what", "wait what", "lol what", "huh", "what are you talking about",
+               "what do you mean", "i don't get it", "come again"},
 }
 
 
@@ -235,20 +261,40 @@ class MeaningPerceptor:
                     confidence=0.9,
                 ))
 
-        # Detect capitalized tokens as person/place candidates
-        for token in raw_text.split():
+        # Detect capitalized tokens as person/place candidates.
+        # Phone keyboards auto-capitalize the first word of every sentence, so
+        # we cannot rely on capitalization alone. Instead, we exclude pronouns,
+        # stopwords, greetings/fillers, and known words. Position 0 gets lower
+        # confidence since it may be auto-capitalized rather than a proper noun.
+        known_words = set()
+        if self._surface_tagger:
+            known_words = getattr(self._surface_tagger, "_known_words", set())
+        raw_tokens = raw_text.split()
+        seen_surfaces: set[str] = set()
+        for idx, token in enumerate(raw_tokens):
             clean = token.strip(".,!?;:\"'()[]{}")
-            if clean and clean[0].isupper() and clean.lower() not in token_set:
-                # Capitalized unknown token -> person/place candidate
-                if clean.lower() not in {p for p in _PRONOUN_MAP}:
-                    packet.referents.append(ReferentAtom(
-                        surface=clean,
-                        entity_type="person",
-                        role="topic",
-                        known=False,
-                        source="capitalization",
-                        confidence=0.6,
-                    ))
+            if not clean or not clean[0].isupper():
+                continue
+            lower = clean.lower()
+            if lower in _ENTITY_EXCLUDE:
+                continue
+            if lower in known_words:
+                continue
+            if self._lexeme_memory and self._lexeme_memory.lookup_active(lower):
+                continue
+            if lower in seen_surfaces:
+                continue
+            seen_surfaces.add(lower)
+            # Position 0 may be auto-capitalized by phone keyboard
+            confidence = 0.4 if idx == 0 else 0.6
+            packet.referents.append(ReferentAtom(
+                surface=clean,
+                entity_type="person",
+                role="topic",
+                known=False,
+                source="capitalization",
+                confidence=confidence,
+            ))
 
         # Detect deictic words
         for deictic in _DEICTIC_WORDS:
@@ -318,9 +364,6 @@ class MeaningPerceptor:
                 ))
 
         # Detect unknown lexemes
-        known_words = set()
-        if self._surface_tagger:
-            known_words = getattr(self._surface_tagger, "_known_words", set())
         for token in unknown_tokens:
             token_lower = token.lower()
             if token_lower in known_words:

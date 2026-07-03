@@ -1,0 +1,66 @@
+[
+  {
+    "capability_key": "remember_facts",
+    "aliases": ["remember", "store", "save facts", "remember things", "remember what i say", "remember facts"],
+    "supported": true,
+    "description": "I can remember facts you teach me and recall them later.",
+    "limitations": []
+  },
+  {
+    "capability_key": "learn_words",
+    "aliases": ["learn words", "learn new commands", "learn slang", "learn language", "learn new words", "learn commands"],
+    "supported": true,
+    "description": "I can learn new words, slang, and command aliases you teach me.",
+    "limitations": []
+  },
+  {
+    "capability_key": "tell_story",
+    "aliases": ["tell story", "tell stories", "make story", "make up a story", "write a story", "tell me a story"],
+    "supported": true,
+    "description": "I can tell short stories with a beginning, middle, and end.",
+    "limitations": ["Stories are short and template-based for now."]
+  },
+  {
+    "capability_key": "answer_questions",
+    "aliases": ["answer questions", "answer question", "respond to questions"],
+    "supported": true,
+    "description": "I can answer questions using facts I've been taught or can retrieve.",
+    "limitations": ["I won't make up answers if I don't have verified information."]
+  },
+  {
+    "capability_key": "browse_web",
+    "aliases": ["browse", "browse the web", "search the web", "lookup online", "go online", "internet", "web search", "google"],
+    "supported": false,
+    "requires_tool": "web",
+    "description": "I don't have live web access in this runtime unless a web tool is connected.",
+    "limitations": ["Requires a web tool to be connected."]
+  },
+  {
+    "capability_key": "play_music",
+    "aliases": ["play music", "play audio", "sing", "play a song", "make music", "stream music"],
+    "supported": false,
+    "description": "I can't play audio directly, but I can help choose music, write lyrics, or describe a playlist.",
+    "limitations": ["No audio output capability in this runtime."]
+  },
+  {
+    "capability_key": "see_images",
+    "aliases": ["see", "look at", "view images", "see pictures", "see photos", "look at pictures"],
+    "supported": false,
+    "description": "I can't see or interpret images in this runtime.",
+    "limitations": ["No vision capability."]
+  },
+  {
+    "capability_key": "run_code",
+    "aliases": ["run code", "execute code", "run python", "run javascript", "program", "code"],
+    "supported": false,
+    "description": "I can't execute code in this runtime.",
+    "limitations": ["No code execution sandbox."]
+  },
+  {
+    "capability_key": "chain_commands",
+    "aliases": ["chain commands", "multi-step", "do multiple things", "combine commands"],
+    "supported": true,
+    "description": "I can chain multiple commands and remember context across steps.",
+    "limitations": []
+  }
+]
