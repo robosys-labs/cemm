@@ -161,6 +161,7 @@ _FRAME_PRIORITY: list[str] = [
     "self_knowledge_query",
     "user_identity_query",
     "user_name_query",
+    "memory_query",
     "open_domain_entity_query",
     "story_request",
     "food_recommendation_request",

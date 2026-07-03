@@ -206,6 +206,63 @@ def test_high_repetition_friction_acknowledges_pattern() -> None:
     assert "same loop" in output.lower() or "going in circles" in output.lower() or "stuck" in output.lower()
 
 
+def test_runtime_transcript_handles_social_repair_capability_and_teaching_memory() -> None:
+    store, registry, op_registry, pipeline, learner, loop = _runtime()
+    ctx = "ctx_runtime_transcript_regression"
+    turn = [0]
+
+    def say(text: str) -> str:
+        output = process_input(text, store, registry, op_registry, pipeline, learner, loop, ctx, turn)
+        turn[0] += 1
+        return output
+
+    say("hi")
+
+    mixed_checkin = say("i'm good lol, how are you?")
+    assert "verified information" not in mixed_checkin.lower()
+    assert any(
+        cue in mixed_checkin.lower()
+        for cue in ("glad", "good", "doing", "here", "with you", "running")
+    )
+
+    skeptical_eval = say("I thought you are smarter than that now")
+    assert "verified information" not in skeptical_eval.lower()
+    assert any(
+        cue in skeptical_eval.lower()
+        for cue in ("try", "better", "missed", "understand", "simple")
+    )
+
+    negative_eval = say("really it seems you've rather gotten worse than before")
+    assert "verified information" not in negative_eval.lower()
+    assert any(
+        cue in negative_eval.lower()
+        for cue in ("try", "better", "missed", "understand", "simple", "reset")
+    )
+
+    capability = say("what then can you answer?")
+    assert "verified information" not in capability.lower()
+    assert any(cue in capability.lower() for cue in ("chat", "remember", "learn", "answer"))
+
+    insult = say("oh man you're much dumber than before")
+    assert "information to store" not in insult.lower()
+    assert any(cue in insult.lower() for cue in ("try", "better", "simple", "reset", "missed"))
+
+    learn = say("can you even learn?")
+    assert "verified information" not in learn.lower()
+    assert "learn" in learn.lower() or "remember" in learn.lower()
+
+    unknown_person = say("Do you know who Barack Obama is?")
+    assert "barack obama" in unknown_person.lower() or "name" in unknown_person.lower()
+
+    taught_fact = say("he's a former president, do you know what that means?")
+    assert "verified information" not in taught_fact.lower()
+    assert any(cue in taught_fact.lower() for cue in ("barack", "obama", "former", "president", "remember"))
+
+    recall = say("I told you about Barack Obama, do you remember anything?")
+    assert "interesting topic" not in recall.lower()
+    assert any(cue in recall.lower() for cue in ("barack", "obama", "former president", "president"))
+
+
 def test_cause_aware_loop_repair_mentions_seeded_cause() -> None:
     store, registry, op_registry, pipeline, learner, loop = _runtime()
     process_input("you are dumb", store, registry, op_registry, pipeline, learner, loop, "ctx_cause", [0])

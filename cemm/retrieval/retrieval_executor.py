@@ -146,6 +146,12 @@ class RetrievalExecutor:
                 entity_id = ref.get("entity_id", "")
                 if entity_id and entity_id not in entity_ids:
                     entity_ids.append(entity_id)
+        for entity_id in (
+            getattr(kernel.topic, "last_taught_entity_id", ""),
+            getattr(kernel.topic, "active_topic_entity_id", ""),
+        ):
+            if entity_id and entity_id not in entity_ids:
+                entity_ids.append(entity_id)
         if not entity_ids:
             trace.skipped.append("world_memory_without_target_entity")
             return
@@ -203,6 +209,8 @@ class RetrievalExecutor:
             getattr(kernel.world, "active_entity_ids", []),
             getattr(kernel.conversation, "active_entity_ids", []),
             getattr(kernel.memory, "working_entity_ids", []),
+            [getattr(kernel.topic, "last_taught_entity_id", "")],
+            [getattr(kernel.topic, "active_topic_entity_id", "")],
         ):
             for entity_id in source:
                 if entity_id and entity_id not in ids:

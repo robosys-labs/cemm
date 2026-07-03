@@ -181,6 +181,8 @@ class ActResolutionPlanner:
         "story_request": 62,
         "creative_request": 62,
         "state_report": 58,
+        "reciprocal_phatic_checkin": 58,
+        "assistant_evaluation": 57,
         "playful_acknowledgment": 56,
         "phatic_checkin": 55,
         "greeting": 50,
@@ -205,6 +207,11 @@ class ActResolutionPlanner:
         "acknowledgment",
         "playful_acknowledgment",
         "phatic_checkin",
+        "reciprocal_phatic_checkin",
+        "user_state_report",
+        "assistant_evaluation",
+        "general_conversation",
+        "chat_mode_statement",
         "frustration_signal",
         "confusion_repair",
         "retrospective_repair",
@@ -239,6 +246,27 @@ class ActResolutionPlanner:
             )
             self._resolve_meaning_groups(meaning_percept, result, facts)
 
+        act_types = set(conversation_act.act_types) if conversation_act else set()
+        teachable_facts = self._teachable_facts(facts, act_types)
+        if teachable_facts and not self._has_fact_memory_update(result):
+            result.memory_updates.append(MemoryUpdatePlan(
+                write_kind="claim",
+                candidates=teachable_facts,
+                act_type="claim_assertion",
+                confidence=self._avg_fact_confidence(teachable_facts),
+                reason="speaker_asserted_fact_candidate",
+                should_confirm=False,
+            ))
+            self._add_obligation(result, ReplyObligation(
+                act_type="claim_assertion",
+                response_mode="social_response",
+                priority=89,
+                intent="remember",
+                reason="acknowledge_speaker_asserted_fact",
+                confidence=self._avg_fact_confidence(teachable_facts),
+                evidence_policy="none",
+            ))
+
         if not result.obligations and not result.memory_updates and facts:
             result.memory_updates.append(MemoryUpdatePlan(
                 write_kind="claim",
@@ -259,6 +287,7 @@ class ActResolutionPlanner:
 
         self._dedupe_plan(result)
         self._merge_hypotheses(result)
+        self._resolve_competing_obligations(result)
         self._select_answer_task(result, retrieval_plan, meaning_percept)
         return result
 
@@ -420,7 +449,7 @@ class ActResolutionPlanner:
                 )
             elif intent_key == "repair":
                 self._add_group_obligation(
-                    result, group, "retrospective_repair", "retrospective_repair", "repair", 88, "none"
+                    result, group, "retrospective_repair", "repair_response", "retrospective_repair", 88, "none"
                 )
             elif intent_key == "fresh_world_query":
                 self._add_group_obligation(
@@ -568,7 +597,7 @@ class ActResolutionPlanner:
                 ))
             elif outcome.expected_change == "clarity_required":
                 self._add_group_obligation(
-                    result, group, "retrospective_repair", "retrospective_repair", "repair", 88,
+                    result, group, "retrospective_repair", "repair_response", "retrospective_repair", 88,
                     "none", predicate_id=outcome.predicate_id,
                 )
             elif outcome.expected_change == "reply_obligation":
@@ -754,6 +783,29 @@ class ActResolutionPlanner:
             return (is_child, -obligation.priority, obligation.group_id)
 
         result.obligations.sort(key=discourse_key, reverse=False)
+
+    def _resolve_competing_obligations(self, result: ActResolutionPlan) -> None:
+        has_capability = any(
+            o.intent == "capability_summary" or o.act_type in {"self_capability_query", "capability_query"}
+            for o in result.obligations
+        )
+        if has_capability:
+            for obligation in result.obligations:
+                if (
+                    obligation.act_type == "retrospective_repair"
+                    and obligation.reason.startswith("meaning_group:")
+                    and obligation.priority > 63
+                ):
+                    obligation.priority = 63
+                    obligation.params["demoted_by"] = "explicit_capability_obligation"
+            for task in result.answer_tasks:
+                if (
+                    task.selected_act_type == "retrospective_repair"
+                    and task.group_id
+                    and task.priority > 63
+                ):
+                    task.priority = 63
+                    task.params["demoted_by"] = "explicit_capability_obligation"
 
     def _add_group_obligation(
         self,
@@ -997,6 +1049,33 @@ class ActResolutionPlanner:
             return "lexeme_or_model"
         return "claim"
 
+    def _has_fact_memory_update(self, result: ActResolutionPlan) -> bool:
+        return any(update.candidates for update in result.memory_updates)
+
+    def _teachable_facts(
+        self, facts: list[EntityFactCandidate], act_types: set[str]
+    ) -> list[EntityFactCandidate]:
+        if act_types and act_types <= {
+            "greeting",
+            "acknowledgment",
+            "playful_acknowledgment",
+            "phatic_checkin",
+            "reciprocal_phatic_checkin",
+            "user_state_report",
+            "assistant_evaluation",
+            "frustration_signal",
+            "confusion_repair",
+            "playful_repair",
+            "retrospective_repair",
+        }:
+            return []
+        return [
+            fact for fact in facts
+            if fact.reason != "affordance_atom"
+            and fact.subject_entity_id not in {"fresh_source_requirement", "clarity_need"}
+            and fact.subject_entity_id not in {"what", "who", "where", "when", "why", "how", "which"}
+        ]
+
     def _intent_for_act(self, act_type: str, response_mode: str) -> str:
         if response_mode == "capability_summary":
             return "capability_summary"
@@ -1006,6 +1085,12 @@ class ActResolutionPlanner:
             return "teaching_offer"
         if act_type == "frustration_signal":
             return "frustration_response"
+        if act_type == "assistant_evaluation":
+            return "frustration_response"
+        if act_type == "user_state_report":
+            return "chat_mode_statement"
+        if act_type == "reciprocal_phatic_checkin":
+            return "reciprocal_phatic_checkin"
         if act_type in {"confusion_repair", "retrospective_repair", "playful_repair"}:
             return act_type
         if act_type == "session_exit":

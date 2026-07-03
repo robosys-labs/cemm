@@ -639,11 +639,16 @@ class EntityFactExtractor:
             kernel.topic.last_updated_signal_id = signal_id
             kernel.topic.last_updated_at = observed_at
 
-        if candidates:
-            subj = candidates[0].subject_entity_id.replace("_", " ")
+        real_candidates = [
+            candidate for candidate in candidates
+            if candidate.reason != "affordance_atom"
+            and candidate.subject_entity_id not in {"fresh_source_requirement", "clarity_need"}
+        ]
+        if real_candidates:
+            subj = real_candidates[0].subject_entity_id.replace("_", " ")
             if subj:
                 kernel.topic.last_taught_entity_surface = subj
-                kernel.topic.last_taught_entity_id = candidates[0].subject_entity_id
+                kernel.topic.last_taught_entity_id = real_candidates[0].subject_entity_id
                 kernel.topic.last_updated_signal_id = signal_id
                 kernel.topic.last_updated_at = observed_at
 
@@ -651,7 +656,7 @@ class EntityFactExtractor:
                     if not kernel.topic.active_topic_surface or subj.lower() != kernel.topic.active_topic_surface.lower():
                         kernel.topic.active_topic_surface = subj
                         kernel.topic.active_topic_type = ""
-                        kernel.topic.active_topic_entity_id = candidates[0].subject_entity_id
+                        kernel.topic.active_topic_entity_id = real_candidates[0].subject_entity_id
 
     def _detect_new_topic(
         self,
@@ -662,11 +667,24 @@ class EntityFactExtractor:
         Returns (surface, entity_type) or None.
         Prefers capitalized unknown entities, then non-pronoun referents.
         """
-        for ref in percept.referents:
-            if ref.source in ("pronoun", "deixis"):
-                continue
+        referents = [
+            ref for ref in percept.referents
+            if ref.source not in ("pronoun", "deixis")
+        ]
+        for idx, ref in enumerate(referents):
             if ref.known and ref.source == "ner":
                 continue
+            if ref.entity_type == "person":
+                merged = [ref.surface]
+                j = idx + 1
+                while j < len(referents):
+                    nxt = referents[j]
+                    if nxt.entity_type != "person" or nxt.role != ref.role:
+                        break
+                    merged.append(nxt.surface)
+                    j += 1
+                if len(merged) > 1:
+                    return (" ".join(merged), ref.entity_type)
             return (ref.surface, ref.entity_type)
         return None
 

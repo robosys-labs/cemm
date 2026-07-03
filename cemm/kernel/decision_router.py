@@ -199,13 +199,23 @@ class DecisionRouter:
             # All these acts produce an "answer" with no evidence retrieval needed.
             # The set is sourced from act_type_metadata in uol_semantics.json.
             if _is_simple_answer(act):
-                intent = "frustration_response" if act == "frustration_signal" else act
+                intent = act
+                mode = response_mode
+                if act in {"frustration_signal", "assistant_evaluation", "user_complaint"}:
+                    intent = "frustration_response"
+                    mode = "repair_response"
+                elif act == "user_state_report":
+                    if "phatic_checkin" in getattr(conversation_act, "act_types", []):
+                        intent = "reciprocal_phatic_checkin"
+                    else:
+                        intent = "chat_mode_statement"
+                    mode = "social_response"
                 return self._make_answer_packet(
                     intent=intent,
-                    response_mode=response_mode,
+                    response_mode=mode,
                     confidence=conversation_act.confidence,
                     graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
-                    reason=f"conversation_act={act} → {response_mode}",
+                    reason=f"conversation_act={act} → {mode}",
                 )
 
             # Capability query: use curated summary, not raw claim join
