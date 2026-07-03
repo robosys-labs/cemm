@@ -1,170 +1,47 @@
-"""MeaningPerceptor — builds MeaningPerceptPacket from signal + NER + lexeme memory.
+"""MeaningPerceptor - assemble foundational meaning atoms from a Signal.
 
-Implements §8.2 from cemm_foundational_fixes.md and §5 from architecture.md.
+The perceptor is the first semantic boundary after normalization. It should
+not classify the final conversation act, route the response, or mutate memory.
+Its job is narrower and more important:
 
-The MeaningPerceptPacket is the first place where NER, POS-lite role cues,
-unknown token detection, slang repair, and referent binding meet. It must be
-built immediately after normalization and before UOL mapping.
+* preserve normalized surface evidence,
+* bind named entities, pronouns, deixis, learned lexemes, and surface tags,
+* emit shared CEMM atoms that are language-neutral,
+* keep uncertainty explicit for later frame binding and learning.
 
-No component after this should rediscover basic token/entity/action meaning
-independently from raw strings.
+Language-specific cue tables live behind LanguageAdapter implementations. The
+default English adapter preserves the current deterministic seed behavior, but
+the perceptor itself is prepared for multilingual adapters and learned surface
+models.
 """
 
 from __future__ import annotations
 
-import re
+from typing import Any, Iterable
 import uuid
-from typing import Any
 
+from ..learning.lexeme_memory import LexemeMemory, LexemeRole
+from ..learning.ner_tagger import NERTagger
+from ..learning.surface_tagger import SurfaceTagger
+from ..types.context_kernel import ContextKernel
 from ..types.meaning_percept import (
-    MeaningPerceptPacket,
-    ReferentAtom,
     ActionAtom,
-    StateAtom,
-    RelationAtom,
+    MeaningPerceptPacket,
     NeedAtom,
-    AffordanceAtom,
+    ReferentAtom,
+    RelationAtom,
+    StateAtom,
 )
 from ..types.signal import Signal
-from ..types.context_kernel import ContextKernel
-from ..learning.surface_tagger import SurfaceTagger
-from ..learning.ner_tagger import NERTagger
-from ..learning.lexeme_memory import LexemeMemory
-from .language_adapter import LanguageAdapter, get_adapter, PronounMapping
+from .language_adapter import EnglishLanguageAdapter, LanguageAdapter
 
 
-# Pronoun to entity type mapping
-_PRONOUN_MAP: dict[str, tuple[str, str, str]] = {
-    # surface -> (entity_type, role, source)
-    "i": ("user", "actor", "pronoun"),
-    "me": ("user", "target", "pronoun"),
-    "my": ("user", "possessor", "pronoun"),
-    "mine": ("user", "possessor", "pronoun"),
-    "myself": ("user", "target", "pronoun"),
-    "we": ("user", "actor", "pronoun"),
-    "us": ("user", "target", "pronoun"),
-    "our": ("user", "possessor", "pronoun"),
-    "you": ("self", "target", "pronoun"),
-    "your": ("self", "possessor", "pronoun"),
-    "yourself": ("self", "target", "pronoun"),
-    "yours": ("self", "possessor", "pronoun"),
-    "he": ("person", "actor", "pronoun"),
-    "him": ("person", "target", "pronoun"),
-    "his": ("person", "possessor", "pronoun"),
-    "she": ("person", "actor", "pronoun"),
-    "her": ("person", "target", "pronoun"),
-    "hers": ("person", "possessor", "pronoun"),
-    "they": ("person", "actor", "pronoun"),
-    "them": ("person", "target", "pronoun"),
-    "their": ("person", "possessor", "pronoun"),
-    "it": ("object", "target", "pronoun"),
-    "its": ("object", "possessor", "pronoun"),
-}
-
-# Deictic words
-_DEICTIC_WORDS = {"here", "there", "this", "that", "those", "these", "now", "then"}
-
-# Words that should never be treated as entity candidates even when capitalized.
-# This includes pronouns, stopwords, common sentence starters, greetings/fillers,
-# and affect markers. Phone keyboards auto-capitalize the first word of every
-# sentence, so we cannot rely on capitalization alone for proper-noun detection.
-_ENTITY_EXCLUDE: frozenset[str] = frozenset({
-    # pronouns
-    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
-    "my", "your", "his", "its", "our", "their", "mine", "yours", "ours", "theirs",
-    "myself", "yourself", "himself", "herself", "itself", "ourselves", "yourselves", "themselves",
-    # articles / determiners / prepositions / conjunctions
-    "the", "a", "an", "and", "or", "but", "if", "then", "than", "to", "of", "in", "on", "at", "for",
-    "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
-    "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "this", "that", "these",
-    "those", "what", "which", "who", "when", "where", "why", "how", "all", "each", "every", "some", "any",
-    "no", "not", "only", "just", "so", "very", "too", "also", "am", "about", "actually", "wait",
-    # greetings / fillers / acknowledgements (common sentence starters)
-    "hi", "hey", "hello", "bye", "goodbye", "oh", "well", "hmm", "uh", "um",
-    "yeah", "yup", "ok", "okay", "sure", "right", "yes", "nah",
-    "lol", "haha", "heh", "lmao", "rofl", "wow", "yay", "aww", "boo", "meh", "huh",
-    "please", "thanks", "thank", "urgh", "urghh", "ugh", "ughh", "argh", "seriously", "really",
-})
-
-# State keywords mapped to state keys and dimensions
-_STATE_KEYWORDS: dict[str, tuple[str, str, str]] = {
-    # surface -> (state_key, dimension, polarity)
-    "hungry": ("hungry", "hunger", "negative"),
-    "thirsty": ("thirsty", "hunger", "negative"),
-    "fine": ("fine", "happiness", "positive"),
-    "good": ("good", "happiness", "positive"),
-    "okay": ("okay", "happiness", "positive"),
-    "ok": ("ok", "happiness", "positive"),
-    "sick": ("sick", "health", "negative"),
-    "ill": ("ill", "health", "negative"),
-    "tired": ("tired", "health", "negative"),
-    "angry": ("angry", "happiness", "negative"),
-    "happy": ("happy", "happiness", "positive"),
-    "sad": ("sad", "happiness", "negative"),
-    "confused": ("confused", "knowledge", "negative"),
-    "lost": ("lost", "knowledge", "negative"),
-    "fine_about": ("fine", "happiness", "positive"),
-}
-
-# Need keywords mapped to need keys
-_NEED_KEYWORDS: dict[str, tuple[str, float]] = {
-    "hungry": ("food", 0.8),
-    "thirsty": ("water", 0.8),
-    "tired": ("rest", 0.7),
-    "confused": ("clarity", 0.7),
-    "lost": ("clarity", 0.6),
-    "help": ("help", 0.6),
-}
-
-# Action keywords mapped to action keys
-_ACTION_KEYWORDS: dict[str, str] = {
-    "come": "move_toward_source",
-    "go": "move_to_place",
-    "give": "transfer_object",
-    "take": "acquire_object",
-    "beat": "physically_harm_target",
-    "hit": "physically_harm_target",
-    "hurt": "physically_harm_target",
-    "attack": "physically_harm_target",
-    "help": "improve_state",
-    "learn": "increase_capability",
-    "remember": "memory_write",
-    "forget": "memory_loss",
-    "eat": "consume_food",
-    "drink": "consume_liquid",
-    "move": "change_location",
-    "run": "move_fast",
-    "walk": "move_slow",
-    "bring": "transfer_to_speaker",
-    "send": "transfer_to_target",
-    "find": "search_locate",
-    "look": "search_locate",
-    "ask": "request_information",
-    "tell": "provide_information",
-    "show": "display_information",
-    "teach": "transfer_knowledge",
-}
-
-# Affect markers
-_AFFECT_MARKERS = {
-    "frustration": {"ugh", "argh", "seriously", "come on", "really", "urgh", "urghh", "ughh",
-                    "canned responses", "same response", "generic response", "template response",
-                    "scripted", "copy paste", "robotic", "pattern matcher"},
-    "playful": {"lol", "haha", "heh", "lmao", "rofl"},
-    "sadness": {"sigh", "alas", "unfortunately"},
-    "anger": {"damn", "crap", "hell"},
-    "surprise": {"wow", "whoa", "omg", "oh my"},
-    "repair": {"what", "wait what", "lol what", "huh", "what are you talking about",
-               "what do you mean", "i don't get it", "come again"},
-}
-
-
-def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[^\W\d_]+", text.lower(), re.UNICODE)
+_ENTITY_ROLES = {"person", "place", "organization", "entity", "object", "time"}
+_SURFACE_ACTION_ROLES = {"process", "command_alias"}
 
 
 class MeaningPerceptor:
-    """Builds MeaningPerceptPacket from signal + normalizer + NER + lexeme memory."""
+    """Build MeaningPerceptPacket from normalized signal and semantic hints."""
 
     def __init__(
         self,
@@ -176,28 +53,18 @@ class MeaningPerceptor:
         self._ner_tagger = ner_tagger
         self._surface_tagger = surface_tagger
         self._lexeme_memory = lexeme_memory
-        self._adapter = language_adapter or get_adapter("en")
+        self._language = language_adapter or EnglishLanguageAdapter()
 
     def perceive(
         self,
         signal: Signal,
         kernel: ContextKernel,
     ) -> MeaningPerceptPacket:
-        """Build a MeaningPerceptPacket from the signal and kernel."""
-        raw_text = signal.content
-        tokens = _tokenize(raw_text)
-        normalized_tokens = tokens
-        repaired_tokens = tokens
-
-        # Get normalized forms if available
-        normalized_forms: list[str] = []
-        if signal.normalized:
-            normalized_tokens = _tokenize(signal.normalized.canonical_form)
-            repaired_tokens = normalized_tokens
-            unknown_tokens = signal.normalized.surface_features.get("unknown_tokens", [])
-            normalized_forms = list(getattr(signal.normalized, "normalized_forms", []))
-        else:
-            unknown_tokens = []
+        """Build a MeaningPerceptPacket without side effects."""
+        raw_text = signal.content or ""
+        tokens = self._language.tokenize(raw_text)
+        normalized_tokens, repaired_tokens, normalized_forms, unknown_tokens = self._normalization(signal, tokens)
+        semantic_tokens = repaired_tokens or normalized_tokens or tokens
 
         packet = MeaningPerceptPacket(
             id=uuid.uuid4().hex[:16],
@@ -208,209 +75,394 @@ class MeaningPerceptor:
             normalized_tokens=normalized_tokens,
             repaired_tokens=repaired_tokens,
             normalized_forms=normalized_forms,
-            punctuation_features={
-                "has_question_mark": "?" in raw_text,
-                "has_exclamation": "!" in raw_text,
-                "has_ellipsis": "..." in raw_text,
-                "is_all_caps": raw_text.isupper() and len(raw_text) > 2,
-                "trailing_punctuation": raw_text.rstrip()[-1] if raw_text.rstrip() and raw_text.rstrip()[-1] in ".!?,;:" else "",
-            },
+            punctuation_features=self._language.punctuation_features(raw_text),
             speaker_entity_id="user",
             listener_entity_id="self",
         )
 
-        # Run NER if available
-        ner_entities: list[dict[str, Any]] = []
-        if self._ner_tagger:
-            ner_entities = self._ner_tagger.extract_entities(tokens)
+        known_words = self._known_words()
+        ner_entities = self._extract_ner(semantic_tokens)
+        semantic_spans = self._extract_surface_spans(semantic_tokens, unknown_tokens)
 
-        # Run surface tagger for semantic roles if available
-        semantic_spans: list[dict[str, Any]] = []
-        if self._surface_tagger:
-            semantic_spans = self._surface_tagger.extract_all(tokens, unknown_tokens=unknown_tokens)
+        self._add_ner_referents(packet, ner_entities)
+        self._extend_referents(packet, self._language.map_pronouns(semantic_tokens))
+        self._extend_referents(packet, self._language.map_deictics(semantic_tokens))
+        self._add_capitalized_referents(packet, raw_text, known_words)
 
-        # Build referents from NER entities
-        for ent in ner_entities:
-            entity_type = ent.get("role", "unknown")
-            if entity_type == "person":
-                entity_type = "person"
-            elif entity_type == "place":
-                entity_type = "place"
-            elif entity_type == "organization":
-                entity_type = "organization"
-            elif entity_type == "time":
-                entity_type = "abstract"
-            else:
-                entity_type = "unknown"
-            packet.referents.append(ReferentAtom(
-                surface=ent.get("text", ""),
+        self._apply_surface_spans(packet, semantic_spans)
+        self._apply_lexeme_memory(packet, semantic_tokens)
+
+        self._extend_actions(packet, self._language.map_actions(semantic_tokens))
+        self._extend_states(packet, self._language.map_states(semantic_tokens))
+        self._extend_needs(packet, self._language.map_needs(semantic_tokens))
+
+        self._add_unknown_lexemes(packet, unknown_tokens, semantic_tokens, known_words, semantic_spans)
+        self._add_idiom_candidates(packet, semantic_tokens, unknown_tokens)
+        packet.affect_markers = self._dedupe_dicts(
+            [*packet.affect_markers, *self._language.detect_affect(raw_text, semantic_tokens)],
+            key_fields=("type", "surface"),
+        )
+
+        packet.attention_target = self._attention_target(packet, kernel)
+        packet.confidence = self._confidence(packet)
+        return packet
+
+    def _normalization(
+        self,
+        signal: Signal,
+        fallback_tokens: list[str],
+    ) -> tuple[list[str], list[str], list[str], list[str]]:
+        normalized = getattr(signal, "normalized", None)
+        if normalized is None:
+            return fallback_tokens, fallback_tokens, [], []
+
+        canonical = getattr(normalized, "canonical_form", "") or ""
+        normalized_tokens = self._language.tokenize(canonical) if canonical else fallback_tokens
+        surface_features = getattr(normalized, "surface_features", {}) or {}
+        unknown_tokens = [str(t) for t in surface_features.get("unknown_tokens", []) if str(t).strip()]
+        normalized_forms = [str(f) for f in getattr(normalized, "normalized_forms", [])]
+        return normalized_tokens, normalized_tokens, normalized_forms, unknown_tokens
+
+    def _extract_ner(self, tokens: list[str]) -> list[dict[str, Any]]:
+        if self._ner_tagger is None or not tokens:
+            return []
+        return self._ner_tagger.extract_entities(tokens)
+
+    def _extract_surface_spans(
+        self,
+        tokens: list[str],
+        unknown_tokens: list[str],
+    ) -> list[dict[str, Any]]:
+        if self._surface_tagger is None or not tokens:
+            return []
+        return self._surface_tagger.extract_all(tokens, unknown_tokens=unknown_tokens)
+
+    def _known_words(self) -> set[str]:
+        if self._surface_tagger is None:
+            return set()
+        return set(getattr(self._surface_tagger, "_known_words", set()))
+
+    def _add_ner_referents(
+        self,
+        packet: MeaningPerceptPacket,
+        entities: Iterable[dict[str, Any]],
+    ) -> None:
+        for entity in entities:
+            role = str(entity.get("role", "entity") or "entity").lower()
+            if role not in _ENTITY_ROLES:
+                continue
+            entity_type = {
+                "time": "abstract",
+                "entity": "unknown",
+            }.get(role, role)
+            self._extend_referents(packet, [ReferentAtom(
+                surface=str(entity.get("text", "")),
                 entity_type=entity_type,
                 role="topic",
-                known=ent.get("confidence", 0) > 0.5,
+                known=float(entity.get("confidence", 0.0) or 0.0) > 0.5,
                 source="ner",
-                confidence=ent.get("confidence", 0.5),
-            ))
+                confidence=float(entity.get("confidence", 0.5) or 0.5),
+            )])
 
-        # Build referents from pronouns (via LanguageAdapter)
-        token_set = set(tokens)
-        pronoun_results = self._adapter.map_pronouns(tokens)
-        for pronoun, mapping in pronoun_results:
-            packet.referents.append(ReferentAtom(
-                surface=pronoun,
-                entity_type=mapping.entity_type,
-                role=mapping.role,
-                known=True,
-                source=mapping.source,
-                confidence=0.9,
-            ))
-
-        # Detect capitalized tokens as person/place candidates.
-        # Phone keyboards auto-capitalize the first word of every sentence, so
-        # we cannot rely on capitalization alone. Instead, we exclude pronouns,
-        # stopwords, greetings/fillers, and known words. Position 0 gets lower
-        # confidence since it may be auto-capitalized rather than a proper noun.
-        known_words = set()
-        if self._surface_tagger:
-            known_words = getattr(self._surface_tagger, "_known_words", set())
-        raw_tokens = raw_text.split()
-        seen_surfaces: set[str] = set()
-        for idx, token in enumerate(raw_tokens):
-            clean = token.strip(".,!?;:\"'()[]{}")
+    def _add_capitalized_referents(
+        self,
+        packet: MeaningPerceptPacket,
+        raw_text: str,
+        known_words: set[str],
+    ) -> None:
+        existing = {r.surface.lower() for r in packet.referents if r.surface}
+        for index, surface in enumerate(self._language.surface_tokens(raw_text)):
+            clean = surface.strip(".,!?;:\"'()[]{}")
             if not clean or not clean[0].isupper():
                 continue
-            lower = clean.lower()
-            if self._adapter.is_entity_exclude(lower):
+            lower = self._language.normalize_surface(clean)
+            if lower in existing:
                 continue
-            if lower in known_words:
+            if self._language.is_entity_surface_excluded(clean, known_words):
                 continue
-            if self._lexeme_memory and self._lexeme_memory.lookup_active(lower):
+            if self._active_lexeme(lower) is not None:
                 continue
-            if lower in seen_surfaces:
-                continue
-            seen_surfaces.add(lower)
-            # Position 0 may be auto-capitalized by phone keyboard
-            confidence = 0.4 if idx == 0 else 0.6
-            packet.referents.append(ReferentAtom(
+            existing.add(lower)
+            self._extend_referents(packet, [ReferentAtom(
                 surface=clean,
                 entity_type="person",
                 role="topic",
                 known=False,
                 source="capitalization",
-                confidence=confidence,
-            ))
+                confidence=self._language.capitalization_confidence(clean, index),
+            )])
 
-        # Detect deictic words (via LanguageAdapter)
-        deictic_words = self._adapter.map_deictics(tokens)
-        for deictic in deictic_words:
-            packet.referents.append(ReferentAtom(
-                surface=deictic,
-                entity_type="place" if deictic in ("here", "there", "this", "that") else "abstract",
-                role="place" if deictic in ("here", "there") else "topic",
-                known=True,
-                source="deixis",
-                confidence=0.7,
-            ))
-
-        # Build actions from action keywords (via LanguageAdapter)
-        action_results = self._adapter.map_actions(tokens)
-        modality = self._adapter.detect_modality(tokens)
-        negated = self._adapter.detect_negation(tokens)
-        for surface, action_key in action_results:
-            packet.actions.append(ActionAtom(
-                surface=surface,
-                action_key=action_key,
-                modality=modality,
-                polarity="negated" if negated else "affirmed",
-                confidence=0.7,
-            ))
-
-        # Build states from state keywords (via LanguageAdapter)
-        state_results = self._adapter.map_states(tokens)
-        holder = self._adapter.detect_holder(tokens)
-        for surface, mapping in state_results:
-            packet.states.append(StateAtom(
-                surface=surface,
-                state_key=mapping.state_key,
-                holder_role=holder,
-                dimension=mapping.dimension,
-                polarity=mapping.polarity,
-                intensity=0.6 if mapping.polarity == "positive" else 0.7,
-                confidence=0.7,
-            ))
-
-        # Build needs from need keywords (via LanguageAdapter)
-        need_results = self._adapter.map_needs(tokens)
-        need_holder = self._adapter.detect_holder(tokens)
-        for surface, need_key, intensity in need_results:
-            packet.needs.append(NeedAtom(
-                holder_role=need_holder,
-                need_key=need_key,
-                intensity=intensity,
-                confidence=0.7,
-            ))
-
-        # Detect unknown lexemes
-        for token in unknown_tokens:
-            token_lower = token.lower()
-            if token_lower in known_words:
+    def _apply_surface_spans(
+        self,
+        packet: MeaningPerceptPacket,
+        spans: Iterable[dict[str, Any]],
+    ) -> None:
+        for span in spans:
+            surface = str(span.get("text", "") or "").strip()
+            role = str(span.get("role", "") or "").lower()
+            confidence = float(span.get("confidence", 0.6) or 0.6)
+            if not surface:
                 continue
-            if self._lexeme_memory and self._lexeme_memory.lookup_active(token_lower):
+            if role in _SURFACE_ACTION_ROLES:
+                self._extend_actions(packet, [ActionAtom(
+                    surface=surface,
+                    action_key=self._canonical_key(surface),
+                    confidence=confidence,
+                )])
+            elif role == "state":
+                self._extend_states(packet, [StateAtom(
+                    surface=surface,
+                    state_key=self._canonical_key(surface),
+                    holder_role="user",
+                    confidence=confidence,
+                )])
+            elif role == "relation":
+                self._extend_relations(packet, [RelationAtom(
+                    relation_key=self._canonical_key(surface),
+                    confidence=confidence,
+                )])
+
+    def _apply_lexeme_memory(
+        self,
+        packet: MeaningPerceptPacket,
+        tokens: list[str],
+    ) -> None:
+        if self._lexeme_memory is None or not tokens:
+            return
+
+        covered: set[tuple[int, int]] = set()
+        for surface, start, end in self._language.ngrams(tokens, max_size=4):
+            if any(start < covered_end and end > covered_start for covered_start, covered_end in covered):
                 continue
-            # Determine candidate role
-            role = "unknown"
-            # Check if it's near "you" -> likely self evaluation
-            token_idx = tokens.index(token_lower) if token_lower in tokens else -1
-            if token_idx > 0 and tokens[token_idx - 1] in ("you", "your", "you're"):
-                role = "self_evaluation"
-            elif token_idx >= 0 and token[0].isupper():
-                role = "person_candidate"
-            packet.unknown_lexemes.append({
-                "surface": token,
-                "role": role,
-                "position": token_idx,
+            lexeme = self._active_lexeme(surface)
+            if lexeme is None:
+                continue
+
+            role = self._lexeme_role(lexeme)
+            mapped = lexeme.maps_to or lexeme.canonical or surface
+            confidence = max(0.45, min(0.95, float(lexeme.confidence or 0.5)))
+            if role == LexemeRole.ENTITY.value:
+                self._extend_referents(packet, [ReferentAtom(
+                    surface=surface,
+                    entity_id=mapped if mapped else None,
+                    entity_type="unknown",
+                    role="topic",
+                    known=True,
+                    source="lexeme_memory",
+                    confidence=confidence,
+                )])
+            elif role in {LexemeRole.PROCESS.value, LexemeRole.COMMAND_ALIAS.value}:
+                self._extend_actions(packet, [ActionAtom(
+                    surface=surface,
+                    action_key=mapped,
+                    confidence=confidence,
+                )])
+            elif role == LexemeRole.STATE.value:
+                self._extend_states(packet, [StateAtom(
+                    surface=surface,
+                    state_key=mapped,
+                    holder_role="user",
+                    confidence=confidence,
+                )])
+            elif role == LexemeRole.RELATION.value:
+                self._extend_relations(packet, [RelationAtom(
+                    relation_key=mapped,
+                    confidence=confidence,
+                )])
+            covered.add((start, end))
+
+    def _add_unknown_lexemes(
+        self,
+        packet: MeaningPerceptPacket,
+        unknown_tokens: list[str],
+        tokens: list[str],
+        known_words: set[str],
+        semantic_spans: Iterable[dict[str, Any]],
+    ) -> None:
+        candidates = [str(t) for t in unknown_tokens]
+        candidates.extend(
+            str(span.get("text", ""))
+            for span in semantic_spans
+            if str(span.get("role", "")).lower() == "unknown_lexeme"
+        )
+        unknowns: list[dict[str, Any]] = []
+        for surface in candidates:
+            normalized = self._language.normalize_surface(surface)
+            if not normalized or normalized in known_words:
+                continue
+            if self._active_lexeme(normalized) is not None:
+                continue
+            position = tokens.index(normalized) if normalized in tokens else -1
+            unknowns.append({
+                "surface": surface,
+                "role": self._unknown_role(surface, normalized, tokens, position),
+                "position": position,
                 "confidence": 0.5,
             })
+        packet.unknown_lexemes = self._dedupe_dicts(
+            [*packet.unknown_lexemes, *unknowns],
+            key_fields=("surface", "position"),
+        )
 
-        # Detect idiom candidates (multi-word unknown phrases)
-        # Simple heuristic: sequences of words not in known vocabulary
-        if len(tokens) >= 3:
-            for i in range(len(tokens) - 2):
-                phrase = " ".join(tokens[i:i + 3])
-                # Check if this phrase contains unknown words
-                phrase_words = tokens[i:i + 3]
-                unknown_count = sum(1 for w in phrase_words if w in {t.lower() for t in unknown_tokens})
+    def _add_idiom_candidates(
+        self,
+        packet: MeaningPerceptPacket,
+        tokens: list[str],
+        unknown_tokens: list[str],
+    ) -> None:
+        unknown_set = {self._language.normalize_surface(t) for t in unknown_tokens}
+        candidates: list[dict[str, Any]] = []
+        if len(tokens) >= 3 and unknown_set:
+            for start in range(0, len(tokens) - 2):
+                phrase_tokens = tokens[start:start + 3]
+                unknown_count = sum(1 for token in phrase_tokens if token in unknown_set)
                 if unknown_count >= 2:
-                    packet.idiom_candidates.append({
-                        "surface": phrase,
-                        "start": i,
-                        "end": i + 3,
+                    candidates.append({
+                        "surface": " ".join(phrase_tokens),
+                        "start": start,
+                        "end": start + 3,
                         "confidence": 0.4,
+                        "source": "unknown_sequence",
                     })
 
-        # Detect affect markers (via LanguageAdapter)
-        affect_results = self._adapter.detect_affect(raw_text.lower())
-        for affect_type, marker in affect_results:
-            packet.affect_markers.append({
-                "type": affect_type,
-                "surface": marker,
-                "confidence": 0.6,
-            })
+        if self._lexeme_memory is not None:
+            for surface, start, end in self._language.ngrams(tokens, max_size=5):
+                lexeme = self._active_lexeme(surface)
+                if lexeme and self._lexeme_role(lexeme) == LexemeRole.COMMAND_ALIAS.value and " " in surface:
+                    candidates.append({
+                        "surface": surface,
+                        "start": start,
+                        "end": end,
+                        "confidence": max(0.5, float(lexeme.confidence or 0.5)),
+                        "source": "lexeme_memory",
+                    })
 
-        # Set attention target
-        if packet.referents:
-            # First non-pronoun referent is likely the attention target
-            for ref in packet.referents:
-                if ref.source not in ("pronoun", "deixis"):
-                    packet.attention_target = ref.surface
-                    break
-            if not packet.attention_target:
-                packet.attention_target = packet.referents[0].surface
-
-        # Compute overall confidence
-        atom_count = (
-            len(packet.referents) + len(packet.actions) + len(packet.states)
-            + len(packet.needs) + len(packet.unknown_lexemes)
+        packet.idiom_candidates = self._dedupe_dicts(
+            [*packet.idiom_candidates, *candidates],
+            key_fields=("surface", "start", "end"),
         )
-        packet.confidence = min(0.9, 0.3 + atom_count * 0.1)
 
-        return packet
+    def _unknown_role(
+        self,
+        surface: str,
+        normalized: str,
+        tokens: list[str],
+        position: int,
+    ) -> str:
+        if position > 0 and tokens[position - 1] in {"you", "your", "you're"}:
+            return "self_evaluation"
+        if surface[:1].isupper():
+            return "person_candidate"
+        if position >= 0 and tokens[max(0, position - 2):position] and "teach" in tokens:
+            return "teachable_surface"
+        return "unknown"
+
+    def _attention_target(
+        self,
+        packet: MeaningPerceptPacket,
+        kernel: ContextKernel,
+    ) -> str | None:
+        for role in ("target", "object", "topic", "place"):
+            for ref in packet.referents:
+                if ref.role == role and ref.source not in {"pronoun", "deixis"} and ref.surface:
+                    return ref.surface
+        topic = getattr(getattr(kernel, "topic", None), "active_topic_surface", "")
+        if topic:
+            return topic
+        for ref in packet.referents:
+            if ref.surface:
+                return ref.surface
+        return None
+
+    def _confidence(self, packet: MeaningPerceptPacket) -> float:
+        evidence_atoms = (
+            len(packet.referents)
+            + len(packet.actions)
+            + len(packet.states)
+            + len(packet.relations)
+            + len(packet.needs)
+            + len(packet.affect_markers)
+        )
+        uncertainty_penalty = min(0.25, len(packet.unknown_lexemes) * 0.04)
+        lexical_bonus = min(0.35, evidence_atoms * 0.05)
+        if packet.actions and packet.referents:
+            lexical_bonus += 0.08
+        return max(0.2, min(0.95, 0.35 + lexical_bonus - uncertainty_penalty))
+
+    def _active_lexeme(self, surface: str) -> Any | None:
+        if self._lexeme_memory is None:
+            return None
+        return self._lexeme_memory.lookup_active(surface)
+
+    @staticmethod
+    def _lexeme_role(lexeme: Any) -> str:
+        role = getattr(lexeme, "role", "")
+        return str(getattr(role, "value", role))
+
+    def _canonical_key(self, surface: str) -> str:
+        return "_".join(self._language.tokenize(surface))
+
+    def _extend_referents(self, packet: MeaningPerceptPacket, atoms: Iterable[ReferentAtom]) -> None:
+        seen = {
+            (r.surface.lower(), r.entity_id or "", r.entity_type, r.role, r.source)
+            for r in packet.referents
+        }
+        for atom in atoms:
+            if not atom.surface:
+                continue
+            key = (atom.surface.lower(), atom.entity_id or "", atom.entity_type, atom.role, atom.source)
+            if key in seen:
+                continue
+            packet.referents.append(atom)
+            seen.add(key)
+
+    def _extend_actions(self, packet: MeaningPerceptPacket, atoms: Iterable[ActionAtom]) -> None:
+        seen = {(a.surface.lower(), a.action_key, a.modality, a.polarity) for a in packet.actions}
+        for atom in atoms:
+            key = (atom.surface.lower(), atom.action_key, atom.modality, atom.polarity)
+            if not atom.surface or key in seen:
+                continue
+            packet.actions.append(atom)
+            seen.add(key)
+
+    def _extend_states(self, packet: MeaningPerceptPacket, atoms: Iterable[StateAtom]) -> None:
+        seen = {(s.surface.lower(), s.state_key, s.holder_role, s.dimension) for s in packet.states}
+        for atom in atoms:
+            key = (atom.surface.lower(), atom.state_key, atom.holder_role, atom.dimension)
+            if not atom.surface or key in seen:
+                continue
+            packet.states.append(atom)
+            seen.add(key)
+
+    def _extend_relations(self, packet: MeaningPerceptPacket, atoms: Iterable[RelationAtom]) -> None:
+        seen = {(r.relation_key, r.source_role, r.target_role) for r in packet.relations}
+        for atom in atoms:
+            key = (atom.relation_key, atom.source_role, atom.target_role)
+            if not atom.relation_key or key in seen:
+                continue
+            packet.relations.append(atom)
+            seen.add(key)
+
+    def _extend_needs(self, packet: MeaningPerceptPacket, atoms: Iterable[NeedAtom]) -> None:
+        seen = {(n.holder_role, n.need_key) for n in packet.needs}
+        for atom in atoms:
+            key = (atom.holder_role, atom.need_key)
+            if not atom.need_key or key in seen:
+                continue
+            packet.needs.append(atom)
+            seen.add(key)
+
+    @staticmethod
+    def _dedupe_dicts(
+        values: Iterable[dict[str, Any]],
+        key_fields: tuple[str, ...],
+    ) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        seen: set[tuple[Any, ...]] = set()
+        for value in values:
+            key = tuple(value.get(field) for field in key_fields)
+            if key in seen:
+                continue
+            result.append(value)
+            seen.add(key)
+        return result

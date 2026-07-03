@@ -236,7 +236,7 @@ class Pipeline:
         # Must happen before UOL mapping, before retrieval, before decision.
         # v3.3 Phase 4: Detect language and select appropriate adapter
         detected_lang, lang_adapter = detect_and_get_adapter(signal.content)
-        self._meaning_perceptor._adapter = lang_adapter
+        self._meaning_perceptor._language = lang_adapter
         meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
 
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────

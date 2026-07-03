@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .language_adapter import LanguageAdapter, get_adapter, load_language_pack, LanguagePackData
+from .language_adapter import LanguageAdapter, get_adapter, EnglishLanguageAdapter, JSONLanguageAdapter
 
 
 _AVAILABLE_LANGUAGES: list[str] | None = None
@@ -35,6 +35,26 @@ def _available_languages() -> list[str]:
     if "en" not in _AVAILABLE_LANGUAGES:
         _AVAILABLE_LANGUAGES = ["en"] + _AVAILABLE_LANGUAGES
     return _AVAILABLE_LANGUAGES
+
+
+def _adapter_known_tokens(adapter: LanguageAdapter) -> set[str]:
+    """Extract known tokens from an adapter for language detection scoring."""
+    tokens: set[str] = set()
+
+    if isinstance(adapter, EnglishLanguageAdapter):
+        tokens.update(adapter.PRONOUNS.keys())
+        tokens.update(adapter.ACTIONS.keys())
+        tokens.update(adapter.STATES.keys())
+        tokens.update(adapter.ENTITY_EXCLUDE)
+        tokens.update(adapter.DEICTICS)
+    elif isinstance(adapter, JSONLanguageAdapter):
+        tokens.update(adapter._pronouns.keys())
+        tokens.update(adapter._actions.keys())
+        tokens.update(adapter._states.keys())
+        tokens.update(adapter._entity_exclude)
+        tokens.update(adapter._deictics)
+
+    return tokens
 
 
 def detect_language(text: str) -> str:
@@ -61,19 +81,10 @@ def detect_language(text: str) -> str:
     best_score = 0
 
     for lang in languages:
-        pack = load_language_pack(lang)
-        # Score: overlap of tokens with pronouns + action keywords + state keywords
-        # + entity_exclude + question_cues
-        known_tokens = set()
-        known_tokens.update(pack.pronouns.keys())
-        known_tokens.update(pack.action_keywords.keys())
-        known_tokens.update(pack.state_keywords.keys())
-        known_tokens.update(pack.entity_exclude)
-        known_tokens.update(pack.question_cues)
-        known_tokens.update(pack.deictic_words)
+        adapter = get_adapter(lang)
+        known_tokens = _adapter_known_tokens(adapter)
 
         overlap = len(tokens & known_tokens)
-        # Normalize by total known tokens to avoid bias toward larger packs
         score = overlap / max(len(known_tokens), 1)
 
         if score > best_score:
