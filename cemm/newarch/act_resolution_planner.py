@@ -26,7 +26,7 @@ except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
         return ""
 from ..types.conversation_act import ConversationAct, ConversationActPacket
 from ..types.meaning_percept import MeaningAtomOutcome, MeaningGroup, MeaningPerceptPacket, RetrievalPlan, SafetyFrame, SituationFrame
-from .entity_fact_extractor import EntityFactCandidate
+from ..kernel.entity_fact_extractor import EntityFactCandidate
 
 
 @dataclass
@@ -103,34 +103,6 @@ class IgnoredAct:
 
 
 @dataclass
-class RejectedPath:
-    """A rejected candidate path retained for learning feedback."""
-
-    candidate_set_id: str
-    atom_id: str
-    atom_kind: str
-    atom_key: str
-    surface: str
-    confidence: float
-    reason: str
-    evidence_refs: list[str] = field(default_factory=list)
-
-
-@dataclass
-class SelectedPath:
-    """The selected interpretation path for a candidate set."""
-
-    candidate_set_id: str
-    atom_id: str
-    atom_kind: str
-    atom_key: str
-    surface: str
-    confidence: float
-    reason: str
-    group_id: str = ""
-
-
-@dataclass
 class ActResolutionPlan:
     """Operational plan for all acts and meaning groups in one turn."""
 
@@ -150,8 +122,6 @@ class ActResolutionPlan:
     abstention_reason: str = ""
     response_contract: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.5
-    selected_paths: list[SelectedPath] = field(default_factory=list)
-    rejected_paths: list[RejectedPath] = field(default_factory=list)
 
 
 class ActResolutionPlanner:
@@ -181,15 +151,14 @@ class ActResolutionPlanner:
         "story_request": 62,
         "creative_request": 62,
         "state_report": 58,
-        "playful_acknowledgment": 56,
         "phatic_checkin": 55,
         "greeting": 50,
-        "command_request": 45,
-        "question": 45,
-        "semantic_disambiguation": 46,
         "acknowledgment": 35,
         "claim_assertion": 30,
         "preference_assertion": 30,
+        "command_request": 45,
+        "question": 45,
+        "semantic_disambiguation": 46,
     }
 
     _MEMORY_ACTS = {
@@ -203,7 +172,6 @@ class ActResolutionPlanner:
     _NO_EVIDENCE_ACTS = {
         "greeting",
         "acknowledgment",
-        "playful_acknowledgment",
         "phatic_checkin",
         "frustration_signal",
         "confusion_repair",
@@ -216,12 +184,12 @@ class ActResolutionPlanner:
 
     def plan(
         self,
-        conversation_act: ConversationActPacket | None = None,
+        conversation_act: ConversationActPacket | None,
         situation: SituationFrame | None = None,
+        retrieval_plan: RetrievalPlan | None = None,
         safety_frame: SafetyFrame | None = None,
         fact_candidates: list[EntityFactCandidate] | None = None,
         meaning_percept: MeaningPerceptPacket | None = None,
-        retrieval_plan: RetrievalPlan | None = None,
     ) -> ActResolutionPlan:
         result = ActResolutionPlan()
         facts = list(fact_candidates or [])
@@ -234,9 +202,7 @@ class ActResolutionPlanner:
             self._resolve_act(act, result, retrieval_plan, facts)
 
         if meaning_percept is not None:
-            result.graph_patch_candidates.extend(
-                getattr(meaning_percept, "graph_patch_candidates", []) or []
-            )
+            result.graph_patch_candidates.extend(getattr(meaning_percept, "graph_patch_candidates", []) or [])
             self._resolve_meaning_groups(meaning_percept, result, facts)
 
         if not result.obligations and not result.memory_updates and facts:
@@ -258,13 +224,10 @@ class ActResolutionPlanner:
             ))
 
         self._dedupe_plan(result)
-        self._merge_hypotheses(result)
-        self._select_answer_task(result, retrieval_plan, meaning_percept)
+        self._select_answer_task(result, retrieval_plan)
         return result
 
-    def _add_safety_override(
-        self, result: ActResolutionPlan, safety_frame: SafetyFrame
-    ) -> None:
+    def _add_safety_override(self, result: ActResolutionPlan, safety_frame: SafetyFrame) -> None:
         safety_task = SafetyTask(
             category=safety_frame.category,
             response_mode=safety_frame.allowed_response_mode or "safe_info",
@@ -292,9 +255,7 @@ class ActResolutionPlanner:
     ) -> None:
         act_type = act.act_type
         if act_type == "unknown":
-            result.ignored_acts.append(
-                IgnoredAct(act_type=act_type, reason="unknown_act_waiting_for_meaning_groups")
-            )
+            result.ignored_acts.append(IgnoredAct(act_type=act_type, reason="unknown_act_waiting_for_meaning_groups"))
             return
 
         if act_type in self._MEMORY_ACTS:
@@ -370,96 +331,57 @@ class ActResolutionPlanner:
                 "group_id": group.id,
                 "surface": group.surface,
                 "intent": intent_key,
-                "parent_group_id": group.parent_group_id,
-                "relation_to_parent": group.relation_to_parent,
                 "predicate_ids": list(group.predicate_ids),
                 "outcome_ids": list(group.outcome_ids),
-                "uol_atom_ids": (
-                    [atom.id for atom in graph.group_atoms(group.id)] if graph else []
-                ),
-                "uol_edge_ids": (
-                    [edge.id for edge in graph.group_edges(group.id)] if graph else []
-                ),
+                "uol_atom_ids": [atom.id for atom in graph.group_atoms(group.id)] if graph else [],
+                "uol_edge_ids": [edge.id for edge in graph.group_edges(group.id)] if graph else [],
                 "port_binding_count": len([
                     binding for binding in getattr(graph, "port_bindings", [])
                     if getattr(graph.atoms.get(binding.owner_atom_id), "group_id", "") == group.id
                 ]) if graph else 0,
                 "affordance_prediction_count": len([
                     prediction for prediction in getattr(graph, "affordance_predictions", [])
-                    if any(
-                        getattr(graph.atoms.get(atom_id), "group_id", "") == group.id
-                        for atom_id in prediction.trigger_atom_ids
-                    )
+                    if any(getattr(graph.atoms.get(atom_id), "group_id", "") == group.id for atom_id in prediction.trigger_atom_ids)
                 ]) if graph else 0,
                 "graph_patch_candidate_ids": [
                     patch.id for patch in self._patches_for_group(graph, group.id)
                 ] if graph else [],
                 "candidate_set_ids": [
-                    cs.id for cs in self._candidate_sets_for_group(graph, group.id)
+                    candidate_set.id for candidate_set in self._candidate_sets_for_group(graph, group.id)
                 ] if graph else [],
                 "ambiguous_candidate_set_count": len([
-                    cs for cs in self._candidate_sets_for_group(graph, group.id)
-                    if len(getattr(cs, "candidate_atom_ids", [])) > 1
+                    candidate_set for candidate_set in self._candidate_sets_for_group(graph, group.id)
+                    if len(getattr(candidate_set, "candidate_atom_ids", [])) > 1
                 ]) if graph else 0,
             }
             result.group_plans.append(summary)
-
-            self._resolve_candidate_sets(
-                result, group, self._candidate_sets_for_group(graph, group.id), graph
-            )
-            self._resolve_group_outcomes(
-                result, group, outcomes_by_group.get(group.id, [])
-            )
-            self._select_and_track_paths(
-                result, group, self._candidate_sets_for_group(graph, group.id), graph
-            )
+            self._resolve_candidate_sets(result, group, self._candidate_sets_for_group(graph, group.id), graph)
+            self._resolve_group_outcomes(result, group, outcomes_by_group.get(group.id, []))
 
             if intent_key == "session_exit":
-                self._add_group_obligation(
-                    result, group, "session_exit", "social_response", "session_exit", 92, "none"
-                )
+                self._add_group_obligation(result, group, "session_exit", "social_response", "session_exit", 92, "none")
             elif intent_key == "repair":
-                self._add_group_obligation(
-                    result, group, "retrospective_repair", "retrospective_repair", "repair", 88, "none"
-                )
+                self._add_group_obligation(result, group, "retrospective_repair", "retrospective_repair", "repair", 88, "none")
             elif intent_key == "fresh_world_query":
-                self._add_group_obligation(
-                    result, group, "evidence_query", "live_info_boundary", "fresh_world_query", 78, "tool_required"
-                )
+                self._add_group_obligation(result, group, "evidence_query", "live_info_boundary", "fresh_world_query", 78, "tool_required")
             elif intent_key == "capability_query":
-                self._add_group_obligation(
-                    result, group, "self_capability_query", "capability_summary", "capability_summary", 75, "none"
-                )
+                self._add_group_obligation(result, group, "self_capability_query", "capability_summary", "capability_summary", 75, "none")
             elif intent_key == "teaching":
-                self._resolve_teaching_group(
-                    result, group, group_facts or fact_candidates, graph
-                )
+                self._resolve_teaching_group(result, group, group_facts or fact_candidates, graph)
             elif intent_key == "user_state_report":
-                self._add_group_obligation(
-                    result, group, "state_report", "social_response", "chat_mode_statement", 34, "none"
-                )
+                self._add_group_obligation(result, group, "state_report", "social_response", "user_state_ack", 58, "none")
             elif intent_key == "greeting":
-                self._add_group_obligation(
-                    result, group, "greeting", "social_response", "greeting", 50, "none"
-                )
+                self._add_group_obligation(result, group, "greeting", "social_response", "greeting", 50, "none")
             elif intent_key == "acknowledgment":
-                self._add_group_obligation(
-                    result, group, "acknowledgment", "social_response", "acknowledgment", 35, "none"
-                )
+                self._add_group_obligation(result, group, "acknowledgment", "social_response", "acknowledgment", 35, "none")
             elif intent_key == "question":
-                self._add_group_obligation(
-                    result, group, "question", "general_conversation", "general_conversation", 45, "optional"
-                )
+                self._add_group_obligation(result, group, "question", "general_conversation", "answer_question", 45, "optional")
             elif intent_key == "command":
-                self._add_group_obligation(
-                    result, group, "command_request", "general_conversation", "command_resolution", 45, "optional"
-                )
+                self._add_group_obligation(result, group, "command_request", "general_conversation", "command_resolution", 45, "optional")
             else:
                 result.unresolved_groups.append(group.id)
 
-    def _graph_intent_for_group(
-        self, graph: Any, group: MeaningGroup
-    ) -> str:
+    def _graph_intent_for_group(self, graph: Any, group: MeaningGroup) -> str:
         if graph is None:
             return ""
         intent_atoms = graph.atoms_by_kind("intent", group.id)
@@ -505,23 +427,12 @@ class ActResolutionPlanner:
                 group_id=group.id,
                 predicate_id=group.predicate_ids[0] if group.predicate_ids else "",
                 should_confirm=False,
-                uol_atom_ids=(
-                    [atom.id for atom in graph.group_atoms(group.id)] if graph else []
-                ),
-                uol_edge_ids=(
-                    [edge.id for edge in graph.group_edges(group.id)] if graph else []
-                ),
-                graph_patch_ids=(
-                    [patch.id for patch in self._patches_for_group(graph, group.id)] if graph else []
-                ),
+                uol_atom_ids=[atom.id for atom in graph.group_atoms(group.id)] if graph else [],
+                uol_edge_ids=[edge.id for edge in graph.group_edges(group.id)] if graph else [],
+                graph_patch_ids=[patch.id for patch in self._patches_for_group(graph, group.id)] if graph else [],
             ))
-            self._add_group_obligation(
-                result, group, "definition_teaching", "social_response", "remember", 64, "none"
-            )
-        elif (
-            graph is not None
-            and graph.has_edge("teaches", source_kind="source", target_kind="relation", group_id=group.id)
-        ):
+            self._add_group_obligation(result, group, "definition_teaching", "social_response", "remember", 64, "none")
+        elif graph is not None and graph.has_edge("teaches", source_kind="source", target_kind="relation", group_id=group.id):
             result.memory_updates.append(MemoryUpdatePlan(
                 write_kind="graph_patch_candidate",
                 candidates=[],
@@ -535,13 +446,9 @@ class ActResolutionPlanner:
                 uol_edge_ids=[edge.id for edge in graph.group_edges(group.id)],
                 graph_patch_ids=[patch.id for patch in self._patches_for_group(graph, group.id)],
             ))
-            self._add_group_obligation(
-                result, group, "definition_teaching", "social_response", "remember", 64, "none"
-            )
+            self._add_group_obligation(result, group, "definition_teaching", "social_response", "remember", 64, "none")
         else:
-            self._add_group_obligation(
-                result, group, "teaching_offer", "teaching_prompt", "teaching_clarification", 64, "none"
-            )
+            self._add_group_obligation(result, group, "teaching_offer", "teaching_prompt", "teaching_clarification", 64, "none")
 
     def _resolve_group_outcomes(
         self,
@@ -552,8 +459,14 @@ class ActResolutionPlanner:
         for outcome in outcomes:
             if outcome.expected_change == "fresh_evidence_required":
                 self._add_group_obligation(
-                    result, group, "evidence_query", "live_info_boundary", "fresh_world_query", 78,
-                    "tool_required", predicate_id=outcome.predicate_id,
+                    result,
+                    group,
+                    "evidence_query",
+                    "live_info_boundary",
+                    "fresh_world_query",
+                    78,
+                    "tool_required",
+                    predicate_id=outcome.predicate_id,
                 )
             elif outcome.expected_change == "candidate_memory_update":
                 result.memory_updates.append(MemoryUpdatePlan(
@@ -568,16 +481,25 @@ class ActResolutionPlanner:
                 ))
             elif outcome.expected_change == "clarity_required":
                 self._add_group_obligation(
-                    result, group, "retrospective_repair", "retrospective_repair", "repair", 88,
-                    "none", predicate_id=outcome.predicate_id,
+                    result,
+                    group,
+                    "retrospective_repair",
+                    "retrospective_repair",
+                    "repair",
+                    88,
+                    "none",
+                    predicate_id=outcome.predicate_id,
                 )
             elif outcome.expected_change == "reply_obligation":
                 self._add_group_obligation(
-                    result, group,
+                    result,
+                    group,
                     "question" if outcome.atom_kind == "intent" else "claim_assertion",
                     "general_conversation",
-                    "general_conversation" if outcome.atom_kind == "intent" else "chat_mode_statement",
-                    45, "optional", predicate_id=outcome.predicate_id,
+                    "answer_question" if outcome.atom_kind == "intent" else "respond",
+                    45,
+                    "optional",
+                    predicate_id=outcome.predicate_id,
                 )
 
     def _resolve_candidate_sets(
@@ -602,12 +524,11 @@ class ActResolutionPlanner:
                     if not act_type:
                         continue
                     response_mode = get_response_mode(str(act_type)) or "general_conversation"
-                    intent = self._intent_for_act(str(act_type), response_mode)
                     self._add_obligation(result, ReplyObligation(
                         act_type=str(act_type),
                         response_mode=response_mode,
-                        priority=max(20, self._PRIORITY.get(str(act_type), 40) - 25),
-                        intent=intent,
+                        priority=max(20, self._PRIORITY.get(str(act_type), 40) - 8),
+                        intent=str(act_type),
                         reason=f"candidate_set:{candidate_set.id}",
                         confidence=min(0.65, atom.confidence),
                         evidence_policy="optional",
@@ -621,9 +542,7 @@ class ActResolutionPlanner:
                     ))
                 continue
 
-            if group.group_type in {"question", "command"} or any(
-                act in {"command_request", "question"} for act in group.candidate_act_types
-            ):
+            if group.group_type in {"question", "command"} or any(act in {"command_request", "question"} for act in group.candidate_act_types):
                 self._add_obligation(result, ReplyObligation(
                     act_type="semantic_disambiguation",
                     response_mode="clarifying_question",
@@ -640,121 +559,6 @@ class ActResolutionPlanner:
                     },
                 ))
 
-    def _select_and_track_paths(
-        self,
-        result: ActResolutionPlan,
-        group: MeaningGroup,
-        candidate_sets: list[Any],
-        graph: Any,
-    ) -> None:
-        if graph is None:
-            return
-        for candidate_set in candidate_sets:
-            candidate_atom_ids = list(getattr(candidate_set, "candidate_atom_ids", []) or [])
-            if len(candidate_atom_ids) <= 1:
-                continue
-            selected_atom_id = getattr(candidate_set, "selected_atom_id", "") or ""
-            for atom_id in candidate_atom_ids:
-                atom = graph.atoms.get(atom_id)
-                if atom is None:
-                    continue
-                is_selected = atom_id == selected_atom_id or atom.features.get("selected_candidate")
-                path = SelectedPath(
-                    candidate_set_id=candidate_set.id,
-                    atom_id=atom.id,
-                    atom_kind=atom.kind,
-                    atom_key=atom.key,
-                    surface=atom.surface or candidate_set.target_surface,
-                    confidence=atom.confidence,
-                    reason="selected_path" if is_selected else "rejected_path",
-                    group_id=group.id,
-                )
-                if is_selected:
-                    result.selected_paths.append(path)
-                else:
-                    result.rejected_paths.append(RejectedPath(
-                        candidate_set_id=candidate_set.id,
-                        atom_id=atom.id,
-                        atom_kind=atom.kind,
-                        atom_key=atom.key,
-                        surface=atom.surface or candidate_set.target_surface,
-                        confidence=atom.confidence,
-                        reason="alternative_rejected",
-                        evidence_refs=self._evidence_refs(atom.evidence),
-                    ))
-
-    _EVIDENCE_POLICY_RANK = {
-        "none": 0,
-        "optional": 1,
-        "stored_required": 2,
-        "fresh_required": 3,
-        "tool_required": 4,
-    }
-
-    def _merge_hypotheses(self, result: ActResolutionPlan) -> None:
-        if not result.obligations:
-            return
-        merged: dict[str, ReplyObligation] = {}
-        merge_trace: dict[str, list[str]] = {}
-        for obligation in result.obligations:
-            key = f"{obligation.act_type}:{obligation.group_id}:{obligation.predicate_id}"
-            if key in merged:
-                existing = merged[key]
-                existing.confidence = max(existing.confidence, obligation.confidence)
-                existing.priority = max(existing.priority, obligation.priority)
-                if obligation.requires_evidence:
-                    existing.requires_evidence = True
-                # Merge evidence_policy: take the most restrictive
-                existing_rank = self._EVIDENCE_POLICY_RANK.get(existing.evidence_policy, 0)
-                new_rank = self._EVIDENCE_POLICY_RANK.get(obligation.evidence_policy, 0)
-                if new_rank > existing_rank:
-                    existing.evidence_policy = obligation.evidence_policy
-                    existing.requires_evidence = obligation.evidence_policy not in {"none", "optional"}
-                existing.params["merged_from"] = existing.params.get("merged_from", [])
-                if isinstance(existing.params["merged_from"], list):
-                    existing.params["merged_from"].append(obligation.reason)
-                merge_trace.setdefault(key, []).append(obligation.reason)
-            else:
-                merged[key] = obligation
-                merge_trace.setdefault(key, [])
-        result.obligations = sorted(merged.values(), key=lambda o: o.priority, reverse=True)
-
-        seen_task_keys: set[str] = set()
-        deduped: list[AnswerTask] = []
-        for task in result.answer_tasks:
-            key = f"{task.selected_act_type}:{task.group_id}:{task.predicate_id}:{task.intent}"
-            if key in seen_task_keys:
-                continue
-            seen_task_keys.add(key)
-            for existing in deduped:
-                if existing.selected_act_type == task.selected_act_type and existing.group_id == task.group_id:
-                    existing.confidence = max(existing.confidence, task.confidence)
-                    existing.priority = max(existing.priority, task.priority)
-                    existing.params["merged"] = True
-                    break
-            else:
-                deduped.append(task)
-        result.answer_tasks = sorted(deduped, key=lambda t: (t.priority, t.confidence), reverse=True)
-
-    def _order_by_discourse(
-        self,
-        result: ActResolutionPlan,
-        percept: MeaningPerceptPacket | None,
-    ) -> None:
-        if not result.obligations:
-            return
-        child_group_ids: set[str] = set()
-        if percept is not None:
-            for group in percept.meaning_groups:
-                if group.parent_group_id:
-                    child_group_ids.add(group.id)
-
-        def discourse_key(obligation: ReplyObligation) -> tuple[int, int, str]:
-            is_child = 0 if obligation.group_id in child_group_ids else 1
-            return (is_child, -obligation.priority, obligation.group_id)
-
-        result.obligations.sort(key=discourse_key, reverse=False)
-
     def _add_group_obligation(
         self,
         result: ActResolutionPlan,
@@ -766,9 +570,7 @@ class ActResolutionPlanner:
         evidence_policy: str,
         predicate_id: str = "",
     ) -> None:
-        resolved_predicate_id = (
-            predicate_id or (group.predicate_ids[0] if group.predicate_ids else "")
-        )
+        resolved_predicate_id = predicate_id or (group.predicate_ids[0] if group.predicate_ids else "")
         self._add_obligation(result, ReplyObligation(
             act_type=act_type,
             response_mode=response_mode,
@@ -782,9 +584,7 @@ class ActResolutionPlanner:
             predicate_id=resolved_predicate_id,
             params={"surface": group.surface, "candidate_act_types": list(group.candidate_act_types)},
         ))
-        self._add_answer_task_from_group(
-            result, group, act_type, response_mode, intent, priority, evidence_policy, resolved_predicate_id
-        )
+        self._add_answer_task_from_group(result, group, act_type, response_mode, intent, priority, evidence_policy, resolved_predicate_id)
 
     def _add_answer_task_from_group(
         self,
@@ -810,16 +610,13 @@ class ActResolutionPlanner:
             predicate_id=predicate_id or (group.predicate_ids[0] if group.predicate_ids else ""),
         ))
 
-    def _add_obligation(
-        self, result: ActResolutionPlan, obligation: ReplyObligation
-    ) -> None:
+    def _add_obligation(self, result: ActResolutionPlan, obligation: ReplyObligation) -> None:
         result.obligations.append(obligation)
 
     def _select_answer_task(
         self,
         result: ActResolutionPlan,
         retrieval_plan: RetrievalPlan | None,
-        meaning_percept: MeaningPerceptPacket | None = None,
     ) -> None:
         if retrieval_plan:
             result.retrieval_mode = retrieval_plan.mode
@@ -832,17 +629,7 @@ class ActResolutionPlanner:
             result.response_contract = {"mode": "general_conversation", "evidence_policy": "none"}
             return
 
-        child_group_ids: set[str] = set()
-        if meaning_percept is not None:
-            for group in meaning_percept.meaning_groups:
-                if group.parent_group_id:
-                    child_group_ids.add(group.id)
-
-        def _obligation_sort_key(o: ReplyObligation) -> tuple:
-            is_child = 1 if o.group_id in child_group_ids else 0
-            return (o.priority, is_child, o.confidence, o.group_id)
-
-        result.obligations.sort(key=_obligation_sort_key, reverse=True)
+        result.obligations.sort(key=lambda o: (o.priority, o.confidence), reverse=True)
         selected = result.obligations[0]
         result.selected_response_mode = selected.response_mode
         result.selected_intent = selected.intent
@@ -855,21 +642,9 @@ class ActResolutionPlanner:
             result.abstention_reason = "fresh_external_evidence_required"
         elif selected.evidence_policy == "stored_required":
             result.requires_retrieval = True
-            result.retrieval_mode = (
-                result.retrieval_mode if result.retrieval_mode != "none" else "world_memory"
-            )
+            result.retrieval_mode = result.retrieval_mode if result.retrieval_mode != "none" else "world_memory"
 
         result.answer_tasks.sort(key=lambda t: (t.priority, t.confidence), reverse=True)
-
-        selected_paths = [
-            {"candidate_set_id": p.candidate_set_id, "atom_key": p.atom_key, "confidence": p.confidence}
-            for p in result.selected_paths
-        ]
-        rejected_paths_for_learning = [
-            {"candidate_set_id": p.candidate_set_id, "atom_key": p.atom_key, "confidence": p.confidence, "reason": p.reason}
-            for p in result.rejected_paths
-        ]
-
         result.response_contract = {
             "mode": selected.response_mode,
             "intent": selected.intent,
@@ -882,22 +657,13 @@ class ActResolutionPlanner:
                 for plan in result.group_plans
             ),
             "must_not_fabricate_fresh_facts": selected.evidence_policy in {"tool_required", "fresh_required"},
-            "selected_path_count": len(result.selected_paths),
-            "rejected_path_count": len(result.rejected_paths),
-            "selected_paths": selected_paths,
-            "rejected_paths_for_learning": rejected_paths_for_learning,
         }
 
     def _dedupe_plan(self, result: ActResolutionPlan) -> None:
         obligations: list[ReplyObligation] = []
         seen_obligations: set[tuple[str, str, str, str, str]] = set()
-        for obligation in sorted(
-            result.obligations, key=lambda o: (o.priority, o.confidence), reverse=True
-        ):
-            key = (
-                obligation.act_type, obligation.intent,
-                obligation.group_id, obligation.predicate_id, obligation.evidence_policy,
-            )
+        for obligation in sorted(result.obligations, key=lambda o: (o.priority, o.confidence), reverse=True):
+            key = (obligation.act_type, obligation.intent, obligation.group_id, obligation.predicate_id, obligation.evidence_policy)
             if key in seen_obligations:
                 continue
             obligations.append(obligation)
@@ -914,22 +680,16 @@ class ActResolutionPlanner:
             seen_tasks.add(key)
         result.answer_tasks = tasks
 
-    def _facts_by_group(
-        self, facts: list[EntityFactCandidate]
-    ) -> dict[str, list[EntityFactCandidate]]:
+    def _facts_by_group(self, facts: list[EntityFactCandidate]) -> dict[str, list[EntityFactCandidate]]:
         grouped: dict[str, list[EntityFactCandidate]] = {}
         for fact in facts:
-            group_id = str(
-                fact.qualifiers.get("group_id", "") if hasattr(fact, "qualifiers") else ""
-            )
+            group_id = str(fact.qualifiers.get("group_id", "") if hasattr(fact, "qualifiers") else "")
             if not group_id:
                 continue
             grouped.setdefault(group_id, []).append(fact)
         return grouped
 
-    def _outcomes_by_group(
-        self, percept: MeaningPerceptPacket
-    ) -> dict[str, list[MeaningAtomOutcome]]:
+    def _outcomes_by_group(self, percept: MeaningPerceptPacket) -> dict[str, list[MeaningAtomOutcome]]:
         grouped: dict[str, list[MeaningAtomOutcome]] = {}
         for outcome in percept.atom_outcomes:
             if not outcome.group_id:
@@ -937,19 +697,15 @@ class ActResolutionPlanner:
             grouped.setdefault(outcome.group_id, []).append(outcome)
         return grouped
 
-    def _candidate_sets_for_group(
-        self, graph: Any, group_id: str
-    ) -> list[Any]:
+    def _candidate_sets_for_group(self, graph: Any, group_id: str) -> list[Any]:
         if graph is None or not group_id:
             return []
         return [
-            cs for cs in getattr(graph, "candidate_sets", []) or []
-            if getattr(cs, "group_id", "") == group_id
+            candidate_set for candidate_set in getattr(graph, "candidate_sets", []) or []
+            if getattr(candidate_set, "group_id", "") == group_id
         ]
 
-    def _patches_for_group(
-        self, graph: Any, group_id: str
-    ) -> list[Any]:
+    def _patches_for_group(self, graph: Any, group_id: str) -> list[Any]:
         if graph is None or not group_id:
             return []
         patches = []
@@ -961,17 +717,12 @@ class ActResolutionPlanner:
                     break
         return patches
 
-    def _evidence_policy_for_act(
-        self, act_type: str, requires_evidence: bool
-    ) -> str:
+    def _evidence_policy_for_act(self, act_type: str, requires_evidence: bool) -> str:
         if act_type in self._NO_EVIDENCE_ACTS:
             return "none"
         if act_type in {"open_domain_entity_query", "evidence_query"}:
             return "stored_required" if requires_evidence else "optional"
-        if act_type in {
-            "memory_query", "self_knowledge_query",
-            "user_identity_query", "user_name_query",
-        }:
+        if act_type in {"memory_query", "self_knowledge_query", "user_identity_query", "user_name_query"}:
             return "stored_required"
         return "stored_required" if requires_evidence else "optional"
 
@@ -984,11 +735,7 @@ class ActResolutionPlanner:
             return "live_tool_required"
         if evidence_policy == "stored_required":
             return retrieval_plan.mode if retrieval_plan else "world_memory"
-        return (
-            retrieval_plan.mode
-            if retrieval_plan and retrieval_plan.mode not in {"", "none"}
-            else "none"
-        )
+        return retrieval_plan.mode if retrieval_plan and retrieval_plan.mode not in {"", "none"} else "none"
 
     def _write_kind_for_act(self, act_type: str) -> str:
         if act_type == "preference_assertion":
@@ -1006,8 +753,8 @@ class ActResolutionPlanner:
             return "teaching_offer"
         if act_type == "frustration_signal":
             return "frustration_response"
-        if act_type in {"confusion_repair", "retrospective_repair", "playful_repair"}:
-            return act_type
+        if act_type in {"confusion_repair", "retrospective_repair"}:
+            return "repair"
         if act_type == "session_exit":
             return "session_exit"
         return act_type
@@ -1016,15 +763,3 @@ class ActResolutionPlanner:
         if not facts:
             return 0.5
         return sum(f.confidence for f in facts) / len(facts)
-
-    @staticmethod
-    def _evidence_refs(evidence: list[dict[str, Any]]) -> list[str]:
-        refs: list[str] = []
-        for item in evidence:
-            span_id = str(item.get("span_id", "") or "")
-            group_id = str(item.get("group_id", "") or "")
-            source = str(item.get("source", "") or "")
-            ref = ":".join(part for part in (source, group_id, span_id) if part)
-            if ref and ref not in refs:
-                refs.append(ref)
-        return refs

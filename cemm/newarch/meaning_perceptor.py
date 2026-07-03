@@ -14,6 +14,7 @@ clause or predicate independently.
 from __future__ import annotations
 
 from typing import Any, Iterable
+import re
 import uuid
 
 try:
@@ -51,14 +52,11 @@ except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
     ContextKernel = Any  # type: ignore[misc,assignment]
 from ..types.meaning_percept import (
     ActionAtom,
-    AffordanceAtom,
     AtomEvidence,
     CandidateInterpretation,
     EvidenceAtom,
     IntentAtom,
     MeaningAtomOutcome,
-    OutcomeAtom,
-    ValenceAtom,
     MeaningGroup,
     MeaningHypothesis,
     MeaningPerceptPacket,
@@ -79,7 +77,7 @@ try:
     from ..types.signal import Signal
 except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
     Signal = Any  # type: ignore[misc,assignment]
-from .language_adapter import EnglishLanguageAdapter, LanguageAdapter
+from ..kernel.language_adapter import EnglishLanguageAdapter, LanguageAdapter
 from .meaning_graph_builder import MeaningGraphBuilder
 
 
@@ -272,34 +270,6 @@ class MeaningPerceptor:
         packet.uol_graph = self._graph_builder.build(packet)
         packet.uol_training_example = packet.uol_graph.to_training_example()
         packet.graph_patch_candidates = list(packet.uol_graph.patch_candidates)
-
-        packet.affordances = [
-            AffordanceAtom(
-                entity_role_or_id=pred.affordance_key,
-                affords=[pred.effect_type],
-                condition=pred.reason,
-                confidence=pred.confidence,
-            )
-            for pred in (packet.uol_graph.affordance_predictions if packet.uol_graph else [])
-        ]
-        packet.outcomes = [
-            OutcomeAtom(
-                affected_entity_role=outcome.affected_role,
-                changed_dimension=outcome.expected_change,
-                direction=outcome.valence or "unknown",
-                event_key=outcome.atom_key,
-                confidence=outcome.confidence,
-            )
-            for outcome in packet.atom_outcomes
-        ]
-        packet.valences = [
-            ValenceAtom(
-                target_role=outcome.affected_role,
-                valence=outcome.valence,
-                confidence=outcome.confidence,
-            )
-            for outcome in packet.atom_outcomes
-        ]
 
         packet.attention_target = self._attention_target(packet, kernel)
         packet.confidence = self._confidence(packet)
@@ -794,16 +764,10 @@ class MeaningPerceptor:
                         span_id=self._span_id_for_group(packet, group),
                     ))
                 if token in _TIME_CUES:
-                    time_relation = (
-                        "present" if token in {"now", "today", "currently"}
-                        else "past" if token in {"yesterday", "recent"}
-                        else "future" if token in {"tomorrow", "tonight"}
-                        else "relative"
-                    )
                     packet.times.append(TimeAtom(
                         surface=token,
                         time_key=token,
-                        relation=time_relation,
+                        relation="present" if token in {"now", "today", "currently"} else "relative",
                         confidence=0.6,
                         group_id=group.id,
                         span_id=self._span_id_for_group(packet, group),

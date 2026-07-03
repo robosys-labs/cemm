@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal
 from .permission import Permission
-from .uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
+from .uol_atom import UOLAtom
 from .normalized_signal import NormalizedSignal
 
 
@@ -46,7 +46,7 @@ class ObservationSemantics:
     cause_hypothesis_claim_ids: list[str] = field(default_factory=list)
     decay_half_life_ms: float = 900000.0
     confidence: float = 0.5
-    uol_atoms: list = field(default_factory=list)  # list of EntityRefUOLAtom | ProcessUOLAtom | StateUOLAtom
+    uol_atoms: list[UOLAtom] = field(default_factory=list)
     frame_key: str = ""
 
 

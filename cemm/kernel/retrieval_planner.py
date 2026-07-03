@@ -41,7 +41,30 @@ class RetrievalPlanner:
         requires_retrieval as the primary signal instead of re-deriving
         from conversation_act.act_type.
         """
-        # ── ActResolutionPlan takes priority when available ──
+        # ── ConversationAct social/creative/repair always wins ──
+        # Check BEFORE the plan's retrieval_mode: secondary evidence_query
+        # from the classifier should not override a primary social act.
+        under_social_turn = conversation_act and (
+            conversation_act.is_social
+            or conversation_act.is_creative
+            or conversation_act.is_repair
+        )
+
+        # Safety frames: no retrieval except safety policy
+        if safety_frame and safety_frame.category != "none":
+            return RetrievalPlan(
+                mode="none",
+                reason=f"safety_frame={safety_frame.category} — no retrieval needed",
+            )
+
+        # Social/exit/repair/creative turns: no retrieval
+        if under_social_turn:
+            return RetrievalPlan(
+                mode="none",
+                reason=f"act_type={conversation_act.act_type} — social/creative/repair, no retrieval",
+            )
+
+        # ── ActResolutionPlan takes priority for non-social turns ──
         if act_resolution_plan is not None:
             # Safety tasks always mean no retrieval
             if act_resolution_plan.safety_tasks:
@@ -63,24 +86,6 @@ class RetrievalPlanner:
                 )
 
         act_type = conversation_act.act_type if conversation_act else "unknown"
-
-        # Safety frames: no retrieval except safety policy
-        if safety_frame and safety_frame.category != "none":
-            return RetrievalPlan(
-                mode="none",
-                reason=f"safety_frame={safety_frame.category} — no retrieval needed",
-            )
-
-        # Social/exit/repair/creative turns: no retrieval
-        if conversation_act and (
-            conversation_act.is_social
-            or conversation_act.is_creative
-            or conversation_act.is_repair
-        ):
-            return RetrievalPlan(
-                mode="none",
-                reason=f"act_type={act_type} — social/creative/repair, no retrieval",
-            )
 
         # Exit: no retrieval
         if act_type == "exit":

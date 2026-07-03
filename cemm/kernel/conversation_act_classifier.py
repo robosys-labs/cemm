@@ -129,11 +129,13 @@ def _is_fresh_world_query(text: str, frame_keys: set[str] | None = None) -> bool
     question_starter_cues = _CUE_SETS.get("question_starter", set())
     if not (tokens & fresh_markers):
         return False
-    # Check if text starts with a question starter
+    # Check if text starts with a question starter or ends with '?'
     text_tokens = _tokenize_surface(text)
     first_token = text_tokens[0] if text_tokens else ""
-    return first_token in question_starter_cues or any(
-        normalized.startswith(qs) for qs in question_starter_cues if len(qs) > 2
+    return (
+        first_token in question_starter_cues
+        or any(normalized.startswith(qs) for qs in question_starter_cues if len(qs) > 2)
+        or text.strip().endswith("?")
     )
 
 

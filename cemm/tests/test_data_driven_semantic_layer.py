@@ -59,7 +59,7 @@ def test_uol_mapper_detects_self_query_from_data() -> None:
     mapper = UOLMapper(Registry())
     kernel = _make_kernel()
     atoms = mapper.map_signal("what are you", kernel)
-    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    frame_keys = {atom.key for atom in atoms if atom.kind == "process"}
     assert "self_identity_query" in frame_keys
 
 
@@ -67,7 +67,7 @@ def test_uol_mapper_detects_user_query_from_data() -> None:
     mapper = UOLMapper(Registry())
     kernel = _make_kernel()
     atoms = mapper.map_signal("what is my name", kernel)
-    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    frame_keys = {atom.key for atom in atoms if atom.kind == "process"}
     assert "user_name_query" in frame_keys
 
 
@@ -75,7 +75,7 @@ def test_uol_mapper_guards_command_on_question_mark() -> None:
     mapper = UOLMapper(Registry())
     kernel = _make_kernel()
     atoms = mapper.map_signal("remember me?", kernel)
-    frame_keys = {atom.frame_key for atom in atoms if atom.kind == "process"}
+    frame_keys = {atom.key for atom in atoms if atom.kind == "process"}
     # Question mark should prevent command_remember emission.
     assert "command_remember" not in frame_keys
 
@@ -91,7 +91,7 @@ def test_uol_mapper_uses_data_driven_insults() -> None:
     mapper = UOLMapper(registry)
     kernel = _make_kernel()
     atoms = mapper.map_signal("you are broken", kernel)
-    state_keys = {atom.state_key for atom in atoms if atom.kind == "state"}
+    state_keys = {atom.key for atom in atoms if atom.kind == "state"}
     assert "low_competence" in state_keys
 
 
@@ -99,7 +99,7 @@ def test_uol_mapper_uses_data_driven_pronouns() -> None:
     mapper = UOLMapper(Registry())
     kernel = _make_kernel()
     atoms = mapper.map_signal("i like rain", kernel)
-    entity_ids = {atom.entity_id for atom in atoms if atom.kind == "entity_ref"}
+    entity_ids = {atom.key for atom in atoms if atom.kind == "entity"}
     assert "user" in entity_ids
 
 
@@ -299,7 +299,7 @@ def test_uol_mapper_emits_conversation_intent_atoms() -> None:
     mapper = UOLMapper(registry)
     kernel = ContextKernel(id="ctx-1", user=UserState())
     atoms = mapper.map_signal("story", kernel)
-    frame_keys = {a.frame_key for a in atoms if hasattr(a, "frame_key")}
+    frame_keys = {a.key for a in atoms if a.kind == "process"}
     assert "story_request" in frame_keys
 
 

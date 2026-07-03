@@ -1,50 +1,113 @@
-# CEMM SLC Architecture - Governing Instructions
+# CEMM Agent Instructions
 
-This file is the highest-priority local implementation guide for CEMM work. If any older plan, archived document, generated artifact, or bootstrap script conflicts with this file, follow this file and the canonical root architecture documents.
+Status: governing implementation guide  
+Audience: AI coding agents, reviewers, and maintainers working on CEMM  
+Supersedes: older v3.0/SLC-only local plans when they conflict with the current architecture
 
-## Canonical Documents
+## 1. Canonical Source Of Truth
 
-Use these root files as the active contract:
+Use these files as the active implementation contract, in this order:
 
-- `architecture.md` - stable CEMM v3.0 architecture.
-- `cemm_training_architecture.md` - continuous training architecture v3.0.
-- `cemm_foundational_fixes.md` - foundational atom fixes and §references used by code.
-- `cemm_v3_1_operational_meaning_spine.md` - v3.1 operational spine alignment doc.
-- `cemm_pipeline.md` - active end-to-end pipeline.
-- `cemm_acceptance_tests.md` - acceptance contract to convert into executable tests.
-- `cemm_implementation_plan.md` - proposed implementation phases.
-- `cemm_architecture_gap_trace.md` - current gap analysis.
+1. `AGENTS.md`
+2. `newarch/consolidated_architecture.md`
+3. `newarch/core_loop_runtime.md`
+4. `newarch/full_cemm_learning_brain_missing_pieces.md`
+5. `newarch/missing_runtime_implementation_plan.md`
+6. `newarch/3.3-uol-graph-architecture.md`
+7. `newarch/core_loop_update_manifest.md`
+8. `cemm/tests/test_acceptance.py`
+9. `docs/archive/cemm_pipeline.md`
+10. `docs/archive/cemm_training_architecture.md`
 
-Historical or deprecated material under `docs/archive/` is not implementation guidance. This includes archived superpowers plans and specs under `docs/archive/superpowers/`. Do not follow old plans that describe CEMM as a basic deterministic conversational MVP, or plans that say to copy files from `new/` directly into root.
+`docs/archive/architecture_v3.md` is useful background only when it agrees with
+`newarch/consolidated_architecture.md`.
 
-## Core Identity
+Older generated artifacts, patch files, archived docs, bootstrap scripts,
+runtime databases, logs, `__pycache__`, JSONL exports, and files under old
+proposal/archive directories are not active architecture guidance.
 
-- CEMM itself is a language model, not a wrapper around prompts.
-- CEMM is a MOE/SLM: it routes semantic packets through expert modules and learned components.
-- UOL and graph packets are the semantic representation; English text is only one input/output surface.
-- The knowledge compression pipeline is runtime -> trace -> extract -> train -> compress -> deploy.
-- The training pipeline feeds the runtime. Deterministic code is a temporary cheapest-first fallback, not the architecture.
+If any document says CEMM is only a deterministic conversational MVP, an
+English-first router, or a text-answer generator, ignore that instruction.
 
-## Non-Negotiable Runtime Shape
+Also ensure that old tests don't derail new implementation or cause drift. Delete and create new ones instead if necessary.
 
-The active target is:
+## 2. Core Identity
+
+CEMM is a meaning-first language architecture.
+
+It is not:
 
 ```text
-Signal + ContextKernel + Memory
--> SemanticEventGraph
--> typed latent / Decide
--> SemanticAnswerGraph or ActionPlan
--> Realize
--> Verify
--> Trace
--> Export
+a prompt wrapper
+a plain intent classifier
+a text-only chatbot
+a giant sentence database
 ```
 
-Final user-facing answer text must not be produced before a `SemanticAnswerGraph` or valid `ActionPlan` exists.
+It is:
 
-## Core Loop Ordering
+```text
+a semantic runtime
+a UOL working-graph system
+a graph-patch learning system
+a compression-oriented concept/construction/predicate/affordance learner
+```
 
-Every runtime change must preserve the SLC loop:
+English text is one input/output surface. UOL graph structure is the internal
+semantic workbench.
+
+## 3. Current Runtime Contract
+
+The active seed runtime loop is:
+
+```text
+Signal
+-> MeaningPerceptor
+-> MeaningPerceptPacket
+-> MeaningGraphBuilder
+-> UOLGraph
+-> runtime resolution
+-> ActResolutionPlanner
+-> GraphPatchExtractor
+-> ConceptConsolidator
+-> durable semantic structures
+```
+
+Runtime resolution includes:
+
+```text
+concept resolution
+construction matching
+operational-port binding
+affordance prediction
+candidate-set handling
+```
+
+The current loop is seed-complete, not full-brain-complete.
+
+Do not overclaim that the full learning brain is done.
+
+## 4. Compatibility Names
+
+Some older docs use SLC names. Use this mapping:
+
+| Older Term | Current Active Equivalent |
+|---|---|
+| `SemanticEventGraph` | `UOLGraph` plus meaning groups, predicates, candidate sets, concept resolutions, port bindings, affordances, and patch candidates |
+| graph packet | `MeaningPerceptPacket` and/or `UOLGraph` depending on stage |
+| semantic packet | `MeaningPerceptPacket` |
+| typed latent / Decide | runtime resolution plus `ActResolutionPlanner` |
+| `SemanticAnswerGraph` | not yet implemented as a first-class type; use `ActResolutionPlan` and future answer-graph type only when added |
+| training export | `UOLGraph.to_training_example()` plus graph patch and realization metadata |
+
+Do not invent a fake `SemanticAnswerGraph` just to satisfy old wording.
+
+If answer-graph work is needed, add an explicit type behind the current
+planner/realizer seam.
+
+## 5. Non-Negotiable Ordering
+
+Runtime changes must preserve this dependency order:
 
 ```text
 Observe
@@ -57,154 +120,298 @@ Observe
 -> Realize
 -> Update
 -> Learn
--> maybe_recurse_from_internal_signals
 ```
 
-Implementation names may differ, but the data dependency must not. In particular:
+Current implementation mapping:
 
-- Build the ContextKernel before interpretation.
-- Interpret into `SemanticEventGraph` before retrieval, ranking, or decision.
-- Ground entities, time, location, frame, and permission before ranking.
-- Retrieve structurally before any dense or neural path.
-- Decide over ContextKernel + SemanticEventGraph + selected memory, not raw text.
-- Realize from SemanticAnswerGraph or ActionPlan only.
-- Export traces with ContextKernel, SemanticEventGraph, SemanticAnswerGraph or ActionPlan, selected evidence, realization metadata, and verification metadata.
+| Stage | Current Implementation |
+|---|---|
+| Observe | `Signal`, source metadata, raw text |
+| Contextualize | context/kernel objects, source, permission, self/user atoms |
+| Interpret | `MeaningPerceptor`, meaning groups, predicates, hypotheses |
+| Ground | `MeaningGraphBuilder`, `UOLGraph`, concept/port/source/time/place grounding |
+| Retrieve | retrieval plan and selected evidence, when available |
+| Infer | concept resolution, construction matches, port bindings, affordance predictions, candidate paths |
+| Decide | `ActResolutionPlanner` |
+| Realize | response realization layer, currently outside the core seed modules |
+| Update | graph patch extraction |
+| Learn | consolidation into durable semantic structures |
 
-## Inference Cascade
+## 6. Phase 0 Hot-Path Rule
 
-Use cheapest valid computation first:
+Before building heavy durable learning, fix the semantic hot path.
+
+Do not feed weak traces into the learning brain.
+
+Phase 0 missing modules include:
 
 ```text
-deterministic structural rules
--> small model / SLC component
+predicate_phrase_extractor.py
+predicate_argument_aligner.py
+implicit_predicate_detector.py
+interpretation_path.py
+alternative_graph_branch.py
+branching_graph_builder.py
+discourse_relation_resolver.py
+group_predicate_index.py
+candidate_set_resolver.py
+interpretation_path_selector.py
+planner_branch_adapter.py
+anaphora_resolver.py
+entity_salience_tracker.py
+deictic_resolver.py
+```
+
+These must improve:
+
+```text
+predicate extraction
+implicit predicates
+candidate graph branching
+discourse relation edges
+candidate selection/rejection
+cross-group anaphora and deixis
+```
+
+## 7. Foundational Primitive Rule
+
+The UOL graph has exactly 16 canonical atom kinds:
+
+```text
+entity
+process
+state
+relation
+quality
+quantity
+time
+place
+intent
+need
+modality
+evidence
+source
+permission
+action
+self
+```
+
+The UOL graph has exactly 16 canonical edge types:
+
+```text
+has_role
+modifies
+refers_to
+asks_about
+teaches
+evaluates
+causes
+enables
+prevents
+before
+after
+same_as
+is_a
+part_of
+used_for
+has_property
+```
+
+Do not create domain primitives such as:
+
+```text
+PresidentAtom
+WeatherAtom
+LeaderAtom
+CountryAtom
+PersonAtom
+```
+
+Represent those as dynamic concept atoms or concept records.
+
+## 8. Learning Law
+
+CEMM learns by semantic compression.
+
+Correct:
+
+```text
+working UOL graph
+-> graph patch candidates
+-> validation/scoring
+-> consolidation
+-> concept/construction/predicate/affordance/source-policy updates
+```
+
+Incorrect:
+
+```text
+raw text -> answer
+raw text -> durable fact
+embedding -> final answer
+generated label -> active truth
+external lookup -> direct memory write
+```
+
+All durable learning must pass through graph patches.
+
+## 9. External Knowledge Rule
+
+Dictionaries, Wikipedia, tools, and LLM teacher outputs are sources, not
+truth-oracles.
+
+They must enter as:
+
+```text
+source atoms
+evidence atoms
+working graph structure
+graph patch candidates
+validation
+consolidation
+```
+
+Never bypass source, permission, freshness, contradiction, or trust policy.
+
+## 10. Inference Cascade
+
+Use the cheapest valid computation first:
+
+```text
+deterministic structural operator
+-> small learned component
 -> parallel small agents
 -> stronger arbiter
 -> background induction
 ```
 
-No layer may be a dead end. Low confidence, insufficient evidence, missing slots, stale world state, or permission failure must route to ask/abstain/escalate according to budget and permission.
+No layer may be a dead end.
 
-## Synthesis And Realization
-
-Answer actions do not directly generate final text.
-
-Required flow:
+Low confidence, insufficient evidence, missing required ports, stale world
+state, contradiction, or permission failure must route to:
 
 ```text
-answer decision
--> SemanticAnswerGraph
--> RealizationPipeline
--> template | extractive | neural | abstain
--> verification
--> final output or abstain
+ask
+abstain
+retrieve
+escalate
+quarantine
 ```
 
-Strategy selection must be cheapest-first:
+according to budget, risk, and permission.
+
+## 11. Realization Rule
+
+Final text should be realized from a response/action plan and selected evidence,
+not directly from raw input text.
+
+Current seed implementation has `ActResolutionPlan`.
+
+Future implementation should add a first-class answer graph or realization
+contract.
+
+Realization strategy should be cheapest-first:
 
 ```text
-template -> extractive -> neural -> abstain
+template
+-> extractive
+-> neural
+-> abstain
 ```
 
-Rules:
+Text is invalid if it cannot be traced back to the working graph, selected
+evidence, and response/action plan.
 
-- Do not run neural synthesis when template or extractive realization is sufficient.
-- Neural realization must use soft verification and bounded selected evidence.
-- Template/extractive realization must use hard verification where possible.
-- Text is invalid if it cannot be mapped back to the SemanticAnswerGraph and selected evidence.
+## 12. No Rules
 
-## Training Law
-
-Training must improve semantic computation, not text-only behavior.
-
-Valid training target:
+Do not:
 
 ```text
-text/context/memory
--> SemanticEventGraph
--> semantic answer/action
--> realized text
+use English-specific string matching as the primary architecture
+hardcode open-domain fallback strings to hide model failure
+produce final answer text before interpretation and planning
+write durable memory directly from perception or retrieval
+promote generated labels without validation
+let dense/neural output bypass permission and evidence
+store every working graph forever as primary memory
+add new primitive atom kinds for ordinary domain concepts
+bury learned knowledge inside meaning_perceptor.py
+collapse candidate meanings too early
+ignore candidate sets, graph branches, anaphora, or discourse edges
+hide limitations to make a demo look good
 ```
 
-Invalid shortcuts:
+Seed heuristics are allowed only as explicit fallback scaffolding.
 
-- text -> action
-- text -> answer
-- embedding -> text answer without SemanticAnswerGraph
-- generated label -> active truth
-- private trace -> public training example
-
-Runtime export and trainer ingest must preserve permission scope, source ids, confidence, time, selected evidence, SemanticEventGraph, SemanticAnswerGraph or ActionPlan, realization, and verification metadata.
-
-## Required Graph Packets
-
-Phase 0 runtime and traces must include:
-
-- `Signal`
-- `ContextKernel`
-- UOL atoms
-- `SemanticEventGraph`
-- selected claims/models
-- `SemanticAnswerGraph` or `ActionPlan`
-- realization metadata
-- verification metadata
-- action trace
-- runtime training export
-
-Do not close implementation work that touches answer, routing, training, retrieval, synthesis, or traces until affected graph-packet invariants are executable tests.
-
-## No Rules
-
-- No English-specific string matching as the primary routing mechanism.
-- No hardcoded response strings for open-domain inputs.
-- No static fallback such as `I am here.`
-- No dead `call_llm`; model-call abstractions must be wired or removed.
-- No answer text before SemanticAnswerGraph.
-- No text-only operator-selection training when graph data is available.
-- No text-only answer training when SemanticAnswerGraph is available.
-- No neural/dense output bypassing permission, frame validity, ranking, selected evidence, or verification.
-- No promoting generated labels or candidate models without validation, risk, cost, and permission gates.
-- No running causal inference unless the goal or graph requires prediction, planning, or consequence reasoning.
-- No refreshing recursive budget in child loops; child budget equals parent remaining budget minus actual cost.
-- **No hiding limitations to make a demo look good.** Run honest evaluations. Let failures and gaps guide the next training pathway, not ad-hoc patches to the legacy router.
-
-## Scoring And Ranking
-
-Scoring formulas must include actual permission validity, not a hardcoded `True`.
+## 13. Scoring And Ranking
 
 Ranking must consider:
 
-- relevance
-- trust
-- confidence
-- salience
-- recency
-- frame validity
-- temporal containment
-- permission validity
-- risk and cost where applicable
+```text
+relevance
+trust
+confidence
+salience
+recency
+frame validity
+temporal containment
+permission validity
+risk
+cost
+contradiction
+freshness requirements
+```
 
-Frame rules and permission gates must run before ranking. Rejected candidates should be observable in diagnostics or tests where practical.
+Permission validity must be real, not hardcoded `True`.
 
-## Storage And Source Of Truth
+Rejected candidates should remain observable in diagnostics, candidate sets,
+branch metadata, or tests where practical.
 
-The root docs are current. The `new/` directory must not be used as a second active source of truth. If a snapshot of old or proposed files is needed, archive it under `docs/archive/`.
+## 14. Storage And Source Of Truth
 
-Generated runtime artifacts such as `.sqlite3`, `output.log`, generated JSONL, and `__pycache__` files are not architecture guidance.
+Working graphs are temporary.
 
-## Code Review Checklist
+Durable memory should store:
 
-Before closing a PR or task, verify:
+```text
+compressed semantic records
+concept atoms
+operational ports
+predicate schemas
+construction operators
+causal affordances
+source policies
+patch journal entries
+sparse high-value exemplars
+```
 
-- [ ] Runtime ordering follows Observe -> Contextualize -> Interpret -> Ground -> Retrieve -> Infer -> Decide -> Realize -> Update -> Learn.
-- [ ] ContextKernel exists before interpretation.
-- [ ] SemanticEventGraph exists before retrieval/ranking/decision.
-- [ ] Answer decisions produce SemanticAnswerGraph before text.
-- [ ] Realization uses cheapest-first template -> extractive -> neural -> abstain.
-- [ ] Output verification is recorded and appropriate to strategy.
-- [ ] Ranking uses real permission validity and frame validity.
-- [ ] Recursive child budget is consumed by actual child cost.
-- [ ] Causal inference is goal/graph-gated.
-- [ ] Runtime export includes ContextKernel, SemanticEventGraph, SemanticAnswerGraph or ActionPlan, selected evidence, realization, and verification.
-- [ ] Training examples reject text-only action/answer targets when graph packets are available.
-- [ ] Promotion requires validation, risk, cost, and permission gates.
-- [ ] All affected invariants from `architecture.md` section 27 and `cemm_acceptance_tests.md` are covered by executable tests.
+Do not use runtime artifacts as architecture guidance:
+
+```text
+*.sqlite3
+*.log
+__pycache__/
+generated JSONL
+old patch files
+```
+
+## 15. Code Review Checklist
+
+Before closing a task, verify:
+
+- [ ] The change follows the current v4.2 architecture, not older v3-only instructions.
+- [ ] `MeaningPerceptPacket` exists before graph construction.
+- [ ] `UOLGraph` exists before runtime resolution, planning, patch extraction, or learning.
+- [ ] Candidate meanings are preserved instead of collapsed prematurely.
+- [ ] Predicate extraction is not limited to action/state surface matches when the task touches interpretation.
+- [ ] Discourse relations create graph structure when the task touches group relations.
+- [ ] Anaphora/deixis are handled or explicitly marked unresolved when the task touches cross-group reference.
+- [ ] Durable learning happens only through `GraphPatch`.
+- [ ] Concept, construction, port, and affordance behavior lives behind the proper lattice/resolver/predictor seams.
+- [ ] Domain concepts are not added as new primitive atom kinds.
+- [ ] External knowledge enters through source/evidence/graph-patch flow.
+- [ ] Planning uses graph structure, candidate sets, and evidence policy, not raw text alone.
+- [ ] Realization is traceable to a plan, selected evidence, and graph state.
+- [ ] Tests cover affected graph-packet invariants.
+- [ ] Known limitations are documented honestly instead of hidden behind fallback strings.
+

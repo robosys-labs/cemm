@@ -110,6 +110,22 @@ class DecisionRouter:
                     reason="act_resolution_plan: safety_task override",
                 )
 
+            # Abstain when planner requires it (tool_required/fresh_required policy
+            # with no available fresh evidence). Checked after safety but before
+            # obligation processing so external-facts queries are correctly gated.
+            if act_resolution_plan.should_abstain:
+                return DecisionPacket(
+                    action_kind="abstain",
+                    action_plan=ActionPlan(
+                        action_kind="abstain",
+                        execution_allowed=False,
+                        confidence=act_resolution_plan.confidence,
+                        risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
+                    ),
+                    confidence=act_resolution_plan.confidence,
+                    reason=f"act_resolution_plan.should_abstain: {act_resolution_plan.abstention_reason}",
+                )
+
             # Memory updates with no answer tasks → remember
             if act_resolution_plan.memory_updates and not act_resolution_plan.answer_tasks:
                 if graph.claim_candidates:
@@ -871,8 +887,10 @@ class DecisionRouter:
             return False
         text_tokens = normalized.split()
         first_token = text_tokens[0] if text_tokens else ""
-        return first_token in question_starter_cues or any(
-            normalized.startswith(qs) for qs in question_starter_cues if len(qs) > 2
+        return (
+            first_token in question_starter_cues
+            or any(normalized.startswith(qs) for qs in question_starter_cues if len(qs) > 2)
+            or input_text.strip().endswith("?")
         )
 
     def _classify_general_question(

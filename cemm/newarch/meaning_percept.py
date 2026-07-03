@@ -1,13 +1,21 @@
+"""Shared meaning-perception types for CEMM core-loop packets.
+
+The packet is intentionally richer than a single intent label. A user turn can
+contain several clauses, predicate phrases, and candidate outcomes. Keeping
+those structures explicit lets later stages bind frames, update memory, answer,
+or repair without pretending the whole utterance has exactly one meaning.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
 
-# ── Evidence ─────────────────────────────────────────────────────────────
-
 @dataclass
 class AtomEvidence:
+    """Traceable surface support for an atom or candidate interpretation."""
+
     source: str = ""
     span_id: str = ""
     group_id: str = ""
@@ -16,7 +24,234 @@ class AtomEvidence:
     rationale: str = ""
 
 
-# ── Surface / Span ───────────────────────────────────────────────────────
+@dataclass
+class ReferentAtom:
+    surface: str
+    entity_id: str | None = None
+    entity_type: str = "unknown"
+    role: str = "topic"
+    known: bool = False
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class ActionAtom:
+    surface: str
+    action_key: str = ""
+    actor_role: str | None = None
+    object_role: str | None = None
+    target_role: str | None = None
+    place_role: str | None = None
+    modality: str = "observed"
+    polarity: str = "affirmed"
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class StateAtom:
+    surface: str
+    state_key: str = ""
+    holder_role: str = "user"
+    dimension: str = "unknown"
+    polarity: str = "unknown"
+    intensity: float = 0.5
+    value: str | int | float | bool | None = None
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class RelationAtom:
+    relation_key: str
+    source_role: str = ""
+    target_role: str = ""
+    surface: str = ""
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class NeedAtom:
+    holder_role: str
+    need_key: str
+    intensity: float = 0.5
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class AffordanceAtom:
+    entity_role_or_id: str
+    affords: list[str] = field(default_factory=list)
+    condition: str = ""
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class OutcomeAtom:
+    affected_entity_role: str = ""
+    changed_dimension: str = ""
+    direction: str = "unknown"
+    event_key: str = ""
+    confidence: float = 0.5
+    group_id: str = ""
+    predicate_id: str = ""
+
+
+@dataclass
+class ValenceAtom:
+    target_role: str = ""
+    valence: str = "neutral"
+    intensity: float = 0.5
+    source: str = "surface"
+    confidence: float = 0.5
+
+
+@dataclass
+class QualityAtom:
+    surface: str = ""
+    quality_key: str = ""
+    holder_role: str = ""
+    dimension: str = "unknown"
+    polarity: str = "unknown"
+    intensity: float = 0.5
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class QuantityAtom:
+    surface: str = ""
+    quantity_key: str = ""
+    value: str | int | float | None = None
+    unit: str = ""
+    approximate: bool = False
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class TimeAtom:
+    surface: str = ""
+    time_key: str = ""
+    relation: str = "unknown"
+    value: str = ""
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class PlaceAtom:
+    surface: str = ""
+    place_key: str = ""
+    relation: str = "unknown"
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class IntentAtom:
+    surface: str = ""
+    intent_key: str = "statement"
+    target_role: str = ""
+    is_question: bool = False
+    is_command: bool = False
+    polarity: str = "affirmed"
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class ModalityAtom:
+    surface: str = ""
+    modality_key: str = "observed"
+    scope: str = "group"
+    polarity: str = "affirmed"
+    source: str = "surface"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+    evidence: list[AtomEvidence] = field(default_factory=list)
+
+
+@dataclass
+class EvidenceAtom:
+    surface: str = ""
+    evidence_key: str = ""
+    source_role: str = "user"
+    freshness: str = "unknown"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+
+
+@dataclass
+class SourceAtom:
+    source_role: str = "user"
+    surface: str = ""
+    reliability: str = "unverified"
+    permission_scope: str = "public"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+
+
+@dataclass
+class PermissionAtom:
+    permission_key: str = "conversation"
+    scope: str = "conversation"
+    holder_role: str = "user"
+    target_role: str = "source"
+    confidence: float = 0.5
+    group_id: str = ""
+    span_id: str = ""
+
+
+@dataclass
+class SelfAtom:
+    self_key: str = "self"
+    role: str = "listener"
+    surface: str = "self"
+    confidence: float = 0.8
+    group_id: str = ""
+    span_id: str = ""
+
 
 @dataclass
 class SurfaceSpan:
@@ -65,266 +300,14 @@ class MeaningAtomOutcome:
     evidence: list[AtomEvidence] = field(default_factory=list)
 
 
-# ── Core Percept Atoms ──────────────────────────────────────────────────
-
-@dataclass
-class ReferentAtom:
-    surface: str
-    entity_id: str | None = None
-    entity_type: str = "unknown"
-    role: str = "topic"
-    known: bool = False
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class ActionAtom:
-    surface: str
-    action_key: str = ""
-    actor_role: str | None = None
-    object_role: str | None = None
-    target_role: str | None = None
-    place_role: str | None = None
-    modality: str = "observed"
-    polarity: str = "affirmed"
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class StateAtom:
-    surface: str = ""
-    state_key: str = ""
-    holder_role: str | None = None
-    dimension: str = "unknown"
-    polarity: str = "unknown"
-    intensity: float = 0.5
-    value: str | int | float | bool | None = None
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class RelationAtom:
-    relation_key: str = ""
-    source_role: str = ""
-    target_role: str = ""
-    surface: str = ""
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class NeedAtom:
-    holder_role: str = ""
-    need_key: str = ""
-    intensity: float = 0.5
-    known_satisfiers: list[str] = field(default_factory=list)
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class AffordanceAtom:
-    entity_role_or_id: str = ""
-    affords: list[str] = field(default_factory=list)
-    condition: str = ""
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class OutcomeAtom:
-    affected_entity_role: str = ""
-    changed_dimension: str = ""
-    direction: str = "unknown"
-    event_key: str = ""
-    confidence: float = 0.5
-    group_id: str = ""
-    predicate_id: str = ""
-    expected_after_state: str | None = None
-    state_changes: list[dict[str, Any]] = field(default_factory=list)
-    relation_changes: list[dict[str, Any]] = field(default_factory=list)
-    resource_changes: list[dict[str, Any]] = field(default_factory=list)
-
-
-@dataclass
-class ValenceAtom:
-    target_role: str = ""
-    valence: str = "neutral"
-    intensity: float = 0.5
-    source: str = "surface"
-    confidence: float = 0.5
-    affected_entity_role: str = ""
-    entity_class: str = "unknown"
-    rationale: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-# ── Extension Atoms ──────────────────────────────────────────────────────
-
-@dataclass
-class QualityAtom:
-    surface: str = ""
-    quality_key: str = ""
-    holder_role: str = ""
-    dimension: str = "unknown"
-    polarity: str = "unknown"
-    intensity: float = 0.5
-    value: str = ""
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class QuantityAtom:
-    surface: str = ""
-    quantity_key: str = ""
-    value: str | int | float | None = None
-    unit: str = ""
-    approximate: bool = False
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class TimeAtom:
-    surface: str = ""
-    time_key: str = ""
-    relation: str = "unknown"
-    value: str = ""
-    tense: str = ""
-    reference_point: str = ""
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class PlaceAtom:
-    surface: str = ""
-    place_key: str = ""
-    relation: str = "unknown"
-    spatial_relation: str = ""
-    reference_entity_role: str = ""
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class IntentAtom:
-    surface: str = ""
-    intent_key: str = "statement"
-    target_role: str = ""
-    is_question: bool = False
-    is_command: bool = False
-    is_teaching: bool = False
-    is_repair: bool = False
-    target: str = ""
-    polarity: str = "affirmed"
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class ModalityAtom:
-    surface: str = ""
-    modality_key: str = "observed"
-    scope: str = "group"
-    modality_type: str = ""
-    polarity: str = "affirmed"
-    source: str = "surface"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-    evidence: list[AtomEvidence] = field(default_factory=list)
-
-
-@dataclass
-class EvidenceAtom:
-    surface: str = ""
-    evidence_key: str = ""
-    source_role: str = "user"
-    freshness: str = "unknown"
-    evidence_type: str = ""
-    supports_claim: str = ""
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-
-
-@dataclass
-class SourceAtom:
-    source_role: str = "user"
-    surface: str = ""
-    reliability: str = "unverified"
-    permission_scope: str = "public"
-    source_type: str = ""
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-
-
-# ── Permission / Self (new in v4) ───────────────────────────────────────
-
-@dataclass
-class PermissionAtom:
-    permission_key: str = "conversation"
-    scope: str = "conversation"
-    holder_role: str = "user"
-    target_role: str = "source"
-    confidence: float = 0.5
-    group_id: str = ""
-    span_id: str = ""
-
-
-@dataclass
-class SelfAtom:
-    self_key: str = "self"
-    role: str = "listener"
-    surface: str = "self"
-    confidence: float = 0.8
-    group_id: str = ""
-    span_id: str = ""
-
-
-# ── Hypothesis / Interpretation (new in v4) ─────────────────────────────
-
 @dataclass
 class CandidateInterpretation:
+    """One possible interpretation of a span or group.
+
+    This is intentionally packet-level. It preserves ambiguity before the UOL
+    graph builder decides which runtime atoms to instantiate or score.
+    """
+
     id: str = ""
     group_id: str = ""
     span_id: str = ""
@@ -343,6 +326,8 @@ class CandidateInterpretation:
 
 @dataclass
 class MeaningHypothesis:
+    """A bundle of competing interpretations for the same span/group."""
+
     id: str = ""
     group_id: str = ""
     span_id: str = ""
@@ -382,43 +367,32 @@ class MeaningGroup:
     confidence: float = 0.5
 
 
-# ── EventSchema ──────────────────────────────────────────────────────────
-
 @dataclass
 class EventSchema:
     schema_key: str = ""
-    actor_role: str | None = None
+    actor_role: str = ""
     action_key: str = ""
-    object_role: str | None = None
-    target_role: str | None = None
-    place_role: str | None = None
-    source_role: str | None = None
-    destination_role: str | None = None
-    recipient_role: str | None = None
-    preconditions: list[str] = field(default_factory=list)
+    object_role: str = ""
+    target_role: str = ""
+    place_role: str = ""
+    source_role: str = ""
+    destination_role: str = ""
+    recipient_role: str = ""
     expected_outcomes: list[OutcomeAtom] = field(default_factory=list)
     examples: list[str] = field(default_factory=list)
     source: str = "seed"
     confidence: float = 0.5
 
 
-# ── SafetyFrame ─────────────────────────────────────────────────────────
-
 @dataclass
 class SafetyFrame:
     category: str = "none"
-    severity: str = "low"
+    severity: str = "none"
     rationale: str = ""
-    actor_entity_id: str | None = None
-    target_entity_id: str | None = None
-    requested_action: str | None = None
-    harmful_outcomes: list[OutcomeAtom] = field(default_factory=list)
     must_not_do: list[str] = field(default_factory=list)
-    allowed_response_mode: str = "none"
+    allowed_response_mode: str = ""
     confidence: float = 0.5
 
-
-# ── RetrospectiveRepairFrame ────────────────────────────────────────────
 
 @dataclass
 class RetrospectiveRepairFrame:
@@ -426,12 +400,8 @@ class RetrospectiveRepairFrame:
     reason: str = ""
     failed_turn_id: str = ""
     repair_target: str = ""
-    repair_type: str = ""
-    original_intent: str = ""
     confidence: float = 0.5
 
-
-# ── SituationFrame ──────────────────────────────────────────────────────
 
 @dataclass
 class SituationFrame:
@@ -450,16 +420,11 @@ class SituationFrame:
     needs: list[NeedAtom] = field(default_factory=list)
     affordances: list[AffordanceAtom] = field(default_factory=list)
     expected_outcomes: list[OutcomeAtom] = field(default_factory=list)
-    valences: list[ValenceAtom] = field(default_factory=list)
     event_schema_ids: list[str] = field(default_factory=list)
     missing_slots: list[str] = field(default_factory=list)
     uncertainty_reasons: list[str] = field(default_factory=list)
-    safety_frame: SafetyFrame | None = None
-    repair_frame: RetrospectiveRepairFrame | None = None
     confidence: float = 0.5
 
-
-# ── RetrievalPlan ───────────────────────────────────────────────────────
 
 @dataclass
 class RetrievalPlan:
@@ -467,15 +432,8 @@ class RetrievalPlan:
     query: str = ""
     targets: list[str] = field(default_factory=list)
     reason: str = ""
-    target_predicates: list[str] = field(default_factory=list)
-    target_entity_ids: list[str] = field(default_factory=list)
-    target_model_kinds: list[str] = field(default_factory=list)
-    freshness_required: bool = False
-    permission_scope: str = "public"
     confidence: float = 0.5
 
-
-# ── MeaningPerceptPacket ────────────────────────────────────────────────
 
 @dataclass
 class MeaningPerceptPacket:
@@ -492,23 +450,15 @@ class MeaningPerceptPacket:
     language_confidence: float = 0.0
     code_switched: bool = False
     spans: list[SurfaceSpan] = field(default_factory=list)
-
-    # Group/hypothesis structure (v4)
     meaning_groups: list[MeaningGroup] = field(default_factory=list)
     predicate_phrases: list[PredicatePhrase] = field(default_factory=list)
     atom_outcomes: list[MeaningAtomOutcome] = field(default_factory=list)
     meaning_hypotheses: list[MeaningHypothesis] = field(default_factory=list)
-
-    # UOL graph integration
     uol_graph: Any | None = None
     uol_training_example: dict[str, Any] = field(default_factory=dict)
     graph_patch_candidates: list[Any] = field(default_factory=list)
-
-    # Pipeline trace
     core_loop_trace: dict[str, Any] = field(default_factory=dict)
     core_loop_stage: str = "perceived"
-
-    # Flat atom lists (v3 compat, still populated)
     referents: list[ReferentAtom] = field(default_factory=list)
     actions: list[ActionAtom] = field(default_factory=list)
     states: list[StateAtom] = field(default_factory=list)
@@ -527,26 +477,12 @@ class MeaningPerceptPacket:
     sources: list[SourceAtom] = field(default_factory=list)
     permissions: list[PermissionAtom] = field(default_factory=list)
     self_atoms: list[SelfAtom] = field(default_factory=list)
-
     unknown_lexemes: list[dict[str, Any]] = field(default_factory=list)
     idiom_candidates: list[dict[str, Any]] = field(default_factory=list)
     affect_markers: list[dict[str, Any]] = field(default_factory=list)
-
     attention_target: str | None = None
     speaker_entity_id: str = "user"
     listener_entity_id: str = "self"
     perception_trace: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.5
-    version: str = "4.1"
-
-
-# ── OutputStateUpdate ────────────────────────────────────────────────────
-
-@dataclass
-class OutputStateUpdate:
-    last_assistant_output_signal_id: str = ""
-    last_assistant_intent: str = ""
-    last_assistant_response_mode: str = ""
-    pending_assistant_question: str | None = None
-    expected_user_answer_type: str | None = None
-    reply_obligation_created: str | None = None
+    version: str = "3.3"

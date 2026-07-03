@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from ..types.uol_atom import EntityRefUOLAtom, ProcessUOLAtom, StateUOLAtom
+from ..types.uol_atom import UOLAtom
 from ..types.signal import ObservationSemantics
 from ..types.context_kernel import ContextKernel
 from .registry import Registry
@@ -37,9 +37,6 @@ class UOLMapper:
         self._lexeme_memory = lexeme_memory
         self._teaching_interpreter = teaching_interpreter or TeachingInterpreter()
         self._semantic_model_store = semantic_model_store
-        # Data-driven semantic frames: the JSON file is the source of truth for
-        # language-specific surface aliases. UOLMapper loads it directly so it can
-        # detect frames even when the registry is empty (e.g., in unit tests).
         self._query_frames = self._load_query_frames()
         self._self_ref_phrases = tuple(
             phrase for phrases in self._query_frames.get("self", {}).values() for phrase in phrases
@@ -97,11 +94,6 @@ class UOLMapper:
         return dict(data.get("speech_act_to_frame", {}))
 
     def _load_frame_metadata(self) -> dict[str, dict]:
-        """Load act_type, polarity, intensity, and cue_type for each UOL frame.
-
-        This is the single source of truth for how atoms should be emitted —
-        no hardcoded category sets needed.
-        """
         data = _load_json_data(_UOL_SEMANTICS_PATH)
         meta: dict[str, dict] = {}
         for entry in data.get("uol_semantics", []):
@@ -115,20 +107,12 @@ class UOLMapper:
         return meta
 
     def _is_question(self, content_lower: str, grouped: dict | None = None) -> bool:
-        """Return True if the surface is a question.
-
-        Uses the language-agnostic terminal '?' and the presence of question
-        UOL frames (from the registry matcher or the data file aliases).
-        No English-specific prefixes are used.
-        """
         if content_lower.endswith("?"):
             return True
         if grouped:
             question_keys = {"ask_question", "request_clarification", "unknown_intent"}
             if any(k in question_keys for k in grouped):
                 return True
-        # Boundary-safe: single-word aliases must match as complete tokens,
-        # multi-word aliases as contiguous token sequences.
         for alias in self._question_aliases:
             if " " in alias:
                 if phrase_in_text(alias, content_lower):
@@ -145,64 +129,61 @@ class UOLMapper:
         if not words:
             return atoms
 
-        # Use normalized signal forms when available for robust noisy/casual matching
         extra_forms = []
         latest_signal = getattr(kernel, "latest_signal", None)
         if latest_signal and latest_signal.normalized:
             extra_forms = latest_signal.normalized.normalized_forms
         content_forms = [content_lower] + [f.lower().strip() for f in extra_forms]
 
-        # Entity detection is driven by the pronouns data file and the UOL
-        # semantic query frames, not by hardcoded English pronouns.
         self_pronouns = set(self._pronouns.get("self", {}).get("target", []))
         user_pronouns = set(self._pronouns.get("user", {}).get("actor", []))
         _targets_self = (
             any(phrase_in_text(phrase, form) for form in content_forms for phrase in self._self_ref_phrases)
             or (any(w in self._insult_phrases for w in words) and any(w in self_pronouns for w in words))
         )
-        # User-identity query detection (e.g. "do you remember me?", "what's my name?")
         if any(phrase_in_text(phrase, form) for form in content_forms for phrase in self._user_query_phrases):
             for frame_key, phrases in self._query_frames.get("user", {}).items():
                 if any(phrase_in_text(phrase, form) for form in content_forms for phrase in phrases):
-                    atoms.append(ProcessUOLAtom(
-                        frame_key=frame_key,
-                        modality="observed",
-                        polarity="affirmed",
-                        intensity=0.7,
+                    atoms.append(UOLAtom(
+                        id=frame_key,
+                        kind="process",
+                        key=frame_key,
                         confidence=0.85,
+                        features={"modality": "observed", "polarity": "affirmed", "intensity": 0.7},
                     ))
                     break
 
         if kernel.self_view.self_id and _targets_self:
             for frame_key, phrases in self._query_frames.get("self", {}).items():
                 if any(phrase_in_text(phrase, form) for form in content_forms for phrase in phrases):
-                    atoms.append(ProcessUOLAtom(
-                        frame_key=frame_key,
-                        modality="observed",
-                        polarity="affirmed",
-                        intensity=0.7,
+                    atoms.append(UOLAtom(
+                        id=frame_key,
+                        kind="process",
+                        key=frame_key,
                         confidence=0.85,
+                        features={"modality": "observed", "polarity": "affirmed", "intensity": 0.7},
                     ))
                     break
             for w in words:
                 if w in self_pronouns:
-                    atoms.append(EntityRefUOLAtom(
-                        entity_id=kernel.self_view.self_id,
-                        role="target",
+                    atoms.append(UOLAtom(
+                        id=kernel.self_view.self_id,
+                        kind="entity",
+                        key=kernel.self_view.self_id,
                         confidence=0.85,
+                        features={"role": "target"},
                     ))
                     break
 
         if any(w in user_pronouns for w in words):
-            atoms.append(EntityRefUOLAtom(
-                entity_id="user",
-                role="actor",
+            atoms.append(UOLAtom(
+                id="user",
+                kind="entity",
+                key="user",
                 confidence=0.8,
+                features={"role": "actor"},
             ))
 
-        # v3.3 Phase 3: Learned bindings from SemanticModelStore.
-        # Check learned surface→frame_key bindings before the semantic matcher.
-        # These are user-taught or correction-derived mappings with lifecycle.
         if self._semantic_model_store:
             for form in content_forms:
                 bindings = self._semantic_model_store.lookup_surface(form)
@@ -210,31 +191,32 @@ class UOLMapper:
                     continue
                 for binding in bindings:
                     if binding.maps_to_frame_key:
-                        atoms.append(ProcessUOLAtom(
-                            frame_key=binding.maps_to_frame_key,
-                            modality="observed",
-                            polarity="affirmed",
-                            intensity=0.7,
+                        atoms.append(UOLAtom(
+                            id=binding.maps_to_frame_key,
+                            kind="process",
+                            key=binding.maps_to_frame_key,
                             confidence=binding.confidence,
-                            params={"source": "learned_binding", "binding_id": binding.id},
+                            features={
+                                "modality": "observed",
+                                "polarity": "affirmed",
+                                "intensity": 0.7,
+                                "source": "learned_binding",
+                                "binding_id": binding.id,
+                            },
                         ))
-                break  # Only check first form that has bindings
+                break
 
-        # Semantic matching against all registry UOL entries with probability ranking
         uol_matches = self._matcher.match(content, kinds=["uol_semantic"], extra_forms=extra_forms)
         grouped = self._matcher.match_grouped(content, kinds=["uol_semantic"], extra_forms=extra_forms)
 
-        # Map UOL semantic frame_keys to atom types using frame metadata.
-        # State-emitting frames produce StateUOLAtom; all others produce ProcessUOLAtom.
-        # Polarity and intensity are derived from the JSON metadata.
         state_keys = {"low_competence", "high_quality"}
         relation_prefixes = ("temporal_", "causal_")
         self_query_keys = {"self_identity_query", "self_capability_query", "self_knowledge_query"}
         user_query_keys = {"user_identity_query", "user_name_query"}
 
         emitted_keys: set[str] = {
-            atom.frame_key for atom in atoms
-            if isinstance(atom, ProcessUOLAtom) and atom.frame_key
+            atom.key for atom in atoms
+            if atom.kind == "process" and atom.key
         }
 
         for canonical_key, matches in grouped.items():
@@ -250,71 +232,78 @@ class UOLMapper:
                 continue
             emitted_keys.add(canonical_key)
 
-            # Skip grammatical cue entries — they carry cue_type, not conversational acts
             meta = self._frame_meta.get(canonical_key, {})
             if meta.get("cue_type"):
                 continue
 
-            # Interrogative guard: do not emit command atoms for questions.
             if canonical_key == "command_remember" and self._is_question(content_lower, grouped):
                 continue
 
-            # Derive polarity and intensity from frame metadata
             frame_polarity = meta.get("polarity", "neutral")
             frame_intensity = meta.get("intensity", 0.5)
 
-            # Map frame polarity to atom polarity (affirmed/negated for Process, pos/neg for State)
             if canonical_key in state_keys:
                 atom_polarity = "negative" if frame_polarity == "negative" else "positive"
-                atoms.append(StateUOLAtom(
-                    state_key=canonical_key,
-                    polarity=atom_polarity,
-                    intensity=frame_intensity,
+                atoms.append(UOLAtom(
+                    id=canonical_key,
+                    kind="state",
+                    key=canonical_key,
                     confidence=prob,
+                    features={"polarity": atom_polarity, "intensity": frame_intensity},
                 ))
             elif canonical_key == "frustration_signal":
-                # Emit as both state and process so the SEG can route it
-                atoms.append(StateUOLAtom(
-                    state_key="frustration_signal",
-                    polarity="negative",
-                    intensity=frame_intensity,
+                atoms.append(UOLAtom(
+                    id="frustration_signal",
+                    kind="state",
+                    key="frustration_signal",
                     confidence=prob,
+                    features={"polarity": "negative", "intensity": frame_intensity},
                 ))
-                atoms.append(ProcessUOLAtom(
-                    frame_key=canonical_key,
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=frame_intensity,
+                atoms.append(UOLAtom(
+                    id=canonical_key,
+                    kind="process",
+                    key=canonical_key,
                     confidence=prob,
+                    features={"modality": "observed", "polarity": "affirmed", "intensity": frame_intensity},
                 ))
             elif canonical_key == "assert_evaluation":
                 negated = any_token_in_text(["not", "never"], content_lower) or "n't" in content_lower
-                atoms.append(ProcessUOLAtom(
-                    frame_key=canonical_key,
-                    modality="observed",
-                    polarity="negated" if negated else "affirmed",
-                    intensity=frame_intensity,
+                atoms.append(UOLAtom(
+                    id=canonical_key,
+                    kind="process",
+                    key=canonical_key,
                     confidence=prob,
+                    features={
+                        "modality": "observed",
+                        "polarity": "negated" if negated else "affirmed",
+                        "intensity": frame_intensity,
+                    },
                 ))
             elif any(canonical_key.startswith(p) for p in relation_prefixes):
-                atoms.append(ProcessUOLAtom(
-                    frame_key=canonical_key,
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=0.7 if canonical_key.startswith("causal_") else 0.6,
+                atoms.append(UOLAtom(
+                    id=canonical_key,
+                    kind="process",
+                    key=canonical_key,
                     confidence=prob,
+                    features={
+                        "modality": "observed",
+                        "polarity": "affirmed",
+                        "intensity": 0.7 if canonical_key.startswith("causal_") else 0.6,
+                    },
                 ))
             else:
-                # Default: emit as ProcessUOLAtom with metadata-derived intensity
-                atoms.append(ProcessUOLAtom(
-                    frame_key=canonical_key,
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=frame_intensity,
+                atoms.append(UOLAtom(
+                    id=canonical_key,
+                    kind="process",
+                    key=canonical_key,
                     confidence=prob,
+                    features={
+                        "modality": "observed",
+                        "polarity": "affirmed",
+                        "intensity": frame_intensity,
+                    },
                 ))
 
-        # Claim structure detection via registry predicates with probability ranking
         pred_grouped = self._matcher.match_grouped(content, kinds=["predicate"], extra_forms=extra_forms)
         for canonical_key, matches in pred_grouped.items():
             if not matches:
@@ -322,66 +311,54 @@ class UOLMapper:
             best = matches[0]
             if best.probability < 0.4:
                 continue
-            atoms.append(ProcessUOLAtom(
-                frame_key=f"claim_{canonical_key}",
-                modality="observed",
-                polarity="affirmed",
-                intensity=0.6,
+            claim_key = f"claim_{canonical_key}"
+            atoms.append(UOLAtom(
+                id=claim_key,
+                kind="process",
+                key=claim_key,
                 confidence=best.probability,
+                features={"modality": "observed", "polarity": "affirmed", "intensity": 0.6},
             ))
 
-        # Detect teaching/learning surface patterns and emit teaching atoms
         atoms = self._apply_teaching_interpreter(content, atoms)
-
-        # Resolve learned lexeme/command aliases into process atoms
         atoms = self._apply_lexeme_memory(content, atoms)
-
         atoms = self._cluster_fallback(content, atoms)
         self._enrich_atoms(atoms, kernel, content_lower)
         return atoms
 
     def _apply_teaching_interpreter(self, content: str, atoms: list) -> list:
-        """Detect definition/alias/correction patterns and emit teaching process atoms."""
         content_lower = content.lower().strip()
         if self._is_question(content_lower):
             return atoms
         events = self._teaching_interpreter.interpret(content)
         for ev in events:
             if ev.kind == "command_alias":
-                atoms.append(ProcessUOLAtom(
-                    frame_key="command_alias_teaching",
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=0.7,
+                atoms.append(UOLAtom(
+                    id="command_alias_teaching",
+                    kind="process",
+                    key="command_alias_teaching",
                     confidence=ev.confidence,
-                    params=ev.to_dict(),
+                    features={"modality": "observed", "polarity": "affirmed", "intensity": 0.7, **ev.to_dict()},
                 ))
             elif ev.kind == "definition":
-                atoms.append(ProcessUOLAtom(
-                    frame_key="definition_teaching",
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=0.7,
+                atoms.append(UOLAtom(
+                    id="definition_teaching",
+                    kind="process",
+                    key="definition_teaching",
                     confidence=ev.confidence,
-                    params=ev.to_dict(),
+                    features={"modality": "observed", "polarity": "affirmed", "intensity": 0.7, **ev.to_dict()},
                 ))
             elif ev.kind == "correction":
-                atoms.append(ProcessUOLAtom(
-                    frame_key="correction",
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=0.8,
+                atoms.append(UOLAtom(
+                    id="correction",
+                    kind="process",
+                    key="correction",
                     confidence=ev.confidence,
-                    params=ev.to_dict(),
+                    features={"modality": "observed", "polarity": "affirmed", "intensity": 0.8, **ev.to_dict()},
                 ))
         return atoms
 
     def _apply_lexeme_memory(self, content: str, atoms: list) -> list:
-        """If a learned active command alias appears in the input, emit a command atom.
-
-        Questions are guarded so a learned alias word does not collapse a
-        question like "do you remember zibble?" into an imperative command.
-        """
         if not self._lexeme_memory:
             return atoms
         content_lower = content.lower().strip()
@@ -391,13 +368,18 @@ class UOLMapper:
         for w in words:
             lex = self._lexeme_memory.lookup_active(w)
             if lex and lex.role == "command_alias":
-                atoms.append(ProcessUOLAtom(
-                    frame_key="command_remember",
-                    modality="observed",
-                    polarity="affirmed",
-                    intensity=0.7,
+                atoms.append(UOLAtom(
+                    id="command_remember",
+                    kind="process",
+                    key="command_remember",
                     confidence=lex.trust,
-                    params={"alias_surface": lex.surface, "alias_meaning": lex.maps_to},
+                    features={
+                        "modality": "observed",
+                        "polarity": "affirmed",
+                        "intensity": 0.7,
+                        "alias_surface": lex.surface,
+                        "alias_meaning": lex.maps_to,
+                    },
                 ))
                 break
         return atoms
@@ -415,17 +397,16 @@ class UOLMapper:
         frame_key = self._speech_act_to_frame.get(best.speech_act, "")
         if not frame_key:
             return atoms
-        # Interrogative guard for cluster fallback too
         if frame_key == "command_remember":
             cl = content.lower().strip()
             if self._is_question(cl):
                 return atoms
-        atoms.append(ProcessUOLAtom(
-            frame_key=frame_key,
-            modality="observed",
-            polarity="affirmed",
-            intensity=0.6,
+        atoms.append(UOLAtom(
+            id=frame_key,
+            kind="process",
+            key=frame_key,
             confidence=best.confidence,
+            features={"modality": "observed", "polarity": "affirmed", "intensity": 0.6},
         ))
         return atoms
 
@@ -434,38 +415,37 @@ class UOLMapper:
         has_self_query = self_id and any(phrase_in_text(p, content_lower) for p in self._self_ref_phrases)
         user_pronouns = set(self._pronouns.get("user", {}).get("actor", []))
         has_user = any_token_in_text(list(user_pronouns), content_lower)
-        entity_atoms = [a for a in atoms if isinstance(a, EntityRefUOLAtom)]
-        user_atom = next((a for a in entity_atoms if a.entity_id == "user"), None)
-        self_atom = next((a for a in entity_atoms if self_id and a.entity_id == self_id), None)
-        state_atoms = [a for a in atoms if isinstance(a, StateUOLAtom)]
-        state_keys = [a.state_key for a in state_atoms if a.state_key]
+        entity_atoms = [a for a in atoms if a.kind == "entity"]
+        user_atom = next((a for a in entity_atoms if a.key == "user"), None)
+        self_atom = next((a for a in entity_atoms if self_id and a.key == self_id), None)
+        state_atoms = [a for a in atoms if a.kind == "state"]
+        state_keys = [a.key for a in state_atoms if a.key]
 
         for atom in atoms:
-            if isinstance(atom, StateUOLAtom):
-                atom.state_model_id = atom.state_model_id or atom.state_key
-                if atom.state_key in {"low_competence", "high_quality"}:
-                    atom.holder_entity_id = self_id
-                elif atom.state_key == "user_state":
-                    atom.holder_entity_id = "user"
+            if atom.kind == "state":
+                atom.features.setdefault("state_model_id", atom.key)
+                if atom.key in {"low_competence", "high_quality"}:
+                    atom.features["holder_entity_id"] = self_id
+                elif atom.key == "user_state":
+                    atom.features["holder_entity_id"] = "user"
                 elif has_self_query:
-                    atom.holder_entity_id = self_id
+                    atom.features["holder_entity_id"] = self_id
 
-        # Frames that create or change a state get output_state_keys; others get input_state_keys.
         _output_frame_keys = {"state_preference", "assert_evaluation", "command_remember", "command_retrieve", "command_reflect"}
         _output_prefixes = ("temporal_", "causal_", "claim_")
 
         for atom in atoms:
-            if not isinstance(atom, ProcessUOLAtom):
+            if atom.kind != "process":
                 continue
-            atom.process_model_id = atom.process_model_id or atom.frame_key
+            atom.features.setdefault("process_model_id", atom.key)
             if state_keys:
                 if (
-                    atom.frame_key in _output_frame_keys
-                    or any(atom.frame_key.startswith(p) for p in _output_prefixes)
+                    atom.key in _output_frame_keys
+                    or any(atom.key.startswith(p) for p in _output_prefixes)
                 ):
-                    atom.output_state_keys = list(state_keys)
+                    atom.features["output_state_keys"] = list(state_keys)
                 else:
-                    atom.input_state_keys = list(state_keys)
+                    atom.features["input_state_keys"] = list(state_keys)
             participants: list[dict] = []
             seen: set[tuple[str, str]] = set()
             if has_user or user_atom:
@@ -475,20 +455,21 @@ class UOLMapper:
                 participants.append({"entity_id": self_id, "role": "target"})
                 seen.add((self_id, "target"))
             for ref in entity_atoms:
-                if ref.entity_id in ("user", self_id):
+                if ref.key in ("user", self_id):
                     continue
-                key = (ref.entity_id, ref.role)
+                role = ref.features.get("role", "")
+                key = (ref.key, role)
                 if key not in seen:
                     seen.add(key)
-                    participants.append({"entity_id": ref.entity_id, "role": ref.role})
-            atom.participants = participants
+                    participants.append({"entity_id": ref.key, "role": role})
+            atom.features["participants"] = participants
 
     def compile_to_pragmatic_keys(self, atoms: list) -> tuple[list[str], list[str]]:
         quality_keys = []
         process_keys = []
         for atom in atoms:
             if atom.kind == "state":
-                quality_keys.append(atom.state_key)
+                quality_keys.append(atom.key)
             elif atom.kind == "process":
-                process_keys.append(atom.frame_key)
+                process_keys.append(atom.key)
         return quality_keys, process_keys
