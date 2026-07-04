@@ -137,15 +137,20 @@ class TestCausalAffordance:
         assert ca.effect_type == "state_change"
         assert ca.confidence == 0.5
 
-    def test_pattern_matching(self):
+    def test_typed_construction(self):
+        trigger = GraphPattern(atom_patterns=[{"kind": "state"}])
+        effect = GraphPatchTemplate(operations=[{"op": "add"}])
         ca = CausalAffordance(
             affordance_id="a2",
-            trigger_pattern={"atom_patterns": [{"kind": "state"}]},
-            predicted_effect={"operations": [{"op": "add"}]},
+            trigger_pattern=trigger,
+            predicted_effect=effect,
             required_bindings=[PortBindingPattern(port_id="p1", filler_kind="entity")],
             effect_type="state_change",
         )
-        assert ca.trigger_pattern["atom_patterns"][0]["kind"] == "state"
+        assert ca.trigger_pattern is not None
+        assert ca.trigger_pattern.atom_patterns[0]["kind"] == "state"
+        assert ca.predicted_effect is not None
+        assert ca.predicted_effect.operations[0]["op"] == "add"
         assert len(ca.required_bindings) == 1
         assert ca.required_bindings[0].port_id == "p1"
         assert ca.required_bindings[0].required is True
@@ -162,6 +167,7 @@ class TestConstructionAtom:
         assert ca.confidence == 0.5
 
     def test_signature_construction(self):
+        graph_sig = GraphPattern(atom_patterns=[{"kind": "process"}])
         ca = ConstructionAtom(
             construction_id="co2",
             form_signature=FormSignature(
@@ -169,18 +175,22 @@ class TestConstructionAtom:
                 pos_pattern="NOUN VERB NOUN",
                 dependency_pattern="nsubj(causes, X) obj(causes, Y)",
             ),
-            graph_signature={"atom_patterns": [{"kind": "process"}]},
+            graph_signature=graph_sig,
             pragmatic_signature=PragmaticPattern(
                 expected_acts=["explain"],
                 expected_modes=["declarative"],
             ),
             port_constraints=[PortConstraint(port_key="cause", source_concept="entity", edge_type="causes")],
+            operator_effects=[GraphPatchTemplate(operations=[{"op": "learn"}])],
             support_count=5,
         )
         assert ca.form_signature.surface_pattern == "X causes Y"
         assert ca.graph_signature is not None
+        assert ca.graph_signature.atom_patterns[0]["kind"] == "process"
         assert ca.pragmatic_signature is not None
         assert ca.pragmatic_signature.expected_acts == ["explain"]
         assert len(ca.port_constraints) == 1
         assert ca.port_constraints[0].edge_type == "causes"
+        assert len(ca.operator_effects) == 1
+        assert ca.operator_effects[0].operations[0]["op"] == "learn"
         assert ca.support_count == 5

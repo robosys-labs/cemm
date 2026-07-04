@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any
+
+from .predicate_schema import GraphPattern, GraphPatchTemplate
+from .concept_atom import Counterexample
 
 
 @dataclass
@@ -28,10 +30,10 @@ class PortConstraint:
 class ConstructionAtom:
     construction_id: str
     form_signature: FormSignature = field(default_factory=FormSignature)
-    graph_signature: Any = None
+    graph_signature: GraphPattern | None = None
     pragmatic_signature: PragmaticPattern | None = None
     port_constraints: list[PortConstraint] = field(default_factory=list)
-    operator_effects: list[Any] = field(default_factory=list)
+    operator_effects: list[GraphPatchTemplate] = field(default_factory=list)
     support_count: int = 0
-    counterexamples: list[Any] = field(default_factory=list)
+    counterexamples: list[Counterexample] = field(default_factory=list)
     confidence: float = 0.5
