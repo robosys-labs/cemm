@@ -63,24 +63,30 @@ Signal
 -> MeaningPerceptPacket
 -> MeaningGraphBuilder
 -> UOLGraph
--> runtime resolution
+-> runtime resolution (concept/port/affordance)
 -> ActResolutionPlanner
 -> GraphPatchExtractor
 -> ConceptConsolidator
 -> durable semantic structures
 ```
 
-Runtime resolution includes:
+Status: **seed-complete for pipeline integration (Phases 1-2 done)**
+- `Pipeline.run()` no longer builds `SemanticEventGraph` — `UOLGraph` is the sole working graph
+- All downstream consumers read from `UOLGraph` via backward-compat properties on the `UOLGraph` dataclass
+- `RememberOperator` routes claims through `ClaimWriter` which creates `GraphPatch` objects for consolidation
+- `ConceptConsolidator` has compression-gain scoring, 4-state lifecycle (candidate→typed→operational→consolidated), decay, counterexamples, fingerprint matching
+- 4 Phase 0 hot-path modules extracted from `MeaningPerceptor` (reduced from 1395→1300 lines)
+- `CausalInference` reads from `UOLGraph` atoms/edges directly
+- 315 tests pass, 0 fail
 
-```text
-concept resolution
-construction matching
-operational-port binding
-affordance prediction
-candidate-set handling
-```
-
-The current loop is seed-complete, not full-brain-complete.
+**Still missing from full architecture:**
+- 5 durable architecture types (`ConceptAtom`, `OperationalPort`, `PredicateSchema`, `CausalAffordance`, `ConstructionAtom`) — replaced by simpler records
+- `SemanticKernelRuntime` as authoritative single entrypoint (Pipeline.run() still mixed)
+- `PatchValidator` write barrier (direct durable writes still escape GraphPatch)
+- Remaining 10 Phase 0 hot-path modules still embedded in `MeaningPerceptor`
+- `SemanticCPU.run_turn()` as orchestrator (graph_builder called directly by Pipeline)
+- Dynamic self-knowledge (still static `self_knowledge.json`)
+- Knowledge ingestion, training infrastructure, adapters, synthesis modules
 
 Do not overclaim that the full learning brain is done.
 
@@ -140,24 +146,24 @@ Before building heavy durable learning, fix the semantic hot path.
 
 Do not feed weak traces into the learning brain.
 
-Phase 0 missing modules include:
+Phase 0 completion status (4 of 14 extracted from MeaningPerceptor):
 
-```text
-predicate_phrase_extractor.py
-predicate_argument_aligner.py
-implicit_predicate_detector.py
-interpretation_path.py
-alternative_graph_branch.py
-branching_graph_builder.py
-discourse_relation_resolver.py
-group_predicate_index.py
-candidate_set_resolver.py
-interpretation_path_selector.py
-planner_branch_adapter.py
-anaphora_resolver.py
-entity_salience_tracker.py
-deictic_resolver.py
-```
+| File | Status |
+|---|---|
+| `predicate_phrase_extractor.py` | ✓ Extracted (`cemm/kernel/predicate_phrase_extractor.py`) |
+| `predicate_argument_aligner.py` | ❌ Still embedded in MeaningPerceptor |
+| `implicit_predicate_detector.py` | ✓ Extracted (`cemm/kernel/implicit_predicate_detector.py`) |
+| `interpretation_path.py` | ❌ Not yet created |
+| `alternative_graph_branch.py` | ❌ Not yet created |
+| `branching_graph_builder.py` | ❌ Not yet created |
+| `discourse_relation_resolver.py` | ❌ Not yet created |
+| `group_predicate_index.py` | ❌ Not yet created |
+| `candidate_set_resolver.py` | ❌ Not yet created |
+| `interpretation_path_selector.py` | ❌ Not yet created |
+| `planner_branch_adapter.py` | ❌ Not yet created |
+| `anaphora_resolver.py` | ✓ Extracted (`cemm/kernel/anaphora_resolver.py`) |
+| `entity_salience_tracker.py` | ✓ Extracted (`cemm/kernel/entity_salience_tracker.py`) |
+| `deictic_resolver.py` | ❌ Not yet created |
 
 These must improve:
 
