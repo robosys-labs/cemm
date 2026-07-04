@@ -429,6 +429,7 @@ class MeaningPerceptor:
                 if relation_to_previous in {"cause", "condition", "temporal", "temporal_or_contrast", "concession", "complement", "cause_or_time", "negative_condition"} and groups:
                     parent_group_id = groups[-1].id
                     relation_to_parent = relation_to_previous
+                group_type = self._initial_group_type(group_surface, piece_tokens, trailing_separator=trailing_separator)
                 groups.append(MeaningGroup(
                     id=f"group_{len(groups)}",
                     parent_group_id=parent_group_id,
@@ -440,8 +441,8 @@ class MeaningPerceptor:
                     connective_before=connective_before,
                     separator_before=separator,
                     separator_after=trailing_separator,
-                    group_type=self._initial_group_type(group_surface, piece_tokens, trailing_separator=trailing_separator),
-                    confidence=0.62,
+                    group_type=group_type,
+                    confidence=self._group_confidence(piece_tokens, group_type, trailing_separator),
                 ))
                 if parent_group_id:
                     parent = self._group_by_id(groups, parent_group_id)
@@ -449,15 +450,17 @@ class MeaningPerceptor:
                         parent.child_group_ids.append(groups[-1].id)
 
         if not groups and tokens:
+            separator_after = "?" if raw_text.rstrip().endswith("?") else ""
+            group_type = self._initial_group_type(raw_text, tokens, separator_after)
             groups.append(MeaningGroup(
                 id="group_0",
                 surface=raw_text,
                 start_token=0,
                 end_token=len(tokens),
                 tokens=tokens,
-                separator_after="?" if raw_text.rstrip().endswith("?") else "",
-                group_type=self._initial_group_type(raw_text, tokens),
-                confidence=0.55,
+                separator_after=separator_after,
+                group_type=group_type,
+                confidence=self._group_confidence(tokens, group_type, separator_after),
             ))
         return groups
 
@@ -611,6 +614,23 @@ class MeaningPerceptor:
         if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right"}:
             return "answer"
         return "clause"
+
+    def _group_confidence(self, tokens: list[str], group_type: str, trailing_separator: str) -> float:
+        confidence = 0.50
+        n = len(tokens)
+        if n > 0:
+            confidence += min(0.10, n * 0.02)
+        if trailing_separator == "?":
+            confidence += 0.08
+        if group_type in ("greeting", "acknowledgment", "exit"):
+            confidence += 0.10
+        elif group_type in ("question", "command"):
+            confidence += 0.06
+        elif group_type == "teaching":
+            confidence += 0.04
+        if n <= 1:
+            confidence -= 0.08
+        return max(0.30, min(0.95, confidence))
 
     def _extract_ner(self, tokens: list[str]) -> list[dict[str, Any]]:
         if self._ner_tagger is None or not tokens:

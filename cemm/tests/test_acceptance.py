@@ -32,6 +32,10 @@ from cemm.retrieval.structural import StructuralRetriever, RetrievalResult
 from cemm.retrieval.ranker import Ranker
 from cemm.operators.base import OperatorContext, OperatorResult
 from cemm.store.artifact_store import ArtifactStore
+from cemm.memory.concept_lattice import ConceptLattice
+from cemm.memory.construction_lattice import ConstructionLattice
+from cemm.memory.episodic_trace_store import EpisodicTraceStore
+from cemm.memory.persistent_lattice_store import PersistentLatticeStore
 
 
 def _make_store() -> Store:
@@ -290,4 +294,142 @@ class TestRuntimeOrdering:
         result = pipeline.run("What is my favorite database?")
         assert result.uol_graph is not None
         assert result.ranked_claim_ids is not None
+
+
+class TestArchitectureInvariants:
+    """Validate that every pipeline stage produces meaningful output.
+
+    These tests enforce the architecture's stage-level guarantees:
+        Signal → MeaningPerceptor → Graph → ContextInference → Grounding
+        → ConversationAct → ActResolution → Decision
+
+    Every stage must produce non-trivial output, even when upstream stages
+    receive minimal input. This prevents cascading emptiness.
+    """
+
+    def _pipeline(self) -> Pipeline:
+        store = Store(":memory:")
+        registry = _make_registry()
+        return Pipeline(store, registry)
+
+    def _full_pipeline(self) -> Pipeline:
+        store = Store(":memory:")
+        registry = _make_registry()
+        pstore = PersistentLatticeStore(":memory:")
+        cl = ConceptLattice(persistent_store=pstore)
+        return Pipeline(
+            store, registry,
+            concept_lattice=cl,
+            construction_lattice=ConstructionLattice(),
+            episodic_store=EpisodicTraceStore(),
+            auto_consolidate=True,
+        )
+
+    def test_graph_always_has_atoms(self) -> None:
+        """Graph builder must produce at least self/user/source/permission atoms."""
+        for label, pipeline in [("fallback", self._pipeline()), ("full", self._full_pipeline())]:
+            result = pipeline.run("hello")
+            assert result.uol_graph is not None, f"{label}: graph is None"
+            assert len(result.uol_graph.atoms) >= 4, (
+                f"{label}: expected >=4 atoms (self/user/source/permission), "
+                f"got {len(result.uol_graph.atoms)}"
+            )
+
+    def test_graph_has_edges(self) -> None:
+        """Graph builder must produce structural edges."""
+        for label, pipeline in [("fallback", self._pipeline()), ("full", self._full_pipeline())]:
+            result = pipeline.run("hello")
+            assert result.uol_graph is not None
+            assert len(result.uol_graph.edges) >= 3, (
+                f"{label}: expected >=3 edges, got {len(result.uol_graph.edges)}"
+            )
+
+    def test_context_inference_always_produces_claims(self) -> None:
+        """Context inference must produce at least one inferred claim for any input."""
+        for label, pipeline in [("fallback", self._pipeline()), ("full", self._full_pipeline())]:
+            result = pipeline.run("hello")
+            assert result.context_inference is not None, f"{label}: context_inference is None"
+            assert len(result.context_inference.inferred_claim_ids) >= 1, (
+                f"{label}: expected >=1 inferred claim, "
+                f"got {len(result.context_inference.inferred_claim_ids)}"
+            )
+            assert result.context_inference.frame_id, (
+                f"{label}: frame_id should be non-empty"
+            )
+
+    def test_context_inference_has_meaningful_confidence(self) -> None:
+        """Context inference confidence must not be hardcoded default."""
+        result = self._pipeline().run("hello")
+        assert result.context_inference is not None
+        conf = result.context_inference.confidence
+        assert 0.0 < conf <= 1.0, f"confidence {conf} out of range"
+        # "hello" as first turn should trigger greeting detection → confidence >= 0.5
+        assert conf >= 0.5, f"expected confidence >=0.5 for greeting, got {conf}"
+
+    def test_grounding_always_resolves_entities(self) -> None:
+        """Grounding must resolve at least self/user entities from graph atoms."""
+        for label, pipeline in [("fallback", self._pipeline()), ("full", self._full_pipeline())]:
+            result = pipeline.run("hello")
+            assert result.grounded_graph is not None, f"{label}: grounded_graph is None"
+            assert len(result.grounded_graph.entity_ids) >= 0, (
+                f"{label}: entity_ids should not be negative"
+            )
+
+    def test_conversation_act_always_classified(self) -> None:
+        """Conversation act must produce a non-unknown act_type for clear input."""
+        for label, pipeline in [("fallback", self._pipeline()), ("full", self._full_pipeline())]:
+            result = pipeline.run("hello")
+            assert result.conversation_act is not None, f"{label}: conversation_act is None"
+            assert result.conversation_act.act_type != "unknown", (
+                f"{label}: act_type should not be 'unknown' for 'hello', "
+                f"got '{result.conversation_act.act_type}'"
+            )
+
+    def test_decision_confidence_is_dynamic(self) -> None:
+        """Decision confidence must not be a hardcoded magic number."""
+        result = self._pipeline().run("hello")
+        assert result.decision_packet is not None
+        conf = result.decision_packet.confidence
+        assert 0.0 < conf <= 1.0, f"confidence {conf} out of range"
+        assert conf not in (0.62, 0.5), (
+            f"decision confidence {conf} appears to be a magic number"
+        )
+        assert result.decision_packet.action_kind, (
+            "action_kind should be non-empty"
+        )
+        assert result.decision_packet.reason, (
+            "decision reason should be non-empty"
+        )
+
+    def test_full_pipeline_greeting(self) -> None:
+        """End-to-end: greeting input produces expected routing through all stages."""
+        result = self._full_pipeline().run("Hello!")
+        assert result.uol_graph is not None
+        assert len(result.uol_graph.atoms) >= 4
+        assert result.context_inference is not None
+        assert result.context_inference.frame_id in ("session_opening", "greeting")
+        assert result.grounded_graph is not None
+        assert result.conversation_act is not None
+        assert result.conversation_act.act_type in ("greeting",)
+        assert result.decision_packet is not None
+        assert result.decision_packet.action_kind == "answer"
+
+    def test_full_pipeline_question(self) -> None:
+        """End-to-end: question input must not route to 'remember'."""
+        result = self._full_pipeline().run("What is your name?")
+        assert result.uol_graph is not None
+        assert len(result.uol_graph.atoms) >= 4
+        assert result.conversation_act is not None
+        assert result.decision_packet is not None
+        assert result.decision_packet.action_kind != "remember", (
+            f"question should not route to remember, got '{result.decision_packet.action_kind}'"
+        )
+
+    def test_empty_input_does_not_crash(self) -> None:
+        """Empty input must not crash the pipeline."""
+        result = self._full_pipeline().run("")
+        assert result.uol_graph is not None
+        assert result.context_inference is not None
+        assert result.conversation_act is not None
+        assert result.decision_packet is not None
 

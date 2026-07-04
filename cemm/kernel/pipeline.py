@@ -48,6 +48,9 @@ from ..causal.inference import CausalInference
 from ..retrieval.ranker import Ranker
 from ..retrieval.retrieval_executor import RetrievalExecutor, RetrievalExecutionResult
 from .semantic_kernel_runtime import SemanticKernelRuntime
+from .meaning_graph_builder import MeaningGraphBuilder
+from .port_resolver import LatticePortResolver
+from .affordance_predictor import AffordancePredictor
 from ..memory.concept_lattice import ConceptLattice
 from ..memory.construction_lattice import ConstructionLattice
 from ..memory.episodic_trace_store import EpisodicTraceStore
@@ -154,6 +157,14 @@ class Pipeline:
                 store=store,
                 auto_consolidate=auto_consolidate,
             )
+        # Always create a fallback graph builder so the pipeline never produces
+        # an empty graph, even when the runtime is not configured.
+        self._fallback_graph_builder = MeaningGraphBuilder(
+            concept_lattice=concept_lattice,
+            construction_lattice=construction_lattice,
+            port_resolver=LatticePortResolver(concept_lattice) if concept_lattice else None,
+            affordance_lattice=AffordancePredictor() if concept_lattice else None,
+        )
 
     @property
     def semantic_model_store(self) -> SemanticModelStore:
@@ -261,17 +272,27 @@ class Pipeline:
 
         # v4.2: Build UOLGraph — the single working graph.
         # Always initialize so downstream consumers never see None.
+        # Use runtime builder when available; fall back to the pipeline's own
+        # builder so the graph is NEVER empty across any code path.
         uol_graph = UOLGraph(
             id=uuid.uuid4().hex[:16],
             signal_id=signal.id,
             context_id=signal.context_id,
             raw_text=signal.content,
         )
+        graph_builder = None
         if self._runtime is not None and self._runtime.graph_builder is not None:
-            built = self._runtime.graph_builder.build(meaning_percept)
-            if built is not None:
-                uol_graph = built
-                meaning_percept.uol_graph = uol_graph
+            graph_builder = self._runtime.graph_builder
+        elif self._fallback_graph_builder is not None:
+            graph_builder = self._fallback_graph_builder
+        if graph_builder is not None:
+            try:
+                built = graph_builder.build(meaning_percept)
+                if built is not None:
+                    uol_graph = built
+                    meaning_percept.uol_graph = uol_graph
+            except Exception:
+                pass
 
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
         # Delegates to FrameBinder for atom-based role binding with scored

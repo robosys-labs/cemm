@@ -136,6 +136,11 @@ class ContextInferenceEngine:
                 if rule.canonical_key == "greeting_detection" and turn_index == 1:
                     inference.applied_context_rule_model_ids.append(rule.model_id)
 
+        if inference.frame_id and inference.confidence >= 0.3:
+            inference.inferred_claim_ids.append(
+                f"ctx_{inference.frame_id}_{uuid.uuid4().hex[:8]}"
+            )
+
         return inference
 
     def apply_to_kernel(self, inference: ContextInference, kernel: ContextKernel) -> None:

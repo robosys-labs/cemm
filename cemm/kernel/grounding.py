@@ -34,6 +34,21 @@ class GroundingPipeline:
         self._resolver = resolver
         self._frames = frames
 
+    def _resolve_atom(
+        self, atom: Any, resolved_ids: list[str], kernel: ContextKernel
+    ) -> str | None:
+        name = atom.surface or atom.key
+        if not name:
+            return None
+        default_id = atom.key.replace("entity:", "").replace("self:", "")
+        resolved = self._resolver.resolve_by_name(name, kernel)
+        if resolved:
+            eid = resolved[0].id
+            if eid not in resolved_ids:
+                resolved_ids.append(eid)
+            return eid
+        return default_id if default_id else None
+
     def run(
         self,
         graph: Any,
@@ -43,17 +58,12 @@ class GroundingPipeline:
         self._resolver.resolve_self(kernel)
         resolved_ids: list[str] = []
         for atom in (a for a in graph.atoms.values() if a.kind in ("entity", "self")):
-            name = atom.surface or atom.key
-            entity_id = atom.key.replace("entity:", "").replace("self:", "")
-            if name and not entity_id:
-                resolved = self._resolver.resolve_by_name(name, kernel)
-                if resolved:
-                    resolved_ids.append(resolved[0].id)
+            self._resolve_atom(atom, resolved_ids, kernel)
         invalidated_ids = self._frames.apply_frame_rules(kernel)
         graph.permission_scope = kernel.permission.scope.value
-        location_ids = []
+        location_ids: list[str] = []
         for atom in (a for a in graph.atoms.values() if a.kind in ("entity", "self")):
-            entity_id = atom.key.replace("entity:", "").replace("self:", "")
+            entity_id = self._resolve_atom(atom, [], kernel) or atom.key.replace("entity:", "").replace("self:", "")
             role = ""
             for edge in graph.incoming(atom.id):
                 r = edge.features.get("role", "")

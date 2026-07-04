@@ -29,19 +29,33 @@ from cemm.operators.synthesize import SynthesizeOperator
 from cemm.operators.call_tool import CallToolOperator
 from cemm.operators.learn import LearnOperator
 from cemm.types.action import ActionKind
+from cemm.memory.concept_lattice import ConceptLattice
+from cemm.memory.construction_lattice import ConstructionLattice
+from cemm.memory.episodic_trace_store import EpisodicTraceStore
+from cemm.memory.persistent_lattice_store import PersistentLatticeStore
 from cemm.__main__ import process_input, seed_registry, seed_self_state
 
 # Global state — single session for demo
 _store = Store(":memory:")
 _registry = Registry()
 _op_registry = OperatorRegistry()
-_pipeline = Pipeline(_store, _registry)
+_persistent_store = PersistentLatticeStore(":memory:")
+_concept_lattice = ConceptLattice(persistent_store=_persistent_store)
+_construction_lattice = ConstructionLattice()
+_episodic_store = EpisodicTraceStore()
+_pipeline = Pipeline(
+    _store, _registry,
+    concept_lattice=_concept_lattice,
+    construction_lattice=_construction_lattice,
+    episodic_store=_episodic_store,
+    auto_consolidate=True,
+)
 _online_learner = OnlineLearner(_store.source_trust, _store.self_store, _store.claims, _store.models)
 _inductor = Inductor(_store)
 _recursive_loop = RecursiveLoop(_pipeline, _store, _online_learner, _inductor)
 
 seed_registry(_registry)
-seed_self_state(_store)
+seed_self_state(_store, concept_lattice=_concept_lattice)
 
 for op in [
     AnswerOperator(), AbstainOperator(), AskOperator(), RememberOperator(),
@@ -58,6 +72,61 @@ _op_registry.register(LearnOperator(lexeme_memory=_learn_mem, action_kind=Action
 
 _context_id = "web_demo"
 _turn_count = [0]
+_DEBUG = False  # overridden by --debug flag in __main__
+
+
+def _extract_debug_info() -> dict:
+    """Pull internals from the last pipeline result for the debug UI."""
+    try:
+        pr = getattr(_recursive_loop, "_last_result", None)
+        if pr is None:
+            return {}
+        info: dict = {}
+        if pr.uol_graph is not None:
+            g = pr.uol_graph
+            info["graph"] = {
+                "id": g.id,
+                "signal_id": g.signal_id,
+                "atoms": len(g.atoms),
+                "edges": len(g.edges),
+                "groups": len(g.groups),
+                "candidate_sets": len(g.candidate_sets),
+                "patch_candidates": len(g.patch_candidates),
+            }
+        if pr.decision_packet is not None:
+            dp = pr.decision_packet
+            info["decision"] = {
+                "action_kind": dp.action_kind,
+                "reason": dp.reason,
+                "confidence": dp.confidence,
+            }
+            if dp.action_plan:
+                info["decision"]["intent"] = dp.action_plan.params.get("intent", "")
+                info["decision"]["response_mode"] = dp.action_plan.params.get("response_mode", "")
+        if pr.grounded_graph is not None:
+            gg = pr.grounded_graph
+            info["grounded"] = {
+                "entity_ids": len(gg.entity_ids),
+                "confidence": gg.confidence,
+                "permission": gg.permission,
+            }
+        if pr.context_inference is not None:
+            ci = pr.context_inference
+            info["context_inference"] = {
+                "frame_id": ci.frame_id,
+                "confidence": ci.confidence,
+                "inferred_claims": len(ci.inferred_claim_ids),
+            }
+        if pr.conversation_act is not None:
+            info["conversation_act"] = {
+                "act_type": pr.conversation_act.act_type,
+                "confidence": pr.conversation_act.confidence,
+            }
+        info["cost_ms"] = round(pr.cost_ms, 1)
+        info["turn"] = _turn_count[0]
+        return info
+    except Exception as e:
+        return {"error": str(e)}
 
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -104,6 +173,54 @@ HTML_PAGE = """<!DOCTYPE html>
   }
   header h1 { font-size: 18px; font-weight: 600; }
   header .subtitle { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  header .spacer { flex: 1; }
+  .debug-toggle {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .debug-toggle:hover { color: var(--text); border-color: var(--accent); }
+  .debug-toggle.on { background: var(--accent); color: white; border-color: var(--accent); }
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+  .chat-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    transition: flex 0.2s ease;
+  }
+  #debug-panel {
+    width: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    transition: width 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  #debug-panel.open {
+    width: 380px;
+    padding: 12px 16px;
+    overflow-y: auto;
+  }
+  #debug-panel .key { color: var(--accent); }
+  #debug-panel .num { color: #f0c060; }
+  #debug-panel .str { color: #8bc891; }
+  #debug-panel .nil { color: var(--text-dim); }
+  #debug-panel .section { color: var(--text); font-weight: 600; margin-top: 8px; }
   .chat-container {
     flex: 1;
     overflow-y: auto;
@@ -145,9 +262,6 @@ HTML_PAGE = """<!DOCTYPE html>
     background: var(--surface);
     border-top: 1px solid var(--border);
     padding: 16px 24px;
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
   }
   .input-wrapper {
     display: flex;
@@ -216,34 +330,83 @@ HTML_PAGE = """<!DOCTYPE html>
     <h1>CEMM</h1>
     <div class="subtitle">Contextual Event Memory Model</div>
   </div>
+  <div class="spacer"></div>
+  <button class="debug-toggle" id="debugToggle" onclick="toggleDebug()">Debug</button>
 </header>
-<div class="chat-container" id="chat">
-  <div class="message bot">
-    <div class="avatar">AI</div>
-    <div><div class="bubble">Hello! I'm CEMM. I can remember facts, answer questions, reflect on my state, and retrieve stored knowledge. Try typing a command or asking a question.</div></div>
+<div class="main">
+  <div class="chat-column">
+    <div class="chat-container" id="chat">
+      <div class="message bot">
+        <div class="avatar">AI</div>
+        <div><div class="bubble">Hello! I'm CEMM. I can remember facts, answer questions, reflect on my state, and retrieve stored knowledge. Try typing a command or asking a question.</div></div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-wrapper">
+        <input type="text" id="input" placeholder="Type a message..." autocomplete="off" autofocus>
+        <button id="send" onclick="send()">Send</button>
+      </div>
+      <div class="suggestions">
+        <button onclick="quick('remember I like coffee')">remember I like coffee</button>
+        <button onclick="quick('what do I like?')">what do I like?</button>
+        <button onclick="quick('reflect on your state')">reflect on your state</button>
+        <button onclick="quick('retrieve claims about user')">retrieve claims</button>
+        <button onclick="quick('hello')">hello</button>
+        <button onclick="quick('rember I like tea')">rember I like tea (typo)</button>
+        <button onclick="quick('exit')">exit</button>
+      </div>
+    </div>
   </div>
-</div>
-<div class="input-area">
-  <div class="input-wrapper">
-    <input type="text" id="input" placeholder="Type a message..." autocomplete="off" autofocus>
-    <button id="send" onclick="send()">Send</button>
-  </div>
-  <div class="suggestions">
-    <button onclick="quick('remember I like coffee')">remember I like coffee</button>
-    <button onclick="quick('what do I like?')">what do I like?</button>
-    <button onclick="quick('reflect on your state')">reflect on your state</button>
-    <button onclick="quick('retrieve claims about user')">retrieve claims</button>
-    <button onclick="quick('hello')">hello</button>
-    <button onclick="quick('rember I like tea')">rember I like tea (typo)</button>
-    <button onclick="quick('exit')">exit</button>
-  </div>
+  <div id="debug-panel"></div>
 </div>
 <script>
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
+const debugPanel = document.getElementById('debug-panel');
+const debugToggle = document.getElementById('debugToggle');
+let debugOn = false;
+const debugHistory = [];
 input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 function quick(text) { input.value = text; send(); }
+function toggleDebug() {
+  debugOn = !debugOn;
+  debugToggle.classList.toggle('on', debugOn);
+  if (debugOn) renderAllDebug();
+  else debugPanel.classList.remove('open');
+}
+function renderDebugValue(v) {
+  if (v === null || v === undefined) return '<span class="nil">null</span>';
+  if (typeof v === 'number') return '<span class="num">' + v + '</span>';
+  if (typeof v === 'string') return '<span class="str">"' + v + '"</span>';
+  if (typeof v === 'boolean') return '<span class="num">' + v + '</span>';
+  if (Array.isArray(v)) return '<span class="num">[' + v.length + ' items]</span>';
+  if (typeof v === 'object') return '<span class="num">{' + Object.keys(v).length + ' keys}</span>';
+  return '<span class="nil">' + String(v) + '</span>';
+}
+function renderDebugSnapshot(entry) {
+  let html = '<div class="section">Turn ' + entry.turn + '</div>';
+  for (const [section, fields] of Object.entries(entry)) {
+    if (section === 'turn') continue;
+    html += '<div class="section" style="font-size:11px;color:var(--text-dim)">  ' + section + '</div>';
+    if (typeof fields === 'object' && fields !== null) {
+      for (const [k, v] of Object.entries(fields)) {
+        html += '<div style="margin-left:16px"><span class="key">' + k + '</span>: ' + renderDebugValue(v) + '</div>';
+      }
+    } else {
+      html += '<div style="margin-left:16px"><span class="key">value</span>: ' + renderDebugValue(fields) + '</div>';
+    }
+  }
+  return html;
+}
+function renderAllDebug() {
+  if (debugHistory.length === 0) {
+    debugPanel.innerHTML = '<span class="nil">(no debug data)</span>';
+  } else {
+    debugPanel.innerHTML = debugHistory.map(renderDebugSnapshot).join('<hr style="border-color:var(--border);margin:8px 0">');
+  }
+  if (debugOn) debugPanel.classList.add('open');
+}
 function addMessage(text, isUser) {
   const msg = document.createElement('div');
   msg.className = 'message ' + (isUser ? 'user' : 'bot');
@@ -285,6 +448,7 @@ async function send() {
     const data = await resp.json();
     removeTyping();
     addMessage(data.response || '(no response)', false);
+    if (data.debug) { debugHistory.push(data.debug); if (debugOn) renderAllDebug(); }
   } catch (err) {
     removeTyping();
     addMessage('Error: ' + err.message, false);
@@ -321,7 +485,10 @@ class CEMMHandler(BaseHTTPRequestHandler):
                     text, _store, _registry, _op_registry, _pipeline,
                     _online_learner, _recursive_loop, _context_id, _turn_count,
                 )
-                response = json.dumps({"response": output, "turn": _turn_count[0]})
+                payload: dict = {"response": output, "turn": _turn_count[0]}
+                if _DEBUG:
+                    payload["debug"] = _extract_debug_info()
+                response = json.dumps(payload)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(response.encode("utf-8"))))
@@ -338,12 +505,20 @@ class CEMMHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        pass
+        if _DEBUG:
+            BaseHTTPRequestHandler.log_message(self, format, *args)
 
 
 if __name__ == "__main__":
     port = 5000
-    print(f"CEMM Web Demo running at http://127.0.0.1:{port}")
+    import argparse
+    _parser = argparse.ArgumentParser(description="CEMM Web Demo")
+    _parser.add_argument("--port", type=int, default=5000, help="Port to bind")
+    _parser.add_argument("--debug", action="store_true", help="Enable debug panel and logging")
+    _args, _ = _parser.parse_known_args()
+    port = _args.port
+    _DEBUG = _args.debug
+    print(f"CEMM Web Demo running at http://127.0.0.1:{port}" + (" (debug)" if _DEBUG else ""))
     print("Press Ctrl+C to stop.")
     server = HTTPServer(("127.0.0.1", port), CEMMHandler)
     server.serve_forever()
