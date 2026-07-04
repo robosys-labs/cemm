@@ -1070,6 +1070,19 @@ class ActResolutionPlanner:
             "evidence_query",
             "user_name_query",
             "user_identity_query",
+            "self_identity_query",
+            "self_knowledge_query",
+            "self_capability_query",
+            "capability_query",
+            "open_domain_entity_query",
+            "fresh_world_query",
+            "memory_query",
+            "story_request",
+            "creative_request",
+            "concept_query",
+            "ask_question",
+            "question",
+            "command_request",
         }:
             return []
         return [

@@ -190,8 +190,20 @@ class DecisionRouter:
 
                 # Answer obligations with evidence
                 if top_obligation.requires_evidence and selected_claim_ids:
+                    _intent = top_obligation.intent
+                    # Map query act types to their base intent names for template lookup
+                    if _intent == "user_name_query":
+                        _intent = "user_name"
+                    elif _intent == "user_identity_query":
+                        _intent = "user_identity"
+                    elif _intent == "self_identity_query":
+                        _intent = "self_identity"
+                    elif _intent == "self_capability_query":
+                        _intent = "self_capability"
+                    elif _intent == "self_knowledge_query":
+                        _intent = "self_knowledge"
                     return self._make_answer_packet(
-                        intent=top_obligation.intent,
+                        intent=_intent,
                         response_mode=top_obligation.response_mode,
                         confidence=top_obligation.confidence,
                         selected_claim_ids=selected_claim_ids,
