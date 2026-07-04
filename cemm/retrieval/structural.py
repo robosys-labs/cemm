@@ -121,7 +121,7 @@ class StructuralRetriever:
         seen = set()
 
         # Detect query-specific predicate constraints
-        frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        frame_keys = {a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state")}
         _identity_predicates = {"name", "preferred_name", "called", "known_as", "identity_name"}
         _capability_predicates = {"capability", "can", "does", "function", "role"}
         constrain_predicates: set[str] | None = None
@@ -134,40 +134,48 @@ class StructuralRetriever:
             return result
 
         # Extract entity names/IDs from graph's entity_refs as retrieval queries
-        for ref in graph.entity_refs:
-            eid = ref.get("entity_id", "")
-            if eid and eid not in seen:
-                seen.add(eid)
-                if constrain_predicates:
-                    # Predicate-constrained retrieval: only get name-related claims
-                    for pred in constrain_predicates:
-                        claims = self._store.claims.find_by_subject(eid, pred, kernel.budget.max_claims)
-                        result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
-                else:
-                    claims = self._store.claims.find_by_subject(eid, limit=kernel.budget.max_claims)
-                    result.claims.extend(c for c in claims if c.status == ClaimStatus.ACTIVE)
+        for a in graph.atoms.values():
+            if a.kind in ("entity", "self"):
+                eid = a.key.replace("entity:", "").replace("self:", "")
+                if eid and eid not in seen:
+                    seen.add(eid)
+                    if constrain_predicates:
+                        for pred in constrain_predicates:
+                            claims = self._store.claims.find_by_subject(eid, pred, kernel.budget.max_claims)
+                            for c in claims:
+                                if c.status == ClaimStatus.ACTIVE and c.id not in seen:
+                                    result.claims.append(c)
+                                    seen.add(c.id)
+                    else:
+                        claims = self._store.claims.find_by_subject(eid, limit=kernel.budget.max_claims)
+                        for c in claims:
+                            if c.status == ClaimStatus.ACTIVE and c.id not in seen:
+                                result.claims.append(c)
+                                seen.add(c.id)
 
         # Extract process frame_key values and use as frame_id queries
-        for proc in graph.processes:
-            frame_key = proc.get("frame_key", "")
-            if frame_key:
-                frame_query = RetrievalQuery(frame_id=frame_key)
-                frame_result = self.retrieve(frame_query, kernel)
-                for c in frame_result.claims:
-                    if c.id not in seen:
-                        result.claims.append(c)
-                        seen.add(c.id)
+        for a in graph.atoms.values():
+            if a.kind in ("process", "state"):
+                frame_key = a.key.replace("process:", "").replace("state:", "")
+                if frame_key:
+                    frame_query = RetrievalQuery(frame_id=frame_key)
+                    frame_result = self.retrieve(frame_query, kernel)
+                    for c in frame_result.claims:
+                        if c.id not in seen:
+                            result.claims.append(c)
+                            seen.add(c.id)
 
         # Extract state_key values and use as domain queries
-        for state in graph.states:
-            state_key = state.get("state_key", "")
-            if state_key:
-                domain_query = RetrievalQuery(domain=state_key)
-                domain_result = self.retrieve(domain_query, kernel)
-                for c in domain_result.claims:
-                    if c.id not in seen:
-                        result.claims.append(c)
-                        seen.add(c.id)
+        for a in graph.atoms.values():
+            if a.kind in ("state", "process"):
+                state_key = a.key.replace("state:", "").replace("process:", "")
+                if state_key:
+                    domain_query = RetrievalQuery(domain=state_key)
+                    domain_result = self.retrieve(domain_query, kernel)
+                    for c in domain_result.claims:
+                        if c.id not in seen:
+                            result.claims.append(c)
+                            seen.add(c.id)
 
         result.claims = self.filter_frame_valid(result.claims, kernel.time.now)
         result.total_count = len(result.claims) + len(result.models)

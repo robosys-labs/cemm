@@ -13,6 +13,7 @@ from typing import Any, Iterable
 from ..store.store import Store
 from ..types.claim import Claim, ClaimStatus
 from ..types.context_kernel import ContextKernel
+from ..types.uol_graph import UOLGraph
 from ..types.meaning_percept import RetrievalPlan
 from ..types.model import ModelKind, ModelStatus
 from .structural import RetrievalQuery, RetrievalResult, StructuralRetriever
@@ -135,16 +136,17 @@ class RetrievalExecutor:
         self,
         plan: RetrievalPlan,
         kernel: ContextKernel,
-        graph: SemanticEventGraph | None,
+        graph: UOLGraph | None,
         result: RetrievalResult,
         trace: RetrievalExecutionTrace,
     ) -> None:
         entity_ids = list(plan.target_entity_ids)
         if graph:
-            for ref in graph.entity_refs:
-                entity_id = ref.get("entity_id", "")
-                if entity_id and entity_id not in entity_ids:
-                    entity_ids.append(entity_id)
+            for a in graph.atoms.values():
+                if a.kind in ("entity", "self"):
+                    entity_id = a.key.replace("entity:", "").replace("self:", "")
+                    if entity_id and entity_id not in entity_ids:
+                        entity_ids.append(entity_id)
         for entity_id in (
             getattr(kernel.topic, "last_taught_entity_id", ""),
             getattr(kernel.topic, "active_topic_entity_id", ""),

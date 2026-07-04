@@ -11,7 +11,7 @@ from cemm.kernel.answer_graph_ranker import rank_candidates, best_candidate
 from cemm.types.context_kernel import ContextKernel, GoalState, MemoryState
 from cemm.types.permission import Permission
 from cemm.types.semantic_answer_graph import SemanticAnswerGraph, AnswerVerification
-from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.uol_graph import UOLGraph
 
 
 def _make_sag(intent: str, confidence: float, claim_ids: list[str] | None = None,
@@ -38,10 +38,9 @@ def _kernel(permission_scope: str = "public", claim_ids: list[str] | None = None
     )
 
 
-def _graph(claim_refs: list[str] | None = None) -> SemanticEventGraph:
-    return SemanticEventGraph(id="g1", source_signal_ids=[], context_id="ctx_1",
-                               entity_refs=[], processes=[], states=[],
-                               claim_refs=claim_refs or [])
+def _graph(claim_refs: list[str] | None = None) -> UOLGraph:
+    return UOLGraph(id="g1", signal_id="", context_id="ctx_1",
+                    claim_refs=claim_refs or [])
 
 
 def test_rank_prefers_higher_confidence() -> None:

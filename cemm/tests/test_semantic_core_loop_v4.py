@@ -38,13 +38,16 @@ def _make_perceptor() -> MeaningPerceptor:
     return MeaningPerceptor(ner_tagger=ner, surface_tagger=SurfaceTagger(ner, known_words=known_words))
 
 
-def test_semantic_cpu_is_available_from_canonical_kernel_path() -> None:
-    from cemm.kernel.semantic_cpu import SemanticCPU
+def test_semantic_kernel_runtime_produces_cycle_result() -> None:
+    from cemm.kernel.semantic_kernel_runtime import SemanticKernelRuntime
 
-    result = SemanticCPU().run_turn(_make_signal("hello"), ContextKernel(id="ctx_cpu"))
+    result = SemanticKernelRuntime().run_turn(
+        _make_signal("hello"), ContextKernel(id="ctx_cpu"),
+    )
 
+    assert result.percept is not None
     assert result.percept.uol_graph is not None
-    assert result.plan.response_contract["mode"]
+    assert result.act_plan is not None
 
 
 def test_working_graph_promotes_discourse_and_anaphora_to_edges() -> None:

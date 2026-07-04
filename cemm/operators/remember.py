@@ -15,6 +15,8 @@ from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..synthesis.realizer import RealizationPipeline
 from ..synthesis.template import TemplateStrategy
 from ..kernel.memory_update_planner import MemoryUpdateBatch, MemoryUpdateTask
+from ..learning.memory_patch_compiler import MemoryPatchCompiler
+from ..learning.patch_validator import PatchValidator
 
 
 _OPERATOR_MESSAGES_PATH = Path(__file__).parents[1] / "data" / "operator_messages.json"
@@ -82,6 +84,29 @@ class RememberOperator(BaseOperator):
             return OperatorResult(
                 success=False,
                 output_text=self._message("predicate_missing"),
+            )
+
+        compiler = MemoryPatchCompiler()
+        validator = PatchValidator(store=ctx.store)
+        candidate = compiler.compile(
+            subject_entity_id=subject_id,
+            predicate=predicate,
+            object_value=object_value,
+            object_entity_id=object_entity_id,
+            domain=domain,
+            qualifiers=qualifiers,
+            evidence_signal_ids=[ctx.input_signal.id],
+            source_id=ctx.input_signal.source_id,
+            permission=ctx.kernel.permission,
+            confidence=0.7,
+            trust=0.7,
+            kernel=ctx.kernel,
+        )
+        validation = validator.validate(candidate, ctx.kernel)
+        if not validation.accepted:
+            return OperatorResult(
+                success=False,
+                output_text=f"Cannot store: {'; '.join(validation.reasons)}",
             )
 
         patches: list[GraphPatch] = []
@@ -264,6 +289,36 @@ class RememberOperator(BaseOperator):
             return OperatorResult(
                 success=False,
                 output_text=self._message("insufficient_information"),
+            )
+
+        # Validation gate: compile and validate every task before writing
+        compiler = MemoryPatchCompiler()
+        validator = PatchValidator(store=ctx.store)
+        validation_errors: list[str] = []
+        for task in filtered_tasks:
+            candidate = compiler.compile(
+                subject_entity_id=task.subject_entity_id,
+                predicate=task.predicate,
+                object_value=task.object_value,
+                object_entity_id=task.object_entity_id,
+                domain=task.domain,
+                qualifiers=task.qualifiers,
+                evidence_signal_ids=[ctx.input_signal.id],
+                source_id=ctx.input_signal.source_id,
+                permission=ctx.kernel.permission,
+                confidence=task.confidence,
+                trust=task.trust,
+                kernel=ctx.kernel,
+            )
+            validation = validator.validate(candidate, ctx.kernel)
+            if not validation.accepted:
+                validation_errors.append(
+                    f"task '{task.predicate}={task.object_value}': {'; '.join(validation.reasons)}"
+                )
+        if validation_errors:
+            return OperatorResult(
+                success=False,
+                output_text=f"Cannot store batch: {' | '.join(validation_errors)}",
             )
 
         claims, batch_patches = writer.write_batch(

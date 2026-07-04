@@ -13,7 +13,7 @@ from cemm.store.store import Store
 from cemm.registry import Registry, RegistryEntry
 from cemm.types.signal import Signal, SignalKind, SourceType
 from cemm.types.context_kernel import ContextKernel, WorldState, UserState, TimeState, ConversationState, GoalState, MemoryState, Budget
-from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.uol_graph import UOLGraph
 from cemm.types.semantic_answer_graph import SemanticAnswerGraph
 from cemm.types.packets import (
     GroundedGraph, MemoryPacket, DecisionPacket, ActionPlan, InferencePacket,
@@ -105,9 +105,9 @@ class TestPhase0ContextFirst:
         registry = _make_registry()
         pipeline = Pipeline(store, registry)
         result = pipeline.run("My favorite database is Postgres.")
-        assert result.semantic_event_graph is not None
-        assert result.semantic_event_graph.source_signal_ids
-        assert result.semantic_event_graph.context_id
+        assert result.uol_graph is not None
+        assert result.uol_graph.signal_id
+        assert result.uol_graph.context_id
 
     def test_memory_recall_selects_active_claim(self) -> None:
         store = _make_store()
@@ -186,9 +186,9 @@ class TestPhase0AbstainAndAsk:
             _make_signal("who is the president?"), turn_index=1,
         )
         kernel.budget.allow_dense_fallback = False
-        seg = SemanticEventGraph(
+        seg = UOLGraph(
             id="seg_test2",
-            source_signal_ids=["sig1"],
+            signal_id="sig1",
             context_id=kernel.id,
         )
         router = DecisionRouter()
@@ -288,6 +288,6 @@ class TestRuntimeOrdering:
         registry = _make_registry()
         pipeline = Pipeline(store, registry)
         result = pipeline.run("What is my favorite database?")
-        assert result.semantic_event_graph is not None
+        assert result.uol_graph is not None
         assert result.ranked_claim_ids is not None
 

@@ -42,21 +42,26 @@ class GroundingPipeline:
     ) -> GroundedGraph:
         self._resolver.resolve_self(kernel)
         resolved_ids: list[str] = []
-        for ref in graph.entity_refs:
-            name = ref.get("name", "")
-            if name and not ref.get("entity_id"):
+        for atom in (a for a in graph.atoms.values() if a.kind in ("entity", "self")):
+            name = atom.surface or atom.key
+            entity_id = atom.key.replace("entity:", "").replace("self:", "")
+            if name and not entity_id:
                 resolved = self._resolver.resolve_by_name(name, kernel)
                 if resolved:
-                    ref["entity_id"] = resolved[0].id
-                    ref["entity_type"] = resolved[0].type.value
                     resolved_ids.append(resolved[0].id)
         invalidated_ids = self._frames.apply_frame_rules(kernel)
         graph.permission_scope = kernel.permission.scope.value
         location_ids = []
-        for ref in graph.entity_refs:
-            ref["frame_valid"] = ref.get("entity_id", "") not in invalidated_ids
-            if ref.get("role") == "location" and ref.get("entity_id"):
-                location_ids.append(ref["entity_id"])
+        for atom in (a for a in graph.atoms.values() if a.kind in ("entity", "self")):
+            entity_id = atom.key.replace("entity:", "").replace("self:", "")
+            role = ""
+            for edge in graph.incoming(atom.id):
+                r = edge.features.get("role", "")
+                if r:
+                    role = r
+                    break
+            if role == "location" and entity_id:
+                location_ids.append(entity_id)
 
         return GroundedGraph(
             semantic_event_graph_id=graph.id,
@@ -66,7 +71,7 @@ class GroundingPipeline:
             active_frame_ids=list(kernel.memory.active_frame_ids) if kernel.memory else [],
             permission=kernel.permission.scope.value if kernel.permission else "public",
             missing_slots=list(kernel.goal.missing_slots) if kernel.goal else [],
-            confidence=graph.confidence,
+            confidence=max((a.confidence for a in graph.atoms.values()), default=0.5),
         )
 
     def _resolve_time_refs(self, content: str | None, kernel: ContextKernel) -> list[str]:

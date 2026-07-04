@@ -9,15 +9,6 @@ from .graph_patch import GraphPatch
 from .uol_atom import UOLAtom, UOLEdge, CANONICAL_ATOM_KINDS, CANONICAL_EDGE_TYPES
 
 
-class _CompatEdge:
-    """Minimal compat wrapper so temporal_edges consumers work without importing SemanticEdge."""
-    def __init__(self, source_id: str, target_id: str, relation: str, confidence: float):
-        self.source_id = source_id
-        self.target_id = target_id
-        self.relation = relation
-        self.confidence = confidence
-
-
 @dataclass
 class UOLMeaningGroup:
     id: str
@@ -211,85 +202,6 @@ class UOLGraph:
     claim_refs: list[str] = field(default_factory=list)
     permission_scope: str = "public"
     trace: dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def source_signal_ids(self) -> list[str]:
-        return [self.signal_id] if self.signal_id else []
-
-    @property
-    def confidence(self) -> float:
-        return max((a.confidence for a in self.atoms.values()), default=0.5)
-
-    @property
-    def processes(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "id": a.id,
-                "frame_key": a.key.replace("process:", "").replace("state:", ""),
-                "surface": a.surface,
-                "confidence": a.confidence,
-                "participants": self._participants_for(a.id),
-                "features": a.features,
-            }
-            for a in self.atoms.values()
-            if a.kind in ("process", "state")
-        ]
-
-    @property
-    def states(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "id": a.id,
-                "state_key": a.key.replace("state:", "").replace("process:", ""),
-                "surface": a.surface,
-                "confidence": a.confidence,
-                "features": a.features,
-            }
-            for a in self.atoms.values()
-            if a.kind in ("state", "process")
-        ]
-
-    @property
-    def entity_refs(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "id": a.id,
-                "name": a.surface or a.key,
-                "entity_id": a.key.replace("entity:", "").replace("self:", ""),
-                "role": self._role_for(a.id),
-                "confidence": a.confidence,
-                "features": a.features,
-            }
-            for a in self.atoms.values()
-            if a.kind in ("entity", "self")
-        ]
-
-    @property
-    def causal_edges(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "id": e.id,
-                "source_id": e.source_id,
-                "target_id": e.target_id,
-                "relation": e.edge_type,
-                "confidence": e.confidence,
-            }
-            for e in self.edges
-            if e.edge_type == "causes"
-        ]
-
-    @property
-    def temporal_edges(self) -> list[_CompatEdge]:
-        return [
-            _CompatEdge(
-                source_id=e.source_id,
-                target_id=e.target_id,
-                relation=e.edge_type,
-                confidence=e.confidence,
-            )
-            for e in self.edges
-            if e.edge_type in ("before", "after")
-        ]
 
     def _participants_for(self, atom_id: str) -> list[dict[str, Any]]:
         participants: list[dict[str, Any]] = []

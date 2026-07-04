@@ -26,14 +26,16 @@ class Ranker:
         now = kernel.time.now
         goal_terms = list(goal_keywords or [])
         if graph:
-            for proc in graph.processes:
-                fk = proc.get("frame_key", "")
-                if fk and fk not in goal_terms:
-                    goal_terms.append(fk)
-            for ref in graph.entity_refs:
-                name = ref.get("name", "")
-                if name and name not in goal_terms:
-                    goal_terms.append(name)
+            for a in graph.atoms.values():
+                if a.kind in ("process", "state"):
+                    fk = a.key.replace("process:", "").replace("state:", "")
+                    if fk and fk not in goal_terms:
+                        goal_terms.append(fk)
+            for a in graph.atoms.values():
+                if a.kind in ("entity", "self"):
+                    name = a.surface or a.key
+                    if name and name not in goal_terms:
+                        goal_terms.append(name)
         # Keep short goal terms from swamping relevance
         goal_terms = [g for g in goal_terms if len(g) > 1 or g.isalnum()]
 
@@ -48,29 +50,31 @@ class Ranker:
             entity_overlap = 0
             if graph:
                 claim_entities = {claim.subject_entity_id, claim.object_entity_id}
-                graph_entities = {ref.get("entity_id", "") for ref in graph.entity_refs}
+                graph_entities = {a.key.replace("entity:", "").replace("self:", "") for a in graph.atoms.values() if a.kind in ("entity", "self")}
                 entity_overlap = len(claim_entities & graph_entities)
             relevance = compute_relevance(
                 claim_predicate=claim.predicate,
                 goal_keywords=goal_terms,
                 entity_overlap=entity_overlap,
-                total_goal_entities=max(1, len(graph.entity_refs)) if graph else 1,
+                total_goal_entities=max(1, len([a for a in graph.atoms.values() if a.kind in ("entity", "self")])) if graph else 1,
             )
             frame_validity = 1.0
             if graph:
-                for proc in graph.processes:
-                    if proc.get("frame_key") == claim.predicate:
-                        frame_validity = max(0.5, proc.get("confidence", 0.5))
+                for a in graph.atoms.values():
+                    if a.kind in ("process", "state") and a.key.replace("process:", "").replace("state:", "") == claim.predicate:
+                        frame_validity = max(0.5, a.confidence)
                         break
                 if claim.id in graph.claim_refs:
-                    relevance = max(relevance, min(1.0, 0.7 + 0.3 * graph.confidence))
+                    _confidence = max((c.confidence for c in graph.atoms.values()), default=0.5)
+                    relevance = max(relevance, min(1.0, 0.7 + 0.3 * _confidence))
             contradiction_penalty = 0.0
             if claim.status == ClaimStatus.DISPUTED:
                 contradiction_penalty = abs(contradiction_weight(0.5))
             semantic_compatibility_penalty = 0.0
             if graph:
-                process_keys = {p.get("frame_key", "") for p in graph.processes}
-                query_predicates = {p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "").startswith("claim_")}
+                _process_atoms = [a for a in graph.atoms.values() if a.kind in ("process", "state")]
+                process_keys = {a.key.replace("process:", "").replace("state:", "") for a in _process_atoms}
+                query_predicates = {a.key.replace("process:", "").replace("state:", "") for a in _process_atoms if a.key.replace("process:", "").replace("state:", "").startswith("claim_")}
                 query_predicates = {k.replace("claim_", "") for k in query_predicates}
                 if process_keys & {"self_identity_query", "user_identity_query", "user_name_query"}:
                     if claim.predicate not in {"name", "preferred_name", "called", "known_as", "identity_name"}:

@@ -358,7 +358,7 @@ def process_input(
     if not selected_claim_ids and (conversation_act is None or conversation_act.requires_evidence or conversation_act.act_type == "unknown"):
         fallback_retriever = StructuralRetriever(store)
         fallback_ranker = Ranker()
-        graph = pipeline_result.semantic_event_graph
+        graph = pipeline_result.uol_graph
         retrieval_result = fallback_retriever.retrieve_for_kernel(kernel)
         if graph:
             graph_result = fallback_retriever.retrieve_for_graph(graph, kernel)
@@ -399,10 +399,10 @@ def process_input(
 
     inference_packet = pipeline_result.inference_packet or InferencePacket()
     sim_result = None
-    graph = pipeline_result.semantic_event_graph
+    graph = pipeline_result.uol_graph
     act_resolution_plan = pipeline_result.act_resolution_plan
     # Pipeline already ran causal inference; only run simulation if causal edges exist
-    if graph and graph.causal_edges:
+    if graph and graph.edges_by_type("causes"):
         sim_engine = SimulationEngine(store)
         sim_result = sim_engine.simulate(text, kernel)
     predictions = inference_packet.predictions
@@ -413,10 +413,10 @@ def process_input(
     params: dict = {}
     ap: ActionPlan | None = None
     decision: DecisionPacket | None = pipeline_result.decision_packet
-    if decision is None and pipeline_result.semantic_event_graph:
+    if decision is None and pipeline_result.uol_graph:
         decision_router = DecisionRouter(uol_mapper=pipeline._uol_mapper)
         decision = decision_router.run(
-            graph=pipeline_result.semantic_event_graph,
+            graph=pipeline_result.uol_graph,
             kernel=kernel,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
@@ -463,7 +463,7 @@ def process_input(
             params = {
                 "answer_text": "",
                 "selected_claim_ids": answer_claim_ids,
-                "seg_confidence": pipeline_result.semantic_event_graph.confidence if pipeline_result.semantic_event_graph else 0.0,
+                "seg_confidence": max((a.confidence for a in pipeline_result.uol_graph.atoms.values()), default=0.5) if pipeline_result.uol_graph else 0.0,
                 "decision_reason": decision.reason,
             }
             if ap and ap.params:
@@ -477,7 +477,7 @@ def process_input(
         elif kind == ActionKind.REMEMBER:
             # v3.3: Use batch memory update when multiple fact candidates available.
             # Falls back to single-claim path when only one candidate exists.
-            seg = pipeline_result.semantic_event_graph
+            seg = pipeline_result.uol_graph
             all_candidates: list = []
             if act_resolution_plan and act_resolution_plan.memory_updates:
                 for mu in act_resolution_plan.memory_updates:
@@ -558,7 +558,7 @@ def process_input(
         grounded_graph_id=grounded_graph.id if grounded_graph else None,
         memory_packet_id=memory_packet.id if memory_packet else None,
         inference_packet_id=inference_packet.id if inference_packet else None,
-        semantic_event_graph_id=pipeline_result.semantic_event_graph.id if pipeline_result.semantic_event_graph else None,
+        semantic_event_graph_id=pipeline_result.uol_graph.id if pipeline_result.uol_graph else None,
         decision_packet_id=decision.id if decision else None,
         params=params,
     )
@@ -568,8 +568,8 @@ def process_input(
     output = op_result.output_text
 
     # v4.2: Feed operator graph_patches into the consolidation cycle
-    if op_result.graph_patches and pipeline._semantic_cpu is not None and pipeline._semantic_cpu.auto_consolidate:
-        pipeline._semantic_cpu.consolidator.consolidate(op_result.graph_patches)
+    if op_result.graph_patches and pipeline._runtime is not None and pipeline._runtime.auto_consolidate:
+        pipeline._runtime.consolidator.consolidate(op_result.graph_patches)
 
     # Fix trace metadata for the operator result.
     if op_result.trace:
@@ -592,7 +592,7 @@ def process_input(
         from .latent.encoder import LatentEncoder
         latent_encoder = LatentEncoder(dim=64)
         sag_for_export = op_result.semantic_answer_graph
-        seg_for_export = pipeline_result.semantic_event_graph
+        export_graph = pipeline_result.uol_graph
         selected_claims = [store.claims.get(cid) for cid in ctx.selected_claim_ids]
         selected_claims = [c for c in selected_claims if c is not None]
         selected_models = [store.models.get(mid) for mid in ctx.selected_model_ids]
@@ -600,8 +600,8 @@ def process_input(
         claim_tuples = [(c.predicate, c.object_value) for c in selected_claims]
         op_result.trace.typed_latents = latent_encoder.encode_typed(
             entity_ids=kernel.memory.working_entity_ids + kernel.world.active_entity_ids,
-            process_keys=[p.get("frame_key", "") for p in (seg_for_export.processes if seg_for_export else [])],
-            state_keys=[s.get("state_key", "") for s in (seg_for_export.states if seg_for_export else [])],
+            process_keys=[a.key.replace("process:", "").replace("state:", "") for a in export_graph.atoms.values() if a.kind in ("process", "state")] if export_graph else [],
+            state_keys=[a.key.replace("state:", "").replace("process:", "") for a in export_graph.atoms.values() if a.kind in ("state", "process")] if export_graph else [],
             claim_tuples=claim_tuples,
             model_keys=[m.id for m in selected_models],
             context_id=kernel.id,
@@ -811,7 +811,7 @@ def process_input(
             kernel=kernel,
             input_signal=input_signal,
             trace=op_result.trace,
-            semantic_event_graph=pipeline_result.semantic_event_graph,
+            semantic_event_graph=pipeline_result.uol_graph,
             semantic_answer_graph=sag_for_export,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,

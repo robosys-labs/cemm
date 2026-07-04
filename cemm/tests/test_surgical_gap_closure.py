@@ -24,7 +24,7 @@ from cemm.types.context_kernel import (
     ContextKernel, WorldState, UserState, TimeState,
     ConversationState, GoalState, MemoryState, Budget,
 )
-from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.uol_graph import UOLGraph
 
 
 # ── fixtures ────────────────────────────────────────────────────
@@ -98,13 +98,12 @@ def decision_router() -> DecisionRouter:
 def test_memory_query_not_remember_command(
     decision_router: DecisionRouter, kernel: ContextKernel, store: Store
 ) -> None:
-    seg = SemanticEventGraph(
+    seg = UOLGraph(
         id=uuid.uuid4().hex[:16],
-        source_signal_ids=["s1"],
+        signal_id="s1",
         context_id=kernel.id,
-        processes=[{"frame_key": "command_remember", "confidence": 0.7}],
-        confidence=0.7,
     )
+    seg.add_atom("process", "process:command_remember", confidence=0.7)
     packet = decision_router.run(
         graph=seg,
         kernel=kernel,
@@ -117,13 +116,12 @@ def test_memory_query_not_remember_command(
 def test_imperative_remember_still_command(
     decision_router: DecisionRouter, kernel: ContextKernel, store: Store
 ) -> None:
-    seg = SemanticEventGraph(
+    seg = UOLGraph(
         id=uuid.uuid4().hex[:16],
-        source_signal_ids=["s1"],
+        signal_id="s1",
         context_id=kernel.id,
-        processes=[{"frame_key": "command_remember", "confidence": 0.7}],
-        confidence=0.7,
     )
+    seg.add_atom("process", "process:command_remember", confidence=0.7)
     packet = decision_router.run(
         graph=seg,
         kernel=kernel,
@@ -217,13 +215,12 @@ def test_user_name_query_routes_to_profile_lane(
     decision_router: DecisionRouter, kernel: ContextKernel, store: Store
 ) -> None:
     store.profile.put("name", "chibueze", "user")
-    seg = SemanticEventGraph(
+    seg = UOLGraph(
         id=uuid.uuid4().hex[:16],
-        source_signal_ids=["s1"],
+        signal_id="s1",
         context_id=kernel.id,
-        processes=[{"frame_key": "user_name_query", "confidence": 0.7}],
-        confidence=0.7,
     )
+    seg.add_atom("process", "process:user_name_query", confidence=0.7)
     packet = decision_router.run(
         graph=seg,
         kernel=kernel,

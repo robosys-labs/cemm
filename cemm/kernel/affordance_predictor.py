@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..types.causal_affordance import CausalAffordance, PortBindingPattern
-from ..types.predicate_schema import GraphPattern
+from ..types.predicate_schema import GraphPattern, GraphPatchTemplate
 from ..types.uol_atom import UOLAtom
 from ..types.uol_graph import AffordancePrediction, UOLGraph
 
@@ -31,15 +31,19 @@ class AffordancePredictor:
                 required_ports = {bp.port_id for bp in affordance.required_bindings if bp.required}
                 if required_ports and not required_ports.issubset(binding_keys):
                     continue
+                template = affordance.predicted_effect
+                predicted_patch_template = {
+                    "target": template.target if template else "causal_affordance",
+                    "operation": "observe_causal_affordance",
+                }
+                if template and template.operations:
+                    predicted_patch_template.update({op.get("key", ""): op.get("value", "") for op in template.operations if isinstance(op, dict)})
                 predictions.append(AffordancePrediction(
                     id=f"aff_{len(predictions)}_{affordance.affordance_id}",
                     affordance_key=affordance.affordance_id,
                     trigger_atom_ids=[atom.id],
                     required_binding_ids=[b.source_edge_id for b in bindings if b.port_key in required_ports],
-                    predicted_patch_template={
-                        "target": "causal_affordance",
-                        "operation": "observe_causal_affordance",
-                    },
+                    predicted_patch_template=predicted_patch_template,
                     effect_type=affordance.effect_type,
                     confidence=min(1.0, max(atom.confidence, affordance.confidence)),
                     reason="affordance_rule_match",
@@ -65,6 +69,7 @@ class AffordancePredictor:
                     {"kind": "evidence", "key": "fresh_external_evidence_required"},
                 ]),
                 effect_type="action_enablement",
+                predicted_effect=GraphPatchTemplate(operations=[{"key": "policy", "value": "require_fresh_source"}]),
                 confidence=0.7,
             ),
             CausalAffordance(

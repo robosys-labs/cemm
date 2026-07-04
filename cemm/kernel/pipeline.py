@@ -47,7 +47,7 @@ from ..types.uol_graph import UOLGraph
 from ..causal.inference import CausalInference
 from ..retrieval.ranker import Ranker
 from ..retrieval.retrieval_executor import RetrievalExecutor, RetrievalExecutionResult
-from .semantic_cpu import SemanticCPU
+from .semantic_kernel_runtime import SemanticKernelRuntime
 from ..memory.concept_lattice import ConceptLattice
 from ..memory.construction_lattice import ConstructionLattice
 from ..memory.episodic_trace_store import EpisodicTraceStore
@@ -64,7 +64,6 @@ class PipelineResult:
     abstained: bool = False
     ranked_claim_ids: list[str] = field(default_factory=list)
     ranked_model_ids: list[str] = field(default_factory=list)
-    semantic_event_graph: Any | None = None
     grounded_graph: GroundedGraph | None = None
     memory_packet: MemoryPacket | None = None
     inference_packet: InferencePacket | None = None
@@ -142,16 +141,17 @@ class Pipeline:
         self._retrieval_executor = RetrievalExecutor(store)
         self._turn_counts: dict[str, int] = {}
         self._session_state: dict[str, dict] = {}
-        # v4.1: SemanticCPU orchestrator with graph builder
-        self._semantic_cpu: SemanticCPU | None = None
+        # v4.2: SemanticKernelRuntime — single authoritative entrypoint
+        self._runtime: SemanticKernelRuntime | None = None
         self._concept_lattice = concept_lattice
         self._construction_lattice = construction_lattice
         self._episodic_store = episodic_store or EpisodicTraceStore()
         if concept_lattice is not None:
-            self._semantic_cpu = SemanticCPU(
+            self._runtime = SemanticKernelRuntime(
                 concept_lattice=concept_lattice,
                 construction_lattice=construction_lattice,
                 episodic_store=self._episodic_store,
+                store=store,
                 auto_consolidate=auto_consolidate,
             )
 
@@ -267,8 +267,8 @@ class Pipeline:
             context_id=signal.context_id,
             raw_text=signal.content,
         )
-        if self._semantic_cpu is not None and self._semantic_cpu.graph_builder is not None:
-            built = self._semantic_cpu.graph_builder.build(meaning_percept)
+        if self._runtime is not None and self._runtime.graph_builder is not None:
+            built = self._runtime.graph_builder.build(meaning_percept)
             if built is not None:
                 uol_graph = built
                 meaning_percept.uol_graph = uol_graph
@@ -433,8 +433,8 @@ class Pipeline:
 
         # Seed entity IDs from graph for graph-grounded retrieval
         if uol_graph is not None:
-            for ref in uol_graph.entity_refs:
-                eid = ref.get("entity_id", "")
+            for atom in (a for a in uol_graph.atoms.values() if a.kind in ("entity", "self")):
+                eid = atom.key.replace("entity:", "").replace("self:", "")
                 if eid and eid not in kernel.memory.working_entity_ids:
                     kernel.memory.working_entity_ids.append(eid)
 
@@ -515,7 +515,7 @@ class Pipeline:
             id=uuid.uuid4().hex[:16],
             inference_graph_input_signal_ids=[signal.id],
         )
-        if uol_graph is not None and uol_graph.causal_edges:
+        if uol_graph is not None and uol_graph.edges_by_type("causes"):
             inference_packet = self._causal_inference.predict(
                 signal.content,
                 kernel.memory.working_claim_ids,
@@ -551,6 +551,16 @@ class Pipeline:
                 semantic_model_store=self._semantic_model_store,
             )
 
+        # v4.2: Build working set for cycle-aware decision routing
+        working_set = None
+        if self._runtime is not None:
+            try:
+                working_set = self._runtime.attention.attend(
+                    uol_graph or UOLGraph(), kernel, kernel.budget,
+                )
+            except Exception:
+                working_set = None
+
         # Decide: choose action based on grounded graph, memory, inference, conversation act
         # v3.3: DecisionRouter now receives act_resolution_plan as primary routing signal
         decision_packet = self._decision_router.run(
@@ -565,6 +575,8 @@ class Pipeline:
             conversation_act=conversation_act,
             store=self._store,
             act_resolution_plan=act_resolution_plan,
+            # v4.2: Cycle-aware routing
+            working_set=working_set,
         )
 
         self._check_budget(kernel, start)
@@ -573,7 +585,7 @@ class Pipeline:
             kernel=kernel,
             ranked_claim_ids=kernel.memory.working_claim_ids,
             ranked_model_ids=[m.id for m, _ in ranked_models] if ranked_models else [],
-            semantic_event_graph=uol_graph,
+            uol_graph=uol_graph,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             context_inference=context_inference,
@@ -589,7 +601,6 @@ class Pipeline:
             reaction_signal=reaction_signal,
             response_plan=response_plan,
             error_attribution=error_attribution,
-            uol_graph=uol_graph,
         )
         # Validate runtime packets against schemas
         from ..kernel.packet_validator import validate_packet
@@ -613,11 +624,11 @@ class Pipeline:
                     1.0, result.kernel.self_view.recent_error_rate + 0.1
                 )
 
-        # v4.1: SemanticCPU consolidation at end of turn
-        if uol_graph is not None and self._semantic_cpu is not None:
-            patches = self._semantic_cpu.patch_extractor.extract(uol_graph)
-            if self._semantic_cpu.auto_consolidate:
-                self._semantic_cpu.consolidator.consolidate(
+        # v4.2: SemanticKernelRuntime consolidation at end of turn
+        if uol_graph is not None and self._runtime is not None:
+            patches = self._runtime.patch_extractor.extract(uol_graph)
+            if self._runtime.auto_consolidate:
+                self._runtime.consolidator.consolidate(
                     patches,
                     source_graph=uol_graph,
                 )

@@ -10,7 +10,8 @@ from cemm.retrieval.ranker import Ranker
 from cemm.types.claim import Claim, ClaimStatus
 from cemm.types.context_kernel import ContextKernel
 from cemm.types.permission import Permission
-from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.uol_graph import UOLGraph
+from cemm.types.uol_atom import UOLAtom
 
 
 def test_graph_claim_ref_boosts_relevance() -> None:
@@ -28,15 +29,11 @@ def test_graph_claim_ref_boosts_relevance() -> None:
         observed_at=time.time(),
         permission=Permission.public(),
     )
-    graph = SemanticEventGraph(
+    graph = UOLGraph(
         id="seg",
-        source_signal_ids=["s"],
+        signal_id="s",
         context_id="ctx",
-        entity_refs=[],
-        processes=[],
-        states=[],
         claim_refs=["c1"],
-        confidence=0.9,
     )
     score_with_graph = Ranker().rank_claims([claim], kernel, graph=graph)[0][1]
     score_without_graph = Ranker().rank_claims([claim], kernel, graph=None)[0][1]

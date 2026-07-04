@@ -8,7 +8,7 @@ from cemm.types.packets import (
     GroundedGraph, MemoryPacket, InferencePacket, DecisionPacket,
     ActionPlan, RankingTraceEntry,
 )
-from cemm.types.semantic_event_graph import SemanticEventGraph, SemanticEdge
+
 from cemm.types.context_kernel import ContextKernel, TimeState, GoalState, MemoryState, Budget, Permission as KernelPermission
 from cemm.types.signal import Signal, SignalKind, SourceType
 from cemm.types.permission import Permission
@@ -38,20 +38,6 @@ def kernel():
     kernel.conversation.session_id = "sess_1"
     return kernel
 
-
-@pytest.fixture
-def seg():
-    return SemanticEventGraph(
-        id="seg_1",
-        source_signal_ids=["sig_1"],
-        context_id="ctx_1",
-        entity_refs=[{"name": "test_entity"}],
-        processes=[{"frame_key": "request_clarification", "confidence": 0.8}],
-        states=[],
-        temporal_edges=[SemanticEdge(source_id="a", target_id="b", relation="before")],
-        causal_edges=[SemanticEdge(source_id="a", target_id="b", relation="causes")],
-        confidence=0.7,
-    )
 
 
 # ── canonical type instantiation ──────────────────────────────

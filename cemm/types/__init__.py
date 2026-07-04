@@ -23,6 +23,8 @@ from .operational_port import OperationalPort, EdgePattern, ResolverPolicy
 from .predicate_schema import PredicateSchema, GraphPattern, GraphPatchTemplate
 from .causal_affordance import CausalAffordance, PortBindingPattern
 from .construction_atom import ConstructionAtom, FormSignature, PragmaticPattern, PortConstraint
+from .runtime_cycle import RuntimeCycleResult
+from .semantic_focus import SemanticFocus
 from .graph_patch import GraphPatch, PatchOperation, GRAPH_PATCH_TARGETS, PATCH_OPERATION_TYPES
 from .semantic_event_graph import SemanticEdge, SemanticEventGraph
 from .semantic_answer_graph import AnswerVerification, SemanticAnswerGraph
@@ -61,6 +63,7 @@ __all__ = [
     "OperationalPort", "EdgePattern", "ResolverPolicy",
     "PredicateSchema", "GraphPattern", "GraphPatchTemplate",
     "CausalAffordance", "PortBindingPattern",
+    "RuntimeCycleResult", "SemanticFocus",
     "ConstructionAtom", "FormSignature", "PragmaticPattern", "PortConstraint",
     "GraphPatch", "PatchOperation", "GRAPH_PATCH_TARGETS", "PATCH_OPERATION_TYPES",
     "SemanticEdge", "SemanticEventGraph",

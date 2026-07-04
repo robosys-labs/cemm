@@ -74,6 +74,10 @@ class DecisionRouter:
         conversation_act: ConversationActPacket | ConversationAct | None = None,
         store: Any | None = None,
         act_resolution_plan: Any = None,
+        # v4.2: Cycle-aware routing inputs
+        working_set: Any = None,
+        resolution: Any = None,
+        policy: Any = None,
     ) -> DecisionPacket:
         selected_claim_ids = memory_packet.selected_claim_ids if memory_packet else []
         selected_model_ids = memory_packet.selected_model_ids if memory_packet else []
@@ -81,8 +85,9 @@ class DecisionRouter:
         missing_slots = (grounded_graph.missing_slots if grounded_graph else
                          kernel.goal.missing_slots if kernel.goal else [])
         required_slots = list(kernel.goal.required_slots) if kernel.goal else []
-        graph_frame_keys = {p.get("frame_key", "") for p in graph.processes}
-        graph_state_keys = {s.get("state_key", "") for s in graph.states}
+        graph_frame_keys = {a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state")}
+        graph_state_keys = {a.key.replace("state:", "").replace("process:", "") for a in graph.atoms.values() if a.kind in ("state", "process")}
+        graph_confidence = max((a.confidence for a in graph.atoms.values()), default=0.5)
         input_lower = input_text.lower().strip() if input_text else ""
         # Language-agnostic question detection: terminal "?" is a surface signal,
         # and question frames in the SEG are the structural signal. No English
@@ -93,6 +98,13 @@ class DecisionRouter:
             or bool(graph_frame_keys & _QUESTION_FRAMES)
             or bool(conversation_act and conversation_act.act_type == "evidence_query")
         )
+
+        # v4.2: Cycle-aware routing — extract working set signals
+        ws_risk_flags: list[str] = []
+        ws_unresolved_ports: list[dict] = []
+        if working_set is not None:
+            ws_risk_flags = getattr(working_set, "risk_flags", []) or []
+            ws_unresolved_ports = getattr(working_set, "unresolved_ports", []) or []
 
         # ── Stage 0: ActResolutionPlan-based routing (highest authority) ──
         # When an ActResolutionPlan is provided, use it as the primary routing
@@ -107,6 +119,20 @@ class DecisionRouter:
                     confidence=act_resolution_plan.safety_tasks[0].confidence,
                     graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
                     reason="act_resolution_plan: safety_task override",
+                )
+
+            # v4.2: Risk flags may force abstention even when planner permits action
+            if ws_risk_flags and not act_resolution_plan.should_abstain:
+                return DecisionPacket(
+                    action_kind="abstain",
+                    action_plan=ActionPlan(
+                        action_kind="abstain",
+                        execution_allowed=False,
+                        confidence=0.6,
+                        risk=0.9,
+                    ),
+                    confidence=0.6,
+                    reason=f"working_set risk flags: {ws_risk_flags}",
                 )
 
             # Abstain when planner requires it (tool_required/fresh_required policy
@@ -190,6 +216,12 @@ class DecisionRouter:
         # When a ConversationAct is provided, use it as the primary routing signal.
         # This prevents social, creative, repair, and teaching turns from falling
         # through into evidence answer, clarification, or remember.
+
+        # v4.2: Unresolved required ports → prefer clarificaiton over answer/remember
+        has_unresolved_required = any(
+            p.get("required", False) for p in ws_unresolved_ports
+        )
+
         if conversation_act and conversation_act.act_type != "unknown":
             act = conversation_act.act_type
             response_mode = conversation_act.response_mode
@@ -236,7 +268,7 @@ class DecisionRouter:
                     return self._make_answer_packet(
                         intent=act,
                         response_mode="evidence_answer",
-                        confidence=min(0.9, graph.confidence),
+                        confidence=min(0.9, graph_confidence),
                         selected_claim_ids=selected_claim_ids,
                         selected_model_ids=selected_model_ids,
                         graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
@@ -246,6 +278,19 @@ class DecisionRouter:
 
             # Explicit remember command: route to remember with claim candidates
             if act == "explicit_remember" and graph.claim_candidates:
+                # If required ports are unresolved, prefer ask over remember
+                if has_unresolved_required:
+                    return DecisionPacket(
+                        action_kind="ask",
+                        action_plan=ActionPlan(
+                            action_kind="ask",
+                            execution_allowed=True,
+                            confidence=0.6,
+                            risk=0.3,
+                        ),
+                        confidence=0.6,
+                        reason="unresolved required ports — need clarification before storing",
+                    )
                 return DecisionPacket(
                     action_kind="remember",
                     action_plan=ActionPlan(
@@ -290,7 +335,7 @@ class DecisionRouter:
                     return self._make_answer_packet(
                         intent="evidence_answer",
                         response_mode="evidence_answer",
-                        confidence=min(0.9, graph.confidence),
+                        confidence=min(0.9, graph_confidence),
                         selected_claim_ids=selected_claim_ids,
                         selected_model_ids=selected_model_ids,
                         graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
@@ -432,6 +477,20 @@ class DecisionRouter:
                 reason="missing required slots",
             )
 
+        # v4.2: Unresolved required ports block memory writes
+        if has_unresolved_required and graph.claim_candidates:
+            return DecisionPacket(
+                action_kind="ask",
+                action_plan=ActionPlan(
+                    action_kind="ask",
+                    execution_allowed=True,
+                    confidence=0.6,
+                    risk=0.3,
+                ),
+                confidence=0.6,
+                reason="unresolved required ports — clarification before storage",
+            )
+
         # Claim candidates from SEG: route to remember to store new knowledge.
         # Gate: only store when the conversation act allows memory writes.
         if graph.claim_candidates and not selected_claim_ids and not is_question:
@@ -496,15 +555,17 @@ class DecisionRouter:
             return [c.id for c in claims]
 
         self_id = getattr(kernel.self_view, "self_id", "")
-        def _targets_self(proc: dict[str, Any]) -> bool:
-            participants = proc.get("participants", []) or []
+        def _targets_self(atom) -> bool:
+            participants = graph._participants_for(atom.id)
             return any(p.get("entity_id") == self_id and p.get("role") == "target" for p in participants)
 
         matched_self_frame = next(
             (
-                p.get("frame_key", "")
-                for p in graph.processes
-                if p.get("frame_key", "") in self_query_frames and _targets_self(p)
+                a.key.replace("process:", "").replace("state:", "")
+                for a in graph.atoms.values()
+                if a.kind in ("process", "state")
+                and a.key.replace("process:", "").replace("state:", "") in self_query_frames
+                and _targets_self(a)
             ),
             "",
         )
@@ -537,11 +598,11 @@ class DecisionRouter:
                         selected_claim_ids=matching_claim_ids,
                         selected_model_ids=selected_model_ids,
                         execution_allowed=True,
-                        confidence=min(0.9, graph.confidence),
+                        confidence=min(0.9, graph_confidence),
                         params={"intent": intent},
                         risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
-                    confidence=min(0.9, graph.confidence),
+                    confidence=min(0.9, graph_confidence),
                     reason=f"self query ({matched_self_frame}) answered from verified claims",
                 )
             else:
@@ -559,7 +620,7 @@ class DecisionRouter:
                 )
 
         matched_user_frame = next(
-            (p.get("frame_key", "") for p in graph.processes if p.get("frame_key", "") in user_query_frames),
+            (a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state") and a.key.replace("process:", "").replace("state:", "") in user_query_frames),
             "",
         )
         if matched_user_frame:
@@ -575,11 +636,11 @@ class DecisionRouter:
                         selected_claim_ids=matching_claim_ids,
                         selected_model_ids=selected_model_ids,
                         execution_allowed=True,
-                        confidence=min(0.9, graph.confidence),
+                        confidence=min(0.9, graph_confidence),
                         params={"intent": intent},
                         risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
                     ),
-                    confidence=min(0.9, graph.confidence),
+                    confidence=min(0.9, graph_confidence),
                     reason=f"user query ({matched_user_frame}) answered from verified claims",
                 )
             else:
@@ -678,8 +739,8 @@ class DecisionRouter:
         # route to ask even if claims were retrieved (e.g. "how do you mean?"
         # retrieves self_main claims via "you" pronoun but is a question, not a query)
         if not graph.claim_candidates:
-            for proc in graph.processes:
-                if proc.get("frame_key") in _QUESTION_FRAMES:
+            for a in graph.atoms.values():
+                if a.kind in ("process", "state") and a.key.replace("process:", "").replace("state:", "") in _QUESTION_FRAMES:
                     return DecisionPacket(
                         action_kind="ask",
                         action_plan=ActionPlan(
@@ -699,7 +760,6 @@ class DecisionRouter:
                 pass  # fall through to non-evidence handling below
             else:
                 base_confidence = 0.8
-                graph_confidence = getattr(graph, 'confidence', 0.5)
                 confidence = min(0.95, base_confidence * (0.5 + 0.5 * graph_confidence))
 
                 if predictions:
@@ -709,7 +769,7 @@ class DecisionRouter:
                     else:
                         confidence = max(0.4, confidence * 0.85)
 
-                if graph.temporal_edges:
+                if graph.edges_by_type("before") or graph.edges_by_type("after"):
                     confidence = min(0.95, confidence * 1.1)
 
                 return DecisionPacket(
@@ -727,8 +787,8 @@ class DecisionRouter:
                     reason="selected evidence available with graph confidence {:.2f}".format(graph_confidence),
                 )
 
-        for proc in graph.processes:
-            if proc.get("frame_key") in _QUESTION_FRAMES:
+        for a in graph.atoms.values():
+            if a.kind in ("process", "state") and a.key.replace("process:", "").replace("state:", "") in _QUESTION_FRAMES:
                 return DecisionPacket(
                     action_kind="ask",
                     action_plan=ActionPlan(
@@ -831,7 +891,7 @@ class DecisionRouter:
                 )
 
         # Short input fallback: only when the graph has no meaningful signal.
-        if input_text and len(input_text.strip()) <= 3 and graph.confidence < 0.3:
+        if input_text and len(input_text.strip()) <= 3 and graph_confidence < 0.3:
             return DecisionPacket(
                 action_kind="ask",
                 action_plan=ActionPlan(
@@ -850,11 +910,11 @@ class DecisionRouter:
                 action_kind="abstain",
                 selected_model_ids=selected_model_ids,
                 execution_allowed=False,
-                confidence=max(0.4, min(0.6, graph.confidence)),
+                confidence=max(0.4, min(0.6, graph_confidence)),
                 risk=self._estimate_risk(graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions),
             ),
-            confidence=max(0.4, min(0.6, graph.confidence)),
-            reason="insufficient graph-grounded evidence (confidence={:.2f})".format(graph.confidence),
+            confidence=max(0.4, min(0.6, graph_confidence)),
+            reason="insufficient graph-grounded evidence (confidence={:.2f})".format(graph_confidence),
         )
 
     def _is_pure_acknowledgment(self, input_text: str) -> bool:
@@ -917,7 +977,7 @@ class DecisionRouter:
             "recommendation_request": "recommendation_request",
             "self_capability_query": "self_capability",
         }
-        graph_frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        graph_frame_keys = {a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state")}
         for frame_key, intent in frame_to_intent.items():
             if frame_key in graph_frame_keys:
                 return intent
@@ -944,7 +1004,7 @@ class DecisionRouter:
         missing_slots: list[str] | None = None,
         is_question: bool = False,
     ) -> DecisionPacket | None:
-        frame_keys = {p.get("frame_key", "") for p in graph.processes}
+        frame_keys = {a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state")}
         has_claims = bool(selected_claim_ids)
 
         if "session_exit" in frame_keys:
@@ -1074,19 +1134,21 @@ class DecisionRouter:
         input_text: str,
     ) -> DecisionPacket | None:
         """Route surface teaching patterns (definition, alias, correction) to learning actions."""
-        for proc in graph.processes:
-            frame_key = proc.get("frame_key", "")
-            params = proc.get("params", {})
+        for a in graph.atoms.values():
+            if a.kind not in ("process", "state"):
+                continue
+            frame_key = a.key.replace("process:", "").replace("state:", "")
+            params = a.features
             if frame_key == "command_alias_teaching":
                 return DecisionPacket(
                     action_kind="learn_command_alias",
                     action_plan=ActionPlan(
                         action_kind="learn_command_alias",
                         execution_allowed=True,
-                        confidence=proc.get("confidence", 0.6),
+                        confidence=a.confidence,
                         params={"teaching_event": params},
                     ),
-                    confidence=proc.get("confidence", 0.6),
+                    confidence=a.confidence,
                     reason="user defined a command alias",
                 )
             if frame_key == "definition_teaching":
@@ -1095,10 +1157,10 @@ class DecisionRouter:
                     action_plan=ActionPlan(
                         action_kind="learn_lexeme",
                         execution_allowed=True,
-                        confidence=proc.get("confidence", 0.6),
+                        confidence=a.confidence,
                         params={"teaching_event": params},
                     ),
-                    confidence=proc.get("confidence", 0.6),
+                    confidence=a.confidence,
                     reason="user defined a word or alias",
                 )
             if frame_key == "correction":
@@ -1107,10 +1169,10 @@ class DecisionRouter:
                     action_plan=ActionPlan(
                         action_kind="learn_correction",
                         execution_allowed=True,
-                        confidence=proc.get("confidence", 0.7),
+                        confidence=a.confidence,
                         params={"teaching_event": params},
                     ),
-                    confidence=proc.get("confidence", 0.7),
+                    confidence=a.confidence,
                     reason="user corrected a previous meaning",
                 )
         # Unknown lexeme gap: only ask for meaning when the unknown term is clearly the
@@ -1118,30 +1180,34 @@ class DecisionRouter:
         # word is embedded in a general question. This prevents the "Could you elaborate?"
         # loop caused by treating everyday words as teachable unknowns.
         if input_text.endswith("?"):
-            known_frames = {p.get("frame_key", "") for p in graph.processes}
+            known_frames = {a.key.replace("process:", "").replace("state:", "") for a in graph.atoms.values() if a.kind in ("process", "state")}
             if known_frames & {
                 "self_identity_query", "self_capability_query", "self_knowledge_query",
                 "user_identity_query", "user_name_query",
             }:
                 return None
-            for entity in graph.entity_refs:
-                if entity.get("role") == "unknown_lexeme":
-                    _punct = '.,!?;:"' + "'()[]{}"
-                    term = entity.get("entity_id", "").strip(_punct).lower()
-                    if not term or len(term) <= 3:
-                        continue
-                    if self._is_unknown_term_focus(input_text, term):
-                        return DecisionPacket(
+            for a in graph.atoms.values():
+                if a.kind not in ("entity", "self"):
+                    continue
+                role = graph._role_for(a.id)
+                if role != "unknown_lexeme":
+                    continue
+                _punct = '.,!?;:"' + "'()[]{}"
+                term = a.key.replace("entity:", "").replace("self:", "").strip(_punct).lower()
+                if not term or len(term) <= 3:
+                    continue
+                if self._is_unknown_term_focus(input_text, term):
+                    return DecisionPacket(
+                        action_kind="ask",
+                        action_plan=ActionPlan(
                             action_kind="ask",
-                            action_plan=ActionPlan(
-                                action_kind="ask",
-                                execution_allowed=True,
-                                confidence=0.6,
-                                params={"question": f"What do you mean by '{term}'?"},
-                            ),
+                            execution_allowed=True,
                             confidence=0.6,
-                            reason=f"ask meaning of unknown term '{term}'",
-                        )
+                            params={"question": f"What do you mean by '{term}'?"},
+                        ),
+                        confidence=0.6,
+                        reason=f"ask meaning of unknown term '{term}'",
+                    )
         return None
 
     def _is_unknown_term_focus(self, input_text: str, term: str) -> bool:
@@ -1191,7 +1257,7 @@ class DecisionRouter:
         predictions: list[dict[str, Any]] | None = None,
     ) -> float:
         if confidence is None:
-            confidence = graph.confidence
+            confidence = max((a.confidence for a in graph.atoms.values()), default=0.5)
         risk = (1.0 - confidence) * 0.5
         if missing_slots:
             risk += min(0.3, len(missing_slots) * 0.1)

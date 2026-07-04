@@ -15,7 +15,8 @@ from cemm.store.store import Store
 from cemm.types.claim import Claim
 from cemm.types.entity import Entity, EntityType
 from cemm.types.permission import Permission
-from cemm.types.semantic_event_graph import SemanticEventGraph
+from cemm.types.uol_graph import UOLGraph
+from cemm.types.uol_atom import UOLAtom, UOLEdge
 from cemm.types.signal import Signal, SignalKind, SourceType
 
 
@@ -45,10 +46,17 @@ def _put_entity(store: Store, entity_id: str, name: str, type_name: str, aliases
 def test_grounding_populates_location_ids_for_location_roles() -> None:
     store = Store(":memory:")
     _put_entity(store, "lagos", "Lagos", "place", ["lagos"])
-    graph = SemanticEventGraph(
-        id="seg", source_signal_ids=["s1"], context_id="ctx", confidence=0.5,
-        entity_refs=[{"entity_id": "lagos", "name": "Lagos", "role": "location"}],
-        processes=[{"frame_key": "request_weather"}],
+    graph = UOLGraph(
+        id="seg",
+        signal_id="s1",
+        context_id="ctx",
+        atoms={
+            "lagos_atom": UOLAtom(id="lagos_atom", kind="entity", key="entity:lagos", surface="Lagos"),
+            "src_atom": UOLAtom(id="src_atom", kind="process", key="process:request_weather", surface="request weather"),
+        },
+        edges=[
+            UOLEdge(id="loc_edge", edge_type="has_role", source_id="src_atom", target_id="lagos_atom", features={"role": "location"}),
+        ],
     )
     kernel = ContextKernelBuilder.from_signal(_sig("weather in Lagos"), turn_index=1)
     pipeline = GroundingPipeline(EntityResolver(store.entities), FrameEngine(store.claims))

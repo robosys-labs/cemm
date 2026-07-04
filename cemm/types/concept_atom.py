@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Any
 from enum import Enum
 
+from .operational_port import OperationalPort
+
 
 class ConceptState(str, Enum):
     unknown_surface = "unknown_surface"
@@ -85,7 +87,7 @@ class ConceptAtom:
     state: ConceptState = ConceptState.unknown_surface
     aliases: list[str] = field(default_factory=list)
     parents: list[str] = field(default_factory=list)
-    ports: list[Any] = field(default_factory=list)
+    ports: list[OperationalPort] = field(default_factory=list)
     acceptable_predicates: list[PredicateSignature] = field(default_factory=list)
     causal_affordances: list[str] = field(default_factory=list)
     temporal_policy: TemporalPolicy = field(default_factory=TemporalPolicy)

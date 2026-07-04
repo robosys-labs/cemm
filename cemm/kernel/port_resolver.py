@@ -48,7 +48,7 @@ class LatticePortResolver:
             parent_score = self._parent_support(candidate.key, port)
             salience_score = 0.1 if candidate.group_id == owner.group_id else 0.0
             confidence_score = min(owner.confidence, candidate.confidence) * 0.25
-            edge_score = self._edge_pattern_score(candidate, port, graph, owner.group_id)
+            edge_score = self._edge_pattern_score(candidate, port, graph)
             score_parts = {
                 "role_support": role_score,
                 "kind_match": kind_score,
@@ -82,10 +82,9 @@ class LatticePortResolver:
             source_edge_id=edge_id,
         )
 
-    def _edge_pattern_score(self, candidate: UOLAtom, port: OperationalPort, graph: UOLGraph, group_id: str | None) -> float:
+    def _edge_pattern_score(self, candidate: UOLAtom, port: OperationalPort, graph: UOLGraph) -> float:
         score = 0.0
-        group_id = group_id or ""
-        edges = graph.outgoing(candidate.id) + graph.incoming(candidate.id) if hasattr(graph, 'outgoing') else []
+        edges = graph.outgoing(candidate.id) + graph.incoming(candidate.id)
         for req in port.required_edges:
             for edge in edges:
                 if edge.edge_type == req.edge_type:

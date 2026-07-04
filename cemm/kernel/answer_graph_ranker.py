@@ -11,6 +11,7 @@ from typing import Any
 from ..types.context_kernel import ContextKernel
 from ..types.packets import MemoryPacket
 from ..types.semantic_answer_graph import SemanticAnswerGraph
+from ..types.uol_graph import UOLGraph
 
 
 def _claim_overlap(selected: list[str], context_claims: list[str]) -> float:
@@ -51,7 +52,7 @@ def _cost_factor(confidence: float, has_temporal: bool, has_causal: bool) -> flo
 def rank_candidates(
     candidates: list[SemanticAnswerGraph],
     kernel: ContextKernel,
-    graph: SemanticEventGraph,
+    graph: UOLGraph,
     memory: MemoryPacket | None = None,
 ) -> list[tuple[SemanticAnswerGraph, float]]:
     """Rank candidate answer graphs by combined score.
@@ -93,7 +94,7 @@ def rank_candidates(
 def best_candidate(
     candidates: list[SemanticAnswerGraph],
     kernel: ContextKernel,
-    graph: SemanticEventGraph,
+    graph: UOLGraph,
     memory: MemoryPacket | None = None,
     min_score: float = 0.3,
 ) -> SemanticAnswerGraph | None:
