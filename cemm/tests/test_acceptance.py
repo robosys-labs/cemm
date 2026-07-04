@@ -433,3 +433,101 @@ class TestArchitectureInvariants:
         assert result.conversation_act is not None
         assert result.decision_packet is not None
 
+    def test_patch_router_flush_persists_concepts(self) -> None:
+        """PatchRouter.flush_all() must persist dirty concepts to store."""
+        from cemm.memory.persistent_lattice_store import PersistentLatticeStore
+        from cemm.memory.patch_router import PatchRouter
+        from cemm.memory.concept_lattice import ConceptLattice
+        from cemm.types.graph_patch import GraphPatch, PatchOperation
+
+        store = PersistentLatticeStore(":memory:")
+        lattice = ConceptLattice(persistent_store=store)
+        router = PatchRouter(concept_lattice=lattice)
+        patch = GraphPatch(
+            target="concept_lattice",
+            operations=[PatchOperation(
+                operation="upsert_concept_candidate",
+                target_id="concept:flush_test",
+                fields={"key": "flush_test", "atom_kind": "entity", "state": "candidate_atom"},
+                confidence=0.8,
+            )],
+            confidence=0.8,
+            reason="flush_test",
+        )
+        router.route(patch)
+        assert lattice.lookup("flush_test") is not None, "concept should exist in-memory"
+        assert store.get_concept("concept:flush_test") is None, \
+            "concept should NOT be in persistent store before flush"
+        router.flush_all()
+        persisted = store.get_concept("concept:flush_test")
+        assert persisted is not None, "concept should be in persistent store after flush"
+        assert persisted["key"] == "flush_test"
+
+    def test_patch_validator_gates_writes(self) -> None:
+        """PatchValidator must reject patches that fail permission or source checks."""
+        from cemm.learning.patch_validator import PatchValidator
+        from cemm.types.graph_patch import GraphPatch, PatchOperation
+        from cemm.types.context_kernel import ContextKernel
+
+        validator = PatchValidator()
+        patch = GraphPatch(
+            target="concept_lattice",
+            operations=[PatchOperation(
+                operation="upsert_concept_candidate",
+                target_id="concept:test",
+                fields={"key": "test"},
+                confidence=0.1,
+            )],
+            confidence=0.1,
+        )
+        # No kernel → permission check fails
+        result = validator.validate(patch, kernel=None)
+        assert "permission_valid" in result.failed_checks
+        assert not result.accepted
+
+    def test_claim_writer_produces_patch_with_claim(self) -> None:
+        """ClaimWriter.write_claim must return both claim and GraphPatch."""
+        from cemm.store.store import Store
+        from cemm.operators.claim_writer import ClaimWriter
+        from cemm.types.entity import Entity, EntityType
+
+        store = Store(":memory:")
+        store.entities.put(Entity(
+            id="test_subject", type=EntityType.PERSON, name="Test",
+            aliases=[], confidence=0.9,
+            created_from_signal_id="sig:test",
+            created_at=0.0, updated_at=0.0,
+        ))
+        writer = ClaimWriter(store)
+        claim, patch = writer.write_claim(
+            subject_entity_id="test_subject",
+            predicate="test_predicate",
+            object_value="test_value",
+            source_id="test_source",
+        )
+        assert claim is not None
+        assert claim.id is not None
+        assert patch is not None
+        assert patch.target == "episodic_trace"
+        assert len(patch.operations) >= 1
+        # Claim must be available in store immediately (for same-turn reads)
+        stored = store.claims.get(claim.id)
+        assert stored is not None
+        assert stored.predicate == "test_predicate"
+
+    def test_concept_consolidator_uses_architecture_state_names(self) -> None:
+        """CONCEPT_STATES must match ConceptState enum values."""
+        from cemm.learning.concept_consolidator import CONCEPT_STATES
+        from cemm.types.concept_atom import ConceptState
+
+        state_values = {s.value for s in ConceptState}
+        for cs in CONCEPT_STATES:
+            assert cs in state_values, (
+                f"State '{cs}' not in ConceptState enum values: {state_values}"
+            )
+        # Must include the main chain states
+        assert "candidate_atom" in CONCEPT_STATES
+        assert "typed_candidate" in CONCEPT_STATES
+        assert "operational_atom" in CONCEPT_STATES
+        assert "consolidated_atom" in CONCEPT_STATES
+

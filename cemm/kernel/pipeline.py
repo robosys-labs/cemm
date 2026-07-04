@@ -294,6 +294,11 @@ class Pipeline:
             except Exception:
                 pass
 
+        # Make sure graph has at least the self atom
+        # If builder failed or produced empty graph, route to abstain
+        graph_is_empty = len(uol_graph.atoms) <= 1  # only self_atom, or empty
+        uol_graph.trace["graph_empty"] = graph_is_empty
+
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
         # Delegates to FrameBinder for atom-based role binding with scored
         # role assignments and schema outcomes.
@@ -654,6 +659,10 @@ class Pipeline:
                     source_graph=uol_graph,
                 )
 
+            # v4.2 PatchPipeline flush: write dirty lattice state to store
+            if hasattr(self._runtime, 'patch_router') and self._runtime.patch_router is not None:
+                self._runtime.patch_router.flush_all()
+
         self._session_state[signal.context_id] = {
             "user_affect": copy.deepcopy(kernel.user.affect),
             "conversation_dynamics": copy.deepcopy(kernel.conversation.dynamics),
@@ -682,7 +691,13 @@ class Pipeline:
         result.cost_ms = (time.time() - start) * 1000.0
 
         # v3.3 Phase 3: Promote ready bindings at end of turn
-        self._semantic_model_store.promote_ready()
+        promoted = self._semantic_model_store.promote_ready()
+        # Route promotion patches through PatchPipeline
+        promotion_patches = []
+        if hasattr(self._semantic_model_store, 'get_promotion_patches'):
+            promotion_patches = self._semantic_model_store.get_promotion_patches()
+        if promotion_patches and self._runtime is not None and hasattr(self._runtime, 'patch_router') and self._runtime.patch_router is not None:
+            self._runtime.patch_router.route_batch(promotion_patches)
 
         return result
 

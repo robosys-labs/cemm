@@ -274,7 +274,35 @@ class DecisionRouter:
                         graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
                         reason=f"conversation_act={act} with evidence → evidence_answer",
                     )
-                # No evidence: fall through to old routing which handles unknown identity/name
+                # Fallback: check store directly for profile/identity claims
+                # (graph atoms may not contain the matching process frame)
+                if store is not None and act in {"user_name_query", "user_identity_query"}:
+                    found: list[str] = []
+                    for slot in ("name", "alias"):
+                        value = store.profile.get(slot)
+                        if value:
+                            for claim in store.claims.find_by_subject("user"):
+                                if claim.domain == "profile" and claim.predicate == f"user.{slot}":
+                                    found.append(claim.id)
+                    if found:
+                        return self._make_answer_packet(
+                            intent="user_name" if act == "user_name_query" else "user_identity",
+                            response_mode="evidence_answer",
+                            confidence=0.8,
+                            selected_claim_ids=found[:1],
+                            selected_model_ids=selected_model_ids,
+                            graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                            reason=f"conversation_act={act} via store fallback → evidence_answer",
+                        )
+                    return self._make_answer_packet(
+                        intent="user_name_unknown" if act == "user_name_query" else "user_identity_unknown",
+                        response_mode="social_response",
+                        confidence=0.7,
+                        graph=graph, kernel=kernel, missing_slots=missing_slots, predictions=predictions,
+                        reason=f"conversation_act={act} without evidence → not found",
+                    )
+                # Fall through to old routing for self identity queries
+                # which use graph atom matching
 
             # Explicit remember command: route to remember with claim candidates
             if act == "explicit_remember" and graph.claim_candidates:

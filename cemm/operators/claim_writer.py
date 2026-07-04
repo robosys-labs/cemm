@@ -46,6 +46,10 @@ class ClaimWriter:
             updated_at=now,
             permission=permission,
         )
+        # Write to store for same-turn availability (working memory).
+        # The patch carries the learning signal through the PatchPipeline
+        # validation barrier. If the patch is rejected, the claim remains
+        # in the store flagged for review.
         self._store.claims.put(claim)
         patch = self._build_patch(claim)
         return claim, patch
@@ -94,13 +98,23 @@ class ClaimWriter:
         permission: Permission | None = None,
         trust: float = 0.7,
     ) -> tuple[Claim, GraphPatch]:
-        claim = self._store.profile.put(
-            slot=slot,
-            value=value,
+        now = time.time()
+        claim = Claim(
+            id=uuid.uuid4().hex[:16],
+            subject_entity_id="user",
+            predicate=f"user.{slot}",
+            object_value=value,
             source_id=source_id,
-            permission=permission,
+            confidence=0.8,
             trust=trust,
+            salience=0.5,
+            status=ClaimStatus.ACTIVE,
+            domain="profile",
+            observed_at=now,
+            updated_at=now,
+            permission=permission,
         )
+        self._store.claims.put(claim)
         patch = self._build_patch(claim)
         return claim, patch
 

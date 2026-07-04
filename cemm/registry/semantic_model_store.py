@@ -26,6 +26,7 @@ from enum import Enum
 from typing import Any
 
 from ..learning.lexeme_memory import LexemeMemory
+from ..types.graph_patch import GraphPatch, PatchOperation
 
 
 class BindingStatus(str, Enum):
@@ -123,6 +124,7 @@ class SemanticModelStore:
         self._surface_index: dict[str, list[str]] = {}  # normalized_surface → [binding_id]
         self._pattern_index: dict[str, list[str]] = {}  # pattern_hash → [binding_id]
         self._deltas: list[dict[str, Any]] = []  # v3.3 Phase 10: per-turn binding deltas
+        self._promotion_patches: list = []  # v4.2: pending GraphPatches for PatchPipeline
 
     @property
     def lexeme_memory(self) -> LexemeMemory:
@@ -325,7 +327,31 @@ class SemanticModelStore:
                     "surface": binding.surface, "maps_to": binding.maps_to_frame_key,
                     "confidence": binding.confidence,
                 })
+                self._promotion_patches.append(GraphPatch(
+                    target="concept_lattice",
+                    operations=[PatchOperation(
+                        operation="custom",
+                        target_id=f"binding:{binding.id}",
+                        fields={
+                            "action": "promote_binding",
+                            "surface": binding.surface,
+                            "maps_to": binding.maps_to_frame_key or "",
+                            "confidence": binding.confidence,
+                            "status": BindingStatus.ACTIVE.value,
+                        },
+                        confidence=binding.confidence,
+                        reason=f"binding_promotion:{binding.id}",
+                    )],
+                    confidence=binding.confidence,
+                    reason=f"binding_promotion:{binding.surface}->{binding.maps_to_frame_key}",
+                ))
         return promoted
+
+    def get_promotion_patches(self) -> list:
+        """Return pending promotion patches for the PatchPipeline."""
+        patches = list(self._promotion_patches)
+        self._promotion_patches.clear()
+        return patches
 
     def all_bindings(self) -> list[SurfaceBinding]:
         return list(self._bindings.values())

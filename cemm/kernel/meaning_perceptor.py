@@ -119,7 +119,7 @@ _COMMAND_CUES = {"please", "tell", "show", "remember", "forget", "explain", "def
 _COMMON_PREDICATE_VERBS = {"know", "think", "feel", "like", "want", "need", "went", "go", "worked", "work", "have", "has", "had", "do", "does", "did"}
 _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they", "this", "that"}
 _REPAIR_CUES = {"what", "huh", "wait", "confused", "misunderstood", "mean", "unpack", "plainly", "again"}
-_FRESH_WORLD_CUES = {"current", "latest", "today", "now", "weather", "president", "price", "score", "news", "temperature", "forecast"}
+_FRESH_WORLD_CUES = {"current", "latest", "today", "now"}
 _EXIT_CUES = {"bye", "goodbye", "later", "farewell"}
 _TEACHING_CUES = {"means", "mean", "called", "is", "are", "refers", "equals"}
 _TIME_CUES = {"now", "today", "tonight", "tomorrow", "yesterday", "currently", "latest", "recent"}
@@ -498,6 +498,10 @@ class MeaningPerceptor:
             char = text[index]
             next_char = text[index + 1] if index + 1 < len(text) else ""
             next_two = text[index:index + 3]
+            if char == "'" and index > 0 and index < len(text) - 1 and text[index - 1].isalpha() and text[index + 1].isalpha():
+                chunk += char
+                index += 1
+                continue
             if char in {"'", '"'}:
                 quote_char = "" if quote_char == char else char if not quote_char else quote_char
                 chunk += char
@@ -598,7 +602,7 @@ class MeaningPerceptor:
             return False
         if len(right_tokens) <= 2 and not self._looks_predicative(right_tokens):
             return False
-        return self._looks_predicative(left_tokens) and self._looks_predicative(right_tokens)
+        return self._looks_predicative(right_tokens)
 
     def _initial_group_type(self, surface: str, tokens: list[str], trailing_separator: str = "") -> str:
         token_set = set(tokens)
@@ -608,7 +612,11 @@ class MeaningPerceptor:
         if token_set & _REPAIR_CUES and ("?" in stripped or trailing_separator == "?" or "what" in token_set or "huh" in token_set):
             return "repair"
         if token_set & _TEACHING_CUES:
-            return "teaching"
+            if token_set & {"is", "are"}:
+                if len(tokens) >= 3 and tokens[0] not in _QUESTION_STARTERS:
+                    return "teaching"
+            else:
+                return "teaching"
         if tokens and tokens[0] in _COMMAND_CUES:
             return "command"
         if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right"}:
@@ -985,7 +993,7 @@ class MeaningPerceptor:
             return "repair"
         if (group.group_type == "teaching" or self._is_teaching_group(group)) and not ends_with_question:
             return "teaching"
-        if "weather" in token_set or (token_set & _FRESH_WORLD_CUES and (group.group_type == "question" or token_set & _QUESTION_STARTERS)):
+        if token_set & _FRESH_WORLD_CUES and (group.group_type == "question" or token_set & _QUESTION_STARTERS):
             return "fresh_world_query"
         if self._is_capability_query(group):
             return "capability_query"

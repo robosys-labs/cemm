@@ -1043,23 +1043,9 @@ class MeaningGraphBuilder:
                     evidence_refs=self._evidence_refs(atom.evidence),
                     reason="repair_intent",
                 ))
-            if atom.kind == "state" and self._is_cold_state_candidate(atom):
-                bindings = graph.bindings_for_owner(atom.id)
-                graph.add_affordance_prediction(AffordancePrediction(
-                    id=f"aff_{len(graph.affordance_predictions)}",
-                    affordance_key="cold_context_comfort_relevance",
-                    trigger_atom_ids=[atom.id],
-                    required_binding_ids=[binding.source_edge_id for binding in bindings if binding.source_edge_id],
-                    predicted_patch_template={
-                        "target": "causal_affordance",
-                        "operation": "predict_possible_need",
-                        "need_key": "comfort_or_warmth_may_be_relevant",
-                    },
-                    effect_type="need_activation",
-                    confidence=min(0.78, max(0.5, atom.confidence)),
-                    evidence_refs=self._evidence_refs(atom.evidence),
-                    reason="seed_affordance_candidate_not_static_port",
-                ))
+            if self._affordance_lattice is not None and hasattr(self._affordance_lattice, 'predict'):
+                for prediction in self._affordance_lattice.predict([atom]) or []:
+                    graph.add_affordance_prediction(prediction)
 
     def _extract_graph_patches(self, graph: UOLGraph) -> None:
         for group in graph.groups:
@@ -1215,11 +1201,9 @@ class MeaningGraphBuilder:
         }
 
     def _is_cold_state_candidate(self, atom: UOLAtom) -> bool:
-        if atom.kind != "state":
-            return False
-        key = atom.key.lower()
-        surface = atom.surface.lower()
-        return "cold" in {key, surface} or atom.features.get("dimension") == "temperature"
+        if self._affordance_lattice is not None and hasattr(self._affordance_lattice, 'predict'):
+            return True
+        return False
 
     @staticmethod
     def _evidence_refs(evidence: Iterable[dict[str, Any]]) -> list[str]:

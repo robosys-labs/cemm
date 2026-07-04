@@ -160,7 +160,7 @@ class InvariantGuard:
     @classmethod
     def check_causal_chain_confidence(cls, predictions: list[dict]) -> bool:
         for p in predictions:
-            if p.get("confidence", 0) > 0.99:
+            if p.get("confidence") is not None and p["confidence"] > 0.99:
                 cls.errors.append(f"Causal chain confidence {p['confidence']} exceeds cap 0.99")
                 return False
         return True

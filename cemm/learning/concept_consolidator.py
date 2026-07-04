@@ -19,7 +19,7 @@ from ..types.graph_patch import GraphPatch
 from ..types.uol_graph import UOLGraph
 
 
-CONCEPT_STATES = ["candidate", "typed", "operational", "consolidated"]
+CONCEPT_STATES = ["candidate_atom", "typed_candidate", "operational_atom", "consolidated_atom"]
 
 _STATE_ORDER = {state: i for i, state in enumerate(CONCEPT_STATES)}
 
@@ -50,12 +50,14 @@ class ConceptConsolidator:
         similarity_threshold: float = 0.85,
         staleness_days: int = 30,
         max_counterexamples: int = 3,
+        router: Any = None,
     ) -> None:
         self._concept_lattice = concept_lattice
         self._construction_lattice = construction_lattice
         self._episodic_store = episodic_store
         self._confidence_threshold = confidence_threshold
         self._persistent_store = persistent_store
+        self._router = router
         self._gain_threshold = gain_threshold
         self._similarity_threshold = similarity_threshold
         self._staleness_days = staleness_days
@@ -230,6 +232,8 @@ class ConceptConsolidator:
         return None
 
     def _apply(self, patch: GraphPatch, source_graph: UOLGraph | None) -> list[str]:
+        if self._router is not None:
+            return self._router.route(patch, source_graph)
         if patch.target == "concept_lattice":
             return self._concept_lattice.apply_patch(patch)
         if patch.target == "construction_lattice" and self._construction_lattice is not None:
@@ -243,7 +247,7 @@ class ConceptConsolidator:
         return bool(patch.operations) and patch.confidence >= self._confidence_threshold
 
     def _journal(self, patch: GraphPatch, accepted: bool) -> None:
-        if self._persistent_store is not None:
+        if hasattr(self, '_persistent_store') and self._persistent_store is not None:
             self._persistent_store.journal_patch(patch, accepted=accepted)
 
     @staticmethod

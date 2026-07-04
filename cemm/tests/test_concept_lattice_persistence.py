@@ -23,6 +23,8 @@ def test_apply_patch_writes_to_store():
         reason="test",
     )
     lattice.apply_patch(patch)
+    # Patch is applied in-memory; flush to persist
+    lattice.flush_to_store()
     got = store.get_concept("concept:test")
     assert got is not None
     assert got["key"] == "test"
@@ -55,6 +57,7 @@ def test_apply_patch_updates_existing_store_row():
         confidence=0.9,
     )
     lattice.apply_patch(patch)
+    lattice.flush_to_store()
     got = store.get_concept("concept:x")
     assert got["state"] == "consolidated_atom"
 

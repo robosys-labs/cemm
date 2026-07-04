@@ -70,3 +70,33 @@ def test_working_graph_promotes_discourse_and_anaphora_to_edges() -> None:
         and graph.atoms[edge.target_id].key == "alice"
         for edge in graph.edges
     )
+
+
+def test_phatic_checkin_not_classified_as_teaching() -> None:
+    perceptor = _make_perceptor()
+    signal = _make_signal("I'm good lol, how are you")
+    packet = perceptor.perceive(signal, ContextKernel(id="ctx_phatic"))
+    groups = packet.meaning_groups
+
+    assert len(groups) >= 2, (
+        f"Expected at least 2 groups for 'I\\'m good lol, how are you', got {len(groups)}: "
+        f"{[(g.surface, g.group_type) for g in groups]}"
+    )
+    second = groups[-1]
+    assert second.group_type == "question", (
+        f"Expected second group 'how are you' to be 'question', got '{second.group_type}'"
+    )
+    assert second.confidence >= 0.55
+
+
+def test_initial_group_type_teaching_requires_guard() -> None:
+    perceptor = _make_perceptor()
+    signal = _make_signal("my name is Opata")
+    packet = perceptor.perceive(signal, ContextKernel(id="ctx_teach"))
+    groups = packet.meaning_groups
+
+    assert len(groups) >= 1
+    group = groups[0]
+    assert group.group_type == "teaching", (
+        f"Expected 'my name is Opata' to be 'teaching', got '{group.group_type}'"
+    )

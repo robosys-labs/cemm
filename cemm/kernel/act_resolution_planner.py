@@ -265,7 +265,7 @@ class ActResolutionPlanner:
                 reason="acknowledge_speaker_asserted_fact",
                 confidence=self._avg_fact_confidence(teachable_facts),
                 evidence_policy="none",
-            ))
+            ))        
 
         if not result.obligations and not result.memory_updates and facts:
             result.memory_updates.append(MemoryUpdatePlan(
@@ -1068,6 +1068,8 @@ class ActResolutionPlanner:
             "playful_repair",
             "retrospective_repair",
             "evidence_query",
+            "user_name_query",
+            "user_identity_query",
         }:
             return []
         return [

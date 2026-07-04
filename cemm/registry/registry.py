@@ -199,8 +199,8 @@ class Registry:
     @staticmethod
     def _dict_to_entry(d: dict, kind: str) -> RegistryEntry:
         return RegistryEntry(
-            model_id=d["model_id"],
-            canonical_key=d["canonical_key"],
+            model_id=str(d.get("model_id", "")),
+            canonical_key=str(d.get("canonical_key", "")),
             kind=kind,
             aliases=d.get("aliases", []),
             description=d.get("description", ""),

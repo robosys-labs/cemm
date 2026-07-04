@@ -131,6 +131,10 @@ class ContextInferenceEngine:
             if words_set & weather_words and not kernel.user.locale:
                 inference.confidence = max(inference.confidence, 0.4)
 
+            if not inference.frame_id:
+                inference.confidence = max(inference.confidence, 0.2)
+                inference.frame_id = "general_conversation"
+
             context_rules = self._registry.all_by_kind("context_rule")
             for rule in context_rules:
                 if rule.canonical_key == "greeting_detection" and turn_index == 1:

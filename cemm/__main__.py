@@ -304,6 +304,8 @@ def _seed_self_concepts(concept_lattice: ConceptLattice, claims_cfgs: list[dict]
             persistent_store=getattr(concept_lattice, '_persistent_store', None),
         )
         consolidator.consolidate(patches)
+    if concept_lattice is not None and hasattr(concept_lattice, 'flush_to_store'):
+        concept_lattice.flush_to_store()
 
 
 def process_input(

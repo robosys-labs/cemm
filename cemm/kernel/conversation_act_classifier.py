@@ -639,6 +639,19 @@ class ConversationActClassifier:
                     confidence=0.4,
                 ))
 
+        # ── Detect assistant-directed evaluation/observation ────────────
+        # Longer inputs that evaluate or observe the assistant's behavior
+        # without asking a question or issuing a command.
+        if not acts and word_count > 4 and word_count <= 18 and not content_lower.endswith("?"):
+            text_tokens = set(_tokenize_surface(content_lower))
+            if "you" in text_tokens:
+                command_cues = _CUE_SETS.get("command", set())
+                if not (text_tokens & command_cues):
+                    acts.append(ConversationAct(
+                        act_type="assistant_evaluation",
+                        confidence=0.55,
+                    ))
+
         # ── Compositional intent parsing ──────────────────────────────
         # Use structural analysis to upgrade/refine acts that lexical matching
         # alone cannot disambiguate.

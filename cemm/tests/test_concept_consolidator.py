@@ -141,42 +141,42 @@ class TestStateMachine:
     def test_initial_state_is_candidate(self, consolidator: ConceptConsolidator) -> None:
         patch = _make_patch(operations=3, confidence=0.8, key="init_state")
         consolidator.consolidate([patch])
-        assert consolidator._concept_states.get("concept:init_state") == "candidate"
+        assert consolidator._concept_states.get("concept:init_state") == "candidate_atom"
 
     def test_advance_state_forward(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:advance"
-        state = consolidator._advance_state(cid, "typed")
-        assert state == "typed"
-        assert consolidator._concept_states[cid] == "typed"
+        state = consolidator._advance_state(cid, "typed_candidate")
+        assert state == "typed_candidate"
+        assert consolidator._concept_states[cid] == "typed_candidate"
 
     def test_full_progression(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:progression"
-        s1 = consolidator._advance_state(cid, "candidate")
-        assert s1 == "candidate"
-        s2 = consolidator._advance_state(cid, "typed")
-        assert s2 == "typed"
-        s3 = consolidator._advance_state(cid, "operational")
-        assert s3 == "operational"
-        s4 = consolidator._advance_state(cid, "consolidated")
-        assert s4 == "consolidated"
+        s1 = consolidator._advance_state(cid, "candidate_atom")
+        assert s1 == "candidate_atom"
+        s2 = consolidator._advance_state(cid, "typed_candidate")
+        assert s2 == "typed_candidate"
+        s3 = consolidator._advance_state(cid, "operational_atom")
+        assert s3 == "operational_atom"
+        s4 = consolidator._advance_state(cid, "consolidated_atom")
+        assert s4 == "consolidated_atom"
 
     def test_advance_state_does_not_regress(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:no_regress"
-        consolidator._advance_state(cid, "operational")
-        s = consolidator._advance_state(cid, "candidate")
-        assert s == "operational"
+        consolidator._advance_state(cid, "operational_atom")
+        s = consolidator._advance_state(cid, "candidate_atom")
+        assert s == "operational_atom"
 
     def test_demote_state(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:demote_me"
-        consolidator._advance_state(cid, "operational")
+        consolidator._advance_state(cid, "operational_atom")
         demoted = consolidator._demote_state(cid)
-        assert demoted == "typed"
+        assert demoted == "typed_candidate"
 
     def test_demote_candidate_stays_candidate(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:demote_candidate"
-        consolidator._advance_state(cid, "candidate")
+        consolidator._advance_state(cid, "candidate_atom")
         demoted = consolidator._demote_state(cid)
-        assert demoted == "candidate"
+        assert demoted == "candidate_atom"
 
     def test_state_changes_in_result(self, consolidator: ConceptConsolidator) -> None:
         patch = _make_patch(operations=3, confidence=0.9, key="state_change_result")
@@ -184,18 +184,18 @@ class TestStateMachine:
         cid = "concept:state_change_result"
         # First consolidation sets state to candidate, no change entry
         assert cid not in result.concept_state_changes
-        assert consolidator._concept_states[cid] == "candidate"
+        assert consolidator._concept_states[cid] == "candidate_atom"
 
     def test_state_advances_on_second_consolidation(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:advance_twice"
         p1 = _make_patch(operations=3, confidence=0.9, key="advance_twice")
         consolidator.consolidate([p1])
-        assert consolidator._concept_states[cid] == "candidate"
+        assert consolidator._concept_states[cid] == "candidate_atom"
         p2 = _make_patch(operations=3, confidence=0.9, key="advance_twice", patch_id="patch_adv_twice_2")
         result = consolidator.consolidate([p2])
-        assert consolidator._concept_states[cid] == "typed"
+        assert consolidator._concept_states[cid] == "typed_candidate"
         assert cid in result.concept_state_changes
-        assert result.concept_state_changes[cid] == "typed"
+        assert result.concept_state_changes[cid] == "typed_candidate"
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ class TestStaleness:
 class TestCounterexamples:
     def test_counterexample_demotes_at_limit(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:counter_demote"
-        consolidator._advance_state(cid, "operational")
+        consolidator._advance_state(cid, "operational_atom")
         patch = GraphPatch(
             id="patch_counter",
             source_graph_id="graph:t",
@@ -253,7 +253,7 @@ class TestCounterexamples:
         for _ in range(3):
             consolidator._track_counterexample(patch, cid)
         assert consolidator._counterexample_tracker[cid] >= 3
-        assert consolidator._concept_states[cid] == "typed"
+        assert consolidator._concept_states[cid] == "typed_candidate"
 
     def test_counterexample_accumulates_correctly(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:counter_accum"
@@ -272,7 +272,7 @@ class TestCounterexamples:
 
     def test_no_demote_below_limit(self, consolidator: ConceptConsolidator) -> None:
         cid = "concept:no_demote_yet"
-        consolidator._advance_state(cid, "operational")
+        consolidator._advance_state(cid, "operational_atom")
         patch = GraphPatch(
             id="patch_no_demote",
             source_graph_id="graph:t",
@@ -282,7 +282,7 @@ class TestCounterexamples:
             reason="no_demote",
         )
         consolidator._track_counterexample(patch, cid)
-        assert consolidator._concept_states[cid] == "operational"
+        assert consolidator._concept_states[cid] == "operational_atom"
 
 
 # ---------------------------------------------------------------------------

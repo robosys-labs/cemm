@@ -47,6 +47,7 @@ class ConceptLattice:
         self._concepts: dict[str, ConceptAtom] = {}
         self._aliases: dict[str, str] = {}
         self._persistent_store = persistent_store
+        self._dirty_ids: set[str] = set()
         if persistent_store:
             self.load_from_store()
         self._seed_minimal_concepts()
@@ -184,6 +185,7 @@ class ConceptLattice:
             concept = self.upsert(ConceptAtom(
                 concept_id=f"concept:{concept_key}",
                 key=concept_key,
+                atom_kind="entity",
             ))
         existing_port = None
         existing_idx = -1
@@ -233,14 +235,7 @@ class ConceptLattice:
                 )
                 self.upsert(concept)
                 applied.append(operation.target_id)
-                if self._persistent_store is not None:
-                    store_data = dict(fields)
-                    store_data.setdefault("key", key)
-                    store_data.setdefault("atom_kind", "entity")
-                    store_data.setdefault("state", state_str)
-                    store_data.setdefault("confidence", operation.confidence)
-                    store_data["confidence"] = operation.confidence
-                    self._persistent_store.upsert_concept(operation.target_id, store_data)
+                self._dirty_ids.add(operation.target_id)
             elif operation.operation == "upsert_relation_candidate":
                 fields = operation.fields
                 source_key = str(fields.get("source_concept_key") or "")
@@ -255,25 +250,19 @@ class ConceptLattice:
                     source = self.upsert(ConceptAtom(
                         concept_id=f"concept:{source_key}",
                         key=source_key,
+                        atom_kind="entity",
                         parents=sorted(source_parents),
                     ))
                     applied.append(operation.target_id)
-                    if self._persistent_store is not None:
-                        self._persistent_store.upsert_concept(
-                            f"concept:{source_key}",
-                            {"key": source_key, "parents_json": json.dumps(source.parents)},
-                        )
+                    self._dirty_ids.add(f"concept:{source_key}")
                 elif source_key and relation:
                     source = self.upsert(ConceptAtom(
                         concept_id=f"concept:{source_key}",
                         key=source_key,
+                        atom_kind="entity",
                     ))
                     applied.append(operation.target_id)
-                    if self._persistent_store is not None:
-                        self._persistent_store.upsert_concept(
-                            f"concept:{source_key}",
-                            {"key": source_key},
-                        )
+                    self._dirty_ids.add(f"concept:{source_key}")
             elif operation.operation == "observe_port_binding":
                 fields = operation.fields
                 owner = str(fields.get("owner_concept_id") or "").replace("concept:", "")
@@ -287,18 +276,46 @@ class ConceptLattice:
                         support=[dict(fields)],
                     ))
                     applied.append(operation.target_id)
-                    if self._persistent_store is not None:
-                        self._persistent_store.upsert_concept(
-                            f"concept:{owner}",
-                            {"key": owner, "ports_json": json.dumps({port_key: dict(fields)})},
-                        )
+                    self._dirty_ids.add(f"concept:{owner}")
             elif operation.operation == "custom":
                 applied.append(operation.target_id)
-                if self._persistent_store is not None:
-                    store_data = dict(operation.fields)
-                    store_data.setdefault("confidence", operation.confidence)
-                    self._persistent_store.upsert_concept(operation.target_id, store_data)
+                self._dirty_ids.add(operation.target_id)
         return applied
+
+    def flush_to_store(self) -> None:
+        """Write all dirty concepts to persistent store. Called once per turn by PatchRouter."""
+        if self._persistent_store is None:
+            self._dirty_ids.clear()
+            return
+        for dirty_id in list(self._dirty_ids):
+            concept = self.lookup(dirty_id.replace("concept:", ""))
+            if concept is None:
+                continue
+            data = {
+                "key": concept.key,
+                "atom_kind": concept.atom_kind,
+                "state": concept.state.value if hasattr(concept.state, "value") else str(concept.state),
+                "aliases_json": json.dumps(sorted(concept.aliases)),
+                "parents_json": json.dumps(sorted(concept.parents)),
+                "ports_json": json.dumps({
+                    p.key: {
+                        "port_id": p.port_id,
+                        "accepted_atom_kinds": sorted(p.accepted_atom_kinds),
+                        "accepted_parent_concepts": sorted(p.accepted_parent_concepts),
+                        "required": p.required,
+                        "confidence": p.confidence,
+                        "support": [dict(item) if hasattr(item, "items") else item for item in p.support],
+                    }
+                    for p in concept.ports
+                }),
+                "confidence": concept.confidence,
+                "stability": getattr(concept, "stability", 0.0),
+            }
+            self._persistent_store.upsert_concept(dirty_id, data)
+        self._dirty_ids.clear()
+
+    def has_dirty(self) -> bool:
+        return bool(self._dirty_ids)
 
     def snapshot(self) -> dict[str, Any]:
         result: dict[str, Any] = {}

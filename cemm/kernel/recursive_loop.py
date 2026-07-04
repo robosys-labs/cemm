@@ -250,3 +250,26 @@ class RecursiveLoop:
             if approved:
                 model.status = ModelStatus.ACTIVE
                 self._store.models.put(model)
+                # Also create a patch for the PatchPipeline journal
+                from ..types.graph_patch import GraphPatch, PatchOperation
+                model_patch = GraphPatch(
+                    target="concept_lattice",
+                    operations=[PatchOperation(
+                        operation="custom",
+                        target_id=f"model:{model.id}",
+                        fields={
+                            "action": "induce_model",
+                            "model_id": model.id,
+                            "model_name": model.name,
+                            "registry_key": model.registry_key or "",
+                            "confidence": model.confidence,
+                        },
+                        confidence=model.confidence,
+                        reason=f"model_induction:{model.id}",
+                    )],
+                    confidence=model.confidence,
+                    reason=f"model_induction:{model.id}",
+                )
+                if not hasattr(self, '_pending_patches'):
+                    self._pending_patches = []
+                self._pending_patches.append(model_patch)
