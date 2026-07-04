@@ -7,7 +7,6 @@ from ..types.signal import Signal, SignalKind, SourceType
 from ..types.action import Action, ActionKind, ActionStatus
 from ..types.trace import Trace
 from ..types.context_kernel import ContextKernel
-from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.packets import GroundedGraph, MemoryPacket, RankingTraceEntry, InferencePacket, DecisionPacket
 from ..types.context_inference import ContextInference
 from ..types.self_view import SelfView
@@ -65,7 +64,7 @@ class PipelineResult:
     abstained: bool = False
     ranked_claim_ids: list[str] = field(default_factory=list)
     ranked_model_ids: list[str] = field(default_factory=list)
-    semantic_event_graph: SemanticEventGraph | None = None
+    semantic_event_graph: Any | None = None
     grounded_graph: GroundedGraph | None = None
     memory_packet: MemoryPacket | None = None
     inference_packet: InferencePacket | None = None
@@ -260,11 +259,19 @@ class Pipeline:
         self._meaning_perceptor._language = lang_adapter
         meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
 
-        # v4.1: Build UOLGraph from MeaningPerceptPacket via SemanticCPU
-        uol_graph: UOLGraph | None = None
+        # v4.2: Build UOLGraph — the single working graph.
+        # Always initialize so downstream consumers never see None.
+        uol_graph = UOLGraph(
+            id=uuid.uuid4().hex[:16],
+            signal_id=signal.id,
+            context_id=signal.context_id,
+            raw_text=signal.content,
+        )
         if self._semantic_cpu is not None and self._semantic_cpu.graph_builder is not None:
-            uol_graph = self._semantic_cpu.graph_builder.build(meaning_percept)
-            meaning_percept.uol_graph = uol_graph
+            built = self._semantic_cpu.graph_builder.build(meaning_percept)
+            if built is not None:
+                uol_graph = built
+                meaning_percept.uol_graph = uol_graph
 
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
         # Delegates to FrameBinder for atom-based role binding with scored
@@ -299,26 +306,18 @@ class Pipeline:
         if safety_frame:
             situation_frame.safety_frame = safety_frame
 
-        # Interpret: SemanticEventGraph + UOL atoms (single authority)
-        # §8.13: SemanticInterpreter now consumes MeaningPerceptPacket + SituationFrame
-        # to enrich the graph with pre-bound atoms, skipping redundant NER/SurfaceTagger.
-        semantic_event_graph = self._semantic_interpreter.run(
-            signal, kernel,
-            meaning_percept=meaning_percept,
-            situation_frame=situation_frame,
-        )
-        # Merge entity fact candidates from EntityFactExtractor
+        # v4.2: UOLGraph is the single working graph.
+        # Entity fact candidates are merged into UOLGraph as claim_candidates
+        # and as GraphPatch candidates for consolidation.
         if fact_candidates:
-            existing = semantic_event_graph.claim_candidates
+            existing = uol_graph.claim_candidates
             existing_keys = {(c.get("subject", ""), c.get("predicate", "")) for c in existing}
             for fc in fact_candidates:
                 key = (fc.subject_entity_id, fc.predicate)
                 if key not in existing_keys:
-                    semantic_event_graph.claim_candidates.append(fc.to_claim_dict())
+                    uol_graph.claim_candidates.append(fc.to_claim_dict())
                     existing_keys.add(key)
 
-        # v4.1: Convert EntityFactCandidates to GraphPatch objects on UOLGraph
-        if fact_candidates and uol_graph is not None:
             from ..types.graph_patch import GraphPatch, PatchOperation
             fact_ops = []
             for fc in fact_candidates:
@@ -421,19 +420,23 @@ class Pipeline:
         # claim_assertion should preserve candidates even if primary is social.
         # v3.3: Also consult act_resolution_plan.memory_updates — if the plan
         # has memory tasks, preserve candidates even if the primary act is social.
-        if semantic_event_graph and "unknown" not in conversation_act.act_types:
+        if uol_graph is not None and "unknown" not in conversation_act.act_types:
             has_memory_plan = bool(act_resolution_plan and act_resolution_plan.memory_updates)
             if not any(act.allows_memory_write for act in conversation_act.all_acts) and not has_memory_plan:
-                semantic_event_graph.claim_candidates = []
+                uol_graph.claim_candidates = []
 
         # Ground entities, time, frame, permission
-        grounded_graph = self._grounding_pipeline.run(semantic_event_graph, kernel, content=signal.content)
+        grounded_graph = self._grounding_pipeline.run(uol_graph, kernel, content=signal.content) if uol_graph is not None else GroundedGraph(
+            semantic_event_graph_id="", entity_ids=[], resolved_time_refs=[], resolved_location_ids=[],
+            active_frame_ids=[], permission="public", missing_slots=[], confidence=0.5,
+        )
 
         # Seed entity IDs from graph for graph-grounded retrieval
-        for ref in semantic_event_graph.entity_refs:
-            eid = ref.get("entity_id", "")
-            if eid and eid not in kernel.memory.working_entity_ids:
-                kernel.memory.working_entity_ids.append(eid)
+        if uol_graph is not None:
+            for ref in uol_graph.entity_refs:
+                eid = ref.get("entity_id", "")
+                if eid and eid not in kernel.memory.working_entity_ids:
+                    kernel.memory.working_entity_ids.append(eid)
 
         # ── Build RetrievalPlan (v3 step 8) ───────────────────────────
         # Explicit retrieval plan replaces implicit requires_evidence gating
@@ -449,7 +452,7 @@ class Pipeline:
         # Retrieve claims and models — gated by RetrievalPlan via RetrievalExecutor
         retrieval_execution = self._retrieval_executor.execute(
             retrieval_plan, kernel,
-            graph=semantic_event_graph,
+            graph=uol_graph,
             lexeme_memory=self._lexeme_memory,
         )
         retrieval_result = retrieval_execution.result
@@ -460,7 +463,7 @@ class Pipeline:
         # Rank claims and models with graph context
         # Skip ranking entirely when retrieval plan says none
         if retrieval_plan.mode != "none":
-            ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=semantic_event_graph)
+            ranked_claims = self._ranker.rank_claims(retrieval_result.claims, kernel, graph=uol_graph)
             ranked_models = self._ranker.rank_models(retrieval_result.models, kernel, store=self._store)
             kernel.memory.working_claim_ids = [c.id for c, _ in ranked_claims[:kernel.budget.max_ranked]]
             kernel.world.active_claim_ids = kernel.memory.working_claim_ids
@@ -512,12 +515,12 @@ class Pipeline:
             id=uuid.uuid4().hex[:16],
             inference_graph_input_signal_ids=[signal.id],
         )
-        if semantic_event_graph and semantic_event_graph.causal_edges:
+        if uol_graph is not None and uol_graph.causal_edges:
             inference_packet = self._causal_inference.predict(
                 signal.content,
-                semantic_event_graph.claim_refs,
+                kernel.memory.working_claim_ids,
                 kernel,
-                graph=semantic_event_graph,
+                graph=uol_graph,
             )
 
         # v3.3: Plan response specification from act resolution and capability model
@@ -551,7 +554,7 @@ class Pipeline:
         # Decide: choose action based on grounded graph, memory, inference, conversation act
         # v3.3: DecisionRouter now receives act_resolution_plan as primary routing signal
         decision_packet = self._decision_router.run(
-            graph=semantic_event_graph,
+            graph=uol_graph or UOLGraph(),
             kernel=kernel,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
@@ -570,7 +573,7 @@ class Pipeline:
             kernel=kernel,
             ranked_claim_ids=kernel.memory.working_claim_ids,
             ranked_model_ids=[m.id for m, _ in ranked_models] if ranked_models else [],
-            semantic_event_graph=semantic_event_graph,
+            semantic_event_graph=uol_graph,
             grounded_graph=grounded_graph,
             memory_packet=memory_packet,
             context_inference=context_inference,
@@ -593,8 +596,8 @@ class Pipeline:
         from dataclasses import asdict
 
         validation_errors: list[str] = []
-        if result.semantic_event_graph:
-            validation_errors.extend(validate_packet(asdict(result.semantic_event_graph), "semantic_event_graph") or [])
+        if result.uol_graph:
+            validation_errors.extend(validate_packet(asdict(result.uol_graph), "uol_graph") or [])
         if result.grounded_graph:
             validation_errors.extend(validate_packet(asdict(result.grounded_graph), "grounded_graph") or [])
         if result.memory_packet:

@@ -1067,6 +1067,7 @@ class ActResolutionPlanner:
             "confusion_repair",
             "playful_repair",
             "retrospective_repair",
+            "evidence_query",
         }:
             return []
         return [

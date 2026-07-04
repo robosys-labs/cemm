@@ -5,8 +5,9 @@ import uuid
 from pathlib import Path
 
 from .base import BaseOperator, OperatorContext, OperatorResult
+from .claim_writer import ClaimWriter
 from ..types.action import ActionKind
-from ..types.claim import Claim, ClaimStatus
+from ..types.graph_patch import GraphPatch
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.entity import Entity, EntityType
 from ..types.trace import Trace
@@ -83,6 +84,9 @@ class RememberOperator(BaseOperator):
                 output_text=self._message("predicate_missing"),
             )
 
+        patches: list[GraphPatch] = []
+        writer = ClaimWriter(ctx.store)
+
         # Profile lane: facts about the user are stored with subject "user" and a
         # predicate in the user namespace (e.g., user.name, user.alias). This is a
         # structural signal, not an English string match.
@@ -102,32 +106,15 @@ class RememberOperator(BaseOperator):
                     updated_at=now,
                 )
                 ctx.store.entities.put(entity)
-            claim = ctx.store.profile.put(
+            claim, patch = writer.write_profile(
                 slot=slot,
                 value=raw_text,
                 source_id=ctx.input_signal.source_id,
                 permission=ctx.kernel.permission,
                 trust=0.7,
             )
+            patches.append(patch)
         else:
-            claim = Claim(
-                id=uuid.uuid4().hex[:16],
-                subject_entity_id=subject_id,
-                predicate=predicate,
-                object_value=object_value,
-                object_entity_id=object_entity_id,
-                qualifiers=qualifiers,
-                evidence_signal_ids=[ctx.input_signal.id],
-                source_id=ctx.input_signal.source_id,
-                domain=domain,
-                confidence=0.7,
-                trust=0.7,
-                salience=0.5,
-                status=ClaimStatus.ACTIVE,
-                observed_at=now,
-                updated_at=now,
-                permission=ctx.kernel.permission,
-            )
             entity = ctx.store.entities.get(subject_id)
             if entity is None:
                 entity = Entity(
@@ -141,7 +128,20 @@ class RememberOperator(BaseOperator):
                     updated_at=now,
                 )
                 ctx.store.entities.put(entity)
-            ctx.store.claims.put(claim)
+            claim, patch = writer.write_claim(
+                subject_entity_id=subject_id,
+                predicate=predicate,
+                object_value=object_value,
+                object_entity_id=object_entity_id,
+                domain=domain,
+                qualifiers=qualifiers,
+                evidence_signal_ids=[ctx.input_signal.id],
+                source_id=ctx.input_signal.source_id,
+                permission=ctx.kernel.permission,
+                confidence=0.7,
+                trust=0.7,
+            )
+            patches.append(patch)
 
         self_state = ctx.store.self_store.latest()
         if self_state:
@@ -210,6 +210,7 @@ class RememberOperator(BaseOperator):
             new_claim_ids=[claim.id],
             cost_ms=cost_ms,
             semantic_answer_graph=answer_graph,
+            graph_patches=patches,
         )
 
     def _execute_batch(
@@ -232,34 +233,16 @@ class RememberOperator(BaseOperator):
             )
 
         now = time.time()
-        new_claim_ids: list[str] = []
-        stored_count = 0
+        patches: list[GraphPatch] = []
+        writer = ClaimWriter(ctx.store)
 
+        filtered_tasks: list[MemoryUpdateTask] = []
         for task in valid_tasks:
             raw_text = str(task.object_value or "").strip()
             if not raw_text or len(raw_text) < 2:
                 continue
             if raw_text.endswith("?"):
                 continue
-
-            claim = Claim(
-                id=uuid.uuid4().hex[:16],
-                subject_entity_id=task.subject_entity_id,
-                predicate=task.predicate,
-                object_value=task.object_value,
-                object_entity_id=task.object_entity_id,
-                qualifiers=task.qualifiers,
-                evidence_signal_ids=[ctx.input_signal.id],
-                source_id=ctx.input_signal.source_id,
-                domain=task.domain,
-                confidence=task.confidence,
-                trust=task.trust,
-                salience=0.5,
-                status=ClaimStatus.ACTIVE,
-                observed_at=now,
-                updated_at=now,
-                permission=ctx.kernel.permission,
-            )
 
             entity = ctx.store.entities.get(task.subject_entity_id)
             if entity is None:
@@ -275,9 +258,23 @@ class RememberOperator(BaseOperator):
                 )
                 ctx.store.entities.put(entity)
 
-            ctx.store.claims.put(claim)
-            new_claim_ids.append(claim.id)
-            stored_count += 1
+            filtered_tasks.append(task)
+
+        if not filtered_tasks:
+            return OperatorResult(
+                success=False,
+                output_text=self._message("insufficient_information"),
+            )
+
+        claims, batch_patches = writer.write_batch(
+            tasks=filtered_tasks,
+            input_signal_id=ctx.input_signal.id,
+            source_id=ctx.input_signal.source_id,
+            permission=ctx.kernel.permission,
+        )
+        patches.extend(batch_patches)
+        new_claim_ids = [c.id for c in claims]
+        stored_count = len(claims)
 
         if not new_claim_ids:
             return OperatorResult(
@@ -356,4 +353,5 @@ class RememberOperator(BaseOperator):
             new_claim_ids=new_claim_ids,
             cost_ms=cost_ms,
             semantic_answer_graph=answer_graph,
+            graph_patches=patches,
         )

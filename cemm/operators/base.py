@@ -10,6 +10,7 @@ from ..types.operator_spec import OperatorSpec
 from ..store.store import Store
 from ..registry import Registry
 from ..learning.lexeme_memory import LexemeMemory
+from ..types.graph_patch import GraphPatch
 
 
 @dataclass
@@ -42,6 +43,7 @@ class OperatorResult:
     cost_ms: float = 0.0
     fallback_used: bool = False
     semantic_answer_graph: SemanticAnswerGraph | None = None
+    graph_patches: list[GraphPatch] = field(default_factory=list)
 
 
 class BaseOperator(ABC):

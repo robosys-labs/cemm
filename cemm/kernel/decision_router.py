@@ -15,7 +15,6 @@ from ..types.packets import (
 from ..types.context_inference import ContextInference
 from ..types.conversation_act import ConversationAct, ConversationActPacket
 from ..types.semantic_answer_graph import SemanticAnswerGraph
-from ..types.semantic_event_graph import SemanticEventGraph
 from ..types.signal import ObservationSemantics
 from .answer_graph_ranker import best_candidate
 from ..registry.uol_mapper import UOLMapper
@@ -63,7 +62,7 @@ class DecisionRouter:
 
     def run(
         self,
-        graph: SemanticEventGraph,
+        graph: Any,
         kernel: ContextKernel,
         grounded_graph: GroundedGraph | None = None,
         memory_packet: MemoryPacket | None = None,
@@ -904,7 +903,7 @@ class DecisionRouter:
         )
 
     def _classify_general_question(
-        self, input_text: str, graph: SemanticEventGraph, kernel: ContextKernel,
+        self, input_text: str, graph: Any, kernel: ContextKernel,
     ) -> str:
         """Map an open-domain question to a conversational answer intent.
 
@@ -938,7 +937,7 @@ class DecisionRouter:
     def _detect_command_intent(
         self,
         input_text: str,
-        graph: SemanticEventGraph,
+        graph: Any,
         kernel: ContextKernel,
         selected_claim_ids: list[str] | None = None,
         predictions: list[dict[str, Any]] | None = None,
@@ -1071,7 +1070,7 @@ class DecisionRouter:
 
     def _detect_teaching_intent(
         self,
-        graph: SemanticEventGraph,
+        graph: Any,
         input_text: str,
     ) -> DecisionPacket | None:
         """Route surface teaching patterns (definition, alias, correction) to learning actions."""
@@ -1185,7 +1184,7 @@ class DecisionRouter:
 
     def _estimate_risk(
         self,
-        graph: SemanticEventGraph,
+        graph: Any,
         kernel: ContextKernel,
         confidence: float | None = None,
         missing_slots: list[str] | None = None,
@@ -1208,7 +1207,7 @@ class DecisionRouter:
         intent: str,
         response_mode: str,
         confidence: float,
-        graph: SemanticEventGraph,
+        graph: Any,
         kernel: ContextKernel,
         missing_slots: list[str] | None = None,
         predictions: list[dict[str, Any]] | None = None,

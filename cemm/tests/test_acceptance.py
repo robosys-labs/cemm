@@ -271,12 +271,12 @@ class TestRuntimeOrdering:
         for i, line in enumerate(source.split("\n")):
             if "self._context_inference_engine.infer" in line:
                 contextualize_line = i
-            if "self._semantic_interpreter.run" in line:
+            if "self._meaning_perceptor.perceive" in line:
                 interpret_line = i
             if "self._grounding_pipeline.run" in line:
                 ground_line = i
         assert contextualize_line is not None, "ContextInference not found in run()"
-        assert interpret_line is not None, "SemanticInterpreter not found in run()"
+        assert interpret_line is not None, "MeaningPerceptor not found in run()"
         assert ground_line is not None, "Ground pipeline not found in run()"
         assert contextualize_line < interpret_line < ground_line, (
             f"Contextualize at line {contextualize_line} must run before "

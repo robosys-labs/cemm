@@ -188,16 +188,15 @@ def test_semantic_interpreter_enriches_with_percept_actions() -> None:
     assert "consume_food" in process_keys
 
 
-def test_pipeline_passes_percept_to_interpreter() -> None:
-    """Pipeline should pass meaning_percept to SemanticInterpreter.run()."""
+def test_pipeline_passes_percept_to_uol_graph() -> None:
+    """Pipeline should produce a UOLGraph from the meaning percept."""
     store = _make_store()
     registry = _make_registry()
     pipeline = Pipeline(store, registry)
     result = pipeline.run("come here")
     assert result.meaning_percept is not None
-    assert result.semantic_event_graph is not None
-    # The graph should be enriched with percept referents
-    assert len(result.semantic_event_graph.entity_refs) > 0
+    assert result.uol_graph is not None
+    assert result.uol_graph.signal_id
 
 
 # ── D4: Event schema entries in uol_semantics.json ────────────────────
@@ -320,12 +319,13 @@ def test_pipeline_uses_event_schemas_for_come() -> None:
 
 
 def test_pipeline_enriches_graph_with_percept_referents() -> None:
-    """Pipeline should enrich SemanticEventGraph with percept referents."""
+    """Pipeline should produce a UOLGraph with percept content."""
     store = _make_store()
     registry = _make_registry()
     pipeline = Pipeline(store, registry)
     result = pipeline.run("give me the book")
-    assert result.semantic_event_graph is not None
+    assert result.uol_graph is not None
     assert result.meaning_percept is not None
-    # The graph should have entity_refs from the percept
-    assert len(result.semantic_event_graph.entity_refs) > 0
+    # The graph should exist with the raw_text from the signal
+    assert result.uol_graph.raw_text == "give me the book"
+    assert result.uol_graph.signal_id

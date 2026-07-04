@@ -1,11 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import Any
 from ..store.store import Store
 from ..types.claim import Claim, ClaimStatus
 from ..types.model import Model, ModelKind, ModelStatus
 from ..types.entity import Entity
 from ..types.context_kernel import ContextKernel
-from ..types.semantic_event_graph import SemanticEventGraph
+
 
 
 @dataclass
@@ -115,7 +116,7 @@ class StructuralRetriever:
         result.total_count = len(result.claims) + len(result.models)
         return result
 
-    def retrieve_for_graph(self, graph: SemanticEventGraph, kernel: ContextKernel) -> RetrievalResult:
+    def retrieve_for_graph(self, graph: Any, kernel: ContextKernel) -> RetrievalResult:
         result = RetrievalResult()
         seen = set()
 

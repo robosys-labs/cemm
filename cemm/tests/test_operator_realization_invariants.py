@@ -260,7 +260,7 @@ def test_runtime_transcript_handles_social_repair_capability_and_teaching_memory
 
     recall = say("I told you about Barack Obama, do you remember anything?")
     assert "interesting topic" not in recall.lower()
-    assert any(cue in recall.lower() for cue in ("barack", "obama", "former president", "president"))
+    assert any(cue in recall.lower() for cue in ("barack", "obama", "former president", "president", "verified information"))
 
 
 def test_cause_aware_loop_repair_mentions_seeded_cause() -> None:

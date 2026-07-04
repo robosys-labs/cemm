@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from typing import Any
+
 from ..types.context_kernel import ContextKernel
 from ..types.packets import GroundedGraph
-from ..types.semantic_event_graph import SemanticEventGraph
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .text_match import tokenize_surface
@@ -35,7 +36,7 @@ class GroundingPipeline:
 
     def run(
         self,
-        graph: SemanticEventGraph,
+        graph: Any,
         kernel: ContextKernel,
         content: str | None = None,
     ) -> GroundedGraph:

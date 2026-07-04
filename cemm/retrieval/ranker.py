@@ -1,5 +1,7 @@
 from __future__ import annotations
 import math
+from typing import Any
+
 from ..types.action import Action, ActionStatus
 from ..types.claim import Claim, ClaimStatus
 from ..types.model import Model
@@ -9,7 +11,6 @@ from ..confidence.scoring import (
 )
 from ..confidence.log_odds import contradiction_weight
 from ..types.permission import PermissionScope
-from ..types.semantic_event_graph import SemanticEventGraph
 from ..store.store import Store
 
 
@@ -19,7 +20,7 @@ class Ranker:
         claims: list[Claim],
         kernel: ContextKernel,
         goal_keywords: list[str] | None = None,
-        graph: SemanticEventGraph | None = None,
+        graph: Any | None = None,
     ) -> list[tuple[Claim, float]]:
         scored: list[tuple[Claim, float]] = []
         now = kernel.time.now

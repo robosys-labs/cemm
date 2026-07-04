@@ -11,7 +11,6 @@ from typing import Any
 from ..types.context_kernel import ContextKernel
 from ..types.packets import MemoryPacket
 from ..types.semantic_answer_graph import SemanticAnswerGraph
-from ..types.semantic_event_graph import SemanticEventGraph
 
 
 def _claim_overlap(selected: list[str], context_claims: list[str]) -> float:

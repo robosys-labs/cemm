@@ -81,6 +81,10 @@ except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
     Signal = Any  # type: ignore[misc,assignment]
 from .language_adapter import EnglishLanguageAdapter, LanguageAdapter
 from .meaning_graph_builder import MeaningGraphBuilder
+from .predicate_phrase_extractor import PredicatePhraseExtractor
+from .anaphora_resolver import AnaphoraResolver
+from .entity_salience_tracker import EntitySalienceTracker
+from .implicit_predicate_detector import ImplicitPredicateDetector
 
 
 _ENTITY_ROLES = {"person", "place", "organization", "entity", "object", "time"}
@@ -172,6 +176,10 @@ class MeaningPerceptor:
         self._lexeme_memory = lexeme_memory
         self._language = language_adapter or EnglishLanguageAdapter()
         self._graph_builder = MeaningGraphBuilder()
+        self._predicate_extractor = PredicatePhraseExtractor()
+        self._anaphora_resolver = AnaphoraResolver()
+        self._salience_tracker = EntitySalienceTracker()
+        self._implicit_detector = ImplicitPredicateDetector()
 
     def perceive(
         self,
@@ -250,10 +258,35 @@ class MeaningPerceptor:
         )
 
         self._assign_atoms_to_groups(packet)
+        self._anaphora_resolver.resolve(
+            referents=packet.referents,
+            groups=packet.meaning_groups,
+            entities=ner_entities,
+            language=self._language,
+        )
+        ranked_entities, _salience_map = self._salience_tracker.track(
+            referents=packet.referents,
+            groups=packet.meaning_groups,
+        )
+        packet.perception_trace["salience_ranked"] = [
+            e["key"] for e in ranked_entities[:5]
+        ]
         self._add_structural_atoms(packet)
         self._build_meaning_hypotheses(packet)
-        self._build_predicate_phrases(packet)
-        self._build_atom_outcomes(packet)
+        packet.predicate_phrases = self._predicate_extractor.extract(
+            groups=packet.meaning_groups,
+            language=self._language,
+        )
+        implicit_predicates = self._implicit_detector.detect(
+            groups=packet.meaning_groups,
+            referents=packet.referents,
+            predicates=packet.predicate_phrases,
+        )
+        packet.predicate_phrases.extend(implicit_predicates)
+        packet.atom_outcomes = self._predicate_extractor.build_outcomes(
+            predicates=packet.predicate_phrases,
+            groups=packet.meaning_groups,
+        )
         packet.core_loop_stage = "working_graph_built"
         packet.core_loop_trace = {
             "loop_version": "semantic_core_loop_v4_1_seed",
@@ -921,104 +954,6 @@ class MeaningPerceptor:
             packet.meaning_hypotheses.append(hypothesis)
             group.hypothesis_ids.append(hypothesis.id)
 
-    def _build_predicate_phrases(self, packet: MeaningPerceptPacket) -> None:
-        for group in packet.meaning_groups:
-            for action in group.actions:
-                start_token, end_token = self._predicate_span(group, action.surface)
-                predicate = PredicatePhrase(
-                    id=f"pred_{len(packet.predicate_phrases)}",
-                    group_id=group.id,
-                    surface=group.surface,
-                    start_token=start_token,
-                    end_token=end_token,
-                    predicate_key=action.action_key or action.surface,
-                    predicate_surface=action.surface,
-                    actor_role=action.actor_role,
-                    object_role=action.object_role,
-                    target_role=action.target_role,
-                    place_role=action.place_role,
-                    modality=action.modality,
-                    polarity=action.polarity,
-                    confidence=action.confidence,
-                    evidence=list(action.evidence),
-                )
-                packet.predicate_phrases.append(predicate)
-                group.predicate_ids.append(predicate.id)
-
-            for state in group.states:
-                start_token, end_token = self._predicate_span(group, state.surface)
-                predicate = PredicatePhrase(
-                    id=f"pred_{len(packet.predicate_phrases)}",
-                    group_id=group.id,
-                    surface=group.surface,
-                    start_token=start_token,
-                    end_token=end_token,
-                    predicate_key=f"state:{state.state_key}",
-                    predicate_surface=state.surface,
-                    actor_role=state.holder_role,
-                    modality="observed",
-                    polarity=state.polarity,
-                    confidence=state.confidence,
-                    evidence=list(state.evidence),
-                )
-                packet.predicate_phrases.append(predicate)
-                group.predicate_ids.append(predicate.id)
-
-            if group.intents and self._should_emit_intent_predicate(group):
-                intent = group.intents[0]
-                predicate = PredicatePhrase(
-                    id=f"pred_{len(packet.predicate_phrases)}",
-                    group_id=group.id,
-                    surface=group.surface,
-                    start_token=group.start_token,
-                    end_token=group.end_token,
-                    predicate_key=f"intent:{intent.intent_key}",
-                    predicate_surface=group.surface,
-                    actor_role="user",
-                    target_role=intent.target_role,
-                    modality="requested" if intent.is_question or intent.is_command else "observed",
-                    polarity=intent.polarity,
-                    confidence=intent.confidence,
-                    evidence=list(intent.evidence),
-                )
-                packet.predicate_phrases.append(predicate)
-                group.predicate_ids.append(predicate.id)
-
-    def _should_emit_intent_predicate(self, group: MeaningGroup) -> bool:
-        if not group.intents:
-            return False
-        intent_key = group.intents[0].intent_key
-        if not group.predicate_ids:
-            return True
-        return intent_key in {
-            "fresh_world_query",
-            "repair",
-            "teaching",
-            "session_exit",
-            "capability_query",
-            "command",
-        }
-
-    def _build_atom_outcomes(self, packet: MeaningPerceptPacket) -> None:
-        for predicate in packet.predicate_phrases:
-            atom_kind, atom_key, affected_role, expected_change, valence = self._outcome_for_predicate(predicate)
-            outcome = MeaningAtomOutcome(
-                id=f"outcome_{len(packet.atom_outcomes)}",
-                group_id=predicate.group_id,
-                predicate_id=predicate.id,
-                atom_kind=atom_kind,
-                atom_key=atom_key,
-                affected_role=affected_role,
-                expected_change=expected_change,
-                valence=valence,
-                confidence=max(0.35, min(0.9, predicate.confidence)),
-                evidence=list(predicate.evidence),
-            )
-            packet.atom_outcomes.append(outcome)
-            group = self._group_by_id(packet.meaning_groups, predicate.group_id)
-            if group is not None:
-                group.outcome_ids.append(outcome.id)
-
     def _intent_key_for_group(self, group: MeaningGroup, packet: MeaningPerceptPacket) -> str:
         tokens = group.tokens
         token_set = set(tokens)
@@ -1124,26 +1059,6 @@ class MeaningPerceptor:
             confidence += 0.05
         return min(0.9, confidence)
 
-    def _outcome_for_predicate(self, predicate: PredicatePhrase) -> tuple[str, str, str, str, str]:
-        key = predicate.predicate_key
-        if key == "physically_harm_target":
-            return "safety", key, predicate.target_role or "target", "harm_or_health_decrease", "negative"
-        if key == "improve_state":
-            return "state", key, predicate.target_role or "target", "state_improvement", "positive"
-        if key in {"memory_write", "intent:teaching"}:
-            return "memory", key, "memory", "candidate_memory_update", "neutral"
-        if key in {"increase_capability", "transfer_knowledge"}:
-            return "learning", key, predicate.actor_role or "learner", "knowledge_increase", "positive"
-        if key == "intent:fresh_world_query":
-            return "answer", key, "world", "fresh_evidence_required", "neutral"
-        if key == "intent:repair":
-            return "repair", key, "conversation", "clarity_required", "neutral"
-        if key.startswith("state:"):
-            return "state", key, predicate.actor_role or "holder", key.replace("state:", "state_observed:"), "unknown"
-        if key.startswith("intent:"):
-            return "intent", key, predicate.target_role or "conversation", "reply_obligation", "neutral"
-        return "action", key, predicate.target_role or predicate.object_role or "event", "event_candidate", "unknown"
-
     def _group_for_surface(self, groups: list[MeaningGroup], surface: str) -> MeaningGroup | None:
         normalized = self._language.tokenize(surface)
         if not normalized:
@@ -1154,16 +1069,6 @@ class MeaningPerceptor:
             if surface_text and surface_text in group_text:
                 return group
         return None
-
-    def _predicate_span(self, group: MeaningGroup, surface: str) -> tuple[int, int]:
-        surface_tokens = self._language.tokenize(surface)
-        if not surface_tokens:
-            return group.start_token, group.end_token
-        for offset in range(0, max(1, len(group.tokens) - len(surface_tokens) + 1)):
-            if group.tokens[offset:offset + len(surface_tokens)] == surface_tokens:
-                start = group.start_token + offset
-                return start, start + len(surface_tokens)
-        return group.start_token, group.end_token
 
     def _span_id_for_token(self, packet: MeaningPerceptPacket, token_index: int) -> str:
         for span in packet.spans:

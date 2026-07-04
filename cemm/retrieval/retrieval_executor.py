@@ -15,7 +15,6 @@ from ..types.claim import Claim, ClaimStatus
 from ..types.context_kernel import ContextKernel
 from ..types.meaning_percept import RetrievalPlan
 from ..types.model import ModelKind, ModelStatus
-from ..types.semantic_event_graph import SemanticEventGraph
 from .structural import RetrievalQuery, RetrievalResult, StructuralRetriever
 
 
@@ -50,7 +49,7 @@ class RetrievalExecutor:
         self,
         plan: RetrievalPlan,
         kernel: ContextKernel,
-        graph: SemanticEventGraph | None = None,
+        graph: Any | None = None,
         lexeme_memory: Any | None = None,
     ) -> RetrievalExecutionResult:
         trace = RetrievalExecutionTrace(mode=plan.mode)

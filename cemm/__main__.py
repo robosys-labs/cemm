@@ -484,7 +484,7 @@ def process_input(
                     all_candidates.extend(mu.candidates)
             if len(all_candidates) > 1:
                 # Batch path: convert EntityFactCandidates to batch tasks
-                from ..kernel.memory_update_planner import MemoryUpdateBatch, MemoryUpdateTask
+                from cemm.kernel.memory_update_planner import MemoryUpdateBatch, MemoryUpdateTask
                 batch = MemoryUpdateBatch(
                     source_signal_id=input_signal.id,
                     context_id=kernel.id,
@@ -566,6 +566,10 @@ def process_input(
     op_result = op_registry.execute(kind, ctx)
     op_cost_ms = (time.time() - op_start) * 1000.0
     output = op_result.output_text
+
+    # v4.2: Feed operator graph_patches into the consolidation cycle
+    if op_result.graph_patches and pipeline._semantic_cpu is not None and pipeline._semantic_cpu.auto_consolidate:
+        pipeline._semantic_cpu.consolidator.consolidate(op_result.graph_patches)
 
     # Fix trace metadata for the operator result.
     if op_result.trace:

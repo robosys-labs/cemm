@@ -9,7 +9,7 @@ from typing import Any
 from ..types.context_kernel import ContextKernel
 from ..types.context_inference import ContextInference
 from ..types.conversation_act import ConversationAct, ConversationActPacket
-from ..types.semantic_event_graph import SemanticEventGraph
+from typing import Any
 from ..types.semantic_answer_graph import SemanticAnswerGraph
 from ..types.packets import (
     GroundedGraph, MemoryPacket, InferencePacket, DecisionPacket,
@@ -34,7 +34,7 @@ def _task_payload(
     base: dict[str, Any],
     task_type: str,
     *,
-    semantic_event_graph: SemanticEventGraph | None = None,
+    semantic_event_graph: Any | None = None,
     semantic_answer_graph: SemanticAnswerGraph | None = None,
     grounded_graph: GroundedGraph | None = None,
     memory_packet: MemoryPacket | None = None,
@@ -106,7 +106,7 @@ def serialize_turn(
     kernel: ContextKernel,
     input_signal: Signal,
     trace: Trace | None = None,
-    semantic_event_graph: SemanticEventGraph | None = None,
+    semantic_event_graph: Any | None = None,
     semantic_answer_graph: SemanticAnswerGraph | None = None,
     grounded_graph: GroundedGraph | None = None,
     memory_packet: MemoryPacket | None = None,

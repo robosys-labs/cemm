@@ -2,84 +2,88 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
+from ..types.causal_affordance import CausalAffordance, PortBindingPattern
+from ..types.predicate_schema import GraphPattern
+from ..types.uol_atom import UOLAtom
 from ..types.uol_graph import AffordancePrediction, UOLGraph
-
-
-@dataclass
-class AffordanceRule:
-    key: str
-    trigger_kind: str = ""
-    trigger_key: str = ""
-    required_port_keys: set[str] = field(default_factory=set)
-    effect_type: str = "state_change"
-    predicted_operation: str = "observe_causal_affordance"
-    payload: dict[str, Any] = field(default_factory=dict)
-    confidence: float = 0.5
 
 
 class AffordancePredictor:
     """Pattern matcher for contextual affordance rules."""
 
-    def __init__(self, rules: list[AffordanceRule] | None = None) -> None:
+    def __init__(self, rules: list[CausalAffordance] | None = None) -> None:
         self._rules = rules or self._seed_rules()
 
     def predict(self, graph: UOLGraph) -> list[AffordancePrediction]:
         predictions: list[AffordancePrediction] = []
         for atom in graph.atoms.values():
-            for rule in self._rules:
-                if rule.trigger_kind and atom.kind != rule.trigger_kind:
-                    continue
-                if rule.trigger_key and rule.trigger_key not in {atom.key, atom.surface}:
+            for affordance in self._rules:
+                pattern = affordance.trigger_pattern
+                if pattern is not None and pattern.atom_patterns:
+                    if not self._atom_matches_patterns(atom, pattern.atom_patterns):
+                        continue
+                elif pattern is not None:
                     continue
                 bindings = graph.bindings_for_owner(atom.id)
-                binding_keys = {binding.port_key for binding in bindings if binding.status == "bound"}
-                if not rule.required_port_keys <= binding_keys:
+                binding_keys = {b.port_key for b in bindings if b.status == "bound"}
+                required_ports = {bp.port_id for bp in affordance.required_bindings if bp.required}
+                if required_ports and not required_ports.issubset(binding_keys):
                     continue
                 predictions.append(AffordancePrediction(
-                    id=f"aff_{len(predictions)}_{rule.key}",
-                    affordance_key=rule.key,
+                    id=f"aff_{len(predictions)}_{affordance.affordance_id}",
+                    affordance_key=affordance.affordance_id,
                     trigger_atom_ids=[atom.id],
-                    required_binding_ids=[binding.source_edge_id for binding in bindings if binding.port_key in rule.required_port_keys],
+                    required_binding_ids=[b.source_edge_id for b in bindings if b.port_key in required_ports],
                     predicted_patch_template={
                         "target": "causal_affordance",
-                        "operation": rule.predicted_operation,
-                        **dict(rule.payload),
+                        "operation": "observe_causal_affordance",
                     },
-                    effect_type=rule.effect_type,
-                    confidence=min(1.0, max(atom.confidence, rule.confidence)),
+                    effect_type=affordance.effect_type,
+                    confidence=min(1.0, max(atom.confidence, affordance.confidence)),
                     reason="affordance_rule_match",
                 ))
         return predictions
 
     @staticmethod
-    def _seed_rules() -> list[AffordanceRule]:
+    def _atom_matches_patterns(atom: UOLAtom, patterns: list[dict[str, Any]]) -> bool:
+        for pattern in patterns:
+            kind_match = not pattern.get("kind") or atom.kind == pattern["kind"]
+            key_match = not pattern.get("key") or atom.key == pattern["key"]
+            surface_match = not pattern.get("surface") or atom.surface == pattern["surface"]
+            if kind_match and key_match and surface_match:
+                return True
+        return False
+
+    @staticmethod
+    def _seed_rules() -> list[CausalAffordance]:
         return [
-            AffordanceRule(
-                key="fresh_source_requirement",
-                trigger_kind="evidence",
-                trigger_key="fresh_external_evidence_required",
+            CausalAffordance(
+                affordance_id="fresh_source_requirement",
+                trigger_pattern=GraphPattern(atom_patterns=[
+                    {"kind": "evidence", "key": "fresh_external_evidence_required"},
+                ]),
                 effect_type="action_enablement",
-                payload={"policy": "require_fresh_source"},
                 confidence=0.7,
             ),
-            AffordanceRule(
-                key="clarity_need",
-                trigger_kind="intent",
-                trigger_key="repair",
+            CausalAffordance(
+                affordance_id="clarity_need",
+                trigger_pattern=GraphPattern(atom_patterns=[
+                    {"kind": "intent", "key": "repair"},
+                ]),
                 effect_type="need_activation",
-                payload={"need_key": "clarity"},
                 confidence=0.65,
             ),
-            AffordanceRule(
-                key="cold_context_comfort_relevance",
-                trigger_kind="state",
-                trigger_key="cold",
-                required_port_keys={"holder"},
+            CausalAffordance(
+                affordance_id="cold_context_comfort_relevance",
+                trigger_pattern=GraphPattern(atom_patterns=[
+                    {"kind": "state", "key": "cold"},
+                ]),
+                required_bindings=[
+                    PortBindingPattern(port_id="holder", required=True),
+                ],
                 effect_type="need_activation",
-                payload={"need_key": "comfort_or_warmth_may_be_relevant"},
                 confidence=0.58,
             ),
         ]

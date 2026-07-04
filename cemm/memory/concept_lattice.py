@@ -12,70 +12,23 @@ and the lattice is loaded from the store on startup.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from typing import Any, Iterable
 
+from ..types.concept_atom import (
+    ConceptAtom,
+    ConceptState,
+    Counterexample,
+    ExemplarRef,
+    PredicateSignature,
+    SemanticFingerprint,
+    SourceSupport,
+    TemporalPolicy,
+    EvidencePolicy,
+    PermissionPolicy,
+)
 from ..types.graph_patch import GraphPatch
+from ..types.operational_port import OperationalPort, EdgePattern, ResolverPolicy
 from ..types.uol_graph import ConceptResolution, UOLAtom
-
-
-@dataclass
-class OperationalPortSpec:
-    key: str
-    accepted_atom_kinds: set[str] = field(default_factory=set)
-    accepted_parent_concepts: set[str] = field(default_factory=set)
-    required: bool = False
-    confidence: float = 0.5
-    support: list[dict[str, Any]] = field(default_factory=list)
-
-    def accepts_kind(self, atom_kind: str) -> bool:
-        return not self.accepted_atom_kinds or atom_kind in self.accepted_atom_kinds
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "key": self.key,
-            "accepted_atom_kinds": sorted(self.accepted_atom_kinds),
-            "accepted_parent_concepts": sorted(self.accepted_parent_concepts),
-            "required": self.required,
-            "confidence": self.confidence,
-            "support": [dict(item) for item in self.support],
-        }
-
-
-@dataclass
-class ConceptRecord:
-    key: str
-    atom_kind: str = "entity"
-    state: str = "candidate_atom"
-    aliases: set[str] = field(default_factory=set)
-    parents: set[str] = field(default_factory=set)
-    ports: dict[str, OperationalPortSpec] = field(default_factory=dict)
-    predicates: set[str] = field(default_factory=set)
-    affordances: set[str] = field(default_factory=set)
-    source_support: list[dict[str, Any]] = field(default_factory=list)
-    confidence: float = 0.5
-
-    def __post_init__(self) -> None:
-        self.key = self._clean_key(self.key)
-        self.aliases.add(self.key)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "key": self.key,
-            "atom_kind": self.atom_kind,
-            "state": self.state,
-            "aliases": sorted(self.aliases),
-            "parents": sorted(self.parents),
-            "ports": {key: port.to_dict() for key, port in self.ports.items()},
-            "predicates": sorted(self.predicates),
-            "affordances": sorted(self.affordances),
-            "source_support": [dict(item) for item in self.source_support],
-            "confidence": self.confidence,
-        }
-
-    @staticmethod
-    def _clean_key(value: str) -> str:
-        return "_".join(str(value or "unknown").strip().lower().split()) or "unknown"
 
 
 class ConceptLattice:
@@ -87,11 +40,11 @@ class ConceptLattice:
 
     def __init__(
         self,
-        concepts: Iterable[ConceptRecord] | None = None,
+        concepts: Iterable[ConceptAtom] | None = None,
         *,
         persistent_store: Any = None,
     ) -> None:
-        self._concepts: dict[str, ConceptRecord] = {}
+        self._concepts: dict[str, ConceptAtom] = {}
         self._aliases: dict[str, str] = {}
         self._persistent_store = persistent_store
         if persistent_store:
@@ -114,17 +67,23 @@ class ConceptLattice:
             parents_raw = data.get("parents_json", [])
             if isinstance(parents_raw, str):
                 parents_raw = json.loads(parents_raw)
-            record = ConceptRecord(
+            state_str = str(data.get("state", "candidate_atom"))
+            try:
+                state = ConceptState(state_str)
+            except ValueError:
+                state = ConceptState.candidate_atom
+            record = ConceptAtom(
+                concept_id=concept_id,
                 key=key,
-                atom_kind=data.get("atom_kind", "entity"),
-                state=data.get("state", "candidate_atom"),
-                aliases=set(aliases_raw),
-                parents=set(parents_raw),
+                atom_kind=str(data.get("atom_kind", "entity")),
+                state=state,
+                aliases=list(aliases_raw) if isinstance(aliases_raw, list) else [str(aliases_raw)],
+                parents=list(parents_raw) if isinstance(parents_raw, list) else [str(parents_raw)],
                 confidence=float(data.get("confidence", 0.5)),
             )
             self.upsert(record)
 
-    def upsert(self, concept: ConceptRecord) -> ConceptRecord:
+    def upsert(self, concept: ConceptAtom) -> ConceptAtom:
         existing = self._concepts.get(concept.key)
         if existing is None:
             self._concepts[concept.key] = concept
@@ -132,18 +91,26 @@ class ConceptLattice:
         else:
             existing.confidence = max(existing.confidence, concept.confidence)
             existing.state = self._stronger_state(existing.state, concept.state)
-            existing.aliases.update(concept.aliases)
-            existing.parents.update(concept.parents)
-            existing.predicates.update(concept.predicates)
-            existing.affordances.update(concept.affordances)
+            existing_aliases = set(existing.aliases)
+            existing_aliases.update(concept.aliases)
+            existing.aliases = sorted(existing_aliases)
+            existing_parents = set(existing.parents)
+            existing_parents.update(concept.parents)
+            existing.parents = sorted(existing_parents)
             existing.source_support.extend(concept.source_support)
-            for key, port in concept.ports.items():
+            existing.counterexamples.extend(concept.counterexamples)
+            existing.exemplars.extend(concept.exemplars)
+            for port in concept.ports:
                 self.upsert_port(existing.key, port)
-        for alias in existing.aliases:
+            if concept.fingerprint is not None:
+                existing.fingerprint = concept.fingerprint
+        all_aliases = set(existing.aliases)
+        all_aliases.add(existing.key)
+        for alias in all_aliases:
             self._aliases[self._clean_key(alias)] = existing.key
         return existing
 
-    def lookup(self, key_or_alias: str) -> ConceptRecord | None:
+    def lookup(self, key_or_alias: str) -> ConceptAtom | None:
         key = self._aliases.get(self._clean_key(key_or_alias), self._clean_key(key_or_alias))
         return self._concepts.get(key)
 
@@ -151,20 +118,24 @@ class ConceptLattice:
         concept = self.lookup(atom.key) or self.lookup(atom.surface)
         if concept is not None:
             inherited = sorted(self.parents_of(concept.key))
+            aliases_set = set(concept.aliases)
+            aliases_set.add(concept.key)
+            state_str = "exact_alias" if self._clean_key(atom.key) in aliases_set else concept.state.value
             return ConceptResolution(
                 atom_id=atom.id,
                 concept_id=f"concept:{concept.key}",
-                state="exact_alias" if self._clean_key(atom.key) in concept.aliases else concept.state,
+                state=state_str,
                 inherited_from=[f"concept:{parent}" for parent in inherited],
                 confidence=max(atom.confidence, concept.confidence),
                 evidence_refs=[],
                 reason="concept_lattice_lookup",
             )
-        candidate = ConceptRecord(
+        candidate = ConceptAtom(
+            concept_id=f"concept:{atom.key}",
             key=atom.key,
             atom_kind=atom.kind,
-            state="new_candidate",
-            aliases={atom.surface} if atom.surface else set(),
+            state=ConceptState.candidate_atom,
+            aliases=[atom.surface] if atom.surface else [],
             confidence=min(0.6, atom.confidence),
         )
         self.upsert(candidate)
@@ -178,7 +149,10 @@ class ConceptLattice:
 
     def parents_of(self, concept_key: str) -> set[str]:
         visited: set[str] = set()
-        stack = list((self.lookup(concept_key) or ConceptRecord(concept_key)).parents)
+        rec = self.lookup(concept_key)
+        if rec is None:
+            return visited
+        stack = list(rec.parents)
         while stack:
             parent = self._clean_key(stack.pop())
             if parent in visited:
@@ -189,31 +163,52 @@ class ConceptLattice:
                 stack.extend(parent_record.parents)
         return visited
 
-    def ports_for(self, concept_key: str) -> dict[str, OperationalPortSpec]:
+    def ports_for(self, concept_key: str) -> list[OperationalPort]:
         concept = self.lookup(concept_key)
         if concept is None:
-            return {}
-        ports: dict[str, OperationalPortSpec] = {}
+            return []
+        port_map: dict[str, OperationalPort] = {}
         for parent in self.parents_of(concept.key):
             parent_record = self.lookup(parent)
             if parent_record is not None:
-                ports.update(parent_record.ports)
-        ports.update(concept.ports)
-        return ports
+                for p in parent_record.ports:
+                    if p.key not in port_map:
+                        port_map[p.key] = p
+        for p in concept.ports:
+            port_map[p.key] = p
+        return list(port_map.values())
 
-    def upsert_port(self, concept_key: str, port: OperationalPortSpec) -> None:
+    def upsert_port(self, concept_key: str, port: OperationalPort) -> None:
         concept = self.lookup(concept_key)
         if concept is None:
-            concept = self.upsert(ConceptRecord(key=concept_key))
-        existing = concept.ports.get(port.key)
-        if existing is None:
-            concept.ports[port.key] = port
+            concept = self.upsert(ConceptAtom(
+                concept_id=f"concept:{concept_key}",
+                key=concept_key,
+            ))
+        existing_port = None
+        existing_idx = -1
+        for i, p in enumerate(concept.ports):
+            if p.key == port.key:
+                existing_port = p
+                existing_idx = i
+                break
+        if existing_port is None:
+            concept.ports.append(port)
             return
-        existing.accepted_atom_kinds.update(port.accepted_atom_kinds)
-        existing.accepted_parent_concepts.update(port.accepted_parent_concepts)
-        existing.required = existing.required or port.required
-        existing.confidence = max(existing.confidence, port.confidence)
-        existing.support.extend(port.support)
+        accepted_kinds = list({*existing_port.accepted_atom_kinds, *port.accepted_atom_kinds})
+        accepted_parents = list({*existing_port.accepted_parent_concepts, *port.accepted_parent_concepts})
+        merged = OperationalPort(
+            port_id=existing_port.port_id or port.port_id,
+            owner_concept_id=existing_port.owner_concept_id or port.owner_concept_id,
+            key=port.key,
+            required=existing_port.required or port.required,
+            accepted_atom_kinds=accepted_kinds,
+            accepted_parent_concepts=accepted_parents,
+            resolver_policy=port.resolver_policy,
+            confidence=max(existing_port.confidence, port.confidence),
+            support=existing_port.support + port.support,
+        )
+        concept.ports[existing_idx] = merged
 
     def apply_patch(self, patch: GraphPatch) -> list[str]:
         applied: list[str] = []
@@ -222,20 +217,27 @@ class ConceptLattice:
         for operation in patch.operations:
             if operation.operation == "upsert_concept_candidate":
                 fields = operation.fields
-                concept = ConceptRecord(
-                    key=str(fields.get("key") or operation.target_id.replace("concept:", "")),
+                key = str(fields.get("key") or operation.target_id.replace("concept:", ""))
+                state_str = str(fields.get("state") or "candidate_atom")
+                try:
+                    state = ConceptState(state_str)
+                except ValueError:
+                    state = ConceptState.candidate_atom
+                concept = ConceptAtom(
+                    concept_id=operation.target_id,
+                    key=key,
                     atom_kind=str(fields.get("atom_kind") or "entity"),
-                    state=str(fields.get("state") or "candidate_atom"),
-                    aliases={str(fields.get("surface"))} if fields.get("surface") else set(),
+                    state=state,
+                    aliases=[str(fields.get("surface"))] if fields.get("surface") else [],
                     confidence=operation.confidence,
                 )
                 self.upsert(concept)
                 applied.append(operation.target_id)
                 if self._persistent_store is not None:
                     store_data = dict(fields)
-                    store_data.setdefault("key", operation.target_id.replace("concept:", ""))
+                    store_data.setdefault("key", key)
                     store_data.setdefault("atom_kind", "entity")
-                    store_data.setdefault("state", "candidate_atom")
+                    store_data.setdefault("state", state_str)
                     store_data.setdefault("confidence", operation.confidence)
                     store_data["confidence"] = operation.confidence
                     self._persistent_store.upsert_concept(operation.target_id, store_data)
@@ -245,8 +247,16 @@ class ConceptLattice:
                 target_key = str(fields.get("target_concept_key") or "")
                 relation = str(fields.get("relation") or "")
                 if source_key and target_key and relation == "is_a":
-                    source = self.upsert(ConceptRecord(key=source_key))
-                    source.parents.add(self._clean_key(target_key))
+                    source_parents = set()
+                    existing_source = self.lookup(source_key)
+                    if existing_source is not None:
+                        source_parents = set(existing_source.parents)
+                    source_parents.add(self._clean_key(target_key))
+                    source = self.upsert(ConceptAtom(
+                        concept_id=f"concept:{source_key}",
+                        key=source_key,
+                        parents=sorted(source_parents),
+                    ))
                     applied.append(operation.target_id)
                     if self._persistent_store is not None:
                         self._persistent_store.upsert_concept(
@@ -254,20 +264,24 @@ class ConceptLattice:
                             {"key": source_key, "parents_json": json.dumps(source.parents)},
                         )
                 elif source_key and relation:
-                    source = self.upsert(ConceptRecord(key=source_key))
-                    source.predicates.add(relation)
+                    source = self.upsert(ConceptAtom(
+                        concept_id=f"concept:{source_key}",
+                        key=source_key,
+                    ))
                     applied.append(operation.target_id)
                     if self._persistent_store is not None:
                         self._persistent_store.upsert_concept(
                             f"concept:{source_key}",
-                            {"key": source_key, "predicates_json": json.dumps(source.predicates)},
+                            {"key": source_key},
                         )
             elif operation.operation == "observe_port_binding":
                 fields = operation.fields
                 owner = str(fields.get("owner_concept_id") or "").replace("concept:", "")
                 port_key = str(fields.get("port_key") or "")
                 if owner and port_key:
-                    self.upsert_port(owner, OperationalPortSpec(
+                    self.upsert_port(owner, OperationalPort(
+                        port_id=f"port:{owner}:{port_key}",
+                        owner_concept_id=f"concept:{owner}",
                         key=port_key,
                         confidence=operation.confidence,
                         support=[dict(fields)],
@@ -287,40 +301,65 @@ class ConceptLattice:
         return applied
 
     def snapshot(self) -> dict[str, Any]:
-        return {key: concept.to_dict() for key, concept in sorted(self._concepts.items())}
+        result: dict[str, Any] = {}
+        for key, concept in sorted(self._concepts.items()):
+            data: dict[str, Any] = {
+                "key": concept.key,
+                "atom_kind": concept.atom_kind,
+                "state": concept.state.value,
+                "aliases": sorted(concept.aliases),
+                "parents": sorted(concept.parents),
+                "ports": [{"key": p.key, "accepted_atom_kinds": sorted(p.accepted_atom_kinds),
+                           "accepted_parent_concepts": sorted(p.accepted_parent_concepts),
+                           "required": p.required, "confidence": p.confidence,
+                           "support": [dict(item) if hasattr(item, 'items') else item for item in p.support]}
+                          for p in concept.ports],
+                "confidence": concept.confidence,
+            }
+            result[key] = data
+        return result
 
     def _seed_minimal_concepts(self) -> None:
-        self.upsert(ConceptRecord(
+        self.upsert(ConceptAtom(
+            concept_id="concept:leader",
             key="leader",
             atom_kind="entity",
-            state="operational_atom",
-            ports={
-                "holder": OperationalPortSpec("holder", accepted_atom_kinds={"entity", "self"}),
-                "domain": OperationalPortSpec("domain", accepted_atom_kinds={"entity", "place"}),
-            },
-            predicates={"leads", "represents", "directs"},
+            state=ConceptState.operational_atom,
+            ports=[
+                OperationalPort("port:leader:holder", "concept:leader", "holder",
+                                accepted_atom_kinds=["entity", "self"]),
+                OperationalPort("port:leader:domain", "concept:leader", "domain",
+                                accepted_atom_kinds=["entity", "place"]),
+            ],
             confidence=0.65,
         ))
-        self.upsert(ConceptRecord(
+        self.upsert(ConceptAtom(
+            concept_id="concept:president",
             key="president",
             atom_kind="entity",
-            state="operational_atom",
-            parents={"leader"},
-            ports={
-                "time_scope": OperationalPortSpec("time_scope", accepted_atom_kinds={"time"}),
-            },
+            state=ConceptState.operational_atom,
+            parents=["leader"],
+            ports=[
+                OperationalPort("port:president:time_scope", "concept:president", "time_scope",
+                                accepted_atom_kinds=["time"]),
+            ],
             confidence=0.62,
         ))
-        self.upsert(ConceptRecord(
+        self.upsert(ConceptAtom(
+            concept_id="concept:cold",
             key="cold",
             atom_kind="state",
-            state="operational_atom",
-            ports={
-                "holder": OperationalPortSpec("holder", accepted_atom_kinds={"entity", "self", "place"}),
-                "intensity": OperationalPortSpec("intensity", accepted_atom_kinds={"quantity", "quality"}),
-                "place": OperationalPortSpec("place", accepted_atom_kinds={"place"}),
-                "time": OperationalPortSpec("time", accepted_atom_kinds={"time"}),
-            },
+            state=ConceptState.operational_atom,
+            ports=[
+                OperationalPort("port:cold:holder", "concept:cold", "holder",
+                                accepted_atom_kinds=["entity", "self", "place"]),
+                OperationalPort("port:cold:intensity", "concept:cold", "intensity",
+                                accepted_atom_kinds=["quantity", "quality"]),
+                OperationalPort("port:cold:place", "concept:cold", "place",
+                                accepted_atom_kinds=["place"]),
+                OperationalPort("port:cold:time", "concept:cold", "time",
+                                accepted_atom_kinds=["time"]),
+            ],
             confidence=0.6,
         ))
 
@@ -329,13 +368,14 @@ class ConceptLattice:
         return "_".join(str(value or "unknown").strip().lower().split()) or "unknown"
 
     @staticmethod
-    def _stronger_state(current: str, new: str) -> str:
+    def _stronger_state(current: ConceptState, new: ConceptState) -> ConceptState:
         order = {
-            "unknown_surface": 0,
-            "candidate_atom": 1,
-            "new_candidate": 1,
-            "typed_candidate": 2,
-            "operational_atom": 3,
-            "consolidated_atom": 4,
+            ConceptState.unknown_surface: 0,
+            ConceptState.candidate_atom: 1,
+            ConceptState.typed_candidate: 2,
+            ConceptState.operational_atom: 3,
+            ConceptState.consolidated_atom: 4,
+            ConceptState.contested_atom: 5,
+            ConceptState.stale_atom: 6,
         }
         return new if order.get(new, 0) > order.get(current, 0) else current
