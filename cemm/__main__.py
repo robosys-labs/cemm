@@ -44,8 +44,12 @@ from .causal.simulation import SimulationEngine
 from .kernel.recursive_loop import RecursiveLoop
 from .kernel.mode_controller import ModeController
 from .kernel.decision_router import DecisionRouter
-from .types.packets import DecisionPacket, InferencePacket
+from .types.packets import ActionPlan, DecisionPacket, InferencePacket
 from .learning.inductor import Inductor
+from .memory.concept_lattice import ConceptLattice
+from .memory.construction_lattice import ConstructionLattice
+from .memory.episodic_trace_store import EpisodicTraceStore
+from .memory.persistent_lattice_store import PersistentLatticeStore
 
 _ACTION_CONFIDENCE_THRESHOLD = 0.5
 
@@ -98,7 +102,7 @@ def seed_registry(registry: Registry) -> None:
         ))
 
 
-def seed_causal_models(store: Store) -> None:
+def seed_causal_models(store: Store, concept_lattice: ConceptLattice | None = None) -> None:
     """Seed a small library of causal rule models so CausalInference can produce predictions."""
     from .types.model import Model, ModelKind, ModelStatus
     from .types.permission import Permission
@@ -149,8 +153,43 @@ def seed_causal_models(store: Store) -> None:
         )
         store.models.put(model)
 
+    # Also seed concept lattice with causal affordances
+    if concept_lattice is not None:
+        _seed_causal_affordances(concept_lattice, rules)
 
-def seed_self_state(store: Store, knowledge_path: str | None = None) -> None:
+
+def _seed_causal_affordances(concept_lattice: ConceptLattice, rules: list) -> None:
+    """Create GraphPatches from causal rules and consolidate into concept lattice."""
+    from .types.graph_patch import GraphPatch, PatchOperation
+    from .learning.concept_consolidator import ConceptConsolidator
+
+    patches = []
+    for model_id, name, _registry_key, preconditions, effects in rules:
+        patches.append(GraphPatch(
+            target="concept_lattice",
+            operations=[PatchOperation(
+                operation="custom",
+                target_id=f"affordance:{model_id}",
+                fields={
+                    "affordance_key": name,
+                    "trigger_atom_ids": preconditions,
+                    "predicted_effect": effects,
+                    "confidence": 0.8,
+                },
+                confidence=0.8,
+            )],
+            confidence=0.8,
+            reason=f"seed_causal_affordance:{model_id}",
+        ))
+    if patches:
+        consolidator = ConceptConsolidator(
+            concept_lattice,
+            persistent_store=getattr(concept_lattice, '_persistent_store', None),
+        )
+        consolidator.consolidate(patches)
+
+
+def seed_self_state(store: Store, knowledge_path: str | None = None, concept_lattice: ConceptLattice | None = None) -> None:
     existing_state = store.self_store.latest()
     if existing_state is None:
         state = SelfState(
@@ -228,6 +267,43 @@ def seed_self_state(store: Store, knowledge_path: str | None = None) -> None:
                 permission=_Perm.public(),
             )
             store.claims.put(claim)
+
+    # Also seed concept lattice with self-knowledge via GraphPatches
+    if concept_lattice is not None and config.get("claims"):
+        _seed_self_concepts(concept_lattice, config["claims"])
+
+
+def _seed_self_concepts(concept_lattice: ConceptLattice, claims_cfgs: list[dict]) -> None:
+    """Create GraphPatches from self-knowledge claims and consolidate into concept lattice."""
+    from .types.graph_patch import GraphPatch, PatchOperation
+    from .learning.concept_consolidator import ConceptConsolidator
+
+    patches = []
+    for claim_cfg in claims_cfgs:
+        patches.append(GraphPatch(
+            target="concept_lattice",
+            operations=[PatchOperation(
+                operation="upsert_concept_candidate",
+                target_id=f"concept:{claim_cfg['subject']}",
+                fields={
+                    "key": claim_cfg["subject"],
+                    "atom_kind": "entity",
+                    "state": "operational_atom",
+                    "predicate": claim_cfg["predicate"],
+                    "object_value": claim_cfg.get("object_value", ""),
+                    "confidence": claim_cfg.get("confidence", 0.95),
+                },
+                confidence=claim_cfg.get("confidence", 0.95),
+            )],
+            confidence=claim_cfg.get("confidence", 0.95),
+            reason=f"seed_self_knowledge:{claim_cfg.get('predicate', 'unknown')}",
+        ))
+    if patches:
+        consolidator = ConceptConsolidator(
+            concept_lattice,
+            persistent_store=getattr(concept_lattice, '_persistent_store', None),
+        )
+        consolidator.consolidate(patches)
 
 
 def process_input(
@@ -335,9 +411,10 @@ def process_input(
     # No hardcoded fallbacks or confidence threshold bypass.
     kind: ActionKind | None = None
     params: dict = {}
+    ap: ActionPlan | None = None
     decision: DecisionPacket | None = pipeline_result.decision_packet
     if decision is None and pipeline_result.semantic_event_graph:
-        decision_router = DecisionRouter()
+        decision_router = DecisionRouter(uol_mapper=pipeline._uol_mapper)
         decision = decision_router.run(
             graph=pipeline_result.semantic_event_graph,
             kernel=kernel,
@@ -350,10 +427,6 @@ def process_input(
             conversation_act=conversation_act,
             store=store,
         )
-
-    kind: ActionKind | None = None
-    params: dict = {}
-    ap: ActionPlan | None = None
     if decision:
         _action_kind_map = {
             "answer": ActionKind.ANSWER,
@@ -776,14 +849,24 @@ def main() -> None:
     store = Store(args.db)
     registry = Registry()
     op_registry = OperatorRegistry()
-    pipeline = Pipeline(store, registry)
+    persistent_store = PersistentLatticeStore(args.db)
+    concept_lattice = ConceptLattice(persistent_store=persistent_store)
+    construction_lattice = ConstructionLattice()
+    episodic_store = EpisodicTraceStore()
+    pipeline = Pipeline(
+        store, registry,
+        concept_lattice=concept_lattice,
+        construction_lattice=construction_lattice,
+        episodic_store=episodic_store,
+        auto_consolidate=True,
+    )
     online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-    inductor = Inductor(store, registry=registry)
+    inductor = Inductor(store, registry=registry, concept_lattice=concept_lattice)
     recursive_loop = RecursiveLoop(pipeline, store, online_learner, inductor)
 
     seed_registry(registry)
-    seed_self_state(store)
-    seed_causal_models(store)
+    seed_self_state(store, concept_lattice=concept_lattice)
+    seed_causal_models(store, concept_lattice=concept_lattice)
 
     for op_class in [
         AnswerOperator, AskOperator, RememberOperator, UpdateClaimOperator,

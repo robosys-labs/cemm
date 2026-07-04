@@ -142,12 +142,9 @@ class RecursiveLoop:
                 if remaining_steps <= 0:
                     break
 
-        if self._induction_turn_count % 10 == 0:
+        if self._induction_turn_count % 10 == 0 or kernel.memory.candidate_model_ids:
             self._run_induction(kernel)
         self._induction_turn_count += 1
-
-        if kernel.memory.candidate_model_ids:
-            self._run_induction(kernel)
 
         return kernel, internal_signals, actionable_signals
 
@@ -227,10 +224,9 @@ class RecursiveLoop:
         promoter = Promoter(self._store)
         evaluator = Evaluator(self._store)
         for model in candidates:
-            existing = self._store.conn.execute(
-                "SELECT id FROM eval_results WHERE model_id = ? LIMIT 1",
-                (model.id,),
-            ).fetchone()
+            from ..types.model import ModelStatus
+            existing_models = self._store.models.find_by_kind(model.kind.value, ModelStatus.ACTIVE.value)
+            existing = any(m.id == model.id for m in existing_models)
             if existing:
                 continue
             eval_set = evaluator.create_eval_set(

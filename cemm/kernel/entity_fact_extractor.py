@@ -57,6 +57,21 @@ _DEFAULT_RELATION_PREDICATES = {
 
 _BLOCKED_SUBJECTS = {"i", "me", "my", "you", "your", "he", "she", "it", "we", "they", "this", "that"}
 
+
+def _resolve_possessive_self(surface: str) -> tuple[str, str] | None:
+    """If surface is 'my <X>', return (predicate_slot, object) or None.
+
+    Handles patterns like 'my name is chibueze' → predicate 'user.name'.
+    Returns (slot_name, rest_of_text) or None.
+    """
+    surface_lower = surface.lower().strip()
+    if not surface_lower.startswith("my "):
+        return None
+    rest = surface_lower[3:].strip()
+    if not rest:
+        return None
+    return (rest, rest)
+
 _TOPIC_PRONOUNS = {"it", "that", "this", "he", "she", "they"}
 
 # v3.3: Contraction expansion for better surface pattern matching
@@ -534,15 +549,29 @@ class EntityFactExtractor:
                     if not subj:
                         break
                     obj = self._preserve_case(obj_raw, percept)
-                    candidates.append(EntityFactCandidate(
-                        subject_entity_id=subj.lower().replace(" ", "_"),
-                        predicate=predicate_name,
-                        object_value=obj.lower().replace(" ", "_"),
-                        evidence_span=percept.raw_text,
-                        confidence=0.7,
-                        trust=0.6,
-                        reason=f"surface_pattern:{predicate_name}",
-                    ))
+                    # Handle possessive self-subjects ("my name", "my age", etc.)
+                    # Route to user profile lane with user.{slot} predicate.
+                    if self._is_possessive_self(subj_raw):
+                        slot = subj_raw.lower().strip()[3:].strip().replace(" ", "_")
+                        candidates.append(EntityFactCandidate(
+                            subject_entity_id="user",
+                            predicate=f"user.{slot}" if slot else predicate_name,
+                            object_value=obj,
+                            evidence_span=percept.raw_text,
+                            confidence=0.7,
+                            trust=0.6,
+                            reason=f"surface_pattern:possessive_self:{slot or predicate_name}",
+                        ))
+                    else:
+                        candidates.append(EntityFactCandidate(
+                            subject_entity_id=subj.lower().replace(" ", "_"),
+                            predicate=predicate_name,
+                            object_value=obj.lower().replace(" ", "_"),
+                            evidence_span=percept.raw_text,
+                            confidence=0.7,
+                            trust=0.6,
+                            reason=f"surface_pattern:{predicate_name}",
+                        ))
                     if idx == 0:
                         parent_subject = subj
 
@@ -711,6 +740,10 @@ class EntityFactExtractor:
             # No valid topic — pronoun has no referent, skip
             return ""
         return surface
+
+    def _is_possessive_self(self, surface: str) -> bool:
+        """Check if surface is a self-possessive like 'my name', 'my age'."""
+        return surface.lower().strip().startswith("my ")
 
     def _resolve_ref(self, key: str, referents: dict[str, ReferentAtom]) -> ReferentAtom | None:
         if not key:

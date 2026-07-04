@@ -23,10 +23,23 @@ def _load_semantic_interpreter_words() -> dict:
 
 
 class Inductor:
-    def __init__(self, store: Store, feedback_threshold: int = 5, registry: Registry | None = None) -> None:
+    def __init__(
+        self,
+        store: Store,
+        feedback_threshold: int = 5,
+        registry: Registry | None = None,
+        concept_lattice: object = None,
+    ) -> None:
         self._store = store
         self._feedback_threshold = feedback_threshold
         self._registry = registry
+        self._induction_consolidator = None
+        if concept_lattice is not None:
+            from ..learning.concept_consolidator import ConceptConsolidator
+            self._induction_consolidator = ConceptConsolidator(
+                concept_lattice,
+                persistent_store=getattr(concept_lattice, '_persistent_store', None),
+            )
         words = _load_semantic_interpreter_words()
         self._causal_connectors = list(words.get("causal_connectors", []))
         self._causal_phrase_connectors = set(words.get("causal_phrase_connectors", []))
@@ -34,6 +47,31 @@ class Inductor:
 
     def set_threshold(self, value: int) -> None:
         self._feedback_threshold = value
+
+    def _put_model_and_emit_patch(self, model: Model) -> None:
+        """Write model to store and emit GraphPatch to concept lattice."""
+        self._store.models.put(model)
+        if self._induction_consolidator is not None:
+            from ..types.graph_patch import GraphPatch, PatchOperation
+            patch = GraphPatch(
+                target="concept_lattice",
+                operations=[PatchOperation(
+                    operation="custom",
+                    target_id=f"{model.kind.value}:{model.id}",
+                    fields={
+                        "kind": model.kind.value,
+                        "name": model.name,
+                        "description": model.description,
+                        "preconditions": list(getattr(model, 'preconditions', [])),
+                        "effects": list(getattr(model, 'effects', [])),
+                        "confidence": model.confidence,
+                    },
+                    confidence=model.confidence,
+                )],
+                confidence=model.confidence,
+                reason=f"induction:{model.kind.value}:{model.id}",
+            )
+            self._induction_consolidator.consolidate([patch])
 
     def maybe_induct(self, domain: str | None = None) -> list[Model]:
         candidates: list[Model] = []
@@ -109,7 +147,7 @@ class Inductor:
                 created_at=now,
                 updated_at=now,
             )
-            self._store.models.put(model)
+            self._put_model_and_emit_patch(model)
             candidates.append(model)
         return candidates
 
@@ -136,7 +174,7 @@ class Inductor:
                     created_at=time.time(),
                     updated_at=time.time(),
                 )
-                self._store.models.put(model)
+                self._put_model_and_emit_patch(model)
                 candidates.append(model)
         return candidates
 
@@ -161,7 +199,7 @@ class Inductor:
                 created_at=time.time(),
                 updated_at=time.time(),
             )
-            self._store.models.put(model)
+            self._put_model_and_emit_patch(model)
             candidates.append(model)
         return candidates
 
@@ -240,7 +278,7 @@ class Inductor:
             updated_at=now,
             permission=permission,
         )
-        self._store.models.put(model)
+        self._put_model_and_emit_patch(model)
         return model
 
     def _find_causal_patterns(self, domain: str | None = None) -> list[Model]:
@@ -327,7 +365,7 @@ class Inductor:
                     created_at=time.time(),
                     updated_at=time.time(),
                 )
-                self._store.models.put(model)
+                self._put_model_and_emit_patch(model)
                 candidates.append(model)
                 if self._registry is not None:
                     existing_entry = self._registry.get_uol_semantic(predicate)
@@ -398,7 +436,7 @@ class Inductor:
                 created_at=now,
                 updated_at=now,
             )
-            self._store.models.put(model)
+            self._put_model_and_emit_patch(model)
             candidates.append(model)
 
         return candidates
@@ -474,7 +512,7 @@ class Inductor:
                 created_at=now,
                 updated_at=now,
             )
-            self._store.models.put(model)
+            self._put_model_and_emit_patch(model)
             candidates.append(model)
 
         return candidates

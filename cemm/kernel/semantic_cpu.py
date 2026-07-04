@@ -16,6 +16,7 @@ from ..memory.concept_lattice import ConceptLattice
 from ..memory.construction_lattice import ConstructionLattice
 from ..memory.episodic_trace_store import EpisodicTraceStore
 from ..types.meaning_percept import MeaningPerceptPacket, RetrievalPlan, SafetyFrame, SituationFrame
+from ..types.uol_graph import UOLGraph
 from .act_resolution_planner import ActResolutionPlan, ActResolutionPlanner
 from .affordance_predictor import AffordancePredictor
 from .meaning_graph_builder import MeaningGraphBuilder
@@ -28,6 +29,7 @@ class SemanticCycleResult:
     percept: MeaningPerceptPacket
     plan: ActResolutionPlan
     consolidation: ConsolidationResult | None = None
+    uol_graph: UOLGraph | None = None
 
 
 class SemanticCPU:
@@ -64,13 +66,18 @@ class SemanticCPU:
         signal: Any,
         kernel: Any,
         *,
+        percept: MeaningPerceptPacket | None = None,
         retrieval_plan: RetrievalPlan | None = None,
         safety_frame: SafetyFrame | None = None,
         situation: SituationFrame | None = None,
     ) -> SemanticCycleResult:
-        percept = self.perceptor.perceive(signal, kernel)
-        if percept.uol_graph is not None:
-            percept.graph_patch_candidates = self.patch_extractor.extract(percept.uol_graph)
+        if percept is None:
+            percept = self.perceptor.perceive(signal, kernel)
+        uol_graph: UOLGraph | None = getattr(percept, "uol_graph", None)
+        if uol_graph is None:
+            uol_graph = self.graph_builder.build(percept)
+        if uol_graph is not None:
+            percept.graph_patch_candidates = list(self.patch_extractor.extract(uol_graph))
         plan = self.planner.plan(
             None,
             situation=situation,
@@ -79,11 +86,16 @@ class SemanticCPU:
             meaning_percept=percept,
         )
         consolidation = None
-        if self.auto_consolidate and percept.uol_graph is not None:
+        if self.auto_consolidate and uol_graph is not None:
             consolidation = self.consolidator.consolidate(
                 list(percept.graph_patch_candidates),
-                source_graph=percept.uol_graph,
+                source_graph=uol_graph,
             )
-        return SemanticCycleResult(percept=percept, plan=plan, consolidation=consolidation)
+        return SemanticCycleResult(
+            percept=percept,
+            plan=plan,
+            consolidation=consolidation,
+            uol_graph=uol_graph,
+        )
 
 __all__ = ["SemanticCPU", "SemanticCycleResult"]

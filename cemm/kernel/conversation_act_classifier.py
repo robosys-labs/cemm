@@ -96,6 +96,15 @@ def _phrase_matches(alias: str, text: str) -> bool:
     for i in range(0, len(text_tokens) - window + 1):
         if text_tokens[i:i + window] == alias_tokens:
             return True
+
+    # Fuzzy fallback: if text has one extra word vs alias, try removing
+    # each word to handle cases like "what else can you do" matching "what can you do".
+    if len(text_tokens) == len(alias_tokens) + 1:
+        for skip in range(len(text_tokens)):
+            trimmed = text_tokens[:skip] + text_tokens[skip + 1:]
+            if trimmed == alias_tokens:
+                return True
+
     return False
 
 
@@ -607,6 +616,17 @@ class ConversationActClassifier:
                 polarity="negative",
                 intensity=0.7,
             ))
+
+        # ── Detect session_exit (short exit requests like "go away") ──
+        if not acts and word_count <= 4:
+            text_lower = content_lower.strip()
+            exit_phrases = {"go away", "leave", "get lost", "scram", "buzz off", "i'm done", "im done", "that's all", "thats all"}
+            if text_lower in exit_phrases:
+                acts.append(ConversationAct(
+                    act_type="exit",
+                    confidence=0.7,
+                    intensity=0.9,
+                ))
 
         # ── Detect chat_mode_statement (short non-command, non-question) ──
         if not acts and word_count <= 4 and not content_lower.endswith("?"):

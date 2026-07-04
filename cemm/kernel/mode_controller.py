@@ -10,15 +10,11 @@ class ModeController:
     COHERENCE_LOW = 0.4
     ERROR_RATE_HIGH = 0.3
 
-    def __init__(self) -> None:
-        self._last_mode: str | None = None
-
     def evaluate(self, self_view: SelfView) -> str | None:
         target = self._determine_mode(self_view)
         current = self_view.mode
 
         if target != current:
-            self._last_mode = current
             return target
         return None
 
@@ -46,14 +42,9 @@ class ModeController:
                 selected_model_ids=[],
                 action_id="",
                 operator_model_id="mode_controller",
-                causal_inference_used=False,
-                frame_rules_applied=True,
-                synthesis_verified=True,
-                synthesis_verification_type="hard",
                 permission="allowed",
                 confidence=0.9,
                 cost_ms=0.5,
-                fallback_used=False,
             ),
             created_at=time.time(),
         )

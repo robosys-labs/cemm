@@ -15,14 +15,13 @@ from ..types.permission import Permission
 from ..store.store import Store
 from ..store.artifact_store import ArtifactStore
 from ..registry import Registry
-from ..confidence.scoring import score_action
 from .context_kernel_builder import ContextKernelBuilder
 from .text_normalizer import TextNormalizer
 from .entity_resolver import EntityResolver
 from .frame_engine import FrameEngine
 from .pragmatic_interpreter import interpret_signal, update_user_affect, update_conversation_dynamics
 from ..registry.uol_mapper import UOLMapper
-from ..kernel.teaching_interpreter import TeachingInterpreter
+from .teaching_interpreter import TeachingInterpreter
 from ..learning.lexeme_memory import LexemeMemory
 from .context_inference import ContextInferenceEngine
 from .semantic_interpreter import SemanticInterpreter
@@ -45,9 +44,14 @@ from .language_detection import detect_and_get_adapter
 from .promotion_gate import PromotionGate
 from ..types.conversation_act import ConversationActPacket
 from ..types.meaning_percept import MeaningPerceptPacket, SituationFrame, SafetyFrame, RetrievalPlan
+from ..types.uol_graph import UOLGraph
 from ..causal.inference import CausalInference
 from ..retrieval.ranker import Ranker
 from ..retrieval.retrieval_executor import RetrievalExecutor, RetrievalExecutionResult
+from .semantic_cpu import SemanticCPU
+from ..memory.concept_lattice import ConceptLattice
+from ..memory.construction_lattice import ConstructionLattice
+from ..memory.episodic_trace_store import EpisodicTraceStore
 
 
 @dataclass
@@ -77,6 +81,7 @@ class PipelineResult:
     reaction_signal: ReactionSignal | None = None
     response_plan: ResponsePlan | None = None
     error_attribution: ErrorAttributionResult | None = None
+    uol_graph: UOLGraph | None = None
 
 
 class Pipeline:
@@ -84,6 +89,10 @@ class Pipeline:
         self,
         store: Store,
         registry: Registry,
+        concept_lattice: ConceptLattice | None = None,
+        construction_lattice: ConstructionLattice | None = None,
+        episodic_store: EpisodicTraceStore | None = None,
+        auto_consolidate: bool = False,
     ) -> None:
         self._store = store
         self._registry = registry
@@ -134,6 +143,18 @@ class Pipeline:
         self._retrieval_executor = RetrievalExecutor(store)
         self._turn_counts: dict[str, int] = {}
         self._session_state: dict[str, dict] = {}
+        # v4.1: SemanticCPU orchestrator with graph builder
+        self._semantic_cpu: SemanticCPU | None = None
+        self._concept_lattice = concept_lattice
+        self._construction_lattice = construction_lattice
+        self._episodic_store = episodic_store or EpisodicTraceStore()
+        if concept_lattice is not None:
+            self._semantic_cpu = SemanticCPU(
+                concept_lattice=concept_lattice,
+                construction_lattice=construction_lattice,
+                episodic_store=self._episodic_store,
+                auto_consolidate=auto_consolidate,
+            )
 
     @property
     def semantic_model_store(self) -> SemanticModelStore:
@@ -239,6 +260,12 @@ class Pipeline:
         self._meaning_perceptor._language = lang_adapter
         meaning_percept = self._meaning_perceptor.perceive(signal, kernel)
 
+        # v4.1: Build UOLGraph from MeaningPerceptPacket via SemanticCPU
+        uol_graph: UOLGraph | None = None
+        if self._semantic_cpu is not None and self._semantic_cpu.graph_builder is not None:
+            uol_graph = self._semantic_cpu.graph_builder.build(meaning_percept)
+            meaning_percept.uol_graph = uol_graph
+
         # ── SituationFrameBuilder (v3.1 step 3b) ─────────────────────
         # Delegates to FrameBinder for atom-based role binding with scored
         # role assignments and schema outcomes.
@@ -289,6 +316,35 @@ class Pipeline:
                 if key not in existing_keys:
                     semantic_event_graph.claim_candidates.append(fc.to_claim_dict())
                     existing_keys.add(key)
+
+        # v4.1: Convert EntityFactCandidates to GraphPatch objects on UOLGraph
+        if fact_candidates and uol_graph is not None:
+            from ..types.graph_patch import GraphPatch, PatchOperation
+            fact_ops = []
+            for fc in fact_candidates:
+                fact_ops.append(PatchOperation(
+                    operation="upsert_relation_candidate",
+                    target_id=f"entity:{fc.subject_entity_id}",
+                    fields={
+                        "subject": fc.subject_entity_id,
+                        "predicate": fc.predicate,
+                        "object_value": fc.object_value,
+                        "object_entity_id": fc.object_entity_id,
+                        "domain": fc.domain,
+                        "source": fc.source,
+                        "evidence_span": fc.evidence_span,
+                    },
+                    confidence=fc.confidence,
+                    reason=fc.reason,
+                ))
+            if fact_ops:
+                uol_graph.add_patch_candidate(GraphPatch(
+                    source_graph_id=uol_graph.id,
+                    target="concept_lattice",
+                    operations=fact_ops,
+                    confidence=max(op.confidence for op in fact_ops),
+                    reason="entity_fact_candidates",
+                ))
         semantics = interpret_signal(signal, kernel, self._store, main_registry=self._registry)
         uol_atoms: list | None = None
         if semantics is not None:
@@ -530,6 +586,7 @@ class Pipeline:
             reaction_signal=reaction_signal,
             response_plan=response_plan,
             error_attribution=error_attribution,
+            uol_graph=uol_graph,
         )
         # Validate runtime packets against schemas
         from ..kernel.packet_validator import validate_packet
@@ -551,6 +608,15 @@ class Pipeline:
             if result.kernel is not None:
                 result.kernel.self_view.recent_error_rate = min(
                     1.0, result.kernel.self_view.recent_error_rate + 0.1
+                )
+
+        # v4.1: SemanticCPU consolidation at end of turn
+        if uol_graph is not None and self._semantic_cpu is not None:
+            patches = self._semantic_cpu.patch_extractor.extract(uol_graph)
+            if self._semantic_cpu.auto_consolidate:
+                self._semantic_cpu.consolidator.consolidate(
+                    patches,
+                    source_graph=uol_graph,
                 )
 
         self._session_state[signal.context_id] = {
@@ -590,6 +656,6 @@ class Pipeline:
         if elapsed > kernel.budget.latency_target_ms:
             working_ids = kernel.memory.working_signal_ids
             if len(working_ids) > kernel.budget.max_entities:
-                kernel.memory.working_signal_ids = working_ids[-kernel.budget.max_entities:]
+                kernel.memory.working_signal_ids = working_ids[:kernel.budget.max_entities]
             if len(kernel.world.active_claim_ids) > kernel.budget.max_claims:
-                kernel.world.active_claim_ids = kernel.world.active_claim_ids[-kernel.budget.max_claims:]
+                kernel.world.active_claim_ids = kernel.world.active_claim_ids[:kernel.budget.max_claims]

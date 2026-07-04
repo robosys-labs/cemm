@@ -933,7 +933,7 @@ class DecisionRouter:
                 if frame_key in atom_frame_keys:
                     return intent
 
-        return "general_conversation"
+        return "open_question"
 
     def _detect_command_intent(
         self,

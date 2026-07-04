@@ -14,13 +14,10 @@ Use these files as the active implementation contract, in this order:
 4. `newarch/full_cemm_learning_brain_missing_pieces.md`
 5. `newarch/missing_runtime_implementation_plan.md`
 6. `newarch/3.3-uol-graph-architecture.md`
-7. `newarch/core_loop_update_manifest.md`
-8. `cemm/tests/test_acceptance.py`
-9. `docs/archive/cemm_pipeline.md`
-10. `docs/archive/cemm_training_architecture.md`
+7. `cemm/tests/test_acceptance.py`
 
-`docs/archive/architecture_v3.md` is useful background only when it agrees with
-`newarch/consolidated_architecture.md`.
+Superseded design docs are archived at `docs/archive/newarch_superseded/`.
+Use them as background reference only — they are not active architecture contracts.
 
 Older generated artifacts, patch files, archived docs, bootstrap scripts,
 runtime databases, logs, `__pycache__`, JSONL exports, and files under old

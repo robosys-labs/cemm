@@ -5,7 +5,7 @@
   },
   "uol_semantics": [
     {"canonical_key": "greeting", "aliases": ["hello", "hi", "hey", "greetings", "howdy", "sup", "morning", "afternoon", "evening"], "act_type": "greeting", "polarity": "positive", "intensity": 0.6},
-    {"canonical_key": "session_exit", "aliases": ["exit", "quit", "bye", "goodbye", "stop", "done"], "act_type": "exit", "intensity": 0.9},
+    {"canonical_key": "session_exit", "aliases": ["exit", "quit", "bye", "goodbye", "stop", "done", "go away", "leave", "get lost", "scram", "buzz off"], "act_type": "exit", "intensity": 0.9},
     {"canonical_key": "command_remember", "aliases": ["remember", "save", "store", "note"], "act_type": "explicit_remember", "intensity": 0.8},
     {"canonical_key": "command_reflect", "aliases": ["reflect", "think", "ponder", "contemplate"], "act_type": "unknown", "intensity": 0.6},
     {"canonical_key": "command_retrieve", "aliases": ["retrieve", "search", "recall", "find", "lookup"], "act_type": "evidence_query", "intensity": 0.8},
@@ -134,7 +134,8 @@
     "meta_question_intent", "teachability_complaint", "creative_request", "chat_mode_statement",
     "safety_response", "safety_deescalation", "social_conflict_clarify", "reciprocal_phatic_checkin", "retrospective_repair",
     "session_exit", "teaching_instruction_query", "self_category_query", "concept_query",
-    "self_category", "teaching_instruction", "concept_unknown", "teaching_protocol"
+    "self_category", "teaching_instruction", "concept_unknown", "teaching_protocol",
+    "user_name_unknown", "user_identity_unknown", "self_query_unknown"
   ],
   "act_type_metadata": {
     "greeting": {"response_mode": "social_response", "requires_evidence": false, "allows_memory_write": false, "is_social": true, "simple_answer": true, "default_template": "greeting"},
