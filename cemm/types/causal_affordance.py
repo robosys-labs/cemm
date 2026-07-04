@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .predicate_schema import GraphPattern, GraphPatchTemplate
+
 
 @dataclass
 class PortBindingPattern:
@@ -14,9 +16,9 @@ class PortBindingPattern:
 @dataclass
 class CausalAffordance:
     affordance_id: str
-    trigger_pattern: Any = None
+    trigger_pattern: GraphPattern | None = None
     required_bindings: list[PortBindingPattern] = field(default_factory=list)
-    predicted_effect: Any = None
+    predicted_effect: GraphPatchTemplate | None = None
     effect_type: str = "state_change"
     source_support: list[Any] = field(default_factory=list)
     counterexamples: list[Any] = field(default_factory=list)
