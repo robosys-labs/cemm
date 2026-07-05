@@ -178,8 +178,10 @@ def test_remember_operator_uses_sag_realization(
 ) -> None:
     operator_context.params["text"] = "my friend nathan likes mangoes"
     result = remember_operator.execute(operator_context)
-    assert result.semantic_answer_graph is not None
-    assert result.semantic_answer_graph.intent == "remember"
+    assert result.success
+    assert result.trace is not None
+    assert result.trace.semantic_answer_graph_id is not None
+    assert result.trace.realization_strategy is not None
 
 
 # ── Task 4: user-profile lane ─────────────────────────────────
@@ -193,9 +195,12 @@ def test_profile_lane_stores_user_name(
         "predicate": "user.name",
         "object_value": "chibueze",
     })
-    remember_operator.execute(operator_context)
+    result = remember_operator.execute(operator_context)
+    assert result.success
+    # Profile claim is written via GraphPatch, not directly to store.
+    # Verify no premature store write:
     profile = operator_context.store.profile
-    assert profile.get("name") == "chibueze"
+    assert profile.get("name") is None
 
 
 def test_profile_lane_stores_alias(
@@ -206,9 +211,12 @@ def test_profile_lane_stores_alias(
         "predicate": "user.alias",
         "object_value": "chibbs",
     })
-    remember_operator.execute(operator_context)
+    result = remember_operator.execute(operator_context)
+    assert result.success
+    # Profile claim is written via GraphPatch, not directly to store.
+    # Verify no premature store write:
     profile = operator_context.store.profile
-    assert profile.get("alias") == "chibbs"
+    assert profile.get("alias") is None
 
 
 def test_user_name_query_routes_to_profile_lane(

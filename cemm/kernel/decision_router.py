@@ -27,6 +27,15 @@ from ..registry.act_type_policy import (
     QUESTION_FRAMES as _QUESTION_FRAMES,
 )
 
+import warnings as _warnings
+
+_warnings.warn(
+    "DecisionRouter is a legacy component superseded by "
+    "ObligationScheduler + SemanticProgram in the v4.2 architecture. "
+    "This module will be removed in a future version.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 _PURE_ACKNOWLEDGMENT_PHRASES_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
 

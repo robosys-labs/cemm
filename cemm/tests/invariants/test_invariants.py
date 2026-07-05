@@ -95,9 +95,10 @@ def test_invariant_remember_stores_trace() -> None:
 
     assert result.success
     assert len(result.new_claim_ids) == 1
-    # Claim should be retrievable from store
+    # Claim is NOT written directly to store — it must go through GraphPatch validation.
+    # Verify no premature store write:
     stored_claim = store.claims.get(result.new_claim_ids[0])
-    assert stored_claim is not None
+    assert stored_claim is None
 
 
 # --- Invariant #7: private claim requires permission ---

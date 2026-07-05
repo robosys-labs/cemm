@@ -74,8 +74,6 @@ def test_remember_operator_stores_claim() -> None:
     assert len(result.new_claim_ids) == 1
     cid = result.new_claim_ids[0]
 
+    # Claim is NOT written directly to store — must go through GraphPatch validation → LegacyClaimAdapter
     stored = store.claims.get(cid)
-    assert stored is not None
-    assert stored.subject_entity_id == "entity_user"
-    assert stored.predicate == "favorite_database"
-    assert stored.object_value == "Postgres"
+    assert stored is None

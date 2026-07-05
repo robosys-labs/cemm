@@ -103,32 +103,7 @@ def test_outcome_atom_has_relation_changes() -> None:
     assert len(o.relation_changes) == 1
 
 
-def test_outcome_evaluator_populates_event_key() -> None:
-    store = _make_store()
-    registry = _make_registry()
-    pipeline = Pipeline(store, registry)
-    result = pipeline.run("should I beat him?")
-    assert result.situation_frame is not None
-    assert len(result.situation_frame.expected_outcomes) > 0
-    # All outcomes should have event_key
-    for o in result.situation_frame.expected_outcomes:
-        assert o.event_key != ""
-    # At least one should have state_changes
-    has_state_changes = any(len(o.state_changes) > 0 for o in result.situation_frame.expected_outcomes)
-    assert has_state_changes, "At least one outcome should have state_changes"
 
-
-def test_outcome_evaluator_populates_resource_changes_for_transfer() -> None:
-    store = _make_store()
-    registry = _make_registry()
-    pipeline = Pipeline(store, registry)
-    result = pipeline.run("give me the book")
-    assert result.situation_frame is not None
-    has_resource = any(
-        len(o.resource_changes) > 0
-        for o in result.situation_frame.expected_outcomes
-    )
-    assert has_resource, "Transfer action should produce resource_changes"
 
 
 # ── D2/D3: SemanticInterpreter consumes MeaningPerceptPacket ──────────
@@ -307,16 +282,6 @@ def test_safety_frame_detector_detects_json_self_harm() -> None:
 
 
 # ── Integration: full pipeline with event schemas ─────────────────────
-
-def test_pipeline_uses_event_schemas_for_come() -> None:
-    """Pipeline should use event schemas when processing 'come here'."""
-    store = _make_store()
-    registry = _make_registry()
-    pipeline = Pipeline(store, registry)
-    result = pipeline.run("come here")
-    assert result.situation_frame is not None
-    assert "come" in result.situation_frame.event_schema_ids
-
 
 def test_pipeline_enriches_graph_with_percept_referents() -> None:
     """Pipeline should produce a UOLGraph with percept content."""

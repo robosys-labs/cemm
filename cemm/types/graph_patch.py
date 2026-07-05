@@ -27,6 +27,7 @@ PATCH_OPERATION_TYPES = frozenset({
     "discard_trace",
     "merge_concepts",
     "mark_counterexample",
+    "update_claim_status",
     "custom",
 })
 

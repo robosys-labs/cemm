@@ -11,7 +11,7 @@ from ..types.graph_patch import GraphPatch
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.entity import Entity, EntityType
 from ..types.trace import Trace
-from ..types.semantic_answer_graph import SemanticAnswerGraph
+from types import SimpleNamespace
 from ..synthesis.realizer import RealizationPipeline
 from ..synthesis.template import TemplateStrategy
 from ..kernel.memory_update_planner import MemoryUpdateBatch, MemoryUpdateTask
@@ -189,15 +189,26 @@ class RememberOperator(BaseOperator):
             permission=ctx.kernel.permission,
         )
         ctx.store.signals.put(result_signal)
-        answer_graph = SemanticAnswerGraph(
+        contract = SimpleNamespace(
             id=uuid.uuid4().hex[:16],
             intent="remember",
             source_signal_ids=[ctx.input_signal.id],
             context_id=ctx.kernel.id,
             selected_claim_ids=[claim.id],
+            selected_model_ids=[],
+            entity_refs=[],
             confidence=0.7,
+            uncertainty_reasons=[],
+            permission_scope="public",
+            verification=SimpleNamespace(
+                supported=False,
+                verification_type="none",
+                confidence=0.0,
+                unsupported_spans=[],
+                uncertainty_reason="",
+            ),
         )
-        result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+        result = RealizationPipeline().run(contract, ctx.kernel, ctx.store, ctx.registry)
         language = TemplateStrategy._detect_language(ctx.kernel)
         fallback_template = TemplateStrategy._load_template("remember_confirm", language)
         fallback_output = TemplateStrategy._apply(fallback_template, {})
@@ -218,7 +229,7 @@ class RememberOperator(BaseOperator):
             memory_packet_id=ctx.memory_packet_id,
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
-            semantic_answer_graph_id=answer_graph.id,
+            semantic_answer_graph_id=contract.id,
             realization_strategy=result.strategy,
             realization_verified=result.verified,
             realization_details={
@@ -234,7 +245,7 @@ class RememberOperator(BaseOperator):
             result_signal=result_signal,
             new_claim_ids=[claim.id],
             cost_ms=cost_ms,
-            semantic_answer_graph=answer_graph,
+            semantic_answer_graph=None,
             graph_patches=patches,
         )
 
@@ -361,15 +372,26 @@ class RememberOperator(BaseOperator):
         )
         ctx.store.signals.put(result_signal)
 
-        answer_graph = SemanticAnswerGraph(
+        contract = SimpleNamespace(
             id=uuid.uuid4().hex[:16],
             intent="remember",
             source_signal_ids=[ctx.input_signal.id],
             context_id=ctx.kernel.id,
             selected_claim_ids=new_claim_ids,
+            selected_model_ids=[],
+            entity_refs=[],
             confidence=0.7,
+            uncertainty_reasons=[],
+            permission_scope="public",
+            verification=SimpleNamespace(
+                supported=False,
+                verification_type="none",
+                confidence=0.0,
+                unsupported_spans=[],
+                uncertainty_reason="",
+            ),
         )
-        result = RealizationPipeline().run(answer_graph, ctx.kernel, ctx.store, ctx.registry)
+        result = RealizationPipeline().run(contract, ctx.kernel, ctx.store, ctx.registry)
         language = TemplateStrategy._detect_language(ctx.kernel)
         fallback_template = TemplateStrategy._load_template("remember_confirm", language)
         fallback_output = TemplateStrategy._apply(fallback_template, {})
@@ -390,7 +412,7 @@ class RememberOperator(BaseOperator):
             memory_packet_id=ctx.memory_packet_id,
             inference_packet_id=ctx.inference_packet_id,
             semantic_event_graph_id=ctx.semantic_event_graph_id,
-            semantic_answer_graph_id=answer_graph.id,
+            semantic_answer_graph_id=contract.id,
             realization_strategy=result.strategy,
             realization_verified=result.verified,
             realization_details={
@@ -407,6 +429,6 @@ class RememberOperator(BaseOperator):
             result_signal=result_signal,
             new_claim_ids=new_claim_ids,
             cost_ms=cost_ms,
-            semantic_answer_graph=answer_graph,
+            semantic_answer_graph=None,
             graph_patches=patches,
         )

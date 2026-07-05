@@ -50,7 +50,6 @@ class ClaimWriter:
         # The patch carries the learning signal through the PatchPipeline
         # validation barrier. If the patch is rejected, the claim remains
         # in the store flagged for review.
-        self._store.claims.put(claim)
         patch = self._build_patch(claim)
         return claim, patch
 
@@ -85,7 +84,6 @@ class ClaimWriter:
                 updated_at=now,
                 permission=permission,
             )
-            self._store.claims.put(claim)
             claims.append(claim)
             patches.append(self._build_patch(claim))
         return claims, patches
@@ -114,14 +112,13 @@ class ClaimWriter:
             updated_at=now,
             permission=permission,
         )
-        self._store.claims.put(claim)
         patch = self._build_patch(claim)
         return claim, patch
 
     def _build_patch(
         self,
         claim: Claim,
-        operation: str = "custom:upsert_claim",
+        operation: str = "upsert_relation_candidate",
     ) -> GraphPatch:
         fields = {
             "claim_id": claim.id,

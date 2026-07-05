@@ -96,10 +96,97 @@ def test_runtime_accepts_existing_percept() -> None:
     assert second.percept is first.percept
 
 
-def test_runtime_exposes_backward_compat_attributes() -> None:
+def test_runtime_exposes_core_components() -> None:
     runtime = SemanticKernelRuntime()
     assert runtime.graph_builder is not None
     assert runtime.perceptor is not None
     assert runtime.planner is not None
     assert runtime.patch_extractor is not None
     assert runtime.consolidator is not None
+    assert runtime.program_compiler is not None
+    assert runtime.obligation_scheduler is not None
+    assert runtime.teaching_frame_manager is not None
+    assert runtime.relation_frame_compiler is not None
+    assert runtime.relation_algebra is not None
+    assert runtime.predicate_schema_store is not None
+    assert runtime.query_engine is not None
+    assert runtime.realizer is not None
+
+
+def test_run_semantic_stack_returns_cycle_result() -> None:
+    runtime = SemanticKernelRuntime()
+    sig = _signal("hello world")
+    kernel = _kernel()
+    full = runtime.run_turn(sig, kernel)
+    result = runtime.run_semantic_stack(
+        sig, kernel,
+        uol_graph=full.uol_graph,
+        percept=full.percept,
+        working_set=full.working_set,
+    )
+    assert isinstance(result, RuntimeCycleResult)
+    assert result.uol_graph is full.uol_graph
+    assert result.percept is full.percept
+    assert result.working_set is full.working_set
+
+
+def test_run_semantic_stack_populates_v42_fields() -> None:
+    runtime = SemanticKernelRuntime()
+    sig = _signal("what is a dog?")
+    kernel = _kernel()
+    full = runtime.run_turn(sig, kernel)
+    result = runtime.run_semantic_stack(
+        sig, kernel,
+        uol_graph=full.uol_graph,
+        percept=full.percept,
+        working_set=full.working_set,
+    )
+    assert result.semantic_program is not None
+    assert result.obligation_frame is not None
+    assert isinstance(result.relation_frames, list)
+
+
+def test_run_semantic_stack_no_double_perception() -> None:
+    runtime = SemanticKernelRuntime()
+    sig = _signal("hello")
+    kernel = _kernel()
+    full = runtime.run_turn(sig, kernel)
+    percept = full.percept
+    result = runtime.run_semantic_stack(
+        sig, kernel,
+        uol_graph=full.uol_graph,
+        percept=percept,
+        working_set=full.working_set,
+    )
+    assert result.percept is percept
+    assert result.consolidation == []
+    assert result.patch_candidates == []
+
+
+def test_run_semantic_stack_attends_when_no_working_set() -> None:
+    runtime = SemanticKernelRuntime()
+    sig = _signal("hello world")
+    kernel = _kernel()
+    full = runtime.run_turn(sig, kernel)
+    result = runtime.run_semantic_stack(
+        sig, kernel,
+        uol_graph=full.uol_graph,
+        percept=full.percept,
+    )
+    assert result.working_set is not None
+
+
+def test_run_semantic_stack_produces_realized_output() -> None:
+    runtime = SemanticKernelRuntime()
+    sig = _signal("what is a dog?")
+    kernel = _kernel()
+    full = runtime.run_turn(sig, kernel)
+    result = runtime.run_semantic_stack(
+        sig, kernel,
+        uol_graph=full.uol_graph,
+        percept=full.percept,
+        working_set=full.working_set,
+    )
+    if result.realization_contract is not None:
+        assert isinstance(result.realized_output, str)
+        assert len(result.realized_output) > 0

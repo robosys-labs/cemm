@@ -19,3 +19,10 @@ class RuntimeCycleResult:
     realized_output: str = ""
     diagnostics: Any | None = None
     cost_ms: float = 0.0
+    # v4.2 first-class outputs
+    semantic_program: Any | None = None
+    obligation_frame: Any | None = None
+    relation_frames: list[Any] = field(default_factory=list)
+    semantic_query: Any | None = None
+    answer_binding: Any | None = None
+    realization_contract: Any | None = None

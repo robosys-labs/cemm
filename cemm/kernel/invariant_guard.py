@@ -190,3 +190,54 @@ class InvariantGuard:
                     cls.errors.append(f"Temporary frustration persisted as stable identity in claim {claim.id}")
                     return False
         return True
+
+    @classmethod
+    def check_no_direct_claim_write_from_operator(cls, writer_module: str) -> bool:
+        if "store.claims.put" in writer_module and "claim_writer" not in writer_module:
+            cls.errors.append("Direct store.claims.put call outside claim_writer")
+            return False
+        return True
+
+    @classmethod
+    def check_no_realization_without_contract(cls, has_contract: bool, output_text: str) -> bool:
+        if output_text and not has_contract:
+            cls.errors.append("Realization produced without RealizationContract")
+            return False
+        return True
+
+    @classmethod
+    def check_no_decision_without_uol_graph(cls, has_graph: bool) -> bool:
+        if not has_graph:
+            cls.errors.append("Decision made without UOLGraph")
+            return False
+        return True
+
+    @classmethod
+    def check_no_patch_commit_without_validation(cls, has_validation: bool) -> bool:
+        if not has_validation:
+            cls.errors.append("Patch committed without PatchValidationResult")
+            return False
+        return True
+
+    @classmethod
+    def check_no_social_over_content(
+        cls,
+        entry_kind: str,
+        child_kinds: list[str],
+    ) -> bool:
+        content_kinds = {"question", "correction", "repair", "teaching", "assertion", "command", "safety"}
+        if entry_kind in ("social", "creative", "unknown"):
+            for child in child_kinds:
+                if child in content_kinds:
+                    cls.errors.append(
+                        f"Social wrapper '{entry_kind}' selected over content instruction '{child}'"
+                    )
+                    return False
+        return True
+
+    @classmethod
+    def check_no_custom_upsert_claim_outside_adapter(cls, operation: str) -> bool:
+        if operation == "custom:upsert_claim":
+            cls.errors.append(f"custom:upsert_claim used outside legacy adapter: {operation}")
+            return False
+        return True

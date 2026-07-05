@@ -368,11 +368,22 @@ class MeaningPerceptor:
             return fallback_tokens, fallback_tokens, [], []
 
         canonical = getattr(normalized, "canonical_form", "") or ""
-        normalized_tokens = self._language.tokenize(canonical) if canonical else fallback_tokens
+        canonical_tokens = self._language.tokenize(canonical) if canonical else fallback_tokens
         surface_features = getattr(normalized, "surface_features", {}) or {}
         unknown_tokens = [str(t) for t in surface_features.get("unknown_tokens", []) if str(t).strip()]
         normalized_forms = [str(f) for f in getattr(normalized, "normalized_forms", [])]
-        return normalized_tokens, normalized_tokens, normalized_forms, unknown_tokens
+
+        # Pick the shortest normalized form — this naturally collapses
+        # "hiii" → "hi", "heyyy" → "hey", "noooo" → "no" etc.
+        best_tokens = canonical_tokens
+        for form in normalized_forms:
+            form_tokens = self._language.tokenize(form) if form else []
+            if not form_tokens or form_tokens == best_tokens:
+                continue
+            if len(form_tokens) < len(best_tokens):
+                best_tokens = form_tokens
+
+        return best_tokens, canonical_tokens, normalized_forms, unknown_tokens
 
     def _surface_spans(self, raw_text: str, tokens: list[str]) -> list[SurfaceSpan]:
         spans: list[SurfaceSpan] = []
@@ -1005,6 +1016,10 @@ class MeaningPerceptor:
             return "user_state_report"
         if token_set & {"hi", "hello", "hey", "hellooo"}:
             return "greeting"
+        _greeting_forms = {"hi", "hello", "hey", "hellooo"}
+        for form in packet.normalized_forms:
+            if set(self._language.tokenize(form)) & _greeting_forms:
+                return "greeting"
         if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right", "good"}:
             return "acknowledgment"
         return "statement"

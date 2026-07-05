@@ -1,0 +1,41 @@
+"""ObligationFrame — the output of the SemanticObligationScheduler.
+
+An ObligationFrame is the authoritative scheduling decision for one turn.
+It specifies what the runtime must do (obligation_kind), how to respond
+(response_mode), what evidence is needed (evidence_policy), what memory
+writes are allowed (write_policy), and which slots must be filled.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+
+OBLIGATION_KINDS = frozenset({
+    "answer_concept",
+    "answer_relation",
+    "answer_self_model",
+    "answer_user_profile",
+    "continue_teaching",
+    "store_patch",
+    "ask_clarification",
+    "abstain_policy",
+    "repair",
+    "social_reply",
+    "exit",
+})
+
+
+@dataclass
+class ObligationFrame:
+    primary_instruction_id: str
+    obligation_kind: str
+    response_mode: str
+    evidence_policy: str = "none"
+    write_policy: str = "none"
+    required_slots: list[str] = field(default_factory=list)
+    blocked_by: list[str] = field(default_factory=list)
+    child_obligations: list[str] = field(default_factory=list)
+    suppressed_obligations: list[dict[str, Any]] = field(default_factory=list)
+    confidence: float = 0.5

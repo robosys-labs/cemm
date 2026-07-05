@@ -46,7 +46,7 @@ class MemoryPatchCompiler:
             "trust": trust,
         }
         op = PatchOperation(
-            operation="custom:upsert_claim",
+            operation="upsert_relation_candidate",
             target_id=f"{subject_entity_id}:{predicate}",
             fields=fields,
             confidence=confidence,
@@ -72,7 +72,7 @@ class MemoryPatchCompiler:
     ) -> GraphPatch:
         """Compile an already-constructed Claim back into a GraphPatch."""
         op = PatchOperation(
-            operation="custom:upsert_claim",
+            operation="upsert_relation_candidate",
             target_id=claim.id,
             fields={
                 "claim_id": claim.id,

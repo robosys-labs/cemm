@@ -1,10 +1,11 @@
 from __future__ import annotations
+from types import SimpleNamespace
 from .base import BaseOperator, OperatorContext, OperatorResult
 from ..types.action import ActionKind
 from ..types.claim import Claim, ClaimStatus
+from ..types.graph_patch import GraphPatch, PatchOperation
 from ..types.signal import Signal, SignalKind, SourceType
 from ..types.trace import Trace
-from ..types.semantic_answer_graph import SemanticAnswerGraph
 import time, uuid
 
 
@@ -29,7 +30,23 @@ class UpdateClaimOperator(BaseOperator):
             )
         existing.status = new_status
         existing.updated_at = now
-        ctx.store.claims.put(existing)
+        # Status updates route through GraphPatch pipeline — no direct store write.
+
+        patch_op = PatchOperation(
+            operation="update_claim_status",
+            target_id=claim_id,
+            fields={"claim_id": claim_id, "status": new_status_str, "updated_at": now},
+            confidence=0.9,
+            reason=f"status:{claim_id}:{new_status_str}",
+        )
+        patch = GraphPatch(
+            target="episodic_trace",
+            operations=[patch_op],
+            source_refs=[ctx.input_signal.id],
+            evidence_refs=[],
+            confidence=0.9,
+            reason=f"update_claim:{claim_id}",
+        )
 
         if new_status in (ClaimStatus.DISPUTED, ClaimStatus.RETRACTED):
             self_state = ctx.store.self_store.latest()
@@ -52,7 +69,7 @@ class UpdateClaimOperator(BaseOperator):
             permission=ctx.kernel.permission,
         )
         ctx.store.signals.put(result_signal)
-        answer_graph = SemanticAnswerGraph(
+        answer_graph = SimpleNamespace(
             id=uuid.uuid4().hex[:16],
             intent="update_claim",
             source_signal_ids=[ctx.input_signal.id],
@@ -82,4 +99,5 @@ class UpdateClaimOperator(BaseOperator):
             result_signal=result_signal,
             cost_ms=cost_ms,
             semantic_answer_graph=answer_graph,
+            graph_patches=[patch],
         )
