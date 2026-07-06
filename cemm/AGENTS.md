@@ -4,20 +4,79 @@ Status: governing implementation guide
 Audience: AI coding agents, reviewers, and maintainers working on CEMM  
 Supersedes: older v3.0/SLC-only local plans when they conflict with the current architecture
 
+## 0. CRITICAL — Causal-Runtime Wiring Gap (Blocker #1)
+
+**Priority: BLOCKER. All other work is secondary until this is fixed.**
+
+The causal and recursive foundational architecture was designed to handle
+cross-turn semantic understanding, emotional context persistence, and
+entity salience tracking. The modules exist but are **island components** —
+built but never wired into the runtime pipeline.
+
+### The Broken Chain
+
+```
+Architecture intended:
+  Construction → evaluates edge → affordance prediction (evaluation_shift)
+  → planner (empathetic response + patch) → durable store → cross-turn retrieval
+
+What's implemented:
+  Construction → intent label only (no relation patch)
+  ✗ no evaluates edge for emotional predicates
+  ✗ no evaluation_shift affordance rule
+  ✗ affordance predictions never consumed by scheduler/realizer
+  ✗ patch extractor filters out likes/evaluates
+  ✗ causal inference engine disconnected from semantic runtime
+  ✗ update_user_affect never called — affect state never updated during turns
+  ✗ anaphora resolver doesn't resolve third-person pronouns cross-turn
+  ✓ durable store can store/retrieve (but nothing to store)
+```
+
+### 12 Specific Culprits
+
+1. **ConstructionMatcher** — No emotional predicate constructions. `graph_patch_templates` only emits metadata.
+2. **MeaningGraphBuilder** — `_parse_surface_relation` only handles definitional cues. No `evaluates` edge for emotional predicates.
+3. **AffordancePredictor** — Only 3 seed rules. No `evaluation_shift` rule.
+4. **SemanticKernelRuntime.run_turn()** — Computes affordance predictions but never passes them to obligation scheduler, query engine, or realizer.
+5. **CausalInference** — Operates on old Store/Claim/Model system. Never called from runtime.
+6. **PragmaticInterpreter.update_user_affect** — Function exists but never called.
+7. **Patch extraction filter** — Excludes `likes`, `dislikes`, `evaluates` from durable patches.
+8. **RelationFrameCompiler** — `evaluates` has `projection_policy: "none"`.
+9. **SemanticObligationScheduler** — No obligation kind for emotional context or affect follow-up.
+10. **SemanticRealizer** — No templates for proactive emotional follow-up.
+11. **AnaphoraResolver** — Third-person pronouns record candidates but don't assign entity_id.
+12. **SemanticAttentionController** — Doesn't process `AffordancePrediction` objects from the graph.
+
+### Master Fix Plan
+
+See: `newarch/causal-runtime-wiring-fix.md` — the single authoritative fix plan.
+
+All other implementation plans are superseded. Do not follow them.
+
 ## 1. Canonical Source Of Truth
 
 Use these files as the active implementation contract, in this order:
 
-1. `AGENTS.md`
-2. `newarch/consolidated_architecture.md`
-3. `newarch/core_loop_runtime.md`
-4. `newarch/full_cemm_learning_brain_missing_pieces.md`
-5. `newarch/missing_runtime_implementation_plan.md`
-6. `newarch/3.3-uol-graph-architecture.md`
-7. `cemm/tests/test_acceptance.py`
+1. `AGENTS.md` (this file)
+2. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
+3. `newarch/consolidated_architecture.md`
+4. `newarch/3.3-uol-graph-architecture.md`
+5. `newarch/core_loop_runtime.md`
 
-Superseded design docs are archived at `docs/archive/newarch_superseded/`.
+Superseded design docs and plans are archived at `docs/archive/newarch_superseded/`.
 Use them as background reference only — they are not active architecture contracts.
+
+The following newarch docs are **deprecated** and have been moved to archive:
+- `semantic-graph-brain-gap-fix-implementation-plan.md`
+- `semantic-graph-brain-implementation.md`
+- `semantic-graph-brain.design.md`
+- `runtime-single-authority-takeover-design.md`
+- `cemm-v4.2-exact-root-cause-gap-fix-proposal.md`
+- `missing_runtime_implementation_plan.md`
+- `full_cemm_learning_brain_missing_pieces.md`
+- `construction-matcher-refactor-plan.md`
+
+Do not follow any superseded plan. Follow `causal-runtime-wiring-fix.md` instead.
 
 Older generated artifacts, patch files, archived docs, bootstrap scripts,
 runtime databases, logs, `__pycache__`, JSONL exports, and files under old
@@ -70,25 +129,33 @@ Signal
 -> durable semantic structures
 ```
 
-Status: **seed-complete for pipeline integration (Phases 1-2 done)**
-- `Pipeline.run()` no longer builds `SemanticEventGraph` — `UOLGraph` is the sole working graph
-- All downstream consumers read from `UOLGraph` via backward-compat properties on the `UOLGraph` dataclass
-- `RememberOperator` routes claims through `ClaimWriter` which creates `GraphPatch` objects for consolidation
-- `ConceptConsolidator` has compression-gain scoring, 4-state lifecycle (candidate→typed→operational→consolidated), decay, counterexamples, fingerprint matching
-- 4 Phase 0 hot-path modules extracted from `MeaningPerceptor` (reduced from 1395→1300 lines)
-- `CausalInference` reads from `UOLGraph` atoms/edges directly
-- 315 tests pass, 0 fail
+Status: **pipeline unified but causal-runtime wiring is broken (BLOCKER #1)**
+- `Pipeline.run()` delegates to `SemanticKernelRuntime.run_turn()` — single authority achieved
+- `UOLGraph` is the sole working graph
+- `SemanticKernelRuntime.run_turn()` has 11 steps: perceive, build, attend, compile, schedule, teach, compile relations, query, realize, plan, extract/validate/commit patches
+- `PatchValidator` and `PatchCommitter` enforce graph-patch-only durable writes
+- `SessionStore` restores/persists conversation, user affect, topic, discourse state across turns
+- `EntitySalienceTracker` tracks entity salience across turns
+- `DurableSemanticStore` stores and retrieves relation frames
 
-**Still missing from full architecture:**
-- 5 durable architecture types (`ConceptAtom`, `OperationalPort`, `PredicateSchema`, `CausalAffordance`, `ConstructionAtom`) — replaced by simpler records
-- `SemanticKernelRuntime` as authoritative single entrypoint (Pipeline.run() still mixed)
-- `PatchValidator` write barrier (direct durable writes still escape GraphPatch)
+**CRITICAL GAP — Causal-Runtime Wiring (see Section 0 and `causal-runtime-wiring-fix.md`):**
+- Affordance predictions computed but never consumed by scheduler/realizer
+- `CausalInference` engine completely disconnected from runtime
+- `update_user_affect` never called — affect state never updated during turns
+- No `evaluates` edge creation for emotional predicates
+- No `evaluation_shift` affordance rules
+- Patch extractor filters out `likes`/`dislikes`/`evaluates`
+- AnaphoraResolver doesn't resolve third-person pronouns cross-turn
+- No obligation kind for emotional context or affect follow-up
+- No realization templates for proactive emotional follow-up
+
+**Other remaining gaps:**
+- 5 durable architecture types replaced by simpler records (acceptable for now)
 - Remaining 10 Phase 0 hot-path modules still embedded in `MeaningPerceptor`
-- `SemanticCPU.run_turn()` as orchestrator (graph_builder called directly by Pipeline)
 - Dynamic self-knowledge (still static `self_knowledge.json`)
 - Knowledge ingestion, training infrastructure, adapters, synthesis modules
 
-Do not overclaim that the full learning brain is done.
+Do not overclaim that the full learning brain is done. The causal-runtime wiring is the #1 blocker.
 
 ## 4. Compatibility Names
 

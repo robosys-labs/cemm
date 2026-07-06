@@ -91,4 +91,22 @@ class AffordancePredictor:
                 effect_type="need_activation",
                 confidence=0.58,
             ),
+            CausalAffordance(
+                affordance_id="user_positive_evaluation",
+                trigger_pattern=GraphPattern(atom_patterns=[
+                    {"kind": "relation", "key": "likes"},
+                ]),
+                effect_type="evaluation_shift",
+                predicted_effect=GraphPatchTemplate(operations=[{"key": "affect_shift", "value": "positive_stance"}]),
+                confidence=0.7,
+            ),
+            CausalAffordance(
+                affordance_id="user_negative_evaluation",
+                trigger_pattern=GraphPattern(atom_patterns=[
+                    {"kind": "relation", "key": "dislikes"},
+                ]),
+                effect_type="evaluation_shift",
+                predicted_effect=GraphPatchTemplate(operations=[{"key": "affect_shift", "value": "negative_stance"}]),
+                confidence=0.7,
+            ),
         ]

@@ -26,6 +26,9 @@ _EDGE_TYPE_TO_FAMILY: dict[str, str] = {
     "has_role": "role",
     "before": "temporal",
     "after": "temporal",
+    "likes": "property",
+    "dislikes": "property",
+    "evaluates": "evaluation",
 }
 
 _EDGE_TYPE_TO_KEY: dict[str, str] = {
@@ -40,6 +43,9 @@ _EDGE_TYPE_TO_KEY: dict[str, str] = {
     "has_role": "has_role",
     "before": "before",
     "after": "after",
+    "likes": "likes",
+    "dislikes": "dislikes",
+    "evaluates": "evaluates",
 }
 
 _INVERSE_HINTS: dict[str, list[str]] = {
@@ -50,6 +56,9 @@ _INVERSE_HINTS: dict[str, list[str]] = {
     "used_for": ["uses"],
     "has_property": ["property_of"],
     "has_role": ["role_of"],
+    "likes": ["liked_by"],
+    "dislikes": ["disliked_by"],
+    "evaluates": ["evaluated_by"],
 }
 
 _INHERITANCE_PREDICATES = {"is_a", "same_as"}
@@ -79,6 +88,31 @@ class RelationFrameCompiler:
 
         return frames
 
+    _STRUCTURAL_EDGE_TYPES: frozenset = frozenset({
+        "has_role",
+        "causes",
+        "enables",
+        "prevents",
+        "before",
+        "after",
+        "refers_to",
+        "modifies",
+        "teaches",
+    })
+
+    _EDGE_PROJECTION_POLICY: dict[str, str] = {
+        "has_role": "none",
+        "causes": "none",
+        "enables": "none",
+        "prevents": "none",
+        "before": "none",
+        "after": "none",
+        "refers_to": "none",
+        "modifies": "none",
+        "evaluates": "object",
+        "teaches": "none",
+    }
+
     def _compile_edge(self, graph: UOLGraph, edge: Any) -> RelationFrame | None:
         source_atom = graph.atoms.get(edge.source_id)
         target_atom = graph.atoms.get(edge.target_id)
@@ -87,6 +121,9 @@ class RelationFrameCompiler:
 
         family = _EDGE_TYPE_TO_FAMILY.get(edge.edge_type, "definition")
         relation_key = _EDGE_TYPE_TO_KEY.get(edge.edge_type, edge.edge_type)
+
+        is_structural = edge.edge_type in self._STRUCTURAL_EDGE_TYPES
+        projection_policy = self._EDGE_PROJECTION_POLICY.get(edge.edge_type, "object")
 
         subject = RelationArgument(
             role="subject",
@@ -121,12 +158,16 @@ class RelationFrameCompiler:
             inverse_relation_keys=_INVERSE_HINTS.get(relation_key, []),
             inherited_from=[],
             confidence=edge.confidence,
+            answerable=not is_structural,
+            structural=is_structural,
+            projection_policy=projection_policy,
         )
 
     def _compile_relation_atom(self, graph: UOLGraph, atom: Any) -> RelationFrame | None:
         subject_arg = RelationArgument(role="subject")
         object_arg = RelationArgument(role="object")
         edge_ids: list[str] = []
+        has_role_edge = False
 
         for edge in graph.edges:
             if edge.source_id != atom.id and edge.target_id != atom.id:
@@ -138,6 +179,7 @@ class RelationFrameCompiler:
             edge_ids.append(edge.id)
 
             if edge.edge_type == "has_role":
+                has_role_edge = True
                 role = edge.features.get("role", "object")
                 arg = RelationArgument(
                     role=role,
@@ -160,6 +202,13 @@ class RelationFrameCompiler:
         relation_key = atom.key.replace("relation:", "")
         family = self._infer_family_from_key(relation_key)
 
+        is_emotional = atom.source == "emotional_predicate" or relation_key in ("likes", "dislikes")
+        is_structural = (has_role_edge or family == "role") and not is_emotional
+        if is_emotional:
+            projection_policy = "object"
+        else:
+            projection_policy = "none" if is_structural else "object"
+
         return RelationFrame(
             relation_id=uuid.uuid4().hex[:16],
             relation_key=relation_key,
@@ -171,6 +220,9 @@ class RelationFrameCompiler:
             evidence_refs=self._evidence_refs(atom),
             inverse_relation_keys=_INVERSE_HINTS.get(relation_key, []),
             confidence=atom.confidence,
+            answerable=not is_structural,
+            structural=is_structural,
+            projection_policy=projection_policy,
         )
 
     def _extract_qualifiers(self, graph: UOLGraph, edge: Any) -> dict[str, RelationArgument]:

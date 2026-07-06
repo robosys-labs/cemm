@@ -41,22 +41,22 @@
     {
       "subject": "self_main",
       "predicate": "capability",
-      "object_value": "language-agnostic understanding via Universal Object Language"
+      "object_value": "learn new things"
     },
     {
       "subject": "self_main",
       "predicate": "capability",
-      "object_value": "knowledge compression from runtime traces"
+      "object_value": "basic chat"
     },
     {
       "subject": "self_main",
       "predicate": "capability",
-      "object_value": "model-driven inference routing"
+      "object_value": "process commands"
     },
     {
       "subject": "self_main",
       "predicate": "creator",
-      "object_value": "OpenCode"
+      "object_value": "Robosys Labs"
     },
     {
       "subject": "self_main",

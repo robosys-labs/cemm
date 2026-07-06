@@ -10,32 +10,39 @@ required.
 Slot kind validation prevents the "Your name is good" bug: a mood value
 (slot_kind="surface") cannot fill a name slot (template expects
 "self_identity" or "profile").
+
+Templates are loaded from cemm/data/response_templates.json to keep
+linguistic data out of code.
 """
 
 from __future__ import annotations
+
+import json
+from pathlib import Path
 
 from ..types.answer_binding import AnswerBinding
 from ..types.realization_contract import RealizationContract, RealizationSlot
 
 
-_TEMPLATES: dict[str, str] = {
-    "evidence_answer": "{answer}",
-    "self_identity": "I am {answer}.",
-    "user_profile": "Your {answer}.",
-    "teaching_continuation": "Got it — {answer}. Tell me more.",
-    "store_confirmation": "Got it. I've learned that {answer}.",
-    "social_response": "Hello!",
-    "ask_clarification": "Could you clarify what you mean by {answer}?",
-    "session_exit": "Goodbye!",
-    "general_conversation": "I understand.",
-    "abstain": "I'm not sure about that yet.",
-    "blocked": "I need more information before I can answer that.",
-    "safety_refusal": "I can't help with that.",
-}
+def _load_templates() -> dict[str, str]:
+    """Load language-indexed templates from response_templates.json."""
+    path = Path(__file__).parent.parent / "data" / "response_templates.json"
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("en", {})
+
+
+_TEMPLATES: dict[str, str] = _load_templates()
 
 _ABSTENTION_REASONS: dict[str, str] = {
     "no_matches": "I don't have enough information to answer that yet.",
     "no_relation_key_or_algebra": "I'm not sure how to look that up.",
+    "safety_policy": "I cannot help with that request.",
+}
+
+_TEMPLATE_FALLBACK: dict[str, str] = {
+    "teaching_continuation": "teaching_acknowledgment",
+    "store_confirmation": "store_acknowledgment",
 }
 
 # Maps template_key → allowed slot kinds for the "answer" slot.
@@ -45,10 +52,14 @@ _TEMPLATE_SLOT_KINDS: dict[str, frozenset[str]] = {
     "evidence_answer": frozenset({"concept", "entity", "surface"}),
     "self_identity": frozenset({"self_identity", "entity"}),
     "user_profile": frozenset({"profile"}),
-    "teaching_continuation": frozenset({"concept", "surface"}),
+    "teaching_continuation": frozenset({"concept", "surface", "profile"}),
+    "teaching_acknowledgment": frozenset(),
     "store_confirmation": frozenset({"concept", "surface"}),
+    "store_acknowledgment": frozenset(),
     "ask_clarification": frozenset({"surface"}),
     "social_response": frozenset(),
+    "emotional_response": frozenset({"surface"}),
+    "emotional_acknowledgment": frozenset({"surface"}),
     "session_exit": frozenset(),
     "general_conversation": frozenset(),
     "abstain": frozenset(),
@@ -80,18 +91,12 @@ class SemanticRealizer:
                 continue
             variables[key] = slot.value
 
-        # Fallback: fill "answer" from binding slot fills if not in contract slots
-        if binding and binding.slot_fills and "answer" not in variables:
-            best = max(binding.slot_fills, key=lambda f: f.confidence)
-            if best.surface:
-                variables["answer"] = best.surface
-            elif best.concept_id:
-                variables["answer"] = best.concept_id
-            elif best.entity_id:
-                variables["answer"] = best.entity_id
-
-        # If template requires an answer slot but none is filled, abstain
+        # If template requires an answer slot but none is filled,
+        # use fallback template or abstain
         if "{answer}" in template and "answer" not in variables:
+            fallback_key = _TEMPLATE_FALLBACK.get(contract.template_key)
+            if fallback_key:
+                return _TEMPLATES.get(fallback_key, _TEMPLATES["abstain"])
             return _TEMPLATES["abstain"]
 
         try:

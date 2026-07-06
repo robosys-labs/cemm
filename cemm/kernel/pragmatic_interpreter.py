@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
+from typing import Any
 from ..types.signal import Signal, SignalKind, SourceType, ObservationSemantics
 from ..types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
 from ..store.store import Store
@@ -201,3 +202,37 @@ def update_conversation_dynamics(
         merged = set(dynamics.likely_cause_claim_ids) | set(semantics.cause_hypothesis_claim_ids)
         dynamics.likely_cause_claim_ids = sorted(merged)
     return dynamics
+
+
+def affect_markers_to_semantics(
+    affect_markers: list[dict[str, Any]],
+    signal_id: str = "",
+) -> ObservationSemantics:
+    """Convert MeaningPerceptPacket.affect_markers into ObservationSemantics.
+
+    This bridges the gap between the language adapter's affect detection
+    and the pragmatic interpreter's update_user_affect function.
+    """
+    affect: dict[str, float] = {
+        "valence": 0.0,
+        "arousal": 0.0,
+        "frustration": 0.0,
+        "hostility": 0.0,
+        "playfulness": 0.0,
+    }
+    for marker in affect_markers:
+        marker_type = marker.get("type", "")
+        valence = float(marker.get("valence", 0.0))
+        if marker_type in ("frustration", "hostility", "playfulness"):
+            affect[marker_type] = max(affect[marker_type], abs(valence))
+        if valence > 0:
+            affect["valence"] = max(affect["valence"], valence)
+            affect["arousal"] = max(affect["arousal"], abs(valence))
+        elif valence < 0:
+            affect["valence"] = min(affect["valence"], valence)
+            affect["arousal"] = max(affect["arousal"], abs(valence))
+    return ObservationSemantics(
+        speech_act="statement",
+        affect=affect,
+        confidence=0.6,
+    )

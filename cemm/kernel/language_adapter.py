@@ -62,8 +62,17 @@ class LanguageAdapter:
     language_code = "und"
 
     def tokenize(self, text: str) -> list[str]:
-        """Return normalized tokens for semantic matching."""
-        return [m.group(0).lower() for m in _TOKEN_RE.finditer(text or "")]
+        """Return normalized tokens for semantic matching.
+
+        Apostrophes are stripped so orthographic variants like "what's"
+        and "whats" normalize to the same token.  This is the §5.1
+        Normalize step — contraction normalization happens here, not
+        by duplicating aliases in JSON data.
+        """
+        return [
+            m.group(0).lower().replace("'", "")
+            for m in _TOKEN_RE.finditer(text or "")
+        ]
 
     def surface_tokens(self, text: str) -> list[str]:
         """Return token surfaces with original casing preserved."""
@@ -179,6 +188,18 @@ class EnglishLanguageAdapter(LanguageAdapter):
         "tell": "provide_information",
         "show": "display_information",
         "teach": "transfer_knowledge",
+        "like": "evaluate_positive",
+        "likes": "evaluate_positive",
+        "love": "evaluate_positive",
+        "loves": "evaluate_positive",
+        "prefer": "evaluate_positive",
+        "prefers": "evaluate_positive",
+        "enjoy": "evaluate_positive",
+        "enjoys": "evaluate_positive",
+        "hate": "evaluate_negative",
+        "hates": "evaluate_negative",
+        "dislike": "evaluate_negative",
+        "dislikes": "evaluate_negative",
     }
 
     STATES: dict[str, StateBinding] = {
@@ -395,6 +416,8 @@ class EnglishLanguageAdapter(LanguageAdapter):
             if token_set & self.THIRD_PERSON_PRONOUNS:
                 return "third_party"
             return "target"
+        if action_key in {"evaluate_positive", "evaluate_negative"}:
+            return "object"
         return None
 
 
@@ -645,6 +668,8 @@ class JSONLanguageAdapter(LanguageAdapter):
             if token_set & self._third_person_pronouns:
                 return "third_party"
             return "target"
+        if action_key in {"evaluate_positive", "evaluate_negative"}:
+            return "object"
         return None
 
 

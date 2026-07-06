@@ -1,0 +1,95 @@
+"""Golden trace tests: social phatic_checkin routing and internal concept filtering.
+
+Verifies:
+  - "how are you" is routed as social_reply, not answer_self_model
+  - reply_obligation internal concept never leaks into realized output
+  - Social greeting chain works end-to-end
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import time
+import uuid
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+os.environ["CEMM_EXPORT_PATH"] = ""
+
+from cemm.kernel.semantic_kernel_runtime import SemanticKernelRuntime
+from cemm.types.context_kernel import ContextKernel
+from cemm.types.signal import Signal, SignalKind, SourceType
+from cemm.types.permission import Permission
+
+
+def _signal(text: str, context_id: str | None = None) -> Signal:
+    return Signal(
+        id=uuid.uuid4().hex[:16],
+        kind=SignalKind.INPUT,
+        source_id="user",
+        source_type=SourceType.USER,
+        content=text,
+        observed_at=time.time(),
+        context_id=context_id or uuid.uuid4().hex[:16],
+        salience=0.8,
+        trust=0.8,
+        permission=Permission.public(),
+    )
+
+
+def _kernel() -> ContextKernel:
+    return ContextKernel(id=uuid.uuid4().hex[:16])
+
+
+def test_how_are_you_is_social_reply() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("how are you"), _kernel())
+    assert result.obligation_frame.obligation_kind == "social_reply", (
+        f"Expected social_reply, got {result.obligation_frame.obligation_kind!r}"
+    )
+    assert result.realized_output == "Hello!", (
+        f"Expected 'Hello!', got {result.realized_output!r}"
+    )
+
+
+def test_how_are_you_with_question_mark() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("how are you?"), _kernel())
+    assert result.obligation_frame.obligation_kind == "social_reply", (
+        f"Expected social_reply, got {result.obligation_frame.obligation_kind!r}"
+    )
+    assert result.realized_output == "Hello!"
+
+
+def test_how_are_you_doing_social() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("how are you doing"), _kernel())
+    assert result.obligation_frame.obligation_kind == "social_reply"
+
+
+def test_reply_obligation_never_leaks() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("how are you"), _kernel())
+    assert "reply_obligation" not in result.realized_output
+
+
+def test_clarity_required_never_leaks() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("what??"), _kernel())
+    assert "clarity_required" not in result.realized_output
+
+
+def test_hello_is_social_reply() -> None:
+    runtime = SemanticKernelRuntime()
+    result = runtime.run_turn(_signal("hello"), _kernel())
+    assert result.obligation_frame.obligation_kind == "social_reply"
+    assert result.realized_output == "Hello!"
+
+
+def test_social_greeting_phatic_chain() -> None:
+    ctx_id = uuid.uuid4().hex[:16]
+    runtime = SemanticKernelRuntime()
+    r1 = runtime.run_turn(_signal("hello", ctx_id), _kernel())
+    assert r1.realized_output == "Hello!"
+    r2 = runtime.run_turn(_signal("how are you", ctx_id), _kernel())
+    assert r2.realized_output == "Hello!"

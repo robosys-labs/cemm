@@ -127,6 +127,7 @@ class ConversationState:
     repair_target_turn_id: str = ""
     active_teaching_target: str = ""
     active_unknown_concept: str = ""
+    entity_salience: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass

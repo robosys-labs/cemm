@@ -85,59 +85,32 @@ from .predicate_phrase_extractor import PredicatePhraseExtractor
 from .anaphora_resolver import AnaphoraResolver
 from .entity_salience_tracker import EntitySalienceTracker
 from .implicit_predicate_detector import ImplicitPredicateDetector
+from .uol_metadata import (
+    cue_set,
+    frame_alias_set,
+    modal_type,
+    conjunction_relation,
+    CONNECTIVE_SET,
+    STRONG_SPLIT_CONNECTIVES,
+    SUBORDINATING_CONNECTIVES,
+)
 
 
 _ENTITY_ROLES = {"person", "place", "organization", "entity", "object", "time"}
 _SURFACE_ACTION_ROLES = {"process", "command_alias"}
-_GROUP_CONNECTIVES = {
-    "and", "but", "or", "then", "because", "so", "while", "when", "if",
-    "although", "though", "plus", "that", "since", "unless", "whereas", "nor",
-}
-_STRONG_SPLIT_CONNECTIVES = {"but", "then", "because", "so", "while", "when", "if", "although", "though", "plus", "since", "unless", "whereas"}
-_SUBORDINATING_CONNECTIVES = {"because", "if", "when", "while", "although", "though", "that", "since", "unless", "whereas"}
-_CONNECTIVE_RELATIONS = {
-    "because": "cause",
-    "so": "result",
-    "if": "condition",
-    "when": "temporal",
-    "while": "temporal_or_contrast",
-    "although": "concession",
-    "though": "concession",
-    "that": "complement",
-    "since": "cause_or_time",
-    "unless": "negative_condition",
-    "whereas": "contrast",
-    "but": "contrast",
-    "then": "sequence",
-    "and": "coordination",
-    "or": "alternative",
-    "nor": "negative_alternative",
-    "plus": "addition",
-}
-_QUESTION_STARTERS = {"who", "what", "when", "where", "why", "how", "which", "can", "could", "would", "should", "do", "does", "did", "is", "are", "am", "was", "were"}
-_COMMAND_CUES = {"please", "tell", "show", "remember", "forget", "explain", "define", "teach", "look", "find", "use", "make", "create", "give"}
-_COMMON_PREDICATE_VERBS = {"know", "think", "feel", "like", "want", "need", "went", "go", "worked", "work", "have", "has", "had", "do", "does", "did"}
-_PRONOUNS = {"i", "you", "he", "she", "it", "we", "they", "this", "that"}
-_REPAIR_CUES = {"what", "huh", "wait", "confused", "misunderstood", "mean", "unpack", "plainly", "again"}
-_FRESH_WORLD_CUES = {"current", "latest", "today", "now"}
-_EXIT_CUES = {"bye", "goodbye", "later", "farewell"}
-_TEACHING_CUES = {"means", "mean", "called", "is", "are", "refers", "equals"}
-_TIME_CUES = {"now", "today", "tonight", "tomorrow", "yesterday", "currently", "latest", "recent"}
-_PLACE_CUES = {"here", "there", "where", "inside", "outside", "nearby"}
-_MODAL_CUES = {
-    "can": "possible",
-    "could": "possible",
-    "should": "recommended",
-    "would": "hypothetical",
-    "must": "required",
-    "need": "required",
-    "needs": "required",
-    "want": "desired",
-    "wants": "desired",
-    "might": "possible",
-    "may": "possible",
-}
-_NEGATIONS = {"not", "never", "no", "cannot", "can't", "dont", "don't", "wont", "won't"}
+
+# Linguistic cue sets loaded dynamically from uol_semantics.json via uol_metadata.
+_QUESTION_STARTERS = cue_set("question_starter")
+_COMMAND_CUES = cue_set("command_cue")
+_COMMON_PREDICATE_VERBS = cue_set("predicate_verb")
+_REPAIR_CUES = cue_set("repair")
+_FRESH_WORLD_CUES = cue_set("fresh_world_marker")
+_EXIT_CUES = cue_set("exit")
+_TEACHING_CUES = cue_set("teaching_cue")
+_TIME_CUES = cue_set("temporal_reference")
+_PLACE_CUES = cue_set("place_reference")
+_NEGATIONS = cue_set("negation")
+
 _AMBIGUOUS_LEXEMES: dict[str, list[dict[str, Any]]] = {
     "bank": [
         {"atom_kind": "entity", "atom_key": "financial_institution", "role": "institution", "confidence": 0.52},
@@ -170,6 +143,7 @@ class MeaningPerceptor:
         surface_tagger: SurfaceTagger | None = None,
         lexeme_memory: LexemeMemory | None = None,
         language_adapter: LanguageAdapter | None = None,
+        construction_matcher: Any | None = None,
     ) -> None:
         self._ner_tagger = ner_tagger
         self._surface_tagger = surface_tagger
@@ -180,6 +154,7 @@ class MeaningPerceptor:
         self._anaphora_resolver = AnaphoraResolver()
         self._salience_tracker = EntitySalienceTracker()
         self._implicit_detector = ImplicitPredicateDetector()
+        self._construction_matcher = construction_matcher
 
     def perceive(
         self,
@@ -258,19 +233,26 @@ class MeaningPerceptor:
         )
 
         self._assign_atoms_to_groups(packet)
+        prior_salience = {}
+        conv = getattr(kernel, "conversation", None)
+        if conv is not None:
+            prior_salience = dict(getattr(conv, "entity_salience", {}))
         self._anaphora_resolver.resolve(
             referents=packet.referents,
             groups=packet.meaning_groups,
             entities=ner_entities,
             language=self._language,
+            prior_salience=prior_salience,
         )
-        ranked_entities, _salience_map = self._salience_tracker.track(
+        ranked_entities, salience_map = self._salience_tracker.track(
             referents=packet.referents,
             groups=packet.meaning_groups,
+            prior_salience=prior_salience,
         )
         packet.perception_trace["salience_ranked"] = [
             e["key"] for e in ranked_entities[:5]
         ]
+        packet.perception_trace["salience_map"] = dict(salience_map)
         self._add_structural_atoms(packet)
         self._build_meaning_hypotheses(packet)
         packet.predicate_phrases = self._predicate_extractor.extract(
@@ -427,7 +409,7 @@ class MeaningPerceptor:
             offset = 0
             for piece_tokens, connective_before, relation_to_previous in pieces:
                 if connective_before:
-                    while offset < len(clause_tokens) and clause_tokens[offset] in _GROUP_CONNECTIVES:
+                    while offset < len(clause_tokens) and clause_tokens[offset] in CONNECTIVE_SET:
                         offset += 1
                 piece_start = start + offset
                 piece_end = piece_start + len(piece_tokens)
@@ -567,14 +549,14 @@ class MeaningPerceptor:
         while index < len(tokens):
             token = tokens[index]
             remaining = tokens[index + 1:]
-            relation = _CONNECTIVE_RELATIONS.get(token, "")
+            relation = conjunction_relation(token) or ""
             should_split = (
-                token in _GROUP_CONNECTIVES
+                token in CONNECTIVE_SET
                 and current
                 and remaining
                 and (
-                    token in _STRONG_SPLIT_CONNECTIVES and self._looks_predicative(remaining)
-                    or token in _SUBORDINATING_CONNECTIVES and self._looks_predicative(remaining)
+                    token in STRONG_SPLIT_CONNECTIVES and self._looks_predicative(remaining)
+                    or token in SUBORDINATING_CONNECTIVES and self._looks_predicative(remaining)
                     or (self._looks_predicative(current) and self._looks_predicative(remaining))
                 )
             )
@@ -602,7 +584,7 @@ class MeaningPerceptor:
             return True
         if len(tokens) == 1:
             return bool(token_set & _COMMON_PREDICATE_VERBS)
-        if len(tokens) == 2 and tokens[0] in _PRONOUNS and tokens[1] in {"is", "are", "am", "was", "were", "do", "does", "did", "have", "has", *_COMMON_PREDICATE_VERBS}:
+        if len(tokens) == 2 and tokens[0] in cue_set("user_subject") and tokens[1] in {"is", "are", "am", "was", "were", "do", "does", "did", "have", "has", *_COMMON_PREDICATE_VERBS}:
             return True
         return bool(token_set & {"is", "are", "am", "was", "were", "do", "does", "did", "have", "has", *_COMMON_PREDICATE_VERBS})
 
@@ -856,10 +838,11 @@ class MeaningPerceptor:
             group.group_type = self._group_type_from_intent(intent_key, group.group_type)
 
             for token in group.tokens:
-                if token in _MODAL_CUES:
+                mt = modal_type(token)
+                if mt is not None:
                     packet.modalities.append(ModalityAtom(
                         surface=token,
-                        modality_key=_MODAL_CUES[token],
+                        modality_key=mt,
                         polarity="negated" if token_set & _NEGATIONS else "affirmed",
                         confidence=0.65,
                         group_id=group.id,
@@ -998,6 +981,14 @@ class MeaningPerceptor:
         token_set = set(tokens)
         surface = group.surface.strip().lower()
         ends_with_question = surface.endswith("?") or group.separator_after == "?"
+
+        # Delegate to ConstructionMatcher for data-driven intent detection.
+        if self._construction_matcher is not None:
+            match = self._construction_matcher.match_group(group, packet)
+            if match is not None:
+                return match.construction_key
+
+        # Minimal fallback heuristics for inputs not covered by constructions.
         if token_set & _EXIT_CUES:
             return "session_exit"
         if self._is_repair_group(group, packet):
@@ -1006,22 +997,24 @@ class MeaningPerceptor:
             return "teaching"
         if token_set & _FRESH_WORLD_CUES and (group.group_type == "question" or token_set & _QUESTION_STARTERS):
             return "fresh_world_query"
-        if self._is_capability_query(group):
-            return "capability_query"
+
         if group.group_type == "question" or ends_with_question or (tokens and tokens[0] in _QUESTION_STARTERS):
             return "question"
         if tokens and tokens[0] in _COMMAND_CUES:
             return "command"
         if group.states and any(state.holder_role == "user" for state in group.states):
             return "user_state_report"
-        if token_set & {"hi", "hello", "hey", "hellooo"}:
+        _greeting_aliases = frame_alias_set("greeting")
+        if token_set & _greeting_aliases:
             return "greeting"
-        _greeting_forms = {"hi", "hello", "hey", "hellooo"}
         for form in packet.normalized_forms:
-            if set(self._language.tokenize(form)) & _greeting_forms:
+            if set(self._language.tokenize(form)) & _greeting_aliases:
                 return "greeting"
-        if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right", "good"}:
+        _ack_aliases = frame_alias_set("acknowledgment")
+        if token_set & _ack_aliases or token_set <= _ack_aliases:
             return "acknowledgment"
+        if token_set & {"reflect", "reflect_on", "introspect", "self_reflect"}:
+            return "self_reflect"
         return "statement"
 
     def _is_repair_group(self, group: MeaningGroup, packet: MeaningPerceptPacket) -> bool:
@@ -1056,6 +1049,41 @@ class MeaningPerceptor:
             or {"can", "you"} <= token_set and token_set & {"do", "tell", "remember", "learn"}
         )
 
+    _SELF_IDENTITY_CUES: frozenset = frozenset({
+        "who", "what", "tell", "describe", "about", "yourself",
+        "name", "identity", "are", "you", "your",
+    })
+
+    def _is_self_identity_query(self, group: MeaningGroup) -> bool:
+        token_set = set(group.tokens)
+        surface = group.surface.strip().lower()
+        if surface in {"who are you", "what are you", "tell me about yourself", "what is your name"}:
+            return True
+        if {"who", "are", "you"} <= token_set:
+            return True
+        if {"what", "are", "you"} <= token_set:
+            return True
+        if {"what", "is", "your", "name"} <= token_set:
+            return True
+        if {"whats", "your", "name"} <= token_set:
+            return True
+        if {"your", "name"} <= token_set and token_set & {"what", "whats", "tell"}:
+            return True
+        return False
+
+    def _is_self_knowledge_query(self, group: MeaningGroup) -> bool:
+        token_set = set(group.tokens)
+        surface = group.surface.strip().lower()
+        if surface in {"what do you know about yourself", "describe yourself", "what are you made of"}:
+            return True
+        if {"what", "do", "you", "know"} <= token_set and "yourself" in token_set:
+            return True
+        if {"describe", "yourself"} <= token_set:
+            return True
+        if {"what", "are", "you", "made", "of"} <= token_set:
+            return True
+        return False
+
     def _target_for_intent(self, group: MeaningGroup, intent_key: str) -> str:
         token_set = set(group.tokens)
         if "you" in token_set or "your" in token_set:
@@ -1072,6 +1100,8 @@ class MeaningPerceptor:
             "repair": ["confusion_repair", "retrospective_repair"],
             "fresh_world_query": ["evidence_query", "open_domain_entity_query"],
             "capability_query": ["self_capability_query", "capability_query"],
+            "self_identity_query": ["self_identity_query"],
+            "self_knowledge_query": ["self_knowledge_query"],
             "teaching": ["definition_teaching", "claim_assertion"],
             "user_state_report": ["state_report", "claim_assertion"],
             "greeting": ["greeting"],
@@ -1086,6 +1116,8 @@ class MeaningPerceptor:
             "repair": "repair",
             "fresh_world_query": "question",
             "capability_query": "question",
+            "self_identity_query": "question",
+            "self_knowledge_query": "question",
             "teaching": "teaching",
             "user_state_report": "state_report",
             "greeting": "social",
@@ -1096,7 +1128,7 @@ class MeaningPerceptor:
         confidence = 0.55
         if group.group_type in {"question", "repair", "teaching", "command"}:
             confidence += 0.15
-        if intent_key in {"fresh_world_query", "capability_query", "session_exit", "greeting"}:
+        if intent_key in {"fresh_world_query", "capability_query", "self_identity_query", "self_knowledge_query", "session_exit", "greeting"}:
             confidence += 0.1
         if group.actions or group.states:
             confidence += 0.05

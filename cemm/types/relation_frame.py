@@ -34,6 +34,19 @@ class RelationArgument:
     confidence: float = 0.5
 
 
+RELATION_PROJECTION_POLICIES = frozenset({
+    "object",
+    "subject",
+    "profile_value",
+    "self_value",
+    "concept_definition",
+    "relation_filler",
+    "patch_summary",
+    "clarification_target",
+    "none",
+})
+
+
 @dataclass
 class RelationFrame:
     relation_id: str
@@ -48,3 +61,7 @@ class RelationFrame:
     inverse_relation_keys: list[str] = field(default_factory=list)
     inherited_from: list[str] = field(default_factory=list)
     confidence: float = 0.5
+    answerable: bool = True
+    structural: bool = False
+    projection_policy: str = "object"
+    query_tags: list[str] = field(default_factory=list)

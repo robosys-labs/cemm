@@ -179,18 +179,33 @@ class DurableSemanticStore:
         allow_inheritance: bool = True,
         allow_inverse: bool = True,
     ) -> list[RelationFrame]:
-        matching = list(self._relations.values())
+        has_filter = bool(relation_key or subject_concept_id or subject_entity_id
+                          or object_concept_id or object_entity_id)
 
-        if relation_key:
-            matching = [r for r in matching if r.relation_key == relation_key]
-        if subject_concept_id:
-            matching = [r for r in matching if r.subject_concept_id == subject_concept_id]
-        if subject_entity_id:
-            matching = [r for r in matching if r.subject_entity_id == subject_entity_id]
-        if object_concept_id:
-            matching = [r for r in matching if r.object_concept_id == object_concept_id]
-        if object_entity_id:
-            matching = [r for r in matching if r.object_entity_id == object_entity_id]
+        if has_filter:
+            candidate_ids: set[str] | None = None
+
+            if relation_key:
+                ids = set(self._relation_key_index.get(relation_key, []))
+                candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
+
+            subj_key = subject_concept_id or subject_entity_id
+            if subj_key:
+                ids = set(self._subject_index.get(subj_key, []))
+                candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
+
+            obj_key = object_concept_id or object_entity_id
+            if obj_key:
+                ids = set(self._object_index.get(obj_key, []))
+                candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
+
+            if candidate_ids is None:
+                candidate_ids = set(self._relations.keys())
+
+            matching = [self._relations[rid] for rid in candidate_ids
+                        if rid in self._relations]
+        else:
+            matching = list(self._relations.values())
 
         if not matching and relation_key and allow_inverse:
             inv_records = self._query_inverse_relations(relation_key, subject_concept_id, object_concept_id)

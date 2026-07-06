@@ -39,13 +39,14 @@ class AnaphoraResolver:
         groups: list[MeaningGroup],
         entities: list[dict[str, Any]] | None = None,
         language: Any = None,
+        prior_salience: dict[str, float] | None = None,
     ) -> list[ReferentAtom]:
         """Resolve anaphoric references in referent atoms.
 
-        Resolves only inherent identity pronouns (user, self) by setting
-        entity_id. Third-person pronouns (person, object, place) are left
-        unresolved so the graph builder can create cross-group anaphoric
-        edges from their surface forms.
+        Resolves inherent identity pronouns (user, self) by setting
+        entity_id. Third-person pronouns (person, object, place) are
+        resolved against known entities and prior-turn salience when
+        available, setting entity_id for cross-turn coreference.
 
         Returns the same mutated referent list for chaining.
 
@@ -55,6 +56,8 @@ class AnaphoraResolver:
             entities: Optional list of known entity dicts with 'text', 'role',
                       'entity_type' keys.
             language: Optional language adapter for surface normalization.
+            prior_salience: Salience map from previous turn(s), enabling
+                            cross-turn pronoun resolution.
         """
         known_entities: list[dict[str, Any]] = []
         for ref in referents:
@@ -105,8 +108,9 @@ class AnaphoraResolver:
                 ref.entity_id = self._INHERENT_IDS[ref.entity_type]
                 continue
 
-            # Third-person pronouns: leave unresolved for graph builder,
-            # but record best candidate in evidence for downstream use.
+            # Third-person pronouns: resolve against known entities.
+            # When prior_salience is available, boost confidence for
+            # entities that were salient in previous turns.
             target_type = self._match_type(ref.entity_type)
             if target_type is None:
                 continue
@@ -115,11 +119,18 @@ class AnaphoraResolver:
                 ref.surface, target_type, known_entities,
             )
             if match is not None:
+                entity_id = match["entity_id"]
+                confidence = match.get("confidence", 0.5) * 0.85
+                if prior_salience and entity_id in prior_salience:
+                    confidence = min(1.0, confidence + prior_salience[entity_id] * 0.3)
+                    ref.entity_id = entity_id
+                elif len(known_entities) == 1 and target_type == "person":
+                    ref.entity_id = entity_id
                 ref.evidence.append(AtomEvidence(
                     source="anaphora_candidate",
                     surface=ref.surface,
-                    confidence=match.get("confidence", 0.5) * 0.85,
-                    rationale=f"candidate_entity={match['entity_id']}",
+                    confidence=confidence,
+                    rationale=f"candidate_entity={entity_id}",
                 ))
 
         return referents

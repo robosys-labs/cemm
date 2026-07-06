@@ -19,6 +19,7 @@ from ..types.meaning_percept import MeaningPerceptPacket, RetrievalPlan, SafetyF
 from ..types.uol_graph import UOLGraph
 from .act_resolution_planner import ActResolutionPlan, ActResolutionPlanner
 from .affordance_predictor import AffordancePredictor
+from .construction_matcher import ConstructionMatcher
 from .meaning_graph_builder import MeaningGraphBuilder
 from .meaning_perceptor import MeaningPerceptor
 from .port_resolver import LatticePortResolver
@@ -51,7 +52,12 @@ class SemanticCPU:
             port_resolver=LatticePortResolver(self.concept_lattice),
             affordance_lattice=AffordancePredictor(),
         )
-        self.perceptor = MeaningPerceptor()
+        self.construction_matcher = ConstructionMatcher(
+            construction_lattice=self.construction_lattice,
+        )
+        self.perceptor = MeaningPerceptor(
+            construction_matcher=self.construction_matcher,
+        )
         self.perceptor._graph_builder = self.graph_builder
         self.planner = ActResolutionPlanner()
         self.patch_extractor = GraphPatchExtractor()

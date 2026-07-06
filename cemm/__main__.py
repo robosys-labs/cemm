@@ -4,40 +4,27 @@
 
 from __future__ import annotations
 import os
-import sys
 import argparse
 import json
 import time
 import uuid
 from pathlib import Path
+from typing import Any
+
 from .store.store import Store
 
 from .registry import Registry, RegistryEntry
 from .kernel.pipeline import Pipeline, PipelineResult
-from .operators.registry import OperatorRegistry
-from .operators.answer import AnswerOperator
-from .operators.ask import AskOperator
-from .operators.remember import RememberOperator
-from .operators.update_claim import UpdateClaimOperator
-from .operators.create_model import CreateModelOperator
-from .operators.synthesize import SynthesizeOperator
-from .operators.simulate import SimulateOperator
-from .operators.retrieve_op import RetrieveOperator
-from .operators.reflect import ReflectOperator
-from .operators.abstain import AbstainOperator
-from .operators.call_tool import CallToolOperator
-from .operators.learn import LearnOperator
 from .learning.online import OnlineLearner
-from .types.action import ActionKind
 from .types.model import ModelKind, ModelStatus
 from .types.permission import Permission
 from .types.signal import Signal, SignalKind, SourceType
 from .types.self_state import SelfState
-from .learning.inductor import Inductor
 from .memory.concept_lattice import ConceptLattice
 from .memory.construction_lattice import ConstructionLattice
 from .memory.episodic_trace_store import EpisodicTraceStore
 from .memory.persistent_lattice_store import PersistentLatticeStore
+from .memory.predicate_schema_store import PredicateSchemaStore
 
 _ACTION_CONFIDENCE_THRESHOLD = 0.5
 
@@ -177,7 +164,12 @@ def _seed_causal_affordances(concept_lattice: ConceptLattice, rules: list) -> No
         consolidator.consolidate(patches)
 
 
-def seed_self_state(store: Store, knowledge_path: str | None = None, concept_lattice: ConceptLattice | None = None) -> None:
+def seed_self_state(
+    store: Store,
+    knowledge_path: str | None = None,
+    concept_lattice: ConceptLattice | None = None,
+    durable_store: Any | None = None,
+) -> None:
     existing_state = store.self_store.latest()
     if existing_state is None:
         state = SelfState(
@@ -260,6 +252,10 @@ def seed_self_state(store: Store, knowledge_path: str | None = None, concept_lat
     if concept_lattice is not None and config.get("claims"):
         _seed_self_concepts(concept_lattice, config["claims"])
 
+    # Seed durable semantic store with self-knowledge relations
+    if durable_store is not None and config.get("claims"):
+        _seed_self_durable(durable_store, config["claims"], ent_cfg)
+
 
 def _seed_self_concepts(concept_lattice: ConceptLattice, claims_cfgs: list[dict]) -> None:
     """Create GraphPatches from self-knowledge claims and consolidate into concept lattice."""
@@ -296,36 +292,57 @@ def _seed_self_concepts(concept_lattice: ConceptLattice, claims_cfgs: list[dict]
         concept_lattice.flush_to_store()
 
 
+def _seed_self_durable(durable_store: Any, claims_cfgs: list[dict], ent_cfg: dict) -> None:
+    """Seed DurableSemanticStore with self-knowledge as relation records."""
+    entity_id = "self"
+    entity_surface = ent_cfg.get("name", "CEMM")
+    schema_store = PredicateSchemaStore()
+
+    for claim_cfg in claims_cfgs:
+        predicate = claim_cfg["predicate"]
+        object_value = claim_cfg.get("object_value", "")
+        if not object_value:
+            continue
+        durable_store.add_relation(
+            relation_key=predicate,
+            relation_family=schema_store.relation_family_for(predicate),
+            subject_entity_id=entity_id,
+            subject_surface=entity_surface,
+            object_surface=object_value,
+            confidence=claim_cfg.get("confidence", 0.95),
+            source_patch_id="seed",
+            evidence_refs=["seed"],
+        )
+
+
 def process_input(
     text: str,
     store: Store,
     registry: Registry,
-    op_registry: OperatorRegistry,
     pipeline: Pipeline,
     online_learner: OnlineLearner,
-    recursive_loop: RecursiveLoop,
     context_id: str,
     turn_count: list[int],
 ) -> str:
     turn_count[0] += 1
-    # Single authority: runtime owns the turn
-    cycle = pipeline._runtime.run_text(text, context_id=context_id)
-    output = cycle.realized_output or ""
+    # Single authority: Pipeline.run() injects self-state from store.self_store
+    result = pipeline.run(text, context_id=context_id)
+    output = result.output_text or ""
 
     # Backfill: re-realize from contract if output empty
-    if not output and cycle.realization_contract is not None:
+    if not output and result.realization_contract is not None:
         try:
             from .kernel.semantic_realizer import SemanticRealizer
             realizer = SemanticRealizer()
             output = realizer.realize(
-                cycle.realization_contract,
-                cycle.answer_binding,
+                result.realization_contract,
+                result.answer_binding,
             ) or ""
         except Exception:
             output = ""
 
     # Background: online learning on semantic data
-    if cycle.uol_graph is not None and cycle.context_kernel is not None:
+    if result.uol_graph is not None and result.kernel is not None:
         try:
             online_learner.record_outcome(
                 source_id="user",
@@ -336,7 +353,7 @@ def process_input(
             pass
 
     # Background: induction on relation frames
-    if cycle.relation_frames:
+    if result.relation_frames:
         try:
             from .learning.inductor import Inductor
             inductor = Inductor(
@@ -344,7 +361,7 @@ def process_input(
                 registry=registry,
                 concept_lattice=getattr(pipeline, '_concept_lattice', None),
             )
-            inductor.induct(cycle.uol_graph, cycle.context_kernel)
+            inductor.induct(result.uol_graph, result.kernel)
         except Exception:
             pass
 
@@ -365,7 +382,6 @@ def main() -> None:
 
     store = Store(args.db)
     registry = Registry()
-    op_registry = OperatorRegistry()
     persistent_store = PersistentLatticeStore(args.db)
     concept_lattice = ConceptLattice(persistent_store=persistent_store)
     construction_lattice = ConstructionLattice()
@@ -378,33 +394,18 @@ def main() -> None:
         auto_consolidate=True,
     )
     online_learner = OnlineLearner(store.source_trust, store.self_store, store.claims, store.models)
-    inductor = Inductor(store, registry=registry, concept_lattice=concept_lattice)
-    recursive_loop = None
 
     seed_registry(registry)
-    seed_self_state(store, concept_lattice=concept_lattice)
+    seed_self_state(store, concept_lattice=concept_lattice, durable_store=pipeline._runtime.durable_semantic_store)
     seed_causal_models(store, concept_lattice=concept_lattice)
-
-    for op_class in [
-        AnswerOperator, AskOperator, RememberOperator, UpdateClaimOperator,
-        CreateModelOperator, SynthesizeOperator, SimulateOperator,
-        RetrieveOperator, ReflectOperator, CallToolOperator, AbstainOperator,
-    ]:
-        op_registry.register(op_class())
-
-    # Learning operators share the pipeline's lexeme memory.
-    learn_lexeme_memory = pipeline._lexeme_memory
-    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_LEXEME))
-    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_COMMAND_ALIAS))
-    op_registry.register(LearnOperator(lexeme_memory=learn_lexeme_memory, action_kind=ActionKind.LEARN_CORRECTION))
 
     context_id = f"session_{int(time.time())}"
     turn_count = [0]
 
     # --once: single turn through full architecture
     if args.once:
-        output = process_input(args.once, store, registry, op_registry, pipeline,
-                               online_learner, recursive_loop, context_id, turn_count)
+        output = process_input(args.once, store, registry, pipeline,
+                               online_learner, context_id, turn_count)
         print(output)
         return
 
@@ -420,8 +421,8 @@ def main() -> None:
                 break
             if not text_in:
                 continue
-            output = process_input(text_in, store, registry, op_registry, pipeline,
-                                   online_learner, recursive_loop, context_id, turn_count)
+            output = process_input(text_in, store, registry, pipeline,
+                                   online_learner, context_id, turn_count)
             print(output)
         return
 
@@ -439,8 +440,8 @@ def main() -> None:
         raise SystemExit(_ct.main(_cargs))
 
     if args.eval:
-        output = process_input(args.eval, store, registry, op_registry, pipeline,
-                               online_learner, recursive_loop, context_id, turn_count)
+        output = process_input(args.eval, store, registry, pipeline,
+                               online_learner, context_id, turn_count)
         print(output)
         return
 
@@ -454,8 +455,8 @@ def main() -> None:
             break
         if not text:
             continue
-        output = process_input(text, store, registry, op_registry, pipeline,
-                               online_learner, recursive_loop, context_id, turn_count)
+        output = process_input(text, store, registry, pipeline,
+                               online_learner, context_id, turn_count)
         print(output)
 
 

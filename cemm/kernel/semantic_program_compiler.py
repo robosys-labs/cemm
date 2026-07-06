@@ -24,9 +24,10 @@ _OBLIGATION_RANK = {
     "teaching": 3,
     "assertion": 4,
     "command": 5,
-    "social": 6,
-    "creative": 7,
-    "unknown": 8,
+    "exit": 6,
+    "social": 7,
+    "creative": 8,
+    "unknown": 9,
 }
 
 
@@ -109,14 +110,19 @@ class SemanticProgramCompiler:
         "question": "question",
         "fresh_world_query": "question",
         "capability_query": "question",
+        "self_identity_query": "question",
+        "self_knowledge_query": "question",
         "teaching": "teaching",
         "repair": "repair",
         "command": "command",
         "greeting": "social",
+        "phatic_checkin": "social",
+        "reciprocal_phatic": "social",
         "acknowledgment": "social",
         "statement": "assertion",
-        "session_exit": "social",
+        "session_exit": "exit",
         "user_state_report": "assertion",
+        "self_reflect": "self_reflect",
     }
 
     def _classify_kind(self, graph: UOLGraph, group: Any, atom_ids: list[str]) -> str:

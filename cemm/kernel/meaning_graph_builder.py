@@ -151,6 +151,7 @@ class MeaningGraphBuilder:
         self._add_group_structures(graph, packet)
         self._add_referents(graph, packet.referents)
         self._add_actions(graph, packet.actions, packet.meaning_groups)
+        self._add_emotional_evaluations(graph, packet)
         self._add_states(graph, packet.states)
         self._add_relations(graph, packet.relations)
         self._add_needs(graph, packet.needs)
@@ -402,6 +403,124 @@ class MeaningGraphBuilder:
                 confidence=action.confidence,
                 features={"role": role_name, "role_value": role_value},
             )
+
+    _EMOTIONAL_VERB_TO_RELATION: dict[str, str] = {
+        "like": "likes", "likes": "likes", "love": "likes", "loves": "likes",
+        "prefer": "likes", "prefers": "likes", "enjoy": "likes", "enjoys": "likes",
+        "hate": "dislikes", "hates": "dislikes",
+        "dislike": "dislikes", "dislikes": "dislikes",
+    }
+
+    def _find_role_atom(self, graph: UOLGraph, atom: UOLAtom, role: str) -> UOLAtom | None:
+        for edge in graph.edges:
+            if edge.source_id == atom.id and edge.edge_type == "has_role":
+                if edge.features.get("role") == role:
+                    target = graph.atoms.get(edge.target_id)
+                    if target:
+                        return target
+        return None
+
+    def _add_emotional_evaluations(self, graph: UOLGraph, packet: MeaningPerceptPacket) -> None:
+        for action in packet.actions:
+            verb = (action.surface or action.action_key or "").lower()
+            relation_key = self._EMOTIONAL_VERB_TO_RELATION.get(verb)
+            if not relation_key:
+                continue
+            action_atoms = [
+                a for a in graph.atoms.values()
+                if a.kind == "action" and a.group_id == action.group_id
+                and a.key == (action.action_key or action.surface or "action")
+            ]
+            if not action_atoms:
+                continue
+            action_atom = action_atoms[0]
+            subject_atom = self._find_role_atom(graph, action_atom, "actor")
+            object_atom = self._find_role_atom(graph, action_atom, "object")
+            if object_atom is None:
+                object_atom = self._find_role_atom(graph, action_atom, "target")
+            if subject_atom is None or object_atom is None:
+                continue
+            valence = "positive" if relation_key == "likes" else "negative"
+            relation_atom = graph.add_atom(
+                "relation",
+                relation_key,
+                surface=verb,
+                group_id=action.group_id,
+                confidence=action.confidence,
+                source="emotional_predicate",
+                features={"valence": valence, "predicate": relation_key},
+            )
+            graph.add_edge(
+                "evaluates",
+                subject_atom.id,
+                object_atom.id,
+                group_id=action.group_id,
+                confidence=action.confidence,
+                features={
+                    "valence": valence,
+                    "predicate": relation_key,
+                    "emotional_verb": verb,
+                },
+            )
+            graph.add_edge(
+                "has_role",
+                relation_atom.id,
+                subject_atom.id,
+                group_id=action.group_id,
+                confidence=action.confidence,
+                features={"role": "subject"},
+            )
+            graph.add_edge(
+                "has_role",
+                relation_atom.id,
+                object_atom.id,
+                group_id=action.group_id,
+                confidence=action.confidence,
+                features={"role": "object"},
+            )
+
+    def _extract_emotional_evaluation_patches(self, graph: UOLGraph) -> None:
+        for edge in graph.edges:
+            if edge.edge_type != "evaluates":
+                continue
+            source = graph.atoms.get(edge.source_id)
+            target = graph.atoms.get(edge.target_id)
+            if source is None or target is None:
+                continue
+            relation_key = edge.features.get("predicate", "evaluates")
+            relation_family = self._EDGE_TYPE_TO_RELATION_FAMILY.get(relation_key, "property")
+            evidence = self._collect_evidence(graph, edge, source, target)
+            if not evidence:
+                evidence = [f"emotional_evaluation:{edge.id}"]
+            graph.add_patch_candidate(GraphPatch(
+                source_graph_id=graph.id,
+                target="concept_lattice",
+                operations=[PatchOperation(
+                    operation="upsert_relation_candidate",
+                    target_id=f"relation:{relation_key}:{source.key}:{target.key}",
+                    fields={
+                        "relation_key": relation_key,
+                        "relation_family": relation_family,
+                        "subject_concept_id": self._concept_key_for(source),
+                        "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",
+                        "subject_surface": source.surface,
+                        "object_concept_id": self._concept_key_for(target),
+                        "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
+                        "object_surface": target.surface,
+                        "source_atom_ids": [source.id, target.id],
+                        "inverse_keys": [],
+                        "group_id": edge.group_id or "",
+                        "evidence_refs": evidence,
+                    },
+                    confidence=edge.confidence,
+                    reason="emotional_evaluation_relation",
+                )],
+                source_refs=self._source_refs_for_group(graph, edge.group_id or ""),
+                permission_refs=self._permission_refs_for_group(graph, edge.group_id or ""),
+                evidence_refs=evidence,
+                confidence=edge.confidence,
+                reason="emotional_evaluation_candidate",
+            ))
 
     def _add_states(self, graph: UOLGraph, states: Iterable[StateAtom]) -> None:
         for state in states:
@@ -699,7 +818,7 @@ class MeaningGraphBuilder:
             if intent.target_role:
                 target = self._resolve_role_atom(graph, intent.target_role, intent.group_id, group_index.get(intent.group_id))
                 graph.add_edge("has_role", atom.id, target.id, group_id=intent.group_id, confidence=intent.confidence, features={"role": "target"})
-            if intent.is_question or intent.intent_key.endswith("query"):
+            if (intent.is_question or intent.intent_key.endswith("query")) and intent.intent_key not in ("phatic_checkin", "reciprocal_phatic"):
                 self._connect_asks_about(graph, atom, intent)
             if intent.intent_key == "teaching":
                 self._connect_teaches(graph, atom, intent)
@@ -1047,6 +1166,126 @@ class MeaningGraphBuilder:
                 for prediction in self._affordance_lattice.predict([atom]) or []:
                     graph.add_affordance_prediction(prediction)
 
+    _EDGE_TYPE_TO_RELATION_FAMILY: dict[str, str] = {
+        "is_a": "taxonomy",
+        "same_as": "identity",
+        "has_property": "property",
+        "used_for": "affordance",
+        "part_of": "membership",
+    }
+
+    _REMEMBER_RELATION_VERBS: dict[str, str] = {
+        "like": "likes",
+        "likes": "likes",
+        "love": "likes",
+        "loves": "likes",
+        "prefer": "likes",
+        "prefers": "likes",
+        "enjoy": "likes",
+        "enjoys": "likes",
+        "hate": "dislikes",
+        "hates": "dislikes",
+        "dislike": "dislikes",
+        "dislikes": "dislikes",
+        "have": "has_property",
+        "has": "has_property",
+        "own": "has_property",
+        "owns": "has_property",
+    }
+
+    def _extract_remember_relation_patches(self, graph: UOLGraph) -> None:
+        """Extract relation patches from 'remember' command groups.
+
+        Detects patterns like 'remember I like coffee' and creates
+        upsert_relation_candidate patches for the embedded relation.
+        """
+        for group in graph.groups:
+            if group.function != "command":
+                continue
+            tokens = group.surface.lower().split()
+            if "remember" not in tokens:
+                continue
+
+            # Find the relation verb in the remaining tokens
+            rem_index = tokens.index("remember")
+            after_rem = tokens[rem_index + 1:]
+
+            relation_key = ""
+            verb_index = -1
+            for i, tok in enumerate(after_rem):
+                if tok in self._REMEMBER_RELATION_VERBS:
+                    relation_key = self._REMEMBER_RELATION_VERBS[tok]
+                    verb_index = i
+                    break
+
+            if verb_index < 0 or not relation_key:
+                continue
+
+            # Subject is the pronoun before the verb (e.g., "I")
+            subject_pronoun = after_rem[verb_index - 1] if verb_index > 0 else ""
+            # Object is the noun phrase after the verb
+            object_tokens = after_rem[verb_index + 1:]
+            if not object_tokens or not subject_pronoun:
+                continue
+
+            object_surface = " ".join(object_tokens)
+
+            # Find matching atoms in the graph
+            user_atom = None
+            for atom in graph.atoms.values():
+                if atom.kind in ("entity", "self") and atom.group_id == group.id:
+                    if atom.surface.lower() == subject_pronoun or atom.key == "user":
+                        user_atom = atom
+                        break
+
+            object_atom = None
+            for atom in graph.atoms.values():
+                if atom.group_id == group.id and atom.surface.lower() == object_surface:
+                    object_atom = atom
+                    break
+            if object_atom is None:
+                for atom in graph.atoms.values():
+                    if atom.group_id == group.id and atom.kind == "entity" and atom.surface.lower() not in ("i", "my", "me", "user", "remember"):
+                        if object_surface in atom.surface.lower() or atom.surface.lower() in object_surface:
+                            object_atom = atom
+                            break
+
+            if user_atom is None or object_atom is None:
+                continue
+
+            relation_family = self._EDGE_TYPE_TO_RELATION_FAMILY.get(relation_key, "property")
+            evidence = [f"remember_command:{group.id}"]
+
+            graph.add_patch_candidate(GraphPatch(
+                source_graph_id=graph.id,
+                target="concept_lattice",
+                operations=[PatchOperation(
+                    operation="upsert_relation_candidate",
+                    target_id=f"relation:{relation_key}:{user_atom.key}:{object_atom.key}",
+                    fields={
+                        "relation_key": relation_key,
+                        "relation_family": relation_family,
+                        "subject_concept_id": self._concept_key_for(user_atom),
+                        "subject_entity_id": user_atom.key,
+                        "subject_surface": user_atom.key if user_atom.kind == "entity" else user_atom.surface,
+                        "object_concept_id": self._concept_key_for(object_atom),
+                        "object_entity_id": "",
+                        "object_surface": object_atom.surface,
+                        "source_atom_ids": [user_atom.id, object_atom.id],
+                        "inverse_keys": [],
+                        "group_id": group.id,
+                        "evidence_refs": evidence,
+                    },
+                    confidence=0.7,
+                    reason="remember_command_relation",
+                )],
+                source_refs=self._source_refs_for_group(graph, group.id),
+                permission_refs=self._permission_refs_for_group(graph, group.id),
+                evidence_refs=evidence,
+                confidence=0.7,
+                reason="remember_command_relation_candidate",
+            ))
+
     def _extract_graph_patches(self, graph: UOLGraph) -> None:
         for group in graph.groups:
             teaching_edges = [
@@ -1060,14 +1299,25 @@ class MeaningGraphBuilder:
                     target = graph.atoms.get(edge.target_id)
                     if source is None or target is None:
                         continue
+                    evidence = self._collect_evidence(graph, edge, source, target)
+                    if not evidence:
+                        evidence = [f"surface_teaching_relation:{group.id}"]
                     operations.append(PatchOperation(
                         operation="upsert_relation_candidate",
                         target_id=f"relation:{edge.edge_type}:{source.key}:{target.key}",
                         fields={
-                            "relation": edge.edge_type,
-                            "source_concept_key": source.key,
-                            "target_concept_key": target.key,
+                            "relation_key": edge.edge_type,
+                            "relation_family": self._EDGE_TYPE_TO_RELATION_FAMILY.get(edge.edge_type, "definition"),
+                            "subject_concept_id": self._concept_key_for(source),
+                            "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",
+                            "subject_surface": source.surface,
+                            "object_concept_id": self._concept_key_for(target),
+                            "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
+                            "object_surface": target.surface,
+                            "source_atom_ids": [source.id, target.id],
+                            "inverse_keys": [],
                             "group_id": group.id,
+                            "evidence_refs": evidence,
                         },
                         confidence=edge.confidence,
                         reason="user_teaching_graph_relation",
@@ -1079,9 +1329,13 @@ class MeaningGraphBuilder:
                         operations=operations,
                         source_refs=self._source_refs_for_group(graph, group.id),
                         permission_refs=self._permission_refs_for_group(graph, group.id),
+                        evidence_refs=self._collect_all_evidence(graph, operations) or [f"teaching_group:{group.id}"],
                         confidence=max(operation.confidence for operation in operations),
                         reason="teaching_group_relation_candidates",
                     ))
+
+        self._extract_remember_relation_patches(graph)
+        self._extract_emotional_evaluation_patches(graph)
 
         concept_operations = []
         for resolution in graph.concept_resolutions:
@@ -1090,14 +1344,18 @@ class MeaningGraphBuilder:
             atom = graph.atoms.get(resolution.atom_id)
             if atom is None:
                 continue
+            evidence = self._evidence_refs(atom.evidence) if hasattr(atom, "evidence") else []
+            if not evidence:
+                evidence = [f"concept_resolution:{resolution.atom_id}"]
             concept_operations.append(PatchOperation(
                 operation="upsert_concept_candidate",
                 target_id=resolution.concept_id,
                 fields={
-                    "key": atom.key,
+                    "concept_key": atom.key,
                     "atom_kind": atom.kind,
                     "surface": atom.surface,
                     "state": "candidate_atom",
+                    "evidence_refs": evidence,
                 },
                 confidence=resolution.confidence,
                 reason=resolution.reason,
@@ -1109,6 +1367,7 @@ class MeaningGraphBuilder:
                 operations=concept_operations,
                 source_refs=self._source_refs_for_group(graph, ""),
                 permission_refs=self._permission_refs_for_group(graph, ""),
+                evidence_refs=self._collect_all_evidence(graph, concept_operations) or ["concept_candidates"],
                 confidence=max(operation.confidence for operation in concept_operations),
                 reason="new_surface_concept_candidates",
             ))
@@ -1217,12 +1476,58 @@ class MeaningGraphBuilder:
                 refs.append(ref)
         return refs
 
+    @staticmethod
+    def _collect_evidence(graph: UOLGraph, edge: Any, source: Any, target: Any) -> list[str]:
+        refs: list[str] = []
+        for item in (edge, source, target):
+            ev = getattr(item, "evidence", [])
+            if isinstance(ev, list):
+                for e in ev:
+                    span_id = str(e.get("span_id", "") if isinstance(e, dict) else "")
+                    group_id = str(e.get("group_id", "") if isinstance(e, dict) else "")
+                    source_str = str(e.get("source", "") if isinstance(e, dict) else "")
+                    ref = ":".join(p for p in (source_str, group_id, span_id) if p)
+                    if ref and ref not in refs:
+                        refs.append(ref)
+            elif isinstance(ev, dict):
+                span_id = str(ev.get("span_id", ""))
+                group_id = str(ev.get("group_id", ""))
+                source_str = str(ev.get("source", ""))
+                ref = ":".join(p for p in (source_str, group_id, span_id) if p)
+                if ref and ref not in refs:
+                    refs.append(ref)
+        return refs
+
+    @staticmethod
+    def _collect_all_evidence(graph: UOLGraph, operations: list[Any]) -> list[str]:
+        refs: list[str] = []
+        for op in operations:
+            ev = op.fields.get("evidence_refs", [])
+            if isinstance(ev, list):
+                for r in ev:
+                    if r and r not in refs:
+                        refs.append(r)
+        return refs
+
+    @staticmethod
+    def _concept_key_for(atom: Any) -> str:
+        key = getattr(atom, "key", "") or ""
+        if key.startswith("entity:") or key.startswith("concept:"):
+            return key
+        if key:
+            return f"concept:{key}"
+        return key
+
     def _source_refs_for_group(self, graph: UOLGraph, group_id: str) -> list[str]:
-        sources = graph.atoms_by_kind("source", group_id) if group_id else graph.atoms_by_kind("source")
+        sources = graph.atoms_by_kind("source", group_id) if group_id else []
+        if not sources:
+            sources = graph.atoms_by_kind("source")
         return [atom.id for atom in sources]
 
     def _permission_refs_for_group(self, graph: UOLGraph, group_id: str) -> list[str]:
-        permissions = graph.atoms_by_kind("permission", group_id) if group_id else graph.atoms_by_kind("permission")
+        permissions = graph.atoms_by_kind("permission", group_id) if group_id else []
+        if not permissions:
+            permissions = graph.atoms_by_kind("permission")
         return [atom.id for atom in permissions]
 
     @staticmethod

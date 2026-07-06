@@ -27,6 +27,12 @@ class TeachingFrameManager:
                 return frame
         return None
 
+    def active_frame_for_context(self, context_id: str) -> TeachingFrame | None:
+        for frame in self._active_frames.values():
+            if frame.active and frame.context_id == context_id:
+                return frame
+        return None
+
     def process_turn(
         self,
         program: Any | None = None,
@@ -170,3 +176,60 @@ class TeachingFrameManager:
 
     def _extract_open_slots(self, entry: Any) -> list[str]:
         return [k for k, v in entry.output_slots.items() if not v]
+
+    # ── Session serialization ──────────────────────────────────────
+
+    def to_session_dict(self, context_id: str) -> dict | None:
+        """Serialize the active teaching frame for this context.
+
+        Returns None if no active frame exists for the context.
+        """
+        frame = self.active_frame_for_context(context_id)
+        if frame is None:
+            return None
+        return {
+            "frame_id": frame.frame_id,
+            "context_id": frame.context_id,
+            "target_concept_key": frame.target_concept_key,
+            "target_concept_id": frame.target_concept_id,
+            "active": frame.active,
+            "started_signal_id": frame.started_signal_id,
+            "last_signal_id": frame.last_signal_id,
+            "open_slots": list(frame.open_slots),
+            "accumulated_graph_ids": list(frame.accumulated_graph_ids),
+            "accumulated_patch_ids": list(frame.accumulated_patch_ids),
+            "current_definition_graph_id": frame.current_definition_graph_id,
+            "confidence": frame.confidence,
+        }
+
+    def from_session_dict(self, context_id: str, data: dict) -> None:
+        """Restore a teaching frame from session data.
+
+        Replaces any existing active frame for this context.
+        """
+        if data is None:
+            return
+        # Remove existing active frames for this context
+        to_remove = [
+            fid for fid, f in self._active_frames.items()
+            if f.context_id == context_id and f.active
+        ]
+        for fid in to_remove:
+            del self._active_frames[fid]
+
+        frame = TeachingFrame(
+            frame_id=data.get("frame_id", ""),
+            context_id=data.get("context_id", context_id),
+            target_concept_key=data.get("target_concept_key", ""),
+            target_concept_id=data.get("target_concept_id", ""),
+            active=data.get("active", True),
+            started_signal_id=data.get("started_signal_id", ""),
+            last_signal_id=data.get("last_signal_id", ""),
+            open_slots=list(data.get("open_slots", [])),
+            accumulated_graph_ids=list(data.get("accumulated_graph_ids", [])),
+            accumulated_patch_ids=list(data.get("accumulated_patch_ids", [])),
+            current_definition_graph_id=data.get("current_definition_graph_id", ""),
+            confidence=data.get("confidence", 0.5),
+        )
+        if frame.frame_id:
+            self._active_frames[frame.frame_id] = frame

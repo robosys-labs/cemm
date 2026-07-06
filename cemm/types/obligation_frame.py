@@ -23,6 +23,7 @@ OBLIGATION_KINDS = frozenset({
     "abstain_policy",
     "repair",
     "social_reply",
+    "acknowledge_emotional_context",
     "exit",
 })
 
@@ -39,3 +40,4 @@ class ObligationFrame:
     child_obligations: list[str] = field(default_factory=list)
     suppressed_obligations: list[dict[str, Any]] = field(default_factory=list)
     confidence: float = 0.5
+    context: dict[str, Any] = field(default_factory=dict)

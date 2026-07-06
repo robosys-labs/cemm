@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
-from pathlib import Path
 from typing import Any
 
 from ..types.conversation_act import ConversationAct, ConversationActPacket
@@ -17,65 +15,16 @@ from ..registry.semantic_model_store import SemanticModelStore
 from ..registry.act_type_policy import DISCOURSE_FRAMES as _DISCOURSE_FRAMES, is_social as _is_social_act
 from .text_match import tokenize_surface
 from .intent_parser import parse_intent, CompositionalIntent
+from .uol_metadata import (
+    FRAME_ALIASES as _FRAME_ALIASES,
+    FRAME_TO_ACT as _FRAME_TO_ACT,
+    FRAME_POLARITY as _FRAME_POLARITY,
+    FRAME_INTENSITY as _FRAME_INTENSITY,
+    CUE_SETS as _CUE_SETS,
+)
 
 _logger = logging.getLogger("cemm.classifier")
 _DEBUG = os.environ.get("CEMM_DEBUG", "").lower() in ("1", "true", "yes")
-
-
-_UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
-
-
-def _load_uol_metadata() -> tuple[
-    dict[str, list[str]],
-    dict[str, str],
-    dict[str, str],
-    dict[str, float],
-    dict[str, set[str]],
-]:
-    """Load all UOL semantic metadata from the JSON data file.
-
-    Returns:
-        frame_aliases: canonical_key -> [aliases]
-        frame_to_act: canonical_key -> act_type
-        frame_polarity: canonical_key -> polarity
-        frame_intensity: canonical_key -> intensity
-        cue_sets: cue_type -> set of canonical_keys belonging to that cue type
-    """
-    if not _UOL_SEMANTICS_PATH.exists():
-        return {}, {}, {}, {}, {}
-    data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
-    entries = data.get("uol_semantics", [])
-    frame_aliases: dict[str, list[str]] = {}
-    frame_to_act: dict[str, str] = {}
-    frame_polarity: dict[str, str] = {}
-    frame_intensity: dict[str, float] = {}
-    cue_sets: dict[str, set[str]] = {}
-    for entry in entries:
-        key = entry["canonical_key"]
-        frame_aliases[key] = entry.get("aliases", [])
-        act_type = entry.get("act_type", "unknown")
-        if act_type != "unknown":
-            frame_to_act[key] = act_type
-        if "polarity" in entry:
-            frame_polarity[key] = entry["polarity"]
-        if "intensity" in entry:
-            frame_intensity[key] = entry["intensity"]
-        cue_type = entry.get("cue_type")
-        if cue_type:
-            cue_sets.setdefault(cue_type, set())
-            cue_sets[cue_type].update(frame_aliases[key])
-    if _DEBUG:
-        _logger.debug(
-            "UOL metadata loaded: %d frames, %d act_types, %d cue_sets [%s]",
-            len(frame_aliases),
-            len(frame_to_act),
-            len(cue_sets),
-            ", ".join(f"{k}={len(v)}" for k, v in sorted(cue_sets.items())),
-        )
-    return frame_aliases, frame_to_act, frame_polarity, frame_intensity, cue_sets
-
-
-_FRAME_ALIASES, _FRAME_TO_ACT, _FRAME_POLARITY, _FRAME_INTENSITY, _CUE_SETS = _load_uol_metadata()
 
 
 def _tokenize_surface(text: str) -> list[str]:

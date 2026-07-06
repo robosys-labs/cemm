@@ -23,5 +23,17 @@
   "ask": "request_information",
   "tell": "provide_information",
   "show": "display_information",
-  "teach": "transfer_knowledge"
+  "teach": "transfer_knowledge",
+  "like": "evaluate_positive",
+  "likes": "evaluate_positive",
+  "love": "evaluate_positive",
+  "loves": "evaluate_positive",
+  "prefer": "evaluate_positive",
+  "prefers": "evaluate_positive",
+  "enjoy": "evaluate_positive",
+  "enjoys": "evaluate_positive",
+  "hate": "evaluate_negative",
+  "hates": "evaluate_negative",
+  "dislike": "evaluate_negative",
+  "dislikes": "evaluate_negative"
 }

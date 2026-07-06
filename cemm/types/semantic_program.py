@@ -12,6 +12,7 @@ from typing import Any
 
 
 INSTRUCTION_KINDS = frozenset({
+    "exit",
     "social",
     "question",
     "teaching",

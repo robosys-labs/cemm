@@ -2,22 +2,36 @@
 
 This directory contains historical or superseded material. Files here are retained for traceability only.
 
-Do not use archived files as implementation guidance. The active architecture is v4.1 consolidated.
+Do not use archived files as implementation guidance.
 
-Current active guidance lives in:
-- `AGENTS.md`
-- `newarch/consolidated_architecture.md`
-- `newarch/core_loop_runtime.md`
-- `newarch/3.3-uol-graph-architecture.md`
-- `newarch/semantic_compression_and_unsupervised_learning.md`
-- `newarch/construction_grammar_for_cemm.md`
-- `newarch/missing_runtime_implementation_plan.md`
-- `newarch/core_loop_update_manifest.md`
-- `newarch/full_cemm_learning_brain_missing_pieces.md`
-- `newarch/atom_grounding_and_bootstrapping.md`
-- `newarch/concept_lattice_runtime_resolution.md`
-- `newarch/dynamic_affordances_and_effects.md`
-- `newarch/operational_ports_and_dynamic_slot_resolution.md`
-- `newarch/probabilistic_oracle_and_afa_ifa_model.md`
+## Current Active Guidance
 
-Archived implementation plans and specs are under `superpowers/`. These were working documents during v3.0-v3.1 development and are retained for traceability only.
+1. `AGENTS.md` — governing implementation guide (includes BLOCKER #1: causal-runtime wiring gap)
+2. `newarch/causal-runtime-wiring-fix.md` — master fix plan (BLOCKER #1)
+3. `newarch/consolidated_architecture.md` — architecture contract
+4. `newarch/3.3-uol-graph-architecture.md` — UOL graph architecture
+5. `newarch/core_loop_runtime.md` — runtime loop contract
+
+## Superseded Newarch Docs
+
+The following docs have been moved to `archive/newarch_superseded/` because they
+describe earlier architectural plans that do not address the causal-runtime
+wiring gap. Following them will cause architectural drift:
+
+- `semantic-graph-brain-gap-fix-implementation-plan.md`
+- `semantic-graph-brain-implementation.md`
+- `semantic-graph-brain.design.md`
+- `runtime-single-authority-takeover-design.md`
+- `cemm-v4.2-exact-root-cause-gap-fix-proposal.md`
+- `missing_runtime_implementation_plan.md`
+- `full_cemm_learning_brain_missing_pieces.md`
+- `construction-matcher-refactor-plan.md`
+- `2026-07-03-consolidated-architecture-v4-migration.md`
+- `2026-07-04-cemm-v42-brain.md`
+- `2026-07-04-persistent-concept-lattice.md`
+
+## Older v3 Archive
+
+Archived implementation plans and specs under `superpowers/` and `archive/`
+subdirectories were working documents during v3.0-v3.1 development and are
+retained for traceability only.

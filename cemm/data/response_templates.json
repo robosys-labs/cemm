@@ -23,7 +23,7 @@
     "learn_correction": "Thanks. I've updated '{surface}' to mean '{meaning}'.",
     "retrieve_empty": "I did not find matching stored evidence.",
     "permission_denied": "I cannot do that because the required permission is not available.",
-    "self_identity": "I'm {name}, a teachable semantic assistant.",
+    "self_identity": "I am {answer}.",
     "self_capability": "I can {capabilities}.",
     "self_knowledge": "I learn from our conversations and use stored claims, models, and reasoning to answer.",
     "self_query_unknown": "I'm not sure how to answer that about myself yet.",
@@ -63,6 +63,18 @@
     "teaching_protocol": "You can teach me by saying things like \"X means Y\", \"X is a type of Y\", or \"when I say X, do Y.\" I'll turn what you tell me into structured memory and confirm what I learned.",
     "self_category": "I'm not a robot in the human sense — I'm a teachable semantic system. I process meaning through structured atoms, learn from what you tell me, and reason from stored knowledge. I don't pretend to be more than I am.",
     "concept_unknown": "I don't have a stored definition for {term} yet. You can teach me by saying \"{term} is ...\" and I'll remember it.",
-    "unknown_self_label": "I hear the frustration. Are you saying I misunderstood you or gave a bad answer?"
+    "unknown_self_label": "I hear the frustration. Are you saying I misunderstood you or gave a bad answer?",
+    "evidence_answer": "{answer}",
+    "user_profile": "Your {answer}.",
+    "teaching_continuation": "Got it — {answer}. Tell me more.",
+    "teaching_acknowledgment": "Got it. What else can you tell me?",
+    "store_confirmation": "Got it. I've learned that {answer}.",
+    "store_acknowledgment": "Got it.",
+    "social_response": "Hello!",
+    "emotional_response": "I hear you. That {evaluation} means a lot — tell me more about it.",
+    "emotional_acknowledgment": "Got it. I can see that {evaluation} matters to you.",
+    "ask_clarification": "Could you clarify what you mean by {answer}?",
+    "blocked": "I need more information before I can answer that.",
+    "safety_refusal": "I can't help with that."
   }
 }

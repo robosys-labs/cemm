@@ -128,6 +128,8 @@ class RelationAlgebra:
         results: list[RelationFrame] = []
 
         for frame in frames:
+            if frame.structural or not frame.answerable:
+                continue
             if frame.relation_key == relation_key:
                 results.append(frame)
 
@@ -143,9 +145,18 @@ class RelationAlgebra:
 
         if allow_inverse and self._schema_store:
             for frame in frames:
+                if frame.structural or not frame.answerable:
+                    continue
                 inv = self.inverse(frame)
                 if inv is not None and inv.relation_key == relation_key:
                     results.append(inv)
+
+        # Re-apply subject filter to include inverse frames
+        if subject_concept_id or subject_entity_id:
+            results = [
+                f for f in results
+                if self._matches_subject(f, subject_concept_id, subject_entity_id)
+            ]
 
         if object_concept_id or object_entity_id:
             results = [

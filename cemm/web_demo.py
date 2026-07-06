@@ -36,14 +36,10 @@ _pipeline = Pipeline(
 )
 
 from cemm.learning.online import OnlineLearner
-from cemm.learning.inductor import Inductor
-from cemm.kernel.recursive_loop import RecursiveLoop
 _online_learner = OnlineLearner(_store.source_trust, _store.self_store, _store.claims, _store.models)
-_inductor = Inductor(_store)
-_recursive_loop = RecursiveLoop(_pipeline, _store, _online_learner, _inductor)
 
 seed_registry(_registry)
-seed_self_state(_store, concept_lattice=_concept_lattice)
+seed_self_state(_store, concept_lattice=_concept_lattice, durable_store=_pipeline._runtime.durable_semantic_store)
 
 _context_id = "web_demo"
 _turn_count = [0]
@@ -568,17 +564,12 @@ class CEMMHandler(BaseHTTPRequestHandler):
                 data = json.loads(raw)
                 text = data.get("text", "")
                 output = process_input(
-                    text, _store, _registry, None, _pipeline,
-                    _online_learner, _recursive_loop, _context_id, _turn_count,
+                    text, _store, _registry, _pipeline,
+                    _online_learner, _context_id, _turn_count,
                 )
                 payload: dict = {"response": output, "turn": _turn_count[0]}
                 if _DEBUG:
                     cycle = getattr(_pipeline._runtime, "_last_cycle", None)
-                    if cycle is None:
-                        from cemm.kernel.pipeline import PipelineResult
-                        pr: PipelineResult | None = getattr(_recursive_loop, "_last_result", None)
-                        if pr is not None:
-                            cycle = getattr(pr, "_cycle", None)
                     if cycle:
                         payload["debug"] = _extract_debug(cycle)
                 body = json.dumps(payload).encode("utf-8")
@@ -607,14 +598,14 @@ class CEMMHandler(BaseHTTPRequestHandler):
 
 def _patch_runtime() -> None:
     """Hook into Pipeline to capture the latest RuntimeCycleResult."""
-    orig = _pipeline._runtime.run_text
+    orig = _pipeline._runtime.run_turn
 
-    def hooked(text, context_id=None, source_id="user"):
-        cycle = orig(text, context_id=context_id, source_id=source_id)
+    def hooked(signal, kernel, **kw):
+        cycle = orig(signal, kernel, **kw)
         _pipeline._runtime._last_cycle = cycle
         return cycle
 
-    _pipeline._runtime.run_text = hooked
+    _pipeline._runtime.run_turn = hooked
 
 
 _patch_runtime()

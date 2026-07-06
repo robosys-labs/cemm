@@ -6,7 +6,6 @@ Produces a RuntimeCycleResult with the full architectural trace.
 """
 
 from __future__ import annotations
-import copy
 import time
 from typing import Any
 
@@ -19,6 +18,8 @@ from .relation_frame_compiler import RelationFrameCompiler
 from .relation_algebra import RelationAlgebra
 from .semantic_query_engine import SemanticQueryEngine
 from .semantic_realizer import SemanticRealizer
+from .session_store import SessionStore
+from ..causal.causal_bridge import CausalBridge
 from ..learning.patch_validator import PatchValidator
 from ..learning.patch_committer import PatchCommitter
 from ..memory.predicate_schema_store import PredicateSchemaStore
@@ -82,7 +83,18 @@ class SemanticKernelRuntime:
         # Durable semantic store + patch committer (Phase 8 breakthrough)
         self._durable_semantic_store = DurableSemanticStore()
         self._patch_committer = PatchCommitter(self._durable_semantic_store)
-        self._session_state: dict = {}
+
+        # Single-authority session state
+        self._session_store = SessionStore()
+
+        # Causal inference bridge (wraps legacy CausalInference if store has models)
+        self._causal_bridge = CausalBridge()
+        if store is not None:
+            try:
+                from ..causal.inference import CausalInference
+                self._causal_bridge = CausalBridge(CausalInference(store))
+            except Exception:
+                pass
 
     @property
     def attention(self):
@@ -129,80 +141,9 @@ class SemanticKernelRuntime:
     def patch_committer(self) -> PatchCommitter:
         return self._patch_committer
 
-    def _restore_session(self, kernel, context_id):
-        prior = self._session_state.get(context_id)
-        if prior is None:
-            return
-        if hasattr(kernel, 'user') and hasattr(kernel.user, 'affect'):
-            kernel.user.affect = copy.deepcopy(prior.get("user_affect", kernel.user.affect))
-        if hasattr(kernel, 'conversation'):
-            kernel.conversation.dynamics = copy.deepcopy(
-                prior.get("conversation_dynamics", kernel.conversation.dynamics)
-            )
-            kernel.conversation.active_repetition_group_ids = list(
-                prior.get("active_repetition_group_ids", kernel.conversation.active_repetition_group_ids)
-            )
-            previous_recent = list(prior.get("recent_signal_ids", []))
-            kernel.conversation.recent_signal_ids = previous_recent
-            kernel.conversation.first_user_signal_id = prior.get(
-                "first_user_signal_id", kernel.conversation.first_user_signal_id
-            )
-            kernel.conversation.pending_assistant_question = prior.get(
-                "pending_assistant_question", ""
-            )
-            kernel.conversation.expected_user_answer_type = prior.get(
-                "expected_user_answer_type", ""
-            )
-            kernel.conversation.last_assistant_response_mode = prior.get(
-                "last_assistant_response_mode", ""
-            )
-            prior_discourse = prior.get("discourse_stack")
-            if prior_discourse:
-                kernel.conversation.discourse_stack = prior_discourse
-            kernel.conversation.repair_target_turn_id = prior.get("repair_target_turn_id", "")
-            kernel.conversation.active_teaching_target = prior.get("active_teaching_target", "")
-            kernel.conversation.active_unknown_concept = prior.get("active_unknown_concept", "")
-        if hasattr(kernel, 'topic'):
-            prior_topic = prior.get("topic_state")
-            if prior_topic:
-                kernel.topic.active_topic_entity_id = prior_topic.get("active_topic_entity_id", "")
-                kernel.topic.active_topic_surface = prior_topic.get("active_topic_surface", "")
-                kernel.topic.active_topic_type = prior_topic.get("active_topic_type", "")
-                kernel.topic.last_taught_entity_id = prior_topic.get("last_taught_entity_id", "")
-                kernel.topic.last_taught_entity_surface = prior_topic.get("last_taught_entity_surface", "")
-                kernel.topic.last_questioned_attribute = prior_topic.get("last_questioned_attribute", "")
-        last_user_at = prior.get("last_user_at")
-        if last_user_at is not None and hasattr(kernel, 'time'):
-            signal_time = getattr(kernel, 'latest_signal', None)
-            if signal_time is not None and hasattr(signal_time, 'observed_at'):
-                kernel.time.time_since_last_user_signal_ms = max(
-                    0.0, (signal_time.observed_at - float(last_user_at)) * 1000.0,
-                )
-
-    def _persist_session(self, kernel, context_id):
-        self._session_state[context_id] = {
-            "user_affect": copy.deepcopy(kernel.user.affect) if hasattr(kernel, 'user') and hasattr(kernel.user, 'affect') else {},
-            "conversation_dynamics": copy.deepcopy(kernel.conversation.dynamics) if hasattr(kernel, 'conversation') and hasattr(kernel.conversation, 'dynamics') else {},
-            "active_repetition_group_ids": list(kernel.conversation.active_repetition_group_ids) if hasattr(kernel, 'conversation') else [],
-            "recent_signal_ids": list(kernel.conversation.recent_signal_ids) if hasattr(kernel, 'conversation') else [],
-            "first_user_signal_id": kernel.conversation.first_user_signal_id if hasattr(kernel, 'conversation') else "",
-            "last_user_at": time.time(),
-            "pending_assistant_question": kernel.conversation.pending_assistant_question if hasattr(kernel, 'conversation') else "",
-            "expected_user_answer_type": kernel.conversation.expected_user_answer_type if hasattr(kernel, 'conversation') else "",
-            "last_assistant_response_mode": kernel.conversation.last_assistant_response_mode if hasattr(kernel, 'conversation') else "",
-            "topic_state": {
-                "active_topic_entity_id": kernel.topic.active_topic_entity_id if hasattr(kernel, 'topic') else "",
-                "active_topic_surface": kernel.topic.active_topic_surface if hasattr(kernel, 'topic') else "",
-                "active_topic_type": kernel.topic.active_topic_type if hasattr(kernel, 'topic') else "",
-                "last_taught_entity_id": kernel.topic.last_taught_entity_id if hasattr(kernel, 'topic') else "",
-                "last_taught_entity_surface": kernel.topic.last_taught_entity_surface if hasattr(kernel, 'topic') else "",
-                "last_questioned_attribute": kernel.topic.last_questioned_attribute if hasattr(kernel, 'topic') else "",
-            },
-            "discourse_stack": kernel.conversation.discourse_stack if hasattr(kernel, 'conversation') else [],
-            "repair_target_turn_id": kernel.conversation.repair_target_turn_id if hasattr(kernel, 'conversation') else "",
-            "active_teaching_target": kernel.conversation.active_teaching_target if hasattr(kernel, 'conversation') else "",
-            "active_unknown_concept": kernel.conversation.active_unknown_concept if hasattr(kernel, 'conversation') else "",
-        }
+    @property
+    def session_store(self) -> SessionStore:
+        return self._session_store
 
     def run_text(
         self,
@@ -232,123 +173,11 @@ class SemanticKernelRuntime:
         signal.normalized = TextNormalizer().normalize(signal.content)
 
         builder = ContextKernelBuilder()
-        kernel = builder.from_signal(signal)
+        turn_index = self._session_store.next_turn_index(signal.context_id)
+        kernel = builder.from_signal(signal, turn_index=turn_index)
         kernel.latest_signal = signal
 
-        self._restore_session(kernel, signal.context_id)
-
-        result = self.run_turn(signal, kernel)
-
-        self._persist_session(kernel, signal.context_id)
-
-        from ..learning.predicate_schema_inductor import PredicateSchemaInductor
-        inductor = PredicateSchemaInductor()
-        try:
-            inductor.induct_from_frames(result.relation_frames, self._predicate_schema_store)
-        except Exception:
-            pass
-
-        return result
-
-    def run_semantic_stack(
-        self,
-        signal: Any,
-        kernel: Any,
-        uol_graph: Any,
-        percept: Any | None = None,
-        working_set: Any | None = None,
-    ) -> RuntimeCycleResult:
-        """Run only the v4.2 semantic stack on a pre-built UOLGraph.
-
-        This avoids re-perceiving / re-building / re-consolidating when the
-        pipeline has already done those steps.  Produces a RuntimeCycleResult
-        populated with semantic_program, obligation_frame, relation_frames,
-        semantic_query, answer_binding, realization_contract, and realized_output.
-        """
-        start = time.monotonic()
-        result = RuntimeCycleResult(signal=signal, context_kernel=kernel)
-        result.percept = percept
-        result.uol_graph = uol_graph
-        result.working_set = working_set
-        errors: list[str] = []
-
-        # 1. Attend if not provided
-        if working_set is None:
-            try:
-                budget = getattr(kernel, "budget", None) if kernel is not None else None
-                working_set = self._attention.attend(uol_graph, kernel, budget)
-                result.working_set = working_set
-            except Exception as e:
-                errors.append(f"attend failed: {e}")
-
-        # 2. Compile semantic program
-        semantic_program = None
-        try:
-            semantic_program = self._program_compiler.compile(uol_graph, percept, kernel)
-        except Exception as e:
-            errors.append(f"compile program failed: {e}")
-
-        # 3. Schedule obligation
-        obligation_frame = None
-        try:
-            obligation_frame = self._obligation_scheduler.schedule(
-                semantic_program, working_set, kernel, uol_graph,
-            )
-        except Exception as e:
-            errors.append(f"schedule obligation failed: {e}")
-
-        # 4. Process teaching frame
-        try:
-            self._teaching_frame_manager.process_turn(
-                semantic_program, uol_graph, kernel, signal.id,
-            )
-        except Exception as e:
-            errors.append(f"teaching frame failed: {e}")
-
-        # 5. Compile relation frames + merge with durable store
-        relation_frames: list[Any] = []
-        try:
-            turn_frames = self._relation_frame_compiler.compile(uol_graph)
-            durable_frames = self._durable_semantic_store.query_relations()
-            relation_frames = turn_frames + durable_frames
-        except Exception as e:
-            errors.append(f"compile relations failed: {e}")
-
-        # 6. Execute semantic query → answer binding → realization contract
-        semantic_query = None
-        answer_binding = None
-        realization_contract = None
-        if obligation_frame is not None:
-            try:
-                semantic_query, answer_binding, realization_contract = (
-                    self._query_engine.run(
-                        obligation_frame, relation_frames, semantic_program,
-                    )
-                )
-            except Exception as e:
-                errors.append(f"query engine failed: {e}")
-
-        # 7. Realize contract → response text
-        if realization_contract is not None:
-            try:
-                result.realized_output = self._realizer.realize(
-                    realization_contract, answer_binding,
-                )
-            except Exception as e:
-                errors.append(f"realize failed: {e}")
-
-        # 8. Populate first-class fields
-        result.semantic_program = semantic_program
-        result.obligation_frame = obligation_frame
-        result.relation_frames = relation_frames
-        result.semantic_query = semantic_query
-        result.answer_binding = answer_binding
-        result.realization_contract = realization_contract
-
-        result.cost_ms = (time.monotonic() - start) * 1000
-        if errors:
-            result.diagnostics = {"errors": errors}
-        return result
+        return self.run_turn(signal, kernel)
 
     def run_turn(
         self,
@@ -364,6 +193,16 @@ class SemanticKernelRuntime:
         result = RuntimeCycleResult(signal=signal, context_kernel=kernel)
         errors: list[str] = []
 
+        # 0. Session restore — hydrate kernel from prior turn state
+        try:
+            self._session_store.restore(kernel, signal)
+            # Restore teaching frame for this context
+            frame_data = self._session_store.load_teaching_frame(signal.context_id)
+            if frame_data is not None:
+                self._teaching_frame_manager.from_session_dict(signal.context_id, frame_data)
+        except Exception as e:
+            errors.append(f"session restore failed: {e}")
+
         # 1. Perceive
         try:
             if percept is None:
@@ -374,6 +213,26 @@ class SemanticKernelRuntime:
             result.cost_ms = (time.monotonic() - start) * 1000
             result.diagnostics = {"errors": errors}
             return result
+
+        # 1a. Update user affect from detected affect markers
+        try:
+            from .pragmatic_interpreter import update_user_affect, affect_markers_to_semantics
+            affect_markers = getattr(percept, "affect_markers", None)
+            if affect_markers:
+                semantics = affect_markers_to_semantics(affect_markers, signal.id)
+                kernel.user.affect = update_user_affect(
+                    kernel.user.affect, semantics, kernel, signal.id,
+                )
+        except Exception as e:
+            errors.append(f"affect update failed: {e}")
+
+        # 1b. Update entity salience from perception trace
+        try:
+            salience_map = percept.perception_trace.get("salience_map", {})
+            if salience_map and hasattr(kernel, "conversation"):
+                kernel.conversation.entity_salience = dict(salience_map)
+        except Exception as e:
+            errors.append(f"salience update failed: {e}")
 
         # 2. Build working graph
         try:
@@ -388,6 +247,16 @@ class SemanticKernelRuntime:
             result.cost_ms = (time.monotonic() - start) * 1000
             result.diagnostics = {"errors": errors}
             return result
+
+        # 2a. Causal inference predictions via bridge
+        try:
+            causal_preds = self._causal_bridge.predict(
+                graph=uol_graph, kernel=kernel,
+            )
+            for pred in causal_preds:
+                uol_graph.add_affordance_prediction(pred)
+        except Exception as e:
+            errors.append(f"causal bridge failed: {e}")
 
         # 3. Attend — select focus (Phase 3)
         try:
@@ -407,8 +276,10 @@ class SemanticKernelRuntime:
         # 3b. Schedule obligation (v4.2)
         obligation_frame = None
         try:
+            affordance_predictions = getattr(uol_graph, "affordance_predictions", []) or []
             obligation_frame = self._obligation_scheduler.schedule(
                 semantic_program, working_set, kernel, uol_graph,
+                affordance_predictions=affordance_predictions,
             )
         except Exception as e:
             errors.append(f"schedule obligation failed: {e}")
@@ -421,24 +292,76 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"teaching frame failed: {e}")
 
-        # 3d. Compile relation frames (v4.2) + merge with durable store
+        # 3c-i. Update topic state from active teaching frame
+        active_teaching = self._teaching_frame_manager.active_frame
+        if active_teaching is not None and hasattr(kernel, 'topic'):
+            kernel.topic.active_topic_surface = active_teaching.target_concept_key
+            kernel.topic.active_topic_entity_id = active_teaching.target_concept_id or active_teaching.target_concept_key
+            kernel.topic.last_taught_entity_surface = active_teaching.target_concept_key
+            kernel.topic.last_taught_entity_id = active_teaching.target_concept_id or active_teaching.target_concept_key
+            kernel.topic.last_updated_signal_id = signal.id
+            kernel.topic.last_updated_at = signal.observed_at
+
+        # 3d. Compile relation frames (v4.2) + query-driven durable retrieval
         relation_frames: list[Any] = []
+        semantic_query = None
+        answer_binding = None
+        realization_contract = None
         try:
             turn_frames = self._relation_frame_compiler.compile(uol_graph)
-            durable_frames = self._durable_semantic_store.query_relations()
+
+            # 3d-i. Build query from turn frames + obligation + program
+            # (durable frames not needed for query construction — the query
+            # is driven by what the user is asking about, not what's stored)
+            if obligation_frame is not None:
+                semantic_query = self._query_engine.build_query(
+                    obligation_frame, turn_frames, semantic_program, uol_graph,
+                )
+
+            # 3d-ii. Retrieve durable frames filtered by query constraints
+            durable_relation_key = semantic_query.relation_key if semantic_query else ""
+            if not durable_relation_key and obligation_frame is not None:
+                durable_relation_key = self._query_engine.preferred_relation_key(
+                    obligation_frame.obligation_kind
+                )
+
+            if semantic_query is not None:
+                durable_frames = self._durable_semantic_store.query_relations(
+                    relation_key=durable_relation_key,
+                    subject_concept_id=semantic_query.subject_constraint.concept_id,
+                    subject_entity_id=semantic_query.subject_constraint.entity_id,
+                    object_concept_id=semantic_query.object_constraint.concept_id,
+                    object_entity_id=semantic_query.object_constraint.entity_id,
+                    allow_inverse=semantic_query.allow_inverse,
+                )
+            elif durable_relation_key:
+                durable_frames = self._durable_semantic_store.query_relations(
+                    relation_key=durable_relation_key,
+                )
+            else:
+                durable_frames = []
+
             # Durable frames last so current-turn frames take priority
             relation_frames = turn_frames + durable_frames
         except Exception as e:
             errors.append(f"compile relations failed: {e}")
 
+        # 3d-iii. Induce predicate schemas from observed relation frames
+        try:
+            from ..learning.predicate_schema_inductor import PredicateSchemaInductor
+            inductor = PredicateSchemaInductor()
+            inductor.induct_from_frames(relation_frames, self._predicate_schema_store)
+        except Exception as e:
+            errors.append(f"induce predicate schemas failed: {e}")
+
         # 3e. Execute semantic query → answer binding → realization contract (v4.2)
-        semantic_query = None
-        answer_binding = None
-        realization_contract = None
-        if obligation_frame is not None:
+        if semantic_query is not None and obligation_frame is not None:
             try:
-                semantic_query, answer_binding, realization_contract = self._query_engine.run(
-                    obligation_frame, relation_frames, semantic_program,
+                answer_binding = self._query_engine.execute(
+                    semantic_query, relation_frames,
+                )
+                realization_contract = self._query_engine.build_contract(
+                    obligation_frame, answer_binding, semantic_program,
                 )
             except Exception as e:
                 errors.append(f"query engine failed: {e}")
@@ -484,7 +407,7 @@ class SemanticKernelRuntime:
         # 6. Validate patches (Phase 4)
         for patch in patches:
             try:
-                validation = self._patch_validator.validate(patch, kernel)
+                validation = self._patch_validator.validate(patch, kernel, current_signal=signal)
                 result.validation.append(validation)
             except Exception as e:
                 errors.append(f"validate patch {patch.id}: {e}")
@@ -518,8 +441,8 @@ class SemanticKernelRuntime:
                 result.realized_output = "I cannot help with that request."
                 if result.realization_contract:
                     result.realization_contract.abstention_reason = "safety_policy"
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"safety check failed: {e}")
 
         # 8a. Update conversation state from realized output
         from .output_state_updater import OutputStateUpdater
@@ -533,8 +456,8 @@ class SemanticKernelRuntime:
                 response_mode=getattr(result.obligation_frame, 'response_mode', '') if result.obligation_frame else '',
             )
             output_updater.apply(kernel, output_update)
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"output state update failed: {e}")
 
         # 8b. Error attribution — lightweight pass
         from .error_attribution_engine import ErrorAttributionEngine
@@ -554,8 +477,8 @@ class SemanticKernelRuntime:
                         "error_type": ea_result.error_type,
                         "confidence": ea_result.confidence,
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"error attribution failed: {e}")
 
         result.cost_ms = (time.monotonic() - start) * 1000
         diag: dict[str, Any] = {}
@@ -617,4 +540,17 @@ class SemanticKernelRuntime:
             }
         if diag:
             result.diagnostics = diag
+
+        # 9. Session persist — snapshot kernel state for next turn
+        try:
+            self._session_store.persist(kernel, signal)
+            frame_data = self._teaching_frame_manager.to_session_dict(signal.context_id)
+            self._session_store.save_teaching_frame(signal.context_id, frame_data)
+        except Exception as e:
+            errors.append(f"session persist failed: {e}")
+            if result.diagnostics is None:
+                result.diagnostics = {"errors": errors}
+            elif isinstance(result.diagnostics, dict):
+                result.diagnostics.setdefault("errors", []).append(f"session persist failed: {e}")
+
         return result

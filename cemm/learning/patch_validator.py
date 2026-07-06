@@ -76,6 +76,7 @@ class PatchValidator:
         self,
         patch: GraphPatch,
         kernel: ContextKernel | None = None,
+        current_signal: Any | None = None,
     ) -> PatchValidationResult:
         scores: dict[str, float] = {}
         reasons: list[str] = []
@@ -131,7 +132,7 @@ class PatchValidator:
         freshness_ok = True
         freshness_reason = ""
         if self._store is not None and kernel is not None:
-            freshness_ok, freshness_reason = self._check_freshness(patch, kernel)
+            freshness_ok, freshness_reason = self._check_freshness(patch, kernel, current_signal)
         scores["freshness_valid"] = 1.0 if freshness_ok else 0.0
         checks.append(ValidationCheck("freshness_valid", freshness_ok, 1.0 if freshness_ok else 0.0, freshness_reason))
         if not freshness_ok:
@@ -142,7 +143,7 @@ class PatchValidator:
         temporal_ok = True
         temporal_reason = ""
         if self._store is not None and kernel is not None:
-            temporal_ok, temporal_reason = self._check_temporal(patch, kernel)
+            temporal_ok, temporal_reason = self._check_temporal(patch, kernel, current_signal)
         scores["temporal_scope_valid"] = 1.0 if temporal_ok else 0.0
         checks.append(ValidationCheck("temporal_scope_valid", temporal_ok, 1.0 if temporal_ok else 0.0, temporal_reason))
         if not temporal_ok:
@@ -219,12 +220,14 @@ class PatchValidator:
         for op in patch.operations:
             if op.operation in ("upsert_relation_candidate",) and op.target_id:
                 if self._store is not None and hasattr(self._store, 'claims'):
+                    predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
+                    new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
                     existing = self._store.claims.find_by_subject(
                         op.fields.get("subject_entity_id", ""),
-                        op.fields.get("predicate", ""),
+                        predicate,
                     )
                     for claim in existing:
-                        if claim.object_value == op.fields.get("object_value", ""):
+                        if claim.object_value == new_value:
                             compression_ok = False
                             compression_reason = f"duplicates existing claim {claim.id}"
                             break
@@ -288,36 +291,64 @@ class PatchValidator:
 
     # ── Helper check methods ──────────────────────────────────────────
 
-    def _check_freshness(self, patch: GraphPatch, kernel: ContextKernel) -> tuple[bool, str]:
+    def _resolve_evidence_signals(
+        self, patch: GraphPatch, store: Any, current_signal: Any | None = None,
+    ) -> list[Any]:
+        """Resolve evidence_refs and source_refs to Signal objects.
+
+        Evidence refs from the graph builder are often structured strings
+        (e.g. "surface_teaching_relation:group_1") that are NOT signal IDs.
+        We try evidence_refs first, then source_refs, then fall back to
+        current_signal as a proxy for the current turn's observation time.
+        """
+        signals: list[Any] = []
+        sig_store = getattr(store, 'signals', None)
+        if sig_store is None:
+            return signals
+
+        all_refs = list(patch.evidence_refs) + list(patch.source_refs)
+        seen: set[str] = set()
+        for ref in all_refs:
+            if ref in seen:
+                continue
+            seen.add(ref)
+            sig = sig_store.get(ref)
+            if sig is not None and hasattr(sig, 'observed_at'):
+                signals.append(sig)
+
+        if not signals and current_signal is not None and hasattr(current_signal, 'observed_at'):
+            signals.append(current_signal)
+
+        return signals
+
+    def _check_freshness(
+        self, patch: GraphPatch, kernel: ContextKernel, current_signal: Any | None = None,
+    ) -> tuple[bool, str]:
         """Check that current-world claims have fresh evidence."""
         if not patch.evidence_refs:
             return True, ""
         if hasattr(kernel, 'time') and kernel.time.now > 0:
-            for ref in patch.evidence_refs:
-                if self._store is not None:
-                    sig = getattr(self._store, 'signals', None)
-                    if sig is not None:
-                        s = sig.get(ref)
-                        if s is not None:
-                            age = kernel.time.now - s.observed_at
-                            if age > 3600:
-                                return False, f"evidence {ref} is stale ({age:.0f}s old)"
+            if self._store is not None:
+                signals = self._resolve_evidence_signals(patch, self._store, current_signal)
+                for sig in signals:
+                    age = kernel.time.now - sig.observed_at
+                    if age > 3600:
+                        return False, f"evidence {sig.id} is stale ({age:.0f}s old)"
         return True, ""
 
-    def _check_temporal(self, patch: GraphPatch, kernel: ContextKernel) -> tuple[bool, str]:
+    def _check_temporal(
+        self, patch: GraphPatch, kernel: ContextKernel, current_signal: Any | None = None,
+    ) -> tuple[bool, str]:
         """Check temporal containment — validity period coherent with observation."""
         if not patch.evidence_refs:
             return True, ""
         if hasattr(kernel, 'time') and kernel.time.now > 0:
-            for ref in patch.evidence_refs:
-                if self._store is not None:
-                    sig = getattr(self._store, 'signals', None)
-                    if sig is not None:
-                        s = sig.get(ref)
-                        if s is not None and hasattr(s, 'observed_at'):
-                            age = kernel.time.now - s.observed_at
-                            if age > self._temporal_threshold:
-                                return False, f"evidence {ref} outside temporal scope ({age:.0f}s old, threshold {self._temporal_threshold}s)"
+            if self._store is not None:
+                signals = self._resolve_evidence_signals(patch, self._store, current_signal)
+                for sig in signals:
+                    age = kernel.time.now - sig.observed_at
+                    if age > self._temporal_threshold:
+                        return False, f"evidence {sig.id} outside temporal scope ({age:.0f}s old, threshold {self._temporal_threshold}s)"
         return True, ""
 
     def _check_contradiction(self, patch: GraphPatch) -> tuple[bool, str]:
@@ -328,14 +359,15 @@ class PatchValidator:
         for op in patch.operations:
             if op.operation in ("custom:upsert_claim", "upsert_relation_candidate") and op.target_id:
                 subject = op.fields.get("subject_entity_id", "")
-                predicate = op.fields.get("predicate", "")
+                predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
+                new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
                 if subject and predicate:
                     existing = claims.find_by_subject(subject, predicate)
                     for claim in existing:
-                        if claim.status.value == "active" and claim.object_value != op.fields.get("object_value", ""):
+                        if claim.status.value == "active" and claim.object_value != new_value:
                             if claim.confidence >= self._contradiction_threshold:
                                 return False, (f"contradicts active claim {claim.id}: "
-                                             f"existing={claim.object_value!r}, new={op.fields.get('object_value', '')!r}")
+                                             f"existing={claim.object_value!r}, new={new_value!r}")
         return True, ""
 
     def _check_schema_compatibility(self, patch: GraphPatch) -> tuple[bool, str]:
