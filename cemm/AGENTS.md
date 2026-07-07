@@ -437,15 +437,90 @@ according to budget, risk, and permission.
 Final text should be realized from a response/action plan and selected evidence,
 not directly from raw input text.
 
-Current seed implementation has `ActResolutionPlan`.
+### v3.1 Response Formation Engine — IMPLEMENTED (Phases 0-3)
 
-Future implementation should add a first-class answer graph or realization
-contract.
+The canonical response path is now:
+
+```text
+ResponseSituation
+-> PrimitiveGoalComposer      (language-agnostic: derives goals from semantic structure)
+-> ResponseMoveComposer       (language-agnostic: composes communicative moves from goals)
+-> RealizationExecutor        (language-specific: English realization only)
+-> ResponseBundle             (final output with traceability)
+```
+
+**Architecture invariants (non-negotiable):**
+
+1. `PrimitiveGoalComposer` and `ResponseMoveComposer` are **language-agnostic**.
+   They must not classify English surface strings. Social, safety, memory, and
+   answer behavior arrives as semantic structure: obligation kind, response act
+   hints, UOL intent atoms, safety frames, write outcomes, and answer bindings.
+
+2. `RealizationExecutor` is the **only** module allowed to choose English wording.
+   It contains `PronounResolver`, `PredicateSelector`, `Morphologizer`,
+   `Linearizer`, `SurfacePostProcessor`, and `SlotBinder` as internal components.
+
+3. `ResponseEvidencePacket` separates evidence binding (query engine's job) from
+   realization (response engine's job). The query engine binds evidence; it does
+   not choose final wording.
+
+4. `WriteOutcome` must be available before response formation. Memory-write claims
+   in output depend on `write_outcome.committed` — never claim storage happened
+   if the patch was not committed.
+
+5. Safety goals are **gates, not ranker preferences**. If `safety_required` is
+   true on any move, the response must include the safety refusal regardless of
+   other moves.
+
+6. `ResponseSituation` carries the full runtime context: obligation frame, answer
+   binding, evidence packet, semantic program, relation frames, UOL graph, safety
+   frame, reaction signal, write outcome, budget frame, style, temperature, and
+   percept. All stages can access what they need without reaching back into the
+   kernel.
+
+7. No generic fallback string may hide a failed semantic path. If the response
+   engine fails, the error must be visible — not silently replaced with a
+   template string from the old `SemanticRealizer`.
+
+8. `RealizationContract` and `template_key` are **metadata only** — they may
+   carry evidence slot information but must not be used as the authoritative
+   response selection mechanism. The `ResponseFormationEngine` is authoritative.
+
+### Old Path To Retire
+
+```text
+RealizationContract.template_key -> SemanticRealizer -> response_templates.json
+```
+
+This path is **not the canonical response path**. `SemanticRealizer` is still
+instantiated in `SemanticKernelRuntime` as a fallback but must not be relied
+upon. It should be removed once all tests pass without it.
+
+`SemanticQueryEngine._template_for_obligation()`, `_shift_pronouns_for_echo()`,
+and `_sanitize_echo()` are superseded by `RealizationExecutor`'s internal
+components. They should be retired.
+
+### Phase Status
+
+| Phase | Status | Description |
+|---|---|---|
+| 0 | ✅ Complete | Test contracts (golden transcript, safety, memory, query) |
+| 1 | ✅ Complete | Core types + runtime reordering |
+| 2 | ✅ Complete | PrimitiveGoalComposer + ResponseMoveComposer |
+| 3 | ✅ Complete | Minimal RealizationExecutor (English) |
+| 4 | ❌ Not started | CandidateGenerator, PlanGateAndRanker, Selector |
+| 5 | ❌ Not started | BudgetFrame + budget-aware spend |
+| 6 | ❌ Not started | Budget-aware semantic query |
+| 7 | ❌ Not started | DeliberationPlanner + anytime distillation |
+| 8 | ❌ Not started | Internal actions |
+| 9 | ❌ Not started | Response/budget learning |
+
+See `newarch/cemm-v3.1-lean-implementation-plan.md` for the full plan.
 
 Realization strategy should be cheapest-first:
 
 ```text
-template
+deterministic composition (current)
 -> extractive
 -> neural
 -> abstain
@@ -475,6 +550,12 @@ hardcode action/state/need meaning in Python dicts instead of Semantic Schema Ke
 add new UOL edge types for state deltas — use existing primitives (state atoms + causes edges)
 make action operator slots answerable by default — they are structural
 keep backward compatibility layers for old meaning systems — replace them
+classify English surface strings in PrimitiveGoalComposer or ResponseMoveComposer
+fall back to SemanticRealizer when ResponseFormationEngine throws — surface the error
+use template_key as the authoritative response selection mechanism
+claim memory was stored when WriteOutcome.committed is false
+bypass safety gates in favor of ranker preferences
+add English-specific logic to language-agnostic response stages
 ```
 
 Seed heuristics are allowed only as explicit fallback scaffolding.
@@ -555,4 +636,11 @@ Before closing a task, verify:
 - [ ] Language files are alias layers only — no schema info in action_keywords.json.
 - [ ] Action slots are structural by default, not answerable.
 - [ ] State deltas are compiled into existing UOL primitives (state atoms + causes edges), not new edge types.
+- [ ] Response formation: `PrimitiveGoalComposer` and `ResponseMoveComposer` are language-agnostic — no English surface string classification.
+- [ ] Response formation: `RealizationExecutor` is the only language-specific module.
+- [ ] Response formation: no fallback to `SemanticRealizer` when `ResponseFormationEngine` throws.
+- [ ] Response formation: `WriteOutcome.committed` is checked before claiming memory was stored.
+- [ ] Response formation: safety moves are gates, not ranker preferences.
+- [ ] Response formation: `ResponseBundle` carries full traceability (moves, evidence, diagnostics).
+- [ ] Response formation: old tests using `SemanticRealizer` directly are replaced with pipeline-level tests via `SeededSystem`.
 

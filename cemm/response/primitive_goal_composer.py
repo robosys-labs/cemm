@@ -1,216 +1,281 @@
-"""PrimitiveGoalComposer — map ObligationFrame to primitive response goals.
+"""Primitive goal composition from semantic runtime state.
 
-Deterministic mapping: obligation_kind + context → list of PrimitiveResponseGoal.
-No candidate variation, no randomness. Just the right semantic force.
+This module is deliberately language-agnostic. It does not classify English
+surface strings. Social, safety, memory, and answer behavior must arrive as
+semantic structure: obligation kind, response act hints, UOL intent atoms,
+safety frames, write outcomes, and answer bindings.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from .types import (
-    PrimitiveResponseGoal,
-    PRIMITIVE_GOALS,
-    ResponseSituation,
-)
+from .types import PrimitiveResponseGoal, ResponseSituation
 
 
-# ── Greeting/farewell surface cues ─────────────────────────────────────
+ANSWER_OBLIGATIONS = frozenset({
+    "answer_concept",
+    "answer_relation",
+    "answer_self_model",
+    "answer_user_profile",
+    "answer_self_identity",
+    "answer_self_capability",
+    "answer_self_knowledge",
+})
 
-_GREETING_CUES = (
-    "hello", "hi", "hey", "greetings", "howdy", "sup",
-    "morning", "afternoon", "evening",
-)
-
-_FAREWELL_CUES = (
-    "bye", "goodbye", "later", "cya", "see you",
-    "see ya", "farewell", "good night", "goodnight",
-)
-
-_CHECKIN_CUES = (
-    "how are you", "how do you do", "how's it going",
-    "hows it going", "how are things", "how you doing",
-    "how's your day", "hows your day", "what's up", "whats up",
-    "how are you today",
-)
-
-_FRUSTRATION_CUES = (
-    "dumb", "stupid", "useless", "broken",
-    "suck", "worthless", "worse", "terrible", "awful",
-)
-
-
-def _entry_surface(situation: ResponseSituation) -> str:
-    """Extract the entry instruction surface text."""
-    program = situation.semantic_program
-    if program is None:
-        return ""
-    entry = program.entry_instruction
-    if entry is None:
-        return ""
-    return (entry.surface or "").lower()
-
-
-def _is_greeting_surface(surface: str) -> bool:
-    return any(cue in surface for cue in _GREETING_CUES)
-
-
-def _is_farewell_surface(surface: str) -> bool:
-    return any(cue in surface for cue in _FAREWELL_CUES)
-
-
-def _is_checkin_surface(surface: str) -> bool:
-    return any(cue in surface for cue in _CHECKIN_CUES)
-
-
-def _is_frustration_surface(surface: str) -> bool:
-    return any(cue in surface for cue in _FRUSTRATION_CUES)
+GREETING_ACTS = frozenset({"greeting", "social_greet"})
+CHECKIN_ACTS = frozenset({"phatic_checkin", "reciprocal_phatic", "status_checkin"})
+FRUSTRATION_ACTS = frozenset({"frustration_signal", "user_complaint"})
+REPAIR_ACTS = frozenset({"repair", "confusion_repair", "correction"})
+FAREWELL_ACTS = frozenset({"session_exit", "farewell"})
+ACK_ACTS = frozenset({"acknowledgment", "playful_acknowledgment"})
 
 
 class PrimitiveGoalComposer:
-    """Compose primitive goals from the response situation.
+    """Compose language-agnostic primitive goals for one response turn."""
 
-    This is the semantic force layer: it decides WHAT communicative
-    force to apply, not how to phrase it.
-    """
-
-    def compose(
-        self,
-        situation: ResponseSituation,
-    ) -> list[PrimitiveResponseGoal]:
+    def compose(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
         obligation = situation.obligation_frame
         if obligation is None:
-            return [PrimitiveResponseGoal(goal_type="assert", confidence=0.3)]
+            return [self._goal("negate", confidence=0.35, reason="missing_obligation")]
 
-        kind = obligation.obligation_kind
-        surface = _entry_surface(situation)
-        binding = situation.answer_binding
-        has_answer = binding is not None and binding.has_answer
-        safety = situation.safety_frame
+        safety_goals = self._compose_safety(situation)
+        if safety_goals:
+            return safety_goals
 
-        # Safety takes absolute priority
-        if safety is not None and safety.category != "none":
-            return self._compose_safety(safety, kind, surface)
+        reaction_goals = self._compose_reaction(situation)
+        kind = getattr(obligation, "obligation_kind", "") or ""
 
-        # Map obligation kind to goals
         if kind == "exit":
-            return [PrimitiveResponseGoal(goal_type="farewell", confidence=0.95)]
+            return [*reaction_goals, self._goal("farewell", confidence=0.95, reason="exit_obligation")]
 
         if kind == "social_reply":
-            return self._compose_social(surface, situation)
+            return [*reaction_goals, *self._compose_social(situation)]
 
         if kind == "store_patch":
-            return self._compose_store_patch(situation)
+            return [*reaction_goals, *self._compose_store_patch(situation)]
 
         if kind == "acknowledge_emotional_context":
-            return self._compose_emotional(situation)
+            return [*reaction_goals, *self._compose_emotional(situation)]
 
         if kind == "ask_clarification":
-            return [PrimitiveResponseGoal(goal_type="query", confidence=0.8)]
+            return [*reaction_goals, self._goal("clarify", confidence=0.85, reason="clarification_obligation")]
 
         if kind == "repair":
-            return [PrimitiveResponseGoal(goal_type="repair_self", confidence=0.85)]
+            return [*reaction_goals, self._goal("repair_self", confidence=0.85, reason="repair_obligation")]
 
-        if kind in ("answer_concept", "answer_relation", "answer_self_model",
-                    "answer_user_profile", "answer_self_identity",
-                    "answer_self_capability", "answer_self_knowledge"):
-            if has_answer:
-                return [PrimitiveResponseGoal(goal_type="assert", confidence=0.85)]
-            return [
-                PrimitiveResponseGoal(goal_type="negate", confidence=0.6),
-                PrimitiveResponseGoal(goal_type="hedge", confidence=0.5),
-            ]
+        if kind in ANSWER_OBLIGATIONS:
+            return [*reaction_goals, *self._compose_answer(situation)]
 
         if kind == "continue_teaching":
-            return [PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.8)]
+            return [*reaction_goals, self._goal("acknowledge", confidence=0.8, reason="continue_teaching")]
 
         if kind == "abstain_policy":
             return [
-                PrimitiveResponseGoal(goal_type="negate", confidence=0.5),
-                PrimitiveResponseGoal(goal_type="hedge", confidence=0.6),
+                *reaction_goals,
+                self._goal("negate", confidence=0.65, reason="abstain_policy"),
+                self._goal("hedge", confidence=0.65, reason="abstain_policy"),
             ]
 
-        return [PrimitiveResponseGoal(goal_type="assert", confidence=0.3)]
+        return [*reaction_goals, self._goal("acknowledge", confidence=0.45, reason="unknown_obligation")]
 
-    def _compose_safety(
-        self,
-        safety: Any,
-        kind: str,
-        surface: str,
-    ) -> list[PrimitiveResponseGoal]:
-        goals = [PrimitiveResponseGoal(goal_type="refuse", confidence=0.95)]
-        goals.append(PrimitiveResponseGoal(goal_type="deescalate", confidence=0.85))
-        return goals
+    def _compose_safety(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
+        safety = situation.safety_frame
+        if safety is None:
+            return []
+        category = (getattr(safety, "category", "") or getattr(safety, "risk_type", "") or "").lower()
+        severity = (getattr(safety, "severity", "") or getattr(safety, "risk_level", "") or "").lower()
+        if not category or category in {"none", "safe", "low"}:
+            return []
+        constraints = {"no_instruction", "no_endorsement"}
+        if severity in {"high", "critical", "imminent"}:
+            constraints.add("immediate_harm_prevention")
+        return [
+            self._goal(
+                "refuse",
+                confidence=0.97,
+                required=True,
+                priority=0,
+                constraints=constraints | {"explicit_negative"},
+                reason=f"safety:{category}",
+            ),
+            self._goal(
+                "deescalate",
+                confidence=0.9,
+                required=True,
+                priority=1,
+                constraints=constraints,
+                reason=f"safety:{category}",
+            ),
+        ]
 
-    def _compose_social(
-        self,
-        surface: str,
-        situation: ResponseSituation,
-    ) -> list[PrimitiveResponseGoal]:
+    def _compose_reaction(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
+        reaction = situation.reaction_signal
+        if reaction is None:
+            if situation.temperature.conversation_repair_debt <= 0:
+                return []
+            return [self._goal("repair_self", confidence=0.65, priority=2, reason="repair_debt")]
+
+        failed = bool(
+            getattr(reaction, "is_negative", False)
+            or getattr(reaction, "marks_previous_failed", False)
+            or getattr(reaction, "requires_repair", False)
+        )
+        confidence = float(getattr(reaction, "confidence", 0.7) or 0.7)
+        if not failed or confidence < 0.45:
+            return []
+        return [self._goal("repair_self", confidence=confidence, priority=1, reason="reaction_signal")]
+
+    def _compose_social(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
+        acts = self._act_keys(situation)
         goals: list[PrimitiveResponseGoal] = []
 
-        if _is_greeting_surface(surface):
-            goals.append(PrimitiveResponseGoal(goal_type="greet", confidence=0.9))
-        elif _is_farewell_surface(surface):
-            goals.append(PrimitiveResponseGoal(goal_type="farewell", confidence=0.9))
-        elif _is_checkin_surface(surface):
-            goals.append(PrimitiveResponseGoal(goal_type="reciprocate", confidence=0.8))
-            goals.append(PrimitiveResponseGoal(goal_type="assert", confidence=0.6,
-                                               slots={"self_state": "here and running normally"}))
-        elif _is_frustration_surface(surface):
-            goals.append(PrimitiveResponseGoal(goal_type="repair_self", confidence=0.7))
-        else:
-            # First-turn non-greeting: treat as greeting context
-            if situation.is_first_turn:
-                goals.append(PrimitiveResponseGoal(goal_type="greet", confidence=0.5))
-                goals.append(PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.6))
+        if acts & FAREWELL_ACTS:
+            goals.append(self._goal("farewell", confidence=0.92, reason="farewell_act"))
+        if acts & GREETING_ACTS:
+            goals.append(self._goal("greet", confidence=0.9, reason="greeting_act"))
+        if acts & CHECKIN_ACTS:
+            goals.append(self._goal("assert", confidence=0.65, slots={"self_state_key": "operational"}, reason="checkin_act"))
+            goals.append(self._goal("reciprocate", confidence=0.8, reason="checkin_act"))
+        if acts & FRUSTRATION_ACTS:
+            goals.append(self._goal("repair_self", confidence=0.72, priority=2, reason="frustration_act"))
+            goals.append(self._goal("acknowledge", confidence=0.65, reason="frustration_act"))
+        if acts & ACK_ACTS:
+            goals.append(self._goal("acknowledge", confidence=0.7, reason="acknowledgment_act"))
+
+        if not goals:
+            instruction_kind = self._entry_instruction_kind(situation)
+            if instruction_kind == "repair":
+                goals.append(self._goal("repair_self", confidence=0.75, reason="instruction_kind:repair"))
             else:
-                goals.append(PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.6))
-
+                goals.append(self._goal("acknowledge", confidence=0.55, reason="social_reply_without_specific_act"))
         return goals
 
-    def _compose_store_patch(
-        self,
-        situation: ResponseSituation,
-    ) -> list[PrimitiveResponseGoal]:
-        goals: list[PrimitiveResponseGoal] = []
+    def _compose_store_patch(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
         write = situation.write_outcome
+        if write is not None and write.committed:
+            refs = [*write.committed_patch_ids, *write.committed_record_ids]
+            return [
+                self._goal("acknowledge", confidence=0.85, evidence_refs=refs, reason="write_committed"),
+                self._goal("confirm_write", confidence=0.9, evidence_refs=refs, reason="write_committed"),
+            ]
+        if write is not None and write.commit_status in {"rejected", "conflict", "quarantined"}:
+            return [
+                self._goal("acknowledge", confidence=0.7, reason=f"write_{write.commit_status}"),
+                self._goal("clarify", confidence=0.65, reason=f"write_{write.commit_status}"),
+            ]
+        return [self._goal("acknowledge", confidence=0.75, reason="write_not_committed")]
 
-        if write is not None and write.commit_status == "committed":
-            goals.append(PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.85))
-            goals.append(PrimitiveResponseGoal(goal_type="confirm_write", confidence=0.9))
-        else:
-            # Patch proposed but not committed — just acknowledge hearing
-            goals.append(PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.75))
-
-        return goals
-
-    def _compose_emotional(
-        self,
-        situation: ResponseSituation,
-    ) -> list[PrimitiveResponseGoal]:
-        goals: list[PrimitiveResponseGoal] = []
-        goals.append(PrimitiveResponseGoal(goal_type="acknowledge", confidence=0.8))
-
-        # Check affordance predictions for evaluation shift
+    def _compose_emotional(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
+        goals = [self._goal("acknowledge", confidence=0.8, reason="emotional_context")]
         obligation = situation.obligation_frame
-        if obligation is not None:
-            preds = obligation.context.get("affordance_predictions", [])
-            for pred in preds:
-                effect = getattr(pred, "effect_type", "")
-                if effect == "evaluation_shift":
-                    patch_tmpl = getattr(pred, "predicted_patch_template", {})
-                    shift = patch_tmpl.get("affect_shift", "")
-                    if "positive" in shift:
-                        goals.append(PrimitiveResponseGoal(
-                            goal_type="assert", confidence=0.6,
-                            slots={"evaluation": "appreciation"},
-                        ))
-                    elif "negative" in shift:
-                        goals.append(PrimitiveResponseGoal(
-                            goal_type="assert", confidence=0.6,
-                            slots={"evaluation": "concern"},
-                        ))
-                    break
-
+        for pred in getattr(obligation, "context", {}).get("affordance_predictions", []) if obligation is not None else []:
+            if getattr(pred, "effect_type", "") != "evaluation_shift":
+                continue
+            patch_template = getattr(pred, "predicted_patch_template", {}) or {}
+            shift = patch_template.get("affect_shift", "")
+            if shift:
+                goals.append(self._goal(
+                    "assert",
+                    confidence=float(getattr(pred, "confidence", 0.6) or 0.6),
+                    slots={"evaluation_shift": shift},
+                    source_refs=[getattr(pred, "id", "") or getattr(pred, "affordance_key", "")],
+                    reason="affordance_evaluation_shift",
+                ))
+            break
         return goals
+
+    def _compose_answer(self, situation: ResponseSituation) -> list[PrimitiveResponseGoal]:
+        binding = situation.answer_binding or getattr(situation.evidence, "answer_binding", None)
+        has_answer = bool(getattr(binding, "has_answer", False))
+        evidence_refs = list(getattr(situation.evidence, "evidence_refs", []) or [])
+        if not evidence_refs and binding is not None:
+            for fill in getattr(binding, "slot_fills", []) or []:
+                evidence_refs.extend(getattr(fill, "source_frame_ids", []) or [])
+                evidence_refs.extend(getattr(fill, "evidence_refs", []) or [])
+        if has_answer:
+            goals = [self._goal("assert", confidence=float(getattr(binding, "confidence", 0.8) or 0.8), evidence_refs=evidence_refs, reason="answer_bound")]
+            obligation = situation.obligation_frame
+            if getattr(obligation, "evidence_policy", "") == "required":
+                goals.append(self._goal("explain_evidence", confidence=0.65, evidence_refs=evidence_refs, reason="evidence_required"))
+            return goals
+        abstention_reason = getattr(binding, "abstention_reason", "") or getattr(situation.evidence, "abstention_reason", "")
+        if abstention_reason in {"missing_required_slots", "clarify"}:
+            return [self._goal("clarify", confidence=0.75, reason=abstention_reason)]
+        return [
+            self._goal("negate", confidence=0.65, reason=abstention_reason or "no_answer"),
+            self._goal("hedge", confidence=0.6, reason=abstention_reason or "no_answer"),
+        ]
+
+    def _act_keys(self, situation: ResponseSituation) -> set[str]:
+        acts: set[str] = set()
+        obligation = situation.obligation_frame
+        context = getattr(obligation, "context", {}) or {}
+        for hint in context.get("response_act_hints", []) or []:
+            if isinstance(hint, str):
+                acts.add(hint)
+            elif isinstance(hint, dict):
+                act = str(hint.get("act", "") or hint.get("intent", "")).strip()
+                if act:
+                    acts.add(act)
+
+        for atom in self._entry_atoms(situation):
+            if getattr(atom, "kind", "") == "intent":
+                key = getattr(atom, "key", "") or getattr(atom, "intent_key", "")
+                if key:
+                    acts.add(str(key))
+            for key in ("intent_key", "act_type", "response_act"):
+                value = getattr(atom, "features", {}).get(key, "") if hasattr(atom, "features") else ""
+                if value:
+                    acts.add(str(value))
+
+        for marker in getattr(getattr(situation, "percept", None), "affect_markers", []) or []:
+            key = getattr(marker, "marker_type", "") or getattr(marker, "key", "") or str(marker)
+            if key:
+                acts.add(key)
+        return {a.strip() for a in acts if a and a.strip()}
+
+    def _entry_instruction_kind(self, situation: ResponseSituation) -> str:
+        entry = self._entry_instruction(situation)
+        return getattr(entry, "instruction_kind", "") if entry is not None else ""
+
+    def _entry_instruction(self, situation: ResponseSituation) -> Any | None:
+        program = situation.semantic_program
+        if program is None:
+            return None
+        return getattr(program, "entry_instruction", None)
+
+    def _entry_atoms(self, situation: ResponseSituation) -> list[Any]:
+        graph = situation.uol_graph
+        entry = self._entry_instruction(situation)
+        if graph is None or entry is None:
+            return []
+        atoms = getattr(graph, "atoms", {}) or {}
+        return [atoms[atom_id] for atom_id in getattr(entry, "atom_ids", []) or [] if atom_id in atoms]
+
+    @staticmethod
+    def _goal(
+        goal_type: str,
+        *,
+        confidence: float,
+        required: bool = False,
+        priority: int = 5,
+        target_refs: list[str] | None = None,
+        source_refs: list[str] | None = None,
+        evidence_refs: list[str] | None = None,
+        constraints: set[str] | None = None,
+        slots: dict[str, Any] | None = None,
+        reason: str = "",
+    ) -> PrimitiveResponseGoal:
+        return PrimitiveResponseGoal(
+            goal_type=goal_type,
+            confidence=confidence,
+            required=required,
+            priority=priority,
+            target_refs=list(target_refs or []),
+            source_refs=[ref for ref in list(source_refs or []) if ref],
+            evidence_refs=[ref for ref in list(evidence_refs or []) if ref],
+            constraints=set(constraints or set()),
+            slots=dict(slots or {}),
+            reason=reason,
+        )

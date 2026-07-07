@@ -1,43 +1,40 @@
-"""RealizationExecutor — turn response moves into surface text.
+"""Minimal English realization executor.
 
-Phase 3 minimal implementation: English-only, deterministic.
-Handles pronoun resolution, predicate selection, morphology,
-linearization, and surface post-processing.
-
-Replaces SemanticRealizer's template.format() approach with
-compositional grammar construction from moves + slots.
+This is the only response v3.1 phase-3 module that is intentionally
+language-specific. It receives language-agnostic response moves and semantic
+slots, then performs English pronoun, predicate, morphology, and linearization
+work.
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from typing import Any
 
-from .types import (
-    RealizedCandidate,
-    ResponseCandidatePlan,
-    ResponseMove,
-    ResponseSituation,
-)
+from .types import RealizedCandidate, ResponseCandidatePlan, ResponseMove, ResponseSituation
 
 
-# ── Discourse markers to strip from echoed surfaces ────────────────────
-
-_DISCOURSE_MARKERS: frozenset = frozenset({
-    "well", "so", "oh", "like", "actually", "basically", "honestly",
-    "frankly", "anyway", "anyways", "hmm", "huh", "um", "uh", "er",
-    "ah", "ok", "okay", "right", "yeah", "yep", "nope", "lol",
-    "haha", "hehe", "i mean", "you know", "i guess", "i suppose",
+_DISCOURSE_MARKERS = frozenset({
+    "well", "so", "oh", "actually", "basically", "honestly", "anyway",
+    "anyways", "hmm", "huh", "um", "uh", "er", "ah", "ok", "okay",
+    "right", "yeah", "yep", "nope", "lol", "haha", "hehe",
 })
 
 
-class PronounResolver:
-    """Resolve pronouns for system echo of user speech.
+@dataclass
+class BoundSlot:
+    key: str
+    value: str
+    relation_key: str = ""
+    slot_kind: str = "surface"
+    confidence: float = 0.5
+    source_refs: list[str] = field(default_factory=list)
+    features: dict[str, Any] = field(default_factory=dict)
 
-    User's first-person (I, my, me) → second-person (you, your).
-    User's second-person (you, your) referring to AI → first-person (I, my).
-    Uses opaque placeholder tokens to prevent double-replacement.
-    """
+
+class PronounResolver:
+    """English pronoun shifting for echoing user-originated assertions."""
 
     _PHASE1 = [
         (r"\bI'm\b", "\x001ST_IM\x00"),
@@ -50,7 +47,6 @@ class PronounResolver:
         (r"\bours\b", "\x001ST_OURS\x00"),
         (r"\bour\b", "\x001ST_OUR\x00"),
     ]
-
     _PHASE2 = [
         (r"\byou're\b", "\x002ND_YOURE\x00"),
         (r"\byoure\b", "\x002ND_YOURE\x00"),
@@ -60,7 +56,6 @@ class PronounResolver:
         (r"\byour\b", "\x002ND_YOUR\x00"),
         (r"\byou\b", "\x002ND_YOU\x00"),
     ]
-
     _RESOLVE = [
         ("\x001ST_I\x00", "you"),
         ("\x001ST_IM\x00", "you're"),
@@ -78,7 +73,7 @@ class PronounResolver:
         ("\x002ND_YOU\x00", "I"),
     ]
 
-    def shift(self, surface: str) -> str:
+    def shift_user_assertion_to_assistant_echo(self, surface: str) -> str:
         result = surface
         for pattern, replacement in self._PHASE1:
             result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
@@ -89,319 +84,313 @@ class PronounResolver:
         return result
 
 
-class SurfacePostProcessor:
-    """Clean up echoed surface text."""
+class PredicateSelector:
+    """Choose compact English predicate forms from semantic relation keys."""
 
-    _MARKER_RE = re.compile(
-        r"^(?:" + "|".join(re.escape(m) for m in _DISCOURSE_MARKERS) + r")\s*",
-        re.IGNORECASE,
-    )
-
-    # Conversational framing prefixes that wrap actual taught content.
-    # These should be stripped before pronoun shifting so the echo
-    # contains only the factual assertion, not the speech act wrapper.
-    _FRAMING_PREFIXES: list[re.Pattern] = [
-        re.compile(r"^i told you (?:that )?", re.IGNORECASE),
-        re.compile(r"^i said (?:that )?", re.IGNORECASE),
-        re.compile(r"^i mentioned (?:that )?", re.IGNORECASE),
-        re.compile(r"^i noted (?:that )?", re.IGNORECASE),
-        re.compile(r"^i informed you (?:that )?", re.IGNORECASE),
-        re.compile(r"^i shared (?:that )?", re.IGNORECASE),
-        re.compile(r"^i explained (?:that )?", re.IGNORECASE),
-        re.compile(r"^you know (?:that )?", re.IGNORECASE),
-        re.compile(r"^like i said,?\s*", re.IGNORECASE),
-        re.compile(r"^as i said,?\s*", re.IGNORECASE),
-        re.compile(r"^just so you know,?\s*", re.IGNORECASE),
-    ]
-
-    def sanitize(self, surface: str) -> str:
-        # Strip leading discourse markers
-        surface = self._MARKER_RE.sub("", surface)
-        # Strip conversational framing prefixes (e.g., "I told you that ...")
-        for pat in self._FRAMING_PREFIXES:
-            surface = pat.sub("", surface)
-        # Strip leading "remember " if present
-        lower = surface.lower()
-        if lower.startswith("remember "):
-            surface = surface[len("remember "):]
-        # Collapse whitespace
-        surface = re.sub(r"\s+", " ", surface).strip()
-        return surface
-
-    @staticmethod
-    def sanitize_echo(surface: str) -> str:
-        """Sanitize user surface before echoing in store confirmation.
-
-        - Strips script/style blocks entirely (including content)
-        - Strips HTML tags to prevent XSS
-        - Removes control characters
-        - Limits length to 200 characters
-        - Collapses whitespace
-        """
-        # Strip script/style blocks entirely (content + tags)
-        surface = re.sub(r'<script[^>]*>.*?</script>', '', surface, flags=re.IGNORECASE | re.DOTALL)
-        surface = re.sub(r'<style[^>]*>.*?</style>', '', surface, flags=re.IGNORECASE | re.DOTALL)
-        # Strip remaining HTML tags
-        surface = re.sub(r'<[^>]+>', '', surface)
-        # Remove control characters
-        surface = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', surface)
-        # Limit length
-        if len(surface) > 200:
-            surface = surface[:197] + '...'
-        # Collapse whitespace
-        surface = re.sub(r'\s+', ' ', surface).strip()
-        return surface
-
-
-class SlotBinder:
-    """Extract slot values from AnswerBinding for realization."""
-
-    _RELATION_KEY_LABELS: dict[str, str] = {
+    _PROFILE_LABELS = {
         "has_name": "name",
         "has_age": "age",
         "has_alias": "alias",
         "has_role": "role",
         "has_property": "value",
+        "has_email": "email",
+        "has_phone": "phone",
+        "located_in": "location",
+        "from_place": "origin",
     }
 
-    def bind_slots(self, situation: ResponseSituation) -> dict[str, str]:
-        slots: dict[str, str] = {}
-        binding = situation.answer_binding
-        if binding is None or not binding.has_answer:
-            return slots
+    _SURFACE_LABEL_HINTS: list[tuple[str, str]] = [
+        ("email", "email"),
+        ("phone", "phone"),
+        ("address", "location"),
+        ("location", "location"),
+        ("birthday", "birthday"),
+        ("birth", "birthday"),
+        ("hobby", "hobby"),
+        ("favorite", "favorite"),
+        ("favourite", "favorite"),
+        ("name", "name"),
+        ("age", "age"),
+        ("job", "role"),
+        ("occupation", "role"),
+        ("work", "role"),
+        ("role", "role"),
+        ("title", "role"),
+    ]
 
-        fills = binding.slot_fills
-        if not fills:
-            return slots
+    def label_for(self, slot: BoundSlot) -> str:
+        dimension = (
+            slot.features.get("property_dimension")
+            or slot.features.get("dimension")
+            or slot.features.get("profile_label")
+            or ""
+        )
+        if dimension:
+            return self._clean_label(str(dimension))
+        return self._PROFILE_LABELS.get(slot.relation_key, self._clean_label(slot.relation_key or slot.key or "value"))
 
-        best = max(fills, key=lambda f: f.confidence)
-        if len(fills) > 1:
-            surfaces = [f.surface for f in fills if f.surface]
-            slots["answer"] = "; ".join(surfaces) if surfaces else (best.concept_id or best.entity_id)
-        else:
-            slots["answer"] = best.surface or best.concept_id or best.entity_id
+    def label_from_surface(self, query_surface: str, fallback: str = "value") -> str:
+        lower = query_surface.lower()
+        for hint, label in self._SURFACE_LABEL_HINTS:
+            if hint in lower:
+                return label
+        return fallback
 
-        # Add label for user profile queries
-        obligation = situation.obligation_frame
-        if obligation is not None and obligation.obligation_kind == "answer_user_profile":
-            if best.relation_key:
-                prop_dim = best.features.get("property_dimension", "")
-                slots["label"] = prop_dim or self._RELATION_KEY_LABELS.get(
-                    best.relation_key, best.relation_key
-                )
-            # Infer label from query surface if relation key is generic
-            if slots.get("label", "") in ("", "value", "has_property"):
-                program = situation.semantic_program
-                if program is not None:
-                    entry = program.entry_instruction
-                    if entry is not None:
-                        surface_lower = (entry.surface or "").lower()
-                        if "name" in surface_lower:
-                            slots["label"] = "name"
-                        elif "email" in surface_lower:
-                            slots["label"] = "email"
-                        elif "age" in surface_lower:
-                            slots["label"] = "age"
-                        elif "job" in surface_lower or "occupation" in surface_lower or "work" in surface_lower:
-                            slots["label"] = "role"
-                        elif "role" in surface_lower or "title" in surface_lower:
-                            slots["label"] = "role"
-                        elif "phone" in surface_lower:
-                            slots["label"] = "phone"
-                        elif "address" in surface_lower or "location" in surface_lower:
-                            slots["label"] = "location"
-                        elif "birthday" in surface_lower or "birth" in surface_lower:
-                            slots["label"] = "birthday"
-                        elif "hobby" in surface_lower:
-                            slots["label"] = "hobby"
-                        elif "favorite" in surface_lower or "favourite" in surface_lower:
-                            slots["label"] = "favorite"
+    @staticmethod
+    def _clean_label(value: str) -> str:
+        value = value.replace("has_", "").replace("_", " ").strip()
+        return value or "value"
 
-        # Add explanation if required
-        if obligation is not None and obligation.evidence_policy == "required":
-            if best.explanation_path and len(best.explanation_path) > 1:
-                slots["explanation"] = " → ".join(best.explanation_path)
 
-        return slots
-
-    def bind_echo_surface(self, situation: ResponseSituation) -> str:
-        """Extract echo surface from store_patch obligation."""
-        program = situation.semantic_program
-        if program is None:
+class Morphologizer:
+    @staticmethod
+    def sentence(text: str) -> str:
+        text = re.sub(r"\s+", " ", text).strip()
+        if not text:
             return ""
-        entry = program.entry_instruction
-        if entry is None or not entry.surface:
-            return ""
-        surface = entry.surface
-        # Sanitize HTML/control chars before any processing
-        surface = SurfacePostProcessor.sanitize_echo(surface)
-        # Strip discourse markers and shift pronouns
-        post_proc = SurfacePostProcessor()
-        pronoun = PronounResolver()
-        surface = post_proc.sanitize(surface)
-        surface = pronoun.shift(surface)
+        text = text[0].upper() + text[1:]
+        if text[-1] not in ".!?":
+            text += "."
+        return text
+
+
+class Linearizer:
+    @staticmethod
+    def user_profile(label: str, value: str) -> str:
+        return f"your {label} is {value}"
+
+    @staticmethod
+    def self_identity(value: str) -> str:
+        return f"I am {value}"
+
+    @staticmethod
+    def evidence_explanation(path: str) -> str:
+        return f"(via: {path})"
+
+
+class SurfacePostProcessor:
+    _SCRIPT_RE = re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL)
+    _STYLE_RE = re.compile(r"<style[^>]*>.*?</style>", re.IGNORECASE | re.DOTALL)
+    _TAG_RE = re.compile(r"<[^>]+>")
+    _CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+    _FRAMING_PREFIXES = [
+        re.compile(r"^i told you (?:that )?", re.IGNORECASE),
+        re.compile(r"^i said (?:that )?", re.IGNORECASE),
+        re.compile(r"^i mentioned (?:that )?", re.IGNORECASE),
+        re.compile(r"^i informed you (?:that )?", re.IGNORECASE),
+        re.compile(r"^remember\s+", re.IGNORECASE),
+    ]
+
+    def clean_echo(self, surface: str, *, limit: int = 200) -> str:
+        surface = self._SCRIPT_RE.sub("", surface)
+        surface = self._STYLE_RE.sub("", surface)
+        surface = self._TAG_RE.sub("", surface)
+        surface = self._CONTROL_RE.sub("", surface)
+        surface = re.sub(r"\s+", " ", surface).strip()
+        tokens = surface.split()
+        while tokens and tokens[0].lower() in _DISCOURSE_MARKERS:
+            tokens.pop(0)
+        while tokens and tokens[-1].lower() in _DISCOURSE_MARKERS:
+            tokens.pop()
+        surface = " ".join(tokens)
+        for pattern in self._FRAMING_PREFIXES:
+            surface = pattern.sub("", surface).strip()
+        if len(surface) > limit:
+            surface = surface[: max(0, limit - 3)].rstrip() + "..."
         return surface
 
 
+class SlotBinder:
+    def bind(self, situation: ResponseSituation) -> dict[str, BoundSlot]:
+        slots: dict[str, BoundSlot] = {}
+        for key, slot in getattr(situation.evidence, "selected_slots", {}).items() if situation.evidence is not None else []:
+            value = getattr(slot, "value", "")
+            if value:
+                slots[key] = BoundSlot(
+                    key=key,
+                    value=str(value),
+                    slot_kind=getattr(slot, "slot_kind", "surface") or "surface",
+                    confidence=float(getattr(slot, "confidence", 0.5) or 0.5),
+                    source_refs=[getattr(slot, "source_relation_id", "") or getattr(slot, "source_atom_id", "")],
+                )
+        binding = situation.answer_binding or getattr(situation.evidence, "answer_binding", None)
+        fills = list(getattr(binding, "slot_fills", []) or [])
+        if fills and "answer" not in slots:
+            best = max(fills, key=lambda fill: getattr(fill, "confidence", 0.0) or 0.0)
+            value = self._surface_value(best)
+            slots["answer"] = BoundSlot(
+                key="answer",
+                value=value,
+                relation_key=getattr(best, "relation_key", "") or "",
+                confidence=float(getattr(best, "confidence", 0.5) or 0.5),
+                source_refs=[*getattr(best, "source_frame_ids", []), *getattr(best, "evidence_refs", [])],
+                features=dict(getattr(best, "features", {}) or {}),
+            )
+        return slots
+
+    def echo_surface(self, situation: ResponseSituation) -> str:
+        slots = self.bind(situation)
+        if "answer" in slots and slots["answer"].value:
+            return slots["answer"].value
+        entry = getattr(situation.semantic_program, "entry_instruction", None)
+        return getattr(entry, "surface", "") or ""
+
+    @staticmethod
+    def _surface_value(fill: Any) -> str:
+        return (
+            getattr(fill, "surface", "")
+            or getattr(fill, "concept_id", "")
+            or getattr(fill, "entity_id", "")
+            or ""
+        )
+
+
 class RealizationExecutor:
-    """Turn response moves + slots into surface text.
-
-    English-only minimal implementation. Each move type has a
-    deterministic realization strategy.
-    """
-
     def __init__(self) -> None:
-        self._pronoun = PronounResolver()
-        self._post_proc = SurfacePostProcessor()
-        self._slot_binder = SlotBinder()
+        self._slots = SlotBinder()
+        self._pronouns = PronounResolver()
+        self._predicates = PredicateSelector()
+        self._morph = Morphologizer()
+        self._linearizer = Linearizer()
+        self._post = SurfacePostProcessor()
 
-    def realize(
-        self,
-        moves: list[ResponseMove],
-        situation: ResponseSituation,
-    ) -> str:
-        if not moves:
-            return ""
+    def realize(self, moves: list[ResponseMove], situation: ResponseSituation) -> str:
+        candidate = self.realize_candidate(moves, situation)
+        return candidate.text
 
+    def realize_candidate(self, moves: list[ResponseMove], situation: ResponseSituation) -> RealizedCandidate:
+        plan = ResponseCandidatePlan(
+            plan_id="deterministic",
+            moves=list(moves),
+            framing_variant="direct",
+            evidence_refs=_dedupe([ref for move in moves for ref in move.evidence_refs]),
+            safety_tags=self._safety_tags(situation),
+            required_components=set().union(*(move.required_components for move in moves)) if moves else set(),
+            satisfied_components=set().union(*(move.satisfied_components for move in moves)) if moves else set(),
+            total_score=1.0,
+        )
+        slots = self._slots.bind(situation)
         parts: list[str] = []
-        slots = self._slot_binder.bind_slots(situation)
-
         for move in moves:
             text = self._realize_move(move, situation, slots)
             if text:
                 parts.append(text)
+        return RealizedCandidate(
+            plan=plan,
+            text=" ".join(parts).strip(),
+            language=situation.language or "en",
+            grammar_trace={"move_count": len(moves), "slot_keys": sorted(slots)},
+        )
 
-        if not parts:
-            return ""
-
-        return " ".join(parts)
-
-    def _realize_move(
-        self,
-        move: ResponseMove,
-        situation: ResponseSituation,
-        slots: dict[str, str],
-    ) -> str:
-        mt = move.move_type
-
-        if mt == "social_greet":
-            return self._realize_greet(situation)
-
-        if mt == "social_farewell":
-            return self._realize_farewell(situation)
-
-        if mt == "phatic_response":
-            return self._realize_phatic(situation)
-
-        if mt == "answer":
-            return self._realize_answer(situation, slots)
-
-        if mt == "acknowledge_heard":
-            return self._realize_acknowledge_heard(situation)
-
-        if mt == "confirm_memory_write":
-            return self._realize_confirm_write(situation)
-
-        if mt == "honest_abstain":
-            return self._realize_abstain(situation)
-
-        if mt == "safety_refusal":
-            return self._realize_safety_refusal(situation)
-
-        if mt == "repair_prior_response":
-            return self._realize_repair(situation)
-
-        if mt == "clarify":
-            return self._realize_clarify(situation, slots)
-
-        if mt == "deescalate":
-            return self._realize_deescalate(situation)
-
-        if mt == "set_expectation":
-            return self._realize_set_expectation(situation)
-
+    def _realize_move(self, move: ResponseMove, situation: ResponseSituation, slots: dict[str, BoundSlot]) -> str:
+        if move.move_type == "social_greet":
+            return "Hello." if situation.style.formality >= 0.65 else "Hi."
+        if move.move_type == "social_farewell":
+            return "Bye for now."
+        if move.move_type == "phatic_response":
+            return "I'm here and running normally. How are you doing?"
+        if move.move_type == "answer":
+            return self._answer(situation, slots)
+        if move.move_type == "evidence_explanation":
+            return self._evidence_explanation(situation)
+        if move.move_type == "acknowledge_heard":
+            return self._acknowledge_heard(situation)
+        if move.move_type == "confirm_memory_write":
+            return self._confirm_write(situation)
+        if move.move_type == "honest_abstain":
+            return self._abstain(situation)
+        if move.move_type == "safety_refusal":
+            return self._safety_refusal(situation)
+        if move.move_type == "repair_prior_response":
+            return "You're right, I missed that."
+        if move.move_type == "clarify":
+            return "Could you clarify what you mean?"
+        if move.move_type == "deescalate":
+            return "Let's take a step back."
+        if move.move_type == "set_expectation":
+            return "Give me a moment on that."
         return ""
 
-    def _realize_greet(self, situation: ResponseSituation) -> str:
-        if situation.is_first_turn:
-            return "Hello! How can I help you today?"
-        return "Hey again. What's on your mind?"
+    def _answer(self, situation: ResponseSituation, slots: dict[str, BoundSlot]) -> str:
+        answer = slots.get("answer")
+        if answer is None or not answer.value:
+            return self._abstain(situation)
+        obligation_kind = getattr(situation.obligation_frame, "obligation_kind", "") if situation.obligation_frame is not None else ""
+        if obligation_kind == "answer_self_identity":
+            return self._morph.sentence(self._linearizer.self_identity(answer.value))
+        if obligation_kind == "answer_user_profile":
+            label = self._predicates.label_for(answer)
+            if label in ("value", "has_property", ""):
+                query_surface = getattr(
+                    getattr(situation.semantic_program, "entry_instruction", None),
+                    "surface", "",
+                ) or ""
+                label = self._predicates.label_from_surface(query_surface, fallback=label)
+            return self._morph.sentence(self._linearizer.user_profile(label, answer.value))
+        if obligation_kind in {"answer_self_capability", "answer_self_knowledge", "answer_self_model"}:
+            return self._morph.sentence(answer.value)
+        return self._morph.sentence(answer.value)
 
-    def _realize_farewell(self, situation: ResponseSituation) -> str:
-        return "Bye for now."
-
-    def _realize_phatic(self, situation: ResponseSituation) -> str:
-        return "I'm here and running normally. How are you doing?"
-
-    def _realize_answer(self, situation: ResponseSituation, slots: dict[str, str]) -> str:
-        answer = slots.get("answer", "")
-        if not answer:
-            return self._realize_abstain(situation)
-
-        obligation = situation.obligation_frame
-        if obligation is not None:
-            kind = obligation.obligation_kind
-
-            if kind == "answer_self_identity":
-                return f"I am {answer}."
-
-            if kind == "answer_user_profile":
-                label = slots.get("label", "value")
-                return f"Your {label} is {answer}."
-
-            if kind in ("answer_self_capability", "answer_self_knowledge"):
-                return answer
-
-        # Default: just the answer value
-        explanation = slots.get("explanation", "")
-        if explanation:
-            return f"{answer} (via: {explanation})"
-        return answer
-
-    def _realize_acknowledge_heard(self, situation: ResponseSituation) -> str:
-        # Check if we have an echo surface from store_patch
-        echo = self._slot_binder.bind_echo_surface(situation)
-        if echo:
-            return f"Got it — {echo}. Tell me more."
+    def _acknowledge_heard(self, situation: ResponseSituation) -> str:
+        echo = self._echo(situation)
+        if echo and situation.style.detail > 0.65:
+            return self._morph.sentence(f"got it, {echo}")
         return "Got it."
 
-    def _realize_confirm_write(self, situation: ResponseSituation) -> str:
-        echo = self._slot_binder.bind_echo_surface(situation)
+    def _confirm_write(self, situation: ResponseSituation) -> str:
+        write = situation.write_outcome
+        if write is None or not write.committed:
+            return "Got it."
+        echo = self._echo(situation)
         if echo:
-            return f"Got it. I've learned that {echo}."
-        return "Got it. I've stored that."
+            return self._morph.sentence(f"I've stored it: {echo}")
+        return "I've stored that."
 
-    def _realize_abstain(self, situation: ResponseSituation) -> str:
-        binding = situation.answer_binding
-        if binding is not None and binding.abstention_reason:
-            reason = binding.abstention_reason
-            if reason.startswith("blocked"):
-                return "I need more information before I can answer that."
-            if reason == "no_matches":
-                return "I don't have enough information to answer that yet."
-            if reason == "no_relation_key_or_algebra":
-                return "I'm not sure how to look that up."
-        return "I don't have enough verified information to answer."
+    def _abstain(self, situation: ResponseSituation) -> str:
+        binding = situation.answer_binding or getattr(situation.evidence, "answer_binding", None)
+        reason = getattr(binding, "abstention_reason", "") or getattr(situation.evidence, "abstention_reason", "")
+        if str(reason).startswith("blocked"):
+            return "I can't answer that from the available evidence."
+        if reason == "no_matches":
+            return "I don't have enough information to answer that yet."
+        if reason == "no_relation_key_or_algebra":
+            return "I'm not sure how to look that up yet."
+        return "I don't have enough verified information to answer that."
 
-    def _realize_safety_refusal(self, situation: ResponseSituation) -> str:
-        safety = situation.safety_frame
-        if safety is not None and safety.category == "self_harm":
-            return ("I can't help with that. Please reach out to someone you trust "
-                    "or a crisis line right now — you deserve support.")
-        return "I can't help with that request."
+    def _safety_refusal(self, situation: ResponseSituation) -> str:
+        category = (getattr(situation.safety_frame, "category", "") or "").lower()
+        severity = (getattr(situation.safety_frame, "severity", "") or "").lower()
+        if category == "self_harm":
+            return "No. I can't help with self-harm. Please reach out to someone you trust or emergency support right now."
+        if category in {"interpersonal_violence", "violence", "harm"}:
+            if severity in {"high", "critical", "imminent"}:
+                return "No. Step away from the situation and get immediate help if anyone is in danger."
+            return "No. I don't want anyone getting hurt."
+        return "No. I can't help with that request."
 
-    def _realize_repair(self, situation: ResponseSituation) -> str:
-        return ("I think we got crossed up there. Let me try again — "
-                "what were you looking for?")
+    def _evidence_explanation(self, situation: ResponseSituation) -> str:
+        paths = getattr(situation.evidence, "explanation_paths", []) if situation.evidence is not None else []
+        longest = max(paths, key=len) if paths else []
+        if len(longest) > 1:
+            return self._linearizer.evidence_explanation(" -> ".join(longest))
+        return ""
 
-    def _realize_clarify(self, situation: ResponseSituation, slots: dict[str, str]) -> str:
-        answer = slots.get("answer", "")
-        if answer:
-            return f"Could you clarify what you mean by {answer}?"
-        return "Could you clarify what you mean?"
+    def _echo(self, situation: ResponseSituation) -> str:
+        surface = self._slots.echo_surface(situation)
+        surface = self._post.clean_echo(surface)
+        surface = self._pronouns.shift_user_assertion_to_assistant_echo(surface)
+        return surface
 
-    def _realize_deescalate(self, situation: ResponseSituation) -> str:
-        return "Let's take a step back. What's going on?"
+    @staticmethod
+    def _safety_tags(situation: ResponseSituation) -> list[str]:
+        category = getattr(situation.safety_frame, "category", "") if situation.safety_frame is not None else ""
+        return [category] if category else []
 
-    def _realize_set_expectation(self, situation: ResponseSituation) -> str:
-        return "Give me a moment on that."
+
+def _dedupe(values: list[str]) -> list[str]:
+    out: list[str] = []
+    for value in values:
+        if value and value not in out:
+            out.append(value)
+    return out

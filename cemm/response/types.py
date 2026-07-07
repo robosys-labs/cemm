@@ -1,10 +1,8 @@
-"""Core types for the v3.1 response formation engine.
+"""Core response formation types.
 
-All types are pure dataclasses — no logic. The engine stages
-(SituationBuilder, PrimitiveGoalComposer, etc.) operate on these.
-
-Architecture: Response formation first, NLG last.
-The runtime produces a ResponseBundle, not a bare string.
+These types intentionally keep semantic composition separate from English
+surface realization. Response goals and moves are language-agnostic; only
+the realization executor is allowed to choose English wording.
 """
 
 from __future__ import annotations
@@ -13,81 +11,136 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-# ── Budget ─────────────────────────────────────────────────────────────
+PRIMITIVE_GOALS = frozenset({
+    "assert",
+    "query",
+    "clarify",
+    "acknowledge",
+    "negate",
+    "refuse",
+    "instruct",
+    "greet",
+    "farewell",
+    "repair_self",
+    "reciprocate",
+    "deescalate",
+    "hedge",
+    "confirm_write",
+    "explain_evidence",
+    "set_expectation",
+})
+
+RESPONSE_MOVES = frozenset({
+    "answer",
+    "acknowledge_heard",
+    "confirm_memory_write",
+    "clarify",
+    "repair_prior_response",
+    "safety_refusal",
+    "deescalate",
+    "social_greet",
+    "social_farewell",
+    "phatic_response",
+    "set_expectation",
+    "honest_abstain",
+    "evidence_explanation",
+})
 
 
 @dataclass
 class BudgetFrame:
-    """Time/resource budget for one response cycle.
-
-    Known before expensive cognition so the system can decide
-    how many candidates to generate, how deep to query, etc.
-    """
     total_time_ms: float = 5000.0
     remaining_time_ms: float = 5000.0
     latency_target_ms: float = 50.0
     max_recursive_steps: int = 1
     max_candidate_plans: int = 8
     max_realized_candidates: int = 3
-    risk_level: str = "low"  # low, medium, high
-    required_confidence: float = 0.3
-    coverage_target: float = 0.8
+    risk_level: str = "normal"
+    required_confidence: float = 0.5
+    coverage_target: float = 0.5
     allow_partial_answer: bool = True
     allow_recursive_distillation: bool = False
 
 
-# ── Write Outcome ──────────────────────────────────────────────────────
-
-
 @dataclass
 class WriteOutcome:
-    """Result of patch validation + commit for this turn.
+    """Validated write/patch status for the current turn."""
 
-    Controls memory truthfulness: the response layer must not
-    claim durable storage before commit_status == "committed".
-    """
     patch_count: int = 0
     committed_count: int = 0
     rejected_count: int = 0
     quarantined_count: int = 0
-    commit_status: str = "none"  # none, proposed, committed, rejected, quarantined
+    commit_status: str = "none"  # none, proposed, validated, committed, rejected, conflict, quarantined
     committed_record_ids: list[str] = field(default_factory=list)
+    committed_patch_ids: list[str] = field(default_factory=list)
+    rejected_patch_ids: list[str] = field(default_factory=list)
+    conflict_ids: list[str] = field(default_factory=list)
     rejected_reasons: list[str] = field(default_factory=list)
 
-
-# ── Evidence ───────────────────────────────────────────────────────────
+    @property
+    def committed(self) -> bool:
+        return self.commit_status == "committed" or self.committed_count > 0
 
 
 @dataclass
 class ResponseEvidencePacket:
-    """Evidence gathered by the query engine for response formation.
+    """Semantic evidence bound by SemanticQueryEngine."""
 
-    The query engine binds evidence; it does not choose final wording.
-    """
     answer_binding: Any | None = None
     relation_frames: list[Any] = field(default_factory=list)
     semantic_query: Any | None = None
+    selected_slots: dict[str, Any] = field(default_factory=dict)
     explanation_paths: list[list[str]] = field(default_factory=list)
+    answer_kind: str = ""
+    answer_status: str = "unavailable"
+    abstention_reason: str = ""
+    evidence_refs: list[str] = field(default_factory=list)
+    confidence: float = 0.0
 
-
-# ── Style & Temperature ────────────────────────────────────────────────
+    @classmethod
+    def from_runtime(
+        cls,
+        *,
+        semantic_query: Any | None = None,
+        answer_binding: Any | None = None,
+        relation_frames: list[Any] | None = None,
+        realization_contract: Any | None = None,
+    ) -> "ResponseEvidencePacket":
+        selected_slots = dict(getattr(realization_contract, "slots", {}) or {})
+        explanation_paths = list(getattr(answer_binding, "explanation_paths", []) or [])
+        evidence_refs: list[str] = []
+        for fill in getattr(answer_binding, "slot_fills", []) or []:
+            for ref in [*getattr(fill, "source_frame_ids", []), *getattr(fill, "evidence_refs", [])]:
+                if ref and ref not in evidence_refs:
+                    evidence_refs.append(ref)
+        has_answer = bool(getattr(answer_binding, "has_answer", False))
+        return cls(
+            answer_binding=answer_binding,
+            relation_frames=list(relation_frames or []),
+            semantic_query=semantic_query,
+            selected_slots=selected_slots,
+            explanation_paths=explanation_paths,
+            answer_kind=getattr(semantic_query, "query_kind", "") or "",
+            answer_status="answered" if has_answer else "no_answer",
+            abstention_reason=getattr(answer_binding, "abstention_reason", "") or "",
+            evidence_refs=evidence_refs,
+            confidence=float(getattr(answer_binding, "confidence", 0.0) or 0.0),
+        )
 
 
 @dataclass
 class StyleVector:
-    """7 style axes that modulate surface realization."""
-    terseness: float = 0.5      # 0=verbose, 1=terse
-    formality: float = 0.5      # 0=casual, 1=formal
-    warmth: float = 0.5         # 0=cold, 1=warm
-    detail: float = 0.5         # 0=minimal, 1=detailed
-    directness: float = 0.5     # 0=hedged, 1=direct
-    uncertainty: float = 0.0    # 0=confident, 1=hedged
-    repair_energy: float = 0.0  # 0=none, 1=maximum repair effort
+    terseness: float = 0.5
+    formality: float = 0.5
+    warmth: float = 0.5
+    detail: float = 0.5
+    directness: float = 0.5
+    uncertainty: float = 0.0
+    repair_energy: float = 0.0
 
 
 @dataclass
 class TemperatureState:
-    """9 temperature dimensions derived from user state and self state."""
     user_urgency: float = 0.0
     user_detail_appetite: float = 0.5
     user_frustration: float = 0.0
@@ -95,78 +148,41 @@ class TemperatureState:
     user_playfulness: float = 0.0
     self_uncertainty: float = 0.0
     self_recent_error_rate: float = 0.0
-    self_warmth_throttle: float = 1.0
+    self_warmth_throttle: float = 0.0
     conversation_repair_debt: float = 0.0
-
-
-# ── Primitive Goals & Moves ────────────────────────────────────────────
-
-
-# Primitive goal types — composable semantic forces
-PRIMITIVE_GOALS = frozenset({
-    "assert",       # state a fact
-    "query",        # ask a question
-    "acknowledge",  # confirm hearing/receiving
-    "negate",       # deny or refuse
-    "refuse",       # explicitly decline
-    "instruct",     # give direction or guidance
-    "greet",        # open social contact
-    "farewell",     # close social contact
-    "repair_self",  # acknowledge own prior error
-    "reciprocate",  # mirror back (e.g. "how are you?" → "I'm fine, you?")
-    "deescalate",   # reduce tension
-    "hedge",        # express uncertainty
-    "confirm_write", # confirm durable memory write
-})
 
 
 @dataclass
 class PrimitiveResponseGoal:
-    """One composable primitive goal."""
-    goal_type: str  # one of PRIMITIVE_GOALS
+    goal_type: str
     confidence: float = 0.8
+    required: bool = False
+    priority: int = 5
+    target_refs: list[str] = field(default_factory=list)
+    source_refs: list[str] = field(default_factory=list)
+    evidence_refs: list[str] = field(default_factory=list)
+    constraints: set[str] = field(default_factory=set)
     slots: dict[str, Any] = field(default_factory=dict)
-
-
-# Response move types — communicative acts
-RESPONSE_MOVES = frozenset({
-    "answer",                 # provide information
-    "acknowledge_heard",      # confirm hearing without storage claim
-    "confirm_memory_write",   # confirm durable storage
-    "clarify",                # ask for clarification
-    "repair_prior_response",  # fix previous bad output
-    "refuse",                 # decline a request
-    "deescalate",             # reduce tension in safety context
-    "safety_refusal",         # refuse + deescalate for harm
-    "check_hearing",          # "did you hear me?" / "you still there?"
-    "social_greet",           # greeting move
-    "social_farewell",        # farewell move
-    "phatic_response",        # check-in reciprocation
-    "set_expectation",        # tell user what to expect
-    "honest_abstain",         # no answer, honest about it
-})
+    reason: str = ""
 
 
 @dataclass
 class ResponseMove:
-    """One communicative move in a response."""
-    move_type: str  # one of RESPONSE_MOVES
+    move_type: str
     primitive_goals: list[PrimitiveResponseGoal] = field(default_factory=list)
     confidence: float = 0.8
+    priority: int = 5
+    required_components: set[str] = field(default_factory=set)
+    satisfied_components: set[str] = field(default_factory=set)
+    tags: set[str] = field(default_factory=set)
     safety_required: bool = False
     evidence_refs: list[str] = field(default_factory=list)
-
-
-# ── Internal Actions ───────────────────────────────────────────────────
+    source_refs: list[str] = field(default_factory=list)
 
 
 @dataclass
 class InternalActionProposal:
-    """A proposed internal action (not user-facing text).
-
-    First-class proposals with authorization, not afterthoughts.
-    """
-    action_type: str  # set_locale_hint, mark_previous_response_failed, etc.
+    action_type: str
     payload: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.5
     reversible: bool = True
@@ -175,24 +191,16 @@ class InternalActionProposal:
     reason: str = ""
 
 
-# ── Candidates ─────────────────────────────────────────────────────────
-
-
 @dataclass
 class ResponseCandidatePlan:
-    """A candidate response plan before surface realization.
-
-    Contains moves, goals, style, and safety tags but no text yet.
-    Ranking happens on plans before expensive realization.
-    """
     plan_id: str = ""
     moves: list[ResponseMove] = field(default_factory=list)
     style: StyleVector = field(default_factory=StyleVector)
-    framing_variant: str = "direct"  # minimal, direct, echo, hedged, etc.
+    framing_variant: str = "direct"
     evidence_refs: list[str] = field(default_factory=list)
     safety_tags: list[str] = field(default_factory=list)
-    required_components: list[str] = field(default_factory=list)
-    satisfied_components: list[str] = field(default_factory=list)
+    required_components: set[str] = field(default_factory=set)
+    satisfied_components: set[str] = field(default_factory=set)
     blocked_reason: str = ""
     score_parts: dict[str, float] = field(default_factory=dict)
     total_score: float = 0.0
@@ -200,23 +208,15 @@ class ResponseCandidatePlan:
 
 @dataclass
 class RealizedCandidate:
-    """A candidate plan with surface text realized."""
     plan: ResponseCandidatePlan = field(default_factory=ResponseCandidatePlan)
     text: str = ""
     language: str = "en"
+    grammar_trace: dict[str, Any] = field(default_factory=dict)
     internal_actions: list[InternalActionProposal] = field(default_factory=list)
-
-
-# ── Response Bundle ────────────────────────────────────────────────────
 
 
 @dataclass
 class ResponseBundle:
-    """The final output of the response formation engine.
-
-    Replaces SemanticRealizer's bare string output. Carries
-    full traceability: moves, evidence, safety, internal actions.
-    """
     text: str = ""
     language: str = "en"
     moves: list[ResponseMove] = field(default_factory=list)
@@ -232,24 +232,17 @@ class ResponseBundle:
     diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
-# ── Response Situation ─────────────────────────────────────────────────
-
-
 @dataclass
 class ResponseSituation:
-    """Full runtime context for response formation.
-
-    Assembled from all prior pipeline stages. This is the input
-    to the response formation engine — not just RelationFrame + Slots
-    but the full semantic runtime snapshot.
-    """
     obligation_frame: Any | None = None
     answer_binding: Any | None = None
+    evidence: ResponseEvidencePacket | None = None
     semantic_program: Any | None = None
     relation_frames: list[Any] = field(default_factory=list)
     semantic_query: Any | None = None
     uol_graph: Any | None = None
     safety_frame: Any | None = None
+    reaction_signal: Any | None = None
     write_outcome: WriteOutcome | None = None
     budget_frame: BudgetFrame = field(default_factory=BudgetFrame)
     style: StyleVector = field(default_factory=StyleVector)
@@ -257,5 +250,6 @@ class ResponseSituation:
     signal: Any | None = None
     kernel: Any | None = None
     percept: Any | None = None
+    language: str = "en"
     is_first_turn: bool = False
     conversation_turn_index: int = 0
