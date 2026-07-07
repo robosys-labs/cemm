@@ -19,7 +19,7 @@ from .relation_algebra import RelationAlgebra
 from .semantic_query_engine import SemanticQueryEngine
 from .semantic_realizer import SemanticRealizer
 from ..response.response_formation_engine import ResponseFormationEngine
-from ..response.types import ResponseSituation, ResponseBundle, WriteOutcome, BudgetFrame, StyleVector, TemperatureState
+from ..response.types import ResponseSituation, ResponseBundle, WriteOutcome, BudgetFrame, StyleVector, TemperatureState, ResponseEvidencePacket
 from .session_store import SessionStore
 from ..causal.causal_bridge import CausalBridge
 from ..learning.patch_validator import PatchValidator
@@ -462,9 +462,16 @@ class SemanticKernelRuntime:
         # 8b. Build ResponseSituation from all prior pipeline outputs
         turn_index = kernel.conversation.turn_index
         is_first_turn = turn_index <= 1
+        evidence_packet = ResponseEvidencePacket.from_runtime(
+            semantic_query=semantic_query,
+            answer_binding=answer_binding,
+            relation_frames=relation_frames,
+            realization_contract=realization_contract,
+        )
         response_situation = ResponseSituation(
             obligation_frame=obligation_frame,
             answer_binding=answer_binding,
+            evidence=evidence_packet,
             semantic_program=semantic_program,
             relation_frames=relation_frames,
             semantic_query=semantic_query,

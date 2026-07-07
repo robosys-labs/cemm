@@ -50,11 +50,12 @@ All other culprits (2-4, 6-12) are fully fixed. See `newarch/causal-runtime-wiri
 Use these files as the active implementation contract, in this order:
 
 1. `AGENTS.md` (this file)
-2. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan)
-3. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
-4. `newarch/consolidated_architecture.md`
-5. `newarch/3.3-uol-graph-architecture.md`
-6. `newarch/core_loop_runtime.md`
+2. `newarch/cemm-v3.1-lean-implementation-plan.md` (response formation architecture plan)
+3. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan)
+4. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
+5. `newarch/consolidated_architecture.md`
+6. `newarch/3.3-uol-graph-architecture.md`
+7. `newarch/core_loop_runtime.md`
 
 Superseded design docs and plans are archived at `docs/archive/newarch_superseded/`.
 Use them as background reference only — they are not active architecture contracts.
@@ -432,59 +433,84 @@ quarantine
 
 according to budget, risk, and permission.
 
-## 11. Realization Rule
+## 11. Response Formation Architecture (v3.1)
 
-Final text should be realized from a response/action plan and selected evidence,
-not directly from raw input text.
-
-### v3.1 Response Formation Engine — IMPLEMENTED (Phases 0-3)
-
-The canonical response path is now:
+The canonical response path is:
 
 ```text
 ResponseSituation
 -> PrimitiveGoalComposer      (language-agnostic: derives goals from semantic structure)
 -> ResponseMoveComposer       (language-agnostic: composes communicative moves from goals)
--> RealizationExecutor        (language-specific: English realization only)
--> ResponseBundle             (final output with traceability)
+-> RealizationExecutor        (language-specific: renders via language modules)
+-> ResponseBundle             (final output with full traceability)
 ```
 
-**Architecture invariants (non-negotiable):**
+### Package Structure
 
-1. `PrimitiveGoalComposer` and `ResponseMoveComposer` are **language-agnostic**.
+```text
+cemm/response/
+  types.py                        # Core types (BudgetFrame, ResponseSituation, ResponseBundle, etc.)
+  response_formation_engine.py    # Orchestrates goal composition → move composition → realization
+  primitive_goal_composer.py      # Language-agnostic goal composition from semantic structure
+  response_move_composer.py       # Language-agnostic move composition from goals
+  realization_executor.py         # Compatibility re-export
+  realization/
+    types.py                      # Language-neutral IR (BoundSlot, RealizationUnit, RealizationPlan)
+    executor.py                   # Language-agnostic executor: binds slots, builds plan, delegates to renderer
+    planner.py                    # Builds language-neutral RealizationUnits from ResponseMoves
+    slot_binder.py                # Binds semantic slots from evidence (never reads raw user text)
+    languages/
+      base.py                     # LanguageRenderer protocol + shared helpers
+      en.py                       # English renderer
+      fr.py                       # French renderer (proves multilingual from day one)
+```
+
+### Architecture Invariants (non-negotiable)
+
+1. **`PrimitiveGoalComposer` and `ResponseMoveComposer` are language-agnostic.**
    They must not classify English surface strings. Social, safety, memory, and
    answer behavior arrives as semantic structure: obligation kind, response act
    hints, UOL intent atoms, safety frames, write outcomes, and answer bindings.
 
-2. `RealizationExecutor` is the **only** module allowed to choose English wording.
-   It contains `PronounResolver`, `PredicateSelector`, `Morphologizer`,
-   `Linearizer`, `SurfacePostProcessor`, and `SlotBinder` as internal components.
+2. **`RealizationExecutor` is language-agnostic.** It binds slots, builds a
+   language-neutral `RealizationPlan`, and delegates surface text to a
+   `LanguageRenderer`. Only language modules (`languages/en.py`, `languages/fr.py`)
+   choose surface wording.
 
-3. `ResponseEvidencePacket` separates evidence binding (query engine's job) from
-   realization (response engine's job). The query engine binds evidence; it does
-   not choose final wording.
+3. **`RealizationUnit` is the language-neutral IR.** Response moves are converted
+   to `RealizationUnit`s before any language renderer sees them. This keeps
+   grammar/rendering multilingual without letting language-specific rules leak
+   back into response planning.
 
-4. `WriteOutcome` must be available before response formation. Memory-write claims
-   in output depend on `write_outcome.committed` — never claim storage happened
-   if the patch was not committed.
+4. **`SlotBinder` never reads raw user text or instruction surface.** It binds
+   from `ResponseEvidencePacket.selected_slots` and `AnswerBinding.slot_fills`
+   only. If upstream semantics did not bind a slot, realization must not invent one.
 
-5. Safety goals are **gates, not ranker preferences**. If `safety_required` is
+5. **`WriteOutcome` must be available before response formation.** Memory-write
+   claims in output depend on `write_outcome.committed` — never claim storage
+   happened if the patch was not committed.
+
+6. **Safety goals are gates, not ranker preferences.** If `safety_required` is
    true on any move, the response must include the safety refusal regardless of
    other moves.
 
-6. `ResponseSituation` carries the full runtime context: obligation frame, answer
-   binding, evidence packet, semantic program, relation frames, UOL graph, safety
-   frame, reaction signal, write outcome, budget frame, style, temperature, and
-   percept. All stages can access what they need without reaching back into the
-   kernel.
+7. **No generic fallback string may hide a failed semantic path.** If the
+   response engine fails, the error must be visible — not silently replaced
+   with a template string from the old `SemanticRealizer`.
 
-7. No generic fallback string may hide a failed semantic path. If the response
-   engine fails, the error must be visible — not silently replaced with a
-   template string from the old `SemanticRealizer`.
-
-8. `RealizationContract` and `template_key` are **metadata only** — they may
+8. **`RealizationContract` and `template_key` are metadata only** — they may
    carry evidence slot information but must not be used as the authoritative
    response selection mechanism. The `ResponseFormationEngine` is authoritative.
+
+9. **HTML sanitization happens in `SlotBinder._clean_value`** — all slot values
+   are sanitized (HTML tags stripped, script blocks removed, control chars
+   removed) before reaching any language renderer.
+
+10. **Echo surface processing (pronoun shifting, framing prefix stripping,
+    discourse marker removal) happens in `SemanticQueryEngine.build_contract()`**
+    before the slot reaches the response engine. This is a transitional state —
+    these should eventually move to the English renderer when Phase 4 adds
+    candidate generation.
 
 ### Old Path To Retire
 
@@ -497,8 +523,8 @@ instantiated in `SemanticKernelRuntime` as a fallback but must not be relied
 upon. It should be removed once all tests pass without it.
 
 `SemanticQueryEngine._template_for_obligation()`, `_shift_pronouns_for_echo()`,
-and `_sanitize_echo()` are superseded by `RealizationExecutor`'s internal
-components. They should be retired.
+and `_sanitize_echo()` are transitional — they still process echo surfaces but
+should eventually be moved to language renderers.
 
 ### Phase Status
 
@@ -507,7 +533,7 @@ components. They should be retired.
 | 0 | ✅ Complete | Test contracts (golden transcript, safety, memory, query) |
 | 1 | ✅ Complete | Core types + runtime reordering |
 | 2 | ✅ Complete | PrimitiveGoalComposer + ResponseMoveComposer |
-| 3 | ✅ Complete | Minimal RealizationExecutor (English) |
+| 3 | ✅ Complete | Minimal RealizationExecutor (English + French) |
 | 4 | ❌ Not started | CandidateGenerator, PlanGateAndRanker, Selector |
 | 5 | ❌ Not started | BudgetFrame + budget-aware spend |
 | 6 | ❌ Not started | Budget-aware semantic query |
@@ -556,6 +582,8 @@ use template_key as the authoritative response selection mechanism
 claim memory was stored when WriteOutcome.committed is false
 bypass safety gates in favor of ranker preferences
 add English-specific logic to language-agnostic response stages
+read raw user text in SlotBinder — bind from evidence only
+put pronoun shifting or HTML sanitization in language-agnostic stages
 ```
 
 Seed heuristics are allowed only as explicit fallback scaffolding.
@@ -637,10 +665,13 @@ Before closing a task, verify:
 - [ ] Action slots are structural by default, not answerable.
 - [ ] State deltas are compiled into existing UOL primitives (state atoms + causes edges), not new edge types.
 - [ ] Response formation: `PrimitiveGoalComposer` and `ResponseMoveComposer` are language-agnostic — no English surface string classification.
-- [ ] Response formation: `RealizationExecutor` is the only language-specific module.
-- [ ] Response formation: no fallback to `SemanticRealizer` when `ResponseFormationEngine` throws.
+- [ ] Response formation: `RealizationExecutor` delegates to language renderers — no English wording in the executor itself.
+- [ ] Response formation: `SlotBinder` binds from evidence only — never reads raw user text.
+- [ ] Response formation: `RealizationUnit` IR keeps language-specific rules out of response planning.
+- [ ] Response formation: no fallback to `SemanticRealizer` when `ResponseFormationEngine` throws — surface the error.
 - [ ] Response formation: `WriteOutcome.committed` is checked before claiming memory was stored.
 - [ ] Response formation: safety moves are gates, not ranker preferences.
 - [ ] Response formation: `ResponseBundle` carries full traceability (moves, evidence, diagnostics).
+- [ ] Response formation: HTML sanitization in `SlotBinder._clean_value` strips script blocks and tags.
 - [ ] Response formation: old tests using `SemanticRealizer` directly are replaced with pipeline-level tests via `SeededSystem`.
 

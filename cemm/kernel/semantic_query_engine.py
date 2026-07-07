@@ -455,6 +455,8 @@ class SemanticQueryEngine:
                 lower = surface.lower()
                 if lower.startswith("remember "):
                     surface = surface[len("remember "):]
+                # Strip conversational framing prefixes (e.g., "I told you that ...")
+                surface = self._strip_framing_prefix(surface)
                 # Strip leading/trailing discourse markers before echo
                 surface = self._strip_echo_discourse_markers(surface)
                 # Shift pronouns for system echo
@@ -599,6 +601,26 @@ class SemanticQueryEngine:
             result = result.replace(placeholder, final)
         return result
 
+    _FRAMING_PREFIXES: list[re.Pattern] = [
+        re.compile(r"^i told you (?:that )?", re.IGNORECASE),
+        re.compile(r"^i said (?:that )?", re.IGNORECASE),
+        re.compile(r"^i mentioned (?:that )?", re.IGNORECASE),
+        re.compile(r"^i noted (?:that )?", re.IGNORECASE),
+        re.compile(r"^i informed you (?:that )?", re.IGNORECASE),
+        re.compile(r"^i shared (?:that )?", re.IGNORECASE),
+        re.compile(r"^i explained (?:that )?", re.IGNORECASE),
+        re.compile(r"^you know (?:that )?", re.IGNORECASE),
+        re.compile(r"^like i said,?\s*", re.IGNORECASE),
+        re.compile(r"^as i said,?\s*", re.IGNORECASE),
+        re.compile(r"^just so you know,?\s*", re.IGNORECASE),
+    ]
+
+    @classmethod
+    def _strip_framing_prefix(cls, surface: str) -> str:
+        for pat in cls._FRAMING_PREFIXES:
+            surface = pat.sub("", surface)
+        return surface
+
     @staticmethod
     def _strip_echo_discourse_markers(surface: str) -> str:
         """Strip leading and trailing discourse markers from echo surface."""
@@ -623,13 +645,17 @@ class SemanticQueryEngine:
     def _sanitize_echo(surface: str) -> str:
         """Sanitize user surface before echoing in store confirmation.
 
+        - Strips script/style blocks entirely (including content)
         - Strips HTML tags to prevent XSS
         - Removes control characters
         - Limits length to 200 characters
         - Collapses whitespace
         """
         import re
-        # Strip HTML tags
+        # Strip script/style blocks entirely (content + tags)
+        surface = re.sub(r'<script[^>]*>.*?</script>', '', surface, flags=re.IGNORECASE | re.DOTALL)
+        surface = re.sub(r'<style[^>]*>.*?</style>', '', surface, flags=re.IGNORECASE | re.DOTALL)
+        # Strip remaining HTML tags
         surface = re.sub(r'<[^>]+>', '', surface)
         # Remove control characters (except normal whitespace)
         surface = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', surface)
