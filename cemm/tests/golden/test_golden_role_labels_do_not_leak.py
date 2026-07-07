@@ -24,7 +24,6 @@ from ...types.obligation_frame import ObligationFrame
 from ...types.semantic_program import SemanticProgram, SemanticInstruction
 from ...types.semantic_query import SemanticQuery, QueryConstraint
 from ...types.answer_binding import AnswerBinding, SlotFill
-from ...types.realization_contract import RealizationContract, RealizationSlot
 from ...kernel.semantic_query_engine import SemanticQueryEngine
 from ...kernel.relation_algebra import RelationAlgebra
 from ...memory.predicate_schema_store import PredicateSchemaStore
@@ -146,7 +145,8 @@ def test_query_engine_never_selects_role_frame():
         entry_instruction_id="inst_1",
     )
 
-    _, binding, _ = engine.run(obligation, [role_frame, teaching_frame], program)
+    query = engine.build_query(obligation, [role_frame, teaching_frame], program)
+    binding = engine.execute(query, [role_frame, teaching_frame])
     if binding.has_answer:
         for fill in binding.slot_fills:
             assert fill.surface not in _ROLE_LABELS, (
@@ -196,7 +196,7 @@ def test_response_engine_no_role_label_in_answer():
     """Role labels like 'target' must not appear in response output.
 
     Tests the full pipeline via SeededSystem rather than directly
-    instantiating the old SemanticRealizer with synthetic contracts.
+    instantiating the old realizer with synthetic contracts.
     """
     system = SeededSystem()
     result = system.run("what is a target?")
@@ -234,7 +234,8 @@ def test_response_engine_no_role_label_in_store_confirmation():
         )],
         entry_instruction_id="inst_1",
     )
-    _, binding, _ = engine.run(obligation, [role_frame], program)
+    query = engine.build_query(obligation, [role_frame], program)
+    binding = engine.execute(query, [role_frame])
     if binding.has_answer:
         for fill in binding.slot_fills:
             assert fill.surface not in _ROLE_LABELS, (
@@ -243,16 +244,16 @@ def test_response_engine_no_role_label_in_store_confirmation():
 
 
 def test_response_engine_teaching_continuation_no_role_label():
-    """Teaching continuation should not leak role labels."""
+    """Teaching continuation should not leak role labels.
+    v3.1: store_patch produces acknowledgment (e.g. 'Got it.' or 'I've stored that.'),
+    not a value echo. The key invariant is that internal role labels never surface."""
     system = SeededSystem()
     result = system.run("my name is Chibueze")
     output = result["output"]
     assert "possessor" not in output.lower(), (
         f"Role label leaked into teaching continuation: {output!r}"
     )
-    assert "Chibueze" in output or "chibueze" in output.lower(), (
-        f"Expected 'Chibueze' in output, got: {output!r}"
-    )
+    assert output, f"Output should be non-empty, got: {output!r}"
 
 
 def test_response_engine_farewell_not_hello():

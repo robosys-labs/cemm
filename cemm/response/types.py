@@ -62,6 +62,43 @@ class BudgetFrame:
     allow_recursive_distillation: bool = False
 
 
+
+
+@dataclass
+class StageBudget:
+    """Per-stage spend plan derived from BudgetFrame.
+
+    This is language-agnostic and controls computational effort, not wording.
+    """
+
+    attention_focus_limit: int = 16
+    query_result_limit: int = 16
+    candidate_plan_limit: int = 4
+    realized_candidate_limit: int = 2
+    explanation_depth: int = 1
+    selector_mode: str = "score"  # score, first_good_enough, deterministic_strict
+    allow_inverse_query: bool = True
+    allow_inheritance_query: bool = True
+    allow_recursive_distillation: bool = False
+    allow_composition_query: bool = False
+    max_query_inference_depth: int = 1
+    stop_on_first_sufficient_query: bool = True
+    query_min_confidence: float = 0.5
+    detail_level: float = 0.5
+    diagnostics: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class BudgetDecision:
+    """Budget arbitration result for one response cycle."""
+
+    input_budget: BudgetFrame = field(default_factory=BudgetFrame)
+    stage_budget: StageBudget = field(default_factory=StageBudget)
+    pressure: float = 0.0
+    task_size: float = 0.0
+    risk_level: str = "normal"
+    reasons: list[str] = field(default_factory=list)
+
 @dataclass
 class WriteOutcome:
     """Validated write/patch status for the current turn."""
@@ -204,6 +241,8 @@ class ResponseCandidatePlan:
     blocked_reason: str = ""
     score_parts: dict[str, float] = field(default_factory=dict)
     total_score: float = 0.0
+    estimated_cost_ms: float = 0.0
+    rank: int = 0
 
 
 @dataclass
@@ -221,6 +260,8 @@ class ResponseBundle:
     language: str = "en"
     moves: list[ResponseMove] = field(default_factory=list)
     internal_actions: list[InternalActionProposal] = field(default_factory=list)
+    proposed_internal_actions: list[InternalActionProposal] = field(default_factory=list)
+    rejected_internal_actions: list[InternalActionProposal] = field(default_factory=list)
     evidence_refs: list[str] = field(default_factory=list)
     safety_tags: list[str] = field(default_factory=list)
     style: StyleVector = field(default_factory=StyleVector)
@@ -230,6 +271,12 @@ class ResponseBundle:
     obligation_kind: str = ""
     confidence: float = 0.5
     diagnostics: dict[str, Any] = field(default_factory=dict)
+    budget_decision: BudgetDecision | None = None
+    deliberation_plan: Any | None = None
+    distillation_result: Any | None = None
+    action_authorization: Any | None = None
+    learning_result: Any | None = None
+    learning_patch_candidates: list[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -244,7 +291,10 @@ class ResponseSituation:
     safety_frame: Any | None = None
     reaction_signal: Any | None = None
     write_outcome: WriteOutcome | None = None
+    deliberation_plan: Any | None = None
+    distillation_result: Any | None = None
     budget_frame: BudgetFrame = field(default_factory=BudgetFrame)
+    budget_decision: BudgetDecision | None = None
     style: StyleVector = field(default_factory=StyleVector)
     temperature: TemperatureState = field(default_factory=TemperatureState)
     signal: Any | None = None

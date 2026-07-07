@@ -8,10 +8,8 @@ template selection, the engine:
 1. Builds a SemanticQuery from the ObligationFrame + RelationFrames
 2. Executes the query against the RelationAlgebra + PredicateSchemaStore
 3. Produces an AnswerBinding with slot fills, evidence, and explanation paths
-4. Derives a RealizationContract from the ObligationFrame + AnswerBinding
 
-This makes the v4.2 semantic stack actually drive query answering,
-not just produce diagnostics.
+The AnswerBinding is consumed by the ResponseFormationEngine (v3.1 canonical path).
 """
 
 from __future__ import annotations
@@ -22,7 +20,6 @@ from typing import Any
 
 from ..types.answer_binding import AnswerBinding, SlotFill
 from ..types.obligation_frame import ObligationFrame
-from ..types.realization_contract import RealizationContract, RealizationSlot
 from ..types.relation_frame import RelationFrame
 from ..types.semantic_program import SemanticProgram
 from ..types.semantic_query import QueryConstraint, SemanticQuery
@@ -66,45 +63,12 @@ def _is_internal_surface(value: str) -> bool:
         return True
     return bool(_STATE_DELTA_SURFACE_RE.match(value))
 
-# Discourse markers that should be stripped from echoed surfaces.
-# English-specific seed scaffolds (per AGENTS.md Section 12).
-_ECHO_DISCOURSE_MARKERS: frozenset = frozenset({
-    "well", "so", "oh", "like", "actually", "basically", "honestly",
-    "frankly", "anyway", "anyways", "hmm", "huh", "um", "uh", "er",
-    "ah", "ok", "okay", "right", "yeah", "yep", "nope", "lol",
-    "haha", "hehe", "i mean", "you know", "i guess", "i suppose",
-})
-
-_NON_ANSWER_TEMPLATES: dict[str, str] = {
-    "exit": "session_exit",
-    "social_reply": "social_response",
-    "greeting": "greeting",
-    "store_patch": "store_confirmation",
-    "continue_teaching": "teaching_continuation",
-    "abstain_policy": "abstain",
-    "ask_clarification": "ask_clarification",
-    "repair": "confusion_repair",
-    "answer_self_identity": "abstain",
-    "answer_self_capability": "abstain",
-    "answer_self_knowledge": "abstain",
-    "answer_self_model": "abstain",
-    "acknowledge_emotional_context": "emotional_response",
-}
-
 _OBLIGATION_KIND_TO_RELATION_KEY: dict[str, str] = {
     "answer_self_identity": "answers_identity_as",
     "answer_self_model": "answers_identity_as",
     "answer_self_capability": "capability",
     "answer_self_knowledge": "knows_about",
     "answer_user_profile": "has_property",
-}
-
-_RELATION_KEY_LABELS: dict[str, str] = {
-    "has_name": "name",
-    "has_age": "age",
-    "has_alias": "alias",
-    "has_role": "role",
-    "has_property": "value",
 }
 
 _OBLIGATION_KIND_TO_SUBJECT_ENTITY: dict[str, str] = {
@@ -393,138 +357,6 @@ class SemanticQueryEngine:
             frame.object.entity_id or "",
         )
 
-    def build_contract(
-        self,
-        obligation: ObligationFrame,
-        binding: AnswerBinding,
-        program: SemanticProgram | None = None,
-    ) -> RealizationContract:
-        response_mode = obligation.response_mode
-        intent = obligation.obligation_kind
-        template_key = self._template_for_obligation(obligation, binding, program)
-
-        filled = [f.slot_name for f in binding.slot_fills if f.concept_id or f.entity_id or f.surface]
-        unfilled = [s for s in obligation.required_slots if s not in filled]
-
-        explanation_required = obligation.evidence_policy == "required" and binding.has_answer
-        abstention_reason = binding.abstention_reason if not binding.has_answer else ""
-
-        slots: dict[str, RealizationSlot] = {}
-        if binding.slot_fills:
-            best = max(binding.slot_fills, key=lambda f: f.confidence)
-            slot_kind = self._slot_kind_for_obligation(obligation.obligation_kind, best)
-            if len(binding.slot_fills) > 1:
-                surfaces = [f.surface for f in binding.slot_fills if f.surface]
-                value = "; ".join(surfaces) if surfaces else (best.concept_id or best.entity_id)
-            else:
-                value = best.surface or best.concept_id or best.entity_id
-            if value:
-                slots["answer"] = RealizationSlot(
-                    slot_key="answer",
-                    slot_kind=slot_kind,
-                    value=value,
-                    source_binding_id=binding.binding_id,
-                    source_relation_id=best.source_frame_ids[0] if best.source_frame_ids else "",
-                    confidence=best.confidence,
-                )
-                if obligation.obligation_kind == "answer_user_profile" and best.relation_key:
-                    prop_dim = best.features.get("property_dimension", "")
-                    if prop_dim:
-                        label = prop_dim
-                    else:
-                        label = _RELATION_KEY_LABELS.get(best.relation_key, best.relation_key)
-                    slots["label"] = RealizationSlot(
-                        slot_key="label",
-                        slot_kind="profile",
-                        value=label,
-                        source_binding_id=binding.binding_id,
-                        confidence=best.confidence,
-                    )
-            if best.explanation_path:
-                slots["explanation"] = RealizationSlot(
-                    slot_key="explanation",
-                    slot_kind="explanation",
-                    value=" \u2192 ".join(best.explanation_path),
-                    source_binding_id=binding.binding_id,
-                    confidence=best.confidence,
-                )
-        elif obligation.obligation_kind == "store_patch" and program is not None:
-            entry = program.entry_instruction
-            if entry and entry.surface:
-                surface = entry.surface
-                lower = surface.lower()
-                if lower.startswith("remember "):
-                    surface = surface[len("remember "):]
-                # Strip conversational framing prefixes (e.g., "I told you that ...")
-                surface = self._strip_framing_prefix(surface)
-                # Strip leading/trailing discourse markers before echo
-                surface = self._strip_echo_discourse_markers(surface)
-                # Shift pronouns for system echo
-                surface = self._shift_pronouns_for_echo(surface)
-                # Sanitize before echoing to user
-                surface = self._sanitize_echo(surface)
-                slots["answer"] = RealizationSlot(
-                    slot_key="answer",
-                    slot_kind="surface",
-                    value=surface,
-                    source_binding_id=binding.binding_id,
-                    confidence=entry.confidence,
-                )
-                filled = ["answer"]
-
-        if obligation.obligation_kind == "acknowledge_emotional_context":
-            preds = obligation.context.get("affordance_predictions", [])
-            evaluation_label = "feeling"
-            for pred in preds:
-                if getattr(pred, "effect_type", "") == "evaluation_shift":
-                    patch_tmpl = getattr(pred, "predicted_patch_template", {})
-                    shift = patch_tmpl.get("affect_shift", "")
-                    if "positive" in shift:
-                        evaluation_label = "appreciation"
-                    elif "negative" in shift:
-                        evaluation_label = "concern"
-                    break
-            slots["evaluation"] = RealizationSlot(
-                slot_key="evaluation",
-                slot_kind="surface",
-                value=evaluation_label,
-                source_binding_id=binding.binding_id,
-                confidence=obligation.confidence,
-            )
-            filled = ["evaluation"]
-
-        return RealizationContract(
-            contract_id=uuid.uuid4().hex[:16],
-            source_obligation_id=obligation.primary_instruction_id,
-            source_binding_id=binding.binding_id,
-            response_mode=response_mode,
-            intent=intent,
-            template_key=template_key,
-            evidence_policy=obligation.evidence_policy,
-            write_policy=obligation.write_policy,
-            verification_level=self._verification_level(obligation, binding),
-            required_slots=list(obligation.required_slots),
-            filled_slots=filled,
-            unfilled_slots=unfilled,
-            explanation_required=explanation_required,
-            explanation_paths=list(binding.explanation_paths),
-            abstention_reason=abstention_reason,
-            confidence=binding.confidence,
-            slots=slots,
-        )
-
-    def run(
-        self,
-        obligation: ObligationFrame,
-        relation_frames: list[RelationFrame],
-        program: SemanticProgram | None = None,
-        uol_graph: Any | None = None,
-    ) -> tuple[SemanticQuery, AnswerBinding, RealizationContract]:
-        query = self.build_query(obligation, relation_frames, program, uol_graph)
-        binding = self.execute(query, relation_frames)
-        contract = self.build_contract(obligation, binding, program)
-        return query, binding, contract
-
     def _query_kind_for_obligation(self, obligation_kind: str) -> str:
         if obligation_kind in ("answer_concept", "answer_self_model", "answer_self_identity", "answer_self_capability", "answer_self_knowledge", "answer_relation", "answer_user_profile"):
             return "lookup"
@@ -537,134 +369,6 @@ class SemanticQueryEngine:
         if obligation_kind in ("social_reply", "abstain_policy", "exit"):
             return "none"
         return "none"
-
-    @staticmethod
-    def _shift_pronouns_for_echo(surface: str) -> str:
-        """Shift pronouns bidirectionally for system echo.
-
-        User's first-person pronouns (I, my, me, mine) → second-person (you, your, yours).
-        User's second-person pronouns (you, your, yourself) referring to the AI → first-person (I, my, myself).
-        Uses opaque placeholder tokens prefixed with 1ST_/2ND_ so that Phase 2
-        regex patterns cannot match inside Phase 1 placeholders and vice versa
-        (the underscore is a regex word char, blocking \\b word-boundary splits).
-        """
-        import re
-        # Phase 1: first-person → placeholders (user talking about themselves)
-        # The 1ST_ prefix uses underscore (a regex word char) so that e.g.
-        # _Y blocks \\b for Phase 2's \\byou\\b from matching inside \\x001ST_YOU\\x00.
-        replacements_phase1 = [
-            (r"\bI'm\b", "\x001ST_IM\x00"),
-            (r'\bIm\b', "\x001ST_IM\x00"),
-            (r'\bmyself\b', '\x001ST_MYSELF\x00'),
-            (r'\bmine\b', '\x001ST_MINE\x00'),
-            (r'\bme\b', '\x001ST_ME\x00'),
-            (r'\bmy\b', '\x001ST_MY\x00'),
-            (r'\bI\b', '\x001ST_I\x00'),
-            (r'\bours\b', '\x001ST_OURS\x00'),
-            (r'\bour\b', '\x001ST_OUR\x00'),
-        ]
-        # Phase 2: second-person → first-person (user talking about the AI)
-        # The 2ND_ prefix blocks Phase 1's patterns (\\bmy\\b, \\bI\\b, etc.)
-        # from matching inside these placeholders.
-        replacements_phase2 = [
-            (r"\byou're\b", "\x002ND_YOURE\x00"),
-            (r"\byoure\b", "\x002ND_YOURE\x00"),
-            (r'\byourself\b', '\x002ND_YOURSELF\x00'),
-            (r'\byourselves\b', '\x002ND_OURSELVES\x00'),
-            (r'\byours\b', '\x002ND_YOURS\x00'),
-            (r'\byour\b', '\x002ND_YOUR\x00'),
-            (r'\byou\b', '\x002ND_YOU\x00'),
-        ]
-        # Phase 3: resolve placeholders to final text
-        placeholder_resolves = [
-            ('\x001ST_I\x00', 'you'),
-            ('\x001ST_IM\x00', "you're"),
-            ('\x001ST_MY\x00', 'your'),
-            ('\x001ST_ME\x00', 'you'),
-            ('\x001ST_MINE\x00', 'yours'),
-            ('\x001ST_MYSELF\x00', 'yourself'),
-            ('\x001ST_OURS\x00', 'yours'),
-            ('\x001ST_OUR\x00', 'your'),
-            ('\x002ND_YOURE\x00', "I'm"),
-            ('\x002ND_YOURSELF\x00', 'myself'),
-            ('\x002ND_OURSELVES\x00', 'ourselves'),
-            ('\x002ND_YOURS\x00', 'mine'),
-            ('\x002ND_YOUR\x00', 'my'),
-            ('\x002ND_YOU\x00', 'I'),
-        ]
-        result = surface
-        for pattern, replacement in replacements_phase1:
-            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
-        for pattern, replacement in replacements_phase2:
-            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
-        for placeholder, final in placeholder_resolves:
-            result = result.replace(placeholder, final)
-        return result
-
-    _FRAMING_PREFIXES: list[re.Pattern] = [
-        re.compile(r"^i told you (?:that )?", re.IGNORECASE),
-        re.compile(r"^i said (?:that )?", re.IGNORECASE),
-        re.compile(r"^i mentioned (?:that )?", re.IGNORECASE),
-        re.compile(r"^i noted (?:that )?", re.IGNORECASE),
-        re.compile(r"^i informed you (?:that )?", re.IGNORECASE),
-        re.compile(r"^i shared (?:that )?", re.IGNORECASE),
-        re.compile(r"^i explained (?:that )?", re.IGNORECASE),
-        re.compile(r"^you know (?:that )?", re.IGNORECASE),
-        re.compile(r"^like i said,?\s*", re.IGNORECASE),
-        re.compile(r"^as i said,?\s*", re.IGNORECASE),
-        re.compile(r"^just so you know,?\s*", re.IGNORECASE),
-    ]
-
-    @classmethod
-    def _strip_framing_prefix(cls, surface: str) -> str:
-        for pat in cls._FRAMING_PREFIXES:
-            surface = pat.sub("", surface)
-        return surface
-
-    @staticmethod
-    def _strip_echo_discourse_markers(surface: str) -> str:
-        """Strip leading and trailing discourse markers from echo surface."""
-        import re
-        tokens = surface.split()
-        # Strip leading discourse markers
-        while tokens and tokens[0].lower() in _ECHO_DISCOURSE_MARKERS:
-            tokens.pop(0)
-        # Strip trailing discourse markers
-        while tokens and tokens[-1].lower() in _ECHO_DISCOURSE_MARKERS:
-            tokens.pop()
-        # Also strip multi-word discourse markers from start
-        lower_surface = " ".join(tokens).lower()
-        for dm in sorted(_ECHO_DISCOURSE_MARKERS, key=len, reverse=True):
-            if " " in dm and lower_surface.startswith(dm + " "):
-                n = len(dm.split())
-                tokens = tokens[n:]
-                break
-        return " ".join(tokens)
-
-    @staticmethod
-    def _sanitize_echo(surface: str) -> str:
-        """Sanitize user surface before echoing in store confirmation.
-
-        - Strips script/style blocks entirely (including content)
-        - Strips HTML tags to prevent XSS
-        - Removes control characters
-        - Limits length to 200 characters
-        - Collapses whitespace
-        """
-        import re
-        # Strip script/style blocks entirely (content + tags)
-        surface = re.sub(r'<script[^>]*>.*?</script>', '', surface, flags=re.IGNORECASE | re.DOTALL)
-        surface = re.sub(r'<style[^>]*>.*?</style>', '', surface, flags=re.IGNORECASE | re.DOTALL)
-        # Strip remaining HTML tags
-        surface = re.sub(r'<[^>]+>', '', surface)
-        # Remove control characters (except normal whitespace)
-        surface = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', surface)
-        # Collapse whitespace
-        surface = re.sub(r'\s+', ' ', surface).strip()
-        # Limit length
-        if len(surface) > 200:
-            surface = surface[:197] + '...'
-        return surface
 
     @staticmethod
     def _select_best_frame(frames: list[RelationFrame], question_surface: str) -> RelationFrame:
@@ -822,112 +526,3 @@ class SemanticQueryEngine:
                     matches.append(f)
 
         return matches
-
-    def _template_for_obligation(
-        self,
-        obligation: ObligationFrame,
-        binding: AnswerBinding,
-        program: Any | None = None,
-    ) -> str:
-        # Repair, exit, and clarification are non-negotiable — they must return
-        # their dedicated template even if the query engine found unrelated results.
-        if obligation.obligation_kind == "repair":
-            return "confusion_repair"
-        if obligation.obligation_kind == "exit":
-            return "session_exit"
-        if obligation.obligation_kind == "ask_clarification":
-            return "ask_clarification"
-
-        if not binding.has_answer:
-            if binding.abstention_reason.startswith("blocked"):
-                return "blocked"
-            if binding.abstention_reason:
-                return "abstain"
-            kind = obligation.obligation_kind
-            if kind == "social_reply" and program is not None:
-                entry = program.entry_instruction
-                if entry is not None:
-                    entry_surface = (entry.surface or "").lower()
-                    greeting_cues = ("hello", "hi", "hey", "greetings", "howdy",
-                                     "sup", "morning", "afternoon", "evening")
-                    if any(cue in entry_surface for cue in greeting_cues):
-                        return "greeting"
-                    frustration_cues = ("dumb", "stupid", "useless", "broken",
-                                        "suck", "worthless", "worse")
-                    if any(cue in entry_surface for cue in frustration_cues):
-                        return "frustration_response"
-                    checkin_cues = ("how are you", "how do you do", "how's it going",
-                                    "hows it going", "how are things", "how you doing",
-                                    "how's your day", "hows your day")
-                    if any(cue in entry_surface for cue in checkin_cues):
-                        return "phatic_checkin"
-            return _NON_ANSWER_TEMPLATES.get(kind, "general_conversation")
-
-        kind = obligation.obligation_kind
-        if kind == "answer_self_identity":
-            return "self_identity"
-        if kind in ("answer_self_capability", "answer_self_knowledge"):
-            return "evidence_answer"
-        if kind == "answer_self_model":
-            rel_key = binding.best_relation_key if hasattr(binding, "best_relation_key") else ""
-            if not rel_key and binding.slot_fills:
-                rel_key = binding.slot_fills[0].relation_key
-            if rel_key in ("capability", "knows_about", "does", "purpose", "creator", "architecture", "limitation"):
-                return "evidence_answer"
-            return "self_identity"
-        if kind in ("answer_concept", "answer_relation"):
-            return "evidence_answer"
-        if kind == "answer_user_profile":
-            return "user_profile"
-        if kind == "continue_teaching":
-            return "teaching_continuation"
-        if kind == "store_patch":
-            return "store_confirmation"
-        if kind == "social_reply":
-            # Distinguish greeting from phatic check-in or frustration
-            # by examining the entry instruction's intent atoms.
-            if program is not None:
-                entry = program.entry_instruction
-                if entry is not None:
-                    entry_surface = (entry.surface or "").lower()
-                    # Check for frustration/banter signals
-                    frustration_cues = ("dumb", "stupid", "useless", "broken",
-                                        "suck", "worthless", "worse")
-                    if any(cue in entry_surface for cue in frustration_cues):
-                        return "frustration_response"
-                    # Check for phatic check-in
-                    checkin_cues = ("how are you", "how do you do", "how's it going",
-                                    "hows it going", "how are things", "how you doing",
-                                    "how's your day", "hows your day")
-                    if any(cue in entry_surface for cue in checkin_cues):
-                        return "phatic_checkin"
-            return "social_response"
-        if kind == "acknowledge_emotional_context":
-            return "emotional_response"
-        if kind == "ask_clarification":
-            return "ask_clarification"
-        if kind == "exit":
-            return "session_exit"
-        return "general_conversation"
-
-    def _verification_level(self, obligation: ObligationFrame, binding: AnswerBinding) -> str:
-        if obligation.evidence_policy == "required" and not binding.evidence_refs_present():
-            return "strict"
-        if obligation.evidence_policy == "required":
-            return "normal"
-        return "lenient"
-
-    def _slot_kind_for_obligation(self, obligation_kind: str, fill: SlotFill) -> str:
-        if obligation_kind in ("answer_self_model", "answer_self_identity"):
-            if fill.relation_key in ("capability", "knows_about", "does", "purpose", "creator", "architecture", "limitation"):
-                return "surface"
-            return "self_identity"
-        if obligation_kind in ("answer_self_capability", "answer_self_knowledge"):
-            return "surface"
-        if obligation_kind == "answer_user_profile":
-            return "profile"
-        if fill.concept_id:
-            return "concept"
-        if fill.entity_id:
-            return "entity"
-        return "surface"

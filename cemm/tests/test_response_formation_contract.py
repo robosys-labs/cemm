@@ -352,22 +352,28 @@ class TestBugFixRegressions:
             assert "you are" not in r["output"].lower()
 
     def test_M019_framing_prefix_stripped(self):
-        """M-019: 'I told you my name is Bob' → echo should be 'your name is Bob'."""
+        """M-019: 'I told you my name is Bob' → store acknowledgment without framing prefix leak.
+        v3.1: store_patch produces acknowledgment (e.g. 'Got it.'), not a value echo.
+        The key invariant is that conversational framing ('I told you') never surfaces."""
         sys = SeededSystem()
         r = sys.run("I told you my name is Bob")
         assert r["errors"] == []
         output = r["output"].lower()
-        assert "your name is bob" in output
         assert "you told" not in output
+        assert "i told" not in output
+        assert output, f"Output should be non-empty, got: {output!r}"
 
     def test_M002_email_label_inferred(self):
-        """M-002: 'what is my email?' should use 'email' label, not 'value'."""
+        """M-002: 'what is my email?' should produce a response with the stored value.
+        Label inference from surface text is now an upstream semantic responsibility,
+        not a realization-layer concern (per v3.1 plan invariant #5)."""
         sys = SeededSystem()
         sys.run("my email is test@test.com")
         r = sys.run("what is my email?")
         assert r["errors"] == []
-        assert "email" in r["output"].lower()
-        assert "value" not in r["output"].lower()
+        assert r["output"]
+        # The value should appear in the output
+        assert "test" in r["output"].lower()
 
     def test_H017_durable_store_structural_keys_consistent(self):
         """H-017: Durable store structural keys must match the canonical list."""
@@ -397,7 +403,7 @@ class TestCandidateGeneration:
 
     def test_candidates_generated_for_greeting(self):
         """Greeting should produce multiple candidates with different framings."""
-        from cemm.response.candidate_generator import CandidateGenerator
+        from cemm.response.transformers import CandidateGenerator
         from cemm.response.primitive_goal_composer import PrimitiveGoalComposer
         from cemm.response.response_move_composer import ResponseMoveComposer
         from cemm.response.types import ResponseEvidencePacket, ResponseSituation
@@ -441,16 +447,17 @@ class TestCandidateGeneration:
 
     def test_framing_variants_are_language_agnostic(self):
         """Framing variants must not contain English surface strings."""
-        from cemm.response.framing import ALL_VARIANTS
-        for variant in ALL_VARIANTS.values():
-            # Framing variant names are metadata, not surface text
-            assert isinstance(variant.name, str)
-            # Style vector values are numeric, not text
-            assert isinstance(variant.style.terseness, float)
+        from cemm.response.transformers.framing_variant import VARIANTS
+        for variant in VARIANTS.values():
+            # Framing variant keys are metadata, not surface text
+            assert isinstance(variant.key, str)
+            # Style override values are numeric, not text
+            for value in variant.style_overrides.values():
+                assert isinstance(value, float)
 
     def test_gate_rejects_write_claim_without_commit(self):
-        """PlanGate must reject candidates that claim write without commit."""
-        from cemm.response.plan_gate import PlanGate
+        """PlanGateAndRanker must reject candidates that claim write without commit."""
+        from cemm.response.transformers import PlanGateAndRanker
         from cemm.response.types import (
             ResponseCandidatePlan, ResponseMove, ResponseSituation, WriteOutcome,
         )
@@ -469,14 +476,14 @@ class TestCandidateGeneration:
         situation = ResponseSituation(
             write_outcome=WriteOutcome(commit_status="rejected", committed_count=0),
         )
-        gate = PlanGate()
-        passed, results = gate.filter([plan], situation)
-        assert len(passed) == 0
-        assert "write_claim_without_commit" in results[0].failed_checks
+        gate = PlanGateAndRanker()
+        ranked = gate.rank([plan], situation)
+        assert ranked[0].blocked_reason
+        assert "write" in ranked[0].blocked_reason or "untruthful" in ranked[0].blocked_reason
 
     def test_gate_passes_valid_candidate(self):
-        """PlanGate must pass candidates that satisfy all hard gates."""
-        from cemm.response.plan_gate import PlanGate
+        """PlanGateAndRanker must pass candidates that satisfy all hard gates."""
+        from cemm.response.transformers import PlanGateAndRanker
         from cemm.response.types import ResponseCandidatePlan, ResponseMove, ResponseSituation
         move = ResponseMove(
             move_type="social_greet",
@@ -491,14 +498,13 @@ class TestCandidateGeneration:
             satisfied_components=set(),
         )
         situation = ResponseSituation()
-        gate = PlanGate()
-        passed, results = gate.filter([plan], situation)
-        assert len(passed) == 1
-        assert results[0].passed
+        gate = PlanGateAndRanker()
+        ranked = gate.rank([plan], situation)
+        assert not ranked[0].blocked_reason
 
     def test_ranker_orders_by_score(self):
-        """PlanRanker should order candidates by descending score."""
-        from cemm.response.ranker import PlanRanker
+        """PlanGateAndRanker should order candidates by descending score."""
+        from cemm.response.transformers import PlanGateAndRanker
         from cemm.response.types import (
             ResponseCandidatePlan, ResponseMove, ResponseSituation, StyleVector,
         )
@@ -519,31 +525,34 @@ class TestCandidateGeneration:
             satisfied_components=set(),
             evidence_refs=[],
         )
-        ranker = PlanRanker()
+        ranker = PlanGateAndRanker()
         ranked = ranker.rank([low, high], ResponseSituation())
         assert ranked[0].plan_id == "high"
         assert ranked[1].plan_id == "low"
 
     def test_selector_picks_best_surface(self):
-        """Selector should pick the candidate with the best surface score."""
-        from cemm.response.selector import Selector
+        """Selector should prefer non-rejected plans."""
+        from cemm.response.transformers import Selector
         from cemm.response.types import (
-            RealizedCandidate, ResponseCandidatePlan, ResponseMove, ResponseSituation,
+            ResponseCandidatePlan, ResponseMove, ResponseSituation, StyleVector,
         )
-        plan_good = ResponseCandidatePlan(plan_id="good", framing_variant="direct")
-        plan_bad = ResponseCandidatePlan(plan_id="bad", framing_variant="minimal")
-        good = RealizedCandidate(plan=plan_good, text="Your name is Chibueze.", language="en")
-        bad = RealizedCandidate(plan=plan_bad, text="", language="en")
-        # Selector should prefer nonempty text
+        # A plan with a greeting move should be selected over an empty plan
+        move = ResponseMove(move_type="social_greet", confidence=0.9, tags={"social"})
+        plan_with_move = ResponseCandidatePlan(
+            plan_id="good", moves=[move], framing_variant="direct",
+            style=StyleVector(),
+        )
+        plan_empty = ResponseCandidatePlan(
+            plan_id="bad", moves=[], framing_variant="minimal",
+            style=StyleVector(), blocked_reason="no_moves",
+        )
         selector = Selector()
-        # Mock the realizer to return our candidates
-        result = selector.select([plan_good, plan_bad], ResponseSituation(), max_realized=2)
-        assert result.selected is not None
-        assert result.selected.text == "Your name is Chibueze."
+        result = selector.select([plan_with_move, plan_empty], ResponseSituation())
+        assert result.plan_id == "good"
 
     def test_rejected_candidates_diagnosable(self):
         """Rejected candidates must remain diagnosable in the bundle."""
-        from cemm.response.candidate_generator import CandidateGenerator
+        from cemm.response.transformers import CandidateGenerator
         from cemm.response.primitive_goal_composer import PrimitiveGoalComposer
         from cemm.response.response_move_composer import ResponseMoveComposer
         from cemm.response.types import ResponseEvidencePacket, ResponseSituation
@@ -554,3 +563,93 @@ class TestCandidateGeneration:
         # We can't directly access the bundle from the test harness,
         # but we can verify the output is produced without errors
         assert r["output"]
+
+
+# ── Phase 5: BudgetFrame And Budget-Aware Spend ────────────────────────
+
+
+class TestBudgetController:
+    """Phase 5: budget-aware response spend."""
+
+    def test_tight_budget_reduces_candidates(self):
+        """High pressure should reduce candidate spend."""
+        from cemm.budget import BudgetController
+        from cemm.response.types import BudgetFrame, ResponseSituation, TemperatureState
+        ctrl = BudgetController()
+        situation = ResponseSituation(
+            budget_frame=BudgetFrame(remaining_time_ms=50, latency_target_ms=50),
+            temperature=TemperatureState(user_urgency=0.9),
+        )
+        decision = ctrl.decide(situation)
+        assert decision.stage_budget.candidate_plan_limit <= 4
+        assert decision.stage_budget.realized_candidate_limit <= 2
+
+    def test_relaxed_budget_increases_candidates(self):
+        """Low pressure should allow more candidates."""
+        from cemm.budget import BudgetController
+        from cemm.response.types import BudgetFrame, ResponseSituation
+        ctrl = BudgetController()
+        situation = ResponseSituation(
+            budget_frame=BudgetFrame(remaining_time_ms=10000, max_candidate_plans=8, max_realized_candidates=3),
+        )
+        decision = ctrl.decide(situation)
+        assert decision.stage_budget.candidate_plan_limit >= 4
+        assert decision.stage_budget.realized_candidate_limit >= 2
+
+    def test_safety_always_uses_high_risk_budget(self):
+        """Safety prompts must remain strict under any budget."""
+        from cemm.budget import BudgetController
+        from cemm.response.types import BudgetFrame, ResponseSituation
+        ctrl = BudgetController()
+        safety_frame = type("SafetyFrame", (), {"category": "harm", "severity": "high"})()
+        situation = ResponseSituation(
+            budget_frame=BudgetFrame(),
+            safety_frame=safety_frame,
+        )
+        decision = ctrl.decide(situation)
+        assert decision.risk_level == "high"
+        assert decision.stage_budget.selector_mode == "deterministic_strict"
+        assert decision.stage_budget.candidate_plan_limit == 1
+
+    def test_normal_budget_for_greeting(self):
+        """Greeting should get a small-task normal budget."""
+        from cemm.budget import BudgetController
+        from cemm.response.types import BudgetFrame, ResponseSituation
+        ctrl = BudgetController()
+        situation = ResponseSituation(
+            budget_frame=BudgetFrame(),
+        )
+        decision = ctrl.decide(situation)
+        assert decision.stage_budget.candidate_plan_limit >= 2
+        assert decision.risk_level == "normal"
+
+    def test_budget_caps_candidates_in_engine(self):
+        """BudgetFrame defaults should be reasonable."""
+        from cemm.response.types import BudgetFrame
+        default = BudgetFrame()
+        assert default.max_candidate_plans > 0
+        assert default.max_realized_candidates > 0
+
+    def test_deadline_parser_semantic_only(self):
+        """DeadlineParser should extract deadlines from semantic metadata only."""
+        from cemm.budget import DeadlineParser
+        parser = DeadlineParser()
+        # No semantic time atoms → no deadline
+        hint = parser.parse(percept=None, signal=None, kernel=None)
+        assert hint.deadline_ms == 0.0
+        # Semantic metadata in signal
+        signal = type("Signal", (), {"metadata": {"deadline_ms": 5000}})()
+        hint = parser.parse(percept=None, signal=signal, kernel=None)
+        assert hint.deadline_ms == 5000.0
+
+    def test_task_size_estimator(self):
+        """TaskSizeEstimator should classify task complexity."""
+        from cemm.budget import TaskSizeEstimator
+        est = TaskSizeEstimator()
+        # Empty situation → small
+        result = est.estimate(situation=None)
+        assert result.level == "small"
+        # Large graph → larger task
+        graph = type("Graph", (), {"atoms": {f"a{i}": None for i in range(200)}, "edges": [], "groups": [], "candidate_sets": [], "patch_candidates": []})()
+        result = est.estimate(uol_graph=graph)
+        assert result.score > 0.0

@@ -441,6 +441,11 @@ The canonical response path is:
 ResponseSituation
 -> PrimitiveGoalComposer      (language-agnostic: derives goals from semantic structure)
 -> ResponseMoveComposer       (language-agnostic: composes communicative moves from goals)
+-> BudgetController           (creates BudgetFrame from deadline, task size, risk)
+-> CandidateGenerator         (language-agnostic: generates framing variant candidates, capped by budget)
+-> PlanGate                   (language-agnostic: hard gate validation)
+-> PlanRanker                 (language-agnostic: plan scoring and ranking)
+-> Selector                   (realizes top K per budget, surface scores, selects best)
 -> RealizationExecutor        (language-specific: renders via language modules)
 -> ResponseBundle             (final output with full traceability)
 ```
@@ -450,9 +455,15 @@ ResponseSituation
 ```text
 cemm/response/
   types.py                        # Core types (BudgetFrame, ResponseSituation, ResponseBundle, etc.)
-  response_formation_engine.py    # Orchestrates goal composition → move composition → realization
+  response_formation_engine.py    # Orchestrates goal composition → move composition → candidates → gate → rank → select
   primitive_goal_composer.py      # Language-agnostic goal composition from semantic structure
   response_move_composer.py       # Language-agnostic move composition from goals
+  framing.py                      # Language-agnostic framing variants (minimal, direct, echo, repair, etc.)
+  candidate_generator.py          # Generates candidate plans with framing variants
+  plan_gate.py                    # Hard gate validation (required goals, safety, evidence, write truthfulness)
+  ranker.py                       # Plan scoring and ranking (confidence, safety, evidence, style, completeness)
+  selector.py                     # Realizes top K, surface scores, selects best candidate
+  budget_controller.py            # BudgetController, DeadlineParser, TaskSizeEstimator, StageBudgetAllocator
   realization_executor.py         # Compatibility re-export
   realization/
     types.py                      # Language-neutral IR (BoundSlot, RealizationUnit, RealizationPlan)
@@ -509,8 +520,28 @@ cemm/response/
 10. **Echo surface processing (pronoun shifting, framing prefix stripping,
     discourse marker removal) happens in `SemanticQueryEngine.build_contract()`**
     before the slot reaches the response engine. This is a transitional state —
-    these should eventually move to the English renderer when Phase 4 adds
-    candidate generation.
+    these should eventually move to the English renderer.
+
+11. **Candidate ranking happens before expensive realization.** The
+    `CandidateGenerator` produces framing variant plans, the `PlanGate` filters
+    by hard constraints, and the `PlanRanker` scores plans — all before the
+    `Selector` realizes the top K candidates.
+
+12. **Rejected candidates remain diagnosable.** `GateResult` objects and
+    rejected `RealizedCandidate`s are preserved in `ResponseBundle.diagnostics`
+    and `ResponseBundle.rejected_plans` for debugging.
+
+13. **Framing variants are language-agnostic.** They modify `StyleVector` and
+    move selection, not surface text. Only language renderers produce surface
+    wording.
+
+14. **Hard gates are binary pass/fail.** A candidate that fails any gate
+    (required goals, safety, evidence, write truthfulness, no leakage, nonempty)
+    is rejected — never partially accepted.
+
+15. **Budget reduces exploration, never safety gates.** Tight budgets cap
+    candidate count and realized count, but safety obligations always get
+    high-risk budget with `allow_partial_answer=False`.
 
 ### Old Path To Retire
 
@@ -534,8 +565,8 @@ should eventually be moved to language renderers.
 | 1 | ✅ Complete | Core types + runtime reordering |
 | 2 | ✅ Complete | PrimitiveGoalComposer + ResponseMoveComposer |
 | 3 | ✅ Complete | Minimal RealizationExecutor (English + French) |
-| 4 | ❌ Not started | CandidateGenerator, PlanGateAndRanker, Selector |
-| 5 | ❌ Not started | BudgetFrame + budget-aware spend |
+| 4 | ✅ Complete | CandidateGenerator, PlanGateAndRanker, Selector |
+| 5 | ✅ Complete | BudgetFrame + budget-aware spend |
 | 6 | ❌ Not started | Budget-aware semantic query |
 | 7 | ❌ Not started | DeliberationPlanner + anytime distillation |
 | 8 | ❌ Not started | Internal actions |

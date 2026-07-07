@@ -92,13 +92,17 @@ def test_emotional_predicate_routes_to_emotional_obligation():
 
 
 def test_emotional_obligation_produces_emotional_response():
-    """Phase 5: Emotional obligation should produce emotional response output."""
+    """Phase 5: Emotional obligation should produce emotional response output.
+    v3.1: template_key is retired; verify via obligation_kind and non-empty output."""
     system = SeededSystem()
     result = system.run("I love music")
 
-    template_key = result["template_key"]
-    assert template_key == "emotional_response", \
-        f"Template should be 'emotional_response', got {template_key}"
+    obligation = result["obligation_kind"]
+    assert obligation == "acknowledge_emotional_context", \
+        f"Obligation should be 'acknowledge_emotional_context', got {obligation}"
+    output = result["output"]
+    assert output and len(output) > 0, \
+        f"Output should be non-empty, got: {output!r}"
 
 
 def test_emotional_response_output_is_non_empty():

@@ -17,7 +17,6 @@ from .teaching_frame_manager import TeachingFrameManager
 from .relation_frame_compiler import RelationFrameCompiler
 from .relation_algebra import RelationAlgebra
 from .semantic_query_engine import SemanticQueryEngine
-from .semantic_realizer import SemanticRealizer
 from ..response.response_formation_engine import ResponseFormationEngine
 from ..response.types import ResponseSituation, ResponseBundle, WriteOutcome, BudgetFrame, StyleVector, TemperatureState, ResponseEvidencePacket
 from .session_store import SessionStore
@@ -91,7 +90,6 @@ class SemanticKernelRuntime:
         )
         self._relation_algebra = RelationAlgebra(self._predicate_schema_store)
         self._query_engine = SemanticQueryEngine(self._relation_algebra, self._predicate_schema_store)
-        self._realizer = SemanticRealizer()
         self._response_engine = ResponseFormationEngine()
 
         # Patch committer (Phase 8 breakthrough)
@@ -135,10 +133,6 @@ class SemanticKernelRuntime:
     @property
     def query_engine(self) -> SemanticQueryEngine:
         return self._query_engine
-
-    @property
-    def realizer(self) -> SemanticRealizer:
-        return self._realizer
 
     @property
     def response_engine(self) -> ResponseFormationEngine:
@@ -317,7 +311,6 @@ class SemanticKernelRuntime:
         relation_frames: list[Any] = []
         semantic_query = None
         answer_binding = None
-        realization_contract = None
         try:
             turn_frames = self._relation_frame_compiler.compile(uol_graph)
 
@@ -370,14 +363,11 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"induce predicate schemas failed: {e}")
 
-        # 3e. Execute semantic query → answer binding → realization contract (v4.2)
+        # 3e. Execute semantic query → answer binding (v4.2)
         if semantic_query is not None and obligation_frame is not None:
             try:
                 answer_binding = self._query_engine.execute(
                     semantic_query, relation_frames,
-                )
-                realization_contract = self._query_engine.build_contract(
-                    obligation_frame, answer_binding, semantic_program,
                 )
             except Exception as e:
                 errors.append(f"query engine failed: {e}")
@@ -388,7 +378,6 @@ class SemanticKernelRuntime:
         result.relation_frames = relation_frames
         result.semantic_query = semantic_query
         result.answer_binding = answer_binding
-        result.realization_contract = realization_contract
 
         # 4. Plan
         try:
@@ -466,7 +455,6 @@ class SemanticKernelRuntime:
             semantic_query=semantic_query,
             answer_binding=answer_binding,
             relation_frames=relation_frames,
-            realization_contract=realization_contract,
         )
         response_situation = ResponseSituation(
             obligation_frame=obligation_frame,
@@ -488,21 +476,13 @@ class SemanticKernelRuntime:
             conversation_turn_index=turn_index,
         )
 
-        # 8c. Form response via ResponseFormationEngine (replaces SemanticRealizer)
+        # 8c. Form response via ResponseFormationEngine (canonical v3.1 path)
         try:
             bundle = self._response_engine.form(response_situation)
             result.realized_output = bundle.text
             result.response_bundle = bundle
         except Exception as e:
             errors.append(f"response formation failed: {e}")
-            # Fallback: use old realizer if response engine fails
-            if realization_contract is not None:
-                try:
-                    result.realized_output = self._realizer.realize(
-                        realization_contract, answer_binding,
-                    )
-                except Exception:
-                    pass
 
         # 8a. Update conversation state from realized output
         from .output_state_updater import OutputStateUpdater
@@ -586,14 +566,6 @@ class SemanticKernelRuntime:
                 "slot_count": len(answer_binding.slot_fills),
                 "confidence": answer_binding.confidence,
                 "abstention_reason": answer_binding.abstention_reason,
-            }
-        if realization_contract is not None:
-            diag["realization_contract"] = {
-                "response_mode": realization_contract.response_mode,
-                "template_key": realization_contract.template_key,
-                "evidence_policy": realization_contract.evidence_policy,
-                "unfilled_slots": realization_contract.unfilled_slots,
-                "abstention_reason": realization_contract.abstention_reason,
             }
         if commit_results:
             diag["patch_commit"] = {

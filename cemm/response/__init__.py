@@ -1,10 +1,10 @@
-"""Response formation package.
-
-This package owns the Decide -> Realize boundary for CEMM response output.
-It composes response goals from semantic runtime state, then realizes those
-goals through language-specific surface rules.
-"""
-
-from .response_formation_engine import ResponseFormationEngine
+"""Response formation package."""
 
 __all__ = ["ResponseFormationEngine"]
+
+
+def __getattr__(name: str):
+    if name == "ResponseFormationEngine":
+        from .response_formation_engine import ResponseFormationEngine
+        return ResponseFormationEngine
+    raise AttributeError(name)

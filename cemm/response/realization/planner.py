@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..types import ResponseCandidatePlan, ResponseMove, ResponseSituation
 from .types import BoundSlot, RealizationPlan, RealizationUnit
 
@@ -14,8 +16,9 @@ class RealizationPlanner:
         slots: dict[str, BoundSlot],
         *,
         language: str,
+        candidate_plan: ResponseCandidatePlan | None = None,
     ) -> RealizationPlan:
-        candidate_plan = ResponseCandidatePlan(
+        candidate_plan = candidate_plan or ResponseCandidatePlan(
             plan_id="deterministic",
             moves=list(moves),
             framing_variant="direct",
@@ -27,7 +30,7 @@ class RealizationPlanner:
         )
         units: list[RealizationUnit] = []
         for move in moves:
-            unit = self._unit_for_move(move, situation, slots)
+            unit = self._unit_for_move(move, situation, slots, candidate_plan.style)
             if unit is not None:
                 units.append(unit)
         return RealizationPlan(
@@ -46,12 +49,13 @@ class RealizationPlanner:
         move: ResponseMove,
         situation: ResponseSituation,
         slots: dict[str, BoundSlot],
+        plan_style: Any,
     ) -> RealizationUnit | None:
         style = {
-            "formality": situation.style.formality,
-            "warmth": situation.style.warmth,
-            "terseness": situation.style.terseness,
-            "detail": situation.style.detail,
+            "formality": plan_style.formality,
+            "warmth": plan_style.warmth,
+            "terseness": plan_style.terseness,
+            "detail": plan_style.detail,
         }
 
         if move.move_type in {"social_greet", "social_farewell", "phatic_response", "repair_prior_response", "clarify", "deescalate", "set_expectation"}:
@@ -73,7 +77,7 @@ class RealizationPlanner:
                     subject_role="user",
                     relation_key=answer.relation_key,
                     object_value=answer.value,
-                    label_key=self._label_key(answer, situation),
+                    label_key=self._label_key(answer),
                     style=style,
                     features=dict(answer.features),
                 )
@@ -135,31 +139,15 @@ class RealizationPlanner:
         return None
 
     @staticmethod
-    def _label_key(slot: BoundSlot, situation: ResponseSituation | None = None) -> str:
-        explicit = str(
+    def _label_key(slot: BoundSlot) -> str:
+        return str(
             slot.features.get("property_dimension")
             or slot.features.get("dimension")
             or slot.features.get("profile_label")
-            or ""
+            or slot.relation_key
+            or slot.key
+            or "value"
         )
-        if explicit:
-            return explicit
-        relation_key = slot.relation_key or ""
-        if relation_key and relation_key not in ("has_property", ""):
-            return relation_key
-        # Fallback: infer from entry instruction surface when relation key is generic.
-        # This is semantic inference from the query's semantic program, not from
-        # raw user text — the entry instruction is a compiled semantic artifact.
-        if situation is not None:
-            program = situation.semantic_program
-            if program is not None:
-                entry = getattr(program, "entry_instruction", None)
-                if entry is not None:
-                    surface_lower = (getattr(entry, "surface", "") or "").lower()
-                    inferred = _infer_profile_label(surface_lower)
-                    if inferred:
-                        return inferred
-        return slot.key or "value"
 
     @staticmethod
     def _longest_evidence_path(situation: ResponseSituation) -> list[str]:
@@ -190,30 +178,3 @@ def _dedupe(values: list[str]) -> list[str]:
         if value and value not in out:
             out.append(value)
     return out
-
-
-_PROFILE_LABEL_KEYWORDS: list[tuple[str, str]] = [
-    ("name", "name"),
-    ("email", "email"),
-    ("phone", "phone"),
-    ("age", "age"),
-    ("job", "role"),
-    ("occupation", "role"),
-    ("work", "role"),
-    ("role", "role"),
-    ("title", "role"),
-    ("address", "location"),
-    ("location", "location"),
-    ("birthday", "birthday"),
-    ("birth", "birthday"),
-    ("hobby", "hobby"),
-    ("favorite", "favorite"),
-    ("favourite", "favorite"),
-]
-
-
-def _infer_profile_label(surface_lower: str) -> str:
-    for keyword, label in _PROFILE_LABEL_KEYWORDS:
-        if keyword in surface_lower:
-            return label
-    return ""

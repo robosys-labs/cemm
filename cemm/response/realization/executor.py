@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..types import RealizedCandidate, ResponseMove, ResponseSituation
+from ..types import RealizedCandidate, ResponseCandidatePlan, ResponseMove, ResponseSituation
 from .languages import EnglishRenderer, FrenchRenderer
 from .languages.base import LanguageRenderer
 from .planner import RealizationPlanner
@@ -26,10 +26,13 @@ class RealizationExecutor:
         return self.realize_candidate(moves, situation).text
 
     def realize_candidate(self, moves: list[ResponseMove], situation: ResponseSituation) -> RealizedCandidate:
+        return self.realize_plan(ResponseCandidatePlan(plan_id="deterministic", moves=list(moves)), situation)
+
+    def realize_plan(self, candidate_plan: ResponseCandidatePlan, situation: ResponseSituation) -> RealizedCandidate:
         language = self._normalize_language(situation.language)
         renderer = self._renderer_for(language)
         slots = self._slot_binder.bind(situation)
-        plan = self._planner.build_plan(moves, situation, slots, language=renderer.language_code)
+        plan = self._planner.build_plan(candidate_plan.moves, situation, slots, language=renderer.language_code, candidate_plan=candidate_plan)
         text = renderer.render_plan(plan)
         trace = {
             "language": renderer.language_code,

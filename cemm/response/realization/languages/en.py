@@ -11,24 +11,12 @@ class EnglishRenderer(BaseRenderer):
 
     RELATION_LABELS = {
         "has_name": "name",
-        "name": "name",
         "has_age": "age",
-        "age": "age",
         "has_alias": "alias",
-        "alias": "alias",
         "has_role": "role",
-        "role": "role",
         "has_property": "value",
-        "value": "value",
         "located_in": "location",
-        "location": "location",
         "from_place": "origin",
-        "origin": "origin",
-        "email": "email",
-        "phone": "phone",
-        "birthday": "birthday",
-        "hobby": "hobby",
-        "favorite": "favorite",
     }
 
     def render_unit(self, unit: RealizationUnit) -> str:

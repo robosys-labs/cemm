@@ -1,112 +1,87 @@
-"""Canonical response formation engine.
-
-Phase 1-4 implementation:
-    ResponseSituation
-    -> PrimitiveGoalComposer
-    -> ResponseMoveComposer
-    -> CandidateGenerator (framing variants)
-    -> PlanGate (hard gates)
-    -> PlanRanker (plan scoring)
-    -> Selector (realize top K, surface score, select)
-    -> ResponseBundle
-
-Goals and moves stay language-agnostic; realization stays language-specific.
-Rejected candidates remain diagnosable in the ResponseBundle.
-"""
+"""Canonical budget-aware response formation engine."""
 
 from __future__ import annotations
 
-from .candidate_generator import CandidateGenerator
-from .plan_gate import PlanGate
+from cemm.actions import InternalActionAuthorizer, InternalActionProposer
+from cemm.budget import BudgetController
+from cemm.learning import ResponseBudgetLearningExtractor
+
 from .primitive_goal_composer import PrimitiveGoalComposer
-from .ranker import PlanRanker
 from .realization_executor import RealizationExecutor
 from .response_move_composer import ResponseMoveComposer
-from .selector import Selector
+from .transformers import CandidateGenerator, PlanGateAndRanker, Selector
 from .types import ResponseBundle, ResponseEvidencePacket, ResponseSituation
 
 
 class ResponseFormationEngine:
+    """Single canonical response formation path.
+
+    Phase 8 adds internal action proposal and authorization. The engine still
+    does not execute side effects; it returns authorized/rejected proposals for
+    the runtime authority layer.
+    """
+
     def __init__(self) -> None:
+        self._budget_controller = BudgetController()
         self._goal_composer = PrimitiveGoalComposer()
         self._move_composer = ResponseMoveComposer()
-        self._candidate_gen = CandidateGenerator()
-        self._gate = PlanGate()
-        self._ranker = PlanRanker()
+        self._candidate_generator = CandidateGenerator()
+        self._ranker = PlanGateAndRanker()
+        self._selector = Selector()
         self._realizer = RealizationExecutor()
-        self._selector = Selector(self._realizer)
+        self._action_proposer = InternalActionProposer()
+        self._action_authorizer = InternalActionAuthorizer()
+        self._learning_extractor = ResponseBudgetLearningExtractor()
 
     def form(self, situation: ResponseSituation) -> ResponseBundle:
-        if situation.evidence is None:
-            situation.evidence = ResponseEvidencePacket.from_runtime(
-                semantic_query=situation.semantic_query,
-                answer_binding=situation.answer_binding,
-                relation_frames=situation.relation_frames,
-            )
-        elif situation.answer_binding is None:
-            situation.answer_binding = situation.evidence.answer_binding
+        self._ensure_evidence(situation)
+        if situation.budget_decision is None:
+            situation.budget_decision = self._budget_controller.decide(situation)
 
         goals = self._goal_composer.compose(situation)
         moves = self._move_composer.compose(goals, situation)
+        plans = self._candidate_generator.generate(moves, situation)
+        ranked = self._ranker.rank(plans, situation)
+        selected_plan = self._selector.select(ranked, situation)
+        realized = self._realizer.realize_plan(selected_plan, situation)
 
-        # Phase 4: candidate generation -> gate -> rank -> select
-        candidates = self._candidate_gen.generate(moves, goals, situation)
-        gated, gate_results = self._gate.filter(candidates, situation)
-        ranked = self._ranker.rank(gated, situation)
+        proposed_actions = self._action_proposer.propose(situation, selected_plan, realized)
+        authorization = self._action_authorizer.authorize(proposed_actions, situation, selected_plan)
 
-        max_realized = situation.budget_frame.max_realized_candidates
-        selection = self._selector.select(ranked, situation, max_realized=max_realized)
-
-        if selection.selected is None:
-            realized = self._realizer.realize_candidate(moves, situation)
-            selected_text = realized.text
-            selected_plan = realized.plan
-            selected_language = realized.language
-            grammar_trace = realized.grammar_trace
-            rejected_plans: list = []
-        else:
-            selected = selection.selected
-            selected_text = selected.text
-            selected_plan = selected.plan
-            selected_language = selected.language
-            grammar_trace = selected.grammar_trace
-            rejected_plans = selection.rejected
-
-        gate_diag = [{"plan_id": r.plan_id, "passed": r.passed,
-                      "failed_checks": r.failed_checks} for r in gate_results]
-
-        evidence_refs = _dedupe([
-            *getattr(situation.evidence, "evidence_refs", []),
-            *[ref for move in moves for ref in move.evidence_refs],
-        ])
-        safety_tags = selected_plan.safety_tags
-        required_components = set().union(*(move.required_components for move in moves)) if moves else set()
-        satisfied_components = set().union(*(move.satisfied_components for move in moves)) if moves else set()
+        required_components = selected_plan.required_components
+        satisfied_components = selected_plan.satisfied_components
         missing_components = sorted(required_components - satisfied_components)
-
-        text = selected_text
-        if missing_components and any(move.safety_required for move in moves):
-            text = "No. I can't help with that request."
+        text = realized.text
+        if selected_plan.blocked_reason or (missing_components and any(move.safety_required for move in selected_plan.moves)):
+            text = self._blocked_fallback(selected_plan.blocked_reason or ",".join(missing_components))
         if not text:
             text = "I don't have enough verified information to answer that."
 
-        obligation_kind = ""
-        if situation.obligation_frame is not None:
-            obligation_kind = getattr(situation.obligation_frame, "obligation_kind", "") or ""
+        obligation_kind = getattr(situation.obligation_frame, "obligation_kind", "") if situation.obligation_frame is not None else ""
+        evidence_refs = _dedupe([
+            *getattr(situation.evidence, "evidence_refs", []),
+            *selected_plan.evidence_refs,
+            *[ref for move in selected_plan.moves for ref in move.evidence_refs],
+        ])
+        rejected = [plan for plan in ranked if plan.plan_id != selected_plan.plan_id]
 
-        return ResponseBundle(
+        bundle = ResponseBundle(
             text=text,
-            language=selected_language,
-            moves=moves,
+            language=realized.language,
+            moves=selected_plan.moves,
+            internal_actions=authorization.authorized_actions,
+            proposed_internal_actions=authorization.proposed_actions,
+            rejected_internal_actions=authorization.rejected_actions,
             evidence_refs=evidence_refs,
-            safety_tags=safety_tags,
-            style=situation.style,
+            safety_tags=selected_plan.safety_tags,
+            style=selected_plan.style,
             selected_plan_id=selected_plan.plan_id,
-            rejected_plans=[c.plan for c in rejected_plans],
+            rejected_plans=rejected,
             write_outcome=situation.write_outcome,
             obligation_kind=obligation_kind,
-            confidence=max((move.confidence for move in moves), default=0.3),
+            confidence=max((move.confidence for move in selected_plan.moves), default=0.3),
             diagnostics={
+                "phase": "budget_aware_v3_1_phase8",
                 "goals": [
                     {
                         "type": goal.goal_type,
@@ -123,18 +98,83 @@ class ResponseFormationEngine:
                         "satisfied_components": sorted(move.satisfied_components),
                         "tags": sorted(move.tags),
                     }
-                    for move in moves
+                    for move in selected_plan.moves
+                ],
+                "candidate_count": len(plans),
+                "ranked_count": len(ranked),
+                "selected_plan": {
+                    "plan_id": selected_plan.plan_id,
+                    "framing_variant": selected_plan.framing_variant,
+                    "score": selected_plan.total_score,
+                    "score_parts": selected_plan.score_parts,
+                    "blocked_reason": selected_plan.blocked_reason,
+                    "estimated_cost_ms": selected_plan.estimated_cost_ms,
+                    "rank": selected_plan.rank,
+                },
+                "rejected_plans": [
+                    {
+                        "plan_id": plan.plan_id,
+                        "framing_variant": plan.framing_variant,
+                        "score": plan.total_score,
+                        "blocked_reason": plan.blocked_reason,
+                        "rank": plan.rank,
+                    }
+                    for plan in rejected
                 ],
                 "missing_components": missing_components,
-                "grammar_trace": grammar_trace,
-                "phase": "candidate_ranked_v3_1",
-                "candidate_count": len(candidates),
-                "gated_count": len(gated),
-                "gate_results": gate_diag,
-                "selected_framing": selected_plan.framing_variant,
-                "rejected_framings": [c.plan.framing_variant for c in rejected_plans],
+                "grammar": realized.grammar_trace,
+                "budget": self._budget_diagnostics(situation),
+                "actions": authorization.diagnostics(),
             },
+            budget_decision=situation.budget_decision,
+            deliberation_plan=situation.deliberation_plan,
+            distillation_result=situation.distillation_result,
+            action_authorization=authorization,
         )
+        learning = self._learning_extractor.extract(situation=situation, bundle=bundle)
+        bundle.learning_result = learning
+        bundle.learning_patch_candidates = learning.patch_candidates
+        bundle.diagnostics["learning"] = learning.diagnostics
+        return bundle
+
+    @staticmethod
+    def _ensure_evidence(situation: ResponseSituation) -> None:
+        if situation.evidence is None:
+            situation.evidence = ResponseEvidencePacket.from_runtime(
+                semantic_query=situation.semantic_query,
+                answer_binding=situation.answer_binding,
+                relation_frames=situation.relation_frames,
+            )
+        elif situation.answer_binding is None:
+            situation.answer_binding = situation.evidence.answer_binding
+
+    @staticmethod
+    def _blocked_fallback(reason: str) -> str:
+        if "safety" in reason or "explicit_negative" in reason or "no_instruction" in reason:
+            return "No. I can't help with that request."
+        return "I don't have enough verified information to answer that."
+
+    @staticmethod
+    def _budget_diagnostics(situation: ResponseSituation) -> dict:
+        decision = situation.budget_decision
+        if decision is None:
+            return {}
+        stage = decision.stage_budget
+        return {
+            "pressure": decision.pressure,
+            "task_size": decision.task_size,
+            "risk_level": decision.risk_level,
+            "reasons": list(decision.reasons),
+            "stage": {
+                "candidate_plan_limit": stage.candidate_plan_limit,
+                "realized_candidate_limit": stage.realized_candidate_limit,
+                "selector_mode": stage.selector_mode,
+                "detail_level": stage.detail_level,
+                "query_result_limit": stage.query_result_limit,
+                "attention_focus_limit": stage.attention_focus_limit,
+            },
+            **stage.diagnostics,
+        }
 
 
 def _dedupe(values: list[str]) -> list[str]:

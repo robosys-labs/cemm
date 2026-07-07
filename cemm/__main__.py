@@ -162,20 +162,6 @@ def process_input(
     result = pipeline.run(text, context_id=context_id)
     output = result.output_text or ""
 
-    # Backfill: re-realize from contract if output empty
-    if not output and result.realization_contract is not None:
-        try:
-            from .kernel.semantic_realizer import SemanticRealizer
-            realizer = SemanticRealizer()
-            output = realizer.realize(
-                result.realization_contract,
-                result.answer_binding,
-            ) or ""
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("Backfill realizer failed: %s", e)
-            output = ""
-
     return output or "I'm not sure how to respond."
 
 
