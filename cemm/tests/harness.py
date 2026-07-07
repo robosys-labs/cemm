@@ -84,15 +84,11 @@ class SeededSystem:
         result = self.pipeline.run(text, context_id=self.context_id)
         output = result.output_text or ""
 
-        if not output and result.realization_contract is not None:
-            try:
-                from cemm.kernel.semantic_realizer import SemanticRealizer
-                realizer = SemanticRealizer()
-                output = realizer.realize(
-                    result.realization_contract, result.answer_binding,
-                )
-            except Exception:
-                pass
+        if not output:
+            # Try response bundle from new engine
+            cycle = getattr(self.runtime, "_last_cycle", None)
+            if cycle and cycle.response_bundle:
+                output = cycle.response_bundle.text or ""
 
         cycle = getattr(self.runtime, "_last_cycle", None)
         return {
@@ -106,6 +102,8 @@ class SeededSystem:
             "has_answer": cycle.answer_binding.has_answer if cycle and cycle.answer_binding else None,
             "abstention_reason": cycle.answer_binding.abstention_reason if cycle and cycle.answer_binding else None,
             "template_key": cycle.realization_contract.template_key if cycle and cycle.realization_contract else None,
+            "response_moves": [m.move_type for m in cycle.response_bundle.moves] if cycle and cycle.response_bundle else [],
+            "response_goals": cycle.response_bundle.diagnostics.get("goals", []) if cycle and cycle.response_bundle else [],
             "slot_fills": [
                 f.surface for f in cycle.answer_binding.slot_fills
             ] if cycle and cycle.answer_binding else [],

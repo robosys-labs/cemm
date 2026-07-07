@@ -926,10 +926,63 @@ class MeaningGraphBuilder:
         "preference": ("has_property", "preference"),
     }
 
+    # Contraction expansion for surface relation parsing.
+    # English-specific seed scaffolding (per AGENTS.md Section 12).
+    # Language-specific contraction maps belong in language packs.
+    _CONTRACTIONS: dict[str, str] = {
+        "i'm": "i am",
+        "you're": "you are",
+        "he's": "he is",
+        "she's": "she is",
+        "it's": "it is",
+        "we're": "we are",
+        "they're": "they are",
+        "i've": "i have",
+        "you've": "you have",
+        "we've": "we have",
+        "they've": "they have",
+        "isn't": "is not",
+        "aren't": "are not",
+        "wasn't": "was not",
+        "weren't": "were not",
+        "don't": "do not",
+        "doesn't": "does not",
+        "didn't": "did not",
+        "won't": "will not",
+        "wouldn't": "would not",
+        "can't": "cannot",
+        "couldn't": "could not",
+        "shouldn't": "should not",
+        "mightn't": "might not",
+        "mustn't": "must not",
+        "name's": "name is",
+        "what's": "what is",
+        "that's": "that is",
+        "here's": "here is",
+        "there's": "there is",
+        "how's": "how is",
+        "where's": "where is",
+        "who's": "who is",
+    }
+
     _POSSESSIVE_PRONOUNS: frozenset = frozenset({
         "my", "mine", "our", "ours",
         "your", "yours", "his", "her", "hers", "their", "theirs", "its",
     })
+
+    # Maps subject/object pronouns to canonical entity keys.
+    # Used by _parse_surface_relation to resolve the subject of a cue match
+    # (e.g., "i am chibueze" → "user is_a chibueze") instead of dropping the
+    # pronoun via _clean_relation_side's stop words.
+    # English-specific seed scaffolds (per AGENTS.md Section 12).
+    _SUBJECT_PRONOUN_TO_ENTITY: dict[str, str] = {
+        "i": "user", "me": "user",
+        "we": "user", "us": "user",
+        "you": "self",
+        "he": "entity:he", "him": "entity:he",
+        "she": "entity:she", "her": "entity:she",
+        "they": "entity:they", "them": "entity:they",
+    }
 
     _POSSESSIVE_TO_ENTITY: dict[str, str] = {
         "my": "user", "mine": "user", "our": "user", "ours": "user",
@@ -955,17 +1008,38 @@ class MeaningGraphBuilder:
         if not tokens:
             return None
 
-        possessive_result = self._parse_possessive_relation(tokens, cased_surface)
+        # Expand contractions (e.g., "i'm" → ["i", "am"]) so both possessive
+        # detection and cue matching work on the underlying verb forms.
+        expanded: list[str] = []
+        for t in tokens:
+            contracted = self._CONTRACTIONS.get(t)
+            if contracted:
+                expanded.extend(contracted.split())
+            else:
+                expanded.append(t)
+
+        # Pass cased_tokens separately so possessive parsing can still match
+        # original cased form for proper noun preservation.
+        possessive_result = self._parse_possessive_relation(expanded, cased_surface)
         if possessive_result is not None:
             return possessive_result
 
-        cues = ("means", "mean", "equals", "called", "refers", "is", "are")
+        cues = ("means", "mean", "equals", "called", "refers", "is", "are", "am")
         for cue in cues:
-            if cue not in tokens:
+            if cue not in expanded:
                 continue
-            index = tokens.index(cue)
-            left = self._clean_relation_side(tokens[:index])
-            right = self._clean_relation_side(tokens[index + 1:])
+            index = expanded.index(cue)
+            left_tokens = expanded[:index]
+            # Resolve subject pronouns in left side to canonical entities so
+            # "i am chibueze" produces ("user", "is_a", "chibueze") instead of
+            # losing the pronoun through _clean_relation_side's stop-word filter.
+            entity_refs = [self._SUBJECT_PRONOUN_TO_ENTITY.get(t.lower()) for t in left_tokens]
+            entity_refs = [e for e in entity_refs if e is not None]
+            if entity_refs:
+                left = entity_refs[-1]
+            else:
+                left = self._clean_relation_side(left_tokens)
+            right = self._clean_relation_side(expanded[index + 1:])
             if not left or not right:
                 return None
             relation_key = "same_as" if cue in {"means", "mean", "equals", "called", "refers"} else "is_a"

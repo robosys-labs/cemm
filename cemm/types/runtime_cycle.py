@@ -26,3 +26,4 @@ class RuntimeCycleResult:
     semantic_query: Any | None = None
     answer_binding: Any | None = None
     realization_contract: Any | None = None
+    response_bundle: Any | None = None

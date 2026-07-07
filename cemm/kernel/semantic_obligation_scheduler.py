@@ -201,6 +201,11 @@ class SemanticObligationScheduler:
                 return refined
 
         if base == "social_reply":
+            # If the graph has verified teaching edges (has_property/is_a/same_as
+            # with a teaches edge), upgrade to store_patch even if the intent
+            # classifier labeled this as social — e.g., "my name is X, I told you"
+            if uol_graph is not None and self._group_has_verified_teaching(uol_graph, entry):
+                return "store_patch"
             for inst in program.instructions:
                 if inst.instruction_id == entry.instruction_id:
                     continue
@@ -216,6 +221,25 @@ class SemanticObligationScheduler:
                 return "acknowledge_emotional_context"
 
         return base
+
+    _TEACHING_EDGE_TYPES: frozenset = frozenset({"is_a", "same_as", "has_property", "used_for", "part_of"})
+
+    def _group_has_verified_teaching(self, uol_graph: Any, entry: Any) -> bool:
+        """Check if the entry's group has verified teaching edges in the graph.
+        A teaching edge is verified when a 'teaches' edge from a source atom
+        connects the group's teaching relation, meaning _add_surface_teaching_relations
+        approved this assertion for durable storage."""
+        group_id = getattr(entry, "group_id", "")
+        if not group_id:
+            return False
+        has_teaching_type = False
+        for edge in uol_graph.group_edges(group_id):
+            if edge.edge_type in self._TEACHING_EDGE_TYPES:
+                has_teaching_type = True
+                break
+        if not has_teaching_type:
+            return False
+        return uol_graph.has_edge("teaches", source_kind="source", group_id=group_id)
 
     def _targets_user_profile(self, entry: Any, uol_graph: Any | None = None) -> bool:
         if uol_graph is None:

@@ -438,7 +438,10 @@ class DurableSemanticStore:
             self._object_index.setdefault(ok, []).append(record.record_id)
 
     _STRUCTURAL_RELATION_KEYS: frozenset = frozenset({
-        "has_role", "causes", "enables", "refers_to",
+        "has_role", "causes", "enables", "prevents",
+        "before", "after", "refers_to", "modifies",
+        "teaches", "asks_about",
+        "is_a", "same_as", "part_of", "used_for",
     })
 
     def _record_to_frame(self, rec: DurableRelationRecord) -> RelationFrame | None:

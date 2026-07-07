@@ -66,9 +66,19 @@ def _is_internal_surface(value: str) -> bool:
         return True
     return bool(_STATE_DELTA_SURFACE_RE.match(value))
 
+# Discourse markers that should be stripped from echoed surfaces.
+# English-specific seed scaffolds (per AGENTS.md Section 12).
+_ECHO_DISCOURSE_MARKERS: frozenset = frozenset({
+    "well", "so", "oh", "like", "actually", "basically", "honestly",
+    "frankly", "anyway", "anyways", "hmm", "huh", "um", "uh", "er",
+    "ah", "ok", "okay", "right", "yeah", "yep", "nope", "lol",
+    "haha", "hehe", "i mean", "you know", "i guess", "i suppose",
+})
+
 _NON_ANSWER_TEMPLATES: dict[str, str] = {
     "exit": "session_exit",
     "social_reply": "social_response",
+    "greeting": "greeting",
     "store_patch": "store_confirmation",
     "continue_teaching": "teaching_continuation",
     "abstain_policy": "abstain",
@@ -445,6 +455,8 @@ class SemanticQueryEngine:
                 lower = surface.lower()
                 if lower.startswith("remember "):
                     surface = surface[len("remember "):]
+                # Strip leading/trailing discourse markers before echo
+                surface = self._strip_echo_discourse_markers(surface)
                 # Shift pronouns for system echo
                 surface = self._shift_pronouns_for_echo(surface)
                 # Sanitize before echoing to user
@@ -530,45 +542,53 @@ class SemanticQueryEngine:
 
         User's first-person pronouns (I, my, me, mine) → second-person (you, your, yours).
         User's second-person pronouns (you, your, yourself) referring to the AI → first-person (I, my, myself).
-        Uses placeholder tokens to avoid double-replacement.
+        Uses opaque placeholder tokens prefixed with 1ST_/2ND_ so that Phase 2
+        regex patterns cannot match inside Phase 1 placeholders and vice versa
+        (the underscore is a regex word char, blocking \\b word-boundary splits).
         """
         import re
         # Phase 1: first-person → placeholders (user talking about themselves)
+        # The 1ST_ prefix uses underscore (a regex word char) so that e.g.
+        # _Y blocks \\b for Phase 2's \\byou\\b from matching inside \\x001ST_YOU\\x00.
         replacements_phase1 = [
-            (r'\bI\b', '\x00YOU\x00'),
-            (r"\bI'm\b", "\x00YOURE\x00"),
-            (r'\bIm\b', "\x00YOURE\x00"),
-            (r'\bmy\b', '\x00YOUR\x00'),
-            (r'\bme\b', '\x00YOU2\x00'),
-            (r'\bmine\b', '\x00YOURS\x00'),
-            (r'\bmyself\b', '\x00YOURSELF\x00'),
-            (r'\bours\b', '\x00YOURS\x00'),
-            (r'\bour\b', '\x00YOUR\x00'),
+            (r"\bI'm\b", "\x001ST_IM\x00"),
+            (r'\bIm\b', "\x001ST_IM\x00"),
+            (r'\bmyself\b', '\x001ST_MYSELF\x00'),
+            (r'\bmine\b', '\x001ST_MINE\x00'),
+            (r'\bme\b', '\x001ST_ME\x00'),
+            (r'\bmy\b', '\x001ST_MY\x00'),
+            (r'\bI\b', '\x001ST_I\x00'),
+            (r'\bours\b', '\x001ST_OURS\x00'),
+            (r'\bour\b', '\x001ST_OUR\x00'),
         ]
         # Phase 2: second-person → first-person (user talking about the AI)
+        # The 2ND_ prefix blocks Phase 1's patterns (\\bmy\\b, \\bI\\b, etc.)
+        # from matching inside these placeholders.
         replacements_phase2 = [
-            (r"\byou're\b", "\x00IM\x00"),
-            (r"\byoure\b", "\x00IM\x00"),
-            (r'\byourself\b', '\x00MYSELF\x00'),
-            (r'\byourselves\b', '\x00OURSELVES\x00'),
-            (r'\byours\b', '\x00MINE\x00'),
-            (r'\byour\b', '\x00MY\x00'),
-            (r'\byou\b', '\x00I\x00'),
+            (r"\byou're\b", "\x002ND_YOURE\x00"),
+            (r"\byoure\b", "\x002ND_YOURE\x00"),
+            (r'\byourself\b', '\x002ND_YOURSELF\x00'),
+            (r'\byourselves\b', '\x002ND_OURSELVES\x00'),
+            (r'\byours\b', '\x002ND_YOURS\x00'),
+            (r'\byour\b', '\x002ND_YOUR\x00'),
+            (r'\byou\b', '\x002ND_YOU\x00'),
         ]
         # Phase 3: resolve placeholders to final text
         placeholder_resolves = [
-            ('\x00YOU\x00', 'you'),
-            ('\x00YOURE\x00', "you're"),
-            ('\x00YOUR\x00', 'your'),
-            ('\x00YOU2\x00', 'you'),
-            ('\x00YOURS\x00', 'yours'),
-            ('\x00YOURSELF\x00', 'yourself'),
-            ('\x00I\x00', 'I'),
-            ('\x00IM\x00', "I'm"),
-            ('\x00MY\x00', 'my'),
-            ('\x00MYSELF\x00', 'myself'),
-            ('\x00MINE\x00', 'mine'),
-            ('\x00OURSELVES\x00', 'ourselves'),
+            ('\x001ST_I\x00', 'you'),
+            ('\x001ST_IM\x00', "you're"),
+            ('\x001ST_MY\x00', 'your'),
+            ('\x001ST_ME\x00', 'you'),
+            ('\x001ST_MINE\x00', 'yours'),
+            ('\x001ST_MYSELF\x00', 'yourself'),
+            ('\x001ST_OURS\x00', 'yours'),
+            ('\x001ST_OUR\x00', 'your'),
+            ('\x002ND_YOURE\x00', "I'm"),
+            ('\x002ND_YOURSELF\x00', 'myself'),
+            ('\x002ND_OURSELVES\x00', 'ourselves'),
+            ('\x002ND_YOURS\x00', 'mine'),
+            ('\x002ND_YOUR\x00', 'my'),
+            ('\x002ND_YOU\x00', 'I'),
         ]
         result = surface
         for pattern, replacement in replacements_phase1:
@@ -578,6 +598,26 @@ class SemanticQueryEngine:
         for placeholder, final in placeholder_resolves:
             result = result.replace(placeholder, final)
         return result
+
+    @staticmethod
+    def _strip_echo_discourse_markers(surface: str) -> str:
+        """Strip leading and trailing discourse markers from echo surface."""
+        import re
+        tokens = surface.split()
+        # Strip leading discourse markers
+        while tokens and tokens[0].lower() in _ECHO_DISCOURSE_MARKERS:
+            tokens.pop(0)
+        # Strip trailing discourse markers
+        while tokens and tokens[-1].lower() in _ECHO_DISCOURSE_MARKERS:
+            tokens.pop()
+        # Also strip multi-word discourse markers from start
+        lower_surface = " ".join(tokens).lower()
+        for dm in sorted(_ECHO_DISCOURSE_MARKERS, key=len, reverse=True):
+            if " " in dm and lower_surface.startswith(dm + " "):
+                n = len(dm.split())
+                tokens = tokens[n:]
+                break
+        return " ".join(tokens)
 
     @staticmethod
     def _sanitize_echo(surface: str) -> str:
@@ -763,6 +803,15 @@ class SemanticQueryEngine:
         binding: AnswerBinding,
         program: Any | None = None,
     ) -> str:
+        # Repair, exit, and clarification are non-negotiable — they must return
+        # their dedicated template even if the query engine found unrelated results.
+        if obligation.obligation_kind == "repair":
+            return "confusion_repair"
+        if obligation.obligation_kind == "exit":
+            return "session_exit"
+        if obligation.obligation_kind == "ask_clarification":
+            return "ask_clarification"
+
         if not binding.has_answer:
             if binding.abstention_reason.startswith("blocked"):
                 return "blocked"
@@ -773,6 +822,10 @@ class SemanticQueryEngine:
                 entry = program.entry_instruction
                 if entry is not None:
                     entry_surface = (entry.surface or "").lower()
+                    greeting_cues = ("hello", "hi", "hey", "greetings", "howdy",
+                                     "sup", "morning", "afternoon", "evening")
+                    if any(cue in entry_surface for cue in greeting_cues):
+                        return "greeting"
                     frustration_cues = ("dumb", "stupid", "useless", "broken",
                                         "suck", "worthless", "worse")
                     if any(cue in entry_surface for cue in frustration_cues):

@@ -18,6 +18,8 @@ from .relation_frame_compiler import RelationFrameCompiler
 from .relation_algebra import RelationAlgebra
 from .semantic_query_engine import SemanticQueryEngine
 from .semantic_realizer import SemanticRealizer
+from ..response.response_formation_engine import ResponseFormationEngine
+from ..response.types import ResponseSituation, ResponseBundle, WriteOutcome, BudgetFrame, StyleVector, TemperatureState
 from .session_store import SessionStore
 from ..causal.causal_bridge import CausalBridge
 from ..learning.patch_validator import PatchValidator
@@ -90,6 +92,7 @@ class SemanticKernelRuntime:
         self._relation_algebra = RelationAlgebra(self._predicate_schema_store)
         self._query_engine = SemanticQueryEngine(self._relation_algebra, self._predicate_schema_store)
         self._realizer = SemanticRealizer()
+        self._response_engine = ResponseFormationEngine()
 
         # Patch committer (Phase 8 breakthrough)
         self._patch_committer = PatchCommitter(self._durable_semantic_store)
@@ -136,6 +139,10 @@ class SemanticKernelRuntime:
     @property
     def realizer(self) -> SemanticRealizer:
         return self._realizer
+
+    @property
+    def response_engine(self) -> ResponseFormationEngine:
+        return self._response_engine
 
     @property
     def durable_semantic_store(self) -> DurableSemanticStore:
@@ -375,15 +382,6 @@ class SemanticKernelRuntime:
             except Exception as e:
                 errors.append(f"query engine failed: {e}")
 
-        # 3f. Realize contract → response text (v4.2)
-        if realization_contract is not None:
-            try:
-                result.realized_output = self._realizer.realize(
-                    realization_contract, answer_binding,
-                )
-            except Exception as e:
-                errors.append(f"realize failed: {e}")
-
         # Promote v4.2 outputs to first-class fields
         result.semantic_program = semantic_program
         result.obligation_frame = obligation_frame
@@ -445,7 +443,7 @@ class SemanticKernelRuntime:
             except Exception as e:
                 errors.append(f"consolidate failed: {e}")
 
-        # 8. Lightweight safety check on realized output
+        # 8. Safety detection — BEFORE response formation (v3.1 invariant #2)
         from .safety_frame_detector import SafetyFrameDetector
         safety_detector = SafetyFrameDetector()
         try:
@@ -454,22 +452,50 @@ class SemanticKernelRuntime:
                 input_text=getattr(signal, 'content', ''),
                 valences=getattr(percept, 'valences', []) if percept else [],
             )
-            if safety_frame and result.realized_output:
-                current_output = result.realized_output.lower()
-                safety_phrases = ("cannot help", "can't help", "safety", "refuse", "inappropriate")
-                if not any(phrase in current_output for phrase in safety_phrases):
-                    result.realized_output = "I cannot help with that request."
-                if result.realization_contract:
-                    import dataclasses
-                    if dataclasses.is_dataclass(result.realization_contract):
-                        result.realization_contract = dataclasses.replace(
-                            result.realization_contract,
-                            abstention_reason="safety_policy",
-                        )
-                    else:
-                        result.realization_contract.abstention_reason = "safety_policy"
         except Exception as e:
-            errors.append(f"safety check failed: {e}")
+            errors.append(f"safety detection failed: {e}")
+            safety_frame = None
+
+        # 8a. Build WriteOutcome from commit results (v3.1 invariant #3)
+        write_outcome = self._build_write_outcome(commit_results)
+
+        # 8b. Build ResponseSituation from all prior pipeline outputs
+        turn_index = kernel.conversation.turn_index
+        is_first_turn = turn_index <= 1
+        response_situation = ResponseSituation(
+            obligation_frame=obligation_frame,
+            answer_binding=answer_binding,
+            semantic_program=semantic_program,
+            relation_frames=relation_frames,
+            semantic_query=semantic_query,
+            uol_graph=uol_graph,
+            safety_frame=safety_frame,
+            write_outcome=write_outcome,
+            budget_frame=BudgetFrame(),
+            style=StyleVector(),
+            temperature=TemperatureState(),
+            signal=signal,
+            kernel=kernel,
+            percept=percept,
+            is_first_turn=is_first_turn,
+            conversation_turn_index=turn_index,
+        )
+
+        # 8c. Form response via ResponseFormationEngine (replaces SemanticRealizer)
+        try:
+            bundle = self._response_engine.form(response_situation)
+            result.realized_output = bundle.text
+            result.response_bundle = bundle
+        except Exception as e:
+            errors.append(f"response formation failed: {e}")
+            # Fallback: use old realizer if response engine fails
+            if realization_contract is not None:
+                try:
+                    result.realized_output = self._realizer.realize(
+                        realization_contract, answer_binding,
+                    )
+                except Exception:
+                    pass
 
         # 8a. Update conversation state from realized output
         from .output_state_updater import OutputStateUpdater
@@ -584,3 +610,34 @@ class SemanticKernelRuntime:
                 result.diagnostics.setdefault("errors", []).append(f"session persist failed: {e}")
 
         return result
+
+    def _build_write_outcome(self, commit_results: list[Any]) -> WriteOutcome:
+        """Build WriteOutcome from patch commit results."""
+        if not commit_results:
+            return WriteOutcome(commit_status="none")
+
+        committed = sum(1 for c in commit_results if c.status == "committed")
+        rejected = sum(1 for c in commit_results if c.status == "rejected")
+        quarantined = sum(1 for c in commit_results if c.status == "quarantined")
+
+        if committed > 0:
+            status = "committed"
+        elif rejected > 0 and quarantined == 0:
+            status = "rejected"
+        elif quarantined > 0:
+            status = "quarantined"
+        else:
+            status = "proposed"
+
+        committed_ids = [
+            c.commit_id for c in commit_results if c.status == "committed"
+        ]
+
+        return WriteOutcome(
+            patch_count=len(commit_results),
+            committed_count=committed,
+            rejected_count=rejected,
+            quarantined_count=quarantined,
+            commit_status=status,
+            committed_record_ids=committed_ids,
+        )

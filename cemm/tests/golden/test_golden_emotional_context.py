@@ -91,8 +91,8 @@ def test_emotional_predicate_routes_to_emotional_obligation():
         f"Obligation should be 'acknowledge_emotional_context', got {obligation}"
 
 
-def test_emotional_obligation_produces_emotional_response_template():
-    """Phase 5: Emotional obligation should produce emotional_response template."""
+def test_emotional_obligation_produces_emotional_response():
+    """Phase 5: Emotional obligation should produce emotional response output."""
     system = SeededSystem()
     result = system.run("I love music")
 
