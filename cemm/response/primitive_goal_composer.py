@@ -229,10 +229,29 @@ class PrimitiveGoalComposer:
                 if value:
                     acts.add(str(value))
 
-        for marker in getattr(getattr(situation, "percept", None), "affect_markers", []) or []:
-            key = getattr(marker, "marker_type", "") or getattr(marker, "key", "") or str(marker)
-            if key:
-                acts.add(key)
+        entry = self._entry_instruction(situation)
+        for act_type in getattr(entry, "candidate_act_types", []) or []:
+            if act_type:
+                acts.add(str(act_type))
+
+        graph = situation.uol_graph
+        if graph is not None and entry is not None:
+            group_id = getattr(entry, "group_id", "")
+            for group in getattr(graph, "groups", []) or []:
+                if getattr(group, "id", "") != group_id:
+                    continue
+                for act_type in getattr(group, "features", {}).get("candidate_act_types", []) or []:
+                    if act_type:
+                        acts.add(str(act_type))
+            wanted = set(getattr(entry, "construction_match_ids", []) or [])
+            for match in getattr(graph, "construction_matches", []) or []:
+                if wanted and getattr(match, "id", "") not in wanted:
+                    continue
+                if not wanted and getattr(match, "group_id", "") != group_id:
+                    continue
+                for hint in getattr(match, "pragmatic_hints", []) or []:
+                    if hint:
+                        acts.add(str(hint))
         return {a.strip() for a in acts if a and a.strip()}
 
     def _entry_instruction_kind(self, situation: ResponseSituation) -> str:
