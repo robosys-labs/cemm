@@ -11,11 +11,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any, Iterable
 
 from ..types.meaning_percept import ActionAtom, NeedAtom, ReferentAtom, StateAtom
+from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
 
 
 _TOKEN_RE = re.compile(r"[^\W_]+(?:'[^\W_]+)?|\d+", re.UNICODE)
@@ -124,325 +126,35 @@ class LanguageAdapter:
                 yield " ".join(tokens[start:end]), start, end
 
 
-class EnglishLanguageAdapter(LanguageAdapter):
-    """Default deterministic English adapter.
+class SchemaBackedLanguageAdapter(LanguageAdapter):
+    """Unified language adapter backed by JSON language packs + Semantic Schema Kernel.
 
-    This preserves the current seed behavior while moving it behind an adapter
-    boundary so Igbo, Yoruba, Spanish, or learned language packs can emit the
-    same CEMM atoms without changing the kernel.
+    Loads pronouns, deictics, states, needs, affect markers, entity exclude,
+    negations, and modals from JSON files in the language pack directory.
+    Action lookup is delegated to the Semantic Schema Kernel's
+    ActionOperatorRegistry, which contains canonical action operator schemas
+    with per-language aliases.
+
+    Language files are alias layers only. Canonical action meaning lives in
+    cemm/data/semantic_schemas/action_operator_schemas.json.
     """
 
-    language_code = "en"
-
-    PRONOUNS: dict[str, PronounBinding] = {
-        "i": PronounBinding("user", "actor"),
-        "me": PronounBinding("user", "target"),
-        "my": PronounBinding("user", "possessor"),
-        "mine": PronounBinding("user", "possessor"),
-        "myself": PronounBinding("user", "target"),
-        "we": PronounBinding("user", "actor"),
-        "us": PronounBinding("user", "target"),
-        "our": PronounBinding("user", "possessor"),
-        "you": PronounBinding("self", "target"),
-        "your": PronounBinding("self", "possessor"),
-        "yourself": PronounBinding("self", "target"),
-        "yours": PronounBinding("self", "possessor"),
-        "he": PronounBinding("person", "actor"),
-        "him": PronounBinding("person", "target"),
-        "his": PronounBinding("person", "possessor"),
-        "she": PronounBinding("person", "actor"),
-        "her": PronounBinding("person", "target"),
-        "hers": PronounBinding("person", "possessor"),
-        "they": PronounBinding("person", "actor"),
-        "them": PronounBinding("person", "target"),
-        "their": PronounBinding("person", "possessor"),
-        "it": PronounBinding("object", "target", confidence=0.75),
-        "its": PronounBinding("object", "possessor", confidence=0.75),
-    }
-
-    DEICTICS = {"here", "there", "this", "that", "those", "these", "now", "then"}
-
-    ACTIONS: dict[str, str] = {
-        "come": "move_toward_source",
-        "go": "move_to_place",
-        "give": "transfer_object",
-        "take": "acquire_object",
-        "beat": "physically_harm_target",
-        "hit": "physically_harm_target",
-        "hurt": "physically_harm_target",
-        "attack": "physically_harm_target",
-        "help": "improve_state",
-        "learn": "increase_capability",
-        "remember": "memory_write",
-        "forget": "memory_loss",
-        "eat": "consume_food",
-        "drink": "consume_liquid",
-        "move": "change_location",
-        "run": "move_fast",
-        "walk": "move_slow",
-        "bring": "transfer_to_speaker",
-        "send": "transfer_to_target",
-        "find": "search_locate",
-        "look": "search_locate",
-        "ask": "request_information",
-        "tell": "provide_information",
-        "show": "display_information",
-        "teach": "transfer_knowledge",
-        "like": "evaluate_positive",
-        "likes": "evaluate_positive",
-        "love": "evaluate_positive",
-        "loves": "evaluate_positive",
-        "prefer": "evaluate_positive",
-        "prefers": "evaluate_positive",
-        "enjoy": "evaluate_positive",
-        "enjoys": "evaluate_positive",
-        "hate": "evaluate_negative",
-        "hates": "evaluate_negative",
-        "dislike": "evaluate_negative",
-        "dislikes": "evaluate_negative",
-    }
-
-    STATES: dict[str, StateBinding] = {
-        "hungry": StateBinding("hungry", "hunger", "negative", intensity=0.75),
-        "thirsty": StateBinding("thirsty", "hunger", "negative", intensity=0.75),
-        "fine": StateBinding("fine", "happiness", "positive", intensity=0.55),
-        "good": StateBinding("good", "happiness", "positive", intensity=0.6),
-        "okay": StateBinding("okay", "happiness", "positive", intensity=0.55),
-        "ok": StateBinding("ok", "happiness", "positive", intensity=0.55),
-        "sick": StateBinding("sick", "health", "negative", intensity=0.75),
-        "ill": StateBinding("ill", "health", "negative", intensity=0.75),
-        "tired": StateBinding("tired", "health", "negative", intensity=0.65),
-        "angry": StateBinding("angry", "happiness", "negative", intensity=0.75),
-        "happy": StateBinding("happy", "happiness", "positive", intensity=0.7),
-        "sad": StateBinding("sad", "happiness", "negative", intensity=0.7),
-        "confused": StateBinding("confused", "knowledge", "negative", intensity=0.7),
-        "lost": StateBinding("lost", "knowledge", "negative", intensity=0.65),
-    }
-
-    NEEDS: dict[str, NeedBinding] = {
-        "hungry": NeedBinding("food", 0.8),
-        "thirsty": NeedBinding("water", 0.8),
-        "tired": NeedBinding("rest", 0.7),
-        "confused": NeedBinding("clarity", 0.7),
-        "lost": NeedBinding("clarity", 0.6),
-        "help": NeedBinding("help", 0.6),
-    }
-
-    AFFECT_MARKERS: dict[str, set[str]] = {
-        "frustration": {
-            "ugh", "argh", "seriously", "come on", "really", "urgh", "urghh", "ughh",
-            "canned responses", "same response", "generic response", "template response",
-            "scripted", "copy paste", "robotic", "pattern matcher",
-        },
-        "playful": {"lol", "haha", "heh", "lmao", "rofl"},
-        "sadness": {"sigh", "alas", "unfortunately"},
-        "anger": {"damn", "crap", "hell"},
-        "surprise": {"wow", "whoa", "omg", "oh my"},
-        "repair": {
-            "what", "wait what", "lol what", "huh", "what are you talking about",
-            "what do you mean", "i don't get it", "come again",
-        },
-    }
-
-    ENTITY_EXCLUDE: frozenset[str] = frozenset({
-        "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
-        "my", "your", "his", "its", "our", "their", "mine", "yours", "ours", "theirs",
-        "myself", "yourself", "himself", "herself", "itself", "ourselves", "yourselves",
-        "themselves", "the", "a", "an", "and", "or", "but", "if", "then", "than", "to",
-        "of", "in", "on", "at", "for", "with", "by", "from", "as", "is", "are", "was",
-        "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "will",
-        "would", "could", "should", "may", "might", "can", "this", "that", "these", "those",
-        "what", "which", "who", "when", "where", "why", "how", "all", "each", "every",
-        "some", "any", "no", "not", "only", "just", "so", "very", "too", "also", "am",
-        "about", "actually", "wait", "hi", "hey", "hello", "bye", "goodbye", "oh", "well",
-        "hmm", "uh", "um", "yeah", "yup", "ok", "okay", "sure", "right", "yes", "nah",
-        "lol", "haha", "heh", "lmao", "rofl", "wow", "yay", "aww", "boo", "meh", "huh",
-        "please", "thanks", "thank", "urgh", "urghh", "ugh", "ughh", "argh", "seriously",
-        "really",
-    })
-
-    NEGATIONS = {"not", "never", "dont", "don't", "no", "cannot", "can't", "wont", "won't"}
-    PROPOSED_MODALS = {"should", "can", "could", "would", "shall", "may", "might"}
-    DESIRED_MODALS = {"must", "need", "needs", "want", "wants", "have"}
-    SELF_PRONOUNS = {"you", "your", "yourself", "yours"}
-    THIRD_PERSON_PRONOUNS = {"he", "she", "him", "her", "they", "them", "their"}
-
-    def map_pronouns(self, tokens: list[str]) -> list[ReferentAtom]:
-        atoms: list[ReferentAtom] = []
-        seen: set[str] = set()
-        for token in tokens:
-            binding = self.PRONOUNS.get(token)
-            if binding is None or token in seen:
-                continue
-            seen.add(token)
-            atoms.append(ReferentAtom(
-                surface=token,
-                entity_type=binding.entity_type,
-                role=binding.role,
-                known=True,
-                source=binding.source,
-                confidence=binding.confidence,
-            ))
-        return atoms
-
-    def map_deictics(self, tokens: list[str]) -> list[ReferentAtom]:
-        atoms: list[ReferentAtom] = []
-        for token in dict.fromkeys(tokens):
-            if token not in self.DEICTICS:
-                continue
-            is_place = token in {"here", "there"}
-            atoms.append(ReferentAtom(
-                surface=token,
-                entity_type="place" if is_place else "abstract",
-                role="place" if is_place else "topic",
-                known=True,
-                source="deixis",
-                confidence=0.7,
-            ))
-        return atoms
-
-    def map_actions(self, tokens: list[str]) -> list[ActionAtom]:
-        token_set = set(tokens)
-        modality = self._modality(token_set)
-        polarity = "negated" if token_set & self.NEGATIONS else "affirmed"
-        atoms: list[ActionAtom] = []
-        for token in tokens:
-            action_key = self.ACTIONS.get(token)
-            if action_key is None:
-                continue
-            atoms.append(ActionAtom(
-                surface=token,
-                action_key=action_key,
-                actor_role=self._actor_role(token_set),
-                target_role=self._target_role(action_key, token_set),
-                modality=modality,
-                polarity=polarity,
-                confidence=0.7,
-            ))
-        return atoms
-
-    def map_states(self, tokens: list[str]) -> list[StateAtom]:
-        token_set = set(tokens)
-        holder = self._holder_role(token_set)
-        atoms: list[StateAtom] = []
-        for token in tokens:
-            binding = self.STATES.get(token)
-            if binding is None:
-                continue
-            atoms.append(StateAtom(
-                surface=token,
-                state_key=binding.state_key,
-                holder_role=holder,
-                dimension=binding.dimension,
-                polarity=binding.polarity,
-                intensity=binding.intensity,
-                confidence=binding.confidence,
-            ))
-        return atoms
-
-    def map_needs(self, tokens: list[str]) -> list[NeedAtom]:
-        token_set = set(tokens)
-        holder = "self" if token_set & self.SELF_PRONOUNS else "user"
-        atoms: list[NeedAtom] = []
-        for token in tokens:
-            binding = self.NEEDS.get(token)
-            if binding is None:
-                continue
-            atoms.append(NeedAtom(
-                holder_role=holder,
-                need_key=binding.need_key,
-                intensity=binding.intensity,
-                confidence=binding.confidence,
-            ))
-        return atoms
-
-    def detect_affect(self, raw_text: str, tokens: list[str]) -> list[dict[str, Any]]:
-        text = (raw_text or "").lower()
-        token_set = set(tokens)
-        markers: list[dict[str, Any]] = []
-        for affect_type, surfaces in self.AFFECT_MARKERS.items():
-            for surface in surfaces:
-                matched = surface in text if " " in surface else surface in token_set
-                if not matched:
-                    continue
-                markers.append({
-                    "type": affect_type,
-                    "surface": surface,
-                    "confidence": 0.6,
-                    "source": f"{self.language_code}_adapter",
-                })
-        return markers
-
-    def is_entity_surface_excluded(self, surface: str, known_words: set[str] | None = None) -> bool:
-        word = self.normalize_surface(surface)
-        if not word or word.isdigit():
-            return True
-        if word in self.ENTITY_EXCLUDE:
-            return True
-        if word in (known_words or set()):
-            return True
-        return False
-
-    def _modality(self, token_set: set[str]) -> str:
-        desired_without_have = self.DESIRED_MODALS - {"have"}
-        if token_set & desired_without_have:
-            return "desired"
-        if "have" in token_set and "to" in token_set:
-            return "desired"
-        if token_set & self.PROPOSED_MODALS:
-            return "proposed"
-        return "observed"
-
-    def _holder_role(self, token_set: set[str]) -> str:
-        if token_set & self.SELF_PRONOUNS:
-            return "self"
-        if token_set & self.THIRD_PERSON_PRONOUNS:
-            return "third_party"
-        return "user"
-
-    def _actor_role(self, token_set: set[str]) -> str | None:
-        if token_set & {"i", "we"}:
-            return "user"
-        if token_set & self.SELF_PRONOUNS:
-            return "self"
-        if token_set & self.THIRD_PERSON_PRONOUNS:
-            return "third_party"
-        return None
-
-    def _target_role(self, action_key: str, token_set: set[str]) -> str | None:
-        if action_key in {"physically_harm_target", "transfer_object", "transfer_to_target"}:
-            if token_set & self.SELF_PRONOUNS:
-                return "self"
-            if token_set & self.THIRD_PERSON_PRONOUNS:
-                return "third_party"
-            return "target"
-        if action_key in {"evaluate_positive", "evaluate_negative"}:
-            return "object"
-        return None
-
-
-# ── JSON-backed adapter for non-English languages ──────────────────
-
-
-class JSONLanguageAdapter(LanguageAdapter):
-    """Adapter that loads language-specific mappings from JSON files.
-
-    Used for non-English languages (Igbo, Yoruba, etc.) where we have
-    language pack data files but don't need the full deterministic seed.
-    """
-
-    def __init__(self, language_code: str = "und", pack_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        language_code: str = "en",
+        pack_dir: Path | None = None,
+        kernel: SemanticSchemaKernel | None = None,
+    ) -> None:
         self.language_code = language_code
         if pack_dir is None:
             pack_dir = Path(__file__).parent.parent / "data" / "languages" / language_code
         self._pack_dir = pack_dir
+        self._kernel = kernel or get_kernel()
         self._load_pack()
 
     def _load_pack(self) -> None:
-        """Load all available JSON files from the language pack directory."""
         self._pronouns: dict[str, PronounBinding] = {}
         self._deictics: set[str] = set()
-        self._actions: dict[str, str] = {}
         self._states: dict[str, StateBinding] = {}
         self._needs: dict[str, NeedBinding] = {}
         self._affect_markers: dict[str, set[str]] = {}
@@ -465,7 +177,10 @@ class JSONLanguageAdapter(LanguageAdapter):
                 entity_type = mapping.get("entity_type", "unknown")
                 role = mapping.get("role", "topic")
                 confidence = mapping.get("confidence", 0.9)
-                self._pronouns[surface] = PronounBinding(entity_type, role, confidence=confidence)
+                source = mapping.get("source", "pronoun")
+                self._pronouns[surface] = PronounBinding(
+                    entity_type, role, source=source, confidence=confidence,
+                )
                 if entity_type == "self":
                     self._self_pronouns.add(surface)
                 elif entity_type == "person":
@@ -474,10 +189,6 @@ class JSONLanguageAdapter(LanguageAdapter):
         deictic_data = _load("deictic_words.json")
         if deictic_data:
             self._deictics = set(deictic_data)
-
-        action_data = _load("action_keywords.json")
-        if action_data:
-            self._actions = dict(action_data)
 
         state_data = _load("state_keywords.json")
         if state_data:
@@ -558,17 +269,21 @@ class JSONLanguageAdapter(LanguageAdapter):
         polarity = "negated" if token_set & self._negations else "affirmed"
         atoms: list[ActionAtom] = []
         for token in tokens:
-            action_key = self._actions.get(token)
+            action_key = self._kernel.action_operators.lookup_alias(token, self.language_code)
             if action_key is None:
                 continue
+            schema_slots = self._kernel.action_operators.slots_for(action_key)
+            actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set)
             atoms.append(ActionAtom(
                 surface=token,
                 action_key=action_key,
-                actor_role=self._actor_role(token_set),
-                target_role=self._target_role(action_key, token_set),
+                actor_role=actor_role,
+                object_role=object_role,
+                target_role=target_role,
                 modality=modality,
                 polarity=polarity,
                 confidence=0.7,
+                schema_slots=schema_slots,
             ))
         return atoms
 
@@ -634,6 +349,21 @@ class JSONLanguageAdapter(LanguageAdapter):
             return True
         return False
 
+    @property
+    def known_tokens(self) -> set[str]:
+        """All known surface tokens for language detection scoring."""
+        tokens: set[str] = set()
+        tokens.update(self._pronouns.keys())
+        tokens.update(self._states.keys())
+        tokens.update(self._needs.keys())
+        tokens.update(self._entity_exclude)
+        tokens.update(self._deictics)
+        for action_key in self._kernel.action_operators.all_action_keys():
+            schema = self._kernel.action_operators.get(action_key)
+            if schema and self.language_code in schema.aliases:
+                tokens.update(schema.aliases[self.language_code])
+        return tokens
+
     def _modality(self, token_set: set[str]) -> str:
         desired_without_have = self._desired_modals - {"have"}
         if token_set & desired_without_have:
@@ -662,7 +392,11 @@ class JSONLanguageAdapter(LanguageAdapter):
         return None
 
     def _target_role(self, action_key: str, token_set: set[str]) -> str | None:
-        if action_key in {"physically_harm_target", "transfer_object", "transfer_to_target"}:
+        schema = self._kernel.action_operators.get(action_key)
+        if schema is None:
+            return None
+        slots = schema.slots
+        if "target" in slots or "recipient" in slots:
             if token_set & self._self_pronouns:
                 return "self"
             if token_set & self._third_person_pronouns:
@@ -672,16 +406,50 @@ class JSONLanguageAdapter(LanguageAdapter):
             return "object"
         return None
 
+    def _infer_roles_from_schema(
+        self, action_key: str, token_set: set[str],
+    ) -> tuple[str | None, str | None, str | None]:
+        """Infer actor, target, and object roles from schema slots when pronouns are absent.
+
+        For statements like 'eat food' (no pronouns), the speaker is the default actor.
+        For schemas with an object slot, assign 'object' as the object role.
+        For schemas with a target/recipient slot, assign via target role logic.
+        """
+        schema = self._kernel.action_operators.get(action_key)
+        if schema is None:
+            return None, None, None
+        actor = self._actor_role(token_set)
+        if actor is None and "actor" in schema.slots:
+            actor = "user"
+        target = self._target_role(action_key, token_set)
+        obj = None
+        if "object" in schema.slots and target is None:
+            obj = "object"
+        return actor, target, obj
+
+
+logger = logging.getLogger(__name__)
+
 
 def get_adapter(language: str = "en") -> LanguageAdapter:
     """Get a LanguageAdapter for the given language.
 
-    Returns EnglishLanguageAdapter for 'en', JSONLanguageAdapter for others.
+    Returns SchemaBackedLanguageAdapter for any language with a JSON pack.
     Falls back to English if the requested language pack is not available.
     """
-    if language == "en":
-        return EnglishLanguageAdapter()
     pack_dir = Path(__file__).parent.parent / "data" / "languages" / language
     if not pack_dir.exists() or not (pack_dir / "pronouns.json").exists():
-        return EnglishLanguageAdapter()
-    return JSONLanguageAdapter(language_code=language, pack_dir=pack_dir)
+        if language != "en":
+            logger.warning("Language pack '%s' not found at %s, falling back to 'en'", language, pack_dir)
+            return get_adapter("en")
+    return SchemaBackedLanguageAdapter(language_code=language, pack_dir=pack_dir)
+
+
+__all__ = [
+    "LanguageAdapter",
+    "SchemaBackedLanguageAdapter",
+    "PronounBinding",
+    "StateBinding",
+    "NeedBinding",
+    "get_adapter",
+]

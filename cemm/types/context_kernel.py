@@ -169,6 +169,7 @@ class Budget:
     latency_target_ms: float = 50.0
     max_entities: int = 16
     max_claims: int = 128
+    max_signals: int = 100
     max_models: int = 16
     max_ranked: int = 64
     max_actions: int = 3
@@ -181,6 +182,7 @@ class Budget:
             latency_target_ms=self.latency_target_ms,
             max_entities=self.max_entities,
             max_claims=self.max_claims,
+            max_signals=self.max_signals,
             max_models=self.max_models,
             max_ranked=self.max_ranked,
             max_actions=self.max_actions,

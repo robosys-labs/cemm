@@ -1,0 +1,50 @@
+[
+  {
+    "policy_key": "structural_none",
+    "description": "Action operator slots: structural, not answerable, no projection",
+    "applies_to": "action_slot",
+    "structural": true,
+    "answerable": false,
+    "projection": "none"
+  },
+  {
+    "policy_key": "entity_native_answerable",
+    "description": "Entity-kind native slots: answerable when query asks about them",
+    "applies_to": "entity_native_slot",
+    "structural": false,
+    "answerable": true,
+    "projection": "object"
+  },
+  {
+    "policy_key": "entity_native_structural",
+    "description": "Entity-kind native slots marked structural in schema: not answerable",
+    "applies_to": "entity_native_slot_structural",
+    "structural": true,
+    "answerable": false,
+    "projection": "none"
+  },
+  {
+    "policy_key": "relation_structural",
+    "description": "Structural graph edges (has_role, has_slot, etc.): not answerable",
+    "applies_to": "structural_edge",
+    "structural": true,
+    "answerable": false,
+    "projection": "none"
+  },
+  {
+    "policy_key": "relation_answerable",
+    "description": "Relation atoms with semantic keys: answerable",
+    "applies_to": "relation_atom",
+    "structural": false,
+    "answerable": true,
+    "projection": "object"
+  },
+  {
+    "policy_key": "evaluates_answerable",
+    "description": "Evaluates edges (likes/dislikes): answerable relation frames",
+    "applies_to": "evaluates_edge",
+    "structural": false,
+    "answerable": true,
+    "projection": "object"
+  }
+]

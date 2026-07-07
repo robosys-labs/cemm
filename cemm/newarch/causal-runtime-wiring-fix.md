@@ -1,8 +1,42 @@
 # Causal-Runtime Wiring Fix — Breakthrough Implementation Plan
 
-Status: **BLOCKER #1 — authoritative fix plan**
-Priority: All other work is secondary until this is fixed.
+Status: **PARTIALLY ADDRESSED — schema kernel refactor complete, remaining gaps tracked below**
+Priority: High — remaining items are the next blocker after schema kernel completion
 Audience: AI coding agents and maintainers implementing CEMM
+
+> **Note:** Several items in this plan have been resolved by the Semantic Schema Kernel
+> refactor (see `newarch/semantic-schema-refactor.md`). Per-culprit status after deep
+> code review:
+>
+> - **Culprit 1 (ConstructionMatcher)**: PARTIALLY OPEN — `graph_patch_templates` still
+>   emits metadata only. Compensated by `_add_emotional_evaluations` in graph builder which
+>   handles `evaluates` edge creation directly from schema. Low priority.
+> - **Culprit 2 (MeaningGraphBuilder evaluates edges)**: ✅ FIXED — `_add_emotional_evaluations`
+>   creates `evaluates` edges with `emotional_verb` feature, using schema `emotional_valence`.
+> - **Culprit 3 (AffordancePredictor)**: ✅ FIXED — Rules loaded from `AffordanceRegistry`.
+>   `affordance_schemas.json` includes `evaluation_shift` rules for `likes`/`dislikes`.
+> - **Culprit 4 (Affordance predictions consumed)**: ✅ FIXED — Runtime passes
+>   `affordance_predictions` to `schedule()`. Scheduler stores them in `context` field.
+> - **Culprit 5 (CausalInference)**: PARTIALLY FIXED — `CausalBridge` exists and is called
+>   from runtime, but is a no-op without legacy `Store`. Full `DurableSemanticStore`-backed
+>   bridge not yet implemented.
+> - **Culprit 6 (update_user_affect)**: ✅ FIXED — Called in `run_turn()` step 1a with
+>   `affect_markers_to_semantics` conversion.
+> - **Culprit 7 (Patch extraction filter)**: ✅ FIXED — Dedicated
+>   `_extract_emotional_evaluation_patches` method handles `evaluates` edges separately.
+> - **Culprit 8 (RelationFrameCompiler)**: ✅ FIXED — `evaluates` has
+>   `projection_policy: "object"`. Feature-based projection distinguishes emotional vs
+>   discourse `evaluates` edges.
+> - **Culprit 9 (Obligation scheduler)**: ✅ FIXED — `acknowledge_emotional_context`
+>   obligation kind exists. `_refine_obligation` routes `evaluation_shift` predictions to it.
+> - **Culprit 10 (Realizer templates)**: ✅ FIXED — `emotional_response` and
+>   `emotional_acknowledgment` templates in `response_templates.json`.
+> - **Culprit 11 (AnaphoraResolver)**: ✅ FIXED — Accepts `prior_salience`, assigns
+>   `entity_id` for third-person pronouns. `SessionStore` persists/restores `entity_salience`.
+> - **Culprit 12 (AttentionController)**: ✅ FIXED — Tier 8b processes
+>   `AffordancePrediction` objects from `graph.affordance_predictions`.
+>
+> **Summary: 10 of 12 culprits fully fixed, 2 partially open (Culprits 1 and 5).**
 
 ---
 

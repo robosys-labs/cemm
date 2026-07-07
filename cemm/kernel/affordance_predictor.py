@@ -8,13 +8,53 @@ from ..types.causal_affordance import CausalAffordance, PortBindingPattern
 from ..types.predicate_schema import GraphPattern, GraphPatchTemplate
 from ..types.uol_atom import UOLAtom
 from ..types.uol_graph import AffordancePrediction, UOLGraph
+from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
 
 
 class AffordancePredictor:
-    """Pattern matcher for contextual affordance rules."""
+    """Pattern matcher for contextual affordance rules.
 
-    def __init__(self, rules: list[CausalAffordance] | None = None) -> None:
-        self._rules = rules or self._seed_rules()
+    Rules are loaded from the Semantic Schema Kernel's AffordanceRegistry.
+    The kernel's affordance schemas define trigger patterns, required bindings,
+    effect types, predicted patch templates, and confidence scores.
+    """
+
+    def __init__(
+        self,
+        rules: list[CausalAffordance] | None = None,
+        schema_kernel: SemanticSchemaKernel | None = None,
+    ) -> None:
+        self._kernel = schema_kernel or get_kernel()
+        self._rules = rules or self._load_rules_from_kernel()
+
+    def _load_rules_from_kernel(self) -> list[CausalAffordance]:
+        """Build CausalAffordance rules from the kernel's AffordanceRegistry."""
+        rules: list[CausalAffordance] = []
+        for schema in self._kernel.affordances.all():
+            trigger = schema.trigger_pattern
+            atom_patterns = []
+            if trigger:
+                kind = trigger.get("atom_kind", "")
+                key = trigger.get("atom_key", "")
+                if kind or key:
+                    atom_patterns.append({"kind": kind, "key": key})
+            required_bindings = []
+            for binding in schema.required_bindings:
+                required_bindings.append(PortBindingPattern(port_id=binding, required=True))
+            template_ops: list[dict[str, Any]] = []
+            patch_template = schema.predicted_patch_template
+            if patch_template:
+                for k, v in patch_template.items():
+                    template_ops.append({"key": k, "value": v})
+            rules.append(CausalAffordance(
+                affordance_id=schema.affordance_key,
+                trigger_pattern=GraphPattern(atom_patterns=atom_patterns),
+                required_bindings=required_bindings,
+                effect_type=schema.effect_type,
+                predicted_effect=GraphPatchTemplate(operations=template_ops) if template_ops else None,
+                confidence=schema.confidence,
+            ))
+        return rules
 
     def predict(self, graph: UOLGraph) -> list[AffordancePrediction]:
         predictions: list[AffordancePrediction] = []
@@ -59,54 +99,3 @@ class AffordancePredictor:
             if kind_match and key_match and surface_match:
                 return True
         return False
-
-    @staticmethod
-    def _seed_rules() -> list[CausalAffordance]:
-        return [
-            CausalAffordance(
-                affordance_id="fresh_source_requirement",
-                trigger_pattern=GraphPattern(atom_patterns=[
-                    {"kind": "evidence", "key": "fresh_external_evidence_required"},
-                ]),
-                effect_type="action_enablement",
-                predicted_effect=GraphPatchTemplate(operations=[{"key": "policy", "value": "require_fresh_source"}]),
-                confidence=0.7,
-            ),
-            CausalAffordance(
-                affordance_id="clarity_need",
-                trigger_pattern=GraphPattern(atom_patterns=[
-                    {"kind": "intent", "key": "repair"},
-                ]),
-                effect_type="need_activation",
-                confidence=0.65,
-            ),
-            CausalAffordance(
-                affordance_id="cold_context_comfort_relevance",
-                trigger_pattern=GraphPattern(atom_patterns=[
-                    {"kind": "state", "key": "cold"},
-                ]),
-                required_bindings=[
-                    PortBindingPattern(port_id="holder", required=True),
-                ],
-                effect_type="need_activation",
-                confidence=0.58,
-            ),
-            CausalAffordance(
-                affordance_id="user_positive_evaluation",
-                trigger_pattern=GraphPattern(atom_patterns=[
-                    {"kind": "relation", "key": "likes"},
-                ]),
-                effect_type="evaluation_shift",
-                predicted_effect=GraphPatchTemplate(operations=[{"key": "affect_shift", "value": "positive_stance"}]),
-                confidence=0.7,
-            ),
-            CausalAffordance(
-                affordance_id="user_negative_evaluation",
-                trigger_pattern=GraphPattern(atom_patterns=[
-                    {"kind": "relation", "key": "dislikes"},
-                ]),
-                effect_type="evaluation_shift",
-                predicted_effect=GraphPatchTemplate(operations=[{"key": "affect_shift", "value": "negative_stance"}]),
-                confidence=0.7,
-            ),
-        ]

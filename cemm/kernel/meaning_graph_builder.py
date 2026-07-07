@@ -45,6 +45,7 @@ from ..types.uol_graph import (
     PortBinding,
     UOLGraph,
 )
+from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
 
 
 class MeaningGraphBuilder:
@@ -56,11 +57,16 @@ class MeaningGraphBuilder:
         port_resolver: Any | None = None,
         affordance_lattice: Any | None = None,
         construction_lattice: Any | None = None,
+        schema_kernel: SemanticSchemaKernel | None = None,
+        predicate_schema_store: Any | None = None,
     ) -> None:
         self._concept_lattice = concept_lattice
         self._port_resolver = port_resolver
         self._affordance_lattice = affordance_lattice
         self._construction_lattice = construction_lattice
+        self._schema_kernel = schema_kernel or get_kernel()
+        self._predicate_schema_store = predicate_schema_store
+        self._last_possessive_prop_dim: str = ""
 
     def build(self, packet: MeaningPerceptPacket) -> UOLGraph:
         graph = UOLGraph(
@@ -351,6 +357,7 @@ class MeaningGraphBuilder:
         group_index = {group.id: group for group in groups}
         for action in actions:
             action_key = action.action_key or action.surface or "action"
+            schema = self._schema_kernel.action_operators.get(action_key)
             action_atom = graph.add_atom(
                 "action",
                 action_key,
@@ -366,6 +373,7 @@ class MeaningGraphBuilder:
                     "object_role": action.object_role,
                     "target_role": action.target_role,
                     "place_role": action.place_role,
+                    "schema_slots": action.schema_slots if action.schema_slots else {},
                 },
                 evidence=self._evidence(action.evidence),
             )
@@ -382,6 +390,78 @@ class MeaningGraphBuilder:
             )
             graph.add_edge("same_as", action_atom.id, process_atom.id, group_id=action.group_id, confidence=0.7)
             self._connect_action_roles(graph, action_atom, action, group_index.get(action.group_id))
+            if schema is not None:
+                self._compile_state_deltas(graph, action_atom, action, schema)
+
+    def _compile_state_deltas(
+        self,
+        graph: UOLGraph,
+        action_atom: UOLAtom,
+        action: ActionAtom,
+        schema: Any,
+    ) -> None:
+        """Compile schema state_deltas into state atoms + causes + has_property edges.
+
+        Uses only existing UOL primitives: state atoms, causes edges, has_property edges.
+        No new edge types are introduced.
+        """
+        for delta in schema.state_deltas:
+            target_role = delta.get("target", "actor")
+            dimension = delta.get("dimension", "")
+            direction = delta.get("direction", "unknown")
+            delta_confidence = float(delta.get("confidence", 0.7))
+
+            target_entity = self._find_role_atom(graph, action_atom, target_role)
+            if target_entity is None:
+                if "skipped_state_deltas" not in graph.trace:
+                    graph.trace["skipped_state_deltas"] = []
+                graph.trace["skipped_state_deltas"].append({
+                    "action_key": action.action_key,
+                    "target_role": target_role,
+                    "dimension": dimension,
+                    "reason": "role_atom_not_found",
+                })
+                continue
+
+            state_key = f"{dimension}:{direction}"
+            state_atom = graph.add_atom(
+                "state",
+                state_key,
+                surface=f"{dimension.split('.')[-1]}:{direction}",
+                group_id=action.group_id,
+                confidence=delta_confidence,
+                source="schema_state_delta",
+                features={
+                    "dimension": dimension,
+                    "direction": direction,
+                    "target_role": target_role,
+                    "action_key": action.action_key,
+                },
+            )
+            graph.add_edge(
+                "causes",
+                action_atom.id,
+                state_atom.id,
+                group_id=action.group_id,
+                confidence=delta_confidence,
+                features={
+                    "dimension": dimension,
+                    "direction": direction,
+                    "schema_source": "state_delta",
+                },
+            )
+            graph.add_edge(
+                "has_property",
+                target_entity.id,
+                state_atom.id,
+                group_id=action.group_id,
+                confidence=delta_confidence,
+                features={
+                    "dimension": dimension,
+                    "direction": direction,
+                    "schema_source": "state_delta",
+                },
+            )
 
     def _connect_action_roles(
         self,
@@ -390,42 +470,87 @@ class MeaningGraphBuilder:
         action: ActionAtom,
         group: MeaningGroup | None,
     ) -> None:
+        schema_slots = action.schema_slots or {}
         for role_name in ("actor", "object", "target", "place"):
             role_value = getattr(action, f"{role_name}_role", None)
             if not role_value:
                 continue
             target = self._resolve_role_atom(graph, role_value, action.group_id, group)
+            slot_def = schema_slots.get(role_name, {})
+            allowed_kinds = slot_def.get("allowed_entity_kinds", [])
+            entity_kind = self._infer_entity_kind(target)
+            kind_valid = True
+            if allowed_kinds and entity_kind:
+                kind_valid = any(
+                    self._schema_kernel.entity_kinds.is_subclass_of(entity_kind, allowed)
+                    or entity_kind == allowed
+                    for allowed in allowed_kinds
+                )
             graph.add_edge(
                 "has_role",
                 action_atom.id,
                 target.id,
                 group_id=action.group_id,
-                confidence=action.confidence,
-                features={"role": role_name, "role_value": role_value},
+                confidence=action.confidence if kind_valid else action.confidence * 0.5,
+                features={
+                    "role": role_name,
+                    "role_value": role_value,
+                    "allowed_entity_kinds": allowed_kinds,
+                    "entity_kind": entity_kind,
+                    "kind_valid": kind_valid,
+                },
             )
 
-    _EMOTIONAL_VERB_TO_RELATION: dict[str, str] = {
-        "like": "likes", "likes": "likes", "love": "likes", "loves": "likes",
-        "prefer": "likes", "prefers": "likes", "enjoy": "likes", "enjoys": "likes",
-        "hate": "dislikes", "hates": "dislikes",
-        "dislike": "dislikes", "dislikes": "dislikes",
-    }
+    @staticmethod
+    def _infer_entity_kind(atom: UOLAtom) -> str:
+        """Infer the schema entity kind from an atom's features.
+
+        Maps runtime entity types to canonical EntityKindRegistry kinds:
+        - 'user' → 'person' (the speaker is a person)
+        - 'self' atom → 'autonomous_agent' (or 'self' if entity_type says so)
+        - role_placeholder → 'object' (safe default for unknown referents)
+        """
+        entity_type = atom.features.get("entity_type", "")
+        if entity_type == "user":
+            return "person"
+        if entity_type:
+            return entity_type
+        if atom.kind == "self":
+            return "autonomous_agent"
+        if atom.kind == "entity":
+            key = atom.key.replace("entity:", "")
+            if key in ("user", "speaker"):
+                return "person"
+            if key in ("world", "external_world", "memory"):
+                return "concept"
+            if atom.source == "role_placeholder":
+                return "object"
+            return "object"
+        return ""
 
     def _find_role_atom(self, graph: UOLGraph, atom: UOLAtom, role: str) -> UOLAtom | None:
-        for edge in graph.edges:
-            if edge.source_id == atom.id and edge.edge_type == "has_role":
-                if edge.features.get("role") == role:
-                    target = graph.atoms.get(edge.target_id)
-                    if target:
-                        return target
+        for edge in graph.outgoing(atom.id, "has_role"):
+            if edge.features.get("role") == role:
+                target = graph.atoms.get(edge.target_id)
+                if target:
+                    return target
         return None
 
     def _add_emotional_evaluations(self, graph: UOLGraph, packet: MeaningPerceptPacket) -> None:
         for action in packet.actions:
-            verb = (action.surface or action.action_key or "").lower()
-            relation_key = self._EMOTIONAL_VERB_TO_RELATION.get(verb)
-            if not relation_key:
+            action_key = action.action_key or ""
+            schema = self._schema_kernel.action_operators.get(action_key)
+            if schema is None or schema.operator_family != "evaluate":
                 continue
+            relation_deltas = self._schema_kernel.action_operators.relation_deltas_for(action_key)
+            if relation_deltas:
+                relation_key = relation_deltas[0].get("relation_key", "evaluates")
+            elif schema.emotional_valence == "positive":
+                relation_key = "likes"
+            elif schema.emotional_valence == "negative":
+                relation_key = "dislikes"
+            else:
+                relation_key = "evaluates"
             action_atoms = [
                 a for a in graph.atoms.values()
                 if a.kind == "action" and a.group_id == action.group_id
@@ -440,7 +565,8 @@ class MeaningGraphBuilder:
                 object_atom = self._find_role_atom(graph, action_atom, "target")
             if subject_atom is None or object_atom is None:
                 continue
-            valence = "positive" if relation_key == "likes" else "negative"
+            valence = schema.emotional_valence
+            verb = (action.surface or action_key).lower()
             relation_atom = graph.add_atom(
                 "relation",
                 relation_key,
@@ -480,9 +606,7 @@ class MeaningGraphBuilder:
             )
 
     def _extract_emotional_evaluation_patches(self, graph: UOLGraph) -> None:
-        for edge in graph.edges:
-            if edge.edge_type != "evaluates":
-                continue
+        for edge in graph.edges_by_type("evaluates"):
             source = graph.atoms.get(edge.source_id)
             target = graph.atoms.get(edge.target_id)
             if source is None or target is None:
@@ -698,12 +822,35 @@ class MeaningGraphBuilder:
 
     def _add_surface_teaching_relations(self, graph: UOLGraph, groups: Iterable[MeaningGroup]) -> None:
         for group in groups:
-            if group.group_type != "teaching" and not any(intent.intent_key == "teaching" for intent in group.intents):
+            is_teaching = (
+                group.group_type == "teaching"
+                or any(intent.intent_key == "teaching" for intent in group.intents)
+            )
+            is_assertion = group.group_type in ("clause", "answer") or any(
+                intent.intent_key == "statement" for intent in group.intents
+            )
+            if not is_teaching and not is_assertion:
                 continue
-            parsed = self._parse_surface_relation(group.tokens)
+            parsed = self._parse_surface_relation(group.tokens, group.surface)
             if parsed is None:
                 continue
             subject_text, relation_key, object_text = parsed
+            # For assertion groups (not teaching), filter out conversational
+            # statements that shouldn't be stored as facts. Accept possessive
+            # patterns and explicit teaching cues freely. For generic "is"/"are"
+            # cues, reject if subject or object contains discourse markers.
+            if is_assertion and not is_teaching:
+                token_set = set(group.tokens)
+                has_possessive = bool(token_set & self._POSSESSIVE_PRONOUNS)
+                has_explicit_cue = any(c in token_set for c in ("means", "mean", "equals", "called", "refers"))
+                if not has_possessive and not has_explicit_cue:
+                    # Generic "is"/"are" assertion — check for discourse markers
+                    subj_lower = subject_text.lower().strip()
+                    obj_lower = object_text.lower().strip()
+                    if any(subj_lower == dm or subj_lower.startswith(dm + " ") for dm in self._DISCOURSE_MARKERS):
+                        continue
+                    if obj_lower in self._FILLER_WORDS:
+                        continue
             object_head, domain_text = self._split_domain_phrase(object_text)
             subject = graph.add_atom(
                 "entity",
@@ -734,7 +881,11 @@ class MeaningGraphBuilder:
             )
             graph.add_edge("has_role", relation.id, subject.id, group_id=group.id, confidence=relation.confidence, features={"role": "source"})
             graph.add_edge("has_role", relation.id, obj.id, group_id=group.id, confidence=relation.confidence, features={"role": "target"})
-            graph.add_edge(relation_key, subject.id, obj.id, group_id=group.id, confidence=relation.confidence, features={"relation_atom_id": relation.id})
+            edge_features: dict[str, Any] = {"relation_atom_id": relation.id}
+            if self._last_possessive_prop_dim:
+                edge_features["property_dimension"] = self._last_possessive_prop_dim
+                self._last_possessive_prop_dim = ""
+            graph.add_edge(relation_key, subject.id, obj.id, group_id=group.id, confidence=relation.confidence, features=edge_features)
             if domain_text:
                 domain = graph.add_atom(
                     "entity",
@@ -760,9 +911,54 @@ class MeaningGraphBuilder:
             source = self._group_source(graph, group.id)
             graph.add_edge("teaches", source.id, relation.id, group_id=group.id, confidence=relation.confidence)
 
-    def _parse_surface_relation(self, tokens: list[str]) -> tuple[str, str, str] | None:
+    _POSSESSIVE_SLOT_TO_PREDICATE: dict[str, tuple[str, str]] = {
+        "name": ("has_property", "name"),
+        "age": ("has_property", "age"),
+        "alias": ("has_property", "alias"),
+        "role": ("has_role", ""),
+        "job": ("has_role", ""),
+        "title": ("has_role", ""),
+        "location": ("has_property", "location"),
+        "hobby": ("has_property", "hobby"),
+        "interest": ("has_property", "interest"),
+        "favorite": ("has_property", "favorite"),
+        "favourite": ("has_property", "favourite"),
+        "preference": ("has_property", "preference"),
+    }
+
+    _POSSESSIVE_PRONOUNS: frozenset = frozenset({
+        "my", "mine", "our", "ours",
+        "your", "yours", "his", "her", "hers", "their", "theirs", "its",
+    })
+
+    _POSSESSIVE_TO_ENTITY: dict[str, str] = {
+        "my": "user", "mine": "user", "our": "user", "ours": "user",
+        "your": "self", "yours": "self",
+        "his": "entity:he", "her": "entity:she", "hers": "entity:she",
+        "their": "entity:they", "theirs": "entity:they",
+        "its": "entity:it",
+    }
+
+    _DISCOURSE_MARKERS: frozenset = frozenset({
+        "i mean", "you know", "well", "so", "oh", "like", "see", "look",
+        "actually", "basically", "honestly", "frankly", "anyway", "anyways",
+        "i think", "i guess", "i suppose", "perhaps", "maybe",
+    })
+
+    _FILLER_WORDS: frozenset = frozenset({
+        "lol", "lmao", "haha", "hahaha", "hehe", "yeah", "yep", "nope",
+        "okay", "ok", "sure", "right", "cool", "nice", "wow", "oops",
+        "whatever", "nothing", "stuff", "things", "something",
+    })
+
+    def _parse_surface_relation(self, tokens: list[str], cased_surface: str = "") -> tuple[str, str, str] | None:
         if not tokens:
             return None
+
+        possessive_result = self._parse_possessive_relation(tokens, cased_surface)
+        if possessive_result is not None:
+            return possessive_result
+
         cues = ("means", "mean", "equals", "called", "refers", "is", "are")
         for cue in cues:
             if cue not in tokens:
@@ -776,9 +972,78 @@ class MeaningGraphBuilder:
             return left, relation_key, right
         return None
 
+    def _parse_possessive_relation(self, tokens: list[str], cased_surface: str = "") -> tuple[str, str, str] | None:
+        """Detect possessive patterns using only canonical edge types.
+
+        All property-like slots (name, age, alias, etc.) map to "has_property"
+        with a property_dimension feature stored on the relation atom. Role-like
+        slots (role, job, title) map to "has_role".
+
+        Handles:
+          "my name is X"   → ("user", "has_property", "X")
+          "mine is X"      → ("user", "has_property", "X")
+          "my age is 25"   → ("user", "has_property", "25")
+          "my role is X"   → ("user", "has_role", "X")
+          "my X is Y"      → ("user", "has_property", "Y")  (fallback)
+
+        If cased_surface is provided, preserves original casing for the object value.
+        """
+        if not tokens:
+            return None
+        token_set = set(tokens)
+        if not token_set & self._POSSESSIVE_PRONOUNS:
+            return None
+
+        cue = None
+        for c in ("is", "are", "means", "mean", "equals", "called", "refers"):
+            if c in tokens:
+                cue = c
+                break
+        if cue is None:
+            return None
+        index = tokens.index(cue)
+        left_tokens = tokens[:index]
+        right_tokens = tokens[index + 1:]
+        left = self._clean_relation_side(left_tokens)
+        right = self._clean_relation_side(right_tokens)
+        if not left or not right:
+            return None
+
+        # Preserve original casing for the object value from cased_surface
+        if cased_surface:
+            cased_lower = cased_surface.lower()
+            right_lower = right.lower()
+            pos = cased_lower.find(right_lower)
+            if pos >= 0:
+                right = cased_surface[pos:pos + len(right)]
+
+        left_lower = left.lower().strip()
+        left_words = left_lower.split()
+
+        if left_words and left_words[0] in self._POSSESSIVE_PRONOUNS:
+            subject = self._POSSESSIVE_TO_ENTITY.get(left_words[0], "user")
+            if left_words[0] in ("mine", "yours", "his", "hers", "theirs", "ours"):
+                self._last_possessive_prop_dim = ""
+                return subject, "has_property", right
+            slot_word = left_words[1] if len(left_words) > 1 else ""
+            edge_type, prop_dim = self._POSSESSIVE_SLOT_TO_PREDICATE.get(slot_word, ("has_property", ""))
+            self._last_possessive_prop_dim = prop_dim
+            return subject, edge_type, right
+
+        return None
+
     @staticmethod
     def _clean_relation_side(tokens: list[str]) -> str:
-        stop = {"a", "an", "the", "to", "as"}
+        stop = {
+            "a", "an", "the", "to", "as", "in", "on", "at", "from", "with",
+            "for", "of", "that", "this", "it", "its", "some", "any", "each",
+            "every", "no", "nor", "not", "but", "or", "and", "by", "up",
+            "down", "out", "over", "under", "about", "into", "through",
+            "during", "before", "after", "above", "below", "between",
+            "is", "are", "was", "were", "be", "been", "being",
+            "have", "has", "had", "do", "does", "did",
+            "will", "would", "can", "could", "shall", "should", "may", "might",
+        }
         clean = [token for token in tokens if token not in stop]
         return " ".join(clean).strip()
 
@@ -1174,24 +1439,83 @@ class MeaningGraphBuilder:
         "part_of": "membership",
     }
 
-    _REMEMBER_RELATION_VERBS: dict[str, str] = {
-        "like": "likes",
-        "likes": "likes",
-        "love": "likes",
-        "loves": "likes",
-        "prefer": "likes",
-        "prefers": "likes",
-        "enjoy": "likes",
-        "enjoys": "likes",
-        "hate": "dislikes",
-        "hates": "dislikes",
-        "dislike": "dislikes",
-        "dislikes": "dislikes",
+    _REMEMBER_EXTRA_VERBS: dict[str, str] = {
         "have": "has_property",
         "has": "has_property",
         "own": "has_property",
         "owns": "has_property",
     }
+
+    def _lookup_relation_verb(self, token: str) -> str | None:
+        """Look up a relation verb via schema kernel action aliases, then fall back to extra verbs."""
+        action_key = self._schema_kernel.action_operators.lookup_alias(token, "en")
+        if action_key:
+            deltas = self._schema_kernel.action_operators.relation_deltas_for(action_key)
+            if deltas:
+                return deltas[0].get("relation_key")
+        return self._REMEMBER_EXTRA_VERBS.get(token)
+
+    def _extract_state_delta_patches(self, graph: UOLGraph) -> None:
+        """Extract upsert_state patch candidates from schema-driven state delta atoms.
+
+        State atoms created by _compile_state_deltas have source='schema_state_delta'.
+        For each, we produce an upsert_state patch operation targeting the entity
+        that holds the state, with the dimension and direction from the schema.
+        """
+        state_atoms = [
+            a for a in graph.atoms.values()
+            if a.kind == "state" and a.source == "schema_state_delta"
+        ]
+        if not state_atoms:
+            return
+
+        operations: list[PatchOperation] = []
+        for state_atom in state_atoms:
+            dimension = state_atom.features.get("dimension", "")
+            direction = state_atom.features.get("direction", "unknown")
+            target_role = state_atom.features.get("target_role", "actor")
+            action_key = state_atom.features.get("action_key", "")
+            group_id = state_atom.group_id
+
+            entity_atom = None
+            for edge in graph.incoming(state_atom.id, "has_property"):
+                entity_atom = graph.atoms.get(edge.source_id)
+                break
+
+            if entity_atom is None:
+                continue
+
+            entity_id = entity_atom.key.replace("entity:", "").replace("self:", "")
+            family = dimension.split(".")[0] if "." in dimension else dimension
+
+            operations.append(PatchOperation(
+                operation="upsert_state",
+                target_id=f"state:{entity_id}:{dimension}",
+                fields={
+                    "entity_id": entity_id,
+                    "state_family": family,
+                    "dimension": dimension,
+                    "direction": direction,
+                    "action_key": action_key,
+                    "target_role": target_role,
+                    "source_atom_ids": [entity_atom.id, state_atom.id],
+                    "group_id": group_id,
+                },
+                confidence=state_atom.confidence,
+                reason="schema_state_delta",
+            ))
+
+        if operations:
+            graph.add_patch_candidate(GraphPatch(
+                source_graph_id=graph.id,
+                target="concept_lattice",
+                operations=operations,
+                source_refs=self._source_refs_for_group(graph, ""),
+                permission_refs=self._permission_refs_for_group(graph, ""),
+                evidence_refs=[f"state_delta:{a.id}" for a in state_atoms],
+                confidence=max(op.confidence for op in operations),
+                reason="schema_state_delta_candidates",
+            ))
 
     def _extract_remember_relation_patches(self, graph: UOLGraph) -> None:
         """Extract relation patches from 'remember' command groups.
@@ -1202,7 +1526,8 @@ class MeaningGraphBuilder:
         for group in graph.groups:
             if group.function != "command":
                 continue
-            tokens = group.surface.lower().split()
+            import re
+            tokens = re.findall(r"[^\W_]+", group.surface.lower())
             if "remember" not in tokens:
                 continue
 
@@ -1213,8 +1538,9 @@ class MeaningGraphBuilder:
             relation_key = ""
             verb_index = -1
             for i, tok in enumerate(after_rem):
-                if tok in self._REMEMBER_RELATION_VERBS:
-                    relation_key = self._REMEMBER_RELATION_VERBS[tok]
+                rk = self._lookup_relation_verb(tok)
+                if rk:
+                    relation_key = rk
                     verb_index = i
                     break
 
@@ -1253,7 +1579,7 @@ class MeaningGraphBuilder:
             if user_atom is None or object_atom is None:
                 continue
 
-            relation_family = self._EDGE_TYPE_TO_RELATION_FAMILY.get(relation_key, "property")
+            relation_family = self._relation_family_for_edge(relation_key)
             evidence = [f"remember_command:{group.id}"]
 
             graph.add_patch_candidate(GraphPatch(
@@ -1286,11 +1612,32 @@ class MeaningGraphBuilder:
                 reason="remember_command_relation_candidate",
             ))
 
+    _TEACHING_EDGE_TYPES: frozenset = frozenset({"is_a", "same_as", "has_property", "used_for", "part_of"})
+
+    def _is_teaching_edge_type(self, edge_type: str) -> bool:
+        if edge_type in self._TEACHING_EDGE_TYPES:
+            return True
+        if self._predicate_schema_store is not None:
+            schema = self._predicate_schema_store.get(edge_type)
+            if schema is not None:
+                return True
+        return False
+
+    def _relation_family_for_edge(self, edge_type: str) -> str:
+        family = self._EDGE_TYPE_TO_RELATION_FAMILY.get(edge_type, "")
+        if family:
+            return family
+        if self._predicate_schema_store is not None:
+            schema = self._predicate_schema_store.get(edge_type)
+            if schema is not None:
+                return schema.relation_family
+        return "definition"
+
     def _extract_graph_patches(self, graph: UOLGraph) -> None:
         for group in graph.groups:
             teaching_edges = [
                 edge for edge in graph.group_edges(group.id)
-                if edge.edge_type in {"is_a", "same_as", "has_property", "used_for", "part_of"}
+                if self._is_teaching_edge_type(edge.edge_type)
             ]
             if teaching_edges and graph.has_edge("teaches", source_kind="source", group_id=group.id):
                 operations = []
@@ -1307,7 +1654,7 @@ class MeaningGraphBuilder:
                         target_id=f"relation:{edge.edge_type}:{source.key}:{target.key}",
                         fields={
                             "relation_key": edge.edge_type,
-                            "relation_family": self._EDGE_TYPE_TO_RELATION_FAMILY.get(edge.edge_type, "definition"),
+                            "relation_family": self._relation_family_for_edge(edge.edge_type),
                             "subject_concept_id": self._concept_key_for(source),
                             "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",
                             "subject_surface": source.surface,
@@ -1336,6 +1683,7 @@ class MeaningGraphBuilder:
 
         self._extract_remember_relation_patches(graph)
         self._extract_emotional_evaluation_patches(graph)
+        self._extract_state_delta_patches(graph)
 
         concept_operations = []
         for resolution in graph.concept_resolutions:

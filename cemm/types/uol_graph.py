@@ -190,6 +190,8 @@ class UOLGraph:
     language: str = "und"
     atoms: dict[str, UOLAtom] = field(default_factory=dict)
     edges: list[UOLEdge] = field(default_factory=list)
+    _outgoing: dict[str, list[UOLEdge]] = field(default_factory=dict)
+    _incoming: dict[str, list[UOLEdge]] = field(default_factory=dict)
     group_atom_ids: dict[str, list[str]] = field(default_factory=dict)
     groups: list[UOLMeaningGroup] = field(default_factory=list)
     candidate_sets: list[CandidateSet] = field(default_factory=list)
@@ -309,6 +311,8 @@ class UOLGraph:
             evidence=[dict(item) for item in evidence or []],
         )
         self.edges.append(edge)
+        self._outgoing.setdefault(edge.source_id, []).append(edge)
+        self._incoming.setdefault(edge.target_id, []).append(edge)
         self._index_edge_to_group(edge.id, group_id)
         return edge
 
@@ -380,6 +384,8 @@ class UOLGraph:
         return cloned
 
     def merge_graph(self, other: UOLGraph, *, confidence_floor: float = 0.0) -> None:
+        if other is self:
+            return
         for group in other.groups:
             self.add_group(
                 group.id,
@@ -429,9 +435,12 @@ class UOLGraph:
         self.port_bindings.extend(copy.deepcopy(other.port_bindings))
         self.affordance_predictions.extend(copy.deepcopy(other.affordance_predictions))
         self.patch_candidates.extend(copy.deepcopy(other.patch_candidates))
+        self._rebuild_adjacency_index()
 
     def prune(self, *, atom_threshold: float = 0.0, edge_threshold: float = 0.0) -> None:
+        needs_rebuild = False
         if atom_threshold > 0:
+            needs_rebuild = True
             keep_atom_ids = {
                 atom_id for atom_id, atom in self.atoms.items()
                 if atom.confidence >= atom_threshold
@@ -454,10 +463,13 @@ class UOLGraph:
                     if atom_id in keep_atom_ids
                 ]
         if edge_threshold > 0:
+            needs_rebuild = True
             self.edges = [edge for edge in self.edges if edge.confidence >= edge_threshold]
             keep_edge_ids = {edge.id for edge in self.edges}
             for group in self.groups:
                 group.edge_ids = [edge_id for edge_id in group.edge_ids if edge_id in keep_edge_ids]
+        if needs_rebuild:
+            self._rebuild_adjacency_index()
 
     def select_candidate(
         self,
@@ -495,16 +507,16 @@ class UOLGraph:
         return values
 
     def outgoing(self, atom_id: str, edge_type: str | None = None) -> list[UOLEdge]:
-        return [
-            edge for edge in self.edges
-            if edge.source_id == atom_id and (edge_type is None or edge.edge_type == edge_type)
-        ]
+        edges = self._outgoing.get(atom_id, [])
+        if edge_type is None:
+            return list(edges)
+        return [edge for edge in edges if edge.edge_type == edge_type]
 
     def incoming(self, atom_id: str, edge_type: str | None = None) -> list[UOLEdge]:
-        return [
-            edge for edge in self.edges
-            if edge.target_id == atom_id and (edge_type is None or edge.edge_type == edge_type)
-        ]
+        edges = self._incoming.get(atom_id, [])
+        if edge_type is None:
+            return list(edges)
+        return [edge for edge in edges if edge.edge_type == edge_type]
 
     def has_edge(
         self,
@@ -571,6 +583,13 @@ class UOLGraph:
             "graph_patch_candidates": [patch.to_dict() for patch in self.patch_candidates],
             "trace": dict(self.trace),
         }
+
+    def _rebuild_adjacency_index(self) -> None:
+        self._outgoing.clear()
+        self._incoming.clear()
+        for edge in self.edges:
+            self._outgoing.setdefault(edge.source_id, []).append(edge)
+            self._incoming.setdefault(edge.target_id, []).append(edge)
 
     def _index_atom_to_group(self, atom_id: str, group_id: str) -> None:
         if not group_id:

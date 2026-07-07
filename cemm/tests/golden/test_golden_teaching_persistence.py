@@ -12,7 +12,6 @@ from ...learning.memory_patch_compiler import MemoryPatchCompiler
 from ...learning.patch_validator import PatchValidator
 from ...learning.patch_committer import PatchCommitter
 from ...memory.durable_semantic_store import DurableSemanticStore
-from ...store.store import Store
 from ...types.context_kernel import ContextKernel, WorldState, UserState, TimeState, ConversationState, GoalState, MemoryState, Budget
 from ...types.self_view import SelfView
 from ...types.permission import Permission
@@ -36,9 +35,8 @@ def _kernel(permission: Permission = Permission.public()) -> ContextKernel:
 
 def test_golden_teaching_persistence() -> None:
     """Teach a relation "entity_x1 rel_a entity_y1" and verify it persists."""
-    store = Store(":memory:")
     compiler = MemoryPatchCompiler()
-    validator = PatchValidator(store=store)
+    validator = PatchValidator()
     committer = PatchCommitter()
 
     patch = compiler.compile(

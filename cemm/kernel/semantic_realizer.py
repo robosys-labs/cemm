@@ -18,18 +18,47 @@ linguistic data out of code.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from ..types.answer_binding import AnswerBinding
 from ..types.realization_contract import RealizationContract, RealizationSlot
 
+_logger = logging.getLogger(__name__)
+
+# Fallback templates used when response_templates.json is missing or corrupt.
+_FALLBACK_TEMPLATES: dict[str, str] = {
+    "general_conversation": "That's an interesting topic.",
+    "abstain": "I'm not sure about that yet.",
+    "safety_refusal": "I cannot help with that request.",
+    "store_acknowledgment": "Got it.",
+    "social_response": "Hello!",
+    "ask_clarification": "Could you clarify what you mean?",
+    "session_exit": "Goodbye!",
+    "blocked": "I can't help with that.",
+}
+
 
 def _load_templates() -> dict[str, str]:
-    """Load language-indexed templates from response_templates.json."""
+    """Load language-indexed templates from response_templates.json.
+
+    Returns fallback templates if the file is missing, corrupted, or lacks
+    the ``"en"`` key, so that module import never crashes.
+    """
     path = Path(__file__).parent.parent / "data" / "response_templates.json"
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("en", {})
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        templates = data.get("en", {})
+        if not templates:
+            _logger.warning("response_templates.json has no 'en' key; using fallback templates")
+            return dict(_FALLBACK_TEMPLATES)
+        return templates
+    except FileNotFoundError:
+        _logger.warning("response_templates.json not found; using fallback templates")
+    except (json.JSONDecodeError, OSError) as exc:
+        _logger.warning("Failed to load response_templates.json: %s; using fallback templates", exc)
+    return dict(_FALLBACK_TEMPLATES)
 
 
 _TEMPLATES: dict[str, str] = _load_templates()

@@ -79,7 +79,7 @@ try:
     from ..types.signal import Signal
 except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
     Signal = Any  # type: ignore[misc,assignment]
-from .language_adapter import EnglishLanguageAdapter, LanguageAdapter
+from .language_adapter import SchemaBackedLanguageAdapter, LanguageAdapter
 from .meaning_graph_builder import MeaningGraphBuilder
 from .predicate_phrase_extractor import PredicatePhraseExtractor
 from .anaphora_resolver import AnaphoraResolver
@@ -144,12 +144,16 @@ class MeaningPerceptor:
         lexeme_memory: LexemeMemory | None = None,
         language_adapter: LanguageAdapter | None = None,
         construction_matcher: Any | None = None,
+        graph_builder: Any | None = None,
+        schema_kernel: Any | None = None,
     ) -> None:
+        from .semantic_schema_kernel import get_kernel
+        kernel = schema_kernel or get_kernel()
         self._ner_tagger = ner_tagger
         self._surface_tagger = surface_tagger
         self._lexeme_memory = lexeme_memory
-        self._language = language_adapter or EnglishLanguageAdapter()
-        self._graph_builder = MeaningGraphBuilder()
+        self._language = language_adapter or SchemaBackedLanguageAdapter(kernel=kernel)
+        self._graph_builder = graph_builder or MeaningGraphBuilder(schema_kernel=kernel)
         self._predicate_extractor = PredicatePhraseExtractor()
         self._anaphora_resolver = AnaphoraResolver()
         self._salience_tracker = EntitySalienceTracker()
@@ -164,7 +168,7 @@ class MeaningPerceptor:
         """Build a MeaningPerceptPacket without side effects."""
         raw_text = signal.content or ""
         tokens = self._language.tokenize(raw_text)
-        normalized_tokens, repaired_tokens, normalized_forms, unknown_tokens = self._normalization(signal, tokens)
+        normalized_tokens, repaired_tokens, normalized_forms, unknown_tokens, cased_tokens = self._normalization(signal, tokens)
         semantic_tokens = repaired_tokens or normalized_tokens or tokens
 
         packet = MeaningPerceptPacket(
@@ -174,6 +178,7 @@ class MeaningPerceptor:
             raw_text=raw_text,
             tokens=tokens,
             normalized_tokens=normalized_tokens,
+            cased_tokens=cased_tokens,
             repaired_tokens=repaired_tokens,
             normalized_forms=normalized_forms,
             punctuation_features=self._language.punctuation_features(raw_text),
@@ -344,10 +349,10 @@ class MeaningPerceptor:
         self,
         signal: Signal,
         fallback_tokens: list[str],
-    ) -> tuple[list[str], list[str], list[str], list[str]]:
+    ) -> tuple[list[str], list[str], list[str], list[str], list[str]]:
         normalized = getattr(signal, "normalized", None)
         if normalized is None:
-            return fallback_tokens, fallback_tokens, [], []
+            return fallback_tokens, fallback_tokens, [], [], fallback_tokens
 
         canonical = getattr(normalized, "canonical_form", "") or ""
         canonical_tokens = self._language.tokenize(canonical) if canonical else fallback_tokens
@@ -365,7 +370,11 @@ class MeaningPerceptor:
             if len(form_tokens) < len(best_tokens):
                 best_tokens = form_tokens
 
-        return best_tokens, canonical_tokens, normalized_forms, unknown_tokens
+        # Preserve original casing for proper nouns.
+        cased_raw = getattr(normalized, "cased_form", "") or ""
+        cased_tokens = self._language.tokenize(cased_raw) if cased_raw else best_tokens
+
+        return best_tokens, canonical_tokens, normalized_forms, unknown_tokens, cased_tokens
 
     def _surface_spans(self, raw_text: str, tokens: list[str]) -> list[SurfaceSpan]:
         spans: list[SurfaceSpan] = []
@@ -584,8 +593,6 @@ class MeaningPerceptor:
             return True
         if len(tokens) == 1:
             return bool(token_set & _COMMON_PREDICATE_VERBS)
-        if len(tokens) == 2 and tokens[0] in cue_set("user_subject") and tokens[1] in {"is", "are", "am", "was", "were", "do", "does", "did", "have", "has", *_COMMON_PREDICATE_VERBS}:
-            return True
         return bool(token_set & {"is", "are", "am", "was", "were", "do", "does", "did", "have", "has", *_COMMON_PREDICATE_VERBS})
 
     def _comma_should_split(self, left: str, right: str) -> bool:
@@ -605,11 +612,7 @@ class MeaningPerceptor:
         if token_set & _REPAIR_CUES and ("?" in stripped or trailing_separator == "?" or "what" in token_set or "huh" in token_set):
             return "repair"
         if token_set & _TEACHING_CUES:
-            if token_set & {"is", "are"}:
-                if len(tokens) >= 3 and tokens[0] not in _QUESTION_STARTERS:
-                    return "teaching"
-            else:
-                return "teaching"
+            return "teaching"
         if tokens and tokens[0] in _COMMAND_CUES:
             return "command"
         if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right"}:
@@ -629,6 +632,9 @@ class MeaningPerceptor:
             confidence += 0.06
         elif group_type == "teaching":
             confidence += 0.04
+        # Boost confidence for possessive patterns (e.g., "my name is X")
+        if n >= 3 and tokens[0] in {"my", "mine", "our", "your", "his", "her", "their", "its"}:
+            confidence += 0.06
         if n <= 1:
             confidence -= 0.08
         return max(0.30, min(0.95, confidence))
@@ -1038,8 +1044,6 @@ class MeaningPerceptor:
             return True
         if token_set & {"means", "called", "refers", "equals"}:
             return True
-        if len(group.tokens) >= 3 and token_set & {"is", "are"} and group.tokens[0] not in _QUESTION_STARTERS:
-            return True
         return False
 
     def _is_capability_query(self, group: MeaningGroup) -> bool:
@@ -1086,6 +1090,8 @@ class MeaningPerceptor:
 
     def _target_for_intent(self, group: MeaningGroup, intent_key: str) -> str:
         token_set = set(group.tokens)
+        if intent_key == "user_profile_query":
+            return "user"
         if "you" in token_set or "your" in token_set:
             return "self"
         if intent_key in {"fresh_world_query", "question"}:
@@ -1102,6 +1108,7 @@ class MeaningPerceptor:
             "capability_query": ["self_capability_query", "capability_query"],
             "self_identity_query": ["self_identity_query"],
             "self_knowledge_query": ["self_knowledge_query"],
+            "user_profile_query": ["user_name_query"],
             "teaching": ["definition_teaching", "claim_assertion"],
             "user_state_report": ["state_report", "claim_assertion"],
             "greeting": ["greeting"],
@@ -1118,6 +1125,7 @@ class MeaningPerceptor:
             "capability_query": "question",
             "self_identity_query": "question",
             "self_knowledge_query": "question",
+            "user_profile_query": "question",
             "teaching": "teaching",
             "user_state_report": "state_report",
             "greeting": "social",
@@ -1128,7 +1136,7 @@ class MeaningPerceptor:
         confidence = 0.55
         if group.group_type in {"question", "repair", "teaching", "command"}:
             confidence += 0.15
-        if intent_key in {"fresh_world_query", "capability_query", "self_identity_query", "self_knowledge_query", "session_exit", "greeting"}:
+        if intent_key in {"fresh_world_query", "capability_query", "self_identity_query", "self_knowledge_query", "user_profile_query", "session_exit", "greeting"}:
             confidence += 0.1
         if group.actions or group.states:
             confidence += 0.05
@@ -1324,9 +1332,11 @@ class MeaningPerceptor:
             seen.add(key)
 
     def _extend_actions(self, packet: MeaningPerceptPacket, atoms: Iterable[ActionAtom]) -> None:
-        seen = {(a.surface.lower(), a.action_key, a.modality, a.polarity) for a in packet.actions}
+        seen = {(a.surface.lower(), a.action_key, a.modality, a.polarity,
+                 a.actor_role, a.target_role, a.place_role) for a in packet.actions}
         for atom in atoms:
-            key = (atom.surface.lower(), atom.action_key, atom.modality, atom.polarity)
+            key = (atom.surface.lower(), atom.action_key, atom.modality, atom.polarity,
+                   atom.actor_role, atom.target_role, atom.place_role)
             if not atom.surface or key in seen:
                 continue
             packet.actions.append(atom)

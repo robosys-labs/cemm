@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 
 from ..types.meaning_percept import SafetyFrame, OutcomeAtom, ValenceAtom, SituationFrame
-from .event_schema_loader import load_event_schemas, EventSchemaStore
+from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
 
 
 # Harm-related action keywords mapped to safety categories
@@ -75,18 +75,30 @@ def _tokenize(text: str) -> list[str]:
 class SafetyFrameDetector:
     """Detects safety-relevant frames from situation and outcome analysis."""
 
-    def __init__(self, event_schema_store: EventSchemaStore | None = None) -> None:
-        self._event_store = event_schema_store or load_event_schemas()
-        # Merge JSON-defined safety schema aliases into hardcoded tables
-        for key, schema in self._event_store.safety_schemas.items():
-            category = key
-            for alias in schema.aliases:
-                if category == "self_harm":
-                    _SELF_HARM_ACTIONS.setdefault(alias, category)
-                elif category == "illegal_activity":
-                    _ILLEGAL_ACTIONS.setdefault(alias, category)
-                else:
-                    _HARM_ACTIONS.setdefault(alias, category)
+    _loaded: bool = False
+
+    def __init__(self, schema_kernel: SemanticSchemaKernel | None = None) -> None:
+        self._kernel = schema_kernel or get_kernel()
+        self._self_harm_actions: dict[str, str] = dict(_SELF_HARM_ACTIONS)
+        self._illegal_actions: dict[str, str] = dict(_ILLEGAL_ACTIONS)
+        self._harm_actions: dict[str, str] = dict(_HARM_ACTIONS)
+        if not SafetyFrameDetector._loaded:
+            for action_key in self._kernel.action_operators.all_action_keys():
+                category = self._kernel.action_operators.safety_category_for(action_key)
+                if not category:
+                    continue
+                schema = self._kernel.action_operators.get(action_key)
+                if schema is None:
+                    continue
+                aliases = schema.aliases.get("en", [])
+                for alias in aliases:
+                    if category == "self_harm":
+                        self._self_harm_actions.setdefault(alias, category)
+                    elif category == "illegal_activity":
+                        self._illegal_actions.setdefault(alias, category)
+                    else:
+                        self._harm_actions.setdefault(alias, category)
+            SafetyFrameDetector._loaded = True
 
     def detect(
         self,
@@ -122,7 +134,7 @@ class SafetyFrameDetector:
         # remain fallback detectors for underspecified frames.
 
         # Detect self-harm
-        for phrase, category in _SELF_HARM_ACTIONS.items():
+        for phrase, category in self._self_harm_actions.items():
             if phrase in text_lower:
                 return SafetyFrame(
                     category=category,
@@ -134,7 +146,7 @@ class SafetyFrameDetector:
                 )
 
         # Detect interpersonal violence
-        for action, category in _HARM_ACTIONS.items():
+        for action, category in self._harm_actions.items():
             if action in token_set:
                 # Check if it's a proposal/question (modal + action)
                 has_modal = bool(token_set & _MODAL_VERBS)
@@ -153,7 +165,7 @@ class SafetyFrameDetector:
                     )
 
         # Detect illegal activity
-        for action, category in _ILLEGAL_ACTIONS.items():
+        for action, category in self._illegal_actions.items():
             if action in token_set:
                 has_modal = bool(token_set & _MODAL_VERBS)
                 if has_modal or action in tokens[:2]:
@@ -170,7 +182,7 @@ class SafetyFrameDetector:
         # human valence without a specific action keyword, still flag it
         if has_unfavorable_human and situation and situation.action:
             action_surface = situation.action.surface.lower()
-            if any(harm in action_surface for harm in _HARM_ACTIONS):
+            if any(harm in action_surface for harm in self._harm_actions):
                 return SafetyFrame(
                     category="interpersonal_violence",
                     severity="high",

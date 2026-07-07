@@ -1,0 +1,74 @@
+[
+  {
+    "affordance_key": "fresh_source_requirement",
+    "trigger_pattern": {"atom_kind": "evidence", "atom_key": "fresh_external_evidence_required"},
+    "required_bindings": [],
+    "effect_type": "action_enablement",
+    "predicted_patch_template": {"operation": "observe_causal_affordance", "policy": "require_fresh_source"},
+    "confidence": 0.7
+  },
+  {
+    "affordance_key": "clarity_need",
+    "trigger_pattern": {"atom_kind": "intent", "atom_key": "repair"},
+    "required_bindings": [],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {},
+    "confidence": 0.65
+  },
+  {
+    "affordance_key": "cold_context_comfort_relevance",
+    "trigger_pattern": {"atom_kind": "state", "atom_key": "cold"},
+    "required_bindings": ["holder"],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {},
+    "confidence": 0.58
+  },
+  {
+    "affordance_key": "user_positive_evaluation",
+    "trigger_pattern": {"atom_kind": "relation", "atom_key": "likes"},
+    "required_bindings": [],
+    "effect_type": "evaluation_shift",
+    "predicted_patch_template": {"affect_shift": "positive_stance"},
+    "confidence": 0.7
+  },
+  {
+    "affordance_key": "user_negative_evaluation",
+    "trigger_pattern": {"atom_kind": "relation", "atom_key": "dislikes"},
+    "required_bindings": [],
+    "effect_type": "evaluation_shift",
+    "predicted_patch_template": {"affect_shift": "negative_stance"},
+    "confidence": 0.7
+  },
+  {
+    "affordance_key": "hunger_food_affordance",
+    "trigger_pattern": {"atom_kind": "state", "atom_key": "hungry"},
+    "required_bindings": ["holder"],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {"need": "food"},
+    "confidence": 0.75
+  },
+  {
+    "affordance_key": "thirst_water_affordance",
+    "trigger_pattern": {"atom_kind": "state", "atom_key": "thirsty"},
+    "required_bindings": ["holder"],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {"need": "water"},
+    "confidence": 0.75
+  },
+  {
+    "affordance_key": "tired_rest_affordance",
+    "trigger_pattern": {"atom_kind": "state", "atom_key": "tired"},
+    "required_bindings": ["holder"],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {"need": "rest"},
+    "confidence": 0.7
+  },
+  {
+    "affordance_key": "confused_clarity_affordance",
+    "trigger_pattern": {"atom_kind": "state", "atom_key": "confused"},
+    "required_bindings": ["holder"],
+    "effect_type": "need_activation",
+    "predicted_patch_template": {"need": "clarity"},
+    "confidence": 0.7
+  }
+]

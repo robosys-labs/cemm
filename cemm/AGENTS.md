@@ -4,64 +4,57 @@ Status: governing implementation guide
 Audience: AI coding agents, reviewers, and maintainers working on CEMM  
 Supersedes: older v3.0/SLC-only local plans when they conflict with the current architecture
 
-## 0. CRITICAL — Causal-Runtime Wiring Gap (Blocker #1)
+## 0. Semantic Schema Kernel — Implementation Complete
 
-**Priority: BLOCKER. All other work is secondary until this is fixed.**
+**Status: COMPLETE.** The Semantic Schema Kernel refactor is fully implemented
+across all 9 phases. The old fragmented meaning systems (flat keyword maps,
+`event_schema_loader.py`, hardcoded dicts) have been replaced by a unified,
+data-driven schema kernel with seven registry types.
 
-The causal and recursive foundational architecture was designed to handle
-cross-turn semantic understanding, emotional context persistence, and
-entity salience tracking. The modules exist but are **island components** —
-built but never wired into the runtime pipeline.
+See `newarch/semantic-schema-refactor.md` for the complete implementation record.
 
-### The Broken Chain
+### What Was Fixed
 
 ```
-Architecture intended:
-  Construction → evaluates edge → affordance prediction (evaluation_shift)
-  → planner (empathetic response + patch) → durable store → cross-turn retrieval
+Old system (replaced):
+  ✗ flat keyword maps → action_key string (no slots, no state deltas)
+  ✗ event_schema_loader.py / EventSchemaStore (side-channel, never reached pipeline)
+  ✗ hardcoded ACTIONS/STATES/NEEDS dicts in language adapters
+  ✗ hardcoded _EMOTIONAL_VERB_TO_RELATION in graph builder
+  ✗ hardcoded _seed_rules in AffordancePredictor
+  ✗ MeaningPerceptor monkey-patched with graph_builder after construction
+  ✗ O(E) edge scans in _find_role_atom and _extract_state_delta_patches
 
-What's implemented:
-  Construction → intent label only (no relation patch)
-  ✗ no evaluates edge for emotional predicates
-  ✗ no evaluation_shift affordance rule
-  ✗ affordance predictions never consumed by scheduler/realizer
-  ✗ patch extractor filters out likes/evaluates
-  ✗ causal inference engine disconnected from semantic runtime
-  ✗ update_user_affect never called — affect state never updated during turns
-  ✗ anaphora resolver doesn't resolve third-person pronouns cross-turn
-  ✓ durable store can store/retrieve (but nothing to store)
+New system (implemented):
+  ✓ SemanticSchemaKernel with 7 registries loaded from semantic_schemas/*.json
+  ✓ SchemaBackedLanguageAdapter delegates action lookup to ActionOperatorRegistry
+  ✓ MeaningGraphBuilder compiles schema state_deltas into state atoms + causes edges
+  ✓ Entity kind validation on has_role edges using schema allowed_entity_kinds
+  ✓ AffordancePredictor generates rules from AffordanceRegistry
+  ✓ UOLGraph adjacency index (_outgoing/_incoming) for O(degree) edge lookups
+  ✓ MeaningPerceptor properly wired with schema_kernel via constructor
+  ✓ SemanticKernelRuntime passes schema_kernel to SemanticCPU
 ```
 
-### 12 Specific Culprits
+### Remaining Causal-Runtime Wiring Gaps
 
-1. **ConstructionMatcher** — No emotional predicate constructions. `graph_patch_templates` only emits metadata.
-2. **MeaningGraphBuilder** — `_parse_surface_relation` only handles definitional cues. No `evaluates` edge for emotional predicates.
-3. **AffordancePredictor** — Only 3 seed rules. No `evaluation_shift` rule.
-4. **SemanticKernelRuntime.run_turn()** — Computes affordance predictions but never passes them to obligation scheduler, query engine, or realizer.
-5. **CausalInference** — Operates on old Store/Claim/Model system. Never called from runtime.
-6. **PragmaticInterpreter.update_user_affect** — Function exists but never called.
-7. **Patch extraction filter** — Excludes `likes`, `dislikes`, `evaluates` from durable patches.
-8. **RelationFrameCompiler** — `evaluates` has `projection_policy: "none"`.
-9. **SemanticObligationScheduler** — No obligation kind for emotional context or affect follow-up.
-10. **SemanticRealizer** — No templates for proactive emotional follow-up.
-11. **AnaphoraResolver** — Third-person pronouns record candidates but don't assign entity_id.
-12. **SemanticAttentionController** — Doesn't process `AffordancePrediction` objects from the graph.
+Two culprits from the original 12-culprit plan remain partially open:
 
-### Master Fix Plan
+- **Culprit 1 (ConstructionMatcher)**: `graph_patch_templates` still emits metadata only for emotional predicates. Compensated by `_add_emotional_evaluations` in graph builder which handles `evaluates` edge creation directly from schema. Low priority.
+- **Culprit 5 (CausalInference)**: `CausalBridge` exists and is called from runtime, but is a no-op without legacy `Store`. Full `DurableSemanticStore`-backed bridge not yet implemented.
 
-See: `newarch/causal-runtime-wiring-fix.md` — the single authoritative fix plan.
-
-All other implementation plans are superseded. Do not follow them.
+All other culprits (2-4, 6-12) are fully fixed. See `newarch/causal-runtime-wiring-fix.md` for the detailed per-culprit status.
 
 ## 1. Canonical Source Of Truth
 
 Use these files as the active implementation contract, in this order:
 
 1. `AGENTS.md` (this file)
-2. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
-3. `newarch/consolidated_architecture.md`
-4. `newarch/3.3-uol-graph-architecture.md`
-5. `newarch/core_loop_runtime.md`
+2. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan)
+3. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
+4. `newarch/consolidated_architecture.md`
+5. `newarch/3.3-uol-graph-architecture.md`
+6. `newarch/core_loop_runtime.md`
 
 Superseded design docs and plans are archived at `docs/archive/newarch_superseded/`.
 Use them as background reference only — they are not active architecture contracts.
@@ -129,33 +122,25 @@ Signal
 -> durable semantic structures
 ```
 
-Status: **pipeline unified but causal-runtime wiring is broken (BLOCKER #1)**
+Status: **schema kernel refactor complete; causal-runtime wiring partially addressed**
 - `Pipeline.run()` delegates to `SemanticKernelRuntime.run_turn()` — single authority achieved
-- `UOLGraph` is the sole working graph
+- `UOLGraph` is the sole working graph (with adjacency index for O(degree) edge lookups)
+- `SemanticSchemaKernel` is the single canonical source for action/state/need/entity meaning
+- `SchemaBackedLanguageAdapter` replaces all old language adapters — delegates to schema kernel
 - `SemanticKernelRuntime.run_turn()` has 11 steps: perceive, build, attend, compile, schedule, teach, compile relations, query, realize, plan, extract/validate/commit patches
 - `PatchValidator` and `PatchCommitter` enforce graph-patch-only durable writes
 - `SessionStore` restores/persists conversation, user affect, topic, discourse state across turns
 - `EntitySalienceTracker` tracks entity salience across turns
 - `DurableSemanticStore` stores and retrieves relation frames
+- `MeaningPerceptor` properly wired with `schema_kernel` and `graph_builder` via constructor
 
-**CRITICAL GAP — Causal-Runtime Wiring (see Section 0 and `causal-runtime-wiring-fix.md`):**
-- Affordance predictions computed but never consumed by scheduler/realizer
-- `CausalInference` engine completely disconnected from runtime
-- `update_user_affect` never called — affect state never updated during turns
-- No `evaluates` edge creation for emotional predicates
-- No `evaluation_shift` affordance rules
-- Patch extractor filters out `likes`/`dislikes`/`evaluates`
-- AnaphoraResolver doesn't resolve third-person pronouns cross-turn
-- No obligation kind for emotional context or affect follow-up
-- No realization templates for proactive emotional follow-up
+**Schema Kernel Refactor — COMPLETE:**
+- All 9 phases implemented and verified (80 tests passing)
+- See `newarch/semantic-schema-refactor.md` for full implementation record
 
-**Other remaining gaps:**
-- 5 durable architecture types replaced by simpler records (acceptable for now)
-- Remaining 10 Phase 0 hot-path modules still embedded in `MeaningPerceptor`
-- Dynamic self-knowledge (still static `self_knowledge.json`)
-- Knowledge ingestion, training infrastructure, adapters, synthesis modules
-
-Do not overclaim that the full learning brain is done. The causal-runtime wiring is the #1 blocker.
+**Remaining causal-runtime wiring gaps (see Section 0):**
+- Culprit 1: ConstructionMatcher `graph_patch_templates` still metadata-only (compensated by graph builder)
+- Culprit 5: `CausalBridge` is a no-op without legacy `Store`; full `DurableSemanticStore`-backed bridge not yet implemented
 
 ## 4. Compatibility Names
 
@@ -299,6 +284,83 @@ PersonAtom
 
 Represent those as dynamic concept atoms or concept records.
 
+## 7.5 Semantic Schema Kernel
+
+### Central Invariant
+
+```
+Verbs do not mean actions; verbs evoke action schemas.
+Nouns do not mean entities; nouns evoke entity-kind/concept candidates.
+States do not mean strings; states occupy dimensions on entity slots.
+Actions are operators over typed slots and produce state/relation deltas.
+```
+
+Schema JSON is canonical boot knowledge.
+Runtime truth is validated graph-patch memory.
+
+### Seven Schema Types
+
+The Semantic Schema Kernel comprises seven schema types that form the canonical
+boot knowledge for semantic interpretation:
+
+```
+EntityKindSchema        — entity kinds with native slot families
+StateDimensionSchema    — state families and dimensions on entity slots
+SlotSchema              — slot definitions (role, entity kind constraints, cardinality)
+ActionOperatorSchema    — action operators over typed slots with preconditions + state/relation deltas
+AffordanceSchema        — affordance rules derived from action operator schemas
+ProjectionPolicySchema  — projection policy per slot/edge (structural vs answerable)
+PatchOperationSchema    — typed patch operations (upsert_relation, upsert_state, etc.)
+```
+
+See: `newarch/semantic-schema-refactor.md` — the authoritative refactor plan.
+
+### Schema Files
+
+```
+cemm/data/semantic_schemas/
+  entity_kind_schemas.json
+  state_dimension_schemas.json
+  slot_schemas.json
+  action_operator_schemas.json
+  affordance_schemas.json
+  projection_policy_schemas.json
+  patch_operation_schemas.json
+```
+
+### Language Files Are Aliases Only
+
+`action_keywords.json` and other language data files are alias layers that map
+surface forms to canonical `action_key` values. They do not define slots,
+preconditions, state deltas, entity kinds, or affordances. The canonical meaning
+lives in `semantic_schemas/` JSON files.
+
+### No New UOL Primitives
+
+State deltas and relation deltas are schema-level declarations compiled into
+existing UOL primitives:
+- `state` atoms + `has_property` edges (for state occupancy)
+- `causes` edges (for delta effects)
+- Relation atoms + `has_role` edges (for relation deltas)
+
+Do not add new atom kinds or edge types beyond the 16 + 16 defined in Section 7.
+
+### Action Slots Are Structural By Default
+
+Action operator slots (actor, object, target, etc.) are `structural=true`,
+`answerable=false`, `projection_policy="none"` by default. Making them answerable
+by default recreates the `has_role` bug where structural bindings pollute the
+answerable relation frame space. Only entity-kind native slots marked
+`"projection": "answerable"` produce answerable frames.
+
+### No Backward Compatibility For Old Meaning Systems — ENFORCED
+
+The old meaning systems (flat keyword maps, hardcoded `ACTIONS`/`STATES`/`NEEDS`
+dicts, `event_schema_loader.py`, `EventSchemaStore`, `EnglishLanguageAdapter`,
+`JSONLanguageAdapter`) are **deleted and replaced** by the Semantic Schema Kernel.
+No backward compatibility layers exist. Old tests verifying hardcoded behavior
+are deleted and replaced with schema-driven tests.
+
 ## 8. Learning Law
 
 CEMM learns by semantic compression.
@@ -409,6 +471,10 @@ bury learned knowledge inside meaning_perceptor.py
 collapse candidate meanings too early
 ignore candidate sets, graph branches, anaphora, or discourse edges
 hide limitations to make a demo look good
+hardcode action/state/need meaning in Python dicts instead of Semantic Schema Kernel
+add new UOL edge types for state deltas — use existing primitives (state atoms + causes edges)
+make action operator slots answerable by default — they are structural
+keep backward compatibility layers for old meaning systems — replace them
 ```
 
 Seed heuristics are allowed only as explicit fallback scaffolding.
@@ -484,4 +550,9 @@ Before closing a task, verify:
 - [ ] Realization is traceable to a plan, selected evidence, and graph state.
 - [ ] Tests cover affected graph-packet invariants.
 - [ ] Known limitations are documented honestly instead of hidden behind fallback strings.
+- [ ] No new UOL atom kinds or edge types beyond the 16 + 16 in Section 7.
+- [ ] Action/state meaning comes from Semantic Schema Kernel, not hardcoded dicts.
+- [ ] Language files are alias layers only — no schema info in action_keywords.json.
+- [ ] Action slots are structural by default, not answerable.
+- [ ] State deltas are compiled into existing UOL primitives (state atoms + causes edges), not new edge types.
 

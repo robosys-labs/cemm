@@ -42,6 +42,28 @@ CANONICAL_EDGE_TYPES = frozenset({
     "has_property",
 })
 
+# Schema-defined predicate keys — used by PredicateSchemaStore for answerable
+# relation frames. These are NOT canonical edge types; they are domain-specific
+# relation keys that the schema kernel maps onto the 16 canonical edge types
+# via projection policies.
+_PREDICATE_KEYS = frozenset({
+    "has_name",
+    "has_age",
+    "has_alias",
+    "knows_about",
+    "capability",
+    "creator",
+    "architecture",
+    "does",
+    "purpose",
+    "limitation",
+    "answers_identity_as",
+    "name",
+    "domain",
+    "likes",
+    "dislikes",
+})
+
 
 @dataclass
 class UOLAtom:

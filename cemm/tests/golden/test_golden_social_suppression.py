@@ -9,10 +9,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 os.environ["CEMM_EXPORT_PATH"] = ""
 
 from ...memory.durable_semantic_store import DurableSemanticStore
-from ...learning.memory_patch_compiler import MemoryPatchCompiler
-from ...learning.patch_validator import PatchValidator
-from ...learning.patch_committer import PatchCommitter
-from ...store.store import Store
 
 
 def _query_by_domain(store: DurableSemanticStore, domain: str) -> list:

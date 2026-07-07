@@ -81,7 +81,8 @@ class FeedbackSignal:
     correction_text: str | None = None
 
     def __post_init__(self) -> None:
-        self.signal.kind = SignalKind.FEEDBACK
+        import dataclasses
+        self.signal = dataclasses.replace(self.signal, kind=SignalKind.FEEDBACK)
 
     @classmethod
     def create(

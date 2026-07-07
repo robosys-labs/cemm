@@ -20,6 +20,6 @@
   "they": {"entity_type": "person", "role": "actor", "source": "pronoun"},
   "them": {"entity_type": "person", "role": "target", "source": "pronoun"},
   "their": {"entity_type": "person", "role": "possessor", "source": "pronoun"},
-  "it": {"entity_type": "object", "role": "target", "source": "pronoun"},
-  "its": {"entity_type": "object", "role": "possessor", "source": "pronoun"}
+  "it": {"entity_type": "object", "role": "target", "source": "pronoun", "confidence": 0.75},
+  "its": {"entity_type": "object", "role": "possessor", "source": "pronoun", "confidence": 0.75}
 }

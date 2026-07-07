@@ -68,6 +68,16 @@ def _detect_question_type(output_text: str) -> tuple[str, str]:
     # Check if it ends with a question mark or has question structure
     is_question = text_lower.endswith("?") or (
         bool(tokens) and tokens[0] in ("do", "are", "is", "can", "would", "should", "how", "what", "why", "could")
+    ) or any(
+        re.search(pattern, text_lower)
+        for pattern in [
+            r"i'?d like to know",
+            r"i want to know",
+            r"tell me (about|what|how|why|when|where)",
+            r"could you (tell|explain|describe)",
+            r"can you (tell|explain|describe)",
+            r"what(?:'s| is| are) your",
+        ]
     )
     if not is_question:
         return ("", "")
@@ -111,11 +121,11 @@ class OutputStateUpdater:
         """
         q_type, expected_answer = _detect_question_type(output_text)
 
-        pending_q = q_type if q_type else None
-        expected_type = expected_answer if expected_answer else None
-
         # If the output is not a question, clear any pending question
-        if not pending_q:
+        if q_type:
+            pending_q = q_type
+            expected_type = expected_answer
+        else:
             pending_q = None
             expected_type = None
 
@@ -139,6 +149,9 @@ class OutputStateUpdater:
         must be cleared; otherwise the next user turn can be misinterpreted as
         an answer to an older assistant question.
         """
-        kernel.conversation.last_assistant_response_mode = update.last_assistant_response_mode
-        kernel.conversation.pending_assistant_question = update.pending_assistant_question or ""
-        kernel.conversation.expected_user_answer_type = update.expected_user_answer_type or ""
+        if update.last_assistant_response_mode is not None:
+            kernel.conversation.last_assistant_response_mode = update.last_assistant_response_mode
+        if update.pending_assistant_question is not None:
+            kernel.conversation.pending_assistant_question = update.pending_assistant_question
+        if update.expected_user_answer_type is not None:
+            kernel.conversation.expected_user_answer_type = update.expected_user_answer_type

@@ -64,7 +64,10 @@ class SkillInductor:
 
     def _update_candidates(self, record: InductionRecord) -> None:
         """Update candidate procedure models based on new observations."""
-        key = f"{record.goal_key}::{hash(record.slot_pattern)}::{hash(record.tool_sequence)}"
+        import hashlib
+        slot_hash = hashlib.sha256(str(record.slot_pattern).encode()).hexdigest()[:16]
+        tool_hash = hashlib.sha256(str(record.tool_sequence).encode()).hexdigest()[:16]
+        key = f"{record.goal_key}::{slot_hash}::{tool_hash}"
 
         if key not in self._candidates:
             self._candidates[key] = InductionCandidate(

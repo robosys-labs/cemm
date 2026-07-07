@@ -23,10 +23,12 @@ class SemanticFingerprint:
     role_tokens: set[str] = field(default_factory=set)
 
     def jaccard(self, other: SemanticFingerprint) -> float:
-        union = self.key_tokens | other.key_tokens | self.surface_tokens | other.surface_tokens | self.role_tokens | other.role_tokens
+        self_all = self.key_tokens | self.surface_tokens | self.role_tokens
+        other_all = other.key_tokens | other.surface_tokens | other.role_tokens
+        union = self_all | other_all
         if not union:
             return 0.0
-        intersection = self.key_tokens & other.key_tokens | self.surface_tokens & other.surface_tokens | self.role_tokens & other.role_tokens
+        intersection = self_all & other_all
         return len(intersection) / len(union)
 
 

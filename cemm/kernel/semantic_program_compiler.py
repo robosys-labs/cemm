@@ -24,6 +24,7 @@ _OBLIGATION_RANK = {
     "teaching": 3,
     "assertion": 4,
     "command": 5,
+    "self_reflect": 5,
     "exit": 6,
     "social": 7,
     "creative": 8,
@@ -112,6 +113,7 @@ class SemanticProgramCompiler:
         "capability_query": "question",
         "self_identity_query": "question",
         "self_knowledge_query": "question",
+        "user_profile_query": "question",
         "teaching": "teaching",
         "repair": "repair",
         "command": "command",
@@ -119,6 +121,8 @@ class SemanticProgramCompiler:
         "phatic_checkin": "social",
         "reciprocal_phatic": "social",
         "acknowledgment": "social",
+        "frustration_signal": "social",
+        "user_complaint": "social",
         "statement": "assertion",
         "session_exit": "exit",
         "user_state_report": "assertion",
@@ -145,16 +149,44 @@ class SemanticProgramCompiler:
             if atom.kind == "permission" and atom.key in ("deny", "restrict"):
                 kind_scores["safety"] = kind_scores.get("safety", 0.0) + atom.confidence
 
+        # Check if we already have a question or social intent before
+        # adding assertion scores from structural edges.
+        has_question_or_social = (
+            kind_scores.get("question", 0.0) > 0
+            or kind_scores.get("social", 0.0) > 0
+        )
+        # If social score comes from frustration/evaluative intent,
+        # suppress question from asks_about edges — banter like
+        # "you're dumb aren't you?" should be social, not question.
+        # But don't suppress for greetings/phatic which can coexist
+        # with legitimate questions (e.g. "hi, what can you do?").
+        _SOCIAL_OVERRIDE_KEYS = frozenset({
+            "frustration_signal", "user_complaint",
+        })
+        social_overrides_question = False
+        for aid in atom_ids:
+            atom = graph.atoms.get(aid)
+            if atom is None:
+                continue
+            if atom.kind == "intent" and atom.key in _SOCIAL_OVERRIDE_KEYS:
+                social_overrides_question = True
+                break
+
         for edge in graph.edges:
             if edge.group_id == group.id:
                 if edge.edge_type == "asks_about":
-                    kind_scores["question"] = kind_scores.get("question", 0.0) + edge.confidence
+                    if not social_overrides_question:
+                        kind_scores["question"] = kind_scores.get("question", 0.0) + edge.confidence
                 if edge.edge_type == "teaches":
                     kind_scores["teaching"] = kind_scores.get("teaching", 0.0) + edge.confidence
                 if edge.edge_type == "causes":
-                    kind_scores["assertion"] = kind_scores.get("assertion", 0.0) + edge.confidence
+                    # causes edges are discourse-level (reply obligation),
+                    # not content assertions — only count if no question/social intent
+                    if not has_question_or_social:
+                        kind_scores["assertion"] = kind_scores.get("assertion", 0.0) + edge.confidence
                 if edge.edge_type in ("is_a", "same_as"):
-                    kind_scores["assertion"] = kind_scores.get("assertion", 0.0) + edge.confidence
+                    if not has_question_or_social:
+                        kind_scores["assertion"] = kind_scores.get("assertion", 0.0) + edge.confidence
 
         if kind_scores:
             return max(kind_scores, key=lambda k: kind_scores[k])
@@ -191,10 +223,25 @@ class SemanticProgramCompiler:
         if not instructions:
             return "", []
 
+        def _info_content(inst: SemanticInstruction) -> int:
+            """Approximate information content by surface token count."""
+            return len((inst.surface or "").split())
+
+        def _effective_rank(inst: SemanticInstruction) -> int:
+            """Adjust rank by content length — longer surfaces get a small bonus."""
+            base = _OBLIGATION_RANK.get(inst.instruction_kind, 8)
+            content = _info_content(inst)
+            # When content is rich (3+ tokens), reduce effective rank by 1
+            # so content-rich assertions can compete with terse repairs
+            if content >= 3:
+                return max(1, base - 1)
+            return base
+
         scored = sorted(
             instructions,
             key=lambda inst: (
-                _OBLIGATION_RANK.get(inst.instruction_kind, 8),
+                _effective_rank(inst),
+                -_info_content(inst),
                 -inst.confidence,
             ),
         )

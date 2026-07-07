@@ -12,7 +12,6 @@ import os
 import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from cemm.store.store import Store
 from cemm.registry import Registry
 from cemm.kernel.pipeline import Pipeline
 from cemm.memory.concept_lattice import ConceptLattice
@@ -21,25 +20,21 @@ from cemm.memory.episodic_trace_store import EpisodicTraceStore
 from cemm.memory.persistent_lattice_store import PersistentLatticeStore
 from cemm.__main__ import process_input, seed_registry, seed_self_state
 
-_store = Store(":memory:")
 _registry = Registry()
 _persistent_store = PersistentLatticeStore(":memory:")
 _concept_lattice = ConceptLattice(persistent_store=_persistent_store)
 _construction_lattice = ConstructionLattice()
 _episodic_store = EpisodicTraceStore()
 _pipeline = Pipeline(
-    _store, _registry,
+    _registry,
     concept_lattice=_concept_lattice,
     construction_lattice=_construction_lattice,
     episodic_store=_episodic_store,
     auto_consolidate=True,
 )
 
-from cemm.learning.online import OnlineLearner
-_online_learner = OnlineLearner(_store.source_trust, _store.self_store, _store.claims, _store.models)
-
 seed_registry(_registry)
-seed_self_state(_store, concept_lattice=_concept_lattice, durable_store=_pipeline._runtime.durable_semantic_store)
+seed_self_state(concept_lattice=_concept_lattice, durable_store=_pipeline._runtime.durable_semantic_store)
 
 _context_id = "web_demo"
 _turn_count = [0]
@@ -564,8 +559,7 @@ class CEMMHandler(BaseHTTPRequestHandler):
                 data = json.loads(raw)
                 text = data.get("text", "")
                 output = process_input(
-                    text, _store, _registry, _pipeline,
-                    _online_learner, _context_id, _turn_count,
+                    text, _pipeline, _context_id, _turn_count,
                 )
                 payload: dict = {"response": output, "turn": _turn_count[0]}
                 if _DEBUG:

@@ -29,7 +29,7 @@ from ..types.meaning_percept import (
     SituationFrame,
     StateAtom,
 )
-from .event_schema_loader import EventSchemaStore, load_event_schemas
+from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
 
 
 _ROLE_FIELDS = (
@@ -111,41 +111,13 @@ class FrameBinder:
 
     def __init__(
         self,
-        event_schema_store: EventSchemaStore | None = None,
         schemas: dict[str, EventSchema] | None = None,
+        schema_kernel: SemanticSchemaKernel | None = None,
         ambiguity_margin: float = 0.08,
         min_role_score: float = 0.35,
     ) -> None:
-        self._event_store = event_schema_store or load_event_schemas()
+        self._kernel = schema_kernel or get_kernel()
         self._schemas = dict(schemas or {})
-        # Merge JSON-defined action schemas, keyed by action_key for lookup
-        for key, loaded in self._event_store.action_schemas.items():
-            if loaded.action_key and loaded.action_key not in self._schemas:
-                outcomes = [
-                    OutcomeAtom(
-                        affected_entity_role=o.get("affected_entity_role", ""),
-                        changed_dimension=o.get("changed_dimension", ""),
-                        direction=o.get("direction", "unknown"),
-                        confidence=o.get("confidence", 0.5),
-                        event_key=loaded.action_key,
-                    )
-                    for o in loaded.expected_outcomes
-                ]
-                self._schemas[loaded.action_key] = EventSchema(
-                    schema_key=loaded.schema_key,
-                    actor_role=loaded.actor_role,
-                    action_key=loaded.action_key,
-                    object_role=loaded.object_role,
-                    target_role=loaded.target_role,
-                    place_role=loaded.place_role,
-                    source_role=loaded.source_role,
-                    destination_role=loaded.destination_role,
-                    recipient_role=loaded.recipient_role,
-                    expected_outcomes=outcomes,
-                    examples=list(loaded.aliases),
-                    confidence=0.7,
-                    source="seed",
-                )
         self._ambiguity_margin = ambiguity_margin
         self._min_role_score = min_role_score
 
@@ -246,33 +218,34 @@ class FrameBinder:
         schema = self._schemas.get(key)
         if schema is not None:
             return schema
-        loaded = self._event_store.action_schemas.get(key)
-        if loaded is None:
+        op_schema = self._kernel.action_operators.get(key)
+        if op_schema is None:
             return None
         outcomes = [
             OutcomeAtom(
-                affected_entity_role=o.get("affected_entity_role", ""),
-                changed_dimension=o.get("changed_dimension", ""),
-                direction=o.get("direction", "unknown"),
-                confidence=o.get("confidence", 0.5),
-                event_key=loaded.action_key,
+                affected_entity_role=d.get("target", "actor"),
+                changed_dimension=d.get("dimension", ""),
+                direction=d.get("direction", "unknown"),
+                confidence=float(d.get("confidence", 0.5)),
+                event_key=op_schema.action_key,
             )
-            for o in loaded.expected_outcomes
+            for d in op_schema.state_deltas
         ]
+        slots = op_schema.slots
         return EventSchema(
-            schema_key=loaded.schema_key,
-            actor_role=loaded.actor_role,
-            action_key=loaded.action_key,
-            object_role=loaded.object_role,
-            target_role=loaded.target_role,
-            place_role=loaded.place_role,
-            source_role=loaded.source_role,
-            destination_role=loaded.destination_role,
-            recipient_role=loaded.recipient_role,
+            schema_key=op_schema.action_key,
+            actor_role="self" if "self" in slots.get("actor", {}).get("allowed_entity_kinds", []) else "actor",
+            action_key=op_schema.action_key,
+            object_role="object" if "object" in slots else None,
+            target_role="target" if "target" in slots else None,
+            place_role="place" if "place" in slots else None,
+            source_role=None,
+            destination_role="destination" if "destination" in slots else None,
+            recipient_role="recipient" if "recipient" in slots else None,
             expected_outcomes=outcomes,
-            examples=list(loaded.aliases),
+            examples=list(op_schema.aliases.get("en", [])),
             confidence=0.7,
-            source="seed",
+            source="schema_kernel",
         )
 
     def _with_context_referents(

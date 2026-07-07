@@ -23,9 +23,12 @@ _UOL_SEMANTICS_PATH = Path(__file__).parents[1] / "data" / "uol_semantics.json"
 
 
 def _load() -> dict:
-    if not _UOL_SEMANTICS_PATH.exists():
+    try:
+        if not _UOL_SEMANTICS_PATH.exists():
+            return {}
+        return json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
         return {}
-    return json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
 
 
 _DATA = _load()

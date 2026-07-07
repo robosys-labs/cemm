@@ -4,7 +4,12 @@
   "could": "proposed",
   "would": "proposed",
   "shall": "proposed",
+  "may": "proposed",
+  "might": "proposed",
   "must": "desired",
   "need": "desired",
+  "needs": "desired",
+  "want": "desired",
+  "wants": "desired",
   "have to": "desired"
 }

@@ -9,7 +9,6 @@ from ..types.context_kernel import ContextKernel
 from ..types.self_view import SelfView
 from ..types.permission import Permission
 from ..types.uol_graph import UOLGraph
-from ..store.store import Store
 from ..registry import Registry
 from ..registry.semantic_model_store import SemanticModelStore
 from ..learning.lexeme_memory import LexemeMemory
@@ -82,14 +81,12 @@ class PipelineResult:
 class Pipeline:
     def __init__(
         self,
-        store: Store,
         registry: Registry,
         concept_lattice: ConceptLattice | None = None,
         construction_lattice: ConstructionLattice | None = None,
         episodic_store: EpisodicTraceStore | None = None,
         auto_consolidate: bool = False,
     ) -> None:
-        self._store = store
         self._registry = registry
         self._builder = ContextKernelBuilder()
         self._lexeme_memory = LexemeMemory()
@@ -103,7 +100,6 @@ class Pipeline:
             concept_lattice=concept_lattice,
             construction_lattice=construction_lattice,
             episodic_store=self._episodic_store,
-            store=store,
             auto_consolidate=auto_consolidate,
         )
 
@@ -137,7 +133,6 @@ class Pipeline:
             trust=0.8,
             permission=Permission.public(),
         )
-        self._store.signals.put(signal)
         signal.normalized = self._text_normalizer.normalize(signal.content)
 
         # ── Kernel building ──
@@ -150,15 +145,14 @@ class Pipeline:
                 if hasattr(kernel.budget, k):
                     setattr(kernel.budget, k, v)
 
-        # ── Self view ──
-        self_state = self._store.self_store.latest()
-        if self_state:
-            kernel.self_view = SelfView.from_self_state(self_state, kernel.memory.working_claim_ids)
-        else:
-            kernel.self_view = SelfView()
+        # ── Self view (inline — no legacy Store needed) ──
+        kernel.self_view = SelfView()
 
         # ── Delegate to runtime (session restore/persist happens inside) ──
         cycle = self._runtime.run_turn(signal, kernel)
+
+        # ── Budget enforcement ──
+        self._check_budget(kernel, start)
 
         # ── Wrap result ──
         result = PipelineResult.from_cycle(cycle, kernel, signal, turn_index)
@@ -170,7 +164,7 @@ class Pipeline:
         elapsed = (time.time() - start) * 1000.0
         if elapsed > kernel.budget.latency_target_ms:
             working_ids = kernel.memory.working_signal_ids
-            if len(working_ids) > kernel.budget.max_entities:
-                kernel.memory.working_signal_ids = working_ids[:kernel.budget.max_entities]
+            if len(working_ids) > kernel.budget.max_signals:
+                kernel.memory.working_signal_ids = working_ids[:kernel.budget.max_signals]
             if len(kernel.world.active_claim_ids) > kernel.budget.max_claims:
                 kernel.world.active_claim_ids = kernel.world.active_claim_ids[:kernel.budget.max_claims]

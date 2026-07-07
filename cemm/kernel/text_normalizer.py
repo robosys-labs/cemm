@@ -6,18 +6,22 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+import logging
+
 from ..types.normalized_signal import NormalizedSignal
 from ..learning.ner_tagger import NERTagger
 from ..learning.lexeme_memory import LexemeMemory
+
+logger = logging.getLogger(__name__)
 
 
 def _load_default_ner_tagger() -> NERTagger | None:
     """Load the bundled learned NER tagger if available."""
     try:
-        weights_path = Path(__file__).parent / "data" / "models" / "ner_tagger_weights.json"
+        weights_path = Path(__file__).parents[1] / "data" / "models" / "ner_tagger_weights.json"
         if weights_path.exists():
             return NERTagger.load(weights_path)
-        alt_path = Path(__file__).parents[1] / "data" / "models" / "ner_tagger_weights.json"
+        alt_path = Path(__file__).parent / "data" / "models" / "ner_tagger_weights.json"
         if alt_path.exists():
             return NERTagger.load(alt_path)
     except Exception:
@@ -173,6 +177,7 @@ class TextNormalizer:
             raw_text=raw,
             normalized_forms=forms,
             canonical_form=forms[-1] if forms else "",
+            cased_form=cased_collapsed,
             detected_scripts=scripts,
             noise_features={
                 "emoji_count": emoji_count,
@@ -210,7 +215,9 @@ class TextNormalizer:
             if not bare:
                 continue
             # Exact noisy / typo map first.
-            canonical = self._noisy_map.get(bare) or self._typo_map.get(bare)
+            canonical = self._noisy_map.get(bare)
+            if canonical is None:
+                canonical = self._typo_map.get(bare)
             if canonical:
                 repaired.append(canonical)
                 slang_used = True
@@ -234,7 +241,10 @@ class TextNormalizer:
     def _best_match(self, word: str) -> str | None:
         best_score = 0.0
         best_word: str | None = None
+        first_char = word[0] if word else ""
         for known in self._known_words:
+            if first_char and known and known[0] != first_char:
+                continue
             score = self._matcher.similarity(word, known)
             if score > best_score:
                 best_score = score
@@ -252,7 +262,7 @@ class TextNormalizer:
                 if name:
                     names.add(name)
         except Exception:
-            pass
+            logger.debug("NER tagger failed", exc_info=True)
         return names
 
     def _detect_unknown_tokens(self, words: list[str]) -> list[str]:

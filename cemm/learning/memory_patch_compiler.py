@@ -8,7 +8,6 @@ This is the "store buffer" step before the MMU (PatchValidator) gate.
 from __future__ import annotations
 from typing import Any
 
-from ..types.claim import Claim
 from ..types.graph_patch import GraphPatch, PatchOperation
 from ..types.context_kernel import ContextKernel
 
@@ -63,40 +62,4 @@ class MemoryPatchCompiler:
             evidence_refs=list(evidence_signal_ids) if evidence_signal_ids else [],
             confidence=confidence,
             reason=f"compile:{subject_entity_id}:{predicate}",
-        )
-
-    def compile_from_claim(
-        self,
-        claim: Claim,
-        kernel: ContextKernel | None = None,
-    ) -> GraphPatch:
-        """Compile an already-constructed Claim back into a GraphPatch."""
-        op = PatchOperation(
-            operation="upsert_relation_candidate",
-            target_id=claim.id,
-            fields={
-                "claim_id": claim.id,
-                "subject_entity_id": claim.subject_entity_id,
-                "predicate": claim.predicate,
-                "object_value": str(claim.object_value) if claim.object_value is not None else "",
-                "object_entity_id": claim.object_entity_id or "",
-                "domain": claim.domain,
-                "confidence": claim.confidence,
-                "trust": claim.trust,
-                "source_id": claim.source_id,
-            },
-            confidence=claim.confidence,
-            reason=f"compile_from_claim:{claim.predicate}",
-        )
-        source_refs: list[str] = [claim.source_id] if claim.source_id else []
-        if kernel is not None and kernel.id:
-            source_refs.append(f"kernel:{kernel.id}")
-
-        return GraphPatch(
-            target="episodic_trace",
-            operations=[op],
-            source_refs=source_refs,
-            evidence_refs=list(claim.evidence_signal_ids or []),
-            confidence=claim.confidence,
-            reason=f"compile_from_claim:{claim.subject_entity_id}:{claim.predicate}",
         )

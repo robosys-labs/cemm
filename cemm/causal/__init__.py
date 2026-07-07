@@ -1,4 +1,3 @@
-from .inference import CausalInference
-from .simulation import SimulationEngine, SimulationResult
+from .causal_bridge import CausalBridge
 
-__all__ = ["CausalInference", "SimulationEngine", "SimulationResult"]
+__all__ = ["CausalBridge"]

@@ -2,7 +2,7 @@
 
 **A trainable event-centered memory model for context-aware agents.**
 
-CEMM is a pure-Python implementation of a meaning-first language architecture (v3.1) — a lean, practical system for context, memory, self-state, causal reasoning, recursive reflection, structural learning, and action. CEMM operates on foundational meaning atoms/primitives instead of matrices, enabling native language understanding and online learning.
+CEMM is a pure-Python implementation of a meaning-first language architecture (v4.2) — a semantic runtime with a unified Semantic Schema Kernel, UOL working-graph system, graph-patch learning, causal inference, and online learning. CEMM operates on foundational meaning atoms/primitives instead of matrices, enabling native language understanding and online learning.
 
 ## Core Primitives
 
@@ -15,12 +15,26 @@ CEMM is a pure-Python implementation of a meaning-first language architecture (v
 | `Action` | Something done or considered | What should happen next? |
 | `Self` | The system's persistent self-state | What am I, and how am I changing? |
 
-### Meaning Atoms (v3.0+)
+### Semantic Schema Kernel
+
+The Semantic Schema Kernel is the single canonical source for action, state, need, and entity meaning. It comprises seven schema registries loaded from JSON files:
+
+| Registry | Purpose |
+|---|---|
+| `EntityKindRegistry` | Entity kinds with native slot families and hierarchy |
+| `StateDimensionRegistry` | State families and dimensions on entity slots |
+| `SlotRegistry` | Slot definitions (role, entity kind constraints, cardinality) |
+| `ActionOperatorRegistry` | Action operators over typed slots with preconditions + state/relation deltas |
+| `AffordanceRegistry` | Affordance rules derived from action operator schemas |
+| `ProjectionPolicyRegistry` | Projection policy per slot/edge (structural vs answerable) |
+| `PatchOperationRegistry` | Typed patch operations (upsert_relation, upsert_state, etc.) |
+
+### Meaning Atoms
 
 | Atom | Meaning |
 |---|---|
 | `ReferentAtom` | Entity detected in signal (NER, capitalization, pronoun) |
-| `ActionAtom` | Event/action predicate |
+| `ActionAtom` | Event/action predicate with schema slots |
 | `StateAtom` | Reported state of an entity |
 | `RelationAtom` | Relationship between entities |
 | `NeedAtom` | Expressed need or goal |
@@ -31,20 +45,18 @@ CEMM is a pure-Python implementation of a meaning-first language architecture (v
 
 ```
 cemm/
-├── types/       # Foundational atoms + runtime packets (dataclasses)
-├── store/       # SQLite persistence (10 tables, 16 indexes)
-├── confidence/  # Log-odds math and scoring formulas
-├── registry/    # Predicate/entity/operator canonicalization + act type policy
-├── kernel/      # Pipeline runtime: MeaningPerceptor, FrameBinder, EntityFactExtractor,
-│                #   SituationFrameBuilder, OutcomeEvaluator, SafetyFrameDetector,
-│                #   ConversationActClassifier, RetrievalPlanner, RetrievalExecutor,
-│                #   ActResolutionPlanner, DecisionRouter, OutputStateUpdater
-├── retrieval/   # Structural retrieval + ranking + RetrievalExecutor
-├── operators/   # 10 typed operators (answer..abstain)
-├── synthesis/   # Template/extractive router + verifier
-├── causal/      # Causal inference + simulation engine
-├── learning/    # Online learning, NER, surface tagger
-└── training/    # Training export + task decomposition
+├── types/              # Foundational atoms + runtime packets (dataclasses)
+├── kernel/             # Semantic runtime: MeaningPerceptor, MeaningGraphBuilder,
+│                       #   SemanticCPU, SemanticKernelRuntime, ActResolutionPlanner,
+│                       #   SemanticSchemaKernel, AffordancePredictor, etc.
+├── data/
+│   ├── semantic_schemas/  # Canonical schema JSON files (7 registries)
+│   └── languages/         # Language alias packs (pronouns, deictics, states, needs)
+├── confidence/         # Log-odds math and scoring formulas
+├── causal/             # Causal inference + simulation engine
+├── learning/           # Online learning, NER, surface tagger, patch extraction
+├── memory/             # Concept/construction lattices, episodic trace, durable store
+└── tests/              # Test suite including golden schema pipeline tests
 ```
 
 ## Quick Start
@@ -68,40 +80,34 @@ python -m cemm --db path/to/db.sqlite                   # Persistent store
 python -m cemm.web_demo           # Browser demo at http://127.0.0.1:5000
 ```
 
-## Architecture (v3.1 Pipeline)
+## Architecture (v4.2 Semantic Runtime)
 
 ```
 Signal
-  -> ContextInferenceEngine (context before interpretation)
-  -> MeaningPerceptor (NER + unknown lexemes + POS-lite roles + pronouns/deixis + affect)
-  -> SituationFrameBuilder -> FrameBinder (atom-based scored role binding)
-  -> EntityFactExtractor (atom-first fact extraction with surface pattern fallback)
-  -> OutcomeEvaluator (predicted outcomes + entity-relative valences)
-  -> SafetyFrameDetector (harm prevention before decision)
-  -> SemanticInterpreter (SemanticEventGraph + UOL atoms)
-  -> ConversationActClassifier (multi-act packet classification)
-  -> RetrievalPlanner (explicit mode-driven retrieval plan)
-  -> RetrievalExecutor (plan-driven structural retrieval)
-  -> Ranker (confidence * trust * recency scoring)
-  -> CausalInference (precondition/effect matching)
-  -> ActResolutionPlanner (reply obligations + memory update plans + answer tasks)
-  -> DecisionRouter (action selection)
-  -> Synthesis Router (template/extractive/neural/abstain)
-  -> OutputStateUpdater (post-output conversation state)
-  -> Trace emission + online learning
+  -> MeaningPerceptor (normalize, segment, atomize via SchemaBackedLanguageAdapter)
+  -> MeaningPerceptPacket
+  -> MeaningGraphBuilder (schema-driven atom/edge creation, state deltas, entity kind validation)
+  -> UOLGraph (with adjacency index for O(degree) edge lookups)
+  -> SemanticAttentionController (focus selection)
+  -> SemanticProgramCompiler (compile semantic program)
+  -> SemanticObligationScheduler (schedule obligations)
+  -> RelationFrameCompiler (compile relation frames with projection policies)
+  -> SemanticQueryEngine (build + execute queries)
+  -> SemanticRealizer (realize response text)
+  -> ActResolutionPlanner (reply obligations + memory updates + answer tasks)
+  -> GraphPatchExtractor -> PatchValidator -> PatchCommitter
+  -> ConceptConsolidator (durable semantic structures)
 ```
 
-See `cemm/architecture.md` for the full v3.0 architecture and `cemm/cemm_v3_1_operational_meaning_spine.md` for the v3.1 operational spine.
+See `cemm/AGENTS.md` for the governing implementation guide and `cemm/newarch/semantic-schema-refactor.md` for the schema kernel refactor record.
 
 ## Tests
 
-267 tests covering:
-- ERCA invariants (drift-proof contract)
-- Foundational fixes (social/phatic, memory write, context-first, safety)
-- v3.1 operational spine (FrameBinder, EntityFactExtractor, ActResolutionPlanner, RetrievalExecutor)
-- CapabilityClassifier (supported/unsupported capability detection)
-- Store CRUD for all subsystems
-- Confidence math (log-odds, scoring)
-- Registry (canonicalization, JSON round-trip)
+80 tests covering:
+- Semantic Schema Kernel (7 registries, schema lookup, multilingual alias resolution)
+- Golden schema pipeline tests (10 end-to-end tests for schema-driven meaning flow)
+- UOLGraph construction, adjacency index, patch candidates
+- MeaningPerceptor, MeaningGraphBuilder, language adapter
+- Affordance prediction, relation frame compilation
 - Causal inference (prediction, simulation, closure)
 - Pipeline (signal persistence, kernel construction, full end-to-end)

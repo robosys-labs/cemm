@@ -101,6 +101,17 @@ _SEED_SCHEMAS: list[dict] = [
         "evidence_policy": "speaker_asserted",
     },
     {
+        "predicate_key": "has_age",
+        "relation_family": "property",
+        "argument_roles": ["owner", "age"],
+        "required_roles": ["owner", "age"],
+        "inverse_predicates": [],
+        "inheritance_behavior": "inherit",
+        "answer_projection": "age",
+        "freshness_policy": "any",
+        "evidence_policy": "speaker_asserted",
+    },
+    {
         "predicate_key": "has_alias",
         "relation_family": "property",
         "argument_roles": ["owner", "alias"],

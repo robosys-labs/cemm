@@ -6,11 +6,12 @@ Do not use archived files as implementation guidance.
 
 ## Current Active Guidance
 
-1. `AGENTS.md` — governing implementation guide (includes BLOCKER #1: causal-runtime wiring gap)
-2. `newarch/causal-runtime-wiring-fix.md` — master fix plan (BLOCKER #1)
-3. `newarch/consolidated_architecture.md` — architecture contract
-4. `newarch/3.3-uol-graph-architecture.md` — UOL graph architecture
-5. `newarch/core_loop_runtime.md` — runtime loop contract
+1. `AGENTS.md` — governing implementation guide (includes Semantic Schema Kernel architecture)
+2. `newarch/semantic-schema-refactor.md` — semantic schema kernel refactor (IMPLEMENTED — all 9 phases complete)
+3. `newarch/causal-runtime-wiring-fix.md` — causal-runtime wiring fix plan (partially addressed)
+4. `newarch/consolidated_architecture.md` — architecture contract
+5. `newarch/3.3-uol-graph-architecture.md` — UOL graph architecture
+6. `newarch/core_loop_runtime.md` — runtime loop contract
 
 ## Superseded Newarch Docs
 

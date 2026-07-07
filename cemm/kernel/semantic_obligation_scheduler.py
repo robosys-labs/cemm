@@ -121,6 +121,17 @@ class SemanticObligationScheduler:
             affordance_predictions=affordance_predictions,
         )
 
+        # H-007: If social reply was refined to a content obligation, switch
+        # entry to the higher-priority instruction so query uses its data
+        if kind == "social_reply" and obligation_kind != "social_reply":
+            for inst in program.instructions:
+                if inst.instruction_id == entry.instruction_id:
+                    continue
+                if _KIND_TO_OBLIGATION.get(inst.instruction_kind, "") == obligation_kind:
+                    entry = inst
+                    kind = inst.instruction_kind
+                    break
+
         suppressed: list[dict[str, Any]] = []
         for inst in program.instructions:
             if inst.instruction_id == entry.instruction_id:
@@ -209,8 +220,11 @@ class SemanticObligationScheduler:
     def _targets_user_profile(self, entry: Any, uol_graph: Any | None = None) -> bool:
         if uol_graph is None:
             return False
+        for atom in uol_graph.atoms.values():
+            if atom.kind == "intent" and atom.key == "user_profile_query":
+                return True
         has_user_entity = False
-        has_possessor_role = False
+        has_user_ref = False
         for aid in entry.atom_ids:
             atom = uol_graph.atoms.get(aid)
             if atom is None:
@@ -218,19 +232,40 @@ class SemanticObligationScheduler:
             if atom.kind == "entity" and atom.key == "user":
                 has_user_entity = True
             role = atom.features.get("role", "")
-            if role == "possessor" and atom.kind == "entity":
-                has_possessor_role = True
-        if has_user_entity and has_possessor_role:
+            if role in ("possessor", "speaker", "topic", "subject", "self_target") and atom.kind == "entity":
+                has_user_ref = True
+        if has_user_entity and has_user_ref:
             surface_lower = entry.surface.lower()
-            if "name" in surface_lower:
+            profile_keywords = (
+                "name", "age", "old", "email", "hobby", "location",
+                "address", "phone", "birthday", "occupation", "job",
+                "favorite", "favourite", "preference", "like",
+            )
+            if any(kw in surface_lower for kw in profile_keywords):
                 return True
+        # Fallback: if user entity is present and surface contains "my" + profile keyword
+        if has_user_entity:
+            surface_lower = entry.surface.lower()
+            if " my " in f" {surface_lower} " or surface_lower.startswith("my "):
+                profile_keywords = (
+                    "name", "age", "old", "email", "hobby", "location",
+                    "address", "phone", "birthday", "occupation", "job",
+                    "favorite", "favourite", "preference",
+                )
+                if any(kw in surface_lower for kw in profile_keywords):
+                    return True
         return False
+
+    _SELF_QUERY_INTENT_KEYS: frozenset = frozenset({
+        "self_identity_query",
+        "self_capability_query",
+        "self_knowledge_query",
+    })
 
     def _targets_self(self, entry: Any, uol_graph: Any | None = None) -> bool:
         if uol_graph is not None:
-            for aid in entry.atom_ids:
-                atom = uol_graph.atoms.get(aid)
-                if atom is not None and atom.kind == "self":
+            for atom in uol_graph.atoms.values():
+                if atom.kind == "intent" and atom.key in self._SELF_QUERY_INTENT_KEYS:
                     return True
         for slot_key in entry.output_slots:
             if "self" in slot_key or "identity" in slot_key:

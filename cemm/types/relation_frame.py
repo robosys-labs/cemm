@@ -9,6 +9,7 @@ and "I can reason with it."
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 RELATION_FAMILIES = frozenset({
@@ -65,3 +66,4 @@ class RelationFrame:
     structural: bool = False
     projection_policy: str = "object"
     query_tags: list[str] = field(default_factory=list)
+    features: dict[str, Any] = field(default_factory=dict)

@@ -40,7 +40,11 @@ class SemanticCPU:
         construction_lattice: ConstructionLattice | None = None,
         episodic_store: EpisodicTraceStore | None = None,
         auto_consolidate: bool = False,
+        schema_kernel: Any | None = None,
+        predicate_schema_store: Any | None = None,
     ) -> None:
+        from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
+        self.schema_kernel = schema_kernel or get_kernel()
         self.concept_lattice = concept_lattice or ConceptLattice()
         self.construction_lattice = construction_lattice or ConstructionLattice()
         self.episodic_store = episodic_store or EpisodicTraceStore()
@@ -50,15 +54,18 @@ class SemanticCPU:
             concept_lattice=self.concept_lattice,
             construction_lattice=self.construction_lattice,
             port_resolver=LatticePortResolver(self.concept_lattice),
-            affordance_lattice=AffordancePredictor(),
+            affordance_lattice=AffordancePredictor(schema_kernel=self.schema_kernel),
+            schema_kernel=self.schema_kernel,
+            predicate_schema_store=predicate_schema_store,
         )
         self.construction_matcher = ConstructionMatcher(
             construction_lattice=self.construction_lattice,
         )
         self.perceptor = MeaningPerceptor(
             construction_matcher=self.construction_matcher,
+            graph_builder=self.graph_builder,
+            schema_kernel=self.schema_kernel,
         )
-        self.perceptor._graph_builder = self.graph_builder
         self.planner = ActResolutionPlanner()
         self.patch_extractor = GraphPatchExtractor()
         self.consolidator = ConceptConsolidator(

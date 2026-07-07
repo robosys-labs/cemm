@@ -1,10 +1,25 @@
 from __future__ import annotations
 import json
+import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..training.tl1_feature_extractor import Feature
-from ..training.tl1_hash_encoder import hash_encode
+
+@dataclass
+class Feature:
+    namespace: str
+    key: str
+    value: float = 1.0
+
+
+def hash_encode(features: list[Feature], num_buckets: int = 1024) -> dict[int, float]:
+    result: dict[int, float] = {}
+    for feat in features:
+        raw = f"{feat.namespace}:{feat.key}"
+        h = int(hashlib.md5(raw.encode()).hexdigest(), 16) % num_buckets
+        result[h] = result.get(h, 0.0) + feat.value
+    return result
 
 
 class NERTagger:

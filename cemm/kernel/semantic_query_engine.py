@@ -16,6 +16,7 @@ not just produce diagnostics.
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -43,7 +44,27 @@ _INTERNAL_SURFACE_VALUES: frozenset = frozenset({
     "clarity_required",
     "event_candidate",
     "neutral",
+    "feeling",
+    "appreciation",
+    "concern",
+    "unknown",
+    "none",
+    "null",
 })
+
+# Pattern for state delta surfaces produced by _compile_state_deltas in
+# meaning_graph_builder.py: "dimension:direction" (e.g. "preference:increase",
+# "energy:decreased"). These are internal state representation, not answers.
+_STATE_DELTA_SURFACE_RE = re.compile(r"^[a-z_]+(:\.[a-z_]+)*:[a-z_]+$")
+
+
+def _is_internal_surface(value: str) -> bool:
+    """Check if a surface value is internal scaffolding that must not leak as an answer."""
+    if not value:
+        return False
+    if value in _INTERNAL_SURFACE_VALUES:
+        return True
+    return bool(_STATE_DELTA_SURFACE_RE.match(value))
 
 _NON_ANSWER_TEMPLATES: dict[str, str] = {
     "exit": "session_exit",
@@ -52,6 +73,7 @@ _NON_ANSWER_TEMPLATES: dict[str, str] = {
     "continue_teaching": "teaching_continuation",
     "abstain_policy": "abstain",
     "ask_clarification": "ask_clarification",
+    "repair": "confusion_repair",
     "answer_self_identity": "abstain",
     "answer_self_capability": "abstain",
     "answer_self_knowledge": "abstain",
@@ -64,7 +86,15 @@ _OBLIGATION_KIND_TO_RELATION_KEY: dict[str, str] = {
     "answer_self_model": "answers_identity_as",
     "answer_self_capability": "capability",
     "answer_self_knowledge": "knows_about",
-    "answer_user_profile": "has_name",
+    "answer_user_profile": "has_property",
+}
+
+_RELATION_KEY_LABELS: dict[str, str] = {
+    "has_name": "name",
+    "has_age": "age",
+    "has_alias": "alias",
+    "has_role": "role",
+    "has_property": "value",
 }
 
 _OBLIGATION_KIND_TO_SUBJECT_ENTITY: dict[str, str] = {
@@ -104,9 +134,19 @@ class SemanticQueryEngine:
             subject_constraint.surface = entry.surface or ""
             subject_constraint.confidence = entry.confidence
 
+            # Known structural relation types that should never be used
+            # as answerable frames, even if the structural flag isn't set
+            # (e.g., durable store frames don't preserve the flag).
+            _NON_ANSWERABLE_KEYS = frozenset({
+                "has_role", "causes", "enables", "prevents",
+                "before", "after", "refers_to", "modifies",
+                "teaches", "asks_about",
+                "is_a", "same_as", "part_of", "used_for",
+            })
             answerable_frames = [
                 f for f in relation_frames
                 if f.answerable and not f.structural
+                and f.relation_key not in _NON_ANSWERABLE_KEYS
             ]
 
             # For specific self-query obligations, use the obligation kind
@@ -120,6 +160,14 @@ class SemanticQueryEngine:
                 subject_entity = _OBLIGATION_KIND_TO_SUBJECT_ENTITY.get(
                     obligation.obligation_kind, "self"
                 )
+                # For user_profile queries, determine relation key from surface
+                # text — role/job/title → has_role, everything else → has_property
+                if obligation.obligation_kind == "answer_user_profile" and entry is not None:
+                    surface_lower = (entry.surface or "").lower()
+                    if "job" in surface_lower or "occupation" in surface_lower or "work" in surface_lower or "role" in surface_lower or "title" in surface_lower:
+                        preferred_relation_key = "has_role"
+                    else:
+                        preferred_relation_key = "has_property"
                 # Set relation_key and subject entity directly from the mapping.
                 # The durable store frames (self-knowledge) are not in turn_frames,
                 # so we must not make relation_key dependent on finding matching
@@ -162,6 +210,16 @@ class SemanticQueryEngine:
                                     f for f in answerable_frames
                                     if f.subject.entity_id == "self"
                                 ]
+                    # Surface-based fallback: match entry surface tokens
+                    # against frame subject/object surfaces and concept_ids.
+                    # This catches concept queries like "who is the president?"
+                    # where the durable store has is_a(president_of_nigeria, tinubu)
+                    # but the current turn's atoms don't share IDs with the
+                    # original teaching turn's atoms.
+                    if not matching_frames and entry is not None:
+                        matching_frames = self._match_frames_by_surface(
+                            answerable_frames, entry, uol_graph
+                        )
                 if matching_frames:
                     best = self._select_best_frame(matching_frames, entry.surface or "")
                     relation_key = best.relation_key
@@ -259,11 +317,11 @@ class SemanticQueryEngine:
             slot_name, surface, concept_id, entity_id = self._project_frame(
                 frame, projection_policy,
             )
-            if surface in _INTERNAL_SURFACE_VALUES:
+            if _is_internal_surface(surface):
                 continue
-            if surface == "" and concept_id.replace("concept:", "") in _INTERNAL_SURFACE_VALUES:
+            if surface == "" and _is_internal_surface(concept_id.replace("concept:", "")):
                 continue
-            if surface == "" and concept_id == "" and entity_id in _INTERNAL_SURFACE_VALUES:
+            if surface == "" and concept_id == "" and _is_internal_surface(entity_id):
                 continue
             slot_fill = SlotFill(
                 slot_name=slot_name,
@@ -275,6 +333,7 @@ class SemanticQueryEngine:
                 evidence_refs=list(frame.evidence_refs),
                 confidence=frame.confidence,
                 is_inherited=bool(frame.inherited_from),
+                features=dict(frame.features) if frame.features else {},
             )
             if self._algebra is not None:
                 slot_fill.explanation_path = self._algebra.explain_path(frame, relation_frames)
@@ -332,7 +391,7 @@ class SemanticQueryEngine:
     ) -> RealizationContract:
         response_mode = obligation.response_mode
         intent = obligation.obligation_kind
-        template_key = self._template_for_obligation(obligation, binding)
+        template_key = self._template_for_obligation(obligation, binding, program)
 
         filled = [f.slot_name for f in binding.slot_fills if f.concept_id or f.entity_id or f.surface]
         unfilled = [s for s in obligation.required_slots if s not in filled]
@@ -358,6 +417,19 @@ class SemanticQueryEngine:
                     source_relation_id=best.source_frame_ids[0] if best.source_frame_ids else "",
                     confidence=best.confidence,
                 )
+                if obligation.obligation_kind == "answer_user_profile" and best.relation_key:
+                    prop_dim = best.features.get("property_dimension", "")
+                    if prop_dim:
+                        label = prop_dim
+                    else:
+                        label = _RELATION_KEY_LABELS.get(best.relation_key, best.relation_key)
+                    slots["label"] = RealizationSlot(
+                        slot_key="label",
+                        slot_kind="profile",
+                        value=label,
+                        source_binding_id=binding.binding_id,
+                        confidence=best.confidence,
+                    )
             if best.explanation_path:
                 slots["explanation"] = RealizationSlot(
                     slot_key="explanation",
@@ -373,8 +445,10 @@ class SemanticQueryEngine:
                 lower = surface.lower()
                 if lower.startswith("remember "):
                     surface = surface[len("remember "):]
-                # Shift first-person pronouns to second-person for system echo
+                # Shift pronouns for system echo
                 surface = self._shift_pronouns_for_echo(surface)
+                # Sanitize before echoing to user
+                surface = self._sanitize_echo(surface)
                 slots["answer"] = RealizationSlot(
                     slot_key="answer",
                     slot_kind="surface",
@@ -452,25 +526,112 @@ class SemanticQueryEngine:
 
     @staticmethod
     def _shift_pronouns_for_echo(surface: str) -> str:
-        """Shift user's first-person pronouns to second-person for system echo."""
+        """Shift pronouns bidirectionally for system echo.
+
+        User's first-person pronouns (I, my, me, mine) → second-person (you, your, yours).
+        User's second-person pronouns (you, your, yourself) referring to the AI → first-person (I, my, myself).
+        Uses placeholder tokens to avoid double-replacement.
+        """
         import re
-        replacements = [
-            (r'\bI\b', 'you'),
-            (r'\bI\'m\b', "you're"),
-            (r'\bIm\b', "you're"),
-            (r'\bmy\b', 'your'),
-            (r'\bme\b', 'you'),
-            (r'\bmine\b', 'yours'),
+        # Phase 1: first-person → placeholders (user talking about themselves)
+        replacements_phase1 = [
+            (r'\bI\b', '\x00YOU\x00'),
+            (r"\bI'm\b", "\x00YOURE\x00"),
+            (r'\bIm\b', "\x00YOURE\x00"),
+            (r'\bmy\b', '\x00YOUR\x00'),
+            (r'\bme\b', '\x00YOU2\x00'),
+            (r'\bmine\b', '\x00YOURS\x00'),
+            (r'\bmyself\b', '\x00YOURSELF\x00'),
+            (r'\bours\b', '\x00YOURS\x00'),
+            (r'\bour\b', '\x00YOUR\x00'),
+        ]
+        # Phase 2: second-person → first-person (user talking about the AI)
+        replacements_phase2 = [
+            (r"\byou're\b", "\x00IM\x00"),
+            (r"\byoure\b", "\x00IM\x00"),
+            (r'\byourself\b', '\x00MYSELF\x00'),
+            (r'\byourselves\b', '\x00OURSELVES\x00'),
+            (r'\byours\b', '\x00MINE\x00'),
+            (r'\byour\b', '\x00MY\x00'),
+            (r'\byou\b', '\x00I\x00'),
+        ]
+        # Phase 3: resolve placeholders to final text
+        placeholder_resolves = [
+            ('\x00YOU\x00', 'you'),
+            ('\x00YOURE\x00', "you're"),
+            ('\x00YOUR\x00', 'your'),
+            ('\x00YOU2\x00', 'you'),
+            ('\x00YOURS\x00', 'yours'),
+            ('\x00YOURSELF\x00', 'yourself'),
+            ('\x00I\x00', 'I'),
+            ('\x00IM\x00', "I'm"),
+            ('\x00MY\x00', 'my'),
+            ('\x00MYSELF\x00', 'myself'),
+            ('\x00MINE\x00', 'mine'),
+            ('\x00OURSELVES\x00', 'ourselves'),
         ]
         result = surface
-        for pattern, replacement in replacements:
+        for pattern, replacement in replacements_phase1:
             result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+        for pattern, replacement in replacements_phase2:
+            result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+        for placeholder, final in placeholder_resolves:
+            result = result.replace(placeholder, final)
         return result
 
     @staticmethod
+    def _sanitize_echo(surface: str) -> str:
+        """Sanitize user surface before echoing in store confirmation.
+
+        - Strips HTML tags to prevent XSS
+        - Removes control characters
+        - Limits length to 200 characters
+        - Collapses whitespace
+        """
+        import re
+        # Strip HTML tags
+        surface = re.sub(r'<[^>]+>', '', surface)
+        # Remove control characters (except normal whitespace)
+        surface = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', surface)
+        # Collapse whitespace
+        surface = re.sub(r'\s+', ' ', surface).strip()
+        # Limit length
+        if len(surface) > 200:
+            surface = surface[:197] + '...'
+        return surface
+
+    @staticmethod
     def _select_best_frame(frames: list[RelationFrame], question_surface: str) -> RelationFrame:
-        """Pick the best frame by confidence. Relation key filtering is handled upstream."""
-        return max(frames, key=lambda f: f.confidence)
+        """Pick the best frame by token overlap with question, then confidence."""
+        import re
+        _STOP = frozenset({
+            "who", "what", "where", "when", "why", "how", "which",
+            "do", "does", "did", "is", "are", "am", "was", "were",
+            "can", "could", "would", "should", "will", "might",
+            "the", "a", "an", "of", "in", "on", "at", "to", "for",
+            "and", "or", "but", "not", "no", "yes",
+            "i", "me", "my", "mine", "we", "us", "our",
+            "you", "your", "yours", "it", "its", "they", "them",
+            "that", "this", "these", "those",
+            "self", "user", "world", "conversation", "memory",
+        })
+        token_re = re.compile(r"[^\W_]+", re.UNICODE)
+        q_tokens = {t for t in token_re.findall((question_surface or "").lower()) if t not in _STOP}
+
+        def _frame_score(f: RelationFrame) -> tuple[int, float]:
+            if not q_tokens:
+                return (0, f.confidence)
+            subj = (f.subject.surface or "").lower()
+            obj = (f.object.surface or "").lower()
+            subj_c = (f.subject.concept_id or "").lower().replace("concept:", "").replace("_", " ")
+            obj_c = (f.object.concept_id or "").lower().replace("concept:", "").replace("_", " ")
+            frame_tokens: set[str] = set()
+            for text in (subj, obj, subj_c, obj_c):
+                frame_tokens |= {t for t in token_re.findall(text) if t not in _STOP}
+            overlap = len(q_tokens & frame_tokens)
+            return (overlap, f.confidence)
+
+        return max(frames, key=_frame_score)
 
     def _frame_matches_entry(self, frame: RelationFrame, entry: Any) -> bool:
         if hasattr(entry, "atom_ids"):
@@ -515,13 +676,112 @@ class SemanticQueryEngine:
                 return True
         return False
 
-    def _template_for_obligation(self, obligation: ObligationFrame, binding: AnswerBinding) -> str:
+    def _match_frames_by_surface(
+        self,
+        frames: list[RelationFrame],
+        entry: Any,
+        uol_graph: Any | None = None,
+    ) -> list[RelationFrame]:
+        """Match frames by surface token overlap with the entry.
+
+        Extracts content tokens from the entry's atom surfaces and the
+        entry surface itself, then matches them against frame subject/object
+        surfaces and concept_ids. Excludes structural frames (self-knowledge,
+        enables, causes, has_role) to avoid false matches.
+        """
+        import re
+        _STOP = frozenset({
+            "who", "what", "where", "when", "why", "how", "which",
+            "do", "does", "did", "is", "are", "am", "was", "were",
+            "can", "could", "would", "should", "will", "might",
+            "the", "a", "an", "of", "in", "on", "at", "to", "for",
+            "and", "or", "but", "not", "no", "yes",
+            "i", "me", "my", "mine", "we", "us", "our",
+            "you", "your", "yours", "it", "its", "they", "them",
+            "that", "this", "these", "those",
+            "self", "user", "world", "conversation", "memory",
+        })
+        token_re = re.compile(r"[^\W_]+", re.UNICODE)
+
+        # Collect content tokens from entry surface and graph atoms
+        entry_surface = (entry.surface or "").lower()
+        entry_tokens = {t for t in token_re.findall(entry_surface) if t not in _STOP}
+
+        if uol_graph is not None:
+            for aid in getattr(entry, "atom_ids", []):
+                atom = uol_graph.atoms.get(aid)
+                if atom is None:
+                    continue
+                if atom.kind in ("entity", "concept", "self", "relation", "quality", "state"):
+                    atom_surface = (atom.surface or "").lower()
+                    atom_tokens = {t for t in token_re.findall(atom_surface) if t not in _STOP}
+                    entry_tokens |= atom_tokens
+
+        if not entry_tokens:
+            return []
+
+        # Match against frames — check if any content token appears in
+        # the frame's subject or object surface/concept_id
+        _STRUCTURAL_RELATIONS = frozenset({
+            "has_role", "causes", "enables", "prevents",
+            "before", "after", "refers_to", "modifies",
+            "teaches", "asks_about",
+            "is_a", "same_as", "part_of", "used_for",
+        })
+        matches: list[RelationFrame] = []
+        for f in frames:
+            if f.structural:
+                continue
+            if f.relation_key in _STRUCTURAL_RELATIONS:
+                continue
+            subj_surface = (f.subject.surface or "").lower()
+            obj_surface = (f.object.surface or "").lower()
+            subj_concept = (f.subject.concept_id or "").lower()
+            obj_concept = (f.object.concept_id or "").lower()
+
+            # Extract tokens from frame surfaces and concept_ids
+            frame_tokens: set[str] = set()
+            for text in (subj_surface, obj_surface):
+                frame_tokens |= {t for t in token_re.findall(text) if t not in _STOP}
+            for text in (subj_concept, obj_concept):
+                # concept_id is like "concept:president_of_nigeria"
+                for part in text.replace("concept:", "").replace("_", " ").split():
+                    if part and part not in _STOP:
+                        frame_tokens.add(part)
+
+            if entry_tokens & frame_tokens:
+                overlap = len(entry_tokens & frame_tokens)
+                min_overlap = max(1, len(entry_tokens) // 3)
+                if overlap >= min_overlap:
+                    matches.append(f)
+
+        return matches
+
+    def _template_for_obligation(
+        self,
+        obligation: ObligationFrame,
+        binding: AnswerBinding,
+        program: Any | None = None,
+    ) -> str:
         if not binding.has_answer:
             if binding.abstention_reason.startswith("blocked"):
                 return "blocked"
             if binding.abstention_reason:
                 return "abstain"
             kind = obligation.obligation_kind
+            if kind == "social_reply" and program is not None:
+                entry = program.entry_instruction
+                if entry is not None:
+                    entry_surface = (entry.surface or "").lower()
+                    frustration_cues = ("dumb", "stupid", "useless", "broken",
+                                        "suck", "worthless", "worse")
+                    if any(cue in entry_surface for cue in frustration_cues):
+                        return "frustration_response"
+                    checkin_cues = ("how are you", "how do you do", "how's it going",
+                                    "hows it going", "how are things", "how you doing",
+                                    "how's your day", "hows your day")
+                    if any(cue in entry_surface for cue in checkin_cues):
+                        return "phatic_checkin"
             return _NON_ANSWER_TEMPLATES.get(kind, "general_conversation")
 
         kind = obligation.obligation_kind
@@ -545,6 +805,23 @@ class SemanticQueryEngine:
         if kind == "store_patch":
             return "store_confirmation"
         if kind == "social_reply":
+            # Distinguish greeting from phatic check-in or frustration
+            # by examining the entry instruction's intent atoms.
+            if program is not None:
+                entry = program.entry_instruction
+                if entry is not None:
+                    entry_surface = (entry.surface or "").lower()
+                    # Check for frustration/banter signals
+                    frustration_cues = ("dumb", "stupid", "useless", "broken",
+                                        "suck", "worthless", "worse")
+                    if any(cue in entry_surface for cue in frustration_cues):
+                        return "frustration_response"
+                    # Check for phatic check-in
+                    checkin_cues = ("how are you", "how do you do", "how's it going",
+                                    "hows it going", "how are things", "how you doing",
+                                    "how's your day", "hows your day")
+                    if any(cue in entry_surface for cue in checkin_cues):
+                        return "phatic_checkin"
             return "social_response"
         if kind == "acknowledge_emotional_context":
             return "emotional_response"

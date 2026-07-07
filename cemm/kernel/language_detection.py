@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .language_adapter import LanguageAdapter, get_adapter, EnglishLanguageAdapter, JSONLanguageAdapter
+from .language_adapter import LanguageAdapter, get_adapter, SchemaBackedLanguageAdapter
 
 
 _AVAILABLE_LANGUAGES: list[str] | None = None
@@ -41,18 +41,13 @@ def _adapter_known_tokens(adapter: LanguageAdapter) -> set[str]:
     """Extract known tokens from an adapter for language detection scoring."""
     tokens: set[str] = set()
 
-    if isinstance(adapter, EnglishLanguageAdapter):
-        tokens.update(adapter.PRONOUNS.keys())
-        tokens.update(adapter.ACTIONS.keys())
-        tokens.update(adapter.STATES.keys())
-        tokens.update(adapter.ENTITY_EXCLUDE)
-        tokens.update(adapter.DEICTICS)
-    elif isinstance(adapter, JSONLanguageAdapter):
+    if isinstance(adapter, SchemaBackedLanguageAdapter):
         tokens.update(adapter._pronouns.keys())
-        tokens.update(adapter._actions.keys())
         tokens.update(adapter._states.keys())
+        tokens.update(adapter._needs.keys())
         tokens.update(adapter._entity_exclude)
         tokens.update(adapter._deictics)
+        tokens.update(adapter.known_tokens)
 
     return tokens
 

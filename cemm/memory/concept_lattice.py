@@ -261,6 +261,21 @@ class ConceptLattice:
                         key=source_key,
                         atom_kind="entity",
                     ))
+                    if target_key:
+                        self.upsert(ConceptAtom(
+                            concept_id=f"concept:{target_key}",
+                            key=target_key,
+                            atom_kind="entity",
+                        ))
+                        self._dirty_ids.add(f"concept:{target_key}")
+                    existing_preds = set(
+                        (p.predicate_key, p.role) for p in source.acceptable_predicates
+                    )
+                    if (relation, "subject") not in existing_preds:
+                        source.acceptable_predicates.append(PredicateSignature(
+                            predicate_key=relation,
+                            role="subject",
+                        ))
                     applied.append(operation.target_id)
                     self._dirty_ids.add(f"concept:{source_key}")
             elif operation.operation == "observe_port_binding":

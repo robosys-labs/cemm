@@ -86,10 +86,20 @@ class DurableSemanticStore:
         self._concepts: dict[str, DurableConceptRecord] = {}
         self._predicates: dict[str, DurablePredicateRecord] = {}
         self._patch_journal: list[dict[str, Any]] = []
+        self._schema_store: Any = None
+        self._signal_store: dict[str, Any] = {}
 
         self._subject_index: dict[str, list[str]] = {}
         self._object_index: dict[str, list[str]] = {}
         self._relation_key_index: dict[str, list[str]] = {}
+
+    def set_schema_store(self, store: Any) -> None:
+        """Wire a PredicateSchemaStore for schema-aware queries (inheritance, etc.)."""
+        self._schema_store = store
+
+    @property
+    def signals(self) -> dict[str, Any]:
+        return self._signal_store
 
     # ── Relation operations ────────────────────────────────────
 
@@ -152,9 +162,9 @@ class DurableSemanticStore:
             rec = self._relations.get(rid)
             if rec is None:
                 continue
-            rec_subj = rec.subject_concept_id or rec.subject_entity_id or rec.subject_surface
-            rec_obj = rec.object_concept_id or rec.object_entity_id or rec.object_surface
-            if rec_subj == subject_key and rec_obj == object_key:
+            rec_subj_keys = {rec.subject_concept_id, rec.subject_entity_id, rec.subject_surface} - {""}
+            rec_obj_keys = {rec.object_concept_id, rec.object_entity_id, rec.object_surface} - {""}
+            if subject_key in rec_subj_keys and object_key in rec_obj_keys:
                 return rec
         return None
 
@@ -189,15 +199,25 @@ class DurableSemanticStore:
                 ids = set(self._relation_key_index.get(relation_key, []))
                 candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
 
-            subj_key = subject_concept_id or subject_entity_id
-            if subj_key:
-                ids = set(self._subject_index.get(subj_key, []))
-                candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
+            subj_keys = {subject_concept_id, subject_entity_id} - {""}
+            if subj_keys:
+                subj_ids: set[str] = set()
+                for sk in subj_keys:
+                    subj_ids |= set(self._subject_index.get(sk, []))
+                if subj_ids:
+                    candidate_ids = subj_ids if candidate_ids is None else (candidate_ids & subj_ids)
+                else:
+                    candidate_ids = set()
 
-            obj_key = object_concept_id or object_entity_id
-            if obj_key:
-                ids = set(self._object_index.get(obj_key, []))
-                candidate_ids = ids if candidate_ids is None else (candidate_ids & ids)
+            obj_keys = {object_concept_id, object_entity_id} - {""}
+            if obj_keys:
+                obj_ids: set[str] = set()
+                for ok in obj_keys:
+                    obj_ids |= set(self._object_index.get(ok, []))
+                if obj_ids:
+                    candidate_ids = obj_ids if candidate_ids is None else (candidate_ids & obj_ids)
+                else:
+                    candidate_ids = set()
 
             if candidate_ids is None:
                 candidate_ids = set(self._relations.keys())
@@ -222,8 +242,18 @@ class DurableSemanticStore:
         self, relation_key: str, subject: str, object_: str
     ) -> list[DurableRelationRecord]:
         results = []
+        subj_keys = {subject} - {""}
+        obj_keys = {object_} - {""}
         for rec in self._relations.values():
             if relation_key in rec.inverse_relation_keys:
+                if subj_keys:
+                    rec_obj_keys = {rec.object_concept_id, rec.object_entity_id, rec.object_surface} - {""}
+                    if not (subj_keys & rec_obj_keys):
+                        continue
+                if obj_keys:
+                    rec_subj_keys = {rec.subject_concept_id, rec.subject_entity_id, rec.subject_surface} - {""}
+                    if not (obj_keys & rec_subj_keys):
+                        continue
                 swapped = DurableRelationRecord(
                     record_id=f"{rec.record_id}_inv",
                     relation_key=relation_key,
@@ -258,6 +288,13 @@ class DurableSemanticStore:
         for rec in parent_records:
             if relation_key and rec.relation_key != relation_key:
                 continue
+            # Check predicate schema for inheritance behavior
+            if self._schema_store is not None:
+                schema = self._schema_store.get(rec.relation_key)
+                if schema is not None:
+                    inheritance_behavior = getattr(schema, 'inheritance_behavior', 'inherit')
+                    if inheritance_behavior == "none":
+                        continue
             child_frame = RelationFrame(
                 relation_id=f"{rec.record_id}_inh_{child_concept_id}",
                 relation_key=rec.relation_key,
@@ -393,14 +430,19 @@ class DurableSemanticStore:
 
     def _index_relation(self, record: DurableRelationRecord) -> None:
         self._relation_key_index.setdefault(record.relation_key, []).append(record.record_id)
-        subj_key = record.subject_concept_id or record.subject_entity_id or record.subject_surface
-        if subj_key:
-            self._subject_index.setdefault(subj_key, []).append(record.record_id)
-        obj_key = record.object_concept_id or record.object_entity_id or record.object_surface
-        if obj_key:
-            self._object_index.setdefault(obj_key, []).append(record.record_id)
+        subj_keys = {record.subject_concept_id, record.subject_entity_id, record.subject_surface} - {""}
+        for sk in subj_keys:
+            self._subject_index.setdefault(sk, []).append(record.record_id)
+        obj_keys = {record.object_concept_id, record.object_entity_id, record.object_surface} - {""}
+        for ok in obj_keys:
+            self._object_index.setdefault(ok, []).append(record.record_id)
+
+    _STRUCTURAL_RELATION_KEYS: frozenset = frozenset({
+        "has_role", "causes", "enables", "refers_to",
+    })
 
     def _record_to_frame(self, rec: DurableRelationRecord) -> RelationFrame | None:
+        is_structural = rec.relation_key in self._STRUCTURAL_RELATION_KEYS
         return RelationFrame(
             relation_id=rec.record_id,
             relation_key=rec.relation_key,
@@ -424,6 +466,8 @@ class DurableSemanticStore:
             evidence_refs=list(rec.evidence_refs),
             inverse_relation_keys=list(rec.inverse_relation_keys),
             confidence=rec.confidence,
+            answerable=not is_structural,
+            structural=is_structural,
         )
 
     def apply_validated_patch(
@@ -439,7 +483,7 @@ class DurableSemanticStore:
         if not validation.accepted:
             return CommitResult(
                 commit_id=commit_id,
-                status="rejected" if validation.status == "rejected" else "quarantined",
+                status=validation.status if validation.status in ("rejected", "needs_confirmation") else "quarantined",
             )
 
         for op in patch.operations:
@@ -460,7 +504,10 @@ class DurableSemanticStore:
                     source_atom_ids=op.fields.get("source_atom_ids"),
                     inverse_keys=op.fields.get("inverse_keys"),
                 )
-                created.append(rec.record_id)
+                if rec.support_count > 1:
+                    updated.append(rec.record_id)
+                else:
+                    created.append(rec.record_id)
             elif op.operation == "upsert_concept_candidate":
                 rec = self.add_concept(
                     concept_key=op.fields.get("concept_key", ""),
@@ -469,7 +516,10 @@ class DurableSemanticStore:
                     confidence=op.confidence,
                     parent_keys=op.fields.get("parent_keys"),
                 )
-                created.append(rec.record_id)
+                if rec.support_count > 1:
+                    updated.append(rec.record_id)
+                else:
+                    created.append(rec.record_id)
             elif op.operation == "observe_predicate_schema":
                 rec = self.add_predicate(
                     predicate_key=op.fields.get("predicate_key", ""),
@@ -477,7 +527,10 @@ class DurableSemanticStore:
                     argument_roles=op.fields.get("argument_roles"),
                     confidence=op.confidence,
                 )
-                created.append(rec.record_id)
+                if rec.support_count > 1:
+                    updated.append(rec.record_id)
+                else:
+                    created.append(rec.record_id)
 
         journal_ids = []
         if created or updated:

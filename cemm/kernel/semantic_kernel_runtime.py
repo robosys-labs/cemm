@@ -39,7 +39,6 @@ class SemanticKernelRuntime:
         concept_lattice: Any | None = None,
         construction_lattice: Any | None = None,
         episodic_store: Any | None = None,
-        store: Any | None = None,
         auto_consolidate: bool = False,
     ) -> None:
         self.concept_lattice = concept_lattice
@@ -50,11 +49,15 @@ class SemanticKernelRuntime:
         # Reuse SemanticCPU for core component wiring — avoids duplicating
         # MeaningGraphBuilder, MeaningPerceptor, ActResolutionPlanner,
         # GraphPatchExtractor, ConceptConsolidator setup
+        from .semantic_schema_kernel import get_kernel
+        self._predicate_schema_store = PredicateSchemaStore()
         self._cpu = SemanticCPU(
             concept_lattice=concept_lattice,
             construction_lattice=construction_lattice,
             episodic_store=episodic_store,
             auto_consolidate=auto_consolidate,
+            schema_kernel=get_kernel(),
+            predicate_schema_store=self._predicate_schema_store,
         )
 
         # Expose SemanticCPU's public attributes for Pipeline cherry-picking
@@ -64,9 +67,16 @@ class SemanticKernelRuntime:
         self.patch_extractor = self._cpu.patch_extractor
         self.consolidator = self._cpu.consolidator
 
+        # Durable semantic store — created early so PatchValidator can reference it
+        self._durable_semantic_store = DurableSemanticStore()
+        self._durable_semantic_store.set_schema_store(self._predicate_schema_store)
+
         # Phase 3-4 additions
         self._attention = SemanticAttentionController()
-        self._patch_validator = PatchValidator(store=store)
+        self._patch_validator = PatchValidator(
+            store=self._durable_semantic_store,
+            schema_store=self._predicate_schema_store,
+        )
 
         # v4.2: Semantic program compilation, obligation scheduling, teaching frames
         self._program_compiler = SemanticProgramCompiler()
@@ -74,27 +84,21 @@ class SemanticKernelRuntime:
         self._teaching_frame_manager = TeachingFrameManager()
 
         # v4.2: Relation frames, predicate schemas, relation algebra
-        self._predicate_schema_store = PredicateSchemaStore()
-        self._relation_frame_compiler = RelationFrameCompiler()
+        self._relation_frame_compiler = RelationFrameCompiler(
+            predicate_schema_store=self._predicate_schema_store,
+        )
         self._relation_algebra = RelationAlgebra(self._predicate_schema_store)
         self._query_engine = SemanticQueryEngine(self._relation_algebra, self._predicate_schema_store)
         self._realizer = SemanticRealizer()
 
-        # Durable semantic store + patch committer (Phase 8 breakthrough)
-        self._durable_semantic_store = DurableSemanticStore()
+        # Patch committer (Phase 8 breakthrough)
         self._patch_committer = PatchCommitter(self._durable_semantic_store)
 
         # Single-authority session state
         self._session_store = SessionStore()
 
-        # Causal inference bridge (wraps legacy CausalInference if store has models)
-        self._causal_bridge = CausalBridge()
-        if store is not None:
-            try:
-                from ..causal.inference import CausalInference
-                self._causal_bridge = CausalBridge(CausalInference(store))
-            except Exception:
-                pass
+        # Causal bridge — queries DurableSemanticStore directly
+        self._causal_bridge = CausalBridge(self._durable_semantic_store)
 
     @property
     def attention(self):
@@ -311,11 +315,16 @@ class SemanticKernelRuntime:
             turn_frames = self._relation_frame_compiler.compile(uol_graph)
 
             # 3d-i. Build query from turn frames + obligation + program
-            # (durable frames not needed for query construction — the query
-            # is driven by what the user is asking about, not what's stored)
+            # Include durable frames so the query engine can find relation_key
+            # for concept queries where the answer is in the durable store.
             if obligation_frame is not None:
+                # Retrieve durable frames with broad filter for query building
+                pre_durable_frames = self._durable_semantic_store.query_relations(
+                    relation_key="",
+                ) if self._durable_semantic_store.relation_count() > 0 else []
+                all_frames_for_query = turn_frames + pre_durable_frames
                 semantic_query = self._query_engine.build_query(
-                    obligation_frame, turn_frames, semantic_program, uol_graph,
+                    obligation_frame, all_frames_for_query, semantic_program, uol_graph,
                 )
 
             # 3d-ii. Retrieve durable frames filtered by query constraints
@@ -411,6 +420,14 @@ class SemanticKernelRuntime:
                 result.validation.append(validation)
             except Exception as e:
                 errors.append(f"validate patch {patch.id}: {e}")
+                from ..learning.patch_validator import PatchValidationResult, ValidationCheck
+                result.validation.append(PatchValidationResult(
+                    patch_id=patch.id,
+                    status="rejected",
+                    reasons=[str(e)],
+                    failed_checks=["validate_exception"],
+                    check_results=[ValidationCheck("validate_exception", False, 0.0, str(e))],
+                ))
 
         # 6a. Commit validated patches to durable store (Phase 8 breakthrough)
         commit_results: list[Any] = []
@@ -435,12 +452,22 @@ class SemanticKernelRuntime:
             safety_frame = safety_detector.detect(
                 situation=getattr(result, 'situation_frame', None),
                 input_text=getattr(signal, 'content', ''),
-                valences=[],
+                valences=getattr(percept, 'valences', []) if percept else [],
             )
             if safety_frame and result.realized_output:
-                result.realized_output = "I cannot help with that request."
+                current_output = result.realized_output.lower()
+                safety_phrases = ("cannot help", "can't help", "safety", "refuse", "inappropriate")
+                if not any(phrase in current_output for phrase in safety_phrases):
+                    result.realized_output = "I cannot help with that request."
                 if result.realization_contract:
-                    result.realization_contract.abstention_reason = "safety_policy"
+                    import dataclasses
+                    if dataclasses.is_dataclass(result.realization_contract):
+                        result.realization_contract = dataclasses.replace(
+                            result.realization_contract,
+                            abstention_reason="safety_policy",
+                        )
+                    else:
+                        result.realization_contract.abstention_reason = "safety_policy"
         except Exception as e:
             errors.append(f"safety check failed: {e}")
 
@@ -477,6 +504,9 @@ class SemanticKernelRuntime:
                         "error_type": ea_result.error_type,
                         "confidence": ea_result.confidence,
                     }
+            # Decay error rate on non-error turns so EMA doesn't monotonically increase
+            if ea_result is None and kernel.self_view:
+                ea_engine.record_success(kernel.self_view)
         except Exception as e:
             errors.append(f"error attribution failed: {e}")
 

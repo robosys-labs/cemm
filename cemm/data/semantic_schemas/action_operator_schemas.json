@@ -1,0 +1,480 @@
+[
+  {
+    "action_key": "move_toward_source",
+    "operator_family": "move",
+    "aliases": {"en": ["come", "come here", "come over"], "ig": ["bịa", "bia"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "destination": {"allowed_entity_kinds": ["person", "self", "place"], "required": false}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_move", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "geospatial.distance", "direction": "decrease", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "move_to_place",
+    "operator_family": "move",
+    "aliases": {"en": ["go", "go to"], "ig": ["ga"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "destination": {"allowed_entity_kinds": ["place"], "required": true}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_move", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "geospatial.location", "direction": "set", "confidence": 0.75}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "transfer_object",
+    "operator_family": "transfer",
+    "aliases": {"en": ["give", "give me", "hand me"], "ig": ["nye"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent", "organization"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "food", "tool", "virtual_object"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self", "autonomous_agent", "organization"], "required": true}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "possession.ownership", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "possession.ownership", "direction": "increase", "confidence": 0.8},
+      {"target": "actor", "dimension": "possession.ownership", "direction": "decrease", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "acquire_object",
+    "operator_family": "transfer",
+    "aliases": {"en": ["take"], "ig": ["were"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "food", "tool", "virtual_object"], "required": true},
+      "source": {"allowed_entity_kinds": ["person", "self", "autonomous_agent", "place"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "actor", "dimension": "possession.ownership", "direction": "increase", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "physically_harm_target",
+    "operator_family": "harm",
+    "aliases": {"en": ["beat", "hit", "attack", "hurt", "fight", "punch", "kick", "slap"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal"], "required": true},
+      "target": {"allowed_entity_kinds": ["person", "animal"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "target", "dimension": "vital.health", "direction": "decrease", "confidence": 0.9},
+      {"target": "target", "dimension": "vital.injured", "direction": "increase", "confidence": 0.85}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "high",
+    "permission_policy": "restricted",
+    "safety_category": "interpersonal_violence",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "improve_state",
+    "operator_family": "assist",
+    "aliases": {"en": ["help", "help me", "help him", "help her"], "ig": ["nyere"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "target": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "target", "dimension": "vital.health", "direction": "increase", "confidence": 0.7},
+      {"target": "target", "dimension": "permission.risk", "direction": "decrease", "confidence": 0.6}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["help"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "positive"
+  },
+  {
+    "action_key": "increase_capability",
+    "operator_family": "learn",
+    "aliases": {"en": ["learn", "learn about", "teach me"], "ig": ["mụta", "muta"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept"], "required": false}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_learn", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "cognitive.knowledge", "direction": "increase", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["clarity"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "memory_write",
+    "operator_family": "memory",
+    "aliases": {"en": ["remember", "store", "save"], "ig": ["cheta"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept", "object", "person", "place"], "required": true}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_remember", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "cognitive.knowledge", "direction": "increase", "confidence": 0.85}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "memory_loss",
+    "operator_family": "memory",
+    "aliases": {"en": ["forget"], "ig": ["chefu"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept", "object", "person", "place"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "actor", "dimension": "cognitive.knowledge", "direction": "decrease", "confidence": 0.7}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "consume_food",
+    "operator_family": "consume",
+    "aliases": {"en": ["eat", "eat food", "eat lunch", "eat dinner"], "ig": ["rie"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["food", "object"], "required": true}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "vital.hunger", "check": "positive"},
+      {"target": "object", "slot": "physical.edible", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "vital.hunger", "direction": "decrease", "confidence": 0.85},
+      {"target": "object", "dimension": "resource.quantity", "direction": "decrease", "confidence": 0.9}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["food"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "consume_liquid",
+    "operator_family": "consume",
+    "aliases": {"en": ["drink"], "ig": ["ṅụ", "nu"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "food"], "required": true}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "vital.thirst", "check": "positive"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "vital.thirst", "direction": "decrease", "confidence": 0.85},
+      {"target": "object", "dimension": "resource.quantity", "direction": "decrease", "confidence": 0.9}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["water"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "change_location",
+    "operator_family": "move",
+    "aliases": {"en": ["move"], "ig": ["gafee"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent", "device"], "required": true},
+      "destination": {"allowed_entity_kinds": ["place"], "required": false}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_move", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "geospatial.location", "direction": "set", "confidence": 0.7}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "move_fast",
+    "operator_family": "move",
+    "aliases": {"en": ["run"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "destination": {"allowed_entity_kinds": ["place"], "required": false}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_move", "check": "exists"},
+      {"target": "actor", "slot": "vital.energy", "check": "positive"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "geospatial.location", "direction": "set", "confidence": 0.8},
+      {"target": "actor", "dimension": "vital.energy", "direction": "decrease", "confidence": 0.7}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "move_slow",
+    "operator_family": "move",
+    "aliases": {"en": ["walk"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "animal", "self", "autonomous_agent"], "required": true},
+      "destination": {"allowed_entity_kinds": ["place"], "required": false}
+    },
+    "preconditions": [
+      {"target": "actor", "slot": "capability.can_move", "check": "exists"}
+    ],
+    "state_deltas": [
+      {"target": "actor", "dimension": "geospatial.location", "direction": "set", "confidence": 0.6},
+      {"target": "actor", "dimension": "vital.energy", "direction": "decrease", "confidence": 0.4}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "transfer_to_speaker",
+    "operator_family": "transfer",
+    "aliases": {"en": ["bring"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "food", "tool", "virtual_object"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "possession.ownership", "direction": "increase", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "transfer_to_target",
+    "operator_family": "transfer",
+    "aliases": {"en": ["send"], "ig": ["ziga"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent", "organization"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "virtual_object"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self", "autonomous_agent", "organization"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "possession.ownership", "direction": "increase", "confidence": 0.75}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "search_locate",
+    "operator_family": "search",
+    "aliases": {"en": ["find", "look", "search"], "ig": ["chọta", "chota"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["object", "person", "place", "concept", "virtual_object"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "object", "dimension": "informational.known", "direction": "increase", "confidence": 0.7}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "request_information",
+    "operator_family": "communicate",
+    "aliases": {"en": ["ask", "question"], "ig": ["ju"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept", "object", "person", "place"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [],
+    "relation_deltas": [],
+    "needs_satisfied": ["clarity"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "provide_information",
+    "operator_family": "communicate",
+    "aliases": {"en": ["tell", "say", "explain"], "ig": ["gwa"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": false},
+      "topic": {"allowed_entity_kinds": ["concept", "object", "person", "place"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "cognitive.knowledge", "direction": "increase", "confidence": 0.7}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["clarity"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "display_information",
+    "operator_family": "communicate",
+    "aliases": {"en": ["show", "display", "present"], "ig": ["gosi"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept", "object", "person", "place"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "cognitive.knowledge", "direction": "increase", "confidence": 0.65}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["clarity"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "transfer_knowledge",
+    "operator_family": "communicate",
+    "aliases": {"en": ["teach", "instruct"], "ig": ["kuziri"]},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "recipient": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "topic": {"allowed_entity_kinds": ["concept"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "recipient", "dimension": "cognitive.knowledge", "direction": "increase", "confidence": 0.8},
+      {"target": "recipient", "dimension": "capability.can_learn", "direction": "increase", "confidence": 0.6}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": ["clarity"],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "neutral"
+  },
+  {
+    "action_key": "evaluate_positive",
+    "operator_family": "evaluate",
+    "aliases": {"en": ["like", "likes", "love", "loves", "prefer", "prefers", "enjoy", "enjoys"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["concept", "object", "person", "place", "food", "tool", "virtual_object"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "actor", "dimension": "volition.preference", "direction": "increase", "confidence": 0.8},
+      {"target": "actor", "dimension": "affective.mood", "direction": "increase", "confidence": 0.6}
+    ],
+    "relation_deltas": [
+      {"relation_key": "likes", "source_slot": "actor", "target_slot": "object"}
+    ],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "positive"
+  },
+  {
+    "action_key": "evaluate_negative",
+    "operator_family": "evaluate",
+    "aliases": {"en": ["hate", "hates", "dislike", "dislikes"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "object": {"allowed_entity_kinds": ["concept", "object", "person", "place", "food", "tool", "virtual_object"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "actor", "dimension": "volition.preference", "direction": "decrease", "confidence": 0.8},
+      {"target": "actor", "dimension": "affective.mood", "direction": "decrease", "confidence": 0.5}
+    ],
+    "relation_deltas": [
+      {"relation_key": "dislikes", "source_slot": "actor", "target_slot": "object"}
+    ],
+    "needs_satisfied": [],
+    "risk": "low",
+    "permission_policy": "normal",
+    "safety_category": "",
+    "emotional_valence": "negative"
+  }
+]

@@ -61,7 +61,7 @@ class SemanticMatcher:
         raw_words = content_lower.split()
         # Strip punctuation from each word for matching, keep originals for position
         words = [_strip_punct(w) for w in raw_words]
-        if not any(words) and not extra_forms:
+        if not any(w for w in words if w) and not extra_forms:
             return []
 
         if kinds is None:
@@ -87,6 +87,20 @@ class SemanticMatcher:
                             alias_lower, form.lower(), form_words, entry,
                         )
                         for r in phrase_results:
+                            key = (r.canonical_key, r.alias_matched, r.match_type)
+                            if key not in best or best[key].probability < r.probability:
+                                best[key] = r
+                    elif not _strip_punct(alias_lower):
+                        # Pure-punctuation alias (e.g. "?") — check direct containment
+                        if alias_lower and alias_lower in form:
+                            r = MatchResult(
+                                canonical_key=entry.canonical_key,
+                                alias_matched=alias_lower,
+                                match_type="exact",
+                                probability=0.9,
+                                word_position=0,
+                                entry=entry,
+                            )
                             key = (r.canonical_key, r.alias_matched, r.match_type)
                             if key not in best or best[key].probability < r.probability:
                                 best[key] = r

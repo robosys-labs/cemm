@@ -110,6 +110,18 @@ class SemanticAttentionController:
                 ))
                 seen_atom_ids.add(atom.id)
 
+        # Tier 8b: Affordance prediction triggers (priority = 8)
+        for pred in graph.affordance_predictions:
+            for atom_id in pred.trigger_atom_ids:
+                if atom_id not in seen_atom_ids:
+                    focus_items.append(SemanticFocus(
+                        atom_id=atom_id,
+                        reason=f"affordance_prediction:{pred.affordance_key}",
+                        priority=8,
+                        confidence=pred.confidence,
+                    ))
+                    seen_atom_ids.add(atom_id)
+
         # Tier 9: Low-confidence predicate bindings (priority = 9)
         for cr in graph.concept_resolutions:
             if cr.atom_id not in seen_atom_ids and cr.confidence < 0.5:

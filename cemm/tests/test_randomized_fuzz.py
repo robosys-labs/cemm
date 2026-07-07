@@ -280,7 +280,6 @@ class TestPropertyBased:
         """PatchValidator should never raise on any valid GraphPatch."""
         from cemm.learning.patch_validator import PatchValidator
         from cemm.types.graph_patch import GraphPatch, PatchOperation
-        from cemm.store.store import Store
         from cemm.types.context_kernel import (
             ContextKernel, Budget, WorldState, UserState, TimeState,
             ConversationState, GoalState, MemoryState,
@@ -288,8 +287,7 @@ class TestPropertyBased:
         from cemm.types.self_view import SelfView
         from cemm.types.permission import Permission
 
-        store = Store(":memory:")
-        validator = PatchValidator(store=store)
+        validator = PatchValidator()
 
         rng = random.Random(123)
         for i in range(50):

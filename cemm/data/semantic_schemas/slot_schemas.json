@@ -1,0 +1,12 @@
+[
+  {"slot_key": "actor", "description": "The primary agent performing the action", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "object", "description": "The primary object acted upon", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "target", "description": "The target entity of a directed action", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "recipient", "description": "The entity receiving a transferred object", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "source", "description": "The origin point of a movement or transfer", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "destination", "description": "The destination point of a movement", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "place", "description": "A location associated with the action", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "instrument", "description": "A tool used to perform the action", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "topic", "description": "The subject matter of a communicative action", "cardinality": "single", "default_projection": "structural"},
+  {"slot_key": "holder", "description": "The entity holding a state or property", "cardinality": "single", "default_projection": "structural"}
+]

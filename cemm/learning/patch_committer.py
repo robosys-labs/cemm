@@ -21,9 +21,10 @@ class PatchCommitter:
         validation: Any,
     ) -> CommitResult:
         if not validation.accepted:
+            status = validation.status if validation.status in ("rejected", "needs_confirmation") else "quarantined"
             return CommitResult(
                 commit_id=uuid.uuid4().hex[:16],
-                status="rejected" if validation.status == "rejected" else "quarantined",
+                status=status,
             )
         return self._store.apply_validated_patch(patch, validation)
 

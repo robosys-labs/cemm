@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any
 from ..types.signal import Signal, SignalKind, SourceType, ObservationSemantics
 from ..types.context_kernel import ContextKernel, UserAffectState, ConversationDynamics
-from ..store.store import Store
 from ..registry.registry import Registry
 from .semantic_clusters import SemanticClusterRegistry
 
@@ -42,7 +41,7 @@ _SPEECH_ACT_TO_FRAME_KEY = {
 def interpret_signal(
     signal: Signal,
     kernel: ContextKernel,
-    store: Store | None = None,
+    store: Any | None = None,
     registry: SemanticClusterRegistry | None = None,
     main_registry: Registry | None = None,
 ) -> ObservationSemantics | None:
@@ -90,7 +89,7 @@ def interpret_signal(
     )
 
 
-def _trace_causes(store: Store, kernel: ContextKernel) -> list[str]:
+def _trace_causes(store: Any, kernel: ContextKernel) -> list[str]:
     def _looks_like_failure_cause(claim) -> bool:
         if claim is None or claim.domain != "causal":
             return False

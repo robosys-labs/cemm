@@ -9,6 +9,7 @@ flat list of claims, it's a structured binding with provenance.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -24,6 +25,7 @@ class SlotFill:
     confidence: float = 0.5
     is_inherited: bool = False
     is_inverse: bool = False
+    features: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

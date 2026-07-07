@@ -17,15 +17,13 @@ from typing import Any
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 os.environ.setdefault("CEMM_EXPORT_PATH", "")
 
-from cemm.store.store import Store
 from cemm.registry import Registry
 from cemm.kernel.pipeline import Pipeline
 from cemm.memory.concept_lattice import ConceptLattice
 from cemm.memory.construction_lattice import ConstructionLattice
 from cemm.memory.episodic_trace_store import EpisodicTraceStore
 from cemm.memory.persistent_lattice_store import PersistentLatticeStore
-from cemm.learning.online import OnlineLearner
-from cemm.__main__ import seed_registry, seed_self_state, seed_causal_models
+from cemm.__main__ import seed_registry, seed_self_state
 from cemm.types.signal import Signal, SignalKind, SourceType
 from cemm.types.permission import Permission
 from cemm.memory.predicate_schema_store import PredicateSchemaStore
@@ -35,30 +33,23 @@ class SeededSystem:
     """A fully seeded CEMM system ready for multiturn conversations."""
 
     def __init__(self, context_id: str = "test_session") -> None:
-        self.store = Store(":memory:")
         self.registry = Registry()
         self.persistent_store = PersistentLatticeStore(":memory:")
         self.concept_lattice = ConceptLattice(persistent_store=self.persistent_store)
         self.construction_lattice = ConstructionLattice()
         self.episodic_store = EpisodicTraceStore()
         self.pipeline = Pipeline(
-            self.store, self.registry,
+            self.registry,
             concept_lattice=self.concept_lattice,
             construction_lattice=self.construction_lattice,
             episodic_store=self.episodic_store,
         )
-        self.online_learner = OnlineLearner(
-            self.store.source_trust, self.store.self_store,
-            self.store.claims, self.store.models,
-        )
 
         seed_registry(self.registry)
         seed_self_state(
-            self.store,
             concept_lattice=self.concept_lattice,
             durable_store=self.pipeline._runtime.durable_semantic_store,
         )
-        seed_causal_models(self.store, self.concept_lattice)
 
         self.context_id = context_id
         self.turn_count = [0]

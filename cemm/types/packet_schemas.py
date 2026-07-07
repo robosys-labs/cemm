@@ -111,7 +111,7 @@ PACKET_SCHEMAS: dict[str, dict] = {
         "properties": {
             "action_kind": {
                 "type": "string",
-                "enum": ["answer", "ask", "remember", "update", "act", "abstain"],
+                "enum": ["answer", "ask", "remember", "update_claim", "act", "abstain"],
             },
             "semantic_answer_graph_id": {"type": "string", "default": None},
             "action_plan": {

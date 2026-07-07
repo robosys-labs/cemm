@@ -219,23 +219,50 @@ class PatchValidator:
         compression_reason = ""
         for op in patch.operations:
             if op.operation in ("upsert_relation_candidate",) and op.target_id:
-                if self._store is not None and hasattr(self._store, 'claims'):
+                if self._store is not None:
+                    subject = op.fields.get("subject_entity_id", "") or op.fields.get("subject_concept_id", "")
                     predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
                     new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
-                    existing = self._store.claims.find_by_subject(
-                        op.fields.get("subject_entity_id", ""),
-                        predicate,
-                    )
-                    for claim in existing:
-                        if claim.object_value == new_value:
-                            compression_ok = False
-                            compression_reason = f"duplicates existing claim {claim.id}"
-                            break
+                    if subject and predicate:
+                        existing_frames = self._store.query_relations(
+                            relation_key=predicate,
+                            subject_entity_id=subject,
+                        )
+                        if not existing_frames:
+                            existing_frames = self._store.query_relations(
+                                relation_key=predicate,
+                                subject_concept_id=subject,
+                            )
+                        for frame in existing_frames:
+                            existing_value = frame.object.surface or frame.object.concept_id or frame.object.entity_id
+                            if existing_value == new_value:
+                                compression_ok = False
+                                compression_reason = f"duplicates existing relation {frame.relation_id}"
+                                break
         scores["compression_gain"] = 1.0 if compression_ok else 0.0
         checks.append(ValidationCheck("compression_gain", compression_ok, 1.0 if compression_ok else 0.0, compression_reason))
         if not compression_ok:
             failed.append("compression_gain")
             reasons.append(compression_reason)
+
+        # 14. Self-referential assertion check — assertions about "self"/"you"
+        # require user confirmation, not stored as direct facts
+        self_ref_ok = True
+        self_ref_reason = ""
+        for op in patch.operations:
+            if op.operation in ("upsert_relation_candidate", "custom:upsert_claim"):
+                subject = (op.fields.get("subject_entity_id", "")
+                           or op.fields.get("subject_concept_id", "")
+                           or op.fields.get("subject_surface", "")).lower()
+                if subject in ("self", "you", "entity:you", "entity:self"):
+                    self_ref_ok = False
+                    self_ref_reason = "self-referential assertion requires confirmation"
+                    needs_confirmation.append(op.target_id)
+                    break
+        scores["self_referential_safe"] = 1.0 if self_ref_ok else 0.5
+        checks.append(ValidationCheck("self_referential_safe", self_ref_ok, 1.0 if self_ref_ok else 0.5, self_ref_reason))
+        if not self_ref_ok:
+            reasons.append(self_ref_reason)
 
         # ── Operation-level validation ───────────────────────────────
         for op in patch.operations:
@@ -261,11 +288,12 @@ class PatchValidator:
 
         # ── Determine overall status ─────────────────────────────────
         mean = sum(scores.values()) / len(scores) if scores else 0.0
+        failed_count = len(failed)
         if not failed and not rejected_ops:
             status = "accepted"
         elif not failed and rejected_ops:
             status = "needs_confirmation"
-        elif mean >= 0.6:
+        elif failed_count <= 2 and mean >= 0.6:
             status = "needs_confirmation"
         elif mean >= 0.3:
             status = "quarantined"
@@ -302,7 +330,7 @@ class PatchValidator:
         current_signal as a proxy for the current turn's observation time.
         """
         signals: list[Any] = []
-        sig_store = getattr(store, 'signals', None)
+        sig_store = getattr(store, 'signals', None) if store is not None else None
         if sig_store is None:
             return signals
 
@@ -332,7 +360,7 @@ class PatchValidator:
                 signals = self._resolve_evidence_signals(patch, self._store, current_signal)
                 for sig in signals:
                     age = kernel.time.now - sig.observed_at
-                    if age > 3600:
+                    if age > self._temporal_threshold:
                         return False, f"evidence {sig.id} is stale ({age:.0f}s old)"
         return True, ""
 
@@ -353,21 +381,29 @@ class PatchValidator:
 
     def _check_contradiction(self, patch: GraphPatch) -> tuple[bool, str]:
         """Check if patch contradicts existing active memory."""
-        claims = getattr(self._store, 'claims', None)
-        if claims is None:
+        if self._store is None:
             return True, ""
         for op in patch.operations:
             if op.operation in ("custom:upsert_claim", "upsert_relation_candidate") and op.target_id:
-                subject = op.fields.get("subject_entity_id", "")
+                subject = op.fields.get("subject_entity_id", "") or op.fields.get("subject_concept_id", "")
                 predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
                 new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
                 if subject and predicate:
-                    existing = claims.find_by_subject(subject, predicate)
-                    for claim in existing:
-                        if claim.status.value == "active" and claim.object_value != new_value:
-                            if claim.confidence >= self._contradiction_threshold:
-                                return False, (f"contradicts active claim {claim.id}: "
-                                             f"existing={claim.object_value!r}, new={new_value!r}")
+                    existing_frames = self._store.query_relations(
+                        relation_key=predicate,
+                        subject_entity_id=subject,
+                    )
+                    if not existing_frames:
+                        existing_frames = self._store.query_relations(
+                            relation_key=predicate,
+                            subject_concept_id=subject,
+                        )
+                    for frame in existing_frames:
+                        existing_value = frame.object.surface or frame.object.concept_id or frame.object.entity_id
+                        if existing_value and existing_value != new_value:
+                            if frame.confidence >= self._contradiction_threshold:
+                                return False, (f"contradicts active relation {frame.relation_id}: "
+                                             f"existing={existing_value!r}, new={new_value!r}")
         return True, ""
 
     def _check_schema_compatibility(self, patch: GraphPatch) -> tuple[bool, str]:
@@ -383,6 +419,29 @@ class PatchValidator:
                         for role in required_roles:
                             if role not in arg_roles:
                                 return False, f"schema {key}: missing required role {role}"
+            elif op.operation == "upsert_relation_candidate":
+                key = op.fields.get("relation_key", "")
+                if key and self._schema_store is not None:
+                    record = self._schema_store.get(key)
+                    if record is not None:
+                        # Validate that both subject and object sides are populated
+                        # with at least one identifier, matching the required_roles
+                        # count from the schema
+                        subject_ids = [
+                            op.fields.get("subject_entity_id", ""),
+                            op.fields.get("subject_concept_id", ""),
+                            op.fields.get("subject_surface", ""),
+                        ]
+                        object_ids = [
+                            op.fields.get("object_entity_id", ""),
+                            op.fields.get("object_concept_id", ""),
+                            op.fields.get("object_surface", ""),
+                        ]
+                        has_subject = any(s for s in subject_ids)
+                        has_object = any(o for o in object_ids)
+                        required_count = len(getattr(record, 'required_roles', []))
+                        if required_count >= 2 and (not has_subject or not has_object):
+                            return False, f"schema {key}: missing subject or object for required roles"
         return True, ""
 
     def _check_reversibility(self, patch: GraphPatch) -> bool:

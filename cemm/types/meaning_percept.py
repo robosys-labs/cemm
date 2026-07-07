@@ -96,6 +96,7 @@ class ActionAtom:
     group_id: str = ""
     span_id: str = ""
     evidence: list[AtomEvidence] = field(default_factory=list)
+    schema_slots: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -485,6 +486,7 @@ class MeaningPerceptPacket:
     raw_text: str = ""
     tokens: list[str] = field(default_factory=list)
     normalized_tokens: list[str] = field(default_factory=list)
+    cased_tokens: list[str] = field(default_factory=list)
     repaired_tokens: list[str] = field(default_factory=list)
     normalized_forms: list[str] = field(default_factory=list)
     punctuation_features: dict[str, Any] = field(default_factory=dict)

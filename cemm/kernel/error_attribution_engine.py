@@ -206,9 +206,10 @@ class ErrorAttributionEngine:
 
         # 2. Update SelfView.recent_error_rate (EMA over last N turns)
         # EMA: recent_error_rate = 0.7 * recent_error_rate + 0.3 * (1 if failed else 0)
+        current_error = 1.0
         self_view.recent_error_rate = min(
             1.0,
-            0.7 * self_view.recent_error_rate + 0.3 * 1.0,
+            0.7 * self_view.recent_error_rate + 0.3 * current_error,
         )
 
         # 3. Track error history (last 20 error types)
@@ -249,6 +250,16 @@ class ErrorAttributionEngine:
                     source="corrected",
                 )
                 semantic_model_store.observe_candidate(binding, signal_id=result.source_turn_id)
+
+    def record_success(self, self_view: Any) -> None:
+        """Decay EMA error rate on a successful (non-error) turn."""
+        self_view.recent_error_rate = max(
+            0.0,
+            0.7 * self_view.recent_error_rate + 0.3 * 0.0,
+        )
+
+    def decay_error_rate(self, self_view: Any) -> None:
+        self.record_success(self_view)
 
     def export_correction_label(
         self,

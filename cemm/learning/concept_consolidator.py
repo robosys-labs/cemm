@@ -90,6 +90,7 @@ class ConceptConsolidator:
                 self._journal(patch, accepted=False)
                 continue
             concept_ids = self._resolve_concept_ids_from_patch(patch)
+            has_duplicate = False
             for cid in concept_ids:
                 existing = self._find_nearest_match(
                     self._compute_fingerprint(cid, "", set()),
@@ -98,6 +99,11 @@ class ConceptConsolidator:
                 if existing is not None and existing != cid:
                     result.reasons[patch.id] = f"merged_into_existing_{existing}"
                     self._track_counterexample(patch, cid)
+                    has_duplicate = True
+            if has_duplicate:
+                result.rejected_patch_ids.append(patch.id)
+                self._journal(patch, accepted=False)
+                continue
             applied = self._apply(patch, source_graph)
             if applied:
                 result.accepted_patch_ids.append(patch.id)
@@ -111,8 +117,7 @@ class ConceptConsolidator:
                             len(CONCEPT_STATES) - 1,
                         )])
                     else:
-                        self._concept_states[cid] = old_state
-                        new_state = old_state
+                        new_state = self._advance_state(cid, CONCEPT_STATES[1])
                     if new_state != old_state:
                         result.concept_state_changes[cid] = new_state
                     self._staleness_tracker[cid] = datetime.now(timezone.utc)

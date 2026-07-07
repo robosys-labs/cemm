@@ -18,6 +18,7 @@ GRAPH_PATCH_TARGETS = frozenset({
 PATCH_OPERATION_TYPES = frozenset({
     "upsert_relation_candidate",
     "upsert_concept_candidate",
+    "upsert_state",
     "observe_port_binding",
     "observe_construction_match",
     "observe_predicate_schema",

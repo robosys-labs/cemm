@@ -1,0 +1,152 @@
+[
+  {
+    "state_family": "identity",
+    "dimensions": {
+      "name": {"polarity_negative": "unnamed", "polarity_positive": "named", "range": [0, 1]},
+      "type": {"polarity_negative": "untyped", "polarity_positive": "typed", "range": [0, 1]},
+      "role": {"polarity_negative": "roleless", "polarity_positive": "roleful", "range": [0, 1]}
+    },
+    "applies_to": ["person", "animal", "self", "autonomous_agent", "organization", "object", "concept", "place", "device"]
+  },
+  {
+    "state_family": "physical",
+    "dimensions": {
+      "size": {"polarity_negative": "small", "polarity_positive": "large", "range": [0, 1]},
+      "weight": {"polarity_negative": "light", "polarity_positive": "heavy", "range": [0, 1]},
+      "color": {"polarity_negative": "colorless", "polarity_positive": "colorful", "range": [0, 1]},
+      "age": {"polarity_negative": "young", "polarity_positive": "old", "range": [0, 1]}
+    },
+    "applies_to": ["person", "animal", "object", "device", "place"]
+  },
+  {
+    "state_family": "vital",
+    "dimensions": {
+      "alive": {"polarity_negative": "dead", "polarity_positive": "alive", "range": [0, 1]},
+      "health": {"polarity_negative": "sick", "polarity_positive": "healthy", "range": [0, 1]},
+      "hunger": {"polarity_negative": "hungry", "polarity_positive": "satisfied", "range": [0, 1]},
+      "thirst": {"polarity_negative": "thirsty", "polarity_positive": "hydrated", "range": [0, 1]},
+      "energy": {"polarity_negative": "tired", "polarity_positive": "energetic", "range": [0, 1]},
+      "injured": {"polarity_negative": "injured", "polarity_positive": "uninjured", "range": [0, 1]}
+    },
+    "applies_to": ["person", "animal", "self", "autonomous_agent"]
+  },
+  {
+    "state_family": "affective",
+    "dimensions": {
+      "mood": {"polarity_negative": "sad", "polarity_positive": "happy", "range": [0, 1]},
+      "fear": {"polarity_negative": "afraid", "polarity_positive": "calm", "range": [0, 1]},
+      "anger": {"polarity_negative": "angry", "polarity_positive": "serene", "range": [0, 1]},
+      "love": {"polarity_negative": "indifferent", "polarity_positive": "loving", "range": [0, 1]},
+      "hate": {"polarity_negative": "neutral", "polarity_positive": "hateful", "range": [0, 1]}
+    },
+    "applies_to": ["person", "animal", "self", "autonomous_agent"]
+  },
+  {
+    "state_family": "cognitive",
+    "dimensions": {
+      "knowledge": {"polarity_negative": "ignorant", "polarity_positive": "knowledgeable", "range": [0, 1]},
+      "belief": {"polarity_negative": "doubtful", "polarity_positive": "certain", "range": [0, 1]},
+      "attention": {"polarity_negative": "distracted", "polarity_positive": "attentive", "range": [0, 1]},
+      "clarity": {"polarity_negative": "confused", "polarity_positive": "clear", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent"]
+  },
+  {
+    "state_family": "volitional",
+    "dimensions": {
+      "desire": {"polarity_negative": "averse", "polarity_positive": "wanting", "range": [0, 1]},
+      "intention": {"polarity_negative": "undecided", "polarity_positive": "committed", "range": [0, 1]},
+      "preference": {"polarity_negative": "indifferent", "polarity_positive": "preferring", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent"]
+  },
+  {
+    "state_family": "capability",
+    "dimensions": {
+      "can_move": {"polarity_negative": "immobile", "polarity_positive": "mobile", "range": [0, 1]},
+      "can_speak": {"polarity_negative": "mute", "polarity_positive": "vocal", "range": [0, 1]},
+      "can_remember": {"polarity_negative": "forgetful", "polarity_positive": "retentive", "range": [0, 1]},
+      "has_internet": {"polarity_negative": "disconnected", "polarity_positive": "connected", "range": [0, 1]},
+      "can_learn": {"polarity_negative": "non_learning", "polarity_positive": "learning", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "device"]
+  },
+  {
+    "state_family": "resource",
+    "dimensions": {
+      "quantity": {"polarity_negative": "depleted", "polarity_positive": "abundant", "range": [0, 1]},
+      "battery": {"polarity_negative": "depleted", "polarity_positive": "charged", "range": [0, 1]},
+      "data": {"polarity_negative": "empty", "polarity_positive": "full", "range": [0, 1]},
+      "money": {"polarity_negative": "broke", "polarity_positive": "wealthy", "range": [0, 1]},
+      "time": {"polarity_negative": "scarce", "polarity_positive": "abundant", "range": [0, 1]},
+      "memory": {"polarity_negative": "full", "polarity_positive": "available", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "device", "object", "organization"]
+  },
+  {
+    "state_family": "geospatial",
+    "dimensions": {
+      "location": {"polarity_negative": "nowhere", "polarity_positive": "located", "range": [0, 1]},
+      "distance": {"polarity_negative": "far", "polarity_positive": "near", "range": [0, 1]},
+      "orientation": {"polarity_negative": "disoriented", "polarity_positive": "oriented", "range": [0, 1]},
+      "containment": {"polarity_negative": "outside", "polarity_positive": "inside", "range": [0, 1]}
+    },
+    "applies_to": ["person", "animal", "self", "autonomous_agent", "object", "device", "place"]
+  },
+  {
+    "state_family": "possession",
+    "dimensions": {
+      "ownership": {"polarity_negative": "owns_nothing", "polarity_positive": "owns", "range": [0, 1]},
+      "control": {"polarity_negative": "uncontrolled", "polarity_positive": "controlled", "range": [0, 1]},
+      "access": {"polarity_negative": "no_access", "polarity_positive": "has_access", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "organization"]
+  },
+  {
+    "state_family": "social",
+    "dimensions": {
+      "relationship": {"polarity_negative": "stranger", "polarity_positive": "friend", "range": [0, 1]},
+      "trust": {"polarity_negative": "distrusted", "polarity_positive": "trusted", "range": [0, 1]},
+      "authority": {"polarity_negative": "subordinate", "polarity_positive": "authoritative", "range": [0, 1]},
+      "hostility": {"polarity_negative": "friendly", "polarity_positive": "hostile", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "organization"]
+  },
+  {
+    "state_family": "permission",
+    "dimensions": {
+      "allowed": {"polarity_negative": "forbidden", "polarity_positive": "permitted", "range": [0, 1]},
+      "obligated": {"polarity_negative": "optional", "polarity_positive": "obligated", "range": [0, 1]},
+      "risk": {"polarity_negative": "safe", "polarity_positive": "risky", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "device", "object", "action"]
+  },
+  {
+    "state_family": "temporal",
+    "dimensions": {
+      "status": {"polarity_negative": "pending", "polarity_positive": "completed", "range": [0, 1]},
+      "freshness": {"polarity_negative": "stale", "polarity_positive": "fresh", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "object", "concept", "action"]
+  },
+  {
+    "state_family": "informational",
+    "dimensions": {
+      "known": {"polarity_negative": "unknown", "polarity_positive": "known", "range": [0, 1]},
+      "verified": {"polarity_negative": "unverified", "polarity_positive": "verified", "range": [0, 1]},
+      "ambiguity": {"polarity_negative": "clear", "polarity_positive": "ambiguous", "range": [0, 1]},
+      "contradiction": {"polarity_negative": "consistent", "polarity_positive": "contradicted", "range": [0, 1]}
+    },
+    "applies_to": ["person", "self", "autonomous_agent", "concept", "object"]
+  },
+  {
+    "state_family": "operational",
+    "dimensions": {
+      "availability": {"polarity_negative": "unavailable", "polarity_positive": "available", "range": [0, 1]},
+      "status": {"polarity_negative": "offline", "polarity_positive": "online", "range": [0, 1]},
+      "load": {"polarity_negative": "idle", "polarity_positive": "busy", "range": [0, 1]},
+      "degradation": {"polarity_negative": "functional", "polarity_positive": "degraded", "range": [0, 1]}
+    },
+    "applies_to": ["self", "autonomous_agent", "device"]
+  }
+]
