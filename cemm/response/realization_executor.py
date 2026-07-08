@@ -1,4 +1,4 @@
-"""Compatibility import for the atomic realization subsystem."""
+"""Re-export of the atomic realization subsystem for the response formation engine."""
 
 from __future__ import annotations
 

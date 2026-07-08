@@ -123,17 +123,29 @@ Signal
 -> durable semantic structures
 ```
 
-Status: **schema kernel refactor complete; causal-runtime wiring partially addressed**
+Status: **v3.1 lean implementation complete; all phases 0-9 implemented and tested**
 - `Pipeline.run()` delegates to `SemanticKernelRuntime.run_turn()` — single authority achieved
 - `UOLGraph` is the sole working graph (with adjacency index for O(degree) edge lookups)
 - `SemanticSchemaKernel` is the single canonical source for action/state/need/entity meaning
 - `SchemaBackedLanguageAdapter` replaces all old language adapters — delegates to schema kernel
-- `SemanticKernelRuntime.run_turn()` has 11 steps: perceive, build, attend, compile, schedule, teach, compile relations, query, realize, plan, extract/validate/commit patches
+- `SemanticKernelRuntime.run_turn()` canonical v3.1 pipeline: perceive → build → attend → compile → schedule → teach → compile relations → query → plan → patch validation/commit → safety → response situation → response formation → output update
+- `ResponseFormationEngine` is the single canonical response path (replaces retired `SemanticRealizer`)
+- `BudgetController` produces `BudgetDecision` that constrains query, candidate, and realization stages
+- `InternalActionProposer` + `InternalActionAuthorizer` handle Phase 8 internal actions
+- `ResponseBudgetLearningExtractor` extracts learning patches from response outcomes (Phase 9)
 - `PatchValidator` and `PatchCommitter` enforce graph-patch-only durable writes
 - `SessionStore` restores/persists conversation, user affect, topic, discourse state across turns
 - `EntitySalienceTracker` tracks entity salience across turns
 - `DurableSemanticStore` stores and retrieves relation frames
 - `MeaningPerceptor` properly wired with `schema_kernel` and `graph_builder` via constructor
+
+**Retired (v3.1):**
+- `SemanticRealizer` — removed from runtime, file recycled
+- `response_templates.json` — recycled
+- `RealizationContract` type — recycled
+- `SemanticQueryEngine.build_contract()` — removed
+- `SemanticQueryEngine._template_for_obligation()`, `_shift_pronouns_for_echo()`, `_sanitize_echo()` — removed
+- Old response modules (`candidate_generator.py`, `framing.py`, `plan_gate.py`, `ranker.py`, `selector.py` at top level) — replaced by `transformers/` package
 
 **Schema Kernel Refactor — COMPLETE:**
 - All 9 phases implemented and verified (80 tests passing)
@@ -189,7 +201,7 @@ Current implementation mapping:
 | Retrieve | retrieval plan and selected evidence, when available |
 | Infer | concept resolution, construction matches, port bindings, affordance predictions, candidate paths |
 | Decide | `ActResolutionPlanner` |
-| Realize | response realization layer, currently outside the core seed modules |
+| Realize | `ResponseFormationEngine` (budget-aware, candidate-based, language-specific rendering) |
 | Update | graph patch extraction |
 | Learn | consolidation into durable semantic structures |
 
@@ -455,16 +467,10 @@ ResponseSituation
 ```text
 cemm/response/
   types.py                        # Core types (BudgetFrame, ResponseSituation, ResponseBundle, etc.)
-  response_formation_engine.py    # Orchestrates goal composition → move composition → candidates → gate → rank → select
+  response_formation_engine.py    # Orchestrates: budget → goals → moves → candidates → gate → rank → select → realize → actions → learning
   primitive_goal_composer.py      # Language-agnostic goal composition from semantic structure
   response_move_composer.py       # Language-agnostic move composition from goals
-  framing.py                      # Language-agnostic framing variants (minimal, direct, echo, repair, etc.)
-  candidate_generator.py          # Generates candidate plans with framing variants
-  plan_gate.py                    # Hard gate validation (required goals, safety, evidence, write truthfulness)
-  ranker.py                       # Plan scoring and ranking (confidence, safety, evidence, style, completeness)
-  selector.py                     # Realizes top K, surface scores, selects best candidate
-  budget_controller.py            # BudgetController, DeadlineParser, TaskSizeEstimator, StageBudgetAllocator
-  realization_executor.py         # Compatibility re-export
+  realization_executor.py         # Re-export of RealizationExecutor for engine import path
   realization/
     types.py                      # Language-neutral IR (BoundSlot, RealizationUnit, RealizationPlan)
     executor.py                   # Language-agnostic executor: binds slots, builds plan, delegates to renderer
@@ -474,6 +480,16 @@ cemm/response/
       base.py                     # LanguageRenderer protocol + shared helpers
       en.py                       # English renderer
       fr.py                       # French renderer (proves multilingual from day one)
+  transformers/                   # Phase 4-5: candidate generation, gating, ranking, selection
+    candidate_generator.py        # Generates candidate plans with framing variants
+    framing_variant.py            # Language-agnostic framing variants (minimal, direct, echo, repair, etc.)
+    plan_gate_and_ranker.py       # Hard gate validation + plan scoring and ranking
+    selector.py                   # Budget-aware selection of best candidate plan
+cemm/budget/                      # Phase 5: budget controller, deadline parser, task size estimator, stage budget allocator
+cemm/actions/                     # Phase 8: internal action proposer, authorizer, types
+cemm/deliberation/                # Phase 7: deliberation planner, anytime distiller
+cemm/query/                       # Phase 6: budget-aware semantic query wrapper
+cemm/learning/                    # Phase 9: response/budget learning extractors, observation builder, outcome interpreter
 ```
 
 ### Architecture Invariants (non-negotiable)
@@ -509,23 +525,24 @@ cemm/response/
    response engine fails, the error must be visible — not silently replaced
    with a template string from the old `SemanticRealizer`.
 
-8. **`RealizationContract` and `template_key` are metadata only** — they may
-   carry evidence slot information but must not be used as the authoritative
-   response selection mechanism. The `ResponseFormationEngine` is authoritative.
+8. **`RealizationContract` and `template_key` are RETIRED.** The old
+   `RealizationContract` type, `template_key` field, and `SemanticRealizer`
+   have been removed. The `ResponseFormationEngine` is the sole authoritative
+   response path. No backward compatibility layers exist.
 
 9. **HTML sanitization happens in `SlotBinder._clean_value`** — all slot values
    are sanitized (HTML tags stripped, script blocks removed, control chars
    removed) before reaching any language renderer.
 
-10. **Echo surface processing (pronoun shifting, framing prefix stripping,
-    discourse marker removal) happens in `SemanticQueryEngine.build_contract()`**
-    before the slot reaches the response engine. This is a transitional state —
-    these should eventually move to the English renderer.
+10. **Pronoun handling is built into language renderer templates.** English
+    templates use fixed pronouns (e.g., `"your {label} is {value}"` for
+    `user_profile_assertion`). No regex-based pronoun shifting or framing
+    prefix stripping exists in the query engine or response pipeline.
 
 11. **Candidate ranking happens before expensive realization.** The
-    `CandidateGenerator` produces framing variant plans, the `PlanGate` filters
-    by hard constraints, and the `PlanRanker` scores plans — all before the
-    `Selector` realizes the top K candidates.
+    `CandidateGenerator` produces framing variant plans, the `PlanGateAndRanker`
+    filters by hard constraints and scores plans — all before the
+    `Selector` selects the best candidate.
 
 12. **Rejected candidates remain diagnosable.** `GateResult` objects and
     rejected `RealizedCandidate`s are preserved in `ResponseBundle.diagnostics`
@@ -543,19 +560,17 @@ cemm/response/
     candidate count and realized count, but safety obligations always get
     high-risk budget with `allow_partial_answer=False`.
 
-### Old Path To Retire
+### Retired Path (v3.1)
 
 ```text
-RealizationContract.template_key -> SemanticRealizer -> response_templates.json
+RealizationContract.template_key -> SemanticRealizer -> response_templates.json  [RETIRED]
 ```
 
-This path is **not the canonical response path**. `SemanticRealizer` is still
-instantiated in `SemanticKernelRuntime` as a fallback but must not be relied
-upon. It should be removed once all tests pass without it.
-
-`SemanticQueryEngine._template_for_obligation()`, `_shift_pronouns_for_echo()`,
-and `_sanitize_echo()` are transitional — they still process echo surfaces but
-should eventually be moved to language renderers.
+This path has been fully removed. `SemanticRealizer`, `response_templates.json`,
+and `RealizationContract` type are recycled. `SemanticQueryEngine.build_contract()`,
+`_template_for_obligation()`, `_shift_pronouns_for_echo()`, `_sanitize_echo()`,
+`_strip_framing_prefix()`, and `_strip_echo_discourse_markers()` are removed.
+No backward compatibility layers exist.
 
 ### Phase Status
 
@@ -567,10 +582,10 @@ should eventually be moved to language renderers.
 | 3 | ✅ Complete | Minimal RealizationExecutor (English + French) |
 | 4 | ✅ Complete | CandidateGenerator, PlanGateAndRanker, Selector |
 | 5 | ✅ Complete | BudgetFrame + budget-aware spend |
-| 6 | ❌ Not started | Budget-aware semantic query |
-| 7 | ❌ Not started | DeliberationPlanner + anytime distillation |
-| 8 | ❌ Not started | Internal actions |
-| 9 | ❌ Not started | Response/budget learning |
+| 6 | ✅ Complete | Budget-aware semantic query |
+| 7 | ✅ Complete | DeliberationPlanner + anytime distillation |
+| 8 | ✅ Complete | Internal actions (proposer + authorizer) |
+| 9 | ✅ Complete | Response/budget learning |
 
 See `newarch/cemm-v3.1-lean-implementation-plan.md` for the full plan.
 
@@ -608,8 +623,8 @@ add new UOL edge types for state deltas — use existing primitives (state atoms
 make action operator slots answerable by default — they are structural
 keep backward compatibility layers for old meaning systems — replace them
 classify English surface strings in PrimitiveGoalComposer or ResponseMoveComposer
-fall back to SemanticRealizer when ResponseFormationEngine throws — surface the error
-use template_key as the authoritative response selection mechanism
+fall back to SemanticRealizer when ResponseFormationEngine throws — SemanticRealizer is retired, surface the error
+use template_key as the authoritative response selection mechanism — template_key is retired
 claim memory was stored when WriteOutcome.committed is false
 bypass safety gates in favor of ranker preferences
 add English-specific logic to language-agnostic response stages
@@ -699,7 +714,7 @@ Before closing a task, verify:
 - [ ] Response formation: `RealizationExecutor` delegates to language renderers — no English wording in the executor itself.
 - [ ] Response formation: `SlotBinder` binds from evidence only — never reads raw user text.
 - [ ] Response formation: `RealizationUnit` IR keeps language-specific rules out of response planning.
-- [ ] Response formation: no fallback to `SemanticRealizer` when `ResponseFormationEngine` throws — surface the error.
+- [ ] Response formation: no fallback to `SemanticRealizer` when `ResponseFormationEngine` throws — `SemanticRealizer` is retired, surface the error.
 - [ ] Response formation: `WriteOutcome.committed` is checked before claiming memory was stored.
 - [ ] Response formation: safety moves are gates, not ranker preferences.
 - [ ] Response formation: `ResponseBundle` carries full traceability (moves, evidence, diagnostics).

@@ -25,5 +25,4 @@ class RuntimeCycleResult:
     relation_frames: list[Any] = field(default_factory=list)
     semantic_query: Any | None = None
     answer_binding: Any | None = None
-    realization_contract: Any | None = None
     response_bundle: Any | None = None

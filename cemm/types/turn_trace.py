@@ -4,7 +4,7 @@ Captures the full decision chain for a single turn:
 raw_input → normalized_forms → matched_aliases → uol_frames →
 conversation_act_packet → claim_candidates → retrieval_allowed →
 selected_claim_ids → decision_action → response_mode → operator →
-template_key → memory_write_attempt.
+response_bundle → memory_write_attempt.
 
 This is distinct from the operator-scoped Trace (which audits action
 execution). TurnTrace is a diagnostic tool for understanding why the

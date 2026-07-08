@@ -101,7 +101,6 @@ class SeededSystem:
             "relation_key": cycle.semantic_query.relation_key if cycle and cycle.semantic_query else None,
             "has_answer": cycle.answer_binding.has_answer if cycle and cycle.answer_binding else None,
             "abstention_reason": cycle.answer_binding.abstention_reason if cycle and cycle.answer_binding else None,
-            "template_key": cycle.realization_contract.template_key if cycle and cycle.realization_contract else None,
             "response_moves": [m.move_type for m in cycle.response_bundle.moves] if cycle and cycle.response_bundle else [],
             "response_goals": cycle.response_bundle.diagnostics.get("goals", []) if cycle and cycle.response_bundle else [],
             "slot_fills": [

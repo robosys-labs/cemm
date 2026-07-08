@@ -1,8 +1,9 @@
 """SemanticKernelRuntime — CPU: single authoritative entrypoint for the semantic cycle.
 
 Wires perception, graph building, attention scheduling, planning, patch
-extraction, patch validation, and consolidation into one orchestrator.
-Produces a RuntimeCycleResult with the full architectural trace.
+extraction, patch validation, consolidation, and v3.1 response formation
+into one orchestrator. Produces a RuntimeCycleResult with the full
+architectural trace including ResponseBundle.
 """
 
 from __future__ import annotations

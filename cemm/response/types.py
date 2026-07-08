@@ -141,9 +141,7 @@ class ResponseEvidencePacket:
         semantic_query: Any | None = None,
         answer_binding: Any | None = None,
         relation_frames: list[Any] | None = None,
-        realization_contract: Any | None = None,
     ) -> "ResponseEvidencePacket":
-        selected_slots = dict(getattr(realization_contract, "slots", {}) or {})
         explanation_paths = list(getattr(answer_binding, "explanation_paths", []) or [])
         evidence_refs: list[str] = []
         for fill in getattr(answer_binding, "slot_fills", []) or []:
@@ -155,7 +153,6 @@ class ResponseEvidencePacket:
             answer_binding=answer_binding,
             relation_frames=list(relation_frames or []),
             semantic_query=semantic_query,
-            selected_slots=selected_slots,
             explanation_paths=explanation_paths,
             answer_kind=getattr(semantic_query, "query_kind", "") or "",
             answer_status="answered" if has_answer else "no_answer",

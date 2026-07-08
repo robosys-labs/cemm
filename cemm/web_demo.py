@@ -124,14 +124,14 @@ def _extract_debug(cycle) -> dict:
             "abstention_reason": getattr(ab, "abstention_reason", ""),
         }
 
-    if cycle.realization_contract is not None:
-        rc = cycle.realization_contract
-        info["Realization Contract"] = {
-            "response_mode": getattr(rc, "response_mode", ""),
-            "template_key": getattr(rc, "template_key", ""),
-            "evidence_policy": getattr(rc, "evidence_policy", ""),
-            "unfilled_slots": list(getattr(rc, "unfilled_slots", [])),
-            "abstention_reason": getattr(rc, "abstention_reason", ""),
+    if cycle.response_bundle is not None:
+        bundle = cycle.response_bundle
+        info["Response Bundle"] = {
+            "text": getattr(bundle, "text", ""),
+            "language": getattr(bundle, "language", ""),
+            "obligation_kind": getattr(bundle, "obligation_kind", ""),
+            "confidence": getattr(bundle, "confidence", 0.0),
+            "move_types": [getattr(m, "move_type", "") for m in getattr(bundle, "moves", [])],
         }
 
     if cycle.patch_candidates:

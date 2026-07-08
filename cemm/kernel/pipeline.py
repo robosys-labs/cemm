@@ -54,12 +54,11 @@ class PipelineResult:
     relation_frames: list[Any] = field(default_factory=list)
     semantic_query: Any | None = None
     answer_binding: Any | None = None
-    realization_contract: Any | None = None
-    semantic_realized_output: str = ""
+    response_bundle: Any | None = None
 
     @staticmethod
     def from_cycle(cycle: Any, kernel: Any, signal: Any, turn_index: int = 0) -> "PipelineResult":
-        """Derive PipelineResult from RuntimeCycleResult for backward compatibility."""
+        """Derive PipelineResult from RuntimeCycleResult."""
         result = PipelineResult(
             kernel=kernel,
             output_text=cycle.realized_output,
@@ -69,8 +68,7 @@ class PipelineResult:
             relation_frames=cycle.relation_frames,
             semantic_query=cycle.semantic_query,
             answer_binding=cycle.answer_binding,
-            realization_contract=cycle.realization_contract,
-            semantic_realized_output=cycle.realized_output,
+            response_bundle=cycle.response_bundle,
             act_resolution_plan=cycle.act_plan,
             meaning_percept=cycle.percept,
             cost_ms=cycle.cost_ms,
