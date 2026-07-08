@@ -2,19 +2,19 @@
 
 Version: 1.0
 Status: approved design
-Prerequisite: v4.1 SemanticCPU wiring (completed)
+Prerequisite: v3.1 SemanticCPU wiring (completed)
 Supersedes: claims-table-as-learning-path pattern from v3.x
 
 ## 1. Problem
 
-The architecture mandates that all durable learning passes through `GraphPatch` objects (AGENTS.md §8, consolidated_architecture.md §3.7). Currently:
+The architecture mandates that all durable learning passes through `GraphPatch` objects (AGENTS.md §8, ARCHITECTURE.md §3.7). Currently:
 
 - **Claims table** (SQLite) is the primary store for learned facts — written directly by operators, seed functions, and the online learner without any graph-patch validation gate
 - **ConceptLattice** (in-memory `_records` dict) is lost on every restart — seed concept updates from graph patches have no durable effect
 - **Induction pipeline** writes `Model` records directly to SQLite through `store.models.put()` with no graph-patch audit trail
 - **No write journal** exists — there is no append-only log of what the system learned and when
 
-The v4.1 architecture defines the concept lattice as durable compressed semantic memory (§6). Claims are not a consolidation target — they are a legacy v3 artifact.
+The v3.1 architecture defines the concept lattice as durable compressed semantic memory (§6). Claims are not a consolidation target — they are a legacy v3 artifact.
 
 ## 2. Design
 

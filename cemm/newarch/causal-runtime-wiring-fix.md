@@ -171,7 +171,7 @@ Current seed rules (3 total):
 
 The `_atom_matches_patterns` method at line 54 checks `atom.kind` and `atom.key` — so it **can** match relation atoms with key `likes` or `dislikes` if rules existed.
 
-**Gap:** No rule triggers on `likes`/`dislikes` relation atoms or `evaluates` edges. The `evaluation_shift` effect type defined in `consolidated_architecture.md` §404 has no implementation.
+**Gap:** No rule triggers on `likes`/`dislikes` relation atoms or `evaluates` edges. The `evaluation_shift` effect type defined in `ARCHITECTURE.md` §10 has no implementation.
 
 ### Culprit 4: SemanticKernelRuntime — Affordance Predictions Never Consumed
 

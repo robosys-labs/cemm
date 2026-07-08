@@ -50,12 +50,12 @@ All other culprits (2-4, 6-12) are fully fixed. See `newarch/causal-runtime-wiri
 Use these files as the active implementation contract, in this order:
 
 1. `AGENTS.md` (this file)
-2. `newarch/cemm-v3.1-lean-implementation-plan.md` (response formation architecture plan)
-3. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan)
-4. `newarch/causal-runtime-wiring-fix.md` (master fix plan — BLOCKER #1)
-5. `newarch/consolidated_architecture.md`
-6. `newarch/3.3-uol-graph-architecture.md`
-7. `newarch/core_loop_runtime.md`
+2. `ARCHITECTURE.md` (promoted consolidated architecture — implementation-facing contract)
+3. `newarch/cemm-v3.1-lean-implementation-plan.md` (response formation architecture plan — COMPLETE)
+4. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan — COMPLETE)
+5. `newarch/causal-runtime-wiring-fix.md` (master fix plan — partially addressed)
+6. `newarch/3.3-uol-graph-architecture.md` (UOL graph architecture details)
+7. `newarch/core_loop_runtime.md` (core loop runtime contract — partially superseded by ARCHITECTURE.md §5)
 
 Superseded design docs and plans are archived at `docs/archive/newarch_superseded/`.
 Use them as background reference only — they are not active architecture contracts.
@@ -69,6 +69,8 @@ The following newarch docs are **deprecated** and have been moved to archive:
 - `missing_runtime_implementation_plan.md`
 - `full_cemm_learning_brain_missing_pieces.md`
 - `construction-matcher-refactor-plan.md`
+- `cemm-sentient-response-formation-design-v2.md` (superseded by v3.1 implementation)
+- `sentient-nlg-pipeline-design.md` (superseded by v3.1 implementation)
 
 Do not follow any superseded plan. Follow `causal-runtime-wiring-fix.md` instead.
 

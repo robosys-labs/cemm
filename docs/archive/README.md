@@ -4,7 +4,7 @@ This directory contains superseded or historical design documents retained for r
 
 ## newarch_superseded/
 
-Superseded design docs that were consolidated into `cemm/newarch/consolidated_architecture.md`.
+Superseded design docs that were consolidated into `cemm/ARCHITECTURE.md`.
 Kept for historical context and traceability.
 
 ### Files
@@ -19,3 +19,5 @@ Kept for historical context and traceability.
 | `concept_lattice_runtime_resolution.md` | Concept resolution through lattice |
 | `atom_grounding_and_bootstrapping.md` | Atom grounding and seed concepts |
 | `probabilistic_oracle_and_afa_ifa_model.md` | Speculative probabilistic design |
+| `cemm-sentient-response-formation-design-v2.md` | Early response formation design (superseded by v3.1 lean implementation) |
+| `sentient-nlg-pipeline-design.md` | Early NLG pipeline design (superseded by v3.1 ResponseFormationEngine) |

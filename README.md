@@ -116,7 +116,7 @@ Signal
   -> OutputStateUpdater
 ```
 
-See `cemm/AGENTS.md` for the governing implementation guide and `cemm/newarch/cemm-v3.1-lean-implementation-plan.md` for the full architecture plan.
+See `cemm/AGENTS.md` for the governing implementation guide, `cemm/ARCHITECTURE.md` for the full architecture contract, and `cemm/newarch/cemm-v3.1-lean-implementation-plan.md` for the response formation plan.
 
 ## Tests
 

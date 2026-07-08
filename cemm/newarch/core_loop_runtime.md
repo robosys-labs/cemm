@@ -1,8 +1,14 @@
 # CEMM Core Loop Runtime
 
-Status: implementation contract  
+Status: **partially superseded — pipeline details now in `cemm/ARCHITECTURE.md` §5**  
 Supersedes: implicit 3.3 loop assumptions  
-Aligned with: `consolidated_architecture.md` v4.1 and `3.3-uol-graph-architecture.md`
+Aligned with: `cemm/ARCHITECTURE.md` v3.1 and `3.3-uol-graph-architecture.md`
+
+> **Note:** This document remains authoritative for stage responsibilities (§2),
+> UOLGraph contents (§3), runtime resolution records (§4), GraphPatch boundary (§5),
+> and planner contract (§6). The overall pipeline ordering is now documented in
+> `cemm/ARCHITECTURE.md` §5, which includes the v3.1 response formation pipeline
+> that this document predates.
 
 ## 1. Contract
 
@@ -263,8 +269,9 @@ answer tasks
 memory update plans
 graph patch references
 tool/retrieval requirements
-response contract
 ```
+
+The response itself is produced by `ResponseFormationEngine` (see `cemm/ARCHITECTURE.md` §5.0a).
 
 It must distinguish:
 
