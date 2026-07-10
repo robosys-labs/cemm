@@ -635,6 +635,10 @@ class MeaningGraphBuilder:
                         "inverse_keys": [],
                         "group_id": edge.group_id or "",
                         "evidence_refs": evidence,
+                        "features": dict(edge.features) if edge.features else {},
+                        "relation_scope": edge.features.get("relation_scope", "") if edge.features else "",
+                        "dimension": edge.features.get("dimension", "") if edge.features else "",
+                        "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, edge.group_id or ""),
                     },
                     confidence=edge.confidence,
                     reason="emotional_evaluation_relation",
@@ -1675,6 +1679,8 @@ class MeaningGraphBuilder:
                         "inverse_keys": [],
                         "group_id": group.id,
                         "evidence_refs": evidence,
+                        "features": {},
+                        "qualifiers": self._extract_qualifier_fields(graph, user_atom.id, object_atom.id, group.id),
                     },
                     confidence=0.7,
                     reason="remember_command_relation",
@@ -1723,6 +1729,7 @@ class MeaningGraphBuilder:
                     evidence = self._collect_evidence(graph, edge, source, target)
                     if not evidence:
                         evidence = [f"surface_teaching_relation:{group.id}"]
+                    edge_features = dict(edge.features) if edge.features else {}
                     operations.append(PatchOperation(
                         operation="upsert_relation_candidate",
                         target_id=f"relation:{edge.edge_type}:{source.key}:{target.key}",
@@ -1739,6 +1746,10 @@ class MeaningGraphBuilder:
                             "inverse_keys": [],
                             "group_id": group.id,
                             "evidence_refs": evidence,
+                            "features": edge_features,
+                            "relation_scope": edge_features.get("relation_scope", ""),
+                            "dimension": edge_features.get("dimension", "") or edge_features.get("property_dimension", ""),
+                            "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, group.id),
                         },
                         confidence=edge.confidence,
                         reason="user_teaching_graph_relation",
@@ -1939,6 +1950,91 @@ class MeaningGraphBuilder:
         if key:
             return f"concept:{key}"
         return key
+
+    @staticmethod
+    def _extract_qualifier_fields(
+        graph: UOLGraph, source_atom_id: str, target_atom_id: str = "", group_id: str = "",
+    ) -> dict[str, dict[str, str]]:
+        """Extract qualifier role data for a relation between source and target atoms.
+
+        Qualifiers can appear in two ways:
+        1. Non-subject/object/source/target roles on relation atoms connected
+           to the source entity via has_role edges.
+        2. Direct has_role edges on the object entity with qualifier roles
+           (e.g. "domain" from "just between us" domain phrases).
+
+        Both paths are scanned and merged.
+        """
+        _CORE_ROLES = frozenset({"subject", "object", "source", "target"})
+        qualifiers: dict[str, dict[str, str]] = {}
+
+        # 1. Find relation atoms where source_atom_id is a role-filler.
+        relation_atom_ids: set[str] = set()
+        for edge in graph.edges:
+            if edge.edge_type != "has_role":
+                continue
+            if edge.target_id != source_atom_id:
+                continue
+            if group_id and edge.group_id and edge.group_id != group_id:
+                continue
+            relation_atom_ids.add(edge.source_id)
+
+        # 2. If a target atom is given, narrow to relation atoms that also
+        #    contain the target as a role-filler (disambiguation).
+        if target_atom_id and relation_atom_ids:
+            narrowed: set[str] = set()
+            for edge in graph.edges:
+                if edge.edge_type != "has_role":
+                    continue
+                if edge.target_id != target_atom_id:
+                    continue
+                if edge.source_id in relation_atom_ids:
+                    narrowed.add(edge.source_id)
+            if narrowed:
+                relation_atom_ids = narrowed
+
+        # 3. Extract non-core roles from the matched relation atoms.
+        for rel_atom_id in relation_atom_ids:
+            for edge in graph.edges:
+                if edge.edge_type != "has_role":
+                    continue
+                if edge.source_id != rel_atom_id:
+                    continue
+                role = edge.features.get("role", "")
+                if not role or role in _CORE_ROLES:
+                    continue
+                target = graph.atoms.get(edge.target_id)
+                if target is None:
+                    continue
+                qualifiers[role] = {
+                    "concept_id": MeaningGraphBuilder._concept_key_for(target),
+                    "entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
+                    "surface": target.surface or "",
+                }
+
+        # 4. Scan for direct has_role edges on the object entity that carry
+        #    qualifier roles (e.g. "domain" from domain phrases).
+        if target_atom_id:
+            for edge in graph.edges:
+                if edge.edge_type != "has_role":
+                    continue
+                if edge.source_id != target_atom_id:
+                    continue
+                if group_id and edge.group_id and edge.group_id != group_id:
+                    continue
+                role = edge.features.get("role", "")
+                if not role or role in _CORE_ROLES:
+                    continue
+                target = graph.atoms.get(edge.target_id)
+                if target is None:
+                    continue
+                qualifiers[role] = {
+                    "concept_id": MeaningGraphBuilder._concept_key_for(target),
+                    "entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
+                    "surface": target.surface or "",
+                }
+
+        return qualifiers
 
     def _source_refs_for_group(self, graph: UOLGraph, group_id: str) -> list[str]:
         sources = graph.atoms_by_kind("source", group_id) if group_id else []

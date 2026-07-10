@@ -37,6 +37,22 @@ from .meaning_percept import (
     EventSchema, SafetyFrame, RetrospectiveRepairFrame, SituationFrame,
     RetrievalPlan, MeaningPerceptPacket, OutputStateUpdate,
 )
+from .operational_meaning import (
+    OperationalMeaningFrame, OperationalEffect, MeaningArbitrationResult,
+    OPERATIONAL_MEANING_FRAME_TYPES, TARGET_SCOPES, PERSISTENCE_POLICIES,
+    QUERY_POLICIES, WRITABLE_FRAME_TYPES, is_writable_frame,
+)
+from .state_transmutation import (
+    StateOccupancyFrame, StateDeltaFrame, StateTransmutationFrame,
+    StateTransmutationPolicy, StateTransmutationResult,
+    STATE_FAMILIES, DIRECTIONS, TRANSMUTATION_KINDS,
+)
+from .obligation_contract import (
+    ObligationContract, QueryContract, WriteContract, ReactionContract,
+    SafetyContract,
+    OBLIGATION_KINDS_3_2, RESPONSE_MODES, QUERY_KINDS, WRITE_KINDS,
+    REACTION_KINDS, COMMIT_POLICIES, EVIDENCE_POLICIES, AMBIGUITY_POLICIES,
+)
 
 __all__ = [
     "Signal", "SignalKind", "SourceType",
@@ -71,4 +87,14 @@ __all__ = [
     "CandidateInterpretation", "MeaningHypothesis", "MeaningGroup",
     "EventSchema", "SafetyFrame", "RetrospectiveRepairFrame", "SituationFrame",
     "RetrievalPlan", "MeaningPerceptPacket", "OutputStateUpdate",
+    "OperationalMeaningFrame", "OperationalEffect", "MeaningArbitrationResult",
+    "OPERATIONAL_MEANING_FRAME_TYPES", "TARGET_SCOPES", "PERSISTENCE_POLICIES",
+    "QUERY_POLICIES", "WRITABLE_FRAME_TYPES", "is_writable_frame",
+    "StateOccupancyFrame", "StateDeltaFrame", "StateTransmutationFrame",
+    "StateTransmutationPolicy", "StateTransmutationResult",
+    "STATE_FAMILIES", "DIRECTIONS", "TRANSMUTATION_KINDS",
+    "ObligationContract", "QueryContract", "WriteContract", "ReactionContract",
+    "SafetyContract",
+    "OBLIGATION_KINDS_3_2", "RESPONSE_MODES", "QUERY_KINDS", "WRITE_KINDS",
+    "REACTION_KINDS", "COMMIT_POLICIES", "EVIDENCE_POLICIES", "AMBIGUITY_POLICIES",
 ]

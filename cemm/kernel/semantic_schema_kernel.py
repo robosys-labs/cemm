@@ -114,6 +114,32 @@ class StateDimensionRegistry:
     def all_families(self) -> list[str]:
         return list(self._by_family.keys())
 
+    def is_safety_relevant(self, state_family: str, dimension: str) -> bool:
+        """Check if a dimension has a harmful_polarity defined, making it safety-relevant."""
+        schema = self._by_family.get(state_family)
+        if schema is None:
+            return False
+        dim_def = schema.dimensions.get(dimension, {})
+        return "harmful_polarity" in dim_def
+
+    def is_harmful_direction(self, state_family: str, dimension: str, direction: str) -> bool:
+        """Check if a direction moves toward the harmful polarity of a dimension.
+
+        Uses the ``harmful_polarity`` field from ``state_dimension_schemas.json``:
+        - ``"negative"`` means ``decrease`` is harmful (toward ``polarity_negative``)
+        - ``"positive"`` means ``increase`` is harmful (toward ``polarity_positive``)
+        """
+        schema = self._by_family.get(state_family)
+        if schema is None:
+            return False
+        dim_def = schema.dimensions.get(dimension, {})
+        harmful_polarity = dim_def.get("harmful_polarity", "")
+        if harmful_polarity == "negative":
+            return direction == "decrease"
+        if harmful_polarity == "positive":
+            return direction == "increase"
+        return False
+
 
 class EntityKindRegistry:
     def __init__(self, schemas: list[EntityKindSchema]) -> None:
@@ -202,6 +228,14 @@ class ActionOperatorRegistry:
     def safety_category_for(self, action_key: str) -> str:
         schema = self._by_key.get(action_key)
         return schema.safety_category if schema else ""
+
+    def permission_policy_for(self, action_key: str) -> str:
+        schema = self._by_key.get(action_key)
+        return schema.permission_policy if schema else "normal"
+
+    def risk_for(self, action_key: str) -> str:
+        schema = self._by_key.get(action_key)
+        return schema.risk if schema else "low"
 
     def emotional_valence_for(self, action_key: str) -> str:
         schema = self._by_key.get(action_key)

@@ -54,8 +54,10 @@ Use these files as the active implementation contract, in this order:
 3. `newarch/cemm-v3.1-lean-implementation-plan.md` (response formation architecture plan — COMPLETE)
 4. `newarch/semantic-schema-refactor.md` (semantic schema kernel refactor plan — COMPLETE)
 5. `newarch/causal-runtime-wiring-fix.md` (master fix plan — partially addressed)
-6. `newarch/3.3-uol-graph-architecture.md` (UOL graph architecture details)
-7. `newarch/core_loop_runtime.md` (core loop runtime contract — partially superseded by ARCHITECTURE.md §5)
+6. `newarch/3.2-improvement-plan.md` (operational meaning and state-transmutation spine — IMPLEMENTED; see header for gap status)
+7. `newarch/3.3-uol-graph-architecture.md` (UOL graph architecture details)
+8. `newarch/core-loop-causal-recursive-spine.md` (runtime loop map after 3.2 changes — reference diagram)
+9. `newarch/core_loop_runtime.md` (core loop runtime contract — partially superseded by ARCHITECTURE.md §5)
 
 Superseded design docs and plans are archived at `docs/archive/newarch_superseded/`.
 Use them as background reference only — they are not active architecture contracts.
@@ -107,6 +109,80 @@ a compression-oriented concept/construction/predicate/affordance learner
 
 English text is one input/output surface. UOL graph structure is the internal
 semantic workbench.
+
+## 2.5 Fundamental Architecture Understanding Gate
+
+Before writing any runtime, interpretation, routing, memory, safety, or response
+code, the agent must understand and preserve CEMM's semantic substrate model.
+CEMM is a multimodal, multilanguage system, do not patch visible transcript symptoms by adding English phrase cases to late
+decision stages. That is antithetical to the project.
+
+CEMM behavior must emerge from these substrates:
+
+```text
+surface signal
+-> normalized multilingual/token evidence
+-> meaning groups and candidate interpretations
+-> UOL atoms/edges with source, permission, time, and modality
+-> entity grounding and salience across turns
+-> temporal/context state in ContextKernel and SessionStore
+-> action/operator schemas over typed slots
+-> state occupancy, state deltas, and state transmutations
+-> operational meaning frames and causal effects
+-> query/write/reaction/safety contracts
+-> response formation from selected evidence
+```
+
+Agents must trace the broken behavior through that chain and fix the earliest
+wrong semantic substrate that has enough authority to explain the bug. A change
+in `OperationalMeaningCompiler`, `ObligationContractBuilder`, query execution,
+or response formation is only acceptable when the upstream graph/contract
+structure is already correct and the bug is truly in that stage.
+
+### Required Pre-Code Trace
+
+For every behavior fix, write down the evidence before editing code:
+
+```text
+1. What meaning group(s) were produced?
+2. What candidate interpretations were preserved or lost?
+3. Which UOL atoms and edges encode the entity, relation, action, state,
+   modality, source, permission, and time?
+4. Which entity state or temporal/session context is required?
+5. Which action/operator schema, state occupancy frame, state delta frame,
+   or state transmutation frame should carry the meaning?
+6. Which operational frame and contract should follow from those substrates?
+7. Why is the intended fix located at this layer rather than later in routing
+   or response text?
+```
+
+If this trace cannot be produced, do not write code. Add diagnostics or tests
+that expose the missing substrate first.
+
+### Meaning Substrate Law
+
+Correct:
+
+```text
+missing meaning -> improve perception / graph / schemas / state frames
+bad entity reference -> improve grounding, salience, anaphora, or deixis
+bad memory behavior -> improve graph patches, validation, or contracts
+bad safety behavior -> improve state transmutations and causal effects
+bad answer behavior -> improve query contracts, evidence selection, or relation frames
+```
+
+Incorrect:
+
+```text
+bad response -> add phrase match in OperationalMeaningCompiler
+bad profile query -> special-case final user text in query execution
+bad criticism handling -> list insult words in a late router
+bad safety behavior -> token-match dangerous words
+bad memory behavior -> block writes by raw text fragments
+```
+
+Seed heuristics may exist only as temporary scaffolding at the correct semantic
+layer, with explicit diagnostics and tests proving the semantic gap they cover.
 
 ## 3. Current Runtime Contract
 
@@ -609,6 +685,8 @@ Do not:
 
 ```text
 use English-specific string matching as the primary architecture
+fix transcript symptoms with late-stage phrase cases instead of repairing the meaning substrate
+turn `OperationalMeaningCompiler` into a bag of conversational regexes
 hardcode open-domain fallback strings to hide model failure
 produce final answer text before interpretation and planning
 write durable memory directly from perception or retrieval
@@ -632,6 +710,7 @@ bypass safety gates in favor of ranker preferences
 add English-specific logic to language-agnostic response stages
 read raw user text in SlotBinder — bind from evidence only
 put pronoun shifting or HTML sanitization in language-agnostic stages
+use tests that assert only final text while ignoring broken graph, state, or contract structure
 ```
 
 Seed heuristics are allowed only as explicit fallback scaffolding.
@@ -693,12 +772,15 @@ old patch files
 Before closing a task, verify:
 
 - [ ] The change follows the current v4.2 architecture, not older v3-only instructions.
+- [ ] The pre-code trace identifies the earliest wrong meaning substrate before any fix is made.
 - [ ] `MeaningPerceptPacket` exists before graph construction.
 - [ ] `UOLGraph` exists before runtime resolution, planning, patch extraction, or learning.
 - [ ] Candidate meanings are preserved instead of collapsed prematurely.
+- [ ] Entity grounding, salience, anaphora, deixis, and temporal/session context were checked when behavior depends on cross-turn meaning.
 - [ ] Predicate extraction is not limited to action/state surface matches when the task touches interpretation.
 - [ ] Discourse relations create graph structure when the task touches group relations.
 - [ ] Anaphora/deixis are handled or explicitly marked unresolved when the task touches cross-group reference.
+- [ ] State occupancy, state deltas, and state transmutations are used when behavior depends on entity state or state change.
 - [ ] Durable learning happens only through `GraphPatch`.
 - [ ] Concept, construction, port, and affordance behavior lives behind the proper lattice/resolver/predictor seams.
 - [ ] Domain concepts are not added as new primitive atom kinds.
@@ -722,4 +804,5 @@ Before closing a task, verify:
 - [ ] Response formation: `ResponseBundle` carries full traceability (moves, evidence, diagnostics).
 - [ ] Response formation: HTML sanitization in `SlotBinder._clean_value` strips script blocks and tags.
 - [ ] Response formation: old tests using `SemanticRealizer` directly are replaced with pipeline-level tests via `SeededSystem`.
+- [ ] Tests assert the semantic substrate and contract shape, not only the final response text.
 

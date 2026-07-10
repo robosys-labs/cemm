@@ -110,6 +110,7 @@ _TEACHING_CUES = cue_set("teaching_cue")
 _TIME_CUES = cue_set("temporal_reference")
 _PLACE_CUES = cue_set("place_reference")
 _NEGATIONS = cue_set("negation")
+_CORRECTION_PREFIXES = cue_set("correction_prefix")
 
 _AMBIGUOUS_LEXEMES: dict[str, list[dict[str, Any]]] = {
     "bank": [
@@ -489,7 +490,7 @@ class MeaningPerceptor:
                 previous_separator = separator or previous_separator
                 return
             start = token_cursor
-            end = min(len(tokens), token_cursor + len(chunk_tokens))
+            end = self._semantic_end_for_raw_tokens(tokens, token_cursor, chunk_tokens)
             token_cursor = end
             segments.append((clean, start, end, previous_separator, separator))
             previous_separator = separator
@@ -548,6 +549,28 @@ class MeaningPerceptor:
             index += 1
         flush(chunk, "")
         return segments
+
+    @staticmethod
+    def _semantic_end_for_raw_tokens(tokens: list[str], start: int, raw_tokens: list[str]) -> int:
+        """Return the semantic-token end index for a raw clause token list.
+
+        The packet may use normalized tokens that split contractions
+        (``whats`` -> ``what``, ``s``). Clause segmentation starts from raw
+        text, so span accounting has to consume the equivalent normalized
+        tokens or the final content token can fall out of the group.
+        """
+        index = start
+        for raw in raw_tokens:
+            if index >= len(tokens):
+                break
+            if tokens[index] == raw:
+                index += 1
+                continue
+            if index + 1 < len(tokens) and f"{tokens[index]}{tokens[index + 1]}" == raw:
+                index += 2
+                continue
+            index += 1
+        return min(len(tokens), index)
 
     def _split_on_connectives(self, tokens: list[str]) -> list[tuple[list[str], str, str]]:
         pieces: list[tuple[list[str], str, str]] = []
@@ -988,7 +1011,17 @@ class MeaningPerceptor:
         surface = group.surface.strip().lower()
         ends_with_question = surface.endswith("?") or group.separator_after == "?"
 
+        # Correction prefix check — uses data-driven cue set from uol_semantics.json.
+        # Positional heuristic: if the first token is a correction prefix and there
+        # is more content after it, classify as correction before the construction
+        # matcher, which would match the declarative content as an assertion.
+        if tokens and tokens[0] in _CORRECTION_PREFIXES and len(tokens) > 1:
+            return "correction"
+
         # Delegate to ConstructionMatcher for data-driven intent detection.
+        # Multi-word greeting aliases ("good morning"), correction phrases
+        # ("that's wrong"), and teaching_remember ("remember that") are all
+        # handled here via frame aliases in uol_semantics.json.
         if self._construction_matcher is not None:
             match = self._construction_matcher.match_group(group, packet)
             if match is not None:
@@ -1008,14 +1041,14 @@ class MeaningPerceptor:
             return "question"
         if tokens and tokens[0] in _COMMAND_CUES:
             return "command"
+
+        # Greeting fallback (when construction matcher is None or unmatched).
+        _greeting_aliases = frame_alias_set("greeting")
+        if token_set & _greeting_aliases and not ends_with_question:
+            return "greeting"
+
         if group.states and any(state.holder_role == "user" for state in group.states):
             return "user_state_report"
-        _greeting_aliases = frame_alias_set("greeting")
-        if token_set & _greeting_aliases:
-            return "greeting"
-        for form in packet.normalized_forms:
-            if set(self._language.tokenize(form)) & _greeting_aliases:
-                return "greeting"
         _ack_aliases = frame_alias_set("acknowledgment")
         if token_set & _ack_aliases or token_set <= _ack_aliases:
             return "acknowledgment"

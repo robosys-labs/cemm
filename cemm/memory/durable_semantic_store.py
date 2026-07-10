@@ -28,6 +28,9 @@ class DurableRelationRecord:
     support_count: int = 1
     observed_at: float = 0.0
     updated_at: float = 0.0
+    relation_scope: str = ""
+    dimension: str = ""
+    features: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -118,6 +121,10 @@ class DurableSemanticStore:
         source_atom_ids: list[str] | None = None,
         evidence_refs: list[str] | None = None,
         inverse_keys: list[str] | None = None,
+        features: dict[str, Any] | None = None,
+        relation_scope: str = "",
+        dimension: str = "",
+        qualifiers: dict[str, Any] | None = None,
     ) -> DurableRelationRecord:
         now = time.time()
         subj_key = subject_concept_id or subject_entity_id or subject_surface
@@ -130,6 +137,14 @@ class DurableSemanticStore:
             existing.updated_at = now
             if source_patch_id and source_patch_id not in existing.source_patch_ids:
                 existing.source_patch_ids.append(source_patch_id)
+            if features:
+                existing.features.update(features)
+            if relation_scope and not existing.relation_scope:
+                existing.relation_scope = relation_scope
+            if dimension and not existing.dimension:
+                existing.dimension = dimension
+            if qualifiers:
+                existing.qualifiers.update(qualifiers)
             return existing
 
         record = DurableRelationRecord(
@@ -142,6 +157,7 @@ class DurableSemanticStore:
             object_concept_id=object_concept_id,
             object_entity_id=object_entity_id,
             object_surface=object_surface,
+            qualifiers=dict(qualifiers) if qualifiers else {},
             inverse_relation_keys=list(inverse_keys or []),
             source_patch_ids=[source_patch_id] if source_patch_id else [],
             source_atom_ids=list(source_atom_ids or []),
@@ -150,6 +166,9 @@ class DurableSemanticStore:
             support_count=1,
             observed_at=now,
             updated_at=now,
+            relation_scope=relation_scope,
+            dimension=dimension,
+            features=dict(features) if features else {},
         )
         self._relations[record.record_id] = record
         self._index_relation(record)
@@ -270,6 +289,9 @@ class DurableSemanticStore:
                     evidence_refs=list(rec.evidence_refs),
                     confidence=rec.confidence * 0.9,
                     support_count=rec.support_count,
+                    relation_scope=rec.relation_scope,
+                    dimension=rec.dimension,
+                    features=dict(rec.features) if rec.features else {},
                 )
                 results.append(swapped)
         return results
@@ -318,6 +340,7 @@ class DurableSemanticStore:
                 inverse_relation_keys=list(rec.inverse_relation_keys),
                 inherited_from=[rec.record_id],
                 confidence=rec.confidence * 0.85,
+                features=dict(rec.features) if rec.features else {},
             )
             results.append(child_frame)
         return results
@@ -446,6 +469,15 @@ class DurableSemanticStore:
 
     def _record_to_frame(self, rec: DurableRelationRecord) -> RelationFrame | None:
         is_structural = rec.relation_key in self._STRUCTURAL_RELATION_KEYS
+        qualifiers: dict[str, RelationArgument] = {}
+        for role, qdata in (rec.qualifiers or {}).items():
+            if isinstance(qdata, dict):
+                qualifiers[role] = RelationArgument(
+                    role=role,
+                    concept_id=qdata.get("concept_id", ""),
+                    entity_id=qdata.get("entity_id", ""),
+                    surface=qdata.get("surface", ""),
+                )
         return RelationFrame(
             relation_id=rec.record_id,
             relation_key=rec.relation_key,
@@ -464,6 +496,7 @@ class DurableSemanticStore:
                 surface=rec.object_surface,
                 confidence=rec.confidence,
             ),
+            qualifiers=qualifiers,
             source_edge_ids=list(rec.source_patch_ids),
             source_atom_ids=list(rec.source_atom_ids),
             evidence_refs=list(rec.evidence_refs),
@@ -471,6 +504,7 @@ class DurableSemanticStore:
             confidence=rec.confidence,
             answerable=not is_structural,
             structural=is_structural,
+            features=dict(rec.features) if rec.features else {},
         )
 
     def apply_validated_patch(
@@ -506,6 +540,10 @@ class DurableSemanticStore:
                     source_patch_id=patch.id,
                     source_atom_ids=op.fields.get("source_atom_ids"),
                     inverse_keys=op.fields.get("inverse_keys"),
+                    features=op.fields.get("features"),
+                    relation_scope=op.fields.get("relation_scope", ""),
+                    dimension=op.fields.get("dimension", ""),
+                    qualifiers=op.fields.get("qualifiers"),
                 )
                 if rec.support_count > 1:
                     updated.append(rec.record_id)

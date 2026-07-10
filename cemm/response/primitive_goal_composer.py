@@ -194,10 +194,12 @@ class PrimitiveGoalComposer:
                 evidence_refs.extend(getattr(fill, "source_frame_ids", []) or [])
                 evidence_refs.extend(getattr(fill, "evidence_refs", []) or [])
         if has_answer:
-            goals = [self._goal("assert", confidence=float(getattr(binding, "confidence", 0.8) or 0.8), evidence_refs=evidence_refs, reason="answer_bound")]
+            answer_confidence = float(getattr(binding, "confidence", 0.8) or 0.8)
+            goals = [self._goal("assert", confidence=answer_confidence, evidence_refs=evidence_refs, reason="answer_bound")]
             obligation = situation.obligation_frame
             if getattr(obligation, "evidence_policy", "") == "required":
-                goals.append(self._goal("explain_evidence", confidence=0.65, evidence_refs=evidence_refs, reason="evidence_required"))
+                if self._should_explain_evidence(situation, answer_confidence):
+                    goals.append(self._goal("explain_evidence", confidence=0.65, evidence_refs=evidence_refs, reason="evidence_required"))
             return goals
         abstention_reason = getattr(binding, "abstention_reason", "") or getattr(situation.evidence, "abstention_reason", "")
         if abstention_reason in {"missing_required_slots", "clarify"}:
@@ -206,6 +208,50 @@ class PrimitiveGoalComposer:
             self._goal("negate", confidence=0.65, reason=abstention_reason or "no_answer"),
             self._goal("hedge", confidence=0.6, reason=abstention_reason or "no_answer"),
         ]
+
+    @staticmethod
+    def _should_explain_evidence(situation: ResponseSituation, answer_confidence: float) -> bool:
+        """Gate evidence explanation rendering.
+
+        Evidence is internally required for all questions, but the explanation
+        should only be rendered externally when at least one of:
+        - user explicitly requested source/reason
+        - confidence is borderline (below 0.75)
+        - style.detail is high (above 0.7)
+        - user_detail_appetite is high (above 0.7)
+        - debug/diagnostics mode is active
+        """
+        style_detail = float(getattr(situation.style, "detail", 0.5) or 0.5)
+        if style_detail > 0.7:
+            return True
+        user_detail_appetite = float(getattr(situation.temperature, "user_detail_appetite", 0.5) or 0.5)
+        if user_detail_appetite > 0.7:
+            return True
+        obligation = situation.obligation_frame
+        source_requested = False
+        if obligation is not None:
+            context = getattr(obligation, "context", {}) or {}
+            act_hints = context.get("response_act_hints", []) or []
+            for hint in act_hints:
+                hint_str = str(hint).lower() if isinstance(hint, str) else str(hint.get("act", "") or hint.get("intent", "")).lower()
+                if any(marker in hint_str for marker in ("source", "reason", "evidence", "why", "how_do_you_know", "citation")):
+                    source_requested = True
+                    break
+        if source_requested:
+            return True
+        obligation_contract = getattr(obligation, "context", {}).get("obligation_contract") if obligation is not None else None
+        query_contract = getattr(obligation_contract, "query_contract", None)
+        if (
+            getattr(obligation, "obligation_kind", "") == "answer_user_profile"
+            and getattr(query_contract, "query_kind", "") == "profile_dimension"
+        ):
+            return False
+        if answer_confidence < 0.75:
+            return True
+        budget = getattr(situation, "budget_decision", None)
+        if budget is not None and getattr(budget, "risk_level", "") in {"high", "critical"}:
+            return True
+        return False
 
     def _act_keys(self, situation: ResponseSituation) -> set[str]:
         acts: set[str] = set()

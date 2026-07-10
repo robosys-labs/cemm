@@ -7,7 +7,6 @@ obligation force.
 """
 
 from __future__ import annotations
-
 import uuid
 from typing import Any
 
@@ -123,9 +122,12 @@ class SemanticProgramCompiler:
         "acknowledgment": "social",
         "frustration_signal": "social",
         "user_complaint": "social",
+        "assistant_evaluation": "social",
+        "style_feedback": "social",
         "statement": "assertion",
         "session_exit": "exit",
         "user_state_report": "assertion",
+        "correction": "correction",
         "self_reflect": "self_reflect",
     }
 
@@ -149,11 +151,14 @@ class SemanticProgramCompiler:
             if atom.kind == "permission" and atom.key in ("deny", "restrict"):
                 kind_scores["safety"] = kind_scores.get("safety", 0.0) + atom.confidence
 
-        # Check if we already have a question or social intent before
-        # adding assertion scores from structural edges.
+        # Check if we already have a question, social, or command intent before
+        # adding assertion scores from structural edges.  Command intents should
+        # not be overridden by assertion edges (is_a, same_as, causes) the same
+        # way questions and social intents are suppressed.
         has_question_or_social = (
             kind_scores.get("question", 0.0) > 0
             or kind_scores.get("social", 0.0) > 0
+            or kind_scores.get("command", 0.0) > 0
         )
         # If social score comes from frustration/evaluative intent,
         # suppress question from asks_about edges — banter like
@@ -162,6 +167,7 @@ class SemanticProgramCompiler:
         # with legitimate questions (e.g. "hi, what can you do?").
         _SOCIAL_OVERRIDE_KEYS = frozenset({
             "frustration_signal", "user_complaint",
+            "assistant_evaluation", "style_feedback",
         })
         social_overrides_question = False
         for aid in atom_ids:

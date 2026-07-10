@@ -1,7 +1,7 @@
-"""SemanticQueryEngine — build and execute SemanticQuery over relation frames.
+"""SemanticQueryEngine - build and execute SemanticQuery over relation frames.
 
 The breakthrough module: closes the loop between the v4.2 semantic stack
-(SemanticProgram → ObligationFrame → RelationFrames) and the response
+(SemanticProgram -> ObligationFrame -> RelationFrames) and the response
 pipeline. Instead of keyword-based claim retrieval and hardcoded if/else
 template selection, the engine:
 
@@ -134,19 +134,11 @@ class SemanticQueryEngine:
                 subject_entity = _OBLIGATION_KIND_TO_SUBJECT_ENTITY.get(
                     obligation.obligation_kind, "self"
                 )
-                # For user_profile queries, determine relation key from surface
-                # text — role/job/title → has_role, everything else → has_property
-                if obligation.obligation_kind == "answer_user_profile" and entry is not None:
-                    surface_lower = (entry.surface or "").lower()
-                    if "job" in surface_lower or "occupation" in surface_lower or "work" in surface_lower or "role" in surface_lower or "title" in surface_lower:
-                        preferred_relation_key = "has_role"
-                    else:
-                        preferred_relation_key = "has_property"
                 # Set relation_key and subject entity directly from the mapping.
                 # The durable store frames (self-knowledge) are not in turn_frames,
                 # so we must not make relation_key dependent on finding matching
-                # turn frames. We still try to find matching turn frames to refine
-                # object_constraint (e.g. surface text).
+                # turn frames. Matching frames may refine object constraints only
+                # through structural relation frames, never surface overlap.
                 relation_key = preferred_relation_key
                 subject_constraint.entity_id = subject_entity
 
@@ -156,7 +148,7 @@ class SemanticQueryEngine:
                     and f.subject.entity_id == subject_entity
                 ]
                 if matching_frames:
-                    best = self._select_best_frame(matching_frames, entry.surface or "")
+                    best = max(matching_frames, key=lambda f: f.confidence)
                     subject_constraint.concept_id = best.subject.concept_id
                     object_constraint.concept_id = best.object.concept_id
                     object_constraint.entity_id = best.object.entity_id
@@ -183,19 +175,10 @@ class SemanticQueryEngine:
                                 matching_frames = [
                                     f for f in answerable_frames
                                     if f.subject.entity_id == "self"
+                                    and f.relation_key == preferred_relation_key
                                 ]
-                    # Surface-based fallback: match entry surface tokens
-                    # against frame subject/object surfaces and concept_ids.
-                    # This catches concept queries like "who is the president?"
-                    # where the durable store has is_a(president_of_nigeria, tinubu)
-                    # but the current turn's atoms don't share IDs with the
-                    # original teaching turn's atoms.
-                    if not matching_frames and entry is not None:
-                        matching_frames = self._match_frames_by_surface(
-                            answerable_frames, entry, uol_graph
-                        )
                 if matching_frames:
-                    best = self._select_best_frame(matching_frames, entry.surface or "")
+                    best = max(matching_frames, key=lambda f: f.confidence)
                     relation_key = best.relation_key
                     subject_constraint.concept_id = best.subject.concept_id
                     subject_constraint.entity_id = best.subject.entity_id
@@ -370,39 +353,6 @@ class SemanticQueryEngine:
             return "none"
         return "none"
 
-    @staticmethod
-    def _select_best_frame(frames: list[RelationFrame], question_surface: str) -> RelationFrame:
-        """Pick the best frame by token overlap with question, then confidence."""
-        import re
-        _STOP = frozenset({
-            "who", "what", "where", "when", "why", "how", "which",
-            "do", "does", "did", "is", "are", "am", "was", "were",
-            "can", "could", "would", "should", "will", "might",
-            "the", "a", "an", "of", "in", "on", "at", "to", "for",
-            "and", "or", "but", "not", "no", "yes",
-            "i", "me", "my", "mine", "we", "us", "our",
-            "you", "your", "yours", "it", "its", "they", "them",
-            "that", "this", "these", "those",
-            "self", "user", "world", "conversation", "memory",
-        })
-        token_re = re.compile(r"[^\W_]+", re.UNICODE)
-        q_tokens = {t for t in token_re.findall((question_surface or "").lower()) if t not in _STOP}
-
-        def _frame_score(f: RelationFrame) -> tuple[int, float]:
-            if not q_tokens:
-                return (0, f.confidence)
-            subj = (f.subject.surface or "").lower()
-            obj = (f.object.surface or "").lower()
-            subj_c = (f.subject.concept_id or "").lower().replace("concept:", "").replace("_", " ")
-            obj_c = (f.object.concept_id or "").lower().replace("concept:", "").replace("_", " ")
-            frame_tokens: set[str] = set()
-            for text in (subj, obj, subj_c, obj_c):
-                frame_tokens |= {t for t in token_re.findall(text) if t not in _STOP}
-            overlap = len(q_tokens & frame_tokens)
-            return (overlap, f.confidence)
-
-        return max(frames, key=_frame_score)
-
     def _frame_matches_entry(self, frame: RelationFrame, entry: Any) -> bool:
         if hasattr(entry, "atom_ids"):
             for aid in entry.atom_ids:
@@ -425,7 +375,7 @@ class SemanticQueryEngine:
                     concept_ids.add(cr.concept_id)
                     break
             else:
-                # No concept resolution found — derive from atom key
+                # No concept resolution found - derive from atom key
                 if atom.kind == "concept":
                     concept_ids.add(atom.key if atom.key.startswith("concept:") else f"concept:{atom.key}")
                 elif atom.kind in ("entity", "self") and atom.key not in ("user", "self", "world", "conversation", "memory"):
@@ -446,83 +396,3 @@ class SemanticQueryEngine:
                 return True
         return False
 
-    def _match_frames_by_surface(
-        self,
-        frames: list[RelationFrame],
-        entry: Any,
-        uol_graph: Any | None = None,
-    ) -> list[RelationFrame]:
-        """Match frames by surface token overlap with the entry.
-
-        Extracts content tokens from the entry's atom surfaces and the
-        entry surface itself, then matches them against frame subject/object
-        surfaces and concept_ids. Excludes structural frames (self-knowledge,
-        enables, causes, has_role) to avoid false matches.
-        """
-        import re
-        _STOP = frozenset({
-            "who", "what", "where", "when", "why", "how", "which",
-            "do", "does", "did", "is", "are", "am", "was", "were",
-            "can", "could", "would", "should", "will", "might",
-            "the", "a", "an", "of", "in", "on", "at", "to", "for",
-            "and", "or", "but", "not", "no", "yes",
-            "i", "me", "my", "mine", "we", "us", "our",
-            "you", "your", "yours", "it", "its", "they", "them",
-            "that", "this", "these", "those",
-            "self", "user", "world", "conversation", "memory",
-        })
-        token_re = re.compile(r"[^\W_]+", re.UNICODE)
-
-        # Collect content tokens from entry surface and graph atoms
-        entry_surface = (entry.surface or "").lower()
-        entry_tokens = {t for t in token_re.findall(entry_surface) if t not in _STOP}
-
-        if uol_graph is not None:
-            for aid in getattr(entry, "atom_ids", []):
-                atom = uol_graph.atoms.get(aid)
-                if atom is None:
-                    continue
-                if atom.kind in ("entity", "concept", "self", "relation", "quality", "state"):
-                    atom_surface = (atom.surface or "").lower()
-                    atom_tokens = {t for t in token_re.findall(atom_surface) if t not in _STOP}
-                    entry_tokens |= atom_tokens
-
-        if not entry_tokens:
-            return []
-
-        # Match against frames — check if any content token appears in
-        # the frame's subject or object surface/concept_id
-        _STRUCTURAL_RELATIONS = frozenset({
-            "has_role", "causes", "enables", "prevents",
-            "before", "after", "refers_to", "modifies",
-            "teaches", "asks_about",
-            "is_a", "same_as", "part_of", "used_for",
-        })
-        matches: list[RelationFrame] = []
-        for f in frames:
-            if f.structural:
-                continue
-            if f.relation_key in _STRUCTURAL_RELATIONS:
-                continue
-            subj_surface = (f.subject.surface or "").lower()
-            obj_surface = (f.object.surface or "").lower()
-            subj_concept = (f.subject.concept_id or "").lower()
-            obj_concept = (f.object.concept_id or "").lower()
-
-            # Extract tokens from frame surfaces and concept_ids
-            frame_tokens: set[str] = set()
-            for text in (subj_surface, obj_surface):
-                frame_tokens |= {t for t in token_re.findall(text) if t not in _STOP}
-            for text in (subj_concept, obj_concept):
-                # concept_id is like "concept:president_of_nigeria"
-                for part in text.replace("concept:", "").replace("_", " ").split():
-                    if part and part not in _STOP:
-                        frame_tokens.add(part)
-
-            if entry_tokens & frame_tokens:
-                overlap = len(entry_tokens & frame_tokens)
-                min_overlap = max(1, len(entry_tokens) // 3)
-                if overlap >= min_overlap:
-                    matches.append(f)
-
-        return matches

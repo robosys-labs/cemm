@@ -268,7 +268,37 @@ class SchemaBackedLanguageAdapter(LanguageAdapter):
         modality = self._modality(token_set)
         polarity = "negated" if token_set & self._negations else "affirmed"
         atoms: list[ActionAtom] = []
-        for token in tokens:
+        consumed: set[int] = set()
+
+        # Pass 1: Multi-word aliases (bigrams, trigrams) — check first for precedence
+        for n in (3, 2):
+            for i in range(len(tokens) - n + 1):
+                if any(i + j in consumed for j in range(n)):
+                    continue
+                phrase = " ".join(tokens[i:i + n])
+                action_key = self._kernel.action_operators.lookup_alias(phrase, self.language_code)
+                if action_key is None:
+                    continue
+                schema_slots = self._kernel.action_operators.slots_for(action_key)
+                actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set)
+                atoms.append(ActionAtom(
+                    surface=phrase,
+                    action_key=action_key,
+                    actor_role=actor_role,
+                    object_role=object_role,
+                    target_role=target_role,
+                    modality=modality,
+                    polarity=polarity,
+                    confidence=0.7,
+                    schema_slots=schema_slots,
+                ))
+                for j in range(n):
+                    consumed.add(i + j)
+
+        # Pass 2: Single-token aliases — skip tokens consumed by multi-word matches
+        for i, token in enumerate(tokens):
+            if i in consumed:
+                continue
             action_key = self._kernel.action_operators.lookup_alias(token, self.language_code)
             if action_key is None:
                 continue

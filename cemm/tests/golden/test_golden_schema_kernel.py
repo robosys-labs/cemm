@@ -119,10 +119,27 @@ def test_affordance_predictor_loads_from_kernel():
 
 
 def test_safety_detector_uses_schema_categories():
-    """SafetyFrameDetector should use safety_category from action operator schemas."""
-    detector = SafetyFrameDetector()
-    sf = detector.detect(input_text="should I beat him?")
-    assert sf is not None, "Should detect safety concern"
+    """SafetyFrameDetector should derive safety from schema primitives via the pipeline.
+
+    'beat him' should produce safety-relevant state transmutations through the
+    graph builder → state delta compiler → state transmutation compiler pipeline,
+    which the detector classifies as interpersonal_violence.
+    """
+    system = SeededSystem()
+    result = system.run("should I beat him?")
+    sf = result.get("safety_frame")
+    if sf is None:
+        cycle = result.get("cycle")
+        if cycle is not None:
+            sf = getattr(cycle, "safety_frame", None)
+    if sf is None:
+        graph = result.get("cycle")
+        if graph is not None:
+            graph = getattr(graph, "uol_graph", None)
+        if graph is not None:
+            detector = SafetyFrameDetector()
+            sf = detector.detect(uol_graph=graph)
+    assert sf is not None, "Should detect safety concern from pipeline"
     assert sf.category == "interpersonal_violence"
     assert sf.severity == "high"
     assert sf.allowed_response_mode == "deescalate"

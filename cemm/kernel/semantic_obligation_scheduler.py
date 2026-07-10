@@ -25,8 +25,14 @@ _OBLIGATION_PRIORITY: dict[str, int] = {
     "assertion": 4,
     "command": 5,
     "self_reflect": 5,
+    "answer_self_model": 5,
+    "answer_user_profile": 5,
+    "answer_self_identity": 5,
+    "answer_self_capability": 5,
+    "answer_self_knowledge": 5,
     "exit": 6,
     "social": 7,
+    "acknowledge_emotional_context": 7,
     "creative": 8,
     "unknown": 9,
 }
@@ -63,6 +69,7 @@ _RESPONSE_MODE: dict[str, str] = {
     "answer_self_capability": "evidence_answer",
     "answer_self_knowledge": "evidence_answer",
     "answer_self_model": "self_identity",
+    "answer_user_profile": "evidence_answer",
     "acknowledge_emotional_context": "emotional_response",
 }
 
@@ -79,6 +86,12 @@ _EVIDENCE_POLICY: dict[str, str] = {
     "creative": "none",
     "unknown": "none",
     "self_reflect": "required",
+    "answer_self_identity": "required",
+    "answer_self_capability": "required",
+    "answer_self_knowledge": "required",
+    "answer_self_model": "required",
+    "answer_user_profile": "required",
+    "acknowledge_emotional_context": "none",
 }
 
 _WRITE_POLICY: dict[str, str] = {
@@ -94,6 +107,12 @@ _WRITE_POLICY: dict[str, str] = {
     "creative": "none",
     "unknown": "none",
     "self_reflect": "none",
+    "answer_self_identity": "none",
+    "answer_self_capability": "none",
+    "answer_self_knowledge": "none",
+    "answer_self_model": "none",
+    "answer_user_profile": "none",
+    "acknowledge_emotional_context": "none",
 }
 
 
@@ -137,7 +156,7 @@ class SemanticObligationScheduler:
             if inst.instruction_id == entry.instruction_id:
                 continue
             inst_rank = _OBLIGATION_PRIORITY.get(inst.instruction_kind, 8)
-            entry_rank = _OBLIGATION_PRIORITY.get(kind, 8)
+            entry_rank = _OBLIGATION_PRIORITY.get(obligation_kind, _OBLIGATION_PRIORITY.get(kind, 8))
             if inst_rank > entry_rank:
                 suppressed.append({
                     "instruction_id": inst.instruction_id,
@@ -159,8 +178,8 @@ class SemanticObligationScheduler:
             primary_instruction_id=entry.instruction_id,
             obligation_kind=obligation_kind,
             response_mode=_RESPONSE_MODE.get(obligation_kind, _RESPONSE_MODE.get(kind, "general_conversation")),
-            evidence_policy=_EVIDENCE_POLICY.get(kind, "none"),
-            write_policy=_WRITE_POLICY.get(kind, "none"),
+            evidence_policy=_EVIDENCE_POLICY.get(obligation_kind, _EVIDENCE_POLICY.get(kind, "none")),
+            write_policy=_WRITE_POLICY.get(obligation_kind, _WRITE_POLICY.get(kind, "none")),
             required_slots=required_slots,
             blocked_by=blocked_by,
             child_obligations=child_obligations,
@@ -220,6 +239,10 @@ class SemanticObligationScheduler:
             if has_evaluation_shift:
                 return "acknowledge_emotional_context"
 
+        if base in ("store_patch", "social_reply") and uol_graph is not None:
+            if self._detect_style_feedback(entry, uol_graph):
+                return "acknowledge_emotional_context"
+
         return base
 
     _TEACHING_EDGE_TYPES: frozenset = frozenset({"is_a", "same_as", "has_property", "used_for", "part_of"})
@@ -245,39 +268,8 @@ class SemanticObligationScheduler:
         if uol_graph is None:
             return False
         for atom in uol_graph.atoms.values():
-            if atom.kind == "intent" and atom.key == "user_profile_query":
+            if atom.kind == "intent" and atom.key in {"user_profile_query", "user_name_query", "user_age_query"}:
                 return True
-        has_user_entity = False
-        has_user_ref = False
-        for aid in entry.atom_ids:
-            atom = uol_graph.atoms.get(aid)
-            if atom is None:
-                continue
-            if atom.kind == "entity" and atom.key == "user":
-                has_user_entity = True
-            role = atom.features.get("role", "")
-            if role in ("possessor", "speaker", "topic", "subject", "self_target") and atom.kind == "entity":
-                has_user_ref = True
-        if has_user_entity and has_user_ref:
-            surface_lower = entry.surface.lower()
-            profile_keywords = (
-                "name", "age", "old", "email", "hobby", "location",
-                "address", "phone", "birthday", "occupation", "job",
-                "favorite", "favourite", "preference", "like",
-            )
-            if any(kw in surface_lower for kw in profile_keywords):
-                return True
-        # Fallback: if user entity is present and surface contains "my" + profile keyword
-        if has_user_entity:
-            surface_lower = entry.surface.lower()
-            if " my " in f" {surface_lower} " or surface_lower.startswith("my "):
-                profile_keywords = (
-                    "name", "age", "old", "email", "hobby", "location",
-                    "address", "phone", "birthday", "occupation", "job",
-                    "favorite", "favourite", "preference",
-                )
-                if any(kw in surface_lower for kw in profile_keywords):
-                    return True
         return False
 
     _SELF_QUERY_INTENT_KEYS: frozenset = frozenset({
@@ -301,6 +293,20 @@ class SemanticObligationScheduler:
         "self_capability_query": "answer_self_capability",
         "self_knowledge_query": "answer_self_knowledge",
     }
+
+    _STYLE_FEEDBACK_MARKERS: frozenset = frozenset({
+        "too_verbose", "too_long", "too_robotic", "too_short",
+        "too_detailed", "too_terse", "too_formal", "too_casual",
+        "response_feedback", "style_feedback",
+    })
+
+    def _detect_style_feedback(self, entry: Any, uol_graph: Any) -> bool:
+        """Check whether canonical intent atoms indicate style feedback."""
+        if uol_graph is not None:
+            for atom in uol_graph.atoms.values():
+                if atom.kind == "intent" and atom.key in self._STYLE_FEEDBACK_MARKERS:
+                    return True
+        return False
 
     def _refine_self_query(self, entry: Any, uol_graph: Any | None = None) -> str:
         """Check UOL graph for specific self-query intent atoms to refine obligation."""

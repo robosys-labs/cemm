@@ -26,3 +26,10 @@ class RuntimeCycleResult:
     semantic_query: Any | None = None
     answer_binding: Any | None = None
     response_bundle: Any | None = None
+    # v3.2 operational spine outputs
+    operational_meaning_frames: list[Any] = field(default_factory=list)
+    meaning_arbitration: Any | None = None
+    state_transmutations: list[Any] = field(default_factory=list)
+    operational_effects: list[Any] = field(default_factory=list)
+    obligation_contract: Any | None = None
+    situation_frame: Any | None = None

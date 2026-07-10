@@ -87,7 +87,7 @@
   {
     "action_key": "physically_harm_target",
     "operator_family": "harm",
-    "aliases": {"en": ["beat", "hit", "attack", "hurt", "fight", "punch", "kick", "slap"], "ig": []},
+    "aliases": {"en": ["beat", "hit", "attack", "hurt", "fight", "punch", "kick", "slap", "stab", "kill", "shoot", "strangle", "choke", "assault", "mug", "rape", "murder", "poison"], "ig": []},
     "slots": {
       "actor": {"allowed_entity_kinds": ["person", "animal"], "required": true},
       "target": {"allowed_entity_kinds": ["person", "animal"], "required": true}
@@ -95,7 +95,7 @@
     "preconditions": [],
     "state_deltas": [
       {"target": "target", "dimension": "vital.health", "direction": "decrease", "confidence": 0.9},
-      {"target": "target", "dimension": "vital.injured", "direction": "increase", "confidence": 0.85}
+      {"target": "target", "dimension": "vital.injured", "direction": "decrease", "confidence": 0.85}
     ],
     "relation_deltas": [],
     "needs_satisfied": [],
@@ -443,7 +443,7 @@
     },
     "preconditions": [],
     "state_deltas": [
-      {"target": "actor", "dimension": "volition.preference", "direction": "increase", "confidence": 0.8},
+      {"target": "actor", "dimension": "volitional.preference", "direction": "increase", "confidence": 0.8},
       {"target": "actor", "dimension": "affective.mood", "direction": "increase", "confidence": 0.6}
     ],
     "relation_deltas": [
@@ -465,7 +465,7 @@
     },
     "preconditions": [],
     "state_deltas": [
-      {"target": "actor", "dimension": "volition.preference", "direction": "decrease", "confidence": 0.8},
+      {"target": "actor", "dimension": "volitional.preference", "direction": "decrease", "confidence": 0.8},
       {"target": "actor", "dimension": "affective.mood", "direction": "decrease", "confidence": 0.5}
     ],
     "relation_deltas": [
@@ -475,6 +475,98 @@
     "risk": "low",
     "permission_policy": "normal",
     "safety_category": "",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "self_harm_injury",
+    "operator_family": "self_harm",
+    "aliases": {"en": ["harm myself", "cut myself", "hurt myself"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self"], "required": true},
+      "target": {"allowed_entity_kinds": ["person", "self"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "target", "dimension": "vital.health", "direction": "decrease", "confidence": 0.9},
+      {"target": "target", "dimension": "vital.injured", "direction": "decrease", "confidence": 0.85}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "critical",
+    "permission_policy": "restricted",
+    "safety_category": "self_harm",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "self_harm_end_life",
+    "operator_family": "self_harm",
+    "aliases": {"en": ["kill myself", "end it all", "ending it all", "end my life", "ending my life", "suicide", "suicidal", "self harm", "self-harm"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self"], "required": true},
+      "target": {"allowed_entity_kinds": ["person", "self"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "target", "dimension": "vital.health", "direction": "decrease", "confidence": 1.0}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "critical",
+    "permission_policy": "restricted",
+    "safety_category": "self_harm",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "illegal_steal",
+    "operator_family": "illegal",
+    "aliases": {"en": ["steal", "rob", "burgle", "shoplift", "embezzle", "smuggle", "hack", "pirate"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "target": {"allowed_entity_kinds": ["object", "virtual_object", "place"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "high",
+    "permission_policy": "restricted",
+    "safety_category": "illegal_activity",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "illegal_weapon",
+    "operator_family": "illegal",
+    "aliases": {"en": ["weapon", "bomb", "explosive", "firearm"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "target": {"allowed_entity_kinds": ["object", "tool"], "required": false}
+    },
+    "preconditions": [],
+    "state_deltas": [],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "high",
+    "permission_policy": "restricted",
+    "safety_category": "illegal_activity",
+    "emotional_valence": "negative"
+  },
+  {
+    "action_key": "illegal_kidnap",
+    "operator_family": "illegal",
+    "aliases": {"en": ["kidnap", "abduct"], "ig": []},
+    "slots": {
+      "actor": {"allowed_entity_kinds": ["person", "self", "autonomous_agent"], "required": true},
+      "target": {"allowed_entity_kinds": ["person"], "required": true}
+    },
+    "preconditions": [],
+    "state_deltas": [
+      {"target": "target", "dimension": "geospatial.location", "direction": "set", "confidence": 0.8}
+    ],
+    "relation_deltas": [],
+    "needs_satisfied": [],
+    "risk": "high",
+    "permission_policy": "restricted",
+    "safety_category": "illegal_activity",
     "emotional_valence": "negative"
   }
 ]

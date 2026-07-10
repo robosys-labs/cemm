@@ -10,7 +10,7 @@ from .primitive_goal_composer import PrimitiveGoalComposer
 from .realization_executor import RealizationExecutor
 from .response_move_composer import ResponseMoveComposer
 from .transformers import CandidateGenerator, PlanGateAndRanker, Selector
-from .types import ResponseBundle, ResponseEvidencePacket, ResponseSituation
+from .types import RealizedCandidate, ResponseBundle, ResponseEvidencePacket, ResponseSituation
 
 
 class ResponseFormationEngine:
@@ -43,17 +43,25 @@ class ResponseFormationEngine:
         plans = self._candidate_generator.generate(moves, situation)
         ranked = self._ranker.rank(plans, situation)
         selected_plan = self._selector.select(ranked, situation)
-        realized = self._realizer.realize_plan(selected_plan, situation)
-
-        proposed_actions = self._action_proposer.propose(situation, selected_plan, realized)
-        authorization = self._action_authorizer.authorize(proposed_actions, situation, selected_plan)
 
         required_components = selected_plan.required_components
         satisfied_components = selected_plan.satisfied_components
         missing_components = sorted(required_components - satisfied_components)
-        text = realized.text
-        if selected_plan.blocked_reason or (missing_components and any(move.safety_required for move in selected_plan.moves)):
+        is_blocked = bool(
+            selected_plan.blocked_reason
+            or (missing_components and any(move.safety_required for move in selected_plan.moves))
+        )
+
+        if is_blocked:
             text = self._blocked_fallback(selected_plan.blocked_reason or ",".join(missing_components))
+            proposed_actions: list = []
+            authorization = self._action_authorizer.authorize([], situation, selected_plan)
+            realized = self._dummy_realized()
+        else:
+            realized = self._realizer.realize_plan(selected_plan, situation)
+            proposed_actions = self._action_proposer.propose(situation, selected_plan, realized)
+            authorization = self._action_authorizer.authorize(proposed_actions, situation, selected_plan)
+            text = realized.text
         if not text:
             text = "I don't have enough verified information to answer that."
 
@@ -153,6 +161,14 @@ class ResponseFormationEngine:
         if "safety" in reason or "explicit_negative" in reason or "no_instruction" in reason:
             return "No. I can't help with that request."
         return "I don't have enough verified information to answer that."
+
+    @staticmethod
+    def _dummy_realized() -> RealizedCandidate:
+        return RealizedCandidate(
+            text="",
+            language="en",
+            grammar_trace={"blocked": True},
+        )
 
     @staticmethod
     def _budget_diagnostics(situation: ResponseSituation) -> dict:

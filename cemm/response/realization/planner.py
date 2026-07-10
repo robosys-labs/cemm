@@ -63,6 +63,7 @@ class RealizationPlanner:
                 unit_type=move.move_type,
                 move_type=move.move_type,
                 style=style,
+                features=self._clarification_features(situation) if move.move_type == "clarify" else {},
             )
 
         if move.move_type == "answer":
@@ -165,6 +166,18 @@ class RealizationPlanner:
             abstention_reason=reason,
             style=style,
         )
+
+    @staticmethod
+    def _clarification_features(situation: ResponseSituation) -> dict[str, Any]:
+        obligation = situation.obligation_frame
+        frames = getattr(obligation, "context", {}).get("operational_meaning_frames", []) if obligation is not None else []
+        for frame in frames:
+            if getattr(frame, "frame_type", "") != "clarification_request":
+                continue
+            unknowns = list(getattr(frame, "features", {}).get("decode_unknown_content_tokens", []) or [])
+            if unknowns:
+                return {"unknown_token": unknowns[0]}
+        return {}
 
     @staticmethod
     def _safety_tags(situation: ResponseSituation) -> list[str]:

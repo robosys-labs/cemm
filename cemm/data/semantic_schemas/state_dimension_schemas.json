@@ -21,12 +21,12 @@
   {
     "state_family": "vital",
     "dimensions": {
-      "alive": {"polarity_negative": "dead", "polarity_positive": "alive", "range": [0, 1]},
-      "health": {"polarity_negative": "sick", "polarity_positive": "healthy", "range": [0, 1]},
-      "hunger": {"polarity_negative": "hungry", "polarity_positive": "satisfied", "range": [0, 1]},
-      "thirst": {"polarity_negative": "thirsty", "polarity_positive": "hydrated", "range": [0, 1]},
-      "energy": {"polarity_negative": "tired", "polarity_positive": "energetic", "range": [0, 1]},
-      "injured": {"polarity_negative": "injured", "polarity_positive": "uninjured", "range": [0, 1]}
+      "alive": {"polarity_negative": "dead", "polarity_positive": "alive", "range": [0, 1], "harmful_polarity": "negative"},
+      "health": {"polarity_negative": "sick", "polarity_positive": "healthy", "range": [0, 1], "harmful_polarity": "negative"},
+      "hunger": {"polarity_negative": "hungry", "polarity_positive": "satisfied", "range": [0, 1], "harmful_polarity": "negative"},
+      "thirst": {"polarity_negative": "thirsty", "polarity_positive": "hydrated", "range": [0, 1], "harmful_polarity": "negative"},
+      "energy": {"polarity_negative": "tired", "polarity_positive": "energetic", "range": [0, 1], "harmful_polarity": "negative"},
+      "injured": {"polarity_negative": "injured", "polarity_positive": "uninjured", "range": [0, 1], "harmful_polarity": "negative"}
     },
     "applies_to": ["person", "animal", "self", "autonomous_agent"]
   },
@@ -117,7 +117,7 @@
     "dimensions": {
       "allowed": {"polarity_negative": "forbidden", "polarity_positive": "permitted", "range": [0, 1]},
       "obligated": {"polarity_negative": "optional", "polarity_positive": "obligated", "range": [0, 1]},
-      "risk": {"polarity_negative": "safe", "polarity_positive": "risky", "range": [0, 1]}
+      "risk": {"polarity_negative": "safe", "polarity_positive": "risky", "range": [0, 1], "harmful_polarity": "positive"}
     },
     "applies_to": ["person", "self", "autonomous_agent", "device", "object", "action"]
   },

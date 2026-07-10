@@ -25,6 +25,7 @@ OBLIGATION_KINDS = frozenset({
     "social_reply",
     "acknowledge_emotional_context",
     "exit",
+    "safety_refusal",
 })
 
 

@@ -193,6 +193,22 @@ class Budget:
 
 
 @dataclass
+class EntityStateEntry:
+    """Tracks the current value of a single state dimension on an entity."""
+    entity_ref: str  # "entity:user", "entity:self", etc.
+    state_family: str
+    dimension: str
+    current_value: float
+    confidence: float = 0.5
+    last_updated_signal_id: str = ""
+    last_updated_at: float = 0.0
+
+    @property
+    def key(self) -> str:
+        return f"{self.entity_ref}:{self.state_family}.{self.dimension}"
+
+
+@dataclass
 class ContextKernel:
     id: str
     self_state_id: str | None = None
@@ -207,8 +223,16 @@ class ContextKernel:
     permission: Permission = field(default_factory=Permission.public)
     budget: Budget = field(default_factory=Budget)
     latest_signal: Any | None = None
+    entity_states: dict[str, EntityStateEntry] = field(default_factory=dict)
     version: str = "cemm.context_kernel.v1"
 
     @property
     def self(self) -> SelfView:
         return self.self_view
+
+    def get_entity_state(self, entity_ref: str, state_family: str, dimension: str) -> EntityStateEntry | None:
+        key = f"{entity_ref}:{state_family}.{dimension}"
+        return self.entity_states.get(key)
+
+    def set_entity_state(self, entry: EntityStateEntry) -> None:
+        self.entity_states[entry.key] = entry

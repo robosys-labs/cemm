@@ -775,12 +775,15 @@ self learns word -> favorable for self and user
 self loses data -> unfavorable for self
 ```
 
-### 8.5 `cemm/kernel/safety_frame_detector.py` — New
+### 8.5 `cemm/kernel/safety_frame_detector.py` — Compositional Derivation
+
+> **Updated 2026-07-10:** Safety is now derived compositionally from primitive atoms, not keyword matching.
+> See `docs/compositional_safety_refactor.md` for the full design.
 
 Input:
 
 ```text
-SituationFrame + OutcomeValence
+UOLGraph (with state delta atoms, causes edges, has_role edges) + SituationFrame + ValenceAtoms
 ```
 
 Output:
@@ -789,7 +792,16 @@ Output:
 SafetyFrame | None
 ```
 
-Must catch:
+Derivation rules (no hardcoded phrases):
+
+```text
+self_harm           = vital.* decrease on entity kind "self"
+interpersonal_violence = vital.* decrease on entity kind "person" (not self)
+illegal_activity    = permission_policy == "restricted"
+medical_risk        = vital.* decrease, permission_policy == "normal", risk == "high"
+```
+
+Harmful direction is data-driven via `harmful_polarity` field in `state_dimension_schemas.json`.
 
 ```text
 should I beat him?

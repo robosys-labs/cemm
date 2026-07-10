@@ -18,6 +18,16 @@ from .teaching_frame_manager import TeachingFrameManager
 from .relation_frame_compiler import RelationFrameCompiler
 from .relation_algebra import RelationAlgebra
 from .semantic_query_engine import SemanticQueryEngine
+from .operational_meaning_compiler import OperationalMeaningCompiler
+from .state_transmutation_compiler import StateTransmutationCompiler
+from .operational_causal_router import OperationalCausalRouter
+from .obligation_contract_builder import ObligationContractBuilder
+from .query_contract_builder import QueryContractBuilder
+from .write_contract_builder import WriteContractBuilder
+from .reaction_contract_builder import ReactionContractBuilder
+from .situation_frame_builder import SituationFrameBuilder
+from .state_occupancy_compiler import StateOccupancyCompiler
+from .state_delta_compiler import StateDeltaCompiler
 from ..response.response_formation_engine import ResponseFormationEngine
 from ..response.types import ResponseSituation, ResponseBundle, WriteOutcome, BudgetFrame, StyleVector, TemperatureState, ResponseEvidencePacket
 from .session_store import SessionStore
@@ -27,6 +37,10 @@ from ..learning.patch_committer import PatchCommitter
 from ..memory.predicate_schema_store import PredicateSchemaStore
 from ..memory.durable_semantic_store import DurableSemanticStore
 from ..types.runtime_cycle import RuntimeCycleResult
+from ..types.answer_binding import AnswerBinding, SlotFill
+from ..types.obligation_contract import QueryContract, WriteContract, ReactionContract
+from ..types.obligation_frame import ObligationFrame
+from ..types.semantic_query import QueryConstraint, SemanticQuery
 
 
 class SemanticKernelRuntime:
@@ -84,6 +98,16 @@ class SemanticKernelRuntime:
         self._program_compiler = SemanticProgramCompiler()
         self._obligation_scheduler = SemanticObligationScheduler()
         self._teaching_frame_manager = TeachingFrameManager()
+        self._operational_meaning_compiler = OperationalMeaningCompiler()
+        self._state_transmutation_compiler = StateTransmutationCompiler()
+        self._operational_causal_router = OperationalCausalRouter()
+        self._obligation_contract_builder = ObligationContractBuilder()
+        self._query_contract_builder = QueryContractBuilder()
+        self._write_contract_builder = WriteContractBuilder()
+        self._reaction_contract_builder = ReactionContractBuilder()
+        self._situation_frame_builder = SituationFrameBuilder()
+        self._state_occupancy_compiler = StateOccupancyCompiler()
+        self._state_delta_compiler = StateDeltaCompiler()
 
         # v4.2: Relation frames, predicate schemas, relation algebra
         self._relation_frame_compiler = RelationFrameCompiler(
@@ -264,6 +288,14 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"causal bridge failed: {e}")
 
+        # 2b. Build situation frame from percept + kernel
+        try:
+            situation_frame = self._situation_frame_builder.build(percept, kernel)
+            result.situation_frame = situation_frame
+        except Exception as e:
+            errors.append(f"situation frame build failed: {e}")
+            situation_frame = None
+
         # 3. Attend — select focus (Phase 3)
         try:
             budget = getattr(kernel, "budget", None) if kernel is not None else None
@@ -279,18 +311,129 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"compile program failed: {e}")
 
-        # 3b. Schedule obligation (v4.2)
-        obligation_frame = None
+        # 3b. Preliminary safety detection from graph (for arbitration preemption)
+        from .safety_frame_detector import SafetyFrameDetector
+        safety_detector = SafetyFrameDetector()
         try:
-            affordance_predictions = getattr(uol_graph, "affordance_predictions", []) or []
-            obligation_frame = self._obligation_scheduler.schedule(
-                semantic_program, working_set, kernel, uol_graph,
-                affordance_predictions=affordance_predictions,
+            safety_frame = safety_detector.detect(
+                situation=result.situation_frame,
+                valences=getattr(percept, 'valences', []) if percept else [],
+                uol_graph=uol_graph,
             )
         except Exception as e:
-            errors.append(f"schedule obligation failed: {e}")
+            errors.append(f"safety detection failed: {e}")
+            safety_frame = None
 
-        # 3c. Process teaching frame (v4.2)
+        # 3c. Compile operational meaning/state/effect/obligation contracts
+        obligation_frame = None
+        obligation_contract = None
+        operational_frames: list[Any] = []
+        meaning_arbitration = None
+        state_transmutations: list[Any] = []
+        operational_effects: list[Any] = []
+        try:
+            affordance_predictions = getattr(uol_graph, "affordance_predictions", []) or []
+            if semantic_program is not None:
+                operational_frames = self._operational_meaning_compiler.compile(
+                    uol_graph, semantic_program, affordance_predictions=affordance_predictions,
+                )
+                meaning_arbitration = self._operational_meaning_compiler.arbitrate(
+                    operational_frames, safety_frame=safety_frame,
+                )
+                selected_frames = [
+                    frame for frame in operational_frames
+                    if frame.frame_id in set(meaning_arbitration.selected_frame_ids)
+                ] or operational_frames[:1]
+
+                # 3c-i. Compile state occupancy frames (entity current states)
+                occupancy_frames = self._state_occupancy_compiler.compile(
+                    uol_graph, kernel,
+                )
+
+                # 3c-ii. Compile state delta frames (proposed changes from graph)
+                delta_frames = self._state_delta_compiler.compile(
+                    uol_graph, selected_frames,
+                )
+
+                # 3c-iii. Compile state transmutations (from frames + deltas + occupancy)
+                state_transmutations = self._state_transmutation_compiler.compile(
+                    uol_graph, selected_frames,
+                    delta_frames=delta_frames,
+                    occupancy_frames=occupancy_frames,
+                )
+
+                # 3c-iv. Authoritative safety detection from transmutations
+                try:
+                    authoritative_safety = safety_detector.detect(
+                        transmutations=state_transmutations,
+                        occupancy_frames=occupancy_frames,
+                        situation=result.situation_frame,
+                        uol_graph=uol_graph,
+                    )
+                    if authoritative_safety is not None:
+                        safety_frame = authoritative_safety
+                except Exception as e:
+                    errors.append(f"authoritative safety detection failed: {e}")
+
+                operational_effects = self._operational_causal_router.route(
+                    selected_frames,
+                    state_transmutations,
+                    affordance_predictions=affordance_predictions,
+                    safety_frame=safety_frame,
+                )
+                obligation_contract = self._obligation_contract_builder.build(
+                    operational_frames,
+                    meaning_arbitration,
+                    effects=operational_effects,
+                    safety_frame=safety_frame,
+                )
+                primary_frame = selected_frames[0] if selected_frames else None
+                if primary_frame is not None and primary_frame.is_query:
+                    refined_query = self._query_contract_builder.build(
+                        primary_frame, self._durable_semantic_store,
+                    )
+                    if refined_query is not None:
+                        obligation_contract.query_contract = refined_query
+                        obligation_contract.query_policy = primary_frame.query_policy
+                if primary_frame is not None:
+                    write_contract = self._write_contract_builder.build(
+                        primary_frame, uol_graph,
+                    )
+                    if write_contract is not None:
+                        obligation_contract.write_contract = write_contract
+                        obligation_contract.write_policy = write_contract.commit_policy
+                    reaction_contract = self._reaction_contract_builder.build(
+                        primary_frame, operational_effects,
+                    )
+                    if reaction_contract is not None:
+                        obligation_contract.reaction_contract = reaction_contract
+                else:
+                    for frame in selected_frames:
+                        wc = self._write_contract_builder.build(frame, uol_graph)
+                        if wc is not None:
+                            obligation_contract.write_contract = wc
+                            obligation_contract.write_policy = wc.commit_policy
+                            break
+                    for frame in selected_frames:
+                        rc = self._reaction_contract_builder.build(frame, operational_effects)
+                        if rc is not None:
+                            obligation_contract.reaction_contract = rc
+                            break
+                obligation_frame = self._obligation_frame_from_contract(
+                    obligation_contract,
+                    semantic_program,
+                    operational_frames,
+                )
+        except Exception as e:
+            errors.append(f"compile operational contract failed: {e}")
+
+        result.operational_meaning_frames = operational_frames
+        result.meaning_arbitration = meaning_arbitration
+        result.state_transmutations = state_transmutations
+        result.operational_effects = operational_effects
+        result.obligation_contract = obligation_contract
+
+        # 3d. Process teaching frame (v4.2)
         try:
             self._teaching_frame_manager.process_turn(
                 semantic_program, uol_graph, kernel, signal.id,
@@ -315,44 +458,21 @@ class SemanticKernelRuntime:
         try:
             turn_frames = self._relation_frame_compiler.compile(uol_graph)
 
-            # 3d-i. Build query from turn frames + obligation + program
-            # Include durable frames so the query engine can find relation_key
-            # for concept queries where the answer is in the durable store.
-            if obligation_frame is not None:
-                # Retrieve durable frames with broad filter for query building
-                pre_durable_frames = self._durable_semantic_store.query_relations(
-                    relation_key="",
-                ) if self._durable_semantic_store.relation_count() > 0 else []
-                all_frames_for_query = turn_frames + pre_durable_frames
-                semantic_query = self._query_engine.build_query(
-                    obligation_frame, all_frames_for_query, semantic_program, uol_graph,
+            query_contract = getattr(obligation_contract, "query_contract", None) if obligation_contract is not None else None
+            if query_contract is not None:
+                semantic_query = self._semantic_query_from_contract(
+                    query_contract,
+                    obligation_frame,
                 )
-
-            # 3d-ii. Retrieve durable frames filtered by query constraints
-            durable_relation_key = semantic_query.relation_key if semantic_query else ""
-            if not durable_relation_key and obligation_frame is not None:
-                durable_relation_key = self._query_engine.preferred_relation_key(
-                    obligation_frame.obligation_kind
-                )
-
-            if semantic_query is not None:
-                durable_frames = self._durable_semantic_store.query_relations(
-                    relation_key=durable_relation_key,
-                    subject_concept_id=semantic_query.subject_constraint.concept_id,
-                    subject_entity_id=semantic_query.subject_constraint.entity_id,
-                    object_concept_id=semantic_query.object_constraint.concept_id,
-                    object_entity_id=semantic_query.object_constraint.entity_id,
-                    allow_inverse=semantic_query.allow_inverse,
-                )
-            elif durable_relation_key:
-                durable_frames = self._durable_semantic_store.query_relations(
-                    relation_key=durable_relation_key,
+                durable_frames = self._durable_frames_for_contract(query_contract)
+                relation_frames = turn_frames + durable_frames
+                answer_binding = self._execute_query_contract(
+                    query_contract,
+                    semantic_query,
+                    relation_frames,
                 )
             else:
-                durable_frames = []
-
-            # Durable frames last so current-turn frames take priority
-            relation_frames = turn_frames + durable_frames
+                relation_frames = turn_frames
         except Exception as e:
             errors.append(f"compile relations failed: {e}")
 
@@ -365,13 +485,7 @@ class SemanticKernelRuntime:
             errors.append(f"induce predicate schemas failed: {e}")
 
         # 3e. Execute semantic query → answer binding (v4.2)
-        if semantic_query is not None and obligation_frame is not None:
-            try:
-                answer_binding = self._query_engine.execute(
-                    semantic_query, relation_frames,
-                )
-            except Exception as e:
-                errors.append(f"query engine failed: {e}")
+        # Query execution occurs above through the v3.2 QueryContract.
 
         # Promote v4.2 outputs to first-class fields
         result.semantic_program = semantic_program
@@ -395,7 +509,11 @@ class SemanticKernelRuntime:
 
         # 5. Extract patches
         try:
-            patches = list(self._cpu.patch_extractor.extract(uol_graph))
+            patches = list(self._cpu.patch_extractor.extract(
+                uol_graph,
+                operational_frames,
+                obligation_contract,
+            ))
             result.patch_candidates = patches
         except Exception as e:
             errors.append(f"extract failed: {e}")
@@ -433,18 +551,9 @@ class SemanticKernelRuntime:
             except Exception as e:
                 errors.append(f"consolidate failed: {e}")
 
-        # 8. Safety detection — BEFORE response formation (v3.1 invariant #2)
-        from .safety_frame_detector import SafetyFrameDetector
-        safety_detector = SafetyFrameDetector()
-        try:
-            safety_frame = safety_detector.detect(
-                situation=getattr(result, 'situation_frame', None),
-                input_text=getattr(signal, 'content', ''),
-                valences=getattr(percept, 'valences', []) if percept else [],
-            )
-        except Exception as e:
-            errors.append(f"safety detection failed: {e}")
-            safety_frame = None
+        # 8. Safety is now integrated into the obligation contract at step 3c
+        # via arbitration preemption + safety_frame parameter to the contract
+        # builder. No post-hoc override needed. (v3.1 invariant #2 — safety is a gate)
 
         # 8a. Build WriteOutcome from commit results (v3.1 invariant #3)
         write_outcome = self._build_write_outcome(commit_results)
@@ -457,6 +566,9 @@ class SemanticKernelRuntime:
             answer_binding=answer_binding,
             relation_frames=relation_frames,
         )
+        style_state, temperature_state = self._state_from_reaction_contract(
+            getattr(obligation_contract, "reaction_contract", None) if obligation_contract is not None else None,
+        )
         response_situation = ResponseSituation(
             obligation_frame=obligation_frame,
             answer_binding=answer_binding,
@@ -468,8 +580,8 @@ class SemanticKernelRuntime:
             safety_frame=safety_frame,
             write_outcome=write_outcome,
             budget_frame=BudgetFrame(),
-            style=StyleVector(),
-            temperature=TemperatureState(),
+            style=style_state,
+            temperature=temperature_state,
             signal=signal,
             kernel=kernel,
             percept=percept,
@@ -590,6 +702,235 @@ class SemanticKernelRuntime:
                 result.diagnostics.setdefault("errors", []).append(f"session persist failed: {e}")
 
         return result
+
+    def _obligation_frame_from_contract(
+        self,
+        contract: Any,
+        program: Any | None,
+        frames: list[Any],
+    ) -> ObligationFrame:
+        entry = getattr(program, "entry_instruction", None) if program is not None else None
+        primary_id = getattr(entry, "instruction_id", "") or getattr(contract, "primary_meaning_frame_id", "")
+        kind_map = {
+            "store_profile": "store_patch",
+            "store_teaching": "store_patch",
+            "store_correction": "store_patch",
+            "memory_command": "store_patch",
+            "answer_concept_definition": "answer_concept",
+            "answer_user_profile": "answer_user_profile",
+            "answer_self_identity": "answer_self_identity",
+            "answer_self_capability": "answer_self_capability",
+            "answer_self_knowledge": "answer_self_knowledge",
+            "apply_style_feedback": "acknowledge_emotional_context",
+            "apply_response_feedback": "repair",
+            "acknowledge_emotional_context": "acknowledge_emotional_context",
+            "social_reply": "social_reply",
+            "exit": "exit",
+            "safety_refusal": "safety_refusal",
+            "ask_clarification": "ask_clarification",
+            "abstain": "abstain_policy",
+            "repair": "repair",
+        }
+        mode_map = {
+            "confirm_write": "store_confirmation",
+            "answer": "evidence_answer",
+            "acknowledge": "emotional_response",
+            "exit": "session_exit",
+            "refuse": "safety_refusal",
+            "social": "social_response",
+            "clarify": "clarification",
+            "abstain": "general_conversation",
+            "repair": "repair",
+        }
+        query_contract = getattr(contract, "query_contract", None)
+        context = {
+            "obligation_contract": contract,
+            "operational_meaning_frames": frames,
+        }
+        return ObligationFrame(
+            primary_instruction_id=primary_id,
+            obligation_kind=kind_map.get(contract.obligation_kind, "social_reply"),
+            response_mode=mode_map.get(contract.response_mode, "general_conversation"),
+            evidence_policy=getattr(query_contract, "evidence_policy", "none") if query_contract is not None else "none",
+            write_policy=contract.write_policy,
+            required_slots=[],
+            blocked_by=list(contract.blocked_by),
+            child_obligations=list(contract.child_meaning_frame_ids),
+            suppressed_obligations=[
+                {"meaning_frame_id": frame.frame_id, "frame_type": frame.frame_type, "reason": "not_primary"}
+                for frame in frames
+                if frame.frame_id != contract.primary_meaning_frame_id
+            ],
+            confidence=contract.confidence,
+            context=context,
+        )
+
+    def _semantic_query_from_contract(
+        self,
+        contract: QueryContract,
+        obligation: ObligationFrame | None,
+    ) -> SemanticQuery:
+        return SemanticQuery(
+            query_id=f"qc_{time.time_ns():x}"[-16:],
+            source_obligation_id=getattr(obligation, "primary_instruction_id", ""),
+            query_kind=contract.query_kind,
+            relation_key=contract.relation_key,
+            subject_constraint=QueryConstraint(
+                role="subject",
+                concept_id=contract.subject_concept_id,
+                entity_id=contract.subject_entity_id,
+            ),
+            object_constraint=QueryConstraint(
+                role="object",
+                concept_id=contract.object_concept_id,
+                entity_id=contract.object_entity_id,
+            ),
+            allow_inheritance=False,
+            allow_inverse=False,
+            evidence_policy=contract.evidence_policy,
+            required_slots=[],
+            blocked_by=[],
+            confidence=1.0,
+        )
+
+    def _durable_frames_for_contract(self, contract: QueryContract) -> list[Any]:
+        if contract.query_kind == "none":
+            return []
+        if contract.query_kind == "profile_dimension" and not contract.dimension:
+            return []
+        if contract.target_required and not (
+            contract.subject_entity_id
+            or contract.subject_concept_id
+            or contract.object_entity_id
+            or contract.object_concept_id
+        ):
+            return []
+        return self._durable_semantic_store.query_relations(
+            relation_key=contract.relation_key,
+            subject_concept_id=contract.subject_concept_id,
+            subject_entity_id=contract.subject_entity_id,
+            object_concept_id=contract.object_concept_id,
+            object_entity_id=contract.object_entity_id,
+            allow_inheritance=False,
+            allow_inverse=False,
+        )
+
+    def _execute_query_contract(
+        self,
+        contract: QueryContract,
+        semantic_query: SemanticQuery,
+        relation_frames: list[Any],
+    ) -> AnswerBinding:
+        if contract.target_required and contract.query_kind == "concept_definition" and not contract.subject_concept_id:
+            return self._empty_answer(semantic_query, "unresolved_query_target", contract.evidence_policy)
+        matches = [
+            frame for frame in relation_frames
+            if self._frame_matches_query_contract(frame, contract)
+        ]
+        if not matches:
+            return self._empty_answer(semantic_query, "no_matches", contract.evidence_policy)
+
+        slot_fills: list[SlotFill] = []
+        matched_ids: list[str] = []
+        explanations: list[list[str]] = []
+        for frame in matches:
+            surface, concept_id, entity_id = self._project_contract_frame(frame, contract)
+            if not surface and not concept_id and not entity_id:
+                continue
+            slot_fills.append(SlotFill(
+                slot_name="answer",
+                concept_id=concept_id,
+                entity_id=entity_id,
+                surface=surface,
+                relation_key=frame.relation_key,
+                source_frame_ids=[frame.relation_id],
+                evidence_refs=list(frame.evidence_refs),
+                confidence=frame.confidence,
+                is_inherited=bool(getattr(frame, "inherited_from", [])),
+                features=dict(frame.features) if frame.features else {},
+            ))
+            matched_ids.append(frame.relation_id)
+            if self._relation_algebra is not None:
+                explanations.append(self._relation_algebra.explain_path(frame, relation_frames))
+
+        if not slot_fills:
+            return self._empty_answer(semantic_query, "no_matches", contract.evidence_policy)
+        return AnswerBinding(
+            binding_id=f"ab_{time.time_ns():x}"[-16:],
+            source_query_id=semantic_query.query_id,
+            query_kind=semantic_query.query_kind,
+            slot_fills=slot_fills,
+            matched_frame_ids=matched_ids,
+            explanation_paths=explanations,
+            has_answer=True,
+            confidence=max(fill.confidence for fill in slot_fills),
+            evidence_policy=contract.evidence_policy,
+        )
+
+    @staticmethod
+    def _frame_matches_query_contract(frame: Any, contract: QueryContract) -> bool:
+        allows_definition_projection = (
+            contract.query_kind == "concept_definition"
+            and getattr(frame, "relation_key", "") in {"is_a", "same_as", "part_of", "used_for"}
+        )
+        if (
+            not allows_definition_projection
+            and (not getattr(frame, "answerable", False) or getattr(frame, "structural", False))
+        ):
+            return False
+        if contract.relation_key and frame.relation_key != contract.relation_key:
+            return False
+        if contract.subject_entity_id and frame.subject.entity_id != contract.subject_entity_id:
+            return False
+        if contract.subject_concept_id and frame.subject.concept_id != contract.subject_concept_id:
+            return False
+        if contract.object_entity_id and frame.object.entity_id != contract.object_entity_id:
+            return False
+        if contract.object_concept_id and frame.object.concept_id != contract.object_concept_id:
+            return False
+        if contract.dimension:
+            features = getattr(frame, "features", {}) or {}
+            dimension = features.get("property_dimension", "") or features.get("dimension", "")
+            if dimension != contract.dimension:
+                return False
+        return True
+
+    @staticmethod
+    def _project_contract_frame(frame: Any, contract: QueryContract) -> tuple[str, str, str]:
+        if contract.projection_policy == "subject":
+            return frame.subject.surface or "", frame.subject.concept_id or "", frame.subject.entity_id or ""
+        return frame.object.surface or "", frame.object.concept_id or "", frame.object.entity_id or ""
+
+    @staticmethod
+    def _empty_answer(
+        semantic_query: SemanticQuery,
+        reason: str,
+        evidence_policy: str,
+    ) -> AnswerBinding:
+        return AnswerBinding(
+            binding_id=f"ab_{time.time_ns():x}"[-16:],
+            source_query_id=semantic_query.query_id,
+            query_kind=semantic_query.query_kind,
+            has_answer=False,
+            abstention_reason=reason,
+            evidence_policy=evidence_policy,
+        )
+
+    @staticmethod
+    def _state_from_reaction_contract(reaction_contract: Any | None) -> tuple[StyleVector, TemperatureState]:
+        style = StyleVector()
+        temperature = TemperatureState()
+        if reaction_contract is None:
+            return style, temperature
+        for key, delta in getattr(reaction_contract, "style_delta", {}).items():
+            if hasattr(style, key):
+                current = float(getattr(style, key))
+                setattr(style, key, max(0.0, min(1.0, current + float(delta))))
+        temperature.conversation_repair_debt = max(
+            0.0,
+            temperature.conversation_repair_debt + float(getattr(reaction_contract, "repair_debt_delta", 0.0) or 0.0),
+        )
+        return style, temperature
 
     def _build_write_outcome(self, commit_results: list[Any]) -> WriteOutcome:
         """Build WriteOutcome from patch commit results."""

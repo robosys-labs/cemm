@@ -30,6 +30,9 @@ class EnglishRenderer(BaseRenderer):
             case "repair_prior_response":
                 return "You're right, I missed that."
             case "clarify":
+                token = str(unit.features.get("unknown_token", "") or "").strip()
+                if token:
+                    return f"What does '{token}' mean here?"
                 return "Could you clarify that?"
             case "deescalate":
                 return "Let's take a step back."

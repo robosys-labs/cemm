@@ -216,6 +216,7 @@ class RelationFrameCompiler:
     def _compile_relation_atom(self, graph: UOLGraph, atom: Any, edges_by_source: dict[str, list[Any]] | None = None, edges_by_target: dict[str, list[Any]] | None = None) -> RelationFrame | None:
         subject_arg = RelationArgument(role="subject")
         object_arg = RelationArgument(role="object")
+        qualifiers: dict[str, RelationArgument] = {}
         edge_ids: list[str] = []
         has_role_edge = False
 
@@ -243,12 +244,12 @@ class RelationFrameCompiler:
                     surface=other.surface,
                     confidence=other.confidence,
                 )
-                if role == "subject":
+                if role in ("subject", "source"):
                     subject_arg = arg
-                elif role == "object":
+                elif role in ("object", "target"):
                     object_arg = arg
                 else:
-                    pass
+                    qualifiers[role] = arg
 
         if not subject_arg.atom_id and not object_arg.atom_id:
             return None
@@ -270,12 +271,21 @@ class RelationFrameCompiler:
             projection_policy = policy.projection if policy else "object"
         answerable = not is_structural
 
+        compiled_features: dict[str, Any] = {}
+        for edge in relevant_edges:
+            if edge.source_id == atom.id or edge.target_id == atom.id:
+                if edge.features:
+                    compiled_features.update(edge.features)
+        if not compiled_features and hasattr(atom, "features") and atom.features:
+            compiled_features = dict(atom.features)
+
         return RelationFrame(
             relation_id=uuid.uuid4().hex[:16],
             relation_key=relation_key,
             relation_family=family,
             subject=subject_arg,
             object=object_arg,
+            qualifiers=qualifiers,
             source_edge_ids=edge_ids,
             source_atom_ids=[atom.id],
             evidence_refs=self._evidence_refs(atom),
@@ -284,10 +294,14 @@ class RelationFrameCompiler:
             answerable=answerable,
             structural=is_structural,
             projection_policy=projection_policy,
+            features=compiled_features,
         )
 
     def _extract_qualifiers(self, graph: UOLGraph, edge: Any, edges_by_source: dict[str, list[Any]] | None = None) -> dict[str, RelationArgument]:
+        _CORE_ROLES = frozenset({"subject", "object", "source", "target"})
         qualifiers: dict[str, RelationArgument] = {}
+
+        # Scan has_role edges on the subject entity (edge.source_id)
         if edges_by_source is not None:
             candidate_edges = edges_by_source.get(edge.source_id, [])
         else:
@@ -300,7 +314,31 @@ class RelationFrameCompiler:
                 if target is None:
                     continue
                 role = e2.features.get("role", "")
-                if role and role not in ("subject", "object"):
+                if role and role not in _CORE_ROLES:
+                    qualifiers[role] = RelationArgument(
+                        role=role,
+                        atom_id=target.id,
+                        concept_id=self._concept_id_for(graph, target),
+                        entity_id=self._entity_id_for(target),
+                        surface=target.surface,
+                        confidence=target.confidence,
+                    )
+
+        # Also scan has_role edges on the object entity (edge.target_id)
+        # for qualifier roles like "domain" from domain phrases
+        if edges_by_source is not None:
+            obj_candidate_edges = edges_by_source.get(edge.target_id, [])
+        else:
+            obj_candidate_edges = graph.edges
+        for e2 in obj_candidate_edges:
+            if e2.id == edge.id:
+                continue
+            if e2.edge_type == "has_role" and e2.source_id == edge.target_id:
+                target = graph.atoms.get(e2.target_id)
+                if target is None:
+                    continue
+                role = e2.features.get("role", "")
+                if role and role not in _CORE_ROLES:
                     qualifiers[role] = RelationArgument(
                         role=role,
                         atom_id=target.id,
