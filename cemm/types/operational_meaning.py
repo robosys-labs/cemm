@@ -73,6 +73,7 @@ WRITABLE_FRAME_TYPES = frozenset({
     "world_fact_claim",
     "correction",
     "memory_command",
+    "command",
 })
 
 WRITABLE_PERSISTENCE_POLICIES = frozenset({

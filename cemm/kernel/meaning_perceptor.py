@@ -13,6 +13,8 @@ clause or predicate independently.
 
 from __future__ import annotations
 
+import json
+import os
 from typing import Any, Iterable
 import uuid
 
@@ -79,7 +81,10 @@ try:
     from ..types.signal import Signal
 except ModuleNotFoundError:  # pragma: no cover - partial scratch checkouts.
     Signal = Any  # type: ignore[misc,assignment]
+from ..types.semantic_gap import SemanticGap, GapKind
+from ..types.semantic_ref import SemanticRef, SemanticRefKind
 from .language_adapter import SchemaBackedLanguageAdapter, LanguageAdapter
+from ..learning.graph_patch_extractor import GraphPatchExtractor
 from .meaning_graph_builder import MeaningGraphBuilder
 from .predicate_phrase_extractor import PredicatePhraseExtractor
 from .anaphora_resolver import AnaphoraResolver
@@ -112,27 +117,30 @@ _PLACE_CUES = cue_set("place_reference")
 _NEGATIONS = cue_set("negation")
 _CORRECTION_PREFIXES = cue_set("correction_prefix")
 
-_AMBIGUOUS_LEXEMES: dict[str, list[dict[str, Any]]] = {
-    "bank": [
-        {"atom_kind": "entity", "atom_key": "financial_institution", "role": "institution", "confidence": 0.52},
-        {"atom_kind": "place", "atom_key": "river_bank", "role": "place", "confidence": 0.48},
-    ],
-    "light": [
-        {"atom_kind": "quality", "atom_key": "low_weight", "role": "quality", "confidence": 0.45},
-        {"atom_kind": "state", "atom_key": "illumination", "role": "state", "confidence": 0.45},
-        {"atom_kind": "process", "atom_key": "ignite", "role": "process", "confidence": 0.4},
-    ],
-    "run": [
-        {"atom_kind": "process", "atom_key": "move_fast", "role": "process", "confidence": 0.44},
-        {"atom_kind": "action", "atom_key": "execute_program", "role": "action", "confidence": 0.42},
-        {"atom_kind": "process", "atom_key": "operate", "role": "process", "confidence": 0.4},
-    ],
-    "cold": [
-        {"atom_kind": "state", "atom_key": "low_temperature", "role": "state", "confidence": 0.58},
-        {"atom_kind": "quality", "atom_key": "unfriendly_affect", "role": "quality", "confidence": 0.35},
-        {"atom_kind": "state", "atom_key": "illness_symptom", "role": "state", "confidence": 0.32},
-    ],
-}
+# Single-token acknowledgment/answer tokens from JSON frame aliases.
+_ACK_TOKENS = frozenset(
+    t for t in (frame_alias_set("acknowledgment") | frame_alias_set("grammatical_negative_answer"))
+    if " " not in t
+)
+
+# 3.3 F-020: ambiguous lexemes moved to versioned data file
+_ambiguous_lexemes_cache: dict[str, list[dict[str, Any]]] | None = None
+
+
+def _load_ambiguous_lexemes() -> dict[str, list[dict[str, Any]]]:
+    global _ambiguous_lexemes_cache
+    if _ambiguous_lexemes_cache is not None:
+        return _ambiguous_lexemes_cache
+    path = os.path.join(
+        os.path.dirname(__file__),
+        "..", "data", "languages", "en", "ambiguous_lexemes.json",
+    )
+    try:
+        with open(path, encoding="utf-8") as f:
+            _ambiguous_lexemes_cache = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _ambiguous_lexemes_cache = {}
+    return _ambiguous_lexemes_cache
 
 
 class MeaningPerceptor:
@@ -185,11 +193,15 @@ class MeaningPerceptor:
             punctuation_features=self._language.punctuation_features(raw_text),
             language=getattr(self._language, "language_code", "und"),
             language_confidence=1.0 if getattr(self._language, "language_code", "und") != "und" else 0.0,
-            speaker_entity_id="user",
-            listener_entity_id="self",
+            speaker_entity_id="user",  # 3.3 F-002: context default, not resolved entity identity
+            listener_entity_id="self",  # 3.3 F-003: context default, not resolved entity identity
             perception_trace={
                 "version": "3.3",
                 "perceptor": "group_aware_deterministic_seed",
+                "entity_role_defaults": {
+                    "speaker_entity_id": {"value": "user", "source": "context_default", "resolved": False},
+                    "listener_entity_id": {"value": "self", "source": "context_default", "resolved": False},
+                },
             },
         )
         packet.spans = self._surface_spans(raw_text, semantic_tokens)
@@ -227,7 +239,7 @@ class MeaningPerceptor:
         self._apply_surface_tags(packet, semantic_spans)
         self._apply_lexeme_memory(packet, semantic_tokens)
 
-        self._extend_actions(packet, self._language.map_actions(semantic_tokens))
+        self._extend_candidate_actions(packet, self._language.map_actions(semantic_tokens))  # 3.3 F-001: candidates not authority
         self._extend_states(packet, self._language.map_states(semantic_tokens))
         self._extend_needs(packet, self._language.map_needs(semantic_tokens))
 
@@ -275,6 +287,7 @@ class MeaningPerceptor:
             predicates=packet.predicate_phrases,
             groups=packet.meaning_groups,
         )
+        packet.candidate_atom_outcomes = list(packet.atom_outcomes)  # 3.3 F-004: requires predicate activation
         packet.core_loop_stage = "working_graph_built"
         packet.core_loop_trace = {
             "loop_version": "semantic_core_loop_v4_1_seed",
@@ -292,7 +305,9 @@ class MeaningPerceptor:
         }
         packet.uol_graph = self._graph_builder.build(packet)
         packet.uol_training_example = packet.uol_graph.to_training_example()
-        packet.graph_patch_candidates = list(packet.uol_graph.patch_candidates)
+        patches = GraphPatchExtractor._observations_to_patches(packet.uol_graph)
+        packet.uol_graph.patch_candidates = list(patches)
+        packet.graph_patch_candidates = list(patches)
 
         packet.affordances = [
             AffordanceAtom(
@@ -638,7 +653,7 @@ class MeaningPerceptor:
             return "teaching"
         if tokens and tokens[0] in _COMMAND_CUES:
             return "command"
-        if token_set <= {"yes", "yeah", "yup", "no", "nah", "ok", "okay", "sure", "right"}:
+        if token_set <= _ACK_TOKENS:
             return "answer"
         return "clause"
 
@@ -917,6 +932,7 @@ class MeaningPerceptor:
         for group in packet.meaning_groups:
             self._add_act_hypothesis(packet, group)
             self._add_lexical_hypotheses(packet, group)
+            self._check_semantic_gap(packet, group)
 
     def _add_act_hypothesis(self, packet: MeaningPerceptPacket, group: MeaningGroup) -> None:
         if not group.candidate_act_types:
@@ -961,8 +977,9 @@ class MeaningPerceptor:
         group.hypothesis_ids.append(hypothesis.id)
 
     def _add_lexical_hypotheses(self, packet: MeaningPerceptPacket, group: MeaningGroup) -> None:
+        ambiguous = _load_ambiguous_lexemes()
         for token_index, token in enumerate(group.tokens):
-            candidates_spec = _AMBIGUOUS_LEXEMES.get(token)
+            candidates_spec = ambiguous.get(token)
             if not candidates_spec:
                 continue
             absolute_index = group.start_token + token_index
@@ -1004,6 +1021,34 @@ class MeaningPerceptor:
             )
             packet.meaning_hypotheses.append(hypothesis)
             group.hypothesis_ids.append(hypothesis.id)
+
+    def _check_semantic_gap(self, packet: MeaningPerceptPacket, group: MeaningGroup) -> None:
+        """Add SemanticGap for genuinely unresolvable groups (3.3 F-005).
+
+        A gap is created when the group has no meaningful atoms assigned
+        and its only candidate act type is a fallback (claim_assertion).
+        """
+        if group.referents or group.actions or group.states or group.relations or group.needs:
+            return
+        candidate_types = set(group.candidate_act_types)
+        if candidate_types and candidate_types <= {"claim_assertion"}:
+            gap_id = f"gap_unresolved_{group.id}"
+            span_ref = SemanticRef(
+                kind=SemanticRefKind.GROUP,
+                id=group.id,
+                label=group.surface,
+            )
+            gap = SemanticGap(
+                gap_id=gap_id,
+                branch_id="main",
+                group_id=group.id,
+                span_ref=span_ref,
+                language_tag=packet.language,
+                gap_kind=GapKind.CONSTRUCTION,
+                confidence=0.3,
+                surface_form=group.surface,
+            )
+            packet.semantic_gaps.append(gap)
 
     def _intent_key_for_group(self, group: MeaningGroup, packet: MeaningPerceptPacket) -> str:
         tokens = group.tokens
@@ -1052,74 +1097,22 @@ class MeaningPerceptor:
         _ack_aliases = frame_alias_set("acknowledgment")
         if token_set & _ack_aliases or token_set <= _ack_aliases:
             return "acknowledgment"
-        if token_set & {"reflect", "reflect_on", "introspect", "self_reflect"}:
+        if token_set & frame_alias_set("command_reflect"):
             return "self_reflect"
         return "statement"
 
     def _is_repair_group(self, group: MeaningGroup, packet: MeaningPerceptPacket) -> bool:
-        token_set = set(group.tokens)
         if group.group_type == "repair":
             return True
-        has_question = packet.punctuation_features.get("has_question_mark")
-        if "huh" in token_set:
-            return True
-        if {"mean", "that"} <= token_set or {"what", "mean"} <= token_set:
-            return True
-        if group.group_type == "question" and has_question and {"what", "that"} <= token_set:
-            return True
-        if "what" in token_set and len(group.tokens) <= 2 and has_question:
+        token_set = set(group.tokens)
+        surface = group.surface.strip().lower()
+        has_question = surface.endswith("?") or packet.punctuation_features.get("has_question_mark")
+        if has_question and token_set & cue_set("repair"):
             return True
         return False
 
     def _is_teaching_group(self, group: MeaningGroup) -> bool:
-        token_set = set(group.tokens)
-        if "teach" in token_set:
-            return True
-        if token_set & {"means", "called", "refers", "equals"}:
-            return True
-        return False
-
-    def _is_capability_query(self, group: MeaningGroup) -> bool:
-        token_set = set(group.tokens)
-        return bool(
-            {"what", "can", "you"} <= token_set
-            or {"can", "you"} <= token_set and token_set & {"do", "tell", "remember", "learn"}
-        )
-
-    _SELF_IDENTITY_CUES: frozenset = frozenset({
-        "who", "what", "tell", "describe", "about", "yourself",
-        "name", "identity", "are", "you", "your",
-    })
-
-    def _is_self_identity_query(self, group: MeaningGroup) -> bool:
-        token_set = set(group.tokens)
-        surface = group.surface.strip().lower()
-        if surface in {"who are you", "what are you", "tell me about yourself", "what is your name"}:
-            return True
-        if {"who", "are", "you"} <= token_set:
-            return True
-        if {"what", "are", "you"} <= token_set:
-            return True
-        if {"what", "is", "your", "name"} <= token_set:
-            return True
-        if {"whats", "your", "name"} <= token_set:
-            return True
-        if {"your", "name"} <= token_set and token_set & {"what", "whats", "tell"}:
-            return True
-        return False
-
-    def _is_self_knowledge_query(self, group: MeaningGroup) -> bool:
-        token_set = set(group.tokens)
-        surface = group.surface.strip().lower()
-        if surface in {"what do you know about yourself", "describe yourself", "what are you made of"}:
-            return True
-        if {"what", "do", "you", "know"} <= token_set and "yourself" in token_set:
-            return True
-        if {"describe", "yourself"} <= token_set:
-            return True
-        if {"what", "are", "you", "made", "of"} <= token_set:
-            return True
-        return False
+        return bool(set(group.tokens) & _TEACHING_CUES)
 
     def _target_for_intent(self, group: MeaningGroup, intent_key: str) -> str:
         token_set = set(group.tokens)
@@ -1373,6 +1366,18 @@ class MeaningPerceptor:
             if not atom.surface or key in seen:
                 continue
             packet.actions.append(atom)
+            seen.add(key)
+
+    def _extend_candidate_actions(self, packet: MeaningPerceptPacket, atoms: Iterable[ActionAtom]) -> None:
+        """Add action atoms as candidates for predicate activation (3.3 F-001)."""
+        seen = {(a.surface.lower(), a.action_key, a.modality, a.polarity,
+                 a.actor_role, a.target_role, a.place_role) for a in packet.candidate_actions}
+        for atom in atoms:
+            key = (atom.surface.lower(), atom.action_key, atom.modality, atom.polarity,
+                   atom.actor_role, atom.target_role, atom.place_role)
+            if not atom.surface or key in seen:
+                continue
+            packet.candidate_actions.append(atom)
             seen.add(key)
 
     def _extend_states(self, packet: MeaningPerceptPacket, atoms: Iterable[StateAtom]) -> None:

@@ -57,3 +57,30 @@ def phrase_in_text(phrase: str, text: str) -> bool:
 def any_phrase_in_text(phrases: list[str], text: str) -> bool:
     """Return True if any phrase in *phrases* appears as a token sequence in *text*."""
     return any(phrase_in_text(p, text) for p in phrases)
+
+
+def find_token_subsequence(needle_tokens: list[str], haystack_tokens: list[str]) -> int | None:
+    """Return the start index of *needle_tokens* in *haystack_tokens*, or None.
+
+    Matching is exact token-for-token, case-sensitive for the already-lowered
+    tokens produced by ``tokenize_surface``.
+    """
+    if not needle_tokens or not haystack_tokens:
+        return None
+    window = len(needle_tokens)
+    for i in range(len(haystack_tokens) - window + 1):
+        if haystack_tokens[i:i + window] == needle_tokens:
+            return i
+    return None
+
+
+def find_all_token_subsequences(needle_tokens: list[str], haystack_tokens: list[str]) -> list[int]:
+    """Return all start indices of *needle_tokens* in *haystack_tokens*."""
+    if not needle_tokens or not haystack_tokens:
+        return []
+    window = len(needle_tokens)
+    starts: list[int] = []
+    for i in range(len(haystack_tokens) - window + 1):
+        if haystack_tokens[i:i + window] == needle_tokens:
+            starts.append(i)
+    return starts

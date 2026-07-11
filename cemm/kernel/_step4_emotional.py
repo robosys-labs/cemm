@@ -1,0 +1,78 @@
+with open('cemm/kernel/meaning_graph_builder.py') as f:
+    c = f.read()
+
+# Replace emotional evaluation body
+old = (
+    '            graph.add_patch_candidate(GraphPatch(\n'
+    '                source_graph_id=graph.id,\n'
+    '                target="concept_lattice",\n'
+    '                operations=[PatchOperation(\n'
+    '                    operation="upsert_relation_candidate",\n'
+    '                    target_id=f"relation:{relation_key}:{source.key}:{target.key}",\n'
+    '                    fields={\n'
+    '                        "relation_key": relation_key,\n'
+    '                        "relation_family": relation_family,\n'
+    '                        "subject_concept_id": self._concept_key_for(source),\n'
+    '                        "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",\n'
+    '                        "subject_surface": source.surface,\n'
+    '                        "object_concept_id": self._concept_key_for(target),\n'
+    '                        "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",\n'
+    '                        "object_surface": target.surface,\n'
+    '                        "source_atom_ids": [source.id, target.id],\n'
+    '                        "inverse_keys": [],\n'
+    '                        "group_id": edge.group_id or "",\n'
+    '                        "evidence_refs": evidence,\n'
+    '                        "features": dict(edge.features) if edge.features else {},\n'
+    '                        "relation_scope": edge.features.get("relation_scope", "") if edge.features else "",\n'
+    '                        "dimension": edge.features.get("dimension", "") if edge.features else "",\n'
+    '                        "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, edge.group_id or ""),\n'
+    '                    },\n'
+    '                    confidence=edge.confidence,\n'
+    '                    reason="emotional_evaluation_relation",\n'
+    '                )],\n'
+    '                source_refs=self._source_refs_for_group(graph, edge.group_id or ""),\n'
+    '                permission_refs=self._permission_refs_for_group(graph, edge.group_id or ""),\n'
+    '                evidence_refs=evidence,\n'
+    '                confidence=edge.confidence,\n'
+    '                reason="emotional_evaluation_candidate",\n'
+    '            ))'
+)
+new = (
+    '            graph.add_structural_observation(StructuralObservation(\n'
+    '                obs_type="relation_candidate",\n'
+    '                target="concept_lattice",\n'
+    '                operation="upsert_relation_candidate",\n'
+    '                target_id=f"relation:{relation_key}:{source.key}:{target.key}",\n'
+    '                fields={\n'
+    '                    "relation_key": relation_key,\n'
+    '                    "relation_family": relation_family,\n'
+    '                    "subject_concept_id": self._concept_key_for(source),\n'
+    '                    "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",\n'
+    '                    "subject_surface": source.surface,\n'
+    '                    "object_concept_id": self._concept_key_for(target),\n'
+    '                    "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",\n'
+    '                    "object_surface": target.surface,\n'
+    '                    "source_atom_ids": [source.id, target.id],\n'
+    '                    "inverse_keys": [],\n'
+    '                    "group_id": edge.group_id or "",\n'
+    '                    "evidence_refs": evidence,\n'
+    '                    "features": dict(edge.features) if edge.features else {},\n'
+    '                    "relation_scope": edge.features.get("relation_scope", "") if edge.features else "",\n'
+    '                    "dimension": edge.features.get("dimension", "") if edge.features else "",\n'
+    '                    "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, edge.group_id or ""),\n'
+    '                },\n'
+    '                confidence=edge.confidence,\n'
+    '                reason="emotional_evaluation_relation",\n'
+    '                source_group_id=edge.group_id or "",\n'
+    '                source_refs=self._source_refs_for_group(graph, edge.group_id or ""),\n'
+    '                permission_refs=self._permission_refs_for_group(graph, edge.group_id or ""),\n'
+    '                evidence_refs=evidence,\n'
+    '            ))'
+)
+assert old in c, 'emotional evaluation body not found'
+c = c.replace(old, new)
+print('Emotional evaluation body replaced')
+
+with open('cemm/kernel/meaning_graph_builder.py', 'w') as f:
+    f.write(c)
+print('Step 4: emotional evaluation OK')

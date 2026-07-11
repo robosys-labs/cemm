@@ -157,21 +157,19 @@ def test_situation_frame_builder_uses_kernel_schemas():
 
 
 def test_remember_uses_schema_relation_lookup():
-    """'remember I like coffee' should produce a relation patch with schema-driven relation_key."""
+    """'remember I like coffee' should produce a relation observation with schema-driven relation_key."""
     system = SeededSystem()
     result = system.run("remember I like coffee")
     graph = result["cycle"].uol_graph
 
-    relation_patches = []
-    for p in graph.patch_candidates:
-        for op in p.operations:
-            if op.operation == "upsert_relation_candidate":
-                relation_patches.append(op)
+    relation_observations = [
+        obs for obs in graph.structural_observations
+        if obs.operation == "upsert_relation_candidate"
+        and obs.fields.get("relation_key") == "likes"
+    ]
 
-    assert len(relation_patches) > 0, "Should have relation candidate patches"
-    likes_patches = [op for op in relation_patches if op.fields.get("relation_key") == "likes"]
-    assert len(likes_patches) > 0, \
-        "Should have a 'likes' relation patch from schema-driven verb lookup"
+    assert len(relation_observations) > 0, \
+        "Should have a 'likes' relation observation from schema-driven verb lookup"
 
 
 def test_patch_operations_all_known_to_kernel():

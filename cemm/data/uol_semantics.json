@@ -83,7 +83,7 @@
     {"canonical_key": "grammatical_stopword", "aliases": ["a", "an", "the", "to", "with", "my", "me", "for", "please", "though", "then", "really", "just"], "act_type": "unknown", "cue_type": "stopword"},
     {"canonical_key": "grammatical_failure_marker", "aliases": ["failure", "error", "bug", "broken", "problem", "issue", "stuck", "crash", "timeout"], "act_type": "unknown", "cue_type": "failure_marker"},
     {"canonical_key": "grammatical_command_expanded", "aliases": ["please", "tell", "show", "remember", "forget", "explain", "define", "teach", "look", "find", "use", "make", "create", "give"], "act_type": "unknown", "cue_type": "command_cue"},
-    {"canonical_key": "grammatical_teaching_cue", "aliases": ["means", "mean", "called", "refers", "equals"], "act_type": "unknown", "cue_type": "teaching_cue"},
+    {"canonical_key": "grammatical_teaching_cue", "aliases": ["means", "mean", "called", "refers", "equals", "teach"], "act_type": "unknown", "cue_type": "teaching_cue"},
     {"canonical_key": "grammatical_predicate_verb", "aliases": ["know", "think", "feel", "like", "want", "need", "went", "go", "worked", "work", "have", "has", "had", "do", "does", "did"], "act_type": "unknown", "cue_type": "predicate_verb"},
     {"canonical_key": "grammatical_place_reference", "aliases": ["here", "there", "where", "inside", "outside", "nearby"], "act_type": "unknown", "cue_type": "place_reference"},
     {"canonical_key": "grammatical_exit", "aliases": ["bye", "goodbye", "later", "farewell", "exit", "quit", "stop", "done", "leave"], "act_type": "exit", "cue_type": "exit"},

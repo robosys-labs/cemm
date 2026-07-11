@@ -89,6 +89,9 @@ def _load() -> tuple[
     connective_set = frozenset(data.get("connective_set", []))
     strong_split_connectives = frozenset(data.get("strong_split_connectives", []))
     subordinating_connectives = frozenset(data.get("subordinating_connectives", []))
+    pure_acknowledgment_phrases = frozenset(
+        t.replace("'", "") for t in data.get("pure_acknowledgment_phrases", [])
+    )
     _logger.debug(
         "UOL metadata loaded: %d frames, %d act_types, %d cue_sets, %d modals, %d conjunctions",
         len(frame_aliases),
@@ -101,6 +104,7 @@ def _load() -> tuple[
         frame_aliases, frame_to_act, frame_polarity, frame_intensity,
         cue_sets, frame_meta, modal_types, conjunction_map,
         connective_set, strong_split_connectives, subordinating_connectives,
+        pure_acknowledgment_phrases,
     )
 
 
@@ -117,6 +121,7 @@ def _load() -> tuple[
     CONNECTIVE_SET,
     STRONG_SPLIT_CONNECTIVES,
     SUBORDINATING_CONNECTIVES,
+    PURE_ACKNOWLEDGMENT_PHRASES,
 ) = _load()
 
 
@@ -146,3 +151,11 @@ def modal_type(token: str) -> str | None:
 def conjunction_relation(token: str) -> str | None:
     """Return the relation type for a conjunction token, or None."""
     return CONJUNCTION_MAP.get(token)
+
+
+def pure_acknowledgment_set() -> frozenset[str]:
+    """Return the frozen set of pure acknowledgment phrases/single tokens.
+
+    Loaded from ``pure_acknowledgment_phrases`` in uol_semantics.json.
+    """
+    return PURE_ACKNOWLEDGMENT_PHRASES

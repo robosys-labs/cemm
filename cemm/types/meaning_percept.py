@@ -530,6 +530,11 @@ class MeaningPerceptPacket:
     permissions: list[PermissionAtom] = field(default_factory=list)
     self_atoms: list[SelfAtom] = field(default_factory=list)
 
+    # 3.3 candidate-action lists (F-001, F-004, F-005)
+    candidate_actions: list[ActionAtom] = field(default_factory=list)
+    candidate_atom_outcomes: list[MeaningAtomOutcome] = field(default_factory=list)
+    semantic_gaps: list[Any] = field(default_factory=list)
+
     unknown_lexemes: list[dict[str, Any]] = field(default_factory=list)
     idiom_candidates: list[dict[str, Any]] = field(default_factory=list)
     affect_markers: list[dict[str, Any]] = field(default_factory=list)

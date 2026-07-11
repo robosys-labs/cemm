@@ -187,11 +187,110 @@ class SafetyContract:
 
 
 @dataclass
+class StateContract:
+    """Authorizes state transmutations with validated authority.
+
+    No state mutation occurs without an authorized StateContract.
+    Distinguishes observed, reported, desired, commanded, and hypothetical
+    transitions with appropriate persistence and authorization requirements.
+    """
+
+    state_family: str = ""
+    dimension: str = ""
+    holder_entity_ref: str = ""
+    value: Any = None
+    direction: str = "set"
+    polarity: str = "affirmed"
+    modality: str = "observed"
+
+    transmutation_id: str = ""
+    source_frame_id: str = ""
+    group_id: str = ""
+    branch_id: str = ""
+    episode_id: str = ""
+    gap_ids: tuple[str, ...] = ()
+
+    requires_authorization: bool = True
+    is_applied: bool = False
+    persistence_policy: str = "session_state"
+    confidence: float = 0.5
+
+
+@dataclass
+class ActionContract:
+    """Authorizes action execution with validated typed ports.
+
+    Only actions with resolved ports (no placeholders) and appropriate
+    scope/modality may be executed. Action execution is distinct from
+    state-change authorization.
+    """
+
+    action_key: str = ""
+    action_type: str = ""
+
+    actor_ref: str = ""
+    target_ref: str = ""
+    object_ref: str = ""
+    instrument_ref: str = ""
+    place_ref: str = ""
+
+    source_frame_id: str = ""
+    group_id: str = ""
+    branch_id: str = ""
+    episode_id: str = ""
+    gap_ids: tuple[str, ...] = ()
+
+    requires_confirmation: bool = False
+    risk_level: float = 0.0
+    is_executed: bool = False
+    confidence: float = 0.5
+
+
+@dataclass
+class ResponseContract:
+    """Guides response formation with structured output metadata.
+
+    The ResponseContract carries expected output acts, style hints,
+    and evidence policy. The response pipeline consumes this metadata;
+    it must not infer response structure by regex over generated text.
+    """
+
+    primary_obligation_id: str = ""
+    expected_output_acts: list[str] = field(default_factory=list)
+    blocked_output_acts: list[str] = field(default_factory=list)
+
+    style_hints: dict[str, float] = field(default_factory=dict)
+    evidence_policy: str = "none"
+    allow_clarification: bool = True
+
+    source_frame_id: str = ""
+    group_id: str = ""
+    branch_id: str = ""
+    episode_id: str = ""
+    gap_ids: tuple[str, ...] = ()
+
+    confidence: float = 0.5
+
+
+STATE_CONTRACT_KINDS = frozenset({
+    "none",
+    "observed_delta",
+    "reported_delta",
+    "inferred_delta",
+    "desired_delta",
+    "commanded_delta",
+    "authorized_transition",
+    "committed_delta",
+})
+
+
+@dataclass
 class ObligationContract:
     """The authoritative decision contract for one turn.
 
     Replaces broad instruction-kind routing. Compiled from selected
     OperationalMeaningFrames, OperationalEffects, and StateTransmutationFrames.
+    This is the single contract produced by the OperationalContractCompiler.
     """
 
     contract_id: str
@@ -205,14 +304,26 @@ class ObligationContract:
     write_policy: str = "none"
     reaction_policy: str = "none"
     safety_policy: str = "none"
+    state_policy: str = "none"
+    action_policy: str = "none"
 
     query_contract: QueryContract | None = None
     write_contract: WriteContract | None = None
     reaction_contract: ReactionContract | None = None
     safety_contract: SafetyContract | None = None
+    state_contract: StateContract | None = None
+    action_contract: ActionContract | None = None
+    response_contract: ResponseContract | None = None
 
     required_state_transmutations: list[str] = field(default_factory=list)
     allowed_state_transmutations: list[str] = field(default_factory=list)
+
+    # Phase 10: frame/gap/episode provenance
+    source_frame_ids: list[str] = field(default_factory=list)
+    source_gap_ids: list[str] = field(default_factory=list)
+    source_episode_ids: list[str] = field(default_factory=list)
+    source_branch_ids: list[str] = field(default_factory=list)
+    source_group_ids: list[str] = field(default_factory=list)
 
     blocked_by: list[str] = field(default_factory=list)
     confidence: float = 0.0

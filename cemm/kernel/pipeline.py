@@ -99,6 +99,7 @@ class Pipeline:
             construction_lattice=construction_lattice,
             episodic_store=self._episodic_store,
             auto_consolidate=auto_consolidate,
+            lexeme_memory=self._lexeme_memory,
         )
 
     @property

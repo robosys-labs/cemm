@@ -4,6 +4,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .text_match import (
+    tokenize_surface,
+    find_token_subsequence,
+    find_all_token_subsequences,
+)
+
 
 _TEACHING_PATTERNS_PATH = Path(__file__).parent.parent / "data" / "teaching_patterns.json"
 _VOCAB_PATH = Path(__file__).parent.parent / "data" / "vocab.json"
@@ -97,19 +103,22 @@ class TeachingInterpreter:
     def interpret(self, text: str) -> list[TeachingEvent]:
         """Return candidate teaching events from the input text."""
         events: list[TeachingEvent] = []
-        lower = text.lower().strip()
-        words = [w.strip(".,!?;:\"'()[]{}") for w in lower.split()]
+        words = tokenize_surface(text)
         if not words:
             return events
 
-        is_correction = any(w in self._correction_triggers for w in words[:3])
+        is_correction = any(
+            find_token_subsequence(tokenize_surface(trigger), words) == 0
+            for trigger in self._correction_triggers
+        )
 
         # "no, X means Y" / correction
         if is_correction:
-            for i, w in enumerate(words):
-                if w in self._definition_triggers:
-                    surface = self._extract_surface(words, i)
-                    meaning = self._extract_meaning(words, i)
+            for trigger in self._definition_triggers:
+                trigger_tokens = tokenize_surface(trigger)
+                for start in find_all_token_subsequences(trigger_tokens, words):
+                    surface = self._extract_surface(words, start)
+                    meaning = self._extract_meaning(words, start + len(trigger_tokens))
                     if surface and meaning:
                         events.append(TeachingEvent(
                             kind="correction",
@@ -122,10 +131,11 @@ class TeachingInterpreter:
                 return events
 
         # "X means Y" / "X is Y" / "X refers to Y"
-        for i, w in enumerate(words):
-            if w in self._definition_triggers:
-                surface = self._extract_surface(words, i)
-                meaning = self._extract_meaning(words, i)
+        for trigger in self._definition_triggers:
+            trigger_tokens = tokenize_surface(trigger)
+            for start in find_all_token_subsequences(trigger_tokens, words):
+                surface = self._extract_surface(words, start)
+                meaning = self._extract_meaning(words, start + len(trigger_tokens))
                 if surface and meaning:
                     role = self._infer_role(surface, meaning)
                     events.append(TeachingEvent(
@@ -138,38 +148,43 @@ class TeachingInterpreter:
 
         # "when I say X, do Y" / "call this X"
         for trigger in self._command_triggers:
-            if trigger in lower:
-                events.extend(self._extract_command_alias(lower, trigger))
+            trigger_tokens = tokenize_surface(trigger)
+            for start in find_all_token_subsequences(trigger_tokens, words):
+                events.extend(self._extract_command_alias(words, start, len(trigger_tokens)))
 
         return events
 
-    def _extract_surface(self, words: list[str], trigger_index: int) -> str:
+    def _extract_surface(self, words: list[str], trigger_start: int) -> str:
         """Extract the surface token before a definition trigger."""
-        if trigger_index == 0:
+        if trigger_start == 0:
             return ""
         # Walk left from trigger to collect the first noun/unknown token
-        for i in range(trigger_index - 1, -1, -1):
-            w = words[i].strip(".,!?;:\"'()[]{}")
+        for i in range(trigger_start - 1, -1, -1):
+            w = words[i]
             if w and w not in self._surface_stop_words:
                 return w
         return ""
 
-    def _extract_meaning(self, words: list[str], trigger_index: int) -> str:
+    def _extract_meaning(self, words: list[str], trigger_end: int) -> str:
         """Extract the meaning phrase after a definition trigger."""
-        rest = words[trigger_index + 1:]
+        rest = words[trigger_end:]
         if not rest:
             return ""
         # Stop at sentence boundaries or trailing punctuation; boundary words are
         # loaded from cemm/data/teaching_patterns.json.
         meaning_words: list[str] = []
         for w in rest:
-            bare = w.strip(".,!?;:\"'()[]{}")
-            if bare in self._meaning_stop_words:
+            if w in self._meaning_stop_words:
                 break
-            meaning_words.append(bare)
+            meaning_words.append(w)
         return " ".join(meaning_words)
 
-    def _extract_command_alias(self, text: str, trigger: str) -> list[TeachingEvent]:
+    def _extract_command_alias(
+        self,
+        words: list[str],
+        trigger_start: int,
+        trigger_length: int,
+    ) -> list[TeachingEvent]:
         """Extract 'when I say X, do Y' style command aliases.
 
         The delimiter that separates the surface form from the command (e.g.,
@@ -177,31 +192,26 @@ class TeachingInterpreter:
         language-specific without hardcoding English surface forms.
         """
         events: list[TeachingEvent] = []
-        parts = text.split(trigger)
-        if len(parts) < 2:
+        after = words[trigger_start + trigger_length:]
+        if not after:
             return events
-        after = parts[1].strip()
-        chunks = after.split(",")
-        if not chunks:
-            return events
-        first = chunks[0].strip()
-        alias = first.split()[0] if first else ""
-        command = ""
-        if len(chunks) > 1:
-            command = chunks[1].strip()
-        else:
-            for delimiter in self._command_alias_delimiters:
-                if delimiter in after:
-                    command = after.split(delimiter, 1)[1].strip()
-                    break
-        if alias and command:
-            events.append(TeachingEvent(
-                kind="command_alias",
-                surface=alias,
-                meaning=command,
-                role="command_alias",
-                confidence=0.6,
-            ))
+
+        for delimiter in self._command_alias_delimiters:
+            delimiter_tokens = tokenize_surface(delimiter)
+            idx = find_token_subsequence(delimiter_tokens, after)
+            if idx is not None:
+                alias = self._extract_surface(after, idx)
+                meaning = self._extract_meaning(after, idx + len(delimiter_tokens))
+                if alias and meaning:
+                    events.append(TeachingEvent(
+                        kind="command_alias",
+                        surface=alias,
+                        meaning=meaning,
+                        role="command_alias",
+                        confidence=0.6,
+                    ))
+                break
+
         return events
 
     def _infer_role(self, surface: str, meaning: str) -> str:
@@ -210,11 +220,12 @@ class TeachingInterpreter:
         Cues are loaded from cemm/data/teaching_patterns.json so they can be
         language-specific without hardcoding English surface forms.
         """
-        meaning_lower = meaning.lower()
-        if any(c in self._modifier_cues for c in meaning_lower.split()):
+        meaning_tokens = tokenize_surface(meaning)
+        meaning_set = set(meaning_tokens)
+        if self._modifier_cues and self._modifier_cues & meaning_set:
             return "modifier"
-        if any(c in self._state_cues for c in meaning_lower.split()):
+        if self._state_cues and self._state_cues & meaning_set:
             return "state"
-        if any(c in self._process_cues for c in meaning_lower.split()):
+        if self._process_cues and self._process_cues & meaning_set:
             return "process"
         return "unknown"

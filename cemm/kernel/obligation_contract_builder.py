@@ -34,6 +34,7 @@ _FRAME_TYPE_TO_OBLIGATION: dict[str, str] = {
     "world_fact_claim": "store_teaching",
     "correction": "store_correction",
     "memory_command": "memory_command",
+    "command": "memory_command",
     "concept_definition_query": "answer_concept_definition",
     "self_identity_query": "answer_self_identity",
     "self_capability_query": "answer_self_capability",
@@ -46,7 +47,6 @@ _FRAME_TYPE_TO_OBLIGATION: dict[str, str] = {
     "user_state_report": "acknowledge_emotional_context",
     "social_act": "social_reply",
     "phatic_act": "social_reply",
-    "command": "social_reply",
     "safety_candidate": "safety_refusal",
 }
 
@@ -190,6 +190,7 @@ class ObligationContractBuilder:
             "world_fact_claim": "relation_upsert",
             "correction": "correction_apply",
             "memory_command": "memory_command",
+            "command": "memory_command",
         }
         write_kind = write_kind_map.get(frame.frame_type, "relation_upsert")
 

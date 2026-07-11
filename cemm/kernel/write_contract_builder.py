@@ -59,7 +59,7 @@ class WriteContractBuilder:
 
     @staticmethod
     def _allowed_patch_targets(frame: OperationalMeaningFrame) -> list[str]:
-        if frame.frame_type in ("profile_assertion", "concept_definition_teaching", "world_fact_claim", "memory_command"):
+        if frame.frame_type in ("profile_assertion", "concept_definition_teaching", "world_fact_claim", "memory_command", "command"):
             return ["concept_lattice"]
         if frame.frame_type == "correction":
             return ["concept_lattice"]

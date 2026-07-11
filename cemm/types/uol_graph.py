@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any, Iterable, TYPE_CHECKING
 import copy
 import uuid
 
 from .graph_patch import GraphPatch
 from .uol_atom import UOLAtom, UOLEdge, CANONICAL_ATOM_KINDS, CANONICAL_EDGE_TYPES
+
+if TYPE_CHECKING:
+    from ..learning.learning_types import StructuralObservation
 
 
 @dataclass
@@ -200,6 +203,7 @@ class UOLGraph:
     port_bindings: list[PortBinding] = field(default_factory=list)
     affordance_predictions: list[AffordancePrediction] = field(default_factory=list)
     patch_candidates: list[GraphPatch] = field(default_factory=list)
+    structural_observations: list = field(default_factory=list)
     claim_candidates: list[dict[str, Any]] = field(default_factory=list)
     claim_refs: list[str] = field(default_factory=list)
     permission_scope: str = "public"
@@ -376,6 +380,10 @@ class UOLGraph:
         self.patch_candidates.append(patch)
         return patch
 
+    def add_structural_observation(self, observation: StructuralObservation) -> StructuralObservation:
+        self.structural_observations.append(observation)
+        return observation
+
     def clone(self, *, graph_id: str | None = None) -> UOLGraph:
         cloned = copy.deepcopy(self)
         cloned.id = graph_id or f"{self.id}_clone_{uuid.uuid4().hex[:8]}"
@@ -435,6 +443,7 @@ class UOLGraph:
         self.port_bindings.extend(copy.deepcopy(other.port_bindings))
         self.affordance_predictions.extend(copy.deepcopy(other.affordance_predictions))
         self.patch_candidates.extend(copy.deepcopy(other.patch_candidates))
+        self.structural_observations.extend(copy.deepcopy(other.structural_observations))
         self._rebuild_adjacency_index()
 
     def prune(self, *, atom_threshold: float = 0.0, edge_threshold: float = 0.0) -> None:

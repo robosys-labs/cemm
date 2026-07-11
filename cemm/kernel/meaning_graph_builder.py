@@ -35,6 +35,7 @@ from ..types.meaning_percept import (
     StateAtom,
     TimeAtom,
 )
+from ..learning.learning_types import StructuralObservation
 from ..types.graph_patch import GraphPatch, PatchOperation
 from ..types.uol_atom import UOLAtom, UOLEdge
 from ..types.uol_graph import (
@@ -156,7 +157,8 @@ class MeaningGraphBuilder:
 
         self._add_group_structures(graph, packet)
         self._add_referents(graph, packet.referents)
-        self._add_actions(graph, packet.actions, packet.meaning_groups)
+        all_actions = (packet.actions or []) + (getattr(packet, 'candidate_actions', None) or [])
+        self._add_actions(graph, all_actions, packet.meaning_groups)
         self._add_emotional_evaluations(graph, packet)
         self._add_states(graph, packet.states)
         self._add_relations(graph, packet.relations)
@@ -188,7 +190,7 @@ class MeaningGraphBuilder:
             "concept_resolution_count": len(graph.concept_resolutions),
             "port_binding_count": len(graph.port_bindings),
             "affordance_prediction_count": len(graph.affordance_predictions),
-            "graph_patch_candidate_count": len(graph.patch_candidates),
+            "graph_patch_candidate_count": len(graph.structural_observations),
         })
         return graph
 
@@ -537,7 +539,8 @@ class MeaningGraphBuilder:
         return None
 
     def _add_emotional_evaluations(self, graph: UOLGraph, packet: MeaningPerceptPacket) -> None:
-        for action in packet.actions:
+        actions = (packet.actions or []) + (getattr(packet, 'candidate_actions', None) or [])
+        for action in actions:
             action_key = action.action_key or ""
             schema = self._schema_kernel.action_operators.get(action_key)
             if schema is None or schema.operator_family != "evaluate":
@@ -605,7 +608,7 @@ class MeaningGraphBuilder:
                 features={"role": "object"},
             )
 
-    def _extract_emotional_evaluation_patches(self, graph: UOLGraph) -> None:
+    def _extract_emotional_evaluation_observations(self, graph: UOLGraph) -> None:
         for edge in graph.edges_by_type("evaluates"):
             source = graph.atoms.get(edge.source_id)
             target = graph.atoms.get(edge.target_id)
@@ -616,38 +619,35 @@ class MeaningGraphBuilder:
             evidence = self._collect_evidence(graph, edge, source, target)
             if not evidence:
                 evidence = [f"emotional_evaluation:{edge.id}"]
-            graph.add_patch_candidate(GraphPatch(
-                source_graph_id=graph.id,
+            graph.add_structural_observation(StructuralObservation(
+                obs_type="relation_candidate",
                 target="concept_lattice",
-                operations=[PatchOperation(
-                    operation="upsert_relation_candidate",
-                    target_id=f"relation:{relation_key}:{source.key}:{target.key}",
-                    fields={
-                        "relation_key": relation_key,
-                        "relation_family": relation_family,
-                        "subject_concept_id": self._concept_key_for(source),
-                        "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",
-                        "subject_surface": source.surface,
-                        "object_concept_id": self._concept_key_for(target),
-                        "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
-                        "object_surface": target.surface,
-                        "source_atom_ids": [source.id, target.id],
-                        "inverse_keys": [],
-                        "group_id": edge.group_id or "",
-                        "evidence_refs": evidence,
-                        "features": dict(edge.features) if edge.features else {},
-                        "relation_scope": edge.features.get("relation_scope", "") if edge.features else "",
-                        "dimension": edge.features.get("dimension", "") if edge.features else "",
-                        "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, edge.group_id or ""),
-                    },
-                    confidence=edge.confidence,
-                    reason="emotional_evaluation_relation",
-                )],
+                operation="upsert_relation_candidate",
+                target_id=f"relation:{relation_key}:{source.key}:{target.key}",
+                fields={
+                    "relation_key": relation_key,
+                    "relation_family": relation_family,
+                    "subject_concept_id": self._concept_key_for(source),
+                    "subject_entity_id": source.key if source.kind in ("entity", "self") and source.key in ("user", "self", "world", "conversation", "memory") else "",
+                    "subject_surface": source.surface,
+                    "object_concept_id": self._concept_key_for(target),
+                    "object_entity_id": target.key if target.kind in ("entity", "self") and target.key in ("user", "self", "world", "conversation", "memory") else "",
+                    "object_surface": target.surface,
+                    "source_atom_ids": [source.id, target.id],
+                    "inverse_keys": [],
+                    "group_id": edge.group_id or "",
+                    "evidence_refs": evidence,
+                    "features": dict(edge.features) if edge.features else {},
+                    "relation_scope": edge.features.get("relation_scope", "") if edge.features else "",
+                    "dimension": edge.features.get("dimension", "") if edge.features else "",
+                    "qualifiers": self._extract_qualifier_fields(graph, source.id, target.id, edge.group_id or ""),
+                },
+                confidence=edge.confidence,
+                reason="emotional_evaluation_relation",
+                source_group_id=edge.group_id or "",
                 source_refs=self._source_refs_for_group(graph, edge.group_id or ""),
                 permission_refs=self._permission_refs_for_group(graph, edge.group_id or ""),
                 evidence_refs=evidence,
-                confidence=edge.confidence,
-                reason="emotional_evaluation_candidate",
             ))
 
     def _add_states(self, graph: UOLGraph, states: Iterable[StateAtom]) -> None:
@@ -1533,12 +1533,11 @@ class MeaningGraphBuilder:
                 return deltas[0].get("relation_key")
         return self._REMEMBER_EXTRA_VERBS.get(token)
 
-    def _extract_state_delta_patches(self, graph: UOLGraph) -> None:
-        """Extract upsert_state patch candidates from schema-driven state delta atoms.
+    def _extract_state_delta_observations(self, graph: UOLGraph) -> None:
+        """Extract state delta structural observations from schema-driven state delta atoms.
 
         State atoms created by _compile_state_deltas have source='schema_state_delta'.
-        For each, we produce an upsert_state patch operation targeting the entity
-        that holds the state, with the dimension and direction from the schema.
+        For each, we produce a structural observation for downstream patch compilation.
         """
         state_atoms = [
             a for a in graph.atoms.values()
@@ -1584,22 +1583,26 @@ class MeaningGraphBuilder:
             ))
 
         if operations:
-            graph.add_patch_candidate(GraphPatch(
-                source_graph_id=graph.id,
-                target="concept_lattice",
-                operations=operations,
-                source_refs=self._source_refs_for_group(graph, ""),
-                permission_refs=self._permission_refs_for_group(graph, ""),
-                evidence_refs=[f"state_delta:{a.id}" for a in state_atoms],
-                confidence=max(op.confidence for op in operations),
-                reason="schema_state_delta_candidates",
-            ))
+            for op in operations:
+                graph.add_structural_observation(StructuralObservation(
+                    obs_type="state_delta",
+                    target="concept_lattice",
+                    operation=op.operation,
+                    target_id=op.target_id,
+                    fields=op.fields,
+                    confidence=op.confidence,
+                    reason=op.reason,
+                    source_group_id="",
+                    source_refs=self._source_refs_for_group(graph, ""),
+                    permission_refs=self._permission_refs_for_group(graph, ""),
+                    evidence_refs=[f"state_delta:{a.id}" for a in state_atoms],
+                ))
 
-    def _extract_remember_relation_patches(self, graph: UOLGraph) -> None:
-        """Extract relation patches from 'remember' command groups.
+    def _extract_remember_relation_observations(self, graph: UOLGraph) -> None:
+        """Extract relation observations from 'remember' command groups.
 
         Detects patterns like 'remember I like coffee' and creates
-        upsert_relation_candidate patches for the embedded relation.
+        structural observations for the embedded relation.
         """
         for group in graph.groups:
             if group.function != "command":
@@ -1660,36 +1663,33 @@ class MeaningGraphBuilder:
             relation_family = self._relation_family_for_edge(relation_key)
             evidence = [f"remember_command:{group.id}"]
 
-            graph.add_patch_candidate(GraphPatch(
-                source_graph_id=graph.id,
+            graph.add_structural_observation(StructuralObservation(
+                obs_type="relation_candidate",
                 target="concept_lattice",
-                operations=[PatchOperation(
-                    operation="upsert_relation_candidate",
-                    target_id=f"relation:{relation_key}:{user_atom.key}:{object_atom.key}",
-                    fields={
-                        "relation_key": relation_key,
-                        "relation_family": relation_family,
-                        "subject_concept_id": self._concept_key_for(user_atom),
-                        "subject_entity_id": user_atom.key,
-                        "subject_surface": user_atom.key if user_atom.kind == "entity" else user_atom.surface,
-                        "object_concept_id": self._concept_key_for(object_atom),
-                        "object_entity_id": "",
-                        "object_surface": object_atom.surface,
-                        "source_atom_ids": [user_atom.id, object_atom.id],
-                        "inverse_keys": [],
-                        "group_id": group.id,
-                        "evidence_refs": evidence,
-                        "features": {},
-                        "qualifiers": self._extract_qualifier_fields(graph, user_atom.id, object_atom.id, group.id),
-                    },
-                    confidence=0.7,
-                    reason="remember_command_relation",
-                )],
+                operation="upsert_relation_candidate",
+                target_id=f"relation:{relation_key}:{user_atom.key}:{object_atom.key}",
+                fields={
+                    "relation_key": relation_key,
+                    "relation_family": relation_family,
+                    "subject_concept_id": self._concept_key_for(user_atom),
+                    "subject_entity_id": user_atom.key,
+                    "subject_surface": user_atom.key if user_atom.kind == "entity" else user_atom.surface,
+                    "object_concept_id": self._concept_key_for(object_atom),
+                    "object_entity_id": "",
+                    "object_surface": object_atom.surface,
+                    "source_atom_ids": [user_atom.id, object_atom.id],
+                    "inverse_keys": [],
+                    "group_id": group.id,
+                    "evidence_refs": evidence,
+                    "features": {},
+                    "qualifiers": self._extract_qualifier_fields(graph, user_atom.id, object_atom.id, group.id),
+                },
+                confidence=0.7,
+                reason="remember_command_relation",
+                source_group_id=group.id,
                 source_refs=self._source_refs_for_group(graph, group.id),
                 permission_refs=self._permission_refs_for_group(graph, group.id),
                 evidence_refs=evidence,
-                confidence=0.7,
-                reason="remember_command_relation_candidate",
             ))
 
     _TEACHING_EDGE_TYPES: frozenset = frozenset({"is_a", "same_as", "has_property", "used_for", "part_of"})
@@ -1755,20 +1755,24 @@ class MeaningGraphBuilder:
                         reason="user_teaching_graph_relation",
                     ))
                 if operations:
-                    graph.add_patch_candidate(GraphPatch(
-                        source_graph_id=graph.id,
-                        target="concept_lattice",
-                        operations=operations,
-                        source_refs=self._source_refs_for_group(graph, group.id),
-                        permission_refs=self._permission_refs_for_group(graph, group.id),
-                        evidence_refs=self._collect_all_evidence(graph, operations) or [f"teaching_group:{group.id}"],
-                        confidence=max(operation.confidence for operation in operations),
-                        reason="teaching_group_relation_candidates",
-                    ))
+                    for op in operations:
+                        graph.add_structural_observation(StructuralObservation(
+                            obs_type="teaching_edge",
+                            target="concept_lattice",
+                            operation=op.operation,
+                            target_id=op.target_id,
+                            fields=op.fields,
+                            confidence=op.confidence,
+                            reason=op.reason,
+                            source_group_id=group.id,
+                            source_refs=self._source_refs_for_group(graph, group.id),
+                            permission_refs=self._permission_refs_for_group(graph, group.id),
+                            evidence_refs=self._collect_all_evidence(graph, [op]) or [f"teaching_group:{group.id}"],
+                        ))
 
-        self._extract_remember_relation_patches(graph)
-        self._extract_emotional_evaluation_patches(graph)
-        self._extract_state_delta_patches(graph)
+        self._extract_remember_relation_observations(graph)
+        self._extract_emotional_evaluation_observations(graph)
+        self._extract_state_delta_observations(graph)
 
         concept_operations = []
         for resolution in graph.concept_resolutions:
@@ -1794,16 +1798,20 @@ class MeaningGraphBuilder:
                 reason=resolution.reason,
             ))
         if concept_operations:
-            graph.add_patch_candidate(GraphPatch(
-                source_graph_id=graph.id,
-                target="concept_lattice",
-                operations=concept_operations,
-                source_refs=self._source_refs_for_group(graph, ""),
-                permission_refs=self._permission_refs_for_group(graph, ""),
-                evidence_refs=self._collect_all_evidence(graph, concept_operations) or ["concept_candidates"],
-                confidence=max(operation.confidence for operation in concept_operations),
-                reason="new_surface_concept_candidates",
-            ))
+            for op in concept_operations:
+                graph.add_structural_observation(StructuralObservation(
+                    obs_type="concept_candidate",
+                    target="concept_lattice",
+                    operation=op.operation,
+                    target_id=op.target_id,
+                    fields=op.fields,
+                    confidence=op.confidence,
+                    reason=op.reason,
+                    source_group_id="",
+                    source_refs=self._source_refs_for_group(graph, ""),
+                    permission_refs=self._permission_refs_for_group(graph, ""),
+                    evidence_refs=self._collect_all_evidence(graph, [op]) or ["concept_candidates"],
+                ))
 
         if graph.port_bindings:
             operations = [
@@ -1823,35 +1831,36 @@ class MeaningGraphBuilder:
                 if binding.score >= 0.55
             ]
             if operations:
-                graph.add_patch_candidate(GraphPatch(
-                    source_graph_id=graph.id,
-                    target="concept_lattice",
-                    operations=operations,
-                    source_refs=self._source_refs_for_group(graph, ""),
-                    permission_refs=self._permission_refs_for_group(graph, ""),
-                    confidence=max(operation.confidence for operation in operations),
-                    reason="port_binding_observations",
-                ))
+                for op in operations:
+                    graph.add_structural_observation(StructuralObservation(
+                        obs_type="port_binding",
+                        target="concept_lattice",
+                        operation=op.operation,
+                        target_id=op.target_id,
+                        fields=op.fields,
+                        confidence=op.confidence,
+                        reason=op.reason,
+                        source_group_id="",
+                        source_refs=self._source_refs_for_group(graph, ""),
+                        permission_refs=self._permission_refs_for_group(graph, ""),
+                        evidence_refs=[],
+                    ))
 
         if graph.construction_matches:
-            graph.add_patch_candidate(GraphPatch(
-                source_graph_id=graph.id,
-                target="construction_lattice",
-                operations=[
-                    PatchOperation(
-                        operation="observe_construction_match",
-                        target_id=f"construction:{match.construction_key}",
-                        fields=match.to_dict(),
-                        confidence=match.confidence,
-                        reason="runtime_construction_match",
-                    )
-                    for match in graph.construction_matches
-                ],
-                source_refs=self._source_refs_for_group(graph, ""),
-                permission_refs=self._permission_refs_for_group(graph, ""),
-                confidence=max(match.confidence for match in graph.construction_matches),
-                reason="construction_observations",
-            ))
+            for match in graph.construction_matches:
+                graph.add_structural_observation(StructuralObservation(
+                    obs_type="construction_match",
+                    target="construction_lattice",
+                    operation="observe_construction_match",
+                    target_id=f"construction:{match.construction_key}",
+                    fields=match.to_dict(),
+                    confidence=match.confidence,
+                    reason="runtime_construction_match",
+                    source_group_id="",
+                    source_refs=self._source_refs_for_group(graph, ""),
+                    permission_refs=self._permission_refs_for_group(graph, ""),
+                    evidence_refs=[],
+                ))
 
     def _construction_key_for_group(self, group: MeaningGroup) -> str:
         if group.group_type == "teaching":

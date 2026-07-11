@@ -7,6 +7,14 @@ import time
 import uuid
 
 
+@dataclass(frozen=True, slots=True)
+class LexemeLookupResult:
+    """A candidate lexeme lookup result — not an authoritative meaning."""
+    lexeme: LexemeModel
+    match_type: str = "exact"
+    score: float = 0.0
+
+
 class LexemeRole(str, Enum):
     ENTITY = "entity"
     PROCESS = "process"
@@ -198,6 +206,20 @@ class LexemeMemory:
         lex.trust = max(0.0, min(1.0, lex.trust + delta))
         lex.updated_at = time.time()
         return lex
+
+    def lookup_candidates(self, surface: str) -> list[LexemeModel]:
+        """Return candidate lexeme models for a surface form.
+        
+        These are candidates, not authoritative meanings.
+        Returns empty list if no candidates found.
+        """
+        norm = surface.strip().lower()
+        results = []
+        for lexeme in self._lexemes.values():
+            if any(l.surface.lower() == norm for l in lexeme):
+                results.extend(l for l in lexeme if l.surface.lower() == norm)
+        results.extend(self._surface_index.get(norm, []))
+        return results
 
     def all(self) -> list[LexemeModel]:
         seen: set[str] = set()

@@ -22,10 +22,39 @@ _ALLOWED_LEARNING_TARGETS = frozenset({
 
 
 @dataclass
+class StructuralObservation:
+    """Structural proposition emitted by the graph builder.
+
+    The builder emits observations about the input, not authorized mutations.
+    The LearningPatchCompiler converts these to GraphPatch objects after
+    LearningContract authorization. Full provenance is tracked for each
+    observation.
+    """
+
+    obs_type: str = ""
+    target: str = "discard"
+    operation: str = ""
+    target_id: str = ""
+    fields: dict[str, Any] = field(default_factory=dict)
+    confidence: float = 0.5
+    reason: str = ""
+
+    source_frame_id: str = ""
+    source_group_id: str = ""
+    source_branch_id: str = ""
+    episode_id: str = ""
+    gap_id: str = ""
+
+    source_refs: list[str] = field(default_factory=list)
+    evidence_refs: list[str] = field(default_factory=list)
+    permission_refs: list[str] = field(default_factory=list)
+
+
+@dataclass
 class OutcomeSignal:
     """Structured outcome evidence for one response turn."""
 
-    outcome_type: str = "unknown"  # success, failure, correction, complaint, coverage_complaint, repair, safety_ok
+    outcome_type: str = "unknown"
     confidence: float = 0.5
     source_refs: list[str] = field(default_factory=list)
     features: dict[str, Any] = field(default_factory=dict)

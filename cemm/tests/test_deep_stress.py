@@ -547,11 +547,14 @@ def test_command_not_overridden_by_assertion_edges():
 
     s = SeededSystem(context_id="regression_cmd_assertion")
     r = s.run("tell me a joke")
-    assert r["obligation_kind"] != "store_teaching", (
-        f"'tell me a joke' should not be store_teaching, got {r['obligation_kind']!r}"
+    cycle = r["cycle"]
+    oc = getattr(cycle, "obligation_contract", None)
+    obligation_kind = getattr(oc, "obligation_kind", r.get("obligation_kind"))
+    assert obligation_kind != "store_teaching", (
+        f"'tell me a joke' should not be store_teaching, got {obligation_kind!r}"
     )
-    assert r["obligation_kind"] != "store_patch", (
-        f"'tell me a joke' should not be store_patch, got {r['obligation_kind']!r}"
+    assert obligation_kind != "store_patch", (
+        f"'tell me a joke' should not be store_patch, got {obligation_kind!r}"
     )
 
 

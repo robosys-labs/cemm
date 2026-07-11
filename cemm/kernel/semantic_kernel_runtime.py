@@ -25,6 +25,7 @@ from .obligation_contract_builder import ObligationContractBuilder
 from .query_contract_builder import QueryContractBuilder
 from .write_contract_builder import WriteContractBuilder
 from .reaction_contract_builder import ReactionContractBuilder
+from .operational_contract_compiler import OperationalContractCompiler
 from .situation_frame_builder import SituationFrameBuilder
 from .state_occupancy_compiler import StateOccupancyCompiler
 from .state_delta_compiler import StateDeltaCompiler
@@ -56,6 +57,7 @@ class SemanticKernelRuntime:
         construction_lattice: Any | None = None,
         episodic_store: Any | None = None,
         auto_consolidate: bool = False,
+        lexeme_memory: Any | None = None,
     ) -> None:
         self.concept_lattice = concept_lattice
         self.construction_lattice = construction_lattice
@@ -105,6 +107,7 @@ class SemanticKernelRuntime:
         self._query_contract_builder = QueryContractBuilder()
         self._write_contract_builder = WriteContractBuilder()
         self._reaction_contract_builder = ReactionContractBuilder()
+        self._contract_compiler = OperationalContractCompiler()
         self._situation_frame_builder = SituationFrameBuilder()
         self._state_occupancy_compiler = StateOccupancyCompiler()
         self._state_delta_compiler = StateDeltaCompiler()
@@ -125,6 +128,32 @@ class SemanticKernelRuntime:
 
         # Causal bridge — queries DurableSemanticStore directly
         self._causal_bridge = CausalBridge(self._durable_semantic_store)
+
+        # 3.3 shadow components — trace-only; do not affect behavior
+        self._lexeme_memory = lexeme_memory
+        from ..learning.semantic_gap_detector import SemanticGapDetector
+        from ..learning.learning_episode_manager import LearningEpisodeManager
+        from ..learning.lexeme_candidate_index import LexemeCandidateIndex
+        from ..learning.session_learning_overlay import SessionLearningOverlay
+        from ..learning.learning_question_planner import LearningQuestionPlanner
+        from ..learning.learning_answer_assimilator import LearningAnswerAssimilator
+        from .predicate_activation_resolver import PredicateActivationResolver
+        from .entity_grounding_resolver import EntityGroundingResolver
+        from .interpretation_lattice import InterpretationLattice
+        from .interpretation_resolver import InterpretationResolver
+        from .obligation_graph_builder import ObligationGraphBuilder
+
+        self._semantic_gap_detector = SemanticGapDetector()
+        self._predicate_activation_resolver = PredicateActivationResolver()
+        self._entity_grounding_resolver = EntityGroundingResolver()
+        self._interpretation_lattice = InterpretationLattice()
+        self._interpretation_resolver = InterpretationResolver()
+        self._obligation_graph_builder = ObligationGraphBuilder()
+        self._learning_episode_manager = LearningEpisodeManager()
+        self._lexeme_candidate_index = LexemeCandidateIndex()
+        self._session_learning_overlay = SessionLearningOverlay()
+        self._learning_question_planner = LearningQuestionPlanner()
+        self._learning_answer_assimilator = LearningAnswerAssimilator()
 
     @property
     def attention(self):
@@ -278,6 +307,43 @@ class SemanticKernelRuntime:
             result.diagnostics = {"errors": errors}
             return result
 
+        # 2c. 3.3 Shadow: semantic gap detection, lexeme candidates, learning episodes
+        try:
+            known = set()
+            if self._lexeme_memory is not None:
+                known = {m.surface.lower() for m in self._lexeme_memory.all()}
+            gaps = self._semantic_gap_detector.detect(
+                percept, uol_graph, known_forms=known,
+            )
+            result.semantic_gaps = gaps
+
+            tokens = getattr(percept, "tokens", []) or []
+            for t in tokens:
+                surface = t if isinstance(t, str) else getattr(t, "surface", str(t))
+                lang = getattr(percept, "language", "en")
+                self._lexeme_candidate_index.index_candidate(
+                    lang, surface,
+                    {"surface": surface, "lemma": surface.lower(), "form": surface},
+                )
+
+            blocking = self._semantic_gap_detector.classify_blocking(gaps, set())
+            if blocking and hasattr(signal, "context_id"):
+                episode = self._learning_episode_manager.create_episode(
+                    signal.context_id, blocking,
+                )
+                result.active_learning_episodes = [episode]
+                asked: set[str] = set()
+                for ep in self._learning_episode_manager.get_active_episodes(signal.context_id):
+                    asked.update(ep.asked_fields)
+                blocking_ids = {g.gap_id for g in blocking}
+                question = self._learning_question_planner.plan(
+                    gaps, [], asked, blocking_ids,
+                )
+                if question is not None:
+                    result.learning_questions = [question]
+        except Exception as e:
+            errors.append(f"3.3 gap/episode shadow failed: {e}")
+
         # 2a. Causal inference predictions via bridge
         try:
             causal_preds = self._causal_bridge.predict(
@@ -295,6 +361,52 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"situation frame build failed: {e}")
             situation_frame = None
+
+        # 2d. 3.3 Shadow: entity grounding + interpretation lattice
+        try:
+            active_ids = set(
+                getattr(kernel.world, "active_entity_ids", [])
+                if kernel is not None and hasattr(kernel, "world") else []
+            )
+            salience = (
+                getattr(kernel.conversation, "entity_salience", {})
+                if kernel is not None and hasattr(kernel, "conversation") else {}
+            )
+            known_entities: dict[str, Any] = {
+                eid: {"surface": eid.split(":")[-1] if ":" in eid else eid, "name": eid}
+                for eid in active_ids
+            }
+            groundings = []
+            for ref in getattr(percept, "referents", []) or []:
+                surface = getattr(ref, "surface", str(ref))
+                eid, status = self._entity_grounding_resolver.resolve(
+                    surface, getattr(ref, "entity_type", "entity"), known_entities, salience,
+                )
+                groundings.append({"surface": surface, "entity_id": eid, "status": status.value})
+            result.entity_groundings = groundings
+        except Exception as e:
+            errors.append(f"3.3 entity grounding shadow failed: {e}")
+
+        try:
+            self._interpretation_lattice.clear()
+            from .interpretation_lattice import InterpretationBranch
+            groups = getattr(percept, "meaning_groups", []) or []
+            for group in groups:
+                gid = getattr(group, "id", "") or getattr(group, "group_id", "")
+                if not gid:
+                    continue
+                branch = InterpretationBranch(
+                    branch_id=f"br_{gid}",
+                    group_id=gid,
+                    language_tag=getattr(percept, "language", "und"),
+                )
+                self._interpretation_lattice.add_branch(branch)
+            result.interpretation_lattice = self._interpretation_lattice
+            result.interpretation_resolution = self._interpretation_resolver.resolve(
+                self._interpretation_lattice,
+            )
+        except Exception as e:
+            errors.append(f"3.3 interpretation lattice shadow failed: {e}")
 
         # 3. Attend — select focus (Phase 3)
         try:
@@ -381,44 +493,19 @@ class SemanticKernelRuntime:
                     affordance_predictions=affordance_predictions,
                     safety_frame=safety_frame,
                 )
-                obligation_contract = self._obligation_contract_builder.build(
-                    operational_frames,
-                    meaning_arbitration,
+                obligation_contract = self._contract_compiler.compile(
+                    frames=operational_frames,
+                    arbitration=meaning_arbitration,
                     effects=operational_effects,
                     safety_frame=safety_frame,
+                    state_transmutations=state_transmutations,
+                    obligation_graph=result.obligation_graph,
+                    gaps=result.semantic_gaps,
+                    episodes=result.active_learning_episodes,
+                    durable_store=self._durable_semantic_store,
+                    graph=uol_graph,
+                    percept=percept,
                 )
-                primary_frame = selected_frames[0] if selected_frames else None
-                if primary_frame is not None and primary_frame.is_query:
-                    refined_query = self._query_contract_builder.build(
-                        primary_frame, self._durable_semantic_store,
-                    )
-                    if refined_query is not None:
-                        obligation_contract.query_contract = refined_query
-                        obligation_contract.query_policy = primary_frame.query_policy
-                if primary_frame is not None:
-                    write_contract = self._write_contract_builder.build(
-                        primary_frame, uol_graph,
-                    )
-                    if write_contract is not None:
-                        obligation_contract.write_contract = write_contract
-                        obligation_contract.write_policy = write_contract.commit_policy
-                    reaction_contract = self._reaction_contract_builder.build(
-                        primary_frame, operational_effects,
-                    )
-                    if reaction_contract is not None:
-                        obligation_contract.reaction_contract = reaction_contract
-                else:
-                    for frame in selected_frames:
-                        wc = self._write_contract_builder.build(frame, uol_graph)
-                        if wc is not None:
-                            obligation_contract.write_contract = wc
-                            obligation_contract.write_policy = wc.commit_policy
-                            break
-                    for frame in selected_frames:
-                        rc = self._reaction_contract_builder.build(frame, operational_effects)
-                        if rc is not None:
-                            obligation_contract.reaction_contract = rc
-                            break
                 obligation_frame = self._obligation_frame_from_contract(
                     obligation_contract,
                     semantic_program,
@@ -427,11 +514,79 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"compile operational contract failed: {e}")
 
+        # 3c-viii. 3.3 Shadow: obligation graph + predicate activation check
+        try:
+            if operational_frames:
+                gaps = result.semantic_gaps
+                blocking_ids: set[str] = set()
+                for ep in result.active_learning_episodes:
+                    blocking_ids.update(ep.target_gap_ids)
+                ob_graph = self._obligation_graph_builder.build(
+                    operational_frames, gaps, blocking_ids,
+                )
+                result.obligation_graph = ob_graph
+        except Exception as e:
+            errors.append(f"3.3 obligation graph shadow failed: {e}")
+
+        try:
+            if operational_frames:
+                from .predicate_activation_resolver import PredicateActivationFrame, PredicateStatus
+                activation_frames = []
+                for frame in operational_frames:
+                    pf = PredicateActivationFrame(
+                        predicate_id=f"pred_{frame.frame_id}",
+                        group_id=getattr(frame, "group_id", ""),
+                        predicate_key=frame.frame_type,
+                        predicate_surface=getattr(frame, "surface", ""),
+                        language_tag=getattr(percept, "language", "und") if percept else "und",
+                        status=PredicateStatus.CANDIDATE,
+                    )
+                    activation_frames.append(pf)
+                resolved: set[str] = set()
+                activated = self._predicate_activation_resolver.resolve(activation_frames, resolved)
+                result.predicate_activations = activated
+        except Exception as e:
+            errors.append(f"3.3 predicate activation shadow failed: {e}")
+
         result.operational_meaning_frames = operational_frames
         result.meaning_arbitration = meaning_arbitration
         result.state_transmutations = state_transmutations
         result.operational_effects = operational_effects
         result.obligation_contract = obligation_contract
+
+        # 3.3 Phase 11 shadow: execution ledger + learning use observer
+        try:
+            from .turn_execution_planner import TurnExecutionPlanner
+            from .contract_executor import ContractExecutor
+            from ..learning.learning_use_observer import LearningUseObserver
+
+            planner = TurnExecutionPlanner()
+            ob_graph = result.obligation_graph
+            plan_steps = planner.plan(ob_graph, obligation_contract)
+
+            executor = ContractExecutor()
+            turn_id = getattr(signal, "id", "")
+            session_id = getattr(kernel, "session_id", "")
+            result.execution_ledger = executor.execute(
+                plan_steps, obligation_contract,
+                turn_id=turn_id, session_id=session_id,
+            )
+
+            observer = LearningUseObserver()
+            episode_ids = [ep.episode_id for ep in result.active_learning_episodes]
+            use_outcomes: list[Any] = []
+            for entry in result.execution_ledger.entries:
+                if entry.status == "succeeded" and entry.operation_type in ("query", "write"):
+                    for eid in episode_ids:
+                        outcomes = observer.observe_use_success(
+                            hypothesis_id=eid,
+                            use_type=entry.operation_type,
+                            confidence=0.7,
+                        )
+                        use_outcomes.extend(outcomes)
+            result.learning_use_outcomes = use_outcomes
+        except Exception as e:
+            errors.append(f"3.3 execution ledger shadow failed: {e}")
 
         # 3d. Process teaching frame (v4.2)
         try:
@@ -607,6 +762,8 @@ class SemanticKernelRuntime:
                 output_signal_id=signal.id if hasattr(signal, 'id') else "",
                 assistant_intent=getattr(result.obligation_frame, 'obligation_kind', '') if result.obligation_frame else '',
                 response_mode=getattr(result.obligation_frame, 'response_mode', '') if result.obligation_frame else '',
+                obligation_contract=result.obligation_contract,
+                response_bundle=result.response_bundle,
             )
             output_updater.apply(kernel, output_update)
         except Exception as e:

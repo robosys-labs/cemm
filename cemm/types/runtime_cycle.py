@@ -33,3 +33,15 @@ class RuntimeCycleResult:
     operational_effects: list[Any] = field(default_factory=list)
     obligation_contract: Any | None = None
     situation_frame: Any | None = None
+    # 3.3 shadow trace fields — populated by shadow components; do not affect behavior
+    semantic_gaps: list[Any] = field(default_factory=list)
+    lexical_candidates: list[Any] = field(default_factory=list)
+    interpretation_lattice: Any | None = None
+    interpretation_resolution: dict[str, Any] = field(default_factory=dict)
+    predicate_activations: list[Any] = field(default_factory=list)
+    entity_groundings: list[Any] = field(default_factory=list)
+    obligation_graph: Any | None = None
+    active_learning_episodes: list[Any] = field(default_factory=list)
+    learning_questions: list[Any] = field(default_factory=list)
+    execution_ledger: Any | None = None
+    learning_use_outcomes: list[Any] = field(default_factory=list)
