@@ -41,6 +41,16 @@ These are not synonyms.
 
 A statement may be remembered about a referentially available but operationally opaque concept.
 
+### 2.1 Sense individuation and schema identity
+
+Lexemes and schemas are different identity spaces. One lexeme may map to several senses; one schema may be lexicalized several ways.
+
+**Split rule.** When new teaching is structurally incompatible with an existing sense (disjoint semantic family, disjoint bearer/holder constraints, or contradictory strict constitutive patterns), the default is a candidate **new sense**, not a contradiction — unless the source explicitly marks it as a correction. Ambiguous cases produce a sense-individuation probe, not a silent merge or silent fork.
+
+**Merge rule.** Two schema refs may be unified only through an explicit `same_identity` assessment: compatible semantic families, non-conflicting strict patterns, and overlapping constitutive/differentiating structure or an explicit synonym/alias claim. Merging is a journaled, reversible revision that consolidates evidence, deferred relations, and gaps from both refs.
+
+**Provisional ref identity.** A provisional schema ref created for an opaque term is durable and re-resolvable: later mentions of the same lexeme in compatible contexts resolve to the same provisional ref so deferred evidence accumulates instead of fragmenting. Context-incompatible mentions create sense candidates under the split rule.
+
 ## 3. Grounded Definition Closure
 
 Every executable schema revision has a `DefinitionShape` determined by its existing schema family.
@@ -52,11 +62,23 @@ A revision has Grounded Definition Closure when:
 3. role and value constraints terminate in kernel value types, executable foundational schemas, adapter-observed schemas, or already grounded active schemas;
 4. at least one constitutive condition explains what instances/occurrences must satisfy;
 5. where the schema specializes another schema, at least one differentiating condition prevents pure synonymy or empty inheritance;
-6. dependency traversal contains no unsupported circular component;
+6. dependency traversal contains no unsupported circular component (see §3.1 for the precise support criteria);
 7. its query, recognition, inference, and contradiction behavior can be instantiated;
 8. schema-family-specific competence tests pass.
 
 This is a derived assessment for an exact schema revision. It is not another durable ontology and not another resolver.
+
+### 3.1 Jointly anchored definition cycles
+
+Mutual definition is not automatically a closure failure. Natural concept clusters (`buy`/`sell`, `parent`/`child`, `win`/`lose`) are legitimately co-defined.
+
+A strongly connected dependency component is **supported** when:
+
+1. the component, taken as a whole, has at least one dependency path terminating outside the component in grounded foundations;
+2. each member schema contributes at least one constitutive condition that is not merely a restatement of another member;
+3. the component passes a joint competence suite that discriminates the members from each other.
+
+A component with no external grounded anchor (`leader ↔ chief`) fails closure regardless of assertion count. Supported components activate together or not at all.
 
 ## 4. Sole authority
 
@@ -74,6 +96,20 @@ SemanticSchemaStore.activate(revision)
 ```
 
 A helper such as `SchemaGroundingValidator` may compute the assessment, but it may not resolve schemas, activate revisions, or create a second store.
+
+### 4.1 Assessment validity and downgrade cascade
+
+A `SchemaGroundingAssessment` is valid only for an exact schema revision **and** an exact dependency closure fingerprint — the set of revision IDs of every schema in its dependency closure.
+
+When any dependency is superseded, quarantined, contradicted, or retired:
+
+1. all cached assessments whose closure fingerprint includes the changed revision are invalidated;
+2. dependent schemas are re-assessed lazily on next resolution or eagerly per policy;
+3. a dependent that loses closure is downgraded to `partial`/`opaque` usability — it is not deleted, and its attributed evidence is preserved;
+4. in-flight interpretations that consumed the degraded schema complete against their original snapshot but are marked for re-evaluation;
+5. downgrades propagate transitively under the same rules, with a traceable journal entry per hop.
+
+The reverse dependency index required for this cascade is the same index used by deferred relation replay.
 
 ## 5. Semantic sufficiency versus evidence confidence
 
@@ -122,6 +158,40 @@ It may not yet:
 - use the relation to authorize state/action effects.
 
 The assertion remains queryable as reported/user-supplied evidence and can be replayed after its dependencies become grounded.
+
+### 6.1 Permitted operation ladder
+
+`definition_usability` maps to a fixed, monotonic operation ladder. Components consult the ladder; they do not re-derive permissions.
+
+| usability | permitted operations |
+|---|---|
+| opaque | quote, remember attributed propositions, query as assertion, search, target for learning |
+| partial | all opaque operations + typed reference, family-constrained composition, gap-directed probing, provisional contrast |
+| executable | all partial operations + recognition, defining queries, licensed inference, inheritance participation |
+| executable + effect-authorized | state/action effect projection |
+
+**Executable is not effect-authorized.** A schema whose family carries precondition/effect semantics may project operational effects only after a separate effect-authorization decision considering source trust, scope, permission, and risk class. Structural closure alone never grants effect authority.
+
+### 6.2 Proposition–revision binding
+
+A committed proposition binds to the exact schema revisions under which it was interpreted at assertion time.
+
+When a schema is later revised:
+
+- historical propositions retain their original interpretation and remain queryable under it;
+- reinterpretation under the new revision is an explicit, journaled replay that produces a new derived reading — it never silently rewrites the stored proposition;
+- contradiction detection across revisions compares readings, not raw stored forms.
+
+Memory meaning is therefore stable under concept drift instead of silently mutating.
+
+### 6.3 Scope shadowing
+
+Schema revisions may be scoped (`session > user > domain > global`). During resolution:
+
+- the narrowest applicable scope shadows wider scopes for interpretation in that context;
+- shadowing is per-schema and journaled in the interpretation trace;
+- a scoped revision never mutates the wider-scope revision it shadows;
+- promotion from a narrow to a wider scope goes through the ordinary promotion policy, including independent-evidence requirements.
 
 ## 7. No new top-level stage
 
@@ -217,6 +287,16 @@ AND required dependencies are accessible
 
 The existence of a lexical mapping or durable record is insufficient.
 
+`understands` is graded and competence-relative, not boolean. Every derived claim carries:
+
+```text
+competence set demonstrated
+scope (session / user / domain / global)
+dependency closure fingerprint at assessment time
+```
+
+A truthful self-report cites what the schema can currently do, not a binary label.
+
 ## 10. Architecture result
 
 This revision gives v3.4 a reliable foundation without adding another ontology layer:
@@ -232,4 +312,7 @@ same replay mechanism
 + non-circular dependencies
 + grounded activation gate
 + honest understanding assessments
++ jointly anchored cycle support
++ assessment invalidation cascade
++ executable/effect-authority separation
 ```

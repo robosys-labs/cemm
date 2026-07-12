@@ -79,13 +79,16 @@ This is a partial schema definition for L, not merely an instance fact.
 
 ```text
 schema family hypothesis: role-like concept
-eligible bearer: agentive entity
+eligible bearer: entity capable of directing ("someone or something" — the
+  user did not restrict to agentive entities; agentivity is a defeasible
+  hypothesis derived from directs_toward's own bearer constraint, not an
+  asserted condition)
 context: group + goal
 constitutive pattern: directs_toward(bearer, group, goal)
 occupancy pattern: occupies_role(bearer, L, context, interval)
 ```
 
-`agentive entity`, `group`, `goal`, and `directs_toward` must already be grounded or produce their own concrete blockers.
+`group`, `goal`, and `directs_toward` must already be grounded or produce their own concrete blockers, subject to the episode's probe budget. The bearer constraint is inherited from `directs_toward`'s role signature rather than invented beyond what the user asserted.
 
 ### Validation
 
