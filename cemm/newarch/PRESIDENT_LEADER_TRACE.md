@@ -1,8 +1,12 @@
-# Canonical Trace — “A President Is a Leader”
+# Canonical Grounded Trace — “A President Is a Leader”
+
+This trace illustrates preservation, provisional structural learning, independent validation, context admission, and final differentiation without inventing user claims.
 
 ## Initial state
 
-Assume the English lexical forms `president` and `leader` have no executable schema definitions.
+English lexical forms `president` and `leader` are recognized, but no executable sense is assumed.
+
+The actual context, user-attribution context, boot foundation revisions, and environment fingerprint are pinned.
 
 ## Turn 1
 
@@ -12,45 +16,49 @@ User: A president is a leader.
 
 ### Compose
 
-Create:
+Create lexical refs and separate candidate sense clusters:
 
 ```text
-lexeme sense candidate: president → provisional schema ref P
-lexeme sense candidate: leader → provisional schema ref L
-classification/relation hypotheses:
-  subtype_of(P, L)
-  subrole_of(P, L)
-  bearer_implication(P, L)
-  synonym_or_paraphrase(P, L)
+president → P?
+leader → L?
 ```
 
-### Ground
+Relation hypotheses remain separate:
 
 ```text
-P definition usability = opaque
-L definition usability = opaque
+subtype(P, L)
+role_specialization(P, L)
+role-bearer implication
+prototype/generalization
+synonym/paraphrase
+```
+
+English `is` does not decide the relation.
+
+### Ground and resolve
+
+```text
+P usability = opaque
+L usability = opaque
 semantic families unresolved
 exact relation unresolved
 ```
 
-### Resolve
-
-Select the communicative meaning:
+Select only the attributed communicative meaning:
 
 ```text
-asserts(user, relation_hypothesis(P, L))
+asserts(user, relation_hypothesis(P?, L?))
 ```
-
-Do not select an executable inheritance relation.
 
 ### Commit
 
 Permitted:
 
 ```text
-store user-attributed proposition
-store lexical references
-store candidate relation evidence
+lexical references
+candidate sense refs/evidence assignments
+user-attributed proposition
+relation hypotheses
 ```
 
 Forbidden:
@@ -58,12 +66,20 @@ Forbidden:
 ```text
 activate P or L
 inherit L into P
-claim CEMM understands either term
+actual-world classification
+claim understanding
 ```
 
-### Honest response
+### Response semantics
 
-> I’ve recorded that you describe a president as a leader, but I do not yet have a grounded definition of “leader” or enough information to determine the exact relation.
+```text
+remembers(self, user_assertion)
+uncertain_about(self, relation_type + definitions)
+```
+
+Possible realization:
+
+> I’ve recorded that you describe a president as a leader, but I don’t yet have grounded definitions for those senses or enough information to decide the exact relation.
 
 ## Turn 2
 
@@ -71,56 +87,97 @@ claim CEMM understands either term
 User: A leader is someone or something that directs a group toward a goal.
 ```
 
-### Target discrimination
+### What was asserted
 
-This is a partial schema definition for L, not merely an instance fact.
-
-### Candidate structure
+The utterance supplies evidence for:
 
 ```text
-schema family hypothesis: role-like concept
-eligible bearer: entity capable of directing ("someone or something" — the
-  user did not restrict to agentive entities; agentivity is a defeasible
-  hypothesis derived from directs_toward's own bearer constraint, not an
-  asserted condition)
-context: group + goal
-constitutive pattern: directs_toward(bearer, group, goal)
-occupancy pattern: occupies_role(bearer, L, context, interval)
+possible semantic family: role-like or relational concept
+constitutive candidate:
+    directs_toward(bearer, group, goal)
+lexicalization: “leader” → candidate sense L1
 ```
 
-`group`, `goal`, and `directs_toward` must already be grounded or produce their own concrete blockers, subject to the episode's probe budget. The bearer constraint is inherited from `directs_toward`'s role signature rather than invented beyond what the user asserted.
-
-### Validation
-
-If dependencies are grounded and competence tests pass, L may activate.
-
-Competence examples:
+The user did **not** directly assert:
 
 ```text
-Ada directs Team A toward Goal G → candidate role occupancy
-Ada is merely a member of Team A → insufficient
-What does a leader direct? → group/participants
-What is leadership relative to? → group/activity + goal/context
+formal role occupancy
+agentive entity as a named superclass
+appointment rules
+termination rules
+authority
 ```
 
-## Deferred replay
+If grounded `directs_toward` has selectional constraints, those may be inherited as constraints with `inherited` provenance. If the architecture proposes an occupancy pattern because role-like schemas require one, it remains `hypothesized` until supported.
 
-Re-evaluate Turn 1 using grounded L.
+### Grounding frontier
 
-P remains opaque. The relation is still not fully activated because CEMM must determine:
+Required dependencies include exact senses of:
 
 ```text
-Is president also a role-like schema?
-What bearer/context does it require?
-What differentiates it from generic leader?
-Is the relation strict, contextual, or defeasible?
+directs_toward
+group
+goal
 ```
+
+The transaction checks their use profiles. Missing items become typed gaps subject to the probe budget.
+
+### Structural assessment
+
+If dependencies are valid, the candidate may become structurally executable.
+
+Teaching-derived examples may test role binding and query projection, but they cannot independently validate discrimination.
+
+Therefore the first result is normally:
+
+```text
+L1 status = provisional
+structurally executable = possibly yes
+independently validated = no
+actual-context admissibility = attributed/user theory unless other evidence exists
+```
+
+A truthful response can say:
+
+> I can now use the definition you gave provisionally: a leader directs a group toward a goal. I haven’t independently validated that as a complete general definition.
+
+## Independent competence
+
+Independent cases may come from:
+
+```text
+audited role invariants
+independently grounded sibling/contrast schemas
+adapter observations
+independently sourced expected semantic cases
+```
+
+Examples must not be generated solely from the teaching definition.
+
+If required discrimination passes and epistemic policy admits the definition for a context, L1 may atomically activate.
+
+## Replay Turn 1
+
+The original relation evidence is replayed under the exact active/provisional L1 revision.
+
+P remains opaque. Replay asks:
+
+```text
+Does president denote a role, office, bearer, or title in this use?
+What context and bearer constraints apply?
+What distinguishes it from L1?
+Is the relation strict, defeasible, contextual, or merely attributed?
+```
+
+No inheritance activates yet.
 
 ## Turn 3 probe
 
-A semantic probe may be realized as:
+A minimal probe may be:
 
-> Is a president a formal role in an institution, and what makes that role different from other leaders?
+> In your usage, is a president a formal role in an institution, and what distinguishes it from other leaders?
+
+The question records expected semantic evidence, not expected English wording.
 
 ## Turn 4
 
@@ -128,54 +185,96 @@ A semantic probe may be realized as:
 User: A president holds a formally established office in an institution and has its defined presiding authority.
 ```
 
-### Candidate P definition
+### Asserted contributions
 
 ```text
-schema family: role-like concept
-parent: L, if validated
-eligible bearer: institution-eligible agent
-context: institution
-constitutive pattern: occupies_formal_office(bearer, institution, office)
-authority pattern: has_presiding_authority(bearer, institution, scope)
-differentiator: formal office + institution-defined authority
+formal office relation
+institution context
+presiding-authority relation
 ```
 
-### Activation
-
-P activates only if dependencies and competence checks pass.
-
-### Resulting distinction
+### Hypotheses to validate
 
 ```text
-leader:
-  role relative to directing/coordinating a group toward a goal
-
-president:
-  institutionally constituted role
-  inherits compatible leader structure
-  distinguished by formal office and defined presiding authority
+schema family: role-like/office sense
+parent relation to L1
+eligible bearer constraints inherited from grounded predicates
+occupancy/tenure behavior if required by family
 ```
 
-### Instance use
+Only the first group is directly asserted. Every other field retains its provenance kind.
+
+### Structural result
+
+If dependencies and family requirements pass:
+
+```text
+P1 provisional structural definition:
+    institutionally constituted office
+    defined presiding authority
+    differentiator from generic leader
+```
+
+Independent competence and actual-context admission are still evaluated separately.
+
+### Relation to leader
+
+The system may validate one of:
+
+```text
+strict role specialization in a declared institution class
+defeasible leader implication
+context-specific office/leadership relation
+no universal implication
+```
+
+It does not force `subtype` from the original copula.
+
+## Instance use
 
 ```text
 Ada is the president of Club C.
 ```
 
-creates a bearer-role occupancy predication. Ada remains the instance; president remains the schema.
+represents:
+
+```text
+Ada = instance referent
+P1 = role/office schema sense
+Club C = context/institution referent
+occupies_role(Ada, P1, Club C, time)
+```
+
+Ada and P1 never unify.
+
+The predication is interpreted under the exact P1 revision active/usable at assertion time.
 
 ## Final query behavior
 
 ```text
+What did I tell you about presidents?
+→ attributed propositions regardless of actual-context admission
+
+What does “leader” mean according to my definition?
+→ qualified user-theory definition if provisional
+
 What is a leader?
-→ grounded constitutive definition
+→ actual/admitted definition or qualified abstention
 
 What is a president?
-→ inherited base + formal-office differentiator
-
-Is every leader a president?
-→ no; differentiating constraints are absent
+→ base structure + differentiator only if exact relation/admissibility pass
 
 Is every president a leader?
-→ answer according to validated relation scope and evidence
+→ answer from validated relation scope, default strength, context, and evidence
 ```
+
+## Downgrade behavior
+
+If `directs_toward`, L1, a competence oracle, or an adapter contract changes:
+
+- L1 assessment invalidates;
+- P1 inherited structure and dependent readings invalidate;
+- classifications/answers/plans using them retract or stale;
+- original user assertions remain;
+- prior output remains historical and may require repair;
+- no effect or operation proceeds on stale authority.

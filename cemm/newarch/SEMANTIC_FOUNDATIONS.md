@@ -1,27 +1,10 @@
-# CEMM v3.4 — Minimal Semantic Foundations
+# CEMM v3.4 — Final Minimal Semantic Foundations
 
-## 1. What is native
+The kernel must start with enough executable structure to represent and test meaning without pretending that familiar domain words are primitives.
 
-CEMM must not natively assume domain concepts such as:
+## 1. Native representation substrate
 
-```text
-person
-animal
-human
-leader
-president
-engineer
-software agent
-organization
-```
-
-These are audited boot or learned schemas.
-
-The native substrate is smaller and formal.
-
-### Representation primitives
-
-Already present in v3.4:
+Canonical semantic object families remain:
 
 ```text
 Referent
@@ -33,26 +16,30 @@ EvidenceRecord
 StructuralLink
 ```
 
-They specify how meaning is represented, not what a domain concept means.
+No domain concept such as `person`, `animal`, `leader`, `president`, `engineer`, `organization`, or `software agent` is a kernel object type.
 
-### Kernel value foundations
+## 2. Kernel value foundations
+
+The release implements typed behavior for:
 
 ```text
 boolean
 enum
 text
-quantity + unit
 identifier
+quantity + unit
 set
-sequence
-time point / interval
-coordinate / reference frame
-probability / distribution
+ordered sequence
+time point and interval
+coordinate and reference frame
+probability/distribution
 ```
 
-### Executable foundational relations
+Each type has canonical identity, normalization, comparison, query, contradiction, serialization, and public-surface rules.
 
-The smallest release-specific set should provide implemented type signatures, identity rules, query behavior, and inference behavior for:
+## 3. Executable foundational predicates
+
+The smallest audited set should include implemented type signatures, truth/query behavior, and inference contracts for:
 
 ```text
 same_identity / different_identity
@@ -68,113 +55,135 @@ causes / enables / prevents
 refers_to / represents
 ```
 
-They are foundational because their behavior is implemented and tested, not because their English labels are presumed understood.
+These labels are not assumed to explain themselves. Their kernel semantics and property tests make them foundational.
 
-### Epistemic self-foundations
+## 4. Epistemic and learning foundations
 
-The organism's claims about its own mind must be as grounded as its claims about the world. The executable foundational set therefore also includes, with implemented truth and query behavior:
+Self-capability and learning require executable predicates over ordinary records:
 
 ```text
 remembers(self, record)
-has_evidence_for(self, proposition, ledger_ref)
-understands(self, schema_revision, competence_set, scope)
+has_access_to(self, record)
+has_evidence_for(self, proposition, evidence)
+understands(self, schema_revision, competence_set, context)
 uncertain_about(self, target, blocker_set)
+means(lexical_form, schema_sense)
+defines(source, schema_revision, proposition)
+learns(self, artifact, evidence)
 ```
 
-`self` is an audited boot schema with kernel-backed identity. A self-report may be realized only from these derived, queryable records — never from response templates. If the epistemic relation cannot be derived, the honest output is uncertainty, not a fluent claim.
+`learns` is derived from committed artifact change and validated use. It is not triggered by a teaching utterance alone.
 
-### Pattern expressiveness minimum
+## 5. Audited boot schemas
 
-`SemanticPattern` is not limited to positive atomic conditions. To represent real definitions it must minimally express:
+Useful concepts such as physical entity, biological entity, person, agent, software system, organization, place, information object, group, and goal may be supplied as ordinary schema revisions.
 
-```text
-negation           — a bachelor is not married
-cardinality        — at most one president per institution
-bounded quantification — over declared role fillers, not open-world domains
-modality           — can/must/may distinctions in constitutive behavior
-temporal/aspectual scope — while in office; upon completion
-```
-
-Each construct carries defined truth, query, and contradiction behavior. A definition that needs an unsupported construct produces a concrete expressiveness blocker — it is not silently approximated by dropping the construct.
-
-## 2. Audited boot schemas
-
-Useful starting concepts such as `physical_entity`, `biological_entity`, `person`, `agent`, `software_system`, `organization`, `place`, and `information_object` may be supplied at boot.
-
-They are not kernel primitives. Each must have:
+Every boot schema has:
 
 ```text
 ordinary schema representation
-explicit definition dependencies
-boot provenance
-grounding/competence specification
-activation validation
+field-level boot provenance
+typed dependencies
+GroundingSpecification
+independent property/invariant tests
+versioned foundation manifest
+activation assessment
 ```
 
-This terminates learning regress honestly: CEMM starts with an audited, testable semantic basis rather than pretending to learn every concept from an empty graph.
+The same package may not self-certify solely by supplying its own example/expected graph pairs. Boot validation includes kernel invariants and independently implemented property tests.
 
-### 2.1 Boot validation failure policy
+Failure policy:
 
-Startup validation executes each audited boot schema's grounding specification and competence cases. Failure handling is tiered:
+- failed representation/value/foundational-predicate semantics halt boot or enter explicit diagnostic-safe mode;
+- failed optional boot concepts load opaque/provisional and downgrade dependents;
+- no failing schema silently activates.
 
-- a failed kernel value primitive or executable foundational relation halts boot — the substrate itself is defective;
-- a failed audited boot concept loads as `partial`/`opaque` usability, its failure is journaled, and dependent boot schemas downgrade through the ordinary assessment cascade;
-- boot never silently activates a failing schema and never fabricates a passing assessment.
+## 6. Grounding anchors
 
-### 2.2 Contradicting a boot schema
-
-A user assertion that contradicts an audited boot schema is ordinary contradiction evidence — boot provenance is not immunity from revision.
-
-It may add context restrictions, exceptions, or session/user-scoped revisions through the normal learning transaction. It may not silently supersede boot provenance at global scope; revising a boot schema above user scope follows the standard promotion policy with independent supporting evidence.
-
-## 3. Grounding anchors
-
-A definition dependency may terminate in:
+A required definition dependency may terminate in:
 
 1. a kernel representation/value primitive;
-2. an executable foundational relation;
-3. an adapter-observed schema with a registered observation contract;
+2. an executable foundational predicate;
+3. an adapter-observed schema under a versioned observation contract;
 4. an audited active boot schema;
-5. an already grounded active learned schema.
+5. an already active learned schema with valid environment fingerprint.
 
-A familiar word is not an anchor by itself.
+A familiar word, assertion count, or graph node is not an anchor.
 
-### 3.1 Adapter contract drift
+## 7. Adapter observation contracts
 
-An adapter-observed anchor is only as sound as its observation contract. Each registered contract carries verification cases that are re-run on adapter change and periodically per policy. A failing contract downgrades the adapter-observed schema — and its dependents — through the ordinary assessment cascade. An adapter is evidence infrastructure, not an unauditable oracle.
-
-## 4. Why a raw fact count is wrong
-
-These may be two assertions but zero additional meaning:
+An adapter-observed anchor records:
 
 ```text
-A leader leads.
-Leading is what a leader does.
+input/output type contract
+observation semantics
+verification/property cases
+adapter implementation/version
+permission and freshness policy
 ```
 
-Likewise:
+Adapter drift invalidates dependent assessments and cognition through the same typed dependency graph.
+
+## 8. SemanticPattern expressiveness
+
+The pattern AST minimally supports:
 
 ```text
-A leader is a chief.
-A chief is a leader.
+positive and negative conditions
+role-variable binding
+bounded quantification over declared fillers
+cardinality
+modality
+context/world qualification
+time and aspect
+comparison and units
+conjunction/disjunction with defined semantics
+exception/default metadata
 ```
 
-Grounding depends on compositional closure and discrimination, not count.
+Unsupported constructs create `expressiveness_blocker`. They are never silently dropped.
 
-## 5. Concept decomposition without ontology bloat
+## 9. Open-world and default reasoning
 
-CEMM does not require every concept to be decomposed into a universal philosophical ontology.
-
-It requires enough executable structure to support the selected competencies:
+Truth maintenance is four-state:
 
 ```text
-recognize or reject candidate use
-bind required roles
-query defining properties/relations
-distinguish from parent or alternatives
-perform licensed inference
-preserve context, polarity, and time
-realize an evidence-bound explanation
+supported
+refuted
+both
+neither
 ```
 
-The required depth is goal- and schema-dependent, but activation has a fixed minimum contract.
+Typical/default reasoning cannot convert `neither` to refutation.
+
+Default application uses context, specificity, priority, exception evidence, provenance, and valid time. A default never overrides strict constitutive evidence silently.
+
+## 10. Causal warrant
+
+Foundational causal predicates define representation and query semantics. Claims using them carry a separate warrant grade:
+
+```text
+reported_claim
+contextual_rule
+predictive_association
+mechanism_supported
+intervention_supported
+```
+
+Actual intervention or irreversible planning requires the appropriate grade plus live authorization.
+
+## 11. Regress and resource bounds
+
+Foundations terminate semantic dependency regress honestly, but the kernel still enforces:
+
+```text
+schema/dependency depth limits
+bounded quantification
+probe/competence/replay budgets
+cycle classification
+no user executable code
+scope/promotion permissions
+boot/global protection
+```
+
+The system may preserve an opaque concept and state its blockers rather than forcing universal decomposition.

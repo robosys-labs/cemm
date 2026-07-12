@@ -1,160 +1,335 @@
-# CEMM v3.4 — Reliable Understanding Pipeline
+# CEMM v3.4 — Final Reliable Understanding Pipeline
 
-This document modifies the existing UNDERSTAND stage. It does not add a new stage.
+This document strengthens the existing `UNDERSTAND` stage. It adds no top-level cognitive stage, ontology engine, or competing schema authority.
 
-## 1. Perceive
+## 1. Required output of understanding
 
-Preserve reversible lexical and structural evidence:
+For each selected meaning group, understanding must preserve:
 
 ```text
-raw form
-normalized form
-lemma/morphology
-span offsets
-syntactic dependencies
-quotation/negation/modality boundaries
+surface evidence
 candidate lexical senses
+candidate schema/sense refs
+predications and propositions
+referent and role bindings
+context, polarity, modality, time, and place
+schema grounding assessment
+context/operation-specific SchemaUseProfile
+open ports and blockers
+source/evidence lineage
 ```
 
-No unknown content word is silently converted into a generic entity or concept fact.
+A known spelling or schema reference is not an understood meaning.
 
-## 2. Compose
+## 2. Perceive: one reversible language stream
 
-For each candidate sense, `SemanticComposer` creates:
+Language adapters emit:
 
 ```text
-semantic target reference or provisional schema reference
-candidate schema family
-candidate predication/proposition structure
-role bindings/open ports
-context/polarity/modality
+raw form and exact offsets
+normalized form without destroying raw form
+lemma and morphology candidates
+contraction decomposition
+quotation, negation, clause, and modality boundaries
+syntax/dependency evidence
+candidate lexical senses
+language and confidence
+```
+
+Apostrophes and quotation boundaries must survive. Different tokenizers may not create incompatible canonical forms.
+
+Unknown content is never converted into a generic entity, role marker, or durable concept fact merely to keep the pipeline moving.
+
+## 3. Compose: preserve alternatives
+
+`SemanticComposer` creates separate candidates for:
+
+```text
+lexical sense
+schema family
+predication/proposition structure
+communicative force
+role bindings and open ports
+embedded propositions
+context/world
 source evidence
 ```
 
-Unknown terms remain explicit candidate senses. Surface recognition is not schema activation.
+Whole-turn construction and pragmatic cues may add candidates or discourse relations. They may not replace compositional content.
 
-## 3. Ground
+For an opaque lexeme, composition creates a lexical reference and one or more provisional candidate sense clusters. It does not assume that identical spellings share one schema.
 
-`GroundingResolver` resolves two different questions.
+## 4. Ground referents and definitions separately
 
-### Referent grounding
+`GroundingResolver` answers two distinct questions.
+
+### 4.1 Referent grounding
 
 ```text
-What existing/new discourse or durable referent is being mentioned?
-Is this an instance, schema referent, value, proposition, place, or context?
+What is being mentioned?
+Is it an instance, schema/sense referent, lexical form, value,
+predication, proposition, place, time, or context?
+What is its discourse/durable identity?
 ```
 
-### Definition grounding
+### 4.2 Definition grounding
 
 ```text
-Which schema revision defines this sense?
-Is its semantic family known?
+Which exact schema revision could define this sense?
+What schema family is hypothesized?
 Are required definition fields present?
-Are its dependencies grounded?
-Is this revision operationally usable or only referentially available?
+Are semantic patterns expressible?
+Are dependencies valid and grounded?
+What recursive-cycle semantics apply?
+What competence has actually been demonstrated?
 ```
 
-Grounded candidates therefore carry:
+### 4.3 Epistemic/contextual admissibility
+
+Structural closure does not determine truth. `EpistemicEvaluator` decides whether the definition claims are:
 
 ```text
-selected/provisional schema ref
-definition usability: executable | opaque | partial
-missing definition fields
-grounding dependency blockers
-permitted operations
+admitted in actual context
+admitted only in a domain/time context
+attributed to a user/source
+contested
+blocked
 ```
 
-## 4. Resolve
+### 4.4 SchemaUseProfile
 
-`InterpretationResolver` may select an opaque/partial meaning when that is enough for the current goal.
+The resolver derives a use profile by intersecting structural, competence, admissibility, scope/access, and requested-operation results.
 
-Examples:
-
-- quote or repeat the user's term;
-- remember that the user asserted a relation;
-- ask what the term means;
-- search external/durable sources;
-- preserve the concept for later learning.
-
-It may not use opaque schemas for:
+A schema may be:
 
 ```text
-inheritance
-causal effects
-state mutation
-strong definition answers
-selectional rejection that depends on unknown constraints
-unqualified self-knowledge claims
+opaque:
+  quote, preserve attributed assertion, search, probe
+
+partial/provisional:
+  typed reference, compose under qualification, query the supplied theory,
+  contrast provisionally, explain exact blockers
+
+active/admitted:
+  recognize, classify, answer defining queries, and perform licensed inference
+  in the admitted contexts
+
+causal/effect interpretable:
+  predict/simulate/propose only; never execute without live authorization
 ```
 
-## 5. Epistemic evaluation
+## 5. Scope is not truth precedence
 
-The system separately assesses:
+`session > user > domain > global` is not a blanket semantic shadowing rule.
+
+Resolution proceeds in this order:
+
+1. determine the intended sense;
+2. determine epistemic world/context;
+3. filter domain and valid time;
+4. check access scope;
+5. compare explicit supersession/override relations;
+6. evaluate structural usability and epistemic admissibility;
+7. select the revision appropriate for the requested operation.
+
+A user-defined meaning may be used for “what do you mean by X?” without replacing actual-world meaning for “what is X?”
+
+## 6. Field-level honesty
+
+Every candidate schema contribution records:
 
 ```text
-I remember the assertion.
-I can access a record about the term.
-I know the asserted relation is supported/contested.
-I understand the term's executable schema.
+asserted
+observed
+entailed
+inherited
+hypothesized
+defaulted
+induced
+adapter-supplied
+boot-supplied
 ```
 
-This allows truthful answers such as:
-
-> I remember that you said a president is a leader, but I do not yet have enough grounded structure for “leader” to use that as a definition.
-
-### 5.1 Evidence-bound self-reports
-
-Every clause of a self-report must bind to a derivable epistemic record: the remembered proposition ref, the evidence ledger entry, the grounding assessment, or the blocker set.
-
-- the renderer receives epistemic slots the same way it receives domain answer slots — it never invents epistemic claims;
-- a self-report claim with no backing record is a realization error, not a stylistic choice;
-- `SchemaGroundingAssessment` and epistemic derivations are queryable through the ordinary query path, so "do you understand X?" is answered by the same machinery as any other question.
-
-## 6. Gap detection
-
-A foundational gap is created only when missing definition structure blocks the selected goal.
-
-Gap types reuse the existing `GapRecord`:
+Example:
 
 ```text
-missing_semantic_family
-missing_parent_or_anchor
-missing_bearer_or_holder_constraint
-missing_constitutive_pattern
-missing_required_role
-missing_value_type
-missing_differentiator
-ungrounded_dependency
-circular_definition
-missing_competency_behavior
+User: A leader directs a group.
 ```
 
-No new gap subsystem is required.
+The user asserted a `directs` pattern. A role-like schema family, an occupancy pattern, or a bearer constraint may be reasonable hypotheses derived from grounded predicate signatures, but they are not user assertions.
 
-## 7. Understanding competence
+The response planner must preserve that distinction.
 
-An activated schema must support the competencies appropriate to its family.
+## 7. Sense individuation
+
+A lexical form may map to several senses and schema families.
+
+### Split evidence
+
+Create a new candidate sense or ambiguity set when evidence is structurally incompatible by:
+
+```text
+schema family
+role/bearer constraints
+strict constitutive patterns
+context/domain
+metonymic projection
+```
+
+### Merge evidence
+
+Merge/alias requires an explicit reversible identity assessment with compatible structure or a grounded synonym/translation claim.
+
+A merge never deletes original refs; it records equivalence/redirect provenance so historical readings remain interpretable.
+
+### Opaque homonyms
+
+When both uses are opaque, compatibility may be unknown. Keep separate candidate sense clusters and reversible evidence assignments rather than merging by spelling.
+
+## 8. Grounded Definition Closure
+
+A schema revision is structurally executable only when:
+
+1. semantic family is resolved;
+2. family-required fields are complete;
+3. required roles and value types are typed;
+4. required semantic constructs are expressible;
+5. definition dependencies terminate in executable foundations or valid grounded schemas;
+6. at least one permitted constitutive/identity pattern explains membership or occurrence;
+7. specialization has a differentiator unless explicitly an alias/synonym;
+8. recursive dependency components have supported semantics;
+9. query, contradiction, role, and context behavior can be instantiated;
+10. structural competence tests pass.
+
+Typical/default/incidental patterns never satisfy a constitutive requirement by themselves.
+
+## 9. Recursive definition components
+
+Classify every strongly connected definition component:
+
+```text
+inverse relation
+positive monotone
+stratified defeasible
+unsupported non-monotone
+```
+
+Direct joint activation requires:
+
+- at least one external grounded anchor per required role path;
+- non-redundant constitutive contribution from every member;
+- total/type-consistent role mapping;
+- declared inverse or least-fixed-point semantics;
+- independent joint competence;
+- no forbidden dependency through effect authorization, permission, destructive update, identity collapse, or cardinality replacement.
+
+The component activates atomically or remains provisional.
+
+## 10. Competence without self-certification
+
+Competence checks are non-mutating and sandboxed.
 
 Minimum generic checks:
 
 ```text
-compose a positive example
-reject or distinguish a negative/contrast example
-answer at least one defining query
-preserve role/context/polarity structure
-produce a basic grounded paraphrase or explanation when lexical resources exist
+compose a positive case
+preserve required role/context/polarity structure
+answer a defining query
+distinguish a real contrast or alternative
+perform a licensed inference
+realize/reparse where language resources exist
 ```
 
-Understanding is therefore operational, not a label attached to a graph node.
+### 10.1 Lineage rules
 
-### 7.1 Competence case provenance
+Each case records input generation lineage and oracle lineage.
 
-Competence cases must be independent of the definition they validate; otherwise activation is self-certifying.
+- a case derived from the teaching utterance tests structure only;
+- translations/paraphrases/generated examples inherit the same lineage;
+- negative cases cannot pass from missing evidence alone;
+- independent discrimination uses an audited invariant, independently grounded sibling/contrast, adapter observation, or independently authored expected pattern;
+- the same implementation path cannot generate input meaning, expected graph, and pass judgment without an independent invariant.
 
-Rules:
+### 10.2 Open-world negative cases
 
-1. a case derived mechanically from the teaching utterance itself may check structural well-formedness only — it cannot count toward discrimination;
-2. negative/contrast cases are drawn from sibling schemas, the parent minus the differentiator, or previously grounded near-neighbors — never generated from the candidate definition alone;
-3. user-supplied competence cases are admissible, but a single source may not supply both the definition and its only discriminating cases at promotion scopes above session/user;
-4. every competence case records its own provenance and participates in the same evidence ledger as other claims;
-5. when no independent discriminating case exists yet, the schema may activate at session/user scope with the limitation journaled; broader promotion waits for independent discrimination.
+Contrast evaluation uses:
+
+```text
+supported
+refuted
+both
+neither
+```
+
+`neither` is not rejection. A negative case passes only when the candidate schema derives an incompatibility or a better alternative.
+
+## 11. Resolve
+
+`InterpretationResolver` may select an opaque/provisional interpretation when sufficient for the current goal, such as quotation, memory, attributed report, correction, or learning.
+
+It may not use an inadmissible/opaque meaning for:
+
+```text
+actual-world inheritance
+strong classification
+causal/effect claims
+state mutation
+unqualified definition answers
+unqualified self-understanding claims
+selectional rejection
+```
+
+Rejected branches emit no effects, writes, or durable schema changes.
+
+## 12. Evidence-bound self-report
+
+Self-report queries use ordinary semantic retrieval over:
+
+```text
+remembered proposition
+schema grounding assessment
+competence results
+admissibility assessment
+current blockers
+capability/component evidence
+```
+
+Truthful outputs distinguish:
+
+```text
+I remember your statement.
+I can use your definition provisionally in this conversation.
+I can recognize/query these cases.
+I have not independently validated it.
+I do not currently have enough structure to understand it.
+```
+
+An unbacked epistemic clause is a realization error.
+
+## 13. Gap detection
+
+A gap exists only when missing structure blocks a selected goal.
+
+Required blocker vocabulary includes:
+
+```text
+missing_semantic_family
+missing_definition_field
+missing_required_role
+missing_value_type
+missing_constitutive_pattern
+missing_differentiator
+ungrounded_dependency
+unsupported_recursive_cycle
+missing_independent_competence
+actual_context_not_admitted
+expressiveness_blocker
+sense_individuation_pending
+stale_assessment
+```
+
+Known surface form never suppresses a structural gap.
+
+## 14. Output contract
+
+Understanding returns immutable candidates and assessments. It performs no persistent mutation, schema activation, external action, or response wording.

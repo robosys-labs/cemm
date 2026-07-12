@@ -1,211 +1,290 @@
-# CEMM v3.4 — Meaning-Backed Learning Pipeline
+# CEMM v3.4 — Final Meaning-Backed Learning Pipeline
 
-This is a strengthening of the existing recursive learning transaction.
+This document strengthens the existing recursive learning transaction. It does not create an ontology learner, second schema store, or separate interpretation path.
 
-## 1. Learning target discrimination
+## 1. Learning is evidence-driven schema revision
 
-Before learning, determine what the user supplied:
+The ordinary understanding path first determines whether an utterance supplies:
 
 ```text
 instance fact
 relation between existing schemas
 lexeme-to-schema binding
-partial schema definition
-complete schema definition
-correction/counterexample
-prototype or defeasible generalization
+partial definition
+complete compositional definition
+prototype/default generalization
+correction or counterexample
+source retraction
+permission change
 ```
 
-Do not treat every teaching statement as a schema definition.
+Not every teaching-looking utterance defines a concept.
 
-## 2. Assimilate evidence normally
+The learning transaction receives grounded propositions and evidence records, never copied free-text fields as semantic authority.
 
-The user's teaching utterance is composed and grounded through the ordinary pipeline.
+## 2. Learning outcomes are distinct
 
-The learning transaction receives grounded propositions, not copied text fields.
-
-Example:
+The kernel may truthfully report:
 
 ```text
-A president is a leader.
+remembered
+    exact attributed proposition/evidence committed
+
+staged
+    child revision exists but is not usable
+
+provisionally usable
+    structurally executable or partial revision committed for a qualified
+    attributed/hypothetical/private context; limitations remain
+
+understood for operations O in contexts C
+    exact active revision has independent competence, valid dependencies,
+    and admissibility for O/C
+
+known/adopted as actual-world definition
+    definition propositions satisfy epistemic policy for actual context
 ```
 
-may yield evidence for a relation hypothesis between two schema referents. It does not by itself define either schema.
+“Stored” and “learned” are never synonyms.
 
-### 2.1 Derived evidence never supports its own ancestry
+## 3. Evidence assimilation and lineage
 
-Every proposition carries derivation provenance: observed, attributed, or inferred (with the schema revisions and premises that licensed the inference).
+Every evidence record stores source, transformation, derivation parents, lineage roots, independence cluster, context, and permission.
 
-An inferred proposition:
+Derived propositions may be working knowledge but cannot increase support or competence for any schema in their transitive support ancestry or support strongly connected component.
 
-- may not increase support, confidence, or competence standing for any schema revision in its own derivation ancestry;
-- may not count as an independent discriminating competence case for those schemas;
-- may still serve as ordinary working knowledge and as evidence for unrelated schemas.
+A translation, paraphrase, generated case, summary, or copied source does not create new independent support.
 
-Without this rule, an activated schema licenses inferences whose outputs are laundered back as support for the schema itself — belief reinforcement without new information.
+## 4. Exact target and field provenance
 
-## 3. Evaluate current definition closure
-
-For each affected schema revision, compute:
+A transaction targets an exact:
 
 ```text
-semantic family resolved?
-required definition shape complete?
-parent/dependencies grounded?
-constitutive pattern executable?
-differentiator present where needed?
-circularity-free?
-competence specification satisfiable?
+lexical sense or candidate sense cluster
+schema revision
+schema field/pattern
+relation orientation
+construction
+state/value constraint
+realization binding
 ```
 
-The result determines what can be staged and what must remain deferred.
+Every staged contribution records whether it is asserted, observed, entailed, inherited, hypothesized, defaulted, induced, adapter-supplied, or boot-supplied.
 
-## 4. Probe only the blocking foundation
+No hypothesis is silently rewritten as user teaching.
 
-The existing probe planner asks the highest-leverage missing question.
+## 5. Grounding frontier and probe policy
 
-For an opaque `leader`, likely semantic questions are:
+The transaction computes the smallest blocking frontier over typed dependencies.
+
+Priority:
 
 ```text
-Does “leader” name a kind of thing, or a role that a person/system can have?
-Who or what can be a leader?
-What relation or responsibility makes something a leader?
-What group, activity, or goal is the leadership relative to?
-When does something stop being the leader?
+active goal blocker
+required semantic family/role/value
+constitutive structure
+independent discrimination
+differentiator
+context/time applicability
+enrichment
 ```
 
-For `president` after `leader` is grounded:
+Budgets include:
 
 ```text
-What makes a president different from another leader?
-Is president a formal office in an institution?
-How is the role acquired and when does it end?
+maximum dependency depth
+maximum open gaps
+maximum probes
+maximum hypothesis branches
+maximum schema size
+maximum competence cost
+maximum replay work
+user-burden/repeated-question limit
 ```
 
-The renderer chooses language. The learning system stores semantic expected-evidence patterns.
+Asked probe keys are persisted. Budget exhaustion leaves exact typed gaps and a resumable transaction. It does not mark failure, repeat the same question, or fabricate closure.
 
-### 4.1 Probe budget and grounding frontier
+## 6. Child revision
 
-Dependency probing must be bounded. Each learning episode carries:
+Accepted evidence creates an immutable child revision in the same `SemanticSchemaStore` snapshot.
+
+The child includes:
 
 ```text
-maximum probe depth along a single dependency chain
-maximum open foundational gaps per episode
-frontier priority: goal-blocking > differentiator > constitutive > enrichment
+base store revision
+field-level contributions
+typed dependencies
+applicability contexts/time
+support/counterevidence
+GroundingSpecification
 ```
 
-When the budget is exhausted, remaining dependencies stay as typed gaps, the schema remains `partial`, and the episode reports honestly what is still missing. The system never chases an unbounded definition regress in one conversation and never fabricates grounding to escape it.
+Untrusted learning is declarative. User data cannot install executable code or override formal kernel semantics.
 
-## 5. Child schema revision
+## 7. Pattern learning
 
-Accepted evidence stages ordinary schema changes in the existing child `SemanticSchemaStore` revision.
-
-No learning overlay, ontology side graph, or special concept database is introduced.
-
-### 5.1 Defeasible and prototype structure
-
-Not every constitutive pattern is a strict necessary condition. Natural concepts are frequently prototype-based (`birds fly`).
-
-Constitutive and differentiating patterns therefore carry an explicit strength:
+Patterns have independent function and strength.
 
 ```text
-strict      — violation defeats classification
-defeasible  — violation lowers typicality; explicit exceptions permitted
-typical     — evidence for recognition ranking only
+function:
+  constitutive | identity | selectional | diagnostic |
+  default | typical | incidental | causal | normative
+
+strength:
+  strict | defeasible | probabilistic
 ```
 
-Competence checks must respect strength: a defeasible pattern's counterexample (`a penguin is a bird that cannot fly`) is recorded as an exception, not a contradiction, and does not defeat closure. Strict patterns remain subject to ordinary contradiction handling.
+Instance induction proposes hypotheses with diagnostic/default/typical function and defeasible/probabilistic strength unless evidence establishes more. Induced patterns alone never activate a definition.
 
-## 6. Replay and validation
+Exceptions preserve context, specificity, and provenance. Missing evidence is not an exception and is not negation.
 
-Replay must prove more than parsing the original sentence.
+## 8. Recursive definitions
 
-It runs:
+The dependency graph is typed and analyzed before replay.
+
+Supported direct joint activation is limited to inverse or positive-monotone clusters with a defined fixed point/inverse contract, external anchors, non-redundant member content, and independent joint competence.
+
+Stratified defeasible cycles are evaluated by explicit strata. Unsupported non-monotone cycles remain provisional.
+
+Joint cluster activation is one atomic store transaction.
+
+## 9. Competence suite
+
+Competence execution is sandboxed and cannot mutate memory, common ground, schema lifecycle, external state, or capability statistics until results commit.
+
+Test classes:
+
+```text
+structural well-formedness
+role/query behavior
+positive recognition
+real contrast/discrimination
+licensed inference
+context/polarity/time preservation
+basic realization/reparse
+```
+
+Self-derived cases can pass structural tests only. Independent competence requires independent oracle lineage.
+
+A shared implementation cannot generate both expected semantics and the pass decision without an independent invariant/comparator.
+
+## 10. Epistemic admissibility
+
+Structural closure answers whether the schema is executable. `EpistemicEvaluator` separately assesses definition propositions in actual, reported, user-belief, hypothetical, domain, and time contexts.
+
+A false but compositional definition can remain provisionally usable in `reported_by(user)` without becoming actual-world knowledge or overriding a global schema.
+
+Access scope and epistemic context remain separate.
+
+## 11. Replay
+
+Replay begins at the earliest affected checkpoint in the ordinary pipeline.
+
+It verifies:
 
 ```text
 original blocked interpretation
-schema-family structural validation
-dependency closure
-non-circularity check
-positive example
-contrast/negative example
-defining query projection
-licensed inference test
-basic realization/reparse where available
+schema-family structure
+expressiveness
+typed dependency closure
+recursive-cycle semantics
+competence suite
+context/admissibility behavior
+query/inference behavior
+realization/reparse where available
 ```
 
-## 7. Activation and commit
-
-`SemanticSchemaStore` activates the revision only when:
+Replay key:
 
 ```text
-Grounded Definition Closure passes
-competence checks pass
-required provenance/permission exists
-schema identity/version is valid
-promotion policy permits the requested scope
+source evidence
+exact target sense/schema revision
+checkpoint
+context/scope
+dependency/environment fingerprint
 ```
 
-Evidence confidence may keep a semantically grounded definition session- or user-scoped. It does not make an ungrounded definition executable.
+Replay is deduplicated, snapshot-pinned, retry-safe, and stale-cancellable. It never repeats external actions or already dispatched communication.
 
-## 8. Deferred relation replay
+## 12. Atomic activation
 
-Assertions involving opaque schemas remain ordinary attributed propositions plus deferred schema-relation evidence.
-
-When a dependency later becomes grounded:
+Activation sequence:
 
 ```text
-retrieve affected provisional/deferred relations
-re-evaluate exact relation type
-replay original evidence
-validate child schema differentiation
-activate only if closure passes
+pin child and environment snapshot
+→ derive structural assessment
+→ run competence suite
+→ derive admissibility profile
+→ replay
+→ compare-and-swap store/environment fingerprint
+→ atomically commit active revision or cluster
+→ publish typed invalidation and deferred-replay events
 ```
 
-### 8.1 Replay budget
+If independent competence or admissibility is incomplete, the child remains provisional. It may be committed with exact limitations, not falsely activated.
 
-Activating a widely depended-on schema may unlock many deferred items. Replay drains from a prioritized queue, never as an unbounded storm:
+## 13. Invalidation and downgrade
+
+Schema, policy, foundation, competence-suite, adapter-contract, or type-registry changes invalidate dependent assessments.
+
+The existing truth-maintenance/dependency infrastructure retracts or marks stale:
 
 ```text
-priority: active goal blockers > user-asked questions > recent episodes > background
-per-cycle replay budget; the remainder stays queued with evidence intact
-each replayed item re-enters the ordinary pipeline; failures re-defer with updated blockers
+inherited constraints
+classifications
+inferred propositions
+cached answers
+plans
+effect proposals
+undispatched messages
+capability/understanding conclusions
+learning-success claims
 ```
 
-The reverse dependency index used here is the same index that drives assessment invalidation.
+Original evidence remains. Historical output remains an event and may generate a repair obligation.
 
-## 9. Truthful learning outcome
+Effects and irreversible operations revalidate at authorization and critical commit.
 
-The response can claim:
+## 14. Correction, retraction, and forgetting
 
-- **remembered** when the proposition was stored;
-- **partially learned** only when a precise, usable partial artifact was committed and the limitation is stated;
-- **understood/learned** only when the executable schema revision activated and replay/competence succeeded.
-
-## 10. Instance-driven schema induction
-
-Verbal definition is not the only learning path. Accumulated grounded instance facts about an opaque or partial schema may propose candidate constitutive/differentiating patterns.
-
-Induced patterns:
-
-- enter as hypotheses with `defeasible` strength at most;
-- record induction provenance (the instance evidence set that produced them);
-- never activate a schema by themselves;
-- must pass the same closure, competence, and provenance gates as taught definitions.
-
-This gives the organism an ostensive learning channel without weakening the activation gate.
-
-## 11. Consolidation and bounded growth
-
-Deferred relations, exceptions, gaps, and evidence ledgers grow without bound unless consolidated.
-
-Policy requirements:
+Operations are distinct:
 
 ```text
-deferred items carry age and staleness; stale items are archived, not deleted
-archived items remain retrievable and replayable when their blockers ground
-redundant evidence for the same claim consolidates into summarized support with provenance intact
-consolidation is journaled and never changes what is claimed — only how it is stored
+supersede schema/proposition meaning
+retract a source's support
+register counterevidence
+revoke permission
+archive from active retrieval
+forget under user policy
+privacy-delete/cryptographically erase where required
 ```
 
-Forgetting-by-archival is an explicit, reversible act. Silent evidence loss is forbidden.
+Each targets exact revisions/evidence and triggers dependency reassessment. A correction never mutates old historical interpretation in place; it creates a new reading/revision and explicit relation to the old.
+
+## 15. Sense split and merge
+
+New incompatible evidence creates a candidate sense or ambiguity set unless correction is explicit.
+
+Alias/synonym/translation hypotheses compete with new-schema and specialization hypotheses.
+
+Merge is reversible and non-destructive. Original refs and proposition bindings remain resolvable.
+
+## 16. Consolidation
+
+Deferred evidence, gaps, exceptions, and replay work have age, relevance, status, and retention policy.
+
+Consolidation may summarize redundant storage while preserving lineage and claim identity. It cannot manufacture independent support, change asserted meaning, or bypass privacy deletion.
+
+## 17. Learning completion gate
+
+A learning change is complete only when:
+
+- exact artifact and field provenance are known;
+- ordinary understanding uses the changed revision;
+- structural closure is valid;
+- competence status is honestly represented;
+- context/scope admissibility is explicit;
+- replay is idempotent and successful for claimed competencies;
+- activation, if any, committed atomically;
+- dependent cognition has valid fingerprints;
+- response wording matches the actual outcome.
