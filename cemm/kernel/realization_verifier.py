@@ -198,9 +198,18 @@ def _check_private_evidence(
 
 def _split_sentences(text: str) -> list[str]:
     """Split text into sentences using simple punctuation heuristics."""
-    import re
-    parts = re.split(r'[.!?]+', text)
-    return [p.strip() for p in parts if p.strip()]
+    parts: list[str] = []
+    current = ""
+    for ch in text:
+        if ch in ".!?":
+            if current.strip():
+                parts.append(current.strip())
+            current = ""
+        else:
+            current += ch
+    if current.strip():
+        parts.append(current.strip())
+    return parts
 
 
 def _check_unsupported_spans(

@@ -127,11 +127,12 @@ class SemanticGapDetector:
         """Classify which gaps are blocking execution.
         
         A gap is blocking if it belongs to a selected interpretation branch
-        and its resolution is required for a selected obligation.
+        (matched by branch_id or group_id) and its resolution is required
+        for a selected obligation.
         """
         blocking: list[SemanticGap] = []
         for gap in gaps:
-            if gap.branch_id in selected_branch_ids:
+            if gap.branch_id in selected_branch_ids or gap.group_id in selected_branch_ids:
                 if gap.gap_kind in (
                     GapKind.LEXEME_SENSE,
                     GapKind.OPERATOR_IDENTITY,

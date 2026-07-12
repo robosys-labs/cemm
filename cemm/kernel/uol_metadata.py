@@ -35,6 +35,12 @@ def _load() -> tuple[
     frozenset[str],
     frozenset[str],
     frozenset[str],
+    frozenset[str],
+    dict[str, str],
+    dict[str, str],
+    dict[str, str],
+    dict[str, dict[str, str]],
+    dict[str, str],
 ]:
     """Load all UOL semantic metadata from the JSON data file.
 
@@ -50,9 +56,19 @@ def _load() -> tuple[
         connective_set: frozenset of all connective tokens
         strong_split_connectives: frozenset of strong split connectives
         subordinating_connectives: frozenset of subordinating connectives
+        pure_acknowledgment_phrases: frozenset of acknowledgment tokens
+        contractions: contraction -> expansion
+        pronoun_to_entity: pronoun -> entity key
+        possessive_to_entity: possessive pronoun -> entity key
+        possessive_slot_to_predicate: slot word -> {edge_type, property_dimension}
+        remember_extra_verbs: verb -> relation key
     """
     if not _UOL_SEMANTICS_PATH.exists():
-        return {}, {}, {}, {}, {}, {}, {}, {}, frozenset(), frozenset(), frozenset()
+        return (
+            {}, {}, {}, {}, {}, {}, {}, {},
+            frozenset(), frozenset(), frozenset(), frozenset(),
+            {}, {}, {}, {}, {},
+        )
     data = json.loads(_UOL_SEMANTICS_PATH.read_text(encoding="utf-8"))
     entries = data.get("uol_semantics", [])
     frame_aliases: dict[str, list[str]] = {}
@@ -92,6 +108,11 @@ def _load() -> tuple[
     pure_acknowledgment_phrases = frozenset(
         t.replace("'", "") for t in data.get("pure_acknowledgment_phrases", [])
     )
+    contractions = dict(data.get("contractions", {}))
+    pronoun_to_entity = dict(data.get("pronoun_to_entity", {}))
+    possessive_to_entity = dict(data.get("possessive_to_entity", {}))
+    possessive_slot_to_predicate = dict(data.get("possessive_slot_to_predicate", {}))
+    remember_extra_verbs = dict(data.get("remember_extra_verbs", {}))
     _logger.debug(
         "UOL metadata loaded: %d frames, %d act_types, %d cue_sets, %d modals, %d conjunctions",
         len(frame_aliases),
@@ -105,6 +126,8 @@ def _load() -> tuple[
         cue_sets, frame_meta, modal_types, conjunction_map,
         connective_set, strong_split_connectives, subordinating_connectives,
         pure_acknowledgment_phrases,
+        contractions, pronoun_to_entity, possessive_to_entity,
+        possessive_slot_to_predicate, remember_extra_verbs,
     )
 
 
@@ -122,6 +145,11 @@ def _load() -> tuple[
     STRONG_SPLIT_CONNECTIVES,
     SUBORDINATING_CONNECTIVES,
     PURE_ACKNOWLEDGMENT_PHRASES,
+    CONTRACTIONS,
+    PRONOUN_TO_ENTITY,
+    POSSESSIVE_TO_ENTITY,
+    POSSESSIVE_SLOT_TO_PREDICATE,
+    REMEMBER_EXTRA_VERBS,
 ) = _load()
 
 
@@ -159,3 +187,28 @@ def pure_acknowledgment_set() -> frozenset[str]:
     Loaded from ``pure_acknowledgment_phrases`` in uol_semantics.json.
     """
     return PURE_ACKNOWLEDGMENT_PHRASES
+
+
+def contractions() -> dict[str, str]:
+    """Return contraction -> expansion mapping from uol_semantics.json."""
+    return CONTRACTIONS
+
+
+def pronoun_to_entity() -> dict[str, str]:
+    """Return pronoun -> entity key mapping from uol_semantics.json."""
+    return PRONOUN_TO_ENTITY
+
+
+def possessive_to_entity() -> dict[str, str]:
+    """Return possessive pronoun -> entity key mapping from uol_semantics.json."""
+    return POSSESSIVE_TO_ENTITY
+
+
+def possessive_slot_to_predicate() -> dict[str, dict[str, str]]:
+    """Return slot word -> {edge_type, property_dimension} from uol_semantics.json."""
+    return POSSESSIVE_SLOT_TO_PREDICATE
+
+
+def remember_extra_verbs() -> dict[str, str]:
+    """Return verb -> relation key mapping for remember commands from uol_semantics.json."""
+    return REMEMBER_EXTRA_VERBS

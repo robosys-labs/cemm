@@ -151,6 +151,8 @@ class StateTransmutationFrame:
     freshness_required: bool = False
     reversible: bool = True
 
+    authorization_status: str = "proposed"
+
     source_refs: list[str] = field(default_factory=list)
     evidence_refs: list[str] = field(default_factory=list)
     confidence: float = 0.0

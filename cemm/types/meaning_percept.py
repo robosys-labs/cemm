@@ -126,6 +126,7 @@ class RelationAtom:
     group_id: str = ""
     span_id: str = ""
     evidence: list[AtomEvidence] = field(default_factory=list)
+    features: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

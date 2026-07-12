@@ -34,6 +34,7 @@ class InterpretationBranch:
     # Consequences
     state_delta_ids: tuple[str, ...] = ()
     operational_frame_id: str = ""
+    frame_type: str = ""
     gap_ids: tuple[str, ...] = ()
     
     # Scoring
@@ -60,6 +61,11 @@ class InterpretationBranch:
     @property
     def is_viable(self) -> bool:
         return self.total_score >= 0.3 or self.has_gaps
+
+    @property
+    def is_activatable_scope(self) -> bool:
+        """Scopes that permit predicate activation and operational effects."""
+        return self.scope not in ("quoted", "negated", "hypothesized")
 
 
 class InterpretationLattice:

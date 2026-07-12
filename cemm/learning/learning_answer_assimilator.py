@@ -1,5 +1,7 @@
 """LearningAnswerAssimilator — assimilates user answers under episode expectations.
-Runs normal perception but uses episode expectations for constrained interpretation.
+Uses percept evidence (referents, tokens, meaning groups, unknown lexemes)
+instead of raw text parsing. Episode constraints improve ranking but do not
+replace evidence.
 """
 
 from __future__ import annotations
@@ -32,7 +34,7 @@ class LearningAnswerAssimilator:
         user_text: str,
         percept: Any,
     ) -> list[tuple[str, Any]]:
-        """Extract field values from user response.
+        """Extract field values from percept evidence.
         
         Returns list of (field_name, value) tuples that can be used
         to update the hypothesis.
@@ -41,55 +43,155 @@ class LearningAnswerAssimilator:
         
         expected_kind = obligation.expected_answer_schema.get("answer_kind", "")
         
-        # Simple extraction based on expected answer kind
-        tokens = user_text.strip().lower().split()
+        referents = list(getattr(percept, "referents", []) or [])
+        tokens = list(getattr(percept, "tokens", []) or [])
+        unknown_lexemes = list(getattr(percept, "unknown_lexemes", []) or [])
         
         if expected_kind == "semantic_type":
-            # Extract noun phrases as semantic type candidates
-            for token in tokens:
-                if len(token) > 2:
-                    filled_fields.append(("semantic_type", token))
-                    break
+            candidate = self._extract_semantic_type(referents, unknown_lexemes, tokens)
+            if candidate:
+                filled_fields.append(("semantic_type", candidate))
         
         elif expected_kind == "entity_reference":
-            for token in tokens:
-                if len(token) > 1:
-                    filled_fields.append(("entity_ref", token))
-                    break
+            candidate = self._extract_entity_ref(referents, tokens)
+            if candidate:
+                filled_fields.append(("entity_ref", candidate))
         
         elif expected_kind == "state_change":
-            for token in tokens:
-                if len(token) > 2 and token not in ("the", "a", "an", "is", "it"):
-                    filled_fields.append(("effect_description", token))
-                    break
+            candidate = self._extract_state_change(referents, tokens)
+            if candidate:
+                filled_fields.append(("effect_description", candidate))
         
         elif expected_kind == "dimension_name":
-            for token in tokens:
-                if len(token) > 2:
-                    filled_fields.append(("dimension", token))
-                    break
+            candidate = self._extract_dimension(referents, tokens)
+            if candidate:
+                filled_fields.append(("dimension", candidate))
         
         elif expected_kind == "value_description":
-            for token in tokens:
-                if len(token) > 1:
-                    filled_fields.append(("value", token))
-                    break
+            candidate = self._extract_value(referents, tokens)
+            if candidate:
+                filled_fields.append(("value", candidate))
         
         elif expected_kind == "direction":
-            direction_words = {"from", "to", "toward", "away", "into", "onto", "across", "through", "around", "between"}
-            for token in tokens:
-                if token in direction_words:
-                    filled_fields.append(("direction", token))
-                    break
-            if not filled_fields and tokens:
-                filled_fields.append(("direction", tokens[0]))
+            candidate = self._extract_direction(referents, tokens)
+            if candidate:
+                filled_fields.append(("direction", candidate))
         
         elif expected_kind in ("time_description", "spatial_relation"):
-            if tokens:
-                filled_fields.append(("description", " ".join(tokens)))
+            desc = self._extract_description(referents, tokens)
+            if desc:
+                filled_fields.append(("description", desc))
         
         else:
-            # free_form — just use the whole text
-            filled_fields.append(("description", user_text))
+            desc = self._extract_description(referents, tokens)
+            if desc:
+                filled_fields.append(("description", desc))
         
         return filled_fields
+    
+    @staticmethod
+    def _extract_semantic_type(
+        referents: list[Any],
+        unknown_lexemes: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            etype = getattr(ref, "entity_type", "")
+            if surface and etype in ("concept", "unknown", "type"):
+                return surface
+        for item in unknown_lexemes:
+            if isinstance(item, dict):
+                surface = item.get("surface", "")
+            elif isinstance(item, str):
+                surface = item
+            else:
+                surface = str(item)
+            if surface and len(surface) > 1:
+                return surface
+        for token in tokens:
+            if len(token) > 2:
+                return token
+        return ""
+    
+    @staticmethod
+    def _extract_entity_ref(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        for token in tokens:
+            if len(token) > 1:
+                return token
+        return ""
+    
+    @staticmethod
+    def _extract_state_change(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        for token in tokens:
+            if len(token) > 2:
+                return token
+        return ""
+    
+    @staticmethod
+    def _extract_dimension(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        for token in tokens:
+            if len(token) > 2:
+                return token
+        return ""
+    
+    @staticmethod
+    def _extract_value(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        for token in tokens:
+            if len(token) > 1:
+                return token
+        return ""
+    
+    @staticmethod
+    def _extract_direction(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        if tokens:
+            return tokens[0]
+        return ""
+    
+    @staticmethod
+    def _extract_description(
+        referents: list[Any],
+        tokens: list[str],
+    ) -> str:
+        for ref in referents:
+            surface = getattr(ref, "surface", "")
+            if surface:
+                return surface
+        if tokens:
+            return " ".join(tokens)
+        return ""

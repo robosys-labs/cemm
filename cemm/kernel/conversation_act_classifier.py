@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from typing import Any
 
 from ..types.conversation_act import ConversationAct, ConversationActPacket
@@ -28,7 +27,7 @@ _DEBUG = os.environ.get("CEMM_DEBUG", "").lower() in ("1", "true", "yes")
 
 
 def _tokenize_surface(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9']+", text.lower())
+    return tokenize_surface(text)
 
 
 def _phrase_matches(alias: str, text: str) -> bool:
@@ -632,14 +631,11 @@ class ConversationActClassifier:
                 ))
 
         # ── Detect reciprocal phatic check-in (P0-5) ─────────────────
-        # "I am fine, you?" / "fine, you?" / "good, what about you?"
-        # These should produce user_state_report + reciprocal_phatic_checkin
-        reciprocal_patterns = [
-            r"(?:i'?m|i am)\s+(?:fine|good|okay|ok|alright|all right|good)\s*[,.]?\s*(?:you|u|how about you|what about you|and you)\??$",
-            r"(?:fine|good|okay|ok|alright|not bad|doing well)\s*[,.]?\s*(?:you|u|how about you|what about you|and you)\??$",
-            r"(?:i'?m|i am)\s+(?:fine|good|okay|ok|alright|not bad)\s*[,.]?\s*(?:you too|same to you)\??$",
-        ]
-        is_reciprocal_phatic = any(re.search(p, content_lower) for p in reciprocal_patterns)
+        # Data-driven: cue aliases from uol_semantics.json (cue_type: reciprocal_phatic)
+        reciprocal_cues = _CUE_SETS.get("reciprocal_phatic", set())
+        is_reciprocal_phatic = any(
+            _phrase_matches(alias, content_lower) for alias in reciprocal_cues
+        )
         if is_reciprocal_phatic:
             # Add user_state_report and reciprocal_phatic_checkin
             has_state_report = any(a.act_type == "user_state_report" for a in acts)
@@ -660,19 +656,11 @@ class ConversationActClassifier:
             expected_response = pending_q or "social_checkin"
 
         # ── Detect retrospective repair (P0-6) ─────────────────────────
-        # "I just wanted to know..." / "I was only asking..." / "that's not what I meant"
-        retro_repair_patterns = [
-            r"i just wanted to (?:know|ask|understand)",
-            r"i was (?:just )?(?:asking|wondering|trying to)",
-            r"i only (?:wanted to|meant to|asked)",
-            r"that'?s not what i meant",
-            r"that'?s not what i was (?:asking|looking) for",
-            r"i didn'?t mean (?:that|it)",
-            r"i wasn'?t (?:asking|trying) to",
-            r"all i (?:wanted|asked) was",
-            r"i was just (?:saying|pointing out)",
-        ]
-        is_retro_repair = any(re.search(p, content_lower) for p in retro_repair_patterns)
+        # Data-driven: cue aliases from uol_semantics.json (cue_type: retro_repair)
+        retro_repair_cues = _CUE_SETS.get("retro_repair", set())
+        is_retro_repair = any(
+            _phrase_matches(alias, content_lower) for alias in retro_repair_cues
+        )
         if is_retro_repair:
             acts.append(ConversationAct(
                 act_type="retrospective_repair",
@@ -684,16 +672,11 @@ class ConversationActClassifier:
                 discourse_relation = "repair_previous"
 
         # ── Detect social conflict / idiom clarification need ──────────
-        # "Obidike is looking for my trouble" -> ask for clarification
-        trouble_patterns = [
-            r"looking for (?:my|trouble)",
-            r"looking for .+ trouble",
-            r"picking on me",
-            r"bothering me",
-            r"provoking me",
-            r"starting (?:trouble|a fight|problems)",
-        ]
-        is_social_conflict = any(re.search(p, content_lower) for p in trouble_patterns)
+        # Data-driven: cue aliases from uol_semantics.json (cue_type: social_conflict)
+        social_conflict_cues = _CUE_SETS.get("social_conflict", set())
+        is_social_conflict = any(
+            _phrase_matches(alias, content_lower) for alias in social_conflict_cues
+        )
         if is_social_conflict and not any(a.act_type == "safety_response" for a in acts):
             acts.append(ConversationAct(
                 act_type="social_conflict_clarify",

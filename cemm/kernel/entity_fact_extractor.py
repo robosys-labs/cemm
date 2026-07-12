@@ -1,17 +1,12 @@
-"""EntityFactExtractor - convert bound meaning into teachable claim candidates.
+"""EntityFactExtractor — convert bound meaning into teachable claim candidates.
 
-Implements Gap 7 from cemm_v3_1_operational_meaning_spine.md.
+Atom-first approach: extracts EntityFactCandidate objects from RelationAtom,
+StateAtom, and AffordanceAtom produced by upstream multilingual parsers.
 
-This module is deliberately separate from UOL mapping. Claim extraction is not a
-side effect of seeing a predicate token; it is a structured operation over
-MeaningPerceptPacket + SituationFrame + discourse context.
-
-The extractor is conservative:
-
-* It prefers relation/state atoms created upstream by multilingual parsers.
-* It uses simple surface patterns only as a fallback seed path.
-* It emits candidates, never committed claims.
-* It records evidence spans and confidence so online learning can grade trust.
+No regex, no surface-text patterns, no hardcoded English constants.
+All linguistic data is data-driven from uol_semantics.json via uol_metadata.
+Complies with AGENTS.md §3.1 (surface evidence is not authority) and §5
+(forbidden: raw-text checks, English cue tables, regex surface patterns).
 
 Output types are EntityFactCandidate / EntityFactExtractionResult so that
 ActResolutionPlanner can consume them directly.
@@ -19,7 +14,6 @@ ActResolutionPlanner can consume them directly.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
@@ -32,9 +26,19 @@ from ..types.meaning_percept import (
     StateAtom,
 )
 from ..types.context_kernel import ContextKernel
+from .uol_metadata import (
+    cue_set,
+    pronoun_to_entity as _pronoun_to_entity_map,
+)
 
 
-# ── Relation predicate mapping ──────────────────────────────────────────────
+# ── Data-driven linguistic sets (from uol_semantics.json) ─────────────────
+
+_PRONOUN_KEYS = set(_pronoun_to_entity_map().keys())
+_BLOCKED_SUBJECTS = cue_set("user_subject") | cue_set("self_target") | _PRONOUN_KEYS
+
+
+# ── Relation predicate mapping (structural, not language-specific) ─────────
 
 _DEFAULT_RELATION_PREDICATES = {
     "same_as": "same_as",
@@ -54,197 +58,6 @@ _DEFAULT_RELATION_PREDICATES = {
     "means": "means",
     "is": "is",
 }
-
-_BLOCKED_SUBJECTS = {"i", "me", "my", "you", "your", "he", "she", "it", "we", "they", "this", "that"}
-
-
-def _resolve_possessive_self(surface: str) -> tuple[str, str] | None:
-    """If surface is 'my <X>', return (predicate_slot, object) or None.
-
-    Handles patterns like 'my name is chibueze' → predicate 'user.name'.
-    Returns (slot_name, rest_of_text) or None.
-    """
-    surface_lower = surface.lower().strip()
-    if not surface_lower.startswith("my "):
-        return None
-    rest = surface_lower[3:].strip()
-    if not rest:
-        return None
-    return (rest, rest)
-
-_TOPIC_PRONOUNS = {"it", "that", "this", "he", "she", "they"}
-
-# v3.3: Contraction expansion for better surface pattern matching
-_CONTRACTIONS = {
-    "don't": "do not", "doesn't": "does not", "didn't": "did not",
-    "isn't": "is not", "aren't": "are not",
-    "wasn't": "was not", "weren't": "were not",
-    "can't": "cannot", "cannot": "cannot", "won't": "will not",
-    "wouldn't": "would not", "shouldn't": "should not",
-    "couldn't": "could not", "mightn't": "might not",
-    "it's": "it is", "that's": "that is", "there's": "there is",
-    "what's": "what is", "who's": "who is", "where's": "where is",
-    "how's": "how is", "when's": "when is",
-    "i'm": "i am", "you're": "you are", "they're": "they are",
-    "we're": "we are", "he's": "he is", "she's": "she is",
-    "let's": "let us",
-}
-
-
-def _expand_contractions(text: str) -> str:
-    """Expand English contractions to improve surface pattern matching."""
-    result = text
-    for contraction, expansion in _CONTRACTIONS.items():
-        result = re.sub(
-            r"\b" + re.escape(contraction) + r"\b",
-            expansion,
-            result,
-            flags=re.IGNORECASE,
-        )
-    return result
-
-
-# ── Clause segmentation ─────────────────────────────────────────────────────
-
-_CLAUSE_SPLIT_RE = re.compile(
-    r"\s+(that|which)\s+"
-    r"|\s+(and|but|or)\s+"
-    r"|[,]\s*"
-    r"|[.]\s*",
-    re.IGNORECASE,
-)
-
-
-@dataclass
-class Clause:
-    """A single clause extracted from a complex sentence."""
-    text: str = ""
-    is_relative: bool = False
-    is_coordinate: bool = False
-    delimiter: str = ""
-
-
-def _segment_clauses(text: str) -> list[Clause]:
-    """Split text into clauses at conjunctions, relative pronouns, and punctuation."""
-    text = text.strip()
-    if not text:
-        return []
-
-    clauses: list[Clause] = []
-    current = ""
-    i = 0
-
-    while i < len(text):
-        match = _CLAUSE_SPLIT_RE.search(text, i)
-        if not match:
-            current += text[i:]
-            break
-
-        current += text[i:match.start()]
-        delim = match.group(0).strip().rstrip(",").rstrip(".").strip()
-        is_rel = match.group(1) is not None
-        is_coord = match.group(2) is not None
-
-        if current.strip():
-            clauses.append(Clause(text=current.strip()))
-        current = ""
-
-        if is_rel:
-            current = delim + " "
-        elif is_coord:
-            current = delim + " "
-
-        i = match.end()
-
-    if current.strip():
-        clauses.append(Clause(text=current.strip()))
-
-    for clause in clauses[1:]:
-        lower = clause.text.lower()
-        if lower.startswith("that ") or lower.startswith("which "):
-            clause.is_relative = True
-            clause.delimiter = "that" if lower.startswith("that") else "which"
-        elif lower.startswith("and ") or lower.startswith("but ") or lower.startswith("or "):
-            clause.is_coordinate = True
-            clause.delimiter = lower.split()[0]
-
-    return clauses
-
-
-# ── Per-clause regex patterns (fallback for surface text) ───────────────────
-
-_CLAUSE_PATTERNS: list[tuple[re.Pattern, str, str]] = [
-    # X is a type of Y / X is a kind of Y
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+a\s+(?:type|kind)\s+of\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "is_a", "subj_obj"),
-    # X is shaped like Y / X is shaped like a Y
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+shaped\s+like\s+(?:a\s+|an\s+)?(\w[\w ]*?)$",
-        re.IGNORECASE), "shape", "subj_obj"),
-    # X has shape Y / X has the shape of Y
-    (re.compile(
-        r"^(\w[\w ]*?)\s+has\s+(?:the\s+)?shape\s+(?:of\s+|like\s+)?(?:a\s+|an\s+)?(\w[\w ]*?)$",
-        re.IGNORECASE), "shape", "subj_obj"),
-    # X is usually COLOR / X is often COLOR / X is typically COLOR
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+(?:usually|often|typically)\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "typical_color", "subj_obj"),
-    # X is used for Y
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+used\s+for\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "function", "subj_obj"),
-    # X comes from PLACE
-    (re.compile(
-        r"^(\w[\w ]*?)\s+comes\s+from\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "source", "subj_obj"),
-    # X is something you eat / X is eaten / X is something eaten
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+(?:something\s+)?(?:you\s+)?eat(?:en)?$",
-        re.IGNORECASE), "edible", "flag"),
-    # you eat X
-    (re.compile(
-        r"^you\s+eat\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "edible", "you_eat"),
-    # X can ACTION
-    (re.compile(
-        r"^(\w[\w ]*?)\s+can\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "affordance", "subj_obj"),
-    # X is a Y (simple categorization)
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+a(?:n)?\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "is_a", "subj_obj"),
-    # X means Y (definition teaching)
-    (re.compile(
-        r"^(\w[\w ]*?)\s+means\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "means", "subj_obj"),
-    # X is Y (without article — for multi-word predicates like "X is blue green")
-    (re.compile(
-        r"^(\w[\w ]*?)\s+is\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "is", "subj_obj"),
-    # ── No-subject patterns (for relative clauses with inherited subject) ──
-    (re.compile(
-        r"^is\s+shaped\s+like\s+(?:a\s+|an\s+)?(\w[\w ]*?)$",
-        re.IGNORECASE), "shape", "no_subj_obj"),
-    (re.compile(
-        r"^is\s+(?:usually|often|typically)\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "typical_color", "no_subj_obj"),
-    (re.compile(
-        r"^is\s+a\s+(?:type|kind)\s+of\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "is_a", "no_subj_obj"),
-    (re.compile(
-        r"^is\s+a(?:n)?\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "is_a", "no_subj_obj"),
-    (re.compile(
-        r"^is\s+used\s+for\s+(\w[\w ]*?)$",
-        re.IGNORECASE), "function", "no_subj_obj"),
-    (re.compile(
-        r"^is\s+(?:something\s+)?(?:you\s+)?eat(?:en)?$",
-        re.IGNORECASE), "edible", "no_subj_flag"),
-    (re.compile(
-        r"^you\s+eat$",
-        re.IGNORECASE), "edible", "relative_eat"),
-]
 
 
 # ── Candidate / result types ────────────────────────────────────────────────
@@ -292,9 +105,8 @@ class EntityFactExtractionResult:
 class EntityFactExtractor:
     """Extract structured claim candidates from meaning atoms.
 
-    Atom-first approach: prefers RelationAtom, StateAtom, AffordanceAtom from
-    upstream multilingual parsers. Falls back to clause-segmented surface
-    patterns for English teaching sentences.
+    Atom-first approach: extracts from RelationAtom, StateAtom, AffordanceAtom
+    produced by upstream multilingual parsers. No surface-text fallback.
 
     Also tracks topic state for pronoun coreference across turns.
     """
@@ -338,11 +150,6 @@ class EntityFactExtractor:
         result.candidates.extend(self._from_relations(percept.relations, referents, percept))
         result.candidates.extend(self._from_states(percept.states, referents, active_topic, percept))
         result.candidates.extend(self._from_situation(situation, percept, active_topic))
-
-        # Fallback: clause-segmented surface patterns
-        result.candidates.extend(
-            self._from_surface_patterns(percept, kernel, active_topic)
-        )
 
         result.candidates = self._dedupe(
             c for c in result.candidates
@@ -428,8 +235,39 @@ class EntityFactExtractor:
                 continue
             source = self._resolve_ref(relation.source_role, referents)
             target = self._resolve_ref(relation.target_role, referents)
-            if not source or not target:
+
+            # Fallback to feature-based extraction when referent resolution
+            # fails (e.g. possessive relations store object in features)
+            subj_surface = relation.features.get("subject_surface", "")
+            obj_surface = relation.features.get("object_surface", "")
+
+            if not source and subj_surface:
+                source = self._resolve_ref(subj_surface, referents)
+            if not target and obj_surface:
+                target = self._resolve_ref(obj_surface, referents)
+
+            if not source:
+                if subj_surface:
+                    source = ReferentAtom(
+                        entity_id=subj_surface if subj_surface in ("user", "self") else "",
+                        surface=subj_surface,
+                        role="subject",
+                        entity_type="self" if subj_surface == "user" else "unknown",
+                    )
+                else:
+                    continue
+
+            if not target and obj_surface:
+                target = ReferentAtom(
+                    entity_id="",
+                    surface=obj_surface,
+                    role="object",
+                    entity_type="unknown",
+                )
+
+            if not target:
                 continue
+
             subject = source.entity_id or source.surface
             obj_entity = target.entity_id or target.surface
             candidates.append(EntityFactCandidate(
@@ -500,149 +338,6 @@ class EntityFactExtractor:
                     trust=0.6,
                     reason="affordance_atom",
                 ))
-        return candidates
-
-    # ── Surface pattern fallback (clause-segmented) ─────────────────────────
-
-    def _from_surface_patterns(
-        self,
-        percept: MeaningPerceptPacket,
-        kernel: ContextKernel | None,
-        active_topic: str | None,
-    ) -> list[EntityFactCandidate]:
-        raw_text = _expand_contractions(percept.raw_text.strip())
-        if not raw_text:
-            return []
-
-        clauses = _segment_clauses(raw_text)
-        if not clauses:
-            return []
-
-        candidates: list[EntityFactCandidate] = []
-        parent_subject = ""
-
-        for idx, clause in enumerate(clauses):
-            clause_text = clause.text.strip()
-
-            if clause.is_relative:
-                clause_text = re.sub(r"^(?:that|which)\s+", "", clause_text, flags=re.IGNORECASE)
-            if clause.is_coordinate:
-                clause_text = re.sub(r"^(?:and|but|or)\s+", "", clause_text, flags=re.IGNORECASE)
-
-            if not clause_text:
-                continue
-
-            matched = False
-            for pattern, predicate_name, layout in _CLAUSE_PATTERNS:
-                m = pattern.match(clause_text)
-                if not m:
-                    continue
-                groups = m.groups()
-                matched = True
-
-                if layout == "subj_obj":
-                    subj_raw = groups[0].strip() if len(groups) >= 1 else ""
-                    obj_raw = groups[1].strip() if len(groups) >= 2 else ""
-                    if not subj_raw or not obj_raw:
-                        break
-                    subj = self._resolve_subject(subj_raw, kernel, active_topic)
-                    if not subj:
-                        break
-                    obj = self._preserve_case(obj_raw, percept)
-                    # Handle possessive self-subjects ("my name", "my age", etc.)
-                    # Route to user profile lane with user.{slot} predicate.
-                    if self._is_possessive_self(subj_raw):
-                        slot = subj_raw.lower().strip()[3:].strip().replace(" ", "_")
-                        candidates.append(EntityFactCandidate(
-                            subject_entity_id="user",
-                            predicate=f"user.{slot}" if slot else predicate_name,
-                            object_value=obj,
-                            evidence_span=percept.raw_text,
-                            confidence=0.7,
-                            trust=0.6,
-                            reason=f"surface_pattern:possessive_self:{slot or predicate_name}",
-                        ))
-                    else:
-                        candidates.append(EntityFactCandidate(
-                            subject_entity_id=subj.lower().replace(" ", "_"),
-                            predicate=predicate_name,
-                            object_value=obj.lower().replace(" ", "_"),
-                            evidence_span=percept.raw_text,
-                            confidence=0.7,
-                            trust=0.6,
-                            reason=f"surface_pattern:{predicate_name}",
-                        ))
-                    if idx == 0:
-                        parent_subject = subj
-
-                elif layout == "flag":
-                    subj_raw = groups[0].strip() if groups else ""
-                    if not subj_raw:
-                        break
-                    subj = self._resolve_subject(subj_raw, kernel, active_topic)
-                    if not subj:
-                        break
-                    candidates.append(EntityFactCandidate(
-                        subject_entity_id=subj.lower().replace(" ", "_"),
-                        predicate=predicate_name,
-                        object_value="true",
-                        evidence_span=percept.raw_text,
-                        confidence=0.7,
-                        trust=0.6,
-                        reason=f"surface_pattern:{predicate_name}",
-                    ))
-                    if idx == 0:
-                        parent_subject = subj
-
-                elif layout == "you_eat":
-                    obj_raw = groups[0].strip() if groups else ""
-                    if not obj_raw:
-                        break
-                    obj = self._preserve_case(obj_raw, percept)
-                    candidates.append(EntityFactCandidate(
-                        subject_entity_id=obj.lower().replace(" ", "_"),
-                        predicate=predicate_name,
-                        object_value="true",
-                        evidence_span=percept.raw_text,
-                        confidence=0.6,
-                        trust=0.55,
-                        reason="surface_pattern:edible_you_eat",
-                    ))
-
-                elif layout == "no_subj_obj":
-                    obj_raw = groups[0].strip() if groups else ""
-                    if not obj_raw:
-                        break
-                    subj = parent_subject or (kernel.topic.active_topic_surface if kernel else "") or active_topic or ""
-                    if not subj:
-                        break
-                    obj = self._preserve_case(obj_raw, percept)
-                    candidates.append(EntityFactCandidate(
-                        subject_entity_id=subj.lower().replace(" ", "_"),
-                        predicate=predicate_name,
-                        object_value=obj.lower().replace(" ", "_"),
-                        evidence_span=percept.raw_text,
-                        confidence=0.65,
-                        trust=0.55,
-                        reason="surface_pattern:coreference",
-                    ))
-
-                elif layout in ("no_subj_flag", "relative_eat"):
-                    subj = parent_subject or (kernel.topic.active_topic_surface if kernel else "") or active_topic or ""
-                    if not subj:
-                        break
-                    candidates.append(EntityFactCandidate(
-                        subject_entity_id=subj.lower().replace(" ", "_"),
-                        predicate=predicate_name,
-                        object_value="true",
-                        evidence_span=percept.raw_text,
-                        confidence=0.65,
-                        trust=0.55,
-                        reason="surface_pattern:coreference",
-                    ))
-
-                break
-
         return candidates
 
     # ── Topic state tracking ────────────────────────────────────────────────
@@ -719,32 +414,6 @@ class EntityFactExtractor:
 
     # ── Helpers ─────────────────────────────────────────────────────────────
 
-    def _resolve_subject(self, surface: str, kernel: ContextKernel | None, active_topic: str | None) -> str:
-        """Resolve a subject surface, handling pronoun coreference.
-
-        v3.3: Validates that the resolved topic is non-empty and not itself
-        a blocked subject (e.g. pronoun resolving to another pronoun).
-        """
-        surface_lower = surface.lower().strip()
-        if surface_lower in _TOPIC_PRONOUNS:
-            # Try kernel topic first
-            if kernel and kernel.topic.active_topic_surface:
-                resolved = kernel.topic.active_topic_surface
-                if resolved and resolved.lower() not in _BLOCKED_SUBJECTS:
-                    return resolved
-            # Fall back to active_topic parameter
-            if active_topic:
-                resolved = active_topic
-                if resolved and resolved.lower() not in _BLOCKED_SUBJECTS:
-                    return resolved
-            # No valid topic — pronoun has no referent, skip
-            return ""
-        return surface
-
-    def _is_possessive_self(self, surface: str) -> bool:
-        """Check if surface is a self-possessive like 'my name', 'my age'."""
-        return surface.lower().strip().startswith("my ")
-
     def _resolve_ref(self, key: str, referents: dict[str, ReferentAtom]) -> ReferentAtom | None:
         if not key:
             return None
@@ -752,18 +421,6 @@ class EntityFactExtractor:
 
     def _span(self, percept: MeaningPerceptPacket) -> str:
         return percept.raw_text or " ".join(percept.tokens)
-
-    def _preserve_case(self, surface: str, percept: MeaningPerceptPacket) -> str:
-        """Recover original casing from percept referents or raw text."""
-        surface_lower = surface.lower()
-        for ref in percept.referents:
-            if ref.surface.lower() == surface_lower:
-                return ref.surface
-        for word in percept.raw_text.split():
-            clean = word.strip(".,!?;:\"'()[]{}")
-            if clean.lower() == surface_lower:
-                return clean
-        return surface
 
     def _valid_subject(self, subject: str) -> bool:
         return bool(subject) and subject.lower() not in _BLOCKED_SUBJECTS

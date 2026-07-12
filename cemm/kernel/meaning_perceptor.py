@@ -90,11 +90,13 @@ from .predicate_phrase_extractor import PredicatePhraseExtractor
 from .anaphora_resolver import AnaphoraResolver
 from .entity_salience_tracker import EntitySalienceTracker
 from .implicit_predicate_detector import ImplicitPredicateDetector
+from .relation_extractor import RelationExtractor
 from .uol_metadata import (
     cue_set,
     frame_alias_set,
     modal_type,
     conjunction_relation,
+    possessive_slot_to_predicate,
     CONNECTIVE_SET,
     STRONG_SPLIT_CONNECTIVES,
     SUBORDINATING_CONNECTIVES,
@@ -167,6 +169,7 @@ class MeaningPerceptor:
         self._anaphora_resolver = AnaphoraResolver()
         self._salience_tracker = EntitySalienceTracker()
         self._implicit_detector = ImplicitPredicateDetector()
+        self._relation_extractor = RelationExtractor(schema_kernel=kernel)
         self._construction_matcher = construction_matcher
 
     def perceive(
@@ -272,6 +275,8 @@ class MeaningPerceptor:
         ]
         packet.perception_trace["salience_map"] = dict(salience_map)
         self._add_structural_atoms(packet)
+        relation_atoms = self._relation_extractor.extract(packet.meaning_groups)
+        self._extend_relations(packet, relation_atoms)
         self._build_meaning_hypotheses(packet)
         packet.predicate_phrases = self._predicate_extractor.extract(
             groups=packet.meaning_groups,
@@ -1063,6 +1068,19 @@ class MeaningPerceptor:
         if tokens and tokens[0] in _CORRECTION_PREFIXES and len(tokens) > 1:
             return "correction"
 
+        # Meaning-atom based possessive query detection: ask the RelationExtractor
+        # to produce a has_property candidate with property_dimension.  If found
+        # and the subject is the user, classify as user_profile_query.  This is
+        # language-agnostic at this layer — all language-specific knowledge
+        # (possessive pronouns, stop words, slot mappings, possessive-to-entity)
+        # lives in the RelationExtractor via the language pack.
+        if self._relation_extractor is not None:
+            rel = self._relation_extractor.extract_possessive_query(group)
+            if (rel is not None
+                    and rel.source_role == "user"
+                    and rel.features.get("property_dimension")):
+                return "user_profile_query"
+
         # Delegate to ConstructionMatcher for data-driven intent detection.
         # Multi-word greeting aliases ("good morning"), correction phrases
         # ("that's wrong"), and teaching_remember ("remember that") are all
@@ -1223,12 +1241,15 @@ class MeaningPerceptor:
             for span in semantic_spans
             if str(span.get("role", "")).lower() == "unknown_lexeme"
         )
+        _known_slots = set(possessive_slot_to_predicate().keys())
         unknowns: list[dict[str, Any]] = []
         for surface in candidates:
             normalized = self._language.normalize_surface(surface)
             if not normalized or normalized in known_words:
                 continue
             if self._active_lexeme(normalized) is not None:
+                continue
+            if normalized in _known_slots:
                 continue
             position = tokens.index(normalized) if normalized in tokens else -1
             unknowns.append({

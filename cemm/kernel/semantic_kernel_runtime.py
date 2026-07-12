@@ -307,7 +307,7 @@ class SemanticKernelRuntime:
             result.diagnostics = {"errors": errors}
             return result
 
-        # 2c. 3.3 Shadow: semantic gap detection, lexeme candidates, learning episodes
+        # 2c. 3.3: semantic gap detection, lexeme candidates
         try:
             known = set()
             if self._lexeme_memory is not None:
@@ -325,24 +325,8 @@ class SemanticKernelRuntime:
                     lang, surface,
                     {"surface": surface, "lemma": surface.lower(), "form": surface},
                 )
-
-            blocking = self._semantic_gap_detector.classify_blocking(gaps, set())
-            if blocking and hasattr(signal, "context_id"):
-                episode = self._learning_episode_manager.create_episode(
-                    signal.context_id, blocking,
-                )
-                result.active_learning_episodes = [episode]
-                asked: set[str] = set()
-                for ep in self._learning_episode_manager.get_active_episodes(signal.context_id):
-                    asked.update(ep.asked_fields)
-                blocking_ids = {g.gap_id for g in blocking}
-                question = self._learning_question_planner.plan(
-                    gaps, [], asked, blocking_ids,
-                )
-                if question is not None:
-                    result.learning_questions = [question]
         except Exception as e:
-            errors.append(f"3.3 gap/episode shadow failed: {e}")
+            errors.append(f"3.3 gap detection failed: {e}")
 
         # 2a. Causal inference predictions via bridge
         try:
@@ -395,10 +379,22 @@ class SemanticKernelRuntime:
                 gid = getattr(group, "id", "") or getattr(group, "group_id", "")
                 if not gid:
                     continue
+                candidate_types = getattr(group, "candidate_act_types", []) or []
+                frame_type = candidate_types[0] if candidate_types else ""
+                intents = getattr(group, "intents", []) or []
+                modality = getattr(intents[0], "modality", "observed") if intents else "observed"
+                polarity = getattr(intents[0], "polarity", "affirmed") if intents else "affirmed"
+                from .predicate_activation_resolver import PredicateActivationResolver
+                scope = PredicateActivationResolver.extract_scope(
+                    [getattr(g, "group_type", "") for g in groups],
+                    modality, polarity,
+                )
                 branch = InterpretationBranch(
                     branch_id=f"br_{gid}",
                     group_id=gid,
                     language_tag=getattr(percept, "language", "und"),
+                    frame_type=frame_type,
+                    scope=scope,
                 )
                 self._interpretation_lattice.add_branch(branch)
             result.interpretation_lattice = self._interpretation_lattice
@@ -406,7 +402,87 @@ class SemanticKernelRuntime:
                 self._interpretation_lattice,
             )
         except Exception as e:
-            errors.append(f"3.3 interpretation lattice shadow failed: {e}")
+            errors.append(f"3.3 interpretation lattice failed: {e}")
+
+        # 2d-i. Branch-aware blocking gap classification (3.3 S2)
+        try:
+            selected_branch_ids = set(result.interpretation_resolution.get("selected_branches", []))
+            selected_group_ids = {
+                b.group_id for b in self._interpretation_lattice.all_branches()
+                if b.branch_id in selected_branch_ids
+            }
+            blocking_search = selected_branch_ids | selected_group_ids
+            blocking = self._semantic_gap_detector.classify_blocking(
+                result.semantic_gaps, blocking_search,
+            )
+            if blocking and hasattr(signal, "context_id"):
+                episode = self._learning_episode_manager.create_episode(
+                    signal.context_id, blocking,
+                )
+                result.active_learning_episodes = [episode]
+                asked: set[str] = set()
+                for ep in self._learning_episode_manager.get_active_episodes(signal.context_id):
+                    asked.update(ep.asked_fields)
+                blocking_ids = {g.gap_id for g in blocking}
+                question = self._learning_question_planner.plan(
+                    result.semantic_gaps, [], asked, blocking_ids,
+                )
+                if question is not None:
+                    result.learning_questions = [question]
+        except Exception as e:
+            errors.append(f"3.3 blocking gap classification failed: {e}")
+
+        # 2d-ii. Assimilate learning answers from active episodes (3.3 acquisition spine)
+        try:
+            if hasattr(signal, "context_id") and result.learning_questions:
+                active_episodes = self._learning_episode_manager.get_active_episodes(
+                    signal.context_id,
+                )
+                if active_episodes:
+                    from ..types.learning_episode import LearningObligation
+                    for episode in active_episodes:
+                        for question in result.learning_questions:
+                            obligation = LearningObligation(
+                                obligation_id=getattr(question, "question_id", ""),
+                                episode_id=episode.episode_id,
+                                gap_ids=tuple(episode.target_gap_ids),
+                                question_act=getattr(question, "question_act", None),
+                                expected_answer_schema=getattr(question, "expected_answer_schema", {}),
+                            )
+                            fields = self._learning_answer_assimilator.assimilate(
+                                episode, obligation, "", percept,
+                            )
+                            if fields:
+                                result.learning_answer_fields.extend(fields)
+        except Exception as e:
+            errors.append(f"learning answer assimilation failed: {e}")
+
+        # 2e. Predicate activation — pre-operational gate (3.3 S1, S3)
+        activated_group_ids: set[str] = set()
+        try:
+            from .predicate_activation_resolver import PredicateActivationFrame, PredicateStatus
+            selected_branch_ids = set(result.interpretation_resolution.get("selected_branches", []))
+            activation_candidates: list[PredicateActivationFrame] = []
+            for branch in self._interpretation_lattice.all_branches():
+                if branch.branch_id not in selected_branch_ids:
+                    continue
+                pf = PredicateActivationFrame(
+                    predicate_id=f"pred_{branch.group_id}",
+                    group_id=branch.group_id,
+                    predicate_key=branch.frame_type,
+                    predicate_surface=getattr(branch, "lexical_sense_ids", "") and branch.lexical_sense_ids[0] or "",
+                    language_tag=branch.language_tag,
+                    scope=branch.scope,
+                    status=PredicateStatus.CANDIDATE,
+                    branch_id=branch.branch_id,
+                )
+                activation_candidates.append(pf)
+            activated = self._predicate_activation_resolver.resolve(activation_candidates, set())
+            result.predicate_activations = activated
+            activated_group_ids = {pf.group_id for pf in activated}
+            result.activated_frame_ids = [pf.predicate_id for pf in activated]
+        except Exception as e:
+            errors.append(f"predicate activation gate failed: {e}")
 
         # 3. Attend — select focus (Phase 3)
         try:
@@ -457,6 +533,13 @@ class SemanticKernelRuntime:
                     if frame.frame_id in set(meaning_arbitration.selected_frame_ids)
                 ] or operational_frames[:1]
 
+                # 3c-0. Filter by activated groups (3.3 S1 — predicate activation gate)
+                if activated_group_ids:
+                    selected_frames = [
+                        frame for frame in selected_frames
+                        if getattr(frame, "group_id", "") in activated_group_ids
+                    ]
+
                 # 3c-i. Compile state occupancy frames (entity current states)
                 occupancy_frames = self._state_occupancy_compiler.compile(
                     uol_graph, kernel,
@@ -493,6 +576,20 @@ class SemanticKernelRuntime:
                     affordance_predictions=affordance_predictions,
                     safety_frame=safety_frame,
                 )
+
+                # 3c-vii. Build obligation graph BEFORE contract compilation (3.3)
+                try:
+                    gaps = result.semantic_gaps
+                    blocking_ids: set[str] = set()
+                    for ep in result.active_learning_episodes:
+                        blocking_ids.update(ep.target_gap_ids)
+                    ob_graph = self._obligation_graph_builder.build(
+                        operational_frames, gaps, blocking_ids,
+                    )
+                    result.obligation_graph = ob_graph
+                except Exception as e:
+                    errors.append(f"obligation graph build failed: {e}")
+
                 obligation_contract = self._contract_compiler.compile(
                     frames=operational_frames,
                     arbitration=meaning_arbitration,
@@ -511,42 +608,32 @@ class SemanticKernelRuntime:
                     semantic_program,
                     operational_frames,
                 )
+
+                # 3c-viii. Authorize transmutations AFTER contract compilation (3.3 S4)
+                try:
+                    from .transmutation_authorizer import TransmutationAuthorizer
+                    authorizer = TransmutationAuthorizer()
+                    contract_prov = {
+                        "frame_id": getattr(obligation_contract, "contract_id", ""),
+                        "obligation_graph": getattr(result.obligation_graph, "graph_id", ""),
+                    }
+                    auth_results = [
+                        authorizer.authorize(stm, contract_prov)
+                        for stm in state_transmutations
+                    ]
+                    result.transmutation_authorizations = auth_results
+                    # Filter: only authorized transmutations proceed downstream
+                    authorized_ids = {
+                        ar.transmutation_id for ar in auth_results if ar.authorized
+                    }
+                    state_transmutations = [
+                        stm for stm in state_transmutations
+                        if stm.transmutation_id in authorized_ids
+                    ]
+                except Exception as e:
+                    errors.append(f"transmutation authorization failed: {e}")
         except Exception as e:
             errors.append(f"compile operational contract failed: {e}")
-
-        # 3c-viii. 3.3 Shadow: obligation graph + predicate activation check
-        try:
-            if operational_frames:
-                gaps = result.semantic_gaps
-                blocking_ids: set[str] = set()
-                for ep in result.active_learning_episodes:
-                    blocking_ids.update(ep.target_gap_ids)
-                ob_graph = self._obligation_graph_builder.build(
-                    operational_frames, gaps, blocking_ids,
-                )
-                result.obligation_graph = ob_graph
-        except Exception as e:
-            errors.append(f"3.3 obligation graph shadow failed: {e}")
-
-        try:
-            if operational_frames:
-                from .predicate_activation_resolver import PredicateActivationFrame, PredicateStatus
-                activation_frames = []
-                for frame in operational_frames:
-                    pf = PredicateActivationFrame(
-                        predicate_id=f"pred_{frame.frame_id}",
-                        group_id=getattr(frame, "group_id", ""),
-                        predicate_key=frame.frame_type,
-                        predicate_surface=getattr(frame, "surface", ""),
-                        language_tag=getattr(percept, "language", "und") if percept else "und",
-                        status=PredicateStatus.CANDIDATE,
-                    )
-                    activation_frames.append(pf)
-                resolved: set[str] = set()
-                activated = self._predicate_activation_resolver.resolve(activation_frames, resolved)
-                result.predicate_activations = activated
-        except Exception as e:
-            errors.append(f"3.3 predicate activation shadow failed: {e}")
 
         result.operational_meaning_frames = operational_frames
         result.meaning_arbitration = meaning_arbitration

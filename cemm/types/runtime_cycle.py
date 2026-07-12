@@ -45,3 +45,6 @@ class RuntimeCycleResult:
     learning_questions: list[Any] = field(default_factory=list)
     execution_ledger: Any | None = None
     learning_use_outcomes: list[Any] = field(default_factory=list)
+    transmutation_authorizations: list[Any] = field(default_factory=list)
+    learning_answer_fields: list[Any] = field(default_factory=list)
+    activated_frame_ids: list[str] = field(default_factory=list)

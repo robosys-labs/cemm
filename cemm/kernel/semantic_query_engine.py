@@ -14,7 +14,6 @@ The AnswerBinding is consumed by the ResponseFormationEngine (v3.1 canonical pat
 
 from __future__ import annotations
 
-import re
 import uuid
 from typing import Any
 
@@ -49,10 +48,24 @@ _INTERNAL_SURFACE_VALUES: frozenset = frozenset({
     "null",
 })
 
-# Pattern for state delta surfaces produced by _compile_state_deltas in
+_NON_ANSWERABLE_KEYS: frozenset = frozenset({
+    "has_role", "causes", "enables", "prevents",
+    "before", "after", "refers_to", "modifies",
+    "teaches", "asks_about",
+    "is_a", "same_as", "part_of", "used_for",
+})
+
+# State delta surfaces produced by _compile_state_deltas in
 # meaning_graph_builder.py: "dimension:direction" (e.g. "preference:increase",
 # "energy:decreased"). These are internal state representation, not answers.
-_STATE_DELTA_SURFACE_RE = re.compile(r"^[a-z_]+(:\.[a-z_]+)*:[a-z_]+$")
+# Structural check: contains a colon, only lowercase letters, underscores, dots.
+
+
+def _is_state_delta_surface(value: str) -> bool:
+    """Check if *value* looks like an internal state delta surface."""
+    if ":" not in value:
+        return False
+    return all(c.isalnum() or c in "_:." for c in value)
 
 
 def _is_internal_surface(value: str) -> bool:
@@ -61,7 +74,7 @@ def _is_internal_surface(value: str) -> bool:
         return False
     if value in _INTERNAL_SURFACE_VALUES:
         return True
-    return bool(_STATE_DELTA_SURFACE_RE.match(value))
+    return _is_state_delta_surface(value)
 
 _OBLIGATION_KIND_TO_RELATION_KEY: dict[str, str] = {
     "answer_self_identity": "answers_identity_as",
@@ -111,12 +124,6 @@ class SemanticQueryEngine:
             # Known structural relation types that should never be used
             # as answerable frames, even if the structural flag isn't set
             # (e.g., durable store frames don't preserve the flag).
-            _NON_ANSWERABLE_KEYS = frozenset({
-                "has_role", "causes", "enables", "prevents",
-                "before", "after", "refers_to", "modifies",
-                "teaches", "asks_about",
-                "is_a", "same_as", "part_of", "used_for",
-            })
             answerable_frames = [
                 f for f in relation_frames
                 if f.answerable and not f.structural
