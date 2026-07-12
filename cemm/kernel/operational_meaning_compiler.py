@@ -1,4 +1,4 @@
-﻿"""OperationalMeaningCompiler â€” compile UOL graph into OperationalMeaningFrames.
+"""OperationalMeaningCompiler â€” compile UOL graph into OperationalMeaningFrames.
 
 Consumes UOLGraph, SemanticProgram, ConstructionMatches, ConceptResolutions,
 PortBindings, and AffordancePredictions to produce OperationalMeaningFrame[].
@@ -238,10 +238,10 @@ class OperationalMeaningCompiler:
                 return "clarification_request", "conversation_state"
             return "user_profile_query", "user_profile"
 
-        if (kind == "question" or self._is_question_like_group(graph, instruction, group)) and self._needs_clarification_before_routing(decode):
-            return "clarification_request", "conversation_state"
+        if (kind == "question" or self._is_question_like_group(graph, instruction, group)) and self._targets_concept(graph, instruction):
+            return "concept_definition_query", "concept_lattice"
 
-        if ("capability_query" in intent_keys or "self_capability_query" in intent_keys) and decode.get("decode_unknown_content_tokens"):
+        if (kind == "question" or self._is_question_like_group(graph, instruction, group)) and self._needs_clarification_before_routing(decode):
             return "clarification_request", "conversation_state"
 
         if "capability_query" in intent_keys or "self_capability_query" in intent_keys:
@@ -419,10 +419,23 @@ class OperationalMeaningCompiler:
 
     def _targets_concept(self, graph: UOLGraph, instruction: Any) -> bool:
         for edge in graph.edges:
-            if edge.group_id == instruction.group_id and edge.edge_type == "asks_about":
-                target = graph.atoms.get(edge.target_id)
-                if target is not None and target.kind in ("concept", "referent"):
-                    return True
+            if edge.group_id != instruction.group_id or edge.edge_type != "asks_about":
+                continue
+            target = graph.atoms.get(edge.target_id)
+            if target is None:
+                continue
+            if target.kind in {"concept", "referent"}:
+                return True
+            if target.kind == "entity" and (
+                target.source == "unknown_lexeme"
+                or target.features.get("candidate_role") in {"topic", "unknown"}
+                or target.features.get("role") == "topic"
+            ):
+                return True
+            if target.kind == "relation" and str(target.features.get("proposition_mode", "")) == "queried":
+                # Profile queries are classified earlier by intent. Other queried
+                # relations represent a concept/relation lookup, not an assertion.
+                return True
         return False
 
     def _targets_previous_response(self, graph: UOLGraph, instruction: Any) -> bool:
@@ -536,17 +549,26 @@ class OperationalMeaningCompiler:
 
     def _extract_features(self, graph: UOLGraph, instruction: Any) -> dict[str, Any]:
         features: dict[str, Any] = {}
+        for atom_id in instruction.atom_ids:
+            atom = graph.atoms.get(atom_id)
+            if atom is not None and atom.kind == "relation" and atom.group_id == instruction.group_id:
+                features.update(dict(atom.features or {}))
+        for atom in graph.atoms.values():
+            if atom.group_id == instruction.group_id and atom.kind == "relation":
+                features.update(dict(atom.features or {}))
         for edge in graph.edges:
-            if edge.group_id == instruction.group_id and edge.features:
+            if edge.group_id != instruction.group_id:
+                continue
+            if edge.features:
                 features.update(edge.features)
-            if edge.group_id == instruction.group_id and edge.edge_type in ("has_property", "is_a", "same_as", "used_for", "part_of", "asks_about"):
+            if edge.edge_type in {"has_property", "is_a", "same_as", "used_for", "part_of", "asks_about"}:
                 source = graph.atoms.get(edge.source_id)
                 target = graph.atoms.get(edge.target_id)
                 if source is not None:
                     features.setdefault("subject_concept_id", self._concept_id_for_atom(graph, source))
                     features.setdefault("subject_entity_id", self._entity_id_for_atom(source))
                     features.setdefault("subject_surface", source.surface)
-                if target is not None:
+                if target is not None and target.kind != "relation":
                     features.setdefault("object_concept_id", self._concept_id_for_atom(graph, target))
                     features.setdefault("object_entity_id", self._entity_id_for_atom(target))
                     features.setdefault("object_surface", target.surface)
@@ -566,50 +588,35 @@ class OperationalMeaningCompiler:
     def _decode_quality(self, graph: UOLGraph, instruction: Any, group: Any) -> dict[str, Any]:
         unknown_tokens: list[str] = []
         for candidate_set in graph.candidate_sets:
-            if candidate_set.group_id != group.id:
+            if candidate_set.group_id != group.id or candidate_set.reason != "unknown_surface_candidate":
                 continue
-            if candidate_set.reason != "unknown_surface_candidate":
-                continue
-            value = (
-                candidate_set.target_span_id
-                or candidate_set.selected_atom_id
-                or candidate_set.id
-            )
-            if value and value not in unknown_tokens:
-                unknown_tokens.append(value)
-
-        unknown_content = list(unknown_tokens)
+            surface = str(getattr(candidate_set, "target_surface", "") or "").strip()
+            if surface and surface not in unknown_tokens:
+                unknown_tokens.append(surface)
         token_count = max(0, int(getattr(group, "end_token", 0) or 0) - int(getattr(group, "start_token", 0) or 0))
         classified_count = max(0, token_count - len(unknown_tokens))
         coverage = (classified_count / token_count) if token_count else 1.0
-
         content_edges = [
             edge for edge in graph.edges
             if edge.group_id == instruction.group_id
-            and edge.edge_type in ("has_property", "is_a", "same_as", "used_for", "part_of")
+            and edge.edge_type in {"has_property", "is_a", "same_as", "used_for", "part_of"}
+            and str((edge.features or {}).get("proposition_mode", "asserted") or "asserted") != "queried"
         ]
-        has_complete_relation = False
-        for edge in content_edges:
-            source = graph.atoms.get(edge.source_id)
-            target = graph.atoms.get(edge.target_id)
-            if source is not None and target is not None:
-                has_complete_relation = True
-                break
-
+        has_complete_relation = any(
+            graph.atoms.get(edge.source_id) is not None and graph.atoms.get(edge.target_id) is not None
+            for edge in content_edges
+        )
         anchors = 0
-        for aid in instruction.atom_ids:
-            atom = graph.atoms.get(aid)
-            if atom is None:
+        for atom_id in instruction.atom_ids:
+            atom = graph.atoms.get(atom_id)
+            if atom is None or atom.source in {"unknown_lexeme", "role_placeholder", "role_binding"}:
                 continue
-            if atom.source in {"unknown_lexeme", "role_placeholder"}:
-                continue
-            if atom.kind in {"intent", "action", "process", "self", "entity", "quality", "modality"}:
+            if atom.kind in {"intent", "action", "process", "self", "entity", "quality", "modality", "relation"}:
                 anchors += 1
-
         return {
             "decode_token_count": token_count,
-            "decode_unknown_tokens": unknown_tokens,
-            "decode_unknown_content_tokens": unknown_content,
+            "decode_unknown_tokens": list(unknown_tokens),
+            "decode_unknown_content_tokens": list(unknown_tokens),
             "decode_coverage": coverage,
             "decode_anchor_count": anchors,
             "decode_has_complete_relation": has_complete_relation,

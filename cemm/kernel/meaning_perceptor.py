@@ -169,7 +169,10 @@ class MeaningPerceptor:
         self._anaphora_resolver = AnaphoraResolver()
         self._salience_tracker = EntitySalienceTracker()
         self._implicit_detector = ImplicitPredicateDetector()
-        self._relation_extractor = RelationExtractor(schema_kernel=kernel)
+        self._relation_extractor = RelationExtractor(
+            schema_kernel=kernel,
+            language_code=getattr(self._language, "language_code", "en"),
+        )
         self._construction_matcher = construction_matcher
 
     def perceive(

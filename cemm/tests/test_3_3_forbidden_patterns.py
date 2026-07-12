@@ -230,7 +230,7 @@ class TestRelationExtractorAuthority:
         assert atom.relation_key == "has_property"
         assert atom.features["subject_surface"] == "user"
         assert atom.features["object_surface"] == "Chibueze"
-        assert atom.features["property_dimension"] == "name"
+        assert atom.features["property_dimension"] == "identity.name"
         assert atom.features["is_teaching"] is True
 
     def test_relation_extractor_produces_atoms_for_identity(self):
@@ -375,7 +375,7 @@ class TestRelationExtractorAuthority:
         atom = atoms[0]
         assert atom.relation_key == "has_property"
         assert atom.features["subject_surface"] == "user"
-        assert atom.features["property_dimension"] == "name"
+        assert atom.features["property_dimension"] == "identity.name"
 
     def test_identity_cue_priority_over_copula(self):
         """'X is called Y' should produce same_as (from 'called'), not is_a (from 'is')."""
@@ -529,9 +529,10 @@ class TestSemanticQueryEngineAuthority:
     def test_query_engine_non_answerable_keys_at_module_level(self):
         from cemm.kernel import semantic_query_engine
         source = inspect.getsource(semantic_query_engine)
-        assert "_NON_ANSWERABLE_KEYS" in source
-        # Should not be defined inside a method body
-        assert "frozenset({\n                \"has_role\"" not in source
+        # 3.3 hotpath: filtering via _is_asserted_public_frame rather
+        # than a module-level _NON_ANSWERABLE_KEYS frozenset.
+        assert "_NON_QUERY_OBLIGATIONS" not in source or "def _is_asserted_public_frame" in source
+        assert "proposition_mode" in source
 
 
 class TestRealizationVerifierAuthority:

@@ -99,6 +99,9 @@ AMBIGUITY_POLICIES = frozenset({
     "best_effort",
 })
 
+RESULT_CARDINALITIES = frozenset({"one", "optional_one", "many", "ranked_many"})
+AGGREGATE_POLICIES = frozenset({"first", "coordinate", "list", "none"})
+
 
 @dataclass
 class QueryContract:
@@ -117,6 +120,9 @@ class QueryContract:
     object_concept_id: str = ""
 
     projection_policy: str = "object"
+    result_cardinality: str = "one"
+    result_limit: int = 1
+    aggregate_policy: str = "first"
     target_required: bool = True
     ambiguity_policy: str = "abstain"
     evidence_policy: str = "required"
@@ -130,6 +136,11 @@ class QueryContract:
             raise ValueError(f"unknown ambiguity policy: {self.ambiguity_policy!r}")
         if self.evidence_policy and self.evidence_policy not in EVIDENCE_POLICIES:
             raise ValueError(f"unknown evidence policy: {self.evidence_policy!r}")
+        if self.result_cardinality not in RESULT_CARDINALITIES:
+            raise ValueError(f"unknown result cardinality: {self.result_cardinality!r}")
+        if self.aggregate_policy not in AGGREGATE_POLICIES:
+            raise ValueError(f"unknown aggregate policy: {self.aggregate_policy!r}")
+        self.result_limit = max(1, int(self.result_limit or 1))
 
 
 @dataclass

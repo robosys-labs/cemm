@@ -47,6 +47,8 @@ from ..types.uol_graph import (
     UOLGraph,
 )
 from .semantic_schema_kernel import SemanticSchemaKernel, get_kernel
+from .proposition_semantics import can_materialize_domain_edge, is_role_placeholder, open_roles, proposition_mode
+from .semantic_integrity import SemanticIntegrityValidator
 
 
 class MeaningGraphBuilder:
@@ -178,6 +180,7 @@ class MeaningGraphBuilder:
         self._resolve_ports(graph)
         self._predict_affordances(graph)
         self._extract_graph_patches(graph)
+        SemanticIntegrityValidator().validate_graph(graph)
 
         graph.trace.update({
             "atom_count": len(graph.atoms),
@@ -314,7 +317,7 @@ class MeaningGraphBuilder:
     def _add_referents(self, graph: UOLGraph, referents: Iterable[ReferentAtom]) -> None:
         for ref in referents:
             kind = "self" if ref.entity_type == "self" else "entity"
-            atom = graph.add_atom(
+            graph.add_atom(
                 kind,
                 ref.entity_id or ref.surface or ref.role,
                 surface=ref.surface,
@@ -328,24 +331,6 @@ class MeaningGraphBuilder:
                     "known": ref.known,
                 },
                 evidence=self._evidence(ref.evidence),
-            )
-            role_atom = graph.add_atom(
-                "relation",
-                f"role:{ref.role or 'topic'}",
-                surface=ref.role or "topic",
-                group_id=ref.group_id,
-                span_id=ref.span_id,
-                confidence=ref.confidence,
-                source="role_binding",
-                features={"role": ref.role or "topic"},
-            )
-            graph.add_edge(
-                "has_role",
-                atom.id,
-                role_atom.id,
-                group_id=ref.group_id,
-                confidence=ref.confidence,
-                features={"role": ref.role or "topic"},
             )
 
     def _add_actions(
@@ -680,6 +665,9 @@ class MeaningGraphBuilder:
     def _add_relations(self, graph: UOLGraph, relations: Iterable[RelationAtom]) -> None:
         for relation in relations:
             feats = dict(relation.features) if relation.features else {}
+            mode = proposition_mode(relation)
+            unresolved = list(open_roles(relation))
+            feats.update({"proposition_mode": mode, "open_roles": unresolved})
             atom = graph.add_atom(
                 "relation",
                 relation.relation_key,
@@ -695,26 +683,54 @@ class MeaningGraphBuilder:
                 },
                 evidence=self._evidence(relation.evidence),
             )
-            subject_surface = feats.get("subject_surface", "")
-            object_surface = feats.get("object_surface", "")
-            if subject_surface:
-                source = self._entity_from_surface(graph, subject_surface, relation.group_id, relation.confidence)
-            else:
-                source = self._resolve_role_atom(graph, relation.source_role, relation.group_id, None) if relation.source_role else None
+            subject_surface = str(feats.get("subject_surface", "") or "")
+            object_surface = str(feats.get("object_surface", "") or "")
+            source = (
+                self._entity_from_surface(graph, subject_surface, relation.group_id, relation.confidence)
+                if subject_surface
+                else self._resolve_role_atom(graph, relation.source_role, relation.group_id, None)
+                if relation.source_role else None
+            )
+            target = None
             if object_surface:
                 target = self._entity_from_surface(graph, object_surface, relation.group_id, relation.confidence)
-            else:
-                target = self._resolve_role_atom(graph, relation.target_role, relation.group_id, None) if relation.target_role else None
+            elif "object" not in unresolved and relation.target_role:
+                target = self._resolve_role_atom(graph, relation.target_role, relation.group_id, None)
+
             if source is not None:
-                graph.add_edge("has_role", atom.id, source.id, group_id=relation.group_id, confidence=relation.confidence, features={"role": "source"})
+                graph.add_edge(
+                    "has_role", atom.id, source.id,
+                    group_id=relation.group_id,
+                    confidence=relation.confidence,
+                    features={"role": "subject", "role_value": relation.source_role},
+                )
             if target is not None:
-                graph.add_edge("has_role", atom.id, target.id, group_id=relation.group_id, confidence=relation.confidence, features={"role": "target"})
+                graph.add_edge(
+                    "has_role", atom.id, target.id,
+                    group_id=relation.group_id,
+                    confidence=relation.confidence,
+                    features={"role": "object", "role_value": relation.target_role},
+                )
+            for role in unresolved:
+                graph.add_port_binding(PortBinding(
+                    owner_atom_id=atom.id,
+                    owner_concept_id=f"concept:{atom.key}",
+                    port_id=f"port:{atom.id}:{role}",
+                    port_key=role,
+                    required=True,
+                    status="open_query_port",
+                    score=1.0,
+                    score_parts={"explicit_open_role": 1.0},
+                    evidence_refs=self._evidence_refs(atom.evidence),
+                ))
+
             self._typed_relation_edge(graph, relation, atom, source, target)
-            self._add_relation_domain(graph, atom, target, feats, relation)
-            if feats.get("is_teaching"):
+            if target is not None:
+                self._add_relation_domain(graph, atom, target, feats, relation)
+            if feats.get("is_teaching") and can_materialize_domain_edge(relation):
                 src = self._group_source(graph, relation.group_id)
                 graph.add_edge("teaches", src.id, atom.id, group_id=relation.group_id, confidence=relation.confidence)
-            if feats.get("is_remember_command"):
+            if feats.get("is_remember_command") and can_materialize_domain_edge(relation):
                 self._add_remember_observation(graph, relation, source, target, feats)
 
     def _entity_from_surface(self, graph: UOLGraph, surface: str, group_id: str, confidence: float) -> UOLAtom:
@@ -804,33 +820,32 @@ class MeaningGraphBuilder:
         source: UOLAtom | None,
         target: UOLAtom | None,
     ) -> None:
+        if not can_materialize_domain_edge(relation):
+            return
         edge_type = {
-            "same_as": "same_as",
-            "is_a": "is_a",
-            "type_of": "is_a",
-            "kind_of": "is_a",
-            "part_of": "part_of",
-            "used_for": "used_for",
-            "has_property": "has_property",
-            "causes": "causes",
-            "enables": "enables",
-            "prevents": "prevents",
-            "before": "before",
-            "after": "after",
+            "same_as": "same_as", "is_a": "is_a", "type_of": "is_a",
+            "kind_of": "is_a", "part_of": "part_of", "used_for": "used_for",
+            "has_property": "has_property", "causes": "causes",
+            "enables": "enables", "prevents": "prevents",
+            "before": "before", "after": "after",
         }.get(relation.relation_key)
-        if edge_type and source is not None and target is not None:
-            edge_features: dict[str, Any] = {"relation_atom_id": relation_atom.id}
-            prop_dim = relation.features.get("property_dimension", "") if relation.features else ""
-            if prop_dim:
-                edge_features["property_dimension"] = prop_dim
-            graph.add_edge(
-                edge_type,
-                source.id,
-                target.id,
-                group_id=relation.group_id,
-                confidence=relation.confidence,
-                features=edge_features,
-            )
+        if edge_type is None or source is None or target is None:
+            return
+        features = {
+            "relation_atom_id": relation_atom.id,
+            "proposition_mode": proposition_mode(relation),
+            "open_roles": list(open_roles(relation)),
+        }
+        for key in ("property_dimension", "dimension", "relation_scope", "cardinality", "update_policy"):
+            value = (relation.features or {}).get(key)
+            if value not in (None, "", [], {}):
+                features[key] = value
+        graph.add_edge(
+            edge_type, source.id, target.id,
+            group_id=relation.group_id,
+            confidence=relation.confidence,
+            features=features,
+        )
 
     def _add_needs(self, graph: UOLGraph, needs: Iterable[NeedAtom]) -> None:
         for need in needs:
@@ -1201,6 +1216,8 @@ class MeaningGraphBuilder:
 
     def _resolve_concepts(self, graph: UOLGraph) -> None:
         for atom in graph.atoms.values():
+            if is_role_placeholder(atom):
+                continue
             if self._concept_lattice is not None and hasattr(self._concept_lattice, "resolve"):
                 resolved = self._concept_lattice.resolve(atom, graph)
                 if resolved is not None:
@@ -1214,7 +1231,7 @@ class MeaningGraphBuilder:
                 state = "exact_alias"
                 confidence = max(0.65, atom.confidence)
                 reason = "known_runtime_alias"
-            elif atom.source in {"unknown_lexeme", "role_placeholder"} or atom.features.get("concept_state") == "candidate_atom":
+            elif atom.source == "unknown_lexeme" or atom.features.get("concept_state") == "candidate_atom":
                 state = "new_candidate"
                 confidence = min(0.6, atom.confidence)
                 reason = "surface_candidate"

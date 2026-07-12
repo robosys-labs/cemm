@@ -1,9 +1,4 @@
-"""Language-neutral realization IR.
-
-Response moves are converted into these units before any language renderer
-sees them. This keeps grammar/rendering multilingual from day one without
-letting language-specific rules leak back into response planning.
-"""
+"""Language-neutral realization IR."""
 
 from __future__ import annotations
 
@@ -16,23 +11,31 @@ from ..types import ResponseCandidatePlan
 @dataclass
 class BoundSlot:
     key: str
-    value: str
+    value: str = ""
+    values: list[str] = field(default_factory=list)
     relation_key: str = ""
     slot_kind: str = "surface"
     confidence: float = 0.5
     source_refs: list[str] = field(default_factory=list)
     features: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        values = [str(item) for item in self.values if str(item)]
+        if self.value and self.value not in values:
+            values.insert(0, self.value)
+        self.values = list(dict.fromkeys(values))
+        if not self.value and self.values:
+            self.value = self.values[0]
+
 
 @dataclass
 class RealizationUnit:
-    """Smallest language-neutral unit rendered by a language module."""
-
     unit_type: str
     move_type: str
     subject_role: str = ""
     relation_key: str = ""
     object_value: str = ""
+    object_values: list[str] = field(default_factory=list)
     label_key: str = ""
     safety_category: str = ""
     safety_severity: str = ""

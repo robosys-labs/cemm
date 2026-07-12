@@ -120,6 +120,8 @@ class RelationAtom:
     relation_key: str = ""
     source_role: str = ""
     target_role: str = ""
+    proposition_mode: str = "asserted"
+    open_roles: list[str] = field(default_factory=list)
     surface: str = ""
     source: str = "surface"
     confidence: float = 0.5

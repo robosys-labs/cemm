@@ -1,20 +1,23 @@
-"""PatchValidator — MMU gate for all durable-write operations.
+"""MMU gate for graph-patch durable writes.
 
-Every GraphPatch must pass through validation before reaching
-durable storage. This enforces the architecture rule that no
-component writes directly to memory without a validation barrier.
-
-Phase 8 upgrade: operation-level validation, schema compatibility,
-contradiction detection, compression gain, reversibility, and richer
-PatchValidationResult with accepted/rejected operations.
+Validation is operation-aware and uses the same normalized relation identity as
+the durable store. Queried/open propositions and internal placeholders fail
+closed before memory.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..types.graph_patch import GraphPatch, PatchOperation
+from ..kernel.proposition_semantics import is_internal_identifier
+from ..memory.relation_identity import (
+    RelationIdentity,
+    cardinality_from_fields,
+    object_key_from_fields,
+)
 from ..types.context_kernel import ContextKernel
+from ..types.graph_patch import GraphPatch, PatchOperation
 
 
 @dataclass
@@ -35,6 +38,7 @@ class PatchValidationResult:
     check_results: list[ValidationCheck] = field(default_factory=list)
     accepted_operations: list[str] = field(default_factory=list)
     rejected_operations: list[str] = field(default_factory=list)
+    rejected_operation_target_ids: list[str] = field(default_factory=list)
     quarantine_reason: str = ""
     required_user_confirmation: list[str] = field(default_factory=list)
 
@@ -48,12 +52,6 @@ class PatchValidationResult:
 
 
 class PatchValidator:
-    """Memory-management unit: gates all GraphPatch writes to durable storage.
-
-    Runs 12 checks against every patch before it reaches the store.
-    Validates at both patch-level and operation-level.
-    """
-
     def __init__(
         self,
         store: Any | None = None,
@@ -78,376 +76,204 @@ class PatchValidator:
         kernel: ContextKernel | None = None,
         current_signal: Any | None = None,
     ) -> PatchValidationResult:
-        scores: dict[str, float] = {}
-        reasons: list[str] = []
-        failed: list[str] = []
-        checks: list[ValidationCheck] = []
-        accepted_ops: list[str] = []
-        rejected_ops: list[str] = []
-        needs_confirmation: list[str] = []
-
-        # ── Patch-level checks ──────────────────────────────────────
-
-        # 1. Permission valid — may_store must be True
-        perm_ok = kernel is not None and kernel.permission.may_store
-        scores["permission_valid"] = 1.0 if perm_ok else 0.0
-        checks.append(ValidationCheck("permission_valid", perm_ok, 1.0 if perm_ok else 0.0,
-                       "permission scope does not allow storage" if not perm_ok else ""))
-        if not perm_ok:
-            failed.append("permission_valid")
-            reasons.append("permission scope does not allow storage")
-
-        # 2. Source present — patch must carry at least one source ref
-        source_ok = bool(patch.source_refs)
-        scores["source_present"] = 1.0 if source_ok else 0.0
-        checks.append(ValidationCheck("source_present", source_ok, 1.0 if source_ok else 0.0,
-                       "no source references in patch" if not source_ok else ""))
-        if not source_ok:
-            failed.append("source_present")
-            reasons.append("no source references in patch")
-
-        # 3. Source trust sufficient
-        trust_ok = True
-        if kernel is not None and kernel.memory.source_trust_keys:
-            trust_ok = any(ref in kernel.memory.source_trust_keys for ref in patch.source_refs)
-        else:
-            trust_ok = patch.confidence >= self._min_source_trust
-        scores["source_trust_sufficient"] = 1.0 if trust_ok else 0.0
-        checks.append(ValidationCheck("source_trust_sufficient", trust_ok, 1.0 if trust_ok else 0.0,
-                       f"source trust {patch.confidence:.2f} below threshold {self._min_source_trust}" if not trust_ok else ""))
-        if not trust_ok:
-            failed.append("source_trust_sufficient")
-            reasons.append(f"source trust {patch.confidence:.2f} below threshold {self._min_source_trust}")
-
-        # 4. Evidence present
-        ev_ok = bool(patch.evidence_refs)
-        scores["evidence_present"] = 1.0 if ev_ok else 0.0
-        checks.append(ValidationCheck("evidence_present", ev_ok, 1.0 if ev_ok else 0.0,
-                       "no evidence references in patch" if not ev_ok else ""))
-        if not ev_ok:
-            failed.append("evidence_present")
-            reasons.append("no evidence references in patch")
-
-        # 5. Freshness valid — check stale current-world claims
-        freshness_ok = True
-        freshness_reason = ""
-        if self._store is not None and kernel is not None:
-            freshness_ok, freshness_reason = self._check_freshness(patch, kernel, current_signal)
-        scores["freshness_valid"] = 1.0 if freshness_ok else 0.0
-        checks.append(ValidationCheck("freshness_valid", freshness_ok, 1.0 if freshness_ok else 0.0, freshness_reason))
-        if not freshness_ok:
-            failed.append("freshness_valid")
-            reasons.append(freshness_reason)
-
-        # 6. Temporal scope valid
-        temporal_ok = True
-        temporal_reason = ""
-        if self._store is not None and kernel is not None:
-            temporal_ok, temporal_reason = self._check_temporal(patch, kernel, current_signal)
-        scores["temporal_scope_valid"] = 1.0 if temporal_ok else 0.0
-        checks.append(ValidationCheck("temporal_scope_valid", temporal_ok, 1.0 if temporal_ok else 0.0, temporal_reason))
-        if not temporal_ok:
-            failed.append("temporal_scope_valid")
-            reasons.append(temporal_reason)
-
-        # 7. Required ports bound — every operation should name a target_id
-        ports_ok = all(op.target_id for op in patch.operations) if patch.operations else True
-        scores["required_ports_bound"] = 1.0 if ports_ok else 0.0
-        checks.append(ValidationCheck("required_ports_bound", ports_ok, 1.0 if ports_ok else 0.0,
-                       "some operations missing target_id" if not ports_ok else ""))
-        if not ports_ok:
-            failed.append("required_ports_bound")
-            reasons.append("some operations missing target_id")
-
-        # 8. Contradiction absent or resolved
-        contradiction_ok = True
-        contradiction_reason = ""
-        if self._store is not None:
-            contradiction_ok, contradiction_reason = self._check_contradiction(patch)
-        scores["contradiction_absent_or_resolved"] = 1.0 if contradiction_ok else 0.0
-        checks.append(ValidationCheck("contradiction_absent_or_resolved", contradiction_ok,
-                       1.0 if contradiction_ok else 0.0, contradiction_reason))
-        if not contradiction_ok:
-            failed.append("contradiction_absent_or_resolved")
-            reasons.append(contradiction_reason)
-
-        # 9. Risk acceptable
-        risk_ok = True
-        risk_reason = ""
-        if kernel is not None and hasattr(kernel, 'permission'):
-            risk_score = getattr(kernel.permission, 'risk_score', 0.0)
-            if risk_score > self._max_risk:
-                risk_ok = False
-                risk_reason = f"risk {risk_score:.2f} exceeds max {self._max_risk}"
-        scores["risk_acceptable"] = 1.0 if risk_ok else 0.0
-        checks.append(ValidationCheck("risk_acceptable", risk_ok, 1.0 if risk_ok else 0.0, risk_reason))
-        if not risk_ok:
-            failed.append("risk_acceptable")
-            reasons.append(risk_reason)
-
-        # 10. Confidence sufficient
-        conf_ok = patch.confidence >= self._min_confidence
-        scores["confidence_sufficient"] = 1.0 if conf_ok else 0.0
-        checks.append(ValidationCheck("confidence_sufficient", conf_ok, 1.0 if conf_ok else 0.0,
-                       f"confidence {patch.confidence:.2f} below threshold {self._min_confidence}" if not conf_ok else ""))
-        if not conf_ok:
-            failed.append("confidence_sufficient")
-            reasons.append(f"confidence {patch.confidence:.2f} below threshold {self._min_confidence}")
-
-        # 11. Schema compatibility — check operations against known schemas
-        schema_ok = True
-        schema_reason = ""
-        if self._schema_store is not None:
-            schema_ok, schema_reason = self._check_schema_compatibility(patch)
-        scores["schema_compatible"] = 1.0 if schema_ok else 0.0
-        checks.append(ValidationCheck("schema_compatible", schema_ok, 1.0 if schema_ok else 0.0, schema_reason))
-        if not schema_ok:
-            failed.append("schema_compatible")
-            reasons.append(schema_reason)
-
-        # 12. Reversibility — inverse operations exist where needed
-        reversibility_ok = self._check_reversibility(patch)
-        scores["reversibility_ok"] = 1.0 if reversibility_ok else 0.0
-        checks.append(ValidationCheck("reversibility_ok", reversibility_ok, 1.0 if reversibility_ok else 0.0,
-                       "irreversible operation without inverse" if not reversibility_ok else ""))
-        if not reversibility_ok:
-            failed.append("reversibility_ok")
-            reasons.append("irreversible operation without inverse")
-
-        # 13. Compression gain — novel or compressing information
-        compression_ok = True
-        compression_reason = ""
-        for op in patch.operations:
-            if op.operation in ("upsert_relation_candidate",) and op.target_id:
-                if self._store is not None:
-                    subject = op.fields.get("subject_entity_id", "") or op.fields.get("subject_concept_id", "")
-                    predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
-                    new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
-                    if subject and predicate:
-                        existing_frames = self._store.query_relations(
-                            relation_key=predicate,
-                            subject_entity_id=subject,
-                        )
-                        if not existing_frames:
-                            existing_frames = self._store.query_relations(
-                                relation_key=predicate,
-                                subject_concept_id=subject,
-                            )
-                        for frame in existing_frames:
-                            existing_value = frame.object.surface or frame.object.concept_id or frame.object.entity_id
-                            if existing_value == new_value:
-                                compression_ok = False
-                                compression_reason = f"duplicates existing relation {frame.relation_id}"
-                                break
-        scores["compression_gain"] = 1.0 if compression_ok else 0.0
-        checks.append(ValidationCheck("compression_gain", compression_ok, 1.0 if compression_ok else 0.0, compression_reason))
-        if not compression_ok:
-            failed.append("compression_gain")
-            reasons.append(compression_reason)
-
-        # 14. Self-referential assertion check — assertions about "self"/"you"
-        # require user confirmation, not stored as direct facts
-        self_ref_ok = True
-        self_ref_reason = ""
-        for op in patch.operations:
-            if op.operation in ("upsert_relation_candidate", "custom:upsert_claim"):
-                subject = (op.fields.get("subject_entity_id", "")
-                           or op.fields.get("subject_concept_id", "")
-                           or op.fields.get("subject_surface", "")).lower()
-                if subject in ("self", "you", "entity:you", "entity:self"):
-                    self_ref_ok = False
-                    self_ref_reason = "self-referential assertion requires confirmation"
-                    needs_confirmation.append(op.target_id)
-                    break
-        scores["self_referential_safe"] = 1.0 if self_ref_ok else 0.5
-        checks.append(ValidationCheck("self_referential_safe", self_ref_ok, 1.0 if self_ref_ok else 0.5, self_ref_reason))
-        if not self_ref_ok:
-            reasons.append(self_ref_reason)
-
-        # ── Operation-level validation ───────────────────────────────
-        for op in patch.operations:
-            op_ok = True
-            op_reasons: list[str] = []
-
-            if not op.target_id:
-                op_ok = False
-                op_reasons.append("missing target_id")
-
-            if op.confidence < self._min_confidence:
-                op_ok = False
-                op_reasons.append(f"op confidence {op.confidence:.2f} below {self._min_confidence}")
-
-            # Check for custom:upsert_claim outside adapter
-            if op.operation == "custom:upsert_claim":
-                needs_confirmation.append(op.target_id)
-
-            if op_ok:
-                accepted_ops.append(op.target_id or op.operation)
-            else:
-                rejected_ops.append(f"{op.target_id or op.operation}: {'; '.join(op_reasons)}")
-
-        # ── Determine overall status ─────────────────────────────────
-        mean = sum(scores.values()) / len(scores) if scores else 0.0
-        failed_count = len(failed)
-        if not failed and not rejected_ops:
-            status = "accepted"
-        elif not failed and rejected_ops:
-            status = "needs_confirmation"
-        elif failed_count <= 2 and mean >= 0.6:
-            status = "needs_confirmation"
-        elif mean >= 0.3:
-            status = "quarantined"
-        else:
-            status = "rejected"
-
-        quarantine_reason = ""
-        if status == "quarantined":
-            quarantine_reason = "; ".join(reasons)
-
-        return PatchValidationResult(
-            patch_id=patch.id or "unknown",
-            status=status,
-            reasons=reasons,
-            scores=scores,
-            failed_checks=failed,
-            check_results=checks,
-            accepted_operations=accepted_ops,
-            rejected_operations=rejected_ops,
-            quarantine_reason=quarantine_reason,
-            required_user_confirmation=needs_confirmation,
+        result = PatchValidationResult(patch_id=patch.id or "unknown")
+        self._patch_check(result, "permission_valid", bool(kernel and kernel.permission.may_store),
+                          "permission scope does not allow storage")
+        self._patch_check(result, "source_present", bool(patch.source_refs), "no source references in patch")
+        trust_ok = bool(
+            patch.confidence >= self._min_source_trust
+            or (kernel and kernel.memory.source_trust_keys and any(ref in kernel.memory.source_trust_keys for ref in patch.source_refs))
         )
+        self._patch_check(result, "source_trust_sufficient", trust_ok, "source trust below threshold")
+        self._patch_check(result, "evidence_present", bool(patch.evidence_refs), "no evidence references in patch")
+        self._patch_check(result, "confidence_sufficient", patch.confidence >= self._min_confidence,
+                          f"patch confidence {patch.confidence:.2f} below {self._min_confidence:.2f}")
+        self._patch_check(result, "required_ports_bound", all(op.target_id for op in patch.operations),
+                          "some operations are missing target_id")
 
-    # ── Helper check methods ──────────────────────────────────────────
+        risk = float(getattr(getattr(kernel, "permission", None), "risk_score", 0.0) or 0.0)
+        self._patch_check(result, "risk_acceptable", risk <= self._max_risk,
+                          f"risk {risk:.2f} exceeds {self._max_risk:.2f}")
+        freshness_ok, freshness_reason = self._check_temporal_evidence(patch, kernel, current_signal)
+        self._patch_check(result, "freshness_valid", freshness_ok, freshness_reason)
 
-    def _resolve_evidence_signals(
-        self, patch: GraphPatch, store: Any, current_signal: Any | None = None,
-    ) -> list[Any]:
-        """Resolve evidence_refs and source_refs to Signal objects.
+        for operation in patch.operations:
+            self._validate_operation(operation, patch, result)
 
-        Evidence refs from the graph builder are often structured strings
-        (e.g. "surface_teaching_relation:group_1") that are NOT signal IDs.
-        We try evidence_refs first, then source_refs, then fall back to
-        current_signal as a proxy for the current turn's observation time.
-        """
-        signals: list[Any] = []
-        sig_store = getattr(store, 'signals', None) if store is not None else None
-        if sig_store is None:
-            return signals
+        hard_failures = [name for name in result.failed_checks if name not in {"operation_confirmation"}]
+        if hard_failures or result.rejected_operation_target_ids:
+            result.status = "rejected"
+        elif result.required_user_confirmation:
+            result.status = "needs_confirmation"
+        else:
+            result.status = "accepted"
+        if result.status == "rejected":
+            result.quarantine_reason = "; ".join(result.reasons)
+        return result
 
-        all_refs = list(patch.evidence_refs) + list(patch.source_refs)
-        seen: set[str] = set()
-        for ref in all_refs:
-            if ref in seen:
-                continue
-            seen.add(ref)
-            sig = sig_store.get(ref)
-            if sig is not None and hasattr(sig, 'observed_at'):
-                signals.append(sig)
+    def _validate_operation(
+        self,
+        operation: PatchOperation,
+        patch: GraphPatch,
+        result: PatchValidationResult,
+    ) -> None:
+        reasons: list[str] = []
+        confirmation_reason = ""
+        if not operation.target_id:
+            reasons.append("missing target_id")
+        if operation.confidence < self._min_confidence:
+            reasons.append(f"operation confidence {operation.confidence:.2f} below {self._min_confidence:.2f}")
 
-        if not signals and current_signal is not None and hasattr(current_signal, 'observed_at'):
-            signals.append(current_signal)
+        if operation.operation == "upsert_relation_candidate":
+            fields = operation.fields
+            features = fields.get("features", {}) or {}
+            proposition_mode = str(features.get("proposition_mode", "asserted") or "asserted")
+            open_roles = features.get("open_roles", []) or []
+            if proposition_mode == "queried" or open_roles:
+                reasons.append("queried/open proposition cannot become durable relation")
+            if not RelationIdentity.from_fields(fields).relation_key:
+                reasons.append("missing relation_key")
+            if not RelationIdentity.from_fields(fields).subject_key:
+                reasons.append("missing relation subject")
+            object_key = object_key_from_fields(fields)
+            if not object_key:
+                reasons.append("missing relation object")
+            if is_internal_identifier(str(fields.get("object_surface", "") or "")):
+                reasons.append("internal identifier cannot be stored as object surface")
+            if str(fields.get("object_surface", "") or "").strip().lower() == "topic":
+                reasons.append("role label cannot be stored as object value")
 
-        return signals
+            schema_reason = self._schema_reason(fields)
+            if schema_reason:
+                reasons.append(schema_reason)
+            contradiction_ok, contradiction_reason, needs_confirmation = self._relation_consistency(fields)
+            if not contradiction_ok:
+                reasons.append(contradiction_reason)
+            elif needs_confirmation:
+                confirmation_reason = contradiction_reason
 
-    def _check_freshness(
-        self, patch: GraphPatch, kernel: ContextKernel, current_signal: Any | None = None,
-    ) -> tuple[bool, str]:
-        """Check that current-world claims have fresh evidence."""
-        if not patch.evidence_refs:
-            return True, ""
-        if hasattr(kernel, 'time') and kernel.time.now > 0:
-            if self._store is not None:
-                signals = self._resolve_evidence_signals(patch, self._store, current_signal)
-                for sig in signals:
-                    age = kernel.time.now - sig.observed_at
-                    if age > self._temporal_threshold:
-                        return False, f"evidence {sig.id} is stale ({age:.0f}s old)"
-        return True, ""
+            subject = str(
+                fields.get("subject_entity_id", "")
+                or fields.get("subject_concept_id", "")
+                or fields.get("subject_surface", "")
+            ).lower()
+            if subject in {"self", "you", "entity:you", "entity:self"}:
+                confirmation_reason = confirmation_reason or "self-referential assertion requires confirmation"
 
-    def _check_temporal(
-        self, patch: GraphPatch, kernel: ContextKernel, current_signal: Any | None = None,
-    ) -> tuple[bool, str]:
-        """Check temporal containment — validity period coherent with observation."""
-        if not patch.evidence_refs:
-            return True, ""
-        if hasattr(kernel, 'time') and kernel.time.now > 0:
-            if self._store is not None:
-                signals = self._resolve_evidence_signals(patch, self._store, current_signal)
-                for sig in signals:
-                    age = kernel.time.now - sig.observed_at
-                    if age > self._temporal_threshold:
-                        return False, f"evidence {sig.id} outside temporal scope ({age:.0f}s old, threshold {self._temporal_threshold}s)"
-        return True, ""
+        elif operation.operation == "upsert_concept_candidate":
+            surface = str(operation.fields.get("surface", "") or "")
+            key = str(operation.fields.get("concept_key", "") or "")
+            if is_internal_identifier(surface) or key.startswith("role:"):
+                reasons.append("internal role/identifier cannot become durable concept")
+        elif operation.operation == "custom:upsert_claim":
+            confirmation_reason = "legacy custom claim requires confirmation"
 
-    def _check_contradiction(self, patch: GraphPatch) -> tuple[bool, str]:
-        """Check if patch contradicts existing active memory."""
+        if reasons:
+            result.rejected_operation_target_ids.append(operation.target_id)
+            result.rejected_operations.append(f"{operation.target_id or operation.operation}: {'; '.join(reasons)}")
+            result.reasons.extend(reason for reason in reasons if reason not in result.reasons)
+            result.failed_checks.append(f"operation:{operation.target_id or operation.operation}")
+            result.check_results.append(ValidationCheck(
+                f"operation:{operation.target_id or operation.operation}", False, 0.0, "; ".join(reasons)
+            ))
+            return
+
+        result.accepted_operations.append(operation.target_id)
+        result.check_results.append(ValidationCheck(
+            f"operation:{operation.target_id}", True, 1.0, confirmation_reason
+        ))
+        if confirmation_reason:
+            result.required_user_confirmation.append(operation.target_id)
+            result.reasons.append(confirmation_reason)
+
+    def _relation_consistency(self, fields: dict[str, Any]) -> tuple[bool, str, bool]:
         if self._store is None:
+            return True, "", False
+        identity = RelationIdentity.from_fields(fields)
+        cardinality = cardinality_from_fields(fields, schema_store=self._schema_store, default="unknown")
+        object_key = object_key_from_fields(fields)
+        if hasattr(self._store, "records_for_identity"):
+            records = self._store.records_for_identity(identity, active_only=True)
+            different = [
+                record for record in records
+                if getattr(record, "object_key", lambda: "")() not in {"", object_key}
+            ]
+        else:
+            existing = self._store.query_relations(
+                relation_key=identity.relation_key,
+                subject_entity_id=str(fields.get("subject_entity_id", "") or ""),
+                subject_concept_id=str(fields.get("subject_concept_id", "") or ""),
+                dimension=identity.dimension,
+                relation_scope=identity.relation_scope,
+                allow_inheritance=False,
+                allow_inverse=False,
+                active_only=True,
+            )
+            different = [
+                frame for frame in existing
+                if (frame.object.entity_id or frame.object.concept_id or frame.object.surface) not in {"", object_key}
+            ]
+        if not different:
+            return True, "", False
+        if cardinality in {"many", "set"}:
+            return True, "", False
+        update_policy = str((fields.get("features", {}) or {}).get("update_policy", "") or "")
+        if cardinality in {"single", "optional_one"} and update_policy in {"replace", "correct", "supersede"}:
+            return True, "supersedes prior active value for the same semantic slot", False
+        strongest = max(float(getattr(item, "confidence", 0.0) or 0.0) for item in different)
+        reason = (
+            f"different active value exists for relation slot {identity.as_key()!r}; "
+            f"cardinality={cardinality}"
+        )
+        if cardinality == "unknown" or strongest >= self._contradiction_threshold:
+            return True, reason, True
+        return True, reason, True
+
+    def _schema_reason(self, fields: dict[str, Any]) -> str:
+        if self._schema_store is None:
+            return ""
+        relation_key = str(fields.get("relation_key", "") or "")
+        schema = self._schema_store.get(relation_key) if relation_key else None
+        if schema is None:
+            return ""
+        if not object_key_from_fields(fields) or not RelationIdentity.from_fields(fields).subject_key:
+            return f"schema {relation_key}: required subject/object roles are not bound"
+        return ""
+
+    def _check_temporal_evidence(
+        self,
+        patch: GraphPatch,
+        kernel: ContextKernel | None,
+        current_signal: Any | None,
+    ) -> tuple[bool, str]:
+        if kernel is None or self._store is None or not patch.evidence_refs:
             return True, ""
-        for op in patch.operations:
-            if op.operation in ("custom:upsert_claim", "upsert_relation_candidate") and op.target_id:
-                subject = op.fields.get("subject_entity_id", "") or op.fields.get("subject_concept_id", "")
-                predicate = op.fields.get("predicate", "") or op.fields.get("relation_key", "")
-                new_value = op.fields.get("object_value", "") or op.fields.get("object_surface", "")
-                if subject and predicate:
-                    existing_frames = self._store.query_relations(
-                        relation_key=predicate,
-                        subject_entity_id=subject,
-                    )
-                    if not existing_frames:
-                        existing_frames = self._store.query_relations(
-                            relation_key=predicate,
-                            subject_concept_id=subject,
-                        )
-                    for frame in existing_frames:
-                        existing_value = frame.object.surface or frame.object.concept_id or frame.object.entity_id
-                        if existing_value and existing_value != new_value:
-                            if frame.confidence >= self._contradiction_threshold:
-                                return False, (f"contradicts active relation {frame.relation_id}: "
-                                             f"existing={existing_value!r}, new={new_value!r}")
+        now = float(getattr(getattr(kernel, "time", None), "now", 0.0) or 0.0)
+        if now <= 0:
+            return True, ""
+        signals = []
+        for ref in [*patch.evidence_refs, *patch.source_refs]:
+            signal = self._store.signals.get(ref)
+            if signal is not None and hasattr(signal, "observed_at"):
+                signals.append(signal)
+        if not signals and current_signal is not None and hasattr(current_signal, "observed_at"):
+            signals.append(current_signal)
+        for signal in signals:
+            age = now - float(signal.observed_at)
+            if age > self._temporal_threshold:
+                return False, f"evidence {getattr(signal, 'id', '')} is stale ({age:.0f}s)"
         return True, ""
 
-    def _check_schema_compatibility(self, patch: GraphPatch) -> tuple[bool, str]:
-        """Check operations against predicate schemas."""
-        for op in patch.operations:
-            if op.operation == "observe_predicate_schema":
-                key = op.fields.get("predicate_key", "")
-                if key and self._schema_store is not None:
-                    record = self._schema_store.get(key)
-                    if record is not None:
-                        required_roles = getattr(record, 'required_roles', [])
-                        arg_roles = op.fields.get("argument_roles", [])
-                        for role in required_roles:
-                            if role not in arg_roles:
-                                return False, f"schema {key}: missing required role {role}"
-            elif op.operation == "upsert_relation_candidate":
-                key = op.fields.get("relation_key", "")
-                if key and self._schema_store is not None:
-                    record = self._schema_store.get(key)
-                    if record is not None:
-                        # Validate that both subject and object sides are populated
-                        # with at least one identifier, matching the required_roles
-                        # count from the schema
-                        subject_ids = [
-                            op.fields.get("subject_entity_id", ""),
-                            op.fields.get("subject_concept_id", ""),
-                            op.fields.get("subject_surface", ""),
-                        ]
-                        object_ids = [
-                            op.fields.get("object_entity_id", ""),
-                            op.fields.get("object_concept_id", ""),
-                            op.fields.get("object_surface", ""),
-                        ]
-                        has_subject = any(s for s in subject_ids)
-                        has_object = any(o for o in object_ids)
-                        required_count = len(getattr(record, 'required_roles', []))
-                        if required_count >= 2 and (not has_subject or not has_object):
-                            return False, f"schema {key}: missing subject or object for required roles"
-        return True, ""
-
-    def _check_reversibility(self, patch: GraphPatch) -> bool:
-        """Check that irreversible operations have inverse operations."""
-        irreversible = {"merge_concepts", "mark_counterexample"}
-        has_irreversible = any(op.operation in irreversible for op in patch.operations)
-        if has_irreversible and not patch.inverse_operations:
-            return False
-        return True
+    @staticmethod
+    def _patch_check(
+        result: PatchValidationResult,
+        name: str,
+        passed: bool,
+        reason: str,
+    ) -> None:
+        result.scores[name] = 1.0 if passed else 0.0
+        result.check_results.append(ValidationCheck(name, passed, result.scores[name], "" if passed else reason))
+        if not passed:
+            result.failed_checks.append(name)
+            if reason and reason not in result.reasons:
+                result.reasons.append(reason)

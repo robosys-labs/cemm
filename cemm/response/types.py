@@ -113,10 +113,19 @@ class WriteOutcome:
     rejected_patch_ids: list[str] = field(default_factory=list)
     conflict_ids: list[str] = field(default_factory=list)
     rejected_reasons: list[str] = field(default_factory=list)
+    required_target_ids: list[str] = field(default_factory=list)
+    committed_target_ids: list[str] = field(default_factory=list)
+    operation_results: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def satisfied(self) -> bool:
+        if self.required_target_ids:
+            return set(self.required_target_ids) <= set(self.committed_target_ids)
+        return self.commit_status == "committed" and self.committed_count > 0
 
     @property
     def committed(self) -> bool:
-        return self.commit_status == "committed" or self.committed_count > 0
+        return self.satisfied
 
 
 @dataclass

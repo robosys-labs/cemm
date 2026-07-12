@@ -19,6 +19,7 @@ class QueryConstraint:
     concept_id: str = ""
     entity_id: str = ""
     surface: str = ""
+    projection_policy: str = ""
     confidence: float = 0.5
 
 

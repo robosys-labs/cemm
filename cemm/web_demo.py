@@ -445,6 +445,17 @@ const dbgBtn = document.getElementById('dbg-btn');
 const turnBadge = document.getElementById('turn-badge');
 let debugOn = false;
 const debugTurns = [];
+const cemmContextId = (() => {
+  const key = 'cemm.web_demo.context_id';
+  let value = localStorage.getItem(key);
+  if (!value) {
+    value = (globalThis.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    localStorage.setItem(key, value);
+  }
+  return value;
+})();
 inp.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 function pick(t) { inp.value = t; send(); }
 function toggleDebug() {
@@ -516,7 +527,7 @@ async function send() {
     const r = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text}),
+      body: JSON.stringify({text, context_id: cemmContextId}),
     });
     const data = await r.json();
     rmTyping();
@@ -558,10 +569,12 @@ class CEMMHandler(BaseHTTPRequestHandler):
             try:
                 data = json.loads(raw)
                 text = data.get("text", "")
+                context_id = str(data.get("context_id", "") or _context_id)
+                context_turn = [_pipeline._runtime.session_store.get_turn_count(context_id)]
                 output = process_input(
-                    text, _pipeline, _context_id, _turn_count,
+                    text, _pipeline, context_id, context_turn,
                 )
-                payload: dict = {"response": output, "turn": _turn_count[0]}
+                payload: dict = {"response": output, "turn": context_turn[0], "context_id": context_id}
                 if _DEBUG:
                     cycle = getattr(_pipeline._runtime, "_last_cycle", None)
                     if cycle:

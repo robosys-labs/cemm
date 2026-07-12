@@ -2,208 +2,574 @@
   {
     "entity_kind": "biological_body",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "physical.age": {"type": "quantity", "projection": "answerable"},
-      "vital.alive": {"type": "state", "projection": "answerable"},
-      "vital.health": {"type": "state", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "physical.age": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "vital.alive": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.health": {
+        "type": "state",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "person",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "identity.role": {"type": "string", "projection": "answerable"},
-      "physical.age": {"type": "quantity", "projection": "answerable"},
-      "vital.alive": {"type": "state", "projection": "answerable"},
-      "vital.health": {"type": "state", "projection": "answerable"},
-      "vital.hunger": {"type": "state", "projection": "answerable"},
-      "vital.thirst": {"type": "state", "projection": "answerable"},
-      "vital.energy": {"type": "state", "projection": "answerable"},
-      "affective.mood": {"type": "state", "projection": "answerable"},
-      "affective.fear": {"type": "state", "projection": "answerable"},
-      "affective.anger": {"type": "state", "projection": "answerable"},
-      "cognitive.knowledge": {"type": "set", "projection": "answerable"},
-      "cognitive.clarity": {"type": "state", "projection": "answerable"},
-      "cognitive.attention": {"type": "state", "projection": "answerable"},
-      "volition.desire": {"type": "state", "projection": "answerable"},
-      "volition.intention": {"type": "state", "projection": "answerable"},
-      "volition.preference": {"type": "relation", "projection": "answerable"},
-      "capability.can_move": {"type": "boolean", "projection": "answerable"},
-      "capability.can_speak": {"type": "boolean", "projection": "answerable"},
-      "capability.can_remember": {"type": "boolean", "projection": "answerable"},
-      "capability.can_learn": {"type": "boolean", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"},
-      "possession.ownership": {"type": "relation_set", "projection": "answerable"},
-      "social.relationship": {"type": "relation_set", "projection": "answerable"},
-      "social.trust": {"type": "state", "projection": "answerable"},
-      "permission.allowed": {"type": "set", "projection": "structural"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "identity.role": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "physical.age": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "vital.alive": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.health": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.hunger": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.thirst": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.energy": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "affective.mood": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "affective.fear": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "affective.anger": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "cognitive.knowledge": {
+        "type": "set",
+        "projection": "answerable"
+      },
+      "cognitive.clarity": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "cognitive.attention": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "volition.desire": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "volition.intention": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "volition.preference": {
+        "type": "relation",
+        "projection": "answerable"
+      },
+      "capability.can_move": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_speak": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_remember": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_learn": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      },
+      "possession.ownership": {
+        "type": "relation_set",
+        "projection": "answerable"
+      },
+      "social.relationship": {
+        "type": "relation_set",
+        "projection": "answerable"
+      },
+      "social.trust": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "permission.allowed": {
+        "type": "set",
+        "projection": "structural"
+      },
+      "identity.full_name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.email": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.alias": {
+        "type": "set",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "biological_body"
   },
   {
     "entity_kind": "animal",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "physical.age": {"type": "quantity", "projection": "answerable"},
-      "vital.alive": {"type": "state", "projection": "answerable"},
-      "vital.health": {"type": "state", "projection": "answerable"},
-      "vital.hunger": {"type": "state", "projection": "answerable"},
-      "vital.energy": {"type": "state", "projection": "answerable"},
-      "affective.fear": {"type": "state", "projection": "answerable"},
-      "capability.can_move": {"type": "boolean", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "physical.age": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "vital.alive": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.health": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.hunger": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "vital.energy": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "affective.fear": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "capability.can_move": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "biological_body"
   },
   {
     "entity_kind": "self",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "identity.role": {"type": "string", "projection": "answerable"},
-      "operational.availability": {"type": "state", "projection": "answerable"},
-      "operational.status": {"type": "state", "projection": "answerable"},
-      "operational.load": {"type": "state", "projection": "answerable"},
-      "operational.degradation": {"type": "state", "projection": "answerable"},
-      "cognitive.knowledge": {"type": "set", "projection": "answerable"},
-      "cognitive.clarity": {"type": "state", "projection": "answerable"},
-      "capability.can_speak": {"type": "boolean", "projection": "answerable"},
-      "capability.can_remember": {"type": "boolean", "projection": "answerable"},
-      "capability.can_learn": {"type": "boolean", "projection": "answerable"},
-      "capability.has_internet": {"type": "boolean", "projection": "answerable"},
-      "resource.battery": {"type": "quantity", "projection": "answerable"},
-      "resource.data": {"type": "quantity", "projection": "answerable"},
-      "resource.memory": {"type": "quantity", "projection": "answerable"},
-      "permission.allowed": {"type": "set", "projection": "structural"},
-      "social.trust": {"type": "state", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "identity.role": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "operational.availability": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "operational.status": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "operational.load": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "operational.degradation": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "cognitive.knowledge": {
+        "type": "set",
+        "projection": "answerable"
+      },
+      "cognitive.clarity": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "capability.can_speak": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_remember": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_learn": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.has_internet": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "resource.battery": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "resource.data": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "resource.memory": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "permission.allowed": {
+        "type": "set",
+        "projection": "structural"
+      },
+      "social.trust": {
+        "type": "state",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "autonomous_agent"
   },
   {
     "entity_kind": "autonomous_agent",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "operational.availability": {"type": "state", "projection": "answerable"},
-      "operational.status": {"type": "state", "projection": "answerable"},
-      "cognitive.knowledge": {"type": "set", "projection": "answerable"},
-      "capability.can_speak": {"type": "boolean", "projection": "answerable"},
-      "capability.can_remember": {"type": "boolean", "projection": "answerable"},
-      "capability.can_learn": {"type": "boolean", "projection": "answerable"},
-      "permission.allowed": {"type": "set", "projection": "structural"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "operational.availability": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "operational.status": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "cognitive.knowledge": {
+        "type": "set",
+        "projection": "answerable"
+      },
+      "capability.can_speak": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_remember": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "capability.can_learn": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "permission.allowed": {
+        "type": "set",
+        "projection": "structural"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "device",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "operational.status": {"type": "state", "projection": "answerable"},
-      "operational.degradation": {"type": "state", "projection": "answerable"},
-      "resource.battery": {"type": "quantity", "projection": "answerable"},
-      "capability.can_move": {"type": "boolean", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "operational.status": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "operational.degradation": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "resource.battery": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "capability.can_move": {
+        "type": "boolean",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "organization",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "resource.money": {"type": "quantity", "projection": "answerable"},
-      "resource.quantity": {"type": "quantity", "projection": "answerable"},
-      "social.authority": {"type": "state", "projection": "answerable"},
-      "possession.ownership": {"type": "relation_set", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "resource.money": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "resource.quantity": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "social.authority": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "possession.ownership": {
+        "type": "relation_set",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "group",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "social.relationship": {"type": "relation_set", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "social.relationship": {
+        "type": "relation_set",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "organization"
   },
   {
     "entity_kind": "object",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "physical.size": {"type": "quantity", "projection": "answerable"},
-      "physical.weight": {"type": "quantity", "projection": "answerable"},
-      "physical.color": {"type": "string", "projection": "answerable"},
-      "resource.quantity": {"type": "quantity", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"},
-      "possession.ownership": {"type": "relation", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "physical.size": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "physical.weight": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "physical.color": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "resource.quantity": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      },
+      "possession.ownership": {
+        "type": "relation",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "food",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "physical.edible": {"type": "boolean", "projection": "structural"},
-      "resource.quantity": {"type": "quantity", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "physical.edible": {
+        "type": "boolean",
+        "projection": "structural"
+      },
+      "resource.quantity": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "object"
   },
   {
     "entity_kind": "tool",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "physical.size": {"type": "quantity", "projection": "answerable"},
-      "resource.quantity": {"type": "quantity", "projection": "answerable"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "physical.size": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "resource.quantity": {
+        "type": "quantity",
+        "projection": "answerable"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "object"
   },
   {
     "entity_kind": "virtual_object",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "informational.known": {"type": "state", "projection": "answerable"},
-      "resource.data": {"type": "quantity", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "informational.known": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "resource.data": {
+        "type": "quantity",
+        "projection": "answerable"
+      }
     },
     "parent_kind": "object"
   },
   {
     "entity_kind": "concept",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "informational.known": {"type": "state", "projection": "answerable"},
-      "informational.verified": {"type": "state", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "informational.known": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "informational.verified": {
+        "type": "state",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "place",
     "native_slots": {
-      "identity.name": {"type": "string", "projection": "answerable"},
-      "identity.type": {"type": "string", "projection": "structural"},
-      "geospatial.location": {"type": "place_ref", "projection": "answerable"},
-      "geospatial.containment": {"type": "state", "projection": "answerable"}
+      "identity.name": {
+        "type": "string",
+        "projection": "answerable"
+      },
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "geospatial.location": {
+        "type": "place_ref",
+        "projection": "answerable"
+      },
+      "geospatial.containment": {
+        "type": "state",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   },
   {
     "entity_kind": "action",
     "native_slots": {
-      "identity.type": {"type": "string", "projection": "structural"},
-      "temporal.status": {"type": "state", "projection": "answerable"},
-      "permission.risk": {"type": "state", "projection": "answerable"}
+      "identity.type": {
+        "type": "string",
+        "projection": "structural"
+      },
+      "temporal.status": {
+        "type": "state",
+        "projection": "answerable"
+      },
+      "permission.risk": {
+        "type": "state",
+        "projection": "answerable"
+      }
     },
     "parent_kind": null
   }

@@ -259,6 +259,14 @@ class SemanticKernelRuntime:
             frame_data = self._session_store.load_teaching_frame(signal.context_id)
             if frame_data is not None:
                 self._teaching_frame_manager.from_session_dict(signal.context_id, frame_data)
+            learning_data = self._session_store.load_learning_state(signal.context_id)
+            if learning_data:
+                manager_data = learning_data.get("episode_manager", learning_data)
+                self._learning_episode_manager.restore_context(signal.context_id, manager_data)
+                overlay_data = learning_data.get("overlay")
+                if isinstance(overlay_data, dict):
+                    from ..learning.session_learning_overlay import SessionLearningOverlay
+                    self._session_learning_overlay = SessionLearningOverlay.from_dict(overlay_data)
         except Exception as e:
             errors.append(f"session restore failed: {e}")
 
@@ -267,6 +275,19 @@ class SemanticKernelRuntime:
             if percept is None:
                 percept = self._cpu.perceptor.perceive(signal, kernel)
             result.percept = percept
+            # Consume answers to obligations that were actually asked on a
+            # prior turn before detecting or creating new gaps.
+            for episode, obligation in self._learning_episode_manager.pending_obligations(signal.context_id):
+                if obligation.created_turn_signal_id == getattr(signal, "id", ""):
+                    continue
+                fields = self._learning_answer_assimilator.assimilate(
+                    episode, obligation, getattr(signal, "content", "") or "", percept,
+                )
+                if fields and self._learning_episode_manager.apply_answer_fields(
+                    episode.episode_id, obligation.obligation_id, fields,
+                    evidence_signal_id=getattr(signal, "id", ""),
+                ):
+                    result.learning_answer_fields.extend(fields)
         except Exception as e:
             errors.append(f"perceive failed: {e}")
             result.cost_ms = (time.monotonic() - start) * 1000
@@ -432,30 +453,9 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"3.3 blocking gap classification failed: {e}")
 
-        # 2d-ii. Assimilate learning answers from active episodes (3.3 acquisition spine)
-        try:
-            if hasattr(signal, "context_id") and result.learning_questions:
-                active_episodes = self._learning_episode_manager.get_active_episodes(
-                    signal.context_id,
-                )
-                if active_episodes:
-                    from ..types.learning_episode import LearningObligation
-                    for episode in active_episodes:
-                        for question in result.learning_questions:
-                            obligation = LearningObligation(
-                                obligation_id=getattr(question, "question_id", ""),
-                                episode_id=episode.episode_id,
-                                gap_ids=tuple(episode.target_gap_ids),
-                                question_act=getattr(question, "question_act", None),
-                                expected_answer_schema=getattr(question, "expected_answer_schema", {}),
-                            )
-                            fields = self._learning_answer_assimilator.assimilate(
-                                episode, obligation, "", percept,
-                            )
-                            if fields:
-                                result.learning_answer_fields.extend(fields)
-        except Exception as e:
-            errors.append(f"learning answer assimilation failed: {e}")
+        # Learning answers were consumed immediately after perception from
+        # prior-turn pending obligations. Never assimilate a newly planned
+        # question against the same percept.
 
         # 2e. Predicate activation — pre-operational gate (3.3 S1, S3)
         activated_group_ids: set[str] = set()
@@ -702,16 +702,10 @@ class SemanticKernelRuntime:
 
             query_contract = getattr(obligation_contract, "query_contract", None) if obligation_contract is not None else None
             if query_contract is not None:
-                semantic_query = self._semantic_query_from_contract(
-                    query_contract,
-                    obligation_frame,
-                )
-                durable_frames = self._durable_frames_for_contract(query_contract)
-                relation_frames = turn_frames + durable_frames
-                answer_binding = self._execute_query_contract(
-                    query_contract,
-                    semantic_query,
-                    relation_frames,
+                semantic_query, relation_frames, answer_binding = self._query_engine.execute_contract(
+                    query_contract, obligation_frame,
+                    turn_frames=turn_frames,
+                    durable_store=self._durable_semantic_store,
                 )
             else:
                 relation_frames = turn_frames
@@ -798,7 +792,7 @@ class SemanticKernelRuntime:
         # builder. No post-hoc override needed. (v3.1 invariant #2 — safety is a gate)
 
         # 8a. Build WriteOutcome from commit results (v3.1 invariant #3)
-        write_outcome = self._build_write_outcome(commit_results)
+        write_outcome = self._build_write_outcome(commit_results, patches, obligation_contract)
 
         # 8b. Build ResponseSituation from all prior pipeline outputs
         turn_index = kernel.conversation.turn_index
@@ -836,6 +830,28 @@ class SemanticKernelRuntime:
             bundle = self._response_engine.form(response_situation)
             result.realized_output = bundle.text
             result.response_bundle = bundle
+            # Register only a learning question that was actually realized as
+            # a clarification. Planned-but-unasked questions do not own the
+            # next user turn.
+            if result.learning_questions and any(
+                getattr(move, "move_type", "") == "clarify" for move in bundle.moves
+            ):
+                question = result.learning_questions[0]
+                active_episodes = self._learning_episode_manager.get_active_episodes(signal.context_id)
+                if active_episodes:
+                    from ..types.learning_episode import LearningObligation
+                    episode = active_episodes[0]
+                    obligation = LearningObligation(
+                        obligation_id=question.obligation_id,
+                        episode_id=episode.episode_id,
+                        gap_ids=tuple(question.gap_ids),
+                        question_act=question.question_act,
+                        expected_answer_schema=dict(question.expected_answer_schema),
+                        resumes_obligation_ids=tuple(question.resumes_obligation_ids),
+                        utility=question.utility,
+                        created_turn_signal_id=getattr(signal, "id", ""),
+                    )
+                    self._learning_episode_manager.register_obligation(episode.episode_id, obligation)
         except Exception as e:
             errors.append(f"response formation failed: {e}")
 
@@ -938,6 +954,13 @@ class SemanticKernelRuntime:
             self._session_store.persist(kernel, signal)
             frame_data = self._teaching_frame_manager.to_session_dict(signal.context_id)
             self._session_store.save_teaching_frame(signal.context_id, frame_data)
+            self._session_store.save_learning_state(
+                signal.context_id,
+                {
+                    "episode_manager": self._learning_episode_manager.context_to_dict(signal.context_id),
+                    "overlay": self._session_learning_overlay.to_dict(),
+                },
+            )
         except Exception as e:
             errors.append(f"session persist failed: {e}")
             if result.diagnostics is None:
@@ -1176,33 +1199,76 @@ class SemanticKernelRuntime:
         )
         return style, temperature
 
-    def _build_write_outcome(self, commit_results: list[Any]) -> WriteOutcome:
-        """Build WriteOutcome from patch commit results."""
-        if not commit_results:
-            return WriteOutcome(commit_status="none")
+    def _build_write_outcome(
+        self,
+        commit_results: list[Any],
+        patches: list[Any] | None = None,
+        obligation_contract: Any | None = None,
+    ) -> WriteOutcome:
+        patches = list(patches or [])
+        required = list(getattr(obligation_contract, "required_write_target_ids", []) or [])
+        if not required:
+            for patch in patches:
+                required.extend(getattr(patch, "required_operation_target_ids", []) or [])
+        if not required and getattr(obligation_contract, "write_contract", None) is not None:
+            required.extend(
+                operation.target_id
+                for patch in patches
+                for operation in getattr(patch, "operations", []) or []
+                if operation.target_id
+            )
+        required = list(dict.fromkeys(required))
 
-        committed = sum(1 for c in commit_results if c.status == "committed")
-        rejected = sum(1 for c in commit_results if c.status == "rejected")
-        quarantined = sum(1 for c in commit_results if c.status == "quarantined")
-
-        if committed > 0:
+        committed_targets = list(dict.fromkeys(
+            target
+            for result in commit_results
+            if getattr(result, "status", "") == "committed"
+            for target in getattr(result, "operation_target_ids", []) or []
+            if target
+        ))
+        rejected_targets = list(dict.fromkeys(
+            target
+            for result in commit_results
+            for target in getattr(result, "rejected_operation_target_ids", []) or []
+            if target
+        ))
+        committed_records = list(dict.fromkeys(
+            record_id
+            for result in commit_results
+            if getattr(result, "status", "") == "committed"
+            for record_id in [
+                *getattr(result, "created_records", []),
+                *getattr(result, "updated_records", []),
+            ]
+            if record_id
+        ))
+        satisfied = bool(required) and set(required) <= set(committed_targets)
+        if satisfied:
             status = "committed"
-        elif rejected > 0 and quarantined == 0:
-            status = "rejected"
-        elif quarantined > 0:
+        elif committed_targets:
+            status = "conflict"
+        elif any(getattr(result, "status", "") == "quarantined" for result in commit_results):
             status = "quarantined"
+        elif commit_results:
+            status = "rejected"
         else:
-            status = "proposed"
-
-        committed_ids = [
-            c.commit_id for c in commit_results if c.status == "committed"
-        ]
-
+            status = "none"
+        operation_results = {
+            target: "committed" if target in committed_targets else "rejected"
+            for target in dict.fromkeys([*required, *committed_targets, *rejected_targets])
+        }
         return WriteOutcome(
             patch_count=len(commit_results),
-            committed_count=committed,
-            rejected_count=rejected,
-            quarantined_count=quarantined,
+            committed_count=sum(1 for result in commit_results if getattr(result, "status", "") == "committed"),
+            rejected_count=sum(1 for result in commit_results if getattr(result, "status", "") == "rejected"),
+            quarantined_count=sum(1 for result in commit_results if getattr(result, "status", "") == "quarantined"),
             commit_status=status,
-            committed_record_ids=committed_ids,
+            committed_record_ids=committed_records,
+            rejected_patch_ids=rejected_targets,
+            rejected_reasons=[
+                error for result in commit_results for error in getattr(result, "errors", []) or []
+            ],
+            required_target_ids=required,
+            committed_target_ids=committed_targets,
+            operation_results=operation_results,
         )
