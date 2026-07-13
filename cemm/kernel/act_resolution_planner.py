@@ -169,6 +169,7 @@ class ActResolutionPlanner:
         "self_capability_query": 75,
         "capability_query": 75,
         "self_identity_query": 72,
+        "self_category_query": 72,
         "self_knowledge_query": 72,
         "user_identity_query": 72,
         "user_name_query": 72,
@@ -459,6 +460,18 @@ class ActResolutionPlanner:
                 self._add_group_obligation(
                     result, group, "self_capability_query", "capability_summary", "capability_summary", 75, "none"
                 )
+            elif intent_key == "self_identity_query":
+                self._add_group_obligation(
+                    result, group, "self_identity_query", "self_identity", "self_identity", 72, "required"
+                )
+            elif intent_key == "self_knowledge_query":
+                self._add_group_obligation(
+                    result, group, "self_knowledge_query", "evidence_answer", "self_knowledge_query", 72, "required"
+                )
+            elif intent_key == "user_profile_query":
+                self._add_group_obligation(
+                    result, group, "user_profile_query", "evidence_answer", "user_profile_query", 72, "required"
+                )
             elif intent_key == "teaching":
                 self._resolve_teaching_group(
                     result, group, group_facts or fact_candidates, graph
@@ -503,6 +516,12 @@ class ActResolutionPlanner:
             return "session_exit"
         if "capability_query" in intent_keys:
             return "capability_query"
+        if "self_identity_query" in intent_keys or "self_category_query" in intent_keys:
+            return "self_identity_query"
+        if "self_knowledge_query" in intent_keys:
+            return "self_knowledge_query"
+        if "user_profile_query" in intent_keys or "user_name_query" in intent_keys:
+            return "user_profile_query"
         if "fresh_world_query" in intent_keys:
             return "fresh_world_query"
         if "user_state_report" in intent_keys:

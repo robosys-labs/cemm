@@ -402,11 +402,21 @@ class ConversationActClassifier:
         # ── Structural act inference (v3.3) ───────────────────────────
         # Use atom graph patterns to infer acts when alias matching fails.
         # This is the first step toward alias-free structural classification.
-        if not acts and meaning_percept:
+        # Also run when existing acts are only discourse-level (greeting, phatic),
+        # so embedded questions in long sentences are not missed.
+        _existing_act_types = {a.act_type for a in acts}
+        _only_discourse = _existing_act_types and _existing_act_types <= {
+            "greeting", "phatic_checkin", "acknowledgment", "playful_acknowledgment",
+        }
+        if (not acts or _only_discourse) and meaning_percept:
             # Rule 1: Self-target + question + entity-category referent → self_category_query
             if meaning_percept.intents:
-                top_intent = meaning_percept.intents[0]
-                if top_intent.is_question and top_intent.target == "self":
+                self_intent = next(
+                    (i for i in meaning_percept.intents
+                     if i.is_question and (i.target == "self" or i.target_role == "self")),
+                    None,
+                )
+                if self_intent:
                     referents = meaning_percept.referents or []
                     has_category_ref = any(
                         r.entity_type in {"category", "object", "abstract", "unknown"}
@@ -420,67 +430,69 @@ class ConversationActClassifier:
                         # Rule 2: Self-target + question + teaching/process atoms → teaching_instruction_query
                         acts.append(ConversationAct(
                             act_type="teaching_instruction_query",
-                            confidence=top_intent.confidence * 0.75,
+                            confidence=self_intent.confidence * 0.75,
                         ))
-                    elif has_category_ref and not top_intent.is_capability_query:
+                    elif has_category_ref and not getattr(self_intent, 'is_capability_query', False):
                         acts.append(ConversationAct(
                             act_type="self_category_query",
-                            confidence=top_intent.confidence * 0.75,
+                            confidence=self_intent.confidence * 0.75,
                         ))
                     elif entity_mentions:
                         acts.append(ConversationAct(
                             act_type="open_domain_entity_query",
-                            confidence=top_intent.confidence * 0.8,
+                            confidence=self_intent.confidence * 0.8,
                             entity_mentions=entity_mentions,
                         ))
                     else:
                         acts.append(ConversationAct(
-                            act_type="evidence_query",
-                            confidence=top_intent.confidence * 0.7,
+                            act_type="self_category_query",
+                            confidence=self_intent.confidence * 0.7,
                         ))
                 # Rule 3: Question + unknown entity referent + no person/place → concept_query
-                elif top_intent.is_question:
-                    referents = meaning_percept.referents or []
-                    has_unknown_entity = any(
-                        r.entity_type == "unknown" and r.source == "ner"
-                        for r in referents
-                    )
-                    has_person_or_place = any(
-                        r.entity_type in ("person", "place")
-                        for r in referents
-                    )
-                    if has_unknown_entity and not has_person_or_place:
+                else:
+                    top_intent = meaning_percept.intents[0]
+                    if top_intent.is_question:
+                        referents = meaning_percept.referents or []
+                        has_unknown_entity = any(
+                            r.entity_type == "unknown" and r.source == "ner"
+                            for r in referents
+                        )
+                        has_person_or_place = any(
+                            r.entity_type in ("person", "place")
+                            for r in referents
+                        )
+                        if has_unknown_entity and not has_person_or_place:
+                            acts.append(ConversationAct(
+                                act_type="concept_query",
+                                confidence=top_intent.confidence * 0.7,
+                                entity_mentions=entity_mentions,
+                            ))
+                        elif entity_mentions:
+                            acts.append(ConversationAct(
+                                act_type="open_domain_entity_query",
+                                confidence=top_intent.confidence * 0.8,
+                                entity_mentions=entity_mentions,
+                            ))
+                        else:
+                            acts.append(ConversationAct(
+                                act_type="evidence_query",
+                                confidence=top_intent.confidence * 0.7,
+                            ))
+                    elif top_intent.is_command:
                         acts.append(ConversationAct(
-                            act_type="concept_query",
+                            act_type="unknown",
+                            confidence=top_intent.confidence * 0.6,
+                        ))
+                    elif top_intent.is_teaching:
+                        acts.append(ConversationAct(
+                            act_type="teaching_offer",
                             confidence=top_intent.confidence * 0.7,
-                            entity_mentions=entity_mentions,
                         ))
-                    elif entity_mentions:
+                    elif top_intent.is_repair:
                         acts.append(ConversationAct(
-                            act_type="open_domain_entity_query",
-                            confidence=top_intent.confidence * 0.8,
-                            entity_mentions=entity_mentions,
-                        ))
-                    else:
-                        acts.append(ConversationAct(
-                            act_type="evidence_query",
+                            act_type="confusion_repair",
                             confidence=top_intent.confidence * 0.7,
                         ))
-                elif top_intent.is_command:
-                    acts.append(ConversationAct(
-                        act_type="unknown",
-                        confidence=top_intent.confidence * 0.6,
-                    ))
-                elif top_intent.is_teaching:
-                    acts.append(ConversationAct(
-                        act_type="teaching_offer",
-                        confidence=top_intent.confidence * 0.7,
-                    ))
-                elif top_intent.is_repair:
-                    acts.append(ConversationAct(
-                        act_type="confusion_repair",
-                        confidence=top_intent.confidence * 0.7,
-                    ))
             # NeedAtom without a matching act → infer from need type
             elif meaning_percept.needs:
                 top_need = meaning_percept.needs[0]
@@ -657,11 +669,18 @@ class ConversationActClassifier:
 
         # ── Detect retrospective repair (P0-6) ─────────────────────────
         # Data-driven: cue aliases from uol_semantics.json (cue_type: retro_repair)
+        # Suppress when self-query acts are present — "I was wondering if you could
+        # tell me your name" is a polite question, not a repair.
         retro_repair_cues = _CUE_SETS.get("retro_repair", set())
         is_retro_repair = any(
             _phrase_matches(alias, content_lower) for alias in retro_repair_cues
         )
-        if is_retro_repair:
+        _has_self_query = any(
+            a.act_type in ("self_identity_query", "self_category_query",
+                           "self_knowledge_query", "self_capability_query")
+            for a in acts
+        )
+        if is_retro_repair and not _has_self_query:
             acts.append(ConversationAct(
                 act_type="retrospective_repair",
                 confidence=0.8,

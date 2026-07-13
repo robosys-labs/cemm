@@ -25,9 +25,9 @@ class GraphPatchExtractor:
             graph.trace["patch_extraction_block_reasons"] = list(integrity.errors)
             return []
         patches = self._observations_to_patches(graph)
+        graph.patch_candidates = list(patches)
         if obligation_contract is not None:
             patches = self._authorized_patches(patches, obligation_contract)
-        graph.patch_candidates = list(patches)
         if not patches and obligation_contract is None and self._should_retain_exemplar(graph):
             patches.append(GraphPatch(
                 source_graph_id=graph.id,

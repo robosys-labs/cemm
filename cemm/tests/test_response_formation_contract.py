@@ -376,14 +376,13 @@ class TestBugFixRegressions:
         assert "test" in r["output"].lower()
 
     def test_H017_durable_store_structural_keys_consistent(self):
-        """H-017: Durable store structural keys must match the canonical list."""
+        """H-017: Durable store structural keys must match the canonical list per AGENTS.md §4."""
         from cemm.memory.durable_semantic_store import DurableSemanticStore
         store = DurableSemanticStore()
         expected = frozenset({
-            "has_role", "causes", "enables", "prevents",
-            "before", "after", "refers_to", "modifies",
-            "teaches", "asks_about",
-            "is_a", "same_as", "part_of", "used_for",
+            "has_role", "instantiates", "refers_to", "grounded_by",
+            "scoped_by", "supported_by", "opposed_by", "derived_from",
+            "depends_on", "co_refers_with", "modifies", "teaches", "asks_about",
         })
         assert store._STRUCTURAL_RELATION_KEYS == expected
 

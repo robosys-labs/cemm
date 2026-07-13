@@ -455,11 +455,17 @@ class MeaningGraphBuilder:
         action: ActionAtom,
         group: MeaningGroup | None,
     ) -> None:
+        import dataclasses as _dc
         schema_slots = action.schema_slots or {}
-        for role_name in ("actor", "object", "target", "place"):
-            role_value = getattr(action, f"{role_name}_role", None)
+        action_role_fields = [
+            f.name for f in _dc.fields(ActionAtom)
+            if f.name.endswith("_role")
+        ]
+        for field_name in action_role_fields:
+            role_value = getattr(action, field_name, None)
             if not role_value:
                 continue
+            role_name = field_name[:-5]  # strip "_role" suffix
             target = self._resolve_role_atom(graph, role_value, action.group_id, group)
             slot_def = schema_slots.get(role_name, {})
             allowed_kinds = slot_def.get("allowed_entity_kinds", [])
@@ -1000,7 +1006,17 @@ class MeaningGraphBuilder:
             graph.add_edge("teaches", source.id, target.id, group_id=intent.group_id, confidence=intent.confidence)
 
     def _add_predicates(self, graph: UOLGraph, predicates: Iterable[PredicatePhrase]) -> None:
+        import dataclasses as _dc
+        predicate_role_fields = [
+            f.name for f in _dc.fields(PredicatePhrase)
+            if f.name.endswith("_role")
+        ]
         for predicate in predicates:
+            role_features = {}
+            for field_name in predicate_role_fields:
+                val = getattr(predicate, field_name, None)
+                if val is not None:
+                    role_features[field_name] = val
             predicate_atom = graph.add_atom(
                 "process" if not predicate.predicate_key.startswith("intent:") else "intent",
                 predicate.predicate_key.replace("intent:", ""),
@@ -1012,17 +1028,15 @@ class MeaningGraphBuilder:
                     "predicate_id": predicate.id,
                     "modality": predicate.modality,
                     "polarity": predicate.polarity,
-                    "actor_role": predicate.actor_role,
-                    "object_role": predicate.object_role,
-                    "target_role": predicate.target_role,
-                    "place_role": predicate.place_role,
+                    **role_features,
                 },
                 evidence=self._evidence(predicate.evidence),
             )
-            for role_name in ("actor", "object", "target", "place"):
-                role_value = getattr(predicate, f"{role_name}_role", None)
+            for field_name in predicate_role_fields:
+                role_value = getattr(predicate, field_name, None)
                 if not role_value:
                     continue
+                role_name = field_name[:-5]  # strip "_role" suffix
                 target = self._resolve_role_atom(graph, role_value, predicate.group_id, None)
                 graph.add_edge(
                     "has_role",
@@ -1856,13 +1870,16 @@ class MeaningGraphBuilder:
                         source="role_resolution",
                         features={"entity_type": ref.entity_type, "role": ref.role},
                     )
+        for atom in graph.group_atoms(group_id):
+            if atom.surface and atom.surface.lower() == role_value.lower() and atom.kind in ("entity", "concept", "self"):
+                return atom
         return graph.add_atom(
             "entity",
             role_value,
             surface=role_value,
             group_id=group_id,
             confidence=0.45,
-            source="role_placeholder",
+            source="role_resolution",
             features={"role_value": role_value},
         )
 

@@ -5,7 +5,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from ..kernel.proposition_semantics import is_internal_identifier
 from ..types.relation_frame import RelationArgument, RelationFrame
 from .relation_identity import (
     RelationIdentity,
@@ -175,6 +174,7 @@ class DurableSemanticStore:
         object_key = object_key_from_fields(fields)
         if not relation_key or not identity.subject_key or not object_key:
             raise ValueError("durable relation requires relation, subject, and object")
+        from ..kernel.proposition_semantics import is_internal_identifier
         if is_internal_identifier(object_surface):
             raise ValueError("internal identifier cannot be stored as public object surface")
 
@@ -616,7 +616,11 @@ class DurableSemanticStore:
             ))
         return results
 
-    _STRUCTURAL_RELATION_KEYS = frozenset({"has_role", "refers_to", "modifies", "teaches", "asks_about"})
+    _STRUCTURAL_RELATION_KEYS = frozenset({
+        "has_role", "instantiates", "refers_to", "grounded_by",
+        "scoped_by", "supported_by", "opposed_by", "derived_from",
+        "depends_on", "co_refers_with", "modifies", "teaches", "asks_about",
+    })
 
     def _record_to_frame(self, record: DurableRelationRecord) -> RelationFrame | None:
         proposition_mode = str(record.features.get("proposition_mode", "asserted") or "asserted")

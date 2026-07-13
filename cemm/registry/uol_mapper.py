@@ -249,7 +249,7 @@ class UOLMapper:
                     kind="state",
                     key=canonical_key,
                     confidence=prob,
-                    features={"polarity": atom_polarity, "intensity": frame_intensity},
+                    features={"polarity": atom_polarity, "intensity": frame_intensity, "source": "surface_alias"},
                 ))
             elif canonical_key == "frustration_signal":
                 atoms.append(UOLAtom(
@@ -257,14 +257,14 @@ class UOLMapper:
                     kind="state",
                     key="frustration_signal",
                     confidence=prob,
-                    features={"polarity": "negative", "intensity": frame_intensity},
+                    features={"polarity": "negative", "intensity": frame_intensity, "source": "surface_alias"},
                 ))
                 atoms.append(UOLAtom(
                     id=canonical_key,
                     kind="process",
                     key=canonical_key,
                     confidence=prob,
-                    features={"modality": "observed", "polarity": "affirmed", "intensity": frame_intensity},
+                    features={"modality": "candidate", "polarity": "affirmed", "intensity": frame_intensity, "source": "surface_alias"},
                 ))
             elif canonical_key == "assert_evaluation":
                 negated = any_token_in_text(["not", "never"], content_lower) or "n't" in content_lower
@@ -274,9 +274,10 @@ class UOLMapper:
                     key=canonical_key,
                     confidence=prob,
                     features={
-                        "modality": "observed",
+                        "modality": "candidate",
                         "polarity": "negated" if negated else "affirmed",
                         "intensity": frame_intensity,
+                        "source": "surface_alias",
                     },
                 ))
             elif any(canonical_key.startswith(p) for p in relation_prefixes):
@@ -286,9 +287,10 @@ class UOLMapper:
                     key=canonical_key,
                     confidence=prob,
                     features={
-                        "modality": "observed",
+                        "modality": "candidate",
                         "polarity": "affirmed",
                         "intensity": 0.7 if canonical_key.startswith("causal_") else 0.6,
+                        "source": "surface_alias",
                     },
                 ))
             else:
@@ -298,9 +300,10 @@ class UOLMapper:
                     key=canonical_key,
                     confidence=prob,
                     features={
-                        "modality": "observed",
+                        "modality": "candidate",
                         "polarity": "affirmed",
                         "intensity": frame_intensity,
+                        "source": "surface_alias",
                     },
                 ))
 

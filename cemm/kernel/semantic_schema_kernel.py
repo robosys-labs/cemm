@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .schema.verb_facade import VerbSchemaFacade, VerbSchemaRecord
+
 
 _SCHEMAS_DIR = Path(__file__).parent.parent / "data" / "semantic_schemas"
 
@@ -49,20 +51,8 @@ class SlotSchema:
     default_projection: str
 
 
-@dataclass(frozen=True)
-class ActionOperatorSchema:
-    action_key: str
-    operator_family: str
-    aliases: dict[str, list[str]]
-    slots: dict[str, dict[str, Any]]
-    preconditions: list[dict[str, Any]]
-    state_deltas: list[dict[str, Any]]
-    relation_deltas: list[dict[str, Any]]
-    needs_satisfied: list[str]
-    risk: str
-    permission_policy: str
-    safety_category: str
-    emotional_valence: str
+# ActionOperatorSchema retired — use VerbSchemaRecord from kernel.schema.verb_facade
+ActionOperatorSchema = VerbSchemaRecord
 
 
 @dataclass(frozen=True)
@@ -184,62 +174,8 @@ class SlotRegistry:
         return schema.default_projection if schema else "structural"
 
 
-class ActionOperatorRegistry:
-    def __init__(self, schemas: list[ActionOperatorSchema]) -> None:
-        self._by_key: dict[str, ActionOperatorSchema] = {s.action_key: s for s in schemas}
-        self._alias_to_key: dict[str, str] = {}
-        self._lang_alias_to_key: dict[str, dict[str, str]] = {}
-        for s in schemas:
-            for lang, aliases in s.aliases.items():
-                if lang not in self._lang_alias_to_key:
-                    self._lang_alias_to_key[lang] = {}
-                for alias in aliases:
-                    normalized = alias.strip().lower()
-                    self._alias_to_key[normalized] = s.action_key
-                    self._lang_alias_to_key[lang][normalized] = s.action_key
-
-    def get(self, action_key: str) -> ActionOperatorSchema | None:
-        return self._by_key.get(action_key)
-
-    def lookup_alias(self, surface: str, language: str = "en") -> str | None:
-        normalized = surface.strip().lower()
-        lang_map = self._lang_alias_to_key.get(language, {})
-        return lang_map.get(normalized)
-
-    def all_action_keys(self) -> list[str]:
-        return list(self._by_key.keys())
-
-    def slots_for(self, action_key: str) -> dict[str, dict[str, Any]]:
-        schema = self._by_key.get(action_key)
-        return schema.slots if schema else {}
-
-    def state_deltas_for(self, action_key: str) -> list[dict[str, Any]]:
-        schema = self._by_key.get(action_key)
-        return schema.state_deltas if schema else []
-
-    def relation_deltas_for(self, action_key: str) -> list[dict[str, Any]]:
-        schema = self._by_key.get(action_key)
-        return schema.relation_deltas if schema else []
-
-    def needs_satisfied_for(self, action_key: str) -> list[str]:
-        schema = self._by_key.get(action_key)
-        return schema.needs_satisfied if schema else []
-
-    def safety_category_for(self, action_key: str) -> str:
-        schema = self._by_key.get(action_key)
-        return schema.safety_category if schema else ""
-
-    def permission_policy_for(self, action_key: str) -> str:
-        schema = self._by_key.get(action_key)
-        return schema.permission_policy if schema else "normal"
-
-    def risk_for(self, action_key: str) -> str:
-        schema = self._by_key.get(action_key)
-        return schema.risk if schema else "low"
-
-    def emotional_valence_for(self, action_key: str) -> str:
-        schema = self._by_key.get(action_key)
-        return schema.emotional_valence if schema else "neutral"
+# ActionOperatorRegistry retired — use VerbSchemaFacade from kernel.schema.verb_facade
+ActionOperatorRegistry = VerbSchemaFacade
 
 
 class AffordanceRegistry:
@@ -331,7 +267,6 @@ class SemanticSchemaKernel:
         state_dim_data = _load("state_dimension_schemas.json")
         entity_kind_data = _load("entity_kind_schemas.json")
         slot_data = _load("slot_schemas.json")
-        action_data = _load("action_operator_schemas.json")
         affordance_data = _load("affordance_schemas.json")
         projection_data = _load("projection_policy_schemas.json")
         patch_op_data = _load("patch_operation_schemas.json")
@@ -359,22 +294,7 @@ class SemanticSchemaKernel:
                     default_projection=s["default_projection"],
                 ) for s in slot_data
             ]),
-            action_operators=ActionOperatorRegistry([
-                ActionOperatorSchema(
-                    action_key=s["action_key"],
-                    operator_family=s["operator_family"],
-                    aliases=s.get("aliases", {}),
-                    slots=s.get("slots", {}),
-                    preconditions=s.get("preconditions", []),
-                    state_deltas=s.get("state_deltas", []),
-                    relation_deltas=s.get("relation_deltas", []),
-                    needs_satisfied=s.get("needs_satisfied", []),
-                    risk=s.get("risk", "low"),
-                    permission_policy=s.get("permission_policy", "normal"),
-                    safety_category=s.get("safety_category", ""),
-                    emotional_valence=s.get("emotional_valence", "neutral"),
-                ) for s in action_data
-            ]),
+            action_operators=VerbSchemaFacade.from_directory(d),
             affordances=AffordanceRegistry([
                 AffordanceSchema(
                     affordance_key=s["affordance_key"],

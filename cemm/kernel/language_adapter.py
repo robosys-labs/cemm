@@ -280,7 +280,7 @@ class SchemaBackedLanguageAdapter(LanguageAdapter):
                 if action_key is None:
                     continue
                 schema_slots = self._kernel.action_operators.slots_for(action_key)
-                actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set)
+                actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set, phrase)
                 atoms.append(ActionAtom(
                     surface=phrase,
                     action_key=action_key,
@@ -303,7 +303,7 @@ class SchemaBackedLanguageAdapter(LanguageAdapter):
             if action_key is None:
                 continue
             schema_slots = self._kernel.action_operators.slots_for(action_key)
-            actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set)
+            actor_role, target_role, object_role = self._infer_roles_from_schema(action_key, token_set, token)
             atoms.append(ActionAtom(
                 surface=token,
                 action_key=action_key,
@@ -432,17 +432,16 @@ class SchemaBackedLanguageAdapter(LanguageAdapter):
             if token_set & self._third_person_pronouns:
                 return "third_party"
             return "target"
-        if action_key in {"evaluate_positive", "evaluate_negative"}:
-            return "object"
         return None
 
     def _infer_roles_from_schema(
         self, action_key: str, token_set: set[str],
+        action_surface: str = "",
     ) -> tuple[str | None, str | None, str | None]:
         """Infer actor, target, and object roles from schema slots when pronouns are absent.
 
         For statements like 'eat food' (no pronouns), the speaker is the default actor.
-        For schemas with an object slot, assign 'object' as the object role.
+        For schemas with an object slot, assign the object noun surface as the object role.
         For schemas with a target/recipient slot, assign via target role logic.
         """
         schema = self._kernel.action_operators.get(action_key)
@@ -454,7 +453,9 @@ class SchemaBackedLanguageAdapter(LanguageAdapter):
         target = self._target_role(action_key, token_set)
         obj = None
         if "object" in schema.slots and target is None:
-            obj = "object"
+            remaining = token_set - set(self._pronouns) - {action_surface.lower()}
+            remaining.discard("")
+            obj = next(iter(remaining), "object")
         return actor, target, obj
 
 

@@ -279,7 +279,9 @@ class SemanticQueryEngine:
     def execute(self, query: SemanticQuery, relation_frames: list[RelationFrame]) -> AnswerBinding:
         if query.blocked_by:
             return self._empty(query, f"blocked:{','.join(query.blocked_by)}", query.evidence_policy)
-        if query.query_kind == "none" or not query.relation_key:
+        if query.query_kind == "none":
+            return self._empty(query, "", query.evidence_policy)
+        if not query.relation_key:
             return self._empty(query, "no_relation_key_or_algebra", query.evidence_policy)
         matching = [
             frame for frame in relation_frames
@@ -309,6 +311,14 @@ class SemanticQueryEngine:
         if policy == "subject":
             return frame.subject.surface or "", frame.subject.concept_id or "", frame.subject.entity_id or ""
         return frame.object.surface or "", frame.object.concept_id or "", frame.object.entity_id or ""
+
+    @staticmethod
+    def _project_frame(frame: RelationFrame, policy: str) -> tuple[str, str, str, str]:
+        slot_name = policy if policy in ("subject", "object") else "object"
+        if policy == "none":
+            return slot_name, "", "", ""
+        surface, concept_id, entity_id = SemanticQueryEngine._project(frame, policy)
+        return slot_name, surface, concept_id, entity_id
 
     @staticmethod
     def _dedupe_frames(frames: Iterable[RelationFrame]) -> list[RelationFrame]:

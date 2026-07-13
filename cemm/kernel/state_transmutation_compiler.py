@@ -98,7 +98,7 @@ class StateTransmutationCompiler:
                 temporal_scope = "session"
             elif ftype == "world_fact_claim":
                 transmutation_kind = "reported"
-                authority = "user_asserted"
+                authority = "candidate_evidence"
                 persistence_policy = "graph_patch_candidate"
                 temporal_scope = "persistent"
 

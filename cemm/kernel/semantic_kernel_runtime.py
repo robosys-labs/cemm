@@ -38,10 +38,8 @@ from ..learning.patch_committer import PatchCommitter
 from ..memory.predicate_schema_store import PredicateSchemaStore
 from ..memory.durable_semantic_store import DurableSemanticStore
 from ..types.runtime_cycle import RuntimeCycleResult
-from ..types.answer_binding import AnswerBinding, SlotFill
 from ..types.obligation_contract import QueryContract, WriteContract, ReactionContract
 from ..types.obligation_frame import ObligationFrame
-from ..types.semantic_query import QueryConstraint, SemanticQuery
 
 
 class SemanticKernelRuntime:
@@ -58,6 +56,8 @@ class SemanticKernelRuntime:
         episodic_store: Any | None = None,
         auto_consolidate: bool = False,
         lexeme_memory: Any | None = None,
+        registry: Any | None = None,
+        semantic_model_store: Any | None = None,
     ) -> None:
         self.concept_lattice = concept_lattice
         self.construction_lattice = construction_lattice
@@ -134,7 +134,6 @@ class SemanticKernelRuntime:
         from ..learning.semantic_gap_detector import SemanticGapDetector
         from ..learning.learning_episode_manager import LearningEpisodeManager
         from ..learning.lexeme_candidate_index import LexemeCandidateIndex
-        from ..learning.session_learning_overlay import SessionLearningOverlay
         from ..learning.learning_question_planner import LearningQuestionPlanner
         from ..learning.learning_answer_assimilator import LearningAnswerAssimilator
         from .predicate_activation_resolver import PredicateActivationResolver
@@ -151,9 +150,17 @@ class SemanticKernelRuntime:
         self._obligation_graph_builder = ObligationGraphBuilder()
         self._learning_episode_manager = LearningEpisodeManager()
         self._lexeme_candidate_index = LexemeCandidateIndex()
-        self._session_learning_overlay = SessionLearningOverlay()
         self._learning_question_planner = LearningQuestionPlanner()
         self._learning_answer_assimilator = LearningAnswerAssimilator()
+
+        # Conversation act classifier — wired when registry is available
+        self._act_classifier = None
+        if registry is not None:
+            from .conversation_act_classifier import ConversationActClassifier
+            self._act_classifier = ConversationActClassifier(
+                registry=registry,
+                semantic_model_store=semantic_model_store,
+            )
 
     @property
     def attention(self):
@@ -263,10 +270,6 @@ class SemanticKernelRuntime:
             if learning_data:
                 manager_data = learning_data.get("episode_manager", learning_data)
                 self._learning_episode_manager.restore_context(signal.context_id, manager_data)
-                overlay_data = learning_data.get("overlay")
-                if isinstance(overlay_data, dict):
-                    from ..learning.session_learning_overlay import SessionLearningOverlay
-                    self._session_learning_overlay = SessionLearningOverlay.from_dict(overlay_data)
         except Exception as e:
             errors.append(f"session restore failed: {e}")
 
@@ -293,6 +296,23 @@ class SemanticKernelRuntime:
             result.cost_ms = (time.monotonic() - start) * 1000
             result.diagnostics = {"errors": errors}
             return result
+
+        # 1a-pre. Classify conversation acts (before planning)
+        conversation_act = None
+        if self._act_classifier is not None:
+            try:
+                pre_graph = getattr(percept, "uol_graph", None)
+                uol_atoms_for_classify = list(pre_graph.atoms.values()) if pre_graph else None
+                conversation_act = self._act_classifier.classify(
+                    signal=signal,
+                    kernel=kernel,
+                    uol_atoms=uol_atoms_for_classify,
+                    meaning_percept=percept,
+                    situation_frame=situation,
+                    safety_frame=safety_frame,
+                )
+            except Exception as e:
+                errors.append(f"conversation act classify failed: {e}")
 
         # 1a. Update user affect from detected affect markers
         try:
@@ -733,7 +753,7 @@ class SemanticKernelRuntime:
         # 4. Plan
         try:
             act_plan = self._cpu.planner.plan(
-                conversation_act=None,
+                conversation_act=conversation_act,
                 situation=situation,
                 safety_frame=safety_frame,
                 meaning_percept=percept,
@@ -958,7 +978,6 @@ class SemanticKernelRuntime:
                 signal.context_id,
                 {
                     "episode_manager": self._learning_episode_manager.context_to_dict(signal.context_id),
-                    "overlay": self._session_learning_overlay.to_dict(),
                 },
             )
         except Exception as e:
@@ -1030,157 +1049,6 @@ class SemanticKernelRuntime:
             ],
             confidence=contract.confidence,
             context=context,
-        )
-
-    def _semantic_query_from_contract(
-        self,
-        contract: QueryContract,
-        obligation: ObligationFrame | None,
-    ) -> SemanticQuery:
-        return SemanticQuery(
-            query_id=f"qc_{time.time_ns():x}"[-16:],
-            source_obligation_id=getattr(obligation, "primary_instruction_id", ""),
-            query_kind=contract.query_kind,
-            relation_key=contract.relation_key,
-            subject_constraint=QueryConstraint(
-                role="subject",
-                concept_id=contract.subject_concept_id,
-                entity_id=contract.subject_entity_id,
-            ),
-            object_constraint=QueryConstraint(
-                role="object",
-                concept_id=contract.object_concept_id,
-                entity_id=contract.object_entity_id,
-            ),
-            allow_inheritance=False,
-            allow_inverse=False,
-            evidence_policy=contract.evidence_policy,
-            required_slots=[],
-            blocked_by=[],
-            confidence=1.0,
-        )
-
-    def _durable_frames_for_contract(self, contract: QueryContract) -> list[Any]:
-        if contract.query_kind == "none":
-            return []
-        if contract.query_kind == "profile_dimension" and not contract.dimension:
-            return []
-        if contract.target_required and not (
-            contract.subject_entity_id
-            or contract.subject_concept_id
-            or contract.object_entity_id
-            or contract.object_concept_id
-        ):
-            return []
-        return self._durable_semantic_store.query_relations(
-            relation_key=contract.relation_key,
-            subject_concept_id=contract.subject_concept_id,
-            subject_entity_id=contract.subject_entity_id,
-            object_concept_id=contract.object_concept_id,
-            object_entity_id=contract.object_entity_id,
-            allow_inheritance=False,
-            allow_inverse=False,
-        )
-
-    def _execute_query_contract(
-        self,
-        contract: QueryContract,
-        semantic_query: SemanticQuery,
-        relation_frames: list[Any],
-    ) -> AnswerBinding:
-        if contract.target_required and contract.query_kind == "concept_definition" and not contract.subject_concept_id:
-            return self._empty_answer(semantic_query, "unresolved_query_target", contract.evidence_policy)
-        matches = [
-            frame for frame in relation_frames
-            if self._frame_matches_query_contract(frame, contract)
-        ]
-        if not matches:
-            return self._empty_answer(semantic_query, "no_matches", contract.evidence_policy)
-
-        slot_fills: list[SlotFill] = []
-        matched_ids: list[str] = []
-        explanations: list[list[str]] = []
-        for frame in matches:
-            surface, concept_id, entity_id = self._project_contract_frame(frame, contract)
-            if not surface and not concept_id and not entity_id:
-                continue
-            slot_fills.append(SlotFill(
-                slot_name="answer",
-                concept_id=concept_id,
-                entity_id=entity_id,
-                surface=surface,
-                relation_key=frame.relation_key,
-                source_frame_ids=[frame.relation_id],
-                evidence_refs=list(frame.evidence_refs),
-                confidence=frame.confidence,
-                is_inherited=bool(getattr(frame, "inherited_from", [])),
-                features=dict(frame.features) if frame.features else {},
-            ))
-            matched_ids.append(frame.relation_id)
-            if self._relation_algebra is not None:
-                explanations.append(self._relation_algebra.explain_path(frame, relation_frames))
-
-        if not slot_fills:
-            return self._empty_answer(semantic_query, "no_matches", contract.evidence_policy)
-        return AnswerBinding(
-            binding_id=f"ab_{time.time_ns():x}"[-16:],
-            source_query_id=semantic_query.query_id,
-            query_kind=semantic_query.query_kind,
-            slot_fills=slot_fills,
-            matched_frame_ids=matched_ids,
-            explanation_paths=explanations,
-            has_answer=True,
-            confidence=max(fill.confidence for fill in slot_fills),
-            evidence_policy=contract.evidence_policy,
-        )
-
-    @staticmethod
-    def _frame_matches_query_contract(frame: Any, contract: QueryContract) -> bool:
-        allows_definition_projection = (
-            contract.query_kind == "concept_definition"
-            and getattr(frame, "relation_key", "") in {"is_a", "same_as", "part_of", "used_for"}
-        )
-        if (
-            not allows_definition_projection
-            and (not getattr(frame, "answerable", False) or getattr(frame, "structural", False))
-        ):
-            return False
-        if contract.relation_key and frame.relation_key != contract.relation_key:
-            return False
-        if contract.subject_entity_id and frame.subject.entity_id != contract.subject_entity_id:
-            return False
-        if contract.subject_concept_id and frame.subject.concept_id != contract.subject_concept_id:
-            return False
-        if contract.object_entity_id and frame.object.entity_id != contract.object_entity_id:
-            return False
-        if contract.object_concept_id and frame.object.concept_id != contract.object_concept_id:
-            return False
-        if contract.dimension:
-            features = getattr(frame, "features", {}) or {}
-            dimension = features.get("property_dimension", "") or features.get("dimension", "")
-            if dimension != contract.dimension:
-                return False
-        return True
-
-    @staticmethod
-    def _project_contract_frame(frame: Any, contract: QueryContract) -> tuple[str, str, str]:
-        if contract.projection_policy == "subject":
-            return frame.subject.surface or "", frame.subject.concept_id or "", frame.subject.entity_id or ""
-        return frame.object.surface or "", frame.object.concept_id or "", frame.object.entity_id or ""
-
-    @staticmethod
-    def _empty_answer(
-        semantic_query: SemanticQuery,
-        reason: str,
-        evidence_policy: str,
-    ) -> AnswerBinding:
-        return AnswerBinding(
-            binding_id=f"ab_{time.time_ns():x}"[-16:],
-            source_query_id=semantic_query.query_id,
-            query_kind=semantic_query.query_kind,
-            has_answer=False,
-            abstention_reason=reason,
-            evidence_policy=evidence_policy,
         )
 
     @staticmethod

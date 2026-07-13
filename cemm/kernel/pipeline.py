@@ -100,6 +100,8 @@ class Pipeline:
             episodic_store=self._episodic_store,
             auto_consolidate=auto_consolidate,
             lexeme_memory=self._lexeme_memory,
+            registry=registry,
+            semantic_model_store=self._semantic_model_store,
         )
 
     @property

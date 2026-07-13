@@ -283,6 +283,9 @@ class SemanticObligationScheduler:
             for atom in uol_graph.atoms.values():
                 if atom.kind == "intent" and atom.key in self._SELF_QUERY_INTENT_KEYS:
                     return True
+            for atom in uol_graph.atoms.values():
+                if atom.kind == "intent" and atom.features.get("target_role") == "self":
+                    return True
         for slot_key in entry.output_slots:
             if "self" in slot_key or "identity" in slot_key:
                 return True
