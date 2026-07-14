@@ -50,6 +50,29 @@ class Planner:
     - Select response content
     """
 
+    def __init__(self, schema_store: Any | None = None) -> None:
+        self._schema_store = schema_store
+
+    def _lookup_operation_schema(
+        self,
+        semantic_key: str,
+    ) -> Any | None:
+        """Look up an operation schema by semantic key from the store.
+
+        Uses find_candidates to get any registered schema (candidate,
+        provisional, or active) since boot operation schemas may not
+        have completed full activation assessment yet.
+        """
+        if self._schema_store is None:
+            return None
+        candidates = self._schema_store.find_candidates(semantic_key)
+        if not candidates:
+            return None
+        # Return highest version
+        best = max(candidates, key=lambda e: e.version)
+        payload = getattr(best, "payload", None)
+        return payload
+
     def plan(
         self,
         goals: tuple[Any, ...] = (),
@@ -74,28 +97,45 @@ class Planner:
             goal_id = getattr(goal, "id", "")
             goal_kind = getattr(goal, "goal_kind", "information_state")
 
-            # Determine operation schema based on goal kind
-            if goal_kind == "information_state":
-                op_schema = "op:query"
-            elif goal_kind == "world_state":
-                op_schema = "op:write"
-            elif goal_kind == "discourse":
-                op_schema = "op:respond"
-            else:
-                op_schema = "op:maintain"
+            # Map goal kind to operation schema semantic key
+            goal_to_op = {
+                "information_state": "op:query",
+                "world_state": "op:stage_mutation",
+                "discourse": "op:respond",
+            }
+            op_semantic_key = goal_to_op.get(goal_kind, "op:maintain")
 
-            # Create operation instance
+            # Look up the operation schema from the store for exact roles
+            op_schema = self._lookup_operation_schema(op_semantic_key)
+            if op_schema is None and operation_schemas:
+                op_schema = operation_schemas.get(op_semantic_key)
+
+            # Use the schema's semantic_key as schema_ref, or fallback
+            schema_ref = op_semantic_key
+            input_roles: tuple[str, ...] = ()
+            output_roles: tuple[str, ...] = ()
+            idem_policy = "strict"
+            if op_schema is not None:
+                schema_ref = getattr(op_schema, "semantic_key", op_semantic_key)
+                input_roles = getattr(op_schema, "input_roles", ())
+                output_roles = getattr(op_schema, "output_roles", ())
+                idem_policy = getattr(op_schema, "idempotency_policy", "strict")
+
+            # Create operation instance with schema-derived roles
             op = OperationInstance(
                 id=f"op:{uuid4().hex[:12]}",
-                schema_ref=op_schema,
+                schema_ref=schema_ref,
                 bindings=(),
                 status="pending" if is_capable else "blocked",
+                idempotency_key=f"{schema_ref}:{goal_id}" if idem_policy != "strict" else "",
             )
 
-            # Estimate cost
+            # Estimate cost based on operation class
+            op_class = getattr(op_schema, "operation_class", "cognitive")
+            cost_total = 0.1 if op_class == "cognitive" else 0.3
             cost = CostEstimate(
-                total=0.1 if goal_kind == "information_state" else 0.3,
-                components={op_schema: 0.1},
+                total=cost_total,
+                components={schema_ref: cost_total},
             )
 
             # Estimate risk

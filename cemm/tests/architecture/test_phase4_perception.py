@@ -782,9 +782,9 @@ def test_language_stream_imports_no_engine():
     import cemm.language.stream as stream_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(stream_mod.__file__, encoding="utf-8").read()
@@ -797,9 +797,9 @@ def test_composer_imports_no_engine():
     import cemm.kernel.understanding.composer as composer_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(composer_mod.__file__, encoding="utf-8").read()

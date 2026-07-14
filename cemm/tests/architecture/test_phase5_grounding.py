@@ -714,9 +714,9 @@ def test_provenance_imports_no_engine():
     import cemm.kernel.schema.provenance as prov_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(prov_mod.__file__, encoding="utf-8").read()
@@ -729,9 +729,9 @@ def test_closure_imports_no_engine():
     import cemm.kernel.schema.closure as closure_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(closure_mod.__file__, encoding="utf-8").read()
@@ -744,9 +744,9 @@ def test_grounding_imports_no_engine():
     import cemm.kernel.understanding.grounding as grounding_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(grounding_mod.__file__, encoding="utf-8").read()

@@ -48,7 +48,9 @@ class RuntimeCycleResult:
     transmutation_authorizations: list[Any] = field(default_factory=list)
     learning_answer_fields: list[Any] = field(default_factory=list)
     activated_frame_ids: list[str] = field(default_factory=list)
-    # v3.4 understanding pipeline trace fields — trace-only; do not affect behavior
+    # v3.4 cognitive cycle fields — hybrid migration; v3.4 components are
+    # wired with single-writer enforcement but legacy authorities still
+    # control key operational spine outputs.
     surface_evidence: Any | None = None
     candidate_graph: Any | None = None
     grounding_assessments: list[Any] = field(default_factory=list)

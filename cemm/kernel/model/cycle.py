@@ -181,20 +181,27 @@ class CognitiveCycle:
     retrieval_results: tuple[Any, ...] = ()
     epistemic_assessments: tuple[Any, ...] = ()
     capability_assessments: tuple[Any, ...] = ()
+    knowledge_assessments: tuple[Any, ...] = ()
+    self_reports: tuple[Any, ...] = ()
     gaps: tuple[Any, ...] = ()
 
     goals: tuple[Any, ...] = ()
     plans: tuple[Any, ...] = ()
     authorization: Any | None = None
     execution_ledger: Any | None = None
+    reconciliation_result: Any | None = None
 
     critical_mutations: Any | None = None
     critical_commit: Any | None = None
 
     message_plan: Any | None = None
+    surface_payload: Any | None = None
     output_event: Any | None = None
     output_mutations: Any | None = None
     output_commit: Any | None = None
 
+    learning_transactions: tuple[Any, ...] = ()
+    invalidation_result: Any | None = None
+    repair_obligations: tuple[Any, ...] = ()
     scheduled_wakes: tuple[Any, ...] = ()
     trace: CycleTrace | None = None

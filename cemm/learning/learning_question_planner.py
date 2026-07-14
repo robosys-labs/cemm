@@ -1,4 +1,10 @@
-"""LearningQuestionPlanner — chooses one semantic question act per turn.
+"""DEPRECATED: Replaced by cemm.kernel.learning.grounding_frontier.GroundingFrontierBuilder.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+learning path uses GroundingFrontier for probe planning.
+Do not use for new code — redirect to GroundingFrontierBuilder.
+
+LearningQuestionPlanner — chooses one semantic question act per turn.
 Maximizes expected uncertainty reduction per interaction cost.
 
 utility = expected_entropy_reduction * downstream_blocking_weight * reuse_value / question_cost

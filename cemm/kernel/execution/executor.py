@@ -24,6 +24,7 @@ from ..model.execution import (
     ExecutionLedger, OperationOutcome, TypedFailure, PredictionError,
 )
 from ..model.plan import PlanRecord, OperationInstance
+from .authorizer import AuthorizationStatus, AuthorizationResult, AuthorizationBatch
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +53,9 @@ class OperationExecutor:
     - Mutate persistent stores directly (that's CommitCoordinator)
     """
 
+    def __init__(self) -> None:
+        self._idempotency_registry: dict[str, str] = {}  # key → operation_ref
+
     def execute(
         self,
         plan: PlanRecord,
@@ -62,6 +66,12 @@ class OperationExecutor:
 
         Records lifecycle transitions and idempotency keys.
         Returns an execution ledger with outcomes.
+
+        Per Stage 6 exit gate:
+        - No no-op success: cognitive ops with no adapter produce real
+          output_refs only if the operation has a concrete implementation.
+        - External ops without adapter fail with typed failure.
+        - Idempotency registry prevents duplicate execution.
         """
         if plan is None:
             return ExecutionResult(failure_detail="no plan")
@@ -72,23 +82,52 @@ class OperationExecutor:
         any_failed = False
 
         for op in plan.operations:
-            # Check authorization
-            is_authorized = True
-            if authorization is not None:
-                is_authorized = getattr(authorization, "authorized", True)
+            # BF-001: Exact authorization check using AuthorizationStatus enum.
+            # Fail closed when no authorization is provided.
+            op_auth: AuthorizationResult | None = None
+            if isinstance(authorization, AuthorizationBatch):
+                op_auth = authorization.get(op.id)
+            elif isinstance(authorization, AuthorizationResult):
+                op_auth = authorization
 
-            if not is_authorized:
+            if op_auth is None:
+                # Fail closed — no authorization means no execution
                 outcomes.append(OperationOutcome(
                     operation_ref=op.id,
                     status="failed",
                     failure=TypedFailure(
                         failure_kind="permission_blocked",
-                        detail="operation not authorized",
+                        detail="no authorization result for operation",
                         recoverable=False,
                     ),
                 ))
                 all_succeeded = False
                 any_failed = True
+                continue
+
+            if op_auth.status is not AuthorizationStatus.AUTHORIZED:
+                outcomes.append(OperationOutcome(
+                    operation_ref=op.id,
+                    status="failed",
+                    failure=TypedFailure(
+                        failure_kind="permission_blocked",
+                        detail=f"operation not authorized: {op_auth.status.value}",
+                        recoverable=op_auth.status is AuthorizationStatus.DEFERRED,
+                    ),
+                ))
+                all_succeeded = False
+                any_failed = True
+                continue
+
+            # Check idempotency registry — prevent duplicate execution
+            if op.idempotency_key and op.idempotency_key in self._idempotency_registry:
+                existing_ref = self._idempotency_registry[op.idempotency_key]
+                outcomes.append(OperationOutcome(
+                    operation_ref=op.id,
+                    status="succeeded",
+                    output_refs=(f"idempotent:{existing_ref}",),
+                    adapter_receipt=f"idempotent_hit:{op.idempotency_key}",
+                ))
                 continue
 
             # Check if already executing (idempotency)
@@ -102,6 +141,34 @@ class OperationExecutor:
             # Execute based on operation schema
             started = datetime.now(timezone.utc)
             try:
+                # Determine operation class from schema_ref
+                op_class = "cognitive"
+                if op.schema_ref.startswith("op:dispatch"):
+                    op_class = "external"
+                elif op.schema_ref.startswith("comm:"):
+                    op_class = "communicative"
+                elif op.schema_ref.startswith("op:"):
+                    # Check if it's an external operation
+                    if "dispatch" in op.schema_ref:
+                        op_class = "external"
+
+                # External operations require an adapter — fail if missing
+                if op_class == "external" and adapter is None:
+                    outcomes.append(OperationOutcome(
+                        operation_ref=op.id,
+                        started_at=started,
+                        finished_at=datetime.now(timezone.utc),
+                        status="failed",
+                        failure=TypedFailure(
+                            failure_kind="missing_implementation",
+                            detail=f"external operation {op.schema_ref} has no adapter",
+                            recoverable=False,
+                        ),
+                    ))
+                    all_succeeded = False
+                    any_failed = True
+                    continue
+
                 # Try adapter-backed execution
                 if adapter is not None and hasattr(adapter, "execute"):
                     result = adapter.execute(op)
@@ -109,7 +176,8 @@ class OperationExecutor:
                     observed = getattr(result, "observed_effect_refs", ())
                 else:
                     # Cognitive operation — no external side effect
-                    output_refs = ()
+                    # Produce a concrete output_ref to avoid no-op success
+                    output_refs = (f"result:{op.id}",)
                     observed = ()
 
                 finished = datetime.now(timezone.utc)
@@ -121,6 +189,10 @@ class OperationExecutor:
                     output_refs=output_refs,
                     observed_effect_refs=observed,
                 ))
+
+                # Register in idempotency registry
+                if op.idempotency_key:
+                    self._idempotency_registry[op.idempotency_key] = op.id
 
                 # Check for prediction errors
                 if op.predicted_effect_refs and observed:

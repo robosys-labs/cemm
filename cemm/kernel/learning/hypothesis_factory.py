@@ -77,6 +77,19 @@ class CompetingHypotheses:
         return tuple(h for h in self.hypotheses if h.hypothesis_kind != "correction")
 
 
+class LearningEvidenceKind(str, Enum):
+    """Kind of learning evidence per LEARNING_PIPELINE.md §1."""
+    INSTANCE_FACT = "instance_fact"
+    RELATION_BETWEEN_SCHEMAS = "relation_between_schemas"
+    LEXEME_TO_SCHEMA_BINDING = "lexeme_to_schema_binding"
+    PARTIAL_DEFINITION = "partial_definition"
+    COMPLETE_COMPOSITIONAL_DEFINITION = "complete_compositional_definition"
+    PROTOTYPE_DEFAULT_GENERALIZATION = "prototype_default_generalization"
+    CORRECTION_OR_COUNTEREXAMPLE = "correction_or_counterexample"
+    SOURCE_RETRACTION = "source_retraction"
+    PERMISSION_CHANGE = "permission_change"
+
+
 class HypothesisFactory:
     """Generates competing schema hypotheses from evidence.
 
@@ -199,3 +212,43 @@ class HypothesisFactory:
             provenance_kind=provenance,
             context_ref=context_ref,
         )
+
+    def classify_learning_kind(
+        self,
+        is_instance_fact: bool = False,
+        is_relation_between_existing: bool = False,
+        is_new_lexical_binding: bool = False,
+        is_partial_definition: bool = False,
+        is_complete_definition: bool = False,
+        is_prototype_generalization: bool = False,
+        is_correction: bool = False,
+        is_source_retraction: bool = False,
+        is_permission_change: bool = False,
+    ) -> LearningEvidenceKind:
+        """Classify what kind of learning evidence an utterance supplies.
+
+        Per LEARNING_PIPELINE.md §1:
+        - Not every teaching-looking utterance defines a concept.
+        - The learning transaction receives grounded propositions and
+          evidence records, never copied free-text fields as semantic
+          authority.
+        """
+        if is_source_retraction:
+            return LearningEvidenceKind.SOURCE_RETRACTION
+        if is_permission_change:
+            return LearningEvidenceKind.PERMISSION_CHANGE
+        if is_correction:
+            return LearningEvidenceKind.CORRECTION_OR_COUNTEREXAMPLE
+        if is_complete_definition:
+            return LearningEvidenceKind.COMPLETE_COMPOSITIONAL_DEFINITION
+        if is_partial_definition:
+            return LearningEvidenceKind.PARTIAL_DEFINITION
+        if is_new_lexical_binding:
+            return LearningEvidenceKind.LEXEME_TO_SCHEMA_BINDING
+        if is_prototype_generalization:
+            return LearningEvidenceKind.PROTOTYPE_DEFAULT_GENERALIZATION
+        if is_relation_between_existing:
+            return LearningEvidenceKind.RELATION_BETWEEN_SCHEMAS
+        if is_instance_fact:
+            return LearningEvidenceKind.INSTANCE_FACT
+        return LearningEvidenceKind.INSTANCE_FACT

@@ -1,4 +1,11 @@
-"""Canonical budget-aware response formation engine."""
+"""DEPRECATED: Replaced by cemm.kernel.response.planner.ResponsePlanner + cemm.kernel.response.renderer.MessageRenderer.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+response path uses ResponsePlanner for content selection and MessageRenderer
+for surface realization. Do not use for new code — redirect to the v3.4
+response pipeline.
+
+Canonical budget-aware response formation engine."""
 
 from __future__ import annotations
 

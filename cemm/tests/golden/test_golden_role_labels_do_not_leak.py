@@ -24,10 +24,10 @@ from ...types.obligation_frame import ObligationFrame
 from ...types.semantic_program import SemanticProgram, SemanticInstruction
 from ...types.semantic_query import SemanticQuery, QueryConstraint
 from ...types.answer_binding import AnswerBinding, SlotFill
-from ...kernel.semantic_query_engine import SemanticQueryEngine
-from ...kernel.relation_algebra import RelationAlgebra
+from ...legacy.v3_3.semantic_query_engine import SemanticQueryEngine
+from ...legacy.v3_3.relation_algebra import RelationAlgebra
 from ...memory.predicate_schema_store import PredicateSchemaStore
-from ...kernel.relation_frame_compiler import RelationFrameCompiler
+from ...legacy.v3_3.relation_frame_compiler import RelationFrameCompiler
 from ...types.uol_graph import UOLGraph
 from ..harness import SeededSystem
 

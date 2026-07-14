@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 os.environ.setdefault("CEMM_EXPORT_PATH", "")
 
 from cemm.registry import Registry
-from cemm.kernel.pipeline import Pipeline
+from cemm.legacy.v3_3.pipeline import Pipeline
 from cemm.memory.concept_lattice import ConceptLattice
 from cemm.memory.construction_lattice import ConstructionLattice
 from cemm.memory.episodic_trace_store import EpisodicTraceStore

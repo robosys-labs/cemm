@@ -463,10 +463,10 @@ def test_model_imports_no_engine():
     import cemm.kernel.model as model_pkg
 
     forbidden_substrings = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
-        "cemm.kernel.operational_meaning_compiler",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
+        "cemm.legacy.v3_3.operational_meaning_compiler",
         "cemm.memory.durable_semantic_store",
     ]
 

@@ -174,7 +174,7 @@ class DurableSemanticStore:
         object_key = object_key_from_fields(fields)
         if not relation_key or not identity.subject_key or not object_key:
             raise ValueError("durable relation requires relation, subject, and object")
-        from ..kernel.proposition_semantics import is_internal_identifier
+        from ..legacy.v3_3.proposition_semantics import is_internal_identifier
         if is_internal_identifier(object_surface):
             raise ValueError("internal identifier cannot be stored as public object surface")
 

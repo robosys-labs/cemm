@@ -576,9 +576,9 @@ def test_phase8_imports_no_engine():
     import cemm.kernel.epistemics.replay_safety as rs_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
         "cemm.kernel.commit",
     ]

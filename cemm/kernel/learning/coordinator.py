@@ -330,6 +330,148 @@ class LearningCoordinator:
         """Get a transaction by ID."""
         return self._transactions.get(tx_id)
 
+    def get_pending_transactions(self) -> tuple[LearningTransaction, ...]:
+        """Get all transactions awaiting evidence (PROBING or STAGED)."""
+        return tuple(
+            tx for tx in self._transactions.values()
+            if tx.status in (
+                TransactionStatus.PROBING.value,
+                TransactionStatus.STAGED.value,
+                TransactionStatus.OPEN.value,
+            )
+        )
+
+    def get_active_transactions(self) -> tuple[LearningTransaction, ...]:
+        """Get all non-terminal transactions."""
+        return tuple(
+            tx for tx in self._transactions.values()
+            if tx.status not in (
+                TransactionStatus.COMMITTED.value,
+                TransactionStatus.ROLLED_BACK.value,
+            )
+        )
+
+    def consume_pending_evidence(
+        self,
+        selected_interpretations: list[Any] | None = None,
+    ) -> tuple[Any, ...]:
+        """B5: Consume pending learning evidence.
+
+        After ordinary composition and grounding, match grounded
+        propositions against expected evidence schemas for pending
+        transactions. Raw text is never copied directly into a
+        hypothesis field.
+
+        Returns updated transactions that received evidence.
+        """
+        if not selected_interpretations:
+            return ()
+
+        pending = self.get_pending_transactions()
+        if not pending:
+            return ()
+
+        from .hypothesis_factory import EvidenceForHypothesis, HypothesisKind
+        updated_txs: list[Any] = []
+
+        for tx in pending:
+            # Match interpretations to this transaction's target
+            matched_evidence: list[EvidenceForHypothesis] = []
+            for interp in selected_interpretations:
+                prop = getattr(interp, "proposition", None)
+                if prop is None:
+                    continue
+                prop_id = getattr(prop, "id", "")
+                # Check if this proposition relates to the transaction's target
+                target = tx.target_sense_ref or tx.target_schema_ref
+                if not target:
+                    continue
+                # Match by target reference in proposition's predication
+                pred_ref = getattr(prop, "predication_ref", "") or getattr(prop, "predicate_schema_ref", "")
+                if target in pred_ref or pred_ref in target:
+                    ev = self._hypothesis_factory.classify_evidence(
+                        proposition_ref=prop_id,
+                        evidence_ref=f"ev:{prop_id}",
+                        is_new_sense_evidence=True,
+                        confidence=0.5,
+                        is_independent=True,
+                    )
+                    matched_evidence.append(ev)
+
+            if matched_evidence:
+                # Begin probing with matched evidence
+                updated, _ = self.begin_probing(
+                    tx=tx,
+                    evidence=tuple(matched_evidence),
+                )
+                updated_txs.append(updated)
+
+        return tuple(updated_txs)
+
+    def provisional_replay(
+        self,
+        tx: LearningTransaction,
+        contributions: tuple[StagedContribution, ...] = (),
+        implementation_path: str = "",
+    ) -> tuple[LearningTransaction, ActivationAttempt]:
+        """B6: Provisional replay — create child revision and attempt activation.
+
+        When matched evidence can update a target schema:
+        1. create a child schema revision against the pinned snapshot
+        2. stage typed schema changes with field-level provenance
+        3. classify typed dependencies and recursive components
+        4. run structural closure and sandboxed competence cases
+        5. derive context-specific epistemic admissibility
+        6. expose the result as provisional or activation-ready
+        7. preserve rollback and idempotency data
+
+        Replay may not repeat dispatched output or external side effects.
+        Definition-derived cases can prove well-formedness only, not
+        independent competence.
+        """
+        # Select the best hypothesis (highest confidence)
+        if not tx.hypotheses:
+            from dataclasses import replace
+            updated = replace(tx, status=TransactionStatus.ROLLED_BACK.value)
+            self._transactions[updated.id] = updated
+            return updated, ActivationAttempt(
+                child_revision_ref="",
+                rollback_reason="no hypotheses to stage",
+            )
+
+        best_hyp = max(tx.hypotheses, key=lambda h: h.confidence)
+
+        # Stage child revision
+        updated, child = self.stage_revision(
+            tx=tx,
+            hypothesis=best_hyp,
+            contributions=contributions,
+        )
+
+        # Attempt activation (runs closure, competence, admissibility)
+        updated, attempt = self.attempt_activation(
+            tx=updated,
+            child=child,
+            implementation_path=implementation_path,
+        )
+
+        # Enqueue replay work if replay queue is available
+        if self._replay_queue is not None and attempt.activated:
+            from ..model.learning import ReplayWorkItem
+            replay_item = ReplayWorkItem(
+                id=f"replay:{child.revision_id}",
+                source_evidence_ref=updated.gap_ref,
+                target_sense_ref=updated.target_sense_ref,
+                target_schema_revision_ref=child.revision_id,
+                checkpoint_ref=updated.replay_checkpoint_ref,
+                context_refs=updated.context_refs,
+                dependency_fingerprint=f"store:{updated.base_store_revision}",
+                idempotency_key=f"replay:{child.revision_id}:{updated.base_store_revision}",
+            )
+            self._replay_queue.enqueue(replay_item)
+
+        return updated, attempt
+
     def rollback(self, tx: LearningTransaction) -> LearningTransaction:
         """Roll back a transaction.
 
@@ -340,6 +482,59 @@ class LearningCoordinator:
         updated = replace(tx, status=TransactionStatus.ROLLED_BACK.value)
         self._transactions[updated.id] = updated
         return updated
+
+    def compute_grounding_frontier(
+        self,
+        tx: LearningTransaction,
+        attempt: ActivationAttempt | None = None,
+        blockers: tuple[Any, ...] = (),
+    ) -> GroundingFrontier:
+        """Compute the grounding frontier for a transaction.
+
+        Per LEARNING_PIPELINE.md §5:
+        - The transaction computes the smallest blocking frontier over
+          typed dependencies.
+        - Priority: active goal blocker, required semantic family/role/value,
+          constitutive structure, independent discrimination, differentiator,
+          context/time applicability, enrichment.
+        - Asked probe keys are persisted. Budget exhaustion leaves exact typed
+          gaps and a resumable transaction.
+        """
+        frontier_items: list[FrontierItem] = []
+
+        # Build frontier items from structural assessment blockers
+        if attempt is not None and attempt.structural_assessment is not None:
+            for blocker in attempt.structural_assessment.blocker_reasons:
+                priority = self._frontier_builder.classify_blocker(blocker)
+                probe_key = f"probe:{tx.id}:{blocker}"
+                frontier_items.append(FrontierItem(
+                    item_id=f"fi:{tx.id}:{blocker}",
+                    dependency_ref=blocker,
+                    blocker_kind=blocker,
+                    priority=priority,
+                    probe_key=probe_key,
+                    target_schema_ref=tx.target_schema_ref,
+                ))
+
+        # Also include any additional blockers passed in
+        for blocker in blockers:
+            blocker_kind = getattr(blocker, "kind", str(blocker))
+            priority = self._frontier_builder.classify_blocker(blocker_kind)
+            probe_key = f"probe:{tx.id}:{blocker_kind}"
+            frontier_items.append(FrontierItem(
+                item_id=f"fi:{tx.id}:{blocker_kind}",
+                dependency_ref=str(blocker),
+                blocker_kind=blocker_kind,
+                priority=priority,
+                probe_key=probe_key,
+                target_schema_ref=tx.target_schema_ref,
+            ))
+
+        return self._frontier_builder.build(
+            blockers=tuple(frontier_items),
+            budget=tx.budget,
+            asked_probe_keys=tx.asked_probe_keys,
+        )
 
     def check_completion_gate(
         self,

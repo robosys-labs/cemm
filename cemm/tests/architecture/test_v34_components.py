@@ -42,6 +42,7 @@ class MockCapabilityAssessment:
 @dataclass(frozen=True, slots=True)
 class MockOpenPort:
     role_name: str = "agent"
+    role_schema_ref: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,11 +95,8 @@ class MockOperation:
     schema_ref: str = "op:query"
     status: str = "pending"
     predicted_effect_refs: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True, slots=True)
-class MockAuthorization:
-    authorized: bool = True
+    bindings: tuple = ()
+    idempotency_key: str = ""
 
 
 # ── GapDetector tests ──
@@ -333,7 +331,7 @@ class TestSemanticRetriever:
         from cemm.kernel.epistemics.retriever import SemanticRetriever
         retriever = SemanticRetriever(store=object())  # non-None store
         result = retriever.retrieve(
-            open_ports=(MockOpenPort(role_name="agent"),),
+            open_ports=(MockOpenPort(role_name="agent", role_schema_ref="role:agent"),),
         )
         assert len(result.results) == 1
         assert result.results[0].is_empty
@@ -409,7 +407,7 @@ class TestPlanner:
         from cemm.kernel.execution.planner import Planner
         planner = Planner()
         result = planner.plan(goals=(MockGoal(goal_kind="world_state"),))
-        assert result.selected.operations[0].schema_ref == "op:write"
+        assert result.selected.operations[0].schema_ref == "op:stage_mutation"
 
     def test_plan_rejected_when_not_capable(self):
         from cemm.kernel.execution.planner import Planner
@@ -429,6 +427,75 @@ class TestPlanner:
         assert result.selected.goal_refs == ("g1",)
 
 
+# ── OperationAuthorizer fail-closed tests (BF-003) ──
+
+
+class TestAuthorizerFailClosed:
+    def test_empty_conditions_never_authorize(self):
+        from cemm.kernel.execution.authorizer import OperationAuthorizer, AuthorizationConditions, AuthorizationStatus
+        authorizer = OperationAuthorizer()
+        op = MockOperation()
+        result = authorizer.authorize(op, AuthorizationConditions())
+        assert result.status is not AuthorizationStatus.AUTHORIZED
+
+    def test_missing_permission_never_authorizes(self):
+        from cemm.kernel.execution.authorizer import OperationAuthorizer, AuthorizationConditions, AuthorizationStatus
+        authorizer = OperationAuthorizer()
+        op = MockOperation()
+        result = authorizer.authorize(op, AuthorizationConditions(
+            permission_allowed=None,
+            safety_passed=True,
+            privacy_passed=True,
+            capability_available=True,
+            resources_available=True,
+            context_valid=True,
+            schema_use_valid=True,
+            risk_level="low",
+        ))
+        assert result.status is AuthorizationStatus.DEFERRED
+
+    def test_denied_permission_produces_denied(self):
+        from cemm.kernel.execution.authorizer import OperationAuthorizer, AuthorizationConditions, AuthorizationStatus
+        authorizer = OperationAuthorizer()
+        op = MockOperation()
+        result = authorizer.authorize(op, AuthorizationConditions(
+            permission_allowed=False,
+        ))
+        assert result.status is AuthorizationStatus.DENIED
+
+    def test_unknown_risk_never_authorizes(self):
+        from cemm.kernel.execution.authorizer import OperationAuthorizer, AuthorizationConditions, AuthorizationStatus
+        authorizer = OperationAuthorizer()
+        op = MockOperation()
+        result = authorizer.authorize(op, AuthorizationConditions(
+            permission_allowed=True,
+            safety_passed=True,
+            privacy_passed=True,
+            capability_available=True,
+            resources_available=True,
+            context_valid=True,
+            schema_use_valid=True,
+            risk_level="unknown",
+        ))
+        assert result.status is not AuthorizationStatus.AUTHORIZED
+
+    def test_fully_specified_low_risk_authorizes(self):
+        from cemm.kernel.execution.authorizer import OperationAuthorizer, AuthorizationConditions, AuthorizationStatus
+        authorizer = OperationAuthorizer()
+        op = MockOperation()
+        result = authorizer.authorize(op, AuthorizationConditions(
+            permission_allowed=True,
+            safety_passed=True,
+            privacy_passed=True,
+            capability_available=True,
+            resources_available=True,
+            context_valid=True,
+            schema_use_valid=True,
+            risk_level="low",
+        ))
+        assert result.status is AuthorizationStatus.AUTHORIZED
+
+
 # ── OperationExecutor tests ──
 
 
@@ -442,38 +509,107 @@ class TestOperationExecutor:
 
     def test_execute_authorized_operation(self):
         from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
         executor = OperationExecutor()
-        plan = MockPlan(operations=(MockOperation(),))
-        result = executor.execute(plan, authorization=MockAuthorization(authorized=True))
+        op = MockOperation()
+        plan = MockPlan(operations=(op,))
+        auth = AuthorizationBatch(by_operation_ref={
+            op.id: AuthorizationResult(
+                operation_ref=op.id,
+                status=AuthorizationStatus.AUTHORIZED,
+            )
+        })
+        result = executor.execute(plan, authorization=auth)
         assert result.succeeded
         assert result.outcome_count == 1
 
     def test_execute_unauthorized_fails(self):
         from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
         executor = OperationExecutor()
-        plan = MockPlan(operations=(MockOperation(),))
-        result = executor.execute(plan, authorization=MockAuthorization(authorized=False))
+        op = MockOperation()
+        plan = MockPlan(operations=(op,))
+        auth = AuthorizationBatch(by_operation_ref={
+            op.id: AuthorizationResult(
+                operation_ref=op.id,
+                status=AuthorizationStatus.DENIED,
+            )
+        })
+        result = executor.execute(plan, authorization=auth)
         assert result.failed
         assert not result.succeeded
 
     def test_execute_records_outcome_status(self):
         from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
         executor = OperationExecutor()
-        plan = MockPlan(operations=(MockOperation(),))
-        result = executor.execute(plan, authorization=MockAuthorization(authorized=True))
+        op = MockOperation()
+        plan = MockPlan(operations=(op,))
+        auth = AuthorizationBatch(by_operation_ref={
+            op.id: AuthorizationResult(
+                operation_ref=op.id,
+                status=AuthorizationStatus.AUTHORIZED,
+            )
+        })
+        result = executor.execute(plan, authorization=auth)
         assert result.ledger is not None
         assert result.ledger.outcomes[0].status == "succeeded"
 
     def test_execute_multiple_operations(self):
         from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
         executor = OperationExecutor()
-        plan = MockPlan(operations=(
-            MockOperation(id="op1"),
-            MockOperation(id="op2"),
-        ))
-        result = executor.execute(plan, authorization=MockAuthorization(authorized=True))
+        op1 = MockOperation(id="op1")
+        op2 = MockOperation(id="op2")
+        plan = MockPlan(operations=(op1, op2))
+        auth = AuthorizationBatch(by_operation_ref={
+            op1.id: AuthorizationResult(operation_ref=op1.id, status=AuthorizationStatus.AUTHORIZED),
+            op2.id: AuthorizationResult(operation_ref=op2.id, status=AuthorizationStatus.AUTHORIZED),
+        })
+        result = executor.execute(plan, authorization=auth)
         assert result.outcome_count == 2
         assert result.succeeded
+
+    def test_execute_no_authorization_fails_closed(self):
+        from cemm.kernel.execution.executor import OperationExecutor
+        executor = OperationExecutor()
+        plan = MockPlan(operations=(MockOperation(),))
+        result = executor.execute(plan, authorization=None)
+        assert result.failed
+        assert not result.succeeded
+
+    def test_execute_deferred_authorization_fails(self):
+        from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
+        executor = OperationExecutor()
+        op = MockOperation()
+        plan = MockPlan(operations=(op,))
+        auth = AuthorizationBatch(by_operation_ref={
+            op.id: AuthorizationResult(
+                operation_ref=op.id,
+                status=AuthorizationStatus.DEFERRED,
+            )
+        })
+        result = executor.execute(plan, authorization=auth)
+        assert result.failed
+        assert not result.succeeded
+
+    def test_execute_auth_for_op_a_does_not_authorize_op_b(self):
+        from cemm.kernel.execution.executor import OperationExecutor
+        from cemm.kernel.execution.authorizer import AuthorizationResult, AuthorizationStatus, AuthorizationBatch
+        executor = OperationExecutor()
+        op1 = MockOperation(id="op1")
+        op2 = MockOperation(id="op2")
+        plan = MockPlan(operations=(op1, op2))
+        auth = AuthorizationBatch(by_operation_ref={
+            op1.id: AuthorizationResult(operation_ref=op1.id, status=AuthorizationStatus.AUTHORIZED),
+        })
+        result = executor.execute(plan, authorization=auth)
+        assert result.failed
+        assert result.outcome_count == 2
+        statuses = [o.status for o in result.ledger.outcomes]
+        assert "succeeded" in statuses
+        assert "failed" in statuses
 
 
 # ── KernelSnapshot pinning tests ──

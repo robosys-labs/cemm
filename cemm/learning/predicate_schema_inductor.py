@@ -1,4 +1,11 @@
-"""PredicateSchemaInductor — discovers new predicate schemas from relation frames."""
+"""DEPRECATED: Replaced by cemm.kernel.learning.coordinator.LearningCoordinator + HypothesisFactory.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+learning path uses LearningCoordinator with HypothesisFactory for schema
+induction and revision.
+Do not use for new code — redirect to LearningCoordinator.
+
+PredicateSchemaInductor — discovers new predicate schemas from relation frames."""
 
 from __future__ import annotations
 

@@ -509,7 +509,16 @@ def test_authorizer_denies_on_capability_unavailable():
     """OperationAuthorizer denies when capability is unavailable."""
     authorizer = OperationAuthorizer()
     op = make_operation()
-    conditions = AuthorizationConditions(capability_available=False)
+    conditions = AuthorizationConditions(
+        permission_allowed=True,
+        safety_passed=True,
+        privacy_passed=True,
+        capability_available=False,
+        resources_available=True,
+        context_valid=True,
+        schema_use_valid=True,
+        risk_level="low",
+    )
 
     result = authorizer.authorize(op, conditions)
     assert result.status == AuthorizationStatus.DENIED
@@ -520,7 +529,16 @@ def test_authorizer_denies_on_safety_violation():
     """OperationAuthorizer denies when safety check fails."""
     authorizer = OperationAuthorizer()
     op = make_operation()
-    conditions = AuthorizationConditions(safety_passed=False)
+    conditions = AuthorizationConditions(
+        permission_allowed=True,
+        safety_passed=False,
+        privacy_passed=True,
+        capability_available=True,
+        resources_available=True,
+        context_valid=True,
+        schema_use_valid=True,
+        risk_level="low",
+    )
 
     result = authorizer.authorize(op, conditions)
     assert result.status == AuthorizationStatus.DENIED
@@ -532,6 +550,13 @@ def test_authorizer_denies_on_risk_exceeded():
     authorizer = OperationAuthorizer()
     op = make_operation()
     conditions = AuthorizationConditions(
+        permission_allowed=True,
+        safety_passed=True,
+        privacy_passed=True,
+        capability_available=True,
+        resources_available=True,
+        context_valid=True,
+        schema_use_valid=True,
         risk_level="high",
         risk_threshold="low",
     )
@@ -541,6 +566,22 @@ def test_authorizer_denies_on_risk_exceeded():
     assert result.failure.failure_kind == "risk_exceeded"
 
 
+def _full_conditions(**overrides) -> AuthorizationConditions:
+    """Return AuthorizationConditions with all gates True, plus overrides."""
+    defaults = dict(
+        permission_allowed=True,
+        safety_passed=True,
+        privacy_passed=True,
+        capability_available=True,
+        resources_available=True,
+        context_valid=True,
+        schema_use_valid=True,
+        risk_level="low",
+    )
+    defaults.update(overrides)
+    return AuthorizationConditions(**defaults)
+
+
 def test_authorizer_revalidation_fingerprint_change():
     """Authorization is revalidated before irreversible execution and critical commit.
     Fingerprint change blocks revalidation."""
@@ -548,12 +589,12 @@ def test_authorizer_revalidation_fingerprint_change():
     op = make_operation()
 
     # Original authorization
-    conditions = AuthorizationConditions(environment_fingerprint="fp:v1")
+    conditions = _full_conditions(environment_fingerprint="fp:v1")
     original = authorizer.authorize(op, conditions)
     assert original.status == AuthorizationStatus.AUTHORIZED
 
     # Revalidation with changed fingerprint
-    new_conditions = AuthorizationConditions(environment_fingerprint="fp:v2")
+    new_conditions = _full_conditions(environment_fingerprint="fp:v2")
     revalidated = authorizer.revalidate(original, new_conditions)
     assert revalidated.status == AuthorizationStatus.DENIED
     assert revalidated.failure.failure_kind == "commit_conflict"
@@ -564,7 +605,7 @@ def test_authorizer_revalidation_same_fingerprint():
     authorizer = OperationAuthorizer()
     op = make_operation()
 
-    conditions = AuthorizationConditions(environment_fingerprint="fp:v1")
+    conditions = _full_conditions(environment_fingerprint="fp:v1")
     original = authorizer.authorize(op, conditions)
     assert original.status == AuthorizationStatus.AUTHORIZED
 
@@ -578,15 +619,12 @@ def test_authorizer_revalidation_permission_revoked():
     authorizer = OperationAuthorizer()
     op = make_operation()
 
-    conditions = AuthorizationConditions(environment_fingerprint="fp:v1")
+    conditions = _full_conditions(environment_fingerprint="fp:v1")
     original = authorizer.authorize(op, conditions)
     assert original.status == AuthorizationStatus.AUTHORIZED
 
     # Permission revoked during revalidation
-    new_conditions = AuthorizationConditions(
-        environment_fingerprint="fp:v1",
-        permission_allowed=False,
-    )
+    new_conditions = _full_conditions(environment_fingerprint="fp:v1", permission_allowed=False)
     revalidated = authorizer.revalidate(original, new_conditions)
     assert revalidated.status == AuthorizationStatus.DENIED
 
@@ -673,9 +711,9 @@ def test_phase9_imports_no_engine():
     import cemm.kernel.execution.commit as co_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     for mod in [cw_mod, au_mod, rc_mod, co_mod]:

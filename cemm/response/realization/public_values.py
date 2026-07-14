@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...kernel.proposition_semantics import is_internal_identifier
+from ...legacy.v3_3.proposition_semantics import is_internal_identifier
 
 _INTERNAL_SOURCES = frozenset({"role_placeholder", "role_binding", "query_open_port"})
 _INTERNAL_KINDS = frozenset({"role", "port", "placeholder", "internal"})

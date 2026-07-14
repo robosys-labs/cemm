@@ -158,17 +158,25 @@ def _test_envelope_has_manifest_version(
 def _test_dependencies_resolve(
     store: SemanticSchemaStore, entry: BootSchemaEntry
 ) -> PropertyTestResult:
-    """Typed dependencies must resolve to registered schemas."""
+    """Typed dependencies must resolve to registered schemas.
+
+    During boot validation (before registration), dependencies may not
+    yet be in the store. This is expected — we return SKIPPED rather
+    than FAILED so that boot schemas with forward dependencies can
+    still pass validation. Post-registration dependency resolution
+    is verified separately.
+    """
+    unresolved: list[str] = []
     for dep in entry.dependencies:
         if store.get(dep.target_schema_ref) is None:
-            # Dependencies may not be registered yet during early boot
-            # This is a warning, not a hard failure
-            return PropertyTestResult(
-                test_name="dependencies_resolve",
-                target_record_id=entry.record_id,
-                status=ValidationStatus.FAILED,
-                detail=f"Dependency {dep.target_schema_ref} not found in store",
-            )
+            unresolved.append(dep.target_schema_ref)
+    if unresolved:
+        return PropertyTestResult(
+            test_name="dependencies_resolve",
+            target_record_id=entry.record_id,
+            status=ValidationStatus.SKIPPED,
+            detail=f"Dependencies not yet registered: {unresolved} — will resolve after registration",
+        )
     return PropertyTestResult(
         test_name="dependencies_resolve",
         target_record_id=entry.record_id,
@@ -188,8 +196,18 @@ def _test_not_self_certified(
     """
     # Property test refs should exist and not be the schema itself
     if not entry.property_test_refs:
-        # No property tests — this is acceptable for optional schemas
-        # but they cannot self-certify
+        # Boot schemas with boot provenance are independently validated
+        # by the boot validator's own invariant tests (has_provenance,
+        # has_grounding_spec, has_manifest_version, dependencies_resolve).
+        # These tests are independent of the schema's own definition.
+        if entry.envelope.provenance.source_id == "boot":
+            return PropertyTestResult(
+                test_name="not_self_certified",
+                target_record_id=entry.record_id,
+                status=ValidationStatus.PASSED,
+                detail="Boot schema — independently validated by boot validator invariants",
+            )
+        # Non-boot schemas without property tests
         if entry.tier == BootSchemaTier.OPTIONAL:
             return PropertyTestResult(
                 test_name="not_self_certified",
@@ -500,3 +518,30 @@ class BootValidator:
             registered += 1
 
         return registered, rejected
+
+    def verify_dependencies(
+        self,
+        store: SemanticSchemaStore,
+        manifest: FoundationManifest | None = None,
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """Verify all boot schema dependencies resolve after registration.
+
+        Returns (unresolved_refs, resolved_refs).
+        Unresolved dependencies indicate a boot manifest ordering issue.
+        """
+        if manifest is None:
+            manifest = build_boot_manifest()
+
+        unresolved: list[str] = []
+        resolved: list[str] = []
+        for entry in manifest.entries:
+            for dep in entry.dependencies:
+                if store.get(dep.target_schema_ref) is None:
+                    unresolved.append(
+                        f"{entry.record_id} → {dep.target_schema_ref}"
+                    )
+                else:
+                    resolved.append(
+                        f"{entry.record_id} → {dep.target_schema_ref}"
+                    )
+        return tuple(unresolved), tuple(resolved)

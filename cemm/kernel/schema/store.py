@@ -14,6 +14,7 @@ Architectural guardrails (AGENTS.md §7):
 """
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterator, Protocol
@@ -117,6 +118,10 @@ class SemanticSchemaStore:
         self._lexical_index: dict[tuple[str, str], set[str]] = {}
         # Store revision counter (incremented on any mutation)
         self._store_revision: int = 0
+        # Thread lock for transaction isolation
+        self._lock = threading.RLock()
+        # Transaction snapshot (set by transaction() context manager)
+        self._txn_snapshot: dict[str, Any] | None = None
 
     # ── Registration ───────────────────────────────────────────────
 
@@ -240,6 +245,10 @@ class SemanticSchemaStore:
         required independent competence, context/scope policy,
         and atomic activation. The validator cannot activate —
         only the store can.
+
+        This method requires assessment refs to be present on the
+        envelope (grounding_assessment_ref, competence_assessment_ref).
+        Use activate_with_assessment to provide them.
         """
         env = self._records.get(record_id)
         if env is None:
@@ -253,7 +262,111 @@ class SemanticSchemaStore:
                 status=ActivationStatus.BLOCKED,
                 detail=f"Record {record_id} is {env.status}, cannot activate",
             )
+        # Enforce assessment refs for activation
+        if not env.grounding_assessment_ref:
+            return ActivationResult(
+                status=ActivationStatus.BLOCKED,
+                detail=f"Record {record_id} has no grounding_assessment_ref — "
+                       "use activate_with_assessment()",
+            )
         return activate_single(self, record_id, "active", expected_revision)
+
+    def activate_with_assessment(
+        self,
+        record_id: str,
+        expected_revision: int,
+        grounding_assessment_ref: str,
+        competence_assessment_ref: str = "",
+        epistemic_admissibility_ref: str = "",
+        environment_fingerprint: str = "",
+        *,
+        grounding_assessment: Any | None = None,
+        competence_assessment: Any | None = None,
+    ) -> ActivationResult:
+        """Activate a schema revision with assessment refs.
+
+        Stamps the envelope with the grounding assessment, competence
+        assessment, and epistemic admissibility refs that justify
+        activation. All active records must have assessment/admissibility
+        refs (Stage 3 exit gate).
+
+        The grounding_assessment_ref must be non-empty. The competence
+        and epistemic refs may be empty if the assessment process
+        determined they are not required for this schema kind.
+
+        If grounding_assessment is provided, verifies is_structurally_executable
+        is True before allowing activation. If competence_assessment is
+        provided, verifies is_self_certified is False. This enforces the
+        no-bypass rule: closure and competence checks cannot be skipped.
+        """
+        env = self._records.get(record_id)
+        if env is None:
+            return ActivationResult(
+                status=ActivationStatus.BLOCKED,
+                detail=f"Record {record_id} not found",
+            )
+        if env.status not in ("candidate", "provisional"):
+            return ActivationResult(
+                status=ActivationStatus.BLOCKED,
+                detail=f"Record {record_id} is {env.status}, cannot activate",
+            )
+        if not grounding_assessment_ref:
+            return ActivationResult(
+                status=ActivationStatus.BLOCKED,
+                detail="grounding_assessment_ref is required for activation",
+            )
+
+        # Enforce closure: grounding assessment must indicate structural executability
+        if grounding_assessment is not None:
+            if not getattr(grounding_assessment, "is_structurally_executable", False):
+                blockers = getattr(grounding_assessment, "blocker_reasons", ())
+                return ActivationResult(
+                    status=ActivationStatus.BLOCKED,
+                    detail=f"Grounding assessment does not indicate structural "
+                           f"executability. Blockers: {blockers}",
+                )
+
+        # Enforce competence: self-certified assessments cannot activate
+        if competence_assessment is not None:
+            if getattr(competence_assessment, "is_self_certified", False):
+                return ActivationResult(
+                    status=ActivationStatus.BLOCKED,
+                    detail="Competence assessment is self-certified — "
+                           "activation forbidden",
+                )
+
+        # CAS check: verify revision hasn't changed since assessment
+        current_rev = self._revisions.get(record_id)
+        if current_rev is None:
+            return ActivationResult(
+                status=ActivationStatus.BLOCKED,
+                detail=f"Record {record_id} has no revision",
+            )
+        if current_rev != expected_revision:
+            return ActivationResult(
+                status=ActivationStatus.CAS_FAILED,
+                failed_ref=record_id,
+                detail=f"Expected revision {expected_revision}, found {current_rev}",
+            )
+
+        # CAS passed — stamp envelope with assessment refs AND set status atomically
+        from dataclasses import replace as _replace
+        stamped = _replace(
+            env,
+            grounding_assessment_ref=grounding_assessment_ref,
+            competence_assessment_ref=competence_assessment_ref,
+            epistemic_admissibility_ref=epistemic_admissibility_ref,
+            activation_environment_fingerprint=environment_fingerprint,
+            status="active",
+        )
+        self._records[record_id] = stamped
+        self._revisions[record_id] = current_rev + 1
+        self._store_revision += 1
+
+        return ActivationResult(
+            status=ActivationStatus.SUCCESS,
+            activated_refs=(record_id,),
+        )
 
     def activate_cluster(
         self,
@@ -264,8 +377,56 @@ class SemanticSchemaStore:
 
         A recursive cluster activates atomically or not at all.
         If any member fails, no member becomes active.
+
+        All cluster members must have grounding_assessment_ref on their
+        envelopes — cluster activation does not bypass assessment refs.
+        Use stamp_assessment_refs() to stamp members before cluster activation.
         """
+        # Enforce assessment refs for all cluster members
+        for rid in record_ids:
+            env = self._records.get(rid)
+            if env is None:
+                return ActivationResult(
+                    status=ActivationStatus.BLOCKED,
+                    detail=f"Cluster member {rid} not found",
+                )
+            if not env.grounding_assessment_ref:
+                return ActivationResult(
+                    status=ActivationStatus.BLOCKED,
+                    detail=f"Cluster member {rid} has no grounding_assessment_ref — "
+                           "use stamp_assessment_refs() first",
+                )
         return activate_cluster(self, record_ids, "active", expected_revisions)
+
+    def stamp_assessment_refs(
+        self,
+        record_id: str,
+        grounding_assessment_ref: str,
+        competence_assessment_ref: str = "",
+        epistemic_admissibility_ref: str = "",
+        environment_fingerprint: str = "",
+    ) -> bool:
+        """Stamp an envelope with assessment refs without activating.
+
+        This is used before cluster activation, where the assessment
+        refs must be present but the status transition happens via
+        activate_cluster(). Does NOT change status or increment revision.
+        """
+        env = self._records.get(record_id)
+        if env is None:
+            return False
+        if not grounding_assessment_ref:
+            return False
+        from dataclasses import replace as _replace
+        stamped = _replace(
+            env,
+            grounding_assessment_ref=grounding_assessment_ref,
+            competence_assessment_ref=competence_assessment_ref,
+            epistemic_admissibility_ref=epistemic_admissibility_ref,
+            activation_environment_fingerprint=environment_fingerprint,
+        )
+        self._records[record_id] = stamped
+        return True
 
     def supersede(
         self,
@@ -631,6 +792,86 @@ class SemanticSchemaStore:
         key = (surface, language_tag)
         return tuple(self._lexical_index.get(key, set()))
 
+    # ── Transaction support ─────────────────────────────────────────
+
+    def transaction(self) -> "_StoreTransaction":
+        """Begin a transaction for atomic batch mutations.
+
+        Usage:
+            with store.transaction():
+                store.register(env1)
+                store.register(env2)
+                store.activate_with_assessment(...)
+
+        On clean exit, the transaction commits (store revision increments once).
+        On exception, all mutations are rolled back to the snapshot.
+        """
+        return _StoreTransaction(self)
+
+    def _snapshot_state(self) -> dict[str, Any]:
+        """Capture a deep snapshot of all mutable store state."""
+        return {
+            "records": dict(self._records),
+            "revisions": dict(self._revisions),
+            "reverse_deps": {k: v for k, v in self._reverse_deps.items()},
+            "forward_deps": {k: v for k, v in self._forward_deps.items()},
+            "journal": list(self._journal),
+            "proposition_bindings": {k: set(v) for k, v in self._proposition_bindings.items()},
+            "replay_bindings": {k: set(v) for k, v in self._replay_bindings.items()},
+            "sense_clusters": {k: set(v) for k, v in self._sense_clusters.items()},
+            "lexical_index": {k: set(v) for k, v in self._lexical_index.items()},
+            "store_revision": self._store_revision,
+        }
+
+    def _restore_state(self, snapshot: dict[str, Any]) -> None:
+        """Restore store state from a snapshot."""
+        self._records = dict(snapshot["records"])
+        self._revisions = dict(snapshot["revisions"])
+        self._reverse_deps = {k: v for k, v in snapshot["reverse_deps"].items()}
+        self._forward_deps = {k: v for k, v in snapshot["forward_deps"].items()}
+        self._journal = list(snapshot["journal"])
+        self._proposition_bindings = {k: set(v) for k, v in snapshot["proposition_bindings"].items()}
+        self._replay_bindings = {k: set(v) for k, v in snapshot["replay_bindings"].items()}
+        self._sense_clusters = {k: set(v) for k, v in snapshot["sense_clusters"].items()}
+        self._lexical_index = {k: set(v) for k, v in snapshot["lexical_index"].items()}
+        self._store_revision = snapshot["store_revision"]
+
+    # ── Persistence ─────────────────────────────────────────────────
+
+    def save_to_file(self, path: str) -> None:
+        """Persist all schema revisions and indices to a file.
+
+        Saves all records, revisions, dependencies, indices,
+        journal, and store revision counter.
+        """
+        import pickle
+        state = self._snapshot_state()
+        with open(path, "wb") as f:
+            pickle.dump(state, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def load_from_file(self, path: str) -> None:
+        """Load schema revisions and indices from a file.
+
+        Replaces all current store state with the loaded state.
+        """
+        import pickle
+        with open(path, "rb") as f:
+            state = pickle.load(f)
+        self._restore_state(state)
+
+    # ── Introspection helpers ──────────────────────────────────────
+
+    def all_record_ids(self) -> tuple[str, ...]:
+        """Get all record IDs in the store."""
+        return tuple(self._records.keys())
+
+    def active_record_ids(self) -> tuple[str, ...]:
+        """Get all active record IDs."""
+        return tuple(
+            rid for rid, env in self._records.items()
+            if env.status == "active"
+        )
+
     # ── Snapshot for assessment ────────────────────────────────────
 
     def create_snapshot(self) -> "StoreSnapshot":
@@ -691,3 +932,32 @@ class StoreSnapshot:
 
     def get_revision(self, record_id: str) -> int | None:
         return self.revisions.get(record_id)
+
+
+# ── Store transaction ──────────────────────────────────────────────
+
+
+class _StoreTransaction:
+    """Context manager for atomic batch store mutations.
+
+    Snapshots store state on enter. On clean exit, commits.
+    On exception, rolls back to the snapshot.
+    """
+
+    def __init__(self, store: SemanticSchemaStore) -> None:
+        self._store = store
+        self._snapshot: dict[str, Any] | None = None
+
+    def __enter__(self) -> SemanticSchemaStore:
+        self._store._lock.acquire()
+        self._snapshot = self._store._snapshot_state()
+        return self._store
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        try:
+            if exc_type is not None and self._snapshot is not None:
+                # Rollback on exception
+                self._store._restore_state(self._snapshot)
+        finally:
+            self._snapshot = None
+            self._store._lock.release()

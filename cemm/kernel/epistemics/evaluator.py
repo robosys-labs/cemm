@@ -35,6 +35,7 @@ Architectural guardrails (AGENTS.md §10, AUTHORITY_MATRIX):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -44,6 +45,11 @@ from ..model.proposition import Proposition
 from ..model.context_frame import ContextFrame
 from ..schema.use_profile import SchemaUseProfile, UseProfileLevel, SemanticOperation
 from ..schema.closure import SchemaGroundingAssessment
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .truth_maintenance import TruthMaintenance, LineageGraph
 
 
 class SupportState(str, Enum):
@@ -124,6 +130,14 @@ class EpistemicEvaluator:
     - Claim capabilities
     """
 
+    def __init__(
+        self,
+        truth_maintenance: "TruthMaintenance | None" = None,
+        cross_schema_guard: "Any | None" = None,
+    ) -> None:
+        self._truth_maintenance = truth_maintenance
+        self._cross_schema_guard = cross_schema_guard
+
     def evaluate(
         self,
         proposition: Proposition,
@@ -133,26 +147,30 @@ class EpistemicEvaluator:
         accessible: bool = True,
         permission_allowed: bool = True,
         environment_fingerprint: str = "",
+        lineage_graph: "LineageGraph | None" = None,
     ) -> EpistemicAssessment:
         """Evaluate the epistemic status of a proposition in a context.
 
         Produces a four-state support assessment and context-specific
-        admissibility decision.
+        admissibility decision. Uses truth maintenance for evidence
+        aggregation by lineage when available.
         """
         # Aggregate support and counterevidence
-        support_score = 0.0
-        opposition_score = 0.0
-        independent_support_count = 0
-
-        for ev in evidence:
-            if ev.proposition_ref != proposition.id:
-                continue
-            if ev.supports:
-                support_score += ev.confidence
-                if ev.is_independent:
-                    independent_support_count += 1
+        # Use truth maintenance for lineage-aware aggregation if available
+        if self._truth_maintenance is not None and evidence:
+            tm_evidence = self._truth_maintenance.get_evidence(proposition.id)
+            if tm_evidence:
+                support_score, opposition_score, independent_support_count = (
+                    self._truth_maintenance.aggregate_support(proposition.id)
+                )
             else:
-                opposition_score += ev.confidence
+                support_score, opposition_score, independent_support_count = (
+                    self._aggregate_direct(evidence, proposition, lineage_graph)
+                )
+        else:
+            support_score, opposition_score, independent_support_count = (
+                self._aggregate_direct(evidence, proposition, lineage_graph)
+            )
 
         # Determine four-state support
         has_support = support_score > 0.0
@@ -185,12 +203,15 @@ class EpistemicEvaluator:
             support_state=support_state,
         )
 
-        # Temporal validity
+        # Temporal validity — check expiry against current time
+        current_time = datetime.now(timezone.utc)
         fresh_enough = True
         for ev in evidence:
             if ev.temporal_validity is not None:
-                # If evidence has expired, it's not fresh
-                fresh_enough = fresh_enough and True  # Simplified — full check needs current time
+                if ev.temporal_validity.end is not None:
+                    if current_time > ev.temporal_validity.end:
+                        fresh_enough = False
+                        break
 
         return EpistemicAssessment(
             proposition_ref=proposition.id,
@@ -203,12 +224,50 @@ class EpistemicEvaluator:
             fresh_enough=fresh_enough,
             permission_allowed=permission_allowed,
             schema_use_valid=schema_use_profile is not None
-            and schema_use_profile.level != UseProfileLevel.OPAQUE,
+            and schema_use_profile.level not in (
+                UseProfileLevel.OPAQUE, UseProfileLevel.INADMISSIBLE,
+            ),
             admissibility=admissibility.value,
             causal_warrant_grade=causal_grade.value if causal_grade else None,
             lineage_independence_count=independent_support_count,
             environment_fingerprint=environment_fingerprint or None,
         )
+
+    def _aggregate_direct(
+        self,
+        evidence: tuple[EvidenceRecord, ...],
+        proposition: Proposition,
+        lineage_graph: "LineageGraph | None" = None,
+    ) -> tuple[float, float, int]:
+        """Aggregate evidence directly, with optional lineage-aware independence counting."""
+        support_score = 0.0
+        opposition_score = 0.0
+        matching: list[EvidenceRecord] = []
+
+        for ev in evidence:
+            if ev.proposition_ref != proposition.id:
+                continue
+            matching.append(ev)
+            if ev.supports:
+                support_score += ev.confidence
+            else:
+                opposition_score += ev.confidence
+
+        # Lineage-aware independence count
+        if lineage_graph is not None and matching:
+            independent_support_count = (
+                self._truth_maintenance.check_lineage_independence(
+                    tuple(matching), lineage_graph,
+                )
+                if self._truth_maintenance is not None
+                else sum(1 for ev in matching if ev.is_independent)
+            )
+        else:
+            independent_support_count = sum(
+                1 for ev in matching if ev.is_independent
+            )
+
+        return support_score, opposition_score, independent_support_count
 
     def _determine_admissibility(
         self,

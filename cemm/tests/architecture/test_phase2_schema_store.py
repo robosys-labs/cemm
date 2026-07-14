@@ -166,7 +166,10 @@ def test_validation_module_cannot_activate():
     assert not hasattr(assessment, "set_status")
 
     # Only the store can activate
-    result = store.activate("schema:test:v1", expected_revision=1)
+    result = store.activate_with_assessment(
+        "schema:test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:test",
+    )
     assert result.status == ActivationStatus.SUCCESS
 
 
@@ -177,7 +180,10 @@ def test_activation_requires_store():
     store.register(env)
 
     # Direct activation via store works
-    result = store.activate("schema:test:v1", expected_revision=1)
+    result = store.activate_with_assessment(
+        "schema:test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:test",
+    )
     assert result.status == ActivationStatus.SUCCESS
 
     # Verify it's active
@@ -199,7 +205,10 @@ def test_concurrent_revisions_do_not_merge():
     # Register parent
     parent = make_envelope("schema:parent:v1", "parent_concept", status="active")
     store.register(parent)
-    store.activate("schema:parent:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:parent:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:parent",
+    )
 
     # Two children from different learning transactions
     child1 = make_envelope(
@@ -231,12 +240,18 @@ def test_cas_prevents_concurrent_activation():
     store.register(env)
 
     # First activation succeeds (revision 1 → 2)
-    result1 = store.activate("schema:test:v1", expected_revision=1)
+    result1 = store.activate_with_assessment(
+        "schema:test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:test",
+    )
     assert result1.status == ActivationStatus.SUCCESS
 
     # Second activation with stale revision — blocked because already active
     # (status check happens before CAS; this is correct behavior)
-    result2 = store.activate("schema:test:v1", expected_revision=1)
+    result2 = store.activate_with_assessment(
+        "schema:test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:test",
+    )
     assert result2.status == ActivationStatus.BLOCKED
 
     # Direct CAS with stale revision on a non-active schema fails properly
@@ -244,7 +259,10 @@ def test_cas_prevents_concurrent_activation():
     store.register(env2)
     # Simulate someone else changing the revision before we activate
     store._revisions["schema:cas2:v1"] = 5
-    result3 = store.activate("schema:cas2:v1", expected_revision=1)
+    result3 = store.activate_with_assessment(
+        "schema:cas2:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:cas2",
+    )
     assert result3.status == ActivationStatus.CAS_FAILED
 
 
@@ -287,8 +305,14 @@ def test_boot_and_learned_same_api():
     assert learned.status == "candidate"
 
     # Both can transition through the same lifecycle
-    result_boot = store.activate("schema:boot_entity:v1", expected_revision=1)
-    result_learned = store.activate("schema:learned_concept:v1", expected_revision=1)
+    result_boot = store.activate_with_assessment(
+        "schema:boot_entity:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:boot",
+    )
+    result_learned = store.activate_with_assessment(
+        "schema:learned_concept:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:learned",
+    )
     assert result_boot.status == ActivationStatus.SUCCESS
     assert result_learned.status == ActivationStatus.SUCCESS
 
@@ -311,7 +335,10 @@ def test_lifecycle_candidate_to_provisional_to_active():
     assert store.get("schema:lifecycle:v1").status == "provisional"
 
     # Transition to active
-    result = store.activate("schema:lifecycle:v1", expected_revision=2)
+    result = store.activate_with_assessment(
+        "schema:lifecycle:v1", expected_revision=2,
+        grounding_assessment_ref="assessment:lifecycle",
+    )
     assert result.status == ActivationStatus.SUCCESS
     assert store.get("schema:lifecycle:v1").status == "active"
 
@@ -327,7 +354,10 @@ def test_lifecycle_cannot_skip_provisional_from_rejected():
     assert store.get("schema:rejected:v1").status == "rejected"
 
     # Cannot activate a rejected schema
-    result = store.activate("schema:rejected:v1", expected_revision=2)
+    result = store.activate_with_assessment(
+        "schema:rejected:v1", expected_revision=2,
+        grounding_assessment_ref="assessment:rejected",
+    )
     assert result.status == ActivationStatus.BLOCKED
 
 
@@ -341,7 +371,10 @@ def test_supersede_only_active():
     assert not store.supersede("schema:supersede:v1", "schema:replacement:v1")
 
     # Activate then supersede
-    store.activate("schema:supersede:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:supersede:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:supersede",
+    )
     assert store.supersede("schema:supersede:v1", "schema:replacement:v1", reason="test")
     assert store.get("schema:supersede:v1").status == "superseded"
 
@@ -356,14 +389,20 @@ def test_cas_revision_mismatch_fails():
     store.register(env)
 
     # Someone else modified the store (simulated by wrong expected revision)
-    result = store.activate("schema:cas:v1", expected_revision=99)
+    result = store.activate_with_assessment(
+        "schema:cas:v1", expected_revision=99,
+        grounding_assessment_ref="assessment:cas",
+    )
     assert result.status == ActivationStatus.CAS_FAILED
 
 
 def test_cas_nonexistent_record_fails():
     """CAS activation must fail for non-existent records."""
     store = SemanticSchemaStore()
-    result = store.activate("schema:nonexistent:v1", expected_revision=1)
+    result = store.activate_with_assessment(
+        "schema:nonexistent:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:nonexist",
+    )
     assert result.status == ActivationStatus.BLOCKED
 
 
@@ -378,6 +417,10 @@ def test_cluster_activation_all_or_nothing():
     env_b = make_envelope("schema:cluster_b:v1", "cluster_b")
     store.register(env_a)
     store.register(env_b)
+
+    # Stamp assessment refs before cluster activation
+    store.stamp_assessment_refs("schema:cluster_a:v1", "assessment:a")
+    store.stamp_assessment_refs("schema:cluster_b:v1", "assessment:b")
 
     # Both should activate atomically
     result = store.activate_cluster(
@@ -397,6 +440,10 @@ def test_cluster_activation_failure_rolls_back():
     env_b = make_envelope("schema:cluster_fail:v1", "cluster_fail")
     store.register(env_a)
     store.register(env_b)
+
+    # Stamp assessment refs before cluster activation
+    store.stamp_assessment_refs("schema:cluster_ok:v1", "assessment:ok")
+    store.stamp_assessment_refs("schema:cluster_fail:v1", "assessment:fail")
 
     # Wrong revision for env_b → should fail and roll back env_a
     result = store.activate_cluster(
@@ -468,7 +515,10 @@ def test_supersession_is_journaled():
 
     env = make_envelope("schema:journal_test:v1", "journal_test")
     store.register(env)
-    store.activate("schema:journal_test:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:journal_test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:journal",
+    )
 
     store.supersede("schema:journal_test:v1", "schema:replacement:v1", reason="obsolete")
 
@@ -537,7 +587,10 @@ def test_retention_for_proposition_bound_revision():
 
     env = make_envelope("schema:retain:v1", "retain_test")
     store.register(env)
-    store.activate("schema:retain:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:retain:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:retain",
+    )
     store.supersede("schema:retain:v1", "schema:retain:v2", reason="new version")
 
     # Bind a proposition
@@ -552,7 +605,10 @@ def test_retention_for_replay_bound_revision():
 
     env = make_envelope("schema:replay_retain:v1", "replay_test")
     store.register(env)
-    store.activate("schema:replay_retain:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:replay_retain:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:replay_retain",
+    )
     store.supersede("schema:replay_retain:v1", "schema:replay_retain:v2")
 
     store.bind_replay("schema:replay_retain:v1", "replay:1")
@@ -565,7 +621,10 @@ def test_no_retention_for_unbound_superseded():
 
     env = make_envelope("schema:no_retain:v1", "no_retain_test")
     store.register(env)
-    store.activate("schema:no_retain:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:no_retain:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:no_retain",
+    )
     store.supersede("schema:no_retain:v1", "schema:no_retain:v2")
 
     assert not store.is_retention_required("schema:no_retain:v1")
@@ -576,7 +635,10 @@ def test_active_always_retained():
     store = SemanticSchemaStore()
     env = make_envelope("schema:active_retain:v1", "active_retain_test")
     store.register(env)
-    store.activate("schema:active_retain:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:active_retain:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:active_retain",
+    )
 
     assert store.is_retention_required("schema:active_retain:v1")
 
@@ -656,7 +718,10 @@ def test_scope_does_not_blind_shadow():
         confidence=0.9,
     )
     store.register(global_env)
-    store.activate("schema:global_concept:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:global_concept:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:global",
+    )
 
     # User-scoped candidate (user's private theory)
     user_env = make_envelope(
@@ -731,7 +796,10 @@ def test_store_snapshot_is_pinned():
     assert snapshot.store_revision == store.store_revision
 
     # Mutate the store
-    store.activate("schema:snapshot:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:snapshot:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:snapshot",
+    )
 
     # Snapshot should still see the old state
     snap_env = snapshot.get("schema:snapshot:v1")
@@ -750,7 +818,10 @@ def test_store_revision_increments_on_mutation():
     store.register(env)
     assert store.store_revision == initial + 1
 
-    store.activate("schema:rev_test:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:rev_test:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:rev",
+    )
     assert store.store_revision == initial + 2
 
 
@@ -762,10 +833,10 @@ def test_schema_store_imports_no_engine():
     import cemm.kernel.schema.store as store_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
-        "cemm.kernel.operational_meaning_compiler",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
+        "cemm.legacy.v3_3.operational_meaning_compiler",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(store_mod.__file__, encoding="utf-8").read()
@@ -778,10 +849,10 @@ def test_resolver_imports_no_engine():
     import cemm.kernel.schema.resolver as resolver_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
-        "cemm.kernel.operational_meaning_compiler",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
+        "cemm.legacy.v3_3.operational_meaning_compiler",
         "cemm.memory.durable_semantic_store",
     ]
     source = open(resolver_mod.__file__, encoding="utf-8").read()
@@ -808,8 +879,17 @@ def test_cluster_rollback_uses_post_commit_revision():
     store.register(env3)
 
     # Activate env1 and env2 first (so they're active, revision = 2)
-    store.activate("schema:rb1:v1", expected_revision=1)
-    store.activate("schema:rb2:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:rb1:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:rb1",
+    )
+    store.activate_with_assessment(
+        "schema:rb2:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:rb2",
+    )
+
+    # Stamp env3 with assessment refs before cluster activation
+    store.stamp_assessment_refs("schema:rb3:v1", "assessment:rb3")
 
     # Now try cluster activation of all three, but env3 has wrong expected revision
     # env1 and env2 are already active (revision 2), env3 is candidate (revision 1)
@@ -839,6 +919,10 @@ def test_cluster_rollback_restores_to_provisional():
     # cluster activation operates on schemas that passed structural closure)
     store.transition_to_provisional("schema:crb1:v1", expected_revision=1)
     store.transition_to_provisional("schema:crb2:v1", expected_revision=1)
+
+    # Stamp assessment refs before cluster activation
+    store.stamp_assessment_refs("schema:crb1:v1", "assessment:crb1")
+    store.stamp_assessment_refs("schema:crb2:v1", "assessment:crb2")
 
     # Now try cluster activation, but pass wrong revision for env2
     result = store.activate_cluster(
@@ -894,7 +978,10 @@ def test_supersede_uses_cas():
     store = SemanticSchemaStore()
     env = make_envelope("schema:sup_cas:v1", "sup_cas")
     store.register(env)
-    store.activate("schema:sup_cas:v1", expected_revision=1)
+    store.activate_with_assessment(
+        "schema:sup_cas:v1", expected_revision=1,
+        grounding_assessment_ref="assessment:sup_cas",
+    )
 
     # Get revision after activation
     rev_after_activate = store.get_revision("schema:sup_cas:v1")

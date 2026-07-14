@@ -13,7 +13,7 @@ import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from cemm.registry import Registry
-from cemm.kernel.pipeline import Pipeline
+from cemm.legacy.v3_3.pipeline import Pipeline
 from cemm.memory.concept_lattice import ConceptLattice
 from cemm.memory.construction_lattice import ConstructionLattice
 from cemm.memory.episodic_trace_store import EpisodicTraceStore
@@ -132,7 +132,7 @@ def _extract_debug(cycle) -> dict:
             "suppressed_count": len(getattr(of, "suppressed_obligations", [])),
         }
 
-    from cemm.kernel.teaching_frame_manager import TeachingFrameManager
+    from cemm.legacy.v3_3.teaching_frame_manager import TeachingFrameManager
     tfm = getattr(_pipeline._runtime, "_teaching_frame_manager", None)
     if tfm is not None:
         active = tfm.active_frame

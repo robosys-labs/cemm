@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .registry import Registry, RegistryEntry
-from .kernel.pipeline import Pipeline, PipelineResult
+from .legacy.v3_3.pipeline import Pipeline, PipelineResult
 from .memory.concept_lattice import ConceptLattice
 from .memory.construction_lattice import ConstructionLattice
 from .memory.episodic_trace_store import EpisodicTraceStore

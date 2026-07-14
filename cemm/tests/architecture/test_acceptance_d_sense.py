@@ -93,7 +93,9 @@ def test_14c_evidence_does_not_contaminate():
 
     # Activate s1 via CAS
     rev = store.get_revision("schema:leader_role:v1")
-    store.activate("schema:leader_role:v1", expected_revision=rev)
+    store.activate_with_assessment("schema:leader_role:v1", expected_revision=rev,
+        grounding_assessment_ref="assessment:leader_role",
+    )
 
     # s1 is active, s2 remains candidate — no contamination
     assert store.get("schema:leader_role:v1").status == "active"

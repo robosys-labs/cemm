@@ -8,7 +8,7 @@ from typing import Any
 import uuid
 
 from ..types.learning_hypothesis import LearningHypothesis, HypothesisTargetKind
-from ..kernel.causal_effect_graph import CausalRule
+from ..legacy.v3_3.causal_effect_graph import CausalRule
 
 
 class CausalRuleCandidateBuilder:

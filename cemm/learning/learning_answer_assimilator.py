@@ -1,10 +1,16 @@
-"""Assimilate a current user percept under a prior learning obligation."""
+"""DEPRECATED: Replaced by cemm.kernel.learning.coordinator.LearningCoordinator.consume_pending_evidence.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+learning path uses LearningCoordinator for evidence assimilation.
+Do not use for new code — redirect to LearningCoordinator.
+
+Assimilate a current user percept under a prior learning obligation."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from ..kernel.proposition_semantics import is_internal_identifier
+from ..legacy.v3_3.proposition_semantics import is_internal_identifier
 from ..types.learning_episode import LearningEpisode, LearningObligation
 
 

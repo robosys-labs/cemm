@@ -17,12 +17,12 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from cemm.kernel.semantic_schema_kernel import get_kernel
-from cemm.kernel.language_adapter import get_adapter, SchemaBackedLanguageAdapter
-from cemm.kernel.relation_frame_compiler import RelationFrameCompiler
-from cemm.kernel.affordance_predictor import AffordancePredictor
-from cemm.kernel.safety_frame_detector import SafetyFrameDetector
-from cemm.kernel.situation_frame_builder import SituationFrameBuilder
+from cemm.legacy.v3_3.semantic_schema_kernel import get_kernel
+from cemm.legacy.v3_3.language_adapter import get_adapter, SchemaBackedLanguageAdapter
+from cemm.legacy.v3_3.relation_frame_compiler import RelationFrameCompiler
+from cemm.legacy.v3_3.affordance_predictor import AffordancePredictor
+from cemm.legacy.v3_3.safety_frame_detector import SafetyFrameDetector
+from cemm.legacy.v3_3.situation_frame_builder import SituationFrameBuilder
 from cemm.tests.harness import SeededSystem
 
 

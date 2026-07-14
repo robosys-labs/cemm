@@ -738,9 +738,9 @@ def test_phase10_imports_no_engine():
     import cemm.kernel.response.common_ground as cg_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     for mod in [pl_mod, pr_mod, rv_mod, cg_mod]:

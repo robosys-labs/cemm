@@ -161,6 +161,10 @@ def test_28a_joint_activation_atomic():
     store.register(s1)
     store.register(s2)
 
+    # Stamp assessment refs before cluster activation
+    store.stamp_assessment_refs("schema:parent:v1", "assessment:parent")
+    store.stamp_assessment_refs("schema:child:v1", "assessment:child")
+
     rev1 = store.get_revision("schema:parent:v1")
     rev2 = store.get_revision("schema:child:v1")
 
@@ -185,6 +189,9 @@ def test_28b_joint_activation_fails_if_one_stale():
     rev1 = store.get_revision("schema:parent:v1")
 
     # Stale revision for s2
+    store.stamp_assessment_refs("schema:parent:v1", "assessment:parent2")
+    store.stamp_assessment_refs("schema:child:v1", "assessment:child2")
+
     result = store.activate_cluster(
         ("schema:parent:v1", "schema:child:v1"),
         {"schema:parent:v1": rev1, "schema:child:v1": 999},

@@ -1,4 +1,9 @@
-"""Authoritative multi-turn learning-episode and pending-obligation store."""
+"""DEPRECATED: Replaced by cemm.kernel.learning.coordinator.LearningCoordinator.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+learning path uses LearningCoordinator for transaction lifecycle management.
+Do not use for new code — redirect to LearningCoordinator.
+"""
 
 from __future__ import annotations
 

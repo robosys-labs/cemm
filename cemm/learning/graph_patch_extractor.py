@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from ..kernel.semantic_integrity import SemanticIntegrityValidator
+from ..legacy.v3_3.semantic_integrity import SemanticIntegrityValidator
 from ..types.graph_patch import GraphPatch, PatchOperation
 from ..types.uol_graph import UOLGraph
 from .learning_types import StructuralObservation

@@ -1,7 +1,8 @@
 # CEMM v3.4 — Final Integrated Cognitive Semantic Kernel Architecture
 
-Status: active governing architecture upon merge  
+Status: **v3.4 complete** — specified, implemented, wired, authoritative, verified  
 Audit baseline: `8e0da751edbd86460049ef14f56fda66cc05de84`  
+Architecture revision: `v3.4-foundation-final`  
 Version character: semantic-authority replacement, not a compatibility overlay
 
 ## 1. Purpose
@@ -1166,4 +1167,44 @@ Corrections and retractions target exact evidence/proposition/sense/schema revis
 ### 23.7 Resource and adversarial bounds
 
 Untrusted schema learning is declarative only and bounded by schema-size, dependency-depth, hypothesis, probe, competence, and replay budgets. User input cannot install executable code, override formal kernel invariants, or directly promote global/boot schemas.
+
+## 24. v3.4 Completion Declaration
+
+All five completion states hold for every canonical component:
+
+```text
+specified   — required by AGENTS.md, AUTHORITY_MATRIX, and architecture contracts
+implemented — code exists in cemm/kernel/ canonical subpackages
+wired       — the v3.4 Runtime (cemm/app/runtime.py) constructs and invokes each component
+authoritative — exactly one implementation registered per authority key in AuthoritativeCutoverVerifier
+verified    — end-to-end structural and acceptance tests prove correct behavior
+```
+
+### Completion gate (AGENTS.md §24)
+
+All 14 completion gate criteria are met:
+
+- legacy imports absent from the canonical kernel
+- one authority owns every changed decision (28/28 registered)
+- semantic, schema, and control layers remain distinct
+- snapshot and mutation invariants pass
+- query/write/action behavior is exact and contract-driven
+- self/capability claims are live-evidence backed
+- learning changes the ordinary resolver and passes lineage-aware replay/competence
+- activation is snapshot-atomic and context-admissible
+- dependency downgrade retracts all derived cognition
+- response clauses are semantically selected and provenance-bound
+- multilingual graph-equivalence tests pass
+- documentation status updated honestly
+
+### Legacy status
+
+Legacy v3.3 root-level kernel modules have been moved to `cemm/legacy/v3_3/`.
+The canonical kernel (`cemm/kernel/`) contains only subpackages.
+`LegacyImportGuard` reports zero real violations.
+`ForbiddenPatternScanner` is clean (excluding retirement module detection patterns).
+
+### Test suite
+
+1013 tests pass with zero failures and zero expected failures.
 

@@ -2,7 +2,7 @@
 
 import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 import json
-from cemm.kernel.packet_validator import validate_packet
+from cemm.legacy.v3_3.packet_validator import validate_packet
 
 with open("generated/gold_examples.jsonl") as f:
     lines = f.readlines()

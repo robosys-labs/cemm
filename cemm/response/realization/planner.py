@@ -156,7 +156,7 @@ class RealizationPlanner:
             if getattr(frame, "frame_type", "") != "clarification_request":
                 continue
             unknowns = list(getattr(frame, "features", {}).get("decode_unknown_content_tokens", []) or [])
-            from ...kernel.proposition_semantics import is_internal_identifier as _is_int_id
+            from ...legacy.v3_3.proposition_semantics import is_internal_identifier as _is_int_id
             public_unknowns = [str(item) for item in unknowns if str(item) and not _is_int_id(str(item))]
             if public_unknowns:
                 return {"unknown_token": public_unknowns[0]}

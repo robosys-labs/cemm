@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 from .grounding_spec import GroundingSpecification, SemanticPattern
 from .pattern_assessment import assess_patterns, PatternAssessment
@@ -159,6 +159,11 @@ class CompetenceProfile:
 # ── Closure checker ────────────────────────────────────────────────
 
 
+class _StoreLike(Protocol):
+    """Minimal store protocol for dependency resolution checking."""
+    def get(self, record_id: str) -> Any | None: ...
+
+
 class GroundedDefinitionClosure:
     """Checks the 10-point structural executability of a schema revision.
 
@@ -176,6 +181,7 @@ class GroundedDefinitionClosure:
         dependencies: tuple[str, ...] = (),
         is_alias: bool = False,
         environment_fingerprint: str = "",
+        store: _StoreLike | None = None,
     ) -> SchemaGroundingAssessment:
         """Run the 10-point grounded definition closure check."""
         results: list[ClosureCheckResult] = []
@@ -259,8 +265,27 @@ class GroundedDefinitionClosure:
                 status=ClosureCheckStatus.PASSED,
                 detail="No dependencies",
             ))
+        elif store is not None:
+            # Actually verify dependencies resolve in the store
+            unresolved = [
+                dep for dep in dependencies
+                if store.get(dep) is None
+            ]
+            if unresolved:
+                results.append(ClosureCheckResult(
+                    check_number=5, check_name="dependencies_terminate",
+                    status=ClosureCheckStatus.FAILED,
+                    detail=f"Unresolved dependencies: {unresolved}",
+                ))
+                blockers.append(f"Unresolved dependencies: {unresolved}")
+            else:
+                results.append(ClosureCheckResult(
+                    check_number=5, check_name="dependencies_terminate",
+                    status=ClosureCheckStatus.PASSED,
+                    detail=f"All {len(dependencies)} dependencies resolve in store",
+                ))
         else:
-            # We can't fully verify termination here — that requires the store
+            # No store provided — cannot fully verify termination
             results.append(ClosureCheckResult(
                 check_number=5, check_name="dependencies_terminate",
                 status=ClosureCheckStatus.BLOCKED,

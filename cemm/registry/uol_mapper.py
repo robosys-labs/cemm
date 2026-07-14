@@ -6,9 +6,9 @@ from ..types.signal import ObservationSemantics
 from ..types.context_kernel import ContextKernel
 from .registry import Registry
 from .semantic_matcher import SemanticMatcher
-from ..kernel.semantic_clusters import SemanticClusterRegistry
-from ..kernel.teaching_interpreter import TeachingInterpreter, TeachingEvent
-from ..kernel.text_match import any_phrase_in_text, any_token_in_text, phrase_in_text, tokenize_surface
+from ..legacy.v3_3.semantic_clusters import SemanticClusterRegistry
+from ..legacy.v3_3.teaching_interpreter import TeachingInterpreter, TeachingEvent
+from ..legacy.v3_3.text_match import any_phrase_in_text, any_token_in_text, phrase_in_text, tokenize_surface
 from ..learning.lexeme_memory import LexemeMemory, LexemeStatus
 from .semantic_model_store import SemanticModelStore
 

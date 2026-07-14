@@ -499,7 +499,9 @@ def test_learning_changes_ordinary_resolver():
     # Activate
     store.transition_to_provisional("schema:learned:v1", 1)
     rev = store.get_revision("schema:learned:v1")
-    store.activate("schema:learned:v1", rev)
+    store.activate_with_assessment("schema:learned:v1", rev,
+        grounding_assessment_ref="assessment:learned",
+    )
 
     # After activation, find_active returns the schema
     active = store.find_active("learned")
@@ -640,9 +642,9 @@ def test_learning_imports_no_engine():
     import cemm.kernel.learning.coordinator as co_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
         "cemm.kernel.commit",
     ]

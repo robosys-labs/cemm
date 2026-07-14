@@ -460,9 +460,9 @@ def test_phase11_imports_no_engine():
     import cemm.kernel.correction.guards as gu_mod
 
     forbidden = [
-        "cemm.kernel.semantic_kernel_runtime",
-        "cemm.kernel.meaning_perceptor",
-        "cemm.kernel.meaning_graph_builder",
+        "cemm.legacy.v3_3.semantic_kernel_runtime",
+        "cemm.legacy.v3_3.meaning_perceptor",
+        "cemm.legacy.v3_3.meaning_graph_builder",
         "cemm.memory.durable_semantic_store",
     ]
     for mod in [ops_mod, re_mod, gu_mod]:

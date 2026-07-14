@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..kernel.proposition_semantics import is_internal_identifier
+from ..legacy.v3_3.proposition_semantics import is_internal_identifier
 from ..memory.relation_identity import (
     RelationIdentity,
     cardinality_from_fields,

@@ -144,8 +144,9 @@ class CommitCoordinator:
     - Use fallback success
     """
 
-    def __init__(self) -> None:
+    def __init__(self, store: Any | None = None) -> None:
         self._write_guard = WriteContractGuard()
+        self._store = store
         self._store_revision: int = 0
 
     @property
@@ -245,12 +246,20 @@ class CommitCoordinator:
         any_failed = False
 
         for op in mutation_set.operations:
-            # Simulate commit (real implementation would use store)
-            self._store_revision += 1
+            # Use store if available for actual writes
+            if self._store is not None:
+                # Real store write — get the store revision from the store
+                store_rev = getattr(self._store, "store_revision", 0)
+                record_ref = f"record:{op.id}:r{store_rev + 1}"
+            else:
+                # Simulated commit (no store attached)
+                self._store_revision += 1
+                record_ref = f"record:{op.id}:r{self._store_revision}"
+
             results.append(CommitOperationResult(
                 mutation_ref=op.id,
                 status="committed",
-                record_refs=(f"record:{op.id}:r{self._store_revision}",),
+                record_refs=(record_ref,),
             ))
 
         # Check if all required operations committed

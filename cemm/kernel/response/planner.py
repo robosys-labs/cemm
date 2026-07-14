@@ -148,13 +148,17 @@ class ResponsePlanner:
                 )
                 content_items.append(repair_item)
 
-        # 4. Build rhetorical relations (simple ordering for now)
-        for i in range(1, len(content_items)):
-            rhetorical_relations.append(RhetoricalRelation(
-                source_item_ref=content_items[i - 1].semantic_ref,
-                target_item_ref=content_items[i].semantic_ref,
-                relation_kind="elaboration",
-            ))
+        # 4. Apply discourse ordering — repair first, then corrections, then informs
+        content_items = self._order_by_discourse(content_items)
+
+        # 5. Apply aggregation — merge items with same discourse function
+        content_items = self._aggregate_items(content_items)
+
+        # 6. Apply information structure — assign focus based on given/new
+        content_items = self._assign_information_structure(content_items)
+
+        # 7. Build rhetorical relations based on discourse structure
+        rhetorical_relations = self._build_rhetorical_relations(content_items)
 
         return SemanticMessagePlan(
             id=f"msg_plan:{id(selection)}",
@@ -283,3 +287,157 @@ class ResponsePlanner:
             required=True,
             provenance_refs=(commit_outcome.mutation_set_ref,),
         )
+
+    # ── Discourse ordering ──────────────────────────────────────
+
+    _DISCOURSE_ORDER = {
+        DiscourseFunction.REPAIR.value: 0,
+        DiscourseFunction.CORRECT.value: 1,
+        DiscourseFunction.REFUSE.value: 2,
+        DiscourseFunction.ACKNOWLEDGE.value: 3,
+        DiscourseFunction.INFORM.value: 4,
+        DiscourseFunction.QUERY.value: 5,
+        DiscourseFunction.REQUEST.value: 6,
+        DiscourseFunction.PROMISE.value: 7,
+    }
+
+    def _order_by_discourse(
+        self,
+        items: list[MessageContentItem],
+    ) -> list[MessageContentItem]:
+        """Order items by discourse priority: repair, correct, refuse, acknowledge, inform, query, request, promise."""
+        return sorted(
+            items,
+            key=lambda item: self._DISCOURSE_ORDER.get(
+                item.discourse_function, 99
+            ),
+        )
+
+    # ── Aggregation ─────────────────────────────────────────────
+
+    def _aggregate_items(
+        self,
+        items: list[MessageContentItem],
+    ) -> list[MessageContentItem]:
+        """Aggregate items with same semantic_ref, discourse function, and stance.
+
+        Merges provenance and keeps the first item's semantic_ref.
+        Only merges items about the same semantic content — does not
+        pollute provenance across different propositions.
+        """
+        if len(items) <= 1:
+            return items
+
+        aggregated: list[MessageContentItem] = []
+        seen_groups: dict[tuple[str, str, str], int] = {}
+
+        for item in items:
+            group_key = (item.semantic_ref, item.discourse_function, item.stance)
+            if group_key in seen_groups:
+                # Merge into existing item
+                idx = seen_groups[group_key]
+                existing = aggregated[idx]
+                merged_provenance = tuple(
+                    set(existing.provenance_refs + item.provenance_refs)
+                )
+                aggregated[idx] = MessageContentItem(
+                    semantic_ref=existing.semantic_ref,
+                    discourse_function=existing.discourse_function,
+                    stance=existing.stance,
+                    focus=existing.focus,
+                    required=existing.required or item.required,
+                    provenance_refs=merged_provenance,
+                )
+            else:
+                seen_groups[group_key] = len(aggregated)
+                aggregated.append(item)
+
+        return aggregated
+
+    # ── Information structure ───────────────────────────────────
+
+    def _assign_information_structure(
+        self,
+        items: list[MessageContentItem],
+    ) -> list[MessageContentItem]:
+        """Assign focus based on given/new information structure.
+
+        First item is 'given' (contextual anchor), subsequent items
+        are 'new' (the information being conveyed).
+        """
+        if not items:
+            return items
+
+        result: list[MessageContentItem] = []
+        for i, item in enumerate(items):
+            focus = item.focus
+            if not focus:
+                focus = "given" if i == 0 else "new"
+            result.append(MessageContentItem(
+                semantic_ref=item.semantic_ref,
+                discourse_function=item.discourse_function,
+                stance=item.stance,
+                focus=focus,
+                required=item.required,
+                provenance_refs=item.provenance_refs,
+            ))
+        return result
+
+    # ── Rhetorical relations ────────────────────────────────────
+
+    def _build_rhetorical_relations(
+        self,
+        items: list[MessageContentItem],
+    ) -> list[RhetoricalRelation]:
+        """Build rhetorical relations between content items.
+
+        Elaboration chains connect sequential items of the same
+        discourse function. Contrast connects corrections to
+        the items they correct.
+        """
+        relations: list[RhetoricalRelation] = []
+
+        for i in range(1, len(items)):
+            prev = items[i - 1]
+            curr = items[i]
+
+            # Determine relation kind
+            if curr.discourse_function == DiscourseFunction.CORRECT.value:
+                relation_kind = "contrast"
+            elif curr.discourse_function == DiscourseFunction.REPAIR.value:
+                relation_kind = "correction"
+            elif prev.discourse_function == curr.discourse_function:
+                relation_kind = "elaboration"
+            else:
+                relation_kind = "elaboration"
+
+            relations.append(RhetoricalRelation(
+                source_item_ref=prev.semantic_ref,
+                target_item_ref=curr.semantic_ref,
+                relation_kind=relation_kind,
+            ))
+
+        return relations
+
+    # ── Content validation ──────────────────────────────────────
+
+    def validate_plan(self, plan: SemanticMessagePlan) -> bool:
+        """Validate that every clause maps to message content/provenance.
+
+        Exit gate checks:
+        - Every content item has a semantic_ref
+        - Every content item has provenance_refs
+        - No internal IDs or open ports leak into content
+        """
+        for item in plan.content_items:
+            if not item.semantic_ref:
+                return False
+            if not item.provenance_refs:
+                return False
+            # Check for internal ID patterns that should not leak
+            ref = item.semantic_ref.lower()
+            # Allow refs that start with prop: or commit: — these are
+            # semantic refs, not internal IDs. Block raw open ports.
+            if ref.startswith("port:") or ref.startswith("placeholder:"):
+                return False
+        return True

@@ -47,20 +47,42 @@ class AuthorizationResult:
 
 
 @dataclass(frozen=True, slots=True)
+class AuthorizationBatch:
+    """Per-operation authorization results.
+
+    BF-001: Authorization must be per operation, not one result reused
+    for the whole plan.
+    """
+    by_operation_ref: dict[str, AuthorizationResult] = field(default_factory=dict)
+
+    def get(self, operation_ref: str) -> AuthorizationResult | None:
+        return self.by_operation_ref.get(operation_ref)
+
+    @property
+    def all_authorized(self) -> bool:
+        if not self.by_operation_ref:
+            return False
+        return all(
+            r.status is AuthorizationStatus.AUTHORIZED
+            for r in self.by_operation_ref.values()
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class AuthorizationConditions:
     """Live conditions for authorization.
 
     Every operation instance is authorized from live capability, permission,
     risk, context, resources, and current schema-use evidence.
     """
-    permission_allowed: bool = True
-    safety_passed: bool = True
-    privacy_passed: bool = True
-    capability_available: bool = True
-    resources_available: bool = True
-    context_valid: bool = True
-    schema_use_valid: bool = True
-    risk_level: str = "low"  # low, medium, high
+    permission_allowed: bool | None = None
+    safety_passed: bool | None = None
+    privacy_passed: bool | None = None
+    capability_available: bool | None = None
+    resources_available: bool | None = None
+    context_valid: bool | None = None
+    schema_use_valid: bool | None = None
+    risk_level: str = "unknown"  # low, medium, high, unknown
     risk_threshold: str = "medium"  # operations above threshold are blocked
     environment_fingerprint: str = ""
 
@@ -90,112 +112,82 @@ class OperationAuthorizer:
 
         Gates: permission, safety, privacy, capability, resources, context,
         schema-use, risk.
+
+        BF-003: Unknown (None) conditions produce DEFERRED, never AUTHORIZED.
         """
         checked: list[str] = []
         fingerprint = conditions.environment_fingerprint
 
+        def _check_gate(
+            gate_name: str,
+            value: bool | None,
+            failure_kind: str,
+            detail: str,
+        ) -> AuthorizationResult | None:
+            checked.append(gate_name)
+            if value is False:
+                return AuthorizationResult(
+                    operation_ref=operation.id,
+                    status=AuthorizationStatus.DENIED,
+                    authorization_fingerprint=fingerprint,
+                    conditions_checked=tuple(checked),
+                    failure=TypedFailure(
+                        failure_kind=failure_kind,
+                        detail=detail,
+                    ),
+                )
+            if value is None:
+                return AuthorizationResult(
+                    operation_ref=operation.id,
+                    status=AuthorizationStatus.DEFERRED,
+                    authorization_fingerprint=fingerprint,
+                    conditions_checked=tuple(checked),
+                    failure=TypedFailure(
+                        failure_kind=f"{failure_kind}_unknown",
+                        detail=f"{gate_name} condition unknown",
+                    ),
+                )
+            return None
+
         # 1. Permission check
-        checked.append("permission")
-        if not conditions.permission_allowed:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="permission_blocked",
-                    detail="permission not allowed for this operation",
-                ),
-            )
+        result = _check_gate("permission", conditions.permission_allowed, "permission_blocked", "permission not allowed for this operation")
+        if result:
+            return result
 
         # 2. Safety check
-        checked.append("safety")
-        if not conditions.safety_passed:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="safety_violation",
-                    detail="safety check failed",
-                ),
-            )
+        result = _check_gate("safety", conditions.safety_passed, "safety_violation", "safety check failed")
+        if result:
+            return result
 
         # 3. Privacy check
-        checked.append("privacy")
-        if not conditions.privacy_passed:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="privacy_violation",
-                    detail="privacy check failed",
-                ),
-            )
+        result = _check_gate("privacy", conditions.privacy_passed, "privacy_violation", "privacy check failed")
+        if result:
+            return result
 
         # 4. Capability check
-        checked.append("capability")
-        if not conditions.capability_available:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="capability_unavailable",
-                    detail="capability not available for this operation",
-                ),
-            )
+        result = _check_gate("capability", conditions.capability_available, "capability_unavailable", "capability not available for this operation")
+        if result:
+            return result
 
         # 5. Resources check
-        checked.append("resources")
-        if not conditions.resources_available:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="resource_insufficient",
-                    detail="resources not available",
-                ),
-            )
+        result = _check_gate("resources", conditions.resources_available, "resource_insufficient", "resources not available")
+        if result:
+            return result
 
         # 6. Context check
-        checked.append("context")
-        if not conditions.context_valid:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="context_invalid",
-                    detail="context not valid for this operation",
-                ),
-            )
+        result = _check_gate("context", conditions.context_valid, "context_invalid", "context not valid for this operation")
+        if result:
+            return result
 
         # 7. Schema-use check
-        checked.append("schema_use")
-        if not conditions.schema_use_valid:
-            return AuthorizationResult(
-                operation_ref=operation.id,
-                status=AuthorizationStatus.DENIED,
-                authorization_fingerprint=fingerprint,
-                conditions_checked=tuple(checked),
-                failure=TypedFailure(
-                    failure_kind="schema_use_invalid",
-                    detail="schema use profile does not permit this operation",
-                ),
-            )
+        result = _check_gate("schema_use", conditions.schema_use_valid, "schema_use_invalid", "schema use profile does not permit this operation")
+        if result:
+            return result
 
         # 8. Risk check
         checked.append("risk")
         risk_order = {"low": 0, "medium": 1, "high": 2}
-        if risk_order.get(conditions.risk_level, 0) > risk_order.get(conditions.risk_threshold, 1):
+        if risk_order.get(conditions.risk_level, -1) > risk_order.get(conditions.risk_threshold, 1):
             return AuthorizationResult(
                 operation_ref=operation.id,
                 status=AuthorizationStatus.DENIED,
@@ -204,6 +196,17 @@ class OperationAuthorizer:
                 failure=TypedFailure(
                     failure_kind="risk_exceeded",
                     detail=f"risk level {conditions.risk_level} exceeds threshold {conditions.risk_threshold}",
+                ),
+            )
+        if conditions.risk_level == "unknown":
+            return AuthorizationResult(
+                operation_ref=operation.id,
+                status=AuthorizationStatus.DEFERRED,
+                authorization_fingerprint=fingerprint,
+                conditions_checked=tuple(checked),
+                failure=TypedFailure(
+                    failure_kind="risk_unknown",
+                    detail="risk level unknown",
                 ),
             )
 

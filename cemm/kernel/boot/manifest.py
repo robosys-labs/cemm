@@ -297,7 +297,6 @@ def boot_cognitive_operations() -> tuple[BootSchemaEntry, ...]:
         ("reconcile", "Reconcile execution outcomes"),
         ("learn", "Learn from evidence and replay"),
         ("respond", "Plan response content"),
-        ("realize", "Realize response in language"),
         ("introspect", "Introspect on self state"),
     ]
     entries: list[BootSchemaEntry] = []
@@ -325,6 +324,73 @@ def boot_cognitive_operations() -> tuple[BootSchemaEntry, ...]:
 
 
 # ── Communicative operation boot schemas ───────────────────────────
+
+
+def boot_internal_operations() -> tuple[BootSchemaEntry, ...]:
+    """Boot internal operation schemas with exact roles and preconditions.
+
+    Per completion-plan.md Stage 6:
+    - retrieve: fetch canonical records from store
+    - query: build and execute semantic query patterns
+    - compare: compare two or more propositions/referents
+    - infer: derive new propositions from existing ones
+    - simulate: simulate effects of an operation without executing
+    - stage_mutation: stage a mutation set for commit
+    - ask: ask a question (communicative probe)
+    - answer: provide an answer to a question
+    - realize: realize a semantic message plan in language
+    - dispatch: dispatch a message to an external channel
+    """
+    internal_ops = [
+        ("retrieve", "cognitive", ("query_pattern", "context"), ("records",),
+         "strict", "Retrieve canonical records from store"),
+        ("query", "cognitive", ("query_pattern", "context"), ("results",),
+         "strict", "Execute semantic query patterns"),
+        ("compare", "cognitive", ("proposition_a", "proposition_b", "context"),
+         ("comparison_result",), "strict", "Compare propositions or referents"),
+        ("infer", "cognitive", ("premises", "context", "rule_refs"),
+         ("conclusions",), "strict", "Derive new propositions"),
+        ("simulate", "cognitive", ("operation_schema", "bindings", "context"),
+         ("predicted_effects",), "strict",
+         "Simulate effects without execution"),
+        ("stage_mutation", "cognitive", ("mutation_set", "evidence_refs"),
+         ("staged_ref",), "strict", "Stage a mutation set for commit"),
+        ("ask", "communicative", ("question_pattern", "addressee", "context"),
+         ("message_ref",), "at_most_once", "Ask a question"),
+        ("answer", "communicative", ("question_ref", "answer_content", "context"),
+         ("message_ref",), "at_most_once", "Provide an answer"),
+        ("realize", "communicative", ("message_plan", "language", "channel"),
+         ("surface_payload",), "strict",
+         "Realize a semantic message plan in language"),
+        ("dispatch", "external", ("message_ref", "channel", "recipient"),
+         ("dispatch_receipt",), "at_most_once",
+         "Dispatch a message to an external channel"),
+    ]
+    entries: list[BootSchemaEntry] = []
+    for key, op_class, input_roles, output_roles, idem_policy, desc in internal_ops:
+        payload = OperationSchema(
+            semantic_key=f"op:{key}",
+            operation_class=op_class,
+            input_roles=input_roles,
+            output_roles=output_roles,
+            idempotency_policy=idem_policy,
+        )
+        envelope = _boot_envelope(
+            f"boot:op:{key}:v1",
+            f"op:{key}",
+            "operation",
+            payload=payload,
+        )
+        entries.append(BootSchemaEntry(
+            record_id=f"boot:op:{key}:v1",
+            semantic_key=f"op:{key}",
+            schema_kind="operation",
+            tier=BootSchemaTier.REQUIRED,
+            envelope=envelope,
+            grounding_spec=_basic_grounding_spec("operation"),
+            description=desc,
+        ))
+    return tuple(entries)
 
 
 def boot_communicative_operations() -> tuple[BootSchemaEntry, ...]:
@@ -443,6 +509,7 @@ def build_boot_manifest() -> FoundationManifest:
     entries.extend(boot_state_dimensions())
     entries.extend(boot_contexts())
     entries.extend(boot_cognitive_operations())
+    entries.extend(boot_internal_operations())
     entries.extend(boot_communicative_operations())
     entries.extend(boot_policies())
     entries.extend(boot_metalanguage())

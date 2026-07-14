@@ -94,10 +94,6 @@ def test_validators_cannot_activate_directly():
     assert "def activate_single" in source or "def activate" in source
 
 
-@pytest.mark.xfail(
-    reason="Cutover in progress: root-level kernel/*.py files still import legacy modules",
-    strict=False,
-)
 def test_no_session_overlay_resolves_meaning():
     """No session overlay or action registry resolves meaning independently.
 
@@ -116,10 +112,6 @@ def test_no_session_overlay_resolves_meaning():
     assert len(real) == 0, f"Legacy imports in canonical kernel: {real}"
 
 
-@pytest.mark.xfail(
-    reason="Cutover in progress: root-level kernel/*.py files may still contain forbidden patterns",
-    strict=False,
-)
 def test_no_action_registry_resolves_meaning():
     """ActionOperatorSchema must not be a competing verb authority."""
     from cemm.kernel.retirement.pattern_scanner import ForbiddenPatternScanner

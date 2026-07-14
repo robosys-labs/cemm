@@ -1,4 +1,10 @@
-"""ObligationFrame — the output of the SemanticObligationScheduler.
+"""DEPRECATED: Replaced by cemm.kernel.execution.goal_arbiter.GoalArbiter + cemm.kernel.model.goal.GoalRecord.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+path uses GoalArbiter for goal derivation and arbitration. Do not use for
+new code — redirect to the v3.4 goal/plan pipeline.
+
+ObligationFrame — the output of the SemanticObligationScheduler.
 
 An ObligationFrame is the authoritative scheduling decision for one turn.
 It specifies what the runtime must do (obligation_kind), how to respond

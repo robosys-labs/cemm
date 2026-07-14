@@ -78,3 +78,8 @@ class SchemaEnvelope(Generic[S]):
         default_factory=lambda: Provenance(source_id="unknown")
     )
     supersedes_refs: tuple[str, ...] = ()
+    # Assessment/admissibility refs — required for active records (Stage 3 exit gate)
+    grounding_assessment_ref: str = ""  # Ref[SchemaGroundingAssessment]
+    epistemic_admissibility_ref: str = ""  # Ref[EpistemicAssessment]
+    competence_assessment_ref: str = ""  # Ref[CompetenceAssessment]
+    activation_environment_fingerprint: str = ""  # pinned snapshot fingerprint

@@ -1,4 +1,10 @@
-"""Core response formation types.
+"""DEPRECATED: ResponseSituation and related types are replaced by cemm.kernel.response.planner.ContentSelectionInput.
+
+This module is retained for legacy compatibility only. The v3.4 canonical
+response path uses ContentSelectionInput and SemanticMessagePlan. Do not use
+for new code — redirect to the v3.4 response pipeline.
+
+Core response formation types.
 
 These types intentionally keep semantic composition separate from English
 surface realization. Response goals and moves are language-agnostic; only
