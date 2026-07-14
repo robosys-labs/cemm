@@ -203,6 +203,83 @@ LEGACY_IMPORT_PATTERNS: tuple[str, ...] = (
     "from ..reaction_detector",
     "from ..act_resolution_planner",
     "from ..pipeline",
+    # Single-dot relative imports (used by root-level kernel/*.py files)
+    "from .semantic_cpu",
+    "from .semantic_attention_controller",
+    "from .semantic_program_compiler",
+    "from .semantic_obligation_scheduler",
+    "from .teaching_frame_manager",
+    "from .teaching_interpreter",
+    "from .relation_frame_compiler",
+    "from .relation_algebra",
+    "from .semantic_query_engine",
+    "from .operational_meaning_compiler",
+    "from .state_transmutation_compiler",
+    "from .operational_causal_router",
+    "from .obligation_contract_builder",
+    "from .obligation_graph_builder",
+    "from .query_contract_builder",
+    "from .write_contract_builder",
+    "from .reaction_contract_builder",
+    "from .operational_contract_compiler",
+    "from .situation_frame_builder",
+    "from .state_occupancy_compiler",
+    "from .state_delta_compiler",
+    "from .session_store",
+    "from .meaning_perceptor",
+    "from .meaning_graph_builder",
+    "from .interpretation_lattice",
+    "from .interpretation_resolver",
+    "from .branch_arbitrator",
+    "from .entity_grounding_resolver",
+    "from .entity_fact_extractor",
+    "from .entity_salience_tracker",
+    "from .predicate_activation_resolver",
+    "from .pragmatic_interpreter",
+    "from .safety_frame_detector",
+    "from .retrieval_planner",
+    "from .role_ref_resolver",
+    "from .scope_graph_builder",
+    "from .text_match",
+    "from .text_normalizer",
+    "from .turn_semantic_index",
+    "from .error_attribution_engine",
+    "from .frame_binder",
+    "from .implicit_predicate_detector",
+    "from .intent_parser",
+    "from .language_adapter",
+    "from .language_detection",
+    "from .learning_contract_builder",
+    "from .construction_matcher",
+    "from .context_kernel_builder",
+    "from .anaphora_resolver",
+    "from .answer_graph_ranker",
+    "from .packet_validator",
+    "from .port_resolver",
+    "from .predicate_phrase_extractor",
+    "from .proposition_semantics",
+    "from .reaction_detector",
+    "from .act_resolution_planner",
+    "from .conversation_act_classifier",
+    "from .semantic_integrity",
+    "from .semantic_working_set",
+    "from .semantic_clusters",
+    "from .semantic_schema_kernel",
+    "from .realization_verifier",
+    "from .promotion_gate",
+    "from .training_export",
+    "from .training_tasks",
+    "from .uol_metadata",
+    "from .output_state_updater",
+    "from .outcome_evaluator",
+    "from .turn_execution_planner",
+    "from .contract_executor",
+    "from .transmutation_authorizer",
+    "from .memory_update_planner",
+    "from .affordance_predictor",
+    "from .capability_classifier",
+    "from .causal_effect_graph",
+    "from .pipeline",
 )
 
 
@@ -233,11 +310,15 @@ class LegacyImportGuard:
     def scan_directory(self, directory: Path) -> LegacyImportScanResult:
         """Scan a directory for legacy imports in canonical kernel modules.
 
-        Only scans .py files in canonical kernel subdirectories.
+        Scans both canonical kernel subdirectories and root-level kernel/*.py
+        files.  Root-level files (e.g. ``semantic_kernel_runtime.py``) are
+        where legacy orchestration code lives, so excluding them creates a
+        blind spot that hides the most critical violations.
         """
         violations: list[LegacyImportViolation] = []
         files_scanned = 0
 
+        # Scan canonical subpackages
         for pkg in CANONICAL_KERNEL_PACKAGES:
             pkg_dir = directory / pkg
             if not pkg_dir.is_dir():
@@ -248,6 +329,14 @@ class LegacyImportGuard:
                 files_scanned += 1
                 file_violations = self.scan_file(py_file)
                 violations.extend(file_violations)
+
+        # Scan root-level kernel/*.py files (not subdirectories)
+        for py_file in directory.glob("*.py"):
+            if py_file.name.startswith("_debug") or py_file.name.startswith("_test"):
+                continue
+            files_scanned += 1
+            file_violations = self.scan_file(py_file)
+            violations.extend(file_violations)
 
         return LegacyImportScanResult(
             is_clean=len(violations) == 0,

@@ -60,6 +60,47 @@ def _diag_value(val: object) -> object:
 def _extract_debug(cycle) -> dict:
     info: dict = {}
 
+    if cycle.surface_evidence is not None:
+        se = cycle.surface_evidence
+        info["Surface Evidence"] = {
+            "token_count": len(getattr(se, "tokens", ())),
+            "referent_count": len(getattr(se, "referents", ())),
+            "predicate_phrase_count": len(getattr(se, "predicate_phrases", ())),
+        }
+
+    if cycle.candidate_graph is not None:
+        cg = cycle.candidate_graph
+        info["Candidate Graph"] = {
+            "predications": len(getattr(cg, "candidate_predications", ())),
+            "propositions": len(getattr(cg, "candidate_propositions", ())),
+            "contexts": len(getattr(cg, "candidate_contexts", ())),
+            "communicative_forces": len(getattr(cg, "candidate_communicative_forces", ())),
+        }
+
+    if cycle.grounding_assessments:
+        info["Grounding Assessments"] = {
+            "count": len(cycle.grounding_assessments),
+        }
+
+    if cycle.epistemic_assessments:
+        info["Epistemic Assessments"] = {
+            "count": len(cycle.epistemic_assessments),
+        }
+
+    if cycle.capability_assessment is not None:
+        info["Capability Assessment"] = {"present": True}
+
+    if cycle.commit_outcome is not None:
+        info["Commit Outcome"] = {
+            "phase": getattr(cycle.commit_outcome, "phase", ""),
+            "committed": len(getattr(cycle.commit_outcome, "committed_refs", ())),
+        }
+
+    if cycle.common_ground_entries:
+        info["Common Ground"] = {
+            "entries": len(cycle.common_ground_entries),
+        }
+
     if cycle.uol_graph is not None:
         g = cycle.uol_graph
         info["UOL Graph"] = {
@@ -400,7 +441,7 @@ HTML_PAGE = """<!DOCTYPE html>
   <div class="logo">C</div>
   <div>
     <h1>CEMM</h1>
-    <div class="subtitle">Contextual Event Memory Model · v4.2 runtime</div>
+    <div class="subtitle">Contextual Event Memory Model · v3.4 cognitive kernel</div>
   </div>
   <span class="header-badge" id="turn-badge">turn 0</span>
   <div class="spacer"></div>

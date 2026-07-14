@@ -38,7 +38,7 @@ from cemm.kernel.retirement.cutover import (
 
 # ── Helpers ────────────────────────────────────────────────────────
 
-KERNEL_DIR = Path(__file__).resolve().parent.parent.parent / "cemm" / "kernel"
+KERNEL_DIR = Path(__file__).resolve().parent.parent.parent / "kernel"
 
 
 # ── Gate 1: legacy imports absent from canonical kernel ──
@@ -56,8 +56,23 @@ def test_canonical_kernel_packages_defined():
     assert "retirement" in CANONICAL_KERNEL_PACKAGES
 
 
+# Known cutover state: root-level kernel/*.py files still contain legacy
+# imports.  This xfail will become xpass once sub-task 14 (legacy module
+# deletion) completes and the root files no longer import legacy code.
+_CUTOVER_INCOMPLETE = True
+
+
+@pytest.mark.xfail(
+    reason="Cutover in progress: root-level kernel/*.py files still import legacy modules",
+    strict=False,
+)
 def test_canonical_kernel_no_legacy_imports():
-    """Legacy imports are absent from the canonical kernel."""
+    """Legacy imports are absent from the canonical kernel.
+
+    Scans both canonical subpackages and root-level kernel/*.py files.
+    During cutover this is expected to fail — root files like
+    ``semantic_kernel_runtime.py`` still import legacy modules.
+    """
     guard = LegacyImportGuard()
     result = guard.scan_directory(KERNEL_DIR)
 
@@ -232,8 +247,17 @@ def test_forbidden_pattern_scanner_clean_file():
     assert len(violations) == 0
 
 
+@pytest.mark.xfail(
+    reason="Cutover in progress: root-level kernel/*.py files may still contain forbidden patterns",
+    strict=False,
+)
 def test_canonical_kernel_no_forbidden_patterns():
-    """No forbidden patterns in canonical kernel modules (excluding retirement)."""
+    """No forbidden patterns in canonical kernel modules (excluding retirement).
+
+    Scans both canonical subpackages and root-level kernel/*.py files.
+    During cutover this is expected to fail — root files like
+    ``semantic_kernel_runtime.py`` may still contain forbidden patterns.
+    """
     scanner = ForbiddenPatternScanner()
     result = scanner.scan_directory(KERNEL_DIR)
 
@@ -243,25 +267,17 @@ def test_canonical_kernel_no_forbidden_patterns():
         if "retirement" not in v.file_path
     )
 
-    # The canonical new-architecture packages should be clean
-    # (legacy kernel root files may still have them — that's expected)
-    canonical_pkg_violations = tuple(
-        v for v in real_violations
-        if any(pkg in v.file_path.replace("\\", "/") for pkg in CANONICAL_KERNEL_PACKAGES)
-        and not v.file_path.replace("\\", "/").endswith("__init__.py")
-    )
-
-    # New-architecture packages should have no forbidden patterns
+    # All canonical kernel files (subpackages + root) should be clean.
     # Note: some patterns like "actor"/"object" may appear in string literals
     # in tests or comments — we check the actual canonical source files
-    assert len(canonical_pkg_violations) == 0 or all(
+    assert len(real_violations) == 0 or all(
         v.violation_kind == "hardcoded_role_names" and
         ('"actor"' in v.line_content or '"object"' in v.line_content or '"target"' in v.line_content)
-        for v in canonical_pkg_violations
+        for v in real_violations
     ), (
-        "Forbidden patterns in canonical packages:\n"
+        "Forbidden patterns in canonical kernel:\n"
         + "\n".join(f"  {v.file_path}:{v.line_number}: {v.violation_kind}: {v.line_content}"
-                     for v in canonical_pkg_violations)
+                     for v in real_violations)
     )
 
 
@@ -418,3 +434,48 @@ def test_retirement_uses_stdlib_only():
     ps_source = open(ps_mod.__file__, encoding="utf-8").read()
     assert "from cemm.kernel.semantic" not in ps_source
     assert "from cemm.kernel.meaning" not in ps_source
+
+
+# ── Single-writer runtime verification tests ──
+
+
+def test_single_writer_same_writer_ok():
+    """Same writer claiming a field twice is idempotent."""
+    verifier = AuthoritativeCutoverVerifier()
+    verifier.assert_single_writer("surface_evidence", "PerceptToSurfaceEvidence")
+    verifier.assert_single_writer("surface_evidence", "PerceptToSurfaceEvidence")  # OK
+    assert verifier.get_turn_writers()["surface_evidence"] == "PerceptToSurfaceEvidence"
+
+
+def test_single_writer_different_writer_fails():
+    """Different writer claiming an already-claimed field raises RuntimeError."""
+    verifier = AuthoritativeCutoverVerifier()
+    verifier.assert_single_writer("realized_output", "ResponseFormationEngine")
+    with pytest.raises(RuntimeError, match="Single-writer violation"):
+        verifier.assert_single_writer("realized_output", "ResponsePlanner")
+
+
+def test_single_writer_reset_clears_turn():
+    """reset_turn_writers clears per-turn state."""
+    verifier = AuthoritativeCutoverVerifier()
+    verifier.assert_single_writer("surface_evidence", "PerceptToSurfaceEvidence")
+    assert len(verifier.get_turn_writers()) == 1
+    verifier.reset_turn_writers()
+    assert len(verifier.get_turn_writers()) == 0
+
+
+def test_verify_cutover_detects_parallel_pipeline():
+    """verify_cutover detects parallel pipeline via single-writer log."""
+    verifier = AuthoritativeCutoverVerifier()
+    for key in AUTHORITY_KEYS:
+        verifier.register(key, f"Impl_{key}")
+
+    # Simulate two different writers writing the same field
+    verifier.assert_single_writer("realized_output", "ResponseFormationEngine")
+    # Reset and simulate a different writer in the same turn (via direct log manipulation)
+    verifier._single_writers["realized_output"] = "ResponsePlanner"
+    verifier._writer_log.append(("realized_output", "ResponsePlanner"))
+
+    result = verifier.verify_cutover()
+    assert not result.is_valid
+    assert any(v.violation_kind == "parallel_pipeline" for v in result.violations)

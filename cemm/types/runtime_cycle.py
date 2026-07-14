@@ -48,3 +48,28 @@ class RuntimeCycleResult:
     transmutation_authorizations: list[Any] = field(default_factory=list)
     learning_answer_fields: list[Any] = field(default_factory=list)
     activated_frame_ids: list[str] = field(default_factory=list)
+    # v3.4 understanding pipeline trace fields — trace-only; do not affect behavior
+    surface_evidence: Any | None = None
+    candidate_graph: Any | None = None
+    grounding_assessments: list[Any] = field(default_factory=list)
+    epistemic_assessments: list[Any] = field(default_factory=list)
+    capability_assessment: Any | None = None
+    self_report: Any | None = None
+    learning_transaction: Any | None = None
+    commit_outcome: Any | None = None
+    common_ground_entries: list[Any] = field(default_factory=list)
+    # v3.4 ORIENT — pinned environment snapshot
+    kernel_snapshot: Any | None = None
+    # v3.4 RESOLVE — typed interpretation result
+    v34_interpretation: Any | None = None
+    # v3.4 GAPS — typed gap list from GapDetector
+    v34_gaps: list[Any] = field(default_factory=list)
+    # v3.4 DECIDE — goals, plan, authorization
+    v34_goals: Any | None = None
+    v34_plan: Any | None = None
+    v34_authorization: Any | None = None
+    # v3.4 ACT — execution result and reconciliation
+    v34_execution: Any | None = None
+    v34_reconciliation: Any | None = None
+    # v3.4 COMMUNICATE — message plan from ResponsePlanner
+    v34_message_plan: Any | None = None

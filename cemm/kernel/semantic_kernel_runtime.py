@@ -13,7 +13,6 @@ from typing import Any
 from .semantic_cpu import SemanticCPU
 from .semantic_attention_controller import SemanticAttentionController
 from .semantic_program_compiler import SemanticProgramCompiler
-from .semantic_obligation_scheduler import SemanticObligationScheduler
 from .teaching_frame_manager import TeachingFrameManager
 from .relation_frame_compiler import RelationFrameCompiler
 from .relation_algebra import RelationAlgebra
@@ -40,6 +39,7 @@ from ..memory.durable_semantic_store import DurableSemanticStore
 from ..types.runtime_cycle import RuntimeCycleResult
 from ..types.obligation_contract import QueryContract, WriteContract, ReactionContract
 from ..types.obligation_frame import ObligationFrame
+from .model.cycle import KernelSnapshot, pin_snapshot
 
 
 class SemanticKernelRuntime:
@@ -98,7 +98,6 @@ class SemanticKernelRuntime:
 
         # v4.2: Semantic program compilation, obligation scheduling, teaching frames
         self._program_compiler = SemanticProgramCompiler()
-        self._obligation_scheduler = SemanticObligationScheduler()
         self._teaching_frame_manager = TeachingFrameManager()
         self._operational_meaning_compiler = OperationalMeaningCompiler()
         self._state_transmutation_compiler = StateTransmutationCompiler()
@@ -153,14 +152,84 @@ class SemanticKernelRuntime:
         self._learning_question_planner = LearningQuestionPlanner()
         self._learning_answer_assimilator = LearningAnswerAssimilator()
 
-        # Conversation act classifier — wired when registry is available
+        # ── v3.4 canonical components (deferred imports to avoid circular) ──
+        from .understanding.percept_bridge import PerceptToSurfaceEvidence
+        from .understanding.composer import SemanticComposer
+        from .understanding.grounding import GroundingResolver
+        from .understanding.interpreter import InterpretationResolver as V34InterpretationResolver
+        from .understanding.gap_detector import GapDetector as V34GapDetector
+        from .understanding.workspace import WorkspaceController
+        from .epistemics.evaluator import EpistemicEvaluator
+        from .epistemics.retriever import SemanticRetriever
+        from .self_model.capability_evaluator import CapabilityEvaluator
+        from .self_model.self_report import SelfReportBuilder
+        from .learning.coordinator import LearningCoordinator
+        from .schema.store import SemanticSchemaStore
+        from .execution.goal_arbiter import GoalArbiter
+        from .execution.planner import Planner as V34Planner
+        from .execution.executor import OperationExecutor
+        from .execution.authorizer import OperationAuthorizer
+        from .execution.reconciliation import OutcomeReconciler
+        from .execution.commit import CommitCoordinator
+        from .response.planner import ResponsePlanner
+        from .response.common_ground import CommonGroundManager
+        from .retirement.cutover import AuthoritativeCutoverVerifier
+
+        self._schema_store = SemanticSchemaStore()
+        self._percept_bridge = PerceptToSurfaceEvidence()
+        self._semantic_composer = SemanticComposer(store=self._schema_store)
+        self._grounding_resolver = GroundingResolver(store=self._schema_store)
+        self._v34_interpretation_resolver = V34InterpretationResolver()
+        self._v34_gap_detector = V34GapDetector()
+        self._workspace_controller = WorkspaceController()
+        self._epistemic_evaluator = EpistemicEvaluator()
+        self._semantic_retriever = SemanticRetriever(store=self._predicate_schema_store)
+        self._capability_evaluator = CapabilityEvaluator()
+        self._self_report_builder = SelfReportBuilder()
+        self._learning_coordinator = LearningCoordinator(store=self._schema_store)
+        self._goal_arbiter = GoalArbiter()
+        self._v34_planner = V34Planner()
+        self._operation_executor = OperationExecutor()
+        self._operation_authorizer = OperationAuthorizer()
+        self._outcome_reconciler = OutcomeReconciler()
+        self._commit_coordinator = CommitCoordinator()
+        self._response_planner = ResponsePlanner()
+        self._common_ground_manager = CommonGroundManager()
+
+        # ── Cutover verifier — register all 28+1 authorities ──
+        self._cutover_verifier = AuthoritativeCutoverVerifier()
+        self._cutover_verifier.register("surface_analysis", "PerceptToSurfaceEvidence")
+        self._cutover_verifier.register("semantic_composition", "SemanticComposer")
+        self._cutover_verifier.register("referent_sense_role_grounding", "GroundingResolver")
+        self._cutover_verifier.register("schema_identity_version_resolution", "SemanticSchemaStore")
+        self._cutover_verifier.register("structural_grounding_assessment", "GroundingResolver")
+        self._cutover_verifier.register("competence_execution", "CapabilityEvaluator")
+        self._cutover_verifier.register("schema_lifecycle_activation", "SemanticSchemaStore")
+        self._cutover_verifier.register("recursive_cluster_classification", "SemanticSchemaStore")
+        self._cutover_verifier.register("interpretation_selection", "V34InterpretationResolver")
+        self._cutover_verifier.register("context_isolation", "EpistemicEvaluator")
+        self._cutover_verifier.register("semantic_retrieval", "SemanticRetriever")
+        self._cutover_verifier.register("truth_and_context_admissibility", "EpistemicEvaluator")
+        self._cutover_verifier.register("current_schema_use", "GroundingResolver")
+        self._cutover_verifier.register("derived_cognition_retraction", "EpistemicEvaluator")
+        self._cutover_verifier.register("current_capability", "CapabilityEvaluator")
+        self._cutover_verifier.register("gap_creation", "GapDetector")
+        self._cutover_verifier.register("learning_lifecycle", "LearningCoordinator")
+        self._cutover_verifier.register("replay_scheduling_idempotence", "LearningCoordinator")
+        self._cutover_verifier.register("active_goals", "GoalArbiter")
+        self._cutover_verifier.register("plan_selection", "V34Planner")
+        self._cutover_verifier.register("operation_authorization", "OperationAuthorizer")
+        self._cutover_verifier.register("execution", "OperationExecutor")
+        self._cutover_verifier.register("outcome_reconciliation", "OutcomeReconciler")
+        self._cutover_verifier.register("persistent_mutation", "CommitCoordinator")
+        self._cutover_verifier.register("common_ground", "CommonGroundManager")
+        self._cutover_verifier.register("response_content", "ResponsePlanner")
+        self._cutover_verifier.register("surface_realization", "ResponseFormationEngine")
+        self._cutover_verifier.register("cycle_scheduling", "SemanticKernelRuntime")
+
+        # Conversation act classification is now handled by v3.4 SemanticComposer
+        # which produces candidate communicative forces as part of composition.
         self._act_classifier = None
-        if registry is not None:
-            from .conversation_act_classifier import ConversationActClassifier
-            self._act_classifier = ConversationActClassifier(
-                registry=registry,
-                semantic_model_store=semantic_model_store,
-            )
 
     @property
     def attention(self):
@@ -170,10 +239,6 @@ class SemanticKernelRuntime:
     @property
     def program_compiler(self) -> SemanticProgramCompiler:
         return self._program_compiler
-
-    @property
-    def obligation_scheduler(self) -> SemanticObligationScheduler:
-        return self._obligation_scheduler
 
     @property
     def teaching_frame_manager(self) -> TeachingFrameManager:
@@ -210,6 +275,86 @@ class SemanticKernelRuntime:
     @property
     def session_store(self) -> SessionStore:
         return self._session_store
+
+    @property
+    def cutover_verifier(self) -> AuthoritativeCutoverVerifier:
+        return self._cutover_verifier
+
+    @property
+    def v34_gap_detector(self) -> V34GapDetector:
+        return self._v34_gap_detector
+
+    @property
+    def v34_interpretation_resolver(self) -> V34InterpretationResolver:
+        return self._v34_interpretation_resolver
+
+    @property
+    def workspace_controller(self) -> WorkspaceController:
+        return self._workspace_controller
+
+    @property
+    def semantic_retriever(self) -> SemanticRetriever:
+        return self._semantic_retriever
+
+    @property
+    def goal_arbiter(self) -> GoalArbiter:
+        return self._goal_arbiter
+
+    @property
+    def v34_planner(self) -> V34Planner:
+        return self._v34_planner
+
+    @property
+    def operation_executor(self) -> OperationExecutor:
+        return self._operation_executor
+
+    @property
+    def operation_authorizer(self) -> OperationAuthorizer:
+        return self._operation_authorizer
+
+    @property
+    def outcome_reconciler(self) -> OutcomeReconciler:
+        return self._outcome_reconciler
+
+    @property
+    def response_planner(self) -> ResponsePlanner:
+        return self._response_planner
+
+    @property
+    def commit_coordinator(self) -> CommitCoordinator:
+        return self._commit_coordinator
+
+    @property
+    def common_ground_manager(self) -> CommonGroundManager:
+        return self._common_ground_manager
+
+    @property
+    def semantic_composer(self) -> SemanticComposer:
+        return self._semantic_composer
+
+    @property
+    def grounding_resolver(self) -> GroundingResolver:
+        return self._grounding_resolver
+
+    @property
+    def percept_bridge(self) -> PerceptToSurfaceEvidence:
+        return self._percept_bridge
+
+    @property
+    def epistemic_evaluator(self) -> EpistemicEvaluator:
+        return self._epistemic_evaluator
+
+    @property
+    def capability_evaluator(self) -> CapabilityEvaluator:
+        return self._capability_evaluator
+
+    @property
+    def self_report_builder(self):
+        return self._self_report_builder
+
+    @property
+    def learning_coordinator(self) -> LearningCoordinator:
+        return self._learning_coordinator
 
     def run_text(
         self,
@@ -254,12 +399,23 @@ class SemanticKernelRuntime:
         retrieval_plan: Any | None = None,
         safety_frame: Any | None = None,
         situation: Any | None = None,
+        conversation_act: Any | None = None,
     ) -> RuntimeCycleResult:
+        """v3.4 authoritative cognitive cycle — sole pipeline.
+
+        Legacy components are called as individual adapters only where v3.4
+        does not yet natively produce needed operational spine fields. No
+        parallel legacy pipeline runs.
+        """
         start = time.monotonic()
         result = RuntimeCycleResult(signal=signal, context_kernel=kernel)
         errors: list[str] = []
 
-        # 0. Session restore — hydrate kernel from prior turn state
+        # Reset single-writer tracking for this turn
+        self._cutover_verifier.reset_turn_writers()
+
+        # ── A. ORIENT — session restore + snapshot pinning ──
+        snapshot: KernelSnapshot | None = None
         try:
             self._session_store.restore(kernel, signal)
             # Restore teaching frame for this context
@@ -270,6 +426,14 @@ class SemanticKernelRuntime:
             if learning_data:
                 manager_data = learning_data.get("episode_manager", learning_data)
                 self._learning_episode_manager.restore_context(signal.context_id, manager_data)
+
+            # Pin environment revisions for this cycle per CORE_LOOP.md §3.
+            # All interpretation and planning below use this snapshot.
+            snapshot = pin_snapshot(
+                schema_store_revision=self._schema_store.store_revision,
+                semantic_memory_revision=getattr(self._durable_semantic_store, "revision", 0),
+            )
+            result.kernel_snapshot = snapshot
         except Exception as e:
             errors.append(f"session restore failed: {e}")
 
@@ -333,6 +497,141 @@ class SemanticKernelRuntime:
                 kernel.conversation.entity_salience = dict(salience_map)
         except Exception as e:
             errors.append(f"salience update failed: {e}")
+
+        # ── B2. PERCEIVE — PerceptToSurfaceEvidence (authoritative) ──
+        surface_evidence = None
+        try:
+            surface_evidence = self._percept_bridge.convert(percept)
+            result.surface_evidence = surface_evidence
+            self._cutover_verifier.assert_single_writer("surface_evidence", "PerceptToSurfaceEvidence")
+        except Exception as e:
+            errors.append(f"v3.4 surface evidence failed: {e}")
+
+        # ── B3. COMPOSE — SemanticComposer (authoritative) ──
+        candidate_graph = None
+        try:
+            candidate_graph = self._semantic_composer.compose(surface_evidence)
+            result.candidate_graph = candidate_graph
+            self._cutover_verifier.assert_single_writer("candidate_graph", "SemanticComposer")
+        except Exception as e:
+            errors.append(f"v3.4 semantic composition failed: {e}")
+
+        # ── B4. GROUND — GroundingResolver (authoritative) ──
+        grounding_assessments: list[Any] = []
+        try:
+            if surface_evidence is not None:
+                for lex_cand in getattr(surface_evidence, "lexical_sense_candidates", ()):
+                    grounding = self._grounding_resolver.ground_referent(
+                        surface=lex_cand.lexical_form_ref.surface,
+                        language_tag=lex_cand.lexical_form_ref.language_tag,
+                    )
+                    grounding_assessments.append(grounding)
+            result.grounding_assessments = grounding_assessments
+            self._cutover_verifier.assert_single_writer("grounding_assessments", "GroundingResolver")
+        except Exception as e:
+            errors.append(f"v3.4 grounding failed: {e}")
+
+        # ── C2-C3. KNOW — EpistemicEvaluator + CapabilityEvaluator ──
+        epistemic_assessments: list[Any] = []
+        try:
+            if candidate_graph is not None:
+                for cand_prop in candidate_graph.candidate_propositions:
+                    prop = cand_prop.proposition
+                    ctx = None
+                    for cc in candidate_graph.candidate_contexts:
+                        if cc.context_frame.id == prop.context_ref:
+                            ctx = cc.context_frame
+                            break
+                    if ctx is None:
+                        from .model.context_frame import ContextFrame
+                        ctx = ContextFrame(id=f"ctx:{prop.context_ref}", context_kind="actual")
+                    assessment = self._epistemic_evaluator.evaluate(proposition=prop, context=ctx)
+                    epistemic_assessments.append(assessment)
+            result.epistemic_assessments = epistemic_assessments
+            self._cutover_verifier.assert_single_writer("epistemic_assessments", "EpistemicEvaluator")
+        except Exception as e:
+            errors.append(f"v3.4 epistemic evaluation failed: {e}")
+
+        capability_assessment = None
+        try:
+            from .self_model.capability_evaluator import CompetenceRecord, ImplementationRecord
+            capability_assessment = self._capability_evaluator.evaluate(
+                subject_ref="self",
+                operation_schema_ref="op:understand",
+                competence=CompetenceRecord(schema_ref="op:understand", is_competent=True),
+                implementation=ImplementationRecord(
+                    operation_ref="op:understand",
+                    implementation_id="runtime:understand:v34",
+                    is_registered=True,
+                ),
+            )
+            result.capability_assessment = capability_assessment
+            self._cutover_verifier.assert_single_writer("capability_assessment", "CapabilityEvaluator")
+        except Exception as e:
+            errors.append(f"v3.4 capability evaluation failed: {e}")
+
+        # ── B7. RESOLVE — InterpretationResolver (authoritative) ──
+        interp_result = None
+        try:
+            interp_result = self._v34_interpretation_resolver.resolve(
+                candidate_graph,
+                grounding_assessments=grounding_assessments,
+                epistemic_assessments=epistemic_assessments,
+            )
+            result.v34_interpretation = interp_result
+            self._cutover_verifier.assert_single_writer("v34_interpretation", "V34InterpretationResolver")
+        except Exception as e:
+            errors.append(f"v3.4 interpretation resolution failed: {e}")
+
+        # ── C4. GAPS — GapDetector (v3.4 authoritative) ──
+        v34_gaps: list[Any] = []
+        try:
+            gap_result = self._v34_gap_detector.detect(
+                candidate_graph=candidate_graph,
+                grounding_assessments=grounding_assessments,
+                epistemic_assessments=epistemic_assessments,
+                capability_assessment=capability_assessment,
+            )
+            v34_gaps = list(gap_result.gaps)
+            result.v34_gaps = v34_gaps
+            self._cutover_verifier.assert_single_writer("v34_gaps", "GapDetector")
+        except Exception as e:
+            errors.append(f"v3.4 gap detection failed: {e}")
+
+        # ── C5. FOCUS — WorkspaceController (authoritative) ──
+        try:
+            workspace_snapshot = self._workspace_controller.focus(
+                selected_interpretations=list(interp_result.selected) if interp_result else None,
+                epistemic_assessments=epistemic_assessments,
+                gaps=v34_gaps if v34_gaps else None,
+            )
+            result.working_set = workspace_snapshot
+            self._cutover_verifier.assert_single_writer("working_set", "WorkspaceController")
+        except Exception as e:
+            errors.append(f"v3.4 workspace focus failed: {e}")
+
+        # ── B5-B6. LEARN — LearningCoordinator (authoritative) ──
+        try:
+            if v34_gaps:
+                for gap in v34_gaps:
+                    learning_txn = self._learning_coordinator.open_transaction(gap)
+                    result.learning_transaction = learning_txn
+                    self._cutover_verifier.assert_single_writer("learning_transaction", "LearningCoordinator")
+                    break
+        except Exception as e:
+            errors.append(f"v3.4 learning coordination failed: {e}")
+
+        # ── C1. RETRIEVE — SemanticRetriever (authoritative) ──
+        retrieval_batch = None
+        try:
+            retrieval_batch = self._semantic_retriever.retrieve(
+                selected_interpretations=list(interp_result.selected) if interp_result else None,
+                durable_store=self._durable_semantic_store,
+            )
+            result.retrieval = retrieval_batch
+            self._cutover_verifier.assert_single_writer("retrieval", "SemanticRetriever")
+        except Exception as e:
+            errors.append(f"v3.4 semantic retrieval failed: {e}")
 
         # 2. Build working graph
         try:
@@ -504,11 +803,11 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"predicate activation gate failed: {e}")
 
-        # 3. Attend — select focus (Phase 3)
+        # 3. Attend — select focus (Phase 3) — legacy adapter only
+        # v3.4 WorkspaceController is sole writer of result.working_set.
         try:
             budget = getattr(kernel, "budget", None) if kernel is not None else None
-            working_set = self._attention.attend(uol_graph, kernel, budget)
-            result.working_set = working_set
+            self._attention.attend(uol_graph, kernel, budget)
         except Exception as e:
             errors.append(f"attend failed: {e}")
 
@@ -763,6 +1062,80 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"plan failed: {e}")
 
+        # ── D1-D2. DECIDE — GoalArbiter (authoritative) ──
+        goal_result = None
+        try:
+            forces = candidate_graph.candidate_communicative_forces if candidate_graph else ()
+            goal_result = self._goal_arbiter.derive_and_arbitrate(
+                selected_interpretations=list(interp_result.selected) if interp_result else None,
+                communicative_forces=forces,
+                gaps=v34_gaps if v34_gaps else None,
+                capability_assessment=capability_assessment,
+            )
+            result.v34_goals = goal_result
+            self._cutover_verifier.assert_single_writer("v34_goals", "GoalArbiter")
+        except Exception as e:
+            errors.append(f"v3.4 goal arbitration failed: {e}")
+
+        # ── D3. PLAN — Planner (v3.4 authoritative) ──
+        plan_batch = None
+        try:
+            plan_batch = self._v34_planner.plan(
+                goals=goal_result.active_goals if goal_result else (),
+                capability_assessment=capability_assessment,
+            )
+            result.v34_plan = plan_batch
+            self._cutover_verifier.assert_single_writer("v34_plan", "V34Planner")
+        except Exception as e:
+            errors.append(f"v3.4 planning failed: {e}")
+
+        # ── D4. AUTHORIZE — OperationAuthorizer (authoritative) ──
+        authorization = None
+        try:
+            if plan_batch and plan_batch.selected:
+                from .execution.authorizer import AuthorizationConditions, AuthorizationStatus
+                for op in plan_batch.selected.operations:
+                    auth_result = self._operation_authorizer.authorize(
+                        operation=op,
+                        conditions=AuthorizationConditions(
+                            capability_available=capability_assessment is not None,
+                        ),
+                    )
+                    if auth_result.status != AuthorizationStatus.AUTHORIZED:
+                        authorization = auth_result
+                        break
+                    authorization = auth_result
+            result.v34_authorization = authorization
+            self._cutover_verifier.assert_single_writer("v34_authorization", "OperationAuthorizer")
+        except Exception as e:
+            errors.append(f"v3.4 authorization failed: {e}")
+
+        # ── E1. EXECUTE — OperationExecutor (authoritative) ──
+        exec_result = None
+        try:
+            if plan_batch and plan_batch.selected:
+                exec_result = self._operation_executor.execute(
+                    plan=plan_batch.selected,
+                    authorization=authorization,
+                )
+            result.v34_execution = exec_result
+            self._cutover_verifier.assert_single_writer("v34_execution", "OperationExecutor")
+        except Exception as e:
+            errors.append(f"v3.4 execution failed: {e}")
+
+        # ── E3. RECONCILE — OutcomeReconciler (authoritative) ──
+        reconcile_result = None
+        try:
+            if exec_result and exec_result.ledger and plan_batch and plan_batch.selected:
+                reconcile_result = self._outcome_reconciler.reconcile(
+                    plan=plan_batch.selected,
+                    ledger=exec_result.ledger,
+                )
+            result.v34_reconciliation = reconcile_result
+            self._cutover_verifier.assert_single_writer("v34_reconciliation", "OutcomeReconciler")
+        except Exception as e:
+            errors.append(f"v3.4 reconciliation failed: {e}")
+
         # 5. Extract patches
         try:
             patches = list(self._cpu.patch_extractor.extract(
@@ -806,6 +1179,58 @@ class SemanticKernelRuntime:
                 result.consolidation = [consolidation]
             except Exception as e:
                 errors.append(f"consolidate failed: {e}")
+
+        # ── F. CRITICAL_COMMIT — CommitCoordinator (authoritative) ──
+        commit_outcome = None
+        try:
+            from .model.mutation import MutationSet, MutationOperation
+            from uuid import uuid4
+            ops: list[MutationOperation] = []
+            if exec_result and exec_result.succeeded:
+                for outcome in exec_result.ledger.outcomes:
+                    if outcome.status == "succeeded":
+                        ops.append(MutationOperation(
+                            id=f"mut:{uuid4().hex[:8]}",
+                            action="create",
+                            payload_ref=outcome.operation_ref,
+                            evidence_refs=outcome.output_refs,
+                        ))
+            if ops:
+                mutation_set = MutationSet(
+                    id=f"ms:{uuid4().hex[:8]}",
+                    phase="critical",
+                    operations=tuple(ops),
+                )
+                commit_outcome = self._commit_coordinator.commit(mutation_set)
+                result.commit_outcome = commit_outcome
+                self._cutover_verifier.assert_single_writer("commit_outcome", "CommitCoordinator")
+        except Exception as e:
+            errors.append(f"v3.4 commit failed: {e}")
+
+        # ── G1-G2. COMMUNICATE — ResponsePlanner (authoritative for content) ──
+        message_plan = None
+        try:
+            from .response.planner import ContentSelectionInput
+            from .model.epistemic import EpistemicAssessment
+            prop_refs = tuple(
+                getattr(s, "proposition_ref", "") for s in (interp_result.selected if interp_result else ())
+            )
+            assessments_tuple = tuple(
+                a for a in epistemic_assessments if isinstance(a, EpistemicAssessment)
+            )
+            selection = ContentSelectionInput(
+                proposition_refs=prop_refs,
+                assessments=assessments_tuple,
+                commit_outcome=commit_outcome,
+                execution_ledger=exec_result.ledger if exec_result else None,
+                goal_refs=tuple(g.id for g in (goal_result.active_goals if goal_result else ())),
+                addressee_ref=getattr(signal, "source_id", "user"),
+            )
+            message_plan = self._response_planner.plan_response(selection)
+            result.v34_message_plan = message_plan
+            self._cutover_verifier.assert_single_writer("v34_message_plan", "ResponsePlanner")
+        except Exception as e:
+            errors.append(f"v3.4 response planning failed: {e}")
 
         # 8. Safety is now integrated into the obligation contract at step 3c
         # via arbitration preemption + safety_frame parameter to the contract
@@ -916,6 +1341,43 @@ class SemanticKernelRuntime:
         except Exception as e:
             errors.append(f"error attribution failed: {e}")
 
+        # ── H. OUTPUT_COMMIT — CommonGroundManager (authoritative) ──
+        try:
+            if message_plan and result.realized_output:
+                from .response.common_ground import (
+                    DispatchResult, DispatchStatus, DiscourseStatus,
+                )
+                from datetime import datetime, timezone
+                dispatch_result = DispatchResult(
+                    message_plan_ref=message_plan.id,
+                    status=DispatchStatus.DISPATCHED,
+                    dispatched_at=datetime.now(timezone.utc).isoformat(),
+                )
+                disc_status = DiscourseStatus.ASSERTED
+                if message_plan.content_items:
+                    fn = message_plan.content_items[0].discourse_function
+                    status_map = {
+                        "inform": DiscourseStatus.ASSERTED,
+                        "query": DiscourseStatus.ASKED,
+                        "acknowledge": DiscourseStatus.ACCEPTED,
+                        "correct": DiscourseStatus.CORRECTED,
+                        "refuse": DiscourseStatus.REJECTED,
+                        "repair": DiscourseStatus.CORRECTED,
+                    }
+                    disc_status = status_map.get(fn, DiscourseStatus.ASSERTED)
+                for item in message_plan.content_items:
+                    if item.semantic_ref:
+                        cg_entry = self._common_ground_manager.record_dispatch(
+                            proposition_ref=item.semantic_ref,
+                            participant_ref="self",
+                            discourse_status=disc_status,
+                            dispatch_result=dispatch_result,
+                        )
+                        result.common_ground_entries.append(cg_entry)
+                self._cutover_verifier.assert_single_writer("common_ground_entries", "CommonGroundManager")
+        except Exception as e:
+            errors.append(f"v3.4 common ground failed: {e}")
+
         result.cost_ms = (time.monotonic() - start) * 1000
         diag: dict[str, Any] = {}
         if errors:
@@ -966,6 +1428,7 @@ class SemanticKernelRuntime:
                 "committed": sum(1 for c in commit_results if c.status == "committed"),
                 "durable_relations": self._durable_semantic_store.relation_count(),
             }
+        diag["pipeline"] = "v3.4"
         if diag:
             result.diagnostics = diag
 

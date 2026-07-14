@@ -100,9 +100,10 @@ class Pipeline:
             episodic_store=self._episodic_store,
             auto_consolidate=auto_consolidate,
             lexeme_memory=self._lexeme_memory,
-            registry=registry,
-            semantic_model_store=self._semantic_model_store,
         )
+        # v3.4: Conversation act classification is handled by SemanticComposer
+        # which produces candidate communicative forces as part of composition.
+        self._act_classifier = None
 
     @property
     def semantic_model_store(self) -> SemanticModelStore:
@@ -150,6 +151,8 @@ class Pipeline:
         kernel.self_view = SelfView()
 
         # ── Delegate to runtime (session restore/persist happens inside) ──
+        # v3.4: SemanticComposer handles communicative force classification.
+        # No pre-perception or legacy act classification needed.
         cycle = self._runtime.run_turn(signal, kernel)
 
         # ── Budget enforcement ──

@@ -482,3 +482,62 @@ def test_model_imports_no_engine():
                 assert forbidden not in content, (
                     f"{full_name} imports forbidden module {forbidden}"
                 )
+
+
+# ── KernelSnapshot and CognitiveCycle ──────────────────────────────
+
+
+def test_kernel_snapshot_is_immutable():
+    """KernelSnapshot must be frozen."""
+    from cemm.kernel.model.cycle import KernelSnapshot
+    s = KernelSnapshot(schema_store_revision=42)
+    with pytest.raises(Exception):
+        s.schema_store_revision = 99
+
+
+def test_kernel_snapshot_fingerprint_derived():
+    """KernelSnapshot.fingerprint derives AssessmentEnvironmentFingerprint."""
+    from cemm.kernel.model.cycle import KernelSnapshot
+    s = KernelSnapshot(
+        schema_store_revision=7,
+        grounding_policy_version="v1",
+        kernel_foundation_version="v3.4",
+    )
+    fp = s.fingerprint
+    assert fp.schema_store_revision == 7
+    assert fp.grounding_policy_version == "v1"
+    assert fp.kernel_foundation_version == "v3.4"
+
+
+def test_cognitive_cycle_is_immutable():
+    """CognitiveCycle must be frozen."""
+    from cemm.kernel.model.cycle import CognitiveCycle, CycleTrigger, KernelSnapshot
+    c = CognitiveCycle(
+        cycle_id="c1",
+        trigger=CycleTrigger(trigger_kind="user_utterance"),
+        snapshot=KernelSnapshot(),
+    )
+    with pytest.raises(Exception):
+        c.cycle_id = "c2"
+
+
+def test_cognitive_cycle_stages_empty_by_default():
+    """CognitiveCycle starts with empty stage outputs."""
+    from cemm.kernel.model.cycle import CognitiveCycle, CycleTrigger, KernelSnapshot
+    c = CognitiveCycle(
+        cycle_id="c1",
+        trigger=CycleTrigger(trigger_kind="user_utterance"),
+        snapshot=KernelSnapshot(),
+    )
+    assert c.surface_evidence == ()
+    assert c.meaning_candidates == ()
+    assert c.grounded_candidates == ()
+    assert c.selected_interpretations == ()
+    assert c.epistemic_assessments == ()
+    assert c.capability_assessments == ()
+    assert c.gaps == ()
+    assert c.goals == ()
+    assert c.plans == ()
+    assert c.critical_commit is None
+    assert c.output_commit is None
+    assert c.trace is None

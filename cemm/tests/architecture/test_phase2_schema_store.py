@@ -929,3 +929,70 @@ def test_reject_uses_cas():
 
     # Status should be rejected
     assert store.get("schema:rej_cas:v1").status == "rejected"
+
+
+# ── SchemaStoreBridge tests ────────────────────────────────────────
+
+
+def test_bridge_seeds_predicate_schemas():
+    """SchemaStoreBridge seeds canonical predicate schemas as active."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    assert len(bridge.all_schemas()) >= 19
+    assert bridge.get("is_a") is not None
+    assert bridge.get("same_as") is not None
+    assert bridge.get("causes") is not None
+
+
+def test_bridge_inverse_of():
+    """SchemaStoreBridge.inverse_of returns inverse predicates."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    assert "sub_type_of" in bridge.inverse_of("is_a")
+    assert "same_as" in bridge.inverse_of("same_as")
+
+
+def test_bridge_inherits():
+    """SchemaStoreBridge.inherits checks inheritance behavior."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    assert bridge.inherits("is_a") is True
+    assert bridge.inherits("causes") is False
+
+
+def test_bridge_relation_family_for():
+    """SchemaStoreBridge.relation_family_for returns family."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    assert bridge.relation_family_for("is_a") == "taxonomy"
+    assert bridge.relation_family_for("causes") == "causal"
+    assert bridge.relation_family_for("unknown_pred") == "definition"
+
+
+def test_bridge_observe_candidate():
+    """SchemaStoreBridge.observe_candidate registers in SemanticSchemaStore."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    rec = bridge.observe_candidate("new_pred", ["arg1", "arg2"])
+    assert rec.predicate_key == "new_pred"
+    assert rec.support_count == 1
+    # Candidate should be retrievable
+    cand = bridge.get_candidate("new_pred")
+    assert cand is not None
+    assert cand.predicate_key == "new_pred"
+
+
+def test_bridge_authoritative_store_is_semantic_schema_store():
+    """SchemaStoreBridge.authoritative_store returns the SemanticSchemaStore."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    from cemm.kernel.schema.store import SemanticSchemaStore
+    bridge = SchemaStoreBridge()
+    assert isinstance(bridge.authoritative_store, SemanticSchemaStore)
+    assert bridge.authoritative_store.store_revision > 0
+
+
+def test_bridge_get_returns_none_for_unknown():
+    """SchemaStoreBridge.get returns None for unknown predicates."""
+    from cemm.kernel.schema.bridge import SchemaStoreBridge
+    bridge = SchemaStoreBridge()
+    assert bridge.get("nonexistent_predicate_xyz") is None

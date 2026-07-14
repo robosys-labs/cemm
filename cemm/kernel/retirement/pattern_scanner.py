@@ -95,12 +95,17 @@ class ForbiddenPatternScanner:
     """
 
     def scan_directory(self, directory: Path) -> PatternScanResult:
-        """Scan canonical kernel packages for forbidden patterns."""
+        """Scan canonical kernel modules for forbidden patterns.
+
+        Scans both canonical kernel subdirectories and root-level kernel/*.py
+        files, matching the coverage of ``LegacyImportGuard.scan_directory``.
+        """
         from .legacy_guard import CANONICAL_KERNEL_PACKAGES
 
         violations: list[PatternViolation] = []
         files_scanned = 0
 
+        # Scan canonical subpackages
         for pkg in CANONICAL_KERNEL_PACKAGES:
             pkg_dir = directory / pkg
             if not pkg_dir.is_dir():
@@ -111,6 +116,14 @@ class ForbiddenPatternScanner:
                 files_scanned += 1
                 file_violations = self.scan_file(py_file)
                 violations.extend(file_violations)
+
+        # Scan root-level kernel/*.py files (not subdirectories)
+        for py_file in directory.glob("*.py"):
+            if py_file.name.startswith("_debug") or py_file.name.startswith("_test"):
+                continue
+            files_scanned += 1
+            file_violations = self.scan_file(py_file)
+            violations.extend(file_violations)
 
         return PatternScanResult(
             is_clean=len(violations) == 0,

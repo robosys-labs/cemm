@@ -97,6 +97,13 @@ class AuthoritativeCutoverVerifier:
     Helpers may derive candidates or convert records, but may not commit
     a competing decision.
 
+    Runtime single-writer verification:
+    Each ``CognitiveCycle`` field must have exactly one writer per turn.
+    ``assert_single_writer`` is called at runtime when a component writes
+    to a cycle field.  If a different writer already claimed the field
+    this turn, a ``RuntimeError`` is raised — detecting parallel
+    legacy/v3.4 pipelines that both write the same field.
+
     Do not:
     - run the old and new pipelines in parallel and call the new path authoritative
     - call shadow code complete
@@ -104,6 +111,8 @@ class AuthoritativeCutoverVerifier:
 
     def __init__(self) -> None:
         self._registrations: dict[str, str] = {}  # authority_key → implementation_name
+        self._single_writers: dict[str, str] = {}  # field_name → writer_name (per-turn)
+        self._writer_log: list[tuple[str, str]] = []  # (field_name, writer) per turn
 
     def register(self, authority_key: str, implementation_name: str) -> None:
         """Register an authority implementation.
@@ -120,13 +129,41 @@ class AuthoritativeCutoverVerifier:
 
         self._registrations[authority_key] = implementation_name
 
+    def assert_single_writer(self, field_name: str, writer: str) -> None:
+        """Assert that only one writer produces a given cycle field per turn.
+
+        Called at runtime when a component writes to a ``CognitiveCycle``
+        field.  If a *different* writer already claimed the field this
+        turn, raises ``RuntimeError`` — detecting parallel legacy/v3.4
+        pipelines that both write the same field.
+
+        Same writer claiming the same field twice is idempotent (no error).
+        """
+        existing = self._single_writers.get(field_name)
+        if existing is not None and existing != writer:
+            raise RuntimeError(
+                f"Single-writer violation for field '{field_name}': "
+                f"'{existing}' already wrote it, now '{writer}' is trying to write"
+            )
+        self._single_writers[field_name] = writer
+        self._writer_log.append((field_name, writer))
+
+    def reset_turn_writers(self) -> None:
+        """Reset single-writer tracking for a new turn."""
+        self._single_writers.clear()
+        self._writer_log.clear()
+
+    def get_turn_writers(self) -> dict[str, str]:
+        """Return a snapshot of field → writer mappings for the current turn."""
+        return dict(self._single_writers)
+
     def verify_cutover(self) -> CutoverResult:
         """Verify that the cutover is authoritative.
 
         Checks:
         - No duplicate authorities
         - All required authorities registered
-        - No parallel pipelines
+        - No parallel pipelines (via single-writer log if available)
         - No shadow code
         """
         violations: list[CutoverViolation] = []
@@ -137,6 +174,19 @@ class AuthoritativeCutoverVerifier:
                 violations.append(CutoverViolation(
                     violation_kind="missing_authority",
                     detail=f"authority {key} not registered",
+                ))
+
+        # Check for single-writer violations in the current turn log
+        field_writers: dict[str, set[str]] = {}
+        for field_name, writer in self._writer_log:
+            field_writers.setdefault(field_name, set()).add(writer)
+        for field_name, writers in field_writers.items():
+            if len(writers) > 1:
+                violations.append(CutoverViolation(
+                    violation_kind="parallel_pipeline",
+                    detail=(
+                        f"field '{field_name}' has multiple writers: {writers}"
+                    ),
                 ))
 
         return CutoverResult(

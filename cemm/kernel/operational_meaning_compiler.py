@@ -120,7 +120,24 @@ class OperationalMeaningCompiler:
         queries = [f for f in frames if f.is_query]
         social = [f for f in frames if f.frame_type in ("social_act", "phatic_act")]
 
-        if writable:
+        if writable and queries:
+            best_writable = max(writable, key=lambda f: f.confidence)
+            # Only let substantive query types override writable frames.
+            # concept_definition_query is often a fallback for commands
+            # like "can you remember that?" and shouldn't suppress writes.
+            substantive_queries = [
+                f for f in queries
+                if f.frame_type not in ("concept_definition_query", "clarification_request")
+            ]
+            if substantive_queries:
+                best_query = max(substantive_queries, key=lambda f: (self._query_priority(f.frame_type), f.confidence))
+                if best_query.confidence > best_writable.confidence:
+                    primary = best_query
+                else:
+                    primary = best_writable
+            else:
+                primary = best_writable
+        elif writable:
             primary = max(writable, key=lambda f: f.confidence)
         elif queries:
             primary = max(queries, key=lambda f: (self._query_priority(f.frame_type), f.confidence))
@@ -238,6 +255,15 @@ class OperationalMeaningCompiler:
                 return "clarification_request", "conversation_state"
             return "user_profile_query", "user_profile"
 
+        if (kind == "question" or self._is_question_like_group(graph, instruction, group)):
+            # When a has_property relation is present, use its source_role to
+            # disambiguate self vs user profile queries early.
+            prop_source_role = self._property_source_role(graph, instruction)
+            if prop_source_role == "self" and not decode.get("decode_unknown_content_tokens"):
+                return "self_identity_query", "self_model"
+            if prop_source_role == "user":
+                return "user_profile_query", "user_profile"
+
         if (kind == "question" or self._is_question_like_group(graph, instruction, group)) and self._targets_concept(graph, instruction):
             return "concept_definition_query", "concept_lattice"
 
@@ -248,10 +274,10 @@ class OperationalMeaningCompiler:
             return "self_capability_query", "self_model"
 
         if kind == "question":
-            if self._targets_concept(graph, instruction):
-                return "concept_definition_query", "concept_lattice"
             if self._targets_self(graph, instruction) and not decode.get("decode_unknown_content_tokens"):
                 return "self_identity_query", "self_model"
+            if self._targets_concept(graph, instruction):
+                return "concept_definition_query", "concept_lattice"
             return "concept_definition_query", "concept_lattice"
 
         if kind == "teaching":
@@ -408,6 +434,18 @@ class OperationalMeaningCompiler:
                 if target is not None and target.kind == "self":
                     return True
         return False
+
+    def _property_source_role(self, graph: UOLGraph, instruction: Any) -> str:
+        """Return 'self' or 'user' if a has_property relation in this group has
+        an explicit source_role, otherwise empty string."""
+        for atom in graph.atoms.values():
+            if atom.group_id != instruction.group_id:
+                continue
+            if atom.kind == "relation" and atom.key == "has_property":
+                role = atom.features.get("source_role", "")
+                if role in ("self", "user"):
+                    return role
+        return ""
 
     def _targets_user_profile(self, graph: UOLGraph, instruction: Any) -> bool:
         for edge in graph.edges:
@@ -630,7 +668,7 @@ class OperationalMeaningCompiler:
         coverage = float(decode.get("decode_coverage", 1.0) or 1.0)
         anchors = int(decode.get("decode_anchor_count", 0) or 0)
         has_complete_relation = bool(decode.get("decode_has_complete_relation", False))
-        if len(unknown_content) == 1 and not has_complete_relation and coverage <= 0.8:
+        if len(unknown_content) == 1 and not has_complete_relation and coverage < 1.0:
             return True
         if token_count >= 3 and coverage < 0.6:
             return True

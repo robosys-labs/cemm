@@ -11,6 +11,7 @@ These files are subordinate only to root `AGENTS.md` and `cemm/ARCHITECTURE.md`.
 - `KERNEL_FOLDER_STRUCTURE.md` — implementation module boundaries.
 - `ARCHITECTURE_DECISIONS.md` — binding decisions.
 - `IMPLEMENTATION_PLAN.md` — authoritative migration sequence.
+- `CUTOVER_PLAN.md` — Phase 12 legacy-retirement completion plan; current honest status of the authoritative cutover.
 - `ACCEPTANCE_TESTS.md` — structural completion contract.
 - `PRESIDENT_LEADER_TRACE.md` — worked concept-learning trace.
 
