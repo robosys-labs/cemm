@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import json
 from typing import Any
-from ..kernel.schema.construction import ConstructionSchema, InputConstructionSchema
+from ..kernel.schema.construction import InputConstructionSchema
 
 @dataclass(frozen=True, slots=True)
 class LexicalEntry:

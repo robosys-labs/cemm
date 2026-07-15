@@ -1,7 +1,6 @@
-"""CEMM canonical v3.4.1 web demo.
+"""CEMM canonical v3.4.3 web demo.
 
-No legacy imports. The HTTP layer projects the authoritative CognitiveCycle;
-it never runs the v3.3 UOL/obligation/patch pipeline.
+The HTTP layer projects the authoritative CognitiveCycle.
 """
 from __future__ import annotations
 
@@ -66,14 +65,14 @@ def handle_chat(text: str, context_id: str) -> dict:
 
 HTML_PAGE = r'''<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>CEMM v3.4.1</title>
+<title>CEMM v3.4.3</title>
 <style>
 body{font:15px system-ui;max-width:900px;margin:0 auto;padding:24px;background:#0b0d14;color:#e8eaf2}
 #chat{min-height:65vh;border:1px solid #30354a;border-radius:12px;padding:16px;overflow:auto}
 .msg{margin:10px 0;padding:10px 12px;border-radius:10px;background:#171b29}.user{background:#252b45}
 .status{font-size:12px;color:#9299b5}form{display:flex;gap:8px;margin-top:12px}input{flex:1;padding:12px;border-radius:8px;border:1px solid #30354a;background:#111521;color:white}button{padding:0 18px}
 pre{white-space:pre-wrap;color:#aeb5d0}
-</style></head><body><h2>CEMM <small>canonical v3.4.1</small></h2><div id="chat"></div>
+</style></head><body><h2>CEMM <small>canonical v3.4.3</small></h2><div id="chat"></div>
 <form id="form"><input id="input" autocomplete="off"><button>Send</button></form>
 <script>
 const chat=document.querySelector('#chat'),input=document.querySelector('#input');
@@ -130,5 +129,5 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     _DEBUG = args.debug
-    print(f"CEMM v3.4.1 at http://127.0.0.1:{args.port}")
+    print(f"CEMM v3.4.3 at http://127.0.0.1:{args.port}")
     HTTPServer(("127.0.0.1", args.port), CEMMHandler).serve_forever()

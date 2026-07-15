@@ -125,10 +125,6 @@ class InputConstructionSchema:
         )
 
 
-# Backward-compatible alias
-ConstructionSchema = InputConstructionSchema
-
-
 @dataclass(frozen=True, slots=True)
 class LexicalInputMapping:
     mapping_id: str

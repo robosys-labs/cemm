@@ -272,11 +272,7 @@ class CognitiveKernel:
             all_gaps = []
             suppress = bool(
                 cycle.dialogue_resolution
-                and getattr(
-                    cycle.dialogue_resolution,
-                    "suppress_fresh_lexical_gaps",
-                    False,
-                )
+                and cycle.dialogue_resolution.suppress_fresh_lexical_gaps
             )
             for index, graph in enumerate(
                 cycle.meaning_candidates
@@ -412,32 +408,24 @@ class CognitiveKernel:
     def _build_response_intents(cycle):
         intents = []
         from ..response.planner import ResponseIntent, ResponseIntentRole
-        for interp in getattr(
-            cycle, "selected_interpretations", ()
-        ):
+        for interp in cycle.selected_interpretations:
             roles = tuple(
                 ResponseIntentRole(
                     role_key=rb.role_schema_ref.removeprefix("role:"),
                     value_ref=rb.filler_ref,
                     value_kind="referent",
                 )
-                for rb in getattr(interp, "role_bindings", ())
+                for rb in interp.role_bindings
             )
             intents.append(ResponseIntent(
                 intent_id=interp.id,
-                predicate_key=getattr(
-                    interp, "predicate_semantic_key", ""
-                ),
+                predicate_key=interp.predicate_semantic_key,
                 roles=roles,
-                communicative_force=getattr(
-                    interp, "communicative_force", "assert"
-                ),
-                context_ref=getattr(
-                    interp, "context_ref", "actual"
-                ),
+                communicative_force=interp.communicative_force,
+                context_ref=interp.context_ref,
                 provenance_refs=(
                     (interp.proposition_ref,)
-                    if getattr(interp, "proposition_ref", "")
+                    if interp.proposition_ref
                     else ()
                 ),
             ))
@@ -479,10 +467,7 @@ class CognitiveKernel:
             plan = self._response.plan_response(
                 selection
             )
-            plan_lang = getattr(
-                plan, "language_tag",
-                getattr(plan, "language", "en"),
-            )
+            plan_lang = plan.language_tag
             authorization = self._renderer.authorize(
                 plan,
                 language=plan_lang,
@@ -498,12 +483,7 @@ class CognitiveKernel:
                     self._fingerprint(cycle)
                 ),
             )
-            if hasattr(self._renderer, "validate_round_trip") and not self._renderer.validate_round_trip(
-                payload
-            ):
-                raise ValueError(
-                    "surface leakage validation failed"
-                )
+
         except Exception as exc:
             errors.append(
                 f"communicate failed: {exc}"
@@ -540,12 +520,9 @@ class CognitiveKernel:
                         timezone.utc
                     ).isoformat()
                 )
-                plan_id = getattr(
-                    cycle.message_plan, "plan_id",
-                    getattr(cycle.message_plan, "id", ""),
-                )
+                plan = cycle.message_plan
                 dispatch = DispatchResult(
-                    message_plan_ref=plan_id,
+                    message_plan_ref=plan.plan_id,
                     status=(
                         DispatchStatus.DISPATCHED
                     ),
@@ -559,86 +536,26 @@ class CognitiveKernel:
                     .realized_item_refs
                 )
                 output_event = {
-                    "message_plan_ref": plan_id,
+                    "message_plan_ref": plan.plan_id,
                     "realized_item_refs":
                     tuple(realized),
                     "dispatched_at": dispatched_at,
                 }
-                items = getattr(
-                    cycle.message_plan,
-                    "content_items",
-                    getattr(
-                        cycle.message_plan,
-                        "clauses", (),
-                    ),
-                )
-                for item in items:
-                    sem_ref = getattr(
-                        item, "semantic_ref",
-                        getattr(item, "clause_id", ""),
-                    )
-                    if sem_ref not in realized:
+                for clause in plan.clauses:
+                    clause_id = clause.clause_id
+                    if clause_id not in realized:
                         continue
-                    discourse_fn = getattr(
-                        item, "discourse_function",
-                        getattr(
-                            item, "communicative_force",
-                            "inform",
-                        ),
-                    )
                     status = (
                         DiscourseStatus.ASKED
-                        if discourse_fn == "query"
+                        if clause.communicative_force == "query"
                         else DiscourseStatus.ASSERTED
                     )
-                    prop_ref = getattr(
-                        item, "semantic_ref",
-                        getattr(
-                            item, "clause_id",
-                            sem_ref,
-                        ),
-                    )
                     self._common_ground.record_dispatch(
-                        proposition_ref=prop_ref,
+                        proposition_ref=clause_id,
                         participant_ref="self",
                         discourse_status=status,
                         dispatch_result=dispatch,
                     )
-                    if (
-                        hasattr(item, "content_kind")
-                        and item.content_kind
-                        == "learning_probe"
-                    ):
-                        self._learning.register_probe_dispatch(
-                            context_ref=(
-                                cycle.trigger.context_id
-                            ),
-                            message_item=item,
-                            gaps=cycle.gaps,
-                            output_event_ref=(
-                                cycle.message_plan.id
-                            ),
-                        )
-                    elif (
-                        item.content_kind
-                        in {
-                            "learning_progress",
-                            "dialogue_gap_explanation",
-                        }
-                        and cycle.dialogue_resolution
-                    ):
-                        self._learning.register_followup_dispatch(
-                            context_ref=(
-                                cycle.trigger.context_id
-                            ),
-                            message_item=item,
-                            dialogue_resolution=(
-                                cycle.dialogue_resolution
-                            ),
-                            output_event_ref=(
-                                cycle.message_plan.id
-                            ),
-                        )
         except Exception as exc:
             errors.append(
                 f"output commit failed: {exc}"

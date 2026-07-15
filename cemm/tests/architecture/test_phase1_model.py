@@ -61,7 +61,7 @@ from cemm.kernel.schema.state_dimension import StateDimensionSchema
 from cemm.kernel.schema.entity_kind import EntityKindSchema
 from cemm.kernel.schema.context import ContextSchema
 from cemm.kernel.schema.lexeme import LexemeSenseSchema
-from cemm.kernel.schema.construction import ConstructionSchema
+from cemm.kernel.schema.construction import InputConstructionSchema
 from cemm.kernel.schema.realization import RealizationSchema
 from cemm.kernel.schema.policy import PolicySchema
 from cemm.kernel.schema.metalanguage import MetalanguageSchema
@@ -94,7 +94,7 @@ IMMUTABLE_RECORD_TYPES = [
     RevisionEntry,
     RoleSchema, PredicateSchema, OperationSchema, CapabilitySchema,
     StateDimensionSchema, EntityKindSchema, ContextSchema,
-    LexemeSenseSchema, ConstructionSchema, RealizationSchema,
+    LexemeSenseSchema, InputConstructionSchema, RealizationSchema,
     PolicySchema, MetalanguageSchema,
 ]
 
@@ -143,7 +143,7 @@ SCHEMA_RECORDS = {
     "SchemaGroundingAssessment", "SchemaUseProfile",
     "RoleSchema", "PredicateSchema", "StateDimensionSchema",
     "OperationSchema", "CapabilitySchema",
-    "LexemeSenseSchema", "ConstructionSchema",
+    "LexemeSenseSchema", "InputConstructionSchema",
     "ContextSchema", "RealizationSchema", "PolicySchema",
     "EntityKindSchema", "MetalanguageSchema",
 }

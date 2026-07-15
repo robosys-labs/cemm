@@ -186,10 +186,6 @@ class LearnedSchemaCompiler:
                     normalised=target_surface.casefold(),
                 ),),
                 semantic_schema_ref=primary.record_id,
-                predicate_schema_ref=(
-                    primary.record_id
-                    if schema_kind == "predicate" else ""
-                ),
                 part_of_speech=str(
                     self._first(
                         values, "part_of_speech"

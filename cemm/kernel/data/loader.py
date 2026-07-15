@@ -403,14 +403,6 @@ class DefinitionPackageLoader:
                         normalised=entry.surface.casefold(),
                     ),),
                     semantic_schema_ref="" if closed else semantic_ref,
-                    predicate_schema_ref=(
-                        semantic_ref
-                        if semantic_ref
-                        and getattr(
-                            store.get(semantic_ref), "schema_kind", ""
-                        ) == "predicate"
-                        else ""
-                    ),
                     part_of_speech=entry.part_of_speech,
                 )
                 registered.append(self._register_active(

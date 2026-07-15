@@ -176,7 +176,9 @@ class SemanticComposer:
     def _lexical_predication(self, sense: Any, lexical: Any) -> CandidatePredication | None:
         envelope = self._store.get(sense.record_id)
         payload = getattr(envelope, "payload", None)
-        predicate_ref = getattr(payload, "predicate_schema_ref", "")
+        predicate_ref = getattr(payload, "semantic_schema_ref", "")
+        if not predicate_ref:
+            predicate_ref = getattr(payload, "predicate_schema_ref", "")
         if not predicate_ref:
             return None
         predication = Predication(

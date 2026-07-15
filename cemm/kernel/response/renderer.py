@@ -103,7 +103,6 @@ class MessageRenderer:
         authorization: SemanticEmissionProof | None = None,
         language: str = "en",
         environment_fingerprint: str = "",
-        language_pack: object | None = None,
     ) -> SurfacePayload:
         pack = self._pack(plan.language_tag)
         if pack is None:
@@ -116,7 +115,7 @@ class MessageRenderer:
         if environment is None:
             from .environment_builder import build_emission_environment
             environment = build_emission_environment(
-                plan, pack, ""
+                plan, pack, environment_fingerprint
             )
         proof = authorization or self._gate.authorize(plan, pack, environment)
         message = self._realizer.realize(plan, proof, pack)
