@@ -79,6 +79,18 @@ class CanonicalSemanticComposer(SemanticComposer):
         )
 
     @staticmethod
+    def _is_grammatical_key(key: str) -> bool:
+        return key.startswith((
+            "grammar:",
+            "pronoun:",
+            "wh:",
+            "aux:",
+            "determiner:",
+            "polarity:",
+            "discourse:",
+        ))
+
+    @staticmethod
     def _open_port_for(construction):
         # All ports are attached atomically by _construction_predication.
         return None

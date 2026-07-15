@@ -58,23 +58,14 @@ class CanonicalCycleEmissionEnvironmentBuilder:
             getattr(cycle, "capability_assessments", ()) or ()
         ):
             claim_evidence.append(ClaimEvidence(
-                evidence_id=(
-                    getattr(assessment, "assessment_id", "")
-                    or getattr(assessment, "id", "")
-                ),
+                evidence_id=assessment.assessment_id,
                 evidence_kind="live_capability_assessment",
-                subject_ref="self",
-                semantic_target_ref=getattr(assessment, "operation_ref", ""),
-                context_ref=getattr(assessment, "context_ref", ""),
-                successful=bool(
-                    getattr(assessment, "is_capable", False)
-                    or getattr(assessment, "available", False)
-                ),
-                revision_fingerprint=getattr(
-                    assessment,
-                    "environment_fingerprint",
-                    "",
-                ),
+                subject_ref=assessment.subject_ref,
+                semantic_target_ref=assessment.operation_schema_ref,
+                context_ref=assessment.context_ref,
+                successful=assessment.is_capable,
+                revision_fingerprint=assessment.environment_fingerprint,
+                provenance_refs=tuple(assessment.evidence_refs),
             ))
 
         commit = getattr(cycle, "critical_commit", None)

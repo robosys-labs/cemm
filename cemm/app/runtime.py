@@ -50,6 +50,7 @@ from ..kernel.response.planner import ResponsePlanner
 from ..kernel.response.renderer import MessageRenderer
 from ..kernel.schema.store import SemanticSchemaStore
 from ..kernel.self_model.capability_evaluator import CapabilityEvaluator
+from ..kernel.self_model.runtime_capabilities import RuntimeCapabilityProvider
 from ..kernel.self_model.self_report import SelfReportBuilder
 from ..kernel.understanding.canonical_composer import CanonicalSemanticComposer
 from ..kernel.understanding.canonical_grounding import CanonicalGroundingResolver
@@ -105,10 +106,19 @@ class Runtime:
         self._inference = BoundedInferenceEngine()
 
         adapters = {
-            tag: SemanticLanguageAdapter(pack)
+            tag: SemanticLanguageAdapter(
+                pack,
+                passed_competence_case_refs=(
+                    emission_evidence.competence_case_refs
+                ),
+            )
             for tag, pack in self._boot_package.language_packs.items()
         }
         percept = _NativePerceptAdapter(adapters)
+        composer = CanonicalSemanticComposer(self._schema_store)
+        grounding = CanonicalGroundingResolver(self._schema_store)
+        interpreter = CanonicalInterpretationResolver()
+        workspace = WorkspaceController()
         retriever = CanonicalSemanticRetriever(
             store=self._semantic_memory,
             schema_store=self._schema_store,
@@ -119,6 +129,10 @@ class Runtime:
             evaluator=self._epistemic,
             schema_compiler=LearnedSchemaCompiler(),
         )
+        response_planner = ResponsePlanner()
+        response_decider = ResponseDecider(tuple(
+            runtime_policies.get("dialogue_policies", ())
+        ))
         renderer = MessageRenderer(
             emission_gate=SemanticEmissionGate(
                 self._boot_package.foundations,
@@ -129,18 +143,38 @@ class Runtime:
                 for tag, pack in self._boot_package.language_packs.items()
             },
         )
+        common_ground = CommonGroundManager()
+        capability_evaluator = CapabilityEvaluator()
+        capability_provider = RuntimeCapabilityProvider(
+            evaluator=capability_evaluator,
+            schema_store=self._schema_store,
+            operation_specs=tuple(self._definition_loader.operations),
+            components={
+                "op:perceive": percept.perceive,
+                "op:interpret": interpreter.resolve,
+                "op:ground": grounding.ground_graph,
+                "op:retrieve": retriever.retrieve,
+                "op:infer": self._inference.infer,
+                "op:learn": learning.open_transaction,
+                "op:store_fact": self._commit.commit,
+                "op:answer": response_decider.decide,
+                "op:realize": renderer.render,
+                # Dispatch is intentionally omitted: recording common ground is
+                # not equivalent to proving that a transport is available.
+            },
+        )
 
         self._kernel = CanonicalCognitiveKernel(
             schema_store=self._schema_store,
             semantic_memory=self._semantic_memory,
             percept_adapter=percept,
-            semantic_composer=CanonicalSemanticComposer(self._schema_store),
-            grounding_resolver=CanonicalGroundingResolver(self._schema_store),
-            interpretation_resolver=CanonicalInterpretationResolver(),
-            workspace_controller=WorkspaceController(),
+            semantic_composer=composer,
+            grounding_resolver=grounding,
+            interpretation_resolver=interpreter,
+            workspace_controller=workspace,
             semantic_retriever=retriever,
             epistemic_evaluator=self._epistemic,
-            capability_evaluator=CapabilityEvaluator(),
+            capability_evaluator=capability_evaluator,
             gap_detector=CanonicalGapDetector(),
             self_report_builder=SelfReportBuilder(),
             learning_coordinator=learning,
@@ -152,15 +186,14 @@ class Runtime:
             commit_coordinator=self._commit,
             fact_compiler=self._fact_compiler,
             inference_engine=self._inference,
-            response_planner=ResponsePlanner(),
+            response_planner=response_planner,
             message_renderer=renderer,
-            common_ground_manager=CommonGroundManager(),
-            response_decider=ResponseDecider(tuple(
-                runtime_policies.get("dialogue_policies", ())
-            )),
+            common_ground_manager=common_ground,
+            response_decider=response_decider,
             emission_environment_builder=(
                 CanonicalCycleEmissionEnvironmentBuilder()
             ),
+            capability_provider=capability_provider,
             foundation_fingerprint=self._boot_package.fingerprint,
             active_schema_refs=emission_evidence.active_schema_refs,
             passed_competence_case_refs=(

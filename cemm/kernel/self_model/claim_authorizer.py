@@ -1,9 +1,4 @@
-"""Authorize semantic predicates about self from live cognitive records.
-
-Policies are keyed by semantic predicates, never by language words.  A language
-pack can realize an authorized predicate in any language, but cannot manufacture
-the backing cognitive state.
-"""
+"""Authorize semantic predicates about self from live cognitive records."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -109,6 +104,7 @@ class SelfClaimAuthorizer:
                 else ("missing_live_goal_requirement_assessment",),
             )
 
+        expected_success = clause.polarity != "negative"
         matches = tuple(
             item
             for item in evidence
@@ -120,7 +116,7 @@ class SelfClaimAuthorizer:
             )
             and (
                 not policy.requires_success
-                or item.successful
+                or item.successful is expected_success
             )
             and (
                 not policy.same_context_required

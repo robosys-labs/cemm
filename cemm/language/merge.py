@@ -100,6 +100,11 @@ def merge_semantic_language_packs(
             extension.input_constructions,
             lambda item: item.schema_id,
         ),
+        token_expansions=_merge_by(
+            base.token_expansions,
+            extension.token_expansions,
+            lambda item: item.expansion_id,
+        ),
         realization=merge_realization_packs(
             base.realization,
             extension.realization,

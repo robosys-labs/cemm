@@ -1,6 +1,6 @@
 {
   "language_tag": "en",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "lexicon": [
     {
       "mapping_id": "input:en:greeting",
@@ -32,6 +32,247 @@
       "grounding_contract_ref": "language:operator:wh:how",
       "competence_case_refs": [
         "competence:en:wh:how"
+      ]
+    },
+    {
+      "mapping_id": "input:en:discourse_oh",
+      "surface_forms": [
+        "oh"
+      ],
+      "lemma_forms": [
+        "oh"
+      ],
+      "semantic_key": "discourse:interjection",
+      "part_of_speech": "interjection",
+      "grounding_contract_ref": "language:discourse:interjection",
+      "competence_case_refs": [
+        "competence:en:discourse:oh"
+      ]
+    },
+    {
+      "mapping_id": "input:en:discourse_well",
+      "surface_forms": [
+        "well"
+      ],
+      "lemma_forms": [
+        "well"
+      ],
+      "semantic_key": "discourse:stance_marker",
+      "part_of_speech": "adverb",
+      "grounding_contract_ref": "language:discourse:stance",
+      "competence_case_refs": [
+        "competence:en:discourse:well"
+      ]
+    },
+    {
+      "mapping_id": "input:en:politeness_please",
+      "surface_forms": [
+        "please"
+      ],
+      "lemma_forms": [
+        "please"
+      ],
+      "semantic_key": "discourse:politeness",
+      "part_of_speech": "particle",
+      "grounding_contract_ref": "language:discourse:politeness",
+      "competence_case_refs": [
+        "competence:en:discourse:please"
+      ]
+    },
+    {
+      "mapping_id": "input:en:capability_aux",
+      "surface_forms": [
+        "can",
+        "could"
+      ],
+      "lemma_forms": [
+        "can"
+      ],
+      "semantic_key": "aux:capability",
+      "part_of_speech": "auxiliary",
+      "grounding_contract_ref": "language:operator:capability",
+      "competence_case_refs": [
+        "competence:en:aux:capability"
+      ]
+    },
+    {
+      "mapping_id": "input:en:action_proform",
+      "surface_forms": [
+        "do"
+      ],
+      "lemma_forms": [
+        "do"
+      ],
+      "semantic_key": "grammar:action_proform",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "language:operator:action_proform",
+      "competence_case_refs": [
+        "competence:en:action_proform"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_learn",
+      "surface_forms": [
+        "learn"
+      ],
+      "lemma_forms": [
+        "learn"
+      ],
+      "semantic_key": "op:learn",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_learn",
+      "competence_case_refs": [
+        "competence:en:operation:learn"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_infer",
+      "surface_forms": [
+        "infer"
+      ],
+      "lemma_forms": [
+        "infer"
+      ],
+      "semantic_key": "op:infer",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_infer",
+      "competence_case_refs": [
+        "competence:en:operation:infer"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_answer",
+      "surface_forms": [
+        "answer"
+      ],
+      "lemma_forms": [
+        "answer"
+      ],
+      "semantic_key": "op:answer",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_answer",
+      "competence_case_refs": [
+        "competence:en:operation:answer"
+      ]
+    },
+    {
+      "mapping_id": "input:en:negative",
+      "surface_forms": [
+        "not"
+      ],
+      "lemma_forms": [
+        "not"
+      ],
+      "semantic_key": "polarity:negative",
+      "part_of_speech": "particle",
+      "grounding_contract_ref": "language:operator:negation",
+      "competence_case_refs": [
+        "competence:en:negation"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_perceive",
+      "surface_forms": [
+        "perceive"
+      ],
+      "lemma_forms": [
+        "perceive"
+      ],
+      "semantic_key": "op:perceive",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_perceive",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_perceive"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_interpret",
+      "surface_forms": [
+        "interpret"
+      ],
+      "lemma_forms": [
+        "interpret"
+      ],
+      "semantic_key": "op:interpret",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_interpret",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_interpret"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_ground",
+      "surface_forms": [
+        "ground"
+      ],
+      "lemma_forms": [
+        "ground"
+      ],
+      "semantic_key": "op:ground",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_ground",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_ground"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_retrieve",
+      "surface_forms": [
+        "retrieve"
+      ],
+      "lemma_forms": [
+        "retrieve"
+      ],
+      "semantic_key": "op:retrieve",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_retrieve",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_retrieve"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_store",
+      "surface_forms": [
+        "store"
+      ],
+      "lemma_forms": [
+        "store"
+      ],
+      "semantic_key": "op:store_fact",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_store_fact",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_store"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_realize",
+      "surface_forms": [
+        "realize"
+      ],
+      "lemma_forms": [
+        "realize"
+      ],
+      "semantic_key": "op:realize",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_realize",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_realize"
+      ]
+    },
+    {
+      "mapping_id": "input:en:operation_dispatch",
+      "surface_forms": [
+        "dispatch"
+      ],
+      "lemma_forms": [
+        "dispatch"
+      ],
+      "semantic_key": "op:dispatch",
+      "part_of_speech": "verb",
+      "grounding_contract_ref": "foundation:operation:op_dispatch",
+      "competence_case_refs": [
+        "competence:mapping:en:operation_dispatch"
       ]
     }
   ],
@@ -128,6 +369,412 @@
           "holder": "self"
         }
       }
+    },
+    {
+      "schema_id": "construction:en:self_repair_preface:v1",
+      "terms": [
+        {
+          "term_id": "speaker",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:first_person"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "mean",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "means"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "discourse_marker",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "",
+      "output_kind": "pragmatic_cue",
+      "output_metadata": {
+        "cue_kind": "self_repair_preface",
+        "cue_value": "reformulation"
+      },
+      "competence_case_refs": [
+        "competence:construction:en:self_repair_preface:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:self_repair_preface:v1"
+      ],
+      "priority": 400
+    },
+    {
+      "schema_id": "construction:en:oh_well_preface:v1",
+      "terms": [
+        {
+          "term_id": "oh",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:interjection"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "well",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:stance_marker"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "discourse_marker",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "",
+      "output_kind": "pragmatic_cue",
+      "output_metadata": {
+        "cue_kind": "stance_preface",
+        "cue_value": "resigned_transition"
+      },
+      "competence_case_refs": [
+        "competence:construction:en:oh_well_preface:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:oh_well_preface:v1"
+      ],
+      "priority": 400
+    },
+    {
+      "schema_id": "construction:en:well_preface:v1",
+      "terms": [
+        {
+          "term_id": "well",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:stance_marker"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "discourse_marker",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "",
+      "output_kind": "pragmatic_cue",
+      "output_metadata": {
+        "cue_kind": "stance_preface",
+        "cue_value": "transition"
+      },
+      "competence_case_refs": [
+        "competence:construction:en:well_preface:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:well_preface:v1"
+      ],
+      "priority": 350
+    },
+    {
+      "schema_id": "construction:en:politeness_preface:v1",
+      "terms": [
+        {
+          "term_id": "please",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:politeness"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "discourse_marker",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "",
+      "output_kind": "pragmatic_cue",
+      "output_metadata": {
+        "cue_kind": "politeness",
+        "cue_value": "please"
+      },
+      "competence_case_refs": [
+        "competence:construction:en:politeness_preface:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:politeness_preface:v1"
+      ],
+      "priority": 350
+    },
+    {
+      "schema_id": "construction:en:capability_open_query:v1",
+      "terms": [
+        {
+          "term_id": "what",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "wh:what"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "capability",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "aux:capability"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "agent",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "action",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:action_proform"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "capable_of",
+      "role_capture_map": {},
+      "open_role_keys": [
+        "operation"
+      ],
+      "communicative_force": "ask",
+      "output_kind": "predication",
+      "output_metadata": {
+        "constant_roles": {
+          "agent": "self"
+        },
+        "requires_full_span": true
+      },
+      "competence_case_refs": [
+        "competence:construction:en:capability_open_query:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:capability_open_query:v1"
+      ],
+      "priority": 380
+    },
+    {
+      "schema_id": "construction:en:capability_specific_query:v1",
+      "terms": [
+        {
+          "term_id": "capability",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "aux:capability"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "agent",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "operation",
+          "constraints": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "op:"
+              ]
+            }
+          ],
+          "capture_key": "operation"
+        }
+      ],
+      "predicate_key": "capable_of",
+      "role_capture_map": {
+        "operation": "operation"
+      },
+      "open_role_keys": [],
+      "communicative_force": "ask",
+      "output_kind": "predication",
+      "output_metadata": {
+        "constant_roles": {
+          "agent": "self"
+        },
+        "requires_full_span": true
+      },
+      "competence_case_refs": [
+        "competence:construction:en:capability_specific_query:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:capability_specific_query:v1"
+      ],
+      "priority": 380
+    }
+  ],
+  "token_expansions": [
+    {
+      "expansion_id": "expansion:en:whats:v1",
+      "surface_forms": [
+        "what's",
+        "what’s"
+      ],
+      "components": [
+        "what",
+        "is"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:whats"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:hows:v1",
+      "surface_forms": [
+        "how's",
+        "how’s"
+      ],
+      "components": [
+        "how",
+        "is"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:hows"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:howre:v1",
+      "surface_forms": [
+        "how're",
+        "how’re"
+      ],
+      "components": [
+        "how",
+        "are"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:howre"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:youre:v1",
+      "surface_forms": [
+        "you're",
+        "you’re"
+      ],
+      "components": [
+        "you",
+        "are"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:youre"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:im:v1",
+      "surface_forms": [
+        "i'm",
+        "i’m"
+      ],
+      "components": [
+        "i",
+        "am"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:im"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:cant:v1",
+      "surface_forms": [
+        "can't",
+        "can’t"
+      ],
+      "components": [
+        "can",
+        "not"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:cant"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:couldnt:v1",
+      "surface_forms": [
+        "couldn't",
+        "couldn’t"
+      ],
+      "components": [
+        "could",
+        "not"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:couldnt"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:dont:v1",
+      "surface_forms": [
+        "don't",
+        "don’t"
+      ],
+      "components": [
+        "do",
+        "not"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:dont"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:doesnt:v1",
+      "surface_forms": [
+        "doesn't",
+        "doesn’t"
+      ],
+      "components": [
+        "does",
+        "not"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:doesnt"
+      ]
     }
   ]
 }

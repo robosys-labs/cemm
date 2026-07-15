@@ -1,6 +1,6 @@
 {
   "language_tag": "en",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "referring_expressions": {},
   "lexicalizations": [
     {
@@ -133,6 +133,342 @@
       ],
       "round_trip_case_refs": [
         "roundtrip:en:clarification_detail:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:capable_of:v1",
+      "semantic_key": "capable_of",
+      "lemma": "can",
+      "forms": {
+        "base": "can"
+      },
+      "part_of_speech": "auxiliary",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:capable_of:v1",
+          "contribution_kind": "predicate",
+          "semantic_key": "capable_of"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:capable_of:v1",
+      "competence_case_refs": [
+        "competence:en:capable_of"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:capable_of:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:not_capable_of:v1",
+      "semantic_key": "capable_of",
+      "lemma": "cannot",
+      "forms": {
+        "base": "cannot"
+      },
+      "part_of_speech": "auxiliary",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:not_capable_of:v1",
+          "contribution_kind": "predicate",
+          "semantic_key": "capable_of"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:capable_of:v1",
+      "competence_case_refs": [
+        "competence:en:not_capable_of"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:not_capable_of:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_perceive:v1",
+      "semantic_key": "op:perceive",
+      "lemma": "perceive input",
+      "forms": {
+        "base": "perceive input"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_perceive:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:perceive"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_perceive",
+      "competence_case_refs": [
+        "competence:en:op_perceive"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_perceive:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_interpret:v1",
+      "semantic_key": "op:interpret",
+      "lemma": "interpret meaning",
+      "forms": {
+        "base": "interpret meaning"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_interpret:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:interpret"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_interpret",
+      "competence_case_refs": [
+        "competence:en:op_interpret"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_interpret:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_ground:v1",
+      "semantic_key": "op:ground",
+      "lemma": "ground meaning",
+      "forms": {
+        "base": "ground meaning"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_ground:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:ground"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_ground",
+      "competence_case_refs": [
+        "competence:en:op_ground"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_ground:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_retrieve:v1",
+      "semantic_key": "op:retrieve",
+      "lemma": "retrieve stored information",
+      "forms": {
+        "base": "retrieve stored information"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_retrieve:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:retrieve"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_retrieve",
+      "competence_case_refs": [
+        "competence:en:op_retrieve"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_retrieve:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_infer:v1",
+      "semantic_key": "op:infer",
+      "lemma": "infer",
+      "forms": {
+        "base": "infer"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_infer:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:infer"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_infer",
+      "competence_case_refs": [
+        "competence:en:op_infer"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_infer:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_learn:v1",
+      "semantic_key": "op:learn",
+      "lemma": "learn from evidence",
+      "forms": {
+        "base": "learn from evidence"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_learn:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:learn"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_learn",
+      "competence_case_refs": [
+        "competence:en:op_learn"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_learn:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_store_fact:v1",
+      "semantic_key": "op:store_fact",
+      "lemma": "store grounded facts",
+      "forms": {
+        "base": "store grounded facts"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_store_fact:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:store_fact"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_store_fact",
+      "competence_case_refs": [
+        "competence:en:op_store_fact"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_store_fact:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_answer:v1",
+      "semantic_key": "op:answer",
+      "lemma": "answer questions",
+      "forms": {
+        "base": "answer questions"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_answer:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:answer"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_answer",
+      "competence_case_refs": [
+        "competence:en:op_answer"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_answer:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_realize:v1",
+      "semantic_key": "op:realize",
+      "lemma": "realize responses",
+      "forms": {
+        "base": "realize responses"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_realize:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:realize"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_realize",
+      "competence_case_refs": [
+        "competence:en:op_realize"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_realize:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:op_dispatch:v1",
+      "semantic_key": "op:dispatch",
+      "lemma": "dispatch responses",
+      "forms": {
+        "base": "dispatch responses"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:lex:en:op_dispatch:v1",
+          "contribution_kind": "operation",
+          "semantic_key": "op:dispatch"
+        }
+      ],
+      "grounding_contract_ref": "foundation:operation:op_dispatch",
+      "competence_case_refs": [
+        "competence:en:op_dispatch"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:op_dispatch:v1"
       ],
       "version": 1
     }
@@ -303,6 +639,94 @@
         "roundtrip:en:clarification_request:v1"
       ],
       "priority": 200
+    },
+    {
+      "schema_id": "construction:en:capable_of_self:v1",
+      "predicate_key": "capable_of",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "required_role_keys": [
+        "agent",
+        "operation"
+      ],
+      "segments": [
+        {
+          "kind": "referring_expression",
+          "role_key": "agent",
+          "schema_ref": "refexp:en:first_person:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:capable_of:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "operation"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:construction:en:capable_of_self:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:capable_of_self:v1"
+      ],
+      "priority": 250,
+      "version": 1
+    },
+    {
+      "schema_id": "construction:en:not_capable_of_self:v1",
+      "predicate_key": "capable_of",
+      "communicative_force": "assert",
+      "polarity": "negative",
+      "required_role_keys": [
+        "agent",
+        "operation"
+      ],
+      "segments": [
+        {
+          "kind": "referring_expression",
+          "role_key": "agent",
+          "schema_ref": "refexp:en:first_person:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:not_capable_of:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "operation"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:construction:en:not_capable_of_self:v1"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:construction:en:not_capable_of_self:v1"
+      ],
+      "priority": 250,
+      "version": 1
     }
   ]
 }

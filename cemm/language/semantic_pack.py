@@ -18,12 +18,23 @@ from ..kernel.schema.lexicalization import LanguageRealizationPack
 
 
 @dataclass(frozen=True, slots=True)
+class TokenExpansion:
+    expansion_id: str
+    language_tag: str
+    surface_forms: tuple[str, ...]
+    components: tuple[str, ...]
+    competence_case_refs: tuple[str, ...]
+    version: int = 1
+
+
+@dataclass(frozen=True, slots=True)
 class SemanticLanguagePack:
     language_tag: str
     input_lexicon: tuple[LexicalInputMapping, ...]
     input_constructions: tuple[InputConstructionSchema, ...]
     realization: LanguageRealizationPack
     fingerprint: str
+    token_expansions: tuple[TokenExpansion, ...] = ()
 
     @classmethod
     def load(cls, root: Path) -> "SemanticLanguagePack":
@@ -96,12 +107,24 @@ class SemanticLanguagePack:
             )
             for item in raw["constructions"]
         )
+        expansions = tuple(
+            TokenExpansion(
+                expansion_id=item["expansion_id"],
+                language_tag=raw["language_tag"],
+                surface_forms=tuple(item["surface_forms"]),
+                components=tuple(item["components"]),
+                competence_case_refs=tuple(item.get("competence_case_refs", ())),
+                version=int(item.get("version", 1)),
+            )
+            for item in raw.get("token_expansions", ())
+        )
         pack = cls(
             language_tag=raw["language_tag"],
             input_lexicon=lexicon,
             input_constructions=constructions,
             realization=realization,
             fingerprint=digest,
+            token_expansions=expansions,
         )
         failures = pack.validate()
         if failures:
@@ -124,5 +147,10 @@ class SemanticLanguagePack:
                 failures.append(f"{construction.schema_id}: no competence cases")
             if not construction.round_trip_case_refs:
                 failures.append(f"{construction.schema_id}: no round-trip cases")
+        for expansion in self.token_expansions:
+            if not expansion.surface_forms or not expansion.components:
+                failures.append(f"{expansion.expansion_id}: empty token expansion")
+            if not expansion.competence_case_refs:
+                failures.append(f"{expansion.expansion_id}: no competence cases")
         failures.extend(self.realization.validate())
         return tuple(failures)

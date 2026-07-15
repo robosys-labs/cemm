@@ -4,10 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-from ..kernel.schema.construction import (
-    InputConstructionSchema,
-    MatchKind,
-)
+from ..kernel.schema.construction import InputConstructionSchema, MatchKind
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,36 +75,31 @@ class DeclarativeConstructionMatcher:
                     failed = True
                     break
                 if term.capture_key and matched:
-                    captures[term.capture_key] = tuple(matched)
+                    captures[term.capture_key] = tuple(dict.fromkeys(matched))
             if failed or not consumed:
                 continue
-            if not self._post_constraints_hold(
-                construction, captures, tokens
-            ):
+            if not self._post_constraints_hold(construction, captures, tokens):
                 continue
             role_map = {
                 role_key: captures[capture_key]
                 for role_key, capture_key in construction.role_capture_map.items()
                 if capture_key in captures
             }
-            result.append(
-                ConstructionMatch(
-                    construction_ref=construction.schema_id,
-                    predicate_key=construction.predicate_key,
-                    role_token_indices=role_map,
-                    open_role_keys=construction.open_role_keys,
-                    communicative_force=construction.communicative_force,
-                    polarity=construction.polarity,
-                    modality=construction.modality,
-                    output_kind=construction.output_kind,
-                    output_metadata=construction.output_metadata,
-                    source_token_indices=tuple(dict.fromkeys(consumed)),
-                    confidence=0.9,
-                    evidence_refs=tuple(
-                        f"token:{index}" for index in dict.fromkeys(consumed)
-                    ),
-                )
-            )
+            source_indices = tuple(dict.fromkeys(consumed))
+            result.append(ConstructionMatch(
+                construction_ref=construction.schema_id,
+                predicate_key=construction.predicate_key,
+                role_token_indices=role_map,
+                open_role_keys=construction.open_role_keys,
+                communicative_force=construction.communicative_force,
+                polarity=construction.polarity,
+                modality=construction.modality,
+                output_kind=construction.output_kind,
+                output_metadata=construction.output_metadata,
+                source_token_indices=source_indices,
+                confidence=0.9,
+                evidence_refs=tuple(f"token:{index}" for index in source_indices),
+            ))
         return tuple(result)
 
     def _term_matches(self, term, token):
@@ -152,13 +144,20 @@ class DeclarativeConstructionMatcher:
 
     @staticmethod
     def _post_constraints_hold(construction, captures, tokens):
-        by_index = {token.token_index: token for token in tokens}
+        # Token expansions may create several matcher tokens that point to the
+        # same preserved source token.  Aggregate their semantic evidence rather
+        # than allowing the last virtual component to overwrite earlier ones.
+        keys_by_index: dict[int, set[str]] = {}
+        for token in tokens:
+            keys_by_index.setdefault(token.token_index, set()).update(
+                token.semantic_keys
+            )
         for constraint in construction.post_constraints:
             indices = captures.get(constraint.capture_key, ())
             keys = {
                 key
                 for index in indices
-                for key in by_index[index].semantic_keys
+                for key in keys_by_index.get(index, ())
             }
             if constraint.constraint_kind == "semantic_in":
                 passed = bool(keys & set(constraint.values))
@@ -170,7 +169,6 @@ class DeclarativeConstructionMatcher:
                 other = captures.get(constraint.other_capture_key, ())
                 passed = set(indices).isdisjoint(other)
             else:
-                # Unsupported expressiveness is a blocker, never ignored.
                 return False
             if constraint.negate:
                 passed = not passed

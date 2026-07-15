@@ -1,7 +1,4 @@
-"""CapabilityAssessment — live capability evaluation for a referent.
-
-Import boundary: standard library only → refs, identity.
-"""
+"""CapabilityAssessment — live capability evaluation for a referent."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,7 +8,6 @@ from .identity import TimeExtent
 
 @dataclass(frozen=True, slots=True)
 class ConditionResult:
-    """Result of evaluating one precondition or contextual condition."""
     condition_ref: str
     satisfied: bool
     detail: str = ""
@@ -19,21 +15,29 @@ class ConditionResult:
 
 @dataclass(frozen=True, slots=True)
 class CapabilityAssessment:
-    """Live capability assessment for a subject referent.
+    """Current, evidence-carrying assessment of one operation capability."""
 
-    Uses live component, resource, permission, and competence records.
-    Static schema declarations cannot override live status.
-    """
-    subject_ref: str  # Ref[Referent]
-    operation_schema_ref: str  # Ref[OperationSchema]
-    status: str = "unknown"  # capable, incapable, degraded, unknown
+    subject_ref: str
+    operation_schema_ref: str
+    assessment_id: str = ""
+    context_ref: str = "actual"
+    environment_fingerprint: str = ""
+    status: str = "unknown"
     competence: float | None = None
     component_refs: tuple[str, ...] = ()
-    health: str = "unknown"  # healthy, degraded, failed, unknown
-    resource_status: str = "unknown"  # available, constrained, exhausted, unknown
-    permission_status: str = "unknown"  # allowed, denied, unknown
+    health: str = "unknown"
+    resource_status: str = "unknown"
+    permission_status: str = "unknown"
     condition_results: tuple[ConditionResult, ...] = ()
     limitations: tuple[str, ...] = ()
     observed_reliability: float | None = None
     valid_time: TimeExtent = field(default_factory=TimeExtent)
     evidence_refs: tuple[str, ...] = ()
+
+    @property
+    def is_capable(self) -> bool:
+        return self.status in {"capable", "degraded"}
+
+    @property
+    def operation_ref(self) -> str:
+        return self.operation_schema_ref

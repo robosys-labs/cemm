@@ -13,6 +13,7 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         *,
         response_decider,
         emission_environment_builder,
+        capability_provider,
         foundation_fingerprint: str,
         active_schema_refs: frozenset[str],
         passed_competence_case_refs: frozenset[str],
@@ -23,6 +24,7 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         super().__init__(**kwargs)
         self._response_decider = response_decider
         self._emission_environment_builder = emission_environment_builder
+        self._capability_provider = capability_provider
         self._foundation_fingerprint = foundation_fingerprint
         self._active_schema_refs = active_schema_refs
         self._passed_competence_case_refs = passed_competence_case_refs
@@ -47,12 +49,31 @@ class CanonicalCognitiveKernel(CognitiveKernel):
             cycle,
             snapshot=replace(
                 cycle.snapshot,
-                kernel_foundation_version="v3.4.3-runtime",
-                grounding_policy_version="typed-query-ports-v3.4.3",
+                kernel_foundation_version="v3.4.4-runtime",
+                grounding_policy_version="typed-query-ports-v3.4.4",
                 competence_suite_hash=self._foundation_fingerprint,
-                adapter_contract_hash="semantic-language-pack-v3.4.3",
+                adapter_contract_hash="semantic-language-pack-v3.4.4",
             ),
         )
+
+    def _know(self, cycle):
+        cycle = super()._know(cycle)
+        errors = []
+        assessments = ()
+        try:
+            assessments = self._capability_provider.assess_cycle(cycle)
+        except Exception as exc:
+            errors.append(f"capability assessment failed: {exc}")
+        cycle = replace(cycle, capability_assessments=assessments)
+        if errors:
+            cycle = replace(
+                cycle,
+                trace=replace(
+                    cycle.trace,
+                    errors=tuple((*cycle.trace.errors, *errors)),
+                ),
+            )
+        return cycle
 
     def _decide(self, cycle):
         errors = []

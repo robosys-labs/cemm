@@ -1,12 +1,5 @@
-"""Proof-carrying multilingual realization.
-
-The realizer accepts only an authorized SemanticEmissionProof.  Every output
-span is covered by a lexicalization, grammatical morpheme, referring-expression
-rule, grounded role value, mention/quotation license, punctuation, or spacing.
-"""
+"""Proof-carrying multilingual realization."""
 from __future__ import annotations
-
-from dataclasses import replace
 
 from ..model.emission import (
     CoverageKind,
@@ -47,7 +40,6 @@ class SemanticRealizer:
             if clause_proof is None or not clause_proof.authorized:
                 blocked.append(clause.clause_id)
                 continue
-
             construction = next(
                 (
                     item
@@ -60,46 +52,49 @@ class SemanticRealizer:
                 blocked.append(clause.clause_id)
                 continue
 
-            clause_start = sum(len(part) for part in surface_parts)
-            clause_failed = False
+            rendered_segments = []
+            failed = False
             for segment in construction.segments:
                 value, kind, semantic_ref, schema_ref = self._render_segment(
                     segment, clause, pack
                 )
                 if value is None:
                     if segment.required:
-                        clause_failed = True
+                        failed = True
                         break
                     continue
-                start = sum(len(part) for part in surface_parts)
-                surface_parts.append(value)
-                end = start + len(value)
-                coverage.append(
-                    SpanCoverage(
-                        start=start,
-                        end=end,
-                        surface=value,
-                        coverage_kind=kind,
-                        semantic_ref=semantic_ref,
-                        schema_ref=schema_ref,
-                        contribution_refs=segment.contribution_refs,
-                    )
-                )
-            if clause_failed:
-                del coverage[
-                    next(
-                        (
-                            index
-                            for index, item in enumerate(coverage)
-                            if item.start >= clause_start
-                        ),
-                        len(coverage),
-                    ):
-                ]
-                while sum(len(part) for part in surface_parts) > clause_start:
-                    surface_parts.pop()
+                rendered_segments.append((
+                    value,
+                    kind,
+                    semantic_ref,
+                    schema_ref,
+                    segment.contribution_refs,
+                ))
+            if failed:
                 blocked.append(clause.clause_id)
                 continue
+
+            if surface_parts:
+                start = sum(len(part) for part in surface_parts)
+                surface_parts.append(" ")
+                coverage.append(SpanCoverage(
+                    start=start,
+                    end=start + 1,
+                    surface=" ",
+                    coverage_kind=CoverageKind.SPACING,
+                ))
+            for value, kind, semantic_ref, schema_ref, contributions in rendered_segments:
+                start = sum(len(part) for part in surface_parts)
+                surface_parts.append(value)
+                coverage.append(SpanCoverage(
+                    start=start,
+                    end=start + len(value),
+                    surface=value,
+                    coverage_kind=kind,
+                    semantic_ref=semantic_ref,
+                    schema_ref=schema_ref,
+                    contribution_refs=contributions,
+                ))
             realized.append(clause.clause_id)
 
         surface = "".join(surface_parts)
@@ -113,7 +108,6 @@ class SemanticRealizer:
                 blocked_clause_refs=tuple(clause.clause_id for clause in plan.clauses),
                 emission_proof_ref=self._proof_ref(proof),
             )
-
         return RealizedMessage(
             plan_ref=plan.plan_id,
             language_tag=plan.language_tag,
@@ -128,12 +122,7 @@ class SemanticRealizer:
         if segment.kind is SegmentKind.SPACE:
             return " ", CoverageKind.SPACING, "", ""
         if segment.kind is SegmentKind.PUNCTUATION:
-            return (
-                segment.punctuation,
-                CoverageKind.PUNCTUATION,
-                "",
-                "",
-            )
+            return segment.punctuation, CoverageKind.PUNCTUATION, "", ""
         if segment.kind is SegmentKind.LEXEME:
             schema = pack.lexicalizations.get(segment.schema_ref)
             if schema is None:
@@ -147,12 +136,7 @@ class SemanticRealizer:
         if segment.kind is SegmentKind.GRAMMATICAL_MORPHEME:
             schema = pack.morphemes.get(segment.schema_ref)
             if schema is None:
-                return (
-                    None,
-                    CoverageKind.GRAMMATICAL_MORPHEME,
-                    "",
-                    segment.schema_ref,
-                )
+                return None, CoverageKind.GRAMMATICAL_MORPHEME, "", segment.schema_ref
             return (
                 schema.surface(segment.form_key),
                 CoverageKind.GRAMMATICAL_MORPHEME,
@@ -163,9 +147,11 @@ class SemanticRealizer:
         role = clause.role(segment.role_key)
         if role is None:
             return None, CoverageKind.ROLE_VALUE, "", ""
-
         if segment.kind is SegmentKind.REFERRING_EXPRESSION:
-            surface = pack.referring_expressions.get(role.value_ref, "")
+            surface = pack.referring_expressions.get(
+                f"{role.value_ref}|{segment.schema_ref}",
+                pack.referring_expressions.get(role.value_ref, ""),
+            )
             return (
                 surface or None,
                 CoverageKind.REFERRING_EXPRESSION,

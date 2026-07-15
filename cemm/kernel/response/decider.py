@@ -1,8 +1,4 @@
-"""Language-neutral DECIDE-stage response-intent derivation.
-
-The decider consumes semantic interpretations, retrieval records, and audited
-runtime policies.  It never examines transcript phrases to choose a response.
-"""
+"""Language-neutral DECIDE-stage response-intent derivation."""
 from __future__ import annotations
 
 import hashlib
@@ -21,8 +17,18 @@ class ResponseDecider:
 
         for interpretation in selected:
             force = getattr(interpretation, "communicative_force", "")
+            predicate = getattr(
+                interpretation, "predicate_semantic_key", ""
+            )
             if force in {"ask", "query"}:
-                intents.extend(self._answer_from_retrieval(cycle, interpretation))
+                if predicate == "capable_of":
+                    intents.extend(
+                        self._answer_from_capability(cycle, interpretation)
+                    )
+                else:
+                    intents.extend(
+                        self._answer_from_retrieval(cycle, interpretation)
+                    )
             intents.extend(self._policy_intents(cycle, interpretation))
 
         if not intents:
@@ -30,6 +36,72 @@ class ResponseDecider:
             if fallback is not None:
                 intents.append(fallback)
         return self._dedupe(intents)
+
+    def _answer_from_capability(self, cycle, interpretation):
+        requested_operation = next((
+            binding.filler_ref.removeprefix("ref:schema:")
+            for binding in getattr(interpretation, "role_bindings", ())
+            if binding.role_schema_ref.removeprefix("role:") == "operation"
+        ), "")
+        assessments = tuple(
+            getattr(cycle, "capability_assessments", ()) or ()
+        )
+        if requested_operation:
+            assessments = tuple(
+                assessment
+                for assessment in assessments
+                if assessment.operation_schema_ref == requested_operation
+            )
+        else:
+            # A broad capability query reports only currently available
+            # operations. A specific query may truthfully return a negative.
+            assessments = tuple(
+                assessment
+                for assessment in assessments
+                if assessment.is_capable
+            )
+        return tuple(
+            self._intent_from_capability(assessment)
+            for assessment in assessments
+        )
+
+    def _intent_from_capability(self, assessment) -> ResponseIntent:
+        assessment_ref = (
+            assessment.assessment_id
+            or f"capability:{self._stable_id((
+                assessment.subject_ref,
+                assessment.operation_schema_ref,
+                assessment.status,
+                assessment.environment_fingerprint,
+            ))}"
+        )
+        provenance = tuple(dict.fromkeys((
+            assessment_ref,
+            *tuple(assessment.evidence_refs or ()),
+        )))
+        return ResponseIntent(
+            intent_id=assessment_ref,
+            predicate_key="capable_of",
+            roles=(
+                ResponseIntentRole(
+                    role_key="agent",
+                    value_ref=assessment.subject_ref,
+                    value_kind="referent",
+                    provenance_refs=provenance,
+                ),
+                ResponseIntentRole(
+                    role_key="operation",
+                    value_ref=assessment.operation_schema_ref,
+                    value_kind="referent",
+                    semantic_key=assessment.operation_schema_ref,
+                    provenance_refs=provenance,
+                ),
+            ),
+            communicative_force="assert",
+            context_ref=assessment.context_ref or "actual",
+            polarity="positive" if assessment.is_capable else "negative",
+            provenance_refs=provenance,
+        )
 
     def _answer_from_retrieval(self, cycle, interpretation):
         predicate_key = getattr(
@@ -58,7 +130,6 @@ class ResponseDecider:
                 ):
                     continue
                 facts.append(fact)
-
         return tuple(self._intent_from_fact(fact) for fact in facts)
 
     def _intent_from_fact(self, fact) -> ResponseIntent:
@@ -82,7 +153,9 @@ class ResponseDecider:
             for role in fact.roles
         )
         return ResponseIntent(
-            intent_id=f"retrieval:{getattr(fact, 'fact_id', self._stable_id(provenance))}",
+            intent_id=(
+                f"retrieval:{getattr(fact, 'fact_id', self._stable_id(provenance))}"
+            ),
             predicate_key=fact.predicate_key,
             roles=roles,
             communicative_force="assert",
@@ -140,7 +213,9 @@ class ResponseDecider:
                     provenance_refs=provenance,
                 ))
             result.append(ResponseIntent(
-                intent_id=f"policy:{policy.get('policy_id', self._stable_id(provenance))}",
+                intent_id=(
+                    f"policy:{policy.get('policy_id', self._stable_id(provenance))}"
+                ),
                 predicate_key=str(response.get("predicate_key", "")),
                 roles=tuple(roles),
                 communicative_force=str(response.get("force", "assert")),
@@ -224,6 +299,7 @@ class ResponseDecider:
             key = (
                 intent.predicate_key,
                 intent.communicative_force,
+                intent.polarity,
                 tuple((role.role_key, role.value_ref) for role in intent.roles),
             )
             if key not in seen:
