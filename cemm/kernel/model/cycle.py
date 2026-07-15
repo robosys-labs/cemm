@@ -1,8 +1,8 @@
 """KernelSnapshot and CognitiveCycle — immutable cycle artifacts.
 
-This replacement keeps the existing public model while separating signal
-identity from signal content and carrying dialogue/realization control records
-through the canonical cycle.
+The cycle carries response intents as an explicit DECIDE-stage artifact.  The
+response planner consumes only this field; selected input interpretations are
+not implicitly echoed as output.
 """
 from __future__ import annotations
 
@@ -75,7 +75,9 @@ class KernelSnapshot:
     truth_maintenance_version: str = ""
     adapter_contract_hash: str = ""
     context_scope_policy_version: str = ""
-    clock_observation: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    clock_observation: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
     @staticmethod
     def pin(**kwargs: Any) -> "KernelSnapshot":
@@ -86,7 +88,8 @@ class KernelSnapshot:
         return AssessmentEnvironmentFingerprint(
             schema_store_revision=self.schema_store_revision,
             dependency_revision_hash=(
-                f"{self.schema_store_revision}:{self.kernel_foundation_version}"
+                f"{self.schema_store_revision}:"
+                f"{self.kernel_foundation_version}"
             ),
             grounding_policy_version=self.grounding_policy_version,
             competency_suite_hash=self.competence_suite_hash,
@@ -101,12 +104,6 @@ class KernelSnapshot:
 
 @dataclass(frozen=True, slots=True)
 class CycleTrigger:
-    """What triggered the cycle.
-
-    ``input_signals`` is authoritative. ``signal_ids`` is retained for callers
-    that construct non-text triggers and for backwards-compatible tests.
-    """
-
     trigger_kind: str
     signal_ids: tuple[str, ...] = ()
     input_signals: tuple[InputSignal, ...] = ()
@@ -144,6 +141,7 @@ class CognitiveCycle:
     critical_mutations: Any | None = None
     critical_commit: Any | None = None
 
+    response_intents: tuple[Any, ...] = ()
     message_plan: Any | None = None
     realization_authorization: Any | None = None
     surface_payload: Any | None = None

@@ -1,0 +1,308 @@
+{
+  "language_tag": "en",
+  "version": "1.0.0",
+  "referring_expressions": {},
+  "lexicalizations": [
+    {
+      "schema_id": "lex:en:greet:v1",
+      "semantic_key": "greet",
+      "lemma": "hello",
+      "forms": {
+        "base": "Hello"
+      },
+      "part_of_speech": "interjection",
+      "permitted_use_modes": [
+        "assert"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:greet:predicate",
+          "contribution_kind": "predicate",
+          "semantic_key": "greet"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:greet:v1",
+      "competence_case_refs": [
+        "competence:en:greet:realization"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:greet:realization:v1"
+      ]
+    },
+    {
+      "schema_id": "lex:en:clarify:v1",
+      "semantic_key": "requests",
+      "lemma": "clarify",
+      "forms": {
+        "base": "Please clarify"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "probe"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:clarify:request",
+          "contribution_kind": "predicate",
+          "semantic_key": "requests"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:requests:v1",
+      "competence_case_refs": [
+        "competence:en:clarify:request"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:clarify:request:v1"
+      ]
+    },
+    {
+      "schema_id": "lex:en:state_available:v1",
+      "semantic_key": "state:available",
+      "lemma": "available",
+      "forms": {
+        "base": "available"
+      },
+      "part_of_speech": "adjective",
+      "permitted_use_modes": [
+        "assert",
+        "qualified"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:available:value",
+          "contribution_kind": "value",
+          "semantic_key": "state:available"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:has_state:v1",
+      "competence_case_refs": [
+        "competence:en:available:state_value"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:available:state_value:v1"
+      ]
+    },
+    {
+      "schema_id": "lex:en:named_self:v1",
+      "semantic_key": "named",
+      "lemma": "name",
+      "forms": {
+        "base": "My name is"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:named:predicate",
+          "contribution_kind": "predicate",
+          "semantic_key": "named"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:named:v1",
+      "competence_case_refs": [
+        "competence:en:named:self_report"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:named:self_report:v1"
+      ]
+    },
+    {
+      "schema_id": "lex:en:clarification_detail:v1",
+      "semantic_key": "dialogue:clarification_detail",
+      "lemma": "clarification_detail",
+      "forms": {
+        "base": "what you mean"
+      },
+      "part_of_speech": "nominal_expression",
+      "permitted_use_modes": [
+        "assert"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:clarification_detail:value",
+          "contribution_kind": "value",
+          "semantic_key": "dialogue:clarification_detail"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:requests:v1",
+      "competence_case_refs": [
+        "competence:en:clarification_detail:semantic_value"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:clarification_detail:v1"
+      ],
+      "version": 1
+    }
+  ],
+  "morphemes": [
+    {
+      "schema_id": "morph:en:copula_first_person:v1",
+      "morpheme_key": "copula_first_person",
+      "forms": {
+        "base": "am"
+      },
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:copula:first_person",
+          "contribution_kind": "feature",
+          "feature_key": "person",
+          "feature_value": "first_singular"
+        }
+      ],
+      "competence_case_refs": [
+        "competence:en:copula:first_person"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:copula:first_person:v1"
+      ]
+    }
+  ],
+  "constructions": [
+    {
+      "schema_id": "construction:en:greet_assertion:v1",
+      "predicate_key": "greet",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "required_role_keys": [
+        "source",
+        "addressee"
+      ],
+      "segments": [
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:greet:v1"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:greet_assertion:licensed"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:greet_assertion:v1"
+      ],
+      "priority": 200
+    },
+    {
+      "schema_id": "construction:en:has_state_self:v1",
+      "predicate_key": "has_state",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "required_role_keys": [
+        "holder",
+        "dimension",
+        "value"
+      ],
+      "segments": [
+        {
+          "kind": "referring_expression",
+          "role_key": "holder",
+          "schema_ref": "refexp:en:first_person:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "grammatical_morpheme",
+          "schema_ref": "morph:en:copula_first_person:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "value"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:has_state_self:retrieval_backed"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:has_state_self:v1"
+      ],
+      "priority": 200
+    },
+    {
+      "schema_id": "construction:en:named_self:v1",
+      "predicate_key": "named",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "required_role_keys": [
+        "holder",
+        "name"
+      ],
+      "segments": [
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:named_self:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "name"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:named_self:retrieval_backed"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:named_self:v1"
+      ],
+      "priority": 200
+    },
+    {
+      "schema_id": "construction:en:clarification_request:v1",
+      "predicate_key": "requests",
+      "communicative_force": "ask",
+      "polarity": "positive",
+      "required_role_keys": [
+        "speaker",
+        "addressee",
+        "content"
+      ],
+      "segments": [
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:clarify:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "content"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:clarification_request:semantic_content"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:clarification_request:v1"
+      ],
+      "priority": 200
+    }
+  ]
+}

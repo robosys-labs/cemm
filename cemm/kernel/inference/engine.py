@@ -34,6 +34,7 @@ class BoundedInferenceEngine:
         dependency_fingerprint: str,
     ) -> InferenceOutcome:
         started = monotonic()
+        seed_facts = tuple(self._ensure_inference_fact(f) for f in seed_facts)
         fact_by_identity = {fact.identity: fact for fact in seed_facts}
         all_facts = list(seed_facts)
         derived: list[SemanticFact] = []
@@ -350,6 +351,30 @@ class BoundedInferenceEngine:
             derivation_ref=proof_id,
             derivation_depth=depth,
         ), None
+
+    @staticmethod
+    def _ensure_inference_fact(fact):
+        if hasattr(fact, "roles") and not isinstance(fact.roles, dict):
+            from .rule_model import SemanticFact as InfFact, CausalWarrant
+            roles = {
+                getattr(role, "role_key", str(idx)): getattr(role, "value_ref", str(role))
+                for idx, role in enumerate(fact.roles)
+            }
+            return InfFact(
+                fact_id=getattr(fact, "fact_id", ""),
+                predicate_key=getattr(fact, "predicate_key", ""),
+                roles=roles,
+                context_ref=getattr(fact, "context_ref", "actual"),
+                valid_time_ref=getattr(fact, "valid_from", "") or getattr(fact, "valid_until", ""),
+                polarity=getattr(fact, "polarity", "positive"),
+                confidence=getattr(fact, "confidence", 1.0),
+                causal_warrant=CausalWarrant(getattr(fact, "causal_warrant", "none")),
+                sensitivity=getattr(fact, "sensitivity", "ordinary"),
+                evidence_refs=getattr(fact, "evidence_refs", ()),
+                derivation_ref=getattr(fact, "derivation_rule_ref", ""),
+                derivation_depth=getattr(fact, "derivation_depth", 0),
+            )
+        return fact
 
     @staticmethod
     def _context(facts):

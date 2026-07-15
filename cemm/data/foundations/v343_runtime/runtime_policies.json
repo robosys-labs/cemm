@@ -1,0 +1,61 @@
+{
+  "dialogue_policies": [
+    {
+      "policy_id": "dialogue:reciprocal_greeting:v1",
+      "trigger": {
+        "predicate_key": "greet",
+        "force": "assert"
+      },
+      "response": {
+        "predicate_key": "greet",
+        "force": "assert",
+        "context_ref": "actual",
+        "roles": {
+          "source": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          }
+        }
+      }
+    },
+    {
+      "policy_id": "dialogue:clarify_unresolved_input:v1",
+      "trigger": {
+        "condition": "no_response_intent"
+      },
+      "response": {
+        "predicate_key": "requests",
+        "force": "ask",
+        "context_ref": "actual",
+        "roles": {
+          "speaker": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          },
+          "content": {
+            "constant": "dialogue:clarification_detail",
+            "value_kind": "value",
+            "semantic_key": "dialogue:clarification_detail",
+            "use_mode": "assert"
+          }
+        }
+      }
+    }
+  ],
+  "non_persistent_predicates": [
+    "greet",
+    "asks",
+    "answers",
+    "requests",
+    "informs",
+    "offers_information"
+  ]
+}
