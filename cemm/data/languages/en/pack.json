@@ -1,0 +1,1142 @@
+{
+  "language_tag": "en",
+  "version": "1.0.0",
+  "closed_class_semantic_keys": [
+    "pronoun:first_person",
+    "pronoun:first_person_possessive",
+    "pronoun:second_person",
+    "pronoun:second_person_possessive",
+    "wh:what",
+    "wh:how",
+    "grammar:copula",
+    "grammar:indefinite",
+    "grammar:definite",
+    "aux:do",
+    "aux:do_negated",
+    "polarity:negative",
+    "grammar:conditional_if",
+    "grammar:conditional_then",
+    "grammar:infinitive_marker"
+  ],
+  "referent_surfaces": {
+    "self": "I",
+    "user": "you"
+  },
+  "lexical_entries": [
+    {
+      "surface": "i",
+      "semantic_key": "pronoun:first_person",
+      "part_of_speech": "pronoun",
+      "lemma": "i"
+    },
+    {
+      "surface": "me",
+      "semantic_key": "pronoun:first_person",
+      "part_of_speech": "pronoun",
+      "lemma": "me"
+    },
+    {
+      "surface": "my",
+      "semantic_key": "pronoun:first_person_possessive",
+      "part_of_speech": "determiner",
+      "lemma": "my"
+    },
+    {
+      "surface": "you",
+      "semantic_key": "pronoun:second_person",
+      "part_of_speech": "pronoun",
+      "lemma": "you"
+    },
+    {
+      "surface": "your",
+      "semantic_key": "pronoun:second_person_possessive",
+      "part_of_speech": "determiner",
+      "lemma": "your"
+    },
+    {
+      "surface": "what",
+      "semantic_key": "wh:what",
+      "part_of_speech": "pronoun",
+      "lemma": "what"
+    },
+    {
+      "surface": "how",
+      "semantic_key": "wh:how",
+      "part_of_speech": "adverb",
+      "lemma": "how"
+    },
+    {
+      "surface": "is",
+      "semantic_key": "grammar:copula",
+      "part_of_speech": "verb",
+      "lemma": "is"
+    },
+    {
+      "surface": "are",
+      "semantic_key": "grammar:copula",
+      "part_of_speech": "verb",
+      "lemma": "are"
+    },
+    {
+      "surface": "am",
+      "semantic_key": "grammar:copula",
+      "part_of_speech": "verb",
+      "lemma": "am"
+    },
+    {
+      "surface": "a",
+      "semantic_key": "grammar:indefinite",
+      "part_of_speech": "determiner",
+      "lemma": "a"
+    },
+    {
+      "surface": "an",
+      "semantic_key": "grammar:indefinite",
+      "part_of_speech": "determiner",
+      "lemma": "an"
+    },
+    {
+      "surface": "the",
+      "semantic_key": "grammar:definite",
+      "part_of_speech": "determiner",
+      "lemma": "the"
+    },
+    {
+      "surface": "do",
+      "semantic_key": "aux:do",
+      "part_of_speech": "verb",
+      "lemma": "do"
+    },
+    {
+      "surface": "does",
+      "semantic_key": "aux:do",
+      "part_of_speech": "verb",
+      "lemma": "does"
+    },
+    {
+      "surface": "dont",
+      "semantic_key": "aux:do_negated",
+      "part_of_speech": "verb",
+      "lemma": "dont"
+    },
+    {
+      "surface": "not",
+      "semantic_key": "polarity:negative",
+      "part_of_speech": "adverb",
+      "lemma": "not"
+    },
+    {
+      "surface": "if",
+      "semantic_key": "grammar:conditional_if",
+      "part_of_speech": "conjunction",
+      "lemma": "if"
+    },
+    {
+      "surface": "then",
+      "semantic_key": "grammar:conditional_then",
+      "part_of_speech": "adverb",
+      "lemma": "then"
+    },
+    {
+      "surface": "to",
+      "semantic_key": "grammar:infinitive_marker",
+      "part_of_speech": "particle",
+      "lemma": "to"
+    },
+    {
+      "surface": "hello",
+      "semantic_key": "greet",
+      "part_of_speech": "interjection",
+      "lemma": "hello"
+    },
+    {
+      "surface": "hi",
+      "semantic_key": "greet",
+      "part_of_speech": "interjection",
+      "lemma": "hi"
+    },
+    {
+      "surface": "hey",
+      "semantic_key": "greet",
+      "part_of_speech": "interjection",
+      "lemma": "hey"
+    },
+    {
+      "surface": "person",
+      "semantic_key": "person",
+      "part_of_speech": "noun",
+      "lemma": "person"
+    },
+    {
+      "surface": "role",
+      "semantic_key": "role",
+      "part_of_speech": "noun",
+      "lemma": "role"
+    },
+    {
+      "surface": "event",
+      "semantic_key": "event",
+      "part_of_speech": "noun",
+      "lemma": "event"
+    },
+    {
+      "surface": "place",
+      "semantic_key": "place",
+      "part_of_speech": "noun",
+      "lemma": "place"
+    },
+    {
+      "surface": "state",
+      "semantic_key": "state",
+      "part_of_speech": "noun",
+      "lemma": "state"
+    },
+    {
+      "surface": "information",
+      "semantic_key": "information_object",
+      "part_of_speech": "noun",
+      "lemma": "information"
+    },
+    {
+      "surface": "word",
+      "semantic_key": "information_object",
+      "part_of_speech": "noun",
+      "lemma": "word"
+    },
+    {
+      "surface": "definition",
+      "semantic_key": "information_object",
+      "part_of_speech": "noun",
+      "lemma": "definition"
+    },
+    {
+      "surface": "name",
+      "semantic_key": "named",
+      "part_of_speech": "noun",
+      "lemma": "name"
+    },
+    {
+      "surface": "named",
+      "semantic_key": "named",
+      "part_of_speech": "verb",
+      "lemma": "named"
+    },
+    {
+      "surface": "know",
+      "semantic_key": "remembers",
+      "part_of_speech": "verb",
+      "lemma": "know"
+    },
+    {
+      "surface": "remember",
+      "semantic_key": "remembers",
+      "part_of_speech": "verb",
+      "lemma": "remember"
+    },
+    {
+      "surface": "mean",
+      "semantic_key": "means",
+      "part_of_speech": "verb",
+      "lemma": "mean"
+    },
+    {
+      "surface": "means",
+      "semantic_key": "means",
+      "part_of_speech": "verb",
+      "lemma": "means"
+    },
+    {
+      "surface": "understand",
+      "semantic_key": "understands",
+      "part_of_speech": "verb",
+      "lemma": "understand"
+    },
+    {
+      "surface": "learn",
+      "semantic_key": "learns",
+      "part_of_speech": "verb",
+      "lemma": "learn"
+    },
+    {
+      "surface": "ask",
+      "semantic_key": "asks",
+      "part_of_speech": "verb",
+      "lemma": "ask"
+    },
+    {
+      "surface": "answer",
+      "semantic_key": "answers",
+      "part_of_speech": "verb",
+      "lemma": "answer"
+    },
+    {
+      "surface": "give",
+      "semantic_key": "requests",
+      "part_of_speech": "verb",
+      "lemma": "give"
+    },
+    {
+      "surface": "need",
+      "semantic_key": "requires_information",
+      "part_of_speech": "verb",
+      "lemma": "need"
+    },
+    {
+      "surface": "recognize",
+      "semantic_key": "recognizes_form",
+      "part_of_speech": "verb",
+      "lemma": "recognize"
+    },
+    {
+      "surface": "store",
+      "semantic_key": "stores",
+      "part_of_speech": "verb",
+      "lemma": "store"
+    },
+    {
+      "surface": "stored",
+      "semantic_key": "stores",
+      "part_of_speech": "verb",
+      "lemma": "stored"
+    },
+    {
+      "surface": "complete",
+      "semantic_key": "completes",
+      "part_of_speech": "verb",
+      "lemma": "complete"
+    },
+    {
+      "surface": "correct",
+      "semantic_key": "corrects",
+      "part_of_speech": "verb",
+      "lemma": "correct"
+    },
+    {
+      "surface": "before",
+      "semantic_key": "before",
+      "part_of_speech": "preposition",
+      "lemma": "before"
+    },
+    {
+      "surface": "after",
+      "semantic_key": "after",
+      "part_of_speech": "preposition",
+      "lemma": "after"
+    },
+    {
+      "surface": "cause",
+      "semantic_key": "causes",
+      "part_of_speech": "verb",
+      "lemma": "cause"
+    },
+    {
+      "surface": "enable",
+      "semantic_key": "enables",
+      "part_of_speech": "verb",
+      "lemma": "enable"
+    },
+    {
+      "surface": "prevent",
+      "semantic_key": "prevents",
+      "part_of_speech": "verb",
+      "lemma": "prevent"
+    },
+    {
+      "surface": "want",
+      "semantic_key": "offers_information",
+      "part_of_speech": "verb",
+      "lemma": "want"
+    },
+    {
+      "surface": "available",
+      "semantic_key": "availability",
+      "part_of_speech": "adjective",
+      "lemma": "available"
+    },
+    {
+      "surface": "operational",
+      "semantic_key": "operational_status",
+      "part_of_speech": "adjective",
+      "lemma": "operational"
+    }
+  ],
+  "cue_rules": [
+    {
+      "cue_kind": "greeting",
+      "condition": {
+        "contains_semantic": [
+          "greet"
+        ],
+        "max_tokens": 3
+      },
+      "confidence": 0.98
+    },
+    {
+      "cue_kind": "elliptical_clarification_query",
+      "condition": {
+        "contains_semantic": [
+          "wh:what"
+        ],
+        "max_tokens": 4,
+        "question_surface": true
+      },
+      "confidence": 0.8
+    }
+  ],
+  "constructions": [
+    {
+      "semantic_key": "construction:en:copular_instance",
+      "language_tag": "en",
+      "predicate_schema_ref": "instance_of",
+      "communicative_force": "assert",
+      "priority": 100,
+      "terms": [
+        {
+          "id": "subject",
+          "capture": "subject",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "pronoun:"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "det",
+          "capture": "",
+          "optional": true,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:indefinite",
+                "grammar:definite"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "complement",
+          "capture": "complement",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "any",
+              "values": []
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "entity": "subject",
+        "kind": "complement"
+      }
+    },
+    {
+      "semantic_key": "construction:en:copular_definition",
+      "language_tag": "en",
+      "predicate_schema_ref": "subkind_of",
+      "communicative_force": "assert",
+      "priority": 90,
+      "terms": [
+        {
+          "id": "subject",
+          "capture": "subject",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "any",
+              "values": []
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "det",
+          "capture": "",
+          "optional": true,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:indefinite",
+                "grammar:definite"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "complement",
+          "capture": "complement",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "any",
+              "values": []
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "capture_semantic_not_in",
+          "capture": "subject",
+          "values": [
+            "pronoun:first_person",
+            "pronoun:second_person",
+            "wh:what",
+            "wh:how"
+          ]
+        }
+      ],
+      "role_mappings": {
+        "child_kind": "subject",
+        "parent_kind": "complement"
+      }
+    },
+    {
+      "semantic_key": "construction:en:how_state_question",
+      "language_tag": "en",
+      "predicate_schema_ref": "has_state",
+      "communicative_force": "ask",
+      "priority": 120,
+      "terms": [
+        {
+          "id": "how",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "wh:how"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "holder",
+          "capture": "holder",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "pronoun:"
+              ]
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "holder": "holder"
+      },
+      "open_role_refs": [
+        "dimension",
+        "value"
+      ]
+    },
+    {
+      "semantic_key": "construction:en:name_statement",
+      "language_tag": "en",
+      "predicate_schema_ref": "named",
+      "communicative_force": "assert",
+      "priority": 130,
+      "terms": [
+        {
+          "id": "poss",
+          "capture": "possessor",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:first_person_possessive",
+                "pronoun:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "name",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "value",
+          "capture": "value",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "any",
+              "values": []
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "holder": "possessor",
+        "name": "value"
+      }
+    },
+    {
+      "semantic_key": "construction:en:name_question",
+      "language_tag": "en",
+      "predicate_schema_ref": "named",
+      "communicative_force": "ask",
+      "priority": 130,
+      "terms": [
+        {
+          "id": "what",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "wh:what"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "poss",
+          "capture": "possessor",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:first_person_possessive",
+                "pronoun:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "name",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "holder": "possessor"
+      },
+      "open_role_refs": [
+        "name"
+      ]
+    },
+    {
+      "semantic_key": "construction:en:information_offer_name",
+      "language_tag": "en",
+      "predicate_schema_ref": "offers_information",
+      "communicative_force": "ask",
+      "priority": 150,
+      "terms": [
+        {
+          "id": "aux",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "aux:do",
+                "aux:do_negated"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "recipient",
+          "capture": "recipient",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "pronoun:"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "want",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "lemma",
+              "values": [
+                "want"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "to",
+          "capture": "",
+          "optional": true,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:infinitive_marker"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "know",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "lemma",
+              "values": [
+                "know"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "poss",
+          "capture": "source",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:first_person_possessive",
+                "pronoun:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "content",
+          "capture": "content",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "source": "source",
+        "recipient": "recipient",
+        "offered_content": "content"
+      }
+    },
+    {
+      "semantic_key": "construction:en:conditional_rule",
+      "language_tag": "en",
+      "output_kind": "rule",
+      "priority": 80,
+      "terms": [
+        {
+          "id": "if",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:conditional_if"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "premise",
+          "capture": "premise",
+          "max_occurs": 20,
+          "matchers": [
+            {
+              "kind": "any"
+            }
+          ]
+        },
+        {
+          "id": "then",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:conditional_then"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "conclusion",
+          "capture": "conclusion",
+          "max_occurs": 20,
+          "matchers": [
+            {
+              "kind": "any"
+            }
+          ]
+        }
+      ],
+      "output_metadata": {
+        "rule_kind": "causal",
+        "strength": "defeasible",
+        "causal_warrant": "reported_claim",
+        "premise_capture": "premise",
+        "conclusion_capture": "conclusion"
+      }
+    }
+  ],
+  "realizations": [
+    {
+      "predicate_key": "greet",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "lexeme",
+              "value": "greet"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "named",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "priority": 10,
+          "when": {
+            "role_equals": {
+              "holder": "self"
+            }
+          },
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "My name is "
+            },
+            {
+              "kind": "role",
+              "role": "name"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        },
+        {
+          "segments": [
+            {
+              "kind": "referent",
+              "role": "holder"
+            },
+            {
+              "kind": "literal",
+              "value": " is named "
+            },
+            {
+              "kind": "role",
+              "role": "name"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "has_state",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "priority": 10,
+          "when": {
+            "role_equals": {
+              "holder": "self"
+            }
+          },
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "I am "
+            },
+            {
+              "kind": "role",
+              "role": "value"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "instance_of",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "referent",
+              "role": "entity"
+            },
+            {
+              "kind": "literal",
+              "value": " is a "
+            },
+            {
+              "kind": "role_semantic",
+              "role": "kind"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "requires_information",
+      "communicative_force": "ask",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "I need more information about "
+            },
+            {
+              "kind": "role",
+              "role": "target"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "requests",
+      "communicative_force": "ask",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "Please provide "
+            },
+            {
+              "kind": "role_semantic",
+              "role": "content"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "informs",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "qualification_key": "attributed_only",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "I recorded that as attributed information."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "stores",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "The exact fact was stored."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "completes",
+      "communicative_force": "assert",
+      "polarity": "negative",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "The required write did not complete."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "has_sufficient_information",
+      "communicative_force": "assert",
+      "polarity": "negative",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "literal",
+              "value": "I do not have sufficient grounded information."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

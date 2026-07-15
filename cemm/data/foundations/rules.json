@@ -1,0 +1,97 @@
+[
+  {
+    "semantic_key": "rule:instance_subkind",
+    "rule_kind": "definitional",
+    "strength": "strict",
+    "cycle_class": "positive_monotone",
+    "premises": [
+      {
+        "predicate_key": "instance_of",
+        "roles": {
+          "entity": "$x",
+          "kind": "$a"
+        }
+      },
+      {
+        "predicate_key": "subkind_of",
+        "roles": {
+          "child_kind": "$a",
+          "parent_kind": "$b"
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "predicate_key": "instance_of",
+        "roles": {
+          "entity": "$x",
+          "kind": "$b"
+        }
+      }
+    ],
+    "provenance_refs": [
+      "foundation_invariant:subkind_inheritance"
+    ]
+  },
+  {
+    "semantic_key": "rule:before_transitive",
+    "rule_kind": "relational",
+    "strength": "strict",
+    "cycle_class": "positive_monotone",
+    "premises": [
+      {
+        "predicate_key": "before",
+        "roles": {
+          "earlier": "$a",
+          "later": "$b"
+        }
+      },
+      {
+        "predicate_key": "before",
+        "roles": {
+          "earlier": "$b",
+          "later": "$c"
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "predicate_key": "before",
+        "roles": {
+          "earlier": "$a",
+          "later": "$c"
+        }
+      }
+    ],
+    "provenance_refs": [
+      "foundation_invariant:temporal_order"
+    ]
+  },
+  {
+    "semantic_key": "rule:before_after_inverse",
+    "rule_kind": "relational",
+    "strength": "strict",
+    "cycle_class": "inverse",
+    "premises": [
+      {
+        "predicate_key": "before",
+        "roles": {
+          "earlier": "$a",
+          "later": "$b"
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "predicate_key": "after",
+        "roles": {
+          "later": "$b",
+          "earlier": "$a"
+        }
+      }
+    ],
+    "provenance_refs": [
+      "foundation_invariant:temporal_inverse"
+    ]
+  }
+]

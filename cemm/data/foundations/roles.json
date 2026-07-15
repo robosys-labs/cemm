@@ -1,0 +1,473 @@
+[
+  {
+    "semantic_key": "left",
+    "accepted_object_families": [
+      "referent",
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "right",
+    "accepted_object_families": [
+      "referent",
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "entity",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "kind",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "child_kind",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "parent_kind",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "holder",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "role",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "participant",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "event",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "dimension",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "value",
+    "accepted_object_families": [
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "from_value",
+    "accepted_object_families": [
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "to_value",
+    "accepted_object_families": [
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "place",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "reference_frame",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "earlier",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "later",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "dependent",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "dependency",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "cause",
+    "accepted_object_families": [
+      "proposition",
+      "predication",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": true
+  },
+  {
+    "semantic_key": "effect",
+    "accepted_object_families": [
+      "proposition",
+      "predication",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": true
+  },
+  {
+    "semantic_key": "condition",
+    "accepted_object_families": [
+      "proposition",
+      "predication",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": true
+  },
+  {
+    "semantic_key": "symbol",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "referent",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "representation",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "content",
+    "accepted_object_families": [
+      "proposition",
+      "referent",
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "knower",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "record",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "evidence",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "schema_revision",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "competence_set",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "context",
+    "accepted_object_families": [
+      "context",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "target",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "blocker_set",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "lexical_form",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "schema_sense",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "source",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "artifact",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "agent",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "operation",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "speaker",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "addressee",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "question",
+    "accepted_object_families": [
+      "proposition",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "answer",
+    "accepted_object_families": [
+      "proposition",
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "information",
+    "accepted_object_families": [
+      "proposition",
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "name",
+    "accepted_object_families": [
+      "value",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "recipient",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "offered_content",
+    "accepted_object_families": [
+      "proposition",
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "desirer",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  }
+]

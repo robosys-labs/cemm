@@ -1,33 +1,68 @@
-"""Native English surface-evidence adapter backed by schema lexical indices."""
+"""English tokenizer adapter using declarative language-pack data."""
 from __future__ import annotations
-
 from typing import Any
-import re
-
 from .tokenizer import tokenize
-from .constructions import detect_constructions
-from ..interfaces import SurfaceEvidence
-
+from ..interfaces import (
+    CommunicativeCandidate,
+    ConstructionCandidate,
+    LexicalSenseCandidate,
+    PragmaticCue,
+    RuleCandidate,
+    SurfaceEvidence,
+)
+from cemm.kernel.model.surface import LexicalFormRef
+from ..matcher import DeclarativeConstructionMatcher, TokenEvidence
+from ..pack import LanguagePackRegistry
+from ...kernel.model.surface import SurfaceSpan
 
 class EnglishLanguageAdapter:
-    adapter_id = "english-native-v34.1"
-    adapter_version = "1.1.0"
+    adapter_id = "data-language-adapter:en"
+    adapter_version = "3.0.0"
     supported_language_tags = ("en", "en-US", "en-GB")
 
-    def __init__(self, schema_store: Any | None = None) -> None:
+    def __init__(self, schema_store: Any, language_registry: LanguagePackRegistry):
         self._store = schema_store
+        self._registry = language_registry
+        self._matcher = DeclarativeConstructionMatcher()
 
     def perceive(self, raw_text: str, language_tag: str = "en") -> SurfaceEvidence:
+        pack = self._registry.require(language_tag)
         stream = tokenize(raw_text)
-        lexical, constructions, communicative, cues, spans = detect_constructions(
-            stream,
-            lexical_lookup=self._lookup,
-            construction_schemas=self._construction_schemas(language_tag),
+        tokens = self._build_token_evidence(stream)
+        construction_matches = self._matcher.match(
+            tokens, pack.constructions,
+            passed_competence_case_refs=frozenset(),
         )
+
+        lexical = self._build_lexical(tokens, language_tag)
+        constructions = tuple(
+            ConstructionCandidate(
+                construction_key=m.construction_ref,
+                pattern=m.predicate_key,
+                predicate_schema_ref=m.predicate_key,
+                role_mappings={
+                    role: indices[0]
+                    for role, indices in m.role_token_indices.items()
+                },
+                open_role_refs=m.open_role_keys,
+                communicative_force=m.communicative_force,
+                confidence=m.confidence,
+                source_token_indices=m.source_token_indices,
+                output_kind=m.output_kind,
+                metadata=m.output_metadata,
+            )
+            for m in construction_matches
+        )
+
+        communicative = self._detect_communicative_cues(tokens)
+        cues = self._detect_pragmatic_cues(tokens, constructions, lexical)
+        spans = self._build_spans(stream)
+
         return SurfaceEvidence(
             token_stream=stream,
             lexical_sense_candidates=lexical,
             construction_candidates=constructions,
+            rule_candidates=(),
             communicative_candidates=communicative,
             pragmatic_cues=cues,
             surface_spans=spans,
@@ -37,29 +72,58 @@ class EnglishLanguageAdapter:
             adapter_version=self.adapter_version,
         )
 
-    def _lookup(self, surface: str, lemma: str, language: str) -> tuple[str, ...]:
-        if self._store is None:
-            return ()
-        keys: list[str] = []
-        normalized_candidates = tuple(dict.fromkeys((surface.casefold(), lemma.casefold())))
-        for candidate in normalized_candidates:
-            keys.extend(self._store.lookup_lexical_form(candidate, language))
-        if not keys:
-            # Orthographic accommodation is candidate evidence, not semantic
-            # authority.  Only reduce an elongated final character and only
-            # when the reduced form already has indexed senses.
-            for candidate in normalized_candidates:
-                reduced = re.sub(r"(.)\1+$", r"\1", candidate)
-                if reduced != candidate:
-                    keys.extend(self._store.lookup_lexical_form(reduced, language))
-        return tuple(dict.fromkeys(keys))
+    def _build_token_evidence(self, stream):
+        result = []
+        for index, token in enumerate(stream.tokens if hasattr(stream, 'tokens') else stream):
+            keys = frozenset(
+                self._store.lookup_lexical_form(
+                    token.normalized_form.casefold(), "en"
+                )
+            )
+            result.append(TokenEvidence(
+                token_index=index,
+                raw_form=token.raw_form,
+                normalized_form=token.normalized_form,
+                lemma_candidates=token.lemma_candidates or (token.normalized_form,),
+                semantic_keys=keys,
+                token_kind=token.kind.value if hasattr(token.kind, 'value') else str(token.kind),
+            ))
+        return tuple(result)
 
-    def _construction_schemas(self, language: str) -> tuple[Any, ...]:
-        if self._store is None:
-            return ()
-        schemas = []
-        for envelope in self._store.records_by_kind("construction"):
-            payload = getattr(envelope, "payload", None)
-            if getattr(payload, "language_tag", "") == language:
-                schemas.append(payload)
-        return tuple(schemas)
+    def _build_lexical(self, tokens, language_tag):
+        result = []
+        seen = set()
+        for token in tokens:
+            for semantic_key in token.semantic_keys:
+                if semantic_key not in seen:
+                    seen.add(semantic_key)
+                    result.append(LexicalSenseCandidate(
+                        lexical_form_ref=LexicalFormRef(
+                            surface=token.normalized_form,
+                            language_tag=language_tag,
+                            normalised=token.normalized_form,
+                        ),
+                        semantic_key=semantic_key,
+                        confidence=0.9,
+                        source_token_indices=(token.token_index,),
+                    ))
+        return tuple(result)
+
+    def _detect_communicative_cues(self, tokens):
+        return ()
+
+    def _detect_pragmatic_cues(self, tokens, constructions, lexical):
+        return ()
+
+    def _build_spans(self, stream):
+        return tuple(
+            SurfaceSpan(
+                signal_ref="",
+                start=token.start_offset,
+                end=token.end_offset,
+                raw_text=token.raw_form,
+                token_start=index,
+                token_end=index,
+            )
+            for index, token in enumerate(stream.tokens if hasattr(stream, 'tokens') else stream)
+        )

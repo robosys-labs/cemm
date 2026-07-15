@@ -1,0 +1,15 @@
+{
+  "package_id": "cemm-foundations-v3.4.3",
+  "version": "3.4.3",
+  "language_neutral": true,
+  "predicate_contracts": "predicates.json",
+  "boot_schema_contracts": "boot_schemas.json",
+  "self_claim_policies": "self_claim_policies.json",
+  "activation_policy": {
+    "predicate_failure": "halt_or_diagnostic_safe_mode",
+    "optional_boot_schema_failure": "opaque_and_downgrade_dependents",
+    "silent_activation": false,
+    "self_certification_allowed": false
+  },
+  "domain_exclusion_policy_ref": "policy:foundation_domain_exclusion:v1"
+}

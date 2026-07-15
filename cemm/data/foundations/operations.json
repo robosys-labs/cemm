@@ -1,0 +1,121 @@
+[
+  {
+    "semantic_key": "op:perceive",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "information"
+    ],
+    "output_roles": [
+      "content"
+    ],
+    "idempotency_policy": "strict"
+  },
+  {
+    "semantic_key": "op:interpret",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "content",
+      "context"
+    ],
+    "output_roles": [
+      "content"
+    ],
+    "idempotency_policy": "strict"
+  },
+  {
+    "semantic_key": "op:ground",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "content",
+      "context"
+    ],
+    "output_roles": [
+      "content"
+    ],
+    "idempotency_policy": "strict"
+  },
+  {
+    "semantic_key": "op:retrieve",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "question",
+      "context"
+    ],
+    "output_roles": [
+      "record"
+    ],
+    "idempotency_policy": "idempotent"
+  },
+  {
+    "semantic_key": "op:infer",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "content",
+      "context"
+    ],
+    "output_roles": [
+      "content"
+    ],
+    "idempotency_policy": "idempotent"
+  },
+  {
+    "semantic_key": "op:learn",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "content",
+      "evidence"
+    ],
+    "output_roles": [
+      "artifact"
+    ],
+    "idempotency_policy": "strict"
+  },
+  {
+    "semantic_key": "op:store_fact",
+    "operation_class": "cognitive",
+    "input_roles": [
+      "content",
+      "evidence"
+    ],
+    "output_roles": [
+      "record"
+    ],
+    "idempotency_policy": "idempotent"
+  },
+  {
+    "semantic_key": "op:answer",
+    "operation_class": "communicative",
+    "input_roles": [
+      "question",
+      "answer",
+      "context"
+    ],
+    "output_roles": [
+      "information"
+    ],
+    "idempotency_policy": "at_most_once"
+  },
+  {
+    "semantic_key": "op:realize",
+    "operation_class": "communicative",
+    "input_roles": [
+      "content"
+    ],
+    "output_roles": [
+      "information"
+    ],
+    "idempotency_policy": "idempotent"
+  },
+  {
+    "semantic_key": "op:dispatch",
+    "operation_class": "communicative",
+    "input_roles": [
+      "information",
+      "recipient"
+    ],
+    "output_roles": [
+      "record"
+    ],
+    "idempotency_policy": "at_most_once"
+  }
+]

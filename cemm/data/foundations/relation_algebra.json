@@ -1,0 +1,34 @@
+[
+  {
+    "predicate_key": "same_identity",
+    "symmetric": true,
+    "transitive": true,
+    "reflexive": true
+  },
+  {
+    "predicate_key": "different_identity",
+    "symmetric": true,
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "before",
+    "inverse_predicate_key": "after",
+    "transitive": true,
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "after",
+    "inverse_predicate_key": "before",
+    "transitive": true,
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "subkind_of",
+    "transitive": true,
+    "irreflexive": true,
+    "antisymmetric": true,
+    "composition_rules": [
+      "rule:instance_subkind"
+    ]
+  }
+]

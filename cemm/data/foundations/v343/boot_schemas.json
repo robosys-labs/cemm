@@ -1,0 +1,275 @@
+[
+  {
+    "contract_id": "boot:schema:entity:v1",
+    "semantic_key": "entity",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "foundation:representation:referent"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:entity:stable_referent_identity"
+    ],
+    "identity_criteria_refs": [
+      "identity:referent"
+    ],
+    "operational_port_refs": [
+      "port:entity:state",
+      "port:entity:relation"
+    ],
+    "competence_case_refs": [
+      "independent:competence:entity:contrast"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:event:v1",
+    "semantic_key": "event",
+    "schema_family": "event_kind",
+    "dependency_refs": [
+      "foundation:representation:predication",
+      "foundation:value:time_interval"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:event:occurs_with_participants"
+    ],
+    "identity_criteria_refs": [
+      "identity:event:participants_time_kind"
+    ],
+    "operational_port_refs": [
+      "port:event:participant",
+      "port:event:time",
+      "port:event:place",
+      "port:event:causal"
+    ],
+    "competence_case_refs": [
+      "independent:competence:event:sequence"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:state:v1",
+    "semantic_key": "state",
+    "schema_family": "state_dimension",
+    "dependency_refs": [
+      "foundation:predicate:has_state:v1",
+      "foundation:value:typed_value"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:state:holder_dimension_value"
+    ],
+    "identity_criteria_refs": [
+      "identity:state:holder_dimension_time_context"
+    ],
+    "operational_port_refs": [
+      "port:state:holder",
+      "port:state:dimension",
+      "port:state:value",
+      "port:state:transition"
+    ],
+    "competence_case_refs": [
+      "independent:competence:state:contradiction"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:place:v1",
+    "semantic_key": "place",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "foundation:predicate:located_at:v1",
+      "foundation:value:coordinate_reference_frame"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:place:reference_frame_location"
+    ],
+    "identity_criteria_refs": [
+      "identity:place:reference_frame"
+    ],
+    "operational_port_refs": [
+      "port:place:contains",
+      "port:place:relative_position"
+    ],
+    "competence_case_refs": [
+      "independent:competence:place:frame_change"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:information_object:v1",
+    "semantic_key": "information_object",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "foundation:representation:referent",
+      "foundation:predicate:represents:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:information_object:represents_content_with_provenance"
+    ],
+    "identity_criteria_refs": [
+      "identity:information:content_provenance_encoding"
+    ],
+    "operational_port_refs": [
+      "port:information:content",
+      "port:information:provenance",
+      "port:information:encoding"
+    ],
+    "competence_case_refs": [
+      "independent:competence:information:representation_content"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:evidence_specification:v1",
+    "semantic_key": "evidence_specification",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "boot:schema:information_object:v1",
+      "foundation:predicate:depends_on:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:evidence_specification:target_required_fields_admissibility"
+    ],
+    "identity_criteria_refs": [
+      "identity:evidence_specification:target_fields_context_time"
+    ],
+    "operational_port_refs": [
+      "port:evidence_specification:target",
+      "port:evidence_specification:required_field",
+      "port:evidence_specification:admissibility"
+    ],
+    "competence_case_refs": [
+      "independent:competence:evidence_specification:satisfaction"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:goal:v1",
+    "semantic_key": "goal",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "foundation:representation:proposition",
+      "foundation:predicate:depends_on:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:goal:holder_desired_proposition_status"
+    ],
+    "identity_criteria_refs": [
+      "identity:goal:holder_desired_context"
+    ],
+    "operational_port_refs": [
+      "port:goal:holder",
+      "port:goal:desired_proposition",
+      "port:goal:dependency",
+      "port:goal:status"
+    ],
+    "competence_case_refs": [
+      "independent:competence:goal:dependency"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:requirement:v1",
+    "semantic_key": "requirement",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "boot:schema:goal:v1",
+      "boot:schema:evidence_specification:v1",
+      "foundation:predicate:requires_for_goal:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:requirement:live_goal_unsatisfied_dependency"
+    ],
+    "identity_criteria_refs": [
+      "identity:requirement:requirer_requirement_goal_context_time"
+    ],
+    "operational_port_refs": [
+      "port:requirement:goal",
+      "port:requirement:specification",
+      "port:requirement:satisfaction"
+    ],
+    "competence_case_refs": [
+      "independent:competence:requirement:no_goal_no_requirement",
+      "independent:competence:requirement:satisfaction_removes_current_claim"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:operation:v1",
+    "semantic_key": "operation",
+    "schema_family": "operation",
+    "dependency_refs": [
+      "foundation:representation:predication",
+      "foundation:representation:value"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:operation:inputs_outputs_preconditions_outcomes"
+    ],
+    "identity_criteria_refs": [
+      "identity:operation:class_contract_revision"
+    ],
+    "operational_port_refs": [
+      "port:operation:input",
+      "port:operation:output",
+      "port:operation:precondition",
+      "port:operation:failure"
+    ],
+    "competence_case_refs": [
+      "independent:competence:operation:failure"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:agent:v1",
+    "semantic_key": "agent",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "boot:schema:entity:v1",
+      "boot:schema:goal:v1",
+      "boot:schema:operation:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:agent:goal_operation_control_loop"
+    ],
+    "identity_criteria_refs": [
+      "identity:agent:continuity_boundary"
+    ],
+    "operational_port_refs": [
+      "port:agent:goal",
+      "port:agent:operation",
+      "port:agent:capability",
+      "port:agent:state"
+    ],
+    "competence_case_refs": [
+      "independent:competence:agent:capability"
+    ],
+    "version": 1
+  },
+  {
+    "contract_id": "boot:schema:software_system:v1",
+    "semantic_key": "software_system",
+    "schema_family": "entity_kind",
+    "dependency_refs": [
+      "boot:schema:agent:v1",
+      "foundation:adapter:runtime_observation:v1"
+    ],
+    "constitutive_pattern_refs": [
+      "pattern:software_system:implementation_runtime_boundary"
+    ],
+    "identity_criteria_refs": [
+      "identity:software_system:implementation_runtime_boundary"
+    ],
+    "operational_port_refs": [
+      "port:software_system:operational_status",
+      "port:software_system:connectivity",
+      "port:software_system:storage",
+      "port:software_system:capability"
+    ],
+    "observation_contract_refs": [
+      "foundation:adapter:runtime_observation:v1"
+    ],
+    "competence_case_refs": [
+      "independent:competence:software_system:live_state"
+    ],
+    "version": 1
+  }
+]

@@ -1,0 +1,25 @@
+[
+  {
+    "rule_id": "policy:accept_information_offer",
+    "priority": 100,
+    "trigger": {
+      "predicate_key": "offers_information",
+      "communicative_force": "ask"
+    },
+    "output": {
+      "predicate_key": "requests",
+      "communicative_force": "ask",
+      "role_map": {
+        "speaker": {
+          "constant": "self"
+        },
+        "addressee": {
+          "from_role": "source"
+        },
+        "content": {
+          "from_role": "offered_content"
+        }
+      }
+    }
+  }
+]

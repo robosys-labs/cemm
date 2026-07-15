@@ -118,6 +118,24 @@ class GapDetector:
                                 )
                             )
 
+        # Detect opaque lexical refs that were never resolved into any
+        # predication.  A bare unknown word without a construction match
+        # produces no role bindings, but the system still needs to learn it.
+        if candidate_graph is not None and not suppress_fresh_lexical_gaps:
+            opaque_refs = tuple(getattr(candidate_graph, "opaque_lexeme_refs", ()) or ())
+            if opaque_refs and not selected_predication_refs:
+                for opaque_ref in opaque_refs:
+                    target = opaque_ref
+                    gaps.append(
+                        self._gap(
+                            "missing_semantic_family",
+                            target,
+                            "ground",
+                            expected="semantic_family",
+                            missing=("semantic_family",),
+                        )
+                    )
+
         if epistemic_assessments:
             for assessment in epistemic_assessments:
                 if getattr(assessment, "admissibility", "") == "blocked":

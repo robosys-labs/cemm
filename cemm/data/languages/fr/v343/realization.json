@@ -1,0 +1,213 @@
+{
+  "language_tag": "fr",
+  "version": "1.0.0",
+  "referring_expressions": {
+    "self": "J’",
+    "user": "vous"
+  },
+  "lexicalizations": [
+    {
+      "schema_id": "lex:fr:requires_for_goal:v1",
+      "semantic_key": "requires_for_goal",
+      "lemma": "avoir besoin",
+      "forms": {
+        "first_singular": "ai besoin",
+        "base": "avoir besoin"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert",
+        "qualified",
+        "probe"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:fr:avoir_besoin:predicate",
+          "contribution_kind": "predicate",
+          "semantic_key": "requires_for_goal"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:requires_for_goal:v1",
+      "competence_case_refs": [
+        "competence:fr:avoir_besoin:requires_live_goal_dependency"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:avoir_besoin:requires_for_goal:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:fr:information_object:v1",
+      "semantic_key": "information_object",
+      "lemma": "information",
+      "forms": {
+        "plural": "informations",
+        "base": "information"
+      },
+      "part_of_speech": "noun",
+      "permitted_use_modes": [
+        "assert",
+        "qualified",
+        "probe"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:fr:information:kind",
+          "contribution_kind": "entity_kind",
+          "semantic_key": "information_object"
+        }
+      ],
+      "grounding_contract_ref": "boot:schema:information_object:v1",
+      "competence_case_refs": [
+        "competence:fr:information:representation_content"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:information:information_object:v1"
+      ],
+      "version": 1
+    }
+  ],
+  "morphemes": [
+    {
+      "schema_id": "morph:fr:de_elided:v1",
+      "morpheme_key": "requirement_complement",
+      "forms": {
+        "base": "d’"
+      },
+      "contributions": [
+        {
+          "contribution_id": "contrib:fr:de:requirement_complement",
+          "contribution_kind": "role_link",
+          "role_key": "requirement"
+        }
+      ],
+      "competence_case_refs": [
+        "competence:fr:de:requirement_complement"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:de:requirement:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "morph:fr:topic_sur:v1",
+      "morpheme_key": "topic_target",
+      "forms": {
+        "base": "sur"
+      },
+      "contributions": [
+        {
+          "contribution_id": "contrib:fr:sur:target",
+          "contribution_kind": "role_link",
+          "role_key": "target"
+        }
+      ],
+      "competence_case_refs": [
+        "competence:fr:sur:topic_target"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:sur:target:v1"
+      ],
+      "version": 1
+    }
+  ],
+  "constructions": [
+    {
+      "schema_id": "construction:fr:requirement_request:v1",
+      "predicate_key": "requires_for_goal",
+      "communicative_force": "request",
+      "polarity": "positive",
+      "required_role_keys": [
+        "requirer",
+        "requirement",
+        "goal",
+        "target",
+        "context"
+      ],
+      "segments": [
+        {
+          "kind": "referring_expression",
+          "role_key": "requirer",
+          "schema_ref": "refexp:fr:first_person_elided:v1",
+          "contribution_refs": [
+            "contrib:ref:self"
+          ]
+        },
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:fr:requires_for_goal:v1",
+          "form_key": "first_singular",
+          "contribution_refs": [
+            "contrib:fr:avoir_besoin:predicate"
+          ]
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "grammatical_morpheme",
+          "schema_ref": "morph:fr:de_elided:v1",
+          "contribution_refs": [
+            "contrib:fr:de:requirement_complement"
+          ]
+        },
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:fr:information_object:v1",
+          "form_key": "plural",
+          "contribution_refs": [
+            "contrib:fr:information:kind",
+            "projection:requirement_as_information_object"
+          ]
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "grammatical_morpheme",
+          "schema_ref": "morph:fr:topic_sur:v1",
+          "contribution_refs": [
+            "contrib:fr:sur:target"
+          ]
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "mention",
+          "role_key": "target",
+          "schema_ref": "mention:fr:opaque_target:v1",
+          "contribution_refs": [
+            "contrib:mention:target"
+          ]
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [
+        {
+          "contribution_id": "projection:requirement_as_information_object",
+          "contribution_kind": "metonymic_projection",
+          "semantic_key": "information_object",
+          "role_key": "requirement"
+        },
+        {
+          "contribution_id": "contrib:fr:requirement_request:force",
+          "contribution_kind": "communicative_force",
+          "feature_key": "force",
+          "feature_value": "request"
+        }
+      ],
+      "competence_case_refs": [
+        "competence:fr:requirement_request:licensed_only_by_assessment"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:requirement_request:v1"
+      ],
+      "priority": 100,
+      "version": 1
+    }
+  ]
+}

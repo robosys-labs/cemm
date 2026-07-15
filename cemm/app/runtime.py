@@ -1,255 +1,187 @@
-"""Canonical CEMM v3.4.1 application runtime.
-
-Public text entrypoints use this runtime exclusively.  Legacy v3.3 may be
-imported only by explicit migration tooling, never by this assembly.
-"""
+"""CEMM v3.4.2 runtime with data-defined foundations and semantic memory."""
 from __future__ import annotations
-
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from .public_result import PublicCycleResult, project_cycle
-from ..kernel.boot.v341 import register_v341_foundations
-from ..kernel.boot.v341_validation import (
-    validate_registered_v341, validate_v341_spec,
-)
+from .public_result import project_cycle
 from ..kernel.cycle.kernel import CognitiveKernel
-from ..kernel.model.cycle import CycleTrigger
-from ..kernel.model.signal import InputSignal
-from ..kernel.schema.store import SemanticSchemaStore
-from ..kernel.understanding.composer import SemanticComposer
-from ..kernel.understanding.grounding import GroundingResolver
-from ..kernel.understanding.interpreter import InterpretationResolver
-from ..kernel.understanding.gap_detector import GapDetector
-from ..kernel.understanding.workspace import WorkspaceController
+from ..kernel.data.loader import (
+    DefinitionPackageLoader, default_data_root,
+)
 from ..kernel.epistemics.evaluator import EpistemicEvaluator
+from ..kernel.epistemics.invalidation_engine import (
+    CrossSchemaLaunderingGuard,
+)
 from ..kernel.epistemics.retriever import SemanticRetriever
 from ..kernel.epistemics.truth_maintenance import TruthMaintenance
-from ..kernel.epistemics.invalidation_engine import CrossSchemaLaunderingGuard
-from ..kernel.self_model.capability_evaluator import CapabilityEvaluator
-from ..kernel.self_model.self_report import SelfReportBuilder
-from ..kernel.learning.coordinator import LearningCoordinator
+from ..kernel.execution.authorizer import OperationAuthorizer
+from ..kernel.execution.commit import CommitCoordinator
+from ..kernel.execution.executor import OperationExecutor
 from ..kernel.execution.goal_arbiter import GoalArbiter
 from ..kernel.execution.planner import Planner
-from ..kernel.execution.executor import OperationExecutor
-from ..kernel.execution.authorizer import OperationAuthorizer
 from ..kernel.execution.reconciliation import OutcomeReconciler
-from ..kernel.execution.commit import CommitCoordinator
+from ..kernel.inference.engine import BoundedInferenceEngine
+from ..kernel.learning.coordinator import LearningCoordinator
+from ..kernel.learning.schema_compiler import LearnedSchemaCompiler
+from ..kernel.memory.compiler import FactMutationCompiler
+from ..kernel.memory.semantic import (
+    FactRole, MutationPayloadRegistry,
+    SemanticFact, SemanticMemoryStore,
+)
+from ..kernel.model.cycle import CycleTrigger
+from ..kernel.model.signal import InputSignal
+from ..kernel.response.common_ground import CommonGroundManager
 from ..kernel.response.planner import ResponsePlanner
 from ..kernel.response.renderer import MessageRenderer
-from ..kernel.response.common_ground import CommonGroundManager
-from ..kernel.retirement.cutover import AuthoritativeCutoverVerifier
-
+from ..kernel.schema.rule import RuleSchema
+from ..kernel.schema.store import SemanticSchemaStore
+from ..kernel.self_model.capability_evaluator import CapabilityEvaluator
+from ..kernel.self_model.self_report import SelfReportBuilder
+from ..kernel.understanding.composer import SemanticComposer
+from ..kernel.understanding.gap_detector import GapDetector
+from ..kernel.understanding.grounding import GroundingResolver
+from ..kernel.understanding.interpreter import InterpretationResolver
+from ..kernel.understanding.workspace import WorkspaceController
+from ..language.en.adapter import EnglishLanguageAdapter
+from ..language.fr.adapter import FrenchLanguageAdapter
+from ..language.pack import LanguagePackRegistry
 
 class Runtime:
-    """Construct the single authoritative native runtime."""
-
     def __init__(
-        self,
-        *,
+        self, *, data_root: Path | None = None,
         predicate_schema_store: Any | None = None,
-        load_boot: bool = True,
-    ) -> None:
+    ):
         if predicate_schema_store is not None:
             raise ValueError(
-                "parallel predicate schema stores are forbidden; use SemanticSchemaStore"
+                "parallel predicate schema stores are forbidden"
             )
-
+        self._data_root = data_root or default_data_root()
         self._schema_store = SemanticSchemaStore()
-        self._boot_report: Any | None = None
-        self._boot_unresolved_deps: tuple[str, ...] = ()
-        if load_boot:
-            from ..kernel.boot.validation import BootValidator, BootStatus
-            from ..kernel.boot.manifest import build_boot_manifest
-
-            validator = BootValidator()
-            manifest = build_boot_manifest()
-            self._boot_report = validator.validate_boot(self._schema_store, manifest)
-            status = getattr(self._boot_report.status, "value", self._boot_report.status)
-            if status == getattr(BootStatus.HALTED, "value", "halted"):
-                raise RuntimeError(
-                    f"Boot validation halted: {self._boot_report.halted_reasons}"
-                )
-            validator.register_boot_schemas(
-                self._schema_store, manifest, self._boot_report
+        self._language_registry = LanguagePackRegistry()
+        self._language_registry.load_directory(
+            self._data_root / "languages"
+        )
+        self._definition_loader = DefinitionPackageLoader(
+            self._data_root
+        )
+        self._definition_report = (
+            self._definition_loader.validate(
+                self._language_registry
             )
-            unresolved, _ = validator.verify_dependencies(
-                self._schema_store, manifest
-            )
-            self._boot_unresolved_deps = unresolved
-            validate_v341_spec().require_ok()
-            register_v341_foundations(self._schema_store)
-            validate_registered_v341(self._schema_store).require_ok()
+        )
+        self._definition_report.require_ok()
+        self._definition_loader.install(
+            self._schema_store,
+            self._language_registry,
+        )
 
-        from ..language.en.adapter import EnglishLanguageAdapter
-        self._percept_adapter = _NativePerceptAdapter(
-            EnglishLanguageAdapter(self._schema_store)
+        self._semantic_memory = SemanticMemoryStore()
+        self._payload_registry = MutationPayloadRegistry()
+        self._truth = TruthMaintenance()
+        self._guard = CrossSchemaLaunderingGuard()
+        self._epistemic = EpistemicEvaluator(
+            truth_maintenance=self._truth,
+            cross_schema_guard=self._guard,
         )
-        self._semantic_composer = SemanticComposer(self._schema_store)
-        self._grounding_resolver = GroundingResolver(self._schema_store)
-        self._interpretation_resolver = InterpretationResolver()
-        self._gap_detector = GapDetector()
-        self._workspace_controller = WorkspaceController()
-        self._truth_maintenance = TruthMaintenance()
-        self._cross_schema_guard = CrossSchemaLaunderingGuard()
-        self._epistemic_evaluator = EpistemicEvaluator(
-            truth_maintenance=self._truth_maintenance,
-            cross_schema_guard=self._cross_schema_guard,
+        self._fact_compiler = FactMutationCompiler(
+            self._payload_registry
         )
-        self._semantic_retriever = SemanticRetriever(
-            schema_store=self._schema_store,
-            truth_maintenance=self._truth_maintenance,
+        self._commit = CommitCoordinator(
+            self._semantic_memory,
+            self._payload_registry,
         )
-        self._capability_evaluator = CapabilityEvaluator()
-        self._self_report_builder = SelfReportBuilder()
-        self._learning_coordinator = LearningCoordinator(
-            store=self._schema_store,
-            evaluator=self._epistemic_evaluator,
-        )
-        self._goal_arbiter = GoalArbiter()
-        self._planner = Planner(schema_store=self._schema_store)
-        self._operation_authorizer = OperationAuthorizer()
-        self._operation_executor = OperationExecutor()
-        self._outcome_reconciler = OutcomeReconciler()
-        self._commit_coordinator = CommitCoordinator()
-        self._response_planner = ResponsePlanner()
-        self._message_renderer = MessageRenderer(self._schema_store)
-        self._common_ground_manager = CommonGroundManager()
+        self._inference = BoundedInferenceEngine()
 
-        from ..kernel.epistemics.artifact_index import DerivedArtifactIndex
-        from ..kernel.epistemics.invalidation_engine import InvalidationEngine
-        from ..kernel.epistemics.invalidation_events import InvalidationEventBus
-        from ..kernel.epistemics.replay_safety import ReplaySafetyManager
-        from ..kernel.correction.retraction_engine import RetractionEngine
-        from ..kernel.learning.replay_queue import ReplayQueue
-
-        self._artifact_index = DerivedArtifactIndex()
-        self._invalidation_event_bus = InvalidationEventBus()
-        self._invalidation_engine = InvalidationEngine(
-            index=self._artifact_index,
-            truth_maintenance=self._truth_maintenance,
-            event_bus=self._invalidation_event_bus,
-        )
-        self._retraction_engine = RetractionEngine()
-        self._replay_queue = ReplayQueue()
-        self._replay_safety_manager = ReplaySafetyManager(self._replay_queue)
-
-        self._cutover_verifier = AuthoritativeCutoverVerifier()
-        authorities = {
-            "surface_analysis": "PerceptAdapter",
-            "semantic_composition": "SemanticComposer",
-            "referent_sense_role_grounding": "GroundingResolver",
-            "schema_identity_version_resolution": "SemanticSchemaStore",
-            "structural_grounding_assessment": "GroundingResolver",
-            "competence_execution": "CapabilityEvaluator",
-            "schema_lifecycle_activation": "SemanticSchemaStore",
-            "recursive_cluster_classification": "SemanticSchemaStore",
-            "interpretation_selection": "InterpretationResolver",
-            "context_isolation": "EpistemicEvaluator",
-            "semantic_retrieval": "SemanticRetriever",
-            "truth_and_context_admissibility": "EpistemicEvaluator",
-            "current_schema_use": "GroundingResolver",
-            "derived_cognition_retraction": "InvalidationEngine",
-            "current_capability": "CapabilityEvaluator",
-            "gap_creation": "GapDetector",
-            "learning_lifecycle": "LearningCoordinator",
-            "replay_scheduling_idempotence": "ReplaySafetyManager",
-            "active_goals": "GoalArbiter",
-            "plan_selection": "Planner",
-            "operation_authorization": "OperationAuthorizer",
-            "execution": "OperationExecutor",
-            "outcome_reconciliation": "OutcomeReconciler",
-            "persistent_mutation": "CommitCoordinator",
-            "common_ground": "CommonGroundManager",
-            "response_content": "ResponsePlanner",
-            "surface_realization": "MessageRenderer",
-            "cycle_scheduling": "CognitiveKernel",
+        adapters = {
+            "en": EnglishLanguageAdapter(
+                self._schema_store,
+                self._language_registry,
+            ),
+            "fr": FrenchLanguageAdapter(
+                self._schema_store,
+                self._language_registry,
+            ),
         }
-        for key, owner in authorities.items():
-            self._cutover_verifier.register(key, owner)
-
+        percept = _NativePerceptAdapter(adapters)
+        retriever = SemanticRetriever(
+            store=self._semantic_memory,
+            schema_store=self._schema_store,
+            truth_maintenance=self._truth,
+        )
+        learning = LearningCoordinator(
+            store=self._schema_store,
+            evaluator=self._epistemic,
+            schema_compiler=LearnedSchemaCompiler(),
+        )
         self._kernel = CognitiveKernel(
             schema_store=self._schema_store,
-            percept_adapter=self._percept_adapter,
-            semantic_composer=self._semantic_composer,
-            grounding_resolver=self._grounding_resolver,
-            interpretation_resolver=self._interpretation_resolver,
-            workspace_controller=self._workspace_controller,
-            semantic_retriever=self._semantic_retriever,
-            epistemic_evaluator=self._epistemic_evaluator,
-            capability_evaluator=self._capability_evaluator,
-            gap_detector=self._gap_detector,
-            self_report_builder=self._self_report_builder,
-            learning_coordinator=self._learning_coordinator,
-            goal_arbiter=self._goal_arbiter,
-            planner=self._planner,
-            operation_authorizer=self._operation_authorizer,
-            operation_executor=self._operation_executor,
-            outcome_reconciler=self._outcome_reconciler,
-            commit_coordinator=self._commit_coordinator,
-            response_planner=self._response_planner,
-            message_renderer=self._message_renderer,
-            common_ground_manager=self._common_ground_manager,
-            invalidation_engine=self._invalidation_engine,
-            retraction_engine=self._retraction_engine,
-            replay_safety_manager=self._replay_safety_manager,
-            cross_schema_guard=self._cross_schema_guard,
-            cutover_verifier=self._cutover_verifier,
+            semantic_memory=self._semantic_memory,
+            percept_adapter=percept,
+            semantic_composer=SemanticComposer(
+                self._schema_store
+            ),
+            grounding_resolver=GroundingResolver(
+                self._schema_store
+            ),
+            interpretation_resolver=InterpretationResolver(),
+            workspace_controller=WorkspaceController(),
+            semantic_retriever=retriever,
+            epistemic_evaluator=self._epistemic,
+            capability_evaluator=CapabilityEvaluator(),
+            gap_detector=GapDetector(),
+            self_report_builder=SelfReportBuilder(),
+            learning_coordinator=learning,
+            goal_arbiter=GoalArbiter(),
+            planner=Planner(
+                schema_store=self._schema_store
+            ),
+            operation_authorizer=OperationAuthorizer(),
+            operation_executor=OperationExecutor(),
+            outcome_reconciler=OutcomeReconciler(),
+            commit_coordinator=self._commit,
+            fact_compiler=self._fact_compiler,
+            inference_engine=self._inference,
+            response_planner=ResponsePlanner(),
+            message_renderer=MessageRenderer.load_default(
+                self._data_root
+            ),
+            common_ground_manager=CommonGroundManager(),
         )
+        self._learning_coordinator = learning
+        self._seed_live_self_observations()
 
     @property
-    def kernel(self) -> CognitiveKernel:
+    def kernel(self):
         return self._kernel
 
     @property
-    def schema_store(self) -> SemanticSchemaStore:
+    def schema_store(self):
         return self._schema_store
 
     @property
-    def boot_report(self) -> Any | None:
-        return self._boot_report
+    def semantic_memory(self):
+        return self._semantic_memory
 
     @property
-    def diagnostic_safe(self) -> bool:
-        if self._boot_report is None:
-            return False
-        return getattr(self._boot_report.status, "value", self._boot_report.status) == "diagnostic_safe"
-
-    @property
-    def learning_coordinator(self) -> LearningCoordinator:
+    def learning_coordinator(self):
         return self._learning_coordinator
 
     @property
-    def invalidation_engine(self) -> Any:
-        return self._invalidation_engine
+    def language_registry(self):
+        return self._language_registry
 
     @property
-    def retraction_engine(self) -> Any:
-        return self._retraction_engine
+    def definition_report(self):
+        return self._definition_report
 
-    @property
-    def replay_safety_manager(self) -> Any:
-        return self._replay_safety_manager
-
-    @property
-    def cross_schema_guard(self) -> Any:
-        return self._cross_schema_guard
-
-    @property
-    def artifact_index(self) -> Any:
-        return self._artifact_index
-
-    def run(self, trigger: CycleTrigger) -> Any:
+    def run(self, trigger):
         return self._kernel.run(trigger)
 
     def run_text(
-        self,
-        text: str,
-        *,
-        context_id: str = "default",
-        language_hint: str = "en",
-        channel: str = "text",
-    ) -> Any:
+        self, text, *, context_id="default",
+        language_hint="en", channel="text",
+    ):
         signal = InputSignal(
             id=f"signal:{uuid4().hex[:12]}",
             content=text,
@@ -265,45 +197,98 @@ class Runtime:
             context_id=context_id,
         ))
 
-    def run_text_result(
-        self,
-        text: str,
-        *,
-        context_id: str = "default",
-        language_hint: str = "en",
-        channel: str = "text",
-    ) -> PublicCycleResult:
-        return project_cycle(self.run_text(
-            text,
-            context_id=context_id,
-            language_hint=language_hint,
-            channel=channel,
-        ))
+    def run_text_result(self, text, **kwargs):
+        return project_cycle(
+            self.run_text(text, **kwargs)
+        )
 
     @staticmethod
-    def project(cycle: Any) -> PublicCycleResult:
+    def project(cycle):
         return project_cycle(cycle)
 
+    def _seed_live_self_observations(self):
+        self._semantic_memory.add(SemanticFact(
+            fact_id="observation:self:name",
+            predicate_key="named",
+            roles=(
+                FactRole("holder", "self"),
+                FactRole(
+                    "name", "value:text:CEMM",
+                    "text", surface="CEMM",
+                ),
+            ),
+            context_ref="actual",
+            confidence=1.0,
+            evidence_refs=(
+                "runtime_observation:self_identity",
+            ),
+            source_ref="runtime:self_observer",
+        ))
+        self._semantic_memory.add(SemanticFact(
+            fact_id=(
+                "observation:self:operational_status"
+            ),
+            predicate_key="has_state",
+            roles=(
+                FactRole("holder", "self"),
+                FactRole(
+                    "dimension",
+                    "operational_status",
+                    "state_dimension",
+                    "operational_status",
+                ),
+                FactRole(
+                    "value", "available",
+                    "enum", "availability",
+                    "available",
+                ),
+            ),
+            context_ref="actual",
+            confidence=1.0,
+            evidence_refs=(
+                "runtime_observation:process_running",
+            ),
+            source_ref="runtime:health_observer",
+        ))
+        self._semantic_memory.add(SemanticFact(
+            fact_id=(
+                "observation:self:software_system"
+            ),
+            predicate_key="instance_of",
+            roles=(
+                FactRole("entity", "self"),
+                FactRole(
+                    "kind", "software_system",
+                    "schema", "software_system",
+                ),
+            ),
+            context_ref="actual",
+            confidence=1.0,
+            evidence_refs=(
+                "runtime_observation:"
+                "implementation_identity",
+            ),
+            source_ref="runtime:self_observer",
+        ))
 
 class _NativePerceptAdapter:
-    def __init__(self, language_adapter: Any) -> None:
-        self._adapter = language_adapter
+    def __init__(self, adapters):
+        self._adapters = adapters
 
     def perceive(
-        self,
-        *,
-        input_signals: tuple[InputSignal, ...] = (),
-        signal_ids: tuple[str, ...] = (),
-        context_id: str = "default",
-        **_: Any,
-    ) -> tuple[Any, ...]:
-        # signal_ids are identity only. Legacy callers that supply raw text via
-        # signal_ids receive no surface evidence rather than a silent contract
-        # violation.
-        results = []
+        self, *, input_signals=(),
+        signal_ids=(), context_id="default",
+        **_,
+    ):
+        result = []
         for signal in input_signals:
-            if not signal.content:
-                continue
-            language = signal.language_hint or "en"
-            results.append(self._adapter.perceive(signal.content, language))
-        return tuple(results)
+            language = (
+                signal.language_hint or "en"
+            ).split("-", 1)[0]
+            adapter = self._adapters.get(language)
+            if adapter is not None:
+                result.append(adapter.perceive(
+                    signal.content,
+                    signal.language_hint,
+                ))
+        return tuple(result)

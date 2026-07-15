@@ -1,107 +1,67 @@
-"""Language adapter interfaces — reversible surface evidence types.
-
-Import boundary: model + language.stream only. No engine imports.
-
-Architectural guardrails (AGENTS.md §8, UNDERSTANDING_PIPELINE.md §2-3):
-- Language adapters emit reversible surface evidence only.
-- They may PROPOSE lexeme senses, constructions, predications, and
-  communicative structures. They may NOT:
-    select final meaning, authorize a write, declare truth,
-    directly answer a query, directly mutate memory,
-    claim a capability, choose final response content.
-- Surface evidence is candidate-only — never authoritative.
-"""
+"""Reversible, candidate-only language evidence interfaces."""
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Any, Protocol
-
-from .stream import TokenStream, Token
-from ..kernel.model.surface import SurfaceSpan, LexicalFormRef, KindHypothesis
-from ..kernel.model.refs import FrozenMap
-
+from .stream import TokenStream
+from ..kernel.model.surface import SurfaceSpan, LexicalFormRef
 
 @dataclass(frozen=True, slots=True)
 class LexicalSenseCandidate:
-    """A candidate lexical sense proposed by a language adapter.
-
-    This is a PROPOSAL — the adapter may not select final meaning.
-    Multiple candidates may exist for the same lexical form.
-    """
     lexical_form_ref: LexicalFormRef
     semantic_key: str
     sense_rank: float = 0.0
-    evidence_kind: str = "lexical"  # lexical, construction, pragmatic
+    evidence_kind: str = "lexical"
     confidence: float = 0.0
     source_token_indices: tuple[int, ...] = ()
 
-
 @dataclass(frozen=True, slots=True)
 class ConstructionCandidate:
-    """A candidate grammatical construction proposed by a language adapter.
-
-    Constructions map surface patterns to predications — but as
-    candidate evidence, not authoritative interpretation.
-    """
     construction_key: str
     pattern: str
-    predicate_schema_ref: str  # proposed predicate
-    role_mappings: dict[str, int] = field(default_factory=dict)  # role → token index
+    predicate_schema_ref: str
+    role_mappings: dict[str, int] = field(default_factory=dict)
     open_role_refs: tuple[str, ...] = ()
     communicative_force: str = ""
     confidence: float = 0.0
     source_token_indices: tuple[int, ...] = ()
+    capture_spans: dict[str, tuple[int, int]] = field(default_factory=dict)
+    output_kind: str = "predication"
+    metadata: dict[str, Any] = field(default_factory=dict)
 
+@dataclass(frozen=True, slots=True)
+class RuleCandidate:
+    construction_key: str
+    rule_kind: str
+    strength: str
+    causal_warrant: str
+    premise_capture: str
+    conclusion_capture: str
+    capture_spans: dict[str, tuple[int, int]] = field(default_factory=dict)
+    confidence: float = 0.0
+    source_token_indices: tuple[int, ...] = ()
 
 @dataclass(frozen=True, slots=True)
 class CommunicativeCandidate:
-    """A candidate communicative force proposed by a language adapter.
-
-    Communicative force: assert, ask, request, direct, acknowledge,
-    correct, promise, refuse. This is independent from polarity,
-    context, and modality (AGENTS.md §5).
-    """
-    force: str  # assert, ask, request, direct, acknowledge, correct, promise, refuse
+    force: str
     confidence: float = 0.0
-    evidence_kind: str = "syntactic"  # syntactic, pragmatic, construction
+    evidence_kind: str = "syntactic"
     source_token_indices: tuple[int, ...] = ()
-
 
 @dataclass(frozen=True, slots=True)
 class PragmaticCue:
-    """A pragmatic cue from a language adapter.
-
-    Pragmatic cues may ADD candidates or discourse relations.
-    They may NOT replace compositional content (UNDERSTANDING_PIPELINE.md §3).
-    """
-    cue_kind: str  # politeness, formality, emphasis, topic_shift, etc.
+    cue_kind: str
     value: str
     confidence: float = 0.0
     source_token_indices: tuple[int, ...] = ()
     adds_candidates: bool = True
-    replaces_content: bool = False  # Must always be False
-
+    replaces_content: bool = False
 
 @dataclass(frozen=True, slots=True)
 class SurfaceEvidence:
-    """Complete reversible surface evidence from a language adapter.
-
-    This is the sole output of language perception. It contains:
-    - raw token stream (preserving raw text, offsets, contractions, etc.)
-    - candidate lexical senses (proposals, not selections)
-    - candidate constructions (proposals)
-    - candidate communicative forces (proposals)
-    - pragmatic cues (additions, never replacements)
-    - quotation and clause boundaries
-    - language and confidence
-
-    The adapter may not select final meaning, authorize a write,
-    declare truth, directly answer a query, directly mutate memory,
-    claim a capability, or choose final response content.
-    """
     token_stream: TokenStream
     lexical_sense_candidates: tuple[LexicalSenseCandidate, ...] = ()
     construction_candidates: tuple[ConstructionCandidate, ...] = ()
+    rule_candidates: tuple[RuleCandidate, ...] = ()
     communicative_candidates: tuple[CommunicativeCandidate, ...] = ()
     pragmatic_cues: tuple[PragmaticCue, ...] = ()
     surface_spans: tuple[SurfaceSpan, ...] = ()
@@ -109,18 +69,10 @@ class SurfaceEvidence:
     overall_confidence: float = 1.0
     adapter_id: str = ""
     adapter_version: str = ""
-
+    source_evidence_refs: tuple[str, ...] = ()
 
 class LanguageAdapter(Protocol):
-    """Protocol for language adapters.
-
-    Language adapters emit reversible surface evidence only.
-    They do NOT select final meaning, authorize writes, declare truth,
-    answer queries, mutate memory, claim capabilities, or choose
-    response content.
-    """
     adapter_id: str
     adapter_version: str
     supported_language_tags: tuple[str, ...]
-
     def perceive(self, raw_text: str, language_tag: str) -> SurfaceEvidence: ...

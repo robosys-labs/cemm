@@ -1,0 +1,257 @@
+{
+  "language_tag": "fr",
+  "version": "1.0.0",
+  "closed_class_semantic_keys": [
+    "pronoun:first_person",
+    "pronoun:first_person_possessive",
+    "pronoun:second_person",
+    "pronoun:second_person_possessive",
+    "wh:what",
+    "wh:how",
+    "grammar:copula",
+    "grammar:indefinite"
+  ],
+  "referent_surfaces": {
+    "self": "je",
+    "user": "vous"
+  },
+  "lexical_entries": [
+    {
+      "surface": "je",
+      "semantic_key": "pronoun:first_person",
+      "part_of_speech": "pronoun",
+      "lemma": "je"
+    },
+    {
+      "surface": "mon",
+      "semantic_key": "pronoun:first_person_possessive",
+      "part_of_speech": "determiner",
+      "lemma": "mon"
+    },
+    {
+      "surface": "vous",
+      "semantic_key": "pronoun:second_person",
+      "part_of_speech": "pronoun",
+      "lemma": "vous"
+    },
+    {
+      "surface": "votre",
+      "semantic_key": "pronoun:second_person_possessive",
+      "part_of_speech": "determiner",
+      "lemma": "votre"
+    },
+    {
+      "surface": "quoi",
+      "semantic_key": "wh:what",
+      "part_of_speech": "pronoun",
+      "lemma": "quoi"
+    },
+    {
+      "surface": "comment",
+      "semantic_key": "wh:how",
+      "part_of_speech": "adverb",
+      "lemma": "comment"
+    },
+    {
+      "surface": "est",
+      "semantic_key": "grammar:copula",
+      "part_of_speech": "verb",
+      "lemma": "être"
+    },
+    {
+      "surface": "suis",
+      "semantic_key": "grammar:copula",
+      "part_of_speech": "verb",
+      "lemma": "être"
+    },
+    {
+      "surface": "un",
+      "semantic_key": "grammar:indefinite",
+      "part_of_speech": "determiner",
+      "lemma": "un"
+    },
+    {
+      "surface": "une",
+      "semantic_key": "grammar:indefinite",
+      "part_of_speech": "determiner",
+      "lemma": "une"
+    },
+    {
+      "surface": "bonjour",
+      "semantic_key": "greet",
+      "part_of_speech": "interjection",
+      "lemma": "bonjour"
+    },
+    {
+      "surface": "salut",
+      "semantic_key": "greet",
+      "part_of_speech": "interjection",
+      "lemma": "salut"
+    },
+    {
+      "surface": "personne",
+      "semantic_key": "person",
+      "part_of_speech": "noun",
+      "lemma": "personne"
+    },
+    {
+      "surface": "rôle",
+      "semantic_key": "role",
+      "part_of_speech": "noun",
+      "lemma": "rôle"
+    },
+    {
+      "surface": "information",
+      "semantic_key": "information_object",
+      "part_of_speech": "noun",
+      "lemma": "information"
+    },
+    {
+      "surface": "nom",
+      "semantic_key": "named",
+      "part_of_speech": "noun",
+      "lemma": "nom"
+    },
+    {
+      "surface": "signifie",
+      "semantic_key": "means",
+      "part_of_speech": "verb",
+      "lemma": "signifier"
+    },
+    {
+      "surface": "besoin",
+      "semantic_key": "requires_information",
+      "part_of_speech": "noun",
+      "lemma": "besoin"
+    }
+  ],
+  "cue_rules": [
+    {
+      "cue_kind": "greeting",
+      "condition": {
+        "contains_semantic": [
+          "greet"
+        ],
+        "max_tokens": 3
+      },
+      "confidence": 0.98
+    }
+  ],
+  "constructions": [
+    {
+      "semantic_key": "construction:fr:copular_instance",
+      "language_tag": "fr",
+      "predicate_schema_ref": "instance_of",
+      "communicative_force": "assert",
+      "priority": 100,
+      "terms": [
+        {
+          "id": "subject",
+          "capture": "subject",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "pronoun:"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "copula",
+          "capture": "",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "det",
+          "capture": "",
+          "optional": true,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:indefinite"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "complement",
+          "capture": "complement",
+          "optional": false,
+          "max_occurs": 1,
+          "matchers": [
+            {
+              "kind": "any",
+              "values": []
+            }
+          ]
+        }
+      ],
+      "role_mappings": {
+        "entity": "subject",
+        "kind": "complement"
+      }
+    }
+  ],
+  "realizations": [
+    {
+      "predicate_key": "greet",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "lexeme",
+              "value": "greet"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "predicate_key": "instance_of",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "variants": [
+        {
+          "segments": [
+            {
+              "kind": "referent",
+              "role": "entity"
+            },
+            {
+              "kind": "literal",
+              "value": " est "
+            },
+            {
+              "kind": "role_semantic",
+              "role": "kind"
+            },
+            {
+              "kind": "punctuation",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,13 @@ from ..schema.use_profile import SemanticOperation, UseProfileLevel
 
 
 @dataclass(frozen=True, slots=True)
+class RoleGroundingInfo:
+    role_schema_ref: str
+    semantic_keys: tuple[str, ...] = ()
+    surface: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class SelectedInterpretation:
     id: str
     predication_ref: str = ""
@@ -19,6 +26,7 @@ class SelectedInterpretation:
     predicate_schema_ref: str = ""
     predicate_semantic_key: str = ""
     role_bindings: tuple[RoleBinding, ...] = ()
+    role_groundings: tuple[RoleGroundingInfo, ...] = ()
     context_ref: str = ""
     communicative_force: str = ""
     confidence: float = 0.0
@@ -176,6 +184,23 @@ class InterpretationResolver:
             elif not pg.use_profile.permits(operation):
                 return None, f"schema use profile blocks {operation.value}"
 
+        role_groundings = (
+            tuple(
+                RoleGroundingInfo(
+                    role_schema_ref=grb.role_schema_ref,
+                    semantic_keys=(
+                        grb.grounding.semantic_keys
+                        if grb.grounding else ()
+                    ),
+                    surface=(
+                        grb.grounding.surface
+                        if grb.grounding else ""
+                    ),
+                )
+                for grb in pg.role_bindings
+            )
+            if pg is not None else ()
+        )
         confidence = candidate.confidence
         if pg is not None:
             if pg.is_structurally_usable:
@@ -194,6 +219,7 @@ class InterpretationResolver:
                 else predication.predicate_schema_ref
             ),
             role_bindings=predication.bindings,
+            role_groundings=role_groundings,
             context_ref=candidate.proposition.context_ref,
             communicative_force=force,
             confidence=confidence,

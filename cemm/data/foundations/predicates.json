@@ -1,0 +1,686 @@
+[
+  {
+    "semantic_key": "same_identity",
+    "role_refs": [
+      "left",
+      "right"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "different_identity",
+    "role_refs": [
+      "left",
+      "right"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "instance_of",
+    "role_refs": [
+      "entity",
+      "kind"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "kind"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "subkind_of",
+    "role_refs": [
+      "child_kind",
+      "parent_kind"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "parent_kind"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "occupies_role",
+    "role_refs": [
+      "holder",
+      "role",
+      "context"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "role"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "participates_in",
+    "role_refs": [
+      "participant",
+      "event"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "event"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_state",
+    "role_refs": [
+      "holder",
+      "dimension",
+      "value"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "value"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "transitions",
+    "role_refs": [
+      "holder",
+      "dimension",
+      "from_value",
+      "to_value",
+      "event"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "located_at",
+    "role_refs": [
+      "entity",
+      "place",
+      "reference_frame"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "place"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "before",
+    "role_refs": [
+      "earlier",
+      "later"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "later"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "after",
+    "role_refs": [
+      "later",
+      "earlier"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "earlier"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "depends_on",
+    "role_refs": [
+      "dependent",
+      "dependency"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "dependency"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "causes",
+    "role_refs": [
+      "cause",
+      "effect"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "effect"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "enables",
+    "role_refs": [
+      "condition",
+      "effect"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "effect"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "prevents",
+    "role_refs": [
+      "condition",
+      "effect"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "effect"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "refers_to",
+    "role_refs": [
+      "symbol",
+      "referent"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "referent"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "represents",
+    "role_refs": [
+      "representation",
+      "content"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "content"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "named",
+    "role_refs": [
+      "holder",
+      "name"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "name"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "remembers",
+    "role_refs": [
+      "holder",
+      "record"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "record"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_access_to",
+    "role_refs": [
+      "holder",
+      "record"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "record"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_evidence_for",
+    "role_refs": [
+      "holder",
+      "content",
+      "evidence"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "understands",
+    "role_refs": [
+      "holder",
+      "schema_revision",
+      "competence_set",
+      "context"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "uncertain_about",
+    "role_refs": [
+      "holder",
+      "target",
+      "blocker_set"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "means",
+    "role_refs": [
+      "lexical_form",
+      "schema_sense"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "schema_sense"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "defines",
+    "role_refs": [
+      "source",
+      "schema_revision",
+      "content"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "learns",
+    "role_refs": [
+      "holder",
+      "artifact",
+      "evidence"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "capable_of",
+    "role_refs": [
+      "agent",
+      "operation"
+    ],
+    "predication_kind": "state",
+    "query_projections": [
+      {
+        "projection_kind": "open_role",
+        "role_refs": [
+          "operation"
+        ]
+      }
+    ],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "greet",
+    "role_refs": [
+      "source",
+      "addressee"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "asks",
+    "role_refs": [
+      "speaker",
+      "addressee",
+      "question"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "answers",
+    "role_refs": [
+      "speaker",
+      "addressee",
+      "question",
+      "answer"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "informs",
+    "role_refs": [
+      "source",
+      "recipient",
+      "information"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "requests",
+    "role_refs": [
+      "speaker",
+      "addressee",
+      "content"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "offers_information",
+    "role_refs": [
+      "source",
+      "recipient",
+      "offered_content"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "desires",
+    "role_refs": [
+      "desirer",
+      "content"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "recognizes_form",
+    "role_refs": [
+      "holder",
+      "lexical_form"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_usable_definition",
+    "role_refs": [
+      "holder",
+      "schema_sense"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "requires_information",
+    "role_refs": [
+      "holder",
+      "target"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_sufficient_information",
+    "role_refs": [
+      "holder",
+      "content"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "stores",
+    "role_refs": [
+      "agent",
+      "artifact"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "completes",
+    "role_refs": [
+      "agent",
+      "operation"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "corrects",
+    "role_refs": [
+      "agent",
+      "content"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  }
+]
