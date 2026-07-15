@@ -351,7 +351,9 @@ class SemanticComposer:
 
     @staticmethod
     def _is_grammatical_key(key: str) -> bool:
-        return key.startswith(("pronoun:", "wh:", "copula:", "aux:", "determiner:", "polarity:"))
+        return key.startswith((
+            "pronoun:", "wh:", "copula:", "aux:", "determiner:", "polarity:",
+        ))
 
     @staticmethod
     def _dedupe_ports(ports: list[OpenPort]) -> list[OpenPort]:

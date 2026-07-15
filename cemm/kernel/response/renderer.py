@@ -126,6 +126,8 @@ class MessageRenderer:
             "self_capability_status": {"capable_of"},
             "learning_probe": {"recognizes_form", "has_usable_definition", "means"},
             "dialogue_gap_explanation": {"requires_information", "means"},
+            "attributed_receipt": {"receives"},
+            "information_request": {"requests"},
             "commit_success": {"stores"},
             "commit_failure": {"completes"},
             "repair": {"corrects"},
@@ -147,6 +149,17 @@ class MessageRenderer:
             return self._render_learning_progress(item, authorization)
         if kind == "dialogue_gap_explanation":
             return self._render_gap_explanation(item, authorization)
+        if kind == "attributed_receipt":
+            received = self._word(authorization, "receives", "received")
+            information = self._word(authorization, "information_object", "information")
+            return self._sentence(f"I {received} that {information}")
+        if kind == "information_request":
+            content = item.role("content")
+            if content is not None and content.semantic_key == "name":
+                name = self._word(authorization, "name", "name")
+                return f"What is your {name}?"
+            request = self._word(authorization, "requests", "give")
+            return self._sentence(f"{request} that information")
         if kind == "commit_success":
             return self._sentence(self._word(authorization, "stores", "stored"))
         if kind == "commit_failure":

@@ -91,13 +91,18 @@ class ResponsePlanner:
         if capability_item is not None and not items:
             items.append(capability_item)
 
+        request_item = self._plan_requested_information(selection)
+        if request_item is not None and not items:
+            items.append(request_item)
+
         social = self._plan_social_surface(selection)
         if social is not None and not items:
             items.append(social)
 
         # Only propositions with an assessment may become public proposition
         # content. Missing assessment is not equivalent to asserted truth.
-        items.extend(self._plan_assessed_propositions(selection))
+        if dialogue_item is None:
+            items.extend(self._plan_assessed_propositions(selection))
 
         if selection.commit_outcome is not None:
             commit_item = self._plan_commit_content(selection.commit_outcome)
@@ -173,7 +178,9 @@ class ResponsePlanner:
             remaining = tuple(getattr(resolution, "remaining_field_refs", ()) or ())
             target = self._public_surface(getattr(resolution, "target_artifact_ref", ""))
             requirements = [
-                self._lex("explanation"), self._lex("associates"), self._lex("is_incomplete"),
+                self._lex("explanation"),
+                self._lex("associates", "qualified"),
+                self._lex("is_incomplete"),
             ]
             if "denotation_role_or_holder" in remaining:
                 requirements.extend((
@@ -284,6 +291,68 @@ class ResponsePlanner:
             provenance_refs=provenance,
         )
 
+    def _plan_requested_information(
+        self,
+        selection: ContentSelectionInput,
+    ) -> MessageContentItem | None:
+        for item in selection.selected_interpretations:
+            if getattr(item, "communicative_force", "") != "ask":
+                continue
+            grounding = self._find_predication_grounding(
+                getattr(item, "predication_ref", ""),
+                selection.grounding_assessments,
+            )
+            if grounding is None:
+                continue
+            if not any(
+                getattr(binding, "grounded_filler_ref", "") == "self"
+                for binding in getattr(grounding, "role_bindings", ())
+            ):
+                continue
+            content = next(
+                (
+                    binding for binding in getattr(grounding, "role_bindings", ())
+                    if getattr(binding, "role_schema_ref", "") == "role:content"
+                ),
+                None,
+            )
+            content_keys = tuple(
+                getattr(getattr(content, "grounding", None), "semantic_keys", ()) or ()
+            )
+            if "name" not in content_keys:
+                continue
+            provenance = (getattr(item, "proposition_ref", ""),)
+            return MessageContentItem(
+                semantic_ref="request:user_name",
+                discourse_function=DiscourseFunction.QUERY.value,
+                stance=EpistemicStance.ASSERTED.value,
+                content_kind="information_request",
+                predicate_key="requests",
+                clauses=(self._clause(
+                    "request:user_name",
+                    "requests",
+                    "ask",
+                    "positive",
+                    (
+                        self._role("speaker", "self"),
+                        self._role("addressee", "user"),
+                        MessageRoleValue(
+                            role_key="content",
+                            value_kind="semantic_ref",
+                            semantic_ref="name",
+                            semantic_key="name",
+                            use_mode="probe",
+                            provenance_refs=provenance,
+                        ),
+                    ),
+                    (self._lex("requests", "probe"), self._lex("name", "probe")),
+                    provenance,
+                ),),
+                lexical_requirements=(self._lex("requests", "probe"), self._lex("name", "probe")),
+                provenance_refs=provenance,
+            )
+        return None
+
     def _plan_learning_probe(
         self, selection: ContentSelectionInput,
     ) -> MessageContentItem | None:
@@ -389,10 +458,38 @@ class ResponsePlanner:
                 continue
             if assessment.admissibility not in {"admitted", "attributed_only", "contested"}:
                 continue
-            # Bare proposition IDs are not realizable semantics. Preserve them
-            # only when a caller supplied a semantic realization item through
-            # dialogue/commit/self-report paths. Do not emit "regarding prop:...".
+            if assessment.admissibility == "attributed_only":
+                result.append(self._attributed_receipt(prop_ref, assessment))
         return result
+
+    def _attributed_receipt(
+        self,
+        prop_ref: str,
+        assessment: EpistemicAssessment,
+    ) -> MessageContentItem:
+        provenance = (prop_ref,)
+        return MessageContentItem(
+            semantic_ref=f"receipt:{prop_ref}",
+            discourse_function=DiscourseFunction.INFORM.value,
+            stance=EpistemicStance.REPORTED.value,
+            content_kind="attributed_receipt",
+            predicate_key="receives",
+            clauses=(self._clause(
+                f"receipt:{prop_ref}",
+                "receives",
+                "assert",
+                "positive",
+                (
+                    self._role("recipient", "self"),
+                    self._role("information", prop_ref),
+                ),
+                (self._lex("receives"), self._lex("information_object")),
+                provenance,
+                qualification_key=getattr(assessment, "admissibility", ""),
+            ),),
+            lexical_requirements=(self._lex("receives"), self._lex("information_object")),
+            provenance_refs=provenance,
+        )
 
     def _plan_commit_content(self, outcome: CommitOutcome) -> MessageContentItem:
         if not outcome.required_satisfied:

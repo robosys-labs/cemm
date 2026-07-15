@@ -295,6 +295,78 @@ def test_social_status_question_does_not_open_learning_gap():
     } == {"has_condition"}
 
 
+def test_learning_progress_realizes_and_preserves_followup_obligation():
+    from cemm.app.runtime import Runtime
+
+    runtime = Runtime()
+    runtime.run_text(
+        "lol, well you're a glorp what did I expect lol",
+        context_id="session:learn-machine",
+    )
+    cycle = runtime.run_text(
+        "A glorp is something mechanical or digital like you",
+        context_id="session:learn-machine",
+    )
+    result = runtime.project(cycle)
+    assert result.output_text
+    assert result.realized_item_refs == (
+        "learning_progress:" + cycle.dialogue_resolution.transaction_ref,
+    )
+    assert result.blocked_item_refs == ()
+    obligations = runtime.learning_coordinator.pending_obligations(
+        "session:learn-machine"
+    )
+    assert obligations
+    assert obligations[-1].unresolved_field_refs
+
+
+def test_machine_is_seeded_as_ordinary_foundation_schema():
+    from cemm.app.runtime import Runtime
+
+    runtime = Runtime()
+    assert runtime.schema_store.find_active("machine") is not None
+    cycle = runtime.run_text(
+        "lol, well you're a machine what did I expect lol",
+        context_id="session:machine-seed",
+    )
+    assert cycle.gaps == ()
+    definition = runtime.run_text(
+        "A machine is something mechanical or digital like you",
+        context_id="session:machine-seed",
+    )
+    assert definition.gaps == ()
+    assert runtime.project(definition).realized_item_refs != (
+        "response:no_admissible_content",
+    )
+
+
+def test_attributed_assertion_receives_qualified_receipt_not_abstention():
+    from cemm.app.runtime import Runtime
+
+    result = Runtime().run_text_result(
+        "you are a machine",
+        context_id="session:attributed-assertion",
+    )
+    assert result.output_text
+    assert result.realized_item_refs != ("response:no_admissible_content",)
+    assert result.output_text == "I received that information."
+
+
+def test_name_offer_question_selects_interpretation():
+    from cemm.app.runtime import Runtime
+
+    cycle = Runtime().run_text(
+        "anyway dont you want to know my name?",
+        context_id="session:name-offer",
+    )
+    assert cycle.selected_interpretations
+    assert cycle.gaps == ()
+    assert Runtime().run_text_result(
+        "anyway dont you want to know my name?",
+        context_id="session:name-offer-output",
+    ).output_text == "What is your name?"
+
+
 def test_answer_capability_assessment_is_request_scoped():
     from cemm.app.runtime import Runtime
 

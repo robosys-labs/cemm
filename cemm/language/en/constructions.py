@@ -28,19 +28,22 @@ _GRAMMATICAL_SENSES: dict[str, str] = {
     "they": "pronoun:third_person_plural",
     "what": "wh:what", "which": "wh:which", "who": "wh:who",
     "where": "wh:where", "when": "wh:when", "why": "wh:why", "how": "wh:how",
+    "something": "pronoun:indefinite",
     "is": "copula:be", "are": "copula:be", "am": "copula:be",
     "was": "copula:be", "were": "copula:be", "be": "copula:be",
     "do": "aux:do", "does": "aux:do", "did": "aux:do",
+    "dont": "aux:do",
     "a": "determiner:indefinite", "an": "determiner:indefinite",
     "the": "determiner:definite", "not": "polarity:negative",
 }
 _WH = frozenset({"what", "which", "who", "where", "when", "why", "how"})
 _AUX = frozenset({
-    "do", "does", "did", "can", "could", "will", "would", "should", "have",
+    "do", "does", "did", "dont", "can", "could", "will", "would", "should", "have",
     "has", "had", "is", "are", "was", "were", "might", "must", "may",
 })
 _COPULA = frozenset({"is", "are", "am", "was", "were", "be"})
 _DET = frozenset({"a", "an", "the"})
+_GENERIC_COMPLEMENT_FILLERS = frozenset({"something"})
 
 
 def detect_constructions(
@@ -155,6 +158,8 @@ def _copular(
         cursor = position + 1
         if cursor < len(words) and _lemma(words[cursor][1]) in _DET:
             cursor += 1
+        if cursor < len(words) and _lemma(words[cursor][1]) in _GENERIC_COMPLEMENT_FILLERS:
+            cursor += 1
         if cursor >= len(words):
             continue
         complement_index = words[cursor][0]
@@ -184,6 +189,11 @@ def _question(
     if not words:
         return
     first = _lemma(words[0][1])
+    desire = _desire_knowledge_question(words, schemas)
+    if desire is not None:
+        constructions.append(desire)
+        _append_force(communicative, desire, 0.9, desire.source_token_indices)
+        return
     if first in _WH:
         if (
             first == "how"
@@ -247,6 +257,47 @@ def _question(
         if candidate is not None:
             constructions.append(candidate)
             _append_force(communicative, candidate, 0.92, indices)
+
+
+def _desire_knowledge_question(
+    words: list[tuple[int, Token]],
+    schemas: "_SchemaIndex",
+) -> ConstructionCandidate | None:
+    for offset, (_, token) in enumerate(words):
+        if _lemma(token) not in {"do", "does", "did", "dont"}:
+            continue
+        if len(words) <= offset + 4:
+            continue
+        holder = words[offset + 1]
+        want = words[offset + 2]
+        cursor = offset + 3
+        if _lemma(want[1]) != "want":
+            continue
+        if cursor < len(words) and _lemma(words[cursor][1]) == "to":
+            cursor += 1
+        if cursor >= len(words) or _lemma(words[cursor][1]) != "know":
+            continue
+        content_index = next(
+            (
+                item_index for item_index in range(cursor + 1, len(words))
+                if _lemma(words[item_index][1]) not in _DET
+                and _lemma(words[item_index][1]) not in {"my", "your", "his", "her", "our", "their"}
+            ),
+            None,
+        )
+        if content_index is None:
+            continue
+        schema = schemas.first(
+            "[aux:do] [holder] [lemma:want] [lemma:know] [content]",
+            "content_lexicalized_as_information",
+        )
+        return _candidate_from_schema(
+            schema,
+            {"holder": holder[0], "content": words[content_index][0]},
+            0.86,
+            (words[offset][0], want[0], words[cursor][0]),
+        )
+    return None
 
 
 def _complement(
@@ -364,6 +415,8 @@ def _append_force(
 
 
 def _lemma(token: Token) -> str:
+    if token.normalized_form in _GRAMMATICAL_SENSES:
+        return token.normalized_form
     if token.lemma_candidates:
         return token.lemma_candidates[0]
     return token.normalized_form
