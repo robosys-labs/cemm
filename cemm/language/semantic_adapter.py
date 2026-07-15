@@ -24,7 +24,7 @@ from .tokenizer import tokenize
 from ..kernel.model.surface import LexicalFormRef, SurfaceSpan
 
 
-_EXPRESSIVE_RUN = re.compile(r"([^\W\d_])\1{2,}", flags=re.UNICODE)
+_EXPRESSIVE_RUN = re.compile(r"([^\W\d_])\1+", flags=re.UNICODE)
 _SUPPORT_OUTPUT_KINDS = frozenset({
     "pragmatic_cue",
     "discourse_cue",
