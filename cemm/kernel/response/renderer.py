@@ -1,38 +1,24 @@
-"""MessageRenderer — language renderer for surface realization.
+"""Semantically authorized message realization.
 
-Import boundary: model + language submodules only. No engine imports.
-
-Architectural guardrails (AGENTS.md §19, CORE_LOOP.md G3,
-AUTHORITY_MATRIX):
-- Language renderers choose wording, not truth or response content.
-- ResponsePlanner is the only response-content authority.
-- The renderer consumes a SemanticMessagePlan and produces a
-  SurfacePayload with exact realized semantic item refs.
-- Every generated clause must trace to a content item and its
-  provenance.
-- Opaque IDs, open ports, role labels, or internal placeholders
-  cannot become public text.
-- Generated content should round-trip into compatible semantic
-  candidates under the same language pack.
+The renderer chooses language form only after each required content word has a
+licensed realization. Unknown user words are copied solely in mention mode.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+import re
+from typing import Any, Callable
 
-from ..model.message import (
-    SemanticMessagePlan,
-    MessageContentItem,
-    RhetoricalRelation,
+from ..model.message import MessageContentItem, SemanticMessagePlan
+from .lexical_use import (
+    ItemRealizationAuthorization,
+    LexicalUseGate,
+    RealizationAuthorization,
 )
 
 
 @dataclass(frozen=True, slots=True)
 class RealizedClause:
-    """A single realized clause from the renderer.
-
-    Every clause traces to a content item via semantic_ref.
-    """
     semantic_ref: str
     surface_text: str
     provenance_refs: tuple[str, ...] = ()
@@ -42,10 +28,6 @@ class RealizedClause:
 
 @dataclass(frozen=True, slots=True)
 class SurfacePayload:
-    """The realized output from a MessageRenderer.
-
-    Renderer returns exact realized semantic item refs.
-    """
     plan_ref: str
     clauses: tuple[RealizedClause, ...] = ()
     surface_text: str = ""
@@ -53,248 +35,284 @@ class SurfacePayload:
     channel: str = "text"
     realized_item_refs: tuple[str, ...] = ()
     provenance_refs: tuple[str, ...] = ()
+    blocked_item_refs: tuple[str, ...] = ()
 
 
 class MessageRenderer:
-    """Language renderer — realizes a SemanticMessagePlan as surface text.
+    """Realize authorized semantic content without inventing content."""
 
-    Performs:
-    - lexicalization (map semantic refs to words)
-    - syntax planning (simple clause construction)
-    - morphology (basic inflection)
-    - orthography/channel rendering
-    - aggregation (combine related items)
-
-    Does NOT:
-    - Select response content (that's ResponsePlanner)
-    - Decide truth
-    - Decide capability
-    - Alter the message plan
-    - Inject content not in the plan
-    """
-
-    def __init__(self) -> None:
-        self._lexical_map: dict[str, str] = {
-            # Common semantic refs to surface forms
-            "commit_success": "Done.",
-            "commit_failure": "I couldn't complete that.",
-            "prior_claim": "Actually, let me correct that.",
-        }
-        self._stance_markers: dict[str, str] = {
-            "asserted": "",
-            "reported": " reportedly",
-            "provisional": " I think",
-            "contested": " There's debate about whether",
-            "hedged": " Possibly",
-            "stale": " Actually, I need to correct that.",
-            "denied": " No,",
-        }
-        self._discourse_markers: dict[str, str] = {
-            "inform": "",
-            "query": "What about",
-            "request": "Please",
-            "acknowledge": "Got it.",
-            "correct": "Actually,",
-            "promise": "I will",
-            "refuse": "I can't",
-            "repair": "Let me correct that.",
-        }
+    def __init__(self, schema_store: Any | None = None) -> None:
+        self._gate = LexicalUseGate(schema_store)
 
     def render(
         self,
         plan: SemanticMessagePlan,
         language: str = "en",
+        authorization: RealizationAuthorization | None = None,
+        environment_fingerprint: str = "",
     ) -> SurfacePayload:
-        """Render a SemanticMessagePlan as surface text.
-
-        Language renderers choose wording, not truth or response content.
-        """
         if plan is None:
             return SurfacePayload(plan_ref="", surface_text="")
 
-        clauses: list[RealizedClause] = []
-        realized_refs: list[str] = []
-        all_provenance: list[str] = []
-
-        for item in plan.content_items:
-            clause = self._render_item(item, language)
-            clauses.append(clause)
-            realized_refs.append(item.semantic_ref)
-            all_provenance.extend(item.provenance_refs)
-
-        # Apply rhetorical relations for ordering
-        ordered_clauses = self._apply_rhetorical_ordering(
-            clauses, plan.rhetorical_relations
+        authorization = authorization or self._gate.authorize_plan(
+            plan,
+            language=language,
+            environment_fingerprint=environment_fingerprint,
         )
 
-        # Build surface text
-        parts = [c.surface_text for c in ordered_clauses if c.surface_text]
-        surface_text = " ".join(parts)
+        clauses: list[RealizedClause] = []
+        realized_refs: list[str] = []
+        provenance: list[str] = []
+        blocked: list[str] = []
 
+        for item in plan.content_items:
+            item_auth = authorization.for_item(item.semantic_ref)
+            if item_auth is None or not item_auth.authorized:
+                blocked.append(item.semantic_ref)
+                continue
+            text = self._render_item(item, item_auth, language)
+            if not text:
+                blocked.append(item.semantic_ref)
+                continue
+            clause = RealizedClause(
+                semantic_ref=item.semantic_ref,
+                surface_text=text,
+                provenance_refs=item.provenance_refs,
+                discourse_function=item.discourse_function,
+                stance=item.stance,
+            )
+            clauses.append(clause)
+            realized_refs.append(item.semantic_ref)
+            provenance.extend(item.provenance_refs)
+
+        surface_text = " ".join(clause.surface_text for clause in clauses)
         return SurfacePayload(
             plan_ref=plan.id,
-            clauses=tuple(ordered_clauses),
+            clauses=tuple(clauses),
             surface_text=surface_text,
             language=language,
             channel=plan.channel,
             realized_item_refs=tuple(realized_refs),
-            provenance_refs=tuple(all_provenance),
+            provenance_refs=tuple(dict.fromkeys(ref for ref in provenance if ref)),
+            blocked_item_refs=tuple(blocked),
+        )
+
+    def authorize(
+        self,
+        plan: SemanticMessagePlan,
+        language: str = "en",
+        environment_fingerprint: str = "",
+    ) -> RealizationAuthorization:
+        return self._gate.authorize_plan(
+            plan,
+            language=language,
+            environment_fingerprint=environment_fingerprint,
         )
 
     def _render_item(
         self,
         item: MessageContentItem,
+        authorization: ItemRealizationAuthorization,
         language: str,
-    ) -> RealizedClause:
-        """Render a single content item as a clause.
+    ) -> str:
+        if language.split("-", 1)[0] != "en":
+            # A language pack must provide its own renderer. Silent English
+            # fallback would misrepresent multilingual competence.
+            return ""
 
-        Performs lexicalization, stance marking, and discourse marking.
-        """
-        # Lexicalization — map semantic_ref to surface form
-        surface = self._lexicalize(item.semantic_ref, item)
+        kind = item.content_kind
+        required_predicates = {
+            "social_greeting": {"greet"},
+            "self_capability_status": {"capable_of"},
+            "learning_probe": {"recognizes_form", "has_usable_definition", "means"},
+            "dialogue_gap_explanation": {"requires_information", "means"},
+            "commit_success": {"stores"},
+            "commit_failure": {"completes"},
+            "repair": {"corrects"},
+            "honest_abstention": {"has_sufficient_information"},
+        }.get(kind, set())
+        available_predicates = {clause.predicate_key for clause in item.clauses}
+        if required_predicates - available_predicates:
+            return ""
 
-        # Apply stance marker
-        stance_marker = self._stance_markers.get(item.stance, "")
-        if stance_marker and surface:
-            surface = f"{stance_marker.strip()} {surface}".strip()
+        if kind == "social_greeting":
+            return self._sentence(self._word(authorization, "greet", "hello"))
+        if kind == "self_capability_status":
+            capable = self._word(authorization, "capable_of", "can")
+            answer = self._word(authorization, "answer_record", "answer")
+            return self._sentence(f"I {capable} {answer}")
+        if kind == "learning_probe":
+            return self._render_learning_probe(item, authorization)
+        if kind == "learning_progress":
+            return self._render_learning_progress(item, authorization)
+        if kind == "dialogue_gap_explanation":
+            return self._render_gap_explanation(item, authorization)
+        if kind == "commit_success":
+            return self._sentence(self._word(authorization, "stores", "stored"))
+        if kind == "commit_failure":
+            complete = self._word(authorization, "completes", "complete")
+            return self._sentence("couldn't " + complete)
+        if kind == "repair":
+            correct = self._word(authorization, "corrects", "correct")
+            answer = self._word(authorization, "answer_record", "answer")
+            return self._sentence(f"{correct}ing the {answer}")
+        if kind == "honest_abstention":
+            enough = self._word(authorization, "grammar:quantifier_sufficiency", "enough")
+            information = self._word(authorization, "information_object", "information")
+            return self._sentence(f"not {enough} {information}")
+        return ""
 
-        # Apply discourse marker
-        discourse_marker = self._discourse_markers.get(
-            item.discourse_function, ""
-        )
-        if discourse_marker and surface:
-            surface = f"{discourse_marker} {surface}".strip()
-
-        # Morphology — basic capitalization and punctuation
-        surface = self._apply_morphology(surface, item.discourse_function)
-
-        return RealizedClause(
-            semantic_ref=item.semantic_ref,
-            surface_text=surface,
-            provenance_refs=item.provenance_refs,
-            discourse_function=item.discourse_function,
-            stance=item.stance,
-        )
-
-    def _lexicalize(
+    def _render_learning_probe(
         self,
-        semantic_ref: str,
         item: MessageContentItem,
+        auth: ItemRealizationAuthorization,
     ) -> str:
-        """Map a semantic ref to surface text.
+        target = self._quoted_role(item, "target")
+        if not target:
+            return ""
+        recognize = self._word(auth, "recognizes_form", "recognize")
+        word = self._word(auth, "lexical_form", "word")
+        definition = self._word(auth, "semantic_definition", "definition")
+        have = self._word(auth, "has_usable_definition", "have")
+        mean = self._word(auth, "means", "mean")
+        person = self._word(auth, "person", "person")
+        role = self._word(auth, "role", "role")
+        both = self._word(auth, "grammar:quantifier_both", "both")
+        return (
+            f"I {recognize} the {word} {target}, but I do not {have} its {definition}. "
+            f"Does {target} {mean} a {person}, a {role}, or {both}?"
+        )
 
-        Uses the lexical map for known refs. For unknown refs,
-        uses the focus field or a generic description based on
-        discourse function.
-        """
-        # Check lexical map first
-        if semantic_ref in self._lexical_map:
-            return self._lexical_map[semantic_ref]
-
-        # Use focus if available
-        if item.focus:
-            focus_map = {
-                "commit_success": "Done.",
-                "commit_failure": "I couldn't complete that.",
-                "prior_claim": "I need to correct my earlier statement.",
-            }
-            if item.focus in focus_map:
-                return focus_map[item.focus]
-
-        # For proposition refs, generate a generic description
-        # based on discourse function
-        if item.discourse_function == "query":
-            return f"about {semantic_ref}"
-        if item.discourse_function == "acknowledge":
-            return f"understood regarding {semantic_ref}"
-        if item.discourse_function == "correct":
-            return f"regarding {semantic_ref}"
-        if item.discourse_function == "repair":
-            return f"correcting {semantic_ref}"
-
-        # Default — use the semantic ref as a placeholder description
-        # In a full implementation, this would use RealizationSchema
-        # from the schema store
-        return f"regarding {semantic_ref}"
-
-    def _apply_morphology(
+    def _render_learning_progress(
         self,
-        text: str,
-        discourse_function: str,
+        item: MessageContentItem,
+        auth: ItemRealizationAuthorization,
     ) -> str:
-        """Apply basic morphology: capitalization and punctuation."""
+        target = self._quoted_role(item, "target")
+        accepted_role = item.role("accepted")
+        accepted = []
+        if accepted_role and accepted_role.semantic_ref:
+            accepted = [
+                self._quote(value)
+                for value in accepted_role.semantic_ref.split("|")
+                if value
+            ]
+        explanation = self._word(auth, "explanation", "explanation")
+        link = self._word(auth, "associates", "links")
+        need = self._word(auth, "requires_information", "need")
+        distinction = self._word(auth, "semantic_distinction", "distinction")
+        role = self._word(auth, "role", "role")
+        person = self._word(auth, "person", "person")
+        mean = self._word(auth, "means", "mean")
+        both = self._word(auth, "grammar:quantifier_both", "both")
+        accepted_text = self._coordinate(accepted)
+        incomplete = self._word(auth, "is_incomplete", "incomplete")
+        first = (
+            f"Your {explanation} {link} {target} with {accepted_text}."
+            if target and accepted_text
+            else f"The {explanation} is {incomplete}."
+        )
+        remaining_role = item.role("remaining_fields")
+        remaining = set(
+            value for value in (
+                (remaining_role.semantic_ref.split("|") if remaining_role and remaining_role.semantic_ref else [])
+            ) if value
+        )
+        if "denotation_role_or_holder" in remaining:
+            return (
+                f"{first} I {need} the {role}/{person} {distinction}. "
+                f"Does {target} {mean} the {role}, the {person}, or {both}?"
+            )
+        if remaining & {"example", "non_example", "differentiator"}:
+            give = self._word(auth, "requests", "give")
+            example = self._word(auth, "example", "example")
+            non_example = self._word(auth, "non_example", "non-example")
+            return f"{first} {give.capitalize()} one {example} and one {non_example}."
+        return first
+
+    def _render_gap_explanation(
+        self,
+        item: MessageContentItem,
+        auth: ItemRealizationAuthorization,
+    ) -> str:
+        target = self._quoted_role(item, "target")
+        need = self._word(auth, "requires_information", "need")
+        distinction = self._word(auth, "semantic_distinction", "distinction")
+        role = self._word(auth, "role", "role")
+        person = self._word(auth, "person", "person")
+        mean = self._word(auth, "means", "mean")
+        both = self._word(auth, "grammar:quantifier_both", "both")
+        return (
+            f"I {need} the {role}/{person} {distinction} for {target}: "
+            f"does it {mean} the {role}, the {person}, or {both}?"
+        )
+
+    @staticmethod
+    def _word(
+        authorization: ItemRealizationAuthorization,
+        semantic_key: str,
+        default: str,
+    ) -> str:
+        return authorization.surface_for(semantic_key, default)
+
+    @classmethod
+    def _quoted_role(cls, item: MessageContentItem, role_key: str) -> str:
+        role = item.role(role_key)
+        if role is None or role.use_mode not in {"mention", "quote"}:
+            return ""
+        return cls._quote(role.surface_hint)
+
+    @staticmethod
+    def _quote(value: str) -> str:
+        value = value.strip().replace("“", "").replace("”", "")
+        return f"“{value}”" if value else ""
+
+    @staticmethod
+    def _coordinate(values: list[str]) -> str:
+        values = list(dict.fromkeys(value for value in values if value))
+        if not values:
+            return ""
+        if len(values) == 1:
+            return values[0]
+        if len(values) == 2:
+            return f"{values[0]} and {values[1]}"
+        return ", ".join(values[:-1]) + f", and {values[-1]}"
+
+    @staticmethod
+    def _sentence(text: str) -> str:
+        text = text.strip()
         if not text:
-            return text
-
-        # Capitalize first letter
-        text = text[0].upper() + text[1:] if text else text
-
-        # Add punctuation based on discourse function
-        if discourse_function == "query":
-            if not text.endswith("?"):
-                text = text + "?"
-        else:
-            if not text.endswith((".", "!", "?")):
-                text = text + "."
-
-        return text
-
-    def _apply_rhetorical_ordering(
-        self,
-        clauses: list[RealizedClause],
-        relations: tuple[RhetoricalRelation, ...],
-    ) -> list[RealizedClause]:
-        """Apply rhetorical relations to order clauses.
-
-        Simple implementation: keep original order but use relations
-        to validate ordering. A full implementation would use the
-        relations to build a discourse tree and traverse it.
-        """
-        if not relations:
-            return clauses
-
-        # For now, keep original order — relations are metadata
-        # In a full implementation, we'd build a discourse graph
-        # and traverse it in the correct order
-        return clauses
+            return ""
+        text = text[0].upper() + text[1:]
+        return text if text.endswith((".", "?", "!")) else text + "."
 
     def validate_round_trip(
         self,
         payload: SurfacePayload,
-        reparse_fn: Any | None = None,
+        reparse_fn: Callable[[str], Any] | None = None,
+        semantic_equivalence_fn: Callable[[Any, tuple[str, ...]], bool] | None = None,
+        equivalence_fn: Callable[[SurfacePayload, Any], bool] | None = None,
     ) -> bool:
-        """Validate that output reparses compatibly.
-
-        Generated content should round-trip into compatible semantic
-        candidates under the same language pack.
-        """
         if not payload.surface_text:
-            return True  # Empty output trivially round-trips
+            return not payload.realized_item_refs
+
+        internal_patterns = (
+            r"\b(?:op|boot|schema|port|placeholder|prop|pred|ctx|interp|mut|ms):",
+        )
+        if any(re.search(pattern, payload.surface_text) for pattern in internal_patterns):
+            return False
 
         if reparse_fn is None:
-            # Without a reparse function, we can only do basic checks
-            # 1. No internal IDs should leak as standalone tokens
-            import re
-            for clause in payload.clauses:
-                text = clause.surface_text
-                # Check for internal ID patterns as word-level prefixes
-                # Use regex to match "op:" or "schema:" etc. as distinct
-                # tokens, not as substrings of "prop:" etc.
-                internal_patterns = [
-                    r'\bop:', r'\bboot:', r'\bschema:',
-                    r'\bport:', r'\bplaceholder:',
-                ]
-                for pattern in internal_patterns:
-                    if re.search(pattern, text):
-                        return False
             return True
-
-        # With a reparse function, verify semantic compatibility
         try:
             reparsed = reparse_fn(payload.surface_text)
-            if reparsed is None:
-                return False
-            # Check that key semantic refs are recoverable
-            return True
         except Exception:
             return False
+        if reparsed is None:
+            return False
+        if equivalence_fn is not None:
+            return bool(equivalence_fn(payload, reparsed))
+        if semantic_equivalence_fn is None:
+            # A non-null parse is insufficient to claim semantic round-trip.
+            return False
+        return bool(semantic_equivalence_fn(reparsed, payload.realized_item_refs))

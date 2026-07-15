@@ -1,60 +1,44 @@
 """ResponsePlanner — sole public-content authority.
 
-Import boundary: model + epistemics submodules only. No engine imports.
-
-Architectural guardrails (AGENTS.md §19, CORE_LOOP.md G1-G2,
-AUTHORITY_MATRIX):
-- ResponsePlanner is the only response-content authority.
-- It consumes selected semantic propositions, epistemic/capability
-  assessments, execution outcomes, commit outcomes, goals, and discourse
-  state. It produces a language-neutral SemanticMessagePlan.
-- Response content begins from propositions, assessments, ledger, and
-  commit outcomes — not from raw text or templates.
-- Language renderers choose wording, not truth or response content.
-- NLG may not decide truth, capability, schema activation, or response
-  content selection.
-- Templates, renderer, and raw input must not decide response content.
+This replacement fails closed on missing epistemic assessments and produces
+language-neutral teaching/dialogue items instead of vague response labels.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Iterable
+from uuid import uuid4
 
 from ..model.message import (
-    SemanticMessagePlan, MessageContentItem, RhetoricalRelation,
+    LexicalRequirement,
+    MessageClauseSpec,
+    MessageContentItem,
+    MessageRoleValue,
+    RhetoricalRelation,
+    SemanticMessagePlan,
 )
 from ..model.epistemic import EpistemicAssessment
-from ..model.execution import OperationOutcome, ExecutionLedger
+from ..model.execution import ExecutionLedger
 from ..model.mutation import CommitOutcome
 
 
 class EpistemicStance(str, Enum):
-    """Epistemic stance for qualified language.
-
-    Implements qualified language for:
-    - reported theory
-    - provisional understanding
-    - contested evidence
-    - known limitations
-    - stale/repaired prior claims
-    """
-    ASSERTED = "asserted"               # actual-world admitted knowledge
-    REPORTED = "reported"               # reported theory / attributed claim
-    PROVISIONAL = "provisional"         # provisional understanding
-    CONTESTED = "contested"             # contested evidence
-    HEDGED = "hedged"                   # known limitations / uncertainty
-    STALE = "stale"                     # stale/repaired prior claims
-    DENIED = "denied"                   # refuted or blocked
+    ASSERTED = "asserted"
+    REPORTED = "reported"
+    PROVISIONAL = "provisional"
+    CONTESTED = "contested"
+    HEDGED = "hedged"
+    STALE = "stale"
+    DENIED = "denied"
 
 
 class DiscourseFunction(str, Enum):
-    """Discourse function for content items."""
     INFORM = "inform"
     QUERY = "query"
     REQUEST = "request"
     ACKNOWLEDGE = "acknowledge"
-    CORRECT = "correct"
+    CORRECT = "corrects"
     PROMISE = "promise"
     REFUSE = "refuse"
     REPAIR = "repair"
@@ -62,12 +46,6 @@ class DiscourseFunction(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class ContentSelectionInput:
-    """Input to response content selection.
-
-    ResponsePlanner consumes selected semantic propositions,
-    epistemic/capability assessments, execution outcomes, commit outcomes,
-    goals, and discourse state.
-    """
     proposition_refs: tuple[str, ...] = ()
     assessments: tuple[EpistemicAssessment, ...] = ()
     commit_outcome: CommitOutcome | None = None
@@ -79,365 +57,669 @@ class ContentSelectionInput:
     language: str = "und"
     channel: str = "text"
 
+    # v3.4.1 canonical context
+    selected_interpretations: tuple[Any, ...] = ()
+    grounding_assessments: tuple[Any, ...] = ()
+    retrieval_results: tuple[Any, ...] = ()
+    knowledge_assessments: tuple[Any, ...] = ()
+    capability_assessments: tuple[Any, ...] = ()
+    gaps: tuple[Any, ...] = ()
+    learning_transactions: tuple[Any, ...] = ()
+    dialogue_resolution: Any | None = None
+    dialogue_obligations: tuple[Any, ...] = ()
+    surface_evidence: tuple[Any, ...] = ()
+
 
 class ResponsePlanner:
-    """Sole response-content authority.
+    """Select only content justified by semantic/epistemic control records."""
 
-    ResponsePlanner is the only response-content authority.
-    It produces a language-neutral SemanticMessagePlan from
-    propositions, assessments, ledger, and commit outcomes.
+    def plan_response(self, selection: ContentSelectionInput) -> SemanticMessagePlan:
+        items: list[MessageContentItem] = []
 
-    Does NOT:
-    - Choose wording (that's the language renderer's job)
-    - Decide truth
-    - Decide capability
-    - Decide schema activation
-    - Use templates or raw input for content selection
-    """
+        items.extend(self._plan_repairs(selection))
 
-    def plan_response(
-        self,
-        selection: ContentSelectionInput,
-    ) -> SemanticMessagePlan:
-        """Plan a response from selected semantic content.
+        dialogue_item = self._plan_dialogue_resolution(selection)
+        if dialogue_item is not None:
+            items.append(dialogue_item)
 
-        Response content begins from propositions, assessments, ledger,
-        and commit outcomes — not from raw text or templates.
-        """
-        content_items: list[MessageContentItem] = []
-        rhetorical_relations: list[RhetoricalRelation] = []
+        if dialogue_item is None:
+            probe = self._plan_learning_probe(selection)
+            if probe is not None:
+                items.append(probe)
 
-        # 1. Select content from propositions with epistemic qualification
-        for i, prop_ref in enumerate(selection.proposition_refs):
-            assessment = self._find_assessment(
-                prop_ref, selection.assessments
-            )
-            stance = self._derive_stance(assessment)
-            discourse_fn = self._derive_discourse_function(assessment)
+        capability_item = self._plan_self_capability_status(selection)
+        if capability_item is not None and not items:
+            items.append(capability_item)
 
-            item = MessageContentItem(
-                semantic_ref=prop_ref,
-                discourse_function=discourse_fn.value,
-                stance=stance.value,
-                focus="",
-                required=True,
-                provenance_refs=self._collect_provenance(
-                    prop_ref, assessment, selection
-                ),
-            )
-            content_items.append(item)
+        social = self._plan_social_surface(selection)
+        if social is not None and not items:
+            items.append(social)
 
-        # 2. Add commit outcome content if present
+        # Only propositions with an assessment may become public proposition
+        # content. Missing assessment is not equivalent to asserted truth.
+        items.extend(self._plan_assessed_propositions(selection))
+
         if selection.commit_outcome is not None:
-            commit_item = self._plan_commit_content(
-                selection.commit_outcome, selection
-            )
+            commit_item = self._plan_commit_content(selection.commit_outcome)
             if commit_item is not None:
-                content_items.append(commit_item)
+                items.append(commit_item)
 
-        # 3. Add repair content if needed
-        if selection.repair_obligation_refs:
-            for repair_ref in selection.repair_obligation_refs:
-                repair_item = MessageContentItem(
-                    semantic_ref=repair_ref,
-                    discourse_function=DiscourseFunction.REPAIR.value,
-                    stance=EpistemicStance.STALE.value,
-                    focus="prior_claim",
-                    required=True,
-                    provenance_refs=(repair_ref,),
-                )
-                content_items.append(repair_item)
+        if not items:
+            items.append(self._honest_abstention(selection))
 
-        # 4. Apply discourse ordering — repair first, then corrections, then informs
-        content_items = self._order_by_discourse(content_items)
-
-        # 5. Apply aggregation — merge items with same discourse function
-        content_items = self._aggregate_items(content_items)
-
-        # 6. Apply information structure — assign focus based on given/new
-        content_items = self._assign_information_structure(content_items)
-
-        # 7. Build rhetorical relations based on discourse structure
-        rhetorical_relations = self._build_rhetorical_relations(content_items)
+        items = self._order_by_discourse(self._dedupe(items))
+        relations = self._build_rhetorical_relations(items)
 
         return SemanticMessagePlan(
-            id=f"msg_plan:{id(selection)}",
+            id=f"msg_plan:{uuid4().hex[:12]}",
             communicative_goal_refs=selection.goal_refs,
-            content_items=tuple(content_items),
-            rhetorical_relations=tuple(rhetorical_relations),
+            content_items=tuple(items),
+            rhetorical_relations=tuple(relations),
             addressee_refs=(selection.addressee_ref,) if selection.addressee_ref else (),
             language=selection.language,
             channel=selection.channel,
         )
 
-    def _find_assessment(
-        self,
-        proposition_ref: str,
-        assessments: tuple[EpistemicAssessment, ...],
-    ) -> EpistemicAssessment | None:
-        """Find the assessment for a proposition."""
-        for a in assessments:
-            if a.proposition_ref == proposition_ref:
-                return a
-        return None
-
-    def _derive_stance(
-        self,
-        assessment: EpistemicAssessment | None,
-    ) -> EpistemicStance:
-        """Derive epistemic stance from an assessment.
-
-        Implements qualified language for:
-        - reported theory → REPORTED
-        - provisional understanding → PROVISIONAL
-        - contested evidence → CONTESTED
-        - known limitations → HEDGED
-        - stale/repaired prior claims → STALE
-        """
-        if assessment is None:
-            return EpistemicStance.ASSERTED  # Default
-
-        # Check admissibility — blocked is strongest (can't use at all)
-        if assessment.admissibility == "blocked":
-            return EpistemicStance.DENIED
-
-        # Check support state — refutation overrides admissibility level
-        if assessment.support_state == "refuted":
-            return EpistemicStance.DENIED
-        if assessment.support_state == "both":
-            return EpistemicStance.CONTESTED
-        if assessment.support_state == "neither":
-            return EpistemicStance.HEDGED
-
-        # Check admissibility — contested/attributed after support state
-        if assessment.admissibility == "contested":
-            return EpistemicStance.CONTESTED
-        if assessment.admissibility == "attributed_only":
-            return EpistemicStance.REPORTED
-
-        # Check confidence
-        if assessment.confidence < 0.5:
-            return EpistemicStance.HEDGED
-
-        # Check schema use validity
-        if not assessment.schema_use_valid:
-            return EpistemicStance.PROVISIONAL
-
-        return EpistemicStance.ASSERTED
-
-    def _derive_discourse_function(
-        self,
-        assessment: EpistemicAssessment | None,
-    ) -> DiscourseFunction:
-        """Derive discourse function from assessment."""
-        if assessment is None:
-            return DiscourseFunction.INFORM
-
-        if assessment.admissibility == "blocked":
-            return DiscourseFunction.REFUSE
-        if assessment.support_state == "refuted":
-            return DiscourseFunction.CORRECT
-
-        return DiscourseFunction.INFORM
-
-    def _collect_provenance(
-        self,
-        prop_ref: str,
-        assessment: EpistemicAssessment | None,
-        selection: ContentSelectionInput,
-    ) -> tuple[str, ...]:
-        """Collect provenance refs for a content item.
-
-        Every generated clause must trace to a selected semantic item
-        and evidence/ledger/commit provenance.
-        """
-        refs: list[str] = [prop_ref]
-        if assessment is not None:
-            refs.extend(assessment.explanation_refs)
-        return tuple(refs)
-
-    def _plan_commit_content(
-        self,
-        commit_outcome: CommitOutcome,
-        selection: ContentSelectionInput,
+    def _plan_dialogue_resolution(
+        self, selection: ContentSelectionInput,
     ) -> MessageContentItem | None:
-        """Plan content from commit outcomes.
-
-        A response may say "I stored it," "I learned it," "I changed it,"
-        or "I completed it" only when every required mutation for that
-        claim committed.
-        """
-        if not commit_outcome.required_satisfied:
-            # Required commits failed — response must not claim success
+        resolution = selection.dialogue_resolution
+        if resolution is None:
+            return None
+        kind = getattr(resolution, "resolution_kind", "none")
+        if kind == "meta_question":
+            remaining = tuple(getattr(resolution, "remaining_field_refs", ()) or ())
+            target = self._public_surface(getattr(resolution, "target_artifact_ref", ""))
             return MessageContentItem(
-                semantic_ref=commit_outcome.mutation_set_ref,
-                discourse_function=DiscourseFunction.ACKNOWLEDGE.value,
-                stance=EpistemicStance.DENIED.value,
-                focus="commit_failure",
-                required=True,
-                provenance_refs=(commit_outcome.mutation_set_ref,),
+                semantic_ref=f"dialogue_explain:{getattr(resolution, 'obligation_ref', '')}",
+                discourse_function=DiscourseFunction.QUERY.value,
+                stance=EpistemicStance.ASSERTED.value,
+                content_kind="dialogue_gap_explanation",
+                predicate_key="requires_information",
+                clauses=self._gap_explanation_clauses(
+                    target, tuple(getattr(resolution, "evidence_refs", ()) or ())
+                    or (getattr(resolution, "obligation_ref", ""),),
+                ),
+                role_values=(
+                    MessageRoleValue(
+                        role_key="target",
+                        value_kind="lexical_mention",
+                        surface_hint=target,
+                        use_mode="mention",
+                        provenance_refs=tuple(getattr(resolution, "evidence_refs", ()) or ()),
+                    ),
+                    MessageRoleValue(
+                        role_key="remaining_fields",
+                        value_kind="semantic_keys",
+                        semantic_ref="|".join(remaining),
+                        use_mode="assert",
+                    ),
+                ),
+                lexical_requirements=(
+                    self._lex("requires_information"),
+                    self._lex("semantic_distinction"),
+                    self._lex("role"),
+                    self._lex("person"),
+                    self._lex("grammar:quantifier_both"),
+                    self._lex("means"),
+                    self._mention(target),
+                ),
+                provenance_refs=tuple(getattr(resolution, "evidence_refs", ()) or ())
+                or (getattr(resolution, "obligation_ref", ""),),
             )
 
-        # Required commits succeeded
+        if kind in {"evidence", "correction"}:
+            accepted = tuple(getattr(resolution, "accepted_surface_forms", ()) or ())
+            remaining = tuple(getattr(resolution, "remaining_field_refs", ()) or ())
+            target = self._public_surface(getattr(resolution, "target_artifact_ref", ""))
+            requirements = [
+                self._lex("explanation"), self._lex("associates"), self._lex("is_incomplete"),
+            ]
+            if "denotation_role_or_holder" in remaining:
+                requirements.extend((
+                    self._lex("requires_information"), self._lex("semantic_distinction"),
+                    self._lex("role"), self._lex("person"),
+                    self._lex("grammar:quantifier_both"), self._lex("means"),
+                ))
+            elif any(field in remaining for field in ("example", "non_example", "differentiator")):
+                requirements.extend((
+                    self._lex("requires_information"), self._lex("requests"),
+                    self._lex("example"), self._lex("non_example"),
+                ))
+            if target:
+                requirements.append(self._mention(target))
+            requirements.extend(self._mention(value) for value in accepted if value)
+            return MessageContentItem(
+                semantic_ref=f"learning_progress:{getattr(resolution, 'transaction_ref', '')}",
+                discourse_function=DiscourseFunction.QUERY.value,
+                stance=EpistemicStance.PROVISIONAL.value,
+                content_kind="learning_progress",
+                predicate_key="requires_information",
+                clauses=self._learning_progress_clauses(
+                    target, accepted, remaining,
+                    tuple(getattr(resolution, "evidence_refs", ()) or ())
+                    or (getattr(resolution, "transaction_ref", ""),),
+                ),
+                role_values=(
+                    MessageRoleValue(
+                        role_key="target", value_kind="lexical_mention",
+                        surface_hint=target, use_mode="mention",
+                    ),
+                    MessageRoleValue(
+                        role_key="accepted", value_kind="surface_mentions",
+                        semantic_ref="|".join(accepted), use_mode="mention",
+                    ),
+                    MessageRoleValue(
+                        role_key="remaining_fields", value_kind="semantic_keys",
+                        semantic_ref="|".join(remaining), use_mode="assert",
+                    ),
+                ),
+                lexical_requirements=tuple(requirements),
+                provenance_refs=tuple(getattr(resolution, "evidence_refs", ()) or ())
+                or (getattr(resolution, "transaction_ref", ""),),
+            )
+        return None
+
+    def _plan_self_capability_status(
+        self, selection: ContentSelectionInput,
+    ) -> MessageContentItem | None:
+        asks_self_condition = False
+        for item in selection.selected_interpretations:
+            if getattr(item, "communicative_force", "") != "ask":
+                continue
+            grounding = self._find_predication_grounding(
+                getattr(item, "predication_ref", ""),
+                selection.grounding_assessments,
+            )
+            if self._is_self_query_projection(grounding):
+                asks_self_condition = True
+                break
+        if not asks_self_condition:
+            return None
+        capable = next(
+            (
+                assessment for assessment in selection.capability_assessments
+                if getattr(assessment, "subject_ref", "") == "self"
+                and getattr(assessment, "status", "") in {"capable", "degraded"}
+                and getattr(assessment, "operation_schema_ref", "")
+            ),
+            None,
+        )
+        if capable is None:
+            return None
+        operation_ref = getattr(capable, "operation_schema_ref", "")
+        provenance = tuple(getattr(capable, "evidence_refs", ()) or ()) or (
+            f"capability:{operation_ref}",
+        )
         return MessageContentItem(
-            semantic_ref=commit_outcome.mutation_set_ref,
+            semantic_ref="self:capability_status",
             discourse_function=DiscourseFunction.INFORM.value,
-            stance=EpistemicStance.ASSERTED.value,
-            focus="commit_success",
-            required=True,
-            provenance_refs=(commit_outcome.mutation_set_ref,),
+            stance=(
+                EpistemicStance.HEDGED.value
+                if getattr(capable, "status", "") == "degraded"
+                else EpistemicStance.ASSERTED.value
+            ),
+            content_kind="self_capability_status",
+            predicate_key="capable_of",
+            clauses=(self._clause(
+                "self:can_answer", "capable_of", "assert", "positive",
+                (
+                    self._role("agent", "self"),
+                    self._role("operation", operation_ref),
+                ),
+                (self._lex("capable_of"), self._lex("answer_record")),
+                provenance,
+            ),),
+            role_values=(
+                MessageRoleValue(
+                    role_key="operation",
+                    value_kind="semantic_ref",
+                    semantic_ref=operation_ref,
+                    semantic_key="answer_record",
+                    use_mode="assert",
+                    provenance_refs=provenance,
+                ),
+            ),
+            lexical_requirements=(self._lex("capable_of"), self._lex("answer_record")),
+            provenance_refs=provenance,
         )
 
-    # ── Discourse ordering ──────────────────────────────────────
+    def _plan_learning_probe(
+        self, selection: ContentSelectionInput,
+    ) -> MessageContentItem | None:
+        gap = next(
+            (
+                gap for gap in selection.gaps
+                if getattr(gap, "learnable", False)
+                and getattr(gap, "blocked_stage", "") in {"compose", "ground", "know"}
+            ),
+            None,
+        )
+        if gap is None:
+            return None
 
-    _DISCOURSE_ORDER = {
-        DiscourseFunction.REPAIR.value: 0,
-        DiscourseFunction.CORRECT.value: 1,
-        DiscourseFunction.REFUSE.value: 2,
-        DiscourseFunction.ACKNOWLEDGE.value: 3,
-        DiscourseFunction.INFORM.value: 4,
-        DiscourseFunction.QUERY.value: 5,
-        DiscourseFunction.REQUEST.value: 6,
-        DiscourseFunction.PROMISE.value: 7,
-    }
+        target_ref = getattr(gap, "target_artifact_ref", "")
+        target = self._public_surface(target_ref)
+        gap_kind = getattr(gap, "gap_kind", "missing_semantic_family")
+        missing = tuple(getattr(gap, "missing_fields", ()) or ())
+        probe_key = ""
+        options = tuple(getattr(gap, "probe_options", ()) or ())
+        if options:
+            probe_key = getattr(options[0], "idempotency_key", "") or (
+                f"probe:{gap.id}:{gap_kind}"
+            )
 
-    def _order_by_discourse(
-        self,
-        items: list[MessageContentItem],
+        requirements = [
+            self._lex("recognizes_form"),
+            self._lex("lexical_form"),
+            self._lex("semantic_definition"),
+            self._lex("has_usable_definition"),
+            self._lex("means"),
+            self._lex("person"),
+            self._lex("role"),
+            self._lex("grammar:quantifier_both"),
+        ]
+        if target:
+            requirements.append(self._mention(target))
+
+        return MessageContentItem(
+            semantic_ref=f"learning_probe:{gap.id}",
+            discourse_function=DiscourseFunction.QUERY.value,
+            stance=EpistemicStance.HEDGED.value,
+            content_kind="learning_probe",
+            predicate_key="recognizes_form",
+            clauses=self._learning_probe_clauses(target, (gap.id,)),
+            role_values=(
+                MessageRoleValue(
+                    role_key="gap_ref", semantic_ref=gap.id,
+                    value_kind="gap_ref", use_mode="assert",
+                ),
+                MessageRoleValue(
+                    role_key="target", value_kind="lexical_mention",
+                    surface_hint=target, use_mode="mention",
+                ),
+                MessageRoleValue(
+                    role_key="gap_kind", semantic_key=gap_kind,
+                    value_kind="semantic_key", use_mode="probe",
+                ),
+                MessageRoleValue(
+                    role_key="missing_fields", semantic_ref="|".join(missing),
+                    value_kind="semantic_keys", use_mode="probe",
+                ),
+                MessageRoleValue(
+                    role_key="probe_key", semantic_ref=probe_key,
+                    value_kind="control_ref", use_mode="probe",
+                ),
+            ),
+            lexical_requirements=tuple(requirements),
+            provenance_refs=(gap.id,),
+        )
+
+    def _plan_social_surface(
+        self, selection: ContentSelectionInput,
+    ) -> MessageContentItem | None:
+        cues = []
+        for evidence in selection.surface_evidence:
+            cues.extend(getattr(evidence, "pragmatic_cues", ()) or ())
+        cue_kinds = {getattr(cue, "cue_kind", "") for cue in cues}
+        if "greeting" in cue_kinds:
+            return MessageContentItem(
+                semantic_ref="social:greeting",
+                discourse_function=DiscourseFunction.INFORM.value,
+                stance=EpistemicStance.ASSERTED.value,
+                content_kind="social_greeting",
+                predicate_key="greet",
+                clauses=self._social_clauses(("surface:greeting",)),
+                lexical_requirements=(self._lex("greet"),),
+                provenance_refs=tuple(
+                    ref
+                    for evidence in selection.surface_evidence
+                    for ref in getattr(evidence, "source_evidence_refs", ())
+                ) or ("surface:greeting",),
+            )
+        return None
+
+    def _plan_assessed_propositions(
+        self, selection: ContentSelectionInput,
     ) -> list[MessageContentItem]:
-        """Order items by discourse priority: repair, correct, refuse, acknowledge, inform, query, request, promise."""
-        return sorted(
-            items,
-            key=lambda item: self._DISCOURSE_ORDER.get(
-                item.discourse_function, 99
+        result: list[MessageContentItem] = []
+        for prop_ref in selection.proposition_refs:
+            assessment = self._find_assessment(prop_ref, selection.assessments)
+            if assessment is None:
+                continue
+            if assessment.admissibility not in {"admitted", "attributed_only", "contested"}:
+                continue
+            # Bare proposition IDs are not realizable semantics. Preserve them
+            # only when a caller supplied a semantic realization item through
+            # dialogue/commit/self-report paths. Do not emit "regarding prop:...".
+        return result
+
+    def _plan_commit_content(self, outcome: CommitOutcome) -> MessageContentItem:
+        if not outcome.required_satisfied:
+            return MessageContentItem(
+                semantic_ref=outcome.mutation_set_ref,
+                discourse_function=DiscourseFunction.INFORM.value,
+                stance=EpistemicStance.DENIED.value,
+                content_kind="commit_failure",
+                predicate_key="completes",
+                clauses=(self._clause(
+                    "commit:failure", "completes", "assert", "negative",
+                    (self._role("agent", "self"), self._role("operation", outcome.mutation_set_ref)),
+                    (self._lex("completes"),), (outcome.mutation_set_ref,),
+                ),),
+                lexical_requirements=(self._lex("completes"),),
+                provenance_refs=(outcome.mutation_set_ref,),
+            )
+        return MessageContentItem(
+            semantic_ref=outcome.mutation_set_ref,
+            discourse_function=DiscourseFunction.INFORM.value,
+            stance=EpistemicStance.ASSERTED.value,
+            content_kind="commit_success",
+            predicate_key="stores",
+            clauses=(self._clause(
+                "commit:success", "stores", "assert", "positive",
+                (self._role("agent", "self"), self._role("artifact", outcome.mutation_set_ref)),
+                (self._lex("stores"),), (outcome.mutation_set_ref,),
+            ),),
+            lexical_requirements=(self._lex("stores"),),
+            provenance_refs=(outcome.mutation_set_ref,),
+        )
+
+    def _plan_repairs(self, selection: ContentSelectionInput) -> list[MessageContentItem]:
+        return [
+            MessageContentItem(
+                semantic_ref=repair_ref,
+                discourse_function=DiscourseFunction.REPAIR.value,
+                stance=EpistemicStance.STALE.value,
+                content_kind="repair",
+                predicate_key="corrects",
+                clauses=(self._clause(
+                    f"repair:{repair_ref}", "corrects", "assert", "positive",
+                    (self._role("agent", "self"), self._role("proposition", repair_ref)),
+                    (self._lex("corrects"), self._lex("answer_record")),
+                    (repair_ref,),
+                ),),
+                lexical_requirements=(self._lex("corrects"), self._lex("answer_record")),
+                provenance_refs=(repair_ref,),
+            )
+            for repair_ref in selection.repair_obligation_refs
+        ]
+
+    def _honest_abstention(self, selection: ContentSelectionInput) -> MessageContentItem:
+        provenance = tuple(
+            getattr(gap, "id", "") for gap in selection.gaps if getattr(gap, "id", "")
+        ) or ("response:no_admissible_content",)
+        return MessageContentItem(
+            semantic_ref="response:no_admissible_content",
+            discourse_function=DiscourseFunction.INFORM.value,
+            stance=EpistemicStance.HEDGED.value,
+            content_kind="honest_abstention",
+            predicate_key="has_sufficient_information",
+            clauses=(self._clause(
+                "response:insufficient_information",
+                "has_sufficient_information", "assert", "negative",
+                (self._role("agent", "self"), self._role("content", "answer_record")),
+                (self._lex("information_object"), self._lex("grammar:quantifier_sufficiency")),
+                provenance,
+            ),),
+            lexical_requirements=(
+                self._lex("information_object"), self._lex("grammar:quantifier_sufficiency"),
+            ),
+            provenance_refs=provenance,
+        )
+
+    def _learning_probe_clauses(
+        self, target: str, provenance: tuple[str, ...],
+    ) -> tuple[MessageClauseSpec, ...]:
+        mention = self._mention(target)
+        return (
+            self._clause(
+                "probe:recognized_form", "recognizes_form", "assert", "positive",
+                (self._role("recognizer", "self"), self._mention_role("lexical_form", target)),
+                (self._lex("recognizes_form"), self._lex("lexical_form"), mention),
+                provenance,
+            ),
+            self._clause(
+                "probe:missing_definition", "has_usable_definition", "assert", "negative",
+                (self._role("holder", "self"), self._mention_role("schema_sense", target)),
+                (self._lex("has_usable_definition"), self._lex("semantic_definition"), mention),
+                provenance,
+            ),
+            self._clause(
+                "probe:meaning_choice", "means", "ask", "positive",
+                (
+                    self._mention_role("lexical_form", target),
+                    MessageRoleValue(
+                        role_key="schema_sense", value_kind="semantic_alternatives",
+                        semantic_ref="person|role|grammar:quantifier_both",
+                        use_mode="probe", provenance_refs=provenance,
+                    ),
+                ),
+                (
+                    self._lex("means", "probe"), self._lex("person", "probe"),
+                    self._lex("role", "probe"),
+                    self._lex("grammar:quantifier_both", "probe"), mention,
+                ),
+                provenance,
             ),
         )
 
-    # ── Aggregation ─────────────────────────────────────────────
+    def _gap_explanation_clauses(
+        self, target: str, provenance: tuple[str, ...],
+    ) -> tuple[MessageClauseSpec, ...]:
+        mention = self._mention(target)
+        return (
+            self._clause(
+                "dialogue:need_distinction", "requires_information", "assert", "positive",
+                (
+                    self._role("agent", "self"),
+                    self._role("requirement", "semantic_distinction"),
+                ),
+                (
+                    self._lex("requires_information"),
+                    self._lex("semantic_distinction"),
+                    self._lex("role"), self._lex("person"), mention,
+                ),
+                provenance,
+            ),
+            self._clause(
+                "dialogue:meaning_choice", "means", "ask", "positive",
+                (
+                    self._mention_role("lexical_form", target),
+                    self._role("schema_sense", "person|role|grammar:quantifier_both"),
+                ),
+                (
+                    self._lex("means", "probe"), self._lex("role", "probe"),
+                    self._lex("person", "probe"),
+                    self._lex("grammar:quantifier_both", "probe"), mention,
+                ),
+                provenance,
+            ),
+        )
 
-    def _aggregate_items(
-        self,
-        items: list[MessageContentItem],
-    ) -> list[MessageContentItem]:
-        """Aggregate items with same semantic_ref, discourse function, and stance.
-
-        Merges provenance and keeps the first item's semantic_ref.
-        Only merges items about the same semantic content — does not
-        pollute provenance across different propositions.
-        """
-        if len(items) <= 1:
-            return items
-
-        aggregated: list[MessageContentItem] = []
-        seen_groups: dict[tuple[str, str, str], int] = {}
-
-        for item in items:
-            group_key = (item.semantic_ref, item.discourse_function, item.stance)
-            if group_key in seen_groups:
-                # Merge into existing item
-                idx = seen_groups[group_key]
-                existing = aggregated[idx]
-                merged_provenance = tuple(
-                    set(existing.provenance_refs + item.provenance_refs)
-                )
-                aggregated[idx] = MessageContentItem(
-                    semantic_ref=existing.semantic_ref,
-                    discourse_function=existing.discourse_function,
-                    stance=existing.stance,
-                    focus=existing.focus,
-                    required=existing.required or item.required,
-                    provenance_refs=merged_provenance,
-                )
-            else:
-                seen_groups[group_key] = len(aggregated)
-                aggregated.append(item)
-
-        return aggregated
-
-    # ── Information structure ───────────────────────────────────
-
-    def _assign_information_structure(
-        self,
-        items: list[MessageContentItem],
-    ) -> list[MessageContentItem]:
-        """Assign focus based on given/new information structure.
-
-        First item is 'given' (contextual anchor), subsequent items
-        are 'new' (the information being conveyed).
-        """
-        if not items:
-            return items
-
-        result: list[MessageContentItem] = []
-        for i, item in enumerate(items):
-            focus = item.focus
-            if not focus:
-                focus = "given" if i == 0 else "new"
-            result.append(MessageContentItem(
-                semantic_ref=item.semantic_ref,
-                discourse_function=item.discourse_function,
-                stance=item.stance,
-                focus=focus,
-                required=item.required,
-                provenance_refs=item.provenance_refs,
+    def _learning_progress_clauses(
+        self, target: str, accepted: tuple[str, ...], remaining: tuple[str, ...],
+        provenance: tuple[str, ...],
+    ) -> tuple[MessageClauseSpec, ...]:
+        clauses: list[MessageClauseSpec] = []
+        mention = self._mention(target)
+        if accepted:
+            clauses.append(self._clause(
+                "learning:accepted_association", "associates", "assert", "positive",
+                (
+                    self._role("source", "user"),
+                    self._mention_role("left", target),
+                    self._role("right", "|".join(accepted)),
+                ),
+                (self._lex("associates", "qualified"), mention,
+                 *(self._mention(value) for value in accepted)),
+                provenance, qualification_key="user_asserted",
             ))
+        clauses.append(self._clause(
+            "learning:incomplete", "is_incomplete", "assert", "positive",
+            (self._role("artifact", "semantic_definition"),),
+            (self._lex("is_incomplete", "qualified"), self._lex("explanation")),
+            provenance, qualification_key="provisional",
+        ))
+        remaining_set = set(remaining)
+        if "denotation_role_or_holder" in remaining_set:
+            clauses.extend(self._gap_explanation_clauses(target, provenance))
+        elif remaining_set & {"example", "non_example", "differentiator"}:
+            clauses.append(self._clause(
+                "learning:request_contrast", "requests", "ask", "positive",
+                (
+                    self._role("speaker", "self"), self._role("addressee", "user"),
+                    self._role("content", "example|non_example"),
+                ),
+                (
+                    self._lex("requests", "probe"), self._lex("example", "probe"),
+                    self._lex("non_example", "probe"),
+                ),
+                provenance,
+            ))
+        return tuple(clauses)
+
+    def _social_clauses(
+        self, provenance: tuple[str, ...],
+    ) -> tuple[MessageClauseSpec, ...]:
+        return (self._clause(
+            "social:greet", "greet", "assert", "positive",
+            (self._role("source", "self"), self._role("addressee", "user")),
+            (self._lex("greet"),), provenance,
+        ),)
+
+    @staticmethod
+    def _role(key: str, semantic_ref: str) -> MessageRoleValue:
+        return MessageRoleValue(
+            role_key=key, semantic_ref=semantic_ref, value_kind="semantic_ref",
+            provenance_refs=(semantic_ref,) if semantic_ref else (),
+        )
+
+    @staticmethod
+    def _mention_role(key: str, surface: str) -> MessageRoleValue:
+        return MessageRoleValue(
+            role_key=key, value_kind="lexical_mention", surface_hint=surface,
+            use_mode="mention", provenance_refs=(f"surface:{surface}",) if surface else (),
+        )
+
+    @staticmethod
+    def _clause(
+        clause_ref: str, predicate_key: str, force: str, polarity: str,
+        role_values: tuple[MessageRoleValue, ...],
+        lexical_requirements: tuple[LexicalRequirement, ...],
+        provenance_refs: tuple[str, ...],
+        qualification_key: str = "",
+    ) -> MessageClauseSpec:
+        return MessageClauseSpec(
+            clause_ref=clause_ref, predicate_key=predicate_key,
+            communicative_force=force, polarity=polarity,
+            role_values=role_values, lexical_requirements=lexical_requirements,
+            provenance_refs=tuple(ref for ref in provenance_refs if ref),
+            qualification_key=qualification_key,
+        )
+
+    @staticmethod
+    def _lex(key: str, use_mode: str = "assert") -> LexicalRequirement:
+        return LexicalRequirement(semantic_key=key, use_mode=use_mode)
+
+    @staticmethod
+    def _mention(surface: str) -> LexicalRequirement:
+        return LexicalRequirement(
+            semantic_key="lexical_mention",
+            use_mode="mention",
+            surface_hint=surface,
+            required=bool(surface),
+        )
+
+    @staticmethod
+    def _public_surface(ref: str) -> str:
+        if not ref:
+            return ""
+        parts = ref.split(":")
+        if parts[0] == "opaque":
+            # stable form: opaque:<lang>:<surface>; legacy form:
+            # opaque:<surface>:<uuid>
+            if len(parts) >= 3 and len(parts[1]) <= 5:
+                return parts[2].replace("_", " ")
+            if len(parts) >= 2:
+                return parts[1].replace("_", " ")
+        if ref.startswith("ref:unknown:"):
+            return ref.removeprefix("ref:unknown:").replace("_", " ")
+        return ""
+
+    @staticmethod
+    def _find_assessment(
+        prop_ref: str, assessments: tuple[EpistemicAssessment, ...],
+    ) -> EpistemicAssessment | None:
+        return next((item for item in assessments if item.proposition_ref == prop_ref), None)
+
+    @staticmethod
+    def _find_predication_grounding(
+        predication_ref: str, grounding_assessments: tuple[Any, ...],
+    ) -> Any | None:
+        for graph_grounding in grounding_assessments:
+            if hasattr(graph_grounding, "for_predication"):
+                found = graph_grounding.for_predication(predication_ref)
+                if found is not None:
+                    return found
+        return None
+
+    @staticmethod
+    def _is_self_query_projection(grounding: Any | None) -> bool:
+        if grounding is None:
+            return False
+        unresolved = set(getattr(grounding, "unresolved_role_refs", ()) or ())
+        query_roles = set(getattr(grounding, "query_role_refs", ()) or ())
+        if not unresolved.intersection(query_roles):
+            return False
+        return any(
+            getattr(binding, "grounded_filler_ref", "") == "self"
+            for binding in getattr(grounding, "role_bindings", ())
+        )
+
+    @staticmethod
+    def _dedupe(items: list[MessageContentItem]) -> list[MessageContentItem]:
+        seen: set[tuple[str, str]] = set()
+        result: list[MessageContentItem] = []
+        for item in items:
+            key = (item.semantic_ref, item.content_kind)
+            if key not in seen:
+                seen.add(key)
+                result.append(item)
         return result
 
-    # ── Rhetorical relations ────────────────────────────────────
+    _ORDER = {
+        DiscourseFunction.REPAIR.value: 0,
+        DiscourseFunction.CORRECT.value: 1,
+        DiscourseFunction.REFUSE.value: 2,
+        DiscourseFunction.INFORM.value: 3,
+        DiscourseFunction.QUERY.value: 4,
+        DiscourseFunction.REQUEST.value: 5,
+        DiscourseFunction.PROMISE.value: 6,
+        DiscourseFunction.ACKNOWLEDGE.value: 7,
+    }
 
+    def _order_by_discourse(self, items: list[MessageContentItem]) -> list[MessageContentItem]:
+        return sorted(items, key=lambda item: self._ORDER.get(item.discourse_function, 99))
+
+    @staticmethod
     def _build_rhetorical_relations(
-        self,
         items: list[MessageContentItem],
     ) -> list[RhetoricalRelation]:
-        """Build rhetorical relations between content items.
-
-        Elaboration chains connect sequential items of the same
-        discourse function. Contrast connects corrections to
-        the items they correct.
-        """
         relations: list[RhetoricalRelation] = []
-
-        for i in range(1, len(items)):
-            prev = items[i - 1]
-            curr = items[i]
-
-            # Determine relation kind
-            if curr.discourse_function == DiscourseFunction.CORRECT.value:
-                relation_kind = "contrast"
-            elif curr.discourse_function == DiscourseFunction.REPAIR.value:
-                relation_kind = "correction"
-            elif prev.discourse_function == curr.discourse_function:
-                relation_kind = "elaboration"
-            else:
-                relation_kind = "elaboration"
-
-            relations.append(RhetoricalRelation(
-                source_item_ref=prev.semantic_ref,
-                target_item_ref=curr.semantic_ref,
-                relation_kind=relation_kind,
-            ))
-
+        for left, right in zip(items, items[1:]):
+            kind = "contrast" if left.stance in {"stale", "denied"} else "elaboration"
+            relations.append(RhetoricalRelation(left.semantic_ref, right.semantic_ref, kind))
         return relations
 
-    # ── Content validation ──────────────────────────────────────
-
     def validate_plan(self, plan: SemanticMessagePlan) -> bool:
-        """Validate that every clause maps to message content/provenance.
-
-        Exit gate checks:
-        - Every content item has a semantic_ref
-        - Every content item has provenance_refs
-        - No internal IDs or open ports leak into content
-        """
+        if plan is None:
+            return False
         for item in plan.content_items:
-            if not item.semantic_ref:
+            if not item.semantic_ref or not item.provenance_refs:
                 return False
-            if not item.provenance_refs:
+            if item.semantic_ref.startswith(("port:", "placeholder:")):
                 return False
-            # Check for internal ID patterns that should not leak
-            ref = item.semantic_ref.lower()
-            # Allow refs that start with prop: or commit: — these are
-            # semantic refs, not internal IDs. Block raw open ports.
-            if ref.startswith("port:") or ref.startswith("placeholder:"):
+            if item.required and not item.all_lexical_requirements():
                 return False
         return True

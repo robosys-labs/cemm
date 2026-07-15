@@ -278,4 +278,5 @@ class CapabilityEvaluator:
             condition_results=tuple(condition_results),
             limitations=tuple(limitations),
             observed_reliability=observed_reliability,
+            evidence_refs=tuple(result.condition_ref for result in condition_results),
         )

@@ -1,21 +1,8 @@
-"""English language adapter — native v3.4 perception.
-
-Implements the LanguageAdapter protocol from interfaces.py.
-Produces SurfaceEvidence directly from raw text — no legacy
-MeaningPerceptor dependency.
-
-Per UNDERSTANDING_PIPELINE.md §2:
-- Language adapters emit reversible surface evidence only.
-- They may NOT select final meaning, authorize writes, declare truth,
-  answer queries, mutate memory, claim capabilities, or choose
-  response content.
-- Unknown content is never converted into a generic entity.
-
-Per completion-plan.md Stage 2:
-- This replaces the legacy v3.3 percept path for English.
-- Multilingual adapters can target the same SurfaceEvidence interface.
-"""
+"""Native English surface-evidence adapter backed by schema lexical indices."""
 from __future__ import annotations
+
+from typing import Any
+import re
 
 from .tokenizer import tokenize
 from .constructions import detect_constructions
@@ -23,30 +10,20 @@ from ..interfaces import SurfaceEvidence
 
 
 class EnglishLanguageAdapter:
-    """Native English language adapter.
-
-    Produces SurfaceEvidence from raw English text.
-    Implements the LanguageAdapter protocol.
-    """
-
-    adapter_id = "english-native-v34"
-    adapter_version = "1.0.0"
+    adapter_id = "english-native-v34.1"
+    adapter_version = "1.1.0"
     supported_language_tags = ("en", "en-US", "en-GB")
 
+    def __init__(self, schema_store: Any | None = None) -> None:
+        self._store = schema_store
+
     def perceive(self, raw_text: str, language_tag: str = "en") -> SurfaceEvidence:
-        """Perceive raw English text into reversible SurfaceEvidence.
-
-        This is the sole output of language perception. It contains
-        candidate lexical senses, constructions, communicative forces,
-        and pragmatic cues — all as proposals, not selections.
-        """
-        # 1. Tokenize
         stream = tokenize(raw_text)
-
-        # 2. Detect constructions
-        lexical, constructions, communicative, cues, spans = detect_constructions(stream)
-
-        # 3. Build SurfaceEvidence
+        lexical, constructions, communicative, cues, spans = detect_constructions(
+            stream,
+            lexical_lookup=self._lookup,
+            construction_schemas=self._construction_schemas(language_tag),
+        )
         return SurfaceEvidence(
             token_stream=stream,
             lexical_sense_candidates=lexical,
@@ -54,8 +31,35 @@ class EnglishLanguageAdapter:
             communicative_candidates=communicative,
             pragmatic_cues=cues,
             surface_spans=spans,
-            language_tag="en",
+            language_tag=language_tag,
             overall_confidence=0.85,
             adapter_id=self.adapter_id,
             adapter_version=self.adapter_version,
         )
+
+    def _lookup(self, surface: str, lemma: str, language: str) -> tuple[str, ...]:
+        if self._store is None:
+            return ()
+        keys: list[str] = []
+        normalized_candidates = tuple(dict.fromkeys((surface.casefold(), lemma.casefold())))
+        for candidate in normalized_candidates:
+            keys.extend(self._store.lookup_lexical_form(candidate, language))
+        if not keys:
+            # Orthographic accommodation is candidate evidence, not semantic
+            # authority.  Only reduce an elongated final character and only
+            # when the reduced form already has indexed senses.
+            for candidate in normalized_candidates:
+                reduced = re.sub(r"(.)\1+$", r"\1", candidate)
+                if reduced != candidate:
+                    keys.extend(self._store.lookup_lexical_form(reduced, language))
+        return tuple(dict.fromkeys(keys))
+
+    def _construction_schemas(self, language: str) -> tuple[Any, ...]:
+        if self._store is None:
+            return ()
+        schemas = []
+        for envelope in self._store.records_by_kind("construction"):
+            payload = getattr(envelope, "payload", None)
+            if getattr(payload, "language_tag", "") == language:
+                schemas.append(payload)
+        return tuple(schemas)

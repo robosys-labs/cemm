@@ -1,25 +1,25 @@
-"""LexemeSenseSchema — executable definition of a lexical sense.
+"""LexemeSenseSchema — lexical form to semantic schema relation.
 
-Import boundary: standard library only → model.refs, model.surface.
+`semantic_schema_ref` is the general authority.  `predicate_schema_ref` is kept
+for source compatibility with v3.4 callers and is used only as a fallback.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from ..model.surface import LexicalFormRef
 
 
 @dataclass(frozen=True, slots=True)
 class LexemeSenseSchema:
-    """Executable definition of a lexical sense.
-
-    One lexical form may map to multiple senses. One schema may have
-    multiple lexicalizations. Opaque uses of one spelling may remain
-    separate candidate sense clusters until evidence supports merge.
-    """
     semantic_key: str
     lexical_form_refs: tuple[LexicalFormRef, ...] = ()
-    predicate_schema_ref: str = ""  # Ref[PredicateSchema]
+    semantic_schema_ref: str = ""
+    predicate_schema_ref: str = ""
     part_of_speech: str = ""
     selectional_constraints: tuple[str, ...] = ()
     sense_disambiguators: tuple[str, ...] = ()
+
+    @property
+    def resolved_schema_ref(self) -> str:
+        return self.semantic_schema_ref or self.predicate_schema_ref

@@ -1,19 +1,21 @@
-"""App runtime — dependency construction and public entry point.
+"""Canonical CEMM v3.4.1 application runtime.
 
-Per completion-plan.md Stage 1:
-- Move dependency construction to app/runtime.py
-- Public app entry returns CognitiveCycle / public result projection
-- RuntimeCycleResult no longer drives the canonical path
-
-This module constructs all v3.4 canonical components, wires the
-CognitiveKernel, and provides a public run() entry point.
+Public text entrypoints use this runtime exclusively.  Legacy v3.3 may be
+imported only by explicit migration tooling, never by this assembly.
 """
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
+from .public_result import PublicCycleResult, project_cycle
+from ..kernel.boot.v341 import register_v341_foundations
+from ..kernel.boot.v341_validation import (
+    validate_registered_v341, validate_v341_spec,
+)
 from ..kernel.cycle.kernel import CognitiveKernel
 from ..kernel.model.cycle import CycleTrigger
+from ..kernel.model.signal import InputSignal
 from ..kernel.schema.store import SemanticSchemaStore
 from ..kernel.understanding.composer import SemanticComposer
 from ..kernel.understanding.grounding import GroundingResolver
@@ -34,54 +36,57 @@ from ..kernel.execution.authorizer import OperationAuthorizer
 from ..kernel.execution.reconciliation import OutcomeReconciler
 from ..kernel.execution.commit import CommitCoordinator
 from ..kernel.response.planner import ResponsePlanner
+from ..kernel.response.renderer import MessageRenderer
 from ..kernel.response.common_ground import CommonGroundManager
 from ..kernel.retirement.cutover import AuthoritativeCutoverVerifier
 
 
 class Runtime:
-    """Canonical v3.4 runtime assembly.
-
-    Constructs all canonical components, wires the CognitiveKernel,
-    and provides a public run() entry that returns CognitiveCycle.
-    """
+    """Construct the single authoritative native runtime."""
 
     def __init__(
         self,
         *,
-        legacy_perceptor: Any | None = None,
-        legacy_percept_bridge: Any | None = None,
         predicate_schema_store: Any | None = None,
         load_boot: bool = True,
     ) -> None:
-        # Construct canonical v3.4 components
-        self._schema_store = SemanticSchemaStore()
+        if predicate_schema_store is not None:
+            raise ValueError(
+                "parallel predicate schema stores are forbidden; use SemanticSchemaStore"
+            )
 
-        # Load and validate boot schemas
+        self._schema_store = SemanticSchemaStore()
         self._boot_report: Any | None = None
         self._boot_unresolved_deps: tuple[str, ...] = ()
         if load_boot:
-            from ..kernel.boot.validation import BootValidator
+            from ..kernel.boot.validation import BootValidator, BootStatus
             from ..kernel.boot.manifest import build_boot_manifest
+
             validator = BootValidator()
             manifest = build_boot_manifest()
             self._boot_report = validator.validate_boot(self._schema_store, manifest)
-            if self._boot_report.status == "halted":
+            status = getattr(self._boot_report.status, "value", self._boot_report.status)
+            if status == getattr(BootStatus.HALTED, "value", "halted"):
                 raise RuntimeError(
                     f"Boot validation halted: {self._boot_report.halted_reasons}"
                 )
             validator.register_boot_schemas(
                 self._schema_store, manifest, self._boot_report
             )
-            # Verify all dependencies resolve after registration
             unresolved, _ = validator.verify_dependencies(
                 self._schema_store, manifest
             )
-            if unresolved:
-                # Log but don't halt — unresolved deps downgrade dependents
-                self._boot_unresolved_deps = unresolved
+            self._boot_unresolved_deps = unresolved
+            validate_v341_spec().require_ok()
+            register_v341_foundations(self._schema_store)
+            validate_registered_v341(self._schema_store).require_ok()
 
-        self._semantic_composer = SemanticComposer(store=self._schema_store)
-        self._grounding_resolver = GroundingResolver(store=self._schema_store)
+        from ..language.en.adapter import EnglishLanguageAdapter
+        self._percept_adapter = _NativePerceptAdapter(
+            EnglishLanguageAdapter(self._schema_store)
+        )
+        self._semantic_composer = SemanticComposer(self._schema_store)
+        self._grounding_resolver = GroundingResolver(self._schema_store)
         self._interpretation_resolver = InterpretationResolver()
         self._gap_detector = GapDetector()
         self._workspace_controller = WorkspaceController()
@@ -103,16 +108,14 @@ class Runtime:
         )
         self._goal_arbiter = GoalArbiter()
         self._planner = Planner(schema_store=self._schema_store)
-        self._operation_executor = OperationExecutor()
         self._operation_authorizer = OperationAuthorizer()
+        self._operation_executor = OperationExecutor()
         self._outcome_reconciler = OutcomeReconciler()
         self._commit_coordinator = CommitCoordinator()
         self._response_planner = ResponsePlanner()
-        from ..kernel.response.renderer import MessageRenderer
-        self._message_renderer = MessageRenderer()
+        self._message_renderer = MessageRenderer(self._schema_store)
         self._common_ground_manager = CommonGroundManager()
 
-        # Stage 8: Invalidation, correction, retention
         from ..kernel.epistemics.artifact_index import DerivedArtifactIndex
         from ..kernel.epistemics.invalidation_engine import InvalidationEngine
         from ..kernel.epistemics.invalidation_events import InvalidationEventBus
@@ -120,7 +123,6 @@ class Runtime:
         from ..kernel.correction.retraction_engine import RetractionEngine
         from ..kernel.learning.replay_queue import ReplayQueue
 
-        # Reuse the truth_maintenance instance already created above
         self._artifact_index = DerivedArtifactIndex()
         self._invalidation_event_bus = InvalidationEventBus()
         self._invalidation_engine = InvalidationEngine(
@@ -130,81 +132,42 @@ class Runtime:
         )
         self._retraction_engine = RetractionEngine()
         self._replay_queue = ReplayQueue()
-        self._replay_safety_manager = ReplaySafetyManager(
-            replay_queue=self._replay_queue,
-        )
+        self._replay_safety_manager = ReplaySafetyManager(self._replay_queue)
 
-        # Language adapter — native v3.4 or legacy boundary
-        if legacy_perceptor is not None:
-            # Legacy path: use boundary adapter wrapping MeaningPerceptor
-            from ..legacy.v3_3.percept_adapter import LegacyV33PerceptAdapter
-            self._percept_adapter = LegacyV33PerceptAdapter(
-                perceptor=legacy_perceptor,
-                percept_bridge=legacy_percept_bridge,
-            )
-        else:
-            # Native path: use English language adapter directly
-            from ..language.en.adapter import EnglishLanguageAdapter
-            self._percept_adapter = _NativePerceptAdapter(
-                language_adapter=EnglishLanguageAdapter(),
-            )
-
-        # Cutover verifier — register all authorities
         self._cutover_verifier = AuthoritativeCutoverVerifier()
-        self._cutover_verifier.register("surface_analysis", "PerceptAdapter")
-        self._cutover_verifier.register("semantic_composition", "SemanticComposer")
-        self._cutover_verifier.register(
-            "referent_sense_role_grounding", "GroundingResolver"
-        )
-        self._cutover_verifier.register(
-            "schema_identity_version_resolution", "SemanticSchemaStore"
-        )
-        self._cutover_verifier.register(
-            "structural_grounding_assessment", "GroundingResolver"
-        )
-        self._cutover_verifier.register("competence_execution", "CapabilityEvaluator")
-        self._cutover_verifier.register(
-            "schema_lifecycle_activation", "SemanticSchemaStore"
-        )
-        self._cutover_verifier.register(
-            "recursive_cluster_classification", "SemanticSchemaStore"
-        )
-        self._cutover_verifier.register(
-            "interpretation_selection", "InterpretationResolver"
-        )
-        self._cutover_verifier.register("context_isolation", "EpistemicEvaluator")
-        self._cutover_verifier.register("semantic_retrieval", "SemanticRetriever")
-        self._cutover_verifier.register(
-            "truth_and_context_admissibility", "EpistemicEvaluator"
-        )
-        self._cutover_verifier.register("current_schema_use", "GroundingResolver")
-        self._cutover_verifier.register(
-            "derived_cognition_retraction", "InvalidationEngine"
-        )
-        self._cutover_verifier.register("current_capability", "CapabilityEvaluator")
-        self._cutover_verifier.register("gap_creation", "GapDetector")
-        self._cutover_verifier.register("learning_lifecycle", "LearningCoordinator")
-        self._cutover_verifier.register(
-            "replay_scheduling_idempotence", "ReplaySafetyManager"
-        )
-        self._cutover_verifier.register("active_goals", "GoalArbiter")
-        self._cutover_verifier.register("plan_selection", "Planner")
-        self._cutover_verifier.register(
-            "operation_authorization", "OperationAuthorizer"
-        )
-        self._cutover_verifier.register("execution", "OperationExecutor")
-        self._cutover_verifier.register(
-            "outcome_reconciliation", "OutcomeReconciler"
-        )
-        self._cutover_verifier.register("persistent_mutation", "CommitCoordinator")
-        self._cutover_verifier.register("common_ground", "CommonGroundManager")
-        self._cutover_verifier.register("response_content", "ResponsePlanner")
-        self._cutover_verifier.register(
-            "surface_realization", "MessageRenderer"
-        )
-        self._cutover_verifier.register("cycle_scheduling", "CognitiveKernel")
+        authorities = {
+            "surface_analysis": "PerceptAdapter",
+            "semantic_composition": "SemanticComposer",
+            "referent_sense_role_grounding": "GroundingResolver",
+            "schema_identity_version_resolution": "SemanticSchemaStore",
+            "structural_grounding_assessment": "GroundingResolver",
+            "competence_execution": "CapabilityEvaluator",
+            "schema_lifecycle_activation": "SemanticSchemaStore",
+            "recursive_cluster_classification": "SemanticSchemaStore",
+            "interpretation_selection": "InterpretationResolver",
+            "context_isolation": "EpistemicEvaluator",
+            "semantic_retrieval": "SemanticRetriever",
+            "truth_and_context_admissibility": "EpistemicEvaluator",
+            "current_schema_use": "GroundingResolver",
+            "derived_cognition_retraction": "InvalidationEngine",
+            "current_capability": "CapabilityEvaluator",
+            "gap_creation": "GapDetector",
+            "learning_lifecycle": "LearningCoordinator",
+            "replay_scheduling_idempotence": "ReplaySafetyManager",
+            "active_goals": "GoalArbiter",
+            "plan_selection": "Planner",
+            "operation_authorization": "OperationAuthorizer",
+            "execution": "OperationExecutor",
+            "outcome_reconciliation": "OutcomeReconciler",
+            "persistent_mutation": "CommitCoordinator",
+            "common_ground": "CommonGroundManager",
+            "response_content": "ResponsePlanner",
+            "surface_realization": "MessageRenderer",
+            "cycle_scheduling": "CognitiveKernel",
+        }
+        for key, owner in authorities.items():
+            self._cutover_verifier.register(key, owner)
 
-        # Wire the kernel
         self._kernel = CognitiveKernel(
             schema_store=self._schema_store,
             percept_adapter=self._percept_adapter,
@@ -236,26 +199,25 @@ class Runtime:
 
     @property
     def kernel(self) -> CognitiveKernel:
-        """The canonical CognitiveKernel instance."""
         return self._kernel
 
     @property
+    def schema_store(self) -> SemanticSchemaStore:
+        return self._schema_store
+
+    @property
     def boot_report(self) -> Any | None:
-        """Boot validation report, or None if boot loading was skipped."""
         return self._boot_report
 
     @property
     def diagnostic_safe(self) -> bool:
-        """Whether the runtime is in diagnostic-safe mode."""
-        return (
-            self._boot_report is not None
-            and self._boot_report.status == "diagnostic_safe"
-        )
+        if self._boot_report is None:
+            return False
+        return getattr(self._boot_report.status, "value", self._boot_report.status) == "diagnostic_safe"
 
     @property
-    def schema_store(self) -> SemanticSchemaStore:
-        """The canonical schema store."""
-        return self._schema_store
+    def learning_coordinator(self) -> LearningCoordinator:
+        return self._learning_coordinator
 
     @property
     def invalidation_engine(self) -> Any:
@@ -278,11 +240,6 @@ class Runtime:
         return self._artifact_index
 
     def run(self, trigger: CycleTrigger) -> Any:
-        """Run one cognitive cycle.
-
-        Returns an immutable CognitiveCycle.
-        This is the public app entry point.
-        """
         return self._kernel.run(trigger)
 
     def run_text(
@@ -290,38 +247,63 @@ class Runtime:
         text: str,
         *,
         context_id: str = "default",
+        language_hint: str = "en",
+        channel: str = "text",
     ) -> Any:
-        """Convenience: run a cycle from raw text input."""
-        trigger = CycleTrigger(
-            trigger_kind="user_utterance",
-            signal_ids=(text,),
+        signal = InputSignal(
+            id=f"signal:{uuid4().hex[:12]}",
+            content=text,
+            context_id=context_id,
+            source_ref="user",
+            language_hint=language_hint,
+            channel=channel,
         )
-        return self._kernel.run(trigger)
+        return self._kernel.run(CycleTrigger(
+            trigger_kind="user_utterance",
+            signal_ids=(signal.id,),
+            input_signals=(signal,),
+            context_id=context_id,
+        ))
+
+    def run_text_result(
+        self,
+        text: str,
+        *,
+        context_id: str = "default",
+        language_hint: str = "en",
+        channel: str = "text",
+    ) -> PublicCycleResult:
+        return project_cycle(self.run_text(
+            text,
+            context_id=context_id,
+            language_hint=language_hint,
+            channel=channel,
+        ))
+
+    @staticmethod
+    def project(cycle: Any) -> PublicCycleResult:
+        return project_cycle(cycle)
 
 
 class _NativePerceptAdapter:
-    """Wraps a native v3.4 LanguageAdapter for the CognitiveKernel.
-
-    The CognitiveKernel calls perceive(signal_ids) expecting a tuple
-    of SurfaceEvidence. This adapter bridges the LanguageAdapter protocol
-    (perceive(raw_text, language_tag) -> SurfaceEvidence) to that interface.
-    """
-
     def __init__(self, language_adapter: Any) -> None:
         self._adapter = language_adapter
 
     def perceive(
         self,
+        *,
+        input_signals: tuple[InputSignal, ...] = (),
         signal_ids: tuple[str, ...] = (),
-        raw_text: str = "",
-        signal: Any | None = None,
-        kernel: Any | None = None,
+        context_id: str = "default",
+        **_: Any,
     ) -> tuple[Any, ...]:
-        """Produce SurfaceEvidence from native language adapter."""
+        # signal_ids are identity only. Legacy callers that supply raw text via
+        # signal_ids receive no surface evidence rather than a silent contract
+        # violation.
         results = []
-        texts = [raw_text] if raw_text else list(signal_ids)
-        for text in texts:
-            if text:
-                evidence = self._adapter.perceive(text, "en")
-                results.append(evidence)
+        for signal in input_signals:
+            if not signal.content:
+                continue
+            language = signal.language_hint or "en"
+            results.append(self._adapter.perceive(signal.content, language))
         return tuple(results)

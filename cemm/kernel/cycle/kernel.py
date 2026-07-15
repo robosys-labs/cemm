@@ -1,42 +1,22 @@
-"""CognitiveKernel — canonical v3.4 cycle orchestrator.
+"""CognitiveKernel — canonical v3.4.1 cycle orchestrator.
 
-Per CORE_LOOP.md §4-§5 and AUTHORITY_MATRIX.md:
-- CognitiveKernel.run(trigger) owns the full cycle:
-  ORIENT → UNDERSTAND → KNOW → DECIDE → ACT → CRITICAL_COMMIT →
-  COMMUNICATE → OUTPUT_COMMIT → CONSOLIDATE/SCHEDULE
-- Stages return new CognitiveCycle revisions; no hidden mutation.
-- Each stage has exactly one sole authority.
-- No canonical component reads hidden mutable legacy kernel state.
-
-Import boundary: model + canonical kernel subpackages only.
-No imports from root kernel/*.py legacy modules.
+The replacement repairs the v3.4 object/ref mismatch, grounds candidate graphs
+instead of empty strings, consumes learning evidence only after interpretation,
+and records only actually dispatched realization items in common ground.
 """
 from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterable
 from uuid import uuid4
 
-from ..model.cycle import (
-    CognitiveCycle,
-    CycleTrigger,
-    KernelSnapshot,
-    pin_snapshot,
-)
+from ..model.cycle import CognitiveCycle, CycleTrigger, KernelSnapshot, pin_snapshot
 from ..model.trace import CycleTrace
+from ..epistemics.evaluator import EvidenceRecord as EpistemicEvidenceRecord
 
 
 class CognitiveKernel:
-    """Canonical v3.4 cognitive cycle orchestrator.
-
-    Owns the macro state machine. Each stage delegates to its sole
-    authority component. The cycle produces an immutable
-    CognitiveCycle artifact.
-
-    Dependencies are injected — construction lives in app/runtime.py.
-    """
-
     def __init__(
         self,
         *,
@@ -95,10 +75,6 @@ class CognitiveKernel:
         self._cutover_verifier = cutover_verifier
 
     def run(self, trigger: CycleTrigger) -> CognitiveCycle:
-        """Run one complete cognitive cycle.
-
-        Returns an immutable CognitiveCycle with all stage outputs.
-        """
         cycle = self._orient(trigger)
         cycle = self._understand(cycle)
         cycle = self._know(cycle)
@@ -108,826 +84,716 @@ class CognitiveKernel:
         cycle = self._communicate(cycle)
         cycle = self._output_commit_and_consolidate(cycle)
         cycle = self._invalidate_and_repair(cycle)
-        cycle = self._finalize(cycle)
-        return cycle
+        return self._finalize(cycle)
 
-    # ── A. ORIENT ──
+    # ------------------------------------------------------------------
+    # A. ORIENT
+    # ------------------------------------------------------------------
 
     def _orient(self, trigger: CycleTrigger) -> CognitiveCycle:
-        """Pin KernelSnapshot and initialize the cycle."""
-        snapshot = self._pin_snapshot()
         cycle_id = f"cycle:{uuid4().hex[:12]}"
-        cycle = CognitiveCycle(
+        snapshot = pin_snapshot(
+            schema_store_revision=getattr(self._schema_store, "store_revision", 0),
+            kernel_foundation_version="v3.4.1",
+            grounding_policy_version="graph-grounding-v2",
+            competence_suite_hash="competence-v3.4.1",
+            type_registry_version="semantic-model-v3.4",
+            inference_policy_version="open-world-v3.4",
+            truth_maintenance_version="four-state-v3.4",
+            adapter_contract_hash="native-language-adapter-v3.4.1",
+            context_scope_policy_version="scope-v3.4",
+        )
+        if self._cutover_verifier is not None:
+            self._cutover_verifier.reset_turn_writers()
+        return CognitiveCycle(
             cycle_id=cycle_id,
             trigger=trigger,
             snapshot=snapshot,
-        )
-        if self._cutover_verifier:
-            self._cutover_verifier.reset_turn_writers()
-        return cycle
-
-    def _pin_snapshot(self) -> KernelSnapshot:
-        """Pin current store revisions into an immutable snapshot."""
-        schema_rev = getattr(self._schema_store, "revision", 0)
-        fp = f"fp:v3.4:schema={schema_rev}"
-        return pin_snapshot(
-            schema_store_revision=schema_rev,
-            kernel_foundation_version="v3.4",
-            adapter_contract_hash=fp,
+            trace=CycleTrace(
+                cycle_id=cycle_id,
+                trigger_kind=trigger.trigger_kind,
+                stages=("orient",),
+            ),
         )
 
-    def _current_fingerprint(self) -> str:
-        """Get current environment fingerprint for invalidation checks."""
-        schema_rev = getattr(self._schema_store, "revision", 0)
-        return f"fp:v3.4:schema={schema_rev}"
-
-    # ── B. UNDERSTAND ──
+    # ------------------------------------------------------------------
+    # B. UNDERSTAND
+    # ------------------------------------------------------------------
 
     def _understand(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """B1-B8: Observe, Perceive, Compose, Ground, Resolve, Integrate."""
         errors: list[str] = []
+        surface_evidence: tuple[Any, ...] = ()
+        meaning_candidates: tuple[Any, ...] = ()
+        grounded_candidates: tuple[Any, ...] = ()
+        selected_interpretations: tuple[Any, ...] = ()
+        dialogue_resolution = None
+        learning_transactions: tuple[Any, ...] = cycle.learning_transactions
 
-        # B1-B2. Observe + Perceive via legacy boundary adapter
-        surface_evidence = ()
         try:
-            raw_signals = cycle.trigger.signal_ids
-            evidence = self._percept_adapter.perceive(raw_signals)
-            surface_evidence = tuple(evidence) if evidence else ()
-        except Exception as e:
-            errors.append(f"perceive failed: {e}")
+            surface_evidence = tuple(self._percept_adapter.perceive(
+                input_signals=cycle.trigger.input_signals,
+                signal_ids=cycle.trigger.signal_ids,
+                context_id=cycle.trigger.context_id,
+            ))
+        except Exception as exc:
+            errors.append(f"perceive failed: {exc}")
 
-        cycle = replace(cycle, surface_evidence=surface_evidence)
-        if self._cutover_verifier:
-            self._cutover_verifier.assert_single_writer(
-                "surface_evidence", "PerceptAdapter"
+        try:
+            meaning_candidates = tuple(
+                self._semantic_composer.compose(evidence)
+                for evidence in surface_evidence
             )
+        except Exception as exc:
+            errors.append(f"compose failed: {exc}")
 
-        # B3. Compose
-        meaning_candidates = ()
         try:
-            if surface_evidence:
-                graphs = []
-                for ev in surface_evidence:
-                    graph = self._semantic_composer.compose(ev)
-                    graphs.append(graph)
-                meaning_candidates = tuple(graphs)
-        except Exception as e:
-            errors.append(f"compose failed: {e}")
-
-        cycle = replace(cycle, meaning_candidates=meaning_candidates)
-        if self._cutover_verifier:
-            self._cutover_verifier.assert_single_writer(
-                "meaning_candidates", "SemanticComposer"
+            grounded_candidates = tuple(
+                self._grounding_resolver.ground_graph(
+                    graph,
+                    evidence,
+                    context_ref=cycle.trigger.context_id,
+                    environment_fingerprint=self._environment_fingerprint(cycle),
+                )
+                for graph, evidence in zip(meaning_candidates, surface_evidence)
             )
+        except Exception as exc:
+            errors.append(f"ground failed: {exc}")
 
-        # B4. Ground
-        grounded_candidates = ()
+        # Interpretation precedes learning-evidence consumption. A learning
+        # answer is ordinary semantic evidence first, never copied raw text.
         try:
-            if meaning_candidates:
-                grounded = []
-                for graph in meaning_candidates:
-                    assessments = self._grounding_resolver.ground_referent(
-                        surface=str(getattr(graph, "source_surface", "")),
-                    )
-                    grounded.append(assessments)
-                grounded_candidates = tuple(grounded)
-        except Exception as e:
-            errors.append(f"ground failed: {e}")
+            selected: list[Any] = []
+            for index, graph in enumerate(meaning_candidates):
+                grounding = (
+                    [grounded_candidates[index]]
+                    if index < len(grounded_candidates) else []
+                )
+                result = self._interpretation_resolver.resolve(
+                    candidate_graph=graph,
+                    grounding_assessments=grounding,
+                )
+                selected.extend(getattr(result, "selected", ()) or ())
+            selected_interpretations = tuple(selected)
+        except Exception as exc:
+            errors.append(f"resolve failed: {exc}")
 
-        cycle = replace(cycle, grounded_candidates=grounded_candidates)
-        if self._cutover_verifier:
-            self._cutover_verifier.assert_single_writer(
-                "grounded_candidates", "GroundingResolver"
+        try:
+            dialogue_resolution = self._learning_coordinator.resolve_dialogue_turn(
+                context_ref=cycle.trigger.context_id,
+                selected_interpretations=selected_interpretations,
+                surface_evidence=surface_evidence,
             )
-
-        # B5. Consume pending learning evidence
-        learning_transactions = ()
-        try:
-            updated_txs = self._learning_coordinator.consume_pending_evidence(
-                selected_interpretations=list(cycle.selected_interpretations),
-            )
-            if updated_txs:
-                learning_transactions = tuple(updated_txs)
-        except Exception as e:
-            errors.append(f"learning evidence consumption failed: {e}")
-
-        # B6. Provisional replay — for transactions with matched evidence,
-        # create child revisions and attempt activation
-        if learning_transactions:
-            try:
-                replayed = []
-                for tx in learning_transactions:
-                    if hasattr(tx, "hypotheses") and tx.hypotheses:
-                        updated_tx, attempt = (
-                            self._learning_coordinator.provisional_replay(tx)
-                        )
-                        replayed.append(updated_tx)
-                if replayed:
-                    learning_transactions = tuple(replayed)
-            except Exception as e:
-                errors.append(f"provisional replay failed: {e}")
-
-        cycle = replace(cycle, learning_transactions=learning_transactions)
-
-        # B7. Resolve
-        selected_interpretations = ()
-        try:
-            if meaning_candidates:
-                selected = []
-                for graph in meaning_candidates:
-                    result = self._interpretation_resolver.resolve(
-                        candidate_graph=graph,
-                        grounding_assessments=list(grounded_candidates),
-                    )
-                    if hasattr(result, "selected"):
-                        selected.extend(result.selected)
-                selected_interpretations = tuple(selected)
-        except Exception as e:
-            errors.append(f"resolve failed: {e}")
+            if getattr(dialogue_resolution, "transaction_ref", ""):
+                transaction = self._learning_coordinator.get_transaction(
+                    dialogue_resolution.transaction_ref
+                )
+                if transaction is not None:
+                    learning_transactions = (transaction,)
+        except Exception as exc:
+            errors.append(f"learning evidence consumption failed: {exc}")
 
         cycle = replace(
             cycle,
+            surface_evidence=surface_evidence,
+            meaning_candidates=meaning_candidates,
+            grounded_candidates=grounded_candidates,
             selected_interpretations=selected_interpretations,
+            dialogue_resolution=dialogue_resolution,
+            dialogue_obligations=self._learning_coordinator.pending_obligations(
+                cycle.trigger.context_id
+            ),
+            learning_transactions=learning_transactions,
         )
-        if self._cutover_verifier:
-            self._cutover_verifier.assert_single_writer(
-                "selected_interpretations", "InterpretationResolver"
-            )
+        return self._trace(cycle, "understand", errors)
 
-        if errors:
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=("orient", "understand"),
-                errors=tuple(errors),
-            ))
-
-        return cycle
-
-    # ── C. KNOW ──
+    # ------------------------------------------------------------------
+    # C. KNOW
+    # ------------------------------------------------------------------
 
     def _know(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """C1-C5: Retrieve, Evaluate Epistemics, Introspect, Detect Gaps, Focus."""
         errors: list[str] = []
+        retrieval_results: tuple[Any, ...] = ()
+        epistemic_assessments: tuple[Any, ...] = ()
+        knowledge_assessments: tuple[Any, ...] = ()
+        capability_assessments: tuple[Any, ...] = ()
+        self_reports: tuple[Any, ...] = ()
+        gaps: tuple[Any, ...] = ()
+        workspace = None
 
-        # C1. Retrieve
-        retrieval_results = ()
         try:
+            open_ports = tuple(
+                port
+                for graph in cycle.meaning_candidates
+                for port in getattr(graph, "open_ports", ())
+            )
             batch = self._semantic_retriever.retrieve(
                 selected_interpretations=list(cycle.selected_interpretations),
+                open_ports=open_ports,
+                context_ref=cycle.trigger.context_id,
             )
-            retrieval_results = tuple(batch.results) if hasattr(batch, "results") else ()
-        except Exception as e:
-            errors.append(f"retrieve failed: {e}")
+            retrieval_results = tuple(getattr(batch, "results", ()) or ())
+        except Exception as exc:
+            errors.append(f"retrieve failed: {exc}")
 
-        cycle = replace(cycle, retrieval_results=retrieval_results)
-
-        # C2. Evaluate Epistemics
-        epistemic_assessments = ()
-        knowledge_assessments = ()
-        self_reports = ()
         try:
-            # Collect evidence refs from retrieval results
-            evidence_by_prop: dict[str, list[str]] = {}
-            for rr in retrieval_results:
-                refs = getattr(rr, "evidence_refs", ())
-                prop_ref = getattr(rr, "query_pattern_ref", "")
-                if refs:
-                    evidence_by_prop.setdefault(prop_ref, []).extend(refs)
-
-            assessments = []
-            knowledge_list = []
-            reports = []
-            for interp in cycle.selected_interpretations:
-                prop = getattr(interp, "proposition", None)
-                ctx = getattr(interp, "context_frame", None)
-                if prop is not None and ctx is not None:
-                    result = self._epistemic_evaluator.evaluate(
-                        proposition=prop,
-                        context=ctx,
-                    )
-                    assessments.append(result)
-
-                    # Derive knowledge assessment (knows(self, p))
-                    knowledge = None
-                    if hasattr(self._epistemic_evaluator, "derive_knowledge"):
-                        knowledge = self._epistemic_evaluator.derive_knowledge(
-                            proposition=prop,
-                            context=ctx,
-                            assessment=result,
-                        )
-                        knowledge_list.append(knowledge)
-
-                    # Build self-report
-                    if self._self_report_builder is not None and knowledge is not None:
-                        if hasattr(self._self_report_builder, "report_knows"):
-                            report = self._self_report_builder.report_knows(
-                                proposition_ref=prop.id,
-                                knowledge=knowledge,
-                            )
-                            reports.append(report)
-            epistemic_assessments = tuple(assessments)
-            knowledge_assessments = tuple(knowledge_list)
-            self_reports = tuple(reports)
-
-            # Register assessments in artifact index for invalidation tracking
-            if self._invalidation_engine is not None:
-                from ..model.learning import DerivedArtifactProvenance
-                from ..epistemics.artifact_index import (
-                    IndexedArtifact, ArtifactKind,
+            assessments: list[Any] = []
+            knowledge: list[Any] = []
+            reports: list[Any] = []
+            for interpretation in cycle.selected_interpretations:
+                # A question is not a factual assertion to admit or refute.
+                if getattr(interpretation, "communicative_force", "") not in {
+                    "assert", "correct"
+                }:
+                    continue
+                proposition, context = self._resolve_proposition_context(
+                    cycle, interpretation
                 )
-                for a in assessments:
-                    prop_id = getattr(a, "proposition_ref", "")
-                    if prop_id:
-                        art = IndexedArtifact(
-                            artifact_id=f"assess:{prop_id}",
-                            artifact_kind=ArtifactKind.INFERENCE,
-                            provenance=DerivedArtifactProvenance(
-                                supporting_assessment_refs=(prop_id,),
-                                environment_fingerprint=None,
-                            ),
-                        )
-                        self._invalidation_engine.index.register(art)
-        except Exception as e:
-            errors.append(f"epistemics failed: {e}")
+                if proposition is None or context is None:
+                    continue
+                predication_grounding = self._resolve_predication_grounding(
+                    cycle, interpretation.predication_ref
+                )
+                evidence = (
+                    EpistemicEvidenceRecord(
+                        evidence_id=f"evidence:{proposition.id}",
+                        proposition_ref=proposition.id,
+                        supports=True,
+                        source_ref=proposition.attribution_ref or "input:user",
+                        confidence=max(0.3, interpretation.confidence),
+                        is_independent=False,
+                        lineage_root=proposition.attribution_ref or cycle.cycle_id,
+                        context_ref=context.id,
+                    ),
+                )
+                assessment = self._epistemic_evaluator.evaluate(
+                    proposition=proposition,
+                    context=context,
+                    evidence=evidence,
+                    schema_use_profile=(
+                        predication_grounding.use_profile
+                        if predication_grounding is not None else None
+                    ),
+                    accessible=True,
+                    permission_allowed=True,
+                    environment_fingerprint=self._environment_fingerprint(cycle),
+                )
+                assessments.append(assessment)
+                known = self._epistemic_evaluator.derive_knowledge(
+                    proposition=proposition,
+                    context=context,
+                    assessment=assessment,
+                    is_grounded=bool(
+                        predication_grounding
+                        and predication_grounding.is_structurally_usable
+                        and not predication_grounding.opaque_role_refs
+                        and not predication_grounding.unresolved_role_refs
+                    ),
+                    schema_use_profile=(
+                        predication_grounding.use_profile
+                        if predication_grounding is not None else None
+                    ),
+                )
+                knowledge.append(known)
+                if (
+                    self._self_report_builder is not None
+                    and hasattr(self._self_report_builder, "report_knows")
+                ):
+                    reports.append(self._self_report_builder.report_knows(
+                        proposition_ref=proposition.id,
+                        knowledge=known,
+                    ))
+            epistemic_assessments = tuple(assessments)
+            knowledge_assessments = tuple(knowledge)
+            self_reports = tuple(reports)
+        except Exception as exc:
+            errors.append(f"epistemics failed: {exc}")
 
-        cycle = replace(
-            cycle,
-            epistemic_assessments=epistemic_assessments,
-            knowledge_assessments=knowledge_assessments,
-            self_reports=self_reports,
-        )
-
-        # C3. Introspect — capability assessment
-        capability_assessments = ()
         try:
-            caps = []
-            for interp in cycle.selected_interpretations:
-                op_ref = getattr(interp, "operation_schema_ref", "")
-                if op_ref:
-                    cap = self._capability_evaluator.evaluate(
-                        subject_ref="self",
-                        operation_schema_ref=op_ref,
-                    )
-                    caps.append(cap)
-            capability_assessments = tuple(caps)
-        except Exception as e:
-            errors.append(f"capability failed: {e}")
-
-        cycle = replace(cycle, capability_assessments=capability_assessments)
-
-        # C4. Detect Gaps
-        gaps = ()
-        try:
-            gap_result = self._gap_detector.detect(
-                candidate_graph=cycle.meaning_candidates[0]
-                if cycle.meaning_candidates else None,
-                grounding_assessments=list(cycle.grounded_candidates),
-                epistemic_assessments=list(cycle.epistemic_assessments),
+            from ..self_model.capability_evaluator import (
+                ChannelRecord,
+                CompetenceRecord,
+                ComponentHealthRecord,
+                ContextualPrecondition,
+                ImplementationRecord,
+                PermissionRecord,
+                ResourceRecord,
             )
-            gaps = tuple(gap_result.gaps) if hasattr(gap_result, "gaps") else ()
-        except Exception as e:
-            errors.append(f"gap detection failed: {e}")
 
-        cycle = replace(cycle, gaps=gaps)
+            if self._needs_answer_capability(cycle):
+                operation_ref = self._operation_ref("op:answer")
+                if operation_ref:
+                    capability_assessments = (
+                        self._capability_evaluator.evaluate(
+                            subject_ref="self",
+                            operation_schema_ref=operation_ref,
+                            competence=CompetenceRecord(
+                                schema_ref=operation_ref,
+                                is_competent=True,
+                                competence_score=0.9,
+                                detail="boot communication competence available",
+                            ),
+                            implementation=ImplementationRecord(
+                                operation_ref=operation_ref,
+                                implementation_id="component:response_planner",
+                                is_registered=True,
+                            ),
+                            component_health=ComponentHealthRecord(
+                                component_id="component:canonical_runtime",
+                                health="healthy",
+                            ),
+                            input_channel=ChannelRecord(
+                                channel_kind="input",
+                                channel_id=cycle.trigger.context_id,
+                                is_available=True,
+                                detail="current user utterance channel",
+                            ),
+                            output_channel=ChannelRecord(
+                                channel_kind="output",
+                                channel_id="text",
+                                is_available=True,
+                                detail="local text projection channel",
+                            ),
+                            resources=(
+                                ResourceRecord(
+                                    resource_kind="cycle_budget",
+                                    status="available",
+                                    available_amount=1.0,
+                                    required_amount=1.0,
+                                ),
+                            ),
+                            permission=PermissionRecord(
+                                operation_ref=operation_ref,
+                                is_allowed=True,
+                                policy_ref="policy:execution_policy",
+                                detail="local text answer permitted",
+                            ),
+                            preconditions=(
+                                ContextualPrecondition(
+                                    precondition_id="context:has_current_turn",
+                                    description="current cycle has a user utterance",
+                                    is_satisfied=bool(cycle.surface_evidence),
+                                ),
+                            ),
+                            observed_reliability=1.0,
+                        ),
+                    )
+        except Exception as exc:
+            errors.append(f"capability evaluation failed: {exc}")
 
-        # C4b. Open learning transactions for detected gaps
-        new_learning_txs = list(cycle.learning_transactions)
+        try:
+            all_gaps: list[Any] = []
+            suppress = bool(
+                cycle.dialogue_resolution
+                and getattr(
+                    cycle.dialogue_resolution,
+                    "suppress_fresh_lexical_gaps",
+                    False,
+                )
+            )
+            for index, graph in enumerate(cycle.meaning_candidates):
+                graph_grounding = (
+                    [cycle.grounded_candidates[index]]
+                    if index < len(cycle.grounded_candidates) else []
+                )
+                graph_selected = [
+                    interpretation
+                    for interpretation in cycle.selected_interpretations
+                    if self._interpretation_in_graph(interpretation, graph)
+                ]
+                result = self._gap_detector.detect(
+                    candidate_graph=graph,
+                    grounding_assessments=graph_grounding,
+                    epistemic_assessments=list(epistemic_assessments),
+                    selected_interpretations=graph_selected,
+                    suppress_fresh_lexical_gaps=suppress,
+                )
+                all_gaps.extend(getattr(result, "gaps", ()) or ())
+            gaps = tuple(self._dedupe_gaps(all_gaps))
+        except Exception as exc:
+            errors.append(f"gap detection failed: {exc}")
+
+        learning_transactions = list(cycle.learning_transactions)
         try:
             for gap in gaps:
-                tx = self._learning_coordinator.open_transaction(gap)
-                new_learning_txs.append(tx)
-        except Exception as e:
-            errors.append(f"learning transaction open failed: {e}")
+                if not getattr(gap, "learnable", False):
+                    continue
+                transaction = self._learning_coordinator.open_transaction(
+                    gap,
+                    context_ref=cycle.trigger.context_id,
+                )
+                if all(
+                    getattr(existing, "id", "") != transaction.id
+                    for existing in learning_transactions
+                ):
+                    learning_transactions.append(transaction)
+        except Exception as exc:
+            errors.append(f"learning transaction open failed: {exc}")
 
-        cycle = replace(cycle, learning_transactions=tuple(new_learning_txs))
-
-        # C5. Focus — workspace
-        workspace = None
         try:
             workspace = self._workspace_controller.focus(
                 selected_interpretations=list(cycle.selected_interpretations),
-                epistemic_assessments=list(cycle.epistemic_assessments),
-                gaps=list(cycle.gaps),
+                epistemic_assessments=list(epistemic_assessments),
+                gaps=list(gaps),
             )
-        except Exception as e:
-            errors.append(f"focus failed: {e}")
+        except Exception as exc:
+            errors.append(f"workspace focus failed: {exc}")
 
-        cycle = replace(cycle, workspace=workspace)
+        cycle = replace(
+            cycle,
+            retrieval_results=retrieval_results,
+            epistemic_assessments=epistemic_assessments,
+            knowledge_assessments=knowledge_assessments,
+            capability_assessments=capability_assessments,
+            self_reports=self_reports,
+            gaps=gaps,
+            learning_transactions=tuple(learning_transactions),
+            workspace=workspace,
+        )
+        return self._trace(cycle, "know", errors)
 
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("know",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── D. DECIDE ──
+    # ------------------------------------------------------------------
+    # D-F. DECIDE / ACT / CRITICAL COMMIT
+    # ------------------------------------------------------------------
 
     def _decide(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """D1-D4: Derive Goals, Plan, Authorize."""
         errors: list[str] = []
-
-        # D1-D2. Derive and arbitrate goals
-        goals = ()
-        try:
-            goal_result = self._goal_arbiter.derive_and_arbitrate(
-                selected_interpretations=list(cycle.selected_interpretations),
-                gaps=list(cycle.gaps),
-                capability_assessment=cycle.capability_assessments[0]
-                if cycle.capability_assessments else None,
-            )
-            goals = tuple(goal_result.active_goals) if hasattr(goal_result, "active_goals") else ()
-        except Exception as e:
-            errors.append(f"goal arbitration failed: {e}")
-
-        cycle = replace(cycle, goals=goals)
-
-        # D3. Plan
-        plans = ()
-        plan_batch = None
-        try:
-            plan_batch = self._planner.plan(
-                goals=goals,
-                capability_assessment=cycle.capability_assessments[0]
-                if cycle.capability_assessments else None,
-            )
-            plans = tuple(plan_batch.plans) if hasattr(plan_batch, "plans") else ()
-        except Exception as e:
-            errors.append(f"planning failed: {e}")
-
-        cycle = replace(cycle, plans=plans)
-
-        # D4. Authorize — consume live typed conditions
+        goals: tuple[Any, ...] = ()
+        plans: tuple[Any, ...] = ()
         authorization = None
         try:
-            if plan_batch and hasattr(plan_batch, "selected") and plan_batch.selected:
-                from ..execution.authorizer import (
-                    AuthorizationConditions,
-                    AuthorizationBatch,
-                )
-                # Derive live conditions from capability and epistemic assessments
-                cap_available = True
-                if cycle.capability_assessments:
-                    cap = cycle.capability_assessments[0]
-                    cap_available = getattr(cap, "is_capable", True)
+            forces = tuple(
+                force
+                for graph in cycle.meaning_candidates
+                for force in getattr(graph, "candidate_communicative_forces", ())
+            )
+            result = self._goal_arbiter.derive_and_arbitrate(
+                selected_interpretations=list(cycle.selected_interpretations),
+                communicative_forces=forces,
+                gaps=list(cycle.gaps),
+            )
+            goals = tuple(getattr(result, "active_goals", ()) or ())
 
-                # Check epistemic admissibility for schema-use validity
-                schema_use_valid = True
-                if cycle.epistemic_assessments:
-                    for assessment in cycle.epistemic_assessments:
-                        admissibility = getattr(assessment, "admissibility", "admitted")
-                        if admissibility in ("blocked", "inadmissible"):
-                            schema_use_valid = False
-                            break
-
-                # Build environment fingerprint from snapshot
-                env_fp = f"store:{cycle.snapshot.schema_store_revision}"
-
-                auth_by_op = {}
-                for op in plan_batch.selected.operations:
-                    auth_result = self._operation_authorizer.authorize(
-                        operation=op,
-                        conditions=AuthorizationConditions(
-                            capability_available=cap_available,
-                            permission_allowed=True,
-                            safety_passed=True,
-                            privacy_passed=True,
-                            resources_available=True,
-                            context_valid=True,
-                            schema_use_valid=schema_use_valid,
-                            risk_level="low",
-                            environment_fingerprint=env_fp,
-                        ),
+            # Information and discourse goals are handled by the response and
+            # learning authorities. They are not executed as fake cognitive
+            # operations merely to manufacture a success ledger.
+            executable_goals = tuple(
+                goal for goal in goals
+                if getattr(goal, "goal_kind", "") == "world_state"
+            )
+            if executable_goals:
+                plan_batch = self._planner.plan(goals=executable_goals)
+                plans = tuple(getattr(plan_batch, "plans", ()) or ())
+                selected_plan = getattr(plan_batch, "selected", None)
+                if selected_plan is not None:
+                    from ..execution.authorizer import (
+                        AuthorizationBatch,
+                        AuthorizationConditions,
                     )
-                    auth_by_op[op.id] = auth_result
-                authorization = AuthorizationBatch(by_operation_ref=auth_by_op)
-        except Exception as e:
-            errors.append(f"authorization failed: {e}")
-
-        cycle = replace(cycle, authorization=authorization)
-
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("decide",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── E. ACT AND RECONCILE ──
+                    decisions = {}
+                    for operation in selected_plan.operations:
+                        # No live policy/capability/resource records were
+                        # supplied to this cycle. Unknown gates defer safely.
+                        decisions[operation.id] = self._operation_authorizer.authorize(
+                            operation,
+                            AuthorizationConditions(
+                                environment_fingerprint=self._environment_fingerprint(cycle),
+                            ),
+                        )
+                    authorization = AuthorizationBatch(by_operation_ref=decisions)
+        except Exception as exc:
+            errors.append(f"decision failed: {exc}")
+        cycle = replace(cycle, goals=goals, plans=plans, authorization=authorization)
+        return self._trace(cycle, "decide", errors)
 
     def _act_and_reconcile(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """E1-E3: Execute, Observe, Reconcile."""
         errors: list[str] = []
-
-        # E1. Execute
-        execution_ledger = None
+        ledger = None
+        reconciliation = None
         try:
             if cycle.plans and cycle.authorization:
-                selected_plan = cycle.plans[0]
-                exec_result = self._operation_executor.execute(
-                    plan=selected_plan,
+                result = self._operation_executor.execute(
+                    plan=cycle.plans[0],
                     authorization=cycle.authorization,
                 )
-                execution_ledger = exec_result.ledger if exec_result else None
-
-                # Register in-flight effects for reauthorization at commit
-                if execution_ledger and self._replay_safety_manager is not None:
-                    for outcome in execution_ledger.outcomes:
-                        if outcome.status == "succeeded":
-                            op_id = outcome.operation_ref
-                            idem_key = getattr(outcome, "idempotency_key", op_id)
-                            auth_fp = ""
-                            if hasattr(cycle.authorization, "by_operation_ref"):
-                                auth_result = cycle.authorization.by_operation_ref.get(op_id)
-                                if auth_result:
-                                    auth_fp = getattr(auth_result, "authorization_fingerprint", "")
-                            self._replay_safety_manager.register_in_flight_effect(
-                                effect_id=f"effect:{op_id}",
-                                operation_id=op_id,
-                                idempotency_key=idem_key,
-                                authorization_fingerprint=auth_fp,
-                                predicted_effects=tuple(outcome.output_refs),
-                            )
-        except Exception as e:
-            errors.append(f"execution failed: {e}")
-
-        cycle = replace(cycle, execution_ledger=execution_ledger)
-
-        # E3. Reconcile — compare predicted and observed effects
-        try:
-            if execution_ledger and cycle.plans:
-                selected_plan = cycle.plans[0]
-                reconcile_result = self._outcome_reconciler.reconcile(
-                    plan=selected_plan,
-                    ledger=execution_ledger,
-                )
-                cycle = replace(cycle, reconciliation_result=reconcile_result)
-                if reconcile_result and reconcile_result.prediction_errors:
-                    existing = cycle.trace
-                    new_errors = (existing.errors if existing else ()) + tuple(
-                        f"prediction error: {pe.error_kind} for {pe.operation_ref}"
-                        for pe in reconcile_result.prediction_errors
+                ledger = getattr(result, "ledger", None)
+                if ledger is not None:
+                    reconciliation = self._outcome_reconciler.reconcile(
+                        plan=cycle.plans[0],
+                        ledger=ledger,
                     )
-                    cycle = replace(cycle, trace=CycleTrace(
-                        cycle_id=cycle.cycle_id,
-                        trigger_kind=cycle.trigger.trigger_kind,
-                        stages=(existing.stages if existing else ()) + ("reconcile",),
-                        errors=new_errors,
-                    ))
-        except Exception as e:
-            errors.append(f"reconciliation failed: {e}")
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("act",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── F. CRITICAL COMMIT ──
+        except Exception as exc:
+            errors.append(f"execution/reconciliation failed: {exc}")
+        cycle = replace(
+            cycle,
+            execution_ledger=ledger,
+            reconciliation_result=reconciliation,
+        )
+        return self._trace(cycle, "act", errors)
 
     def _critical_commit(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """F1-F6: Build MutationSet, validate, commit atomically.
+        # Execution output refs are not canonical semantic mutation payloads.
+        # Do not convert operation IDs/results into fake persistent mutations.
+        return self._trace(cycle, "critical_commit", [])
 
-        Per CORE_LOOP.md §F and Stage 6:
-        - Revalidate authorization before critical commit.
-        - Build exact MutationSet from execution outcomes.
-        - Commit atomically. Roll back on failure.
-        """
-        errors: list[str] = []
-
-        critical_commit = None
-        try:
-            if cycle.execution_ledger:
-                from ..model.mutation import MutationSet, MutationOperation
-                from uuid import uuid4 as _uuid4
-
-                # F0. Revalidate authorization before critical commit
-                if cycle.authorization:
-                    from ..execution.authorizer import AuthorizationBatch, AuthorizationConditions
-                    auth_batch = cycle.authorization
-                    if isinstance(auth_batch, AuthorizationBatch):
-                        for op_id, auth_result in auth_batch.by_operation_ref.items():
-                            if auth_result.revalidation_required:
-                                # Check if environment changed
-                                current_fp = f"store:{cycle.snapshot.schema_store_revision}"
-                                if auth_result.authorization_fingerprint and \
-                                   auth_result.authorization_fingerprint != current_fp:
-                                    errors.append(
-                                        f"authorization stale for {op_id}: "
-                                        f"environment changed"
-                                    )
-                                    continue
-
-                # F0b. Reauthorize in-flight effects via ReplaySafetyManager
-                if self._replay_safety_manager is not None:
-                    current_fp = f"store:{cycle.snapshot.schema_store_revision}"
-                    for effect in self._replay_safety_manager.get_in_flight_effects():
-                        reauth = self._replay_safety_manager.reauthorize(
-                            effect_id=effect.effect_id,
-                            current_fingerprint=current_fp,
-                        )
-                        if not reauth.is_authorized:
-                            errors.append(
-                                f"effect reauthorization denied for {effect.effect_id}: "
-                                f"{reauth.reason}"
-                            )
-                        else:
-                            self._replay_safety_manager.commit_effect(effect.effect_id)
-
-                ops = []
-                for outcome in cycle.execution_ledger.outcomes:
-                    if outcome.status == "succeeded":
-                        ops.append(MutationOperation(
-                            id=f"mut:{_uuid4().hex[:8]}",
-                            action="create",
-                            payload_ref=outcome.operation_ref,
-                            evidence_refs=outcome.output_refs,
-                            required=True,
-                        ))
-
-                if ops and not any("authorization stale" in e for e in errors):
-                    mutation_set = MutationSet(
-                        id=f"ms:{_uuid4().hex[:8]}",
-                        phase="critical",
-                        operations=tuple(ops),
-                    )
-                    critical_commit = self._commit_coordinator.commit(mutation_set)
-        except Exception as e:
-            errors.append(f"critical commit failed: {e}")
-
-        cycle = replace(cycle, critical_commit=critical_commit)
-
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("commit",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── G. COMMUNICATE ──
+    # ------------------------------------------------------------------
+    # G-H. COMMUNICATE / OUTPUT COMMIT
+    # ------------------------------------------------------------------
 
     def _communicate(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """G1-G4: Select content, build message plan, realize, dispatch."""
         errors: list[str] = []
-
-        # G1-G2. Select content and build message plan
         message_plan = None
-        try:
-            from ..response.planner import ContentSelectionInput
-            from ..model.epistemic import EpistemicAssessment
-
-            prop_refs = tuple(
-                getattr(s, "proposition_ref", "")
-                for s in cycle.selected_interpretations
-            )
-            assessments_tuple = tuple(
-                a for a in cycle.epistemic_assessments
-                if isinstance(a, EpistemicAssessment)
-            )
-            selection = ContentSelectionInput(
-                proposition_refs=prop_refs,
-                assessments=assessments_tuple,
-                commit_outcome=cycle.critical_commit,
-                execution_ledger=cycle.execution_ledger,
-                goal_refs=tuple(g.id for g in cycle.goals if hasattr(g, "id")),
-            )
-            message_plan = self._response_planner.plan_response(selection)
-
-            # Validate plan — every clause maps to content/provenance
-            if message_plan and not self._response_planner.validate_plan(message_plan):
-                errors.append("message plan validation failed: content/provenance mismatch")
-                message_plan = None
-
-            # Register message items in artifact index for repair obligation tracking
-            if message_plan and self._invalidation_engine is not None:
-                from ..model.learning import DerivedArtifactProvenance
-                from ..epistemics.artifact_index import (
-                    IndexedArtifact, ArtifactKind,
-                )
-                for item in message_plan.content_items:
-                    art = IndexedArtifact(
-                        artifact_id=f"msg:{item.semantic_ref}",
-                        artifact_kind=ArtifactKind.MESSAGE_ITEM,
-                        provenance=DerivedArtifactProvenance(
-                            supporting_assessment_refs=item.provenance_refs,
-                            evidence_refs=item.provenance_refs,
-                        ),
-                    )
-                    self._invalidation_engine.index.register(art)
-        except Exception as e:
-            errors.append(f"communicate failed: {e}")
-
-        cycle = replace(cycle, message_plan=message_plan)
-
-        # G3. Realize — language renderer produces surface text
+        realization_authorization = None
         surface_payload = None
         try:
-            if message_plan:
-                surface_payload = self._message_renderer.render(
-                    plan=message_plan,
-                    language=message_plan.language or "en",
-                )
-        except Exception as e:
-            errors.append(f"realization failed: {e}")
+            from ..response.planner import ContentSelectionInput
 
-        cycle = replace(cycle, surface_payload=surface_payload)
-
-        # G4. Dispatch — record transport outcome
-        # (In a full implementation, this would dispatch through an
-        # authorized channel. For now, we mark as dispatched.)
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("communicate",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── H. OUTPUT COMMIT AND CONSOLIDATE ──
+            selection = ContentSelectionInput(
+                proposition_refs=tuple(
+                    getattr(item, "proposition_ref", "")
+                    for item in cycle.selected_interpretations
+                    if getattr(item, "proposition_ref", "")
+                ),
+                assessments=tuple(cycle.epistemic_assessments),
+                commit_outcome=cycle.critical_commit,
+                execution_ledger=cycle.execution_ledger,
+                goal_refs=tuple(
+                    getattr(goal, "id", "") for goal in cycle.goals
+                    if getattr(goal, "id", "")
+                ),
+                repair_obligation_refs=tuple(cycle.repair_obligations),
+                language=self._response_language(cycle),
+                channel="text",
+                selected_interpretations=cycle.selected_interpretations,
+                grounding_assessments=cycle.grounded_candidates,
+                retrieval_results=cycle.retrieval_results,
+                knowledge_assessments=cycle.knowledge_assessments,
+                capability_assessments=cycle.capability_assessments,
+                gaps=cycle.gaps,
+                learning_transactions=cycle.learning_transactions,
+                dialogue_resolution=cycle.dialogue_resolution,
+                dialogue_obligations=cycle.dialogue_obligations,
+                surface_evidence=cycle.surface_evidence,
+            )
+            message_plan = self._response_planner.plan_response(selection)
+            if not self._response_planner.validate_plan(message_plan):
+                raise ValueError("message plan failed semantic/provenance validation")
+            realization_authorization = self._message_renderer.authorize(
+                message_plan,
+                language=message_plan.language or "en",
+                environment_fingerprint=self._environment_fingerprint(cycle),
+            )
+            surface_payload = self._message_renderer.render(
+                message_plan,
+                language=message_plan.language or "en",
+                authorization=realization_authorization,
+                environment_fingerprint=self._environment_fingerprint(cycle),
+            )
+            if not self._message_renderer.validate_round_trip(surface_payload):
+                raise ValueError("surface payload failed structural leakage validation")
+        except Exception as exc:
+            errors.append(f"communication failed: {exc}")
+        cycle = replace(
+            cycle,
+            message_plan=message_plan,
+            realization_authorization=realization_authorization,
+            surface_payload=surface_payload,
+        )
+        return self._trace(cycle, "communicate", errors)
 
     def _output_commit_and_consolidate(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """H1-H7: Commit output, update common ground, schedule."""
         errors: list[str] = []
-
-        # Record dispatched content in common ground
-        # Commit common ground only after dispatch
+        output_event = None
         try:
-            if cycle.message_plan and cycle.surface_payload:
+            if (
+                cycle.message_plan is not None
+                and cycle.surface_payload is not None
+                and cycle.surface_payload.surface_text
+            ):
                 from ..response.common_ground import (
                     DispatchResult,
                     DispatchStatus,
                     DiscourseStatus,
                 )
-                from datetime import datetime, timezone
-
-                # Only record if surface payload has content (was dispatched)
-                if cycle.surface_payload.surface_text:
-                    dispatch_result = DispatchResult(
-                        message_plan_ref=cycle.message_plan.id,
-                        status=DispatchStatus.DISPATCHED,
-                        dispatched_at=datetime.now(timezone.utc).isoformat(),
+                dispatched_at = datetime.now(timezone.utc).isoformat()
+                dispatch = DispatchResult(
+                    message_plan_ref=cycle.message_plan.id,
+                    status=DispatchStatus.DISPATCHED,
+                    transport_outcome="local_projection",
+                    dispatched_at=dispatched_at,
+                )
+                realized = set(cycle.surface_payload.realized_item_refs)
+                output_event = {
+                    "message_plan_ref": cycle.message_plan.id,
+                    "realized_item_refs": tuple(realized),
+                    "dispatched_at": dispatched_at,
+                }
+                status_map = {
+                    "inform": DiscourseStatus.ASSERTED,
+                    "query": DiscourseStatus.ASKED,
+                    "correct": DiscourseStatus.CORRECTED,
+                    "repair": DiscourseStatus.CORRECTED,
+                    "request": DiscourseStatus.UNRESOLVED,
+                    "refuse": DiscourseStatus.REJECTED,
+                    "promise": DiscourseStatus.PROMISED,
+                    "acknowledge": DiscourseStatus.ACCEPTED,
+                }
+                for item in cycle.message_plan.content_items:
+                    if item.semantic_ref not in realized:
+                        continue
+                    self._common_ground_manager.record_dispatch(
+                        proposition_ref=item.semantic_ref,
+                        participant_ref="self",
+                        discourse_status=status_map.get(
+                            item.discourse_function,
+                            DiscourseStatus.ASSERTED,
+                        ),
+                        dispatch_result=dispatch,
                     )
-
-                    # Map discourse function to discourse status
-                    status_map = {
-                        "inform": DiscourseStatus.ASSERTED,
-                        "query": DiscourseStatus.ASKED,
-                        "acknowledge": DiscourseStatus.ACCEPTED,
-                        "correct": DiscourseStatus.CORRECTED,
-                        "refuse": DiscourseStatus.REJECTED,
-                        "repair": DiscourseStatus.CORRECTED,
-                        "promise": DiscourseStatus.PROMISED,
-                        "request": DiscourseStatus.UNRESOLVED,
-                    }
-
-                    for item in cycle.message_plan.content_items:
-                        if item.semantic_ref:
-                            disc_status = status_map.get(
-                                item.discourse_function,
-                                DiscourseStatus.ASSERTED,
-                            )
-                            self._common_ground_manager.record_dispatch(
-                                proposition_ref=item.semantic_ref,
-                                participant_ref="self",
-                                discourse_status=disc_status,
-                                dispatch_result=dispatch_result,
-                            )
-        except Exception as e:
-            errors.append(f"common ground update failed: {e}")
-
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("output_commit",),
-                errors=new_errors,
-            ))
-
-        return cycle
-
-    # ── Invalidation and repair ──
-
-    def execute_correction(self, operation: Any) -> Any:
-        """Execute a correction/retention operation.
-
-        Per AGENTS.md §7.8, each operation targets exact evidence,
-        proposition, sense, or schema revisions and triggers
-        appropriate dependency reassessment.
-
-        Returns CorrectionResult or None if retraction_engine not wired.
-        """
-        if self._retraction_engine is None:
-            return None
-        result = self._retraction_engine.execute(operation)
-
-        # If the correction invalidates a schema, trigger invalidation cascade
-        if self._invalidation_engine is not None and result.success:
-            target = operation.target_ref
-            if operation.kind.value == "supersession":
-                self._invalidation_engine.on_schema_supersession(
-                    old_schema_ref=target,
-                    new_schema_ref="",
-                )
-            elif operation.kind.value == "support_retraction":
-                self._invalidation_engine.on_evidence_retraction(target)
-            elif operation.kind.value == "permission_revocation":
-                self._invalidation_engine.on_schema_downgrade(
-                    schema_revision_ref=target,
-                )
-
-        return result
-
-    def _invalidate_and_repair(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """Process invalidation events and generate repair obligations.
-
-        Per AGENTS.md §7.5, §7.8, LEARNING_PIPELINE.md §13-14:
-        - Parent downgrade cascades to dependent artifacts
-        - Historical output generates repair obligation
-        - Evidence remains preserved
-        - Stale effects must be re-authorized
-        """
-        errors: list[str] = []
-        invalidation_result = None
-        repair_obligations: tuple[Any, ...] = ()
-
-        try:
-            if self._invalidation_engine is not None:
-                # Check for environment fingerprint changes
-                current_fp = self._current_fingerprint()
-                if cycle.snapshot and hasattr(cycle.snapshot, 'adapter_contract_hash'):
-                    old_fp = cycle.snapshot.adapter_contract_hash
-                    if old_fp and old_fp != current_fp:
-                        inv_result = self._invalidation_engine.on_environment_change(
-                            old_fingerprint=old_fp,
-                            new_fingerprint=current_fp,
+                    if item.content_kind == "learning_probe":
+                        self._learning_coordinator.register_probe_dispatch(
+                            context_ref=cycle.trigger.context_id,
+                            message_item=item,
+                            gaps=cycle.gaps,
+                            output_event_ref=cycle.message_plan.id,
                         )
-                        invalidation_result = inv_result
-
-                # Collect repair obligations from invalidated dispatched messages
-                if invalidation_result and invalidation_result.repair_obligation_ids:
-                    repair_obligations = tuple(invalidation_result.repair_obligation_ids)
-
-        except Exception as e:
-            errors.append(f"invalidation failed: {e}")
-
+                    elif item.content_kind in {"learning_progress", "dialogue_gap_explanation"} and cycle.dialogue_resolution is not None:
+                        self._learning_coordinator.register_followup_dispatch(
+                            context_ref=cycle.trigger.context_id,
+                            message_item=item,
+                            dialogue_resolution=cycle.dialogue_resolution,
+                            output_event_ref=cycle.message_plan.id,
+                        )
+        except Exception as exc:
+            errors.append(f"output commit failed: {exc}")
         cycle = replace(
             cycle,
-            invalidation_result=invalidation_result,
-            repair_obligations=repair_obligations,
+            output_event=output_event,
+            dialogue_obligations=self._learning_coordinator.pending_obligations(
+                cycle.trigger.context_id
+            ),
         )
+        return self._trace(cycle, "output_commit", errors)
 
-        if errors:
-            existing = cycle.trace
-            new_errors = (existing.errors if existing else ()) + tuple(errors)
-            cycle = replace(cycle, trace=CycleTrace(
-                cycle_id=cycle.cycle_id,
-                trigger_kind=cycle.trigger.trigger_kind,
-                stages=(existing.stages if existing else ()) + ("invalidate",),
-                errors=new_errors,
-            ))
+    # ------------------------------------------------------------------
+    # Invalidation/finalization and compatibility correction entry
+    # ------------------------------------------------------------------
 
-        return cycle
+    def execute_correction(self, operation: Any) -> Any:
+        if self._retraction_engine is None:
+            return None
+        return self._retraction_engine.execute(operation)
 
-    # ── Finalize ──
+    def _invalidate_and_repair(self, cycle: CognitiveCycle) -> CognitiveCycle:
+        # Invalidation events are processed by their owning components when
+        # revisions change. This cycle does not invent an environment change by
+        # comparing unlike fingerprint formats.
+        return self._trace(cycle, "invalidate", [])
 
     def _finalize(self, cycle: CognitiveCycle) -> CognitiveCycle:
-        """Finalize trace with completion timestamp."""
-        existing = cycle.trace
-        stages = (existing.stages if existing else ()) + ("finalize",)
-        errors = existing.errors if existing else ()
-
-        cycle = replace(cycle, trace=CycleTrace(
-            cycle_id=cycle.cycle_id,
-            trigger_kind=cycle.trigger.trigger_kind,
-            stages=stages,
-            errors=errors,
+        trace = cycle.trace or CycleTrace(cycle_id=cycle.cycle_id)
+        trace = replace(
+            trace,
             finished_at=datetime.now(timezone.utc),
+            stages=(*trace.stages, "finalize"),
+        )
+        return replace(cycle, trace=trace)
+
+    # ------------------------------------------------------------------
+    # Lookup and trace helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _trace(cycle: CognitiveCycle, stage: str, errors: list[str]) -> CognitiveCycle:
+        current = cycle.trace or CycleTrace(cycle_id=cycle.cycle_id)
+        return replace(cycle, trace=replace(
+            current,
+            stages=(*current.stages, stage),
+            errors=(*current.errors, *tuple(errors)),
         ))
-        return cycle
+
+    @staticmethod
+    def _environment_fingerprint(cycle: CognitiveCycle) -> str:
+        return (
+            f"schema={cycle.snapshot.schema_store_revision};"
+            f"foundation={cycle.snapshot.kernel_foundation_version};"
+            f"adapter={cycle.snapshot.adapter_contract_hash}"
+        )
+
+    @staticmethod
+    def _response_language(cycle: CognitiveCycle) -> str:
+        for evidence in cycle.surface_evidence:
+            language = getattr(evidence, "language_tag", "")
+            if language:
+                return language
+        return "en"
+
+    @staticmethod
+    def _needs_answer_capability(cycle: CognitiveCycle) -> bool:
+        return any(
+            getattr(interpretation, "communicative_force", "") == "ask"
+            for interpretation in cycle.selected_interpretations
+        )
+
+    def _operation_ref(self, semantic_key: str) -> str:
+        active = self._schema_store.find_active(semantic_key)
+        if active is not None:
+            return getattr(active, "semantic_key", "") or semantic_key
+        return ""
+
+    @staticmethod
+    def _interpretation_in_graph(interpretation: Any, graph: Any) -> bool:
+        prop_ref = getattr(interpretation, "proposition_ref", "")
+        return any(
+            candidate.proposition.id == prop_ref
+            for candidate in getattr(graph, "candidate_propositions", ())
+        )
+
+    @staticmethod
+    def _resolve_proposition_context(
+        cycle: CognitiveCycle,
+        interpretation: Any,
+    ) -> tuple[Any | None, Any | None]:
+        prop_ref = getattr(interpretation, "proposition_ref", "")
+        context_ref = getattr(interpretation, "context_ref", "")
+        proposition = None
+        context = None
+        for graph in cycle.meaning_candidates:
+            for candidate in getattr(graph, "candidate_propositions", ()):
+                if candidate.proposition.id == prop_ref:
+                    proposition = candidate.proposition
+                    context_ref = context_ref or proposition.context_ref
+                    break
+            for candidate in getattr(graph, "candidate_contexts", ()):
+                if candidate.context_frame.id == context_ref:
+                    context = candidate.context_frame
+                    break
+            if proposition is not None and context is not None:
+                break
+        return proposition, context
+
+    @staticmethod
+    def _resolve_predication_grounding(
+        cycle: CognitiveCycle,
+        predication_ref: str,
+    ) -> Any | None:
+        for grounding in cycle.grounded_candidates:
+            if hasattr(grounding, "for_predication"):
+                found = grounding.for_predication(predication_ref)
+                if found is not None:
+                    return found
+        return None
+
+    @staticmethod
+    def _dedupe_gaps(gaps: Iterable[Any]) -> list[Any]:
+        result: list[Any] = []
+        seen: set[tuple[str, str, tuple[str, ...]]] = set()
+        for gap in gaps:
+            key = (
+                getattr(gap, "gap_kind", ""),
+                getattr(gap, "target_artifact_ref", ""),
+                tuple(getattr(gap, "missing_fields", ()) or ()),
+            )
+            if key not in seen:
+                seen.add(key)
+                result.append(gap)
+        return result

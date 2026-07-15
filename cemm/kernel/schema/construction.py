@@ -19,4 +19,7 @@ class ConstructionSchema:
     pattern: str = ""
     predicate_schema_ref: str = ""  # Ref[PredicateSchema]
     role_mappings: dict[str, str] = field(default_factory=dict)
+    open_role_refs: tuple[str, ...] = ()
+    communicative_force: str = ""
+    language_tag: str = "und"
     constraints: tuple[str, ...] = ()

@@ -96,7 +96,7 @@ class TestCognitiveKernelCycle:
         trigger = CycleTrigger(trigger_kind="user_utterance")
         cycle = rt.run(trigger)
         # Snapshot should have pinned revision
-        assert cycle.snapshot.kernel_foundation_version == "v3.4"
+        assert cycle.snapshot.kernel_foundation_version == "v3.4.1"
 
     def test_cycle_is_immutable(self):
         from cemm.app.runtime import Runtime
@@ -179,24 +179,13 @@ class TestCognitiveKernelStageOutputs:
 
 
 class TestLegacyBoundary:
-    """Test the legacy v3.3 percept adapter boundary."""
+    """Legacy v3.3 adapter modules are retired, not importable boundaries."""
 
-    def test_percept_adapter_exists(self):
-        from cemm.legacy.v3_3.percept_adapter import LegacyV33PerceptAdapter
-        adapter = LegacyV33PerceptAdapter()
-        assert adapter is not None
+    def test_legacy_boundary_package_is_removed(self):
+        import importlib
 
-    def test_percept_adapter_returns_empty_without_perceptor(self):
-        from cemm.legacy.v3_3.percept_adapter import LegacyV33PerceptAdapter
-        adapter = LegacyV33PerceptAdapter()
-        result = adapter.perceive(signal_ids=("test",))
-        assert result == ()
-
-    def test_percept_adapter_returns_empty_with_raw_text_only(self):
-        from cemm.legacy.v3_3.percept_adapter import LegacyV33PerceptAdapter
-        adapter = LegacyV33PerceptAdapter()
-        result = adapter.perceive(raw_text="hello world")
-        assert result == ()
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("cemm.legacy.v3_3.percept_adapter")
 
 
 class TestCognitiveKernelImportBoundary:
@@ -215,28 +204,20 @@ class TestCognitiveKernelImportBoundary:
         )
 
     def test_app_package_no_legacy_imports(self):
-        """The app/ package must not import from root kernel/*.py legacy
-        modules. It IS allowed to import from cemm.legacy/ (the explicit
-        legacy boundary)."""
+        """The app/ package must not import legacy modules."""
         from pathlib import Path
         from cemm.kernel.retirement.legacy_guard import LegacyImportGuard
 
         guard = LegacyImportGuard()
         app_dir = Path("cemm/app")
         result = guard.scan_directory(app_dir)
-        # Filter out violations for cemm.legacy imports (those are the
-        # explicit boundary, not violations)
-        real_violations = tuple(
-            v for v in result.violations
-            if not v.import_statement.startswith("from ..legacy")
-            and not v.import_statement.startswith("from cemm.legacy")
-        )
-        assert len(real_violations) == 0, (
-            f"Legacy root kernel imports found in app package: {real_violations}"
+        assert result.is_clean, (
+            f"Legacy imports found in app package: {result.violations}"
         )
 
-    def test_legacy_boundary_package_exists(self):
-        """The cemm/legacy/v3_3/ boundary package exists."""
+    def test_legacy_boundary_package_does_not_exist(self):
+        """The cemm/legacy/v3_3/ boundary package has been deleted."""
         import importlib
-        mod = importlib.import_module("cemm.legacy.v3_3.percept_adapter")
-        assert hasattr(mod, "LegacyV33PerceptAdapter")
+
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("cemm.legacy.v3_3")

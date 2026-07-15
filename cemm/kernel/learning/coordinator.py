@@ -1,62 +1,44 @@
-"""LearningCoordinator — transaction lifecycle authority.
+"""LearningCoordinator — dialogue-grounded schema acquisition authority.
 
-Import boundary: model + schema + epistemics submodules only. No engine imports.
-
-Architectural guardrails (AGENTS.md §7, AUTHORITY_MATRIX, LEARNING_PIPELINE.md §12-13, §17):
-- LearningCoordinator is the transaction lifecycle authority.
-- Transaction lifecycle: open → probing → staged → provisional →
-  validated → committed / rolled_back
-- Activation sequence (LEARNING_PIPELINE.md §12):
-    pin child and environment snapshot
-    → derive structural assessment
-    → run competence suite
-    → derive admissibility profile
-    → replay
-    → compare-and-swap store/environment fingerprint
-    → atomically commit active revision or cluster
-    → publish typed invalidation and deferred-replay events
-- If independent competence or admissibility is incomplete, the child
-  remains provisional. It may be committed with exact limitations,
-  not falsely activated.
-- Learning completion gate (§17): a learning change is complete only when:
-    exact artifact and field provenance are known;
-    ordinary understanding uses the changed revision;
-    structural closure is valid;
-    competence status is honestly represented;
-    context/scope admissibility is explicit;
-    replay is idempotent and successful for claimed competencies;
-    activation, if any, committed atomically;
-    dependent cognition has valid fingerprints;
-    response wording matches the actual outcome.
-- Learning cannot install a parallel resolver.
-- No competency test may mutate canonical stores or execute external effects.
+v3.4.1 replacement.  Learning remains inside SemanticSchemaStore: an opaque
+surface receives a stable session-scoped candidate revision; user evidence is
+stored as typed field contributions; provisional status is not reported unless
+the child record was committed and is visible to the ordinary resolver.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, replace
 from enum import Enum
-from typing import Any
+import hashlib
+from typing import Any, Iterable
+from uuid import uuid4
 
-from ..model.learning import (
-    LearningTransaction, SchemaHypothesis, ReplayWorkItem, ReplayResult,
-    CompetencyResult,
+from ..model.dialogue import DialogueObligation, DialogueTurnResolution
+from ..model.gap import GapRecord
+from ..model.identity import (
+    Permission, PermissionScope, Provenance, RetentionPolicy, Scope, ScopeLevel,
 )
-from ..model.gap import GapRecord, LearningBudget
-from ..schema.store import SemanticSchemaStore
-from ..schema.envelope import SchemaEnvelope
+from ..model.learning import LearningTransaction, SchemaHypothesis
+from ..schema.competence import CompetenceAssessment, CompetenceCase, CompetenceHarness
 from ..schema.closure import GroundedDefinitionClosure, SchemaGroundingAssessment
-from ..schema.competence import CompetenceHarness, CompetenceAssessment
-from ..schema.use_profile import derive_use_profile, SchemaUseProfile, UseProfileLevel
-from ..schema.provenance import ProvenanceKind, FieldProvenanceMap
-from ..epistemics.evaluator import EpistemicEvaluator, AdmissibilityLevel
-from .hypothesis_factory import HypothesisFactory, CompetingHypotheses, EvidenceForHypothesis
-from .grounding_frontier import GroundingFrontierBuilder, GroundingFrontier, FrontierItem
+from ..schema.envelope import SchemaEnvelope
+from ..schema.grounding_spec import GroundingSpecification
+from ..schema.lexeme import LexemeSenseSchema
+from ..schema.provenance import ProvenanceKind
+from ..schema.store import SemanticSchemaStore
+from ..schema.use_profile import SchemaUseProfile, UseProfileLevel, derive_use_profile
 from .assimilator import Assimilator, ChildRevision, StagedContribution
+from .grounding_frontier import GroundingFrontier, GroundingFrontierBuilder, FrontierItem
+from .hypothesis_factory import (
+    CompetingHypotheses,
+    EvidenceForHypothesis,
+    HypothesisFactory,
+    HypothesisKind,
+)
 from .replay_queue import ReplayQueue
 
 
 class TransactionStatus(str, Enum):
-    """Learning transaction lifecycle states."""
     OPEN = "open"
     PROBING = "probing"
     STAGED = "staged"
@@ -68,35 +50,32 @@ class TransactionStatus(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class ActivationAttempt:
-    """Result of an activation attempt for a child revision.
-
-    If independent competence or admissibility is incomplete, the child
-    remains provisional. It may be committed with exact limitations,
-    not falsely activated.
-    """
     child_revision_ref: str
     structural_assessment: SchemaGroundingAssessment | None = None
     competence_assessment: CompetenceAssessment | None = None
     use_profile: SchemaUseProfile | None = None
-    admissibility: AdmissibilityLevel = AdmissibilityLevel.BLOCKED
+    admissibility: str = "blocked"
     activated: bool = False
     committed_provisional: bool = False
     limitations: tuple[str, ...] = ()
     rollback_reason: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class LearnedSchemaDraft:
+    """Declarative payload for a partially grounded learned sense."""
+
+    semantic_key: str
+    target_surface: str = ""
+    semantic_family: str = ""
+    role_refs: tuple[str, ...] = ()
+    constitutive_predicate_refs: tuple[str, ...] = ()
+    related_surface_forms: tuple[str, ...] = ()
+    unresolved_field_refs: tuple[str, ...] = ()
+
+
 class LearningCoordinator:
-    """Transaction lifecycle authority for recursive schema acquisition.
-
-    Manages the full learning transaction:
-    open → probing → staged → provisional → validated → committed / rolled_back
-
-    Does NOT:
-    - Install a parallel resolver
-    - Allow competency tests to mutate canonical stores
-    - Allow competency tests to execute external effects
-    - Falsely activate a schema without full conditions
-    """
+    """Own the complete learning transaction and pending dialogue lifecycle."""
 
     def __init__(
         self,
@@ -107,7 +86,7 @@ class LearningCoordinator:
         replay_queue: ReplayQueue | None = None,
         closure: GroundedDefinitionClosure | None = None,
         competence_harness: CompetenceHarness | None = None,
-        evaluator: EpistemicEvaluator | None = None,
+        evaluator: Any | None = None,
     ) -> None:
         self._store = store
         self._hypothesis_factory = hypothesis_factory or HypothesisFactory()
@@ -116,25 +95,86 @@ class LearningCoordinator:
         self._replay_queue = replay_queue or ReplayQueue()
         self._closure = closure or GroundedDefinitionClosure()
         self._competence_harness = competence_harness or CompetenceHarness()
-        self._evaluator = evaluator or EpistemicEvaluator()
+        self._evaluator = evaluator
         self._transactions: dict[str, LearningTransaction] = {}
+        self._transaction_keys: dict[tuple[str, str, str], str] = {}
+        self._obligations: dict[str, DialogueObligation] = {}
+        self._children: dict[str, ChildRevision] = {}
+
+    # ------------------------------------------------------------------
+    # Transaction identity and lifecycle
+    # ------------------------------------------------------------------
 
     def open_transaction(
         self,
         gap: GapRecord,
+        *,
+        context_ref: str = "default",
     ) -> LearningTransaction:
-        """Open a new learning transaction for a gap."""
+        target = gap.target_artifact_ref
+        key = (context_ref, target, gap.gap_kind)
+        existing_id = self._transaction_keys.get(key)
+        if existing_id:
+            existing = self._transactions.get(existing_id)
+            if existing and existing.status not in {
+                TransactionStatus.COMMITTED.value,
+                TransactionStatus.ROLLED_BACK.value,
+            }:
+                return existing
+
         tx = LearningTransaction(
-            id=f"tx:{gap.id}",
+            id=f"tx:{uuid4().hex[:12]}",
             gap_ref=gap.id,
-            target_sense_ref=gap.target_artifact_ref,
-            target_schema_ref=gap.target_artifact_ref,
+            target_sense_ref=target,
+            target_schema_ref=target,
             base_store_revision=self._store.store_revision,
+            expected_evidence_schema_ref=(
+                gap.expected_evidence_schema_ref
+                or self._expected_evidence_key(gap)
+            ),
+            grounding_frontier=tuple(gap.missing_fields),
             status=TransactionStatus.OPEN.value,
+            scope=Scope(level=ScopeLevel.SESSION, session_id=context_ref),
+            context_refs=(context_ref,),
             budget=gap.budget,
+            provenance=Provenance(
+                source_id=gap.id,
+                source_kind="semantic_gap",
+            ),
         )
         self._transactions[tx.id] = tx
+        self._transaction_keys[key] = tx.id
         return tx
+
+    def get_transaction(self, tx_id: str) -> LearningTransaction | None:
+        return self._transactions.get(tx_id)
+
+    def get_pending_transactions(
+        self,
+        context_ref: str | None = None,
+    ) -> tuple[LearningTransaction, ...]:
+        result = []
+        for tx in self._transactions.values():
+            if tx.status not in {
+                TransactionStatus.OPEN.value,
+                TransactionStatus.PROBING.value,
+                TransactionStatus.STAGED.value,
+                TransactionStatus.PROVISIONAL.value,
+            }:
+                continue
+            if context_ref is not None and context_ref not in tx.context_refs:
+                continue
+            result.append(tx)
+        return tuple(result)
+
+    def get_active_transactions(self) -> tuple[LearningTransaction, ...]:
+        return tuple(
+            tx for tx in self._transactions.values()
+            if tx.status not in {
+                TransactionStatus.COMMITTED.value,
+                TransactionStatus.ROLLED_BACK.value,
+            }
+        )
 
     def begin_probing(
         self,
@@ -142,29 +182,357 @@ class LearningCoordinator:
         evidence: tuple[EvidenceForHypothesis, ...] = (),
         is_correction_explicit: bool = False,
     ) -> tuple[LearningTransaction, CompetingHypotheses]:
-        """Begin probing phase — generate competing hypotheses.
-
-        Alias/synonym/translation hypotheses compete with new-schema
-        and specialization hypotheses.
-        """
         gap = GapRecord(
             id=tx.gap_ref,
             target_artifact_ref=tx.target_sense_ref,
+            expected_evidence_schema_ref=tx.expected_evidence_schema_ref or None,
             budget=tx.budget,
+            learnable=True,
         )
         competing = self._hypothesis_factory.generate(
             gap=gap,
             evidence=evidence,
             is_correction_explicit=is_correction_explicit,
         )
+        # A structural gap with accepted evidence must always retain at least
+        # one explicit hypothesis.  This is not a claim that it is correct.
+        hypotheses = competing.hypotheses
+        if not hypotheses and evidence:
+            hypotheses = (
+                SchemaHypothesis(
+                    hypothesis_kind=(
+                        HypothesisKind.CORRECTION.value
+                        if is_correction_explicit
+                        else HypothesisKind.NEW_SENSE.value
+                    ),
+                    target_sense_ref=tx.target_sense_ref,
+                    confidence=max((ev.confidence for ev in evidence), default=0.4),
+                ),
+            )
+            competing = replace(competing, hypotheses=hypotheses)
 
-        from dataclasses import replace
         updated = replace(
-            tx, status=TransactionStatus.PROBING.value,
-            hypotheses=competing.hypotheses,
+            tx,
+            status=TransactionStatus.PROBING.value,
+            hypotheses=hypotheses,
+            acquired_evidence_refs=tuple(dict.fromkeys(
+                (*tx.acquired_evidence_refs, *(ev.evidence_ref for ev in evidence))
+            )),
         )
         self._transactions[updated.id] = updated
         return updated, competing
+
+    # ------------------------------------------------------------------
+    # Dialogue obligations — registered only after dispatch
+    # ------------------------------------------------------------------
+
+    def pending_obligations(
+        self,
+        context_ref: str,
+    ) -> tuple[DialogueObligation, ...]:
+        return tuple(
+            obligation for obligation in self._obligations.values()
+            if obligation.context_ref == context_ref
+            and obligation.status == "pending"
+        )
+
+    def register_probe_dispatch(
+        self,
+        *,
+        context_ref: str,
+        message_item: Any,
+        gaps: tuple[Any, ...] | list[Any],
+        output_event_ref: str = "",
+    ) -> DialogueObligation | None:
+        if getattr(message_item, "content_kind", "") != "learning_probe":
+            return None
+        gap_role = message_item.role("gap_ref") if hasattr(message_item, "role") else None
+        gap_ref = getattr(gap_role, "semantic_ref", "") if gap_role else ""
+        gap = next((g for g in gaps if getattr(g, "id", "") == gap_ref), None)
+        if gap is None:
+            return None
+        tx = self.open_transaction(gap, context_ref=context_ref)
+        tx = replace(
+            tx,
+            status=TransactionStatus.PROBING.value,
+            asked_probe_keys=frozenset((*tx.asked_probe_keys, self._probe_key(message_item, gap))),
+        )
+        self._transactions[tx.id] = tx
+
+        unresolved = tuple(getattr(gap, "missing_fields", ()) or ())
+        if not unresolved:
+            unresolved = self._default_frontier(gap.gap_kind)
+        obligation = DialogueObligation(
+            obligation_id=f"dialogue:{uuid4().hex[:12]}",
+            context_ref=context_ref,
+            transaction_ref=tx.id,
+            question_semantic_ref=getattr(message_item, "semantic_ref", ""),
+            target_artifact_ref=gap.target_artifact_ref,
+            expected_evidence_schema_refs=(
+                tx.expected_evidence_schema_ref,
+            ) if tx.expected_evidence_schema_ref else (),
+            unresolved_field_refs=unresolved,
+            asked_probe_key=self._probe_key(message_item, gap),
+            output_event_ref=output_event_ref,
+        )
+        # Supersede older question for the same transaction; preserve history.
+        for oid, old in tuple(self._obligations.items()):
+            if old.transaction_ref == tx.id and old.status == "pending":
+                self._obligations[oid] = replace(old, status="superseded")
+        self._obligations[obligation.obligation_id] = obligation
+        return obligation
+
+
+    def register_followup_dispatch(
+        self,
+        *,
+        context_ref: str,
+        message_item: Any,
+        dialogue_resolution: DialogueTurnResolution,
+        output_event_ref: str = "",
+    ) -> DialogueObligation | None:
+        """Register a follow-up frontier question that was actually emitted."""
+        if getattr(message_item, "content_kind", "") not in {
+            "learning_progress", "dialogue_gap_explanation"
+        }:
+            return None
+        tx = self._transactions.get(dialogue_resolution.transaction_ref)
+        if tx is None:
+            return None
+        unresolved = tuple(dialogue_resolution.remaining_field_refs)
+        if not unresolved:
+            return None
+        for oid, old in tuple(self._obligations.items()):
+            if old.transaction_ref == tx.id and old.status == "pending":
+                self._obligations[oid] = replace(old, status="superseded")
+        obligation = DialogueObligation(
+            obligation_id=f"dialogue:{uuid4().hex[:12]}",
+            context_ref=context_ref,
+            transaction_ref=tx.id,
+            question_semantic_ref=getattr(message_item, "semantic_ref", ""),
+            target_artifact_ref=dialogue_resolution.target_artifact_ref,
+            expected_evidence_schema_refs=("evidence:denotation_choice",),
+            unresolved_field_refs=unresolved,
+            accepted_contribution_refs=dialogue_resolution.accepted_contribution_refs,
+            asked_probe_key=f"probe:{tx.id}:{unresolved[0]}",
+            output_event_ref=output_event_ref,
+        )
+        self._obligations[obligation.obligation_id] = obligation
+        self._transactions[tx.id] = replace(
+            tx,
+            status=TransactionStatus.PROBING.value,
+            asked_probe_keys=frozenset((*tx.asked_probe_keys, obligation.asked_probe_key)),
+            grounding_frontier=unresolved,
+        )
+        return obligation
+
+    def resolve_dialogue_turn(
+        self,
+        *,
+        context_ref: str,
+        selected_interpretations: list[Any] | tuple[Any, ...],
+        surface_evidence: tuple[Any, ...] | list[Any],
+    ) -> DialogueTurnResolution:
+        pending = self.pending_obligations(context_ref)
+        if not pending:
+            return DialogueTurnResolution(context_ref=context_ref)
+        obligation = pending[-1]
+        tx = self._transactions.get(obligation.transaction_ref)
+        if tx is None:
+            return DialogueTurnResolution(context_ref=context_ref)
+
+        if self._is_meta_question(selected_interpretations, surface_evidence):
+            return DialogueTurnResolution(
+                context_ref=context_ref,
+                resolution_kind="meta_question",
+                obligation_ref=obligation.obligation_id,
+                transaction_ref=tx.id,
+                target_artifact_ref=obligation.target_artifact_ref,
+                remaining_field_refs=obligation.unresolved_field_refs,
+                explanation_key="explain_pending_learning_frontier",
+                evidence_refs=(obligation.question_semantic_ref,),
+                suppress_fresh_lexical_gaps=True,
+            )
+
+        evidence_interps = tuple(
+            interp for interp in selected_interpretations
+            if getattr(interp, "communicative_force", "") in {"assert", "correct"}
+        )
+        choice = self._choice_answer(surface_evidence)
+        if not evidence_interps and choice:
+            evidence_ref = f"learning_evidence:choice:{uuid4().hex[:10]}"
+            evidence = (
+                self._hypothesis_factory.classify_evidence(
+                    proposition_ref=evidence_ref,
+                    evidence_ref=evidence_ref,
+                    is_new_sense_evidence=True,
+                    confidence=0.85,
+                    is_independent=False,
+                    context_ref=context_ref,
+                ),
+            )
+            updated, competing = self.begin_probing(tx, evidence=evidence)
+            contributions = (
+                StagedContribution(
+                    field_name="denotation_role_or_holder",
+                    field_value=choice,
+                    provenance_kind=ProvenanceKind.ASSERTED,
+                    evidence_ref=evidence_ref,
+                    source_ref="user:dialogue_answer",
+                    is_independent=False,
+                ),
+            )
+            best = max(
+                competing.hypotheses,
+                key=lambda hypothesis: hypothesis.confidence,
+                default=SchemaHypothesis(
+                    hypothesis_kind=HypothesisKind.NEW_SENSE.value,
+                    target_sense_ref=updated.target_sense_ref,
+                    confidence=0.6,
+                ),
+            )
+            updated, child = self.stage_revision(updated, best, contributions)
+            updated, _ = self.attempt_activation(updated, child)
+            remaining = tuple(
+                field for field in obligation.unresolved_field_refs
+                if field != "denotation_role_or_holder"
+            )
+            remaining = tuple(dict.fromkeys((*remaining, "example", "non_example", "differentiator")))
+            accepted_refs = tuple(dict.fromkeys(
+                (*obligation.accepted_contribution_refs, evidence_ref)
+            ))
+            self._obligations[obligation.obligation_id] = replace(
+                obligation,
+                status="answered",
+                accepted_contribution_refs=accepted_refs,
+                unresolved_field_refs=remaining,
+            )
+            self._transactions[updated.id] = replace(
+                updated,
+                grounding_frontier=remaining,
+            )
+            return DialogueTurnResolution(
+                context_ref=context_ref,
+                resolution_kind="evidence",
+                obligation_ref=obligation.obligation_id,
+                transaction_ref=updated.id,
+                target_artifact_ref=obligation.target_artifact_ref,
+                accepted_contribution_refs=accepted_refs,
+                accepted_surface_forms=(choice,),
+                remaining_field_refs=remaining,
+                explanation_key="report_denotation_and_request_contrast",
+                evidence_refs=(evidence_ref,),
+                suppress_fresh_lexical_gaps=True,
+            )
+        if not evidence_interps:
+            return DialogueTurnResolution(context_ref=context_ref)
+
+        is_correction = any(
+            getattr(interp, "communicative_force", "") == "correct"
+            for interp in evidence_interps
+        )
+        evidence = tuple(
+            self._hypothesis_factory.classify_evidence(
+                proposition_ref=getattr(interp, "proposition_ref", ""),
+                evidence_ref=f"learning_evidence:{getattr(interp, 'proposition_ref', uuid4().hex)}",
+                is_new_sense_evidence=not is_correction,
+                is_correction=is_correction,
+                confidence=max(0.35, float(getattr(interp, "confidence", 0.0))),
+                # The user utterance is independent of CEMM's hypothesis, but
+                # repeated paraphrases retain the same source lineage.  We do
+                # not count it as an independent competence oracle.
+                is_independent=False,
+                context_ref=getattr(interp, "context_ref", context_ref),
+            )
+            for interp in evidence_interps
+            if getattr(interp, "proposition_ref", "")
+        )
+        updated, competing = self.begin_probing(
+            tx,
+            evidence=evidence,
+            is_correction_explicit=is_correction,
+        )
+        accepted_surfaces = self._accepted_surfaces(
+            surface_evidence,
+            obligation.target_artifact_ref,
+        )
+        contributions = self._typed_contributions(
+            evidence_interps,
+            accepted_surfaces,
+            evidence,
+        )
+        best = max(
+            competing.hypotheses,
+            key=lambda hypothesis: hypothesis.confidence,
+            default=SchemaHypothesis(
+                hypothesis_kind=HypothesisKind.NEW_SENSE.value,
+                target_sense_ref=updated.target_sense_ref,
+                confidence=0.4,
+            ),
+        )
+        updated, child = self.stage_revision(updated, best, contributions)
+        updated, attempt = self.attempt_activation(updated, child)
+
+        accepted_refs = tuple(
+            dict.fromkeys(
+                (*obligation.accepted_contribution_refs,
+                 *(contribution.evidence_ref for contribution in contributions if contribution.evidence_ref))
+            )
+        )
+        remaining = self._remaining_frontier(
+            obligation.unresolved_field_refs,
+            contributions,
+        )
+        # A single analogy/subkind assertion does not establish role-vs-holder
+        # denotation or independent contrast competence.
+        if "denotation_role_or_holder" not in remaining:
+            remaining = (*remaining, "denotation_role_or_holder")
+        remaining = tuple(dict.fromkeys(remaining))
+        self._obligations[obligation.obligation_id] = replace(
+            obligation,
+            status="answered",
+            accepted_contribution_refs=accepted_refs,
+            unresolved_field_refs=remaining,
+        )
+        self._transactions[updated.id] = replace(
+            updated,
+            grounding_frontier=remaining,
+        )
+        return DialogueTurnResolution(
+            context_ref=context_ref,
+            resolution_kind="correction" if is_correction else "evidence",
+            obligation_ref=obligation.obligation_id,
+            transaction_ref=updated.id,
+            target_artifact_ref=obligation.target_artifact_ref,
+            accepted_contribution_refs=accepted_refs,
+            accepted_surface_forms=accepted_surfaces,
+            remaining_field_refs=remaining,
+            explanation_key="report_accepted_and_remaining",
+            evidence_refs=tuple(ev.evidence_ref for ev in evidence),
+            suppress_fresh_lexical_gaps=True,
+        )
+
+    # Compatibility API: called after ordinary interpretation resolution.
+    def consume_pending_evidence(
+        self,
+        selected_interpretations: list[Any] | None = None,
+        *,
+        context_ref: str = "default",
+        surface_evidence: tuple[Any, ...] = (),
+    ) -> tuple[Any, ...]:
+        resolution = self.resolve_dialogue_turn(
+            context_ref=context_ref,
+            selected_interpretations=selected_interpretations or [],
+            surface_evidence=surface_evidence,
+        )
+        if resolution.transaction_ref:
+            tx = self._transactions.get(resolution.transaction_ref)
+            return (tx,) if tx else ()
+        return ()
+
+    # ------------------------------------------------------------------
+    # Child revisions and activation
+    # ------------------------------------------------------------------
 
     def stage_revision(
         self,
@@ -172,22 +540,95 @@ class LearningCoordinator:
         hypothesis: SchemaHypothesis,
         contributions: tuple[StagedContribution, ...] = (),
     ) -> tuple[LearningTransaction, ChildRevision]:
-        """Stage a child revision from accepted evidence.
-
-        Accepted evidence creates an immutable child revision.
-        No hypothesis is silently rewritten as user teaching.
-        """
+        prior_child = self._children.get(tx.target_schema_ref)
+        combined_contributions = tuple(dict.fromkeys(
+            (*(prior_child.contributions if prior_child else ()), *contributions)
+        ))
+        semantic_key = self._stable_semantic_key(tx.target_sense_ref)
+        existing_versions = [
+            getattr(candidate, "version", 0)
+            for candidate in self._store.find_candidates(semantic_key)
+        ]
+        version = max(existing_versions, default=0) + 1
+        digest = hashlib.sha1(semantic_key.encode("utf-8")).hexdigest()[:12]
         child = self._assimilator.assimilate(
             base_schema_ref=tx.target_schema_ref,
-            base_store_revision=tx.base_store_revision,
+            base_store_revision=self._store.store_revision,
             hypothesis=hypothesis,
-            contributions=contributions,
+            contributions=combined_contributions,
+            grounding_spec=GroundingSpecification(
+                semantic_family="lexeme_sense",
+                required_definition_fields=("semantic_family",),
+                allowed_cycle_classes=frozenset({"positive_monotone_recursive"}),
+                minimum_independent_oracle_classes=frozenset({"invariant"}),
+            ),
         )
-
-        from dataclasses import replace
+        child = replace(child, revision_id=f"learned:lexeme:{digest}:v{version}")
+        surface = self._target_surface(tx.target_sense_ref)
+        draft = LearnedSchemaDraft(
+            semantic_key=semantic_key,
+            target_surface=surface,
+            semantic_family=self._field(contributions, "semantic_family"),
+            role_refs=tuple(self._field_values(contributions, "role_ref")),
+            constitutive_predicate_refs=tuple(
+                self._field_values(contributions, "constitutive_predicate_ref")
+            ),
+            related_surface_forms=tuple(
+                self._field_values(contributions, "related_surface_form")
+            ),
+            unresolved_field_refs=tuple(tx.grounding_frontier),
+        )
+        record_id = child.revision_id
+        scope = tx.scope if tx.scope.level == ScopeLevel.SESSION else Scope(
+            level=ScopeLevel.SESSION,
+            session_id=(tx.context_refs[0] if tx.context_refs else "default"),
+        )
+        envelope = SchemaEnvelope(
+            record_id=record_id,
+            semantic_key=semantic_key,
+            schema_kind="lexeme_sense",
+            status="candidate",
+            scope=scope,
+            version=version,
+            payload=LexemeSenseSchema(
+                semantic_key=semantic_key,
+                lexical_form_refs=(),
+                predicate_schema_ref="",
+                part_of_speech="",
+                sense_disambiguators=draft.related_surface_forms,
+            ),
+            confidence=max(0.2, hypothesis.confidence),
+            permission=Permission(
+                scope=PermissionScope.SESSION_PRIVATE,
+                may_store=True,
+                may_retrieve=True,
+                may_use=True,
+                may_share=False,
+                may_execute=False,
+                retention=RetentionPolicy.SESSION,
+            ),
+            provenance=Provenance(
+                source_id=tx.id,
+                source_kind="user_teaching",
+                language_tag="en",
+            ),
+            support_refs=tuple(
+                contribution.evidence_ref
+                for contribution in contributions
+                if contribution.evidence_ref
+            ),
+        )
+        if self._store.get(record_id) is None:
+            with self._store.transaction():
+                self._store.register(envelope)
+                if surface:
+                    self._store.index_lexical_form(surface.lower(), "en", semantic_key)
+        self._children[record_id] = child
         updated = replace(
-            tx, status=TransactionStatus.STAGED.value,
-            child_schema_revision=1,
+            tx,
+            status=TransactionStatus.STAGED.value,
+            child_schema_revision=version,
+            target_schema_ref=record_id,
         )
         self._transactions[updated.id] = updated
         return updated, child
@@ -197,216 +638,126 @@ class LearningCoordinator:
         tx: LearningTransaction,
         child: ChildRevision,
         implementation_path: str = "",
+        competence_cases: tuple[CompetenceCase, ...] = (),
     ) -> tuple[LearningTransaction, ActivationAttempt]:
-        """Attempt activation of a child revision.
+        envelope = self._store.get(child.revision_id)
+        if envelope is None:
+            updated = replace(tx, status=TransactionStatus.ROLLED_BACK.value)
+            self._transactions[updated.id] = updated
+            return updated, ActivationAttempt(
+                child_revision_ref=child.revision_id,
+                rollback_reason="child schema was not committed to SemanticSchemaStore",
+            )
 
-        Activation sequence (LEARNING_PIPELINE.md §12):
-        1. pin child and environment snapshot
-        2. derive structural assessment
-        3. run competence suite
-        4. derive admissibility profile
-        5. replay
-        6. compare-and-swap store/environment fingerprint
-        7. atomically commit active revision or cluster
-        8. publish typed invalidation and deferred-replay events
-
-        If independent competence or admissibility is incomplete,
-        the child remains provisional.
-        """
-        # 1. Pin snapshot — use store revision at transaction start
-        env_fingerprint = f"store:{tx.base_store_revision}"
-
-        # 2. Derive structural assessment
-        # Create a temporary envelope for assessment
-        env = SchemaEnvelope(
-            record_id=child.revision_id,
-            semantic_key=tx.target_sense_ref,
-            schema_kind="predicate",
-            status="candidate",
+        grounding_spec = child.grounding_spec or GroundingSpecification(
+            semantic_family=envelope.schema_kind,
+            required_definition_fields=(),
         )
-        grounding_spec = child.grounding_spec
-        if grounding_spec is None:
-            from ..schema.grounding_spec import GroundingSpecification
-            grounding_spec = GroundingSpecification(semantic_family="predicate")
-
         structural = self._closure.assess(
-            envelope=env,
+            envelope=envelope,
             grounding_spec=grounding_spec,
             patterns=child.patterns,
+            provenance_map=child.field_provenance_map,
+            environment_fingerprint=f"store:{tx.base_store_revision}",
         )
-
-        # 3. Run competence suite (sandboxed, non-mutating)
-        competence_assessment = self._competence_harness.assess(
-            cases=(),
+        competence = self._competence_harness.assess(
+            cases=competence_cases,
             implementation_path=implementation_path,
         )
-
-        # 4. Derive admissibility profile
-        # Default to attributed_only for learning — actual-world admission
-        # requires full epistemic evaluation
-        admissibility = AdmissibilityLevel.ATTRIBUTED_ONLY
-
-        # 5. Derive use profile
         use_profile = derive_use_profile(
-            assessment=structural,
-            competence_is_competent=competence_assessment.is_competent,
-            competence_is_self_certified=competence_assessment.is_self_certified,
+            structural,
+            context_ref=(tx.context_refs[0] if tx.context_refs else ""),
+            competence_is_competent=competence.is_competent,
+            competence_is_self_certified=competence.is_self_certified,
+            # User teaching remains attributed until independently admitted.
+            epistemic_admissible=True,
+            scope_accessible=True,
         )
+        limitations = list(structural.blocker_reasons)
+        if not competence_cases:
+            limitations.append("no independent competence cases supplied")
+        if not competence.is_competent:
+            limitations.append("independent competence not established")
 
-        # Determine outcome
-        limitations: list[str] = list(structural.blocker_reasons)
-        if competence_assessment.is_self_certified:
-            limitations.append("self-certified competence — not independently validated")
-        if not competence_assessment.is_competent:
-            limitations.append("competence not met")
-
-        # 6-7. Activation or provisional commit
         activated = False
         committed_provisional = False
         rollback_reason = ""
-
-        if structural.is_structurally_executable and competence_assessment.is_competent:
-            # Full activation conditions met
-            # Register and activate through the store (CAS)
-            try:
-                self._store.register(env)
-                rev = self._store.get_revision(env.record_id)
-                if rev is not None:
-                    # Transition to provisional first
-                    result = self._store.transition_to_provisional(
-                        env.record_id, rev
-                    )
-                    if result.status.value == "success":
-                        rev = self._store.get_revision(env.record_id)
-                        if rev is not None:
-                            result = self._store.activate(env.record_id, rev)
-                            activated = result.status.value == "success"
-                            if not activated:
-                                rollback_reason = f"activation CAS failed: {result.detail}"
-                else:
-                    rollback_reason = "could not get revision after register"
-            except ValueError:
-                rollback_reason = "schema already registered"
-        elif structural.is_structurally_executable:
-            # Structurally executable but competence incomplete → provisional
-            committed_provisional = True
-            limitations.append("provisional — competence incomplete")
+        current_revision = self._store.get_revision(child.revision_id)
+        if current_revision is None:
+            rollback_reason = "child revision is not visible"
+        elif structural.is_structurally_executable and competence.is_competent:
+            result = self._store.activate_with_assessment(
+                child.revision_id,
+                current_revision,
+                grounding_assessment_ref=f"grounding:{child.revision_id}",
+                competence_assessment_ref=f"competence:{child.revision_id}",
+                epistemic_admissibility_ref=f"admissibility:{child.revision_id}:attributed",
+                environment_fingerprint=f"store:{tx.base_store_revision}",
+                grounding_assessment=structural,
+                competence_assessment=competence,
+            )
+            activated = getattr(result.status, "value", result.status) == "success"
+            if not activated:
+                rollback_reason = getattr(result, "detail", "activation failed")
         else:
-            # Not structurally executable → stays staged
-            rollback_reason = "not structurally executable"
+            # Commit a real provisional revision only when some declarative
+            # contribution exists.  It remains limited to attributed/qualified
+            # use and cannot become actual-world knowledge or authorize effects.
+            has_minimum_session_structure = any(
+                contribution.field_name == "semantic_family"
+                and bool(contribution.field_value)
+                for contribution in child.contributions
+            )
+            if has_minimum_session_structure:
+                result = self._store.transition_to_provisional(
+                    child.revision_id,
+                    current_revision,
+                )
+                committed_provisional = (
+                    getattr(result.status, "value", result.status) == "success"
+                )
+                if not committed_provisional:
+                    rollback_reason = getattr(result, "detail", "provisional commit failed")
+            else:
+                rollback_reason = "semantic family is still unresolved"
 
-        # Update transaction status
         if activated:
-            new_status = TransactionStatus.COMMITTED.value
+            status = TransactionStatus.COMMITTED.value
         elif committed_provisional:
-            new_status = TransactionStatus.PROVISIONAL.value
+            status = TransactionStatus.PROVISIONAL.value
+        elif envelope.status == "candidate":
+            # Keep the transaction staged rather than falsely reporting rollback
+            # when further user evidence can still make progress.
+            status = TransactionStatus.STAGED.value
         else:
-            new_status = TransactionStatus.ROLLED_BACK.value
-
-        from dataclasses import replace
+            status = TransactionStatus.ROLLED_BACK.value
         updated = replace(
-            tx, status=new_status,
-            structural_status="structurally_executable" if structural.is_structurally_executable else "partial",
-            competence_status="independently_validated" if competence_assessment.is_competent else "self_checked",
-            admissibility_status=admissibility.value,
+            tx,
+            status=status,
+            structural_status=(
+                "structurally_executable"
+                if structural.is_structurally_executable
+                else "partial"
+            ),
+            competence_status=(
+                "independently_validated"
+                if competence.is_competent
+                else "limited"
+            ),
+            admissibility_status="attributed_only",
         )
         self._transactions[updated.id] = updated
-
-        attempt = ActivationAttempt(
+        return updated, ActivationAttempt(
             child_revision_ref=child.revision_id,
             structural_assessment=structural,
-            competence_assessment=competence_assessment,
+            competence_assessment=competence,
             use_profile=use_profile,
-            admissibility=admissibility,
+            admissibility="attributed_only",
             activated=activated,
             committed_provisional=committed_provisional,
-            limitations=tuple(limitations),
+            limitations=tuple(dict.fromkeys(limitations)),
             rollback_reason=rollback_reason,
         )
-
-        return updated, attempt
-
-    def get_transaction(self, tx_id: str) -> LearningTransaction | None:
-        """Get a transaction by ID."""
-        return self._transactions.get(tx_id)
-
-    def get_pending_transactions(self) -> tuple[LearningTransaction, ...]:
-        """Get all transactions awaiting evidence (PROBING or STAGED)."""
-        return tuple(
-            tx for tx in self._transactions.values()
-            if tx.status in (
-                TransactionStatus.PROBING.value,
-                TransactionStatus.STAGED.value,
-                TransactionStatus.OPEN.value,
-            )
-        )
-
-    def get_active_transactions(self) -> tuple[LearningTransaction, ...]:
-        """Get all non-terminal transactions."""
-        return tuple(
-            tx for tx in self._transactions.values()
-            if tx.status not in (
-                TransactionStatus.COMMITTED.value,
-                TransactionStatus.ROLLED_BACK.value,
-            )
-        )
-
-    def consume_pending_evidence(
-        self,
-        selected_interpretations: list[Any] | None = None,
-    ) -> tuple[Any, ...]:
-        """B5: Consume pending learning evidence.
-
-        After ordinary composition and grounding, match grounded
-        propositions against expected evidence schemas for pending
-        transactions. Raw text is never copied directly into a
-        hypothesis field.
-
-        Returns updated transactions that received evidence.
-        """
-        if not selected_interpretations:
-            return ()
-
-        pending = self.get_pending_transactions()
-        if not pending:
-            return ()
-
-        from .hypothesis_factory import EvidenceForHypothesis, HypothesisKind
-        updated_txs: list[Any] = []
-
-        for tx in pending:
-            # Match interpretations to this transaction's target
-            matched_evidence: list[EvidenceForHypothesis] = []
-            for interp in selected_interpretations:
-                prop = getattr(interp, "proposition", None)
-                if prop is None:
-                    continue
-                prop_id = getattr(prop, "id", "")
-                # Check if this proposition relates to the transaction's target
-                target = tx.target_sense_ref or tx.target_schema_ref
-                if not target:
-                    continue
-                # Match by target reference in proposition's predication
-                pred_ref = getattr(prop, "predication_ref", "") or getattr(prop, "predicate_schema_ref", "")
-                if target in pred_ref or pred_ref in target:
-                    ev = self._hypothesis_factory.classify_evidence(
-                        proposition_ref=prop_id,
-                        evidence_ref=f"ev:{prop_id}",
-                        is_new_sense_evidence=True,
-                        confidence=0.5,
-                        is_independent=True,
-                    )
-                    matched_evidence.append(ev)
-
-            if matched_evidence:
-                # Begin probing with matched evidence
-                updated, _ = self.begin_probing(
-                    tx=tx,
-                    evidence=tuple(matched_evidence),
-                )
-                updated_txs.append(updated)
-
-        return tuple(updated_txs)
 
     def provisional_replay(
         self,
@@ -414,74 +765,23 @@ class LearningCoordinator:
         contributions: tuple[StagedContribution, ...] = (),
         implementation_path: str = "",
     ) -> tuple[LearningTransaction, ActivationAttempt]:
-        """B6: Provisional replay — create child revision and attempt activation.
-
-        When matched evidence can update a target schema:
-        1. create a child schema revision against the pinned snapshot
-        2. stage typed schema changes with field-level provenance
-        3. classify typed dependencies and recursive components
-        4. run structural closure and sandboxed competence cases
-        5. derive context-specific epistemic admissibility
-        6. expose the result as provisional or activation-ready
-        7. preserve rollback and idempotency data
-
-        Replay may not repeat dispatched output or external side effects.
-        Definition-derived cases can prove well-formedness only, not
-        independent competence.
-        """
-        # Select the best hypothesis (highest confidence)
         if not tx.hypotheses:
-            from dataclasses import replace
-            updated = replace(tx, status=TransactionStatus.ROLLED_BACK.value)
-            self._transactions[updated.id] = updated
-            return updated, ActivationAttempt(
+            return tx, ActivationAttempt(
                 child_revision_ref="",
-                rollback_reason="no hypotheses to stage",
+                rollback_reason="no hypothesis is available for replay",
             )
-
-        best_hyp = max(tx.hypotheses, key=lambda h: h.confidence)
-
-        # Stage child revision
-        updated, child = self.stage_revision(
-            tx=tx,
-            hypothesis=best_hyp,
-            contributions=contributions,
-        )
-
-        # Attempt activation (runs closure, competence, admissibility)
-        updated, attempt = self.attempt_activation(
-            tx=updated,
-            child=child,
-            implementation_path=implementation_path,
-        )
-
-        # Enqueue replay work if replay queue is available
-        if self._replay_queue is not None and attempt.activated:
-            from ..model.learning import ReplayWorkItem
-            replay_item = ReplayWorkItem(
-                id=f"replay:{child.revision_id}",
-                source_evidence_ref=updated.gap_ref,
-                target_sense_ref=updated.target_sense_ref,
-                target_schema_revision_ref=child.revision_id,
-                checkpoint_ref=updated.replay_checkpoint_ref,
-                context_refs=updated.context_refs,
-                dependency_fingerprint=f"store:{updated.base_store_revision}",
-                idempotency_key=f"replay:{child.revision_id}:{updated.base_store_revision}",
-            )
-            self._replay_queue.enqueue(replay_item)
-
-        return updated, attempt
+        best = max(tx.hypotheses, key=lambda hypothesis: hypothesis.confidence)
+        updated, child = self.stage_revision(tx, best, contributions)
+        return self.attempt_activation(updated, child, implementation_path)
 
     def rollback(self, tx: LearningTransaction) -> LearningTransaction:
-        """Roll back a transaction.
-
-        Roll back provisional schema revisions that failed validation.
-        Original evidence remains preserved.
-        """
-        from dataclasses import replace
         updated = replace(tx, status=TransactionStatus.ROLLED_BACK.value)
         self._transactions[updated.id] = updated
         return updated
+
+    # ------------------------------------------------------------------
+    # Frontier and completion
+    # ------------------------------------------------------------------
 
     def compute_grounding_frontier(
         self,
@@ -489,49 +789,23 @@ class LearningCoordinator:
         attempt: ActivationAttempt | None = None,
         blockers: tuple[Any, ...] = (),
     ) -> GroundingFrontier:
-        """Compute the grounding frontier for a transaction.
-
-        Per LEARNING_PIPELINE.md §5:
-        - The transaction computes the smallest blocking frontier over
-          typed dependencies.
-        - Priority: active goal blocker, required semantic family/role/value,
-          constitutive structure, independent discrimination, differentiator,
-          context/time applicability, enrichment.
-        - Asked probe keys are persisted. Budget exhaustion leaves exact typed
-          gaps and a resumable transaction.
-        """
-        frontier_items: list[FrontierItem] = []
-
-        # Build frontier items from structural assessment blockers
-        if attempt is not None and attempt.structural_assessment is not None:
-            for blocker in attempt.structural_assessment.blocker_reasons:
-                priority = self._frontier_builder.classify_blocker(blocker)
-                probe_key = f"probe:{tx.id}:{blocker}"
-                frontier_items.append(FrontierItem(
-                    item_id=f"fi:{tx.id}:{blocker}",
-                    dependency_ref=blocker,
-                    blocker_kind=blocker,
-                    priority=priority,
-                    probe_key=probe_key,
-                    target_schema_ref=tx.target_schema_ref,
-                ))
-
-        # Also include any additional blockers passed in
-        for blocker in blockers:
-            blocker_kind = getattr(blocker, "kind", str(blocker))
-            priority = self._frontier_builder.classify_blocker(blocker_kind)
-            probe_key = f"probe:{tx.id}:{blocker_kind}"
-            frontier_items.append(FrontierItem(
-                item_id=f"fi:{tx.id}:{blocker_kind}",
-                dependency_ref=str(blocker),
-                blocker_kind=blocker_kind,
-                priority=priority,
+        items: list[FrontierItem] = []
+        blocker_values: list[str] = list(tx.grounding_frontier)
+        if attempt and attempt.structural_assessment:
+            blocker_values.extend(attempt.structural_assessment.blocker_reasons)
+        blocker_values.extend(str(getattr(value, "kind", value)) for value in blockers)
+        for blocker in dict.fromkeys(value for value in blocker_values if value):
+            probe_key = f"probe:{tx.id}:{blocker}"
+            items.append(FrontierItem(
+                item_id=f"fi:{uuid4().hex[:10]}",
+                dependency_ref=blocker,
+                blocker_kind=blocker,
+                priority=self._frontier_builder.classify_blocker(blocker),
                 probe_key=probe_key,
                 target_schema_ref=tx.target_schema_ref,
             ))
-
         return self._frontier_builder.build(
-            blockers=tuple(frontier_items),
+            blockers=tuple(items),
             budget=tx.budget,
             asked_probe_keys=tx.asked_probe_keys,
         )
@@ -541,46 +815,218 @@ class LearningCoordinator:
         tx: LearningTransaction,
         attempt: ActivationAttempt,
     ) -> tuple[bool, tuple[str, ...]]:
-        """Check the learning completion gate (LEARNING_PIPELINE.md §17).
-
-        A learning change is complete only when:
-        1. exact artifact and field provenance are known
-        2. ordinary understanding uses the changed revision
-        3. structural closure is valid
-        4. competence status is honestly represented
-        5. context/scope admissibility is explicit
-        6. replay is idempotent and successful for claimed competencies
-        7. activation, if any, committed atomically
-        8. dependent cognition has valid fingerprints
-        9. response wording matches the actual outcome
-        """
         failures: list[str] = []
-
-        # 1. Field provenance known
+        if self._store.get(attempt.child_revision_ref) is None:
+            failures.append("child revision is absent from SemanticSchemaStore")
         if attempt.structural_assessment is None:
             failures.append("structural assessment missing")
-
-        # 3. Structural closure valid
-        if attempt.structural_assessment and not attempt.structural_assessment.is_structurally_executable:
-            if tx.status != TransactionStatus.PROVISIONAL.value:
-                failures.append("structural closure not valid")
-
-        # 4. Competence status honestly represented
-        if attempt.competence_assessment and attempt.competence_assessment.is_self_certified:
-            if attempt.activated:
-                failures.append("self-certified competence cannot activate")
-
-        # 5. Admissibility explicit
-        if tx.admissibility_status == "open":
-            failures.append("admissibility not explicit")
-
-        # 7. Activation committed atomically
         if attempt.activated and tx.status != TransactionStatus.COMMITTED.value:
-            failures.append("activation not reflected in transaction status")
-
-        # If provisional, limitations must be explicit
+            failures.append("activation is not reflected in transaction status")
         if tx.status == TransactionStatus.PROVISIONAL.value:
+            if not attempt.committed_provisional:
+                failures.append("provisional transaction lacks a committed provisional revision")
             if not attempt.limitations:
-                failures.append("provisional without explicit limitations")
+                failures.append("provisional limitations are absent")
+        if not attempt.activated:
+            failures.append("ordinary use has not passed independent competence and activation")
+        return not failures, tuple(failures)
 
-        return (len(failures) == 0, tuple(failures))
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _expected_evidence_key(gap: GapRecord) -> str:
+        if gap.gap_kind == "missing_semantic_family":
+            return "evidence:semantic_family"
+        if gap.gap_kind == "missing_required_role":
+            return "evidence:role_filler"
+        if gap.gap_kind in {"missing_differentiator", "sense_individuation_pending"}:
+            return "evidence:differentiator"
+        return "evidence:partial_definition"
+
+    @staticmethod
+    def _default_frontier(gap_kind: str) -> tuple[str, ...]:
+        if gap_kind in {"missing_semantic_family", "sense_individuation_pending"}:
+            return ("semantic_family", "denotation_role_or_holder")
+        if gap_kind == "missing_required_role":
+            return ("required_role",)
+        return ("missing_definition_field",)
+
+    @staticmethod
+    def _probe_key(message_item: Any, gap: Any) -> str:
+        role = message_item.role("probe_key") if hasattr(message_item, "role") else None
+        value = getattr(role, "surface_hint", "") if role else ""
+        return value or f"probe:{getattr(gap, 'id', '')}:{getattr(gap, 'gap_kind', '')}"
+
+    @staticmethod
+    def _is_meta_question(
+        selected_interpretations: Iterable[Any],
+        surface_evidence: Iterable[Any],
+    ) -> bool:
+        for evidence in surface_evidence:
+            for cue in getattr(evidence, "pragmatic_cues", ()):
+                if getattr(cue, "cue_kind", "") == "elliptical_clarification_query":
+                    return True
+        asks = [
+            interp for interp in selected_interpretations
+            if getattr(interp, "communicative_force", "") == "ask"
+        ]
+        return bool(asks and all(
+            getattr(interp, "open_role_refs", ())
+            or getattr(interp, "query_role_refs", ())
+            for interp in asks
+        ))
+
+    @staticmethod
+    def _choice_answer(surface_evidence: Iterable[Any]) -> str:
+        semantic_keys: set[str] = set()
+        for evidence in surface_evidence:
+            semantic_keys.update(
+                getattr(candidate, "semantic_key", "")
+                for candidate in getattr(evidence, "lexical_sense_candidates", ())
+                if getattr(candidate, "semantic_key", "")
+            )
+        if "grammar:quantifier_both" in semantic_keys or {"role", "person"} <= semantic_keys:
+            return "both"
+        if "role" in semantic_keys:
+            return "role"
+        if "person" in semantic_keys:
+            return "person"
+        return ""
+
+    @staticmethod
+    def _accepted_surfaces(
+        surface_evidence: Iterable[Any],
+        target_ref: str,
+    ) -> tuple[str, ...]:
+        target = LearningCoordinator._target_surface(target_ref).lower()
+        blocked = {
+            "a", "an", "the", "is", "are", "am", "was", "were",
+            "like", "of", "to", "and", "or", "what", "which", "do",
+            "does", "did", "i", "you", "it", "that", "this", "my",
+            "your", "well", "mean",
+        }
+        values: list[str] = []
+        for evidence in surface_evidence:
+            stream = getattr(evidence, "token_stream", None)
+            for token in getattr(stream, "tokens", ()):
+                raw = getattr(token, "raw_form", "").strip()
+                lemma = (
+                    getattr(token, "lemma_candidates", ()) or
+                    (getattr(token, "normalized_form", ""),)
+                )[0].lower()
+                if not raw or lemma in blocked or lemma == target or len(lemma) < 2:
+                    continue
+                # Preserve open-class evidence only.  This remains an observed
+                # lexical mention, not a silently accepted definition field.
+                values.append(raw.lower())
+        return tuple(dict.fromkeys(values))
+
+    def _typed_contributions(
+        self,
+        interpretations: Iterable[Any],
+        accepted_surfaces: tuple[str, ...],
+        evidence: tuple[EvidenceForHypothesis, ...],
+    ) -> tuple[StagedContribution, ...]:
+        contributions: list[StagedContribution] = []
+        ev_refs = [ev.evidence_ref for ev in evidence]
+        first_ev = ev_refs[0] if ev_refs else ""
+        for interp in interpretations:
+            predicate = getattr(interp, "predicate_semantic_key", "")
+            if self._supports_family_contribution(predicate):
+                contributions.append(StagedContribution(
+                    field_name="semantic_family",
+                    field_value="entity_kind_or_role",
+                    provenance_kind=ProvenanceKind.ASSERTED,
+                    evidence_ref=first_ev,
+                    source_ref=getattr(interp, "proposition_ref", ""),
+                    is_independent=False,
+                ))
+                contributions.append(StagedContribution(
+                    field_name="constitutive_predicate_ref",
+                    field_value=predicate,
+                    provenance_kind=ProvenanceKind.ASSERTED,
+                    evidence_ref=first_ev,
+                    source_ref=getattr(interp, "predication_ref", ""),
+                    is_independent=False,
+                ))
+            for binding in getattr(interp, "role_bindings", ()):
+                contributions.append(StagedContribution(
+                    field_name="role_ref",
+                    field_value=getattr(binding, "role_schema_ref", ""),
+                    provenance_kind=ProvenanceKind.OBSERVED,
+                    evidence_ref=first_ev,
+                    source_ref=getattr(interp, "predication_ref", ""),
+                    is_independent=False,
+                ))
+        for surface in accepted_surfaces:
+            contributions.append(StagedContribution(
+                field_name="related_surface_form",
+                field_value=surface,
+                provenance_kind=ProvenanceKind.OBSERVED,
+                evidence_ref=first_ev,
+                source_ref=first_ev,
+                is_independent=False,
+            ))
+        # Deduplicate exact field/value pairs.
+        unique: dict[tuple[str, str], StagedContribution] = {}
+        for contribution in contributions:
+            unique[(contribution.field_name, repr(contribution.field_value))] = contribution
+        return tuple(unique.values())
+
+    def _supports_family_contribution(self, predicate_key: str) -> bool:
+        active = self._store.find_active(predicate_key)
+        payload = getattr(active, "payload", None) if active is not None else None
+        role_refs = set(getattr(payload, "role_refs", ()) or ())
+        classifying_shapes = (
+            {"role:child_kind", "role:parent_kind"},
+            {"role:entity", "role:kind"},
+            {"role:subject", "role:complement"},
+        )
+        return any(shape <= role_refs for shape in classifying_shapes)
+
+    @staticmethod
+    def _remaining_frontier(
+        old: tuple[str, ...],
+        contributions: tuple[StagedContribution, ...],
+    ) -> tuple[str, ...]:
+        supplied = {contribution.field_name for contribution in contributions}
+        remaining = [field for field in old if field not in supplied]
+        if "semantic_family" not in supplied and "semantic_family" not in remaining:
+            remaining.insert(0, "semantic_family")
+        if "differentiator" not in remaining:
+            remaining.append("differentiator")
+        return tuple(dict.fromkeys(remaining))
+
+    @staticmethod
+    def _stable_semantic_key(target_ref: str) -> str:
+        if target_ref.startswith("opaque:"):
+            return target_ref
+        return f"learned:{target_ref}"
+
+    @staticmethod
+    def _target_surface(target_ref: str) -> str:
+        if target_ref.startswith("opaque:"):
+            parts = target_ref.split(":")
+            return parts[-1] if parts else ""
+        if target_ref.startswith("ref:unknown:"):
+            return target_ref[len("ref:unknown:"):]
+        return target_ref.rsplit(":", 1)[-1] if target_ref else ""
+
+    @staticmethod
+    def _field(contributions: tuple[StagedContribution, ...], name: str) -> str:
+        for contribution in contributions:
+            if contribution.field_name == name:
+                return str(contribution.field_value)
+        return ""
+
+    @staticmethod
+    def _field_values(
+        contributions: tuple[StagedContribution, ...], name: str,
+    ) -> tuple[str, ...]:
+        return tuple(
+            str(contribution.field_value)
+            for contribution in contributions
+            if contribution.field_name == name and contribution.field_value
+        )

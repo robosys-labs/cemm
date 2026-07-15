@@ -1,21 +1,22 @@
-"""Signal envelope — raw input signal metadata.
+"""Canonical input signals for the v3.4 cognitive cycle.
 
-Import boundary: standard library only.
+Raw content is carried by an InputSignal. ``signal_ids`` remain references and
+must never be overloaded with user text.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
 
 from .refs import FrozenMap
 
 
 @dataclass(frozen=True, slots=True)
 class SignalEnvelope:
-    """Envelope for a raw input signal before semantic processing."""
+    """Immutable transport envelope for an observed input signal."""
+
     id: str
-    signal_kind: str  # text, audio, sensor, event, etc.
+    signal_kind: str
     language_tag: str = "und"
     received_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)
@@ -24,3 +25,16 @@ class SignalEnvelope:
     source_ref: str | None = None
     raw_data_ref: str | None = None
     features: FrozenMap = field(default_factory=FrozenMap)
+
+
+@dataclass(frozen=True, slots=True)
+class InputSignal:
+    """An observed input delivered to a cognitive cycle."""
+
+    id: str
+    content: str
+    context_id: str = "default"
+    source_ref: str = "user"
+    language_hint: str = "en"
+    channel: str = "text"
+    observed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

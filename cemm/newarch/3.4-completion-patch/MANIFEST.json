@@ -1,0 +1,27 @@
+{
+  "package": "cemm_v3_4_completion_audit",
+  "audited_commit": "d45a0f6e2989ef11122de9fef66786c40c7ef2a5",
+  "generated_at": "2026-07-14T10:06:37.308747+00:00",
+  "files": {
+    "README.md": {
+      "sha256": "0b751472e343cd33b988a6998e1b86c6a56ba12c5e72e7b2b88821dad2ab5811",
+      "bytes": 613
+    },
+    "bug-fixes.md": {
+      "sha256": "7c3e2d191fc28aef027e62ec2aa38e55d31449aff4532c37e9f0a8e23b2c1c0e",
+      "bytes": 24441
+    },
+    "completion-plan.md": {
+      "sha256": "e59aac37b6bca86209655e2ebcb1f27b0559e4a05dc5f0621195663c0a725d14",
+      "bytes": 12926
+    },
+    "implementation-audit.md": {
+      "sha256": "573799a86ceaf91a1390925bf2bfc91683dca219d3f7a50cbbd2f418111902e2",
+      "bytes": 21075
+    },
+    "legacy-inventory.md": {
+      "sha256": "dfac6ff495054219c77f7f607e8f338f9795b86c54630d1bf862c23fbe01f630",
+      "bytes": 7689
+    }
+  }
+}

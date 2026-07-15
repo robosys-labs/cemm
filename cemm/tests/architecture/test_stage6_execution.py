@@ -527,15 +527,17 @@ class TestAuthorizationRevalidation:
 
 
 class TestLegacyRetirement:
-    def test_operational_meaning_compiler_deprecated(self):
+    def test_operational_meaning_compiler_removed(self):
         import importlib
-        mod = importlib.import_module("cemm.legacy.v3_3.operational_meaning_compiler")
-        assert "DEPRECATED" in mod.__doc__
 
-    def test_operational_causal_router_deprecated(self):
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("cemm.legacy.v3_3.operational_meaning_compiler")
+
+    def test_operational_causal_router_removed(self):
         import importlib
-        mod = importlib.import_module("cemm.legacy.v3_3.operational_causal_router")
-        assert "DEPRECATED" in mod.__doc__
+
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module("cemm.legacy.v3_3.operational_causal_router")
 
 
 # ── 9. Exit gate: no generic op:write ─────────────────────────────

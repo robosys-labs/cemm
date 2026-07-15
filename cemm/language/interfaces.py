@@ -47,6 +47,8 @@ class ConstructionCandidate:
     pattern: str
     predicate_schema_ref: str  # proposed predicate
     role_mappings: dict[str, int] = field(default_factory=dict)  # role → token index
+    open_role_refs: tuple[str, ...] = ()
+    communicative_force: str = ""
     confidence: float = 0.0
     source_token_indices: tuple[int, ...] = ()
 

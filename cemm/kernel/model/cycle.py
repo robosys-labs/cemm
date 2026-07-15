@@ -1,11 +1,8 @@
 """KernelSnapshot and CognitiveCycle — immutable cycle artifacts.
 
-Import boundary: standard library only → refs, identity, trace.
-
-Per CORE_LOOP.md §3 and §1:
-- KernelSnapshot pins all environment revisions for one cycle.
-- CognitiveCycle is the immutable artifact carrying all stage outputs.
-- Stages return new cycle revisions or typed artifacts; no hidden mutation.
+This replacement keeps the existing public model while separating signal
+identity from signal content and carrying dialogue/realization control records
+through the canonical cycle.
 """
 from __future__ import annotations
 
@@ -14,8 +11,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .identity import AssessmentEnvironmentFingerprint
-from .refs import FrozenMap
 from .trace import CycleTrace
+from .signal import InputSignal
 
 
 def pin_snapshot(
@@ -37,13 +34,7 @@ def pin_snapshot(
     truth_maintenance_version: str = "",
     adapter_contract_hash: str = "",
     context_scope_policy_version: str = "",
-) -> KernelSnapshot:
-    """Pin a KernelSnapshot from current store revisions.
-
-    Per CORE_LOOP.md §3, all interpretation and planning in a cycle use
-    the pinned snapshot unless a learning transaction creates a child
-    schema snapshot for bounded replay.
-    """
+) -> "KernelSnapshot":
     return KernelSnapshot(
         schema_store_revision=schema_store_revision,
         semantic_memory_revision=semantic_memory_revision,
@@ -67,11 +58,6 @@ def pin_snapshot(
 
 @dataclass(frozen=True, slots=True)
 class KernelSnapshot:
-    """Pinned environment revisions for one cognitive cycle.
-
-    A child learning snapshot derives from this exact base; it does not
-    read moving global schema state during validation.
-    """
     schema_store_revision: int = 0
     semantic_memory_revision: int = 0
     episodic_event_revision: int = 0
@@ -89,58 +75,19 @@ class KernelSnapshot:
     truth_maintenance_version: str = ""
     adapter_contract_hash: str = ""
     context_scope_policy_version: str = ""
-    clock_observation: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    clock_observation: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @staticmethod
-    def pin(
-        *,
-        schema_store_revision: int = 0,
-        semantic_memory_revision: int = 0,
-        episodic_event_revision: int = 0,
-        common_ground_revision: int = 0,
-        self_health_revision: int = 0,
-        resource_revision: int = 0,
-        permission_policy_revision: int = 0,
-        active_goal_revision: int = 0,
-        learning_transaction_revision: int = 0,
-        competence_suite_hash: str = "",
-        grounding_policy_version: str = "",
-        kernel_foundation_version: str = "",
-        type_registry_version: str = "",
-        inference_policy_version: str = "",
-        truth_maintenance_version: str = "",
-        adapter_contract_hash: str = "",
-        context_scope_policy_version: str = "",
-    ) -> KernelSnapshot:
-        """Pin a snapshot from current store revisions."""
-        return pin_snapshot(
-            schema_store_revision=schema_store_revision,
-            semantic_memory_revision=semantic_memory_revision,
-            episodic_event_revision=episodic_event_revision,
-            common_ground_revision=common_ground_revision,
-            self_health_revision=self_health_revision,
-            resource_revision=resource_revision,
-            permission_policy_revision=permission_policy_revision,
-            active_goal_revision=active_goal_revision,
-            learning_transaction_revision=learning_transaction_revision,
-            competence_suite_hash=competence_suite_hash,
-            grounding_policy_version=grounding_policy_version,
-            kernel_foundation_version=kernel_foundation_version,
-            type_registry_version=type_registry_version,
-            inference_policy_version=inference_policy_version,
-            truth_maintenance_version=truth_maintenance_version,
-            adapter_contract_hash=adapter_contract_hash,
-            context_scope_policy_version=context_scope_policy_version,
-        )
+    def pin(**kwargs: Any) -> "KernelSnapshot":
+        return pin_snapshot(**kwargs)
 
     @property
     def fingerprint(self) -> AssessmentEnvironmentFingerprint:
-        """Derive the assessment environment fingerprint from this snapshot."""
         return AssessmentEnvironmentFingerprint(
             schema_store_revision=self.schema_store_revision,
-            dependency_revision_hash=f"{self.schema_store_revision}:{self.kernel_foundation_version}",
+            dependency_revision_hash=(
+                f"{self.schema_store_revision}:{self.kernel_foundation_version}"
+            ),
             grounding_policy_version=self.grounding_policy_version,
             competency_suite_hash=self.competence_suite_hash,
             kernel_foundation_version=self.kernel_foundation_version,
@@ -154,28 +101,31 @@ class KernelSnapshot:
 
 @dataclass(frozen=True, slots=True)
 class CycleTrigger:
-    """What triggered this cognitive cycle."""
-    trigger_kind: str  # user_utterance, sensor, tool_result, timer, etc.
+    """What triggered the cycle.
+
+    ``input_signals`` is authoritative. ``signal_ids`` is retained for callers
+    that construct non-text triggers and for backwards-compatible tests.
+    """
+
+    trigger_kind: str
     signal_ids: tuple[str, ...] = ()
+    input_signals: tuple[InputSignal, ...] = ()
+    context_id: str = "default"
     wake_reason: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class CognitiveCycle:
-    """Immutable artifact for one cognitive cycle.
-
-    Stages populate fields in order per CORE_LOOP.md §4-§5.
-    Each stage returns a new revision; fields are populated as stages complete.
-    """
     cycle_id: str
     trigger: CycleTrigger
     snapshot: KernelSnapshot
 
-    # Stage outputs (populated as stages complete)
     surface_evidence: tuple[Any, ...] = ()
     meaning_candidates: tuple[Any, ...] = ()
     grounded_candidates: tuple[Any, ...] = ()
     selected_interpretations: tuple[Any, ...] = ()
+    dialogue_resolution: Any | None = None
+    dialogue_obligations: tuple[Any, ...] = ()
 
     workspace: Any | None = None
     retrieval_results: tuple[Any, ...] = ()
@@ -195,6 +145,7 @@ class CognitiveCycle:
     critical_commit: Any | None = None
 
     message_plan: Any | None = None
+    realization_authorization: Any | None = None
     surface_payload: Any | None = None
     output_event: Any | None = None
     output_mutations: Any | None = None
