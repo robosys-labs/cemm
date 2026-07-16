@@ -8,10 +8,15 @@ from .planner import ResponseIntent, ResponseIntentRole
 
 
 class ResponseDecider:
-    def __init__(self, policies: tuple[dict[str, Any], ...] = ()) -> None:
+    def __init__(
+        self, policies: tuple[dict[str, Any], ...] = (), *,
+        ranker=None, semantic_memory=None
+    ) -> None:
         self._policies = policies
+        self._ranker = ranker
+        self._semantic_memory = semantic_memory
 
-    def decide(self, cycle) -> tuple[ResponseIntent, ...]:
+    def _decide_unranked(self, cycle) -> tuple[ResponseIntent, ...]:
         intents: list[ResponseIntent] = []
         selected = tuple(getattr(cycle, "selected_interpretations", ()) or ())
 
@@ -25,6 +30,12 @@ class ResponseDecider:
                     intents.extend(
                         self._answer_from_capability(cycle, interpretation)
                     )
+                elif predicate == "knows":
+                    intents.extend(
+                        self._answer_from_contextual_knowledge(
+                            cycle, interpretation
+                        )
+                    )
                 else:
                     intents.extend(
                         self._answer_from_retrieval(cycle, interpretation)
@@ -32,17 +43,23 @@ class ResponseDecider:
             intents.extend(self._policy_intents(cycle, interpretation))
 
         if not intents:
-            for result in tuple(
-                getattr(cycle, "rule_learning_results", ()) or ()
-            ):
-                if not getattr(result, "rule_schema_ref", ""):
+            learning_results = tuple((
+                *tuple(getattr(cycle, "rule_learning_results", ()) or ()),
+                *tuple(getattr(cycle, "definition_learning_results", ()) or ()),
+            ))
+            for result in learning_results:
+                learned_ref = (
+                    getattr(result, "rule_schema_ref", "")
+                    or getattr(result, "schema_record_ref", "")
+                )
+                if not learned_ref:
                     continue
                 provenance = tuple(dict.fromkeys((
-                    result.rule_schema_ref,
+                    learned_ref,
                     *tuple(getattr(result, "evidence_refs", ()) or ()),
                 )))
                 intents.append(ResponseIntent(
-                    intent_id=f"rule_learning:{result.rule_schema_ref}",
+                    intent_id=f"grounded_learning:{learned_ref}",
                     predicate_key="acknowledges",
                     roles=(
                         ResponseIntentRole(
@@ -67,6 +84,85 @@ class ResponseDecider:
             if fallback is not None:
                 intents.append(fallback)
         return self._dedupe(intents)
+
+    def decide_with_candidates(self, cycle):
+        intents = list(self._decide_unranked(cycle))
+        has_residue = any(
+            tuple(getattr(graph, "unresolved_fragments", ()) or ())
+            for graph in tuple(getattr(cycle, "meaning_candidates", ()) or ())
+        )
+        if has_residue and not any(
+            intent.predicate_key == "requests" for intent in intents
+        ):
+            clarification = self._fallback_intent(cycle)
+            if clarification is not None:
+                intents.append(clarification)
+        intents = self._dedupe(intents)
+        if self._ranker is None:
+            return intents, ()
+        ranked = self._ranker.rank(intents, cycle)
+        return self._ranker.select(ranked), ranked
+
+    def decide(self, cycle) -> tuple[ResponseIntent, ...]:
+        selected, _ = self.decide_with_candidates(cycle)
+        return selected
+
+    def _answer_from_contextual_knowledge(self, cycle, interpretation):
+        if self._semantic_memory is None:
+            return ()
+        embedded = []
+        for graph in tuple(getattr(cycle, "meaning_candidates", ()) or ()):
+            outer = next((
+                item for item in graph.candidate_propositions
+                if item.proposition.id == interpretation.proposition_ref
+            ), None)
+            if outer is None:
+                continue
+            for embedded_ref in outer.embedded_proposition_refs:
+                proposition = next((
+                    item for item in graph.candidate_propositions
+                    if item.proposition.id == embedded_ref
+                ), None)
+                if proposition is None:
+                    continue
+                grounding = next((
+                    grounded.for_predication(proposition.proposition.predication_ref)
+                    for grounded in cycle.grounded_candidates
+                    if grounded.for_predication(
+                        proposition.proposition.predication_ref
+                    ) is not None
+                ), None)
+                if grounding is not None:
+                    embedded.append(grounding)
+        named = next((
+            item for item in embedded
+            if item.predicate_semantic_key == "named"
+        ), None)
+        if named is None:
+            return ()
+        holder = next((
+            binding.grounded_filler_ref for binding in named.role_bindings
+            if binding.role_schema_ref.removeprefix("role:") == "holder"
+        ), "")
+        if not holder:
+            return ()
+        from ..memory.semantic import FactQuery
+        facts = list(self._semantic_memory.query(FactQuery(
+            predicate_key="named",
+            role_constraints={"holder": holder},
+            context_refs=("actual",),
+        )))
+        if not facts:
+            return ()
+        fact = max(facts, key=lambda item: (
+            any(
+                role.role_key == "name_form"
+                and role.semantic_key == "name_form:full"
+                for role in item.roles
+            ),
+            item.created_at,
+        ))
+        return (self._intent_from_fact(fact),)
 
     def _answer_from_capability(self, cycle, interpretation):
         requested_operation = next((
@@ -161,6 +257,23 @@ class ResponseDecider:
                 ):
                     continue
                 facts.append(fact)
+        if predicate_key == "named" and facts:
+            by_holder = {}
+            for fact in facts:
+                holder = next((
+                    role.value_ref for role in fact.roles
+                    if role.role_key == "holder"
+                ), "")
+                current = by_holder.get(holder)
+                full = any(
+                    role.role_key == "name_form"
+                    and role.semantic_key == "name_form:full"
+                    for role in fact.roles
+                )
+                key = (full, getattr(fact, "created_at", ""))
+                if current is None or key > current[0]:
+                    by_holder[holder] = (key, fact)
+            facts = [item[1] for item in by_holder.values()]
         return tuple(self._intent_from_fact(fact) for fact in facts)
 
     def _intent_from_fact(self, fact) -> ResponseIntent:

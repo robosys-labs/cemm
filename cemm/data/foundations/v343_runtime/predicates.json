@@ -123,6 +123,15 @@
         "required": true,
         "cardinality": "one",
         "allows_open_port": true
+      },
+      {
+        "role_key": "name_form",
+        "accepted_families": [
+          "value"
+        ],
+        "required": false,
+        "cardinality": "optional_one",
+        "allows_open_port": true
       }
     ],
     "identity_role_keys": [

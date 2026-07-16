@@ -118,7 +118,9 @@ class CognitiveKernel:
                 context_id=cycle.trigger.context_id,
             ))
             graphs = tuple(
-                self._composer.compose(item)
+                self._composer.compose(
+                    item, context_snapshot=cycle.context_snapshot
+                )
                 for item in evidence
             )
             groundings = tuple(
@@ -130,12 +132,14 @@ class CognitiveKernel:
                     environment_fingerprint=(
                         self._fingerprint(cycle)
                     ),
+                    context_snapshot=cycle.context_snapshot,
                 )
                 for graph, item in zip(
                     graphs, evidence
                 )
             )
             selected = []
+            alternatives = []
             for index, graph in enumerate(graphs):
                 result = self._interpreter.resolve(
                     candidate_graph=graph,
@@ -144,8 +148,12 @@ class CognitiveKernel:
                         if index < len(groundings)
                         else []
                     ),
+                    context_snapshot=cycle.context_snapshot,
                 )
                 selected.extend(result.selected)
+                alternatives.extend(
+                    tuple(getattr(result, "alternatives", ()) or ())
+                )
             selections = tuple(selected)
             dialogue = (
                 self._learning.resolve_dialogue_turn(
@@ -166,6 +174,7 @@ class CognitiveKernel:
             meaning_candidates=graphs,
             grounded_candidates=groundings,
             selected_interpretations=selections,
+            interpretation_alternatives=tuple(alternatives),
             dialogue_resolution=dialogue,
             dialogue_obligations=(
                 self._learning.pending_obligations(

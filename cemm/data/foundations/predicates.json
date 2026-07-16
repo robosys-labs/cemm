@@ -328,7 +328,8 @@
     "semantic_key": "named",
     "role_refs": [
       "holder",
-      "name"
+      "name",
+      "name_form"
     ],
     "predication_kind": "state",
     "query_projections": [
@@ -838,6 +839,49 @@
       "value"
     ],
     "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "communicates",
+    "role_refs": [
+      "speaker",
+      "addressee",
+      "content",
+      "frequency"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "knows",
+    "role_refs": [
+      "knower",
+      "content"
+    ],
+    "predication_kind": "state",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "evaluates_difficulty",
+    "role_refs": [
+      "experiencer",
+      "activity",
+      "addressee",
+      "degree"
+    ],
+    "predication_kind": "state",
     "query_projections": [],
     "supports_reported": true,
     "supports_hypothetical": true,

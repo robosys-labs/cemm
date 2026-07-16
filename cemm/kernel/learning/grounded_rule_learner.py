@@ -10,11 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 
+from .anchor_validator import GroundingAnchorValidator
 from ..model.identity import Permission, PermissionScope, Provenance, RetentionPolicy, Scope, ScopeLevel
 from ..schema.envelope import SchemaEnvelope
 from ..schema.rule import (
     CausalWarrant,
     CycleClass,
+    ExistentialDeclaration,
     RuleAtom,
     RuleKind,
     RuleSchema,
@@ -34,8 +36,11 @@ class GroundedRuleLearningResult:
 
 
 class GroundedRuleLearner:
-    def __init__(self, schema_store) -> None:
+    def __init__(self, schema_store, semantic_memory=None) -> None:
         self._store = schema_store
+        self._anchor_validator = GroundingAnchorValidator(
+            schema_store, semantic_memory
+        )
 
     def learn_cycle(self, cycle) -> tuple[GroundedRuleLearningResult, ...]:
         results = []
@@ -115,6 +120,19 @@ class GroundedRuleLearner:
         conclusion_atoms = tuple(
             atoms[ref] for ref in candidate.conclusion_predication_refs
         )
+        premise_atoms, conclusion_atoms, existential_declarations = (
+            self._existentialize(premise_atoms, conclusion_atoms)
+        )
+        anchor_validation = self._anchor_validator.validate_rule(
+            premise_atoms, conclusion_atoms
+        )
+        if not anchor_validation.grounded:
+            return GroundedRuleLearningResult(
+                candidate_ref=candidate.rule_id,
+                premise_predication_refs=candidate.premise_predication_refs,
+                conclusion_predication_refs=candidate.conclusion_predication_refs,
+                blocker_refs=anchor_validation.blocker_refs,
+            )
         digest = hashlib.sha256(repr((premise_atoms, conclusion_atoms)).encode()).hexdigest()[:16]
         semantic_key = f"learned_rule:{digest}"
         existing = self._store.find_candidates(semantic_key)
@@ -139,6 +157,9 @@ class GroundedRuleLearner:
             warrant_value if warrant_value in {item.value for item in CausalWarrant}
             else CausalWarrant.REPORTED_CLAIM.value
         )
+        sensitivity = self._rule_sensitivity(
+            (*premise_atoms, *conclusion_atoms)
+        )
         rule = RuleSchema(
             semantic_key=semantic_key,
             premises=premise_atoms,
@@ -156,10 +177,14 @@ class GroundedRuleLearner:
                 if strength is RuleStrength.STRICT
                 else CycleClass.STRATIFIED_DEFEASIBLE
             ),
-            sensitivity="ordinary",
+            sensitivity=sensitivity,
             enabled_by_default=False,
             max_firings_per_cycle=16,
-            provenance_refs=(cycle_id, candidate.construction_ref),
+            existential_declarations=existential_declarations,
+            provenance_refs=(
+                cycle_id, candidate.construction_ref,
+                *anchor_validation.anchor_refs,
+            ),
         )
         envelope = SchemaEnvelope(
             record_id=f"learned:rule:{digest}:v1",
@@ -205,6 +230,73 @@ class GroundedRuleLearner:
             evidence_refs=(cycle_id, candidate.construction_ref),
             blocker_refs=("independent_competence_required",),
         )
+
+    def _rule_sensitivity(self, atoms):
+        levels = []
+        for atom in atoms:
+            envelope = self._store.find_active(str(atom.predicate_key))
+            payload = getattr(envelope, "payload", None) if envelope else None
+            levels.append(str(getattr(payload, "sensitivity", "ordinary")))
+        if "sensitive" in levels:
+            return "sensitive"
+        if "restricted" in levels:
+            return "restricted"
+        return "ordinary"
+
+
+    @staticmethod
+    def _existentialize(premise_atoms, conclusion_atoms):
+        premise_variables = {
+            str(term)
+            for atom in premise_atoms
+            for term in atom.roles.values()
+            if str(term).startswith("$")
+        }
+        conclusion_variables = tuple(dict.fromkeys(
+            str(term)
+            for atom in conclusion_atoms
+            for term in atom.roles.values()
+            if str(term).startswith("$")
+            and str(term) not in premise_variables
+        ))
+        replacements = {
+            variable: f"?e{index + 1}"
+            for index, variable in enumerate(conclusion_variables)
+        }
+        if not replacements:
+            return premise_atoms, conclusion_atoms, ()
+        rebuilt = tuple(
+            RuleAtom(
+                predicate_key=atom.predicate_key,
+                roles={
+                    key: replacements.get(str(value), str(value))
+                    for key, value in atom.roles.items()
+                },
+                polarity=atom.polarity,
+                context_ref=atom.context_ref,
+                modality=atom.modality,
+            )
+            for atom in conclusion_atoms
+        )
+        kind_by_variable = {}
+        for atom in rebuilt:
+            if atom.predicate_key != "instance_of":
+                continue
+            entity = str(atom.roles.get("entity", ""))
+            kind = str(atom.roles.get("kind", ""))
+            if entity.startswith("?") and kind and not kind.startswith(("$", "?")):
+                kind_by_variable[entity] = kind
+        declarations = tuple(
+            ExistentialDeclaration(
+                variable=replacements[variable],
+                entity_kind_ref=kind_by_variable.get(replacements[variable], ""),
+                identity_scope="rule_application",
+                maximum_instances=1,
+            )
+            for variable in conclusion_variables
+        )
+        return premise_atoms, rebuilt, declarations
+
 
     @staticmethod
     def _variable_map(grounded_items) -> dict[str, str]:

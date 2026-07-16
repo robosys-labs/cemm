@@ -249,11 +249,12 @@
     "accepted_object_families": [
       "proposition",
       "referent",
-      "value"
+      "value",
+      "predication"
     ],
     "allows_open_port": true,
     "allows_embedded_proposition": true,
-    "allows_embedded_predication": false
+    "allows_embedded_predication": true
   },
   {
     "semantic_key": "knower",
@@ -586,5 +587,58 @@
     "allows_open_port": true,
     "allows_embedded_proposition": false,
     "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "name_form",
+    "accepted_object_families": [
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false,
+    "required": false,
+    "cardinality": "optional_one"
+  },
+  {
+    "semantic_key": "frequency",
+    "accepted_object_families": [
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false,
+    "required": false,
+    "cardinality": "optional_one"
+  },
+  {
+    "semantic_key": "experiencer",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "activity",
+    "accepted_object_families": [
+      "referent",
+      "predication",
+      "proposition"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": true,
+    "allows_embedded_predication": true
+  },
+  {
+    "semantic_key": "degree",
+    "accepted_object_families": [
+      "value"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false,
+    "required": false,
+    "cardinality": "optional_one"
   }
 ]

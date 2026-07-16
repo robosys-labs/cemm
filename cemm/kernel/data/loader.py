@@ -237,6 +237,12 @@ class DefinitionPackageLoader:
                 predicate_refs=tuple(item.get("predicate_refs", ())),
                 typical_features=tuple(item.get("typical_features", ())),
                 identity_criteria=tuple(item.get("identity_criteria", ())),
+                grounding_anchor_refs=tuple(item.get("grounding_anchor_refs", ())),
+                constitutive_rule_refs=tuple(item.get("constitutive_rule_refs", ())),
+                default_rule_refs=tuple(item.get("default_rule_refs", ())),
+                event_pattern_refs=tuple(item.get("event_pattern_refs", ())),
+                place_pattern_refs=tuple(item.get("place_pattern_refs", ())),
+                sensitivity=str(item.get("sensitivity", "ordinary")),
             )
             dependencies = tuple(
                 SchemaDependency(
@@ -322,6 +328,7 @@ class DefinitionPackageLoader:
                 persistence_policy=PersistencePolicy(
                     retention=item.get("retention", "long_term")
                 ),
+                sensitivity=str(item.get("sensitivity", "ordinary")),
             )
             registered.append(self._register_active(
                 store, f"foundation:predicate:{item['semantic_key']}",

@@ -104,6 +104,7 @@ class GroundingResolver:
         *,
         context_ref: str = "",
         environment_fingerprint: str = "",
+        context_snapshot=None,
     ) -> GraphGrounding:
         referents: list[ReferentGrounding] = []
         definitions: list[DefinitionGrounding] = []

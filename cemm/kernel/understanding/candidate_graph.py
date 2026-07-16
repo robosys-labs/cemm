@@ -63,6 +63,7 @@ class CandidateCommunicativeForce:
     target_proposition_ref: str = ""
     confidence: float = 0.0
     source_evidence_refs: tuple[str, ...] = ()
+    source_token_indices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +117,11 @@ class CandidateGraph:
     open_ports: tuple[OpenPort, ...] = ()
     opaque_lexeme_refs: tuple[str, ...] = ()
     source_evidence_refs: tuple[str, ...] = ()
+    semantic_spans: tuple[Any, ...] = ()
+    relation_candidates: tuple[Any, ...] = ()
+    unresolved_fragments: tuple[Any, ...] = ()
+    coverage_by_predication: tuple[tuple[str, float], ...] = ()
+    content_token_count: int = 0
 
     @property
     def has_alternatives(self) -> bool:

@@ -13,6 +13,7 @@ from typing import Iterable
 from .rule_model import (
     CausalWarrant,
     CycleClass,
+    ExistentialDeclaration,
     RuleAtom,
     RuleStrength,
     SemanticRule,
@@ -94,6 +95,15 @@ class SemanticRuleCatalog:
             exception_atoms=tuple(
                 self._compile_atom(atom)
                 for atom in getattr(payload, "exception_atoms", ())
+            ),
+            existential_declarations=tuple(
+                ExistentialDeclaration(
+                    variable=str(item.variable),
+                    entity_kind_ref=str(item.entity_kind_ref),
+                    identity_scope=str(item.identity_scope),
+                    maximum_instances=int(item.maximum_instances),
+                )
+                for item in getattr(payload, "existential_declarations", ())
             ),
             context_refs=tuple(getattr(payload, "context_refs", ()) or ()),
             valid_time_policy=str(

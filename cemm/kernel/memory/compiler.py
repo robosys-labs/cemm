@@ -13,8 +13,11 @@ class FactCompilationResult:
     blockers: tuple[str, ...] = ()
 
 class FactMutationCompiler:
-    def __init__(self, payload_registry: MutationPayloadRegistry):
+    def __init__(
+        self, payload_registry: MutationPayloadRegistry, semantic_memory=None
+    ):
         self._payloads = payload_registry
+        self._memory = semantic_memory
 
     def compile(self, cycle):
         operations, fact_refs, blockers = [], [], []
@@ -82,6 +85,17 @@ class FactMutationCompiler:
                 for binding in grounding.role_bindings
                 if binding.grounded_filler_ref
             )
+            if grounding.predicate_semantic_key == "subkind_of":
+                blockers.append("definition retained in schema lifecycle")
+                continue
+            if (
+                getattr(interpretation, "is_provisional", False)
+                and grounding.opaque_role_refs
+            ):
+                blockers.append(
+                    "provisional role fillers cannot enter actual memory"
+                )
+                continue
             fact_id = f"fact:{uuid4().hex[:16]}"
             evidence_ref = (
                 f"input_evidence:{cycle.cycle_id}:"
@@ -114,6 +128,35 @@ class FactMutationCompiler:
                 evidence_refs=(evidence_ref,),
                 source_ref="user",
             )
+            if self._is_correction(cycle, interpretation, fact):
+                holder = next((
+                    role.value_ref for role in fact.roles
+                    if role.role_key == "holder"
+                ), "")
+                from .semantic import FactQuery
+                for existing in self._memory.query(FactQuery(
+                    predicate_key=fact.predicate_key,
+                    role_constraints={"holder": holder},
+                    context_refs=(fact.context_ref,),
+                )):
+                    if existing.semantic_identity == fact.semantic_identity:
+                        continue
+                    supersede_ref = f"payload:supersede:{existing.fact_id}"
+                    self._payloads.put(supersede_ref, existing.fact_id)
+                    operations.append(MutationOperation(
+                        id=f"mutation:supersede:{existing.fact_id}",
+                        operation_kind="semantic_fact",
+                        semantic_identity=SemanticIdentity(
+                            identity_kind="semantic_fact",
+                            key=existing.semantic_identity,
+                        ),
+                        action="supersede",
+                        payload_ref=supersede_ref,
+                        required=True,
+                        evidence_refs=(evidence_ref,),
+                        permission=Permission.user_private(),
+                        reason="grounded correction supersedes prior fact",
+                    ))
             payload_ref = f"payload:{fact_id}"
             self._payloads.put(payload_ref, fact)
             operations.append(MutationOperation(
@@ -143,6 +186,24 @@ class FactMutationCompiler:
             ),
             fact_refs=tuple(fact_refs),
             blockers=tuple(blockers),
+        )
+
+    def _is_correction(self, cycle, interpretation, fact):
+        if self._memory is None or fact.predicate_key != "named":
+            return False
+        if interpretation.communicative_force == "correct":
+            return True
+        if any(
+            role.role_key == "name_form"
+            and role.semantic_key == "name_form:full"
+            for role in fact.roles
+        ):
+            return True
+        return any(
+            relation.source_ref == interpretation.proposition_ref
+            and relation.relation_kind == "correction"
+            for graph in cycle.meaning_candidates
+            for relation in graph.discourse_relations
         )
 
     @staticmethod

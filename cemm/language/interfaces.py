@@ -19,7 +19,7 @@ class ConstructionCandidate:
     construction_key: str
     pattern: str
     predicate_schema_ref: str
-    role_mappings: dict[str, int] = field(default_factory=dict)
+    role_mappings: dict[str, tuple[int, ...]] = field(default_factory=dict)
     open_role_refs: tuple[str, ...] = ()
     communicative_force: str = ""
     confidence: float = 0.0
@@ -59,6 +59,37 @@ class PragmaticCue:
     replaces_content: bool = False
 
 @dataclass(frozen=True, slots=True)
+class SemanticSpanCandidate:
+    span_ref: str
+    token_indices: tuple[int, ...]
+    surface: str
+    semantic_keys: tuple[str, ...] = ()
+    features: dict[str, str] = field(default_factory=dict)
+    candidate_kind: str = "lexical"
+    confidence: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticRelationCandidate:
+    relation_ref: str
+    relation_kind: str
+    source_span_ref: str
+    target_predicate_key: str = ""
+    target_role_key: str = ""
+    confidence: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class UnresolvedFragment:
+    span_ref: str
+    token_indices: tuple[int, ...]
+    surface: str
+    possible_semantic_families: tuple[str, ...] = ()
+    confidence: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
 class SurfaceEvidence:
     token_stream: TokenStream
     lexical_sense_candidates: tuple[LexicalSenseCandidate, ...] = ()
@@ -66,6 +97,9 @@ class SurfaceEvidence:
     rule_candidates: tuple[RuleCandidate, ...] = ()
     communicative_candidates: tuple[CommunicativeCandidate, ...] = ()
     pragmatic_cues: tuple[PragmaticCue, ...] = ()
+    semantic_spans: tuple[SemanticSpanCandidate, ...] = ()
+    relation_candidates: tuple[SemanticRelationCandidate, ...] = ()
+    unresolved_fragments: tuple[UnresolvedFragment, ...] = ()
     surface_spans: tuple[SurfaceSpan, ...] = ()
     language_tag: str = "und"
     overall_confidence: float = 1.0

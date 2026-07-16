@@ -17,8 +17,10 @@ from ..model.role_binding import OpenPort, RoleBinding
 class CanonicalSemanticComposer(SemanticComposer):
     """Preserve every open role and distinguish query ports from missing data."""
 
-    def compose(self, evidence):
-        graph = super().compose(evidence)
+    def compose(self, evidence, *, context_snapshot=None):
+        graph = super().compose(
+            evidence, context_snapshot=context_snapshot
+        )
         ports = tuple(
             port
             for candidate in graph.candidate_predications
@@ -51,6 +53,7 @@ class CanonicalSemanticComposer(SemanticComposer):
                 force=communicative.force,
                 target_proposition_ref=propositions.get(target.predication.id, ""),
                 confidence=communicative.confidence,
+                source_token_indices=communicative.source_token_indices,
             ))
 
         candidate_rules = []
@@ -90,15 +93,22 @@ class CanonicalSemanticComposer(SemanticComposer):
         predicate_ref = self._resolve_predicate_ref(
             construction.predicate_schema_ref
         )
-        bindings: list[RoleBinding] = [
-            RoleBinding(
-                role_schema_ref=self._role_ref(role_key),
-                filler_ref=f"ref:token:{token_index}",
-                confidence=construction.confidence,
+        bindings: list[RoleBinding] = []
+        for role_key, raw_indices in construction.role_mappings.items():
+            indices = (raw_indices,) if isinstance(raw_indices, int) else tuple(raw_indices)
+            indices = tuple(index for index in indices if isinstance(index, int) and index >= 0)
+            if not indices:
+                continue
+            filler_ref = (
+                f"ref:token:{indices[0]}"
+                if len(indices) == 1
+                else "ref:span:" + ",".join(str(index) for index in indices)
             )
-            for role_key, token_index in construction.role_mappings.items()
-            if isinstance(token_index, int) and token_index >= 0
-        ]
+            bindings.append(RoleBinding(
+                role_schema_ref=self._role_ref(role_key),
+                filler_ref=filler_ref,
+                confidence=construction.confidence,
+            ))
         constant_roles = dict(
             getattr(construction, "metadata", {}).get("constant_roles", {})
         )

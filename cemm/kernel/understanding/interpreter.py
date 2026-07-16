@@ -37,6 +37,9 @@ class SelectedInterpretation:
     is_provisional: bool = False
     requested_semantic_operation: str = ""
     grounding_ref: str = ""
+    score_breakdown: tuple[tuple[str, float], ...] = ()
+    coverage_ratio: float = 0.0
+    unresolved_fragment_refs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +48,7 @@ class InterpretationResult:
     rejected: tuple[SelectedInterpretation, ...] = ()
     primary: SelectedInterpretation | None = None
     has_selection: bool = False
+    alternatives: tuple[SelectedInterpretation, ...] = ()
 
     @property
     def selected_count(self) -> int:
@@ -59,6 +63,8 @@ class InterpretationResolver:
         candidate_graph: CandidateGraph,
         grounding_assessments: list[Any] | None = None,
         epistemic_assessments: list[Any] | None = None,
+        *,
+        context_snapshot=None,
     ) -> InterpretationResult:
         graph_grounding = self._graph_grounding(grounding_assessments)
         selected: list[SelectedInterpretation] = []

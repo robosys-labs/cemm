@@ -108,3 +108,4 @@ class PredicateSchema:
     persistence_policy: PersistencePolicy = field(default_factory=PersistencePolicy)
     lexicalization_refs: tuple[str, ...] = ()  # Ref[LexemeSenseSchema]
     realization_refs: tuple[str, ...] = ()  # Ref[RealizationSchema]
+    sensitivity: str = "ordinary"

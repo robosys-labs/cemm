@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 import re
+from types import SimpleNamespace
 
 from .interfaces import (
     CommunicativeCandidate,
@@ -16,7 +17,10 @@ from .interfaces import (
     LexicalSenseCandidate,
     PragmaticCue,
     RuleCandidate,
+    SemanticRelationCandidate,
+    SemanticSpanCandidate,
     SurfaceEvidence,
+    UnresolvedFragment,
 )
 from .matcher import DeclarativeConstructionMatcher, TokenEvidence
 from .semantic_pack import SemanticLanguagePack
@@ -41,8 +45,10 @@ class SemanticLanguageAdapter:
         pack: SemanticLanguagePack,
         *,
         passed_competence_case_refs: frozenset[str] | None = None,
+        schema_store=None,
     ) -> None:
         self._pack = pack
+        self._schema_store = schema_store
         self.adapter_id = f"semantic-language-adapter:{pack.language_tag}"
         self.supported_language_tags = (pack.language_tag,)
         self._matcher = DeclarativeConstructionMatcher()
@@ -94,31 +100,23 @@ class SemanticLanguageAdapter:
             and match.output_kind != "rule"
         )
         semantic_matches = self._select_clause_cover(
-            ordinary_matches,
-            support_matches,
-            content_by_clause,
-        )
-        embedded_matches = self._embedded_rule_matches(
-            ordinary_matches,
-            rule_matches,
+            ordinary_matches, support_matches, content_by_clause
         )
         semantic_matches = self._dedupe_matches((
             *semantic_matches,
-            *embedded_matches,
+            *self._embedded_rule_matches(ordinary_matches, rule_matches),
         ))
         rule_candidates = self._rule_candidates(rule_matches)
 
         support_indices = frozenset(
-            index
-            for match in support_matches
-            for index in match.source_token_indices
+            index for match in support_matches for index in match.source_token_indices
         )
         constructed_predicates = frozenset(
             (match.predicate_key, index)
             for match in semantic_matches
             for index in match.source_token_indices
         )
-        lexical = tuple(
+        lexical_items = [
             LexicalSenseCandidate(
                 lexical_form_ref=LexicalFormRef(
                     surface=stream.tokens[index].raw_form,
@@ -127,21 +125,40 @@ class SemanticLanguageAdapter:
                 ),
                 semantic_key=mapping.semantic_key,
                 sense_rank=float(rank),
-                confidence=0.95,
+                confidence=0.95 if not str(mapping.semantic_key).startswith("opaque:") else 0.25,
                 source_token_indices=(index,),
             )
             for index, mappings in mappings_by_index.items()
             for rank, mapping in enumerate(mappings)
             if index not in support_indices
             and (mapping.semantic_key, index) not in constructed_predicates
-        )
+        ]
+        content_indices = set().union(*content_by_clause) if content_by_clause else set()
+        for index in sorted(content_indices):
+            if mappings_by_index.get(index):
+                continue
+            token = stream.tokens[index]
+            lexical_items.append(LexicalSenseCandidate(
+                lexical_form_ref=LexicalFormRef(
+                    surface=token.raw_form,
+                    language_tag=tag,
+                    normalised=token.normalized_form,
+                ),
+                semantic_key=self._opaque_key(token.normalized_form, tag),
+                sense_rank=0.0,
+                evidence_kind="opaque_surface",
+                confidence=0.20,
+                source_token_indices=(index,),
+            ))
+        lexical = tuple(lexical_items)
+
         constructions = tuple(
             ConstructionCandidate(
                 construction_key=match.construction_ref,
-                pattern=match.predicate_key,
+                pattern=str(match.output_metadata.get("pattern", match.predicate_key)),
                 predicate_schema_ref=match.predicate_key,
                 role_mappings={
-                    role: indices[0]
+                    role: tuple(indices)
                     for role, indices in match.role_token_indices.items()
                     if indices
                 },
@@ -149,6 +166,11 @@ class SemanticLanguageAdapter:
                 communicative_force=match.communicative_force,
                 confidence=match.confidence,
                 source_token_indices=match.source_token_indices,
+                capture_spans={
+                    key: (min(indices), max(indices))
+                    for key, indices in match.capture_token_indices.items()
+                    if indices
+                },
                 output_kind=match.output_kind,
                 metadata=dict(match.output_metadata),
             )
@@ -157,7 +179,11 @@ class SemanticLanguageAdapter:
         communicative = tuple(
             CommunicativeCandidate(
                 force=match.communicative_force,
-                confidence=match.confidence,
+                confidence=match.confidence * (
+                    0.70 + 0.30 * self._coverage_ratio(
+                        match, content_by_clause, support_matches
+                    )
+                ),
                 source_token_indices=match.source_token_indices,
             )
             for match in semantic_matches
@@ -166,9 +192,7 @@ class SemanticLanguageAdapter:
         )
         pragmatic = tuple(
             PragmaticCue(
-                cue_kind=str(
-                    match.output_metadata.get("cue_kind", match.output_kind)
-                ),
+                cue_kind=str(match.output_metadata.get("cue_kind", match.output_kind)),
                 value=str(match.output_metadata.get("cue_value", "present")),
                 confidence=match.confidence,
                 source_token_indices=match.source_token_indices,
@@ -176,6 +200,25 @@ class SemanticLanguageAdapter:
                 replaces_content=False,
             )
             for match in support_matches
+        )
+        semantic_spans = self._semantic_spans(
+            stream, mappings_by_index, semantic_matches
+        )
+        relation_candidates = self._relation_candidates(semantic_spans)
+        resolved_indices = {
+            index
+            for match in (*semantic_matches, *support_matches)
+            for index in match.source_token_indices
+        }
+        resolved_indices.update(
+            index
+            for relation in relation_candidates
+            for span in semantic_spans
+            if span.span_ref == relation.source_span_ref
+            for index in span.token_indices
+        )
+        unresolved = self._unresolved_fragments(
+            stream, content_indices - resolved_indices
         )
         spans = tuple(
             SurfaceSpan(
@@ -195,11 +238,17 @@ class SemanticLanguageAdapter:
             rule_candidates=rule_candidates,
             communicative_candidates=communicative,
             pragmatic_cues=pragmatic,
+            semantic_spans=semantic_spans,
+            relation_candidates=relation_candidates,
+            unresolved_fragments=unresolved,
             surface_spans=spans,
             language_tag=tag,
-            overall_confidence=0.95 if constructions else 0.45,
+            overall_confidence=(
+                max((item.confidence for item in constructions), default=0.35)
+                * (1.0 - min(0.35, len(unresolved) * 0.04))
+            ),
             adapter_id=self.adapter_id,
-            adapter_version=self.adapter_version,
+            adapter_version="3.4.6",
         )
 
 
@@ -251,11 +300,10 @@ class SemanticLanguageAdapter:
         support_matches,
         content_by_clause,
     ):
-        """Select a non-overlapping semantic cover for each clause.
+        """Select useful compatible constructions without erasing partial meaning.
 
-        A clause may be composed from several independently licensed semantic
-        constructions (for example acknowledgement + identity assertion).
-        Unknown residue is never silently discarded.
+        Full surface closure is a ranking feature, never an authorization gate.
+        Unknown residue remains explicit in ``UnresolvedFragment`` records.
         """
         selected = []
         for clause_content in content_by_clause:
@@ -274,20 +322,19 @@ class SemanticLanguageAdapter:
             ]
             covered = set(support)
             chosen = []
-            while covered != set(clause_content):
+            while True:
                 ranked = sorted(
                     (
                         match for match in candidates
                         if set(match.source_token_indices) - covered
                         and not (
-                            set(match.source_token_indices) & covered
-                            - set(support)
+                            set(match.source_token_indices) & covered - set(support)
                         )
                     ),
                     key=lambda match: (
                         len(set(match.source_token_indices) - covered),
-                        len(set(match.source_token_indices)),
                         match.confidence,
+                        len(set(match.source_token_indices)),
                     ),
                     reverse=True,
                 )
@@ -296,15 +343,18 @@ class SemanticLanguageAdapter:
                 best = ranked[0]
                 chosen.append(best)
                 covered.update(best.source_token_indices)
-            if covered == set(clause_content):
-                selected.extend(chosen)
-                continue
-            # Preserve non-communicative local candidates, but do not authorize
-            # a partial speech act as if the residue had been understood.
+                if covered == set(clause_content):
+                    break
+            selected.extend(chosen)
             selected.extend(
                 match for match in candidates
                 if not match.communicative_force
-                and not match.output_metadata.get("requires_full_span")
+                and match not in chosen
+                and not any(
+                    set(match.source_token_indices) < set(item.source_token_indices)
+                    and match.predicate_key == item.predicate_key
+                    for item in chosen
+                )
             )
         return cls._dedupe_matches(tuple(selected))
 
@@ -382,6 +432,129 @@ class SemanticLanguageAdapter:
                 result.append(match)
         return tuple(result)
 
+    @staticmethod
+    def _coverage_ratio(match, content_by_clause, support_matches) -> float:
+        source = set(match.source_token_indices)
+        for clause in content_by_clause:
+            if source <= set(clause):
+                support = {
+                    index for cue in support_matches
+                    if set(cue.source_token_indices) <= set(clause)
+                    for index in cue.source_token_indices
+                }
+                return len(source | support) / max(1, len(clause))
+        return 0.0
+
+    @staticmethod
+    def _opaque_key(surface: str, language_tag: str) -> str:
+        normalized = "_".join(surface.casefold().split())
+        return f"opaque:{language_tag}:{normalized}"
+
+    @staticmethod
+    def _semantic_spans(stream, mappings_by_index, matches=()):
+        result = []
+        for index, token in enumerate(stream.tokens):
+            mappings = tuple(mappings_by_index.get(index, ()) or ())
+            features = {}
+            semantic_keys = []
+            for mapping in mappings:
+                semantic_key = str(getattr(mapping, "semantic_key", ""))
+                if semantic_key:
+                    semantic_keys.append(semantic_key)
+                features.update(dict(getattr(mapping, "morphological_features", {}) or {}))
+            result.append(SemanticSpanCandidate(
+                span_ref=f"span:{index}",
+                token_indices=(index,),
+                surface=token.raw_form,
+                semantic_keys=tuple(dict.fromkeys(semantic_keys)),
+                features=features,
+                candidate_kind="lexical" if mappings else "opaque",
+                confidence=0.92 if mappings else 0.20,
+            ))
+        for match in matches:
+            for capture_key, raw_indices in match.capture_token_indices.items():
+                indices = tuple(dict.fromkeys(raw_indices))
+                if len(indices) <= 1:
+                    continue
+                semantic_keys = tuple(dict.fromkeys(
+                    str(getattr(mapping, "semantic_key", ""))
+                    for index in indices
+                    for mapping in tuple(mappings_by_index.get(index, ()) or ())
+                    if getattr(mapping, "semantic_key", "")
+                ))
+                result.append(SemanticSpanCandidate(
+                    span_ref=(
+                        f"span:capture:{match.construction_ref}:"
+                        f"{capture_key}:{indices[0]}:{indices[-1]}"
+                    ),
+                    token_indices=indices,
+                    surface=" ".join(
+                        stream.tokens[index].raw_form for index in indices
+                    ),
+                    semantic_keys=semantic_keys,
+                    features={
+                        "semantic_family": "composite_span",
+                        "capture_key": str(capture_key),
+                        "construction_ref": match.construction_ref,
+                    },
+                    candidate_kind="construction_capture",
+                    confidence=match.confidence,
+                ))
+        return tuple(result)
+
+    @staticmethod
+    def _relation_candidates(spans):
+        result = []
+        for span in spans:
+            features = dict(span.features or {})
+            target_predicate = str(features.get("target_predicate", ""))
+            target_role = str(features.get("target_role", ""))
+            relation_kind = str(features.get("relation_kind", ""))
+            if target_predicate and target_role:
+                result.append(SemanticRelationCandidate(
+                    relation_ref=f"relation:{span.span_ref}:{target_predicate}:{target_role}",
+                    relation_kind=relation_kind or "modifier_attachment",
+                    source_span_ref=span.span_ref,
+                    target_predicate_key=target_predicate,
+                    target_role_key=target_role,
+                    confidence=span.confidence,
+                    metadata=features,
+                ))
+            elif features.get("semantic_family") == "temporal_deictic":
+                result.append(SemanticRelationCandidate(
+                    relation_ref=f"relation:{span.span_ref}:temporal_scope",
+                    relation_kind="temporal_scope",
+                    source_span_ref=span.span_ref,
+                    confidence=span.confidence,
+                    metadata=features,
+                ))
+        return tuple(result)
+
+    @staticmethod
+    def _unresolved_fragments(stream, indices):
+        indices = sorted(indices)
+        if not indices:
+            return ()
+        groups = []
+        current = [indices[0]]
+        for index in indices[1:]:
+            if index == current[-1] + 1:
+                current.append(index)
+            else:
+                groups.append(tuple(current))
+                current = [index]
+        groups.append(tuple(current))
+        return tuple(
+            UnresolvedFragment(
+                span_ref=f"unresolved:{group[0]}:{group[-1]}",
+                token_indices=group,
+                surface=" ".join(stream.tokens[index].raw_form for index in group),
+                possible_semantic_families=("lexical_sense", "modifier", "relation"),
+                confidence=0.20,
+            )
+            for group in groups
+        )
+
     def _token_evidence(self, stream):
         matcher_tokens: list[TokenEvidence] = []
         mappings_by_index: dict[int, tuple[object, ...]] = {}
@@ -401,6 +574,24 @@ class SemanticLanguageAdapter:
             for component_index, component in enumerate(components):
                 mappings: list[object] = []
                 seen: set[str] = set()
+                if self._schema_store is not None:
+                    for semantic_key in self._schema_store.lookup_lexical_form(
+                        component.casefold(), self._pack.language_tag
+                    ):
+                        marker = f"learned:{semantic_key}"
+                        learned_mapping = SimpleNamespace(
+                            mapping_id=marker,
+                            semantic_key=semantic_key,
+                            lemma_forms=(component,),
+                            morphological_features={
+                                "provenance": "learned_schema_store"
+                            },
+                        )
+                        mappings.append(learned_mapping)
+                        seen.add(marker)
+                        if marker not in source_seen:
+                            source_mappings.append(learned_mapping)
+                            source_seen.add(marker)
                 for variant in self._surface_variants(component):
                     for mapping in self._surface_index.get(variant, ()):
                         marker = getattr(mapping, "mapping_id", "")

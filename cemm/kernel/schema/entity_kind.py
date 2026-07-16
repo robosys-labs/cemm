@@ -16,3 +16,9 @@ class EntityKindSchema:
     predicate_refs: tuple[str, ...] = ()  # Ref[PredicateSchema]
     typical_features: tuple[str, ...] = ()
     identity_criteria: tuple[str, ...] = ()
+    grounding_anchor_refs: tuple[str, ...] = ()
+    constitutive_rule_refs: tuple[str, ...] = ()
+    default_rule_refs: tuple[str, ...] = ()
+    event_pattern_refs: tuple[str, ...] = ()
+    place_pattern_refs: tuple[str, ...] = ()
+    sensitivity: str = "ordinary"

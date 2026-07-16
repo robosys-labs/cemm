@@ -518,6 +518,82 @@
       "competence_case_refs": [
         "competence:fr:foundation:software_system"
       ]
+    },
+    {
+      "mapping_id": "input:fr:today",
+      "surface_forms": [
+        "aujourd’hui",
+        "aujourd'hui"
+      ],
+      "lemma_forms": [
+        "aujourd’hui"
+      ],
+      "semantic_key": "time:today",
+      "part_of_speech": "adverb",
+      "morphological_features": {
+        "semantic_family": "temporal_deictic",
+        "deictic": "deictic:current_day"
+      },
+      "grounding_contract_ref": "language:evidence:time:today",
+      "competence_case_refs": [
+        "competence:input:fr:today"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:full",
+      "surface_forms": [
+        "complet",
+        "complète"
+      ],
+      "lemma_forms": [
+        "complet"
+      ],
+      "semantic_key": "name_form:full",
+      "part_of_speech": "adjective",
+      "morphological_features": {
+        "target_predicate": "named",
+        "target_role": "name_form",
+        "relation_kind": "qualifier"
+      },
+      "grounding_contract_ref": "language:evidence:name_form:full",
+      "competence_case_refs": [
+        "competence:input:fr:full"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:actually",
+      "surface_forms": [
+        "réellement",
+        "effectivement"
+      ],
+      "lemma_forms": [
+        "réellement"
+      ],
+      "semantic_key": "discourse:correction",
+      "part_of_speech": "adverb",
+      "morphological_features": {
+        "discourse_relation": "correction"
+      },
+      "grounding_contract_ref": "language:evidence:discourse:correction",
+      "competence_case_refs": [
+        "competence:input:fr:actually"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:always",
+      "surface_forms": [
+        "toujours"
+      ],
+      "lemma_forms": [
+        "toujours"
+      ],
+      "semantic_key": "frequency:always",
+      "part_of_speech": "adverb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:frequency:always",
+      "competence_case_refs": [
+        "competence:input:fr:always"
+      ]
     }
   ],
   "constructions": [
@@ -865,7 +941,7 @@
           ]
         },
         {
-          "term_id": "holder",
+          "term_id": "possessor",
           "capture_key": "holder",
           "constraints": [
             {
@@ -878,7 +954,7 @@
           ]
         },
         {
-          "term_id": "name_noun",
+          "term_id": "name_key",
           "constraints": [
             {
               "kind": "semantic_key",
@@ -887,26 +963,38 @@
               ]
             }
           ]
+        },
+        {
+          "term_id": "name_form",
+          "capture_key": "name_form",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "name_form:full"
+              ]
+            }
+          ]
         }
       ],
       "predicate_key": "named",
       "role_capture_map": {
-        "holder": "holder"
+        "holder": "holder",
+        "name_form": "name_form"
       },
       "open_role_keys": [
         "name"
       ],
       "communicative_force": "ask",
-      "output_metadata": {
-        "requires_full_span": true
-      },
       "competence_case_refs": [
-        "competence:fr:name_question:role_projection"
+        "competence:fr:name_question:qualified_port"
       ],
       "round_trip_case_refs": [
-        "roundtrip:fr:name_question:v1"
+        "roundtrip:fr:name_question:v2"
       ],
-      "priority": 220
+      "priority": 330
     },
     {
       "schema_id": "construction:fr:acknowledgement:v1",
@@ -946,7 +1034,7 @@
       "schema_id": "construction:fr:name_statement:v1",
       "terms": [
         {
-          "term_id": "holder",
+          "term_id": "possessor",
           "capture_key": "holder",
           "constraints": [
             {
@@ -959,12 +1047,26 @@
           ]
         },
         {
-          "term_id": "name_noun",
+          "term_id": "name_key",
           "constraints": [
             {
               "kind": "semantic_key",
               "values": [
                 "named"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_form",
+          "capture_key": "name_form",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "name_form:full"
               ]
             }
           ]
@@ -981,11 +1083,29 @@
           ]
         },
         {
-          "term_id": "name",
-          "capture_key": "name",
+          "term_id": "correction",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
           "constraints": [
             {
-              "kind": "any"
+              "kind": "semantic_key",
+              "values": [
+                "discourse:correction"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_value",
+          "capture_key": "name",
+          "minimum_occurs": 1,
+          "maximum_occurs": 8,
+          "constraints": [
+            {
+              "kind": "token_kind",
+              "values": [
+                "word"
+              ]
             }
           ]
         }
@@ -993,20 +1113,18 @@
       "predicate_key": "named",
       "role_capture_map": {
         "holder": "holder",
+        "name_form": "name_form",
         "name": "name"
       },
       "open_role_keys": [],
       "communicative_force": "assert",
-      "output_metadata": {
-        "requires_full_span": true
-      },
       "competence_case_refs": [
-        "competence:fr:name_statement:role_projection"
+        "competence:fr:name_statement:semantic_span"
       ],
       "round_trip_case_refs": [
-        "roundtrip:fr:name_statement:v1"
+        "roundtrip:fr:name_statement:v2"
       ],
-      "priority": 210
+      "priority": 330
     }
   ],
   "token_expansions": [

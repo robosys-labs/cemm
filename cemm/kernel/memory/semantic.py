@@ -104,12 +104,15 @@ class SemanticMemoryStore:
                 existing = self._facts[existing_ref]
                 self._facts[existing_ref] = replace(
                     existing,
+                    status="active",
                     confidence=max(
                         existing.confidence, fact.confidence
                     ),
                     evidence_refs=tuple(dict.fromkeys(
                         (*existing.evidence_refs, *fact.evidence_refs)
                     )),
+                    source_ref=fact.source_ref or existing.source_ref,
+                    created_at=fact.created_at,
                 )
                 self._revision += 1
                 return existing_ref, False
@@ -158,8 +161,13 @@ class SemanticMemoryStore:
                 sorted(result, key=lambda item: item.created_at)
             )
 
-    def all_facts(self):
-        return tuple(self._facts.values())
+    def all_facts(
+        self, *, active_only: bool = True
+    ) -> tuple[SemanticFact, ...]:
+        values = tuple(self._facts.values())
+        if not active_only:
+            return values
+        return tuple(fact for fact in values if fact.status == "active")
 
     def supersede(self, fact_id):
         with self._lock:

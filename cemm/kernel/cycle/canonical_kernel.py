@@ -17,6 +17,8 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         rule_catalog,
         inference_committer,
         rule_learner,
+        definition_learner,
+        dialogue_ledger,
         foundation_fingerprint: str,
         active_schema_refs: frozenset[str],
         passed_competence_case_refs: frozenset[str],
@@ -31,6 +33,8 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         self._rule_catalog = rule_catalog
         self._inference_committer = inference_committer
         self._rule_learner = rule_learner
+        self._definition_learner = definition_learner
+        self._dialogue_ledger = dialogue_ledger
         self._foundation_fingerprint = foundation_fingerprint
         self._active_schema_refs = active_schema_refs
         self._passed_competence_case_refs = passed_competence_case_refs
@@ -51,14 +55,22 @@ class CanonicalCognitiveKernel(CognitiveKernel):
 
     def _orient(self, trigger):
         cycle = super()._orient(trigger)
+        context_snapshot = self._dialogue_ledger.snapshot(
+            trigger.context_id,
+            clock_observation=cycle.snapshot.clock_observation,
+        )
         return replace(
             cycle,
+            context_snapshot=context_snapshot,
             snapshot=replace(
                 cycle.snapshot,
-                kernel_foundation_version="v3.5-grounded-relational",
-                grounding_policy_version="role-aware-grounding-v3.5",
+                common_ground_revision=self._dialogue_ledger.revision,
+                kernel_foundation_version="v3.4.6-semantic-forest",
+                grounding_policy_version="span-context-grounding-v3.4.6",
                 competence_suite_hash=self._foundation_fingerprint,
-                adapter_contract_hash="semantic-language-pack-v3.5",
+                adapter_contract_hash="semantic-evidence-forest-v3.4.6",
+                inference_policy_version="agenda-seminaive-v3.4.6",
+                context_scope_policy_version="dialogue-ledger-v3.4.6",
             ),
         )
 
@@ -71,14 +83,20 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         except Exception as exc:
             errors.append(f"capability assessment failed: {exc}")
         rule_results = ()
+        definition_results = ()
         try:
             rule_results = self._rule_learner.learn_cycle(cycle)
         except Exception as exc:
             errors.append(f"grounded rule learning failed: {exc}")
+        try:
+            definition_results = self._definition_learner.learn_cycle(cycle)
+        except Exception as exc:
+            errors.append(f"grounded definition learning failed: {exc}")
         cycle = replace(
             cycle,
             capability_assessments=assessments,
             rule_learning_results=rule_results,
+            definition_learning_results=definition_results,
         )
         if errors:
             cycle = replace(
@@ -94,6 +112,7 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         errors = []
         goals = ()
         response_intents = ()
+        response_candidates = ()
         try:
             forces = tuple(
                 force
@@ -108,13 +127,20 @@ class CanonicalCognitiveKernel(CognitiveKernel):
                 gaps=list(cycle.gaps),
             )
             goals = arbitration.active_goals
-            response_intents = self._response_decider.decide(cycle)
+            if hasattr(self._response_decider, "decide_with_candidates"):
+                response_intents, response_candidates = (
+                    self._response_decider.decide_with_candidates(cycle)
+                )
+            else:
+                response_intents = self._response_decider.decide(cycle)
+                response_candidates = ()
         except Exception as exc:
             errors.append(f"decide failed: {exc}")
         cycle = replace(
             cycle,
             goals=goals,
             response_intents=response_intents,
+            response_candidates=response_candidates,
         )
         return self._trace(cycle, "decide", errors)
 
@@ -153,8 +179,20 @@ class CanonicalCognitiveKernel(CognitiveKernel):
             if commit_outcome is not None and commit_outcome.required_satisfied:
                 rules = self._rule_catalog.active_rules()
                 if rules:
+                    delta_refs = tuple(
+                        ref
+                        for result in commit_outcome.results
+                        if result.status == "committed"
+                        for ref in result.record_refs
+                    )
+                    delta_facts = tuple(
+                        fact for ref in delta_refs
+                        if (fact := self._memory.get(ref)) is not None
+                        and getattr(fact, "status", "active") == "active"
+                    )
                     outcome = self._inference.infer(
                         seed_facts=self._memory.all_facts(),
+                        delta_facts=delta_facts,
                         rules=rules,
                         budget=InferenceBudget(
                             max_steps=256,
@@ -295,6 +333,42 @@ class CanonicalCognitiveKernel(CognitiveKernel):
                     )
         except Exception as exc:
             errors.append(f"output commit failed: {exc}")
+        try:
+            from ..understanding.context_snapshot import DialogueTurnRecord
+            inbound_surface = next((
+                signal.content
+                for signal in tuple(cycle.trigger.input_signals or ())
+            ), "")
+            self._dialogue_ledger.append(DialogueTurnRecord(
+                event_ref=f"input:{cycle.cycle_id}",
+                context_id=cycle.trigger.context_id,
+                direction="inbound",
+                speaker_ref="user",
+                addressee_ref="self",
+                clauses=self._dialogue_ledger.clauses_from_interpretations(
+                    cycle.selected_interpretations,
+                    speaker_ref="user",
+                    addressee_ref="self",
+                    surface_text=inbound_surface,
+                ),
+                surface_text=inbound_surface,
+            ))
+            if cycle.message_plan and cycle.surface_payload and cycle.surface_payload.surface_text:
+                self._dialogue_ledger.append(DialogueTurnRecord(
+                    event_ref=f"output:{cycle.cycle_id}",
+                    context_id=cycle.trigger.context_id,
+                    direction="outbound",
+                    speaker_ref="self",
+                    addressee_ref="user",
+                    clauses=self._dialogue_ledger.clauses_from_message_plan(
+                        cycle.message_plan,
+                        realized_clause_refs=cycle.surface_payload.realized_item_refs,
+                        surface_text=cycle.surface_payload.surface_text,
+                    ),
+                    surface_text=cycle.surface_payload.surface_text,
+                ))
+        except Exception as exc:
+            errors.append(f"dialogue semantic ledger failed: {exc}")
         cycle = replace(
             cycle,
             output_event=output_event,

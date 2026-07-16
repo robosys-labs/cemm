@@ -121,6 +121,8 @@ class CognitiveCycle:
     meaning_candidates: tuple[Any, ...] = ()
     grounded_candidates: tuple[Any, ...] = ()
     selected_interpretations: tuple[Any, ...] = ()
+    interpretation_alternatives: tuple[Any, ...] = ()
+    context_snapshot: Any | None = None
     dialogue_resolution: Any | None = None
     dialogue_obligations: tuple[Any, ...] = ()
 
@@ -134,6 +136,7 @@ class CognitiveCycle:
     existential_constraints: tuple[Any, ...] = ()
     inference_commit: Any | None = None
     rule_learning_results: tuple[Any, ...] = ()
+    definition_learning_results: tuple[Any, ...] = ()
     self_reports: tuple[Any, ...] = ()
     gaps: tuple[Any, ...] = ()
 
@@ -146,6 +149,7 @@ class CognitiveCycle:
     critical_mutations: Any | None = None
     critical_commit: Any | None = None
 
+    response_candidates: tuple[Any, ...] = ()
     response_intents: tuple[Any, ...] = ()
     message_plan: Any | None = None
     realization_authorization: Any | None = None

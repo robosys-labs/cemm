@@ -30,8 +30,11 @@ from ..kernel.execution.planner import Planner
 from ..kernel.execution.reconciliation import OutcomeReconciler
 from ..kernel.inference.catalog import SemanticRuleCatalog
 from ..kernel.inference.committer import InferenceFactCommitter
+from ..kernel.inference.agenda_engine import AgendaInferenceEngine
 from ..kernel.inference.engine import BoundedInferenceEngine
 from ..kernel.learning.coordinator import LearningCoordinator
+from ..kernel.learning.anchored_schema_compiler import AnchoredLearnedSchemaCompiler
+from ..kernel.learning.grounded_definition_learner import GroundedDefinitionLearner
 from ..kernel.learning.grounded_rule_learner import GroundedRuleLearner
 from ..kernel.learning.schema_compiler import LearnedSchemaCompiler
 from ..kernel.memory.compiler import FactMutationCompiler
@@ -48,6 +51,7 @@ from ..kernel.response.cycle_environment import (
     CanonicalCycleEmissionEnvironmentBuilder,
 )
 from ..kernel.response.decider import ResponseDecider
+from ..kernel.response.ranker import ResponseCandidateRanker
 from ..kernel.response.emission_closure import SemanticEmissionGate
 from ..kernel.response.planner import ResponsePlanner
 from ..kernel.response.renderer import MessageRenderer
@@ -55,7 +59,10 @@ from ..kernel.schema.store import SemanticSchemaStore
 from ..kernel.self_model.capability_evaluator import CapabilityEvaluator
 from ..kernel.self_model.runtime_capabilities import RuntimeCapabilityProvider
 from ..kernel.self_model.self_report import SelfReportBuilder
-from ..kernel.understanding.canonical_composer import CanonicalSemanticComposer
+from ..kernel.understanding.context_snapshot import DialogueSemanticLedger
+from ..kernel.understanding.contextual_grounding import ContextualGroundingResolver
+from ..kernel.understanding.contextual_interpreter import ContextualInterpretationResolver
+from ..kernel.understanding.forest_composer import SemanticForestComposer
 from ..kernel.understanding.canonical_grounding import CanonicalGroundingResolver
 from ..kernel.understanding.canonical_interpreter import (
     CanonicalInterpretationResolver,
@@ -101,12 +108,14 @@ class Runtime:
             truth_maintenance=self._truth,
             cross_schema_guard=self._guard,
         )
-        self._fact_compiler = FactMutationCompiler(self._payload_registry)
+        self._fact_compiler = FactMutationCompiler(
+            self._payload_registry, self._semantic_memory
+        )
         self._commit = CommitCoordinator(
             self._semantic_memory,
             self._payload_registry,
         )
-        self._inference = BoundedInferenceEngine()
+        self._inference = AgendaInferenceEngine()
         rule_catalog = SemanticRuleCatalog(self._schema_store)
         inference_committer = InferenceFactCommitter(
             self._payload_registry,
@@ -119,13 +128,15 @@ class Runtime:
                 passed_competence_case_refs=(
                     emission_evidence.competence_case_refs
                 ),
+                schema_store=self._schema_store,
             )
             for tag, pack in self._boot_package.language_packs.items()
         }
         percept = _NativePerceptAdapter(adapters)
-        composer = CanonicalSemanticComposer(self._schema_store)
-        grounding = CanonicalGroundingResolver(self._schema_store)
-        interpreter = CanonicalInterpretationResolver()
+        dialogue_ledger = DialogueSemanticLedger()
+        composer = SemanticForestComposer(self._schema_store)
+        grounding = ContextualGroundingResolver(self._schema_store)
+        interpreter = ContextualInterpretationResolver()
         workspace = WorkspaceController()
         retriever = CanonicalSemanticRetriever(
             store=self._semantic_memory,
@@ -135,13 +146,22 @@ class Runtime:
         learning = LearningCoordinator(
             store=self._schema_store,
             evaluator=self._epistemic,
-            schema_compiler=LearnedSchemaCompiler(),
+            schema_compiler=AnchoredLearnedSchemaCompiler(
+                self._schema_store
+            ),
         )
-        rule_learner = GroundedRuleLearner(self._schema_store)
+        rule_learner = GroundedRuleLearner(
+            self._schema_store, self._semantic_memory
+        )
+        definition_learner = GroundedDefinitionLearner(
+            self._schema_store, self._semantic_memory
+        )
         response_planner = ResponsePlanner()
-        response_decider = ResponseDecider(tuple(
-            runtime_policies.get("dialogue_policies", ())
-        ))
+        response_decider = ResponseDecider(
+            tuple(runtime_policies.get("dialogue_policies", ())),
+            ranker=ResponseCandidateRanker(),
+            semantic_memory=self._semantic_memory,
+        )
         renderer = MessageRenderer(
             emission_gate=SemanticEmissionGate(
                 self._boot_package.foundations,
@@ -206,6 +226,8 @@ class Runtime:
             rule_catalog=rule_catalog,
             inference_committer=inference_committer,
             rule_learner=rule_learner,
+            definition_learner=definition_learner,
+            dialogue_ledger=dialogue_ledger,
             foundation_fingerprint=self._boot_package.fingerprint,
             active_schema_refs=emission_evidence.active_schema_refs,
             passed_competence_case_refs=(

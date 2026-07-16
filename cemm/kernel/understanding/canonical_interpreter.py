@@ -27,6 +27,9 @@ class CanonicalSelectedInterpretation:
     requested_semantic_operation: str = ""
     grounding_ref: str = ""
     context_kind: str = ""
+    score_breakdown: tuple[tuple[str, float], ...] = ()
+    coverage_ratio: float = 0.0
+    unresolved_fragment_refs: tuple[str, ...] = ()
 
 
 class CanonicalInterpretationResolver(InterpretationResolver):

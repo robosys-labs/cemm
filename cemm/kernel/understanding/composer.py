@@ -33,7 +33,9 @@ class SemanticComposer:
         self._store = store
         self._resolver = resolver or SchemaResolver(store)
 
-    def compose(self, evidence: SurfaceEvidence) -> CandidateGraph:
+    def compose(
+        self, evidence: SurfaceEvidence, *, context_snapshot=None
+    ) -> CandidateGraph:
         stream = evidence.token_stream
         predications: list[CandidatePredication] = []
         propositions: list[CandidateProposition] = []
@@ -55,6 +57,7 @@ class SemanticComposer:
                 candidate = self._lexical_predication(sense, lexical)
                 if candidate is not None:
                     predications.append(candidate)
+                    open_ports.extend(candidate.predication.open_ports)
             if not resolution.candidates and not self._is_grammatical_key(key):
                 opaque_refs.append(
                     self._stable_opaque(
@@ -137,6 +140,7 @@ class SemanticComposer:
                     target_proposition_ref=target,
                     confidence=communicative.confidence,
                     source_evidence_refs=(),
+                    source_token_indices=communicative.source_token_indices,
                 )
             )
         if not forces and propositions:
@@ -179,11 +183,26 @@ class SemanticComposer:
         predicate_ref = getattr(payload, "semantic_schema_ref", "")
         if not predicate_ref:
             predicate_ref = getattr(payload, "predicate_schema_ref", "")
+        predicate_roles = ()
+        if not predicate_ref and getattr(envelope, "schema_kind", "") == "predicate":
+            predicate_ref = envelope.record_id
+            predicate_roles = tuple(
+                str(role) for role in tuple(
+                    getattr(payload, "role_refs", ()) or ()
+                )
+            )
         if not predicate_ref:
             return None
         predication = Predication(
             id=f"pred:{uuid4().hex[:12]}",
             predicate_schema_ref=predicate_ref,
+            open_ports=tuple(
+                OpenPort(
+                    role if role.startswith("role:") else f"role:{role}",
+                    True, "one"
+                )
+                for role in predicate_roles
+            ),
             source_span_refs=tuple(f"span:{index}" for index in lexical.source_token_indices),
             confidence=sense.confidence * lexical.confidence,
         )
@@ -243,7 +262,18 @@ class SemanticComposer:
             return predications, propositions, contexts, ports
 
         for construction in complement_constructions:
-            content_index = construction.role_mappings.get("content")
+            metadata = dict(getattr(construction, "metadata", {}) or {})
+            embedded_role = str(metadata.get("embedded_role", "content"))
+            capture_role = str(
+                metadata.get("embedded_capture_role", embedded_role)
+            )
+            content_indices = construction.role_mappings.get(capture_role)
+            if content_indices is None:
+                continue
+            if isinstance(content_indices, int):
+                content_index = content_indices
+            else:
+                content_index = next(iter(content_indices), None)
             if content_index is None:
                 continue
             inner_prop = self._embedded_proposition_ref(
@@ -260,9 +290,16 @@ class SemanticComposer:
                 bindings = tuple(
                     binding
                     for binding in candidate.predication.bindings
-                    if binding.role_schema_ref != "role:content"
+                    if binding.role_schema_ref != (
+                        embedded_role if embedded_role.startswith("role:")
+                        else f"role:{embedded_role}"
+                    )
                 ) + (
-                    RoleBinding("role:content", inner_prop, 0.85),
+                    RoleBinding(
+                        embedded_role if embedded_role.startswith("role:")
+                        else f"role:{embedded_role}",
+                        inner_prop, 0.85
+                    ),
                 )
                 outer = Predication(
                     id=candidate.predication.id,

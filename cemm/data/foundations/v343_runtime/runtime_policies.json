@@ -92,6 +92,48 @@
           }
         }
       }
+    },
+    {
+      "policy_id": "dialogue:acknowledge_grounded_evaluates_difficulty:v1",
+      "trigger": {
+        "predicate_key": "evaluates_difficulty"
+      },
+      "response": {
+        "predicate_key": "acknowledges",
+        "force": "assert",
+        "context_ref": "actual",
+        "roles": {
+          "speaker": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          }
+        }
+      }
+    },
+    {
+      "policy_id": "dialogue:acknowledge_grounded_communicates:v1",
+      "trigger": {
+        "predicate_key": "communicates"
+      },
+      "response": {
+        "predicate_key": "acknowledges",
+        "force": "assert",
+        "context_ref": "actual",
+        "roles": {
+          "speaker": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          }
+        }
+      }
     }
   ],
   "non_persistent_predicates": [

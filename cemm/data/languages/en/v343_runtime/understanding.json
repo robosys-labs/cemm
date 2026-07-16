@@ -367,6 +367,247 @@
       "competence_case_refs": [
         "competence:en:foundation:software_system"
       ]
+    },
+    {
+      "mapping_id": "input:en:today",
+      "surface_forms": [
+        "today"
+      ],
+      "lemma_forms": [
+        "today"
+      ],
+      "semantic_key": "time:today",
+      "part_of_speech": "adverb",
+      "morphological_features": {
+        "semantic_family": "temporal_deictic",
+        "deictic": "deictic:current_day"
+      },
+      "grounding_contract_ref": "language:evidence:time:today",
+      "competence_case_refs": [
+        "competence:input:en:today"
+      ]
+    },
+    {
+      "mapping_id": "input:en:full",
+      "surface_forms": [
+        "full"
+      ],
+      "lemma_forms": [
+        "full"
+      ],
+      "semantic_key": "name_form:full",
+      "part_of_speech": "adjective",
+      "morphological_features": {
+        "target_predicate": "named",
+        "target_role": "name_form",
+        "relation_kind": "qualifier"
+      },
+      "grounding_contract_ref": "language:evidence:name_form:full",
+      "competence_case_refs": [
+        "competence:input:en:full"
+      ]
+    },
+    {
+      "mapping_id": "input:en:actually",
+      "surface_forms": [
+        "actually"
+      ],
+      "lemma_forms": [
+        "actually"
+      ],
+      "semantic_key": "discourse:correction",
+      "part_of_speech": "adverb",
+      "morphological_features": {
+        "discourse_relation": "correction"
+      },
+      "grounding_contract_ref": "language:evidence:discourse:correction",
+      "competence_case_refs": [
+        "competence:input:en:actually"
+      ]
+    },
+    {
+      "mapping_id": "input:en:question_aux",
+      "surface_forms": [
+        "do",
+        "does",
+        "did"
+      ],
+      "lemma_forms": [
+        "do"
+      ],
+      "semantic_key": "grammar:question_aux",
+      "part_of_speech": "auxiliary",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:grammar:question_aux",
+      "competence_case_refs": [
+        "competence:input:en:question_aux"
+      ]
+    },
+    {
+      "mapping_id": "input:en:say",
+      "surface_forms": [
+        "say",
+        "says",
+        "said"
+      ],
+      "lemma_forms": [
+        "say"
+      ],
+      "semantic_key": "communicates",
+      "part_of_speech": "verb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:communicates",
+      "competence_case_refs": [
+        "competence:input:en:say"
+      ]
+    },
+    {
+      "mapping_id": "input:en:always",
+      "surface_forms": [
+        "always"
+      ],
+      "lemma_forms": [
+        "always"
+      ],
+      "semantic_key": "frequency:always",
+      "part_of_speech": "adverb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:frequency:always",
+      "competence_case_refs": [
+        "competence:input:en:always"
+      ]
+    },
+    {
+      "mapping_id": "input:en:anaphor_that",
+      "surface_forms": [
+        "that"
+      ],
+      "lemma_forms": [
+        "that"
+      ],
+      "semantic_key": "anaphor:recent_proposition",
+      "part_of_speech": "pronoun",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:anaphor:recent_proposition",
+      "competence_case_refs": [
+        "competence:input:en:anaphor_that"
+      ]
+    },
+    {
+      "mapping_id": "input:en:know",
+      "surface_forms": [
+        "know",
+        "knows",
+        "knew"
+      ],
+      "lemma_forms": [
+        "know"
+      ],
+      "semantic_key": "knows",
+      "part_of_speech": "verb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:knows",
+      "competence_case_refs": [
+        "competence:input:en:know"
+      ]
+    },
+    {
+      "mapping_id": "input:en:focus_even",
+      "surface_forms": [
+        "even"
+      ],
+      "lemma_forms": [
+        "even"
+      ],
+      "semantic_key": "discourse:focus",
+      "part_of_speech": "particle",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:discourse:focus",
+      "competence_case_refs": [
+        "competence:input:en:focus_even"
+      ]
+    },
+    {
+      "mapping_id": "input:en:expletive_it",
+      "surface_forms": [
+        "it"
+      ],
+      "lemma_forms": [
+        "it"
+      ],
+      "semantic_key": "pronoun:expletive",
+      "part_of_speech": "pronoun",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:pronoun:expletive",
+      "competence_case_refs": [
+        "competence:input:en:expletive_it"
+      ]
+    },
+    {
+      "mapping_id": "input:en:degree_so",
+      "surface_forms": [
+        "so"
+      ],
+      "lemma_forms": [
+        "so"
+      ],
+      "semantic_key": "degree:high",
+      "part_of_speech": "adverb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:degree:high",
+      "competence_case_refs": [
+        "competence:input:en:degree_so"
+      ]
+    },
+    {
+      "mapping_id": "input:en:difficulty_hard",
+      "surface_forms": [
+        "hard",
+        "difficult"
+      ],
+      "lemma_forms": [
+        "hard"
+      ],
+      "semantic_key": "difficulty:high",
+      "part_of_speech": "adjective",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:difficulty:high",
+      "competence_case_refs": [
+        "competence:input:en:difficulty_hard"
+      ]
+    },
+    {
+      "mapping_id": "input:en:infinitive_to",
+      "surface_forms": [
+        "to"
+      ],
+      "lemma_forms": [
+        "to"
+      ],
+      "semantic_key": "grammar:infinitive_marker",
+      "part_of_speech": "particle",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:grammar:infinitive_marker",
+      "competence_case_refs": [
+        "competence:input:en:infinitive_to"
+      ]
+    },
+    {
+      "mapping_id": "input:en:talk",
+      "surface_forms": [
+        "talk",
+        "speak"
+      ],
+      "lemma_forms": [
+        "talk"
+      ],
+      "semantic_key": "communicates",
+      "part_of_speech": "verb",
+      "morphological_features": {},
+      "grounding_contract_ref": "language:evidence:communicates",
+      "competence_case_refs": [
+        "competence:input:en:talk"
+      ]
     }
   ],
   "constructions": [
@@ -774,6 +1015,592 @@
         "roundtrip:en:acknowledgement:v1"
       ],
       "priority": 260
+    },
+    {
+      "schema_id": "construction:en:name_statement:v1",
+      "terms": [
+        {
+          "term_id": "possessor",
+          "capture_key": "holder",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "determiner:first_person_possessive",
+                "determiner:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_form",
+          "capture_key": "name_form",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "name_form:full"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_key",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "copula",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "correction",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:correction"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_value",
+          "capture_key": "name",
+          "minimum_occurs": 1,
+          "maximum_occurs": 8,
+          "constraints": [
+            {
+              "kind": "token_kind",
+              "values": [
+                "word"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "named",
+      "role_capture_map": {
+        "holder": "holder",
+        "name_form": "name_form",
+        "name": "name"
+      },
+      "open_role_keys": [],
+      "communicative_force": "assert",
+      "competence_case_refs": [
+        "competence:en:name_statement:semantic_span"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:name_statement:v2"
+      ],
+      "priority": 330
+    },
+    {
+      "schema_id": "construction:en:name_question:v1",
+      "terms": [
+        {
+          "term_id": "what",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "wh:what"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "copula",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "possessor",
+          "capture_key": "holder",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "determiner:first_person_possessive",
+                "determiner:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_form",
+          "capture_key": "name_form",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "name_form:full"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_key",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "named",
+      "role_capture_map": {
+        "holder": "holder",
+        "name_form": "name_form"
+      },
+      "open_role_keys": [
+        "name"
+      ],
+      "communicative_force": "ask",
+      "competence_case_refs": [
+        "competence:en:name_question:qualified_port"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:name_question:v2"
+      ],
+      "priority": 330
+    },
+    {
+      "schema_id": "construction:en:habitual_communication_query:v1",
+      "terms": [
+        {
+          "term_id": "aux",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:question_aux"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "speaker",
+          "capture_key": "speaker",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "frequency",
+          "capture_key": "frequency",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "frequency:always"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "communicate",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "communicates"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "content",
+          "capture_key": "content",
+          "constraints": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "anaphor:"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "communicates",
+      "role_capture_map": {
+        "speaker": "speaker",
+        "frequency": "frequency",
+        "content": "content"
+      },
+      "open_role_keys": [],
+      "communicative_force": "ask",
+      "competence_case_refs": [
+        "competence:en:habitual_communication:anaphora"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:habitual_communication:v1"
+      ],
+      "priority": 360
+    },
+    {
+      "schema_id": "construction:en:possessive_name_pattern:v1",
+      "terms": [
+        {
+          "term_id": "possessor",
+          "capture_key": "holder",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "determiner:first_person_possessive",
+                "determiner:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_key",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "named",
+      "role_capture_map": {
+        "holder": "holder"
+      },
+      "open_role_keys": [
+        "name"
+      ],
+      "communicative_force": "",
+      "competence_case_refs": [
+        "competence:en:possessive_name_pattern:embedded"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:possessive_name_pattern:v1"
+      ],
+      "priority": 300
+    },
+    {
+      "schema_id": "construction:en:knowledge_name_query:v1",
+      "terms": [
+        {
+          "term_id": "knower",
+          "capture_key": "knower",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "aux",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:question_aux"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "negative",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "polarity:negative"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "focus",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "discourse:focus"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "know",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "knows"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "content_holder",
+          "capture_key": "content",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "determiner:first_person_possessive",
+                "determiner:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_key",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "knows",
+      "role_capture_map": {
+        "knower": "knower",
+        "content": "content"
+      },
+      "open_role_keys": [],
+      "communicative_force": "ask",
+      "output_metadata": {
+        "pattern": "[predicate] [embedded_clause]"
+      },
+      "competence_case_refs": [
+        "competence:en:knowledge_name_query:embedded"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:knowledge_name_query:v1"
+      ],
+      "priority": 370
+    },
+    {
+      "schema_id": "construction:en:communication_activity:v1",
+      "terms": [
+        {
+          "term_id": "activity",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "communicates"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "to",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:infinitive_marker"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "addressee",
+          "capture_key": "addressee",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "communicates",
+      "role_capture_map": {
+        "addressee": "addressee"
+      },
+      "open_role_keys": [
+        "content",
+        "frequency"
+      ],
+      "communicative_force": "",
+      "output_metadata": {
+        "constant_roles": {
+          "speaker": "user"
+        }
+      },
+      "competence_case_refs": [
+        "competence:en:communication_activity:embedded"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:communication_activity:v1"
+      ],
+      "priority": 345
+    },
+    {
+      "schema_id": "construction:en:difficulty_communication:v1",
+      "terms": [
+        {
+          "term_id": "expletive",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:expletive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "copula",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "degree",
+          "capture_key": "degree",
+          "minimum_occurs": 0,
+          "maximum_occurs": 1,
+          "constraints": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "degree:"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "difficulty",
+          "constraints": [
+            {
+              "kind": "semantic_prefix",
+              "values": [
+                "difficulty:"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "infinitive",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:infinitive_marker"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "activity",
+          "capture_key": "activity",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "communicates"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "to",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:infinitive_marker"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "addressee",
+          "capture_key": "addressee",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "pronoun:second_person"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "evaluates_difficulty",
+      "role_capture_map": {
+        "degree": "degree",
+        "activity": "activity",
+        "addressee": "addressee"
+      },
+      "open_role_keys": [],
+      "communicative_force": "assert",
+      "output_metadata": {
+        "constant_roles": {
+          "experiencer": "user"
+        },
+        "pattern": "[predicate] [embedded_clause]",
+        "embedded_role": "activity",
+        "embedded_capture_role": "activity"
+      },
+      "competence_case_refs": [
+        "competence:en:difficulty_communication:composition"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:difficulty_communication:v1"
+      ],
+      "priority": 350
     }
   ],
   "token_expansions": [
@@ -901,6 +1728,20 @@
       ],
       "competence_case_refs": [
         "competence:en:expansion:doesnt"
+      ]
+    },
+    {
+      "expansion_id": "expansion:en:its:v1",
+      "surface_forms": [
+        "it's",
+        "it’s"
+      ],
+      "components": [
+        "it",
+        "is"
+      ],
+      "competence_case_refs": [
+        "competence:en:expansion:its"
       ]
     }
   ]

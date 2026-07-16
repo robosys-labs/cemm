@@ -49,6 +49,23 @@ class RuleAtom:
         )
 
 @dataclass(frozen=True, slots=True)
+class ExistentialDeclaration:
+    variable: str
+    entity_kind_ref: str = ""
+    identity_scope: str = "rule_application"
+    maximum_instances: int = 1
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, Any]) -> "ExistentialDeclaration":
+        return cls(
+            variable=str(raw["variable"]),
+            entity_kind_ref=str(raw.get("entity_kind_ref", "")),
+            identity_scope=str(raw.get("identity_scope", "rule_application")),
+            maximum_instances=int(raw.get("maximum_instances", 1)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class RuleSchema:
     semantic_key: str
     premises: tuple[RuleAtom, ...]
@@ -60,6 +77,7 @@ class RuleSchema:
     cycle_class: CycleClass = CycleClass.ACYCLIC
     stratum: int = 0
     exception_atoms: tuple[RuleAtom, ...] = ()
+    existential_declarations: tuple[ExistentialDeclaration, ...] = ()
     context_refs: tuple[str, ...] = ()
     valid_time_policy: str = "inherit"
     sensitivity: str = "ordinary"
@@ -81,6 +99,10 @@ class RuleSchema:
             stratum=int(raw.get("stratum", 0)),
             exception_atoms=tuple(
                 RuleAtom.from_dict(v) for v in raw.get("exception_atoms", ())
+            ),
+            existential_declarations=tuple(
+                ExistentialDeclaration.from_dict(v)
+                for v in raw.get("existential_declarations", ())
             ),
             context_refs=tuple(str(v) for v in raw.get("context_refs", ())),
             valid_time_policy=str(raw.get("valid_time_policy", "inherit")),
