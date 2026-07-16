@@ -117,5 +117,36 @@
       "desired_proposition",
       "holder"
     ]
+  },
+  {
+    "semantic_key": "action",
+    "parent_kind_refs": [
+      "event"
+    ],
+    "identity_criteria": [
+      "participants",
+      "time_interval",
+      "action_kind"
+    ]
+  },
+  {
+    "semantic_key": "social_relation",
+    "parent_kind_refs": [
+      "information_object"
+    ],
+    "identity_criteria": [
+      "participants",
+      "relation_type",
+      "context"
+    ]
+  },
+  {
+    "semantic_key": "relationship_type",
+    "parent_kind_refs": [
+      "information_object"
+    ],
+    "identity_criteria": [
+      "semantic_definition"
+    ]
   }
 ]

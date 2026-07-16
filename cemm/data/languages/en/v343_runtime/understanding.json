@@ -274,6 +274,99 @@
       "competence_case_refs": [
         "competence:mapping:en:operation_dispatch"
       ]
+    },
+    {
+      "mapping_id": "input:en:acknowledgement",
+      "surface_forms": [
+        "ok",
+        "okay",
+        "alright"
+      ],
+      "lemma_forms": [
+        "ok"
+      ],
+      "semantic_key": "dialogue:acknowledgement",
+      "part_of_speech": "interjection",
+      "grounding_contract_ref": "foundation:predicate:acknowledges:v1",
+      "competence_case_refs": [
+        "competence:en:acknowledgement"
+      ]
+    },
+    {
+      "mapping_id": "input:en:foundation:person",
+      "surface_forms": [
+        "person"
+      ],
+      "lemma_forms": [
+        "person"
+      ],
+      "semantic_key": "person",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:person",
+      "competence_case_refs": [
+        "competence:en:foundation:person"
+      ]
+    },
+    {
+      "mapping_id": "input:en:foundation:agent",
+      "surface_forms": [
+        "agent"
+      ],
+      "lemma_forms": [
+        "agent"
+      ],
+      "semantic_key": "agent",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:agent",
+      "competence_case_refs": [
+        "competence:en:foundation:agent"
+      ]
+    },
+    {
+      "mapping_id": "input:en:foundation:place",
+      "surface_forms": [
+        "place"
+      ],
+      "lemma_forms": [
+        "place"
+      ],
+      "semantic_key": "place",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:place",
+      "competence_case_refs": [
+        "competence:en:foundation:place"
+      ]
+    },
+    {
+      "mapping_id": "input:en:foundation:event",
+      "surface_forms": [
+        "event"
+      ],
+      "lemma_forms": [
+        "event"
+      ],
+      "semantic_key": "event",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:event",
+      "competence_case_refs": [
+        "competence:en:foundation:event"
+      ]
+    },
+    {
+      "mapping_id": "input:en:foundation:software_system",
+      "surface_forms": [
+        "software system",
+        "software_system"
+      ],
+      "lemma_forms": [
+        "software system"
+      ],
+      "semantic_key": "software_system",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:software_system",
+      "competence_case_refs": [
+        "competence:en:foundation:software_system"
+      ]
     }
   ],
   "constructions": [
@@ -647,6 +740,40 @@
         "roundtrip:construction:en:capability_specific_query:v1"
       ],
       "priority": 380
+    },
+    {
+      "schema_id": "construction:en:acknowledgement:v1",
+      "terms": [
+        {
+          "term_id": "acknowledgement",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "dialogue:acknowledgement"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "acknowledges",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "acknowledge",
+      "output_metadata": {
+        "constant_roles": {
+          "speaker": "user",
+          "addressee": "self"
+        },
+        "requires_full_span": true
+      },
+      "competence_case_refs": [
+        "competence:en:acknowledgement:composition"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:acknowledgement:v1"
+      ],
+      "priority": 260
     }
   ],
   "token_expansions": [

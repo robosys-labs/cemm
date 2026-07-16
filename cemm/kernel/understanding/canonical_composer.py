@@ -4,7 +4,11 @@ from __future__ import annotations
 from dataclasses import replace
 from uuid import uuid4
 
-from .candidate_graph import CandidatePredication
+from .candidate_graph import (
+    CandidateCommunicativeForce,
+    CandidatePredication,
+    CandidateRule,
+)
 from .composer import SemanticComposer
 from ..model.predication import Predication
 from ..model.role_binding import OpenPort, RoleBinding
@@ -20,7 +24,67 @@ class CanonicalSemanticComposer(SemanticComposer):
             for candidate in graph.candidate_predications
             for port in candidate.predication.open_ports
         )
-        return replace(graph, open_ports=tuple(self._dedupe_ports(list(ports))))
+        propositions = {
+            item.proposition.predication_ref: item.proposition.id
+            for item in graph.candidate_propositions
+        }
+        forces = []
+        for communicative in evidence.communicative_candidates:
+            source = set(communicative.source_token_indices)
+            candidates = [
+                item for item in graph.candidate_predications
+                if item.candidate_source != "rule_component"
+                and source
+                and set(item.source_token_indices) == source
+            ]
+            if not candidates:
+                candidates = [
+                    item for item in graph.candidate_predications
+                    if item.candidate_source != "rule_component"
+                    and source
+                    and set(item.source_token_indices) <= source
+                ]
+            if not candidates:
+                continue
+            target = max(candidates, key=lambda item: item.confidence)
+            forces.append(CandidateCommunicativeForce(
+                force=communicative.force,
+                target_proposition_ref=propositions.get(target.predication.id, ""),
+                confidence=communicative.confidence,
+            ))
+
+        candidate_rules = []
+        for index, rule in enumerate(evidence.rule_candidates):
+            premise = tuple(
+                item.predication.id
+                for item in graph.candidate_predications
+                if item.candidate_source == "rule_component"
+                and set(item.source_token_indices)
+                and set(item.source_token_indices) <= set(rule.premise_token_indices)
+            )
+            conclusion = tuple(
+                item.predication.id
+                for item in graph.candidate_predications
+                if item.candidate_source == "rule_component"
+                and set(item.source_token_indices)
+                and set(item.source_token_indices) <= set(rule.conclusion_token_indices)
+            )
+            candidate_rules.append(CandidateRule(
+                rule_id=f"candidate_rule:{index}:{rule.construction_key}",
+                construction_ref=rule.construction_key,
+                premise_predication_refs=tuple(dict.fromkeys(premise)),
+                conclusion_predication_refs=tuple(dict.fromkeys(conclusion)),
+                strength=rule.strength,
+                causal_warrant=rule.causal_warrant,
+                confidence=rule.confidence,
+                source_token_indices=rule.source_token_indices,
+            ))
+        return replace(
+            graph,
+            candidate_communicative_forces=tuple(forces),
+            candidate_rules=tuple(candidate_rules),
+            open_ports=tuple(self._dedupe_ports(list(ports))),
+        )
 
     def _construction_predication(self, construction):
         predicate_ref = self._resolve_predicate_ref(
@@ -73,7 +137,11 @@ class CanonicalSemanticComposer(SemanticComposer):
         )
         return CandidatePredication(
             predication=predication,
-            candidate_source="construction",
+            candidate_source=(
+                "rule_component"
+                if getattr(construction, "metadata", {}).get("embedded_rule_ref")
+                else "construction"
+            ),
             confidence=construction.confidence,
             source_token_indices=construction.source_token_indices,
         )

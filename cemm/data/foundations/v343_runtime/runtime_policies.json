@@ -48,6 +48,50 @@
           }
         }
       }
+    },
+    {
+      "policy_id": "dialogue:reciprocal_acknowledgement:v1",
+      "trigger": {
+        "predicate_key": "acknowledges",
+        "force": "acknowledge"
+      },
+      "response": {
+        "predicate_key": "acknowledges",
+        "force": "assert",
+        "context_ref": "actual",
+        "roles": {
+          "speaker": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          }
+        }
+      }
+    },
+    {
+      "policy_id": "dialogue:acknowledge_named_assertion:v1",
+      "trigger": {
+        "predicate_key": "named",
+        "force": "assert"
+      },
+      "response": {
+        "predicate_key": "acknowledges",
+        "force": "assert",
+        "context_ref": "actual",
+        "roles": {
+          "speaker": {
+            "constant": "self",
+            "value_kind": "referent"
+          },
+          "addressee": {
+            "constant": "user",
+            "value_kind": "referent"
+          }
+        }
+      }
     }
   ],
   "non_persistent_predicates": [
@@ -56,6 +100,7 @@
     "answers",
     "requests",
     "informs",
-    "offers_information"
+    "offers_information",
+    "acknowledges"
   ]
 }

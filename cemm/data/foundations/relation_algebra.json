@@ -30,5 +30,35 @@
     "composition_rules": [
       "rule:instance_subkind"
     ]
+  },
+  {
+    "predicate_key": "resides_with",
+    "symmetric": true,
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "partnership_relation",
+    "symmetric": true,
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "possesses",
+    "inverse_predicate_key": "possessed_by",
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "possessed_by",
+    "inverse_predicate_key": "possesses",
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "contained_in",
+    "inverse_predicate_key": "contains",
+    "irreflexive": true
+  },
+  {
+    "predicate_key": "contains",
+    "inverse_predicate_key": "contained_in",
+    "irreflexive": true
   }
 ]

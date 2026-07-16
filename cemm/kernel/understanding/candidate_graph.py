@@ -88,6 +88,19 @@ class DiscourseRelation:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateRule:
+    """Typed conditional candidate linked to ordinary predications."""
+    rule_id: str
+    construction_ref: str
+    premise_predication_refs: tuple[str, ...] = ()
+    conclusion_predication_refs: tuple[str, ...] = ()
+    strength: str = "defeasible"
+    causal_warrant: str = "reported_claim"
+    confidence: float = 0.0
+    source_token_indices: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateGraph:
     """A graph of competing candidates from composition.
 
@@ -98,6 +111,7 @@ class CandidateGraph:
     candidate_propositions: tuple[CandidateProposition, ...] = ()
     candidate_communicative_forces: tuple[CandidateCommunicativeForce, ...] = ()
     candidate_contexts: tuple[CandidateContext, ...] = ()
+    candidate_rules: tuple[CandidateRule, ...] = ()
     discourse_relations: tuple[DiscourseRelation, ...] = ()
     open_ports: tuple[OpenPort, ...] = ()
     opaque_lexeme_refs: tuple[str, ...] = ()

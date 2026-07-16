@@ -199,7 +199,7 @@ class SemanticEmissionGate:
             if segment.kind in {SegmentKind.MENTION, SegmentKind.QUOTATION}
         )
         for role in clause.roles:
-            if role.role_key in realized_role_keys and role.semantic_key:
+            if role.role_key in realized_role_keys and role.semantic_key and not role.semantic_key.startswith("value:"):
                 lexicalization = pack.lexicalization(
                     role.semantic_key, role.use_mode.value
                 )

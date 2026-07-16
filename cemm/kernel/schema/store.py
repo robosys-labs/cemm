@@ -524,6 +524,25 @@ class SemanticSchemaStore:
                     queue.append(rdep.dependent_ref)
         return tuple(result)
 
+    def records(
+        self,
+        *,
+        schema_kind: str = "",
+        statuses: tuple[str, ...] = (),
+    ) -> tuple[SchemaEnvelope, ...]:
+        """Return a revision-stable filtered schema snapshot.
+
+        Consumers may project active schemas into execution models, but this
+        method does not grant lifecycle authority or mutate revisions.
+        """
+        with self._lock:
+            values = tuple(self._records.values())
+        return tuple(
+            item for item in values
+            if (not schema_kind or item.schema_kind == schema_kind)
+            and (not statuses or item.status in statuses)
+        )
+
     # ── Context/time applicability ─────────────────────────────────
 
     def find_candidates(

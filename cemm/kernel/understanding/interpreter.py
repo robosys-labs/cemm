@@ -113,8 +113,16 @@ class InterpretationResolver:
         # as independent assertions.  Multi-clause composition must attach its
         # own communicative force to each asserted proposition.
         if not forces:
+            predication_sources = {
+                item.predication.id: item.candidate_source
+                for item in candidate_graph.candidate_predications
+            }
             for candidate in candidate_graph.candidate_propositions:
                 if candidate.proposition.id in used:
+                    continue
+                if predication_sources.get(
+                    candidate.proposition.predication_ref
+                ) == "rule_component":
                     continue
                 interpretation, reason = self._make_interpretation(
                     candidate,

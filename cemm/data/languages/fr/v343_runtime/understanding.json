@@ -356,6 +356,168 @@
       "competence_case_refs": [
         "competence:mapping:fr:votre"
       ]
+    },
+    {
+      "mapping_id": "input:fr:acknowledgement",
+      "surface_forms": [
+        "ok",
+        "d’accord",
+        "d'accord",
+        "bien"
+      ],
+      "lemma_forms": [
+        "ok"
+      ],
+      "semantic_key": "dialogue:acknowledgement",
+      "part_of_speech": "interjection",
+      "grounding_contract_ref": "foundation:predicate:acknowledges:v1",
+      "competence_case_refs": [
+        "competence:fr:acknowledgement"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:first_possessive",
+      "surface_forms": [
+        "mon",
+        "ma",
+        "mes"
+      ],
+      "lemma_forms": [
+        "mon"
+      ],
+      "semantic_key": "determiner:first_person_possessive",
+      "part_of_speech": "determiner",
+      "grounding_contract_ref": "language:referring_expression:participant",
+      "competence_case_refs": [
+        "competence:fr:first_possessive"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:second_possessive",
+      "surface_forms": [
+        "votre",
+        "vos",
+        "ton",
+        "ta",
+        "tes"
+      ],
+      "lemma_forms": [
+        "votre"
+      ],
+      "semantic_key": "determiner:second_person_possessive",
+      "part_of_speech": "determiner",
+      "grounding_contract_ref": "language:referring_expression:participant",
+      "competence_case_refs": [
+        "competence:fr:second_possessive"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:what",
+      "surface_forms": [
+        "quel",
+        "quelle"
+      ],
+      "lemma_forms": [
+        "quel"
+      ],
+      "semantic_key": "wh:what",
+      "part_of_speech": "determiner",
+      "grounding_contract_ref": "language:referring_expression:participant",
+      "competence_case_refs": [
+        "competence:fr:what"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:name_runtime",
+      "surface_forms": [
+        "nom"
+      ],
+      "lemma_forms": [
+        "nom"
+      ],
+      "semantic_key": "named",
+      "part_of_speech": "determiner",
+      "grounding_contract_ref": "language:referring_expression:participant",
+      "competence_case_refs": [
+        "competence:fr:name_runtime"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:foundation:person",
+      "surface_forms": [
+        "personne"
+      ],
+      "lemma_forms": [
+        "personne"
+      ],
+      "semantic_key": "person",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:person",
+      "competence_case_refs": [
+        "competence:fr:foundation:person"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:foundation:agent",
+      "surface_forms": [
+        "agent"
+      ],
+      "lemma_forms": [
+        "agent"
+      ],
+      "semantic_key": "agent",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:agent",
+      "competence_case_refs": [
+        "competence:fr:foundation:agent"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:foundation:place",
+      "surface_forms": [
+        "lieu"
+      ],
+      "lemma_forms": [
+        "lieu"
+      ],
+      "semantic_key": "place",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:place",
+      "competence_case_refs": [
+        "competence:fr:foundation:place"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:foundation:event",
+      "surface_forms": [
+        "événement",
+        "evenement"
+      ],
+      "lemma_forms": [
+        "événement"
+      ],
+      "semantic_key": "event",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:event",
+      "competence_case_refs": [
+        "competence:fr:foundation:event"
+      ]
+    },
+    {
+      "mapping_id": "input:fr:foundation:software_system",
+      "surface_forms": [
+        "système logiciel",
+        "systeme logiciel"
+      ],
+      "lemma_forms": [
+        "système logiciel"
+      ],
+      "semantic_key": "software_system",
+      "part_of_speech": "noun",
+      "grounding_contract_ref": "foundation:entity_kind:software_system",
+      "competence_case_refs": [
+        "competence:fr:foundation:software_system"
+      ]
     }
   ],
   "constructions": [
@@ -703,18 +865,20 @@
           ]
         },
         {
-          "term_id": "possessor",
+          "term_id": "holder",
+          "capture_key": "holder",
           "constraints": [
             {
               "kind": "semantic_key",
               "values": [
+                "determiner:first_person_possessive",
                 "determiner:second_person_possessive"
               ]
             }
           ]
         },
         {
-          "term_id": "name",
+          "term_id": "name_noun",
           "constraints": [
             {
               "kind": "semantic_key",
@@ -726,25 +890,123 @@
         }
       ],
       "predicate_key": "named",
-      "role_capture_map": {},
+      "role_capture_map": {
+        "holder": "holder"
+      },
       "open_role_keys": [
         "name"
       ],
       "communicative_force": "ask",
-      "output_kind": "predication",
+      "output_metadata": {
+        "requires_full_span": true
+      },
+      "competence_case_refs": [
+        "competence:fr:name_question:role_projection"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:name_question:v1"
+      ],
+      "priority": 220
+    },
+    {
+      "schema_id": "construction:fr:acknowledgement:v1",
+      "terms": [
+        {
+          "term_id": "acknowledgement",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "dialogue:acknowledgement"
+              ]
+            }
+          ]
+        }
+      ],
+      "predicate_key": "acknowledges",
+      "role_capture_map": {},
+      "open_role_keys": [],
+      "communicative_force": "acknowledge",
       "output_metadata": {
         "constant_roles": {
-          "holder": "self"
+          "speaker": "user",
+          "addressee": "self"
         },
         "requires_full_span": true
       },
       "competence_case_refs": [
-        "competence:construction:fr:name_question:v1"
+        "competence:fr:acknowledgement:composition"
       ],
       "round_trip_case_refs": [
-        "roundtrip:construction:fr:name_question:v1"
+        "roundtrip:fr:acknowledgement:v1"
       ],
-      "priority": 380
+      "priority": 260
+    },
+    {
+      "schema_id": "construction:fr:name_statement:v1",
+      "terms": [
+        {
+          "term_id": "holder",
+          "capture_key": "holder",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "determiner:first_person_possessive",
+                "determiner:second_person_possessive"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name_noun",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "named"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "copula",
+          "constraints": [
+            {
+              "kind": "semantic_key",
+              "values": [
+                "grammar:copula"
+              ]
+            }
+          ]
+        },
+        {
+          "term_id": "name",
+          "capture_key": "name",
+          "constraints": [
+            {
+              "kind": "any"
+            }
+          ]
+        }
+      ],
+      "predicate_key": "named",
+      "role_capture_map": {
+        "holder": "holder",
+        "name": "name"
+      },
+      "open_role_keys": [],
+      "communicative_force": "assert",
+      "output_metadata": {
+        "requires_full_span": true
+      },
+      "competence_case_refs": [
+        "competence:fr:name_statement:role_projection"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:fr:name_statement:v1"
+      ],
+      "priority": 210
     }
   ],
   "token_expansions": [

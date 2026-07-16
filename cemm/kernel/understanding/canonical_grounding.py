@@ -1,6 +1,9 @@
 """Grounding resolver that preserves query ports without treating them as gaps."""
 from __future__ import annotations
 
+import hashlib
+import unicodedata
+
 from .grounding import (
     DefinitionGrounding,
     GraphGrounding,
@@ -14,7 +17,7 @@ from ..schema.use_profile import UseProfileLevel
 
 class CanonicalGroundingResolver(GroundingResolver):
 
-    def _ground_binding(self, binding, evidence):
+    def _ground_binding(self, binding, evidence, context_ref=""):
         filler = binding.filler_ref
         if not filler.startswith("ref:token:"):
             return super()._ground_binding(binding, evidence)
@@ -32,7 +35,9 @@ class CanonicalGroundingResolver(GroundingResolver):
         ))
         participant = {
             "pronoun:first_person": ("user", "speaker:user"),
+            "determiner:first_person_possessive": ("user", "speaker:user"),
             "pronoun:second_person": ("self", "addressee:self"),
+            "determiner:second_person_possessive": ("self", "addressee:self"),
         }
         for key in semantic_keys:
             if key in participant:
@@ -82,7 +87,7 @@ class CanonicalGroundingResolver(GroundingResolver):
         )
         if active_key:
             grounding = ReferentGrounding(
-                referent_ref=f"ref:schema:{active_key}",
+                referent_ref=active_key,
                 referent_kind="schema_sense",
                 discourse_identity=f"{active_key}:{evidence.language_tag}",
                 confidence=0.9,
@@ -97,7 +102,56 @@ class CanonicalGroundingResolver(GroundingResolver):
                 grounding=grounding,
                 confidence=min(binding.confidence, 0.9),
             )
-        return super()._ground_binding(binding, evidence)
+        accepted = self._accepted_families(binding.role_schema_ref)
+        normalized = unicodedata.normalize(
+            "NFKC", token.raw_form
+        ).strip()
+        digest = hashlib.sha256(
+            f"{evidence.language_tag}|{context_ref}|{normalized.casefold()}".encode("utf-8")
+        ).hexdigest()[:16]
+        if "value" in accepted:
+            grounding = ReferentGrounding(
+                referent_ref=f"value:text:{digest}",
+                referent_kind="value",
+                discourse_identity=f"value:{digest}",
+                confidence=0.9,
+                is_unknown=False,
+                source_token_index=index,
+                surface=normalized,
+                semantic_keys=("value:text",),
+            )
+        elif "referent" in accepted:
+            grounding = ReferentGrounding(
+                referent_ref=f"entity:mention:{digest}",
+                referent_kind="entity_anchor",
+                discourse_identity=f"mention:{digest}",
+                confidence=0.65,
+                is_unknown=False,
+                source_token_index=index,
+                surface=normalized,
+                semantic_keys=("entity:untyped",),
+            )
+        else:
+            return super()._ground_binding(binding, evidence)
+        return GroundedRoleBinding(
+            role_schema_ref=binding.role_schema_ref,
+            original_filler_ref=filler,
+            grounded_filler_ref=grounding.referent_ref,
+            grounding=grounding,
+            confidence=min(binding.confidence, grounding.confidence),
+        )
+
+    def _accepted_families(self, role_ref):
+        envelope = self._store.find_active(role_ref)
+        if envelope is None:
+            envelope = self._store.find_active(
+                role_ref if role_ref.startswith("role:") else f"role:{role_ref}"
+            )
+        payload = getattr(envelope, "payload", None) if envelope else None
+        return frozenset(
+            getattr(payload, "accepted_object_families", ()) or ()
+        )
+
     def ground_graph(
         self,
         candidate_graph,
@@ -135,7 +189,11 @@ class CanonicalGroundingResolver(GroundingResolver):
             grounded_roles = []
             opaque_roles = []
             for binding in predication.bindings:
-                grounded = self._ground_binding(binding, surface_evidence)
+                grounded = self._ground_binding(
+                    binding,
+                    surface_evidence,
+                    context_ref,
+                )
                 grounded_roles.append(grounded)
                 if grounded.grounding is not None:
                     referents.append(grounded.grounding)

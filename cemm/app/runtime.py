@@ -28,8 +28,11 @@ from ..kernel.execution.executor import OperationExecutor
 from ..kernel.execution.goal_arbiter import GoalArbiter
 from ..kernel.execution.planner import Planner
 from ..kernel.execution.reconciliation import OutcomeReconciler
+from ..kernel.inference.catalog import SemanticRuleCatalog
+from ..kernel.inference.committer import InferenceFactCommitter
 from ..kernel.inference.engine import BoundedInferenceEngine
 from ..kernel.learning.coordinator import LearningCoordinator
+from ..kernel.learning.grounded_rule_learner import GroundedRuleLearner
 from ..kernel.learning.schema_compiler import LearnedSchemaCompiler
 from ..kernel.memory.compiler import FactMutationCompiler
 from ..kernel.memory.semantic import (
@@ -104,6 +107,11 @@ class Runtime:
             self._payload_registry,
         )
         self._inference = BoundedInferenceEngine()
+        rule_catalog = SemanticRuleCatalog(self._schema_store)
+        inference_committer = InferenceFactCommitter(
+            self._payload_registry,
+            self._commit,
+        )
 
         adapters = {
             tag: SemanticLanguageAdapter(
@@ -129,6 +137,7 @@ class Runtime:
             evaluator=self._epistemic,
             schema_compiler=LearnedSchemaCompiler(),
         )
+        rule_learner = GroundedRuleLearner(self._schema_store)
         response_planner = ResponsePlanner()
         response_decider = ResponseDecider(tuple(
             runtime_policies.get("dialogue_policies", ())
@@ -194,6 +203,9 @@ class Runtime:
                 CanonicalCycleEmissionEnvironmentBuilder()
             ),
             capability_provider=capability_provider,
+            rule_catalog=rule_catalog,
+            inference_committer=inference_committer,
+            rule_learner=rule_learner,
             foundation_fingerprint=self._boot_package.fingerprint,
             active_schema_refs=emission_evidence.active_schema_refs,
             passed_competence_case_refs=(
@@ -208,6 +220,8 @@ class Runtime:
         )
         self._learning_coordinator = learning
         self._seed_live_self_observations()
+        self._seed_foundational_relations()
+        self._close_seed_knowledge(rule_catalog, inference_committer)
 
     @property
     def kernel(self):
@@ -265,6 +279,48 @@ class Runtime:
     @staticmethod
     def project(cycle):
         return project_cycle(cycle)
+
+    def _seed_foundational_relations(self):
+        self._semantic_memory.add(SemanticFact(
+            fact_id="observation:user:agent",
+            predicate_key="instance_of",
+            roles=(
+                FactRole("entity", "user"),
+                FactRole("kind", "agent", "referent", "agent"),
+            ),
+            context_ref="actual",
+            confidence=1.0,
+            evidence_refs=("runtime_observation:dialogue_participant",),
+            source_ref="runtime:participant_observer",
+        ))
+        for item in self._definition_loader.entity_kinds:
+            child = str(item.get("semantic_key", ""))
+            for parent in item.get("parent_kind_refs", ()):
+                self._semantic_memory.add(SemanticFact(
+                    fact_id=f"foundation:subkind:{child}:{parent}",
+                    predicate_key="subkind_of",
+                    roles=(
+                        FactRole("child_kind", child, "referent", child),
+                        FactRole("parent_kind", str(parent), "referent", str(parent)),
+                    ),
+                    context_ref="actual",
+                    confidence=1.0,
+                    evidence_refs=("foundation:entity_kind_hierarchy",),
+                    source_ref="foundation:definitions",
+                ))
+
+    def _close_seed_knowledge(self, rule_catalog, inference_committer):
+        rules = rule_catalog.active_rules()
+        if not rules:
+            return
+        from ..kernel.inference.rule_model import InferenceBudget
+        outcome = self._inference.infer(
+            seed_facts=self._semantic_memory.all_facts(),
+            rules=rules,
+            budget=InferenceBudget(wall_clock_ms=50, allow_sensitive=False),
+            dependency_fingerprint=self._boot_package.fingerprint,
+        )
+        inference_committer.commit(outcome, context_id="boot")
 
     def _seed_live_self_observations(self):
         self._semantic_memory.add(SemanticFact(

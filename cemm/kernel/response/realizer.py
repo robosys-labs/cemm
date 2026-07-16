@@ -159,7 +159,7 @@ class SemanticRealizer:
                 segment.schema_ref,
             )
         if segment.kind is SegmentKind.ROLE_VALUE:
-            if role.semantic_key:
+            if role.semantic_key and not role.semantic_key.startswith("value:"):
                 lexicalization = pack.lexicalization(
                     role.semantic_key, role.use_mode.value
                 )

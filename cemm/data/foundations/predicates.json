@@ -682,5 +682,166 @@
     "supports_hypothetical": true,
     "supports_negation": true,
     "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "acknowledges",
+    "role_refs": [
+      "speaker",
+      "addressee"
+    ],
+    "predication_kind": "event",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "related_to",
+    "role_refs": [
+      "left",
+      "right",
+      "relation_type"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "kinship_relation",
+    "role_refs": [
+      "holder",
+      "relative",
+      "relation_type"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "partnership_relation",
+    "role_refs": [
+      "holder",
+      "partner",
+      "relation_type"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "resides_with",
+    "role_refs": [
+      "resident",
+      "co_resident"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "possesses",
+    "role_refs": [
+      "possessor",
+      "possessed"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "possessed_by",
+    "role_refs": [
+      "possessed",
+      "possessor"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "member_of",
+    "role_refs": [
+      "member",
+      "membership_group"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "contained_in",
+    "role_refs": [
+      "contained",
+      "container"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "contains",
+    "role_refs": [
+      "container",
+      "contained"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "event_has_participant",
+    "role_refs": [
+      "event",
+      "participant",
+      "participant_role"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
+  },
+  {
+    "semantic_key": "has_property",
+    "role_refs": [
+      "holder",
+      "property",
+      "value"
+    ],
+    "predication_kind": "relation",
+    "query_projections": [],
+    "supports_reported": true,
+    "supports_hypothetical": true,
+    "supports_negation": true,
+    "minimum_evidence_count": 1
   }
 ]

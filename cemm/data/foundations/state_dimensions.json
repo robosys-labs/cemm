@@ -78,5 +78,90 @@
     "semantic_key": "confidence_level",
     "holder_kinds": [],
     "value_type": "probability"
+  },
+  {
+    "semantic_key": "emotive_state",
+    "holder_kinds": [
+      "person",
+      "agent"
+    ],
+    "value_type": "enum",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "physical_size",
+    "holder_kinds": [
+      "physical_entity"
+    ],
+    "value_type": "quantity",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "height",
+    "holder_kinds": [
+      "physical_entity"
+    ],
+    "value_type": "quantity",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "mass",
+    "holder_kinds": [
+      "physical_entity"
+    ],
+    "value_type": "quantity",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "energy_level",
+    "holder_kinds": [
+      "biological_entity",
+      "agent"
+    ],
+    "value_type": "quantity",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "capacity_level",
+    "holder_kinds": [
+      "agent",
+      "software_system"
+    ],
+    "value_type": "quantity",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "network_state",
+    "holder_kinds": [
+      "digital_entity",
+      "software_system"
+    ],
+    "value_type": "enum",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "life_status",
+    "holder_kinds": [
+      "biological_entity"
+    ],
+    "value_type": "enum",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
+  },
+  {
+    "semantic_key": "relationship_status",
+    "holder_kinds": [
+      "person"
+    ],
+    "value_type": "enum",
+    "temporal_policy": "persistent_until_changed",
+    "contradiction_policy": "latest_wins"
   }
 ]

@@ -469,5 +469,122 @@
     "allows_open_port": true,
     "allows_embedded_proposition": false,
     "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "relation_type",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "relative",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "partner",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "resident",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "co_resident",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "possessor",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "possessed",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "member",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "membership_group",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "container",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "contained",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "participant_role",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
+  },
+  {
+    "semantic_key": "property",
+    "accepted_object_families": [
+      "referent"
+    ],
+    "allows_open_port": true,
+    "allows_embedded_proposition": false,
+    "allows_embedded_predication": false
   }
 ]

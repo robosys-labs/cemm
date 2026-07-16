@@ -15,6 +15,7 @@ from .interfaces import (
     ConstructionCandidate,
     LexicalSenseCandidate,
     PragmaticCue,
+    RuleCandidate,
     SurfaceEvidence,
 )
 from .matcher import DeclarativeConstructionMatcher, TokenEvidence
@@ -83,16 +84,29 @@ class SemanticLanguageAdapter:
             for match in all_matches
             if match.output_kind in _SUPPORT_OUTPUT_KINDS
         ))
-        semantic_matches = tuple(
+        rule_matches = tuple(
+            match for match in all_matches if match.output_kind == "rule"
+        )
+        ordinary_matches = tuple(
             match
             for match in all_matches
             if match.output_kind not in _SUPPORT_OUTPUT_KINDS
-            and self._match_has_clause_coverage(
-                match,
-                support_matches,
-                content_by_clause,
-            )
+            and match.output_kind != "rule"
         )
+        semantic_matches = self._select_clause_cover(
+            ordinary_matches,
+            support_matches,
+            content_by_clause,
+        )
+        embedded_matches = self._embedded_rule_matches(
+            ordinary_matches,
+            rule_matches,
+        )
+        semantic_matches = self._dedupe_matches((
+            *semantic_matches,
+            *embedded_matches,
+        ))
+        rule_candidates = self._rule_candidates(rule_matches)
 
         support_indices = frozenset(
             index
@@ -148,6 +162,7 @@ class SemanticLanguageAdapter:
             )
             for match in semantic_matches
             if match.communicative_force
+            and not match.output_metadata.get("embedded_rule_ref")
         )
         pragmatic = tuple(
             PragmaticCue(
@@ -177,6 +192,7 @@ class SemanticLanguageAdapter:
             token_stream=stream,
             lexical_sense_candidates=lexical,
             construction_candidates=constructions,
+            rule_candidates=rule_candidates,
             communicative_candidates=communicative,
             pragmatic_cues=pragmatic,
             surface_spans=spans,
@@ -228,36 +244,143 @@ class SemanticLanguageAdapter:
             ))
         return tuple(result) or (frozenset(),)
 
-    @staticmethod
-    def _match_has_clause_coverage(
-        match,
+    @classmethod
+    def _select_clause_cover(
+        cls,
+        matches,
         support_matches,
         content_by_clause,
-    ) -> bool:
-        requires_coverage = bool(
-            match.output_metadata.get(
-                "requires_full_span",
-                bool(match.communicative_force),
+    ):
+        """Select a non-overlapping semantic cover for each clause.
+
+        A clause may be composed from several independently licensed semantic
+        constructions (for example acknowledgement + identity assertion).
+        Unknown residue is never silently discarded.
+        """
+        selected = []
+        for clause_content in content_by_clause:
+            if not clause_content:
+                continue
+            support = frozenset(
+                index
+                for cue in support_matches
+                if frozenset(cue.source_token_indices) <= clause_content
+                for index in cue.source_token_indices
             )
+            candidates = [
+                match for match in matches
+                if frozenset(match.source_token_indices)
+                and frozenset(match.source_token_indices) <= clause_content
+            ]
+            covered = set(support)
+            chosen = []
+            while covered != set(clause_content):
+                ranked = sorted(
+                    (
+                        match for match in candidates
+                        if set(match.source_token_indices) - covered
+                        and not (
+                            set(match.source_token_indices) & covered
+                            - set(support)
+                        )
+                    ),
+                    key=lambda match: (
+                        len(set(match.source_token_indices) - covered),
+                        len(set(match.source_token_indices)),
+                        match.confidence,
+                    ),
+                    reverse=True,
+                )
+                if not ranked:
+                    break
+                best = ranked[0]
+                chosen.append(best)
+                covered.update(best.source_token_indices)
+            if covered == set(clause_content):
+                selected.extend(chosen)
+                continue
+            # Preserve non-communicative local candidates, but do not authorize
+            # a partial speech act as if the residue had been understood.
+            selected.extend(
+                match for match in candidates
+                if not match.communicative_force
+                and not match.output_metadata.get("requires_full_span")
+            )
+        return cls._dedupe_matches(tuple(selected))
+
+    @staticmethod
+    def _embedded_rule_matches(matches, rule_matches):
+        result = []
+        for rule in rule_matches:
+            premise_key = str(rule.output_metadata.get("premise_capture", "premise"))
+            conclusion_key = str(
+                rule.output_metadata.get("conclusion_capture", "conclusion")
+            )
+            for side, capture_key in (
+                ("premise", premise_key),
+                ("conclusion", conclusion_key),
+            ):
+                capture = frozenset(rule.capture_token_indices.get(capture_key, ()))
+                if not capture:
+                    continue
+                for match in matches:
+                    source = frozenset(match.source_token_indices)
+                    if source and source <= capture:
+                        result.append(replace(
+                            match,
+                            output_metadata={
+                                **dict(match.output_metadata),
+                                "embedded_rule_ref": rule.construction_ref,
+                                "rule_component_side": side,
+                            },
+                        ))
+        return tuple(result)
+
+    @staticmethod
+    def _rule_candidates(rule_matches):
+        return tuple(
+            RuleCandidate(
+                construction_key=match.construction_ref,
+                rule_kind=str(match.output_metadata.get("rule_kind", "relational")),
+                strength=str(match.output_metadata.get("strength", "defeasible")),
+                causal_warrant=str(
+                    match.output_metadata.get("causal_warrant", "reported_claim")
+                ),
+                premise_capture=str(
+                    match.output_metadata.get("premise_capture", "premise")
+                ),
+                conclusion_capture=str(
+                    match.output_metadata.get("conclusion_capture", "conclusion")
+                ),
+                premise_token_indices=tuple(match.capture_token_indices.get(
+                    str(match.output_metadata.get("premise_capture", "premise")),
+                    (),
+                )),
+                conclusion_token_indices=tuple(match.capture_token_indices.get(
+                    str(match.output_metadata.get("conclusion_capture", "conclusion")),
+                    (),
+                )),
+                confidence=match.confidence,
+                source_token_indices=match.source_token_indices,
+            )
+            for match in rule_matches
         )
-        if not requires_coverage:
-            return True
-        source = frozenset(match.source_token_indices)
-        clause_indices = [
-            index
-            for index, content in enumerate(content_by_clause)
-            if source and source <= content
-        ]
-        if len(clause_indices) != 1:
-            return False
-        clause_content = content_by_clause[clause_indices[0]]
-        support = frozenset(
-            token_index
-            for cue in support_matches
-            if frozenset(cue.source_token_indices) <= clause_content
-            for token_index in cue.source_token_indices
-        )
-        return source | support == clause_content
+
+    @staticmethod
+    def _dedupe_matches(matches):
+        result = []
+        seen = set()
+        for match in matches:
+            key = (
+                match.construction_ref,
+                tuple(match.source_token_indices),
+                match.output_metadata.get("embedded_rule_ref", ""),
+                match.output_metadata.get("rule_component_side", ""),
+            )
+            if key not in seen:
+                seen.add(key)
+                result.append(match)
+        return tuple(result)
 
     def _token_evidence(self, stream):
         matcher_tokens: list[TokenEvidence] = []

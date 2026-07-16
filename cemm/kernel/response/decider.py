@@ -32,6 +32,37 @@ class ResponseDecider:
             intents.extend(self._policy_intents(cycle, interpretation))
 
         if not intents:
+            for result in tuple(
+                getattr(cycle, "rule_learning_results", ()) or ()
+            ):
+                if not getattr(result, "rule_schema_ref", ""):
+                    continue
+                provenance = tuple(dict.fromkeys((
+                    result.rule_schema_ref,
+                    *tuple(getattr(result, "evidence_refs", ()) or ()),
+                )))
+                intents.append(ResponseIntent(
+                    intent_id=f"rule_learning:{result.rule_schema_ref}",
+                    predicate_key="acknowledges",
+                    roles=(
+                        ResponseIntentRole(
+                            role_key="speaker",
+                            value_ref="self",
+                            value_kind="referent",
+                            provenance_refs=provenance,
+                        ),
+                        ResponseIntentRole(
+                            role_key="addressee",
+                            value_ref="user",
+                            value_kind="referent",
+                            provenance_refs=provenance,
+                        ),
+                    ),
+                    communicative_force="assert",
+                    context_ref="actual",
+                    provenance_refs=provenance,
+                ))
+        if not intents:
             fallback = self._fallback_intent(cycle)
             if fallback is not None:
                 intents.append(fallback)
@@ -152,6 +183,14 @@ class ResponseDecider:
             )
             for role in fact.roles
         )
+        qualification_key = ""
+        if fact.predicate_key == "named":
+            holder = next(
+                (role.value_ref for role in fact.roles if role.role_key == "holder"),
+                "",
+            )
+            if holder in {"self", "user"}:
+                qualification_key = f"holder:{holder}"
         return ResponseIntent(
             intent_id=(
                 f"retrieval:{getattr(fact, 'fact_id', self._stable_id(provenance))}"
@@ -162,6 +201,7 @@ class ResponseDecider:
             context_ref=fact.context_ref,
             polarity=fact.polarity,
             modality=fact.modality,
+            qualification_key=qualification_key,
             provenance_refs=provenance,
         )
 

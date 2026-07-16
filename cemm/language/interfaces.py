@@ -37,6 +37,8 @@ class RuleCandidate:
     premise_capture: str
     conclusion_capture: str
     capture_spans: dict[str, tuple[int, int]] = field(default_factory=dict)
+    premise_token_indices: tuple[int, ...] = ()
+    conclusion_token_indices: tuple[int, ...] = ()
     confidence: float = 0.0
     source_token_indices: tuple[int, ...] = ()
 

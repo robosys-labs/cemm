@@ -24,6 +24,7 @@ class ConstructionMatch:
     construction_ref: str
     predicate_key: str
     role_token_indices: dict[str, tuple[int, ...]]
+    capture_token_indices: dict[str, tuple[int, ...]]
     open_role_keys: tuple[str, ...]
     communicative_force: str
     polarity: str
@@ -57,50 +58,84 @@ class DeclarativeConstructionMatcher:
     def _match_construction(self, tokens, construction):
         result = []
         for start in range(len(tokens)):
-            cursor = start
-            captures: dict[str, tuple[int, ...]] = {}
-            consumed: list[int] = []
-            failed = False
-            for term in construction.terms:
-                matched: list[int] = []
-                while (
-                    cursor < len(tokens)
-                    and len(matched) < term.maximum_occurs
-                    and self._term_matches(term, tokens[cursor])
-                ):
-                    matched.append(tokens[cursor].token_index)
-                    consumed.append(tokens[cursor].token_index)
-                    cursor += 1
-                if len(matched) < term.minimum_occurs:
-                    failed = True
-                    break
-                if term.capture_key and matched:
-                    captures[term.capture_key] = tuple(dict.fromkeys(matched))
-            if failed or not consumed:
-                continue
-            if not self._post_constraints_hold(construction, captures, tokens):
-                continue
-            role_map = {
-                role_key: captures[capture_key]
-                for role_key, capture_key in construction.role_capture_map.items()
-                if capture_key in captures
-            }
-            source_indices = tuple(dict.fromkeys(consumed))
-            result.append(ConstructionMatch(
-                construction_ref=construction.schema_id,
-                predicate_key=construction.predicate_key,
-                role_token_indices=role_map,
-                open_role_keys=construction.open_role_keys,
-                communicative_force=construction.communicative_force,
-                polarity=construction.polarity,
-                modality=construction.modality,
-                output_kind=construction.output_kind,
-                output_metadata=construction.output_metadata,
-                source_token_indices=source_indices,
-                confidence=0.9,
-                evidence_refs=tuple(f"token:{index}" for index in source_indices),
-            ))
+            matches = self._match_terms(
+                tokens,
+                construction.terms,
+                term_index=0,
+                cursor=start,
+                captures={},
+                consumed=(),
+            )
+            for _, captures, consumed in matches:
+                if not consumed:
+                    continue
+                if not self._post_constraints_hold(construction, captures, tokens):
+                    continue
+                role_map = {
+                    role_key: captures[capture_key]
+                    for role_key, capture_key in construction.role_capture_map.items()
+                    if capture_key in captures
+                }
+                source_indices = tuple(dict.fromkeys(consumed))
+                result.append(ConstructionMatch(
+                    construction_ref=construction.schema_id,
+                    predicate_key=construction.predicate_key,
+                    role_token_indices=role_map,
+                    capture_token_indices=dict(captures),
+                    open_role_keys=construction.open_role_keys,
+                    communicative_force=construction.communicative_force,
+                    polarity=construction.polarity,
+                    modality=construction.modality,
+                    output_kind=construction.output_kind,
+                    output_metadata=construction.output_metadata,
+                    source_token_indices=source_indices,
+                    confidence=0.9,
+                    evidence_refs=tuple(
+                        f"token:{index}" for index in source_indices
+                    ),
+                ))
         return tuple(result)
+
+    def _match_terms(
+        self,
+        tokens,
+        terms,
+        *,
+        term_index,
+        cursor,
+        captures,
+        consumed,
+    ):
+        if term_index >= len(terms):
+            return ((cursor, captures, consumed),)
+        term = terms[term_index]
+        available = []
+        probe = cursor
+        while (
+            probe < len(tokens)
+            and len(available) < term.maximum_occurs
+            and self._term_matches(term, tokens[probe])
+        ):
+            available.append(tokens[probe].token_index)
+            probe += 1
+        if len(available) < term.minimum_occurs:
+            return ()
+
+        results = []
+        for count in range(len(available), term.minimum_occurs - 1, -1):
+            matched = tuple(available[:count])
+            next_captures = dict(captures)
+            if term.capture_key and matched:
+                next_captures[term.capture_key] = tuple(dict.fromkeys(matched))
+            results.extend(self._match_terms(
+                tokens,
+                terms,
+                term_index=term_index + 1,
+                cursor=cursor + count,
+                captures=next_captures,
+                consumed=(*consumed, *matched),
+            ))
+        return tuple(results)
 
     def _term_matches(self, term, token):
         if not term.constraints:

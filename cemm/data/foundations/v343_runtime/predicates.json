@@ -153,5 +153,49 @@
     ],
     "implementation_ref": "kernel:semantics:named",
     "version": 1
+  },
+  {
+    "contract_id": "foundation:predicate:acknowledges:v1",
+    "semantic_key": "acknowledges",
+    "roles": [
+      {
+        "role_key": "speaker",
+        "accepted_families": [
+          "referent"
+        ],
+        "required": true,
+        "cardinality": "one",
+        "allows_open_port": false
+      },
+      {
+        "role_key": "addressee",
+        "accepted_families": [
+          "referent"
+        ],
+        "required": true,
+        "cardinality": "one",
+        "allows_open_port": false
+      }
+    ],
+    "identity_role_keys": [
+      "speaker",
+      "addressee"
+    ],
+    "query_projections": [],
+    "contradiction_contracts": [],
+    "algebra": {},
+    "permitted_operations": [
+      "recognize",
+      "compose",
+      "realize"
+    ],
+    "context_policy": "context_required",
+    "valid_time_policy": "inherit",
+    "property_case_refs": [
+      "independent:property:acknowledges:role_integrity",
+      "independent:property:acknowledges:dialogue_only"
+    ],
+    "implementation_ref": "kernel:semantics:acknowledges",
+    "version": 1
   }
 ]

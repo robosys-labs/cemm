@@ -14,6 +14,9 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         response_decider,
         emission_environment_builder,
         capability_provider,
+        rule_catalog,
+        inference_committer,
+        rule_learner,
         foundation_fingerprint: str,
         active_schema_refs: frozenset[str],
         passed_competence_case_refs: frozenset[str],
@@ -25,6 +28,9 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         self._response_decider = response_decider
         self._emission_environment_builder = emission_environment_builder
         self._capability_provider = capability_provider
+        self._rule_catalog = rule_catalog
+        self._inference_committer = inference_committer
+        self._rule_learner = rule_learner
         self._foundation_fingerprint = foundation_fingerprint
         self._active_schema_refs = active_schema_refs
         self._passed_competence_case_refs = passed_competence_case_refs
@@ -49,10 +55,10 @@ class CanonicalCognitiveKernel(CognitiveKernel):
             cycle,
             snapshot=replace(
                 cycle.snapshot,
-                kernel_foundation_version="v3.4.4-runtime",
-                grounding_policy_version="typed-query-ports-v3.4.4",
+                kernel_foundation_version="v3.5-grounded-relational",
+                grounding_policy_version="role-aware-grounding-v3.5",
                 competence_suite_hash=self._foundation_fingerprint,
-                adapter_contract_hash="semantic-language-pack-v3.4.4",
+                adapter_contract_hash="semantic-language-pack-v3.5",
             ),
         )
 
@@ -64,7 +70,16 @@ class CanonicalCognitiveKernel(CognitiveKernel):
             assessments = self._capability_provider.assess_cycle(cycle)
         except Exception as exc:
             errors.append(f"capability assessment failed: {exc}")
-        cycle = replace(cycle, capability_assessments=assessments)
+        rule_results = ()
+        try:
+            rule_results = self._rule_learner.learn_cycle(cycle)
+        except Exception as exc:
+            errors.append(f"grounded rule learning failed: {exc}")
+        cycle = replace(
+            cycle,
+            capability_assessments=assessments,
+            rule_learning_results=rule_results,
+        )
         if errors:
             cycle = replace(
                 cycle,
@@ -118,18 +133,65 @@ class CanonicalCognitiveKernel(CognitiveKernel):
         return self._trace(cycle, "act", errors)
 
     def _critical_commit(self, cycle):
-        if not self._non_persistent_predicates:
-            return super()._critical_commit(cycle)
+        from ..inference.rule_model import InferenceBudget
+
+        errors = []
+        mutations = commit_outcome = inference_commit = None
+        inference_outcomes = ()
         filtered = tuple(
             interpretation
             for interpretation in cycle.selected_interpretations
             if interpretation.predicate_semantic_key
             not in self._non_persistent_predicates
         )
-        committed = super()._critical_commit(replace(
+        working = replace(cycle, selected_interpretations=filtered)
+        try:
+            compilation = self._fact_compiler.compile(working)
+            mutations = compilation.mutation_set
+            if mutations is not None:
+                commit_outcome = self._commit.commit(mutations)
+            if commit_outcome is not None and commit_outcome.required_satisfied:
+                rules = self._rule_catalog.active_rules()
+                if rules:
+                    outcome = self._inference.infer(
+                        seed_facts=self._memory.all_facts(),
+                        rules=rules,
+                        budget=InferenceBudget(
+                            max_steps=256,
+                            max_depth=8,
+                            max_new_facts=256,
+                            max_rule_firings=256,
+                            max_firings_per_rule=32,
+                            max_signature_visits=1,
+                            max_existential_constraints=32,
+                            wall_clock_ms=50,
+                            allow_sensitive=False,
+                        ),
+                        dependency_fingerprint=self._fingerprint(cycle),
+                    )
+                    inference_outcomes = (outcome,)
+                    inference_commit = self._inference_committer.commit(
+                        outcome,
+                        context_id=cycle.trigger.context_id,
+                    )
+        except Exception as exc:
+            errors.append(f"critical commit/inference failed: {exc}")
+        committed = replace(
             cycle,
-            selected_interpretations=filtered,
-        ))
+            critical_mutations=mutations,
+            critical_commit=commit_outcome,
+            inference_outcomes=inference_outcomes,
+            inference_proofs=tuple(
+                proof for outcome in inference_outcomes for proof in outcome.proofs
+            ),
+            existential_constraints=tuple(
+                constraint
+                for outcome in inference_outcomes
+                for constraint in outcome.existential_constraints
+            ),
+            inference_commit=inference_commit,
+        )
+        committed = self._trace(committed, "critical_commit", errors)
         return replace(
             committed,
             selected_interpretations=cycle.selected_interpretations,

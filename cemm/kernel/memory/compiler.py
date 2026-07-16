@@ -87,18 +87,23 @@ class FactMutationCompiler:
                 f"input_evidence:{cycle.cycle_id}:"
                 f"{proposition.id}"
             )
+            context_kind = str(
+                getattr(interpretation, "context_kind", "") or "actual"
+            )
+            # World context and source attribution are distinct.  A direct user
+            # assertion is about the actual dialogue world but remains sourced
+            # to the user and evidence-qualified; random proposition UUIDs are
+            # not durable world identifiers.
+            durable_context = (
+                "actual"
+                if context_kind in {"actual", "reported", ""}
+                else context_kind
+            )
             fact = SemanticFact(
                 fact_id=fact_id,
                 predicate_key=grounding.predicate_semantic_key,
                 roles=roles,
-                context_ref=(
-                    proposition.context_ref
-                    if actual
-                    else (
-                        f"reported_by:user:"
-                        f"{cycle.trigger.context_id}"
-                    )
-                ),
+                context_ref=durable_context,
                 polarity=proposition.polarity,
                 confidence=max(
                     0.35,
@@ -122,7 +127,7 @@ class FactMutationCompiler:
                 payload_ref=payload_ref,
                 required=True,
                 evidence_refs=(evidence_ref,),
-                permission=Permission.public(),
+                permission=Permission.user_private(),
                 reason="grounded user assertion",
             ))
             fact_refs.append(fact_id)

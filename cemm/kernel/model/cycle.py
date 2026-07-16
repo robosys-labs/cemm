@@ -129,6 +129,11 @@ class CognitiveCycle:
     epistemic_assessments: tuple[Any, ...] = ()
     capability_assessments: tuple[Any, ...] = ()
     knowledge_assessments: tuple[Any, ...] = ()
+    inference_outcomes: tuple[Any, ...] = ()
+    inference_proofs: tuple[Any, ...] = ()
+    existential_constraints: tuple[Any, ...] = ()
+    inference_commit: Any | None = None
+    rule_learning_results: tuple[Any, ...] = ()
     self_reports: tuple[Any, ...] = ()
     gaps: tuple[Any, ...] = ()
 

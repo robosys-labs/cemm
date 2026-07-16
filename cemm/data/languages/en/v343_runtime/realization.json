@@ -471,6 +471,60 @@
         "roundtrip:en:op_dispatch:v1"
       ],
       "version": 1
+    },
+    {
+      "schema_id": "lex:en:acknowledges:v1",
+      "semantic_key": "acknowledges",
+      "lemma": "acknowledges",
+      "forms": {
+        "base": "Okay"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:acknowledges:predicate",
+          "contribution_kind": "predicate",
+          "semantic_key": "acknowledges"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:acknowledges:v1",
+      "competence_case_refs": [
+        "competence:en:acknowledges:realization"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:acknowledges:realization:v1"
+      ],
+      "version": 1
+    },
+    {
+      "schema_id": "lex:en:named_user:v1",
+      "semantic_key": "named",
+      "lemma": "named_user",
+      "forms": {
+        "base": "Your name is"
+      },
+      "part_of_speech": "verbal_expression",
+      "permitted_use_modes": [
+        "assert"
+      ],
+      "contributions": [
+        {
+          "contribution_id": "contrib:en:named_user:predicate",
+          "contribution_kind": "predicate",
+          "semantic_key": "named"
+        }
+      ],
+      "grounding_contract_ref": "foundation:predicate:named:v1",
+      "competence_case_refs": [
+        "competence:en:named_user:realization"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:named_user:realization:v1"
+      ],
+      "version": 1
     }
   ],
   "morphemes": [
@@ -602,7 +656,8 @@
       "round_trip_case_refs": [
         "roundtrip:en:named_self:v1"
       ],
-      "priority": 200
+      "priority": 200,
+      "qualification_key": "holder:self"
     },
     {
       "schema_id": "construction:en:clarification_request:v1",
@@ -726,6 +781,72 @@
         "roundtrip:construction:en:not_capable_of_self:v1"
       ],
       "priority": 250,
+      "version": 1
+    },
+    {
+      "schema_id": "construction:en:acknowledgement_assertion:v1",
+      "predicate_key": "acknowledges",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "required_role_keys": [
+        "speaker",
+        "addressee"
+      ],
+      "segments": [
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:acknowledges:v1"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:acknowledgement_assertion"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:acknowledgement_assertion:v1"
+      ],
+      "priority": 260,
+      "version": 1
+    },
+    {
+      "schema_id": "construction:en:named_user:v1",
+      "predicate_key": "named",
+      "communicative_force": "assert",
+      "polarity": "positive",
+      "qualification_key": "holder:user",
+      "required_role_keys": [
+        "holder",
+        "name"
+      ],
+      "segments": [
+        {
+          "kind": "lexeme",
+          "schema_ref": "lex:en:named_user:v1"
+        },
+        {
+          "kind": "space"
+        },
+        {
+          "kind": "role_value",
+          "role_key": "name"
+        },
+        {
+          "kind": "punctuation",
+          "punctuation": "."
+        }
+      ],
+      "construction_contributions": [],
+      "competence_case_refs": [
+        "competence:en:named_user:retrieval_backed"
+      ],
+      "round_trip_case_refs": [
+        "roundtrip:en:named_user:v1"
+      ],
+      "priority": 240,
       "version": 1
     }
   ]
