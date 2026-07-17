@@ -88,7 +88,7 @@ def registry() -> SchemaRegistry:
             cardinality=Cardinality(1, 1),
         ),),
         lifecycle_status=SchemaLifecycleStatus.ACTIVE,
-        use_profile=profile(compose="allow", query="allow"),
+        use_profile=profile(compose="allow", query="allow", transition="allow"),
     )
     named = EventSchema(
         schema_ref="property:named",

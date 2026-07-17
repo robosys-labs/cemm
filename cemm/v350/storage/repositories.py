@@ -98,8 +98,25 @@ class TypedRepository(Generic[T]):
 class SchemaRepository(TypedRepository[MeaningSchema]):
     def __init__(self, store):
         super().__init__(store, RecordKind.SCHEMA, MeaningSchema)
+        self._registry_cache: dict[tuple[int, str, str], SchemaRegistry] = {}
 
     def registry(self, *, snapshot: StoreSnapshot | None = None) -> SchemaRegistry:
+        if snapshot is None:
+            key = (
+                self._store.revision,
+                self._store.boot_fingerprint,
+                self._store.overlay_fingerprint,
+            )
+        else:
+            self._store.assert_snapshot(snapshot)
+            key = (
+                snapshot.store_revision,
+                snapshot.boot_fingerprint,
+                snapshot.overlay_fingerprint,
+            )
+        cached = self._registry_cache.get(key)
+        if cached is not None:
+            return cached
         schemas = tuple(item.payload for item in self.all(all_revisions=True, snapshot=snapshot))
         entitlements = tuple(
             item.payload
@@ -110,7 +127,11 @@ class SchemaRepository(TypedRepository[MeaningSchema]):
             )
             if isinstance(item.payload, FacetEntitlement)
         )
-        return SchemaRegistry(schemas, entitlements)
+        registry = SchemaRegistry(schemas, entitlements)
+        # A store revision uniquely pins the overlay; retain only the current
+        # snapshot to prevent an unbounded cache in long-running processes.
+        self._registry_cache = {key: registry}
+        return registry
 
     def authoritative(
         self, schema_ref: str, *, snapshot: StoreSnapshot | None = None

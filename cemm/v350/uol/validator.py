@@ -18,6 +18,7 @@ from ..schema.model import (
     StateDimensionSchema,
     StateValueSchema,
     UseDecision,
+    UseOperation,
     ValidationSeverity,
 )
 from ..schema.registry import SchemaRegistry
@@ -683,6 +684,21 @@ class UOLValidator:
         self, event: EventOccurrence, target_ref: str, context_ref: str,
         issues: list[UOLValidationIssue],
     ) -> None:
+        schema = self._schemas.maybe_schema(
+            event.event_schema_ref, event.event_schema_revision
+        )
+        if schema is None:
+            issues.append(self._unresolved(
+                "transition_event_schema_unresolved", target_ref,
+                "event transition schema revision is unresolved",
+                event.event_schema_ref,
+            ))
+        elif not schema.use_profile.permits(UseOperation.TRANSITION):
+            issues.append(self._error(
+                "event_transition_not_authorized", target_ref,
+                f"{schema.schema_ref}@{schema.revision} does not authorize transition use",
+                schema.schema_ref,
+            ))
         if event.occurrence_status in _NON_TRANSITIONING_EVENT_STATUSES:
             issues.append(self._error(
                 "unadmitted_event_transition", target_ref,

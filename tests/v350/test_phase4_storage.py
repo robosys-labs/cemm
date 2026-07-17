@@ -478,6 +478,25 @@ def test_snapshot_detects_later_overlay_revision() -> None:
         store.close()
 
 
+def test_snapshot_detects_overlay_fingerprint_change_without_revision_change() -> None:
+    store = bootstrap_store()
+    try:
+        snapshot = StoreSnapshot(
+            store_revision=store.revision,
+            boot_fingerprint=store.boot_fingerprint,
+            overlay_fingerprint=store.overlay_fingerprint,
+        )
+        store._overlay.execute(
+            "UPDATE meta SET value=? WHERE key='record_set_fingerprint'",
+            ("overlay-records:fixture-drift",),
+        )
+        store._overlay.commit()
+        with pytest.raises(StoreConflictError, match="overlay database fingerprint changed"):
+            store.records(RecordKind.SCHEMA, snapshot=snapshot)
+    finally:
+        store.close()
+
+
 def test_normalized_tables_are_populated() -> None:
     store = bootstrap_store()
     try:

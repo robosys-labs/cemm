@@ -160,6 +160,9 @@ class SemanticStore:
             self._overlay.rollback()
             raise
         self._boot: sqlite3.Connection | None = None
+        self._records_cache: dict[
+            tuple[RecordKind, bool, int, str, str], tuple[StoredRecord[Any], ...]
+        ] = {}
         if self.boot_path is not None:
             if not self.boot_path.is_file():
                 raise FileNotFoundError(self.boot_path)
@@ -221,6 +224,8 @@ class SemanticStore:
             )
         if snapshot.boot_fingerprint != self.boot_fingerprint:
             raise StoreConflictError("boot database fingerprint changed")
+        if snapshot.overlay_fingerprint != self.overlay_fingerprint:
+            raise StoreConflictError("overlay database fingerprint changed")
 
     def get_record(
         self,
@@ -250,6 +255,17 @@ class SemanticStore:
     ) -> tuple[StoredRecord[Any], ...]:
         self.assert_snapshot(snapshot)
         resolved = record_kind if isinstance(record_kind, RecordKind) else RecordKind(record_kind)
+        store_revision = self.revision if snapshot is None else snapshot.store_revision
+        boot_fingerprint = self.boot_fingerprint if snapshot is None else snapshot.boot_fingerprint
+        overlay_fingerprint = self.overlay_fingerprint if snapshot is None else snapshot.overlay_fingerprint
+        cache_key = (resolved, all_revisions, store_revision, boot_fingerprint, overlay_fingerprint)
+        cached = self._records_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        self._records_cache = {
+            key: value for key, value in self._records_cache.items()
+            if key[2:] == cache_key[2:]
+        }
         tombstones = self._tombstones(resolved)
         combined: dict[tuple[str, int], StoredRecord[Any]] = {}
         if self._boot is not None:
@@ -260,13 +276,17 @@ class SemanticStore:
             if not _tombstoned(tombstones, item.record_ref, item.revision):
                 combined[(item.record_ref, item.revision)] = item
         if all_revisions:
-            return tuple(combined[key] for key in sorted(combined))
+            result = tuple(combined[key] for key in sorted(combined))
+            self._records_cache[cache_key] = result
+            return result
         latest: dict[str, StoredRecord[Any]] = {}
         for item in combined.values():
             current = latest.get(item.record_ref)
             if current is None or item.revision > current.revision:
                 latest[item.record_ref] = item
-        return tuple(latest[key] for key in sorted(latest))
+        result = tuple(latest[key] for key in sorted(latest))
+        self._records_cache[cache_key] = result
+        return result
 
     def resolve_any(
         self, record_ref: str, *, snapshot: StoreSnapshot | None = None

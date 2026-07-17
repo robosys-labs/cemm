@@ -279,7 +279,19 @@ class ReferentKnowledgeProjector:
             role_applications=tuple(sorted(by_class[SchemaClass.ROLE], key=lambda item: item.application_ref)),
             event_refs=tuple(sorted(item.event_ref for item in events)),
             afforded_action_refs=tuple(sorted({
-                application.schema_ref for application in by_class[SchemaClass.ACTION]
+                *(application.schema_ref for application in by_class[SchemaClass.ACTION]),
+                *(
+                    value_ref
+                    for entitlement in entitlements
+                    if entitlement.facet_ref == "facet:action_affordance"
+                    and entitlement.status not in {
+                        ProjectionStatus.INAPPLICABLE,
+                        ProjectionStatus.BLOCKED,
+                        ProjectionStatus.CONTRADICTED,
+                    }
+                    for value_ref in entitlement.value_domain_refs
+                    if isinstance(registry.maybe_authoritative_schema(value_ref), ActionSchema)
+                ),
             })),
             live_capabilities=capabilities,
             function_applications=tuple(sorted(by_class[SchemaClass.FUNCTION], key=lambda item: item.application_ref)),

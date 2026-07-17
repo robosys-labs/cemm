@@ -1,0 +1,539 @@
+{
+  "contract_ref": "contract:cemm:v350:foundation",
+  "expected_record_counts": {
+    "capability_instance": 4,
+    "default_rule": 1,
+    "evidence": 6,
+    "facet_entitlement": 52,
+    "identity_facet": 4,
+    "referent": 4,
+    "schema": 337,
+    "semantic_application": 5,
+    "type_assertion": 1
+  },
+  "expected_schema_parents": {
+    "action:communicate": [],
+    "action:compile_foundation": [],
+    "action:externally_caused_move": [
+      "action:move"
+    ],
+    "action:learn": [],
+    "action:move": [],
+    "action:observe": [],
+    "action:project_referent_knowledge": [],
+    "action:read_semantic_store": [],
+    "action:realize_language": [],
+    "action:self_initiated_move": [
+      "action:move"
+    ],
+    "event:activate": [
+      "event:state_change"
+    ],
+    "event:change": [
+      "event:occurrence"
+    ],
+    "event:claim": [
+      "event:communicative",
+      "event:epistemic_change"
+    ],
+    "event:communicate": [
+      "event:communicative"
+    ],
+    "event:communicative": [
+      "event:occurrence"
+    ],
+    "event:correct": [
+      "event:communicative",
+      "event:epistemic_change"
+    ],
+    "event:create": [
+      "event:existence_change"
+    ],
+    "event:deactivate": [
+      "event:state_change"
+    ],
+    "event:decrease": [
+      "event:state_change"
+    ],
+    "event:destroy": [
+      "event:existence_change"
+    ],
+    "event:epistemic_change": [
+      "event:change"
+    ],
+    "event:existence_change": [
+      "event:change"
+    ],
+    "event:gain": [
+      "event:relation_change"
+    ],
+    "event:increase": [
+      "event:state_change"
+    ],
+    "event:learn": [
+      "event:epistemic_change"
+    ],
+    "event:localization_change": [
+      "event:change"
+    ],
+    "event:lose": [
+      "event:relation_change"
+    ],
+    "event:move": [
+      "event:localization_change"
+    ],
+    "event:observe": [
+      "event:epistemic_change"
+    ],
+    "event:occurrence": [],
+    "event:relation_change": [
+      "event:change"
+    ],
+    "event:start": [
+      "event:state_change"
+    ],
+    "event:state_change": [
+      "event:change"
+    ],
+    "event:stop": [
+      "event:state_change"
+    ]
+  },
+  "expected_source_record_fingerprint": "foundation-source-records:99e5b2f5562de01a2f21b5980d6dd22086f1a76e12338013add3afddac4b074b",
+  "expected_type_parents": {
+    "type:agent": [
+      "type:referent"
+    ],
+    "type:artifact": [
+      "type:physical_entity"
+    ],
+    "type:biological_agent": [
+      "type:organism",
+      "type:natural_agent"
+    ],
+    "type:claim_information": [
+      "type:information_object"
+    ],
+    "type:collection": [
+      "type:referent"
+    ],
+    "type:collective_agent": [
+      "type:agent"
+    ],
+    "type:concrete": [
+      "type:referent"
+    ],
+    "type:context": [
+      "type:referent"
+    ],
+    "type:digital_entity": [
+      "type:concrete"
+    ],
+    "type:event_occurrence": [
+      "type:referent"
+    ],
+    "type:hybrid_entity": [
+      "type:physical_entity",
+      "type:digital_entity"
+    ],
+    "type:information_object": [
+      "type:referent"
+    ],
+    "type:institutional_agent": [
+      "type:collective_agent"
+    ],
+    "type:living_entity": [
+      "type:physical_entity"
+    ],
+    "type:natural_agent": [
+      "type:agent"
+    ],
+    "type:organism": [
+      "type:living_entity"
+    ],
+    "type:physical_entity": [
+      "type:concrete"
+    ],
+    "type:place": [
+      "type:referent"
+    ],
+    "type:proposition": [
+      "type:information_object"
+    ],
+    "type:quantity": [
+      "type:referent"
+    ],
+    "type:referent": [],
+    "type:schema_topic": [
+      "type:information_object"
+    ],
+    "type:software_agent": [
+      "type:agent",
+      "type:digital_entity"
+    ],
+    "type:state_occurrence": [
+      "type:referent"
+    ],
+    "type:time": [
+      "type:referent"
+    ],
+    "type:unit": [
+      "type:referent"
+    ]
+  },
+  "forbidden_domain_semantic_keys": [
+    "person",
+    "animal",
+    "server",
+    "bank",
+    "president",
+    "fox",
+    "battery",
+    "pregnancy",
+    "death",
+    "fraud",
+    "marriage"
+  ],
+  "metadata": {
+    "authority": "reviewed_source",
+    "domain_light": true,
+    "language_neutral": true,
+    "phase": 6
+  },
+  "required_capability_refs": [
+    "capability:self:read-semantic-store",
+    "capability:self:compile-foundation",
+    "capability:self:project-referent-knowledge",
+    "capability:self:realize-language"
+  ],
+  "required_competence_case_refs": [
+    "competence:foundation:action-affordance-inheritance",
+    "competence:foundation:claim-hierarchy",
+    "competence:foundation:claim-not-fact",
+    "competence:foundation:core-property-entitlement",
+    "competence:foundation:default-not-fact",
+    "competence:foundation:event-hierarchy",
+    "competence:foundation:event-role-contract",
+    "competence:foundation:function-capability-distinction",
+    "competence:foundation:length-measure-unit-roundtrip",
+    "competence:foundation:loss-decrease-valence-orthogonality",
+    "competence:foundation:movement-action-event-distinction",
+    "competence:foundation:multiple-inheritance",
+    "competence:foundation:native-axis-isolation",
+    "competence:foundation:prohibited-affective-facet",
+    "competence:foundation:relation-inverse-roundtrip",
+    "competence:foundation:self-type-closure",
+    "competence:foundation:targeted-template-free-response",
+    "competence:foundation:truth-status-domain",
+    "competence:foundation:universal-existence",
+    "competence:foundation:universal-temporal",
+    "competence:foundation:unknown-applicable-state",
+    "competence:self:compile-foundation",
+    "competence:self:project-referent-knowledge",
+    "competence:self:read-semantic-store"
+  ],
+  "required_entitlement_refs": [
+    "entitlement:agent:action_affordance",
+    "entitlement:agent:capability",
+    "entitlement:agent:epistemic",
+    "entitlement:agent:event_participation",
+    "entitlement:agent:function",
+    "entitlement:agent:role",
+    "entitlement:agent:social_normative",
+    "entitlement:artifact:descriptive_property",
+    "entitlement:artifact:state",
+    "entitlement:biological_agent:action_affordance",
+    "entitlement:biological_agent:capability",
+    "entitlement:claim_information:affective",
+    "entitlement:claim_information:epistemic",
+    "entitlement:collection:composition",
+    "entitlement:concrete:composition",
+    "entitlement:concrete:localization",
+    "entitlement:concrete:state",
+    "entitlement:context:composition",
+    "entitlement:context:epistemic",
+    "entitlement:context:state",
+    "entitlement:digital:descriptive_property",
+    "entitlement:digital:resource",
+    "entitlement:digital:state",
+    "entitlement:event:impact",
+    "entitlement:event:participation",
+    "entitlement:event:state",
+    "entitlement:information:composition",
+    "entitlement:information:descriptive_property",
+    "entitlement:information:epistemic",
+    "entitlement:living:affective",
+    "entitlement:living:capability",
+    "entitlement:living:state",
+    "entitlement:physical:action_affordance",
+    "entitlement:physical:descriptive_property",
+    "entitlement:physical:resource",
+    "entitlement:proposition:affective",
+    "entitlement:proposition:capability",
+    "entitlement:proposition:epistemic",
+    "entitlement:proposition:state",
+    "entitlement:referent:descriptive_property",
+    "entitlement:referent:existence",
+    "entitlement:referent:identity",
+    "entitlement:referent:localization",
+    "entitlement:referent:provenance_access",
+    "entitlement:referent:relation",
+    "entitlement:referent:semantic_type",
+    "entitlement:referent:significance",
+    "entitlement:referent:temporal",
+    "entitlement:software_agent:action_affordance",
+    "entitlement:software_agent:capability",
+    "entitlement:software_agent:localization",
+    "entitlement:software_agent:state"
+  ],
+  "required_referent_refs": [
+    "referent:self",
+    "referent:context:actual",
+    "referent:context:fictional"
+  ],
+  "required_schema_groups": {
+    "capability_function": [
+      "action:communicate",
+      "action:compile_foundation",
+      "action:externally_caused_move",
+      "action:learn",
+      "action:move",
+      "action:observe",
+      "action:project_referent_knowledge",
+      "action:read_semantic_store",
+      "action:realize_language",
+      "action:self_initiated_move",
+      "function:communicate_meaning",
+      "function:compile_reviewed_foundation",
+      "function:preserve_semantic_structure",
+      "function:project_referent_knowledge"
+    ],
+    "claim_discourse": [
+      "discourse-act:asserted",
+      "discourse-act:suggested",
+      "discourse-act:speculated",
+      "discourse-act:quoted",
+      "discourse-act:denied",
+      "discourse-act:corrected",
+      "discourse-act:retracted",
+      "discourse-act:ask",
+      "discourse-act:request",
+      "discourse-act:acknowledge",
+      "discourse-relation:elaboration",
+      "discourse-relation:cause",
+      "discourse-relation:condition",
+      "discourse-relation:contrast",
+      "discourse-relation:temporal_sequence",
+      "discourse-relation:attribution",
+      "discourse-relation:correction",
+      "discourse-relation:answer_to"
+    ],
+    "core_change_events": [
+      "event:start",
+      "event:stop",
+      "event:gain",
+      "event:lose",
+      "event:increase",
+      "event:decrease",
+      "event:activate",
+      "event:deactivate",
+      "event:create",
+      "event:destroy",
+      "event:move",
+      "event:communicate",
+      "event:observe",
+      "event:claim",
+      "event:correct",
+      "event:learn"
+    ],
+    "core_properties": [
+      "property:name",
+      "property:identifier",
+      "property:version",
+      "property:material",
+      "property:owner",
+      "property:classification",
+      "property:source_attribution"
+    ],
+    "core_state_dimensions": [
+      "state:existence_status",
+      "state:life_status",
+      "state:health_status",
+      "state:affective_arousal",
+      "state:operational_status",
+      "state:availability",
+      "state:connectivity",
+      "state:location_status",
+      "state:time_status",
+      "state:resource_level",
+      "state:capability_status",
+      "state:truth_status",
+      "state:epistemic_basis",
+      "state:common_ground_status",
+      "state:importance",
+      "state:valence",
+      "state:occurrence_status"
+    ],
+    "event_hierarchy": [
+      "event:occurrence",
+      "event:change",
+      "event:state_change",
+      "event:relation_change",
+      "event:existence_change",
+      "event:localization_change",
+      "event:communicative",
+      "event:epistemic_change"
+    ],
+    "native_operators": [
+      "operator:activation:active",
+      "operator:activation:blocked",
+      "operator:activation:latent",
+      "operator:activation:terminated",
+      "operator:applicability:applicable",
+      "operator:applicability:inapplicable",
+      "operator:change:activate",
+      "operator:change:create",
+      "operator:change:deactivate",
+      "operator:change:decrease",
+      "operator:change:destroy",
+      "operator:change:disable",
+      "operator:change:enable",
+      "operator:change:gain",
+      "operator:change:increase",
+      "operator:change:lose",
+      "operator:change:maintain",
+      "operator:change:restore",
+      "operator:change:set",
+      "operator:change:start",
+      "operator:change:stop",
+      "operator:change:terminate",
+      "operator:epistemic_basis:assumed",
+      "operator:epistemic_basis:default_expected",
+      "operator:epistemic_basis:inferred",
+      "operator:epistemic_basis:observed",
+      "operator:epistemic_basis:reported",
+      "operator:importance:critical",
+      "operator:importance:high",
+      "operator:importance:low",
+      "operator:importance:moderate",
+      "operator:importance:negligible",
+      "operator:modality:capable",
+      "operator:modality:desired",
+      "operator:modality:intended",
+      "operator:modality:necessary",
+      "operator:modality:obligated",
+      "operator:modality:permitted",
+      "operator:modality:possible",
+      "operator:modality:predicted",
+      "operator:normativity:discouraged",
+      "operator:normativity:permitted",
+      "operator:normativity:prohibited",
+      "operator:normativity:recommended",
+      "operator:normativity:required",
+      "operator:occurrence:actual",
+      "operator:occurrence:counterfactual",
+      "operator:occurrence:desired",
+      "operator:occurrence:fictional",
+      "operator:occurrence:hypothetical",
+      "operator:occurrence:non_occurring",
+      "operator:occurrence:planned",
+      "operator:occurrence:possible",
+      "operator:occurrence:reported",
+      "operator:persistence:durative",
+      "operator:persistence:instantaneous",
+      "operator:persistence:persistent_until_changed",
+      "operator:persistence:terminal",
+      "operator:polarity:negative",
+      "operator:polarity:positive",
+      "operator:reversibility:irreversible",
+      "operator:reversibility:partially_reversible",
+      "operator:reversibility:reversible",
+      "operator:reversibility:unknown",
+      "operator:truth_status:both",
+      "operator:truth_status:opposed",
+      "operator:truth_status:supported",
+      "operator:truth_status:undetermined",
+      "operator:valence:beneficial",
+      "operator:valence:harmful",
+      "operator:valence:mixed",
+      "operator:valence:neutral",
+      "operator:valence:unknown"
+    ],
+    "root_types": [
+      "type:referent",
+      "type:concrete",
+      "type:physical_entity",
+      "type:living_entity",
+      "type:organism",
+      "type:agent",
+      "type:natural_agent",
+      "type:biological_agent",
+      "type:artifact",
+      "type:digital_entity",
+      "type:hybrid_entity",
+      "type:software_agent",
+      "type:collective_agent",
+      "type:institutional_agent",
+      "type:place",
+      "type:information_object",
+      "type:event_occurrence",
+      "type:state_occurrence",
+      "type:proposition",
+      "type:claim_information",
+      "type:quantity",
+      "type:unit",
+      "type:time",
+      "type:collection",
+      "type:context",
+      "type:schema_topic"
+    ],
+    "universal_facets": [
+      "facet:identity",
+      "facet:existence",
+      "facet:semantic_type",
+      "facet:temporal",
+      "facet:localization",
+      "facet:composition",
+      "facet:descriptive_property",
+      "facet:state",
+      "facet:relation",
+      "facet:role",
+      "facet:event_participation",
+      "facet:action_affordance",
+      "facet:capability",
+      "facet:function",
+      "facet:resource",
+      "facet:epistemic",
+      "facet:social_normative",
+      "facet:affective",
+      "facet:significance",
+      "facet:provenance_access"
+    ]
+  },
+  "required_schema_metadata": {
+    "action:externally_caused_move": {
+      "movement_mode": "externally_caused_move"
+    },
+    "action:self_initiated_move": {
+      "movement_mode": "self_initiated_move"
+    },
+    "event:claim": {
+      "admission_policy": "independent_epistemic_admission",
+      "claim_content_not_fact": true,
+      "claim_does_not_imply_admission": true
+    },
+    "state:capability_status": {
+      "record_class": "capability_instance",
+      "record_status_only": true
+    },
+    "state:importance": {
+      "assessment_only": true,
+      "requires_stakeholder_context": true
+    },
+    "state:valence": {
+      "assessment_only": true,
+      "requires_stakeholder_context": true
+    }
+  },
+  "version": "3.5.0-dev"
+}
