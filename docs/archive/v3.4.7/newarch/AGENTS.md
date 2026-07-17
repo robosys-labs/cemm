@@ -2,21 +2,19 @@
 
 This file is the highest-priority local implementation contract for v3.5 work.
 
-**Transition status:** v3.5 is specified but not yet implemented or authoritative. The existing v3.4.7 runtime is a migration baseline only. New changes must move toward the v3.5 contracts and must not deepen v3.4.7 shortcuts.
-
 ## 1. Authority order
 
-1. root `AGENTS.md`
-2. root `ARCHITECTURE.md`
-3. `docs/architecture/TERMINOLOGY.md`
-4. `docs/architecture/FOUNDATIONAL_KNOWLEDGE_ARCHITECTURE.md`
-5. `docs/architecture/LEARNING_ARCHITECTURE.md`
-6. `docs/architecture/CLAIMS_EVENTS_STATE_AND_IMPACT.md`
-7. `docs/architecture/UOL.md`
-8. root `CORE_LOOP.md`
-9. `docs/architecture/DATA_ARCHITECTURE.md`
-10. root `IMPLEMENTATION_PLAN.md`
-11. root `ACCEPTANCE_CONTRACT.md`
+1. `AGENTS.md`
+2. `ARCHITECTURE.md`
+3. `TERMINOLOGY.md`
+4. `FOUNDATIONAL_KNOWLEDGE_ARCHITECTURE.md`
+5. `LEARNING_ARCHITECTURE.md`
+6. `CLAIMS_EVENTS_STATE_AND_IMPACT.md`
+7. `UOL.md`
+8. `CORE_LOOP.md`
+9. `DATA_ARCHITECTURE.md`
+10. `IMPLEMENTATION_PLAN.md`
+11. `ACCEPTANCE_CONTRACT.md`
 12. executable architecture tests
 13. implementation code and data
 

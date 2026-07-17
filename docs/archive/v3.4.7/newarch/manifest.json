@@ -1,0 +1,84 @@
+{
+  "package": "CEMM v3.5 foundational learning-first redesign",
+  "replaces": "Earlier generated v3.5 draft documents",
+  "files": {
+    "ACCEPTANCE_CONTRACT.md": {
+      "bytes": 6352,
+      "lines": 333,
+      "words": 958,
+      "sha256": "56bef6f30de26cc391eb2cbf6242679bc7e8e68a99150f76dde3edf3d3294c86"
+    },
+    "AGENTS.md": {
+      "bytes": 3979,
+      "lines": 156,
+      "words": 526,
+      "sha256": "8ce58833caa5768f4c0310525188b5655070070e38d9ec711552aec91be8b247"
+    },
+    "ARCHITECTURE.md": {
+      "bytes": 28835,
+      "lines": 1332,
+      "words": 3634,
+      "sha256": "84b193fbbba5582e0d49dafce91358c2f374f1f5111d98e5ea3c41b7720c494d"
+    },
+    "CLAIMS_EVENTS_STATE_AND_IMPACT.md": {
+      "bytes": 9961,
+      "lines": 542,
+      "words": 1301,
+      "sha256": "10a3f046c5e7fe9b37bf2db070e9a5aaa76959abc8ba426edc734c9ccfa594b8"
+    },
+    "CORE_LOOP.md": {
+      "bytes": 12628,
+      "lines": 600,
+      "words": 1612,
+      "sha256": "fbe05980049616a71c9bae4dd215c674babb5e16a169222c6c0690759e7b6150"
+    },
+    "DATA_ARCHITECTURE.md": {
+      "bytes": 13327,
+      "lines": 715,
+      "words": 1404,
+      "sha256": "18a7c6e5f1369731fc83a52e0e707f3f152e2729c7d1d1945cae223bf8ec1ee6"
+    },
+    "FOUNDATIONAL_KNOWLEDGE_ARCHITECTURE.md": {
+      "bytes": 13004,
+      "lines": 696,
+      "words": 1636,
+      "sha256": "bffeb64c7833a2a171d331e7290fc4e72a903c7ddd4d20baa491208eca862c49"
+    },
+    "IMPLEMENTATION_PLAN.md": {
+      "bytes": 10335,
+      "lines": 560,
+      "words": 1387,
+      "sha256": "ba8a00c6c866e0aa7867a020c0051db7617a385141725bf9af5c58fc8aaa202f"
+    },
+    "LEARNING_ARCHITECTURE.md": {
+      "bytes": 10281,
+      "lines": 526,
+      "words": 1390,
+      "sha256": "dad9735accb636ae3ada08e0969a8720ea5dae3428e68ff0a3c94c704d863a41"
+    },
+    "README.md": {
+      "bytes": 2331,
+      "lines": 75,
+      "words": 305,
+      "sha256": "7c9551722ea76f99077e75f0b7ae67fe4f5fe03736698af2f57f31d20a286987"
+    },
+    "REVIEW_NOTES.md": {
+      "bytes": 6395,
+      "lines": 112,
+      "words": 824,
+      "sha256": "74862b0030dce52610ea9dbe76c9f6b82eb701910deee9325661c3c4d88e2ae4"
+    },
+    "TERMINOLOGY.md": {
+      "bytes": 9871,
+      "lines": 421,
+      "words": 1300,
+      "sha256": "aaa4b30dd2d98c6dbba30ab5e5b15778fc071ed1691322d5922e7c96f12d3687"
+    },
+    "UOL.md": {
+      "bytes": 8021,
+      "lines": 537,
+      "words": 1016,
+      "sha256": "cc1edbb85fde5f446e967ef87d296fc1414723e72299ab66f38709381351a4b1"
+    }
+  }
+}
