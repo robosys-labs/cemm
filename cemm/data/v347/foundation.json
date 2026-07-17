@@ -1,0 +1,3687 @@
+{
+  "version": "3.4.7",
+  "package_ref": "foundation:cemm:v347",
+  "referents": [
+    {
+      "referent_id": "referent:self",
+      "kind": "self",
+      "type_refs": [
+        "kind:self",
+        "kind:software_agent",
+        "kind:agent"
+      ],
+      "payload": {
+        "semantic_key": "self"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:user",
+      "kind": "person",
+      "type_refs": [
+        "kind:person",
+        "kind:agent"
+      ],
+      "payload": {
+        "semantic_key": "user"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:actual",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "actual",
+        "mode": "actual"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:self:name:CEMM",
+      "kind": "text",
+      "type_refs": [
+        "kind:text",
+        "kind:name"
+      ],
+      "payload": {
+        "text": "CEMM"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:meaning:CEMM",
+      "kind": "text",
+      "type_refs": [
+        "kind:text",
+        "kind:expansion"
+      ],
+      "payload": {
+        "text": "Contextual Event Memory Model"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:age",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:age"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:operational_status",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:operational_status"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:available",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:availability_state"
+      ],
+      "payload": {
+        "semantic_key": "state:available"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:year",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:time_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:year",
+        "dimension_ref": "dimension:time"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:person",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:person"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:software_system",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:software_system"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:president",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:institutional_role"
+      ],
+      "payload": {
+        "semantic_key": "role:president"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:leader",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:social_role"
+      ],
+      "payload": {
+        "semantic_key": "role:leader"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:self",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:self"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:agent",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:agent"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:animal",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:animal"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:organization",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:organization"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:software_agent",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:software_agent"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:physical_object",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:physical_object"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:digital_object",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:digital_object"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:place",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:place"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:event",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:event"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:process",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:process"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:state",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:state"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:proposition",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:proposition"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:quantity",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:quantity"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:unit",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:unit"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:time",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:time"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:collection",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:collection"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:information_object",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:information_object"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:context",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:context"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:schema",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:schema"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:kind:text",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:referent_kind"
+      ],
+      "payload": {
+        "semantic_key": "kind:text"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:reported",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "reported",
+        "mode": "reported"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:believed",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "believed",
+        "mode": "believed"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:hypothetical",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "hypothetical",
+        "mode": "hypothetical"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:desired",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "desired",
+        "mode": "desired"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:counterfactual",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "counterfactual",
+        "mode": "counterfactual"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:simulated",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "simulated",
+        "mode": "simulated"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:context:quoted",
+      "kind": "context",
+      "type_refs": [
+        "kind:context"
+      ],
+      "payload": {
+        "semantic_key": "quoted",
+        "mode": "quoted"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:availability",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:availability"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:connectivity",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:connectivity"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:location",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:location"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:emotive_state",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:emotive_state"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:capacity",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:capacity"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:mass",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:mass"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:height",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:height"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:size",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:size"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:energy",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:energy"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:relationship_status",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:relationship_status"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:confidence",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:confidence"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:visibility",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:visibility"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:temperature",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:temperature"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:unavailable",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:availability_state"
+      ],
+      "payload": {
+        "semantic_key": "state:unavailable"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:connected",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:connectivity_state"
+      ],
+      "payload": {
+        "semantic_key": "state:connected"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:disconnected",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:connectivity_state"
+      ],
+      "payload": {
+        "semantic_key": "state:disconnected"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:happy",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:emotive_state"
+      ],
+      "payload": {
+        "semantic_key": "state:happy"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:sad",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:emotive_state"
+      ],
+      "payload": {
+        "semantic_key": "state:sad"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:known",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:epistemic_state"
+      ],
+      "payload": {
+        "semantic_key": "state:known"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:unknown",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:epistemic_state"
+      ],
+      "payload": {
+        "semantic_key": "state:unknown"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:visible",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:visibility_state"
+      ],
+      "payload": {
+        "semantic_key": "state:visible"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:not_visible",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:visibility_state"
+      ],
+      "payload": {
+        "semantic_key": "state:not_visible"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:active",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:operational_state"
+      ],
+      "payload": {
+        "semantic_key": "state:active"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:inactive",
+      "kind": "state",
+      "type_refs": [
+        "kind:state",
+        "kind:operational_state"
+      ],
+      "payload": {
+        "semantic_key": "state:inactive"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:second",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:time_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:second",
+        "dimension_ref": "dimension:time",
+        "scale_to_base": 1
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:minute",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:time_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:minute",
+        "dimension_ref": "dimension:time",
+        "scale_to_base": 60
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:hour",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:time_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:hour",
+        "dimension_ref": "dimension:time",
+        "scale_to_base": 3600
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:day",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:time_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:day",
+        "dimension_ref": "dimension:time",
+        "scale_to_base": 86400
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:meter",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:length_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:meter",
+        "dimension_ref": "dimension:length",
+        "scale_to_base": 1
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:kilometer",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:length_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:kilometer",
+        "dimension_ref": "dimension:length",
+        "scale_to_base": 1000
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:kilogram",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:mass_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:kilogram",
+        "dimension_ref": "dimension:mass",
+        "scale_to_base": 1
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:gram",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:mass_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:gram",
+        "dimension_ref": "dimension:mass",
+        "scale_to_base": 0.001
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:count",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:count_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:count",
+        "dimension_ref": "dimension:count",
+        "scale_to_base": 1
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:percent",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:ratio_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:percent",
+        "dimension_ref": "dimension:ratio",
+        "scale_to_base": 0.01
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:unit:celsius",
+      "kind": "unit",
+      "type_refs": [
+        "kind:unit",
+        "kind:temperature_unit"
+      ],
+      "payload": {
+        "semantic_key": "unit:celsius",
+        "dimension_ref": "dimension:temperature",
+        "scale_to_base": 1
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:spouse",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:social_role"
+      ],
+      "payload": {
+        "semantic_key": "role:spouse"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:mother_in_law",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:kinship_role"
+      ],
+      "payload": {
+        "semantic_key": "role:mother_in_law"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:teacher",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:social_role"
+      ],
+      "payload": {
+        "semantic_key": "role:teacher"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:operator",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:operational_role"
+      ],
+      "payload": {
+        "semantic_key": "role:operator"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:citizen",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:institutional_role"
+      ],
+      "payload": {
+        "semantic_key": "role:citizen"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:parent",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:kinship_role"
+      ],
+      "payload": {
+        "semantic_key": "role:parent"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:role:child",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:kinship_role"
+      ],
+      "payload": {
+        "semantic_key": "role:child"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:country",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:country"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:capital",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:capital"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:relation",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:relation"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:capability",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:capability"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:operation",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:operation"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:goal",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:goal"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:predicate",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:predicate"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:role",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:role"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:schema:state_dimension",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema"
+      ],
+      "payload": {
+        "semantic_key": "schema:state_dimension"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:dimension:conversational_tone",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:state_dimension"
+      ],
+      "payload": {
+        "semantic_key": "state_dimension:conversational_tone"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:neutral",
+      "kind": "state",
+      "type_refs": [
+        "kind:state"
+      ],
+      "payload": {
+        "semantic_key": "state:neutral",
+        "tone_hint": "neutral"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:warm",
+      "kind": "state",
+      "type_refs": [
+        "kind:state"
+      ],
+      "payload": {
+        "semantic_key": "state:warm",
+        "tone_hint": "warm"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:formal",
+      "kind": "state",
+      "type_refs": [
+        "kind:state"
+      ],
+      "payload": {
+        "semantic_key": "state:formal",
+        "tone_hint": "formal"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:state:concise",
+      "kind": "state",
+      "type_refs": [
+        "kind:state"
+      ],
+      "payload": {
+        "semantic_key": "state:concise",
+        "tone_hint": "concise"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    }
+  ],
+  "predicates": [
+    {
+      "schema_ref": "predicate:named",
+      "semantic_key": "named",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "information_object"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "name",
+          "accepted_kinds": [
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "name",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "supersedes_same_ports": [
+        "holder"
+      ],
+      "metadata": {
+        "alias_value_port": "name"
+      }
+    },
+    {
+      "schema_ref": "predicate:means",
+      "semantic_key": "means",
+      "ports": [
+        {
+          "port_id": "term",
+          "accepted_kinds": [
+            "text",
+            "schema",
+            "information_object"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "term",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "meaning",
+          "accepted_kinds": [
+            "text",
+            "schema",
+            "proposition",
+            "information_object"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "meaning",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "supersedes_same_ports": [
+        "term"
+      ]
+    },
+    {
+      "schema_ref": "predicate:has_state",
+      "semantic_key": "has_state",
+      "stateful": true,
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "dimension",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "dimension",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "value",
+          "accepted_kinds": [
+            "quantity",
+            "state",
+            "text",
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "value",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either",
+            "preferred_kinds": [
+              "quantity",
+              "state"
+            ]
+          }
+        },
+        {
+          "port_id": "unit",
+          "accepted_kinds": [
+            "unit"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "unit",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "supersedes_same_ports": [
+        "holder",
+        "dimension"
+      ]
+    },
+    {
+      "schema_ref": "predicate:instance_of",
+      "semantic_key": "instance_of",
+      "ports": [
+        {
+          "port_id": "instance",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "instance",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "kind",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "kind",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "supersedes_same_ports": []
+    },
+    {
+      "schema_ref": "predicate:located_at",
+      "semantic_key": "located_at",
+      "stateful": true,
+      "ports": [
+        {
+          "port_id": "subject",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "subject",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "place",
+          "accepted_kinds": [
+            "place"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "place",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "supersedes_same_ports": [
+        "subject",
+        "time"
+      ]
+    },
+    {
+      "schema_ref": "predicate:occupies_role",
+      "semantic_key": "occupies_role",
+      "stateful": true,
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "role",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "role",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "domain",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "domain",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "supersedes_same_ports": [
+        "holder",
+        "role",
+        "domain"
+      ]
+    },
+    {
+      "schema_ref": "predicate:subkind_of",
+      "semantic_key": "subkind_of",
+      "ports": [
+        {
+          "port_id": "child",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "child",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "parent",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "parent",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "metadata": {
+        "transitive": true
+      }
+    },
+    {
+      "schema_ref": "predicate:causes",
+      "semantic_key": "causes",
+      "ports": [
+        {
+          "port_id": "cause",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "cause",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "effect",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "effect",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:enables",
+      "semantic_key": "enables",
+      "ports": [
+        {
+          "port_id": "condition",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "condition",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "possibility",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "possibility",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:related_to",
+      "semantic_key": "related_to",
+      "symmetric": true,
+      "ports": [
+        {
+          "port_id": "left",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "left",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "right",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "right",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:move",
+      "semantic_key": "move",
+      "eventive": true,
+      "ports": [
+        {
+          "port_id": "actor",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "actor",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "object",
+          "accepted_kinds": [
+            "physical_object",
+            "digital_object",
+            "information_object"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "object",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "destination",
+          "accepted_kinds": [
+            "place"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "destination",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "metadata": {
+        "operation_ref": "operation:move"
+      }
+    },
+    {
+      "schema_ref": "predicate:same_as",
+      "semantic_key": "same_as",
+      "ports": [
+        {
+          "port_id": "left",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "left",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "right",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "right",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "symmetric": true,
+      "metadata": {
+        "transitive": true
+      }
+    },
+    {
+      "schema_ref": "predicate:part_of",
+      "semantic_key": "part_of",
+      "ports": [
+        {
+          "port_id": "part",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "part",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "whole",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "whole",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:inside",
+      "semantic_key": "inside",
+      "ports": [
+        {
+          "port_id": "subject",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "subject",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "container",
+          "accepted_kinds": [
+            "place",
+            "physical_object",
+            "digital_object",
+            "organization",
+            "collection"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "container",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:before",
+      "semantic_key": "before",
+      "ports": [
+        {
+          "port_id": "earlier",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "time"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "earlier",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "later",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "time"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "later",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "inverse_predicate_ref": "predicate:after",
+      "metadata": {
+        "transitive": true
+      }
+    },
+    {
+      "schema_ref": "predicate:after",
+      "semantic_key": "after",
+      "ports": [
+        {
+          "port_id": "later",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "time"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "later",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "earlier",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "time"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "earlier",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "inverse_predicate_ref": "predicate:before",
+      "metadata": {
+        "transitive": true
+      }
+    },
+    {
+      "schema_ref": "predicate:possesses",
+      "semantic_key": "possesses",
+      "ports": [
+        {
+          "port_id": "possessor",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "possessor",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "item",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "item",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:member_of",
+      "semantic_key": "member_of",
+      "ports": [
+        {
+          "port_id": "member",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "member",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "collection",
+          "accepted_kinds": [
+            "collection",
+            "organization"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "collection",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:participates_in",
+      "semantic_key": "participates_in",
+      "ports": [
+        {
+          "port_id": "participant",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "participant",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "event",
+          "accepted_kinds": [
+            "event",
+            "process"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "event",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:has_participant",
+      "semantic_key": "has_participant",
+      "ports": [
+        {
+          "port_id": "event",
+          "accepted_kinds": [
+            "event",
+            "process"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "event",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "participant",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": true,
+          "role_family": "participant",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:depends_on",
+      "semantic_key": "depends_on",
+      "ports": [
+        {
+          "port_id": "dependent",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "dependent",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "dependency",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "dependency",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:prevents",
+      "semantic_key": "prevents",
+      "ports": [
+        {
+          "port_id": "condition",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "condition",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "outcome",
+          "accepted_kinds": [
+            "event",
+            "process",
+            "state",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "outcome",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:refers_to",
+      "semantic_key": "refers_to",
+      "ports": [
+        {
+          "port_id": "expression",
+          "accepted_kinds": [
+            "text",
+            "information_object",
+            "proposition"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "expression",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "target",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "target",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:capable_of",
+      "semantic_key": "capable_of",
+      "ports": [
+        {
+          "port_id": "agent",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "agent",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "operation",
+          "accepted_kinds": [
+            "schema",
+            "event",
+            "process"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "operation",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:permitted",
+      "semantic_key": "permitted",
+      "ports": [
+        {
+          "port_id": "agent",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "agent",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "operation",
+          "accepted_kinds": [
+            "schema",
+            "event",
+            "process"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "operation",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "context",
+          "accepted_kinds": [
+            "context"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "context",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:believes",
+      "semantic_key": "believes",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "content",
+          "accepted_kinds": [
+            "proposition"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "content",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:knows",
+      "semantic_key": "knows",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "content",
+          "accepted_kinds": [
+            "proposition",
+            "schema",
+            "information_object"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "content",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:desires",
+      "semantic_key": "desires",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "content",
+          "accepted_kinds": [
+            "proposition",
+            "event",
+            "process",
+            "state"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "content",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:spouse_of",
+      "semantic_key": "spouse_of",
+      "ports": [
+        {
+          "port_id": "left",
+          "accepted_kinds": [
+            "person"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "left",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "right",
+          "accepted_kinds": [
+            "person"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "right",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "symmetric": true
+    },
+    {
+      "schema_ref": "predicate:parent_in_law_of",
+      "semantic_key": "parent_in_law_of",
+      "ports": [
+        {
+          "port_id": "parent",
+          "accepted_kinds": [
+            "person"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "parent",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "child_in_law",
+          "accepted_kinds": [
+            "person"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "child_in_law",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:co_resides_with",
+      "semantic_key": "co_resides_with",
+      "ports": [
+        {
+          "port_id": "left",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "left",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "right",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "right",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "symmetric": true
+    },
+    {
+      "schema_ref": "predicate:presides_over",
+      "semantic_key": "presides_over",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "organization"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "domain",
+          "accepted_kinds": [
+            "organization",
+            "place",
+            "collection"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "domain",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:elected_to",
+      "semantic_key": "elected_to",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "person"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "role",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "role",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "domain",
+          "accepted_kinds": [
+            "organization",
+            "place",
+            "collection"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "domain",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:capital_of",
+      "semantic_key": "capital_of",
+      "ports": [
+        {
+          "port_id": "capital",
+          "accepted_kinds": [
+            "place"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "capital",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "country",
+          "accepted_kinds": [
+            "place",
+            "organization"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "country",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
+      "schema_ref": "predicate:transitions",
+      "semantic_key": "transitions",
+      "ports": [
+        {
+          "port_id": "holder",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "holder",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "from_state",
+          "accepted_kinds": [
+            "state",
+            "quantity",
+            "schema"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "from_state",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "to_state",
+          "accepted_kinds": [
+            "state",
+            "quantity",
+            "schema"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "to_state",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "time",
+          "accepted_kinds": [
+            "time"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "time",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "eventive": true,
+      "stateful": true
+    },
+    {
+      "schema_ref": "predicate:remember",
+      "semantic_key": "remember",
+      "ports": [
+        {
+          "port_id": "actor",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "actor",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "content",
+          "accepted_kinds": [
+            "proposition",
+            "information_object",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "content",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "eventive": true,
+      "metadata": {
+        "operation_ref": "operation:remember"
+      }
+    },
+    {
+      "schema_ref": "predicate:observe",
+      "semantic_key": "observe",
+      "ports": [
+        {
+          "port_id": "observer",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "observer",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "target",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "target",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "dimension",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": false,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "dimension",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "eventive": true,
+      "metadata": {
+        "operation_ref": "operation:observe"
+      }
+    }
+  ],
+  "operations": [
+    {
+      "operation_ref": "operation:move",
+      "semantic_predicate_ref": "predicate:move",
+      "input_ports": [
+        {
+          "port_id": "actor",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "actor",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "object",
+          "accepted_kinds": [
+            "physical_object",
+            "digital_object",
+            "information_object"
+          ],
+          "required": false,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "object",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        },
+        {
+          "port_id": "destination",
+          "accepted_kinds": [
+            "place"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "destination",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "capability_ref": "capability:physical_move",
+      "permission_ref": "external_action",
+      "risk": 0.4,
+      "reversible": false,
+      "idempotent": false
+    },
+    {
+      "operation_ref": "operation:remember",
+      "semantic_predicate_ref": "predicate:remember",
+      "input_ports": [
+        {
+          "port_id": "actor",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "actor",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "content",
+          "accepted_kinds": [
+            "proposition",
+            "information_object",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "content",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ],
+      "capability_ref": "capability:semantic_memory",
+      "permission_ref": "conversation",
+      "risk": 0.05,
+      "reversible": true,
+      "idempotent": true,
+      "metadata": {
+        "resource_requirements": {
+          "compute": 0.05
+        },
+        "resource_state": {
+          "compute": 1.0
+        }
+      }
+    },
+    {
+      "operation_ref": "operation:observe",
+      "semantic_predicate_ref": "predicate:observe",
+      "input_ports": [
+        {
+          "port_id": "observer",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "observer",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "target",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "animal",
+            "organization",
+            "software_agent",
+            "physical_object",
+            "digital_object",
+            "place",
+            "event",
+            "process",
+            "state",
+            "proposition",
+            "quantity",
+            "unit",
+            "time",
+            "collection",
+            "information_object",
+            "context",
+            "schema",
+            "text"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "target",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        },
+        {
+          "port_id": "dimension",
+          "accepted_kinds": [
+            "schema"
+          ],
+          "required": false,
+          "query_open": true,
+          "multiple": false,
+          "role_family": "dimension",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "either"
+          }
+        }
+      ],
+      "capability_ref": "capability:observation",
+      "permission_ref": "internal",
+      "risk": 0.05,
+      "reversible": true,
+      "idempotent": true,
+      "metadata": {
+        "resource_requirements": {
+          "compute": 0.05
+        },
+        "resource_state": {
+          "compute": 1.0
+        }
+      }
+    }
+  ],
+  "rules": [
+    {
+      "rule_ref": "rule:president_is_leader",
+      "antecedents": [
+        {
+          "predicate_schema_ref": "predicate:occupies_role",
+          "port_variables": {
+            "holder": "x"
+          },
+          "fixed_referent_refs": {
+            "role": "referent:role:president"
+          }
+        }
+      ],
+      "consequent": {
+        "predicate_schema_ref": "predicate:occupies_role",
+        "port_variables": {
+          "holder": "x"
+        },
+        "fixed_referent_refs": {
+          "role": "referent:role:leader"
+        }
+      },
+      "function": "strict",
+      "strength": "strict",
+      "confidence": 1.0
+    },
+    {
+      "rule_ref": "rule:president_presides_over_domain",
+      "antecedents": [
+        {
+          "predicate_schema_ref": "predicate:occupies_role",
+          "port_variables": {
+            "holder": "x",
+            "domain": "d"
+          },
+          "fixed_referent_refs": {
+            "role": "referent:role:president"
+          }
+        }
+      ],
+      "consequent": {
+        "predicate_schema_ref": "predicate:presides_over",
+        "port_variables": {
+          "holder": "x",
+          "domain": "d"
+        },
+        "fixed_referent_refs": {}
+      },
+      "function": "constitutive",
+      "strength": "strict",
+      "confidence": 1.0,
+      "priority": 20
+    },
+    {
+      "rule_ref": "rule:president_usually_at_capital",
+      "antecedents": [
+        {
+          "predicate_schema_ref": "predicate:occupies_role",
+          "port_variables": {
+            "holder": "x",
+            "domain": "c"
+          },
+          "fixed_referent_refs": {
+            "role": "referent:role:president"
+          }
+        },
+        {
+          "predicate_schema_ref": "predicate:capital_of",
+          "port_variables": {
+            "capital": "p",
+            "country": "c"
+          },
+          "fixed_referent_refs": {}
+        }
+      ],
+      "consequent": {
+        "predicate_schema_ref": "predicate:located_at",
+        "port_variables": {
+          "subject": "x",
+          "place": "p"
+        },
+        "fixed_referent_refs": {}
+      },
+      "function": "default",
+      "strength": "defeasible",
+      "confidence": 0.55,
+      "priority": 1,
+      "metadata": {
+        "qualification_required": true
+      }
+    },
+    {
+      "rule_ref": "rule:spouse_symmetric",
+      "antecedents": [
+        {
+          "predicate_schema_ref": "predicate:spouse_of",
+          "port_variables": {
+            "left": "x",
+            "right": "y"
+          },
+          "fixed_referent_refs": {}
+        }
+      ],
+      "consequent": {
+        "predicate_schema_ref": "predicate:spouse_of",
+        "port_variables": {
+          "left": "y",
+          "right": "x"
+        },
+        "fixed_referent_refs": {}
+      },
+      "function": "identity",
+      "strength": "strict",
+      "confidence": 1.0,
+      "priority": 10
+    },
+    {
+      "rule_ref": "rule:spouses_may_co_reside",
+      "antecedents": [
+        {
+          "predicate_schema_ref": "predicate:spouse_of",
+          "port_variables": {
+            "left": "x",
+            "right": "y"
+          },
+          "fixed_referent_refs": {}
+        }
+      ],
+      "consequent": {
+        "predicate_schema_ref": "predicate:co_resides_with",
+        "port_variables": {
+          "left": "x",
+          "right": "y"
+        },
+        "fixed_referent_refs": {}
+      },
+      "function": "default",
+      "strength": "defeasible",
+      "confidence": 0.45,
+      "sensitivity": "sensitive_personal",
+      "priority": 0,
+      "metadata": {
+        "qualification_required": true
+      }
+    }
+  ],
+  "seed_assertions": [
+    {
+      "predicate_schema_ref": "predicate:named",
+      "bindings": {
+        "holder": "referent:self",
+        "name": "referent:self:name:CEMM"
+      },
+      "source_ref": "foundation:self_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:means",
+      "bindings": {
+        "term": "referent:self:name:CEMM",
+        "meaning": "referent:meaning:CEMM"
+      },
+      "source_ref": "foundation:definition",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:instance_of",
+      "bindings": {
+        "instance": "referent:self",
+        "kind": "referent:kind:software_system"
+      },
+      "source_ref": "foundation:self_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:has_state",
+      "bindings": {
+        "holder": "referent:self",
+        "dimension": "referent:dimension:operational_status",
+        "value": "referent:state:available"
+      },
+      "source_ref": "foundation:runtime_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:has_state",
+      "bindings": {
+        "holder": "referent:self",
+        "dimension": "referent:dimension:conversational_tone",
+        "value": "referent:state:neutral"
+      },
+      "source_ref": "foundation:runtime_observation",
+      "scope_ref": "global"
+    }
+  ]
+}

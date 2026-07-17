@@ -1,0 +1,1125 @@
+{
+  "language_tag": "fr",
+  "version": "3.4.7.2",
+  "detector_markers": [
+    "quel",
+    "votre",
+    "mon",
+    "nom",
+    "signifie",
+    "et",
+    "ans",
+    "âge",
+    "vous",
+    "je"
+  ],
+  "tokenizer": {
+    "kind": "unicode_word"
+  },
+  "lexical_entries": [
+    {
+      "entry_kind": "question_operator",
+      "semantic_ref": "force:ask",
+      "surfaces": [
+        "quel",
+        "quelle",
+        "quoi",
+        "qui",
+        "où",
+        "comment"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "copula",
+      "semantic_ref": "structure:copula",
+      "surfaces": [
+        "est",
+        "suis",
+        "êtes",
+        "es"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "conjunction",
+      "semantic_ref": "structure:coordination",
+      "surfaces": [
+        "et",
+        "ou"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "subordinator",
+      "semantic_ref": "structure:subordination",
+      "surfaces": [
+        "que",
+        "parce",
+        "si"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "negation",
+      "semantic_ref": "structure:negation",
+      "surfaces": [
+        "pas",
+        "jamais"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "correction",
+      "semantic_ref": "force:correct",
+      "surfaces": [
+        "correction",
+        "en fait"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:named",
+      "surfaces": [
+        "nom",
+        "appelle",
+        "appelé",
+        "appeler",
+        "m’appelle",
+        "m'appelle"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:means",
+      "surfaces": [
+        "signifie",
+        "signification"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:has_state",
+      "surfaces": [
+        "âge"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "fixed_bindings": {
+          "dimension": "referent:dimension:age"
+        }
+      }
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:instance_of",
+      "surfaces": [
+        "type",
+        "sorte"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:located_at",
+      "surfaces": [
+        "situé",
+        "emplacement"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:move",
+      "surfaces": [
+        "aller",
+        "déplacer"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:year",
+      "surfaces": [
+        "ans",
+        "années"
+      ],
+      "confidence": 0.98,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:year",
+      "surfaces": [
+        "an",
+        "année"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:self:name:CEMM",
+      "surfaces": [
+        "cemm"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:meaning:CEMM",
+      "surfaces": [
+        "modèle de mémoire événementielle contextuelle"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:available",
+      "surfaces": [
+        "disponible"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:kind:person",
+      "surfaces": [
+        "personne",
+        "humain"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:kind:software_system",
+      "surfaces": [
+        "système logiciel"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:age",
+      "surfaces": [
+        "âge"
+      ],
+      "confidence": 0.96,
+      "features": {
+        "role_hint": "dimension"
+      }
+    },
+    {
+      "entry_kind": "teaching_marker",
+      "semantic_ref": "force:teach",
+      "surfaces": [
+        "définis",
+        "enseigne"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:subkind_of",
+      "surfaces": [
+        "sous-type",
+        "sorte de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:causes",
+      "surfaces": [
+        "cause",
+        "provoque"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:enables",
+      "surfaces": [
+        "permet",
+        "rend possible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:same_as",
+      "surfaces": [
+        "identique à",
+        "même que"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:part_of",
+      "surfaces": [
+        "partie de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:inside",
+      "surfaces": [
+        "dans",
+        "à l’intérieur de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:before",
+      "surfaces": [
+        "avant"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:after",
+      "surfaces": [
+        "après"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:possesses",
+      "surfaces": [
+        "possède",
+        "a"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:member_of",
+      "surfaces": [
+        "membre de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:participates_in",
+      "surfaces": [
+        "participe à"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:depends_on",
+      "surfaces": [
+        "dépend de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:prevents",
+      "surfaces": [
+        "empêche"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:refers_to",
+      "surfaces": [
+        "fait référence à"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:capable_of",
+      "surfaces": [
+        "capable de",
+        "peut"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:permitted",
+      "surfaces": [
+        "autorisé",
+        "permis"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:believes",
+      "surfaces": [
+        "croit"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:knows",
+      "surfaces": [
+        "sait",
+        "connaît"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:desires",
+      "surfaces": [
+        "veut",
+        "désire"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:spouse_of",
+      "surfaces": [
+        "conjoint de",
+        "marié à"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:parent_in_law_of",
+      "surfaces": [
+        "beau-parent de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:co_resides_with",
+      "surfaces": [
+        "vit avec"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:presides_over",
+      "surfaces": [
+        "préside"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:elected_to",
+      "surfaces": [
+        "élu à"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:capital_of",
+      "surfaces": [
+        "capitale de"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:transitions",
+      "surfaces": [
+        "devient",
+        "change en"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:remember",
+      "surfaces": [
+        "mémorise",
+        "souviens"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:observe",
+      "surfaces": [
+        "observe"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:second",
+      "surfaces": [
+        "seconde",
+        "secondes"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:minute",
+      "surfaces": [
+        "minute",
+        "minutes"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:hour",
+      "surfaces": [
+        "heure",
+        "heures"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:day",
+      "surfaces": [
+        "jour",
+        "jours"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:meter",
+      "surfaces": [
+        "mètre",
+        "mètres"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:kilometer",
+      "surfaces": [
+        "kilomètre",
+        "kilomètres",
+        "km"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:kilogram",
+      "surfaces": [
+        "kilogramme",
+        "kilogrammes",
+        "kg"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:gram",
+      "surfaces": [
+        "gramme",
+        "grammes"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:count",
+      "surfaces": [
+        "compte"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:percent",
+      "surfaces": [
+        "pour cent",
+        "%"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:celsius",
+      "surfaces": [
+        "celsius"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:spouse",
+      "surfaces": [
+        "conjoint"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:mother_in_law",
+      "surfaces": [
+        "belle-mère"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:teacher",
+      "surfaces": [
+        "enseignant"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:operator",
+      "surfaces": [
+        "opérateur"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:availability",
+      "surfaces": [
+        "disponibilité"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:connectivity",
+      "surfaces": [
+        "connectivité"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:location",
+      "surfaces": [
+        "emplacement"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:emotive_state",
+      "surfaces": [
+        "humeur",
+        "émotion"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:capacity",
+      "surfaces": [
+        "capacité"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:mass",
+      "surfaces": [
+        "masse",
+        "poids"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:height",
+      "surfaces": [
+        "hauteur"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:size",
+      "surfaces": [
+        "taille"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:energy",
+      "surfaces": [
+        "énergie",
+        "charge"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:visibility",
+      "surfaces": [
+        "visibilité"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:unavailable",
+      "surfaces": [
+        "indisponible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:connected",
+      "surfaces": [
+        "connecté"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:disconnected",
+      "surfaces": [
+        "déconnecté"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:happy",
+      "surfaces": [
+        "heureux"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:sad",
+      "surfaces": [
+        "triste"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:visible",
+      "surfaces": [
+        "visible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:not_visible",
+      "surfaces": [
+        "non visible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "semantic_ref": "referent:dimension:conversational_tone",
+      "surfaces": [
+        "ton conversationnel",
+        "ton"
+      ],
+      "candidate_kind": "concept",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:neutral",
+      "surfaces": [
+        "neutre"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:warm",
+      "surfaces": [
+        "chaleureux"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:formal",
+      "surfaces": [
+        "formel"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:concise",
+      "surfaces": [
+        "concis"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    }
+  ],
+  "structure_markers": {
+    "question": [
+      "quel",
+      "quelle",
+      "quoi",
+      "qui",
+      "où",
+      "comment",
+      "est"
+    ],
+    "conjunction": [
+      "et",
+      "ou"
+    ],
+    "subordination": [
+      "que",
+      "parce",
+      "si"
+    ],
+    "condition": [
+      "si"
+    ],
+    "cause": [
+      "parce"
+    ],
+    "negation": [
+      "pas",
+      "jamais"
+    ],
+    "correction": [
+      "correction",
+      "en fait"
+    ],
+    "directive": [
+      "veuillez"
+    ]
+  },
+  "constructions": [
+    {
+      "construction_id": "fr:possessive_property",
+      "sequence": [
+        "pronoun:possessive",
+        "predicate"
+      ],
+      "allow_gaps": true,
+      "semantic_hint": "structure:possessive_property",
+      "confidence": 0.58
+    },
+    {
+      "construction_id": "fr:question",
+      "sequence": [
+        "question_operator",
+        "predicate"
+      ],
+      "allow_gaps": true,
+      "semantic_hint": "force:ask",
+      "confidence": 0.62
+    }
+  ],
+  "realization": {
+    "predicate_answers": {
+      "named": {
+        "self": "Je m’appelle {name}.",
+        "user": "Vous vous appelez {name}.",
+        "default": "{holder} s’appelle {name}."
+      },
+      "means": "{term} signifie {meaning}.",
+      "has_state": {
+        "self": "Mon {dimension} est {value} {unit}.",
+        "user": "Votre {dimension} est {value} {unit}.",
+        "default": "{holder} a {dimension} {value} {unit}."
+      },
+      "instance_of": "{instance} est un {kind}.",
+      "located_at": "{subject} est à {place}.",
+      "occupies_role": "{holder} occupe le rôle {role}.",
+      "subkind_of": "{child} est une sorte de {parent}.",
+      "related_to": "{left} est lié à {right}.",
+      "causes": "{cause} cause {effect}.",
+      "enables": "{condition} permet {possibility}.",
+      "move": "{actor} va à {destination}.",
+      "same_as": "{left} est identique à {right}.",
+      "part_of": "{part} fait partie de {whole}.",
+      "inside": "{subject} est dans {container}.",
+      "before": "{earlier} est avant {later}.",
+      "after": "{later} est après {earlier}.",
+      "possesses": "{possessor} possède {item}.",
+      "member_of": "{member} est membre de {collection}.",
+      "depends_on": "{dependent} dépend de {dependency}.",
+      "prevents": "{condition} empêche {outcome}.",
+      "refers_to": "{expression} fait référence à {target}.",
+      "capable_of": "{agent} est capable de {operation}.",
+      "permitted": "{agent} est autorisé à effectuer {operation}.",
+      "knows": "{holder} connaît {content}.",
+      "spouse_of": "{left} est le conjoint de {right}.",
+      "co_resides_with": "{left} vit avec {right}.",
+      "presides_over": "{holder} préside {domain}.",
+      "elected_to": "{holder} a été élu à {role}.",
+      "capital_of": "{capital} est la capitale de {country}.",
+      "transitions": "{holder} devient {to_state}.",
+      "remember": "{actor} se souvient de {content}.",
+      "observe": "{observer} observe {target}."
+    },
+    "response_moves": {
+      "acknowledgement": "Compris.",
+      "correction_acknowledgement": "Compris ; je l’ai corrigé.",
+      "admission_failed": "J’ai compris l’affirmation, mais je n’ai pas pu la mémoriser.",
+      "knowledge_limitation": "Je ne dispose pas encore de connaissances fondées pour cela.",
+      "clarification": "Pouvez-vous préciser le sens non résolu ?",
+      "learning_probe": "Veuillez définir la dépendance sémantique manquante.",
+      "operation_result": "Le résultat de l’opération est {status}.",
+      "contradiction_disclosure": "Je dispose d’éléments fondés pour des versions contradictoires ; je ne peux donc présenter aucune comme établie.",
+      "qualified_default": "Il s’agit d’une attente qualifiée, et non d’un fait confirmé.",
+      "capability_limitation": "Je ne peux pas effectuer cette opération avec mes capacités ou autorisations actuelles."
+    },
+    "references": {
+      "self": {
+        "default": "je",
+        "holder": "je",
+        "subject": "je",
+        "actor": "je",
+        "instance": "je"
+      },
+      "user": {
+        "default": "vous",
+        "holder": "vous",
+        "subject": "vous",
+        "actor": "vous",
+        "instance": "vous"
+      }
+    },
+    "tone_variants": {
+      "warm": {
+        "acknowledgement": "D’accord.",
+        "correction_acknowledgement": "D’accord ; je l’ai corrigé.",
+        "knowledge_limitation": "Je ne dispose pas encore de connaissances fondées, donc je ne vais pas deviner.",
+        "answer:named": {
+          "self": "Avec plaisir — je m’appelle {name}.",
+          "user": "Votre nom est {name}.",
+          "default": "{holder} s’appelle {name}."
+        }
+      },
+      "formal": {
+        "acknowledgement": "Accusé de réception.",
+        "correction_acknowledgement": "Accusé de réception ; l’enregistrement antérieur a été remplacé.",
+        "answer:named": {
+          "self": "Mon nom est {name}.",
+          "user": "Votre nom est {name}.",
+          "default": "Le nom de {holder} est {name}."
+        }
+      },
+      "concise": {
+        "acknowledgement": "Compris.",
+        "knowledge_limitation": "Je ne le sais pas."
+      }
+    }
+  },
+  "pronouns": {
+    "je": {
+      "person": "first",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.98
+    },
+    "moi": {
+      "person": "first",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.95
+    },
+    "mon": {
+      "person": "first",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.98
+    },
+    "ma": {
+      "person": "first",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.98
+    },
+    "vous": {
+      "person": "second",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.98
+    },
+    "votre": {
+      "person": "second",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.98
+    },
+    "tu": {
+      "person": "second",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.95
+    },
+    "ton": {
+      "person": "second",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.95
+    },
+    "ça": {
+      "person": "third",
+      "anaphoric": true,
+      "deixis": "discourse",
+      "accepted_kinds": [
+        "proposition",
+        "event",
+        "state",
+        "information_object"
+      ],
+      "confidence": 0.82
+    }
+  },
+  "morphology": {
+    "number_words": {
+      "zéro": "0",
+      "un": "1",
+      "deux": "2",
+      "trois": "3",
+      "quatre": "4",
+      "cinq": "5",
+      "six": "6",
+      "sept": "7",
+      "huit": "8",
+      "neuf": "9",
+      "dix": "10"
+    }
+  }
+}

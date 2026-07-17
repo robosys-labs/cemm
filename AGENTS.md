@@ -1,864 +1,674 @@
-# CEMM v3.4 Cognitive Kernel — Governing Implementation Contract
+# CEMM v3.4.7 Governing Implementation Contract
 
-Status: active governing contract upon merge  
-Audit baseline: `8e0da751edbd86460049ef14f56fda66cc05de84`  
-Architecture revision: `v3.4-foundation-final`  
-Scope: repository-wide  
-Compatibility: intentionally breaking at the semantic-authority boundary
+**Status:** highest-priority repository implementation contract  
+**Scope:** all code, data, tests, documentation, demos, migration work, and architectural claims  
+**Target:** a multilingual grounded semantic kernel that learns through UOL and says only what it can justify  
+**Compatibility:** intentionally breaking at the semantic-authority boundary.
 
-This file is the highest-priority implementation contract for CEMM v3.4. It governs coding agents, maintainers, reviewers, tests, migration work, and architectural status claims.
+---
 
-The purpose of v3.4 is not to preserve v3.3 names or layers. The purpose is to establish one coherent runtime that can interpret, ground, know, doubt, learn, plan, act, introspect, and communicate through the same native semantic substrate.
-
-## 1. Core identity
-
-CEMM is a **cognitive semantic kernel**.
-
-It maintains an evidence-aware model of:
-
-- referents, identities, concepts, states, events, places, time, sequences, and causes;
-- propositions in actual, reported, believed, hypothetical, desired, quoted, counterfactual, and simulated contexts;
-- what is stored, accessible, attended, remembered, understood, believed, or known;
-- what the system is currently capable of, permitted to do, resourced to do, and reliable at doing;
-- active uncertainty, contradiction, gaps, needs, goals, plans, operations, and outcomes;
-- language-independent meaning and language-specific expression.
-
-The target is functional cognitive continuity and operational self-awareness. This is a software architecture for simulating cognitive access, self-modeling, agency, and learning. It is not a scientific claim of subjective consciousness.
-
-## 2. Canonical source order
+## 1. Binding source order
 
 Use active guidance in this order:
 
-1. root `AGENTS.md`
-2. `cemm/ARCHITECTURE.md`
-3. `cemm/newarch/CORE_LOOP.md`
-4. `cemm/newarch/SEMANTIC_DATA_MODEL.md`
-5. `cemm/newarch/UNDERSTANDING_PIPELINE.md`
-6. `cemm/newarch/LEARNING_PIPELINE.md`
-7. `cemm/newarch/SEMANTIC_FOUNDATIONS.md`
-8. `cemm/newarch/AUTHORITY_MATRIX.md`
-9. `cemm/newarch/IMPLEMENTATION_PLAN.md`
-10. `cemm/newarch/ARCHITECTURE_DECISIONS.md`
-11. executable architecture and acceptance tests
-12. implementation code and traces
+1. root `AGENTS.md`;
+2. root `architecture.md`;
+3. root `coreloop.md`;
+4. root `3.4.7-upgrade-fixes-plan.md`;
+5. executable architecture/acceptance tests;
+6. active data manifests and version manifest;
+7. implementation code and traces.
 
-Historical documents and code under `legacy/` are non-authoritative.
+`README.md` explains the project but does not override the contracts above.
 
-Every status claim must distinguish:
+Any older architecture, plan, patch README, generated overlay, archived document, bootstrap script, comment, or test fixture that conflicts with these files is non-authoritative. Move obsolete guidance under `docs/archive/` and mark it clearly.
+
+---
+
+## 2. Status language is mandatory
+
+Every progress or completion claim must distinguish:
 
 - **specified** — required by an active contract;
-- **implemented** — code exists;
+- **implemented** — code/data exists;
 - **wired** — the canonical runtime invokes it;
 - **authoritative** — no competing component can make the same decision;
-- **verified** — end-to-end structural tests prove it.
+- **verified** — end-to-end and metamorphic tests prove it.
 
-Never call a phase complete unless all five states hold.
+Do not call a phase, module, or release complete unless all applicable states are true.
 
-## 3. Three-layer law
+Do not say tests pass unless they were actually run against the stated revision. Report skipped, unavailable, or failing suites explicitly.
 
-CEMM has exactly three architectural layers of meaning-related records.
+---
 
-### 3.1 Canonical semantic graph
+## 3. Core identity
 
-The only canonical semantic object families are:
+CEMM is a grounded meaning system and cognitive semantic kernel. It is not:
+
+- a sentence-intent classifier;
+- a chatbot routing table;
+- an LLM wrapper;
+- a vector store presented as understanding;
+- a giant persistent sentence graph;
+- a rule engine with no grounded learning;
+- an English regex pipeline;
+- a collection of demo-specific patches.
+
+Its canonical path is:
 
 ```text
-Referent
-Value
-Predication
-Proposition
-ContextFrame
-EvidenceRecord
-StructuralLink
+Observation
+→ FormLattice evidence
+→ Referent candidates
+→ active schemas and local operational ports
+→ UOL MeaningHypotheses
+→ compatible MeaningBundle
+→ epistemics / learning / inference / goals / operations
+→ response-goal candidates
+→ UOLResponsePlan
+→ target-language realization and emission proof
 ```
 
-These represent what an input, memory, simulation, plan, tool result, or response means.
+---
 
-### 3.2 Semantic schemas
+## 4. Referent law
 
-Executable definitions are versioned `SchemaRecord`s:
+`Referent` is the single canonical term and record family for every identity-bearing semantic object that may fill a predicate or operation port.
 
-```text
-LexemeSenseSchema
-ConstructionSchema
-PredicateSchema
-RoleSchema
-EntityKindSchema
-StateDimensionSchema
-ContextSchema
-OperationSchema
-CapabilitySchema
-RealizationSchema
-PolicySchema
-```
-
-Schemas define how meaning can be recognized, composed, grounded, queried, learned, executed, or expressed.
-
-### 3.3 Cognitive-control records
-
-Control records reference semantic graph objects and schemas; they do not constitute a second ontology:
+Referent kinds include:
 
 ```text
-WorkspaceEntry
-EpistemicAssessment
-CapabilityAssessment
-GapRecord
-GoalRecord
-PlanRecord
-OperationInstance
-ExecutionLedger
-LearningTransaction
-SemanticMessagePlan
-MutationSet
-CommitOutcome
-```
-
-A goal, plan, gap, learning transaction, or capability assessment may never replace the proposition or schema it concerns.
-
-## 4. Structural-edge law
-
-`StructuralLink` expresses graph structure only:
-
-```text
-has_role
-instantiates
-refers_to
-grounded_by
-scoped_by
-supported_by
-opposed_by
-derived_from
-depends_on
-co_refers_with
-```
-
-Semantic relations such as the following are always `Predication` instances:
-
-```text
-is_a
-same_as
-part_of
-located_at
-inside
-before
-after
-causes
-enables
-prevents
-knows
-means
-capable_of
-```
-
-No semantic relation may also be encoded as an authoritative typed graph edge. Compatibility importers may read old representations, but the canonical kernel emits only predications plus structural links.
-
-## 5. Predication and proposition law
-
-A `Predication` is semantic content:
-
-```text
-predicate_schema_ref + typed role bindings + open ports
-```
-
-A `Proposition` makes that content truth-bearing by adding:
-
-```text
-context_ref
-polarity
-modal qualifiers
-attribution
-valid time
-```
-
-The following are independent axes and must never be collapsed into one `proposition_mode` enum:
-
-- communicative force: assert, ask, request, direct, acknowledge, correct, promise, refuse;
-- polarity: positive or negative;
-- context: actual, reported, believed, hypothetical, desired, counterfactual, simulated, quoted;
-- modality: possible, necessary, permitted, prohibited, obligated, capable;
-- temporal scope and aspect.
-
-A question is a communicative predication over a proposition pattern with open ports. A command is a directive predication whose content denotes a desired operation or state. Negation is proposition polarity. Reported and hypothetical meanings are contexts.
-
-## 6. Role and open-port law
-
-Roles belong to `PredicateSchema`.
-
-A role binding points from a predication to a real filler:
-
-```text
-Referent | Value | Predication | Proposition | ContextFrame
-```
-
-A proposition or predication may fill content, cause, condition, purpose, reason, answer, question, belief, desire, or plan roles.
-
-An open port is an unfilled typed role requirement. It is metadata on a candidate predication or query pattern. It is never:
-
-- a placeholder entity;
-- a concept named `topic`, `object`, or `target`;
-- a public response value;
-- a durable memory candidate.
-
-Role resolution is schema-generic. No engine may hard-code a universal role list such as actor/object/target/place.
-
-## 7. One schema authority
-
-`SemanticSchemaStore` is the only authority for executable meaning schemas.
-
-Every schema record carries:
-
-```text
-record_id
-semantic_key
-schema_kind
-status: candidate | provisional | active | rejected | superseded
-scope: global | tenant | user | session
-applicability contexts and valid time
-version
-field-level contributions and provenance
-support and counterevidence
-confidence
-permission
-```
-
-Boot and learned schemas use the same model and resolver. Boot origin is provenance, not a separate lifecycle state. Session learning is a session-scoped schema revision, not a `SessionLearningOverlay`, shadow lexicon, or second resolver.
-
-Lifecycle meaning is strict:
-
-- `candidate` — identity or hypothesis exists but is not structurally usable;
-- `provisional` — some or all structure is executable in a declared attributed/hypothetical/private context, but independent competence or epistemic admission is incomplete;
-- `active` — the exact revision passed structural closure, required independent competence, context/scope policy, and atomic activation;
-- `superseded`/`rejected` — not selected for new interpretation, while historical proposition bindings remain resolvable.
-
-A structurally executable revision is not automatically actual-world knowledge. `EpistemicEvaluator` decides admissibility in a context, and `GroundingResolver` derives a snapshot-specific use profile from structural assessment plus epistemic admissibility. Neither may activate a revision.
-
-`ActionOperatorSchema` and `PredicateSchema` may not remain competing authorities. Actions and processes are event-oriented predicate schemas; executable operations use `OperationSchema` and reference semantic predicates for preconditions and effects.
-
-
-### 7.1 Grounded-definition and use-profile law
-
-Schema lookup, structural executability, independent competence, epistemic admissibility, and current usability are different decisions.
-
-The existing schema path must derive:
-
-```text
-recognized surface
-→ candidate sense/schema reference
-→ schema-family definition closure
-→ competence profile
-→ epistemic admissibility by context
-→ operation-specific SchemaUseProfile
-```
-
-`SchemaGroundingAssessment` is a derived control record for an exact revision and environment fingerprint. It is not a semantic object, store, certificate database, or activation authority.
-
-A revision may support quotation, preservation, or attributed reasoning while remaining opaque or provisional. It may support actual-world classification or inference only when the current `SchemaUseProfile` permits those operations.
-
-### 7.2 Sense, scope, and context law
-
-Lexical form, sense, schema revision, access scope, and epistemic context are distinct.
-
-One lexical form may map to multiple senses. One schema may have multiple lexicalizations. Opaque uses of one spelling may remain separate candidate sense clusters until evidence supports merge.
-
-Narrower access scope does not blindly replace wider meaning. A user-scoped revision may represent a user theory or private convention without overriding an active global schema in the actual context. Resolution considers:
-
-```text
-sense
-context/world
-applicability domain and valid time
-scope/access
-structural usability
-epistemic admissibility
-requested semantic operation
-```
-
-Schema merge or identity equivalence is explicit, reversible, journaled, and never destroys original references.
-
-### 7.3 Evidence-lineage and field-provenance law
-
-Evidence independence follows derivation lineage, not record count or source labels.
-
-Translations, paraphrases, summaries, generated examples, and retrieved copies inherit their root lineage unless an independent observation or oracle exists.
-
-Every learned schema field or pattern records whether it was:
-
-```text
-asserted
-observed
-entailed
-inherited
-hypothesized
-defaulted
-induced
-adapter-supplied
-boot-supplied
-```
-
-Hypothesized/defaulted content may guide candidate ranking and probing. It may not be presented as user-taught or observed truth.
-
-Competence cases derived from the definition may test well-formedness only. They cannot independently certify discrimination, truth, or promotion.
-
-### 7.4 Recursive-definition law
-
-Schema dependencies are typed. Cyclic dependency components are classified as:
-
-```text
-inverse relation cluster
-positive monotone recursive cluster
-stratified defeasible cluster
-unsupported non-monotone cluster
-```
-
-Joint activation is allowed only for a declared inverse or positive-monotone cluster with external anchors, non-redundant member contributions, a defined fixed-point/inverse contract, and independent joint competence.
-
-Cycles through negation, exception priority, permission, effect authorization, destructive mutation, identity collapse, or single-valued replacement are not directly jointly activated.
-
-A recursive cluster activates atomically or not at all.
-
-### 7.5 Atomic activation and invalidation law
-
-Assessment and activation use one pinned store/environment snapshot and compare-and-swap commit.
-
-The assessment fingerprint includes:
-
-```text
-schema dependency revisions
-grounding-policy version
-competence-suite versions
-kernel foundation/type versions
-inference/truth-maintenance version
-adapter observation-contract versions
-context/scope policy version
-```
-
-A dependency or environment change invalidates all dependent derived cognition, including assessments, inherited constraints, classifications, inferred propositions, cached answers, plans, undispatched messages, effect proposals, capability/understanding conclusions, and learning-success claims.
-
-Original evidence and already dispatched historical output remain preserved. Stale effects must be re-authorized before execution or critical commit.
-
-### 7.6 Pattern-semantics law
-
-Pattern function and pattern strength are independent.
-
-```text
-function:
-  constitutive | identity | selectional | diagnostic |
-  default | typical | incidental | causal | normative
-
-strength:
-  strict | defeasible | probabilistic
-```
-
-Typical/default/incidental patterns may support recognition or prediction but may not by themselves close a constitutive definition or reject an instance.
-
-Default reasoning respects specificity, exceptions, context, provenance, and four-state open-world truth.
-
-### 7.7 Live-effect-authority law
-
-Schema grounding may permit interpretation, prediction, simulation, or proposal of effects. It never grants persistent authority to execute or commit an effect.
-
-Every operation instance is authorized from live capability, permission, risk, context, resources, and current schema-use evidence. Authorization is revalidated before irreversible execution and critical commit.
-
-### 7.8 Correction, revocation, and forgetting law
-
-The kernel distinguishes:
-
-```text
-schema/proposition supersession
-source support retraction
-permission revocation
-archival
-user-requested forgetting
-privacy deletion
-```
-
-Each targets exact evidence, proposition, sense, or schema revisions and triggers appropriate dependency reassessment. Archival is not privacy deletion. Provenance history may be retained only where policy permits.
-
-## 8. Language-boundary law
-
-Language adapters emit reversible surface evidence only:
-
-```text
-raw span
-normalized surface
-lemma candidates
-morphological features
-syntax/dependency evidence
-construction candidates
-quotation and clause boundaries
-language and confidence
-```
-
-They may propose lexeme senses, constructions, predications, and communicative structures. They may not:
-
-- select final meaning;
-- authorize a write;
-- declare truth;
-- directly answer a query;
-- directly mutate memory;
-- claim a capability;
-- choose final response content.
-
-The canonical token stream preserves raw text, apostrophes, offsets, punctuation, quotation boundaries, negation, contractions, and morphology.
-
-## 9. Working-space and memory law
-
-`GlobalSemanticWorkspace` is the bounded active set available to reasoning, planning, introspection, and response formation.
-
-The following are distinct:
-
-```text
-stored(p)       — a persistent record exists
-accessible(p)   — current retrieval, permission, and resources allow access
-attended(p)     — p is in the active workspace
-remembered(p)   — a relevant stored trace was successfully retrieved
-understood(x)   — executable schemas can operate over x
-known(p)        — epistemic criteria are satisfied
-```
-
-Memory classes are lifecycle/indexing policies over shared canonical records:
-
-```text
-working
-common-ground/conversation
-episodic
-semantic
-procedural
-schema/learning
-```
-
-They are not competing semantic stores. Indexes and projections may be rebuilt from authoritative journals and stores.
-
-Only `CommitCoordinator` mutates persistent canonical stores.
-
-## 10. Epistemic law
-
-Absence is not falsity.
-
-Truth maintenance uses four support states:
-
-```text
-supported
-refuted
-both
-neither
-```
-
-Confidence, freshness, accessibility, source trust, and schema executability are separate dimensions.
-
-`EpistemicEvaluator` is the sole truth and knowledge authority.
-
-`knows(self, p)` may be derived only when:
-
-- `p` is grounded;
-- supporting evidence satisfies policy;
-- relevant counterevidence is considered;
-- the record is accessible;
-- temporal validity is sufficient;
-- the schemas needed to use or explain `p` are executable;
-- permission allows the current use.
-
-The following are never interchangeable:
-
-```text
-stored(p)
-remembers(self, p)
-has_access_to(self, p)
-knows(self, p)
-knows_about(self, topic)
-understands(self, schema_or_structure)
-believes(self, p)
-```
-
-“What do you not know?” may return only bounded active gaps, unresolved requested content, contradictions, inaccessible records, unsupported propositions, and known limitations. CEMM may not claim to enumerate all unknown facts.
-
-## 11. Self and capability law
-
-`self` is a stable `Referent` with deictic identity, not a special atom kind and not a separate truth system.
-
-Self identity, operational state, resources, capabilities, permissions, goals, knowledge assessments, limitations, commitments, and history use the same semantic/query substrate as every other referent.
-
-`CapabilityEvaluator` is the only capability authority. A current capability assessment requires:
-
-```text
-semantic competence
-∧ registered implementation
-∧ component health
-∧ required input channel
-∧ required output/effect channel
-∧ sufficient resources
-∧ permission and policy authorization
-∧ contextual preconditions
-```
-
-Observed reliability and current degradation qualify the result.
-
-A static entity schema, phrase template, or capability list cannot override live evidence.
-
-Self-description must query current assessments and ordinary semantic records, then pass through the normal response planner and NLG pipeline.
-
-## 12. State, event, place, time, and cause law
-
-States are typed predications governed by `StateDimensionSchema`. State values support:
-
-```text
-boolean
-enum
-text
-quantity + unit
-entity reference
-place reference
-time reference
-set
-distribution
-structured coordinate
-```
-
-Every state assertion distinguishes:
-
-```text
-valid time
-observation/assertion time
+self
+agent/person/animal/organization/software agent
+physical or digital object
+place
+event/action/process
+state
+proposition
+quantity
+unit
+time instant/interval
+collection
+information object
 context
-source/evidence
-current versus historical occupancy
+schema-as-topic
 ```
 
-Events are event-kind predications with identity, participants, aspect, time, and context.
+Rules:
 
-Spatial, temporal, and causal meanings are predications, not structural links.
+1. Do not introduce a competing top-level `Value`, `Entity`, `TemporalObject`, `EventObject`, or `PropositionObject` filler family.
+2. Distinguish kinds through `ReferentKind`, type schemas, identity criteria, and specialized canonical payloads.
+3. Raw strings, numbers, role IDs, parser nodes, and opaque labels do not fill semantic ports directly.
+4. Quantity and unit are separate linked referents.
+5. A proposition is a referent whose content references predications and carries context, polarity, modality, attribution, and time.
+6. A schema is not replaced by a referent. A `SCHEMA` referent can point to a schema revision when the schema itself is discussed.
+7. Referent identity merge/split is explicit, reversible, provenance-bearing, and patch-controlled.
 
-Temporal order does not imply causation. Causal hypotheses preserve:
+---
+
+## 5. UOL law
+
+UOL is the Universal Operational Language of the kernel.
+
+### 5.1 UOL is temporary cognition
+
+`UOLGraph` is a cycle-local multi-hypothesis workbench containing referents, predications, propositions, discourse relations, alternatives, open ports, assumptions, and provenance.
+
+Do not persist the entire working graph as long-term memory.
+
+### 5.2 Selected meaning
+
+Only `MeaningBundleSelector` may authorize the selected compatible UOL subgraph. Selecting one top proposition is insufficient for coordinated or multi-clause input.
+
+### 5.3 Durable change
+
+`GraphPatch` is the only route from selected UOL cognition to durable changes in referents, knowledge, schemas, rules, aliases, state, common ground, or operation effects.
+
+No operator, analyzer, learner, or response component may write directly to a canonical store.
+
+### 5.4 Output
+
+`UOLResponsePlan` contains semantic propositions, discourse structure, reference plans, certainty/attribution, target language, and tone constraints. It contains no final response strings.
+
+---
+
+## 6. Predication and local-port law
+
+A `Predication` is an instance of an active `PredicateSchema` with bindings to predicate-owned local ports.
+
+A local port schema defines:
 
 ```text
-cause and effect propositions/events
-context
-mechanism or schema basis
-support and counterevidence
-causal warrant grade:
-  reported_claim | contextual_rule | predictive_association |
-  mechanism_supported | intervention_supported
-intervention/counterfactual status
-confidence
+port_id
+optional role_family
+accepted ReferentKinds and type schemas
+cardinality and requiredness
+query/open behavior
+context/time propagation
+identity contribution
+binding constraints
+coercion policy
 ```
 
-Predicted effects do not mutate actual state. Actual effects require execution or observation plus reconciliation and commit.
+Rules:
 
-## 13. Context and common-ground law
+1. Exact port semantics belong to the owning predicate or operation.
+2. Engines may not assume a universal actor/object/target/place role list.
+3. Reusable role families are alignment hints, not binding authority.
+4. An open port is a typed unresolved requirement, not a placeholder referent and not a durable concept.
+5. Query ports are deliberately open; missing required assertion ports are gaps.
+6. Operations use local input/output ports and explicit semantic success conditions.
 
-Every proposition is evaluated in an explicit `ContextFrame`.
+---
 
-Minimum contexts:
+## 7. Semantic-authority law
+
+Only the following authorities may make their named decisions:
+
+| Decision | Authority |
+|---|---|
+| language hypotheses | LanguageDetectionCoordinator |
+| form-analysis alternatives | LanguageAnalysisCoordinator/FusionCoordinator |
+| referent candidates | ReferentCandidateGenerator/Resolver |
+| schema lifecycle | SemanticSchemaStore |
+| predicate/operation activation | SchemaActivator |
+| UOL hypothesis composition | MeaningAssembler |
+| selected compatible meaning | MeaningBundleSelector |
+| gap class | GapClassifier |
+| learning eligibility | LearningEligibilityAssessor |
+| epistemic use/admission | EpistemicCoordinator |
+| durable semantic commit | GraphPatchCommitCoordinator |
+| active goals | GoalArbiter |
+| executable operation plan | OperationPlanner + Authorizer |
+| response candidate generation | ResponseGoalGenerator |
+| selected response goals | ResponseRanker/Selector |
+| UOL response content | UOLResponsePlanner |
+| surface realization | RealizationCoordinator |
+| emission permission | EmissionGate |
+
+A component must not construct the artifact of a downstream authority as a fallback.
+
+---
+
+## 8. Language and analyzer boundary
+
+Language-specific code and data are allowed and necessary inside language adapters and packs. The semantic kernel must remain language-independent.
+
+Language analyzers may emit:
+
+- tokens/morphemes and raw spans;
+- lexical-sense candidates;
+- morphology and agreement evidence;
+- clause and sentence boundary candidates;
+- dependency/constituency evidence;
+- conjunction, coordination, subordination, and relative-clause evidence;
+- negation/modality/tense/aspect scope cues;
+- NER/mention candidates;
+- quantity, unit, time, and place candidates;
+- construction/form-pattern evidence;
+- communicative/discourse cues;
+- unresolved spans.
+
+They may not:
+
+- select final referents;
+- instantiate authoritative predications;
+- choose a MeaningBundle;
+- write knowledge or schemas;
+- open learning solely because a word is unknown;
+- choose response goals;
+- emit final response content.
+
+### 8.1 Prohibited kernel patterns
+
+Kernel and control modules must not contain:
+
+- English or other language-specific word tests;
+- exact transcript phrases;
+- language-specific word order assumptions;
+- response phrase routing;
+- domain-vocabulary blacklists;
+- regular expressions whose semantic purpose is recognizing a particular language construction.
+
+Unicode-safe transport normalization is allowed. Language-specific morphology or surface regex belongs in a language module and must emit evidence only.
+
+### 8.2 Construction matcher
+
+The declarative construction matcher is a `FormPatternEvidenceProvider` only.
+
+A construction may be retained for:
+
+- closed grammar;
+- idioms/non-compositional expressions;
+- argument-realization evidence;
+- morphology or discourse patterns;
+- realization.
+
+An ordinary full-sentence construction added because a demo failed is architectural drift unless it is proven to be a genuine idiom and accompanied by broader semantic tests.
+
+---
+
+## 9. NER and reference law
+
+NER output is a mention proposal, not an identity decision.
+
+Reference resolution must support all ReferentKinds, including prior propositions, events, states, quantities, units, times, places, schema topics, and multimodal tracks.
+
+Pronoun/anaphora resolution and predicate-port binding are joint. Do not greedily resolve a pronoun before candidate predicates reveal accepted port kinds.
+
+Database, knowledge-base, geospatial, event, or vector matches are candidate anchors only. Final grounding requires identity/type/port/context compatibility and traceable selection.
+
+---
+
+## 10. Context and multimodal law
+
+`DiscourseModel` and `SessionWorldModel` are bounded projections, not truth stores.
+
+They may provide:
+
+- mention chains;
+- topic/focus and recency;
+- open questions and ports;
+- learning and operation obligations;
+- common-ground status;
+- multimodal tracks;
+- current location/time/state;
+- capability and affordance evidence;
+- language/tone preferences.
+
+They may rank meaning but may not fabricate a fact. Durable admission uses EpistemicAssessment and GraphPatch.
+
+---
+
+## 11. Meaning assembly and selection law
+
+`MeaningAssembler` must compose from evidence, active schemas, referent candidates, and local ports.
+
+Required behavior:
+
+- preserve multiple clause boundaries and structures;
+- support multiple predicates per utterance;
+- support coordination/shared arguments;
+- support relative clauses and complements;
+- support propositions as role fillers;
+- support questions through typed open ports;
+- support directives through desired operation/state content;
+- preserve partial meaning and unresolved evidence;
+- expose all assumptions/coercions;
+- use bounded search and trace pruning.
+
+`MeaningBundleSelector` selects compatible sets using hard constraints and named score factors. It must preserve coordinated propositions and N-best ambiguity alternatives.
+
+Do not use parser confidence, construction priority, lexical frequency, or world plausibility as a final authority.
+
+---
+
+## 12. Gap and repair law
+
+Canonical gaps distinguish analysis, language, lexical, reference, identity, port, schema, knowledge, epistemic, capability, permission, learning-frontier, and realization failures.
+
+Rules:
+
+1. `learnable` defaults to false.
+2. Reference or port failures are not schema lessons.
+3. Knowledge absence is not missing meaning.
+4. Capability/permission failures are not knowledge failures.
+5. Learning eligibility requires a known target, grounding anchor/frontier, representable contribution type, scope, and permission.
+6. Run error attribution before deciding how to repair.
+7. Ask the narrowest useful question.
+8. Generic “rephrase” is last resort.
+9. Every repair question is a UOL response goal with an exact target gap.
+
+---
+
+## 13. Knowledge and epistemic law
+
+Canonical durable knowledge is a `KnowledgeRecord` pointing to a proposition referent.
+
+Do not create a second predicate/role fact representation for new writes.
+
+Knowledge must preserve:
+
+- four-state truth: supported, opposed, both, undetermined;
+- source and evidence lineage;
+- context and attribution;
+- valid time;
+- confidence;
+- sensitivity;
+- permission and scope;
+- retention and revision.
+
+An assertion that is structurally understood is not automatically actual-world knowledge. The EpistemicCoordinator decides permitted use.
+
+Absence of evidence is not negation. Contradictions remain visible unless exact correction/supersession policy applies.
+
+---
+
+## 14. Learning law
+
+Learning is a first-class core-loop activity, not a fallback string handler.
+
+### 14.1 Grounding requirement
+
+Every learned contribution must connect to:
+
+- known referents;
+- active/provisional schemas;
+- self or discourse participants;
+- place/event/state/proposition/quantity/unit/time referents;
+- or exact typed unresolved frontier items.
+
+Raw prose, opaque labels, generated examples, and response text are not executable definitions.
+
+### 14.2 Contribution classes
+
+Learning must distinguish lexical alias, identity, kind, role/relationship, predicate/ports, state dimension, unit/conversion, event/place pattern, operation affordance, strict/constitutive/causal/enabling/default/statistical rule, exception, realization, correction, and retraction.
+
+### 14.3 Recursive frontier
+
+Recursive learning must have hard limits for depth, wall clock, new records, rule firings, interaction count, and sensitive content. Detect cycles and classify dependency components.
+
+Unresolved frontier items remain unresolved. Do not guess them.
+
+### 14.4 Scope and activation
+
+New user-taught structures default to session/private scope. A single example cannot self-certify global competence.
+
+Lifecycle is:
 
 ```text
-actual
-reported
-belief
-hypothetical
-conditional
-counterfactual
-desired
-simulation
-quoted
+candidate → provisional → active → superseded/rejected
 ```
 
-Contexts may be nested and have explicit accessibility/inheritance policies. Content in reported, belief, hypothetical, conditional, counterfactual, simulated, or quoted contexts may not enter actual-world truth without an explicit inference/evidence rule.
-
-`CommonGroundManager` tracks who asserted, asked, accepted, rejected, corrected, promised, answered, or left unresolved which proposition. It records actual dispatched communication, not intended text.
+Activation requires grounding, structural closure, competence, rule classification, cycle/contradiction analysis, permission, scope, and atomic CAS commit.
 
-## 14. Attention, appraisal, needs, values, and goals
+### 14.5 Examples are not facts about every instance
 
-Attention changes accessibility to cognition, not truth.
+- `president` should normally be learned as a role/relationship structure, not merely a person kind.
+- “president usually in the capital” is a default.
+- mother-in-law/spouse/co-residence relations are not automatically strict.
+- relationship status must not imply sensitive personal activity by default.
 
-Workspace selection may use:
+Preserve user-taught theories in attributed/private contexts when appropriate; do not launder them into universal truth.
 
-```text
-relevance
-novelty
-uncertainty
-contradiction
-urgency
-goal impact
-causal consequence
-social/discourse obligation
-resource cost
-```
+---
 
-Appraisal variables are functional control signals, not claims of subjective feeling.
+## 15. Inference and relationship-algebra law
 
-Needs generate goals from state constraints, commitments, and gaps. Stable values and policies constrain planning. Minimum policy goals include:
+Rule function and strength are independent.
 
-```text
-truthfulness
-safety
-permission integrity
-privacy
-commitment integrity
-semantic coherence
-resource boundedness
-```
+Functions include identity, constitutive, strict implication, prerequisite, causal, enabling, preventing, default, statistical, pragmatic, and normative.
 
-A `GoalRecord` denotes a desired proposition or information state. It may not be a free-form response label such as `answer_concept` or `store_patch`.
+Strength includes strict, defeasible, and probabilistic.
 
-## 15. Planning, operation, and execution law
+Every derived proposition must carry:
 
-Every action—internal, communicative, or external—is an `OperationInstance` instantiated from `OperationSchema`.
+- rule and supporting proposition refs;
+- variable bindings;
+- context/time propagation;
+- derivation depth;
+- consequence status;
+- dependency fingerprint;
+- sensitivity result;
+- completeness/timeout status.
 
-Minimum cognitive operations:
+Defaults and associations may guide ranking or qualified responses. They do not become unqualified actual facts by default.
 
-```text
-attend
-retrieve
-query
-compare
-infer
-simulate
-probe
-assimilate
-validate
-store
-explain
-plan
-```
-
-Minimum communicative operations:
-
-```text
-assert
-ask
-answer
-acknowledge
-clarify
-correct
-qualify
-refuse
-promise
-```
-
-External operations are adapter-backed and capability/permission gated.
-
-Operation lifecycle:
-
-```text
-proposed
-planned
-authorized | blocked
-started
-succeeded | failed | partial | timed_out
-reconciled
-committed
-```
-
-`Planner` is the sole plan authority. `OperationAuthorizer` is the sole permission/safety/capability gate. `OperationExecutor` executes authorized operations only. `ExecutionLedger` records actual outcomes.
-
-No graph-building, interpretation, or response-planning stage may execute state effects.
-
-## 16. Commit-before-claim law
-
-All persistent mutations are typed `MutationOperation`s in a `MutationSet`.
-
-Every mutation is classified as required or auxiliary and has an exact semantic identity.
-
-Two commit moments use the same `CommitCoordinator`:
-
-1. **critical pre-response commit** — facts, requested writes, state transitions, operation outcomes, and learned schemas that the response may claim;
-2. **output/discourse commit** — actual output event, common-ground effects, promises, pending questions, and transport outcome after dispatch.
-
-A response may say “I stored it,” “I learned it,” “I changed it,” or “I completed it” only when every required mutation for that claim committed.
+Inference must obey depth, step, firing, signature, existential, memory, wall-clock, and sensitivity budgets. Partial timeout results are explicit.
 
-Auxiliary concept or schema observations cannot satisfy an unrelated required write.
-
-## 17. Learning law
-
-Learning is an ordinary kernel operation over the same schema store and semantic model.
-
-A learning transaction is created only for a concrete gap that blocks an interpretation, query, plan, operation, or realization goal.
-
-Lifecycle:
-
-```text
-gap
-→ exact target artifact and missing fields
-→ typed hypothesis
-→ minimal semantic probe
-→ ordinary interpretation of returned evidence
-→ provisional child schema snapshot
-→ replay from earliest affected checkpoint
-→ structural closure and competency tests
-→ commit or rollback
-→ resume original goal
-```
+---
 
-A learning transaction cannot be successful merely because fields were filled or a status changed. Success requires:
+## 16. Goal, operation, and capability law
 
-- an executable artifact changed;
-- the ordinary resolver uses the new schema version;
-- the blocked case replays successfully;
-- competency and contradiction tests pass;
-- intended scope and provenance are preserved.
+Goals are desired propositions, information states, or operation outcomes. They are not response labels.
 
-Replay may never repeat already dispatched external actions.
+Operation plans must:
 
-## 18. Semantic metalanguage law
+- instantiate active OperationSchemas;
+- bind all required local ports to referents;
+- have explicit semantic success conditions;
+- verify preconditions;
+- simulate effects as GraphPatches;
+- assess capability, permission, resources, risk, cost, reversibility, and idempotency;
+- reauthorize immediately before irreversible effects;
+- reconcile observed outcomes.
 
-CEMM must natively understand enough semantic metalanguage to learn new meanings without phrase-specific code.
+Do not map generic goal kinds to fixed operation keys without semantic bindings.
 
-Minimum boot predicates include:
+Self capability claims come from live component/capability observations and admitted configuration, not from hard-coded conversational text.
 
-```text
-means
-lexicalizes
-defines
-is_a
-same_as
-subtype_of
-has_semantic_kind
-has_role
-role_requires
-role_accepts
-has_precondition
-has_effect
-has_state_dimension
-has_value_type
-applies_to
-before
-after
-causes
-enables
-prevents
-capable_of
-requires_operation
-realized_as
-```
-
-Metalanguage assertions are ordinary predications and propositions about schema referents. They pass through grounding, epistemics, authorization, learning validation, and commit.
-
-## 19. NLG law
-
-`ResponsePlanner` is the only response-content authority.
-
-It consumes selected semantic propositions, epistemic/capability assessments, execution outcomes, commit outcomes, goals, and discourse state. It produces a language-neutral `SemanticMessagePlan`.
-
-NLG stages:
-
-```text
-content selection
-rhetorical/discourse organization
-information structure and focus
-referring-expression generation
-aggregation
-stance and epistemic qualification
-lexicalization
-syntax planning
-morphology
-orthography/channel rendering
-dispatch
-```
-
-Language renderers choose wording, not truth or response content.
-
-Every generated clause must trace to a selected semantic item and evidence/ledger/commit provenance. Opaque IDs, open ports, role labels, or internal placeholders cannot become public text.
-
-Generated content should round-trip into compatible semantic candidates under the same language pack.
-
-## 20. Core-loop law
-
-The canonical event-driven cognitive cycle is:
-
-```text
-ORIENT
-→ UNDERSTAND
-→ KNOW
-→ DECIDE
-→ ACT AND RECONCILE
-→ CRITICAL COMMIT
-→ COMMUNICATE
-→ OUTPUT COMMIT AND CONSOLIDATE
-```
-
-The detailed ordering in `CORE_LOOP.md` is mandatory.
-
-A `KernelSnapshot` pins schema, memory, common-ground, self-health, policy, resource, goal, learning-transaction, competence-suite, type-registry, inference-policy, and adapter-contract revisions for one cycle. Stages return immutable artifacts. Hidden global mutation is forbidden.
-
-Learning replay uses a child schema snapshot and a typed checkpoint. It is not a second top-level loop.
-
-## 21. Authority law
-
-Exactly one component is authoritative for each decision. The binding table is `AUTHORITY_MATRIX.md`.
-
-Compatibility helpers may translate representations but may not:
-
-- independently select meaning;
-- independently declare truth;
-- independently derive capability;
-- independently authorize operations;
-- independently write memory;
-- independently choose response content.
-
-## 22. Folder and import law
-
-The canonical tree is defined in `KERNEL_FOLDER_STRUCTURE.md`.
-
-Hard import boundaries:
-
-```text
-kernel/model       → standard library only
-kernel/schema      → model
-kernel engines     → model + schema + read interfaces
-kernel/commit      → model + schema + writable persistence interfaces
-language           → public semantic interfaces only
-adapters           → public operation/signal interfaces only
-app                → dependency assembly
-legacy             → isolated; canonical kernel never imports it
-```
-
-Persistence is forbidden in perception, composition, grounding, NLG, and language adapters.
-
-## 23. Forbidden implementation patterns
-
-Do not:
-
-- add transcript phrases to query, write, capability, or response executors;
-- learn into an overlay the ordinary schema resolver does not use;
-- retain action and predicate schema stores as separate semantic authorities;
-- represent semantic relations both as predications and typed graph edges;
-- use free-form instruction kinds as semantic content;
-- equate structural executability with actual-world truth;
-- call a provisional/self-certified schema fully understood;
-- count transformed copies from one evidence lineage as independent support;
-- activate recursive clusters without declared fixed-point or inverse semantics;
-- let a narrow access scope blindly shadow wider actual-world meaning;
-- store inferred or hypothesized schema fields as if the user asserted them;
-- persist effect authorization as a schema property;
-- treat typical/default features as constitutive identity;
-- invalidate only an assessment while dependent answers/plans/inferences remain live;
-- treat goals as strings such as `answer_relation` or `store_patch`;
-- hard-code universal role names in a graph builder;
-- create role-placeholder entities or concepts;
-- execute predicted effects while building or interpreting a graph;
-- infer actual-world truth from reported, belief, hypothetical, quoted, or simulated contexts without a rule;
-- confirm a write because any patch committed;
-- advertise a capability because a JSON slot says it exists;
-- parse generated text to recover operational meaning;
-- let language templates choose factual content;
-- use missing public wording as a reason to expose internal IDs;
-- run the old and new pipelines in parallel and call the new path authoritative;
-- call shadow code complete.
-
-## 24. Completion gate
-
-A change is complete only when:
-
-- it corrects the earliest wrong authority;
-- no later phrase or output workaround is required;
-- one authority owns every changed decision;
-- semantic, schema, and control layers remain distinct;
-- snapshot and mutation invariants pass;
-- query/write/action behavior is exact and contract-driven;
-- self/capability claims are live-evidence backed;
-- learning changes the ordinary resolver and passes lineage-aware replay/competence;
-- activation is snapshot-atomic and context-admissible;
-- dependency downgrade retracts all derived cognition;
-- response clauses are semantically selected and provenance-bound;
-- multilingual graph-equivalence tests pass where applicable;
-- legacy imports are absent from the canonical kernel;
-- documentation status is updated honestly.
+---
+
+## 17. Response and realization law
+
+### 17.1 Candidate generation
+
+ResponseGoalGenerator must generate plausible semantic alternatives before ranking, including answer, qualified answer, acknowledgement, correction, clarification, learning probe, operation result, limitation, uncertainty, rapport, and no-output.
+
+A ranker cannot compensate for candidates that were never generated.
+
+### 17.2 Response selection
+
+Each response candidate references exact semantic records. Do not use `content_kind`, phrase labels, or templates as response meaning.
+
+### 17.3 UOL response
+
+UOLResponsePlanner selects semantic propositions, discourse order, reference plans, target language, attribution/certainty, and bounded tone constraints.
+
+### 17.4 Realization
+
+The realizer chooses morphology, word order, referring expressions, and style. It may not add or strengthen claims.
+
+Every semantic contribution must have coverage. Uncovered required content blocks emission.
+
+### 17.5 “Says only what it understands”
+
+A clause is emit-able only when:
+
+- it satisfies a selected response goal;
+- predicate and realization schemas are active;
+- required ports are filled;
+- referents are grounded or explicitly mentioned/quoted;
+- epistemic use is authorized;
+- inference proof is allowed where applicable;
+- full realization coverage exists;
+- revisions are fresh.
+
+Fluency is never evidence of understanding.
+
+---
+
+## 18. Foundation-data law
+
+Foundation data must be small, operationally complete, language-neutral, and teachable.
+
+It must include:
+
+- ReferentKinds and identity;
+- local-port predicate families;
+- relation algebra;
+- state and transition;
+- quantities, units, conversions, and time;
+- place/event participation;
+- epistemic and discourse relations;
+- learning/definition structures;
+- goals, operations, capability, permission;
+- self referent, CEMM name, and `Contextual Event Memory Model` expansion;
+- response-goal schemas;
+- competence tests.
+
+Reviewed foundations and language packs may use JSON/YAML. Runtime and learned records use durable indexed stores.
+
+Do not put language surface forms in language-neutral foundation files.
+
+Do not enforce foundation neutrality through domain-word blacklists in Python. Validate schema families and dependency structure.
+
+---
+
+## 19. Testing contract
+
+Every semantic change requires tests at the correct level.
+
+### 19.1 Required categories
+
+- unit tests for new records and constraints;
+- end-to-end canonical-runtime tests;
+- metamorphic paraphrase/structure tests;
+- cross-language UOL equivalence tests;
+- minimal-pair distinction tests;
+- discourse/reference tests;
+- learning and rollback tests;
+- inference proof/rule-class tests;
+- operation authorization/reconciliation tests;
+- realization round-trip/coverage tests;
+- performance/timeout/determinism tests;
+- architecture import/lint tests.
+
+### 19.2 Test anti-patterns
+
+Do not prove architecture with only the exact phrase that caused a bug.
+
+For every accepted utterance case, include nearby variants. For every semantic distinction, include a minimal negative case.
+
+Do not mock away the authority being tested in an end-to-end acceptance test.
+
+Do not assert only final surface output. Assert selected referents, predicates, ports, proposition contexts, gaps, goals, response candidates, UOL plan, and proof.
+
+### 19.3 Required baby-CEMM suite
+
+The release suite must cover:
+
+- self name and CEMM expansion;
+- user full name and age;
+- conjunction and multi-answer query;
+- correction/supersession;
+- entity/place/event/proposition/state/time reference;
+- unknown word versus reference gap;
+- recursive grounded teaching;
+- strict/default/causal/sensitive rule discipline;
+- second-language semantic equivalence;
+- multimodal reference;
+- bound safe operation;
+- multiple response candidates;
+- blocked unsupported emission.
+
+---
+
+## 20. Performance and boundedness law
+
+Every candidate-generating or recursive component must expose configurable budgets and trace them.
+
+Required limits include:
+
+- candidates per span/mention/port;
+- predicate activations per clause;
+- clause and bundle beam width;
+- embedding depth;
+- repair re-entry count;
+- learning frontier depth and questions;
+- inference depth, steps, firings, signatures, existentials;
+- operation planning alternatives;
+- wall-clock and memory budgets.
+
+A budget hit returns the best proof-bearing partial result plus explicit incompleteness. It must not trigger a hidden canned fallback.
+
+Fixed snapshots must produce deterministic selections except where explicitly configured stochastic evidence providers are recorded with seeds/versions.
+
+---
+
+## 21. Repository and import boundaries
+
+1. `language/` may depend on evidence models and schema lookup interfaces, not UOL selection, knowledge commit, goals, response selection, or realization authority outside its own language realization data.
+2. `understanding/` may read schemas/referents/context but may not commit knowledge or schemas.
+3. `learning/` creates GraphPatches but does not activate or commit directly.
+4. `inference/` creates proof-bearing candidates/patches but does not bypass consequence policy.
+5. `goals/` and `operations/` do not generate response text.
+6. `response/` does not execute operations or admit knowledge.
+7. `realization/` does not retrieve facts or decide response content.
+8. `storage/` does not interpret semantics.
+9. compatibility/legacy packages may not be imported by the canonical composition root after cutover.
+
+Enforce these boundaries with import tests where practical.
+
+---
+
+## 22. Implementation workflow for agents and maintainers
+
+Before changing code:
+
+1. Read the governing documents.
+2. Identify the decision authority affected.
+3. Trace the current canonical runtime call path.
+4. Identify whether the bug is evidence, grounding, activation, composition, selection, gap, knowledge, learning, inference, goal, operation, response, or realization.
+5. Reproduce with a semantic trace and neighboring variants.
+6. Design the fix at the owning authority.
+
+During implementation:
+
+1. Add/modify typed records first.
+2. Preserve source/provenance and alternatives.
+3. Add named score factors and budgets.
+4. Avoid compatibility branches inside canonical authorities.
+5. Keep language-specific logic in language modules/data.
+6. Route durable changes through GraphPatch.
+7. Add positive, negative, metamorphic, and end-to-end tests.
+
+Before claiming completion:
+
+1. Run architecture lint/import tests.
+2. Run focused and full suites.
+3. Inspect semantic traces, not only output strings.
+4. Verify the canonical runtime invokes the new path.
+5. Verify old competing authority is unreachable or removed.
+6. Report actual status using specified/implemented/wired/authoritative/verified.
+
+---
+
+## 23. Code-review rejection checklist
+
+Reject a change when any answer is yes:
+
+- Does it add an exact demo/transcript phrase?
+- Does kernel code inspect language-specific words or word order?
+- Does a parser/construction/NER result become selected meaning directly?
+- Does it introduce another semantic object family instead of Referent?
+- Does it bind raw values rather than referents?
+- Does it hard-code universal role names?
+- Does it choose one proposition and drop compatible coordinated content?
+- Does it make a generic gap learnable?
+- Does it write directly to a semantic store?
+- Does it treat a user assertion as unqualified truth?
+- Does it materialize a default/association/sensitive inference as fact?
+- Does it map a generic goal to an unbound operation?
+- Does it rank only one preselected response route?
+- Does the renderer decide what to say?
+- Does tone change certainty or factual content?
+- Does the test assert only a final string?
+- Does it claim completion without canonical wiring and verification?
+
+---
+
+## 24. Architectural change procedure
+
+A change to any of the following requires updating the governing documents and architecture tests in the same change:
+
+- canonical record families;
+- ReferentKinds;
+- authority matrix;
+- core-loop stage ownership;
+- GraphPatch commit boundary;
+- learning lifecycle;
+- rule classes/consequence policy;
+- UOL response contract;
+- foundation admissibility;
+- release acceptance floor.
+
+Do not silently evolve architecture through code.
+
+---
+
+## 25. Final governing principle
+
+The implementation must optimize for semantic truthfulness, compositional reuse, teachability, and explicit uncertainty—not for making one conversation look fluent.
+
+The correct fix is the smallest change that repairs the owning foundational authority and generalizes across languages, paraphrases, contexts, and modalities. A larger sentence database, a new fallback phrase, or another wrapper around the old composer is not progress toward CEMM.

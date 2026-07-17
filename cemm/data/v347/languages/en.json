@@ -1,0 +1,1174 @@
+{
+  "language_tag": "en",
+  "version": "3.4.7.2",
+  "detector_markers": [
+    "what",
+    "your",
+    "my",
+    "name",
+    "means",
+    "does",
+    "and",
+    "old",
+    "years",
+    "where",
+    "who",
+    "the"
+  ],
+  "tokenizer": {
+    "kind": "unicode_word"
+  },
+  "lexical_entries": [
+    {
+      "entry_kind": "question_operator",
+      "semantic_ref": "force:ask",
+      "surfaces": [
+        "what",
+        "who",
+        "where",
+        "when",
+        "which",
+        "how"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "copula",
+      "semantic_ref": "structure:copula",
+      "surfaces": [
+        "is",
+        "am",
+        "are",
+        "was",
+        "were",
+        "does",
+        "do"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "conjunction",
+      "semantic_ref": "structure:coordination",
+      "surfaces": [
+        "and",
+        "or"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "subordinator",
+      "semantic_ref": "structure:subordination",
+      "surfaces": [
+        "that",
+        "because",
+        "if",
+        "when"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "negation",
+      "semantic_ref": "structure:negation",
+      "surfaces": [
+        "not",
+        "never"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "correction",
+      "semantic_ref": "force:correct",
+      "surfaces": [
+        "correction",
+        "actually"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "directive",
+      "semantic_ref": "force:direct",
+      "surfaces": [
+        "please"
+      ],
+      "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:named",
+      "surfaces": [
+        "name",
+        "named",
+        "called"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:means",
+      "surfaces": [
+        "mean",
+        "means",
+        "meaning"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:has_state",
+      "surfaces": [
+        "age"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "fixed_bindings": {
+          "dimension": "referent:dimension:age"
+        }
+      }
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:has_state",
+      "surfaces": [
+        "old"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "fixed_bindings": {
+          "dimension": "referent:dimension:age"
+        }
+      }
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:instance_of",
+      "surfaces": [
+        "kind",
+        "type"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:located_at",
+      "surfaces": [
+        "located",
+        "location"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:occupies_role",
+      "surfaces": [
+        "role"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:move",
+      "surfaces": [
+        "move",
+        "go"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:year",
+      "surfaces": [
+        "years"
+      ],
+      "confidence": 0.98,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:year",
+      "surfaces": [
+        "year"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:self:name:CEMM",
+      "surfaces": [
+        "cemm"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:meaning:CEMM",
+      "surfaces": [
+        "contextual event memory model"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:available",
+      "surfaces": [
+        "available"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:kind:person",
+      "surfaces": [
+        "person",
+        "human"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:kind:software_system",
+      "surfaces": [
+        "software system"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:president",
+      "surfaces": [
+        "president"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:leader",
+      "surfaces": [
+        "leader"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:age",
+      "surfaces": [
+        "age"
+      ],
+      "confidence": 0.96,
+      "features": {
+        "role_hint": "dimension"
+      }
+    },
+    {
+      "entry_kind": "teaching_marker",
+      "semantic_ref": "force:teach",
+      "surfaces": [
+        "teach",
+        "define"
+      ],
+      "confidence": 0.94,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:subkind_of",
+      "surfaces": [
+        "subkind",
+        "subtype"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:causes",
+      "surfaces": [
+        "cause",
+        "causes"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:enables",
+      "surfaces": [
+        "enable",
+        "enables"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:same_as",
+      "surfaces": [
+        "same as",
+        "identical to"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:part_of",
+      "surfaces": [
+        "part of"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:inside",
+      "surfaces": [
+        "inside",
+        "within"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:before",
+      "surfaces": [
+        "before"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:after",
+      "surfaces": [
+        "after"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:possesses",
+      "surfaces": [
+        "has",
+        "owns"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:member_of",
+      "surfaces": [
+        "member of"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:participates_in",
+      "surfaces": [
+        "participates in"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:depends_on",
+      "surfaces": [
+        "depends on"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:prevents",
+      "surfaces": [
+        "prevents"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:refers_to",
+      "surfaces": [
+        "refers to"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:capable_of",
+      "surfaces": [
+        "capable of",
+        "can"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:permitted",
+      "surfaces": [
+        "permitted",
+        "allowed"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:believes",
+      "surfaces": [
+        "believes"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:knows",
+      "surfaces": [
+        "knows"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:desires",
+      "surfaces": [
+        "wants",
+        "desires"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:spouse_of",
+      "surfaces": [
+        "spouse of",
+        "married to"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:parent_in_law_of",
+      "surfaces": [
+        "parent in law of"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:co_resides_with",
+      "surfaces": [
+        "lives with"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:presides_over",
+      "surfaces": [
+        "presides over"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:elected_to",
+      "surfaces": [
+        "elected to"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:capital_of",
+      "surfaces": [
+        "capital of"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:transitions",
+      "surfaces": [
+        "becomes",
+        "changes to"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:remember",
+      "surfaces": [
+        "remember"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:observe",
+      "surfaces": [
+        "observe"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:second",
+      "surfaces": [
+        "second",
+        "seconds"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:minute",
+      "surfaces": [
+        "minute",
+        "minutes"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:hour",
+      "surfaces": [
+        "hour",
+        "hours"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:day",
+      "surfaces": [
+        "day",
+        "days"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:meter",
+      "surfaces": [
+        "meter",
+        "meters"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:kilometer",
+      "surfaces": [
+        "kilometer",
+        "kilometers",
+        "km"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:kilogram",
+      "surfaces": [
+        "kilogram",
+        "kilograms",
+        "kg"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:gram",
+      "surfaces": [
+        "gram",
+        "grams"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:count",
+      "surfaces": [
+        "count"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:percent",
+      "surfaces": [
+        "percent",
+        "%"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "unit",
+      "semantic_ref": "referent:unit:celsius",
+      "surfaces": [
+        "celsius"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "role_hint": "unit"
+      }
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:spouse",
+      "surfaces": [
+        "spouse"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:mother_in_law",
+      "surfaces": [
+        "mother in law"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:teacher",
+      "surfaces": [
+        "teacher"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:role:operator",
+      "surfaces": [
+        "operator"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:availability",
+      "surfaces": [
+        "availability"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:connectivity",
+      "surfaces": [
+        "connectivity"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:location",
+      "surfaces": [
+        "location"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:emotive_state",
+      "surfaces": [
+        "mood",
+        "emotion"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:capacity",
+      "surfaces": [
+        "capacity"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:mass",
+      "surfaces": [
+        "mass",
+        "weight"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:height",
+      "surfaces": [
+        "height"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:size",
+      "surfaces": [
+        "size"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:energy",
+      "surfaces": [
+        "energy",
+        "charge"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:visibility",
+      "surfaces": [
+        "visibility"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:unavailable",
+      "surfaces": [
+        "unavailable"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:connected",
+      "surfaces": [
+        "connected"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:disconnected",
+      "surfaces": [
+        "disconnected"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:happy",
+      "surfaces": [
+        "happy"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:sad",
+      "surfaces": [
+        "sad"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:visible",
+      "surfaces": [
+        "visible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "referent",
+      "semantic_ref": "referent:state:not_visible",
+      "surfaces": [
+        "not visible"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "semantic_ref": "referent:dimension:conversational_tone",
+      "surfaces": [
+        "conversational tone",
+        "tone"
+      ],
+      "candidate_kind": "concept",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:neutral",
+      "surfaces": [
+        "neutral"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:warm",
+      "surfaces": [
+        "warm"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:formal",
+      "surfaces": [
+        "formal"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    },
+    {
+      "semantic_ref": "referent:state:concise",
+      "surfaces": [
+        "concise"
+      ],
+      "candidate_kind": "state",
+      "confidence": 0.94
+    }
+  ],
+  "structure_markers": {
+    "question": [
+      "what",
+      "who",
+      "where",
+      "when",
+      "which",
+      "how",
+      "does",
+      "do"
+    ],
+    "conjunction": [
+      "and",
+      "or"
+    ],
+    "subordination": [
+      "that",
+      "because",
+      "if",
+      "when"
+    ],
+    "condition": [
+      "if"
+    ],
+    "cause": [
+      "because"
+    ],
+    "negation": [
+      "not",
+      "never"
+    ],
+    "correction": [
+      "correction",
+      "actually"
+    ],
+    "directive": [
+      "please"
+    ]
+  },
+  "constructions": [
+    {
+      "construction_id": "en:possessive_property",
+      "sequence": [
+        "pronoun:possessive",
+        "predicate"
+      ],
+      "allow_gaps": true,
+      "semantic_hint": "structure:possessive_property",
+      "confidence": 0.58
+    },
+    {
+      "construction_id": "en:question",
+      "sequence": [
+        "question_operator",
+        "predicate"
+      ],
+      "allow_gaps": true,
+      "semantic_hint": "force:ask",
+      "confidence": 0.62
+    }
+  ],
+  "realization": {
+    "predicate_answers": {
+      "named": {
+        "self": "My name is {name}.",
+        "user": "Your name is {name}.",
+        "default": "{holder} is named {name}."
+      },
+      "means": "{term} means {meaning}.",
+      "has_state": {
+        "self": "My {dimension} is {value} {unit}.",
+        "user": "Your {dimension} is {value} {unit}.",
+        "default": "{holder} has {dimension} {value} {unit}."
+      },
+      "instance_of": "{instance} is a {kind}.",
+      "located_at": "{subject} is at {place}.",
+      "occupies_role": "{holder} has the role {role}.",
+      "subkind_of": "{child} is a kind of {parent}.",
+      "related_to": "{left} is related to {right}.",
+      "causes": "{cause} causes {effect}.",
+      "enables": "{condition} enables {possibility}.",
+      "move": "{actor} moves to {destination}.",
+      "same_as": "{left} is the same as {right}.",
+      "part_of": "{part} is part of {whole}.",
+      "inside": "{subject} is inside {container}.",
+      "before": "{earlier} is before {later}.",
+      "after": "{later} is after {earlier}.",
+      "possesses": "{possessor} has {item}.",
+      "member_of": "{member} is a member of {collection}.",
+      "depends_on": "{dependent} depends on {dependency}.",
+      "prevents": "{condition} prevents {outcome}.",
+      "refers_to": "{expression} refers to {target}.",
+      "capable_of": "{agent} is capable of {operation}.",
+      "permitted": "{agent} is permitted to perform {operation}.",
+      "knows": "{holder} knows {content}.",
+      "spouse_of": "{left} is the spouse of {right}.",
+      "co_resides_with": "{left} lives with {right}.",
+      "presides_over": "{holder} presides over {domain}.",
+      "elected_to": "{holder} was elected to {role}.",
+      "capital_of": "{capital} is the capital of {country}.",
+      "transitions": "{holder} changes to {to_state}.",
+      "remember": "{actor} remembers {content}.",
+      "observe": "{observer} observes {target}."
+    },
+    "response_moves": {
+      "acknowledgement": "Understood.",
+      "correction_acknowledgement": "Understood; I corrected it.",
+      "admission_failed": "I understood the assertion, but I could not store it.",
+      "knowledge_limitation": "I do not have grounded knowledge for that yet.",
+      "clarification": "Could you clarify the unresolved meaning?",
+      "learning_probe": "Please define the missing semantic dependency.",
+      "operation_result": "The operation result is {status}.",
+      "contradiction_disclosure": "I have grounded support for conflicting versions, so I cannot present either as settled.",
+      "qualified_default": "This is a qualified expectation, not a confirmed fact.",
+      "capability_limitation": "I cannot perform that operation with my current capabilities or permissions."
+    },
+    "references": {
+      "self": {
+        "default": "I",
+        "holder": "I",
+        "subject": "I",
+        "actor": "I",
+        "instance": "I"
+      },
+      "user": {
+        "default": "you",
+        "holder": "you",
+        "subject": "you",
+        "actor": "you",
+        "instance": "you"
+      }
+    },
+    "tone_variants": {
+      "warm": {
+        "acknowledgement": "Got it.",
+        "correction_acknowledgement": "Got it; I corrected it.",
+        "knowledge_limitation": "I do not have grounded knowledge for that yet, so I will not guess.",
+        "answer:named": {
+          "self": "Glad you asked—my name is {name}.",
+          "user": "Your name is {name}.",
+          "default": "{holder} is named {name}."
+        }
+      },
+      "formal": {
+        "acknowledgement": "Acknowledged.",
+        "correction_acknowledgement": "Acknowledged; the prior record has been superseded.",
+        "answer:named": {
+          "self": "My name is {name}.",
+          "user": "Your name is {name}.",
+          "default": "{holder} is named {name}."
+        }
+      },
+      "concise": {
+        "acknowledgement": "Understood.",
+        "knowledge_limitation": "I do not know that."
+      }
+    }
+  },
+  "pronouns": {
+    "i": {
+      "person": "first",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.98
+    },
+    "me": {
+      "person": "first",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.96
+    },
+    "my": {
+      "person": "first",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:user"
+      ],
+      "confidence": 0.98
+    },
+    "you": {
+      "person": "second",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.98
+    },
+    "your": {
+      "person": "second",
+      "possessive": true,
+      "role_hint": "holder",
+      "candidate_referent_refs": [
+        "referent:self"
+      ],
+      "confidence": 0.98
+    },
+    "it": {
+      "person": "third",
+      "anaphoric": true,
+      "accepted_kinds": [
+        "physical_object",
+        "digital_object",
+        "event",
+        "proposition",
+        "state",
+        "information_object"
+      ],
+      "confidence": 0.8
+    },
+    "that": {
+      "person": "third",
+      "anaphoric": true,
+      "deixis": "discourse",
+      "accepted_kinds": [
+        "proposition",
+        "event",
+        "state",
+        "information_object",
+        "physical_object"
+      ],
+      "confidence": 0.82
+    },
+    "there": {
+      "person": "third",
+      "anaphoric": true,
+      "deixis": "place",
+      "accepted_kinds": [
+        "place"
+      ],
+      "confidence": 0.78
+    }
+  },
+  "morphology": {
+    "number_words": {
+      "zero": "0",
+      "one": "1",
+      "two": "2",
+      "three": "3",
+      "four": "4",
+      "five": "5",
+      "six": "6",
+      "seven": "7",
+      "eight": "8",
+      "nine": "9",
+      "ten": "10"
+    }
+  }
+}

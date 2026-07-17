@@ -1,19 +1,20 @@
 [build-system]
 requires = ["setuptools>=68.0"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "cemm"
-version = "0.1.0"
-description = "Contextual Event Memory Model — ERCA v2.0 implementation"
+version = "3.4.7"
+description = "CEMM grounded multilingual cognitive semantic kernel"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-xdist>=3.0",
-]
-train = [
-    "datasets>=4.0",
-]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cemm*"]
+
+[tool.setuptools.package-data]
+cemm = ["data/v347/*.json", "data/v347/languages/*.json", "*.md", "newarch/*.md", "uol/*.md"]
