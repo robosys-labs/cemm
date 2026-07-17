@@ -1,0 +1,56 @@
+name: v3.5 architecture
+
+on:
+  pull_request:
+    paths:
+      - "cemm/v350/**"
+      - "cemm/v347/**"
+      - "cemm/data/v347/**"
+      - "tests/v350/**"
+      - "tests/test_v347_*.py"
+      - "tools/check_v350_architecture.py"
+      - "docs/audits/v347-authority-debt.json"
+      - "AGENTS.md"
+      - "ARCHITECTURE.md"
+      - "CORE_LOOP.md"
+      - "IMPLEMENTATION_PLAN.md"
+      - "ACCEPTANCE_CONTRACT.md"
+      - "docs/architecture/**"
+      - ".github/workflows/v350-architecture.yml"
+  push:
+    branches: [main]
+    paths:
+      - "cemm/v350/**"
+      - "cemm/v347/**"
+      - "cemm/data/v347/**"
+      - "tests/v350/**"
+      - "tests/test_v347_*.py"
+      - "tools/check_v350_architecture.py"
+      - "docs/audits/v347-authority-debt.json"
+      - "AGENTS.md"
+      - "ARCHITECTURE.md"
+      - "CORE_LOOP.md"
+      - "IMPLEMENTATION_PLAN.md"
+      - "ACCEPTANCE_CONTRACT.md"
+      - "docs/architecture/**"
+      - ".github/workflows/v350-architecture.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Enforce v3.5 prohibitions and legacy-debt ratchet
+        run: python tools/check_v350_architecture.py
+      - name: Verify Phases 0 through 3
+        run: pytest -q tests/v350

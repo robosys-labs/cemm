@@ -23,20 +23,33 @@ No phase is complete merely because classes or JSON files exist.
 
 ## 2. Phase 0 — Baseline and authority audit
 
-- pin current main commit;
-- capture failing transcripts and traces;
-- inventory all semantic shortcuts;
-- map all per-predicate templates;
-- inventory mutable state blobs;
-- inventory claims admitted as actual facts;
-- identify every Python enum that blocks learned types;
-- record performance and database shape.
+Pin and record:
 
-Deliverable: `v347-authority-audit.md`.
+- exact main commit and package/runtime version;
+- executable composition root and cycle stage order;
+- every durable write producer and commit boundary;
+- schema, referent, UOL, epistemic, inference, operation, response, and realization authorities;
+- all semantic shortcuts, per-predicate templates, mutable/opaque state blobs, and claim-to-fact paths;
+- every Python enum or control-flow branch that blocks learned semantic types/events;
+- active regression tests, transcripts, traces, database tables/indexes, and performance budgets;
+- preserve/replace/migrate disposition for every active component.
+
+Deliverables:
+
+```text
+docs/audits/v347-authority-audit.md
+docs/audits/v347-authority-debt.json
+Phase-0 transcript/trace and measurement report
+```
+
+Phase 0 has two gates:
+
+1. **authority gate** — no Phase 1–3 design begins until all active semantic and write authorities are mapped and known legacy debt is machine-ratcheted;
+2. **measurement gate** — executable transcripts, stage timings, database size/row counts, and principal query plans must be captured before runtime cutover. An unavailable measurement is recorded as pending, never reported as passing.
 
 ---
 
-## 3. Phase 1 — Replace governing documents
+## 3. Phase 1 — Replace governing documents and enforce cutover direction
 
 Install this package's:
 
@@ -51,13 +64,20 @@ Install this package's:
 
 Archive conflicting v3.4.7 documents.
 
-Add CI lints for prohibited authority patterns.
+Add:
+
+- strict AST/data lints over canonical v3.5 code;
+- a maximum-count ratchet over retained v3.4.7 authority debt;
+- CI checks proving the v3.5 package does not import or delegate semantic authority to v3.4.7;
+- explicit exclusions only for archived/migration evidence, never for new canonical code.
+
+Phase 1 exit gate: governing documents, lint rules, debt manifest, and CI entrypoint are mutually consistent and executable.
 
 ---
 
 ## 4. Phase 2 — Semantic schema metamodel
 
-Implement:
+Implement one revisioned schema authority for:
 
 ```text
 MeaningSchema
@@ -72,22 +92,30 @@ RoleSchema
 FunctionSchema
 ActionSchema
 EventSchema
+UnitSchema
+MeasureDimensionSchema
 OperatorSchema
 DiscourseActSchema
+DiscourseRelationSchema
 ResponsePolicySchema
 ```
 
 Requirements:
 
-- data-driven schema classes;
-- multiple inheritance;
-- revision/lifecycle;
-- typed local ports;
-- use profiles;
-- provenance/dependencies;
-- competence hooks.
+- data-driven schema classes with typed family-specific validation;
+- multiple inheritance with cycle detection and parent-family compatibility;
+- revision-aware parent links (`authoritative`, `minimum`, `exact`);
+- lifecycle, supersession, authoritative-revision selection, and independent per-use authorization;
+- typed local ports supporting referents, applications, variables, coordination, and explicit quoted literals;
+- storage-kind, referent-type, schema-class, cardinality, ordering, context/time, and open-binding constraints;
+- provenance, field lineage, dependencies, invalidation fingerprints, and independent competence hooks;
+- deterministic document codec and registry snapshots;
+- separate semantic-content and full-record fingerprints;
+- unresolved frontiers for candidates, but hard dependency/reference errors for active authority.
 
-Remove executable dependency on the broad `ReferentKind` ontology enum.
+New v3.5 code must have zero executable dependency on the broad `ReferentKind` ontology enum. Physical removal from the retained v3.4.7 runtime occurs during migration/authority removal, not by breaking the baseline before replacement authorities exist.
+
+Phase 2 exit gate: every schema family round-trips through data, selects an exact/authoritative revision deterministically, validates cross-family references, and can be authorized independently per use.
 
 ---
 
@@ -96,6 +124,8 @@ Remove executable dependency on the broad `ReferentKind` ontology enum.
 Implement:
 
 ```text
+Referent
+ApplicationBinding
 SemanticApplication
 SemanticVariable
 ScopeRelation
@@ -107,9 +137,27 @@ StateDelta
 CapabilityDelta
 ImpactAssessment
 ImportanceAssessment
+UOLGraph
 ```
 
-Add canonical fingerprints and equivalence comparison.
+Requirements:
+
+- `Referent` remains the only identity-bearing semantic filler family;
+- proposition, claim, and event records are referent-backed specializations, not parallel identity families;
+- open variables have explicit purpose and typed restrictions;
+- claims, proposition content, epistemic admission, event occurrence, and state/capability effects remain separate;
+- an event requires independent admission proof before it can authorize a delta;
+- reported, hypothetical, counterfactual, fictional, planned, negated, or non-occurring events cannot mutate actual state;
+- state, capability, loss/decrease, valence, importance, polarity, and prohibition remain orthogonal axes;
+- every delta/assessment is context/time qualified, proof-bearing, and schema-revision pinned;
+- validation checks lifecycle/use authorization, local ports, type closure, context isolation, holder applicability, and cross-record references.
+
+Add two fingerprint layers:
+
+1. **record fingerprint** — preserves IDs, provenance, evidence, and revision detail;
+2. **semantic graph fingerprint/equivalence** — ignores generated local IDs and proof identifiers while preserving schema revisions, bindings, ordering, scope, context, polarity, modality, time, occurrence/admission status, deltas, stakeholders, impact, and importance.
+
+Phase 3 exit gate: alpha-renaming and map/binding insertion order do not change semantic equivalence; any meaning-bearing axis, context, ordering, or schema revision does.
 
 ---
 

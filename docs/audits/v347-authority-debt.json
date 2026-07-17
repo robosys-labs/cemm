@@ -1,0 +1,76 @@
+{
+  "baseline_commit": "bcc77fdf1af7a735e173e873c9fd0585c5bbb80f",
+  "policy": "Counts are maximum tolerated legacy occurrences. Reductions are allowed; increases fail CI.",
+  "budgets": [
+    {
+      "debt_id": "broad-referent-kind-enum",
+      "path": "cemm/v347/model.py",
+      "pattern": "class\\s+ReferentKind\\b",
+      "maximum_count": 1,
+      "rationale": "Semantic type is still source-code-bound in the migration baseline."
+    },
+    {
+      "debt_id": "kind-authoritative-port-typing",
+      "path": "cemm/v347/model.py",
+      "pattern": "accepted_kinds\\s*:",
+      "maximum_count": 2,
+      "rationale": "Ports still authorize semantic compatibility through ReferentKind."
+    },
+    {
+      "debt_id": "predicate-only-schema-promotion",
+      "path": "cemm/v347/schema.py",
+      "pattern": "_learned_predicates",
+      "maximum_count": 5,
+      "rationale": "Learned schema revisions become executable only as PredicateSchema records."
+    },
+    {
+      "debt_id": "assertion-directly-admitted-as-supported",
+      "path": "cemm/v347/knowledge.py",
+      "pattern": "force\\s+not\\s+in\\s+\\{CommunicativeForce\\.ASSERT,\\s*CommunicativeForce\\.CORRECT\\}",
+      "maximum_count": 1,
+      "rationale": "Assertion force is used as the primary actual-context admission gate."
+    },
+    {
+      "debt_id": "input-only-discourse-commit",
+      "path": "cemm/v347/runtime.py",
+      "pattern": "self\\.discourse\\.compile\\([\\s\\S]*?bundle=understood\\.bundle",
+      "maximum_count": 1,
+      "rationale": "System output UOL is not committed as referable discourse content."
+    },
+    {
+      "debt_id": "targetless-response-goal",
+      "path": "cemm/v347/response.py",
+      "pattern": "target_proposition_refs=\\(\\)",
+      "maximum_count": 4,
+      "rationale": "Several response goals can be constructed without a semantic target."
+    },
+    {
+      "debt_id": "english-how-direct-state-mapping",
+      "path": "cemm/data/v347/languages/en.json",
+      "pattern": "\\\"semantic_ref\\\"\\s*:\\s*\\\"predicate:has_state\\\"[\\s\\S]{0,360}\\\"surfaces\\\"\\s*:\\s*\\[\\s*\\\"how\\\"\\s*\\]",
+      "maximum_count": 1,
+      "rationale": "The migration language pack maps a query surface directly to a completed state predicate."
+    },
+    {
+      "debt_id": "english-do-direct-capability-mapping",
+      "path": "cemm/data/v347/languages/en.json",
+      "pattern": "\\\"semantic_ref\\\"\\s*:\\s*\\\"predicate:capable_of\\\"[\\s\\S]{0,360}\\\"surfaces\\\"\\s*:\\s*\\[\\s*\\\"do\\\"\\s*\\]",
+      "maximum_count": 1,
+      "rationale": "The migration language pack maps an auxiliary directly to capability content."
+    },
+    {
+      "debt_id": "predicate-answer-template-store",
+      "path": "cemm/data/v347/languages/en.json",
+      "pattern": "\\\"predicate_answers\\\"",
+      "maximum_count": 1,
+      "rationale": "Ordinary predicates still own sentence-level answer realization."
+    },
+    {
+      "debt_id": "generic-understood-regression-expectation",
+      "path": "tests/test_v347_foundational_breakthrough.py",
+      "pattern": "Understood\\.",
+      "maximum_count": 1,
+      "rationale": "A retained baseline test still expects targetless acknowledgement."
+    }
+  ]
+}
