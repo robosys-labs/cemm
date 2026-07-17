@@ -1,0 +1,499 @@
+"""Typed repositories over the layered CEMM v3.5 semantic store."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Generic, Iterable, TypeVar
+
+from ..schema.model import (
+    FacetEntitlement, MeaningSchema, SchemaClass, SchemaLifecycleStatus, UseOperation,
+)
+from ..schema.registry import SchemaRegistry
+from ..uol.model import (
+    CapabilityDelta,
+    ClaimOccurrence,
+    EventOccurrence,
+    ImpactAssessment,
+    ImportanceAssessment,
+    PropositionReferent,
+    Referent,
+    SemanticApplication,
+    StateDelta,
+)
+from .model import (
+    CapabilityInstance,
+    ClaimRecord,
+    DefaultRuleRecord,
+    EvidenceRecord,
+    IdentityFacetRecord,
+    KnowledgeRecord,
+    MaterializedViewRecord,
+    RecordKind,
+    ReferentTypeAssertion,
+    StateAssignment,
+    StoreSnapshot,
+    StoredRecord,
+)
+
+
+T = TypeVar("T")
+
+
+class TypedRepository(Generic[T]):
+    def __init__(self, store, record_kind: RecordKind, expected_type: type[T]):
+        self._store = store
+        self.record_kind = record_kind
+        self.expected_type = expected_type
+
+    def get(
+        self,
+        record_ref: str,
+        revision: int | None = None,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> StoredRecord[T] | None:
+        stored = self._store.get_record(
+            self.record_kind, record_ref, revision, snapshot=snapshot
+        )
+        if stored is None:
+            return None
+        if not isinstance(stored.payload, self.expected_type):
+            raise TypeError(
+                f"{self.record_kind.value} repository decoded {type(stored.payload).__name__}"
+            )
+        return stored
+
+    def require(
+        self,
+        record_ref: str,
+        revision: int | None = None,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> StoredRecord[T]:
+        stored = self.get(record_ref, revision, snapshot=snapshot)
+        if stored is None:
+            suffix = "" if revision is None else f"@{revision}"
+            raise KeyError(f"{self.record_kind.value}:{record_ref}{suffix}")
+        return stored
+
+    def all(
+        self,
+        *,
+        all_revisions: bool = False,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[StoredRecord[T], ...]:
+        result = self._store.records(
+            self.record_kind,
+            all_revisions=all_revisions,
+            snapshot=snapshot,
+        )
+        for item in result:
+            if not isinstance(item.payload, self.expected_type):
+                raise TypeError(
+                    f"{self.record_kind.value} repository decoded {type(item.payload).__name__}"
+                )
+        return result  # type: ignore[return-value]
+
+
+class SchemaRepository(TypedRepository[MeaningSchema]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.SCHEMA, MeaningSchema)
+
+    def registry(self, *, snapshot: StoreSnapshot | None = None) -> SchemaRegistry:
+        schemas = tuple(item.payload for item in self.all(all_revisions=True, snapshot=snapshot))
+        entitlements = tuple(
+            item.payload
+            for item in self._store.records(
+                RecordKind.FACET_ENTITLEMENT,
+                all_revisions=True,
+                snapshot=snapshot,
+            )
+            if isinstance(item.payload, FacetEntitlement)
+        )
+        return SchemaRegistry(schemas, entitlements)
+
+    def authoritative(
+        self, schema_ref: str, *, snapshot: StoreSnapshot | None = None
+    ) -> MeaningSchema:
+        return self.registry(snapshot=snapshot).authoritative_schema(schema_ref)
+
+    def for_use(
+        self,
+        schema_ref: str,
+        operation: UseOperation | str,
+        *,
+        provisional: bool = False,
+        snapshot: StoreSnapshot | None = None,
+    ) -> MeaningSchema:
+        return self.registry(snapshot=snapshot).schema_for_use(
+            schema_ref, operation, provisional=provisional
+        )
+
+    def by_class(
+        self,
+        schema_class: SchemaClass,
+        *,
+        active_only: bool = False,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[MeaningSchema, ...]:
+        registry = self.registry(snapshot=snapshot)
+        if active_only:
+            return registry.active_schemas(schema_class)
+        return tuple(
+            item
+            for item in registry.iter_schemas()
+            if item.schema_class == schema_class
+        )
+
+
+class EntitlementRepository(TypedRepository[FacetEntitlement]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.FACET_ENTITLEMENT, FacetEntitlement)
+
+    def for_type(
+        self,
+        type_ref: str,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[FacetEntitlement, ...]:
+        registry = self._store.repositories.schemas.registry(snapshot=snapshot)
+        return registry.entitlements_for_type(type_ref)
+
+
+class ReferentRepository(TypedRepository[Referent]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.REFERENT, Referent)
+
+    def type_assertions(
+        self,
+        referent_ref: str,
+        *,
+        context_ref: str | None = None,
+        at_time: str | datetime | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[ReferentTypeAssertion, ...]:
+        items = []
+        for stored in self._store.repositories.type_assertions.all(snapshot=snapshot):
+            assertion = stored.payload
+            if assertion.referent_ref != referent_ref:
+                continue
+            if context_ref is not None and assertion.context_ref not in {"global", context_ref}:
+                continue
+            if not interval_contains(assertion.valid_from, assertion.valid_to, at_time):
+                continue
+            items.append(assertion)
+        return tuple(sorted(items, key=lambda item: (item.type_schema_ref, item.assertion_ref)))
+
+    def identity_facets(
+        self,
+        referent_ref: str,
+        *,
+        context_ref: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[IdentityFacetRecord, ...]:
+        result = []
+        for stored in self._store.repositories.identity_facets.all(snapshot=snapshot):
+            item = stored.payload
+            if item.referent_ref == referent_ref and (
+                context_ref is None or item.context_ref in {"global", context_ref}
+            ):
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: item.identity_facet_ref))
+
+
+class ApplicationRepository(TypedRepository[SemanticApplication]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.SEMANTIC_APPLICATION, SemanticApplication)
+
+    def for_schema(
+        self,
+        schema_ref: str,
+        *,
+        context_ref: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[SemanticApplication, ...]:
+        result = []
+        for stored in self.all(snapshot=snapshot):
+            item = stored.payload
+            if item.schema_ref == schema_ref and (
+                context_ref is None or item.context_ref == context_ref
+            ):
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: item.application_ref))
+
+    def involving(
+        self,
+        referent_ref: str,
+        *,
+        context_ref: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[SemanticApplication, ...]:
+        result = []
+        for stored in self.all(snapshot=snapshot):
+            item = stored.payload
+            if context_ref is not None and item.context_ref != context_ref:
+                continue
+            if any(
+                getattr(filler, "ref", None) == referent_ref
+                for binding in item.bindings
+                for filler in binding.fillers
+            ):
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: item.application_ref))
+
+
+class KnowledgeRepository(TypedRepository[KnowledgeRecord]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.KNOWLEDGE, KnowledgeRecord)
+
+    def for_proposition(
+        self,
+        proposition_ref: str,
+        *,
+        context_ref: str | None = None,
+        at_time: str | datetime | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[KnowledgeRecord, ...]:
+        result = []
+        for stored in self.all(snapshot=snapshot):
+            item = stored.payload
+            if item.proposition_ref != proposition_ref:
+                continue
+            if context_ref is not None and item.context_ref not in {"global", context_ref}:
+                continue
+            if not interval_contains(item.valid_from, item.valid_to, at_time):
+                continue
+            if item.superseded_by is None:
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: item.knowledge_ref))
+
+
+class EventStateRepository:
+    def __init__(self, store):
+        self._store = store
+
+    def events(
+        self,
+        referent_ref: str,
+        *,
+        context_ref: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[EventOccurrence, ...]:
+        applications = {
+            item.application_ref: item
+            for item in self._store.repositories.applications.involving(
+                referent_ref, context_ref=context_ref, snapshot=snapshot
+            )
+        }
+        result = []
+        for stored in self._store.repositories.event_occurrences.all(snapshot=snapshot):
+            event = stored.payload
+            if event.participant_application_ref in applications and (
+                context_ref is None or event.context_ref == context_ref
+            ):
+                result.append(event)
+        return tuple(sorted(result, key=lambda item: item.event_ref))
+
+    def state_timeline(
+        self,
+        holder_ref: str,
+        dimension_ref: str | None = None,
+        *,
+        context_ref: str | None = None,
+        at_time: str | datetime | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[StateAssignment, ...]:
+        result = []
+        for stored in self._store.repositories.state_assignments.all(snapshot=snapshot):
+            item = stored.payload
+            if item.holder_ref != holder_ref:
+                continue
+            if dimension_ref is not None and item.dimension_ref != dimension_ref:
+                continue
+            if context_ref is not None and item.context_ref not in {"global", context_ref}:
+                continue
+            if not interval_contains(item.valid_from, item.valid_to, at_time):
+                continue
+            result.append(item)
+        return tuple(
+            sorted(
+                result,
+                key=lambda item: (
+                    item.dimension_ref,
+                    item.valid_from or "",
+                    item.assignment_ref,
+                ),
+            )
+        )
+
+    def state_deltas(
+        self,
+        holder_ref: str,
+        *,
+        context_ref: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[StateDelta, ...]:
+        result = []
+        for stored in self._store.repositories.state_deltas.all(snapshot=snapshot):
+            item = stored.payload
+            if item.holder_ref == holder_ref and (
+                context_ref is None or item.context_ref == context_ref
+            ):
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: item.delta_ref))
+
+    def capabilities(
+        self,
+        holder_ref: str,
+        *,
+        context_ref: str | None = None,
+        at_time: str | datetime | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[CapabilityInstance, ...]:
+        result = []
+        for stored in self._store.repositories.capability_instances.all(snapshot=snapshot):
+            item = stored.payload
+            if item.holder_ref != holder_ref:
+                continue
+            if context_ref is not None and item.context_ref not in {"global", context_ref}:
+                continue
+            if not interval_contains(item.valid_from, item.valid_to, at_time):
+                continue
+            result.append(item)
+        return tuple(sorted(result, key=lambda item: (item.action_schema_ref, item.capability_ref)))
+
+
+class DefaultRuleRepository(TypedRepository[DefaultRuleRecord]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.DEFAULT_RULE, DefaultRuleRecord)
+
+    def authoritative(
+        self, rule_ref: str, *, snapshot: StoreSnapshot | None = None
+    ) -> DefaultRuleRecord:
+        revisions = [
+            item.payload for item in self.all(all_revisions=True, snapshot=snapshot)
+            if item.record_ref == rule_ref
+        ]
+        if not revisions:
+            raise KeyError(rule_ref)
+        superseded = {
+            item.supersedes_revision for item in revisions
+            if item.supersedes_revision is not None
+            and item.lifecycle_status not in {SchemaLifecycleStatus.CANDIDATE, SchemaLifecycleStatus.REJECTED}
+        }
+        usable = [
+            item for item in revisions
+            if item.revision not in superseded
+            and item.lifecycle_status not in {SchemaLifecycleStatus.REJECTED, SchemaLifecycleStatus.SUPERSEDED}
+        ]
+        if not usable:
+            raise KeyError(f"no usable default-rule revision for {rule_ref}")
+        rank = {
+            SchemaLifecycleStatus.CANDIDATE: 0,
+            SchemaLifecycleStatus.STRUCTURALLY_CLOSED: 1,
+            SchemaLifecycleStatus.PROVISIONAL: 2,
+            SchemaLifecycleStatus.COMPETENCE_VERIFIED: 3,
+            SchemaLifecycleStatus.ACTIVE: 4,
+            SchemaLifecycleStatus.SUPERSEDED: -1,
+            SchemaLifecycleStatus.REJECTED: -1,
+        }
+        return max(usable, key=lambda item: (rank[item.lifecycle_status], item.revision))
+
+    def for_facet(
+        self,
+        facet_ref: str,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[DefaultRuleRecord, ...]:
+        refs = {
+            item.record_ref for item in self.all(all_revisions=True, snapshot=snapshot)
+            if item.payload.target_facet_ref == facet_ref
+        }
+        result = []
+        for ref in sorted(refs):
+            try:
+                item = self.authoritative(ref, snapshot=snapshot)
+            except KeyError:
+                continue
+            if item.target_facet_ref == facet_ref:
+                result.append(item)
+        return tuple(sorted(result, key=lambda item: (-item.priority, item.rule_ref)))
+
+
+class MaterializedViewRepository(TypedRepository[MaterializedViewRecord]):
+    def __init__(self, store):
+        super().__init__(store, RecordKind.MATERIALIZED_VIEW, MaterializedViewRecord)
+
+    def valid(
+        self,
+        view_ref: str,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> MaterializedViewRecord | None:
+        return self._store.materialized_view(view_ref, snapshot=snapshot)
+
+
+class RepositorySet:
+    """Stable typed repository façade bound to one store instance.
+
+    The façade is intentionally a regular class rather than a slotted frozen
+    dataclass: repositories are constructed lazily by :class:`SemanticStore`
+    and are fixed by convention after initialization.  Declaring undeclared
+    attributes on a slotted dataclass made this composition root invalid.
+    """
+
+    def __init__(self, store: Any) -> None:
+        self.store = store
+        self.schemas = SchemaRepository(store)
+        self.entitlements = EntitlementRepository(store)
+        self.referents = ReferentRepository(store)
+        self.type_assertions = TypedRepository(store, RecordKind.TYPE_ASSERTION, ReferentTypeAssertion)
+        self.identity_facets = TypedRepository(store, RecordKind.IDENTITY_FACET, IdentityFacetRecord)
+        self.applications = ApplicationRepository(store)
+        self.propositions = TypedRepository(store, RecordKind.PROPOSITION, PropositionReferent)
+        self.claim_occurrences = TypedRepository(store, RecordKind.CLAIM_OCCURRENCE, ClaimOccurrence)
+        self.claim_records = TypedRepository(store, RecordKind.CLAIM_RECORD, ClaimRecord)
+        self.knowledge = KnowledgeRepository(store)
+        self.event_occurrences = TypedRepository(store, RecordKind.EVENT_OCCURRENCE, EventOccurrence)
+        self.state_assignments = TypedRepository(store, RecordKind.STATE_ASSIGNMENT, StateAssignment)
+        self.state_deltas = TypedRepository(store, RecordKind.STATE_DELTA, StateDelta)
+        self.capability_instances = TypedRepository(store, RecordKind.CAPABILITY_INSTANCE, CapabilityInstance)
+        self.capability_deltas = TypedRepository(store, RecordKind.CAPABILITY_DELTA, CapabilityDelta)
+        self.impact_assessments = TypedRepository(store, RecordKind.IMPACT_ASSESSMENT, ImpactAssessment)
+        self.importance_assessments = TypedRepository(store, RecordKind.IMPORTANCE_ASSESSMENT, ImportanceAssessment)
+        self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)
+        self.default_rules = DefaultRuleRepository(store)
+        self.materialized_views = MaterializedViewRepository(store)
+        self.event_state = EventStateRepository(store)
+
+
+def interval_contains(
+    valid_from: str | None,
+    valid_to: str | None,
+    at_time: str | datetime | None,
+) -> bool:
+    if at_time is None:
+        point = datetime.now(timezone.utc)
+    elif isinstance(at_time, datetime):
+        point = at_time if at_time.tzinfo is not None else at_time.replace(tzinfo=timezone.utc)
+    else:
+        point = _parse_time(at_time)
+        if point is None:
+            return True
+    start = _parse_time(valid_from)
+    end = _parse_time(valid_to)
+    if start is not None and point < start:
+        return False
+    if end is not None and point >= end:
+        return False
+    return True
+
+
+def _parse_time(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)

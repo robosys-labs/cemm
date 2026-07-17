@@ -1,0 +1,34 @@
+{
+  "package_ref": "cemm:v350:foundation-source",
+  "version": "3.5.0-dev",
+  "schema_version": 1,
+  "metadata": {
+    "authority": "reviewed_source",
+    "language_neutral": true,
+    "phase": "4"
+  },
+  "modules": [
+    {"module_ref": "schemas:referent_types", "path": "schemas/referent_types.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:facets", "path": "schemas/facets.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:facet_entitlements", "path": "schemas/facet_entitlements.jsonl", "record_kind": "facet_entitlement"},
+    {"module_ref": "schemas:properties", "path": "schemas/properties.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:state_dimensions", "path": "schemas/state_dimensions.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:state_values", "path": "schemas/state_values.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:relations", "path": "schemas/relations.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:roles", "path": "schemas/roles.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:functions", "path": "schemas/functions.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:actions", "path": "schemas/actions.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:events", "path": "schemas/events.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:units", "path": "schemas/units.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:measure_dimensions", "path": "schemas/measure_dimensions.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:operators", "path": "schemas/operators.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:discourse_acts", "path": "schemas/discourse_acts.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:discourse_relations", "path": "schemas/discourse_relations.jsonl", "record_kind": "schema"},
+    {"module_ref": "schemas:response_policies", "path": "schemas/response_policies.jsonl", "record_kind": "schema"},
+    {"module_ref": "dynamics:default_rules", "path": "dynamics/default_rules.jsonl", "record_kind": "default_rule"},
+    {"module_ref": "foundation:self", "path": "foundation/self.jsonl", "record_kind": "referent"},
+    {"module_ref": "foundation:seed_referents", "path": "foundation/seed_referents.jsonl", "record_kind": "referent"},
+    {"module_ref": "foundation:type_assertions", "path": "foundation/type_assertions.jsonl", "record_kind": "type_assertion"},
+    {"module_ref": "foundation:seed_knowledge", "path": "foundation/seed_knowledge.jsonl", "record_kind": "knowledge"}
+  ]
+}

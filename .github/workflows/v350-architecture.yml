@@ -6,9 +6,11 @@ on:
       - "cemm/v350/**"
       - "cemm/v347/**"
       - "cemm/data/v347/**"
+      - "cemm/data/v350/**"
       - "tests/v350/**"
       - "tests/test_v347_*.py"
       - "tools/check_v350_architecture.py"
+      - "tools/compile_v350_data.py"
       - "docs/audits/v347-authority-debt.json"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
@@ -23,9 +25,11 @@ on:
       - "cemm/v350/**"
       - "cemm/v347/**"
       - "cemm/data/v347/**"
+      - "cemm/data/v350/**"
       - "tests/v350/**"
       - "tests/test_v347_*.py"
       - "tools/check_v350_architecture.py"
+      - "tools/compile_v350_data.py"
       - "docs/audits/v347-authority-debt.json"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
@@ -41,7 +45,7 @@ permissions:
 jobs:
   architecture:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,5 +56,12 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Enforce v3.5 prohibitions and legacy-debt ratchet
         run: python tools/check_v350_architecture.py
-      - name: Verify Phases 0 through 3
+      - name: Verify Phases 0 through 5
         run: pytest -q tests/v350
+      - name: Prove deterministic boot compilation
+        run: |
+          python tools/compile_v350_data.py --output /tmp/v350-a.sqlite --writable
+          python tools/compile_v350_data.py --output /tmp/v350-b.sqlite --writable
+          cmp /tmp/v350-a.sqlite /tmp/v350-b.sqlite
+      - name: Run complete repository suite
+        run: pytest -q

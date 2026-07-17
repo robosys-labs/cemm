@@ -185,11 +185,31 @@ class SchemaRegistry:
         except KeyError as exc:
             raise KeyError(f"unknown entitlement revision {entitlement_ref}@{selected}") from exc
 
+    @staticmethod
+    def _effective_revisions(revisions):
+        """Return immutable revisions not superseded by a usable later record.
+
+        Boot records are read-only, so a writable overlay cannot rewrite an old
+        active row merely to mark it superseded.  Supersession is therefore an
+        effective lifecycle relation derived from the newer revision's explicit
+        ``supersedes_revision`` pin.
+        """
+        superseded = {
+            item.supersedes_revision
+            for item in revisions.values()
+            if item.lifecycle_status not in _TERMINAL
+            and item.supersedes_revision is not None
+        }
+        return tuple(
+            item for item in revisions.values()
+            if item.lifecycle_status not in _TERMINAL and item.revision not in superseded
+        )
+
     def authoritative_schema(self, schema_ref: str) -> MeaningSchema:
         revisions = self._schemas.get(schema_ref)
         if not revisions:
             raise KeyError(schema_ref)
-        usable = [item for item in revisions.values() if item.lifecycle_status not in _TERMINAL]
+        usable = self._effective_revisions(revisions)
         if not usable:
             raise KeyError(f"no usable schema revision for {schema_ref}")
         return max(usable, key=lambda item: (_LIFECYCLE_RANK[item.lifecycle_status], item.revision))
@@ -198,7 +218,7 @@ class SchemaRegistry:
         revisions = self._entitlements.get(entitlement_ref)
         if not revisions:
             raise KeyError(entitlement_ref)
-        usable = [item for item in revisions.values() if item.lifecycle_status not in _TERMINAL]
+        usable = self._effective_revisions(revisions)
         if not usable:
             raise KeyError(f"no usable entitlement revision for {entitlement_ref}")
         return max(usable, key=lambda item: (_LIFECYCLE_RANK[item.lifecycle_status], item.revision))
@@ -215,9 +235,8 @@ class SchemaRegistry:
         if not revisions:
             raise KeyError(schema_ref)
         candidates = [
-            item for item in revisions.values()
-            if item.lifecycle_status not in _TERMINAL
-            and item.use_profile.permits(resolved, provisional=provisional)
+            item for item in self._effective_revisions(revisions)
+            if item.use_profile.permits(resolved, provisional=provisional)
         ]
         if not candidates:
             raise KeyError(f"no revision of {schema_ref} authorizes {resolved.value}")
@@ -226,16 +245,26 @@ class SchemaRegistry:
     def iter_schemas(self, *, all_revisions: bool = False) -> Iterator[MeaningSchema]:
         for ref in sorted(self._schemas):
             revisions = self._schemas[ref]
-            selected = sorted(revisions) if all_revisions else [max(revisions)]
-            for revision in selected:
-                yield revisions[revision]
+            if all_revisions:
+                for revision in sorted(revisions):
+                    yield revisions[revision]
+            else:
+                try:
+                    yield self.authoritative_schema(ref)
+                except KeyError:
+                    continue
 
     def iter_entitlements(self, *, all_revisions: bool = False) -> Iterator[FacetEntitlement]:
         for ref in sorted(self._entitlements):
             revisions = self._entitlements[ref]
-            selected = sorted(revisions) if all_revisions else [max(revisions)]
-            for revision in selected:
-                yield revisions[revision]
+            if all_revisions:
+                for revision in sorted(revisions):
+                    yield revisions[revision]
+            else:
+                try:
+                    yield self.authoritative_entitlement(ref)
+                except KeyError:
+                    continue
 
     def active_schemas(self, schema_class: SchemaClass | None = None) -> tuple[MeaningSchema, ...]:
         result: list[MeaningSchema] = []
@@ -326,7 +355,10 @@ class SchemaRegistry:
 
     def _validate_revision_sets(self, issues: list[ValidationIssue]) -> None:
         for ref, revisions in self._schemas.items():
-            active = [item for item in revisions.values() if item.lifecycle_status == SchemaLifecycleStatus.ACTIVE]
+            active = [
+                item for item in self._effective_revisions(revisions)
+                if item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+            ]
             if len(active) > 1:
                 issues.append(ValidationIssue(
                     ValidationSeverity.ERROR, "multiple_active_revisions", ref,
@@ -338,13 +370,6 @@ class SchemaRegistry:
                         ValidationSeverity.ERROR, "missing_superseded_revision", ref,
                         f"revision {item.revision} supersedes missing revision {item.supersedes_revision}",
                     ))
-                if item.supersedes_revision is not None:
-                    prior = revisions.get(item.supersedes_revision)
-                    if prior is not None and prior.lifecycle_status != SchemaLifecycleStatus.SUPERSEDED:
-                        issues.append(ValidationIssue(
-                            ValidationSeverity.WARNING, "prior_revision_not_marked_superseded", ref,
-                            f"revision {prior.revision} is superseded by {item.revision} but status is {prior.lifecycle_status.value}",
-                        ))
 
     def _validate_schema(self, schema: MeaningSchema, issues: list[ValidationIssue]) -> None:
         if schema.schema_class == SchemaClass.MEANING and schema.lifecycle_status in {
@@ -582,7 +607,7 @@ class SchemaRegistry:
     ) -> None:
         for ref, revisions in self._entitlements.items():
             active = [
-                item for item in revisions.values()
+                item for item in self._effective_revisions(revisions)
                 if item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
             ]
             if len(active) > 1:
