@@ -1153,6 +1153,45 @@
       "context_ref": "actual"
     },
     {
+      "referent_id": "referent:operation:semantic_response",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:operation"
+      ],
+      "payload": {
+        "semantic_key": "operation:semantic_response"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:operation:semantic_memory",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:operation"
+      ],
+      "payload": {
+        "semantic_key": "operation:semantic_memory"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
+      "referent_id": "referent:operation:observation",
+      "kind": "schema",
+      "type_refs": [
+        "kind:schema",
+        "kind:operation"
+      ],
+      "payload": {
+        "semantic_key": "operation:observation"
+      },
+      "scope_ref": "global",
+      "context_ref": "actual"
+    },
+    {
       "referent_id": "referent:schema:goal",
       "kind": "schema",
       "type_refs": [
@@ -2647,6 +2686,46 @@
       ]
     },
     {
+      "schema_ref": "predicate:greets",
+      "semantic_key": "greets",
+      "ports": [
+        {
+          "port_id": "speaker",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "speaker",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "left"
+          }
+        },
+        {
+          "port_id": "addressee",
+          "accepted_kinds": [
+            "self",
+            "agent",
+            "person",
+            "software_agent"
+          ],
+          "required": true,
+          "query_open": false,
+          "multiple": false,
+          "role_family": "addressee",
+          "accepted_type_refs": [],
+          "metadata": {
+            "position": "right"
+          }
+        }
+      ]
+    },
+    {
       "schema_ref": "predicate:permitted",
       "semantic_key": "permitted",
       "ports": [
@@ -3681,6 +3760,33 @@
         "value": "referent:state:neutral"
       },
       "source_ref": "foundation:runtime_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:capable_of",
+      "bindings": {
+        "agent": "referent:self",
+        "operation": "referent:operation:semantic_response"
+      },
+      "source_ref": "foundation:capability_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:capable_of",
+      "bindings": {
+        "agent": "referent:self",
+        "operation": "referent:operation:semantic_memory"
+      },
+      "source_ref": "foundation:capability_observation",
+      "scope_ref": "global"
+    },
+    {
+      "predicate_schema_ref": "predicate:capable_of",
+      "bindings": {
+        "agent": "referent:self",
+        "operation": "referent:operation:observation"
+      },
+      "source_ref": "foundation:capability_observation",
       "scope_ref": "global"
     }
   ]

@@ -213,6 +213,12 @@ class LanguageAnalysisCoordinator:
                 group = tokens[start:start + size]
                 normalized = " ".join(token.normalized for token in group)
                 entries = lexicon.get(normalized, ())
+                if not entries and size == 1:
+                    for variant in _elongated_token_variants(normalized):
+                        entries = lexicon.get(variant, ())
+                        if entries:
+                            normalized = variant
+                            break
                 for number, entry in enumerate(entries):
                     semantic_ref = str(entry.get("semantic_ref", ""))
                     kind = str(entry.get("entry_kind", "lexeme"))
@@ -229,6 +235,7 @@ class LanguageAnalysisCoordinator:
                         confidence=float(entry.get("confidence", 0.8)),
                         evidence_refs=(f"evidence:{span_id}",),
                         features={
+                            "surface_normalized_from": group[0].normalized if size == 1 else normalized,
                             **dict(entry.get("features", {})),
                             "token_start": start,
                             "token_end": start + size,
@@ -462,3 +469,31 @@ def _dedupe_relations(items: Iterable[StructureRelationCandidate]) -> list[Struc
         if existing is None or item.confidence > existing.confidence:
             result[key] = item
     return sorted(result.values(), key=lambda item: item.relation_id)
+
+
+def _elongated_token_variants(value: str) -> tuple[str, ...]:
+    """Normalize emphatic single-token elongation as language evidence."""
+    if len(value) < 3:
+        return ()
+    variants: list[str] = []
+    collapsed: list[str] = []
+    index = 0
+    changed = False
+    while index < len(value):
+        char = value[index]
+        end = index + 1
+        while end < len(value) and value[end] == char:
+            end += 1
+        run_length = end - index
+        if run_length >= 3:
+            changed = True
+            collapsed.append(char)
+            if not variants:
+                variants.append(value[:index] + char + value[end:])
+        else:
+            collapsed.append(value[index:end])
+        index = end
+    fully_collapsed = "".join(collapsed)
+    if changed and fully_collapsed not in variants:
+        variants.append(fully_collapsed)
+    return tuple(item for item in variants if item and item != value)

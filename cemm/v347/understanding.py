@@ -547,6 +547,8 @@ class JointMeaningAssembler:
         semantic_refs = {ref for span in lattice.spans for ref in span.semantic_refs}
         if "correction" in relation_kinds or "force:correct" in semantic_refs:
             return CommunicativeForce.CORRECT
+        if "force:acknowledge" in semantic_refs:
+            return CommunicativeForce.ACKNOWLEDGE
         if "directive" in relation_kinds or "force:direct" in semantic_refs:
             return CommunicativeForce.DIRECT
         if "question" in relation_kinds or "question_operator" in span_kinds or "force:ask" in semantic_refs:

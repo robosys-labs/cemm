@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any, Iterable, Mapping
 
 from .knowledge import RetrievalResult
@@ -144,7 +145,16 @@ class ResponseGoalGenerator:
                 )),
             ))
         if retrieval.answers and not retrieval.contradicted:
+            seen_answers: set[tuple[Any, ...]] = set()
             for answer in retrieval.answers:
+                answer_key = (
+                    answer.matched_knowledge_ref,
+                    answer.matched_proposition_ref,
+                    tuple(sorted(answer.variable_bindings.values())),
+                )
+                if answer_key in seen_answers:
+                    continue
+                seen_answers.add(answer_key)
                 candidates.append(ResponseGoalCandidate(
                     response_goal_id=semantic_hash("response_goal", (
                         "answer", answer.query_proposition_ref, answer.matched_knowledge_ref
@@ -193,6 +203,16 @@ class ResponseGoalGenerator:
                     constraints={"errors": tuple(error for item in failed for error in item.errors)},
                     evidence_refs=bundle.graph.evidence_refs,
                 ))
+
+        if bundle is not None and self._has_acknowledgement(bundle):
+            candidates.append(ResponseGoalCandidate(
+                response_goal_id=semantic_hash("response_goal", (bundle.bundle_id, "rapport_acknowledgement")),
+                goal_kind="rapport_acknowledgement",
+                target_proposition_refs=bundle.proposition_refs,
+                score=1.05,
+                constraints={"bundle_ref": bundle.bundle_id},
+                evidence_refs=bundle.graph.evidence_refs,
+            ))
 
         if learning is not None and learning.frontier:
             candidates.append(ResponseGoalCandidate(
@@ -256,6 +276,14 @@ class ResponseGoalGenerator:
     def _has_correction(bundle: MeaningBundle) -> bool:
         return any(
             str((bundle.graph.referents[ref].payload or {}).get("communicative_force")) == "correct"
+            for ref in bundle.proposition_refs
+            if ref in bundle.graph.referents
+        )
+
+    @staticmethod
+    def _has_acknowledgement(bundle: MeaningBundle) -> bool:
+        return any(
+            str((bundle.graph.referents[ref].payload or {}).get("communicative_force")) == "acknowledge"
             for ref in bundle.proposition_refs
             if ref in bundle.graph.referents
         )
@@ -617,7 +645,7 @@ class RealizationCoordinator:
                 schema = self._schemas.predicate(predicate_ref)
             except KeyError:
                 return "", (), f"inactive_predicate:{predicate_ref}", {}
-            slots: dict[str, str] = {}
+            slots: dict[str, str] = {port.port_id: "" for port in schema.ports if not port.required}
             covered = [clause.proposition_ref] if clause.proposition_ref else []
             for port_id, referent_ref in clause.port_bindings.items():
                 referent = self._store.get_referent(referent_ref)
@@ -634,7 +662,7 @@ class RealizationCoordinator:
                 text = str(variant).format(**slots)
             except KeyError as exc:
                 return "", tuple(covered), f"uncovered_template_slot:{exc.args[0]}", {}
-            return text.strip(), tuple(covered), "", {schema.schema_ref: schema.revision}
+            return _clean_realized_text(text), tuple(covered), "", {schema.schema_ref: schema.revision}
         tone = str(tone_constraints.get("tone", "neutral"))
         tone_template = (
             pack.realization.get("tone_variants", {}).get(tone, {}).get(clause.semantic_key)
@@ -648,7 +676,7 @@ class RealizationCoordinator:
         except KeyError as exc:
             return "", (), f"uncovered_response_slot:{exc.args[0]}", {}
         covered = (clause.proposition_ref,) if clause.proposition_ref else (clause.clause_id,)
-        return text.strip(), covered, "", {}
+        return _clean_realized_text(text), covered, "", {}
 
     @staticmethod
     def _select_template_variant(template: Any, bindings: Mapping[str, str]) -> str:
@@ -656,7 +684,7 @@ class RealizationCoordinator:
             return template
         if not isinstance(template, Mapping):
             return ""
-        holder = bindings.get("holder") or bindings.get("subject") or ""
+        holder = bindings.get("holder") or bindings.get("subject") or bindings.get("agent") or ""
         if holder == "referent:self" and "self" in template:
             return str(template["self"])
         if holder == "referent:user" and "user" in template:
@@ -721,3 +749,8 @@ class RealizationCoordinator:
             store_revision=self._store.revision,
         )
         return RealizedMessage(text="", language_tag=plan.target_language, clause_texts={}, proof=proof)
+
+
+def _clean_realized_text(text: str) -> str:
+    text = re.sub(r"\s+", " ", text).strip()
+    return re.sub(r"\s+([.,!?;:])", r"\1", text)

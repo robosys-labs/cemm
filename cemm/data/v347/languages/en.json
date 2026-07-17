@@ -13,7 +13,11 @@
     "years",
     "where",
     "who",
-    "the"
+    "the",
+    "hi",
+    "hello",
+    "how",
+    "do"
   ],
   "tokenizer": {
     "kind": "unicode_word"
@@ -34,6 +38,46 @@
       "features": {}
     },
     {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:has_state",
+      "surfaces": [
+        "how"
+      ],
+      "confidence": 0.86,
+      "features": {
+        "fixed_bindings": {
+          "dimension": "referent:dimension:operational_status"
+        }
+      }
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:greets",
+      "surfaces": [
+        "hi",
+        "hello",
+        "hey"
+      ],
+      "confidence": 0.94,
+      "features": {
+        "fixed_bindings": {
+          "speaker": "referent:user",
+          "addressee": "referent:self"
+        }
+      }
+    },
+    {
+      "entry_kind": "discourse",
+      "semantic_ref": "force:acknowledge",
+      "surfaces": [
+        "hi",
+        "hello",
+        "hey"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
       "entry_kind": "copula",
       "semantic_ref": "structure:copula",
       "surfaces": [
@@ -46,6 +90,15 @@
         "do"
       ],
       "confidence": 0.88,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:capable_of",
+      "surfaces": [
+        "do"
+      ],
+      "confidence": 0.86,
       "features": {}
     },
     {
@@ -726,6 +779,30 @@
     },
     {
       "entry_kind": "schema",
+      "semantic_ref": "referent:dimension:operational_status",
+      "surfaces": [
+        "operational status",
+        "status"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "predicate",
+      "semantic_ref": "predicate:has_state",
+      "surfaces": [
+        "operational status",
+        "status"
+      ],
+      "confidence": 0.9,
+      "features": {
+        "fixed_bindings": {
+          "dimension": "referent:dimension:operational_status"
+        }
+      }
+    },
+    {
+      "entry_kind": "schema",
       "semantic_ref": "referent:dimension:availability",
       "surfaces": [
         "availability"
@@ -813,6 +890,36 @@
       "semantic_ref": "referent:dimension:visibility",
       "surfaces": [
         "visibility"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:operation:semantic_response",
+      "surfaces": [
+        "semantic response",
+        "responding from grounded meaning"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:operation:semantic_memory",
+      "surfaces": [
+        "semantic memory",
+        "remembering grounded propositions"
+      ],
+      "confidence": 0.9,
+      "features": {}
+    },
+    {
+      "entry_kind": "schema",
+      "semantic_ref": "referent:operation:observation",
+      "surfaces": [
+        "observation",
+        "observing structured evidence"
       ],
       "confidence": 0.9,
       "features": {}
@@ -1014,7 +1121,10 @@
       "depends_on": "{dependent} depends on {dependency}.",
       "prevents": "{condition} prevents {outcome}.",
       "refers_to": "{expression} refers to {target}.",
-      "capable_of": "{agent} is capable of {operation}.",
+      "capable_of": {
+        "self": "I can perform {operation}.",
+        "default": "{agent} is capable of {operation}."
+      },
       "permitted": "{agent} is permitted to perform {operation}.",
       "knows": "{holder} knows {content}.",
       "spouse_of": "{left} is the spouse of {right}.",
@@ -1036,6 +1146,7 @@
       "operation_result": "The operation result is {status}.",
       "contradiction_disclosure": "I have grounded support for conflicting versions, so I cannot present either as settled.",
       "qualified_default": "This is a qualified expectation, not a confirmed fact.",
+      "rapport_acknowledgement": "Hello.",
       "capability_limitation": "I cannot perform that operation with my current capabilities or permissions."
     },
     "references": {
