@@ -98,6 +98,9 @@ def transition_proof_from_document(value: Mapping[str, Any]) -> TransitionProofR
     return TransitionProofRecord(
         proof_ref=str(data["proof_ref"]),
         event_ref=str(data["event_ref"]),
+        event_revision=int(data["event_revision"]),
+        participant_application_ref=str(data["participant_application_ref"]),
+        participant_application_revision=int(data["participant_application_revision"]),
         transition_contract_ref=str(data["transition_contract_ref"]),
         transition_contract_revision=int(data["transition_contract_revision"]),
         admission_pins=tuple((str(item[0]), int(item[1])) for item in data.get("admission_pins", ())),

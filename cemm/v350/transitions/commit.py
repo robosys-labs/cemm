@@ -48,9 +48,20 @@ class EffectCommitCoordinator:
             raise EffectCommitError("transition plan is stale: overlay fingerprint changed")
         operations: list[PatchOperation] = []
 
-        event_stored = self._store.get_record(RecordKind.EVENT_OCCURRENCE, event.event_ref)
-        if event_stored is None:
-            raise EffectCommitError("event occurrence must be durably stored before effect commit")
+        event_stored = self._store.get_record(
+            RecordKind.EVENT_OCCURRENCE, event.event_ref, preview.proof.event_revision
+        )
+        if event_stored is None or event_stored.payload != event:
+            raise EffectCommitError("transition event must match the exact proof-pinned durable event revision")
+        application_stored = self._store.get_record(
+            RecordKind.SEMANTIC_APPLICATION,
+            preview.proof.participant_application_ref,
+            preview.proof.participant_application_revision,
+        )
+        if application_stored is None:
+            raise EffectCommitError("transition participant application revision disappeared before commit")
+        if event.participant_application_ref != preview.proof.participant_application_ref:
+            raise EffectCommitError("transition proof pins a different participant application")
         contract_stored = self._store.get_record(
             RecordKind.TRANSITION_CONTRACT,
             preview.contract_ref,
@@ -60,9 +71,12 @@ class EffectCommitCoordinator:
             raise EffectCommitError("transition contract revision is unresolved at commit boundary")
 
         proof_dependencies = [
-            RecordDependency(RecordKind.EVENT_OCCURRENCE, event.event_ref, event_stored.revision, event_stored.record_fingerprint),
+            RecordDependency(RecordKind.EVENT_OCCURRENCE, event.event_ref, preview.proof.event_revision, event_stored.record_fingerprint),
             RecordDependency(RecordKind.TRANSITION_CONTRACT, preview.contract_ref, contract_stored.revision, contract_stored.record_fingerprint),
-            RecordDependency(RecordKind.SEMANTIC_APPLICATION, event.participant_application_ref),
+            RecordDependency(
+                RecordKind.SEMANTIC_APPLICATION, preview.proof.participant_application_ref,
+                preview.proof.participant_application_revision, application_stored.record_fingerprint,
+            ),
         ]
         for admission_ref, admission_revision in preview.proof.admission_pins:
             admission = self._store.get_record(RecordKind.EPISTEMIC_ADMISSION, admission_ref, admission_revision)
@@ -139,10 +153,10 @@ class EffectCommitCoordinator:
                     reason="projected immutable state timeline update",
                 ))
 
-        seen_capability_targets: set[tuple[str, str]] = set()
+        seen_capability_targets: set[tuple[str, str, str]] = set()
         for projection in capability_projections:
             delta = projection.delta
-            key = (delta.holder_ref, delta.action_schema_ref)
+            key = (delta.holder_ref, delta.action_schema_ref, delta.context_ref)
             if key in seen_capability_targets:
                 raise EffectCommitError("multiple capability projections target the same holder/action in one atomic patch")
             seen_capability_targets.add(key)

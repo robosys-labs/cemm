@@ -582,22 +582,176 @@ A detailed executable test matrix is maintained in `docs/implementation/v350-pha
 
 ### Objective
 
-Turn unresolved frontiers and repeated evidence into reviewable/promotable semantic packages without making examples into definitions automatically.
+Turn unresolved frontiers, explicit teaching, repeated evidence, corrections, and counterexamples into reviewable semantic packages without letting examples become definitions or letting the learning subsystem become a second semantic authority.
 
-### Required capabilities
+Phase 13 owns **candidate-package lifecycle and promotion decisions**. It does not own the meaning of learned schemas after promotion; promoted records must enter the same canonical schema/language/transition authorities already used by Phases 2–12.
 
-- package families for referent/type/facet/property/state/action-event/relation-role/rule/lexical/realization/response-policy knowledge;
-- exact dependencies and frontier nodes;
-- examples and counterexamples;
-- recursive learning limits;
-- independent competence tests;
-- per-use activation;
-- promotion/retraction/supersession;
-- restart rehydration and invalidation.
+### 16.1 Governing laws
 
-### Exit gate
+- learning evidence is not semantic authority by itself;
+- one example never silently becomes a definition;
+- repeated examples may raise support but do not bypass contradiction/counterexample checks;
+- promotion is per exact record revision and per authorized use;
+- lexical evidence, schema structure, transition behavior, realization, and response policy remain independently promotable;
+- candidate packages declare exact dependencies and unresolved frontier nodes;
+- promoted packages survive restart through the normal reviewed data/store path;
+- corrections/retractions create explicit invalidation and recomputation, not destructive history rewrite;
+- learning budgets bound recursion, package breadth, competence generation, and dependency expansion;
+- no learning coordinator branch may inspect a domain concept, language word, predicate name, or demonstration fixture to choose semantics.
 
-A newly promoted semantic structure survives restart and participates only in uses independently authorized by its competence evidence.
+### 16.2 First-class durable learning records
+
+Implement revisioned records for at least:
+
+```text
+LearningPackageRecord
+LearningFrontierRecord
+LearningEvidenceLink
+CompetenceResultRecord
+PromotionDecisionRecord
+LearningInvalidationRecord
+```
+
+The records must preserve exact evidence/provenance, dependencies, candidate revisions, counterevidence, competence scope, promotion policy, use authorization, invalidation lineage, permission/privacy scope, and deterministic fingerprints.
+
+### 16.3 Package families
+
+The coordinator must support packages for structural families rather than named concepts:
+
+- referent/identity;
+- semantic type and inheritance;
+- facet entitlement;
+- property/state/value structure;
+- action/event schema;
+- transition/dependency contract;
+- relation/role/rule;
+- lexical form/sense/construction;
+- realization knowledge;
+- response-policy knowledge.
+
+This list identifies record families, not a boot vocabulary. A package may span several families, but each family must retain independent competence and activation status.
+
+### 16.4 Required runtime components
+
+Implement generic components equivalent in responsibility to:
+
+```text
+FrontierCollector
+EvidenceAggregator
+CandidateStructureInducer
+PackageAssembler
+LearningDependencyResolver
+CompetenceCaseBuilder
+LearningCompetenceRunner
+PromotionPolicyEngine
+PromotionCoordinator
+LearningInvalidationManager
+LearningRetractionCoordinator
+LearningRehydrationCoordinator
+```
+
+`CandidateStructureInducer` is an evidence-to-candidate interface, not a privileged model authority. Any heuristic/model proposal remains candidate evidence until validated and promoted through canonical record validators.
+
+### 16.5 Lifecycle
+
+A package must move explicitly through states equivalent to:
+
+```text
+frontier
+-> candidate
+-> evidence_accumulating
+-> competence_pending
+-> promotable | blocked | contradicted
+-> promoted_for_selected_uses
+-> superseded | retracted | invalidated
+```
+
+No state transition in this lifecycle may silently activate semantic use. Promotion decisions must pin the exact candidate record revisions and exact competence/evidence revisions they relied on.
+
+### 16.6 Evidence and counterexamples
+
+Support:
+
+- explicit teaching;
+- repeated independent observation;
+- corrections;
+- negative examples/counterexamples;
+- cross-modal corroboration;
+- cross-language lexical evidence;
+- failed competence cases;
+- unresolved grounding/composition/transition frontiers.
+
+Counterexamples must defeat or narrow candidate rules without requiring deletion of the candidate's historical evidence. Contradictory evidence remains independently attributable.
+
+### 16.7 Competence and per-use promotion
+
+Competence must be independently evaluable for relevant use profiles such as:
+
+```text
+mention
+grounding
+composition
+query
+inference
+transition
+impact
+operation
+realization
+response-policy
+```
+
+A package that can be mentioned or grounded must not thereby become transition-authorized. A transition-capable package must separately satisfy the Phase-11/12 proof contracts. A lexicalization may be promoted without promoting a proposed world rule.
+
+### 16.8 Dependency and recursion safety
+
+- exact dependency revisions are mandatory;
+- dependency cycles are detected before promotion;
+- unresolved dependencies remain frontier nodes;
+- recursive learning has explicit depth/node/time budgets;
+- partial packages remain usable only for independently authorized uses;
+- dependency invalidation propagates deterministically to affected competence/promotion decisions.
+
+### 16.9 Restart, supersession, and invalidation
+
+After restart, the system must reconstruct the same effective promoted authority from durable records. Supersession/retraction/correction must:
+
+- preserve historical revisions and evidence;
+- invalidate dependent materialized views/competence decisions;
+- prevent stale promoted revisions from remaining silently authoritative;
+- require recomputation before dependent higher-risk uses reactivate.
+
+### 16.10 Security, provenance, and privacy
+
+Learning must retain permission/access scope. Evidence learned in one privacy/context scope may not be promoted into broader authority without explicit authorization. Untrusted external content cannot self-authorize executable transition/operation/response policy.
+
+### 16.11 Determinism and performance
+
+Package fingerprints, dependency closure, competence inputs, promotion decisions, and effective active revisions must be deterministic for a pinned snapshot. Expensive induction may be asynchronous in a future runtime, but no pending work may be reported as completed or authoritative.
+
+Index package/evidence/dependency/frontier/promotion/invalidation records for bounded lookup and restart rehydration. Preserve learning frontiers under budget exhaustion.
+
+### 16.12 Acceptance matrix
+
+Phase 13 must prove at minimum:
+
+- explicit teaching creates a candidate, not immediate authority;
+- repeated evidence can advance confidence without bypassing competence;
+- a counterexample narrows/blocks a defeasible candidate;
+- independent use profiles promote independently;
+- a newly learned type inherits structural facets after promotion without Python edits;
+- a newly learned event/transition uses the Phase-11 generic path after separate transition competence;
+- a cross-language lexicalization maps to equivalent UOL without changing schema semantics;
+- restart preserves promoted authority and unresolved frontiers;
+- correction/retraction invalidates dependents and prevents stale use;
+- conflicting evidence preserves alternatives rather than arbitrary winner selection;
+- package renaming does not change structural behavior;
+- adding a learned concept produces zero semantic control-flow diff in kernel paths.
+
+### 16.13 Exit gate
+
+Phase 13 passes only when a newly learned/promoted semantic structure can survive restart and participate **only** in independently competence-authorized uses, with exact evidence/dependency/promotion lineage, counterexample handling, bounded recursive learning, deterministic invalidation, and zero concept-specific kernel branches.
+
+The comprehensive implementation design is maintained in `docs/implementation/v350-phase-13-plan.md`.
 
 ---
 

@@ -248,7 +248,7 @@ def test_negative_attributed_proposition_cannot_authorize_actual_transition() ->
     OccurrenceStatus.MENTIONED, OccurrenceStatus.CLAIMED, OccurrenceStatus.REPORTED,
     OccurrenceStatus.PLANNED, OccurrenceStatus.HYPOTHETICAL, OccurrenceStatus.COUNTERFACTUAL,
     OccurrenceStatus.FICTIONAL, OccurrenceStatus.NON_OCCURRING, OccurrenceStatus.PREVENTED,
-    OccurrenceStatus.FAILED,
+    OccurrenceStatus.FAILED, OccurrenceStatus.ATTEMPTED,
 ])
 def test_non_transitioning_event_statuses_never_preview_effects(status: OccurrenceStatus) -> None:
     schemas, resolver, contract, _dependency, event, *_ = _fixture(event_status=status)
@@ -272,6 +272,41 @@ def test_admitted_event_previews_proof_bearing_state_delta_without_mutation() ->
     assert (delta.from_value_ref, delta.to_value_ref) == (value_a.schema_ref, value_b.schema_ref)
     assert preview.proof is not None and preview.proof.admission_refs == ("admission:competence:event",)
     assert resolver.resolve(RecordKind.STATE_ASSIGNMENT, "assignment:competence:mode").payload.value_ref == value_a.schema_ref
+
+
+def test_future_dated_state_cannot_satisfy_earlier_transition_condition() -> None:
+    schemas, resolver, contract, _dependency, event, *_ = _fixture()
+    original = resolver.resolve(RecordKind.STATE_ASSIGNMENT, "assignment:competence:mode")
+    resolver.items.remove(original)
+    resolver.add(_stored(
+        RecordKind.STATE_ASSIGNMENT, original.record_ref,
+        replace(original.payload, valid_from="2027-01-01T00:00:00Z"),
+    ))
+    preview = TransitionPreviewEngine(schemas, resolver).preview(
+        event, contract, effective_time_ref="2026-07-18T12:00:00Z"
+    )
+    assert not preview.authorized
+    assert preview.state_deltas == ()
+    assert any(item.reason == "transition_condition_unknown" for item in preview.frontiers)
+
+
+def test_retroactive_transition_requires_replay_instead_of_rewriting_advanced_timeline() -> None:
+    schemas, resolver, contract, _dependency, event, subject, dimension, value_a, _value_b = _fixture()
+    resolver.add(_stored(
+        RecordKind.STATE_ASSIGNMENT, "assignment:competence:future-boundary",
+        StateAssignment(
+            "assignment:competence:future-boundary", subject.referent_ref, dimension.schema_ref, 1,
+            value_a.schema_ref, 1, AssignmentStatus.ACTIVE, "actual", 1.0,
+            valid_from="2026-09-01T00:00:00Z", evidence_refs=("evidence:competence:state",),
+        ),
+    ))
+    preview = TransitionPreviewEngine(schemas, resolver).preview(
+        event, contract, effective_time_ref="2026-07-18T12:00:00Z"
+    )
+    assert preview.authorized
+    from cemm.v350.transitions.state import StateTransitionError
+    with pytest.raises(StateTransitionError, match="retroactive/out-of-order"):
+        StateTimelineProjector(schemas, resolver).project(preview.state_deltas[0])
 
 
 def test_state_timeline_projection_is_immutable_revision_plus_new_assignment() -> None:
@@ -342,10 +377,13 @@ def test_phase11_timeline_requires_explicit_concrete_timestamp() -> None:
     preview = TransitionPreviewEngine(schemas, resolver).preview(
         event, contract, effective_time_ref="time:unresolved:competence"
     )
-    assert preview.authorized
-    from cemm.v350.transitions.state import StateTransitionError
-    with pytest.raises(StateTransitionError, match="ISO-8601"):
-        StateTimelineProjector(schemas, resolver).project(preview.state_deltas[0])
+    assert not preview.authorized
+    assert preview.state_deltas == ()
+    assert any(
+        frontier.reason == "transition_effective_time_unresolved"
+        for frontier in preview.frontiers
+    )
+    assert "transition_frontier_unresolved" in preview.blocked_reasons
 
 def _patch_op(kind: RecordKind, ref: str, record, revision: int = 1):
     from cemm.v350.storage import PatchOperation, PatchOperationKind, encode_record
@@ -558,11 +596,75 @@ def test_end_to_end_atomic_transition_commit_with_capability_reevaluation(tmp_pa
         assert not forged.committed
         assert any("effect" in error or "delta" in error for error in forged.errors), forged.errors
 
+        # A direct GraphPatch cannot smuggle a second capability dependency/delta
+        # around the coordinator's ambiguity frontier.
+        original_capability_delta = next(
+            operation for operation in patch.operations
+            if operation.record_kind == RecordKind.CAPABILITY_DELTA
+        )
+        from cemm.v350.storage import decode_record
+        decoded_capability_delta = decode_record(RecordKind.CAPABILITY_DELTA, original_capability_delta.payload)
+        competing_dependency = replace(
+            dependency, dependency_ref="capability-dependency:competence:integration:competing"
+        )
+        competing_delta = replace(
+            decoded_capability_delta,
+            delta_ref="capability-delta:competence:integration:competing",
+            dependency_ref=competing_dependency.dependency_ref,
+        )
+        competing_patch = replace(
+            patch, patch_ref="patch:competence:phase11:competing-capability-bypass",
+            operations=(
+                *patch.operations,
+                _patch_op(
+                    RecordKind.CAPABILITY_DEPENDENCY, competing_dependency.dependency_ref, competing_dependency
+                ),
+                _patch_op(RecordKind.CAPABILITY_DELTA, competing_delta.delta_ref, competing_delta),
+            ),
+        )
+        rejected_competing = store.apply_patch(competing_patch)
+        assert not rejected_competing.committed
+        assert any("multiple capability dependencies" in error for error in rejected_competing.errors)
+
+        missing_termination = replace(
+            patch, patch_ref="patch:competence:phase11:missing-termination",
+            operations=tuple(
+                operation for operation in patch.operations
+                if not (
+                    operation.record_kind == RecordKind.STATE_ASSIGNMENT
+                    and operation.target_ref == assignment.assignment_ref
+                )
+            ),
+        )
+        rejected_missing_termination = store.apply_patch(missing_termination)
+        assert not rejected_missing_termination.committed
+        assert any("termination" in error or "pre-state" in error for error in rejected_missing_termination.errors)
+
+        target_assignment_refs = {
+            operation.target_ref for operation in patch.operations
+            if operation.record_kind == RecordKind.STATE_ASSIGNMENT
+            and operation.target_ref != assignment.assignment_ref
+        }
+        assert len(target_assignment_refs) == 1
+        missing_target = replace(
+            patch, patch_ref="patch:competence:phase11:missing-target",
+            operations=tuple(
+                operation for operation in patch.operations
+                if operation.target_ref not in target_assignment_refs
+            ),
+        )
+        rejected_missing_target = store.apply_patch(missing_target)
+        assert not rejected_missing_target.committed
+        assert any("target assignment" in error for error in rejected_missing_target.errors)
+
         committed = store.apply_patch(patch)
         assert committed.status == PatchCommitStatus.COMMITTED, committed.errors
 
         proof = store.get_record(RecordKind.TRANSITION_PROOF, plans[0].preview.proof.proof_ref)
         assert proof is not None
+        assert proof.payload.event_revision == 1
+        assert proof.payload.participant_application_ref == actual_app.application_ref
+        assert proof.payload.participant_application_revision == 1
         assert proof.payload.admission_pins == ((admission.admission_ref, 1),)
         assert proof.payload.input_assignment_pins == ((assignment.assignment_ref, 1),)
         latest_old = store.get_record(RecordKind.STATE_ASSIGNMENT, assignment.assignment_ref)

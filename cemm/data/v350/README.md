@@ -23,8 +23,10 @@ SQLite compiler. It is reviewed source, not Python ontology authority.
 - **Phase 11** owns generic reviewed transition/dependency contracts, independent
   admission-gated transition preview, immutable state timelines, dependent
   capability reevaluation, proof lineage, and atomic CAS effect commit.
-- **Phase 12 and later** own cross-domain transition vertical-slice proof, downstream
-  learning/inference/impact/response/realization, migration, and runtime cutover.
+- **Phase 12** owns adversarial cross-domain transition vertical-slice verification only.
+  Its synthetic packages live in temporary overlays and never become boot ontology.
+- **Phase 13 and later** own learning/promotion, downstream inference/impact/response/
+  realization, migration, and runtime cutover.
 
 Empty later-phase modules are explicit boundaries. They are not silently
 replaced by code defaults.
@@ -148,6 +150,27 @@ convention: durable timeline projection requires an explicitly resolved concrete
 timestamp. Relation/role effects remain a declared frontier until first-class
 generic lifecycle/delta records exist.
 
+
+## Phase-12 cross-domain proof layers
+
+```text
+12A Phase-11 temporal/revision/proof/commit hardening audit
+12B synthetic overlay-only reviewed package installation
+12C raw form -> grounding -> UOL -> epistemic bridge -> admitted event
+12D generic transition preview/proof/timeline/capability/CAS commit
+12E negative/modal/attempted/failed/prevented/unadmitted/retracted/time/stale-plan/context contrasts
+12F renaming and type/port polysemy genericity proofs
+12G ambiguity frontiers for competing contracts/dependencies
+12H restart/history/performance evidence and deterministic verifier
+```
+
+Phase 12 adds no canonical domain event, state, lexical, transition, or capability
+authority. Competence packages are installed only into fresh temporary overlays.
+Adding or renaming a package cannot require semantic control-flow edits in the
+grounding, composition, epistemic, or transition kernels. Competing transition
+contracts or capability dependencies block on explicit frontiers rather than
+being resolved by ordering or arbitrary score.
+
 ## Critical invariants
 
 - A storage kind is never a semantic ontology type.
@@ -164,7 +187,7 @@ generic lifecycle/delta records exist.
 - Claims preserve source and audience but have no actual-world admission by default.
 - Actual-world epistemic admission requires explicit durable authorization, proof, source evidence, revisioned source-assessment records, and policy satisfaction.
 - Metadata never authorizes context crossing; cross-context knowledge requires resolvable active admission lineage.
-- SQLite schema changes are versioned; Phase-11 normalized authorities require schema version 4.
+- SQLite schema changes are versioned; Phase-12 hardened transition proof persistence requires schema version 5.
 - Claim corrections/retractions and admission retractions are append-only and source-local.
 - Four-state `both` is derived from independent support/opposition; it is never one record's truth flag.
 - Event occurrence never implies effect; transition requires exact reviewed contract + independent admission + proof.
@@ -184,6 +207,7 @@ python tools/verify_v350_language_grounding.py
 python tools/verify_v350_composition.py
 python tools/verify_v350_epistemics.py
 python tools/verify_v350_transitions.py
+python tools/verify_v350_vertical_slices.py
 ```
 
 The foundation verifier audits only manifest modules owned by Phases 0–6, so the
@@ -201,3 +225,9 @@ proves deterministic compilation, checks that transition/dependency source modul
 contain no convenience domain seed, scans the transition kernel for named semantic
 authority references, and executes synthetic structural competence cases for
 admission, blocking, preview, timelines, capability dependencies, and revision-pinned proofs.
+
+The Phase-12 verifier audits its pinned competence contract, proves canonical
+source still contains zero domain transition/dependency seed, scans semantic
+kernels for competence-fixture leakage, executes five full Phase-7-through-11 paths covering four structurally distinct
+transition classes plus non-actual context isolation, runs 19 pinned adversarial cases, captures per-stage timing,
+and verifies restart-visible proof/state history.

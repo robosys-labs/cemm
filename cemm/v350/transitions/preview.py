@@ -24,7 +24,7 @@ from .model import (
     TransitionProofRecord,
     UnknownConditionPolicy,
 )
-from .state import StateConditionEvaluator
+from .state import StateConditionEvaluator, StateTransitionError, require_concrete_timeline_timestamp
 
 
 class Resolver(Protocol):
@@ -37,6 +37,7 @@ _NON_TRANSITIONING = frozenset({
     OccurrenceStatus.CLAIMED,
     OccurrenceStatus.REPORTED,
     OccurrenceStatus.PLANNED,
+    OccurrenceStatus.ATTEMPTED,
     OccurrenceStatus.HYPOTHETICAL,
     OccurrenceStatus.COUNTERFACTUAL,
     OccurrenceStatus.FICTIONAL,
@@ -63,6 +64,42 @@ class TransitionPreviewEngine:
     ) -> TransitionPreview:
         blocked: list[str] = []
         frontiers: list[TransitionFrontier] = []
+        try:
+            require_concrete_timeline_timestamp(effective_time_ref)
+        except StateTransitionError:
+            frontiers.append(TransitionFrontier(
+                frontier_ref=_ref("transition-frontier", event.event_ref, contract.contract_ref, "effective-time"),
+                reason="transition_effective_time_unresolved",
+                dependency_refs=(effective_time_ref,),
+            ))
+            blocked.append("transition_frontier_unresolved")
+            return TransitionPreview(
+                event.event_ref, contract.contract_ref, contract.revision, (), None,
+                tuple(frontiers), tuple(sorted(set(blocked))),
+            )
+
+        event_stored = self._resolver.resolve(RecordKind.EVENT_OCCURRENCE, event.event_ref)
+        if event_stored is None or event_stored.payload != event:
+            blocked.append("event_occurrence_not_exactly_stored")
+            return TransitionPreview(
+                event.event_ref, contract.contract_ref, contract.revision, (), None,
+                tuple(frontiers), tuple(sorted(set(blocked))),
+            )
+        event_revision = event_stored.revision
+
+        for stored_proof in self._resolver.records(RecordKind.TRANSITION_PROOF):
+            existing = stored_proof.payload
+            if (
+                isinstance(existing, TransitionProofRecord)
+                and existing.event_ref == event.event_ref
+                and existing.event_revision == event_revision
+                and existing.transition_contract_ref == contract.contract_ref
+                and existing.transition_contract_revision == contract.revision
+                and existing.context_ref == event.context_ref
+            ):
+                blocked.append("transition_already_committed_for_event_contract")
+                break
+
         if event.occurrence_status in _NON_TRANSITIONING:
             blocked.append(f"event_status_not_transitioning:{event.occurrence_status.value}")
         if contract.lifecycle_status != SchemaLifecycleStatus.ACTIVE:
@@ -75,15 +112,19 @@ class TransitionPreviewEngine:
         if event.event_schema_ref != contract.trigger_schema_ref or event.event_schema_revision != contract.trigger_schema_revision:
             blocked.append("transition_contract_trigger_mismatch")
 
-        admission = self._admission.assess(event)
-        if not admission.admitted:
-            blocked.extend(admission.reasons or ("event_not_epistemically_admitted",))
-
         application_stored = self._resolver.resolve(RecordKind.SEMANTIC_APPLICATION, event.participant_application_ref)
         if application_stored is None or not isinstance(application_stored.payload, SemanticApplication):
             blocked.append("event_participant_application_unresolved")
             return TransitionPreview(event.event_ref, contract.contract_ref, contract.revision, (), None, (), tuple(sorted(set(blocked))))
         application = application_stored.payload
+        application_revision = application_stored.revision
+        admission = self._admission.assess(
+            event, participant_application_revision=application_revision
+        )
+        if not admission.admitted:
+            blocked.extend(admission.reasons or ("event_not_epistemically_admitted",))
+        if application.application_ref != event.participant_application_ref:
+            blocked.append("event_participant_application_ref_mismatch")
         if application.schema_ref != event.event_schema_ref or application.schema_revision != event.event_schema_revision:
             blocked.append("event_participant_application_schema_mismatch")
         if application.context_ref != event.context_ref:
@@ -123,7 +164,7 @@ class TransitionPreviewEngine:
                     dependency_refs=(condition.holder_port_ref,),
                 ))
                 continue
-            result, assignment_pins, evidence_refs = self._conditions.evaluate(condition, holder, event.context_ref)
+            result, assignment_pins, evidence_refs = self._conditions.evaluate(condition, holder, event.context_ref, effective_time_ref)
             condition_assignment_pins.update(assignment_pins)
             condition_evidence_refs.update(evidence_refs)
             if result is False:
@@ -147,14 +188,45 @@ class TransitionPreviewEngine:
                 tuple(sorted(set(blocked))),
             )
 
-        proof_ref = _ref("transition-proof", event.event_ref, contract.contract_ref, str(contract.revision), effective_time_ref)
+        runtime_targets: set[tuple[str, str, int, str]] = set()
+        for effect in contract.state_effects:
+            holder = bound_referents.get(effect.holder_port_ref)
+            if holder is None:
+                continue
+            target = (holder, effect.dimension_ref, effect.dimension_revision, event.context_ref)
+            if target in runtime_targets:
+                frontiers.append(TransitionFrontier(
+                    frontier_ref=_ref("transition-frontier", event.event_ref, contract.contract_ref, "duplicate-runtime-target", *target),
+                    reason="multiple_transition_effects_resolve_to_same_runtime_state_target",
+                    dependency_refs=(effect.effect_ref, holder, effect.dimension_ref),
+                ))
+            runtime_targets.add(target)
+        if frontiers:
+            return TransitionPreview(
+                event.event_ref, contract.contract_ref, contract.revision, (), None,
+                tuple(sorted(frontiers, key=lambda item: item.frontier_ref)),
+                tuple(sorted(set((*blocked, "transition_frontier_unresolved")))),
+            )
+
+        proof_material = repr((
+            event.event_ref, event_revision, application.application_ref, application_revision,
+            contract.contract_ref, contract.revision, tuple(sorted(admission.admission_pins)),
+            tuple(sorted(condition_assignment_pins)), effective_time_ref,
+            tuple((
+                item.effect_ref, bound_referents.get(item.holder_port_ref), item.dimension_ref,
+                item.dimension_revision, item.operation.value, item.from_value_ref, item.from_value_revision,
+                item.to_value_ref, item.to_value_revision,
+                bound_refs.get(item.magnitude_port_ref) if item.magnitude_port_ref else None,
+            ) for item in contract.state_effects),
+        ))
+        proof_ref = _ref("transition-proof", proof_material)
         deltas: list[StateDelta] = []
         for effect in contract.state_effects:
             holder = bound_referents.get(effect.holder_port_ref)
             if holder is None:
                 raise AssertionError("compiled transition effect holder became unresolved after frontier gate")
             magnitude_ref = bound_refs.get(effect.magnitude_port_ref) if effect.magnitude_port_ref else None
-            delta_ref = _ref("state-delta", event.event_ref, contract.contract_ref, effect.effect_ref, holder, effective_time_ref)
+            delta_ref = _ref("state-delta", proof_ref, effect.effect_ref, holder)
             deltas.append(StateDelta(
                 delta_ref=delta_ref,
                 trigger_ref=event.event_ref,
@@ -175,6 +247,9 @@ class TransitionPreviewEngine:
         proof = TransitionProofRecord(
             proof_ref=proof_ref,
             event_ref=event.event_ref,
+            event_revision=event_revision,
+            participant_application_ref=application.application_ref,
+            participant_application_revision=application_revision,
             transition_contract_ref=contract.contract_ref,
             transition_contract_revision=contract.revision,
             admission_pins=admission.admission_pins,
@@ -186,6 +261,7 @@ class TransitionPreviewEngine:
             confidence=min([1.0, *[item.confidence for item in deltas]]),
             evidence_refs=tuple(sorted(set(admission.evidence_refs) | set(contract.evidence_refs))),
         )
+
         return TransitionPreview(
             event_ref=event.event_ref,
             contract_ref=contract.contract_ref,

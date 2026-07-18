@@ -15,6 +15,7 @@ from ..schema.model import (
     SchemaLifecycleStatus,
     StateDimensionSchema,
     StateValueSchema,
+    UseOperation,
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
@@ -24,7 +25,7 @@ from ..language.model import (
 from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..transitions.admission import EventAdmissionGate
 from ..transitions.compiler import TransitionContractCompiler, TransitionContractError
-from ..transitions.state import require_concrete_timeline_timestamp
+from ..transitions.state import StateConditionEvaluator, parse_optional_timeline_timestamp, parse_timeline_timestamp, require_concrete_timeline_timestamp
 from ..transitions.model import (
     CapabilityDependencyRecord,
     ConditionOperator,
@@ -33,6 +34,8 @@ from ..transitions.model import (
 )
 from ..uol.model import (
     CapabilityDelta,
+    CapabilityStatus,
+    ChangeOperation,
     ClaimOccurrence,
     EventOccurrence,
     FillerRef,
@@ -532,13 +535,66 @@ class CommitValidator:
         if value.dimension_ref != dimension.schema_ref:
             raise ValueError("state value does not belong to the pinned dimension")
         self._require_holder_type(assignment.holder_ref, dimension.holder_type_refs)
+        self._validate_transition_derived_state_assignment(assignment)
+
+    def _validate_transition_derived_state_assignment(self, assignment: StateAssignment) -> None:
+        transition_proofs = [
+            stored.payload
+            for proof_ref in assignment.proof_refs
+            if (stored := self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref)) is not None
+            and isinstance(stored.payload, TransitionProofRecord)
+        ]
+        if not transition_proofs:
+            return
+        matching_deltas: list[StateDelta] = []
+        for proof in transition_proofs:
+            for delta_ref in proof.derived_state_delta_refs:
+                stored = self._resolver.resolve(RecordKind.STATE_DELTA, delta_ref)
+                if stored is None or not isinstance(stored.payload, StateDelta):
+                    continue
+                delta = stored.payload
+                if (
+                    delta.holder_ref == assignment.holder_ref
+                    and delta.dimension_ref == assignment.dimension_ref
+                    and delta.dimension_revision == assignment.dimension_revision
+                    and delta.context_ref == assignment.context_ref
+                    and proof.proof_ref in delta.proof_refs
+                ):
+                    matching_deltas.append(delta)
+        if not matching_deltas:
+            raise ValueError("transition-derived state assignment has no matching state delta")
+        if assignment.status == AssignmentStatus.ACTIVE and assignment.valid_to is None:
+            if not any(
+                delta.to_value_ref == assignment.value_ref
+                and delta.to_value_revision == assignment.value_revision
+                and delta.effective_time_ref == assignment.valid_from
+                for delta in matching_deltas
+            ):
+                raise ValueError("transition-derived active state assignment does not match a delta target")
+        elif assignment.status == AssignmentStatus.TERMINATED:
+            if assignment.valid_to is None or not any(
+                delta.effective_time_ref == assignment.valid_to
+                and (delta.from_value_ref is None or (
+                    delta.from_value_ref == assignment.value_ref
+                    and delta.from_value_revision == assignment.value_revision
+                ))
+                for delta in matching_deltas
+            ):
+                raise ValueError("transition-derived terminated state assignment does not match a delta boundary")
 
     def _validate_state_delta(self, delta: StateDelta) -> None:
         self._require_record(RecordKind.REFERENT, delta.holder_ref)
         dimension = self._require_schema(delta.dimension_ref, delta.dimension_revision)
         if not isinstance(dimension, StateDimensionSchema):
             raise ValueError("state delta must pin a StateDimensionSchema")
+        if not dimension.use_profile.permits(UseOperation.TRANSITION):
+            raise ValueError("state delta dimension does not authorize transition use")
         self._require_holder_type(delta.holder_ref, dimension.holder_type_refs)
+        require_concrete_timeline_timestamp(delta.effective_time_ref)
+        if delta.operation in {ChangeOperation.INCREASE, ChangeOperation.DECREASE} and delta.to_value_ref is None:
+            raise ValueError("event transition scalar delta requires explicit target value")
+        if delta.operation in {ChangeOperation.TERMINATE, ChangeOperation.DEACTIVATE} and delta.to_value_ref is not None:
+            raise ValueError("terminate/deactivate state delta cannot declare a target value")
         for value_ref, value_revision in (
             (delta.from_value_ref, delta.from_value_revision),
             (delta.to_value_ref, delta.to_value_revision),
@@ -552,12 +608,95 @@ class CommitValidator:
             raise ValueError("state delta trigger is unresolved")
         trigger_event = self._resolver.resolve(RecordKind.EVENT_OCCURRENCE, delta.trigger_ref)
         if trigger_event is not None:
-            proofs = [
-                self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref)
-                for proof_ref in delta.proof_refs
+            matching_proofs: list[TransitionProofRecord] = []
+            for proof_ref in delta.proof_refs:
+                stored_proof = self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref)
+                if stored_proof is None or not isinstance(stored_proof.payload, TransitionProofRecord):
+                    continue
+                proof = stored_proof.payload
+                if proof.event_ref != delta.trigger_ref or delta.delta_ref not in proof.derived_state_delta_refs:
+                    continue
+                if proof.context_ref != delta.context_ref or proof.effective_time_ref != delta.effective_time_ref:
+                    continue
+                matching_proofs.append(proof)
+            if not matching_proofs:
+                raise ValueError("event-triggered state delta is not enumerated by its durable transition proof")
+            self._validate_state_delta_projection_completeness(delta, dimension, tuple(matching_proofs))
+
+    def _validate_state_delta_projection_completeness(
+        self,
+        delta: StateDelta,
+        dimension: StateDimensionSchema,
+        proofs: tuple[TransitionProofRecord, ...],
+    ) -> None:
+        proof_refs = {item.proof_ref for item in proofs}
+        latest_by_ref: dict[str, StoredRecord[Any]] = {}
+        for stored in self._resolver.records(RecordKind.STATE_ASSIGNMENT):
+            item = stored.payload
+            if not isinstance(item, StateAssignment):
+                continue
+            if (
+                item.holder_ref != delta.holder_ref
+                or item.dimension_ref != delta.dimension_ref
+                or item.dimension_revision != delta.dimension_revision
+                or item.context_ref != delta.context_ref
+            ):
+                continue
+            prior = latest_by_ref.get(item.assignment_ref)
+            if prior is None or stored.revision > prior.revision:
+                latest_by_ref[item.assignment_ref] = stored
+
+        if delta.to_value_ref is not None:
+            targets = [
+                item.payload for item in latest_by_ref.values()
+                if item.payload.status == AssignmentStatus.ACTIVE
+                and item.payload.value_ref == delta.to_value_ref
+                and item.payload.value_revision == delta.to_value_revision
+                and item.payload.valid_from == delta.effective_time_ref
+                and set(item.payload.proof_refs).intersection(proof_refs)
             ]
-            if not any(item is not None for item in proofs):
-                raise ValueError("event-triggered state delta requires durable transition proof lineage")
+            if not targets:
+                raise ValueError(
+                    "event-triggered state delta is missing its proof-linked active target assignment"
+                )
+            if dimension.exclusive and len(targets) != 1:
+                raise ValueError(
+                    "exclusive state transition must materialize exactly one proof-linked active target"
+                )
+
+        if delta.from_value_ref is not None:
+            pre_candidates: dict[str, StoredRecord[Any]] = {}
+            for proof in proofs:
+                for stored in self._pre_transition_active_assignments(
+                    proof, delta.holder_ref, delta.dimension_ref, delta.dimension_revision, delta.context_ref
+                ):
+                    item = stored.payload
+                    if (
+                        item.value_ref == delta.from_value_ref
+                        and item.value_revision == delta.from_value_revision
+                    ):
+                        pre_candidates[stored.record_ref] = stored
+            if not pre_candidates:
+                raise ValueError("state delta declares a from-value absent from pinned pre-transition state")
+            for assignment_ref, pre_stored in pre_candidates.items():
+                latest = latest_by_ref.get(assignment_ref)
+                if latest is None or latest.revision <= pre_stored.revision:
+                    raise ValueError(
+                        "event-triggered state delta omitted the required immutable pre-state termination revision"
+                    )
+                projected = latest.payload
+                if (
+                    projected.status != AssignmentStatus.TERMINATED
+                    or projected.valid_to != delta.effective_time_ref
+                    or not set(projected.proof_refs).intersection(proof_refs)
+                ):
+                    raise ValueError(
+                        "event-triggered state delta pre-state termination does not match proof/time lineage"
+                    )
+
+        if delta.operation in {ChangeOperation.TERMINATE, ChangeOperation.DEACTIVATE}:
+            if delta.to_value_ref is not None:
+                raise ValueError("terminate/deactivate delta cannot materialize a target assignment")
 
     def _validate_capability(self, capability: CapabilityInstance) -> None:
         self._require_record(RecordKind.REFERENT, capability.holder_ref)
@@ -566,6 +705,25 @@ class CommitValidator:
         )
         if not isinstance(action, ActionSchema):
             raise ValueError("capability must pin an ActionSchema")
+        transition_proofs = {
+            proof_ref for proof_ref in capability.proof_refs
+            if self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref) is not None
+        }
+        if transition_proofs:
+            matching = [
+                item.payload for item in self._resolver.records(RecordKind.CAPABILITY_DELTA)
+                if isinstance(item.payload, CapabilityDelta)
+                and item.payload.holder_ref == capability.holder_ref
+                and item.payload.action_schema_ref == capability.action_schema_ref
+                and item.payload.action_schema_revision == capability.action_schema_revision
+                and item.payload.context_ref == capability.context_ref
+                and item.payload.new_status == capability.status
+                and set(item.payload.proof_refs).intersection(transition_proofs)
+                and item.payload.dependency_ref in capability.dependency_refs
+                and item.payload.effective_time_ref == capability.valid_from
+            ]
+            if not matching:
+                raise ValueError("transition-derived capability instance has no matching capability delta")
 
     def _validate_capability_delta(self, delta: CapabilityDelta) -> None:
         self._require_record(RecordKind.REFERENT, delta.holder_ref)
@@ -577,13 +735,98 @@ class CommitValidator:
         dependency = self._resolver.resolve(RecordKind.CAPABILITY_DEPENDENCY, delta.dependency_ref)
         if dependency is None or not isinstance(dependency.payload, CapabilityDependencyRecord):
             raise ValueError("capability delta dependency must resolve to a capability dependency record")
-        if dependency.payload.action_schema_ref != delta.action_schema_ref:
-            raise ValueError("capability delta dependency targets a different action schema")
-        if not any(
-            self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref) is not None
-            for proof_ref in delta.proof_refs
+        if (
+            dependency.payload.action_schema_ref != delta.action_schema_ref
+            or dependency.payload.action_schema_revision != delta.action_schema_revision
         ):
+            raise ValueError("capability delta dependency targets a different action schema revision")
+        require_concrete_timeline_timestamp(delta.effective_time_ref)
+        proofs = []
+        for proof_ref in delta.proof_refs:
+            stored_proof = self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref)
+            if stored_proof is not None and isinstance(stored_proof.payload, TransitionProofRecord):
+                proofs.append(stored_proof.payload)
+        if not proofs:
             raise ValueError("Phase-11 capability delta requires durable transition proof lineage")
+        if not any(
+            proof.event_ref == delta.trigger_ref
+            and proof.context_ref == delta.context_ref
+            and proof.effective_time_ref == delta.effective_time_ref
+            for proof in proofs
+        ):
+            raise ValueError("capability delta proof does not match trigger/context/effective time")
+        competing_dependencies = {
+            item.payload.dependency_ref
+            for item in self._resolver.records(RecordKind.CAPABILITY_DELTA)
+            if isinstance(item.payload, CapabilityDelta)
+            and item.payload.delta_ref != delta.delta_ref
+            and item.payload.holder_ref == delta.holder_ref
+            and item.payload.action_schema_ref == delta.action_schema_ref
+            and item.payload.action_schema_revision == delta.action_schema_revision
+            and item.payload.context_ref == delta.context_ref
+            and item.payload.effective_time_ref == delta.effective_time_ref
+            and set(item.payload.proof_refs).intersection(delta.proof_refs)
+        }
+        if competing_dependencies and (competing_dependencies != {delta.dependency_ref}):
+            raise ValueError(
+                "multiple capability dependencies target the same holder/action/time without explicit composition semantics"
+            )
+        expected_status = self._expected_capability_status(
+            dependency.payload, delta.holder_ref, delta.context_ref, delta.effective_time_ref
+        )
+        if delta.new_status != expected_status:
+            raise ValueError("capability delta new status does not match dependency evaluation")
+        current = self._pre_transition_capability(
+            delta, proof_refs=tuple(proof.proof_ref for proof in proofs)
+        )
+        prior_status = current.payload.status if current is not None else CapabilityStatus.UNKNOWN
+        if delta.prior_status != prior_status:
+            raise ValueError("capability delta prior status does not match pre-transition capability state")
+
+    def _expected_capability_status(
+        self, dependency: CapabilityDependencyRecord, holder_ref: str, context_ref: str, effective_time_ref: str
+    ) -> CapabilityStatus:
+        outcomes: list[bool | None] = []
+        evaluator = StateConditionEvaluator(self._resolver)
+        for condition in dependency.state_conditions:
+            result, _pins, _evidence = evaluator.evaluate(
+                condition, holder_ref, context_ref, effective_time_ref
+            )
+            outcomes.append(result)
+        if any(item is False for item in outcomes):
+            return dependency.status_if_unsatisfied
+        if any(item is None for item in outcomes):
+            return dependency.status_if_unknown
+        return dependency.status_if_satisfied
+
+    def _pre_transition_capability(
+        self, delta: CapabilityDelta, *, proof_refs: tuple[str, ...]
+    ) -> StoredRecord[CapabilityInstance] | None:
+        candidates: list[StoredRecord[CapabilityInstance]] = []
+        for stored in self._resolver.records(RecordKind.CAPABILITY_INSTANCE):
+            item = stored.payload
+            if not isinstance(item, CapabilityInstance):
+                continue
+            if (
+                item.holder_ref != delta.holder_ref
+                or item.action_schema_ref != delta.action_schema_ref
+                or item.action_schema_revision != delta.action_schema_revision
+                or item.context_ref not in {"global", delta.context_ref}
+            ):
+                continue
+            if stored.layer == "staged" and set(item.proof_refs).intersection(proof_refs):
+                continue
+            candidates.append(stored)
+        if not candidates:
+            return None
+        latest_by_ref: dict[str, StoredRecord[CapabilityInstance]] = {}
+        for stored in candidates:
+            prior = latest_by_ref.get(stored.record_ref)
+            if prior is None or stored.revision > prior.revision:
+                latest_by_ref[stored.record_ref] = stored
+        exact_context = [item for item in latest_by_ref.values() if item.payload.context_ref == delta.context_ref]
+        pool = exact_context or [item for item in latest_by_ref.values() if item.payload.context_ref == "global"]
+        return max(pool, key=lambda item: (item.revision, item.record_ref)) if pool else None
 
     def _validate_transition_contract(self, contract: TransitionContractRecord) -> None:
         try:
@@ -616,7 +859,19 @@ class CommitValidator:
                 raise ValueError("capability dependency revision may not retarget its action schema")
 
     def _validate_transition_proof(self, proof: TransitionProofRecord) -> None:
-        event = self._require_record(RecordKind.EVENT_OCCURRENCE, proof.event_ref).payload
+        event_stored = self._resolver.resolve(RecordKind.EVENT_OCCURRENCE, proof.event_ref, proof.event_revision)
+        if event_stored is None or not isinstance(event_stored.payload, EventOccurrence):
+            raise ValueError("transition proof exact event revision is unresolved")
+        event = event_stored.payload
+        if event.participant_application_ref != proof.participant_application_ref:
+            raise ValueError("transition proof participant application ref differs from pinned event revision")
+        application_stored = self._resolver.resolve(
+            RecordKind.SEMANTIC_APPLICATION,
+            proof.participant_application_ref,
+            proof.participant_application_revision,
+        )
+        if application_stored is None or not isinstance(application_stored.payload, SemanticApplication):
+            raise ValueError("transition proof exact participant application revision is unresolved")
         if event.context_ref != proof.context_ref:
             raise ValueError("transition proof context differs from event context")
         require_concrete_timeline_timestamp(proof.effective_time_ref)
@@ -635,7 +890,9 @@ class CommitValidator:
         except TransitionContractError as exc:
             raise ValueError(f"transition proof contract is not executable: {exc}") from exc
 
-        admission_assessment = EventAdmissionGate(self._resolver).assess(event)
+        admission_assessment = EventAdmissionGate(self._resolver).assess(
+            event, participant_application_revision=proof.participant_application_revision
+        )
         if not admission_assessment.admitted:
             raise ValueError("transition proof event is not independently admitted")
         if tuple(sorted(proof.admission_pins)) != tuple(sorted(admission_assessment.admission_pins)):
@@ -656,9 +913,7 @@ class CommitValidator:
         for evidence_ref in proof.evidence_refs + proof.condition_evidence_refs:
             self._require_record(RecordKind.EVIDENCE, evidence_ref)
 
-        application = self._require_record(
-            RecordKind.SEMANTIC_APPLICATION, event.participant_application_ref
-        ).payload
+        application = application_stored.payload
         binding_map = {item.port_ref: item for item in application.bindings}
         expected_assignment_pins: set[tuple[str, int]] = set()
         expected_condition_evidence: set[str] = set()
@@ -668,21 +923,22 @@ class CommitValidator:
                 raise ValueError("transition proof condition holder binding is unresolved")
             holder_ref = binding.fillers[0].ref
             active = self._pre_transition_active_assignments(
-                proof, holder_ref, condition.dimension_ref, proof.context_ref
+                proof, holder_ref, condition.dimension_ref, condition.dimension_revision, proof.context_ref
             )
             expected_assignment_pins.update((item.record_ref, item.revision) for item in active)
             expected_condition_evidence.update(
                 ref for item in active for ref in item.payload.evidence_refs
             )
-            values = {item.payload.value_ref for item in active}
+            values = {(item.payload.value_ref, item.payload.value_revision) for item in active}
+            condition_value = (condition.value_ref, condition.value_revision)
             if condition.operator == ConditionOperator.KNOWN:
                 satisfied = bool(values)
             elif condition.operator == ConditionOperator.UNKNOWN:
                 satisfied = not values
             elif condition.operator == ConditionOperator.EQUALS:
-                satisfied = bool(values) and condition.value_ref in values
+                satisfied = bool(values) and condition_value in values
             elif condition.operator == ConditionOperator.NOT_EQUALS:
-                satisfied = bool(values) and condition.value_ref not in values
+                satisfied = bool(values) and condition_value not in values
             else:  # pragma: no cover - enum exhaustiveness
                 satisfied = False
             if not satisfied:
@@ -738,28 +994,50 @@ class CommitValidator:
             raise ValueError("transition proof contains unreviewed extra state effects")
 
     def _pre_transition_active_assignments(
-        self, proof: TransitionProofRecord, holder_ref: str, dimension_ref: str, context_ref: str
+        self,
+        proof: TransitionProofRecord,
+        holder_ref: str,
+        dimension_ref: str,
+        dimension_revision: int,
+        context_ref: str,
     ) -> tuple[StoredRecord[Any], ...]:
+        at_time = parse_timeline_timestamp(proof.effective_time_ref)
         by_ref: dict[str, list[StoredRecord[Any]]] = {}
         for stored in self._resolver.records(RecordKind.STATE_ASSIGNMENT):
             item = stored.payload
             if not isinstance(item, StateAssignment):
                 continue
-            if item.holder_ref != holder_ref or item.dimension_ref != dimension_ref:
+            if (
+                item.holder_ref != holder_ref
+                or item.dimension_ref != dimension_ref
+                or item.dimension_revision != dimension_revision
+            ):
                 continue
             if item.context_ref not in {"global", context_ref}:
                 continue
-            # A staged assignment revision carrying this proof is the proposed post-state,
-            # not evidence for the condition that authorized the same proof.
+            # Staged revisions carrying this proof are proposed post-state, never
+            # condition evidence for the proof that created them.
             if stored.layer == "staged" and proof.proof_ref in item.proof_refs:
                 continue
             by_ref.setdefault(item.assignment_ref, []).append(stored)
         active: list[StoredRecord[Any]] = []
         for revisions in by_ref.values():
             latest = max(revisions, key=lambda item: item.revision)
-            if latest.payload.status == AssignmentStatus.ACTIVE and latest.payload.valid_to is None:
+            item = latest.payload
+            if item.status in {AssignmentStatus.RETRACTED, AssignmentStatus.SUPERSEDED, AssignmentStatus.OPPOSED, AssignmentStatus.CONTRADICTED}:
+                continue
+            start = parse_optional_timeline_timestamp(item.valid_from)
+            end = parse_optional_timeline_timestamp(item.valid_to)
+            if start is not None and at_time < start:
+                continue
+            if end is not None and at_time >= end:
+                continue
+            if item.status == AssignmentStatus.TERMINATED and end is None:
+                continue
+            if item.status in {AssignmentStatus.ACTIVE, AssignmentStatus.TERMINATED}:
                 active.append(latest)
         return tuple(sorted(active, key=lambda item: (item.record_ref, item.revision)))
+
 
     def _validate_default_rule(self, rule: DefaultRuleRecord) -> None:
         facet = self._registry.maybe_authoritative_schema(rule.target_facet_ref)

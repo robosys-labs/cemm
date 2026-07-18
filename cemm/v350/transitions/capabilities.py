@@ -57,9 +57,10 @@ class CapabilityDependencyEngine:
                 and projection.context_ref == context_ref
             ), None)
             if projected is None:
-                result, _, _ = self._conditions.evaluate(condition, holder_ref, context_ref)
+                result, _, _ = self._conditions.evaluate(condition, holder_ref, context_ref, effective_time_ref)
             else:
-                values = tuple(item.value_ref for item in projected.active_assignments)
+                values = tuple((item.value_ref, item.value_revision) for item in projected.active_assignments)
+                target = (condition.value_ref, condition.value_revision)
                 if condition.operator == ConditionOperator.KNOWN:
                     result = bool(values)
                 elif condition.operator == ConditionOperator.UNKNOWN:
@@ -67,9 +68,9 @@ class CapabilityDependencyEngine:
                 elif not values:
                     result = None
                 elif condition.operator == ConditionOperator.EQUALS:
-                    result = condition.value_ref in values
+                    result = target in values
                 elif condition.operator == ConditionOperator.NOT_EQUALS:
-                    result = condition.value_ref not in values
+                    result = target not in values
                 else:
                     result = None
             outcomes.append(result)
@@ -86,6 +87,11 @@ class CapabilityDependencyEngine:
         if prior_status == new_status:
             return None
 
+        derivation_confidence = self._derivation_confidence(
+            dependency, holder_ref=holder_ref, context_ref=context_ref,
+            effective_time_ref=effective_time_ref, proof_refs=proof_refs,
+            state_projections=state_projections,
+        )
         delta_ref = _ref(
             "capability-delta", trigger_ref, dependency.dependency_ref,
             holder_ref, dependency.action_schema_ref, effective_time_ref,
@@ -101,7 +107,7 @@ class CapabilityDependencyEngine:
             context_ref=context_ref,
             effective_time_ref=effective_time_ref,
             dependency_ref=dependency.dependency_ref,
-            confidence=1.0,
+            confidence=derivation_confidence,
             proof_refs=proof_refs,
         )
         if current is None:
@@ -112,7 +118,7 @@ class CapabilityDependencyEngine:
                 action_schema_ref=dependency.action_schema_ref,
                 action_schema_revision=dependency.action_schema_revision,
                 status=new_status,
-                confidence=1.0,
+                confidence=derivation_confidence,
                 context_ref=context_ref,
                 valid_from=effective_time_ref,
                 dependency_refs=(dependency.dependency_ref,),
@@ -125,7 +131,7 @@ class CapabilityDependencyEngine:
         projected_instance = replace(
             current.payload,
             status=new_status,
-            confidence=1.0,
+            confidence=derivation_confidence,
             valid_from=effective_time_ref,
             valid_to=None,
             dependency_refs=merged_dependencies,
@@ -133,6 +139,40 @@ class CapabilityDependencyEngine:
             proof_refs=tuple(sorted(set(current.payload.proof_refs) | set(proof_refs))),
         )
         return CapabilityProjection(delta, projected_instance, current.revision + 1, current.revision)
+
+    def _derivation_confidence(
+        self,
+        dependency: CapabilityDependencyRecord,
+        *,
+        holder_ref: str,
+        context_ref: str,
+        effective_time_ref: str,
+        proof_refs: tuple[str, ...],
+        state_projections: tuple[StateTimelineProjection, ...],
+    ) -> float:
+        confidences: list[float] = []
+        for proof_ref in proof_refs:
+            stored = self._resolver.resolve(RecordKind.TRANSITION_PROOF, proof_ref)
+            if stored is not None:
+                confidence = getattr(stored.payload, "confidence", None)
+                if isinstance(confidence, (int, float)):
+                    confidences.append(float(confidence))
+        for condition in dependency.state_conditions:
+            projected = next((
+                projection for projection in state_projections
+                if projection.holder_ref == holder_ref
+                and projection.dimension_ref == condition.dimension_ref
+                and projection.context_ref == context_ref
+            ), None)
+            if projected is not None:
+                confidences.extend(item.confidence for item in projected.active_assignments)
+            else:
+                assignments = self._conditions.active_assignments(
+                    holder_ref, condition.dimension_ref, condition.dimension_revision,
+                    context_ref, effective_time_ref,
+                )
+                confidences.extend(item.payload.confidence for item in assignments)
+        return min(confidences) if confidences else 1.0
 
     def applicable_dependencies(self, holder_ref: str) -> tuple[CapabilityDependencyRecord, ...]:
         result: list[CapabilityDependencyRecord] = []
@@ -166,7 +206,9 @@ class CapabilityDependencyEngine:
                 candidates[item.capability_ref] = stored
         if not candidates:
             return None
-        return max(candidates.values(), key=lambda item: (item.revision, item.record_ref))
+        exact_context = [item for item in candidates.values() if item.payload.context_ref == context_ref]
+        pool = exact_context or [item for item in candidates.values() if item.payload.context_ref == "global"]
+        return max(pool, key=lambda item: (item.revision, item.record_ref)) if pool else None
 
     def _holder_compatible(self, holder_ref: str, accepted_type_refs: Iterable[str]) -> bool:
         accepted = frozenset(accepted_type_refs)

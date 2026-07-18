@@ -109,6 +109,9 @@ class StateEffectSpec:
                     "Phase-11 scalar effects require an explicit target value; "
                     "a magnitude may be evidence but is not interpreted as arithmetic by the kernel"
                 )
+        if self.operation in {ChangeOperation.TERMINATE, ChangeOperation.DEACTIVATE}:
+            if self.to_value_ref is not None:
+                raise ValueError(f"{self.operation.value} effect cannot declare to_value_ref")
         if self.operation in {ChangeOperation.GAIN, ChangeOperation.LOSE, ChangeOperation.ENABLE, ChangeOperation.DISABLE}:
             raise ValueError(
                 f"{self.operation.value} is not a state-dimension effect; use a dedicated dependency/lifecycle contract"
@@ -194,6 +197,9 @@ class CapabilityDependencyRecord:
 class TransitionProofRecord:
     proof_ref: str
     event_ref: str
+    event_revision: int
+    participant_application_ref: str
+    participant_application_revision: int
     transition_contract_ref: str
     transition_contract_revision: int
     admission_pins: tuple[tuple[str, int], ...]
@@ -209,11 +215,16 @@ class TransitionProofRecord:
         for value, label in (
             (self.proof_ref, "proof_ref"),
             (self.event_ref, "event_ref"),
+            (self.participant_application_ref, "participant_application_ref"),
             (self.transition_contract_ref, "transition_contract_ref"),
             (self.context_ref, "context_ref"),
             (self.effective_time_ref, "effective_time_ref"),
         ):
             _ref(value, label)
+        if self.event_revision < 1:
+            raise ValueError("transition proof event revision must be positive")
+        if self.participant_application_revision < 1:
+            raise ValueError("transition proof participant application revision must be positive")
         if self.transition_contract_revision < 1:
             raise ValueError("transition proof contract revision must be positive")
         _probability(self.confidence, "transition proof confidence")

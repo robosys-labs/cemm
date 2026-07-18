@@ -58,7 +58,12 @@ class EventAdmissionGate:
     def __init__(self, resolver: Resolver) -> None:
         self._resolver = resolver
 
-    def assess(self, event: EventOccurrence) -> EventAdmissionAssessment:
+    def assess(
+        self,
+        event: EventOccurrence,
+        *,
+        participant_application_revision: int | None = None,
+    ) -> EventAdmissionAssessment:
         reasons: list[str] = []
         evidence: set[str] = set()
         accepted: list[tuple[str, int]] = []
@@ -69,6 +74,7 @@ class EventAdmissionGate:
         target_stored = self._resolver.resolve(
             RecordKind.SEMANTIC_APPLICATION,
             event.participant_application_ref,
+            participant_application_revision,
         )
         if target_stored is None or not isinstance(target_stored.payload, SemanticApplication):
             return EventAdmissionAssessment(

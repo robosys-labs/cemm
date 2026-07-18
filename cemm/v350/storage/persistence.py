@@ -1430,12 +1430,15 @@ def _write_transition_proof(
     connection.execute(
         """
         INSERT INTO transition_proofs(
-            proof_ref, event_ref, transition_contract_ref, transition_contract_revision,
-            admission_pins_json, condition_evidence_refs_json, input_assignment_pins_json,
-            derived_state_delta_refs_json, context_ref, effective_time_ref, confidence, evidence_refs_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            proof_ref, event_ref, event_revision, participant_application_ref, participant_application_revision,
+            transition_contract_ref, transition_contract_revision, admission_pins_json, condition_evidence_refs_json,
+            input_assignment_pins_json, derived_state_delta_refs_json, context_ref, effective_time_ref, confidence, evidence_refs_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(proof_ref) DO UPDATE SET
             event_ref=excluded.event_ref,
+            event_revision=excluded.event_revision,
+            participant_application_ref=excluded.participant_application_ref,
+            participant_application_revision=excluded.participant_application_revision,
             transition_contract_ref=excluded.transition_contract_ref,
             transition_contract_revision=excluded.transition_contract_revision,
             admission_pins_json=excluded.admission_pins_json,
@@ -1448,9 +1451,11 @@ def _write_transition_proof(
             evidence_refs_json=excluded.evidence_refs_json
         """,
         (
-            record.proof_ref, record.event_ref, record.transition_contract_ref, record.transition_contract_revision,
-            canonical_json(record.admission_pins), canonical_json(record.condition_evidence_refs),
-            canonical_json(record.input_assignment_pins), canonical_json(record.derived_state_delta_refs),
-            record.context_ref, record.effective_time_ref, record.confidence, canonical_json(record.evidence_refs),
+            record.proof_ref, record.event_ref, record.event_revision,
+            record.participant_application_ref, record.participant_application_revision,
+            record.transition_contract_ref, record.transition_contract_revision, canonical_json(record.admission_pins),
+            canonical_json(record.condition_evidence_refs), canonical_json(record.input_assignment_pins),
+            canonical_json(record.derived_state_delta_refs), record.context_ref, record.effective_time_ref,
+            record.confidence, canonical_json(record.evidence_refs),
         ),
     )

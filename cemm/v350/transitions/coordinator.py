@@ -1,7 +1,7 @@
 """Phase-11 transition orchestration over pinned store/schema snapshots."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Iterable
 
 from ..schema.model import EventSchema, SchemaLifecycleStatus
@@ -9,8 +9,8 @@ from ..storage.model import RecordKind, StoreSnapshot
 from ..storage.store import SemanticStore
 from ..uol.model import EventOccurrence
 from .capabilities import CapabilityDependencyEngine
-from .commit import EffectCommitCoordinator
-from .model import CapabilityProjection, StateTimelineProjection, TransitionContractRecord, TransitionPreview
+from .commit import EffectCommitCoordinator, EffectCommitError
+from .model import CapabilityProjection, StateTimelineProjection, TransitionContractRecord, TransitionFrontier, TransitionPreview
 from .preview import TransitionPreviewEngine
 from .state import StateTimelineProjector
 
@@ -99,15 +99,43 @@ class TransitionCoordinator:
                         )
                         if projected is not None:
                             cap_candidates.append(projected)
-                self._require_capability_consistency(cap_candidates)
+                capability_frontiers = self._capability_ambiguity_frontiers(cap_candidates)
+                if capability_frontiers:
+                    preview = replace(
+                        preview,
+                        frontiers=tuple(sorted((*preview.frontiers, *capability_frontiers), key=lambda item: item.frontier_ref)),
+                        blocked_reasons=tuple(sorted(set((*preview.blocked_reasons, "capability_dependency_frontier_unresolved")))),
+                    )
                 result.append(TransitionExecutionPlan(
                     preview,
                     state_projections,
-                    tuple(sorted(cap_candidates, key=lambda item: (item.delta.holder_ref, item.delta.action_schema_ref))),
+                    tuple(sorted(cap_candidates, key=lambda item: (item.delta.holder_ref, item.delta.action_schema_ref, item.delta.dependency_ref))),
                     snapshot.store_revision,
                     snapshot.boot_fingerprint,
                     snapshot.overlay_fingerprint,
                 ))
+            authorized = [item for item in result if item.preview.authorized]
+            if len(authorized) > 1:
+                competing = tuple(sorted(item.preview.contract_ref for item in authorized))
+                rewritten: list[TransitionExecutionPlan] = []
+                for item in result:
+                    if not item.preview.authorized:
+                        rewritten.append(item)
+                        continue
+                    frontier = TransitionFrontier(
+                        frontier_ref=self._frontier_ref(event.event_ref, "multiple-authorized-contracts", *competing),
+                        reason="multiple_transition_contracts_authorized_without_explicit_composition_semantics",
+                        dependency_refs=competing,
+                    )
+                    rewritten.append(replace(
+                        item,
+                        preview=replace(
+                            item.preview,
+                            frontiers=tuple(sorted((*item.preview.frontiers, frontier), key=lambda entry: entry.frontier_ref)),
+                            blocked_reasons=tuple(sorted(set((*item.preview.blocked_reasons, "transition_contract_ambiguity_unresolved")))),
+                        ),
+                    ))
+                result = rewritten
             return tuple(result)
 
     def build_patch(
@@ -118,6 +146,30 @@ class TransitionCoordinator:
         source_ref: str,
         permission_ref: str,
     ):
+        if not plan.preview.authorized or plan.preview.proof is None:
+            raise EffectCommitError("transition plan is blocked or unresolved and cannot be committed")
+        with self._store.snapshot() as current_snapshot:
+            if (
+                current_snapshot.store_revision != plan.store_revision
+                or current_snapshot.boot_fingerprint != plan.boot_fingerprint
+                or current_snapshot.overlay_fingerprint != plan.overlay_fingerprint
+            ):
+                raise EffectCommitError(
+                    "stale transition execution plan: pinned store snapshot no longer matches current store"
+                )
+        canonical = next((
+            item for item in self.plans_for_event(
+                event, effective_time_ref=plan.preview.proof.effective_time_ref
+            )
+            if item.preview.contract_ref == plan.preview.contract_ref
+            and item.preview.contract_revision == plan.preview.contract_revision
+            and item.preview.proof is not None
+            and item.preview.proof.proof_ref == plan.preview.proof.proof_ref
+        ), None)
+        if canonical is None or canonical != plan:
+            raise EffectCommitError(
+                "transition execution plan does not match canonical recomputation at the pinned store state"
+            )
         return EffectCommitCoordinator(self._store).build_patch(
             event,
             plan.preview,
@@ -131,11 +183,29 @@ class TransitionCoordinator:
         )
 
     @staticmethod
-    def _require_capability_consistency(items: Iterable[CapabilityProjection]) -> None:
-        by_key: dict[tuple[str, str, str], set[str]] = {}
+    def _capability_ambiguity_frontiers(
+        items: Iterable[CapabilityProjection],
+    ) -> tuple[TransitionFrontier, ...]:
+        by_key: dict[tuple[str, str, str], list[CapabilityProjection]] = {}
         for item in items:
             key = (item.delta.holder_ref, item.delta.action_schema_ref, item.delta.context_ref)
-            by_key.setdefault(key, set()).add(item.delta.new_status.value)
-        conflicts = {key: values for key, values in by_key.items() if len(values) > 1}
-        if conflicts:
-            raise ValueError(f"conflicting capability dependency projections: {conflicts}")
+            by_key.setdefault(key, []).append(item)
+        frontiers: list[TransitionFrontier] = []
+        for key, projections in sorted(by_key.items()):
+            if len(projections) <= 1:
+                continue
+            dependencies = tuple(sorted(item.delta.dependency_ref for item in projections))
+            frontiers.append(TransitionFrontier(
+                frontier_ref=TransitionCoordinator._frontier_ref(
+                    *key, "capability-dependency-ambiguity", *dependencies
+                ),
+                reason="multiple_capability_dependencies_target_same_holder_action_without_composition_semantics",
+                dependency_refs=dependencies,
+            ))
+        return tuple(frontiers)
+
+    @staticmethod
+    def _frontier_ref(*parts: str) -> str:
+        from hashlib import sha256
+        payload = "\x1f".join(parts).encode("utf-8")
+        return f"transition-frontier:{sha256(payload).hexdigest()[:24]}"

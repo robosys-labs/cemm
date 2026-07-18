@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -709,6 +709,9 @@ DDL: tuple[str, ...] = (
     CREATE TABLE IF NOT EXISTS transition_proofs (
         proof_ref TEXT PRIMARY KEY,
         event_ref TEXT NOT NULL,
+        event_revision INTEGER NOT NULL,
+        participant_application_ref TEXT NOT NULL,
+        participant_application_revision INTEGER NOT NULL,
         transition_contract_ref TEXT NOT NULL,
         transition_contract_revision INTEGER NOT NULL,
         admission_pins_json TEXT NOT NULL,
@@ -721,7 +724,7 @@ DDL: tuple[str, ...] = (
         evidence_refs_json TEXT NOT NULL
     ) WITHOUT ROWID
     """,
-    "CREATE INDEX IF NOT EXISTS transition_proofs_event_idx ON transition_proofs(event_ref, transition_contract_ref)",
+    "CREATE INDEX IF NOT EXISTS transition_proofs_event_idx ON transition_proofs(event_ref, event_revision, transition_contract_ref)",
     """
     CREATE TABLE IF NOT EXISTS patch_journal (
         patch_ref TEXT PRIMARY KEY,

@@ -1,8 +1,9 @@
 # CEMM v3.5 Phase 12 — Cross-domain transition vertical-slice plan
 
-**Status:** planned; not implemented by Phase 11
-**Prerequisite:** Phase 11 generic transition engine phase-verified
+**Status:** implemented and adversarially phase-verified; retained as the governing proof plan
+**Prerequisite:** Phase 11 generic transition engine phase-verified and hardened
 **Authority:** test/promoted domain packages only; no new kernel ontology authority
+**Implementation record:** `docs/implementation/v350-phase-12.md`
 
 ## 1. Purpose
 
@@ -60,12 +61,16 @@ For every applicable event/package, include:
 | attributed report without target admission | no target-context transition |
 | admitted attributed report | transition only in explicitly admitted target context |
 | fictional/simulated context | effects remain inside that context |
-| retracted admission before commit | commit rejected |
+| retracted admission before transition | transition is not authorized |
 | changed pre-state after preview | stale plan/proof rejected |
 | ambiguous grounding | preserve alternatives/frontier; no speculative transition |
 | unresolved time | explicit frontier; no timeline mutation |
 | restart | proof/history/current projections survive and re-query correctly |
 | correction/retraction | dependent projections invalidate/recompute through generic lineage |
+
+### 4.1 Implemented Phase-12 proof evidence
+
+The executable Phase-12 contract currently pins 19 declarative cases, including five full-path executions, non-occurring-status contrasts, retracted admission, changed-pre-state stale-plan rejection, unresolved time, context isolation, renaming invariance, polysemy, and ambiguity frontiers. Correction-driven replay of already committed chains remains an explicit Phase-13 invalidation/recomputation responsibility; Phase 12 must not fake rollback by destructive mutation.
 
 ## 5. Genericity/adversarial tests
 

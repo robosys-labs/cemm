@@ -25,12 +25,17 @@
     "language_phase": "7",
     "meaning_composition_competence_sha256": "1de55417ca6e76a335685032a7a287c69dc60e0c155a5b64c9c667c13baaa31f",
     "multilingual_competence_sha256": "51fc999fe06c3a7d28405fd87d9d156ea31a2466f06c07ea1a9e055ede522ae3",
-    "phase": "11",
+    "phase": "12",
     "transition_base_commit": "60b2fe7026fe1e6204b1dc682977de93c13e515e",
     "transition_competence_sha256": "94ce850b7ee630b8446e6223e19a498d206e0a3db461c4cbb305f4df4802294c",
     "transition_contract_ref": "contract:cemm:v350:transitions",
-    "transition_contract_sha256": "a8c3e67867d904cc5dfa485965dd3ab846241a86fd7e43d9a2aa755b761937a9",
-    "transition_phase": "11"
+    "transition_contract_sha256": "74893a4f820e9ac9b0da83e78472427a45a91ed906a1ef2927a6ded2fcdc0306",
+    "transition_phase": "11",
+    "vertical_slice_base_commit": "735d13d11f112d0062972a9a66d59100fa8a406c",
+    "vertical_slice_competence_sha256": "97dbdaf2fc433d17141a1bbb7768237fe857a0f346ca0e3df2596baf16eae2e5",
+    "vertical_slice_contract_ref": "contract:cemm:v350:transition-vertical-slices",
+    "vertical_slice_contract_sha256": "8e5f116e9a34f716846c7c40a912f89c08f57447e12230df0704b33801cc6c89",
+    "vertical_slice_phase": "12"
   },
   "modules": [
     {

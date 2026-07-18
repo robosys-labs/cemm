@@ -36,34 +36,62 @@ class StateConditionEvaluator:
         self,
         holder_ref: str,
         dimension_ref: str,
+        dimension_revision: int,
         context_ref: str,
+        effective_time_ref: str,
     ) -> tuple[StoredRecord[StateAssignment], ...]:
-        result: list[StoredRecord[StateAssignment]] = []
+        """Return exact-revision assignments that hold at the requested timeline instant.
+
+        The latest record revision for each assignment identity is authoritative. A
+        terminated assignment still counts historically inside its closed interval;
+        future-dated assignments never satisfy an earlier transition.
+        """
+        at_time = parse_timeline_timestamp(effective_time_ref)
         latest: dict[str, StoredRecord[StateAssignment]] = {}
         for stored in self._resolver.records(RecordKind.STATE_ASSIGNMENT):
             item = stored.payload
             if not isinstance(item, StateAssignment):
                 continue
-            if item.holder_ref != holder_ref or item.dimension_ref != dimension_ref:
+            if (
+                item.holder_ref != holder_ref
+                or item.dimension_ref != dimension_ref
+                or item.dimension_revision != dimension_revision
+            ):
                 continue
             if item.context_ref not in {"global", context_ref}:
                 continue
             prior = latest.get(item.assignment_ref)
             if prior is None or stored.revision > prior.revision:
                 latest[item.assignment_ref] = stored
+
+        result: list[StoredRecord[StateAssignment]] = []
         for stored in latest.values():
             item = stored.payload
-            if item.status == AssignmentStatus.ACTIVE and item.valid_to is None:
-                result.append(stored)
-        return tuple(sorted(result, key=lambda stored: (stored.payload.value_ref, stored.record_ref)))
+            if item.status in {AssignmentStatus.RETRACTED, AssignmentStatus.SUPERSEDED, AssignmentStatus.OPPOSED, AssignmentStatus.CONTRADICTED}:
+                continue
+            start = parse_optional_timeline_timestamp(item.valid_from)
+            end = parse_optional_timeline_timestamp(item.valid_to)
+            if start is not None and at_time < start:
+                continue
+            if end is not None and at_time >= end:
+                continue
+            if item.status == AssignmentStatus.TERMINATED and end is None:
+                continue
+            if item.status not in {AssignmentStatus.ACTIVE, AssignmentStatus.TERMINATED}:
+                continue
+            result.append(stored)
+        return tuple(sorted(result, key=lambda stored: (stored.payload.value_ref, stored.payload.value_revision, stored.record_ref)))
 
     def evaluate(
         self,
         condition: StateConditionSpec,
         holder_ref: str,
         context_ref: str,
+        effective_time_ref: str,
     ) -> tuple[bool | None, tuple[tuple[str, int], ...], tuple[str, ...]]:
-        active = self.active_assignments(holder_ref, condition.dimension_ref, context_ref)
+        active = self.active_assignments(
+            holder_ref, condition.dimension_ref, condition.dimension_revision, context_ref, effective_time_ref
+        )
         assignment_pins = tuple((item.record_ref, item.revision) for item in active)
         evidence_refs = tuple(sorted({ref for item in active for ref in item.payload.evidence_refs}))
         if condition.operator == ConditionOperator.KNOWN:
@@ -72,12 +100,17 @@ class StateConditionEvaluator:
             return (not active), assignment_pins, evidence_refs
         if not active:
             return None, assignment_pins, evidence_refs
-        matches = any(item.payload.value_ref == condition.value_ref for item in active)
+        matches = any(
+            item.payload.value_ref == condition.value_ref
+            and item.payload.value_revision == condition.value_revision
+            for item in active
+        )
         if condition.operator == ConditionOperator.EQUALS:
             return matches, assignment_pins, evidence_refs
         if condition.operator == ConditionOperator.NOT_EQUALS:
             return (not matches), assignment_pins, evidence_refs
         raise StateTransitionError(f"unsupported condition operator: {condition.operator}")
+
 
 
 class StateDeltaValidator:
@@ -102,9 +135,13 @@ class StateDeltaValidator:
             value = self._schemas.maybe_schema(value_ref, revision)
             if not isinstance(value, StateValueSchema) or value.dimension_ref != dimension.schema_ref:
                 raise StateTransitionError("state delta value is outside the exact dimension domain")
-        active = self._conditions.active_assignments(delta.holder_ref, delta.dimension_ref, delta.context_ref)
+        active = self._conditions.active_assignments(delta.holder_ref, delta.dimension_ref, delta.dimension_revision, delta.context_ref, delta.effective_time_ref)
         if delta.from_value_ref is not None:
-            if not any(item.payload.value_ref == delta.from_value_ref for item in active):
+            if not any(
+                item.payload.value_ref == delta.from_value_ref
+                and item.payload.value_revision == delta.from_value_revision
+                for item in active
+            ):
                 raise StateTransitionError("state delta from_value does not match active state")
         if delta.operation in {ChangeOperation.INCREASE, ChangeOperation.DECREASE}:
             if delta.to_value_ref is None:
@@ -170,7 +207,8 @@ class StateTimelineProjector:
         self._validator.validate(delta)
         dimension = self._schemas.schema(delta.dimension_ref, delta.dimension_revision)
         assert isinstance(dimension, StateDimensionSchema)
-        active = list(self._conditions.active_assignments(delta.holder_ref, delta.dimension_ref, delta.context_ref))
+        self._require_append_only_timeline(delta)
+        active = list(self._conditions.active_assignments(delta.holder_ref, delta.dimension_ref, delta.dimension_revision, delta.context_ref, delta.effective_time_ref))
         mutations: list[AssignmentMutation] = []
         projected_active = [stored.payload for stored in active]
 
@@ -251,22 +289,61 @@ class StateTimelineProjector:
         )
 
 
+    def _require_append_only_timeline(self, delta: StateDelta) -> None:
+        effective = parse_timeline_timestamp(delta.effective_time_ref)
+        latest: dict[str, StoredRecord[StateAssignment]] = {}
+        for stored in self._resolver.records(RecordKind.STATE_ASSIGNMENT):
+            item = stored.payload
+            if not isinstance(item, StateAssignment):
+                continue
+            if (
+                item.holder_ref != delta.holder_ref
+                or item.dimension_ref != delta.dimension_ref
+                or item.dimension_revision != delta.dimension_revision
+                or item.context_ref not in {"global", delta.context_ref}
+            ):
+                continue
+            prior = latest.get(item.assignment_ref)
+            if prior is None or stored.revision > prior.revision:
+                latest[item.assignment_ref] = stored
+        boundaries = []
+        for stored in latest.values():
+            item = stored.payload
+            for value in (item.valid_from, item.valid_to):
+                parsed = parse_optional_timeline_timestamp(value)
+                if parsed is not None:
+                    boundaries.append(parsed)
+        if boundaries and effective < max(boundaries):
+            raise StateTransitionError(
+                "retroactive/out-of-order transition requires replay/invalidation; "
+                "Phase 12 will not rewrite an already advanced timeline in place"
+            )
+
+
 def _derived_ref(prefix: str, *parts: str) -> str:
     payload = "\x1f".join(parts).encode("utf-8")
     return f"{prefix}:{sha256(payload).hexdigest()[:24]}"
 
 
-def require_concrete_timeline_timestamp(value: str) -> None:
-    """Require a concrete timeline timestamp rather than interpreting an opaque time ref.
-
-    Phase 11 does not silently dereference semantic time referents.  A later generic
-    time-resolution stage may supply a concrete timestamp, but the timeline projector
-    only commits intervals after that resolution is explicit.
-    """
+def parse_timeline_timestamp(value: str) -> datetime:
+    """Parse a concrete, timezone-aware ISO-8601 timestamp for semantic timelines."""
     try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except (TypeError, ValueError) as exc:
         raise StateTransitionError(
             "state timeline projection requires an explicit ISO-8601 effective timestamp; "
             "unresolved time referents must remain a transition frontier"
         ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise StateTransitionError(
+            "state timeline timestamps require an explicit timezone/UTC offset for deterministic ordering"
+        )
+    return parsed
+
+
+def parse_optional_timeline_timestamp(value: str | None) -> datetime | None:
+    return None if value is None else parse_timeline_timestamp(value)
+
+
+def require_concrete_timeline_timestamp(value: str) -> None:
+    parse_timeline_timestamp(value)
