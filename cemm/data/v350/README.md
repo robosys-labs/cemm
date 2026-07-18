@@ -15,8 +15,13 @@ SQLite compiler. It is reviewed source, not Python ontology authority.
   form-sense links, construction contracts, and adapter-produced syntax evidence.
 - **Phase 8** owns joint referent/claim grounding hypotheses and reviewable
   provisional, merge, and split proposals.
-- **Phase 9 and later** own UOL factor-graph composition, epistemic admission,
-  transitions, realization, migration, and runtime cutover.
+- **Phase 9** owns cycle-local UOL factor-graph composition, bounded meaning
+  hypothesis solving, partial-understanding frontiers, and selection traces.
+- **Phase 10** owns attributed claim occurrence/history, independent epistemic
+  admission, source/evidence assessment, four-state truth projection, and
+  admission-lineage knowledge projection.
+- **Phase 11 and later** own event transitions, downstream inference/effects,
+  realization, migration, and runtime cutover.
 
 Empty later-phase modules are explicit boundaries. They are not silently
 replaced by code defaults.
@@ -74,6 +79,48 @@ not create actual-world knowledge, mutate identity, merge referents, or treat a
 sole provisional candidate as resolved. Referent remains the only identity-bearing
 semantic filler family.
 
+## Phase-9 UOL composition layers
+
+```text
+9A  exact sense/schema/referent variables from pinned Phase-7/8 evidence
+9B  explicit port, type, context, time, scope, and evidence constraints
+9C  traceable discourse/world/default/complexity ranking factors
+9D  bounded deterministic beam search with hard-pruning trace
+9E  partial-safe UOL materialization with explicit open variables
+9F  close-alternative preservation and selection assessment
+9G  deterministic review contract and competence verifier
+```
+
+The solver has no predicate, event, type, or language knowledge. Exact reviewed
+schema revisions and their use/port contracts compile into finite factor tables
+before search. Grounding confidence is decomposed into named evidence factors;
+it is not hidden in one opaque candidate score. Event mentions remain mentioned,
+claims remain unadmitted, defaults only rank, and no state/capability delta is
+committed by composition. Meaning selection never consults target-language
+realization.
+
+## Phase-10 epistemic layers
+
+```text
+10A structural claim occurrence compilation from selected UOL
+10B attributed source/reported-context separation
+10C append-only claim history with source-local correction/retraction
+10D independent revisioned source authority/reliability/access/bias assessment
+10E explicit policy + authorization + proof admission gate
+10F independent support/opposition admissions and derived four-state truth
+10G knowledge projection retaining exact admission lineage
+10H deterministic contract/competence verification
+```
+
+A grammatical or well-grounded claim remains attributed evidence by default.
+Actual-world support/opposition is a separate durable `EpistemicAdmissionRecord`
+that requires an explicit authorization reference, proof, source evidence, exact durable source-assessment records, and
+policy satisfaction. Retractions are separately authorized/proof-bearing and may
+only retract the same source lineage. `BOTH` is derived from independent active
+support and opposition records; no single record can assert it. Corrections and
+retractions are append-only history rather than destructive rewrites. Phase 10
+never emits state or capability deltas.
+
 ## Critical invariants
 
 - A storage kind is never a semantic ontology type.
@@ -88,6 +135,11 @@ semantic filler family.
 - Code switching is represented by span-local evidence rather than one utterance-wide language label.
 - Unknown names and typed mentions remain explicit grounding frontiers.
 - Claims preserve source and audience but have no actual-world admission by default.
+- Actual-world epistemic admission requires explicit durable authorization, proof, source evidence, revisioned source-assessment records, and policy satisfaction.
+- Metadata never authorizes context crossing; cross-context knowledge requires resolvable active admission lineage.
+- SQLite schema changes are versioned; Phase-10 normalized authorities require schema version 3.
+- Claim corrections/retractions and admission retractions are append-only and source-local.
+- Four-state `both` is derived from independent support/opposition; it is never one record's truth flag.
 - Identity merge/split and provisional referent creation require reviewable proposals.
 - Truth support, epistemic basis, proposition polarity, change direction, and evaluative valence remain separate axes.
 - Importance/valence are assessment vocabularies, and capability status is record-scoped; none is silently materialized as ordinary holder state.
@@ -98,6 +150,8 @@ semantic filler family.
 ```bash
 python tools/verify_v350_foundation.py
 python tools/verify_v350_language_grounding.py
+python tools/verify_v350_composition.py
+python tools/verify_v350_epistemics.py
 ```
 
 The foundation verifier audits only manifest modules owned by Phases 0–6, so the
@@ -105,4 +159,7 @@ frozen foundation contract cannot be changed accidentally by later reviewed
 packages. The language/grounding verifier audits `language_grounding_contract.json`,
 checks pinned competence hashes and source fingerprints, compiles twice, requires
 byte-identical SQLite output, opens the artifact immutably, and executes the
-composition, multilingual, and grounding competence suites.
+composition, multilingual, and grounding competence suites. The Phase-9 verifier audits the pinned composition contract, proves deterministic compilation, and executes bounded multilingual UOL composition cases without admitting claims or firing transitions. The Phase-10 verifier audits the
+pinned epistemic contract, deterministic compilation, attributed claim/history
+separation, explicit authorization/proof admission, source-local retraction, and
+four-state truth projection without state/capability effects.

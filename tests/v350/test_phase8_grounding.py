@@ -157,14 +157,20 @@ def mention(ref, surface, *, target=MentionTargetClass.REFERENT, types=(), stora
 
 
 def test_self_deictic_resolves_only_self(grounder) -> None:
-    _, result = grounder.ground_text("I", source_ref="utterance:self")
+    anchor = DiscourseAnchor(
+        "anchor:self", "referent:self", "actual", 1.0, 0,
+        role_refs=("self", "speaker"), evidence_refs=("evidence:anchor:self",),
+    )
+    _, result = grounder.ground_text(
+        "I", source_ref="utterance:self", context_ref="actual", discourse_anchors=(anchor,)
+    )
     assert result.selected is not None
     assert dict(result.selected.mention_to_target) == {result.mentions[0].mention_ref: "referent:self"}
     assert {item.target_ref for item in result.candidates} == {"referent:self"}
 
 
 def test_unknown_name_remains_provisional_frontier_not_resolved(grounder) -> None:
-    _, result = grounder.ground_text("UnknownName", source_ref="utterance:unknown")
+    _, result = grounder.ground_text("UnknownName", source_ref="utterance:unknown", context_ref="actual")
     assert result.selected is None
     assert result.frontier_refs
     assert result.metadata["provisional_frontier_only"] is True
@@ -173,7 +179,7 @@ def test_unknown_name_remains_provisional_frontier_not_resolved(grounder) -> Non
 
 
 def test_same_name_candidates_preserve_identity_ambiguity(grounder) -> None:
-    _, result = grounder.ground_text("Alex", source_ref="utterance:alex")
+    _, result = grounder.ground_text("Alex", source_ref="utterance:alex", context_ref="actual")
     resolved = [item for item in result.candidates if item.origin == CandidateOrigin.STORE]
     assert {item.target_ref for item in resolved} == {"referent:alex:a", "referent:alex:b"}
     assert result.selected is None
@@ -191,7 +197,7 @@ def test_discourse_anchor_disambiguates_anaphoric_and_addressee_grounding(ground
         type_refs=("type:software_agent",),
         evidence_refs=("evidence:anchor:alex:a",),
     )
-    _, result = grounder.ground_text("you", source_ref="utterance:addressee", discourse_anchors=(anchor,))
+    _, result = grounder.ground_text("you", source_ref="utterance:addressee", context_ref="actual", discourse_anchors=(anchor,))
     assert result.selected is not None
     assert tuple(dict(result.selected.mention_to_target).values()) == ("referent:alex:a",)
     assert not {item.target_ref for item in result.candidates if item.origin == CandidateOrigin.STORE} - {"referent:alex:a"}
@@ -250,7 +256,7 @@ def test_demonstrative_jointly_considers_multimodal_and_system_output_only(groun
         evidence_refs=("evidence:output",),
     )
     _, result = grounder.ground_text(
-        "this", source_ref="utterance:this",
+        "this", source_ref="utterance:this", context_ref="actual",
         multimodal_tracks=(track,), system_outputs=(output,),
     )
     assert {item.origin for item in result.candidates} >= {CandidateOrigin.MULTIMODAL, CandidateOrigin.SYSTEM_OUTPUT}
@@ -312,7 +318,7 @@ def test_joint_solver_enforces_coreference_and_distinctness() -> None:
 
 
 def test_lexical_event_predicate_introduces_provisional_occurrence_not_arbitrary_history(grounder) -> None:
-    _, grounding = grounder.ground_text("say", source_ref="utterance:event-introduction")
+    _, grounding = grounder.ground_text("say", source_ref="utterance:event-introduction", context_ref="actual")
     event = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.EVENT)
     candidates = [item for item in grounding.candidates if item.mention_ref == event.mention_ref]
     assert candidates
@@ -330,14 +336,19 @@ def test_claim_source_audience_and_attributed_context_are_preserved_without_admi
         role_refs=("addressee", "audience"), type_refs=("type:software_agent",),
         evidence_refs=("evidence:claim:addressee",),
     )
+    self_anchor = DiscourseAnchor(
+        "anchor:claim:self", "referent:self", "actual", 1.0, 4,
+        role_refs=("self", "speaker"), evidence_refs=("evidence:claim:self",),
+    )
     _, grounding = grounder.ground_text(
-        "I say you", source_ref="utterance:claim", discourse_anchors=(addressee,)
+        "I say you", source_ref="utterance:claim", context_ref="actual",
+        discourse_anchors=(addressee, self_anchor),
     )
     claim = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.EVENT)
     source = next(item for item in grounding.mentions if item.surface == "I")
     audience = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.AUDIENCE)
     assert grounding.assignments
-    compiled = ClaimGroundingCompiler().compile(
+    compiled = ClaimGroundingCompiler(grounder.store).compile(
         grounding,
         claim_mention_ref=claim.mention_ref,
         proposition_ref="referent:foundation:proposition-example",
@@ -361,17 +372,21 @@ def test_claim_compiler_rejects_role_and_storage_category_errors(grounder) -> No
         role_refs=("addressee", "audience"), type_refs=("type:software_agent",),
         evidence_refs=("evidence:claim:validation",),
     )
+    self_anchor = DiscourseAnchor(
+        "anchor:claim:validation:self", "referent:self", "actual", 1.0, 5,
+        role_refs=("self", "speaker"), evidence_refs=("evidence:claim:validation:self",),
+    )
     _, grounding = grounder.ground_text(
-        "I say you", source_ref="utterance:claim:validation",
-        discourse_anchors=(addressee,),
+        "I say you", source_ref="utterance:claim:validation", context_ref="actual",
+        discourse_anchors=(addressee, self_anchor),
     )
     claim = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.EVENT)
     source = next(item for item in grounding.mentions if item.surface == "I")
     audience = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.AUDIENCE)
     assignment_ref = grounding.assignments[0].assignment_ref
-    compiler = ClaimGroundingCompiler()
+    compiler = ClaimGroundingCompiler(grounder.store)
 
-    with pytest.raises(ClaimGroundingError, match="event or claim"):
+    with pytest.raises(ClaimGroundingError, match="event-occurrence storage"):
         compiler.compile(
             grounding, claim_mention_ref=source.mention_ref,
             proposition_ref="referent:foundation:proposition-example",
@@ -379,7 +394,7 @@ def test_claim_compiler_rejects_role_and_storage_category_errors(grounder) -> No
             reported_context_ref="context:reported:invalid-claim",
             assignment_ref=assignment_ref,
         )
-    with pytest.raises(ClaimGroundingError, match="source mention is not referential"):
+    with pytest.raises(ClaimGroundingError, match="claim source"):
         compiler.compile(
             grounding, claim_mention_ref=claim.mention_ref,
             proposition_ref="referent:foundation:proposition-example",
@@ -387,7 +402,7 @@ def test_claim_compiler_rejects_role_and_storage_category_errors(grounder) -> No
             reported_context_ref="context:reported:invalid-source",
             assignment_ref=assignment_ref,
         )
-    with pytest.raises(ClaimGroundingError, match="audience mention is not referential"):
+    with pytest.raises(ClaimGroundingError, match="claim audience"):
         compiler.compile(
             grounding, claim_mention_ref=claim.mention_ref,
             proposition_ref="referent:foundation:proposition-example",
@@ -399,11 +414,18 @@ def test_claim_compiler_rejects_role_and_storage_category_errors(grounder) -> No
 
 
 def test_claim_compiler_requires_explicit_assignment_when_ambiguous(grounder) -> None:
-    _, grounding = grounder.ground_text("Alex say I", source_ref="utterance:ambiguous-claim")
+    self_anchor = DiscourseAnchor(
+        "anchor:ambiguous-claim:self", "referent:self", "actual", 1.0, 6,
+        role_refs=("self", "speaker"), evidence_refs=("evidence:ambiguous-claim:self",),
+    )
+    _, grounding = grounder.ground_text(
+        "Alex say I", source_ref="utterance:ambiguous-claim", context_ref="actual",
+        discourse_anchors=(self_anchor,),
+    )
     claim = next(item for item in grounding.mentions if item.target_class == MentionTargetClass.EVENT)
     source = next(item for item in grounding.mentions if item.surface == "Alex")
     with pytest.raises(ClaimGroundingError, match="explicit assignment"):
-        ClaimGroundingCompiler().compile(
+        ClaimGroundingCompiler(grounder.store).compile(
             grounding,
             claim_mention_ref=claim.mention_ref,
             proposition_ref="referent:foundation:proposition-example",
@@ -414,7 +436,7 @@ def test_claim_compiler_requires_explicit_assignment_when_ambiguous(grounder) ->
 
 
 def test_provisional_referent_is_reviewable_patch_not_automatic_mutation(store, grounder) -> None:
-    _, result = grounder.ground_text("NewEntity", source_ref="utterance:new-entity")
+    _, result = grounder.ground_text("NewEntity", source_ref="utterance:new-entity", context_ref="actual")
     mention_item = result.mentions[0]
     frontier = result.frontier_refs[0]
     planner = ProvisionalReferentPlanner()
@@ -423,7 +445,8 @@ def test_provisional_referent_is_reviewable_patch_not_automatic_mutation(store, 
         storage_kind=StorageKind.ORDINARY,
     )
     graph_patch = planner.graph_patch(
-        proposal, source_ref="utterance:new-entity", expected_store_revision=store.revision
+        proposal, source_ref="utterance:new-entity", expected_store_revision=store.revision,
+        store=store,
     )
     assert store.get_record(RecordKind.REFERENT, frontier) is None
     assert {item.record_kind for item in graph_patch.operations} == {
@@ -438,7 +461,7 @@ def test_provisional_referent_is_reviewable_patch_not_automatic_mutation(store, 
 
 
 def test_identity_merge_and_split_are_review_only_proposals(grounder) -> None:
-    _, result = grounder.ground_text("Alex", source_ref="utterance:identity-review")
+    _, result = grounder.ground_text("Alex", source_ref="utterance:identity-review", context_ref="actual")
     engine = IdentityProposalEngine()
     merges = engine.merge_proposals(result.candidates, context_ref="actual")
     assert merges
@@ -456,8 +479,8 @@ def test_identity_merge_and_split_are_review_only_proposals(grounder) -> None:
 
 
 def test_grounding_is_deterministic(grounder) -> None:
-    first = grounder.ground_text("Alex", source_ref="utterance:deterministic")[1]
-    second = grounder.ground_text("Alex", source_ref="utterance:deterministic")[1]
+    first = grounder.ground_text("Alex", source_ref="utterance:deterministic", context_ref="actual")[1]
+    second = grounder.ground_text("Alex", source_ref="utterance:deterministic", context_ref="actual")[1]
     assert first == second
     assert first.fingerprint == second.fingerprint
 
@@ -550,7 +573,7 @@ def test_system_output_preserves_both_targets_and_content_referents(store) -> No
         "mention:system-output:both",
         "that",
         target=MentionTargetClass.SYSTEM_OUTPUT,
-        metadata={"structural_targets": ("deictic:system_output",)},
+        metadata={"grounding_channels": ("system_output",)},
     )
     output = SystemOutputAnchor(
         output_ref="output:target-and-content",

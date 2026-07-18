@@ -107,3 +107,25 @@ def test_lint_rejects_targetless_response_goal(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert any(item.code == "targetless_response_goal" for item in scan_file(path))
+
+
+def test_lint_rejects_named_semantic_authority_literal_in_cognition_kernel(tmp_path: Path) -> None:
+    directory = tmp_path / "grounding"
+    directory.mkdir()
+    path = directory / "bad.py"
+    path.write_text(
+        "def f(candidate):\n    return candidate.type_refs == ('type:agent',)\n",
+        encoding="utf-8",
+    )
+    assert any(item.code == "named_semantic_authority_literal" for item in scan_file(path))
+
+
+def test_lint_rejects_implicit_actual_context_default_in_cognition_kernel(tmp_path: Path) -> None:
+    directory = tmp_path / "composition"
+    directory.mkdir()
+    path = directory / "bad.py"
+    path.write_text(
+        "def compose(*, context_ref: str = 'actual'):\n    return context_ref\n",
+        encoding="utf-8",
+    )
+    assert any(item.code == "implicit_actual_context_default" for item in scan_file(path))

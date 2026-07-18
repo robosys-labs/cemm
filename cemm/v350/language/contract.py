@@ -90,12 +90,17 @@ class LanguageGroundingPackageAuditor:
 
         metadata = dict(loader.manifest.metadata)
         required_metadata = {
-            "phase": "8",
             "language_phase": "7",
             "grounding_phase": "8",
             "language_grounding_contract_ref": self.contract.contract_ref,
             "language_grounding_base_commit": self.contract.base_commit,
         }
+        try:
+            current_phase = int(metadata.get("phase", 0))
+        except (TypeError, ValueError):
+            current_phase = 0
+        if current_phase < 8:
+            issues.append(f"manifest:phase:expected>=8:actual={metadata.get('phase')}")
         for key, value in required_metadata.items():
             if str(metadata.get(key)) != value:
                 issues.append(f"manifest:{key}:expected={value}:actual={metadata.get(key)}")

@@ -31,6 +31,8 @@ class RecordKind(StrEnum):
     PROPOSITION = "proposition"
     CLAIM_OCCURRENCE = "claim_occurrence"
     CLAIM_RECORD = "claim_record"
+    CLAIM_HISTORY = "claim_history"
+    EPISTEMIC_ADMISSION = "epistemic_admission"
     EVENT_OCCURRENCE = "event_occurrence"
     STATE_ASSIGNMENT = "state_assignment"
     STATE_DELTA = "state_delta"
@@ -38,6 +40,7 @@ class RecordKind(StrEnum):
     CAPABILITY_DELTA = "capability_delta"
     KNOWLEDGE = "knowledge"
     EVIDENCE = "evidence"
+    SOURCE_ASSESSMENT = "source_assessment"
     IMPACT_ASSESSMENT = "impact_assessment"
     IMPORTANCE_ASSESSMENT = "importance_assessment"
     DEFAULT_RULE = "default_rule"
@@ -63,6 +66,30 @@ class KnowledgeStatus(StrEnum):
     OPPOSED = "opposed"
     BOTH = "both"
     UNDETERMINED = "undetermined"
+    RETRACTED = "retracted"
+    SUPERSEDED = "superseded"
+
+
+
+
+class ClaimHistoryAction(StrEnum):
+    ASSERT = "assert"
+    CORRECT = "correct"
+    RETRACT = "retract"
+    SUPERSEDE = "supersede"
+
+
+class AdmissionDecision(StrEnum):
+    PRESERVE_ATTRIBUTED = "preserve_attributed"
+    ADMIT_SUPPORT = "admit_support"
+    ADMIT_OPPOSITION = "admit_opposition"
+    DEFER = "defer"
+    DENY = "deny"
+    RETRACT = "retract"
+
+
+class AdmissionLifecycleStatus(StrEnum):
+    ACTIVE = "active"
     RETRACTED = "retracted"
     SUPERSEDED = "superseded"
 
@@ -124,6 +151,48 @@ class EvidenceRecord:
             raise ValueError("evidence span requires both start and end")
         if self.span_start is not None and (self.span_start < 0 or self.span_end < self.span_start):
             raise ValueError("invalid evidence span")
+
+
+@dataclass(frozen=True, slots=True)
+class SourceAssessmentRecord:
+    assessment_ref: str
+    source_ref: str
+    authority: float
+    reliability: float
+    access_quality: float
+    bias_risk: float
+    context_ref: str
+    evidence_refs: tuple[str, ...]
+    revision: int = 1
+    supersedes_revision: int | None = None
+    valid_from: str | None = None
+    valid_to: str | None = None
+    permission_ref: str = "conversation"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.assessment_ref, "source assessment_ref"),
+            (self.source_ref, "source assessment source_ref"),
+            (self.context_ref, "source assessment context_ref"),
+            (self.permission_ref, "source assessment permission_ref"),
+        ):
+            _require_ref(value, label)
+        if self.revision < 1:
+            raise ValueError("source assessment revision must be positive")
+        if self.supersedes_revision is not None and not 1 <= self.supersedes_revision < self.revision:
+            raise ValueError("source assessment supersedes_revision must target an older revision")
+        for value, label in (
+            (self.authority, "source authority"),
+            (self.reliability, "source reliability"),
+            (self.access_quality, "source access quality"),
+            (self.bias_risk, "source bias risk"),
+        ):
+            _confidence(value, label)
+        _require_unique(self.evidence_refs, "source-assessment evidence")
+        if not self.evidence_refs:
+            raise ValueError("source assessment requires evidence")
+        _interval(self.valid_from, self.valid_to, "source assessment")
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +281,117 @@ class ClaimRecord:
         _require_unique(self.evidence_refs, "claim-record evidence")
         if self.source_context_ref == self.reported_context_ref:
             raise ValueError("claim record must preserve source-attributed content context")
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimHistoryRecord:
+    history_ref: str
+    claim_record_ref: str
+    action: ClaimHistoryAction
+    source_ref: str
+    context_ref: str
+    evidence_refs: tuple[str, ...]
+    target_claim_record_ref: str | None = None
+    occurred_at: str | None = None
+    revision: int = 1
+    supersedes_revision: int | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.history_ref, "history_ref"),
+            (self.claim_record_ref, "claim_record_ref"),
+            (self.source_ref, "source_ref"),
+            (self.context_ref, "context_ref"),
+        ):
+            _require_ref(value, label)
+        if self.revision < 1:
+            raise ValueError("claim history revision must be positive")
+        if self.supersedes_revision is not None and not 1 <= self.supersedes_revision < self.revision:
+            raise ValueError("claim history supersedes_revision must target an older revision")
+        _require_unique(self.evidence_refs, "claim-history evidence")
+        if not self.evidence_refs:
+            raise ValueError("claim history requires evidence")
+        if self.action in {ClaimHistoryAction.CORRECT, ClaimHistoryAction.RETRACT, ClaimHistoryAction.SUPERSEDE}:
+            if not self.target_claim_record_ref:
+                raise ValueError(f"{self.action.value} claim history requires a target claim")
+
+
+@dataclass(frozen=True, slots=True)
+class EpistemicAdmissionRecord:
+    admission_ref: str
+    proposition_ref: str
+    source_context_ref: str
+    target_context_ref: str
+    decision: AdmissionDecision
+    truth_status: KnowledgeStatus
+    confidence: float
+    source_refs: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    proof_refs: tuple[str, ...]
+    policy_ref: str
+    source_assessment_pins: tuple[tuple[str, int], ...] = ()
+    authorization_ref: str | None = None
+    permission_ref: str = "conversation"
+    sensitivity: str = "normal"
+    lifecycle_status: AdmissionLifecycleStatus = AdmissionLifecycleStatus.ACTIVE
+    valid_time_ref: str | None = None
+    valid_from: str | None = None
+    valid_to: str | None = None
+    retracts_admission_ref: str | None = None
+    revision: int = 1
+    supersedes_revision: int | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.admission_ref, "admission_ref"),
+            (self.proposition_ref, "proposition_ref"),
+            (self.source_context_ref, "source_context_ref"),
+            (self.target_context_ref, "target_context_ref"),
+            (self.policy_ref, "policy_ref"),
+            (self.permission_ref, "permission_ref"),
+            (self.sensitivity, "sensitivity"),
+        ):
+            _require_ref(value, label)
+        if self.revision < 1:
+            raise ValueError("epistemic admission revision must be positive")
+        if self.supersedes_revision is not None and not 1 <= self.supersedes_revision < self.revision:
+            raise ValueError("epistemic admission supersedes_revision must target an older revision")
+        _confidence(self.confidence, "epistemic admission confidence")
+        _require_unique(self.source_refs, "epistemic admission sources")
+        _require_unique(self.source_assessment_pins, "epistemic admission source assessments")
+        for assessment_ref, assessment_revision in self.source_assessment_pins:
+            _require_ref(assessment_ref, "epistemic admission source assessment ref")
+            if assessment_revision < 1:
+                raise ValueError("epistemic admission source assessment revision must be positive")
+        _require_unique(self.evidence_refs, "epistemic admission evidence")
+        _require_unique(self.proof_refs, "epistemic admission proofs")
+        _interval(self.valid_from, self.valid_to, "epistemic admission")
+        admitted = {AdmissionDecision.ADMIT_SUPPORT, AdmissionDecision.ADMIT_OPPOSITION}
+        if self.decision in admitted:
+            if not self.authorization_ref or not self.authorization_ref.strip():
+                raise ValueError("actual-world admission requires explicit authorization")
+            if not self.source_refs or not self.source_assessment_pins or not self.evidence_refs or not self.proof_refs:
+                raise ValueError("actual-world admission requires source assessments, source, evidence, and proof")
+            expected = KnowledgeStatus.SUPPORTED if self.decision == AdmissionDecision.ADMIT_SUPPORT else KnowledgeStatus.OPPOSED
+            if self.truth_status != expected:
+                raise ValueError("admission decision and truth status disagree")
+            if self.lifecycle_status != AdmissionLifecycleStatus.ACTIVE:
+                raise ValueError("new admitted support/opposition must be active")
+        elif self.decision == AdmissionDecision.RETRACT:
+            if not self.retracts_admission_ref:
+                raise ValueError("retraction must identify the admission being retracted")
+            if not self.authorization_ref or not self.authorization_ref.strip():
+                raise ValueError("actual-world admission retraction requires explicit authorization")
+            if not self.source_refs or not self.evidence_refs or not self.proof_refs:
+                raise ValueError("actual-world admission retraction requires source, evidence, and proof")
+            if self.truth_status != KnowledgeStatus.UNDETERMINED:
+                raise ValueError("retraction is not itself support or opposition")
+        elif self.truth_status != KnowledgeStatus.UNDETERMINED:
+            raise ValueError("non-admission decisions cannot assert truth support")
+        if self.truth_status == KnowledgeStatus.BOTH:
+            raise ValueError("four-state BOTH is derived from independent admissions, never one admission record")
 
 
 @dataclass(frozen=True, slots=True)

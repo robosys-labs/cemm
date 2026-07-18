@@ -49,11 +49,16 @@ from ..uol.model import (
 from .model import (
     AssertionStatus,
     AssignmentStatus,
+    AdmissionDecision,
+    AdmissionLifecycleStatus,
     CapabilityInstance,
+    ClaimHistoryAction,
+    ClaimHistoryRecord,
     ClaimRecord,
     ConditionTruth,
     DefaultRuleRecord,
     DependencyEdge,
+    EpistemicAdmissionRecord,
     EvidenceRecord,
     IdentityFacetRecord,
     KnowledgeRecord,
@@ -61,6 +66,7 @@ from .model import (
     MaterializedViewRecord,
     RecordKind,
     ReferentTypeAssertion,
+    SourceAssessmentRecord,
     StateAssignment,
 )
 
@@ -155,6 +161,29 @@ def _identity_facet(value: Mapping[str, Any]) -> IdentityFacetRecord:
         raise RecordDecodeError(str(exc)) from exc
 
 
+def _source_assessment(value: Mapping[str, Any]) -> SourceAssessmentRecord:
+    data = dict(value)
+    try:
+        return SourceAssessmentRecord(
+            assessment_ref=str(data["assessment_ref"]),
+            source_ref=str(data["source_ref"]),
+            authority=float(data["authority"]),
+            reliability=float(data["reliability"]),
+            access_quality=float(data["access_quality"]),
+            bias_risk=float(data["bias_risk"]),
+            context_ref=str(data["context_ref"]),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            valid_from=None if data.get("valid_from") is None else str(data["valid_from"]),
+            valid_to=None if data.get("valid_to") is None else str(data["valid_to"]),
+            permission_ref=str(data.get("permission_ref", "conversation")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RecordDecodeError(str(exc)) from exc
+
+
 def _claim_record(value: Mapping[str, Any]) -> ClaimRecord:
     data = dict(value)
     try:
@@ -169,6 +198,58 @@ def _claim_record(value: Mapping[str, Any]) -> ClaimRecord:
             permission_ref=str(data.get("permission_ref", "conversation")),
             evidence_refs=_tuple_str(data.get("evidence_refs")),
             superseded_by=None if data.get("superseded_by") is None else str(data["superseded_by"]),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RecordDecodeError(str(exc)) from exc
+
+
+def _claim_history(value: Mapping[str, Any]) -> ClaimHistoryRecord:
+    data = dict(value)
+    try:
+        return ClaimHistoryRecord(
+            history_ref=str(data["history_ref"]),
+            claim_record_ref=str(data["claim_record_ref"]),
+            action=ClaimHistoryAction(data["action"]),
+            source_ref=str(data["source_ref"]),
+            context_ref=str(data["context_ref"]),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            target_claim_record_ref=None if data.get("target_claim_record_ref") is None else str(data["target_claim_record_ref"]),
+            occurred_at=None if data.get("occurred_at") is None else str(data["occurred_at"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RecordDecodeError(str(exc)) from exc
+
+
+def _epistemic_admission(value: Mapping[str, Any]) -> EpistemicAdmissionRecord:
+    data = dict(value)
+    try:
+        return EpistemicAdmissionRecord(
+            admission_ref=str(data["admission_ref"]),
+            proposition_ref=str(data["proposition_ref"]),
+            source_context_ref=str(data["source_context_ref"]),
+            target_context_ref=str(data["target_context_ref"]),
+            decision=AdmissionDecision(data["decision"]),
+            truth_status=KnowledgeStatus(data["truth_status"]),
+            confidence=float(data["confidence"]),
+            source_refs=_tuple_str(data.get("source_refs")),
+            source_assessment_pins=tuple((str(item[0]), int(item[1])) for item in data.get("source_assessment_pins", ())),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            proof_refs=_tuple_str(data.get("proof_refs")),
+            policy_ref=str(data["policy_ref"]),
+            authorization_ref=None if data.get("authorization_ref") is None else str(data["authorization_ref"]),
+            permission_ref=str(data.get("permission_ref", "conversation")),
+            sensitivity=str(data.get("sensitivity", "normal")),
+            lifecycle_status=AdmissionLifecycleStatus(data.get("lifecycle_status", AdmissionLifecycleStatus.ACTIVE.value)),
+            valid_time_ref=None if data.get("valid_time_ref") is None else str(data["valid_time_ref"]),
+            valid_from=None if data.get("valid_from") is None else str(data["valid_from"]),
+            valid_to=None if data.get("valid_to") is None else str(data["valid_to"]),
+            retracts_admission_ref=None if data.get("retracts_admission_ref") is None else str(data["retracts_admission_ref"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            metadata=dict(data.get("metadata", {})),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise RecordDecodeError(str(exc)) from exc
@@ -323,6 +404,8 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.PROPOSITION: proposition_from_document,
     RecordKind.CLAIM_OCCURRENCE: claim_from_document,
     RecordKind.CLAIM_RECORD: _claim_record,
+    RecordKind.CLAIM_HISTORY: _claim_history,
+    RecordKind.EPISTEMIC_ADMISSION: _epistemic_admission,
     RecordKind.EVENT_OCCURRENCE: event_from_document,
     RecordKind.STATE_ASSIGNMENT: _state_assignment,
     RecordKind.STATE_DELTA: state_delta_from_document,
@@ -330,6 +413,7 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.CAPABILITY_DELTA: capability_delta_from_document,
     RecordKind.KNOWLEDGE: _knowledge,
     RecordKind.EVIDENCE: _evidence,
+    RecordKind.SOURCE_ASSESSMENT: _source_assessment,
     RecordKind.IMPACT_ASSESSMENT: impact_from_document,
     RecordKind.IMPORTANCE_ASSESSMENT: importance_from_document,
     RecordKind.DEFAULT_RULE: _default_rule,
@@ -397,6 +481,8 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.PROPOSITION: (PropositionReferent,),
         RecordKind.CLAIM_OCCURRENCE: (ClaimOccurrence,),
         RecordKind.CLAIM_RECORD: (ClaimRecord,),
+        RecordKind.CLAIM_HISTORY: (ClaimHistoryRecord,),
+        RecordKind.EPISTEMIC_ADMISSION: (EpistemicAdmissionRecord,),
         RecordKind.EVENT_OCCURRENCE: (EventOccurrence,),
         RecordKind.STATE_ASSIGNMENT: (StateAssignment,),
         RecordKind.STATE_DELTA: (StateDelta,),
@@ -404,6 +490,7 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.CAPABILITY_DELTA: (CapabilityDelta,),
         RecordKind.KNOWLEDGE: (KnowledgeRecord,),
         RecordKind.EVIDENCE: (EvidenceRecord,),
+        RecordKind.SOURCE_ASSESSMENT: (SourceAssessmentRecord,),
         RecordKind.IMPACT_ASSESSMENT: (ImpactAssessment,),
         RecordKind.IMPORTANCE_ASSESSMENT: (ImportanceAssessment,),
         RecordKind.DEFAULT_RULE: (DefaultRuleRecord,),
@@ -435,6 +522,9 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.PROPOSITION: "proposition_ref",
         RecordKind.CLAIM_OCCURRENCE: "claim_ref",
         RecordKind.CLAIM_RECORD: "claim_record_ref",
+        RecordKind.CLAIM_HISTORY: "history_ref",
+        RecordKind.EPISTEMIC_ADMISSION: "admission_ref",
+        RecordKind.SOURCE_ASSESSMENT: "assessment_ref",
         RecordKind.EVENT_OCCURRENCE: "event_ref",
         RecordKind.STATE_ASSIGNMENT: "assignment_ref",
         RecordKind.STATE_DELTA: "delta_ref",
@@ -464,7 +554,7 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.REFERENT, RecordKind.DEFAULT_RULE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM,
         RecordKind.LEXICAL_SENSE, RecordKind.FORM_SENSE_LINK,
-        RecordKind.CONSTRUCTION,
+        RecordKind.CONSTRUCTION, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -484,6 +574,10 @@ def record_context(record_kind: RecordKind | str, record: Any) -> str | None:
         return str(record.context_ref)
     if resolved == RecordKind.CLAIM_OCCURRENCE:
         return str(record.source_context_ref)
+    if resolved == RecordKind.CLAIM_HISTORY:
+        return str(record.context_ref)
+    if resolved == RecordKind.EPISTEMIC_ADMISSION:
+        return str(record.target_context_ref)
     return None
 
 
@@ -492,7 +586,7 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
     if resolved in {
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
-        RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION,
+        RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION, RecordKind.EPISTEMIC_ADMISSION,
     }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):
@@ -525,7 +619,8 @@ def record_fingerprints(record_kind: RecordKind | str, record: Any) -> tuple[str
         return record.content_fingerprint, record.record_fingerprint
     content_document = dict(document)
     for key in (
-        "evidence_refs", "proof_refs", "provenance_refs", "source_refs", "metadata",
+        "evidence_refs", "proof_refs", "provenance_refs", "source_refs", "source_assessment_pins",
+        "authorization_ref", "metadata",
         "confidence", "revision", "superseded_by",
     ):
         content_document.pop(key, None)

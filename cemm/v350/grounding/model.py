@@ -58,8 +58,7 @@ class GroundingConstraintKind(StrEnum):
     TYPE_COMPATIBLE = "type_compatible"
     STORAGE_COMPATIBLE = "storage_compatible"
     SAME_CONTEXT = "same_context"
-    CLAIM_SOURCE = "claim_source"
-    CLAIM_AUDIENCE = "claim_audience"
+    PORT_COMPATIBLE = "port_compatible"
 
 
 class CandidateOrigin(StrEnum):

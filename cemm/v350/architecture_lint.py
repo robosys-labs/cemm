@@ -37,6 +37,11 @@ _SURFACE_NAMES = frozenset(
     {"token", "tokens", "word", "words", "text", "surface", "utterance", "normalized"}
 )
 _TARGETLESS_ACKNOWLEDGEMENTS = frozenset({"understood"})
+_NAMED_SEMANTIC_REF = re.compile(
+    r"^(?:type|facet|event|action|property|state|relation|role|function|operator|"
+    r"discourse-act|discourse-relation|response-policy):[^:]+(?:[:][^:]+)*$"
+)
+_SEMANTIC_AUTHORITY_PACKAGES = frozenset({"grounding", "composition", "epistemics"})
 _EVENT_MUTATION_NAME = re.compile(
     r"(?:mutate|apply|commit|update|set|handle|on).*(?:death|die|died)|"
     r"(?:death|die|died).*(?:mutate|apply|commit|update|set|handle)",
@@ -185,6 +190,31 @@ class _Visitor(ast.NodeVisitor):
                 "event_specific_mutation",
                 "event effects must use generic transition contracts and proof-bearing deltas",
             )
+        if _semantic_authority_path(self.path):
+            positional = (*node.args.posonlyargs, *node.args.args)
+            if node.args.defaults:
+                for arg, default in zip(positional[-len(node.args.defaults):], node.args.defaults):
+                    if (
+                        arg.arg == "context_ref"
+                        and isinstance(default, ast.Constant)
+                        and default.value == "actual"
+                    ):
+                        self._add(
+                            default,
+                            "implicit_actual_context_default",
+                            "grounding/composition/epistemic context must be cycle-pinned explicitly, not defaulted to the actual world",
+                        )
+            for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults):
+                if (
+                    arg.arg == "context_ref"
+                    and isinstance(default, ast.Constant)
+                    and default.value == "actual"
+                ):
+                    self._add(
+                        default,
+                        "implicit_actual_context_default",
+                        "grounding/composition/epistemic context must be cycle-pinned explicitly, not defaulted to the actual world",
+                    )
         self.generic_visit(node)
 
     visit_AsyncFunctionDef = visit_FunctionDef
@@ -265,6 +295,12 @@ class _Visitor(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant) -> None:
         if not isinstance(node.value, str) or id(node) in self._docstring_nodes:
             return
+        if _semantic_authority_path(self.path) and _NAMED_SEMANTIC_REF.match(node.value):
+            self._add(
+                node,
+                "named_semantic_authority_literal",
+                "composition/grounding/epistemic kernel code must resolve semantic refs from data, evidence, or exact schema contracts",
+            )
         normalized = " ".join(node.value.casefold().split()).strip(".!? ")
         if normalized in _TARGETLESS_ACKNOWLEDGEMENTS:
             self._add(
@@ -330,6 +366,10 @@ def _surface_expression(node: ast.AST) -> bool:
         return _surface_expression(node.func) or any(_surface_expression(arg) for arg in node.args)
     return False
 
+
+
+def _semantic_authority_path(path: Path) -> bool:
+    return any(part.casefold() in _SEMANTIC_AUTHORITY_PACKAGES for part in path.parts)
 
 def _response_path(path: Path) -> bool:
     stem = path.stem.casefold()

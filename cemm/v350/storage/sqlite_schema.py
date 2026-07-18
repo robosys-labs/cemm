@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -275,6 +275,76 @@ DDL: tuple[str, ...] = (
         superseded_by TEXT
     ) WITHOUT ROWID
     """,
+    """
+    CREATE TABLE IF NOT EXISTS claim_history_records (
+        history_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        claim_record_ref TEXT NOT NULL,
+        action TEXT NOT NULL,
+        source_ref TEXT NOT NULL,
+        context_ref TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        target_claim_record_ref TEXT,
+        occurred_at TEXT,
+        supersedes_revision INTEGER,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(history_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS claim_history_claim_idx ON claim_history_records(claim_record_ref, action, revision)",
+    "CREATE INDEX IF NOT EXISTS claim_history_source_idx ON claim_history_records(source_ref, context_ref, occurred_at)",
+
+    """
+    CREATE TABLE IF NOT EXISTS source_assessment_records (
+        assessment_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        source_ref TEXT NOT NULL,
+        authority REAL NOT NULL,
+        reliability REAL NOT NULL,
+        access_quality REAL NOT NULL,
+        bias_risk REAL NOT NULL,
+        context_ref TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        supersedes_revision INTEGER,
+        valid_from TEXT,
+        valid_to TEXT,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY (assessment_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS source_assessment_source_idx ON source_assessment_records(source_ref, context_ref, revision)",
+    """
+    CREATE TABLE IF NOT EXISTS epistemic_admissions (
+        admission_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        proposition_ref TEXT NOT NULL,
+        source_context_ref TEXT NOT NULL,
+        target_context_ref TEXT NOT NULL,
+        decision TEXT NOT NULL,
+        truth_status TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        source_refs_json TEXT NOT NULL,
+        source_assessment_pins_json TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        proof_refs_json TEXT NOT NULL,
+        policy_ref TEXT NOT NULL,
+        authorization_ref TEXT,
+        permission_ref TEXT NOT NULL,
+        sensitivity TEXT NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        valid_time_ref TEXT,
+        valid_from TEXT,
+        valid_to TEXT,
+        retracts_admission_ref TEXT,
+        supersedes_revision INTEGER,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(admission_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS epistemic_admissions_truth_idx ON epistemic_admissions(proposition_ref, target_context_ref, truth_status, lifecycle_status)",
+    "CREATE INDEX IF NOT EXISTS epistemic_admissions_retraction_idx ON epistemic_admissions(retracts_admission_ref, lifecycle_status)",
+    "CREATE INDEX IF NOT EXISTS epistemic_admissions_policy_idx ON epistemic_admissions(policy_ref, target_context_ref, lifecycle_status)",
     """
     CREATE TABLE IF NOT EXISTS knowledge_records (
         knowledge_ref TEXT PRIMARY KEY,

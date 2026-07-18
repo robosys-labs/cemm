@@ -30,7 +30,7 @@ class MentionCompiler:
         self,
         lattice: FormLattice,
         *,
-        context_ref: str = "actual",
+        context_ref: str,
         include_unresolved: bool = True,
     ) -> tuple[MentionHypothesis, ...]:
         forms = {item.candidate_ref: item for item in lattice.form_candidates}
@@ -96,19 +96,12 @@ class MentionCompiler:
                 str(item.metadata.get("syntactic_role"))
                 for item in senses if item.metadata.get("syntactic_role")
             ), "")
-            construction_target = _target_class_for_roles(construction_role_values)
-            if construction_target is not None and target == MentionTargetClass.REFERENT:
-                target = construction_target
             syntactic_role = (
                 construction_role_values[0]
                 if len(construction_role_values) == 1
                 else lexical_syntactic_role
             )
-            source_role = lexical_source_role or (
-                syntactic_role
-                if target in {MentionTargetClass.CLAIM_SOURCE, MentionTargetClass.AUDIENCE}
-                else ""
-            )
+            source_role = lexical_source_role
             mentions.append(MentionHypothesis(
                 mention_ref=mention_ref,
                 source_ref=lattice.source_ref,
@@ -134,6 +127,29 @@ class MentionCompiler:
                     "schema_target_refs": tuple(sorted(
                         item.target_ref for item in senses if item.target_kind != SenseTargetKind.STRUCTURAL
                     )),
+                    "schema_target_pins": tuple(sorted({
+                        (item.target_ref, item.target_revision)
+                        for item in senses
+                        if item.target_kind != SenseTargetKind.STRUCTURAL
+                        and item.target_revision is not None
+                    })),
+                    "deictic_roles": tuple(sorted({
+                        str(item.metadata.get("deictic_role"))
+                        for item in senses if item.metadata.get("deictic_role")
+                    })),
+                    "grounding_channels": tuple(sorted({
+                        str(channel)
+                        for item in senses
+                        for channel in item.metadata.get("grounding_channels", ())
+                    })),
+                    "required_discourse_roles": tuple(sorted({
+                        str(role)
+                        for item in senses
+                        for role in item.metadata.get("required_discourse_roles", ())
+                    })),
+                    "discourse_required": any(
+                        bool(item.metadata.get("discourse_required")) for item in senses
+                    ),
                     "candidate_syntactic_roles": construction_role_values,
                 },
             ))
@@ -165,8 +181,6 @@ class MentionCompiler:
             return True
         if sense.target_kind == SenseTargetKind.REFERENT_TYPE:
             return True
-        if sense.target_kind == SenseTargetKind.STRUCTURAL:
-            return str(sense.target_ref).startswith(("deictic:", "mention:", "claim-role:"))
         return bool(sense.metadata.get("mention_target_class"))
 
     @staticmethod
@@ -176,16 +190,6 @@ class MentionCompiler:
             return MentionTargetClass(str(explicit))
         if sense.target_kind == SenseTargetKind.REFERENT_TYPE:
             return MentionTargetClass.REFERENT
-        if sense.target_kind == SenseTargetKind.STRUCTURAL:
-            value = str(sense.target_ref)
-            if value == "deictic:system_output":
-                return MentionTargetClass.SYSTEM_OUTPUT
-            if value == "deictic:multimodal":
-                return MentionTargetClass.MULTIMODAL_TRACK
-            if value == "claim-role:source":
-                return MentionTargetClass.CLAIM_SOURCE
-            if value == "claim-role:audience":
-                return MentionTargetClass.AUDIENCE
         if sense.target_schema_class is not None:
             return _SCHEMA_TARGETS.get(sense.target_schema_class, MentionTargetClass.SCHEMA_TOPIC)
         return MentionTargetClass.REFERENT
@@ -209,15 +213,6 @@ class MentionCompiler:
         return "mention:" + semantic_fingerprint(
             "mention-ref", (source_ref, span.start, span.end, tuple(sorted(evidence))), 24
         )
-
-
-def _target_class_for_roles(roles: tuple[str, ...]) -> MentionTargetClass | None:
-    values = set(roles)
-    if values.intersection({"claimant", "source", "speaker"}):
-        return MentionTargetClass.CLAIM_SOURCE
-    if values.intersection({"audience", "addressee"}):
-        return MentionTargetClass.AUDIENCE
-    return None
 
 
 def _normalize(value: str) -> str:

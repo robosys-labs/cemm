@@ -1,21 +1,31 @@
 {
   "metadata": {
     "authority": "reviewed_source",
+    "composition_base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
     "composition_competence_sha256": "3ad2fec0f0a4318084baf3e17b712336f1506332cfc8743a89de036b6a3ab3a3",
+    "composition_contract_ref": "contract:cemm:v350:composition",
+    "composition_contract_sha256": "6bc8575c8cb3bdb8b194687bd6ca92af7e4b2ce33fd645b0ef47a217a5d595cc",
+    "composition_phase": "9",
     "domain_light": true,
+    "epistemic_base_commit": "390610c0f17f83d309d8d7e83bd63ce5b68c03a7",
+    "epistemic_competence_sha256": "cc12602fbdfcfbbc40ece2e7695e93c294498e344c3ac5d77032d65897d08c94",
+    "epistemic_contract_ref": "contract:cemm:v350:epistemics",
+    "epistemic_contract_sha256": "3d978b042e753867260e2fe5dc2b3fe3921d4e32dd64183a615a498afb21f439",
+    "epistemic_phase": "10",
     "foundation_competence_sha256": "e404ebc317522f7821fa49912d8f6b759c8a520a4bc7e0bdc870dde07ca3bcf8",
     "foundation_contract_ref": "contract:cemm:v350:foundation",
     "foundation_contract_sha256": "8e04867fa6ecc16bd651717798e648f737d32a953140718161a35bb0b8a4f963",
     "foundation_phase": "6",
-    "grounding_competence_sha256": "22bb360ba1f37257fe666038c861130be32b4b4581c78cac16b1b3f64921b923",
+    "grounding_competence_sha256": "c7190163df12f60ad1e5f0de31311571095881a13656ad4d2d791e63ae4d4702",
     "grounding_phase": "8",
-    "language_grounding_base_commit": "e05b1021a2b155050b400995d95b946d950c9316",
+    "language_grounding_base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
     "language_grounding_contract_ref": "contract:cemm:v350:language-grounding",
-    "language_grounding_contract_sha256": "e594880b8664155b98cc00fa8f95876d801bffe9a2052a295e3b0acabdfaa4c3",
+    "language_grounding_contract_sha256": "a8b3efa681fd7afbee138882f4057afe6dfb6fa5c8a24ad9571959b27a4ac666",
     "language_neutral": true,
     "language_phase": "7",
+    "meaning_composition_competence_sha256": "1de55417ca6e76a335685032a7a287c69dc60e0c155a5b64c9c667c13baaa31f",
     "multilingual_competence_sha256": "51fc999fe06c3a7d28405fd87d9d156ea31a2466f06c07ea1a9e055ede522ae3",
-    "phase": "8"
+    "phase": "10"
   },
   "modules": [
     {

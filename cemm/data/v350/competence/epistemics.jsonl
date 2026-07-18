@@ -1,0 +1,17 @@
+{"case_ref":"competence:phase10:append-only-correction","operation":"append_only_correction"}
+{"case_ref":"competence:phase10:append-only-retraction","operation":"append_only_retraction"}
+{"case_ref":"competence:phase10:claim-attributed","operation":"claim_attributed"}
+{"case_ref":"competence:phase10:claim-same-context-rejected","operation":"claim_same_context_rejected"}
+{"case_ref":"competence:phase10:cross-source-retraction-ignored","operation":"cross_source_retraction_ignored"}
+{"case_ref":"competence:phase10:durable-authorization-required","operation":"durable_authorization_required"}
+{"case_ref":"competence:phase10:durable-source-assessment","operation":"durable_source_assessment"}
+{"case_ref":"competence:phase10:explicit-opposition-admission","operation":"opposition_admission"}
+{"case_ref":"competence:phase10:explicit-support-admission","operation":"support_admission"}
+{"case_ref":"competence:phase10:four-state-both","operation":"four_state_both"}
+{"case_ref":"competence:phase10:grammar-not-admission","operation":"grammar_not_admission"}
+{"case_ref":"competence:phase10:knowledge-needs-admission","operation":"knowledge_needs_admission"}
+{"case_ref":"competence:phase10:patch-no-state-effect","operation":"patch_no_state_effect"}
+{"case_ref":"competence:phase10:retraction-authorization-required","operation":"retraction_authorization_required"}
+{"case_ref":"competence:phase10:single-admission-not-both","operation":"single_admission_not_both"}
+{"case_ref":"competence:phase10:source-dimensions-independent","operation":"source_dimension_gate"}
+{"case_ref":"competence:phase10:source-local-retraction","operation":"source_local_retraction"}

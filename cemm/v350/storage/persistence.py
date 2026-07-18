@@ -33,15 +33,18 @@ from .codec import (
 )
 from .model import (
     CapabilityInstance,
+    ClaimHistoryRecord,
     ClaimRecord,
     DefaultRuleRecord,
     DependencyEdge,
+    EpistemicAdmissionRecord,
     EvidenceRecord,
     IdentityFacetRecord,
     KnowledgeRecord,
     MaterializedViewRecord,
     RecordKind,
     ReferentTypeAssertion,
+    SourceAssessmentRecord,
     StateAssignment,
 )
 
@@ -144,6 +147,12 @@ def _write_normalized(
         _write_claim_occurrence(connection, record)
     elif record_kind == RecordKind.CLAIM_RECORD:
         _write_claim_record(connection, record)
+    elif record_kind == RecordKind.CLAIM_HISTORY:
+        _write_claim_history(connection, record)
+    elif record_kind == RecordKind.SOURCE_ASSESSMENT:
+        _write_source_assessment(connection, record)
+    elif record_kind == RecordKind.EPISTEMIC_ADMISSION:
+        _write_epistemic_admission(connection, record)
     elif record_kind == RecordKind.KNOWLEDGE:
         _write_knowledge(connection, record)
     elif record_kind == RecordKind.EVENT_OCCURRENCE:
@@ -637,6 +646,106 @@ def _write_claim_record(connection: sqlite3.Connection, item: ClaimRecord) -> No
             item.permission_ref,
             canonical_json(item.evidence_refs),
             item.superseded_by,
+        ),
+    )
+
+
+def _write_claim_history(connection: sqlite3.Connection, item: ClaimHistoryRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO claim_history_records(
+            history_ref, revision, claim_record_ref, action, source_ref, context_ref,
+            evidence_refs_json, target_claim_record_ref, occurred_at,
+            supersedes_revision, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(history_ref, revision) DO UPDATE SET
+            claim_record_ref=excluded.claim_record_ref,
+            action=excluded.action,
+            source_ref=excluded.source_ref,
+            context_ref=excluded.context_ref,
+            evidence_refs_json=excluded.evidence_refs_json,
+            target_claim_record_ref=excluded.target_claim_record_ref,
+            occurred_at=excluded.occurred_at,
+            supersedes_revision=excluded.supersedes_revision,
+            metadata_json=excluded.metadata_json
+        """,
+        (
+            item.history_ref, item.revision, item.claim_record_ref, item.action.value,
+            item.source_ref, item.context_ref, canonical_json(item.evidence_refs),
+            item.target_claim_record_ref, item.occurred_at, item.supersedes_revision,
+            canonical_json(item.metadata),
+        ),
+    )
+
+
+def _write_source_assessment(connection: sqlite3.Connection, item: SourceAssessmentRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO source_assessment_records(
+            assessment_ref, revision, source_ref, authority, reliability,
+            access_quality, bias_risk, context_ref, evidence_refs_json,
+            supersedes_revision, valid_from, valid_to, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(assessment_ref, revision) DO UPDATE SET
+            source_ref=excluded.source_ref, authority=excluded.authority,
+            reliability=excluded.reliability, access_quality=excluded.access_quality,
+            bias_risk=excluded.bias_risk, context_ref=excluded.context_ref,
+            evidence_refs_json=excluded.evidence_refs_json,
+            supersedes_revision=excluded.supersedes_revision, valid_from=excluded.valid_from,
+            valid_to=excluded.valid_to, permission_ref=excluded.permission_ref,
+            metadata_json=excluded.metadata_json
+        """,
+        (
+            item.assessment_ref, item.revision, item.source_ref, item.authority,
+            item.reliability, item.access_quality, item.bias_risk, item.context_ref,
+            canonical_json(item.evidence_refs), item.supersedes_revision, item.valid_from,
+            item.valid_to, item.permission_ref, canonical_json(item.metadata),
+        ),
+    )
+
+
+def _write_epistemic_admission(connection: sqlite3.Connection, item: EpistemicAdmissionRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO epistemic_admissions(
+            admission_ref, revision, proposition_ref, source_context_ref, target_context_ref,
+            decision, truth_status, confidence, source_refs_json, source_assessment_pins_json,
+            evidence_refs_json, proof_refs_json, policy_ref, authorization_ref, permission_ref, sensitivity, lifecycle_status,
+            valid_time_ref, valid_from, valid_to, retracts_admission_ref,
+            supersedes_revision, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(admission_ref, revision) DO UPDATE SET
+            proposition_ref=excluded.proposition_ref,
+            source_context_ref=excluded.source_context_ref,
+            target_context_ref=excluded.target_context_ref,
+            decision=excluded.decision,
+            truth_status=excluded.truth_status,
+            confidence=excluded.confidence,
+            source_refs_json=excluded.source_refs_json,
+            source_assessment_pins_json=excluded.source_assessment_pins_json,
+            evidence_refs_json=excluded.evidence_refs_json,
+            proof_refs_json=excluded.proof_refs_json,
+            policy_ref=excluded.policy_ref,
+            authorization_ref=excluded.authorization_ref,
+            permission_ref=excluded.permission_ref,
+            sensitivity=excluded.sensitivity,
+            lifecycle_status=excluded.lifecycle_status,
+            valid_time_ref=excluded.valid_time_ref,
+            valid_from=excluded.valid_from,
+            valid_to=excluded.valid_to,
+            retracts_admission_ref=excluded.retracts_admission_ref,
+            supersedes_revision=excluded.supersedes_revision,
+            metadata_json=excluded.metadata_json
+        """,
+        (
+            item.admission_ref, item.revision, item.proposition_ref,
+            item.source_context_ref, item.target_context_ref, item.decision.value,
+            item.truth_status.value, item.confidence, canonical_json(item.source_refs),
+            canonical_json(item.source_assessment_pins), canonical_json(item.evidence_refs),
+            canonical_json(item.proof_refs),
+            item.policy_ref, item.authorization_ref, item.permission_ref, item.sensitivity, item.lifecycle_status.value,
+            item.valid_time_ref, item.valid_from, item.valid_to, item.retracts_admission_ref,
+            item.supersedes_revision, canonical_json(item.metadata),
         ),
     )
 

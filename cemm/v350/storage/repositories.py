@@ -27,14 +27,17 @@ from ..uol.model import (
 )
 from .model import (
     CapabilityInstance,
+    ClaimHistoryRecord,
     ClaimRecord,
     DefaultRuleRecord,
+    EpistemicAdmissionRecord,
     EvidenceRecord,
     IdentityFacetRecord,
     KnowledgeRecord,
     MaterializedViewRecord,
     RecordKind,
     ReferentTypeAssertion,
+    SourceAssessmentRecord,
     StateAssignment,
     StoreSnapshot,
     StoredRecord,
@@ -509,6 +512,9 @@ class RepositorySet:
         self.propositions = TypedRepository(store, RecordKind.PROPOSITION, PropositionReferent)
         self.claim_occurrences = TypedRepository(store, RecordKind.CLAIM_OCCURRENCE, ClaimOccurrence)
         self.claim_records = TypedRepository(store, RecordKind.CLAIM_RECORD, ClaimRecord)
+        self.claim_history = TypedRepository(store, RecordKind.CLAIM_HISTORY, ClaimHistoryRecord)
+        self.epistemic_admissions = TypedRepository(store, RecordKind.EPISTEMIC_ADMISSION, EpistemicAdmissionRecord)
+        self.source_assessments = TypedRepository(store, RecordKind.SOURCE_ASSESSMENT, SourceAssessmentRecord)
         self.knowledge = KnowledgeRepository(store)
         self.event_occurrences = TypedRepository(store, RecordKind.EVENT_OCCURRENCE, EventOccurrence)
         self.state_assignments = TypedRepository(store, RecordKind.STATE_ASSIGNMENT, StateAssignment)

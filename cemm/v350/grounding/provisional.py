@@ -38,7 +38,7 @@ class ProvisionalReferentPlanner:
             mention_ref=mention.mention_ref,
             referent_ref=referent_ref,
             storage_kind=storage_kind,
-            type_refs=type_refs or ("type:referent",),
+            type_refs=type_refs,
             identity_value=mention.normalized_surface,
             context_ref=mention.context_ref,
             evidence_refs=evidence,
@@ -56,6 +56,8 @@ class ProvisionalReferentPlanner:
         source_ref: str,
         permission_ref: str = "conversation",
         expected_store_revision: int | None = None,
+        store: SemanticStore,
+        snapshot=None,
     ) -> GraphPatch:
         evidence_ref = "evidence:grounding:" + semantic_fingerprint(
             "grounding-evidence-ref", (proposal.proposal_ref, proposal.evidence_refs), 24
@@ -87,10 +89,17 @@ class ProvisionalReferentPlanner:
             permission_ref=permission_ref,
             metadata={"grounding_proposal_ref": proposal.proposal_ref},
         )
+        registry = store.repositories.schemas.registry(snapshot=snapshot)
+        identity_facets = tuple(
+            schema for schema in registry.active_schemas()
+            if getattr(schema, "facet_family", None) == "identity"
+        )
+        if len(identity_facets) != 1:
+            raise ValueError("provisional identity requires exactly one active identity facet authority")
         identity = IdentityFacetRecord(
             identity_facet_ref=identity_ref,
             referent_ref=proposal.referent_ref,
-            facet_schema_ref="facet:identity",
+            facet_schema_ref=identity_facets[0].schema_ref,
             normalized_value=proposal.identity_value,
             confidence=proposal.confidence,
             evidence_refs=(evidence_ref,),

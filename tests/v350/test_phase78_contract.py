@@ -33,7 +33,7 @@ def test_phase7_8_review_contract_is_clean_and_pinned_to_latest_base() -> None:
         "lexical_sense": 51,
     }
     contract = load_language_grounding_contract(SOURCE / "language_grounding_contract.json")
-    assert contract.base_commit == "e05b1021a2b155050b400995d95b946d950c9316"
+    assert contract.base_commit == "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf"
     assert report.source_record_fingerprint == contract.expected_source_record_fingerprint
 
 
@@ -86,6 +86,6 @@ def test_phase7_8_verifier_executes_all_declarative_cases(tmp_path: Path) -> Non
     assert completed.returncode == 0, completed.stdout + completed.stderr
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["valid"] is True
-    assert report["base_commit"] == "e05b1021a2b155050b400995d95b946d950c9316"
+    assert report["base_commit"] == "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf"
     assert report["competence"]["passed"] == 24
     assert report["compilation"]["byte_deterministic"] is True

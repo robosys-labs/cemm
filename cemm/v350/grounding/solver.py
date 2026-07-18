@@ -194,10 +194,7 @@ class JointGroundingSolver:
                     cross_score += 1.5
                 elif constraint.constraint_kind == GroundingConstraintKind.DISTINCT:
                     cross_score += 0.35
-                elif constraint.constraint_kind in {
-                    GroundingConstraintKind.CLAIM_SOURCE,
-                    GroundingConstraintKind.CLAIM_AUDIENCE,
-                }:
+                elif constraint.constraint_kind == GroundingConstraintKind.PORT_COMPATIBLE:
                     cross_score += 0.75
             elif constraint.required:
                 return None
@@ -220,15 +217,24 @@ class JointGroundingSolver:
             for item in candidates[1:]:
                 common.intersection_update(item.context_refs)
             return bool(common)
-        if kind in {GroundingConstraintKind.CLAIM_SOURCE, GroundingConstraintKind.CLAIM_AUDIENCE}:
-            return all(
-                "type:agent" in item.type_refs
-                or "type:natural_agent" in item.type_refs
-                or "type:software_agent" in item.type_refs
-                or "type:collective_agent" in item.type_refs
-                or "type:institutional_agent" in item.type_refs
-                for item in candidates
-            )
+        if kind == GroundingConstraintKind.PORT_COMPATIBLE:
+            contracts = tuple(constraint.metadata.get("port_contracts", ()))
+            if not contracts:
+                return False
+            for item in candidates:
+                compatible = False
+                for contract in contracts:
+                    accepted_types = set(map(str, contract.get("accepted_type_refs", ())))
+                    accepted_storage = set(map(str, contract.get("accepted_storage_kinds", ())))
+                    if accepted_types and not accepted_types.intersection(item.type_refs):
+                        continue
+                    if accepted_storage and item.storage_kind.value not in accepted_storage:
+                        continue
+                    compatible = True
+                    break
+                if not compatible:
+                    return False
+            return True
         if kind == GroundingConstraintKind.TYPE_COMPATIBLE:
             expected = set(map(str, constraint.metadata.get("type_refs", ())))
             return not expected or all(expected.intersection(item.type_refs) for item in candidates)

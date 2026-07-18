@@ -335,7 +335,18 @@ class UOLValidator:
                     if isinstance(filler, QuotedLiteral)
                     else filler.filler_class
                 )
-                if filler_class not in port.filler_classes:
+                # A semantic variable is an explicitly authorized open binding,
+                # not an ordinary closed-world filler class.  LocalPortSchema
+                # already models this independently through open_binding_purposes;
+                # requiring every schema to duplicate SEMANTIC_VARIABLE in
+                # filler_classes would make partial composition data-dependent
+                # on a redundant declaration and contradict the metamodel.
+                variable_open_binding = (
+                    filler_class == PortFillerClass.SEMANTIC_VARIABLE
+                    and binding.open_binding_purpose is not None
+                    and binding.open_binding_purpose in port.open_binding_purposes
+                )
+                if filler_class not in port.filler_classes and not variable_open_binding:
                     dependency = (
                         filler.literal_ref if isinstance(filler, QuotedLiteral) else filler.ref
                     )
@@ -376,15 +387,23 @@ class UOLValidator:
                     nested_schema = self._schemas.maybe_schema(
                         nested.schema_ref, nested.schema_revision
                     )
-                    if (
-                        nested_schema is not None
-                        and nested_schema.schema_class not in port.accepted_schema_classes
-                    ):
-                        issues.append(self._error(
-                            "nested_schema_class", application.application_ref,
-                            f"port {port.port_ref} rejects "
-                            f"{nested_schema.schema_class.value}", filler.ref,
-                        ))
+                    if nested_schema is not None:
+                        nested_allowed = nested_schema.schema_class in port.accepted_schema_classes
+                        # Operators are recursively compositional structural
+                        # nodes.  A port's accepted_schema_classes constrain the
+                        # eventual semantic operand leaf; an intermediate
+                        # operator may wrap that leaf and is validated through
+                        # its own exact operand contract and ScopeRelation.
+                        recursive_operator = (
+                            schema.schema_class == SchemaClass.OPERATOR
+                            and nested_schema.schema_class == SchemaClass.OPERATOR
+                        )
+                        if not nested_allowed and not recursive_operator:
+                            issues.append(self._error(
+                                "nested_schema_class", application.application_ref,
+                                f"port {port.port_ref} rejects "
+                                f"{nested_schema.schema_class.value}", filler.ref,
+                            ))
 
     def _validate_variable_for_port(
         self, graph: UOLGraph, application_ref: str, port: Any,

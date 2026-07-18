@@ -326,12 +326,14 @@ def test_observation_script_ties_and_normalization_source_are_deterministic(anal
 
 def test_construction_ports_flow_into_grounding_mentions(analyzer, store) -> None:
     lattice = analyzer.analyze("I say this", source_ref="utterance:claim-role-bridge")
-    mentions = MentionCompiler(store.repositories.language.registry()).compile(lattice)
+    mentions = MentionCompiler(store.repositories.language.registry()).compile(lattice, context_ref="actual")
     claimant = next(item for item in mentions if item.surface == "I")
     claim_event = next(item for item in mentions if item.surface == "say")
-    assert claimant.target_class == MentionTargetClass.CLAIM_SOURCE
+    # Construction role evidence must not mutate the mention into a hidden ontology class.
+    # Compatibility is derived later from the exact output-schema port contract.
+    assert claimant.target_class == MentionTargetClass.REFERENT
     assert claimant.syntactic_role == "claimant"
-    assert claimant.source_role == "claimant"
+    assert claimant.source_role == ""
     claim_candidates = {
         item.candidate_ref for item in lattice.construction_candidates
         if item.construction_ref == "construction:en:claim-frame"

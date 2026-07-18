@@ -39,7 +39,7 @@ class JointGrounder:
         content: str,
         *,
         source_ref: str,
-        context_ref: str = "actual",
+        context_ref: str,
         language_hints: tuple[str, ...] = (),
         discourse_anchors: Iterable[DiscourseAnchor] = (),
         multimodal_tracks: Iterable[MultimodalTrack] = (),
@@ -51,7 +51,7 @@ class JointGrounder:
             content, source_ref=source_ref, language_hints=language_hints
         )
         mentions = self.mentions.compile(lattice, context_ref=context_ref)
-        derived_constraints = self._derive_constraints(mentions)
+        derived_constraints = self._derive_constraints(mentions, lattice, snapshot=snapshot)
         candidates = self.candidates.generate(
             mentions,
             discourse_anchors=discourse_anchors,
@@ -67,11 +67,22 @@ class JointGrounder:
         )
         return lattice, result
 
-    @staticmethod
-    def _derive_constraints(mentions) -> tuple[GroundingConstraint, ...]:
+    def _derive_constraints(
+        self, mentions, lattice: FormLattice, *, snapshot: StoreSnapshot | None
+    ) -> tuple[GroundingConstraint, ...]:
+        """Derive only structural constraints from reviewed evidence/schema contracts.
+
+        Crucially, this method never embeds semantic type names such as ``agent``.
+        Construction roles are resolved against the exact output schema revision,
+        and candidate compatibility is expressed from that port's data-declared
+        accepted types/storage kinds.
+        """
         coref = defaultdict(list)
         distinct = defaultdict(list)
-        result = []
+        result: list[GroundingConstraint] = []
+        candidate_by_ref = {item.candidate_ref: item for item in lattice.construction_candidates}
+        schema_registry = self.store.repositories.schemas.registry(snapshot=snapshot)
+
         for mention in mentions:
             coref_group = mention.metadata.get("coreference_group")
             distinct_group = mention.metadata.get("distinctness_group")
@@ -79,26 +90,58 @@ class JointGrounder:
                 coref[str(coref_group)].append(mention.mention_ref)
             if distinct_group:
                 distinct[str(distinct_group)].append(mention.mention_ref)
-            if mention.target_class.value == "claim_source":
+
+            port_contracts = []
+            role = mention.syntactic_role
+            if role:
+                for candidate_ref in mention.construction_candidate_refs:
+                    construction_candidate = candidate_by_ref.get(candidate_ref)
+                    if construction_candidate is None:
+                        continue
+                    construction = self.analyzer.registry.require_construction(
+                        construction_candidate.construction_ref,
+                        construction_candidate.construction_revision,
+                    )
+                    if construction.output_schema_ref is None or construction.output_schema_revision is None:
+                        continue
+                    schema = schema_registry.schema(
+                        construction.output_schema_ref, construction.output_schema_revision
+                    )
+                    matching_ports = tuple(
+                        port for port in schema.local_ports
+                        if port.port_ref == role or port.role_family == role
+                    )
+                    for port in matching_ports:
+                        port_contracts.append({
+                            "schema_ref": schema.schema_ref,
+                            "schema_revision": schema.revision,
+                            "port_ref": port.port_ref,
+                            "role_family": port.role_family,
+                            "accepted_type_refs": tuple(port.accepted_type_refs),
+                            "accepted_storage_kinds": tuple(
+                                sorted(item.value for item in port.accepted_storage_kinds)
+                            ),
+                        })
+            if port_contracts:
+                canonical_contracts = tuple(sorted(
+                    port_contracts,
+                    key=lambda item: (
+                        item["schema_ref"], item["schema_revision"], item["port_ref"]
+                    ),
+                ))
                 result.append(GroundingConstraint(
                     constraint_ref="grounding-constraint:" + semantic_fingerprint(
-                        "claim-source-constraint", mention.mention_ref, 24
+                        "port-compatibility-constraint",
+                        (mention.mention_ref, canonical_contracts),
+                        24,
                     ),
-                    constraint_kind=GroundingConstraintKind.CLAIM_SOURCE,
+                    constraint_kind=GroundingConstraintKind.PORT_COMPATIBLE,
                     mention_refs=(mention.mention_ref,),
                     required=True,
                     evidence_refs=mention.evidence_refs,
+                    metadata={"port_contracts": canonical_contracts},
                 ))
-            if mention.target_class.value == "audience":
-                result.append(GroundingConstraint(
-                    constraint_ref="grounding-constraint:" + semantic_fingerprint(
-                        "claim-audience-constraint", mention.mention_ref, 24
-                    ),
-                    constraint_kind=GroundingConstraintKind.CLAIM_AUDIENCE,
-                    mention_refs=(mention.mention_ref,),
-                    required=True,
-                    evidence_refs=mention.evidence_refs,
-                ))
+
         for group, refs in sorted(coref.items()):
             if len(refs) > 1:
                 result.append(GroundingConstraint(

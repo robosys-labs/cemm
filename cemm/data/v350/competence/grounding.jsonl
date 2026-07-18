@@ -1,4 +1,4 @@
-{"case_ref":"competence:phase8:self-resolution","content":"I","expected_selected":true,"expected_target_ref":"referent:self","operation":"ground_text"}
+{"case_ref":"competence:phase8:self-resolution","content":"I","discourse_anchors":[{"anchor_ref":"anchor:phase8:self","context_ref":"actual","evidence_refs":["evidence:phase8:self-participant-frame"],"referent_ref":"referent:self","role_refs":["self","speaker"],"salience":1.0,"turn_index":0,"type_refs":[]}],"expected_selected":true,"expected_target_ref":"referent:self","operation":"ground_text"}
 {"case_ref":"competence:phase8:unknown-provisional-frontier","content":"NovelName","expected_provisional":true,"expected_selected":false,"operation":"ground_text"}
 {"case_ref":"competence:phase8:same-name-ambiguity","content":"Alex","expected_target_refs":["referent:competence:alex:a","referent:competence:alex:b"],"operation":"ambiguous_identity"}
 {"case_ref":"competence:phase8:addressee-discourse","content":"you","expected_target_ref":"referent:competence:alex:a","operation":"addressee"}

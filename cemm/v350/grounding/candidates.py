@@ -96,13 +96,10 @@ class GroundingCandidateProvider:
         for mention in mentions:
             seen_targets: set[tuple[str, CandidateOrigin]] = set()
             structural_targets = set(map(str, mention.metadata.get("structural_targets", ())))
-            deictic_external = bool(structural_targets.intersection({
-                "deictic:multimodal", "deictic:system_output"
-            }))
-            deictic_self = "deictic:self" in structural_targets
-            discourse_only = bool(structural_targets.intersection({
-                "deictic:addressee", "mention:anaphoric"
-            }))
+            grounding_channels = set(map(str, mention.metadata.get("grounding_channels", ())))
+            required_discourse_roles = set(map(str, mention.metadata.get("required_discourse_roles", ())))
+            deictic_external = bool(grounding_channels.intersection({"multimodal", "system_output"}))
+            discourse_only = bool(mention.metadata.get("discourse_required")) or bool(required_discourse_roles)
             schema_target_refs = tuple(map(str, mention.metadata.get("schema_target_refs", ())))
             introduces_occurrence = (
                 mention.target_class in {
@@ -113,25 +110,13 @@ class GroundingCandidateProvider:
                 and not mention.description_application_refs
             )
 
-            if "deictic:self" in structural_targets and "referent:self" in by_ref:
-                referent = by_ref["referent:self"]
-                candidate = self._referent_candidate(
-                    mention, referent, type_closure(referent.referent_ref, referent),
-                    identities=identities, applications=applications,
-                    anchors=anchor_by_ref.get(referent.referent_ref, ()),
-                    forced_identity=True,
-                )
-                if candidate is not None:
-                    candidates.append(candidate)
-                    seen_targets.add((candidate.target_ref, candidate.origin))
-
-            if not deictic_external and not deictic_self and not introduces_occurrence:
+            if not deictic_external and not introduces_occurrence:
                 for referent in referents:
                     referent_anchors = tuple(anchor_by_ref.get(referent.referent_ref, ()))
                     if discourse_only and not referent_anchors:
                         continue
-                    if "deictic:addressee" in structural_targets and not any(
-                        {"addressee", "audience"}.intersection(anchor.role_refs)
+                    if required_discourse_roles and not any(
+                        required_discourse_roles.intersection(anchor.role_refs)
                         for anchor in referent_anchors
                     ):
                         continue
@@ -149,7 +134,7 @@ class GroundingCandidateProvider:
                 candidates.extend(self._schema_candidates(mention, snapshot=snapshot))
 
             if (mention.target_class == MentionTargetClass.MULTIMODAL_TRACK
-                    or "deictic:multimodal" in structural_targets):
+                    or "multimodal" in grounding_channels):
                 for track in multimodal:
                     if track.referent_ref in by_ref and track.referent_ref not in type_cache:
                         type_closure(track.referent_ref, by_ref[track.referent_ref])
@@ -161,7 +146,7 @@ class GroundingCandidateProvider:
                         seen_targets.add((candidate.target_ref, candidate.origin))
 
             if (mention.target_class == MentionTargetClass.SYSTEM_OUTPUT
-                    or "deictic:system_output" in structural_targets):
+                    or "system_output" in grounding_channels):
                 for output in outputs:
                     for ref in (*output.target_refs, *output.content_referent_refs):
                         if ref in by_ref and ref not in type_cache:
@@ -334,7 +319,7 @@ class GroundingCandidateProvider:
                 target_ref=schema.schema_ref,
                 origin=CandidateOrigin.SCHEMA,
                 storage_kind=StorageKind.SCHEMA_TOPIC,
-                type_refs=("type:schema_topic",),
+                type_refs=mention.expected_type_refs,
                 context_refs=(mention.context_ref,),
                 factors=factors,
                 metadata={"schema_revision": schema.revision, "schema_class": schema.schema_class.value},
@@ -442,7 +427,7 @@ class GroundingCandidateProvider:
             origin=CandidateOrigin.PROVISIONAL,
             storage_kind=(mention.expected_storage_kinds[0] if mention.expected_storage_kinds
                           else _storage_for_target(mention.target_class)),
-            type_refs=mention.expected_type_refs or _default_types(mention.target_class),
+            type_refs=mention.expected_type_refs,
             context_refs=(mention.context_ref,),
             factors=(
                 _factor(mention, target_ref, GroundingFactorKind.PROVISIONAL, -0.75,
@@ -453,6 +438,10 @@ class GroundingCandidateProvider:
             metadata={
                 "introduced_by_schema_refs": tuple(
                     map(str, mention.metadata.get("schema_target_refs", ()))
+                ),
+                "introduced_by_schema_pins": tuple(
+                    (str(ref), int(revision))
+                    for ref, revision in mention.metadata.get("schema_target_pins", ())
                 ),
                 "occurrence_introduction": mention.target_class in {
                     MentionTargetClass.EVENT, MentionTargetClass.CLAIM, MentionTargetClass.STATE
@@ -526,17 +515,6 @@ def _storage_for_target(target: MentionTargetClass) -> StorageKind:
         MentionTargetClass.SCHEMA_TOPIC: StorageKind.SCHEMA_TOPIC,
     }.get(target, StorageKind.ORDINARY)
 
-
-def _default_types(target: MentionTargetClass) -> tuple[str, ...]:
-    return {
-        MentionTargetClass.EVENT: ("type:event_occurrence",),
-        MentionTargetClass.CLAIM: ("type:event_occurrence", "type:claim_information"),
-        MentionTargetClass.PROPOSITION: ("type:proposition",),
-        MentionTargetClass.STATE: ("type:state_occurrence",),
-        MentionTargetClass.SCHEMA_TOPIC: ("type:schema_topic",),
-        MentionTargetClass.CLAIM_SOURCE: ("type:agent",),
-        MentionTargetClass.AUDIENCE: ("type:agent",),
-    }.get(target, ("type:referent",))
 
 
 def _type_compatible(actual: Iterable[str], expected: Iterable[str]) -> bool:

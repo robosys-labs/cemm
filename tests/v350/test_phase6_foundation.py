@@ -118,15 +118,17 @@ def test_manifest_is_reviewed_language_neutral_and_domain_light() -> None:
         "authority": manifest.metadata["authority"],
         "domain_light": manifest.metadata["domain_light"],
         "language_neutral": manifest.metadata["language_neutral"],
-        "phase": manifest.metadata["phase"],
         "foundation_phase": manifest.metadata["foundation_phase"],
     } == {
         "authority": "reviewed_source",
         "domain_light": True,
         "language_neutral": True,
-        "phase": "8",
         "foundation_phase": "6",
     }
+    # Later reviewed phases may advance the package phase without mutating the
+    # frozen Phase-6 foundation authority. Do not make a Phase-6 regression test
+    # a hidden blocker on future phase numbers.
+    assert int(manifest.metadata["phase"]) >= 6
     assert manifest.metadata["foundation_contract_ref"] == "contract:cemm:v350:foundation"
     assert len(manifest.metadata["foundation_contract_sha256"]) == 64
     assert len(manifest.metadata["foundation_competence_sha256"]) == 64
