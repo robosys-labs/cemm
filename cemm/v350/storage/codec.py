@@ -33,6 +33,18 @@ from ..transitions.model import (
     TransitionContractRecord,
     TransitionProofRecord,
 )
+from ..learning.codec import (
+    competence_result_from_document,
+    learning_evidence_link_from_document,
+    learning_frontier_from_document,
+    learning_invalidation_from_document,
+    learning_package_from_document,
+    promotion_decision_from_document,
+)
+from ..learning.model import (
+    CompetenceResultRecord, LearningEvidenceLink, LearningFrontierRecord,
+    LearningInvalidationRecord, LearningPackageRecord, PromotionDecisionRecord,
+)
 from ..uol.codec import (
     application_from_document,
     capability_delta_from_document,
@@ -437,6 +449,12 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.FORM_SENSE_LINK: form_sense_link_from_document,
     RecordKind.CONSTRUCTION: construction_from_document,
     RecordKind.MATERIALIZED_VIEW: _view,
+    RecordKind.LEARNING_PACKAGE: learning_package_from_document,
+    RecordKind.LEARNING_FRONTIER: learning_frontier_from_document,
+    RecordKind.LEARNING_EVIDENCE_LINK: learning_evidence_link_from_document,
+    RecordKind.COMPETENCE_RESULT: competence_result_from_document,
+    RecordKind.PROMOTION_DECISION: promotion_decision_from_document,
+    RecordKind.LEARNING_INVALIDATION: learning_invalidation_from_document,
 }
 
 
@@ -517,6 +535,12 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.FORM_SENSE_LINK: (FormSenseLinkRecord,),
         RecordKind.CONSTRUCTION: (ConstructionRecord,),
         RecordKind.MATERIALIZED_VIEW: (MaterializedViewRecord,),
+        RecordKind.LEARNING_PACKAGE: (LearningPackageRecord,),
+        RecordKind.LEARNING_FRONTIER: (LearningFrontierRecord,),
+        RecordKind.LEARNING_EVIDENCE_LINK: (LearningEvidenceLink,),
+        RecordKind.COMPETENCE_RESULT: (CompetenceResultRecord,),
+        RecordKind.PROMOTION_DECISION: (PromotionDecisionRecord,),
+        RecordKind.LEARNING_INVALIDATION: (LearningInvalidationRecord,),
     }
     if not isinstance(record, expected[record_kind]):
         names = ", ".join(item.__name__ for item in expected[record_kind])
@@ -561,6 +585,12 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.FORM_SENSE_LINK: "link_ref",
         RecordKind.CONSTRUCTION: "construction_ref",
         RecordKind.MATERIALIZED_VIEW: "view_ref",
+        RecordKind.LEARNING_PACKAGE: "package_ref",
+        RecordKind.LEARNING_FRONTIER: "frontier_ref",
+        RecordKind.LEARNING_EVIDENCE_LINK: "link_ref",
+        RecordKind.COMPETENCE_RESULT: "result_ref",
+        RecordKind.PROMOTION_DECISION: "decision_ref",
+        RecordKind.LEARNING_INVALIDATION: "invalidation_ref",
     }
     return str(getattr(record, attributes[resolved]))
 
@@ -575,6 +605,9 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.LEXICAL_SENSE, RecordKind.FORM_SENSE_LINK,
         RecordKind.CONSTRUCTION, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
+        RecordKind.LEARNING_PACKAGE, RecordKind.LEARNING_FRONTIER,
+        RecordKind.LEARNING_EVIDENCE_LINK, RecordKind.COMPETENCE_RESULT,
+        RecordKind.PROMOTION_DECISION, RecordKind.LEARNING_INVALIDATION,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -603,11 +636,20 @@ def record_context(record_kind: RecordKind | str, record: Any) -> str | None:
 
 def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
     resolved = record_kind if isinstance(record_kind, RecordKind) else RecordKind(record_kind)
+    if resolved == RecordKind.LEARNING_FRONTIER:
+        return str(record.resolution_status.value)
+    if resolved == RecordKind.COMPETENCE_RESULT:
+        return str(record.outcome.value)
+    if resolved == RecordKind.PROMOTION_DECISION:
+        return str(record.decision.value)
+    if resolved == RecordKind.LEARNING_INVALIDATION:
+        return str(record.status.value)
     if resolved in {
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
         RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION, RecordKind.EPISTEMIC_ADMISSION,
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
+        RecordKind.LEARNING_PACKAGE,
     }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):

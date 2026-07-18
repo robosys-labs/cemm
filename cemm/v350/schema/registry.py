@@ -36,6 +36,7 @@ from .model import (
     UseDecision,
     UseOperation,
     ValidationSeverity,
+    schema_authorizes_use,
     semantic_fingerprint,
 )
 
@@ -96,6 +97,8 @@ _LIFECYCLE_RANK = {
     SchemaLifecycleStatus.ACTIVE: 4,
 }
 _TERMINAL = {SchemaLifecycleStatus.SUPERSEDED, SchemaLifecycleStatus.REJECTED}
+_AUTHORITY_LIFECYCLES = {SchemaLifecycleStatus.ACTIVE}
+_SUPERSESSION_AUTHORITY = {SchemaLifecycleStatus.ACTIVE}
 _CLOSED = {
     SchemaLifecycleStatus.STRUCTURALLY_CLOSED,
     SchemaLifecycleStatus.PROVISIONAL,
@@ -197,7 +200,7 @@ class SchemaRegistry:
         superseded = {
             item.supersedes_revision
             for item in revisions.values()
-            if item.lifecycle_status not in _TERMINAL
+            if item.lifecycle_status in _SUPERSESSION_AUTHORITY
             and item.supersedes_revision is not None
         }
         return tuple(
@@ -209,18 +212,24 @@ class SchemaRegistry:
         revisions = self._schemas.get(schema_ref)
         if not revisions:
             raise KeyError(schema_ref)
-        usable = self._effective_revisions(revisions)
+        usable = tuple(
+            item for item in self._effective_revisions(revisions)
+            if item.lifecycle_status in _AUTHORITY_LIFECYCLES
+        )
         if not usable:
-            raise KeyError(f"no usable schema revision for {schema_ref}")
+            raise KeyError(f"no authoritative schema revision for {schema_ref}")
         return max(usable, key=lambda item: (_LIFECYCLE_RANK[item.lifecycle_status], item.revision))
 
     def authoritative_entitlement(self, entitlement_ref: str) -> FacetEntitlement:
         revisions = self._entitlements.get(entitlement_ref)
         if not revisions:
             raise KeyError(entitlement_ref)
-        usable = self._effective_revisions(revisions)
+        usable = tuple(
+            item for item in self._effective_revisions(revisions)
+            if item.lifecycle_status in _AUTHORITY_LIFECYCLES
+        )
         if not usable:
-            raise KeyError(f"no usable entitlement revision for {entitlement_ref}")
+            raise KeyError(f"no authoritative entitlement revision for {entitlement_ref}")
         return max(usable, key=lambda item: (_LIFECYCLE_RANK[item.lifecycle_status], item.revision))
 
     def schema_for_use(
@@ -236,7 +245,7 @@ class SchemaRegistry:
             raise KeyError(schema_ref)
         candidates = [
             item for item in self._effective_revisions(revisions)
-            if item.use_profile.permits(resolved, provisional=provisional)
+            if schema_authorizes_use(item, resolved, provisional=provisional)
         ]
         if not candidates:
             raise KeyError(f"no revision of {schema_ref} authorizes {resolved.value}")
@@ -468,18 +477,9 @@ class SchemaRegistry:
         issues: list[ValidationIssue],
     ) -> None:
         decisions = {item.operation: item.decision for item in use_profile.authorizations}
-        if lifecycle == SchemaLifecycleStatus.CANDIDATE:
-            unsafe = [
-                op.value
-                for op, decision in decisions.items()
-                if decision in {UseDecision.ALLOW, UseDecision.PROVISIONAL}
-                and op not in {UseOperation.MENTION}
-            ]
-            if unsafe:
-                issues.append(ValidationIssue(
-                    ValidationSeverity.ERROR, "candidate_use_overreach", record_ref,
-                    f"candidate authorizes: {unsafe}",
-                ))
+        # Candidate use profiles are proposals, not authority. They may name the
+        # use axes they seek to prove, while schema_authorizes_use/schema_for_use
+        # keep executable ALLOW unavailable until active promotion.
         if lifecycle in {SchemaLifecycleStatus.COMPETENCE_VERIFIED, SchemaLifecycleStatus.ACTIVE}:
             required_hooks = {
                 (item.operation, item.case_ref) for item in competence_hooks if item.required

@@ -111,16 +111,33 @@ class EffectCommitCoordinator:
         ))
 
         for delta in preview.state_deltas:
-            deps = [
-                RecordDependency(RecordKind.TRANSITION_PROOF, preview.proof.proof_ref, 1),
-                RecordDependency(RecordKind.SCHEMA, delta.dimension_ref, delta.dimension_revision),
-            ]
+            # PatchOperation requires unique dependency refs. Preserve exact pins but
+            # deduplicate structurally (for example SET/RESTORE with from == to).
+            dependency_by_ref: dict[str, RecordDependency] = {
+                preview.proof.proof_ref: RecordDependency(
+                    RecordKind.TRANSITION_PROOF, preview.proof.proof_ref, 1
+                ),
+                delta.dimension_ref: RecordDependency(
+                    RecordKind.SCHEMA, delta.dimension_ref, delta.dimension_revision
+                ),
+            }
             for value_ref, revision in (
                 (delta.from_value_ref, delta.from_value_revision),
                 (delta.to_value_ref, delta.to_value_revision),
             ):
-                if value_ref is not None and revision is not None:
-                    deps.append(RecordDependency(RecordKind.SCHEMA, value_ref, revision))
+                if value_ref is None or revision is None:
+                    continue
+                existing = dependency_by_ref.get(value_ref)
+                candidate = RecordDependency(RecordKind.SCHEMA, value_ref, revision)
+                if existing is not None and (
+                    existing.record_kind != candidate.record_kind
+                    or existing.revision != candidate.revision
+                ):
+                    raise EffectCommitError(
+                        f"conflicting exact transition dependency pins for {value_ref}"
+                    )
+                dependency_by_ref[value_ref] = candidate
+            deps = list(dependency_by_ref.values())
             operations.append(PatchOperation(
                 operation_ref=_ref("patch-op:state-delta", delta.delta_ref),
                 operation_kind=PatchOperationKind.UPSERT,

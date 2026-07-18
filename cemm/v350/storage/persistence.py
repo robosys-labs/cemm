@@ -198,6 +198,53 @@ def _write_normalized(
         _write_construction(connection, record)
     elif record_kind == RecordKind.MATERIALIZED_VIEW:
         _write_view(connection, record)
+    elif record_kind in {
+        RecordKind.LEARNING_PACKAGE, RecordKind.LEARNING_FRONTIER,
+        RecordKind.LEARNING_EVIDENCE_LINK, RecordKind.COMPETENCE_RESULT,
+        RecordKind.PROMOTION_DECISION, RecordKind.LEARNING_INVALIDATION,
+    }:
+        _write_learning_record(connection, record_kind, record, revision)
+
+
+def _write_learning_record(
+    connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int
+) -> None:
+    package_ref = getattr(record, "package_ref", None)
+    package_revision = getattr(record, "package_revision", None)
+    lifecycle = record_lifecycle(record_kind, record)
+    operation = getattr(record, "use_operation", None)
+    polarity = getattr(record, "polarity", None)
+    decision = getattr(record, "decision", None)
+    connection.execute(
+        """
+        INSERT INTO learning_records(
+            record_kind, record_ref, revision, package_ref, package_revision,
+            lifecycle_status, use_operation, polarity, decision, permission_ref, payload_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(record_kind, record_ref, revision) DO UPDATE SET
+            package_ref=excluded.package_ref,
+            package_revision=excluded.package_revision,
+            lifecycle_status=excluded.lifecycle_status,
+            use_operation=excluded.use_operation,
+            polarity=excluded.polarity,
+            decision=excluded.decision,
+            permission_ref=excluded.permission_ref,
+            payload_json=excluded.payload_json
+        """,
+        (
+            record_kind.value,
+            record_ref(record_kind, record),
+            revision,
+            package_ref,
+            package_revision,
+            lifecycle,
+            None if operation is None else getattr(operation, "value", str(operation)),
+            None if polarity is None else getattr(polarity, "value", str(polarity)),
+            None if decision is None else getattr(decision, "value", str(decision)),
+            record_permission(record_kind, record),
+            canonical_json(encode_record(record_kind, record)),
+        ),
+    )
 
 
 def _write_schema(connection: sqlite3.Connection, schema: MeaningSchema) -> None:

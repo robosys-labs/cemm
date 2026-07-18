@@ -1,0 +1,12 @@
+{"case_ref":"competence:phase13:candidate-not-authority","expected":"candidate record with allow-like proposal remains non-executable before promotion"}
+{"case_ref":"competence:phase13:repeated-evidence-no-bypass","expected":"repeated independent support advances evidence only; no authority without competence"}
+{"case_ref":"competence:phase13:counterexample-blocks","expected":"counterexample remains attributable and blocks or narrows promotion until resolved"}
+{"case_ref":"competence:phase13:per-use-promotion","expected":"ground/query authorization does not imply transition/infer/execute authorization"}
+{"case_ref":"competence:phase13:stale-competence-rejected","expected":"candidate/dependency fingerprint change invalidates cached competence"}
+{"case_ref":"competence:phase13:atomic-cas","expected":"decision, promoted revisions and package lifecycle commit atomically or not at all"}
+{"case_ref":"competence:phase13:direct-patch-bypass-rejected","expected":"tracked learned candidate cannot become active via GraphPatch without exact PromotionDecision dependency"}
+{"case_ref":"competence:phase13:restart-rehydration","expected":"restart reconstructs only exact non-stale promoted authority"}
+{"case_ref":"competence:phase13:correction-invalidation","expected":"correction/retraction preserves history, revokes dependent learned authority and creates recomputation frontier"}
+{"case_ref":"competence:phase13:dependency-cycle","expected":"cyclic package dependency blocks competence/promotion"}
+{"case_ref":"competence:phase13:permission-no-escalation","expected":"promotion cannot broaden package/evidence permission scope"}
+{"case_ref":"competence:phase13:rename-invariance","expected":"renaming semantic/package labels without structural changes does not alter generic promotion behavior"}

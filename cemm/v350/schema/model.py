@@ -60,6 +60,7 @@ class UseOperation(StrEnum):
     PLAN = "plan"
     EXECUTE = "execute"
     REALIZE = "realize"
+    RESPONSE_POLICY = "response_policy"
 
 
 class UseDecision(StrEnum):
@@ -266,6 +267,32 @@ class UseProfile:
             for operation, decision in decisions.items()
         ]
         return cls(tuple(sorted(items, key=lambda item: item.operation.value)))
+
+
+def schema_authorizes_use(
+    schema: "MeaningSchema",
+    operation: UseOperation | str,
+    *,
+    provisional: bool = False,
+) -> bool:
+    """Lifecycle-aware executable use gate.
+
+    Candidate/structurally-closed records are proposals even if their proposed
+    UseProfile contains ALLOW. ALLOW requires ACTIVE lifecycle; competence
+    verification alone is not promotion. PROVISIONAL is visible only to explicitly
+    provisional callers.
+    """
+    resolved = operation if isinstance(operation, UseOperation) else UseOperation(operation)
+    decision = schema.use_profile.decision_for(resolved)
+    if decision == UseDecision.ALLOW:
+        return schema.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+    if decision == UseDecision.PROVISIONAL and provisional:
+        return schema.lifecycle_status in {
+            SchemaLifecycleStatus.PROVISIONAL,
+            SchemaLifecycleStatus.COMPETENCE_VERIFIED,
+            SchemaLifecycleStatus.ACTIVE,
+        }
+    return False
 
 
 @dataclass(frozen=True, slots=True)

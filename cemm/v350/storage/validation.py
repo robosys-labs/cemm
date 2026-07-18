@@ -16,6 +16,7 @@ from ..schema.model import (
     StateDimensionSchema,
     StateValueSchema,
     UseOperation,
+    schema_authorizes_use,
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
@@ -23,6 +24,7 @@ from ..language.model import (
     LanguagePackRecord, LexicalSenseRecord, SenseTargetKind,
 )
 from ..language.registry import LanguageRegistry, LanguageRegistryError
+from ..learning.validation import LearningCommitValidator
 from ..transitions.admission import EventAdmissionGate
 from ..transitions.compiler import TransitionContractCompiler, TransitionContractError
 from ..transitions.state import StateConditionEvaluator, parse_optional_timeline_timestamp, parse_timeline_timestamp, require_concrete_timeline_timestamp
@@ -94,6 +96,7 @@ class CommitValidator:
         self._resolver = resolver
         self._registry = self._schema_registry()
         self._language_registry = self._build_language_registry()
+        self._learning = LearningCommitValidator(resolver)
 
     def validate(self, operations: Iterable[tuple[PatchOperation, Any | None]]) -> tuple[ValidationError, ...]:
         errors: list[ValidationError] = []
@@ -107,12 +110,17 @@ class CommitValidator:
             for item in report.errors
         )
         errors.extend(self._validate_default_rule_revisions())
+        errors.extend(
+            ValidationError(item.code, item.target_ref, item.message)
+            for item in self._learning.validate_global()
+        )
         for operation, record in operations:
             if record is None:
                 continue
             try:
                 self._validate_record(operation.record_kind, record, operation.record_revision)
                 self._validate_dependencies(operation.target_ref, operation.dependencies)
+                self._learning.validate_operation(operation, record)
             except ValueError as exc:
                 errors.append(ValidationError("record_contract", operation.target_ref, str(exc)))
         return tuple(errors)
@@ -140,9 +148,7 @@ class CommitValidator:
             superseded = {
                 item.supersedes_revision for item in revisions.values()
                 if item.supersedes_revision is not None
-                and item.lifecycle_status not in {
-                    SchemaLifecycleStatus.CANDIDATE, SchemaLifecycleStatus.REJECTED,
-                }
+                and item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
             }
             active = [
                 item for item in revisions.values()
@@ -243,7 +249,7 @@ class CommitValidator:
 
     def _validate_application(self, application: SemanticApplication) -> None:
         schema = self._require_schema(application.schema_ref, application.schema_revision)
-        if not schema.use_profile.permits(application.use_operation, provisional=True):
+        if not schema_authorizes_use(schema, application.use_operation):
             raise ValueError(
                 f"schema {schema.schema_ref}@{schema.revision} does not authorize "
                 f"{application.use_operation.value}"
@@ -587,7 +593,7 @@ class CommitValidator:
         dimension = self._require_schema(delta.dimension_ref, delta.dimension_revision)
         if not isinstance(dimension, StateDimensionSchema):
             raise ValueError("state delta must pin a StateDimensionSchema")
-        if not dimension.use_profile.permits(UseOperation.TRANSITION):
+        if not schema_authorizes_use(dimension, UseOperation.TRANSITION):
             raise ValueError("state delta dimension does not authorize transition use")
         self._require_holder_type(delta.holder_ref, dimension.holder_type_refs)
         require_concrete_timeline_timestamp(delta.effective_time_ref)
@@ -830,7 +836,7 @@ class CommitValidator:
 
     def _validate_transition_contract(self, contract: TransitionContractRecord) -> None:
         try:
-            TransitionContractCompiler(self._registry).compile(contract)
+            TransitionContractCompiler(self._registry).compile(contract, require_active=False)
         except TransitionContractError as exc:
             raise ValueError(str(exc)) from exc
         for evidence_ref in contract.evidence_refs:
@@ -846,7 +852,7 @@ class CommitValidator:
 
     def _validate_capability_dependency(self, dependency: CapabilityDependencyRecord) -> None:
         try:
-            TransitionContractCompiler(self._registry).validate_capability_dependency(dependency)
+            TransitionContractCompiler(self._registry).validate_capability_dependency(dependency, require_active=False)
         except TransitionContractError as exc:
             raise ValueError(str(exc)) from exc
         for evidence_ref in dependency.evidence_refs:

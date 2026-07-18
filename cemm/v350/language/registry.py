@@ -19,10 +19,7 @@ class LanguageRegistryError(ValueError):
     pass
 
 
-_ACTIVE = {
-    SchemaLifecycleStatus.COMPETENCE_VERIFIED,
-    SchemaLifecycleStatus.ACTIVE,
-}
+_ACTIVE = {SchemaLifecycleStatus.ACTIVE}
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,7 +181,7 @@ def _effective_revisions(revisions):
     superseded = {
         item.supersedes_revision for item in revisions.values()
         if item.supersedes_revision is not None
-        and item.lifecycle_status not in {SchemaLifecycleStatus.CANDIDATE, SchemaLifecycleStatus.REJECTED}
+        and item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
     }
     return tuple(sorted(
         (item for item in revisions.values()

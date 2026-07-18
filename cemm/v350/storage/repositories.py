@@ -15,6 +15,10 @@ from ..language.model import (
 )
 from ..language.registry import LanguageRegistry
 from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
+from ..learning.model import (
+    CompetenceResultRecord, LearningEvidenceLink, LearningFrontierRecord,
+    LearningInvalidationRecord, LearningPackageRecord, PromotionDecisionRecord,
+)
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -409,12 +413,12 @@ class DefaultRuleRepository(TypedRepository[DefaultRuleRecord]):
         superseded = {
             item.supersedes_revision for item in revisions
             if item.supersedes_revision is not None
-            and item.lifecycle_status not in {SchemaLifecycleStatus.CANDIDATE, SchemaLifecycleStatus.REJECTED}
+            and item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
         }
         usable = [
             item for item in revisions
             if item.revision not in superseded
-            and item.lifecycle_status not in {SchemaLifecycleStatus.REJECTED, SchemaLifecycleStatus.SUPERSEDED}
+            and item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
         ]
         if not usable:
             raise KeyError(f"no usable default-rule revision for {rule_ref}")
@@ -531,6 +535,12 @@ class RepositorySet:
         self.default_rules = DefaultRuleRepository(store)
         self.language = LanguageRepository(store)
         self.materialized_views = MaterializedViewRepository(store)
+        self.learning_packages = TypedRepository(store, RecordKind.LEARNING_PACKAGE, LearningPackageRecord)
+        self.learning_frontiers = TypedRepository(store, RecordKind.LEARNING_FRONTIER, LearningFrontierRecord)
+        self.learning_evidence_links = TypedRepository(store, RecordKind.LEARNING_EVIDENCE_LINK, LearningEvidenceLink)
+        self.competence_results = TypedRepository(store, RecordKind.COMPETENCE_RESULT, CompetenceResultRecord)
+        self.promotion_decisions = TypedRepository(store, RecordKind.PROMOTION_DECISION, PromotionDecisionRecord)
+        self.learning_invalidations = TypedRepository(store, RecordKind.LEARNING_INVALIDATION, LearningInvalidationRecord)
         self.event_state = EventStateRepository(store)
 
 

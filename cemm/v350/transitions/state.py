@@ -6,7 +6,7 @@ from datetime import datetime
 from hashlib import sha256
 from typing import Any, Iterable, Protocol
 
-from ..schema.model import StateDimensionSchema, StateValueSchema, UseOperation
+from ..schema.model import StateDimensionSchema, StateValueSchema, UseOperation, schema_authorizes_use
 from ..schema.registry import SchemaRegistry
 from ..storage.model import AssignmentStatus, RecordKind, StateAssignment, StoredRecord
 from ..uol.model import ChangeOperation, StateDelta
@@ -123,8 +123,8 @@ class StateDeltaValidator:
         dimension = self._schemas.maybe_schema(delta.dimension_ref, delta.dimension_revision)
         if not isinstance(dimension, StateDimensionSchema):
             raise StateTransitionError("state delta must pin an exact state dimension")
-        if not dimension.use_profile.permits(UseOperation.TRANSITION):
-            raise StateTransitionError("state dimension does not authorize transition use")
+        if not schema_authorizes_use(dimension, UseOperation.TRANSITION):
+            raise StateTransitionError("state dimension does not authorize active transition use")
         self._require_holder_compatible(delta.holder_ref, dimension.holder_type_refs)
         for value_ref, revision in (
             (delta.from_value_ref, delta.from_value_revision),
@@ -150,11 +150,25 @@ class StateDeltaValidator:
                 )
             if not dimension.ordered:
                 raise StateTransitionError("increase/decrease requires an ordered state dimension")
-            if active:
-                current = self._schemas.maybe_schema(active[0].payload.value_ref, active[0].payload.value_revision)
-                target = self._schemas.maybe_schema(delta.to_value_ref, delta.to_value_revision)
-                if isinstance(current, StateValueSchema) and isinstance(target, StateValueSchema):
-                    self._validate_direction(current, target, delta.operation)
+            if delta.from_value_ref is not None:
+                # Direction is defined from the explicitly pinned semantic source value,
+                # never from arbitrary list order when multiple assignments are active.
+                current = self._schemas.maybe_schema(
+                    delta.from_value_ref, delta.from_value_revision
+                )
+            elif len(active) == 1:
+                current = self._schemas.maybe_schema(
+                    active[0].payload.value_ref, active[0].payload.value_revision
+                )
+            elif active:
+                raise StateTransitionError(
+                    "ordered increase/decrease without from_value requires exactly one active current value"
+                )
+            else:
+                current = None
+            target = self._schemas.maybe_schema(delta.to_value_ref, delta.to_value_revision)
+            if isinstance(current, StateValueSchema) and isinstance(target, StateValueSchema):
+                self._validate_direction(current, target, delta.operation)
 
     def _require_holder_compatible(self, holder_ref: str, accepted_type_refs: Iterable[str]) -> None:
         accepted = frozenset(accepted_type_refs)

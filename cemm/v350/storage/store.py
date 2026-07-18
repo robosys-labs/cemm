@@ -179,8 +179,8 @@ class SemanticStore:
     @property
     def boot_fingerprint(self) -> str:
         if self._boot is None:
-            return ""
-        return get_meta(self._boot, "boot_fingerprint", "")
+            return "boot-database:none"
+        return get_meta(self._boot, "boot_fingerprint", "") or "boot-database:none"
 
     @property
     def overlay_fingerprint(self) -> str:

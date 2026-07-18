@@ -54,6 +54,12 @@ class RecordKind(StrEnum):
     FORM_SENSE_LINK = "form_sense_link"
     CONSTRUCTION = "construction"
     MATERIALIZED_VIEW = "materialized_view"
+    LEARNING_PACKAGE = "learning_package"
+    LEARNING_FRONTIER = "learning_frontier"
+    LEARNING_EVIDENCE_LINK = "learning_evidence_link"
+    COMPETENCE_RESULT = "competence_result"
+    PROMOTION_DECISION = "promotion_decision"
+    LEARNING_INVALIDATION = "learning_invalidation"
 
 
 class AssertionStatus(StrEnum):

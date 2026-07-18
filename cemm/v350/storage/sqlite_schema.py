@@ -36,6 +36,25 @@ DDL: tuple[str, ...] = (
     "CREATE INDEX IF NOT EXISTS record_index_ref_idx ON record_index(record_ref, record_kind, revision DESC)",
     "CREATE INDEX IF NOT EXISTS record_index_context_idx ON record_index(record_kind, context_ref, revision DESC)",
     """
+    CREATE TABLE IF NOT EXISTS learning_records (
+        record_kind TEXT NOT NULL,
+        record_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        package_ref TEXT,
+        package_revision INTEGER,
+        lifecycle_status TEXT,
+        use_operation TEXT,
+        polarity TEXT,
+        decision TEXT,
+        permission_ref TEXT,
+        payload_json TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS learning_records_package_idx ON learning_records(package_ref, package_revision, record_kind, revision DESC)",
+    "CREATE INDEX IF NOT EXISTS learning_records_lifecycle_idx ON learning_records(record_kind, lifecycle_status, revision DESC)",
+    "CREATE INDEX IF NOT EXISTS learning_records_use_idx ON learning_records(use_operation, record_kind, revision DESC)",
+    """
     CREATE TABLE IF NOT EXISTS record_tombstones (
         record_kind TEXT NOT NULL,
         record_ref TEXT NOT NULL,

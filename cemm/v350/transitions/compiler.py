@@ -13,6 +13,8 @@ from ..schema.model import (
     StateDimensionSchema,
     StateValueSchema,
     UseOperation,
+    UseDecision,
+    schema_authorizes_use,
 )
 from ..schema.registry import SchemaRegistry
 from .model import (
@@ -35,14 +37,24 @@ class TransitionContractCompiler:
     def __init__(self, schemas: SchemaRegistry) -> None:
         self._schemas = schemas
 
-    def compile(self, contract: TransitionContractRecord) -> CompiledTransitionContract:
-        if contract.lifecycle_status in _TERMINAL:
+    def compile(
+        self, contract: TransitionContractRecord, *, require_active: bool = True
+    ) -> CompiledTransitionContract:
+        if require_active and contract.lifecycle_status != SchemaLifecycleStatus.ACTIVE:
+            raise TransitionContractError("runtime transition compilation requires an active contract revision")
+        if not require_active and contract.lifecycle_status in _TERMINAL:
             raise TransitionContractError("transition contract is terminal")
         trigger = self._schemas.maybe_schema(contract.trigger_schema_ref, contract.trigger_schema_revision)
         if not isinstance(trigger, EventSchema):
             raise TransitionContractError("transition contract trigger must pin an exact EventSchema")
-        if not trigger.use_profile.permits(UseOperation.TRANSITION):
-            raise TransitionContractError("trigger EventSchema does not authorize transition use")
+        if require_active:
+            trigger_authorized = schema_authorizes_use(trigger, UseOperation.TRANSITION)
+        else:
+            trigger_authorized = trigger.use_profile.decision_for(UseOperation.TRANSITION) in {
+                UseDecision.ALLOW, UseDecision.PROVISIONAL,
+            }
+        if not trigger_authorized:
+            raise TransitionContractError("trigger EventSchema does not authorize/propose transition use")
         if contract.contract_ref not in trigger.transition_contract_refs:
             raise TransitionContractError("trigger EventSchema does not link the transition contract")
 
@@ -64,8 +76,12 @@ class TransitionContractCompiler:
                 referenced_ports.add(effect.magnitude_port_ref)
         return CompiledTransitionContract(contract=contract, trigger_port_refs=frozenset(referenced_ports))
 
-    def validate_capability_dependency(self, dependency: CapabilityDependencyRecord) -> None:
-        if dependency.lifecycle_status in _TERMINAL:
+    def validate_capability_dependency(
+        self, dependency: CapabilityDependencyRecord, *, require_active: bool = True
+    ) -> None:
+        if require_active and dependency.lifecycle_status != SchemaLifecycleStatus.ACTIVE:
+            raise TransitionContractError("runtime capability dependency validation requires an active revision")
+        if not require_active and dependency.lifecycle_status in _TERMINAL:
             raise TransitionContractError("capability dependency is terminal")
         action = self._schemas.maybe_schema(dependency.action_schema_ref, dependency.action_schema_revision)
         from ..schema.model import ActionSchema, ReferentTypeSchema
