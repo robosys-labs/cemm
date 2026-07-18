@@ -12,6 +12,7 @@ on:
       - "tools/check_v350_architecture.py"
       - "tools/compile_v350_data.py"
       - "tools/verify_v350_foundation.py"
+      - "tools/verify_v350_language_grounding.py"
       - "docs/audits/v347-authority-debt.json"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
@@ -32,6 +33,7 @@ on:
       - "tools/check_v350_architecture.py"
       - "tools/compile_v350_data.py"
       - "tools/verify_v350_foundation.py"
+      - "tools/verify_v350_language_grounding.py"
       - "docs/audits/v347-authority-debt.json"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
@@ -58,10 +60,12 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Enforce v3.5 prohibitions and legacy-debt ratchet
         run: python tools/check_v350_architecture.py
-      - name: Verify Phases 0 through 6
+      - name: Verify Phases 0 through 8
         run: pytest -q tests/v350
       - name: Audit and competence-test the foundational seed
         run: python tools/verify_v350_foundation.py
+      - name: Audit language evidence and joint grounding
+        run: python tools/verify_v350_language_grounding.py
       - name: Prove deterministic boot compilation
         run: |
           python tools/compile_v350_data.py --output /tmp/v350-a.sqlite --writable

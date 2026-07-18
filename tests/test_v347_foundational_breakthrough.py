@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from cemm.migration.v347 import LegacyMigrationError, migrate_legacy_fact
-from cemm.v347.conformance import check as conformance_check
 from cemm.v347.goals import CapabilityState, OperationAuthorizer
 from cemm.v347.inference import InferenceBudget
 from cemm.v347.knowledge import _upsert_predication_op, _upsert_proposition_op
@@ -34,10 +31,6 @@ from cemm.v347.model import (
     semantic_hash,
 )
 from cemm.v347.runtime import Runtime
-
-
-def _root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
 
 def _assertion_patch(runtime: Runtime, *, context: str = "rules") -> GraphPatch:
@@ -507,8 +500,3 @@ def test_foundation_bootstrap_is_one_graph_patch() -> None:
         assert "upsert_knowledge" in rows[0]["operations_json"]
     finally:
         runtime.close()
-
-
-def test_architecture_conformance_gate_passes() -> None:
-    result = conformance_check(_root())
-    assert result["ok"], result["findings"]

@@ -1,175 +1,286 @@
 {
   "metadata": {
     "authority": "reviewed_source",
+    "composition_competence_sha256": "3ad2fec0f0a4318084baf3e17b712336f1506332cfc8743a89de036b6a3ab3a3",
     "domain_light": true,
     "foundation_competence_sha256": "e404ebc317522f7821fa49912d8f6b759c8a520a4bc7e0bdc870dde07ca3bcf8",
     "foundation_contract_ref": "contract:cemm:v350:foundation",
     "foundation_contract_sha256": "8e04867fa6ecc16bd651717798e648f737d32a953140718161a35bb0b8a4f963",
+    "foundation_phase": "6",
+    "grounding_competence_sha256": "22bb360ba1f37257fe666038c861130be32b4b4581c78cac16b1b3f64921b923",
+    "grounding_phase": "8",
+    "language_grounding_base_commit": "e05b1021a2b155050b400995d95b946d950c9316",
+    "language_grounding_contract_ref": "contract:cemm:v350:language-grounding",
+    "language_grounding_contract_sha256": "e594880b8664155b98cc00fa8f95876d801bffe9a2052a295e3b0acabdfaa4c3",
     "language_neutral": true,
-    "phase": "6"
+    "language_phase": "7",
+    "multilingual_competence_sha256": "51fc999fe06c3a7d28405fd87d9d156ea31a2466f06c07ea1a9e055ede522ae3",
+    "phase": "8"
   },
   "modules": [
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:referent_types",
       "path": "schemas/referent_types.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:facets",
       "path": "schemas/facets.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:facet_entitlements",
       "path": "schemas/facet_entitlements.jsonl",
+      "phase": 6,
       "record_kind": "facet_entitlement"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:properties",
       "path": "schemas/properties.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:state_dimensions",
       "path": "schemas/state_dimensions.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:state_values",
       "path": "schemas/state_values.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:relations",
       "path": "schemas/relations.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:roles",
       "path": "schemas/roles.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:functions",
       "path": "schemas/functions.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:actions",
       "path": "schemas/actions.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:events",
       "path": "schemas/events.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:units",
       "path": "schemas/units.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:measure_dimensions",
       "path": "schemas/measure_dimensions.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:operators",
       "path": "schemas/operators.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:discourse_acts",
       "path": "schemas/discourse_acts.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:discourse_relations",
       "path": "schemas/discourse_relations.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "schemas:response_policies",
       "path": "schemas/response_policies.jsonl",
+      "phase": 6,
       "record_kind": "schema"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "dynamics:default_rules",
       "path": "dynamics/default_rules.jsonl",
+      "phase": 6,
       "record_kind": "default_rule"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:evidence",
       "path": "foundation/evidence.jsonl",
+      "phase": 6,
       "record_kind": "evidence"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:self",
       "path": "foundation/self.jsonl",
+      "phase": 6,
       "record_kind": "referent"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:seed_referents",
       "path": "foundation/seed_referents.jsonl",
+      "phase": 6,
       "record_kind": "referent"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:identity_facets",
       "path": "foundation/identity_facets.jsonl",
+      "phase": 6,
       "record_kind": "identity_facet"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:type_assertions",
       "path": "foundation/type_assertions.jsonl",
+      "phase": 6,
       "record_kind": "type_assertion"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:seed_applications",
       "path": "foundation/seed_applications.jsonl",
+      "phase": 6,
       "record_kind": "semantic_application"
     },
     {
       "allow_empty": true,
+      "authority_scope": "foundation",
       "module_ref": "foundation:state_assignments",
       "path": "foundation/state_assignments.jsonl",
+      "phase": 6,
       "record_kind": "state_assignment"
     },
     {
       "allow_empty": false,
+      "authority_scope": "foundation",
       "module_ref": "foundation:capabilities",
       "path": "foundation/capabilities.jsonl",
+      "phase": 6,
       "record_kind": "capability_instance"
     },
     {
       "allow_empty": true,
+      "authority_scope": "foundation",
       "module_ref": "foundation:seed_knowledge",
       "path": "foundation/seed_knowledge.jsonl",
+      "phase": 6,
       "record_kind": "knowledge"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:evidence",
+      "path": "languages/evidence.jsonl",
+      "phase": 7,
+      "record_kind": "evidence"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:packs",
+      "path": "languages/packs.jsonl",
+      "phase": 7,
+      "record_kind": "language_pack"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:forms",
+      "path": "languages/forms.jsonl",
+      "phase": 7,
+      "record_kind": "language_form"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:senses",
+      "path": "languages/senses.jsonl",
+      "phase": 7,
+      "record_kind": "lexical_sense"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:form_sense_links",
+      "path": "languages/form_sense_links.jsonl",
+      "phase": 7,
+      "record_kind": "form_sense_link"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:constructions",
+      "path": "languages/constructions.jsonl",
+      "phase": 7,
+      "record_kind": "construction"
     }
   ],
   "package_ref": "cemm:v350:foundation-source",

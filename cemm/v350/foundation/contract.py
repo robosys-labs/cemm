@@ -96,7 +96,8 @@ class FoundationPackageAuditor:
     def audit(self, package_root: str | Path) -> FoundationAuditReport:
         root = Path(package_root).resolve()
         loader = SourcePackageLoader(root)
-        records = loader.load()
+        all_records = loader.load()
+        records = tuple(item for item in all_records if item.phase <= 6)
         issues: list[FoundationAuditIssue] = []
         counts = Counter(item.record_kind.value for item in records)
         by_kind: dict[RecordKind, dict[str, list[SourceRecord]]] = {}
@@ -172,16 +173,26 @@ class FoundationPackageAuditor:
     def _check_manifest(self, loader: SourcePackageLoader, issues: list[FoundationAuditIssue]) -> None:
         metadata = dict(loader.manifest.metadata)
         required = {
-            "phase": "6",
+            "foundation_phase": "6",
             "authority": "reviewed_source",
             "domain_light": True,
             "language_neutral": True,
             "foundation_contract_ref": self.contract.contract_ref,
         }
+        current_phase = int(metadata.get("phase", 0))
+        if current_phase < 6:
+            self._error(issues, "manifest_contract_mismatch", "phase", f"expected current phase >= 6, got {current_phase!r}")
         for key, expected in required.items():
             actual = metadata.get(key)
             if str(actual).casefold() != str(expected).casefold():
                 self._error(issues, "manifest_contract_mismatch", key, f"expected {expected!r}, got {actual!r}")
+
+        foundation_modules = tuple(item for item in loader.manifest.modules if item.phase <= 6)
+        if not foundation_modules:
+            self._error(issues, "foundation_modules_missing", loader.manifest.package_ref, "no Phase-6-owned modules")
+        for module in foundation_modules:
+            if module.authority_scope not in {"semantic", "foundation"}:
+                self._error(issues, "foundation_module_scope", module.module_ref, module.authority_scope)
 
         pinned_files = {
             "foundation_contract_sha256": loader.package_root / "foundation_contract.json",

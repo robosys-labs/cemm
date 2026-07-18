@@ -9,6 +9,11 @@ from ..schema.model import (
     FacetEntitlement, MeaningSchema, SchemaClass, SchemaLifecycleStatus, UseOperation,
 )
 from ..schema.registry import SchemaRegistry
+from ..language.model import (
+    ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
+    LanguagePackRecord, LexicalSenseRecord,
+)
+from ..language.registry import LanguageRegistry
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -454,6 +459,36 @@ class MaterializedViewRepository(TypedRepository[MaterializedViewRecord]):
         return self._store.materialized_view(view_ref, snapshot=snapshot)
 
 
+class LanguageRepository:
+    def __init__(self, store: Any) -> None:
+        self._store = store
+        self.packs = TypedRepository(store, RecordKind.LANGUAGE_PACK, LanguagePackRecord)
+        self.forms = TypedRepository(store, RecordKind.LANGUAGE_FORM, LanguageFormRecord)
+        self.senses = TypedRepository(store, RecordKind.LEXICAL_SENSE, LexicalSenseRecord)
+        self.links = TypedRepository(store, RecordKind.FORM_SENSE_LINK, FormSenseLinkRecord)
+        self.constructions = TypedRepository(store, RecordKind.CONSTRUCTION, ConstructionRecord)
+        self._registry_cache: dict[tuple[int, str, str], LanguageRegistry] = {}
+
+    def registry(self, *, snapshot: StoreSnapshot | None = None) -> LanguageRegistry:
+        if snapshot is None:
+            key = (self._store.revision, self._store.boot_fingerprint, self._store.overlay_fingerprint)
+        else:
+            self._store.assert_snapshot(snapshot)
+            key = (snapshot.store_revision, snapshot.boot_fingerprint, snapshot.overlay_fingerprint)
+        cached = self._registry_cache.get(key)
+        if cached is not None:
+            return cached
+        registry = LanguageRegistry(
+            (item.payload for item in self.packs.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.forms.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.senses.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.links.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.constructions.all(snapshot=snapshot, all_revisions=True)),
+        )
+        self._registry_cache = {key: registry}
+        return registry
+
+
 class RepositorySet:
     """Stable typed repository façade bound to one store instance.
 
@@ -484,6 +519,7 @@ class RepositorySet:
         self.importance_assessments = TypedRepository(store, RecordKind.IMPORTANCE_ASSESSMENT, ImportanceAssessment)
         self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)
         self.default_rules = DefaultRuleRepository(store)
+        self.language = LanguageRepository(store)
         self.materialized_views = MaterializedViewRepository(store)
         self.event_state = EventStateRepository(store)
 

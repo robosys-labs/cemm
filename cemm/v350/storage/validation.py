@@ -17,6 +17,11 @@ from ..schema.model import (
     StateValueSchema,
 )
 from ..schema.registry import SchemaRegistry
+from ..language.model import (
+    ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
+    LanguagePackRecord, LexicalSenseRecord, SenseTargetKind,
+)
+from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -69,10 +74,15 @@ class CommitValidator:
     def __init__(self, resolver: RecordResolver):
         self._resolver = resolver
         self._registry = self._schema_registry()
+        self._language_registry = self._build_language_registry()
 
     def validate(self, operations: Iterable[tuple[PatchOperation, Any | None]]) -> tuple[ValidationError, ...]:
         errors: list[ValidationError] = []
         report = self._registry.validate()
+        try:
+            self._language_registry.snapshot()
+        except LanguageRegistryError as exc:
+            errors.append(ValidationError("language_registry", "language", str(exc)))
         errors.extend(
             ValidationError(item.code, item.target_ref, item.message)
             for item in report.errors
@@ -127,6 +137,20 @@ class CommitValidator:
                 ))
         return tuple(errors)
 
+    def _build_language_registry(self) -> LanguageRegistry:
+        def records(kind: RecordKind, expected: type[Any]):
+            return tuple(
+                item.payload for item in self._resolver.records(kind)
+                if isinstance(item.payload, expected)
+            )
+        return LanguageRegistry(
+            records(RecordKind.LANGUAGE_PACK, LanguagePackRecord),
+            records(RecordKind.LANGUAGE_FORM, LanguageFormRecord),
+            records(RecordKind.LEXICAL_SENSE, LexicalSenseRecord),
+            records(RecordKind.FORM_SENSE_LINK, FormSenseLinkRecord),
+            records(RecordKind.CONSTRUCTION, ConstructionRecord),
+        )
+
     def _schema_registry(self) -> SchemaRegistry:
         schemas = tuple(item.payload for item in self._resolver.records(RecordKind.SCHEMA))
         entitlements = tuple(item.payload for item in self._resolver.records(RecordKind.FACET_ENTITLEMENT))
@@ -162,6 +186,10 @@ class CommitValidator:
             self._validate_default_rule(record)
         elif kind == RecordKind.REFERENT:
             self._validate_referent(record)
+        elif kind == RecordKind.LEXICAL_SENSE:
+            self._validate_lexical_sense(record)
+        elif kind == RecordKind.CONSTRUCTION:
+            self._validate_construction(record)
         del revision
 
     def _validate_referent(self, referent: Referent) -> None:
@@ -369,6 +397,51 @@ class CommitValidator:
                 )
                 if not isinstance(value, StateValueSchema) or value.dimension_ref != dimension.schema_ref:
                     raise ValueError("default rule value does not belong to its dimension")
+
+    def _validate_lexical_sense(self, sense: LexicalSenseRecord) -> None:
+        if sense.target_kind in {
+            SenseTargetKind.SCHEMA, SenseTargetKind.REFERENT_TYPE,
+            SenseTargetKind.OPERATOR, SenseTargetKind.DISCOURSE,
+        }:
+            schema = self._require_schema(sense.target_ref, sense.target_revision or 0)
+            if sense.target_schema_class is not None and schema.schema_class != sense.target_schema_class:
+                raise ValueError(
+                    f"lexical sense target class mismatch: {sense.sense_ref} expects "
+                    f"{sense.target_schema_class.value}, got {schema.schema_class.value}"
+                )
+            if not schema.use_profile.permits(sense.use_operation, provisional=True):
+                raise ValueError(
+                    f"lexical sense target does not authorize {sense.use_operation.value}: "
+                    f"{sense.target_ref}@{sense.target_revision}"
+                )
+            if sense.target_kind == SenseTargetKind.REFERENT_TYPE and not isinstance(schema, ReferentTypeSchema):
+                raise ValueError("referent-type lexical sense must target ReferentTypeSchema")
+        for type_ref in sense.expected_type_refs:
+            schema = self._registry.maybe_authoritative_schema(type_ref)
+            if schema is None or not isinstance(schema, ReferentTypeSchema):
+                raise ValueError(f"lexical sense expected type is unresolved: {type_ref}")
+
+    def _validate_construction(self, construction: ConstructionRecord) -> None:
+        if construction.output_schema_ref is None:
+            return
+        schema = self._require_schema(
+            construction.output_schema_ref, construction.output_schema_revision or 0
+        )
+        if construction.output_schema_class is not None and schema.schema_class != construction.output_schema_class:
+            raise ValueError(
+                f"construction output class mismatch: {construction.construction_ref}"
+            )
+        if not schema.use_profile.permits("compose", provisional=True):
+            raise ValueError(
+                f"construction output schema does not authorize composition: {schema.schema_ref}"
+            )
+        schema_ports = {item.port_ref for item in schema.local_ports}
+        for slot in construction.slots:
+            if slot.semantic_port_ref and slot.semantic_port_ref not in schema_ports:
+                raise ValueError(
+                    f"construction slot maps to unknown semantic port {slot.semantic_port_ref}: "
+                    f"{construction.construction_ref}"
+                )
 
     def _validate_dependencies(self, target_ref: str, dependencies: Iterable[RecordDependency]) -> None:
         for dependency in dependencies:

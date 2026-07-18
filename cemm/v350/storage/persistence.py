@@ -6,6 +6,10 @@ import sqlite3
 from typing import Any, Mapping
 
 from ..schema.model import FacetEntitlement, MeaningSchema, canonical_data
+from ..language.model import (
+    ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
+    LanguagePackRecord, LexicalSenseRecord,
+)
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -162,6 +166,16 @@ def _write_normalized(
         _write_default_rule(connection, record)
     elif record_kind == RecordKind.DEPENDENCY:
         _write_dependency(connection, record)
+    elif record_kind == RecordKind.LANGUAGE_PACK:
+        _write_language_pack(connection, record)
+    elif record_kind == RecordKind.LANGUAGE_FORM:
+        _write_language_form(connection, record)
+    elif record_kind == RecordKind.LEXICAL_SENSE:
+        _write_lexical_sense(connection, record)
+    elif record_kind == RecordKind.FORM_SENSE_LINK:
+        _write_form_sense_link(connection, record)
+    elif record_kind == RecordKind.CONSTRUCTION:
+        _write_construction(connection, record)
     elif record_kind == RecordKind.MATERIALIZED_VIEW:
         _write_view(connection, record)
 
@@ -1062,6 +1076,136 @@ def _write_dependency(connection: sqlite3.Connection, item: DependencyEdge) -> N
             int(item.active),
             canonical_json(item.metadata),
         ),
+    )
+
+
+def _write_language_pack(connection: sqlite3.Connection, item: LanguagePackRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO language_packs(
+            pack_ref, revision, supersedes_revision, language_tag, lifecycle_status, scripts_json,
+            tokenizer_profile, normalization_profile, competence_case_refs_json,
+            permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(pack_ref, revision) DO UPDATE SET
+            supersedes_revision=excluded.supersedes_revision, language_tag=excluded.language_tag, lifecycle_status=excluded.lifecycle_status,
+            scripts_json=excluded.scripts_json, tokenizer_profile=excluded.tokenizer_profile,
+            normalization_profile=excluded.normalization_profile,
+            competence_case_refs_json=excluded.competence_case_refs_json,
+            permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
+        """,
+        (item.pack_ref, item.revision, item.supersedes_revision, item.language_tag, item.lifecycle_status.value,
+         canonical_json(item.scripts), item.tokenizer_profile, item.normalization_profile,
+         canonical_json(item.competence_case_refs), item.permission_ref, canonical_json(item.metadata)),
+    )
+
+
+def _write_language_form(connection: sqlite3.Connection, item: LanguageFormRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO language_forms(
+            form_ref, revision, supersedes_revision, pack_ref, pack_revision, written_form, normalized_form,
+            form_kind, script, token_count, feature_values_json, variant_of_ref,
+            lifecycle_status, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(form_ref, revision) DO UPDATE SET
+            supersedes_revision=excluded.supersedes_revision, pack_ref=excluded.pack_ref, pack_revision=excluded.pack_revision,
+            written_form=excluded.written_form, normalized_form=excluded.normalized_form,
+            form_kind=excluded.form_kind, script=excluded.script,
+            token_count=excluded.token_count, feature_values_json=excluded.feature_values_json,
+            variant_of_ref=excluded.variant_of_ref, lifecycle_status=excluded.lifecycle_status,
+            permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
+        """,
+        (item.form_ref, item.revision, item.supersedes_revision, item.pack_ref, item.pack_revision, item.written_form,
+         item.normalized_form, item.form_kind.value, item.script, item.token_count,
+         canonical_json(item.feature_values), item.variant_of_ref, item.lifecycle_status.value,
+         item.permission_ref, canonical_json(item.metadata)),
+    )
+
+
+def _write_lexical_sense(connection: sqlite3.Connection, item: LexicalSenseRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO lexical_senses(
+            sense_ref, revision, supersedes_revision, pack_ref, pack_revision, target_kind, target_ref,
+            target_revision, target_schema_class, use_operation, lexical_category,
+            frame_ref, argument_map_json, expected_type_refs_json, scope_behavior,
+            context_constraints_json, feature_constraints_json, lifecycle_status,
+            competence_case_refs_json, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(sense_ref, revision) DO UPDATE SET
+            supersedes_revision=excluded.supersedes_revision, pack_ref=excluded.pack_ref, pack_revision=excluded.pack_revision,
+            target_kind=excluded.target_kind, target_ref=excluded.target_ref,
+            target_revision=excluded.target_revision, target_schema_class=excluded.target_schema_class,
+            use_operation=excluded.use_operation, lexical_category=excluded.lexical_category,
+            frame_ref=excluded.frame_ref, argument_map_json=excluded.argument_map_json,
+            expected_type_refs_json=excluded.expected_type_refs_json,
+            scope_behavior=excluded.scope_behavior, context_constraints_json=excluded.context_constraints_json,
+            feature_constraints_json=excluded.feature_constraints_json,
+            lifecycle_status=excluded.lifecycle_status, competence_case_refs_json=excluded.competence_case_refs_json,
+            permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
+        """,
+        (item.sense_ref, item.revision, item.supersedes_revision, item.pack_ref, item.pack_revision, item.target_kind.value,
+         item.target_ref, item.target_revision, None if item.target_schema_class is None else item.target_schema_class.value,
+         item.use_operation.value, item.lexical_category, item.frame_ref, canonical_json(item.argument_map),
+         canonical_json(item.expected_type_refs), item.scope_behavior, canonical_json(item.context_constraints),
+         canonical_json(item.feature_constraints), item.lifecycle_status.value,
+         canonical_json(item.competence_case_refs), item.permission_ref, canonical_json(item.metadata)),
+    )
+
+
+def _write_form_sense_link(connection: sqlite3.Connection, item: FormSenseLinkRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO form_sense_links(
+            link_ref, revision, supersedes_revision, form_ref, form_revision, sense_ref, sense_revision,
+            prior_weight, register_refs_json, condition_refs_json, lifecycle_status,
+            permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(link_ref, revision) DO UPDATE SET
+            supersedes_revision=excluded.supersedes_revision, form_ref=excluded.form_ref, form_revision=excluded.form_revision,
+            sense_ref=excluded.sense_ref, sense_revision=excluded.sense_revision,
+            prior_weight=excluded.prior_weight, register_refs_json=excluded.register_refs_json,
+            condition_refs_json=excluded.condition_refs_json, lifecycle_status=excluded.lifecycle_status,
+            permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
+        """,
+        (item.link_ref, item.revision, item.supersedes_revision, item.form_ref, item.form_revision, item.sense_ref,
+         item.sense_revision, item.prior_weight, canonical_json(item.register_refs),
+         canonical_json(item.condition_refs), item.lifecycle_status.value,
+         item.permission_ref, canonical_json(item.metadata)),
+    )
+
+
+def _write_construction(connection: sqlite3.Connection, item: ConstructionRecord) -> None:
+    connection.execute(
+        """
+        INSERT INTO constructions(
+            construction_ref, revision, supersedes_revision, pack_ref, pack_revision, construction_kind,
+            slots_json, trigger_form_refs_json, trigger_sense_refs_json,
+            output_schema_ref, output_schema_revision, output_schema_class,
+            full_sentence_pattern, genuine_idiom, preserves_gap, lifecycle_status,
+            competence_case_refs_json, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(construction_ref, revision) DO UPDATE SET
+            supersedes_revision=excluded.supersedes_revision, pack_ref=excluded.pack_ref, pack_revision=excluded.pack_revision,
+            construction_kind=excluded.construction_kind, slots_json=excluded.slots_json,
+            trigger_form_refs_json=excluded.trigger_form_refs_json,
+            trigger_sense_refs_json=excluded.trigger_sense_refs_json,
+            output_schema_ref=excluded.output_schema_ref, output_schema_revision=excluded.output_schema_revision,
+            output_schema_class=excluded.output_schema_class,
+            full_sentence_pattern=excluded.full_sentence_pattern, genuine_idiom=excluded.genuine_idiom,
+            preserves_gap=excluded.preserves_gap, lifecycle_status=excluded.lifecycle_status,
+            competence_case_refs_json=excluded.competence_case_refs_json,
+            permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
+        """,
+        (item.construction_ref, item.revision, item.supersedes_revision, item.pack_ref, item.pack_revision,
+         item.construction_kind.value, canonical_json(item.slots),
+         canonical_json(item.trigger_form_refs), canonical_json(item.trigger_sense_refs),
+         item.output_schema_ref, item.output_schema_revision,
+         None if item.output_schema_class is None else item.output_schema_class.value,
+         int(item.full_sentence_pattern), int(item.genuine_idiom), int(item.preserves_gap),
+         item.lifecycle_status.value, canonical_json(item.competence_case_refs),
+         item.permission_ref, canonical_json(item.metadata)),
     )
 
 

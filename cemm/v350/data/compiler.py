@@ -37,6 +37,8 @@ class SourceRecord:
     path: str
     ordinal: int
     record_kind: RecordKind
+    phase: int
+    authority_scope: str
     record: Any
     revision: int
 
@@ -95,6 +97,8 @@ class SourcePackageLoader:
                         path=module.path,
                         ordinal=ordinal,
                         record_kind=module.record_kind,
+                        phase=module.phase,
+                        authority_scope=module.authority_scope,
                         record=record,
                         revision=revision,
                     ))

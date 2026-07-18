@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -488,6 +488,115 @@ DDL: tuple[str, ...] = (
     ) WITHOUT ROWID
     """,
     "CREATE INDEX IF NOT EXISTS materialized_views_subject_idx ON materialized_views(view_kind, subject_ref, context_ref, stale)",
+    """
+    CREATE TABLE IF NOT EXISTS language_packs (
+        pack_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        supersedes_revision INTEGER,
+        language_tag TEXT NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        scripts_json TEXT NOT NULL,
+        tokenizer_profile TEXT NOT NULL,
+        normalization_profile TEXT NOT NULL,
+        competence_case_refs_json TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(pack_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS language_packs_tag_idx ON language_packs(language_tag, lifecycle_status, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS language_forms (
+        form_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        supersedes_revision INTEGER,
+        pack_ref TEXT NOT NULL,
+        pack_revision INTEGER NOT NULL,
+        written_form TEXT NOT NULL,
+        normalized_form TEXT NOT NULL,
+        form_kind TEXT NOT NULL,
+        script TEXT NOT NULL,
+        token_count INTEGER NOT NULL,
+        feature_values_json TEXT NOT NULL,
+        variant_of_ref TEXT,
+        lifecycle_status TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(form_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS language_forms_lookup_idx ON language_forms(pack_ref, pack_revision, normalized_form, lifecycle_status)",
+    """
+    CREATE TABLE IF NOT EXISTS lexical_senses (
+        sense_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        supersedes_revision INTEGER,
+        pack_ref TEXT NOT NULL,
+        pack_revision INTEGER NOT NULL,
+        target_kind TEXT NOT NULL,
+        target_ref TEXT NOT NULL,
+        target_revision INTEGER,
+        target_schema_class TEXT,
+        use_operation TEXT NOT NULL,
+        lexical_category TEXT NOT NULL,
+        frame_ref TEXT NOT NULL,
+        argument_map_json TEXT NOT NULL,
+        expected_type_refs_json TEXT NOT NULL,
+        scope_behavior TEXT NOT NULL,
+        context_constraints_json TEXT NOT NULL,
+        feature_constraints_json TEXT NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        competence_case_refs_json TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(sense_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS lexical_senses_target_idx ON lexical_senses(target_ref, target_revision, lifecycle_status)",
+    """
+    CREATE TABLE IF NOT EXISTS form_sense_links (
+        link_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        supersedes_revision INTEGER,
+        form_ref TEXT NOT NULL,
+        form_revision INTEGER NOT NULL,
+        sense_ref TEXT NOT NULL,
+        sense_revision INTEGER NOT NULL,
+        prior_weight REAL NOT NULL,
+        register_refs_json TEXT NOT NULL,
+        condition_refs_json TEXT NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(link_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS form_sense_links_form_idx ON form_sense_links(form_ref, form_revision, lifecycle_status)",
+    """
+    CREATE TABLE IF NOT EXISTS constructions (
+        construction_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        supersedes_revision INTEGER,
+        pack_ref TEXT NOT NULL,
+        pack_revision INTEGER NOT NULL,
+        construction_kind TEXT NOT NULL,
+        slots_json TEXT NOT NULL,
+        trigger_form_refs_json TEXT NOT NULL,
+        trigger_sense_refs_json TEXT NOT NULL,
+        output_schema_ref TEXT,
+        output_schema_revision INTEGER,
+        output_schema_class TEXT,
+        full_sentence_pattern INTEGER NOT NULL,
+        genuine_idiom INTEGER NOT NULL,
+        preserves_gap INTEGER NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        competence_case_refs_json TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(construction_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS constructions_pack_idx ON constructions(pack_ref, pack_revision, construction_kind, lifecycle_status)",
     """
     CREATE TABLE IF NOT EXISTS patch_journal (
         patch_ref TEXT PRIMARY KEY,

@@ -8,6 +8,21 @@ from typing import Any, Callable, Mapping
 from ..schema.codec import record_from_document as schema_record_from_document
 from ..schema.codec import record_to_document as schema_record_to_document
 from ..schema.model import FacetEntitlement, MeaningSchema, canonical_data, semantic_fingerprint
+from ..language.codec import (
+    construction_from_document,
+    form_sense_link_from_document,
+    language_form_from_document,
+    language_pack_from_document,
+    language_record_to_document,
+    lexical_sense_from_document,
+)
+from ..language.model import (
+    ConstructionRecord,
+    FormSenseLinkRecord,
+    LanguageFormRecord,
+    LanguagePackRecord,
+    LexicalSenseRecord,
+)
 from ..uol.codec import (
     application_from_document,
     capability_delta_from_document,
@@ -319,6 +334,11 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.IMPORTANCE_ASSESSMENT: importance_from_document,
     RecordKind.DEFAULT_RULE: _default_rule,
     RecordKind.DEPENDENCY: _dependency,
+    RecordKind.LANGUAGE_PACK: language_pack_from_document,
+    RecordKind.LANGUAGE_FORM: language_form_from_document,
+    RecordKind.LEXICAL_SENSE: lexical_sense_from_document,
+    RecordKind.FORM_SENSE_LINK: form_sense_link_from_document,
+    RecordKind.CONSTRUCTION: construction_from_document,
     RecordKind.MATERIALIZED_VIEW: _view,
 }
 
@@ -341,6 +361,14 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
     validate_record_kind(resolved, record)
     if resolved in {RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT}:
         document = schema_record_to_document(record)
+    elif resolved in {
+        RecordKind.LANGUAGE_PACK,
+        RecordKind.LANGUAGE_FORM,
+        RecordKind.LEXICAL_SENSE,
+        RecordKind.FORM_SENSE_LINK,
+        RecordKind.CONSTRUCTION,
+    }:
+        document = language_record_to_document(record)
     elif resolved in {
         RecordKind.REFERENT,
         RecordKind.SEMANTIC_APPLICATION,
@@ -380,6 +408,11 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.IMPORTANCE_ASSESSMENT: (ImportanceAssessment,),
         RecordKind.DEFAULT_RULE: (DefaultRuleRecord,),
         RecordKind.DEPENDENCY: (DependencyEdge,),
+        RecordKind.LANGUAGE_PACK: (LanguagePackRecord,),
+        RecordKind.LANGUAGE_FORM: (LanguageFormRecord,),
+        RecordKind.LEXICAL_SENSE: (LexicalSenseRecord,),
+        RecordKind.FORM_SENSE_LINK: (FormSenseLinkRecord,),
+        RecordKind.CONSTRUCTION: (ConstructionRecord,),
         RecordKind.MATERIALIZED_VIEW: (MaterializedViewRecord,),
     }
     if not isinstance(record, expected[record_kind]):
@@ -413,6 +446,11 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.IMPORTANCE_ASSESSMENT: "assessment_ref",
         RecordKind.DEFAULT_RULE: "rule_ref",
         RecordKind.DEPENDENCY: "dependency_ref",
+        RecordKind.LANGUAGE_PACK: "pack_ref",
+        RecordKind.LANGUAGE_FORM: "form_ref",
+        RecordKind.LEXICAL_SENSE: "sense_ref",
+        RecordKind.FORM_SENSE_LINK: "link_ref",
+        RecordKind.CONSTRUCTION: "construction_ref",
         RecordKind.MATERIALIZED_VIEW: "view_ref",
     }
     return str(getattr(record, attributes[resolved]))
@@ -424,6 +462,9 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
     if resolved in {
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT,
         RecordKind.REFERENT, RecordKind.DEFAULT_RULE,
+        RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM,
+        RecordKind.LEXICAL_SENSE, RecordKind.FORM_SENSE_LINK,
+        RecordKind.CONSTRUCTION,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -448,7 +489,11 @@ def record_context(record_kind: RecordKind | str, record: Any) -> str | None:
 
 def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
     resolved = record_kind if isinstance(record_kind, RecordKind) else RecordKind(record_kind)
-    if resolved in {RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE}:
+    if resolved in {
+        RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE,
+        RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
+        RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION,
+    }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):
         return str(_enum_value(getattr(record, "status")))

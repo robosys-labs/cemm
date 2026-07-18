@@ -1,0 +1,10 @@
+{"case_ref":"competence:phase8:self-resolution","content":"I","expected_selected":true,"expected_target_ref":"referent:self","operation":"ground_text"}
+{"case_ref":"competence:phase8:unknown-provisional-frontier","content":"NovelName","expected_provisional":true,"expected_selected":false,"operation":"ground_text"}
+{"case_ref":"competence:phase8:same-name-ambiguity","content":"Alex","expected_target_refs":["referent:competence:alex:a","referent:competence:alex:b"],"operation":"ambiguous_identity"}
+{"case_ref":"competence:phase8:addressee-discourse","content":"you","expected_target_ref":"referent:competence:alex:a","operation":"addressee"}
+{"case_ref":"competence:phase8:event-frontier","content":"see","expected_provisional":true,"expected_selected":false,"expected_storage_kind":"event_occurrence","operation":"ground_text"}
+{"case_ref":"competence:phase8:multimodal-system-output","content":"this","expected_origins":["multimodal","system_output"],"operation":"demonstrative"}
+{"case_ref":"competence:phase8:schema-topic","expected_revision":1,"operation":"schema_topic","schema_ref":"event:observe"}
+{"case_ref":"competence:phase8:claim-attribution-no-admission","content":"I say you","expected_admission_count":0,"expected_audience_ref":"referent:competence:alex:a","expected_source_ref":"referent:self","operation":"claim"}
+{"case_ref":"competence:phase8:provisional-patch-is-review-only","content":"FreshEntity","expected_record_kinds":["evidence","referent","identity_facet"],"operation":"provisional_patch"}
+{"case_ref":"competence:phase8:identity-proposals-review-only","content":"Alex","expected_merge":true,"expected_split":true,"operation":"identity_proposals"}

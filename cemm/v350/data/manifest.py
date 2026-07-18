@@ -17,6 +17,8 @@ class SourceModule:
     record_kind: RecordKind
     required: bool = True
     allow_empty: bool = True
+    phase: int = 6
+    authority_scope: str = "semantic"
 
     def __post_init__(self) -> None:
         if not self.module_ref.strip() or not self.path.strip():
@@ -24,6 +26,10 @@ class SourceModule:
         relative = Path(self.path)
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError(f"source module path must remain inside the package: {self.path}")
+        if self.phase < 0:
+            raise ValueError("source module phase must be non-negative")
+        if not self.authority_scope.strip():
+            raise ValueError("source module authority_scope is required")
         if relative.suffix.casefold() not in {".jsonl", ".json", ".yaml", ".yml"}:
             raise ValueError(f"unsupported source module extension: {self.path}")
 
@@ -65,6 +71,8 @@ class SourceManifest:
                         "record_kind": item.record_kind.value,
                         "required": item.required,
                         "allow_empty": item.allow_empty,
+                        "phase": item.phase,
+                        "authority_scope": item.authority_scope,
                     }
                     for item in self.modules
                 ],
@@ -89,6 +97,8 @@ def load_manifest(path: str | Path) -> SourceManifest:
             record_kind=RecordKind(item["record_kind"]),
             required=bool(item.get("required", True)),
             allow_empty=bool(item.get("allow_empty", True)),
+            phase=int(item.get("phase", 6)),
+            authority_scope=str(item.get("authority_scope", "semantic")),
         ))
     return SourceManifest(
         package_ref=str(payload["package_ref"]),

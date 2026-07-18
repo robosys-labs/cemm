@@ -100,7 +100,13 @@ def test_foundation_contract_audit_is_clean(contract) -> None:
 
 
 def test_foundation_compilation_is_byte_deterministic(compiled, contract) -> None:
-    assert compiled.record_count == sum(contract.expected_record_counts.values())
+    manifest = SourcePackageLoader(SOURCE).manifest
+    foundation_modules = {item.module_ref for item in manifest.modules if item.phase <= 6}
+    assert sum(
+        count for module_ref, count in compiled.module_counts.items()
+        if module_ref in foundation_modules
+    ) == sum(contract.expected_record_counts.values())
+    assert compiled.record_count >= sum(contract.expected_record_counts.values())
     assert compiled.byte_size > 0
     assert compiled.boot_fingerprint.startswith("boot-database:")
     assert compiled.record_set_fingerprint.startswith("compiled-record-set:")
@@ -113,11 +119,13 @@ def test_manifest_is_reviewed_language_neutral_and_domain_light() -> None:
         "domain_light": manifest.metadata["domain_light"],
         "language_neutral": manifest.metadata["language_neutral"],
         "phase": manifest.metadata["phase"],
+        "foundation_phase": manifest.metadata["foundation_phase"],
     } == {
         "authority": "reviewed_source",
         "domain_light": True,
         "language_neutral": True,
-        "phase": "6",
+        "phase": "8",
+        "foundation_phase": "6",
     }
     assert manifest.metadata["foundation_contract_ref"] == "contract:cemm:v350:foundation"
     assert len(manifest.metadata["foundation_contract_sha256"]) == 64

@@ -42,6 +42,11 @@ class RecordKind(StrEnum):
     IMPORTANCE_ASSESSMENT = "importance_assessment"
     DEFAULT_RULE = "default_rule"
     DEPENDENCY = "dependency"
+    LANGUAGE_PACK = "language_pack"
+    LANGUAGE_FORM = "language_form"
+    LEXICAL_SENSE = "lexical_sense"
+    FORM_SENSE_LINK = "form_sense_link"
+    CONSTRUCTION = "construction"
     MATERIALIZED_VIEW = "materialized_view"
 
 
