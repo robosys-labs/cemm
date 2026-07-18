@@ -30,8 +30,10 @@ def test_lint_rejects_generic_negative_axis(tmp_path: Path) -> None:
 
 
 def test_lint_rejects_event_specific_mutation(tmp_path: Path) -> None:
-    path = tmp_path / "bad.py"
-    path.write_text("def apply_death_state():\n    pass\n", encoding="utf-8")
+    directory = tmp_path / "transitions"
+    directory.mkdir()
+    path = directory / "bad.py"
+    path.write_text("def apply_example_concept_state():\n    pass\n", encoding="utf-8")
     assert any(item.code == "event_specific_mutation" for item in scan_file(path))
 
 

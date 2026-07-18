@@ -23,6 +23,16 @@ from ..language.model import (
     LanguagePackRecord,
     LexicalSenseRecord,
 )
+from ..transitions.codec import (
+    capability_dependency_from_document,
+    transition_contract_from_document,
+    transition_proof_from_document,
+)
+from ..transitions.model import (
+    CapabilityDependencyRecord,
+    TransitionContractRecord,
+    TransitionProofRecord,
+)
 from ..uol.codec import (
     application_from_document,
     capability_delta_from_document,
@@ -411,6 +421,9 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.STATE_DELTA: state_delta_from_document,
     RecordKind.CAPABILITY_INSTANCE: _capability,
     RecordKind.CAPABILITY_DELTA: capability_delta_from_document,
+    RecordKind.TRANSITION_CONTRACT: transition_contract_from_document,
+    RecordKind.CAPABILITY_DEPENDENCY: capability_dependency_from_document,
+    RecordKind.TRANSITION_PROOF: transition_proof_from_document,
     RecordKind.KNOWLEDGE: _knowledge,
     RecordKind.EVIDENCE: _evidence,
     RecordKind.SOURCE_ASSESSMENT: _source_assessment,
@@ -488,6 +501,9 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.STATE_DELTA: (StateDelta,),
         RecordKind.CAPABILITY_INSTANCE: (CapabilityInstance,),
         RecordKind.CAPABILITY_DELTA: (CapabilityDelta,),
+        RecordKind.TRANSITION_CONTRACT: (TransitionContractRecord,),
+        RecordKind.CAPABILITY_DEPENDENCY: (CapabilityDependencyRecord,),
+        RecordKind.TRANSITION_PROOF: (TransitionProofRecord,),
         RecordKind.KNOWLEDGE: (KnowledgeRecord,),
         RecordKind.EVIDENCE: (EvidenceRecord,),
         RecordKind.SOURCE_ASSESSMENT: (SourceAssessmentRecord,),
@@ -530,6 +546,9 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.STATE_DELTA: "delta_ref",
         RecordKind.CAPABILITY_INSTANCE: "capability_ref",
         RecordKind.CAPABILITY_DELTA: "delta_ref",
+        RecordKind.TRANSITION_CONTRACT: "contract_ref",
+        RecordKind.CAPABILITY_DEPENDENCY: "dependency_ref",
+        RecordKind.TRANSITION_PROOF: "proof_ref",
         RecordKind.KNOWLEDGE: "knowledge_ref",
         RecordKind.EVIDENCE: "evidence_ref",
         RecordKind.IMPACT_ASSESSMENT: "assessment_ref",
@@ -555,6 +574,7 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM,
         RecordKind.LEXICAL_SENSE, RecordKind.FORM_SENSE_LINK,
         RecordKind.CONSTRUCTION, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,
+        RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -587,6 +607,7 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
         RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION, RecordKind.EPISTEMIC_ADMISSION,
+        RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
     }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):

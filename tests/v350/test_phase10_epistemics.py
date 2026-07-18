@@ -378,7 +378,7 @@ def test_epistemic_patch_planner_never_contains_state_or_capability_effects(stor
 
 
 def test_phase10_schema_version_is_bumped_and_old_v2_shape_is_rejected() -> None:
-    assert SCHEMA_VERSION == 3
+    assert SCHEMA_VERSION >= 3
     connection = sqlite3.connect(":memory:")
     try:
         configure_connection(connection, deterministic_build=True)

@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -667,6 +667,61 @@ DDL: tuple[str, ...] = (
     ) WITHOUT ROWID
     """,
     "CREATE INDEX IF NOT EXISTS constructions_pack_idx ON constructions(pack_ref, pack_revision, construction_kind, lifecycle_status)",
+    """
+    CREATE TABLE IF NOT EXISTS transition_contracts (
+        contract_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        trigger_schema_ref TEXT NOT NULL,
+        trigger_schema_revision INTEGER NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        state_conditions_json TEXT NOT NULL,
+        state_effects_json TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        supersedes_revision INTEGER,
+        context_policy TEXT NOT NULL,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(contract_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS transition_contracts_trigger_idx ON transition_contracts(trigger_schema_ref, trigger_schema_revision, lifecycle_status, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS capability_dependencies (
+        dependency_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        action_schema_ref TEXT NOT NULL,
+        action_schema_revision INTEGER NOT NULL,
+        holder_type_refs_json TEXT NOT NULL,
+        state_conditions_json TEXT NOT NULL,
+        status_if_satisfied TEXT NOT NULL,
+        status_if_unsatisfied TEXT NOT NULL,
+        status_if_unknown TEXT NOT NULL,
+        evidence_refs_json TEXT NOT NULL,
+        lifecycle_status TEXT NOT NULL,
+        supersedes_revision INTEGER,
+        permission_ref TEXT NOT NULL,
+        metadata_json TEXT NOT NULL,
+        PRIMARY KEY(dependency_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS capability_dependencies_action_idx ON capability_dependencies(action_schema_ref, action_schema_revision, lifecycle_status, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS transition_proofs (
+        proof_ref TEXT PRIMARY KEY,
+        event_ref TEXT NOT NULL,
+        transition_contract_ref TEXT NOT NULL,
+        transition_contract_revision INTEGER NOT NULL,
+        admission_pins_json TEXT NOT NULL,
+        condition_evidence_refs_json TEXT NOT NULL,
+        input_assignment_pins_json TEXT NOT NULL,
+        derived_state_delta_refs_json TEXT NOT NULL,
+        context_ref TEXT NOT NULL,
+        effective_time_ref TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        evidence_refs_json TEXT NOT NULL
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS transition_proofs_event_idx ON transition_proofs(event_ref, transition_contract_ref)",
     """
     CREATE TABLE IF NOT EXISTS patch_journal (
         patch_ref TEXT PRIMARY KEY,

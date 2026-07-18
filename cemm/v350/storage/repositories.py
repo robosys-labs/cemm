@@ -14,6 +14,7 @@ from ..language.model import (
     LanguagePackRecord, LexicalSenseRecord,
 )
 from ..language.registry import LanguageRegistry
+from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -521,6 +522,9 @@ class RepositorySet:
         self.state_deltas = TypedRepository(store, RecordKind.STATE_DELTA, StateDelta)
         self.capability_instances = TypedRepository(store, RecordKind.CAPABILITY_INSTANCE, CapabilityInstance)
         self.capability_deltas = TypedRepository(store, RecordKind.CAPABILITY_DELTA, CapabilityDelta)
+        self.transition_contracts = TypedRepository(store, RecordKind.TRANSITION_CONTRACT, TransitionContractRecord)
+        self.capability_dependencies = TypedRepository(store, RecordKind.CAPABILITY_DEPENDENCY, CapabilityDependencyRecord)
+        self.transition_proofs = TypedRepository(store, RecordKind.TRANSITION_PROOF, TransitionProofRecord)
         self.impact_assessments = TypedRepository(store, RecordKind.IMPACT_ASSESSMENT, ImpactAssessment)
         self.importance_assessments = TypedRepository(store, RecordKind.IMPORTANCE_ASSESSMENT, ImportanceAssessment)
         self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)

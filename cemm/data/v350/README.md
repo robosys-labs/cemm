@@ -20,8 +20,11 @@ SQLite compiler. It is reviewed source, not Python ontology authority.
 - **Phase 10** owns attributed claim occurrence/history, independent epistemic
   admission, source/evidence assessment, four-state truth projection, and
   admission-lineage knowledge projection.
-- **Phase 11 and later** own event transitions, downstream inference/effects,
-  realization, migration, and runtime cutover.
+- **Phase 11** owns generic reviewed transition/dependency contracts, independent
+  admission-gated transition preview, immutable state timelines, dependent
+  capability reevaluation, proof lineage, and atomic CAS effect commit.
+- **Phase 12 and later** own cross-domain transition vertical-slice proof, downstream
+  learning/inference/impact/response/realization, migration, and runtime cutover.
 
 Empty later-phase modules are explicit boundaries. They are not silently
 replaced by code defaults.
@@ -121,6 +124,30 @@ support and opposition records; no single record can assert it. Corrections and
 retractions are append-only history rather than destructive rewrites. Phase 10
 never emits state or capability deltas.
 
+## Phase-11 transition layers
+
+```text
+11A revisioned TransitionContract and CapabilityDependency authority
+11B exact EventSchema/StateDimension/StateValue contract compilation
+11C independent epistemic-admission gate and explicit context bridge
+11D snapshot-pinned non-mutating transition preview/frontiers
+11E revision-pinned TransitionProof and exact StateDelta derivation
+11F immutable StateAssignment timeline projection
+11G separate post-state CapabilityDependency reevaluation
+11H atomic CAS GraphPatch commit and deterministic competence audit
+```
+
+The Phase-11 kernel contains no named event/type/state/action authority. Canonical
+source intentionally contains zero domain transition contracts or capability
+dependencies; synthetic competence fixtures prove the generic machinery without
+promoting example concepts into the foundation. A transition proof pins exact
+epistemic-admission and pre-state assignment revisions. Commit validation
+reconstructs pre-state and rejects forged effects that do not exactly match the
+reviewed contract. Unresolved semantic time is never interpreted by string
+convention: durable timeline projection requires an explicitly resolved concrete
+timestamp. Relation/role effects remain a declared frontier until first-class
+generic lifecycle/delta records exist.
+
 ## Critical invariants
 
 - A storage kind is never a semantic ontology type.
@@ -137,9 +164,13 @@ never emits state or capability deltas.
 - Claims preserve source and audience but have no actual-world admission by default.
 - Actual-world epistemic admission requires explicit durable authorization, proof, source evidence, revisioned source-assessment records, and policy satisfaction.
 - Metadata never authorizes context crossing; cross-context knowledge requires resolvable active admission lineage.
-- SQLite schema changes are versioned; Phase-10 normalized authorities require schema version 3.
+- SQLite schema changes are versioned; Phase-11 normalized authorities require schema version 4.
 - Claim corrections/retractions and admission retractions are append-only and source-local.
 - Four-state `both` is derived from independent support/opposition; it is never one record's truth flag.
+- Event occurrence never implies effect; transition requires exact reviewed contract + independent admission + proof.
+- Transition preview is non-mutating and every durable effect is exact-contract/revision reproducible.
+- Capability change is dependency-driven rather than embedded in named event handlers.
+- Canonical foundation/source contains zero convenience domain transition contracts.
 - Identity merge/split and provisional referent creation require reviewable proposals.
 - Truth support, epistemic basis, proposition polarity, change direction, and evaluative valence remain separate axes.
 - Importance/valence are assessment vocabularies, and capability status is record-scoped; none is silently materialized as ordinary holder state.
@@ -152,6 +183,7 @@ python tools/verify_v350_foundation.py
 python tools/verify_v350_language_grounding.py
 python tools/verify_v350_composition.py
 python tools/verify_v350_epistemics.py
+python tools/verify_v350_transitions.py
 ```
 
 The foundation verifier audits only manifest modules owned by Phases 0–6, so the
@@ -163,3 +195,9 @@ composition, multilingual, and grounding competence suites. The Phase-9 verifier
 pinned epistemic contract, deterministic compilation, attributed claim/history
 separation, explicit authorization/proof admission, source-local retraction, and
 four-state truth projection without state/capability effects.
+
+The Phase-11 verifier audits the pinned transition contract and competence hashes,
+proves deterministic compilation, checks that transition/dependency source modules
+contain no convenience domain seed, scans the transition kernel for named semantic
+authority references, and executes synthetic structural competence cases for
+admission, blocking, preview, timelines, capability dependencies, and revision-pinned proofs.

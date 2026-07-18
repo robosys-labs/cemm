@@ -10,6 +10,11 @@ from ..language.model import (
     ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
     LanguagePackRecord, LexicalSenseRecord,
 )
+from ..transitions.model import (
+    CapabilityDependencyRecord,
+    TransitionContractRecord,
+    TransitionProofRecord,
+)
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -165,6 +170,12 @@ def _write_normalized(
         _write_capability(connection, record)
     elif record_kind == RecordKind.CAPABILITY_DELTA:
         _write_capability_delta(connection, record)
+    elif record_kind == RecordKind.TRANSITION_CONTRACT:
+        _write_transition_contract(connection, record)
+    elif record_kind == RecordKind.CAPABILITY_DEPENDENCY:
+        _write_capability_dependency(connection, record)
+    elif record_kind == RecordKind.TRANSITION_PROOF:
+        _write_transition_proof(connection, record)
     elif record_kind == RecordKind.IMPACT_ASSESSMENT:
         _write_impact(connection, record)
     elif record_kind == RecordKind.IMPORTANCE_ASSESSMENT:
@@ -1344,5 +1355,102 @@ def _write_view(connection: sqlite3.Connection, item: MaterializedViewRecord) ->
             canonical_json(item.dependency_refs),
             item.dependency_fingerprint,
             item.snapshot_revision,
+        ),
+    )
+
+
+def _write_transition_contract(
+    connection: sqlite3.Connection, record: TransitionContractRecord
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO transition_contracts(
+            contract_ref, revision, trigger_schema_ref, trigger_schema_revision, lifecycle_status,
+            state_conditions_json, state_effects_json, evidence_refs_json, supersedes_revision,
+            context_policy, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(contract_ref, revision) DO UPDATE SET
+            trigger_schema_ref=excluded.trigger_schema_ref,
+            trigger_schema_revision=excluded.trigger_schema_revision,
+            lifecycle_status=excluded.lifecycle_status,
+            state_conditions_json=excluded.state_conditions_json,
+            state_effects_json=excluded.state_effects_json,
+            evidence_refs_json=excluded.evidence_refs_json,
+            supersedes_revision=excluded.supersedes_revision,
+            context_policy=excluded.context_policy,
+            permission_ref=excluded.permission_ref,
+            metadata_json=excluded.metadata_json
+        """,
+        (
+            record.contract_ref, record.revision, record.trigger_schema_ref, record.trigger_schema_revision,
+            record.lifecycle_status.value, canonical_json(record.state_conditions), canonical_json(record.state_effects),
+            canonical_json(record.evidence_refs), record.supersedes_revision, record.context_policy,
+            record.permission_ref, canonical_json(record.metadata),
+        ),
+    )
+
+
+def _write_capability_dependency(
+    connection: sqlite3.Connection, record: CapabilityDependencyRecord
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO capability_dependencies(
+            dependency_ref, revision, action_schema_ref, action_schema_revision, holder_type_refs_json,
+            state_conditions_json, status_if_satisfied, status_if_unsatisfied, status_if_unknown,
+            evidence_refs_json, lifecycle_status, supersedes_revision, permission_ref, metadata_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(dependency_ref, revision) DO UPDATE SET
+            action_schema_ref=excluded.action_schema_ref,
+            action_schema_revision=excluded.action_schema_revision,
+            holder_type_refs_json=excluded.holder_type_refs_json,
+            state_conditions_json=excluded.state_conditions_json,
+            status_if_satisfied=excluded.status_if_satisfied,
+            status_if_unsatisfied=excluded.status_if_unsatisfied,
+            status_if_unknown=excluded.status_if_unknown,
+            evidence_refs_json=excluded.evidence_refs_json,
+            lifecycle_status=excluded.lifecycle_status,
+            supersedes_revision=excluded.supersedes_revision,
+            permission_ref=excluded.permission_ref,
+            metadata_json=excluded.metadata_json
+        """,
+        (
+            record.dependency_ref, record.revision, record.action_schema_ref, record.action_schema_revision,
+            canonical_json(record.holder_type_refs), canonical_json(record.state_conditions),
+            record.status_if_satisfied.value, record.status_if_unsatisfied.value, record.status_if_unknown.value,
+            canonical_json(record.evidence_refs), record.lifecycle_status.value, record.supersedes_revision,
+            record.permission_ref, canonical_json(record.metadata),
+        ),
+    )
+
+
+def _write_transition_proof(
+    connection: sqlite3.Connection, record: TransitionProofRecord
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO transition_proofs(
+            proof_ref, event_ref, transition_contract_ref, transition_contract_revision,
+            admission_pins_json, condition_evidence_refs_json, input_assignment_pins_json,
+            derived_state_delta_refs_json, context_ref, effective_time_ref, confidence, evidence_refs_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(proof_ref) DO UPDATE SET
+            event_ref=excluded.event_ref,
+            transition_contract_ref=excluded.transition_contract_ref,
+            transition_contract_revision=excluded.transition_contract_revision,
+            admission_pins_json=excluded.admission_pins_json,
+            condition_evidence_refs_json=excluded.condition_evidence_refs_json,
+            input_assignment_pins_json=excluded.input_assignment_pins_json,
+            derived_state_delta_refs_json=excluded.derived_state_delta_refs_json,
+            context_ref=excluded.context_ref,
+            effective_time_ref=excluded.effective_time_ref,
+            confidence=excluded.confidence,
+            evidence_refs_json=excluded.evidence_refs_json
+        """,
+        (
+            record.proof_ref, record.event_ref, record.transition_contract_ref, record.transition_contract_revision,
+            canonical_json(record.admission_pins), canonical_json(record.condition_evidence_refs),
+            canonical_json(record.input_assignment_pins), canonical_json(record.derived_state_delta_refs),
+            record.context_ref, record.effective_time_ref, record.confidence, canonical_json(record.evidence_refs),
         ),
     )

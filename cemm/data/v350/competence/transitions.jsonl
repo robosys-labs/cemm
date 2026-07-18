@@ -1,0 +1,12 @@
+{"case_ref":"competence:phase11:contract-compile","operation":"contract_compile"}
+{"case_ref":"competence:phase11:admission-context-bridge","operation":"admission_context_bridge"}
+{"case_ref":"competence:phase11:negative-proposition-block","operation":"negative_proposition_block"}
+{"case_ref":"competence:phase11:hypothetical-block","operation":"nontransitioning_status_block","status":"hypothetical"}
+{"case_ref":"competence:phase11:fictional-block","operation":"nontransitioning_status_block","status":"fictional"}
+{"case_ref":"competence:phase11:admitted-preview","operation":"admitted_preview"}
+{"case_ref":"competence:phase11:unknown-frontier","operation":"unknown_frontier"}
+{"case_ref":"competence:phase11:immutable-timeline","operation":"immutable_timeline"}
+{"case_ref":"competence:phase11:capability-dependency","operation":"capability_dependency"}
+{"case_ref":"competence:phase11:revision-pinned-proof","operation":"revision_pinned_proof"}
+{"case_ref":"competence:phase11:no-domain-transition-seed","operation":"no_domain_transition_seed"}
+{"case_ref":"competence:phase11:no-named-kernel-authority","operation":"no_named_kernel_authority"}

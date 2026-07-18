@@ -41,12 +41,14 @@ _NAMED_SEMANTIC_REF = re.compile(
     r"^(?:type|facet|event|action|property|state|relation|role|function|operator|"
     r"discourse-act|discourse-relation|response-policy):[^:]+(?:[:][^:]+)*$"
 )
-_SEMANTIC_AUTHORITY_PACKAGES = frozenset({"grounding", "composition", "epistemics"})
-_EVENT_MUTATION_NAME = re.compile(
-    r"(?:mutate|apply|commit|update|set|handle|on).*(?:death|die|died)|"
-    r"(?:death|die|died).*(?:mutate|apply|commit|update|set|handle)",
-    re.IGNORECASE,
-)
+_SEMANTIC_AUTHORITY_PACKAGES = frozenset({"grounding", "composition", "epistemics", "transitions"})
+_MUTATION_NAME_PREFIXES = frozenset({"mutate", "apply", "commit", "update", "set", "handle", "on"})
+_GENERIC_MUTATION_NAME_TOKENS = frozenset({
+    "record", "records", "state", "states", "delta", "deltas", "patch", "patches",
+    "effect", "effects", "transition", "transitions", "assignment", "assignments",
+    "capability", "capabilities", "lifecycle", "timeline", "projection", "projections",
+    "event", "events", "store", "overlay", "snapshot", "revision", "revisions", "status",
+})
 
 
 def scan_tree(root: Path) -> tuple[ArchitectureViolation, ...]:
@@ -184,7 +186,7 @@ class _Visitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        if _EVENT_MUTATION_NAME.search(node.name):
+        if _semantic_authority_path(self.path) and _looks_like_domain_specific_mutation_name(node.name):
             self._add(
                 node,
                 "event_specific_mutation",
@@ -299,7 +301,7 @@ class _Visitor(ast.NodeVisitor):
             self._add(
                 node,
                 "named_semantic_authority_literal",
-                "composition/grounding/epistemic kernel code must resolve semantic refs from data, evidence, or exact schema contracts",
+                "grounding/composition/epistemic/transition kernel code must resolve semantic refs from data, evidence, or exact schema contracts",
             )
         normalized = " ".join(node.value.casefold().split()).strip(".!? ")
         if normalized in _TARGETLESS_ACKNOWLEDGEMENTS:
@@ -314,6 +316,25 @@ class _Visitor(ast.NodeVisitor):
             ArchitectureViolation(self.path, getattr(node, "lineno", 1), code, message)
         )
 
+
+
+def _looks_like_domain_specific_mutation_name(name: str) -> bool:
+    """Flag mutation helpers that embed an unexplained domain token in the function name.
+
+    This deliberately does not know any domain vocabulary.  Generic lifecycle/store
+    machinery is allowed; a helper such as ``apply_<domain>_state`` is rejected
+    because the domain token would become source-code semantic authority.
+    """
+    tokens = tuple(token for token in name.casefold().split("_") if token)
+    if len(tokens) < 2:
+        return False
+    if tokens[0] in _MUTATION_NAME_PREFIXES:
+        semantic_tokens = tokens[1:]
+    elif tokens[-1] in _MUTATION_NAME_PREFIXES:
+        semantic_tokens = tokens[:-1]
+    else:
+        return False
+    return any(token not in _GENERIC_MUTATION_NAME_TOKENS for token in semantic_tokens)
 
 
 def _dotted_name(node: ast.AST) -> str:

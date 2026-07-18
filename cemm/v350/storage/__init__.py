@@ -11,6 +11,7 @@ from .codec import (
     record_ref,
     record_revision,
 )
+from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
 from .model import (
     AdmissionDecision,
     AdmissionLifecycleStatus,
@@ -57,6 +58,7 @@ __all__ = [
     "AssertionStatus",
     "AssignmentStatus",
     "CapabilityInstance",
+    "CapabilityDependencyRecord",
     "ClaimHistoryAction",
     "ClaimHistoryRecord",
     "ClaimRecord",
@@ -85,6 +87,8 @@ __all__ = [
     "SemanticStore",
     "SourceAssessmentRecord",
     "StateAssignment",
+    "TransitionContractRecord",
+    "TransitionProofRecord",
     "StoreConflictError",
     "StoreError",
     "StoreSnapshot",
