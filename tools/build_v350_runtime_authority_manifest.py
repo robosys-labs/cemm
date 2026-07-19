@@ -24,8 +24,19 @@ def git_head(root:Path)->str:
  try:return subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
  except Exception:return ''
 
+def _module_name(factory_path:str)->str:
+ return factory_path.partition(':')[0]
+
+def _source_manifest_sets(path:Path):
+ doc=json.loads(path.read_text())
+ modules=doc.get('modules',[])
+ boot=sorted(str(item.get('module_ref','')) for item in modules if item.get('module_ref'))
+ kinds=sorted({str(item.get('record_kind','')) for item in modules if item.get('record_kind')})
+ languages=sorted(str(item.get('module_ref','')) for item in modules if str(item.get('module_ref','')).startswith('languages:'))
+ return boot,kinds,languages
+
 def main():
- p=argparse.ArgumentParser();p.add_argument('--repo',default='.');p.add_argument('--verification-report',default='');p.add_argument('--boot-db',default='');p.add_argument('--runtime-factory',required=True);p.add_argument('--adapter',action='append',default=[],help='STAGE=adapter_ref@revision,module:factory,source_file');p.add_argument('--output',default='cemm/data/v350/runtime_authority_manifest.json');a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--repo',default='.');p.add_argument('--verification-report',default='');p.add_argument('--boot-db',default='');p.add_argument('--runtime-factory',required=True);p.add_argument('--adapter',action='append',default=[],help='STAGE=adapter_ref@revision,module:factory,source_file');p.add_argument('--operation-adapter-contract',action='append',default=[]);p.add_argument('--semantic-analyzer-contract',action='append',default=[]);p.add_argument('--channel-adapter-contract',action='append',default=[]);p.add_argument('--output',default='cemm/data/v350/runtime_authority_manifest.json');a=p.parse_args()
  root=Path(a.repo).resolve();report=Path(a.verification_report).resolve() if a.verification_report else None
  if report is not None:
   doc=json.loads(report.read_text())
@@ -41,7 +52,9 @@ def main():
  missing=[s for s in STAGES if s not in by]
  if missing:raise SystemExit('missing stage adapters: '+','.join(missing))
  source_manifest=root/'cemm/data/v350/manifest.json';deny=root/'cemm/data/v350/legacy_authority_denylist.json'
+ boot_modules,record_kinds,language_packages=_source_manifest_sets(source_manifest)
+ allowed_runtime_modules=sorted({_module_name(a.runtime_factory),*(_module_name(item['factory_path']) for item in by.values()),'cemm.v350.orchestration','cemm.v350.cutover','cemm.v350.public_runtime'})
  boot=Path(a.boot_db).resolve() if a.boot_db else None
- out={"manifest_version":1,"release_version":"3.5.0","release_commit":git_head(root),"source_manifest_sha256":sha(source_manifest),"boot_database_sha256":sha(boot) if boot and boot.is_file() else '',"schema_version":8,"canonical_orchestrator":"cemm.v350.orchestration:CanonicalOrchestrator","canonical_runtime_factory":a.runtime_factory,"public_entrypoints":["cemm:Runtime","cemm.app.runtime:Runtime","cemm.__main__:main"],"forbidden_runtime_import_prefixes":["cemm.v347","cemm.v350.migration"],"stage_adapters":[by[s] for s in STAGES],"legacy_denylist_sha256":sha(deny),"verification_report_sha256":sha(report) if report is not None else "","activation_ready":False,"metadata":{"stage15_sole_goal_authority":True,"legacy_fallback":False,"migration_runtime_reachable":False}}
+ out={"manifest_version":1,"release_version":"3.5.0","release_commit":git_head(root),"source_manifest_sha256":sha(source_manifest),"boot_database_sha256":sha(boot) if boot and boot.is_file() else '',"schema_version":8,"canonical_orchestrator":"cemm.v350.orchestration:CanonicalOrchestrator","canonical_runtime_factory":a.runtime_factory,"public_entrypoints":["cemm:Runtime","cemm.app.runtime:Runtime","cemm.__main__:main"],"forbidden_runtime_import_prefixes":["cemm.v347","cemm.v350.migration"],"stage_adapters":[by[s] for s in STAGES],"allowed_runtime_modules":allowed_runtime_modules,"allowed_record_kinds":record_kinds,"allowed_boot_data_modules":boot_modules,"allowed_language_packages":language_packages,"operation_adapter_contracts":sorted(map(str,a.operation_adapter_contract)),"semantic_analyzer_contracts":sorted(map(str,a.semantic_analyzer_contract)),"channel_adapter_contracts":sorted(map(str,a.channel_adapter_contract)),"migration_modules_allowed_at_runtime":[],"legacy_denylist_sha256":sha(deny),"verification_report_sha256":sha(report) if report is not None else "","activation_ready":False,"metadata":{"stage15_sole_goal_authority":True,"legacy_fallback":False,"migration_runtime_reachable":False}}
  path=root/a.output;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(out,sort_keys=True,separators=(',',':'))+'\n');print(path)
 if __name__=='__main__':main()

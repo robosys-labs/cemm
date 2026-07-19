@@ -31,7 +31,7 @@ from ..operations.model import OperationAdapterContractRecord, OperationAuthoriz
 from ..response.model import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord, ResponseUOLRecord
 from ..realization.model import ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticAnalyzerContractRecord, SemanticRoundTripRecord, SurfaceCandidateRecord
 from ..output.model import ChannelAdapterContractRecord, LiteralEmissionPolicyRecord, EmissionGateAssessmentRecord, EmissionAuthorizationRecord, EmissionJournalRecord, EmissionRecord, EmissionAnomalyRecord, SilenceOutcomeRecord, OutputDiscourseActRecord, OutputCommitmentRecord, CommonGroundRecord, OutputReferenceAnchorRecord, OutputCorrectionRecord
-from ..migration.model import MigrationSourceRecord, MigrationRuleRecord, MigrationTargetMapRecord, MigrationDecisionRecord, MigrationBatchRecord, MigrationQuarantineRecord, MigrationIntentionalChangeRecord, SemanticEquivalenceRecord, MigrationRollbackRecord
+from ..migration_records.model import MigrationSourceRecord, MigrationRuleRecord, MigrationTargetMapRecord, MigrationDecisionRecord, MigrationBatchRecord, MigrationQuarantineRecord, MigrationIntentionalChangeRecord, SemanticEquivalenceRecord, MigrationRollbackRecord
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,

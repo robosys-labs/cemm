@@ -28,7 +28,7 @@ from ..learning.validation import LearningCommitValidator
 from ..operations.validation import Phase16CommitValidator
 from ..realization.validation import Phase17CommitValidator
 from ..output.validation import Phase18CommitValidator
-from ..migration.validation import Phase19CommitValidator
+from ..migration_records.validation import Phase19CommitValidator
 from ..significance.model import (
     ImpactProofRecord, ImpactRuleRecord, ImportanceEvidenceRecord, ImportancePolicyRecord, SignificanceAssessmentRecord,
 )

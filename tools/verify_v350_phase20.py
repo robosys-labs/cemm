@@ -14,6 +14,11 @@ FORBIDDEN_IMPORTS=('cemm.v347','cemm.v350.migration')
 PUBLIC_FILES=('cemm/__init__.py','cemm/app/runtime.py','cemm/__main__.py')
 SEMANTIC_FLAGS=('USE_V350','FALLBACK_LEGACY','USE_OLD_NLG','LEGACY_MEMORY_ON_FAILURE')
 STAGE_COUNT=23
+REQUIRED_MANIFEST_SEQUENCE_FIELDS=(
+ 'allowed_runtime_modules','allowed_record_kinds','allowed_boot_data_modules',
+ 'allowed_language_packages','operation_adapter_contracts',
+ 'semantic_analyzer_contracts','channel_adapter_contracts',
+ 'migration_modules_allowed_at_runtime')
 
 def sha(p:Path)->str:
  h=hashlib.sha256();
@@ -30,6 +35,19 @@ def imports(path:Path):
   elif isinstance(node,ast.ImportFrom):
    if node.module:out.append(node.module)
  return tuple(out)
+
+def is_forbidden_runtime_import(rel_path:str, import_name:str)->bool:
+ rel=rel_path.replace('\\','/')
+ name=import_name
+ if any(name==x or name.startswith(x+'.') for x in FORBIDDEN_IMPORTS):
+  return True
+ if name=='v347' or name.startswith('v347.'):
+  return True
+ if name=='v350.migration' or name.startswith('v350.migration.'):
+  return True
+ if rel.startswith('cemm/v350/') and (name=='migration' or name.startswith('migration.')):
+  return True
+ return False
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--repo',default='.');ap.add_argument('--boot-db',default='');ap.add_argument('--runtime-manifest',default='cemm/data/v350/runtime_authority_manifest.json');ap.add_argument('--run-pytest',action='store_true');ap.add_argument('--check-wheel',action='store_true');ap.add_argument('--output',default='phase20-release-verification.json');ap.add_argument('--preactivate',action='store_true');a=ap.parse_args();root=Path(a.repo).resolve();errors=[];warnings=[];checks={}
@@ -50,7 +68,8 @@ def main():
  bad=[]
  for p in runtime_files:
   for imp in imports(p):
-   if any(imp==x or imp.startswith(x+'.') for x in FORBIDDEN_IMPORTS) or imp=='v347' or imp.startswith('v347.') or imp=='v350.migration' or imp.startswith('v350.migration.') or (str(p.relative_to(root)).startswith('cemm/v350/') and (imp=='migration' or imp.startswith('migration.'))):bad.append((str(p.relative_to(root)),imp))
+   rel=p.relative_to(root).as_posix()
+   if is_forbidden_runtime_import(rel,imp):bad.append((rel,imp))
  check('runtime_import_isolation',not bad,'forbidden runtime imports: '+repr(bad[:20]))
  flag_hits=[]
  for p in runtime_files:
@@ -64,6 +83,9 @@ def main():
  rmp=root/a.runtime_manifest
  try:
   m=json.loads(rmp.read_text());ad=m.get('stage_adapters',[]);stages={int(x['stage']) for x in ad};check('runtime_manifest_activation',True if a.preactivate else bool(m.get('activation_ready')),'runtime manifest is not activation_ready');check('all_23_stages',len(ad)==STAGE_COUNT and stages==set(range(STAGE_COUNT)),'runtime manifest does not declare exactly one adapter for stages 0..22');check('runtime_factory',bool(m.get('canonical_runtime_factory')) and not any(str(m.get('canonical_runtime_factory')).startswith(x) for x in FORBIDDEN_IMPORTS),'runtime factory missing or forbidden');check('source_manifest_fingerprint',m.get('source_manifest_sha256')==sha(source),'runtime manifest source manifest fingerprint mismatch');check('denylist_fingerprint',m.get('legacy_denylist_sha256')==sha(deny),'runtime manifest denylist fingerprint mismatch');
+  missing_manifest_fields=[field for field in REQUIRED_MANIFEST_SEQUENCE_FIELDS if field not in m or not isinstance(m.get(field),list)]
+  check('runtime_manifest_full_cutover_fields',not missing_manifest_fields,'runtime manifest missing full cutover fields: '+repr(missing_manifest_fields))
+  check('runtime_manifest_no_migration_modules',m.get('migration_modules_allowed_at_runtime',[])==[],'runtime manifest allows migration modules at runtime')
   if not a.preactivate:check('verification_lineage',bool(m.get('verification_report_sha256')),'runtime manifest lacks activation verification lineage')
  except Exception as e:check('runtime_manifest_activation',False,f'runtime authority manifest unreadable: {e}');check('all_23_stages',False,'no valid runtime authority manifest')
  pyproject=(root/'pyproject.toml').read_text(encoding='utf-8') if (root/'pyproject.toml').is_file() else ''

@@ -47,6 +47,14 @@ class RuntimeAuthorityManifest:
     public_entrypoints: tuple[str, ...]
     forbidden_runtime_import_prefixes: tuple[str, ...]
     stage_adapters: tuple[StageAdapterAuthority, ...]
+    allowed_runtime_modules: tuple[str, ...]
+    allowed_record_kinds: tuple[str, ...]
+    allowed_boot_data_modules: tuple[str, ...]
+    allowed_language_packages: tuple[str, ...]
+    operation_adapter_contracts: tuple[str, ...]
+    semantic_analyzer_contracts: tuple[str, ...]
+    channel_adapter_contracts: tuple[str, ...]
+    migration_modules_allowed_at_runtime: tuple[str, ...]
     legacy_denylist_sha256: str
     verification_report_sha256: str
     activation_ready: bool
@@ -77,6 +85,14 @@ class RuntimeAuthorityManifest:
             public_entrypoints=tuple(map(str, doc.get("public_entrypoints", ()))),
             forbidden_runtime_import_prefixes=tuple(map(str, doc.get("forbidden_runtime_import_prefixes", ()))),
             stage_adapters=adapters,
+            allowed_runtime_modules=tuple(map(str, doc.get("allowed_runtime_modules", ()))),
+            allowed_record_kinds=tuple(map(str, doc.get("allowed_record_kinds", ()))),
+            allowed_boot_data_modules=tuple(map(str, doc.get("allowed_boot_data_modules", ()))),
+            allowed_language_packages=tuple(map(str, doc.get("allowed_language_packages", ()))),
+            operation_adapter_contracts=tuple(map(str, doc.get("operation_adapter_contracts", ()))),
+            semantic_analyzer_contracts=tuple(map(str, doc.get("semantic_analyzer_contracts", ()))),
+            channel_adapter_contracts=tuple(map(str, doc.get("channel_adapter_contracts", ()))),
+            migration_modules_allowed_at_runtime=tuple(map(str, doc.get("migration_modules_allowed_at_runtime", ()))),
             legacy_denylist_sha256=str(doc["legacy_denylist_sha256"]),
             verification_report_sha256=str(doc["verification_report_sha256"]),
             activation_ready=bool(doc.get("activation_ready", False)),
@@ -98,6 +114,8 @@ class RuntimeAuthorityGuard:
             raise RuntimeAuthorityError("v3.5 runtime authority manifest is not activation-ready")
         if m.release_version != "3.5.0":
             raise RuntimeAuthorityError(f"unexpected release version: {m.release_version}")
+        if m.migration_modules_allowed_at_runtime:
+            raise RuntimeAuthorityError("runtime manifest allows migration modules")
         missing = [stage.name for stage in CoreStage if stage not in self._by_stage]
         if missing:
             raise RuntimeAuthorityError("runtime manifest missing stage adapters: " + ",".join(missing))
