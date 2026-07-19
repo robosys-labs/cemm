@@ -1,0 +1,4 @@
+{"case_ref":"competence:phase15:no-targetless-goal","expected":"positive targetless acknowledgement/goal is structurally rejected"}
+{"case_ref":"competence:phase15:authorization-before-utility","expected":"unauthorized high-utility goal cannot outrank authorized lower-utility goal"}
+{"case_ref":"competence:phase15:controlling-holder-capability","expected":"capability belongs to exact action controlling-port holder, never arbitrary filler"}
+{"case_ref":"competence:phase15:eligibility-not-execution","expected":"Phase15 authorization means goal eligibility only and cannot submit external operation"}

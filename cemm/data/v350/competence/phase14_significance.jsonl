@@ -1,0 +1,4 @@
+{"case_ref":"competence:phase14:impact-source-field-current","expected":"ImpactAssessment uses source_event_or_state_ref and exact source/rule/binding/prerequisite lineage"}
+{"case_ref":"competence:phase14:stakeholder-scope-isolation","expected":"importance evidence from another stakeholder/context/permission cannot influence assessment"}
+{"case_ref":"competence:phase14:contradiction-preserved","expected":"support and opposition remain separately attributable through arbitration"}
+{"case_ref":"competence:phase14:no-state-mutation","expected":"significance assessment cannot create or rewrite state facts"}

@@ -1,0 +1,17 @@
+{"case_ref":"competence:phase17:realize-use-independent","expected":"GROUND-only learned language authority is invisible to REALIZE"}
+{"case_ref":"competence:phase17:unseen-domain-no-template","expected":"new schema with compatible structural frame realizes without predicate-specific sentence code"}
+{"case_ref":"competence:phase17:feature-conflict-fails","expected":"feature-unification contradiction creates realization frontier instead of arbitrary selection"}
+{"case_ref":"competence:phase17:negation-preserved","expected":"morphology/linearization cannot silently drop polarity"}
+{"case_ref":"competence:phase17:reference-privacy","expected":"reference generation cannot use identity facets outside response permission scope"}
+{"case_ref":"competence:phase17:roundtrip-addition-rejected","expected":"surface adding unsupported semantic content fails round-trip authorization"}
+{"case_ref":"competence:phase17:language-revision-invalidation","expected":"changed pack/frame/morphology/linearization dependency invalidates cached candidate"}
+{"case_ref":"competence:phase17:cyclic-linearization-bounded","expected":"cyclic ordering fails closed with explicit frontier"}
+{"case_ref":"competence:phase17:exact-pack-closure","expected":"realization cannot select an active same-language pack/form/frame not pinned by the exact RealizationRequest"}
+{"case_ref":"competence:phase17:reference-form-authority","expected":"raw identity facets/transcript text cannot become surface; explicit REALIZE-authorized language form and reference plan required"}
+{"case_ref":"competence:phase17:nested-application-composition","expected":"semantic-application fillers remain typed and recursively realize through their own reviewed frames instead of being misread as referents"}
+{"case_ref":"competence:phase17:coordination-construction","expected":"coordination preserves member identity and uses an exact REALIZE-authorized coordination ConstructionRecord plus connector LanguageForm from the pinned pack closure"}
+{"case_ref":"competence:phase17:single-snapshot-compile","expected":"any semantic-store change during realization compilation invalidates the candidate and forces recompilation"}
+{"case_ref":"competence:phase17:underconstrained-order-fails","expected":"multiple valid linearization orders fail closed unless reviewed language data explicitly marks free order"}
+{"case_ref":"competence:phase17:specialized-referent-reference","expected":"proposition/claim/event referents resolve through durable permission-scoped reference plans without raw identity leakage"}
+{"case_ref":"competence:phase17:roundtrip-expected-is-response-graph","expected":"caller cannot choose a weaker expected fingerprint; roundtrip compares against exact pinned Response UOL graph fingerprint"}
+{"case_ref":"competence:phase17:scope-construction-algebra","expected":"logical/modal/temporal/quantifier/discourse/negation scope uses exact ordered ScopeRelation plus REALIZE-authorized scope ConstructionRecord; missing or ambiguous construction fails closed"}

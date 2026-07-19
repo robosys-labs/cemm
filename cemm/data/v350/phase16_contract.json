@@ -1,0 +1,36 @@
+{
+  "contract_ref": "contract:cemm:v350:phase16-operation-response-uol",
+  "phase": 16,
+  "authority": "operation-boundary-and-response-meaning",
+  "invariants": {
+    "goal_eligibility_is_not_execution_permission": true,
+    "fresh_hard_authorization_before_external_side_effect": true,
+    "journal_before_side_effect": true,
+    "dispatch_is_not_success": true,
+    "unknown_outcome_never_blindly_retried": true,
+    "operation_results_reenter_epistemics_and_transitions": true,
+    "phase15_remains_sole_goal_authority": true,
+    "response_uol_is_surface_free": true,
+    "response_uol_all_and_only_authorized_meaning": true,
+    "stale_goal_decision_cannot_emit_or_execute": true,
+    "hard_gate_pass_names_are_not_authority_without_durable_assessments": true,
+    "operation_result_and_observed_journal_commit_atomically": true,
+    "operation_plan_authorization_and_prepare_share_one_exact_snapshot": true,
+    "historical_candidate_revisions_do_not_shadow_effective_execution_authority": true,
+    "response_nested_application_closure_is_exact_and_root_reachable": true,
+    "historical_event_participant_application_is_never_latest_by_ref": true,
+    "submitted_crash_window_is_recoverable_without_resubmit": true,
+    "terminal_operation_outcomes_require_observed_evidence_or_proof": true
+  },
+  "required_components": [
+    "OperationPlanner",
+    "OperationAuthorizationGate",
+    "OperationJournalCoordinator",
+    "OperationExecutionCoordinator",
+    "OperationRecoveryCoordinator",
+    "ReconciliationCoordinator",
+    "ResponseMeaningPlanner",
+    "ResponseAuthorizationGate",
+    "ResponseUOLCommitCoordinator"
+  ]
+}

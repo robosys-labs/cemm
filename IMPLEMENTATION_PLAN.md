@@ -816,6 +816,8 @@ Build proof-carrying response meaning graphs before any target-language realizat
 
 Response UOL contains all and only authorized meaning, with no target-language wording embedded as semantic authority.
 
+The comprehensive implementation design is maintained in `docs/implementation/v350-phase-16-plan.md`.
+
 ---
 
 ## 20. Phase 17 — Multilingual realization algebra
@@ -844,6 +846,8 @@ Adding a new domain schema must not require adding a full sentence template.
 
 Shared semantic competence cases round-trip across multiple reviewed language packages without semantic drift.
 
+The comprehensive implementation design is maintained in `docs/implementation/v350-phase-17-plan.md`.
+
 ---
 
 ## 21. Phase 18 — Output discourse and common-ground authority
@@ -862,6 +866,8 @@ Make system output semantically referable and auditable.
 ### Exit gate
 
 Follow-up references can resolve against semantic output history without transcript-string hacks.
+
+The comprehensive implementation design is maintained in `docs/implementation/v350-phase-18-plan.md`.
 
 ---
 
@@ -883,6 +889,8 @@ Migrate retained useful legacy data without migrating legacy authority or semant
 ### Exit gate
 
 Migrated state is explainable, reversible, and behaviorally equivalent where equivalence is claimed.
+
+The comprehensive implementation design is maintained in `docs/implementation/v350-phase-19-plan.md`.
 
 ---
 

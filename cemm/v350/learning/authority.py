@@ -24,13 +24,17 @@ _COMPATIBLE: dict[RecordKind, frozenset[UseOperation]] = {
     RecordKind.LANGUAGE_PACK: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.LANGUAGE_FORM: frozenset({UseOperation.GROUND, UseOperation.REALIZE}),
     RecordKind.LEXICAL_SENSE: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
-    RecordKind.FORM_SENSE_LINK: frozenset({UseOperation.GROUND}),
+    RecordKind.FORM_SENSE_LINK: frozenset({UseOperation.GROUND, UseOperation.REALIZE}),
     RecordKind.CONSTRUCTION: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.TRANSITION_CONTRACT: frozenset({UseOperation.TRANSITION}),
     RecordKind.CAPABILITY_DEPENDENCY: frozenset({UseOperation.TRANSITION}),
     RecordKind.IMPACT_RULE: frozenset({UseOperation.IMPACT}),
     RecordKind.IMPORTANCE_POLICY: frozenset({UseOperation.IMPACT}),
     RecordKind.RESPONSE_POLICY_RULE: frozenset({UseOperation.RESPONSE_POLICY}),
+    RecordKind.RESPONSE_TRANSFORM_RULE: frozenset({UseOperation.PLAN}),
+    RecordKind.ARGUMENT_FRAME: frozenset({UseOperation.REALIZE}),
+    RecordKind.MORPHOLOGY_RULE: frozenset({UseOperation.REALIZE}),
+    RecordKind.LINEARIZATION_RULE: frozenset({UseOperation.REALIZE}),
 }
 
 

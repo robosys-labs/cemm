@@ -57,7 +57,10 @@ def impact_proof_from_document(value: Mapping[str, Any]) -> ImpactProofRecord:
     return ImpactProofRecord(
         proof_ref=str(d["proof_ref"]), source_pin=_pin(dict(d["source_pin"])), rule_pin=_pin(dict(d["rule_pin"])),
         stakeholder_ref=str(d["stakeholder_ref"]), affected_ref=str(d["affected_ref"]), context_ref=str(d["context_ref"]),
-        permission_ref=str(d["permission_ref"]), binding_evidence_refs=tuple(map(str, d.get("binding_evidence_refs", ()))),
+        permission_ref=str(d["permission_ref"]),
+        binding_source_pins=tuple(_pin(dict(x)) for x in d.get("binding_source_pins", ())),
+        prerequisite_proof_pins=tuple(_pin(dict(x)) for x in d.get("prerequisite_proof_pins", ())),
+        binding_evidence_refs=tuple(map(str, d.get("binding_evidence_refs", ()))),
         prerequisite_proof_refs=tuple(map(str, d.get("prerequisite_proof_refs", ()))), confidence=float(d.get("confidence", 1.0)),
         revision=int(d.get("revision", 1)), metadata=dict(d.get("metadata", {})),
     )

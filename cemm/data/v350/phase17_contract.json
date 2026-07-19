@@ -1,0 +1,36 @@
+{
+  "contract_ref": "contract:cemm:v350:phase17-realization-algebra",
+  "phase": 17,
+  "authority": "target-language-realization-only",
+  "invariants": {
+    "no_domain_sentence_templates": true,
+    "realize_authority_independent_from_grounding": true,
+    "exact_language_pack_closure": true,
+    "learned_realization_requires_exact_promotion_lineage": true,
+    "feature_unification_fails_closed": true,
+    "reference_generation_is_permission_scoped": true,
+    "raw_identity_facets_are_not_surface_authority": true,
+    "roundtrip_pass_requires_semantic_equivalence": true,
+    "roundtrip_pass_is_not_emission_authorization": true,
+    "nested_semantic_applications_remain_compositional": true,
+    "coordination_uses_reviewed_language_construction": true,
+    "realization_compile_is_single_snapshot": true,
+    "underconstrained_linearization_fails_closed_without_reviewed_free_order": true,
+    "specialized_referents_use_durable_permission_scoped_reference_lineage": true,
+    "surface_candidate_language_authority_is_commit_boundary_revalidated": true,
+    "roundtrip_expected_graph_is_pinned_response_uol_not_caller_choice": true,
+    "scope_relations_use_reviewed_realization_constructions": true
+  },
+  "required_components": [
+    "LanguageUseAuthority",
+    "ClausePlanner",
+    "FeatureUnifier",
+    "LexicalSelector",
+    "MorphologyExecutor",
+    "Linearizer",
+    "PrivacyAwareReferenceResolver",
+    "RealizationCompiler",
+    "RoundTripVerifier",
+    "RealizationCommitCoordinator"
+  ]
+}

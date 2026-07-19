@@ -211,6 +211,14 @@ def _write_normalized(
         RecordKind.GOAL_CANDIDATE, RecordKind.GOAL_CONFLICT, RecordKind.GOAL_DECISION,
     }:
         _write_phase14_15_record(connection, record_kind, record, revision)
+    elif record_kind in {
+        RecordKind.OPERATION_ADAPTER_CONTRACT, RecordKind.OPERATION_GATE_ASSESSMENT, RecordKind.OPERATION_PLAN, RecordKind.OPERATION_AUTHORIZATION,
+        RecordKind.OPERATION_JOURNAL, RecordKind.OPERATION_RESULT, RecordKind.OPERATION_RECONCILIATION,
+        RecordKind.RESPONSE_TRANSFORM_RULE, RecordKind.RESPONSE_TRANSFORMATION_PROOF, RecordKind.RESPONSE_OMISSION, RecordKind.RESPONSE_UOL,
+        RecordKind.REALIZATION_REQUEST, RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
+        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP,
+    }:
+        _write_phase16_17_record(connection, record_kind, record, revision)
 
 
 def _write_phase14_15_record(
@@ -253,6 +261,29 @@ def _write_phase14_15_record(
              None if not hasattr(record, "authorized") else int(bool(record.authorized)), record_context(record_kind, record),
              record_permission(record_kind, record), record_lifecycle(record_kind, record), canonical_json(payload)),
         )
+
+
+def _write_phase16_17_record(connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int) -> None:
+    payload = encode_record(record_kind, record)
+    phase17 = record_kind in {
+        RecordKind.REALIZATION_REQUEST, RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
+        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP,
+    }
+    if phase17:
+        connection.execute("""INSERT OR REPLACE INTO phase17_records(record_kind,record_ref,revision,pack_ref,language_tag,status,permission_ref,payload_json) VALUES (?,?,?,?,?,?,?,?)""",
+            (record_kind.value, record_ref(record_kind,record), revision, getattr(record,"pack_ref",None), getattr(record,"language_tag",None),
+             record_lifecycle(record_kind,record), record_permission(record_kind,record), canonical_json(payload)))
+    else:
+        parent_ref = None
+        for name in ("plan_ref","journal_ref","decision_ref","response_ref"):
+            value = getattr(record,name,None)
+            if value: parent_ref=value; break
+        for name in ("plan_pin","journal_pin","goal_decision_pin"):
+            pin=getattr(record,name,None)
+            if pin is not None: parent_ref=pin.record_ref; break
+        connection.execute("""INSERT OR REPLACE INTO phase16_records(record_kind,record_ref,revision,parent_ref,status,context_ref,permission_ref,payload_json) VALUES (?,?,?,?,?,?,?,?)""",
+            (record_kind.value, record_ref(record_kind,record), revision, parent_ref, record_lifecycle(record_kind,record),
+             record_context(record_kind,record), record_permission(record_kind,record), canonical_json(payload)))
 
 
 def _write_learning_record(

@@ -25,11 +25,21 @@ class ResolvedSource:
     context_ref: str
     permission_ref: str
     application: SemanticApplication | None
+    application_pin: PinnedRecord | None
 
 
 class ImpactRuleRegistry:
     def __init__(self, rules: Iterable[ImpactRuleRecord]) -> None:
-        self._rules = tuple(r for r in rules if r.executable)
+        by_ref = {}
+        for rule in rules:
+            if rule.executable:
+                by_ref.setdefault(rule.rule_ref, []).append(rule)
+        effective = []
+        for rule_ref in sorted(by_ref):
+            revisions = by_ref[rule_ref]
+            superseded = {r.supersedes_revision for r in revisions if r.supersedes_revision is not None}
+            effective.extend(r for r in revisions if r.revision not in superseded)
+        self._rules = tuple(sorted(effective, key=lambda r: (r.rule_ref, r.revision)))
 
     def candidates(self, source: ResolvedSource) -> tuple[ImpactRuleRecord, ...]:
         source_schema_pin = None
@@ -153,13 +163,16 @@ class SignificanceEngine:
         context_ref = stored.context_ref or getattr(payload, "context_ref", "actual")
         permission_ref = stored.permission_ref or getattr(payload, "permission_ref", "conversation")
         application = None
+        application_pin = None
         if isinstance(payload, SemanticApplication):
             application = payload
+            application_pin = pin
         elif isinstance(payload, EventOccurrence):
-            app_stored = self.store.get_record(RecordKind.SEMANTIC_APPLICATION, payload.participant_application_ref)
-            if app_stored is not None and isinstance(app_stored.payload, SemanticApplication):
-                application = app_stored.payload
-        return ResolvedSource(pin, payload, context_ref, permission_ref, application)
+            # EventOccurrence stores only participant_application_ref, never a revision.
+            # Do not recover latest-by-ref here; assess() must receive an explicit exact pin.
+            application = None
+            application_pin = None
+        return ResolvedSource(pin, payload, context_ref, permission_ref, application, application_pin)
 
     def assess(
         self,
@@ -170,10 +183,35 @@ class SignificanceEngine:
         importance_evidence: Iterable[ImportanceEvidenceRecord] = (),
         importance_policy: ImportancePolicyRecord | None = None,
         importance_policy_pin: PinnedRecord | None = None,
+        prerequisite_proof_pins: tuple[PinnedRecord, ...] = (),
+        participant_application_pin: PinnedRecord | None = None,
     ) -> tuple[tuple[tuple[ImpactProofRecord, SignificanceAssessmentRecord], ...], tuple[LearningFrontierRecord, ...]]:
         source = self.resolve_source(source_pin)
+        if isinstance(source.payload, EventOccurrence):
+            if participant_application_pin is None or participant_application_pin.record_kind != RecordKind.SEMANTIC_APPLICATION or participant_application_pin.record_ref != source.payload.participant_application_ref:
+                raise ValueError("event impact requires the exact participant application pin")
+            app_stored = self.store.get_record(participant_application_pin.record_kind, participant_application_pin.record_ref, participant_application_pin.revision)
+            if app_stored is None or app_stored.record_fingerprint != participant_application_pin.record_fingerprint or not isinstance(app_stored.payload, SemanticApplication):
+                raise ValueError("stale/missing exact participant application pin")
+            source = ResolvedSource(source.pin, source.payload, source.context_ref, source.permission_ref, app_stored.payload, participant_application_pin)
+        stored_rule = self.store.get_record(rule_pin.record_kind, rule_pin.record_ref, rule_pin.revision)
+        if stored_rule is None or stored_rule.record_fingerprint != rule_pin.record_fingerprint or stored_rule.payload != rule:
+            raise ValueError("impact rule object does not match exact durable rule_pin")
         if not rule.executable:
             raise ValueError("candidate/provisional impact rule cannot execute")
+        if importance_policy is not None:
+            if importance_policy_pin is None:
+                raise ValueError("importance policy use requires an exact importance_policy_pin")
+            stored_policy = self.store.get_record(importance_policy_pin.record_kind, importance_policy_pin.record_ref, importance_policy_pin.revision)
+            if stored_policy is None or stored_policy.record_fingerprint != importance_policy_pin.record_fingerprint or stored_policy.payload != importance_policy:
+                raise ValueError("importance policy object does not match exact durable policy pin")
+        provided_kinds = {pin.record_kind for pin in prerequisite_proof_pins}
+        if set(rule.prerequisite_proof_kinds).difference(provided_kinds):
+            raise ValueError("impact rule prerequisite proof kinds are not satisfied")
+        for pin in prerequisite_proof_pins:
+            stored = self.store.get_record(pin.record_kind, pin.record_ref, pin.revision)
+            if stored is None or stored.record_fingerprint != pin.record_fingerprint:
+                raise ValueError("stale prerequisite proof pin for impact assessment")
         stakeholders, affected = self.resolver.resolve(source, rule)
         frontiers: list[LearningFrontierRecord] = []
         if not stakeholders or not affected:
@@ -199,6 +237,9 @@ class SignificanceEngine:
                 proof = ImpactProofRecord(
                     proof_ref=proof_ref, source_pin=source_pin, rule_pin=rule_pin, stakeholder_ref=stakeholder,
                     affected_ref=affected_ref, context_ref=source.context_ref, permission_ref=source.permission_ref,
+                    binding_source_pins=(() if source.application_pin is None else (source.application_pin,)),
+                    prerequisite_proof_pins=prerequisite_proof_pins,
+                    prerequisite_proof_refs=tuple(pin.record_ref for pin in prerequisite_proof_pins),
                     confidence=rule.confidence,
                 )
                 event_ref = source_pin.record_ref
@@ -207,7 +248,7 @@ class SignificanceEngine:
                 )
                 impact = ImpactAssessment(
                     assessment_ref=impact_ref,
-                    event_ref=event_ref,
+                    source_event_or_state_ref=event_ref,
                     affected_ref=affected_ref,
                     stakeholder_ref=stakeholder,
                     affected_facet_refs=rule.affected_facet_refs,

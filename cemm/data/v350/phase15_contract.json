@@ -1,0 +1,14 @@
+{
+  "contract_ref": "contract:cemm:v350:phase15-goals",
+  "phase": 15,
+  "authority": "semantic-obligation-and-goal-selection-only",
+  "invariants": {
+    "every_positive_goal_target_bearing": true,
+    "authorization_precedes_utility": true,
+    "goal_eligibility_is_not_execution_permission": true,
+    "response_policy_semantic_not_surface": true,
+    "capability_holder_uses_action_controlling_port": true,
+    "conflicts_are_explicit_and_pairwise": true,
+    "decision_exact_snapshot_and_dependency_pinned": true
+  }
+}

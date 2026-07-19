@@ -109,6 +109,8 @@ class ImpactProofRecord:
     affected_ref: str
     context_ref: str
     permission_ref: str
+    binding_source_pins: tuple[PinnedRecord, ...] = ()
+    prerequisite_proof_pins: tuple[PinnedRecord, ...] = ()
     binding_evidence_refs: tuple[str, ...] = ()
     prerequisite_proof_refs: tuple[str, ...] = ()
     confidence: float = 1.0
@@ -128,6 +130,8 @@ class ImpactProofRecord:
             raise ValueError("impact proofs are immutable; recomputation requires a new proof_ref")
         if not isfinite(self.confidence) or not 0.0 <= self.confidence <= 1.0:
             raise ValueError("impact proof confidence must be finite in [0,1]")
+        _unique(tuple(pin.key for pin in self.binding_source_pins), "impact proof binding source pins")
+        _unique(tuple(pin.key for pin in self.prerequisite_proof_pins), "impact prerequisite proof pins")
         _unique(self.binding_evidence_refs, "impact proof binding evidence")
         _unique(self.prerequisite_proof_refs, "impact prerequisite proofs")
 
@@ -243,7 +247,7 @@ class SignificanceAssessmentRecord:
         if self.impact.context_ref != self.context_ref:
             raise ValueError("significance impact context must match wrapper context")
         if self.importance is not None:
-            if self.importance.subject_ref not in {self.impact.event_ref, self.impact.affected_ref, self.assessment_ref}:
+            if self.importance.subject_ref not in {self.impact.source_event_or_state_ref, self.impact.affected_ref, self.assessment_ref}:
                 raise ValueError("importance subject must be structurally related to the impact")
             if self.importance.stakeholder_ref != self.impact.stakeholder_ref:
                 raise ValueError("importance stakeholder must match impact stakeholder")

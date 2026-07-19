@@ -26,12 +26,44 @@ class GoalDecisionCoordinator:
         permission_ref: str,
     ):
         candidate_map = {item.goal_ref: item for item in candidates}
+        if len(candidate_map) != len(candidates):
+            raise ValueError("goal candidate refs must be unique")
+        obligation_map = {item.obligation_ref: item for item in obligations}
+        if any(ref not in obligation_map for c in candidates for ref in c.obligation_refs):
+            raise ValueError("every candidate obligation must be committed atomically in the same Phase-15 patch")
+        if any(c.permission_ref != permission_ref for c in candidates) or any(o.permission_ref != permission_ref for o in obligations):
+            raise ValueError("Phase-15 patch cannot silently mix permission scopes")
         unknown = set((*selected_goal_refs, *rejected_goal_refs, *deferred_goal_refs)) - set(candidate_map)
         if unknown:
             raise ValueError(f"goal decision references unknown candidates: {sorted(unknown)}")
         if any(not candidate_map[ref].authorized for ref in selected_goal_refs):
             raise ValueError("unauthorized candidate cannot be committed as selected")
         with self.store.snapshot() as snapshot:
+            for ref in selected_goal_refs:
+                candidate = candidate_map[ref]
+                for pin in (*candidate.source_pins, *candidate.policy_rule_pins, *candidate.authorization_pins):
+                    exact = self.store.get_record(pin.record_kind, pin.record_ref, pin.revision)
+                    if exact is None or exact.record_fingerprint != pin.record_fingerprint:
+                        raise ValueError(f"selected goal authorization/source is stale: {pin.key}")
+                    if pin.record_kind == RecordKind.RESPONSE_POLICY_RULE:
+                        revisions = [item for item in self.store.records(RecordKind.RESPONSE_POLICY_RULE, all_revisions=True)
+                                     if item.record_ref == pin.record_ref and getattr(item.payload, "executable", False)]
+                        superseded = {getattr(item.payload, "supersedes_revision", None) for item in revisions
+                                      if getattr(item.payload, "supersedes_revision", None) is not None}
+                        effective = [item for item in revisions if item.revision not in superseded]
+                        if len(effective) != 1 or effective[0].revision != pin.revision or effective[0].record_fingerprint != pin.record_fingerprint:
+                            raise ValueError(f"selected goal response-policy authority is no longer effective: {pin.key}")
+                    elif pin.record_kind == RecordKind.SCHEMA:
+                        try:
+                            effective_schema = self.store.repositories.schemas.for_use(pin.record_ref, candidate.operation)
+                        except KeyError as exc:
+                            raise ValueError(f"selected goal schema authority is no longer effective: {pin.key}") from exc
+                        if effective_schema.revision != pin.revision or effective_schema.record_fingerprint != pin.record_fingerprint:
+                            raise ValueError(f"selected goal schema authority is no longer effective: {pin.key}")
+                    else:
+                        latest = self.store.get_record(pin.record_kind, pin.record_ref)
+                        if latest is None or latest.revision != pin.revision or latest.record_fingerprint != pin.record_fingerprint:
+                            raise ValueError(f"selected goal authorization/source is stale: {pin.key}")
             operations = []
             obligation_fps = {}
             for obligation in obligations:
@@ -56,15 +88,21 @@ class GoalDecisionCoordinator:
                     RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "goal_policy_or_source")
                     for pin in (*candidate.policy_rule_pins, *candidate.source_pins)
                 )
+                deps.extend(
+                    RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "goal_authorization")
+                    for pin in candidate.authorization_pins
+                )
                 op = self._upsert(RecordKind.GOAL_CANDIDATE, candidate, tuple(deps), "persist authorized/rejected goal candidate")
                 operations.append(op)
                 candidate_fps[candidate.goal_ref] = record_fingerprints(RecordKind.GOAL_CANDIDATE, candidate)[1]
+            conflict_fps = {}
             for conflict in conflicts:
                 deps = tuple(
                     RecordDependency(RecordKind.GOAL_CANDIDATE, ref, 1, candidate_fps[ref], "goal_conflict_candidate")
                     for ref in conflict.competing_goal_refs
                 )
                 operations.append(self._upsert(RecordKind.GOAL_CONFLICT, conflict, deps, "persist explicit unresolved goal conflict"))
+                conflict_fps[conflict.conflict_ref] = record_fingerprints(RecordKind.GOAL_CONFLICT, conflict)[1]
             candidate_pins = tuple(
                 PinnedRecord(RecordKind.GOAL_CANDIDATE, item.goal_ref, 1, candidate_fps[item.goal_ref]) for item in candidates
             )
@@ -84,6 +122,9 @@ class GoalDecisionCoordinator:
             decision_deps = tuple(
                 RecordDependency(RecordKind.GOAL_CANDIDATE, pin.record_ref, pin.revision, pin.record_fingerprint, "goal_decision_candidate")
                 for pin in candidate_pins
+            ) + tuple(
+                RecordDependency(RecordKind.GOAL_CONFLICT, ref, 1, conflict_fps[ref], "goal_decision_conflict")
+                for ref in sorted(conflict_fps)
             )
             operations.append(self._upsert(RecordKind.GOAL_DECISION, decision, decision_deps, "persist exact-snapshot goal arbitration result"))
             patch = GraphPatch(
@@ -93,7 +134,10 @@ class GoalDecisionCoordinator:
                 validation_requirements=("phase15_target_bearing", "phase15_authorization_before_utility", "phase15_exact_snapshot"),
                 metadata={"phase": 15, "decision_ref": decision_ref},
             )
-        return self.store.apply_patch(patch), decision
+        result = self.store.apply_patch(patch)
+        if not result.committed:
+            raise RuntimeError("Phase-15 goal decision commit failed: " + "; ".join(result.errors))
+        return result, decision
 
     @staticmethod
     def _upsert(kind: RecordKind, record, deps: tuple[RecordDependency, ...], reason: str) -> PatchOperation:

@@ -40,6 +40,16 @@ _AUTO_DERIVED = {
     RecordKind.GOAL_CANDIDATE,
     RecordKind.GOAL_CONFLICT,
     RecordKind.GOAL_DECISION,
+    # External-operation journals/results/reconciliation are immutable audit history.
+    # Freshness gates prevent reuse; learning invalidation must never auto-tombstone them.
+    RecordKind.RESPONSE_TRANSFORMATION_PROOF,
+    RecordKind.RESPONSE_OMISSION,
+    RecordKind.RESPONSE_UOL,
+    RecordKind.REALIZATION_REQUEST,
+    RecordKind.DEEP_CLAUSE_PLAN,
+    RecordKind.REFERENCE_PLAN,
+    RecordKind.SURFACE_CANDIDATE,
+    RecordKind.SEMANTIC_ROUNDTRIP,
 }
 
 

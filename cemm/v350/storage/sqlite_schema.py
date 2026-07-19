@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -797,6 +797,24 @@ DDL: tuple[str, ...] = (
     """,
     "CREATE INDEX IF NOT EXISTS phase15_goal_idx ON phase15_records(goal_schema_ref, operation, authorized, revision DESC)",
     "CREATE INDEX IF NOT EXISTS phase15_context_idx ON phase15_records(record_kind, context_ref, permission_ref, revision DESC)",
+
+    """
+    CREATE TABLE IF NOT EXISTS phase16_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        parent_ref TEXT, status TEXT, context_ref TEXT, permission_ref TEXT,
+        payload_json TEXT NOT NULL, PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS phase16_parent_idx ON phase16_records(record_kind, parent_ref, status, revision DESC)",
+    "CREATE INDEX IF NOT EXISTS phase16_context_idx ON phase16_records(record_kind, context_ref, permission_ref, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS phase17_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        pack_ref TEXT, language_tag TEXT, status TEXT, permission_ref TEXT,
+        payload_json TEXT NOT NULL, PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS phase17_pack_idx ON phase17_records(record_kind, pack_ref, language_tag, revision DESC)",
 
 )
 

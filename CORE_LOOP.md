@@ -428,32 +428,19 @@ Reconciliation compares predicted and observed outcomes and emits evidence/patch
 
 ---
 
-## 19. Stage 17 — GENERATE_RESPONSE_GOALS
+## 19. Stage 17 — RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS
 
-Generate candidates such as:
+Stage 15 remains the sole generic goal authority. Stage 17 does **not** invent a
+second response-goal family after execution.
 
-```text
-answer_query
-answer_capability_query
-report_state
-acknowledge_claim
-acknowledge_commit
-console
-warn
-qualify
-ask_reference_repair
-ask_schema_repair
-continue_learning
-confirm_operation
-report_operation_result
-refuse_or_limit
-follow_response_policy
-remain_silent
-```
+Operation outcomes are converted to ordinary evidence/claims/events, reconciled
+through epistemics/transitions, and may invalidate the pre-operation
+`GoalDecisionRecord`. When semantic state changed, the loop re-enters Stage 15
+and produces a new exact goal decision before Response UOL planning.
 
-Every goal has a semantic target.
-
-A targetless acknowledgement candidate is invalid.
+Every selected goal remains target-bearing. A targetless acknowledgement is
+invalid, and an operation result cannot be surfaced from a stale pre-operation
+goal snapshot.
 
 ---
 

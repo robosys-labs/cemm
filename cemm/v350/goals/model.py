@@ -156,6 +156,7 @@ class GoalCandidateRecord:
     policy_rule_pins: tuple[PinnedRecord, ...]
     source_pins: tuple[PinnedRecord, ...]
     authorization_refs: tuple[str, ...]
+    authorization_pins: tuple[PinnedRecord, ...] = ()
     prerequisite_frontier_refs: tuple[str, ...] = ()
     impact_refs: tuple[str, ...] = ()
     importance_refs: tuple[str, ...] = ()
@@ -195,6 +196,7 @@ class GoalCandidateRecord:
             (tuple(pin.key for pin in self.policy_rule_pins), "goal policy pins"),
             (tuple(pin.key for pin in self.source_pins), "goal source pins"),
             (self.authorization_refs, "goal authorization refs"),
+            (tuple(pin.key for pin in self.authorization_pins), "goal authorization pins"),
             (self.prerequisite_frontier_refs, "goal frontier refs"),
             (self.impact_refs, "goal impact refs"),
             (self.importance_refs, "goal importance refs"),

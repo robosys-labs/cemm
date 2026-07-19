@@ -25,6 +25,8 @@ from ..language.model import (
 )
 from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..learning.validation import LearningCommitValidator
+from ..operations.validation import Phase16CommitValidator
+from ..realization.validation import Phase17CommitValidator
 from ..significance.model import (
     ImpactProofRecord, ImpactRuleRecord, ImportanceEvidenceRecord, ImportancePolicyRecord, SignificanceAssessmentRecord,
 )
@@ -103,6 +105,8 @@ class CommitValidator:
         self._registry = self._schema_registry()
         self._language_registry = self._build_language_registry()
         self._learning = LearningCommitValidator(resolver)
+        self._phase16 = Phase16CommitValidator(resolver)
+        self._phase17 = Phase17CommitValidator(resolver)
 
     def validate(self, operations: Iterable[tuple[PatchOperation, Any | None]]) -> tuple[ValidationError, ...]:
         errors: list[ValidationError] = []
@@ -127,6 +131,8 @@ class CommitValidator:
                 self._validate_record(operation.record_kind, record, operation.record_revision)
                 self._validate_dependencies(operation.target_ref, operation.dependencies)
                 self._learning.validate_operation(operation, record)
+                self._phase16.validate_operation(operation, record)
+                self._phase17.validate_operation(operation, record)
                 self._validate_phase14_15(operation, record)
             except ValueError as exc:
                 errors.append(ValidationError("record_contract", operation.target_ref, str(exc)))

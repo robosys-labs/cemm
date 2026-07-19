@@ -1,0 +1,13 @@
+{
+  "contract_ref": "contract:cemm:v350:phase14-significance",
+  "phase": 14,
+  "authority": "impact-importance-stakeholder-only",
+  "invariants": {
+    "impact_does_not_assert_event_truth": true,
+    "impact_does_not_mutate_state": true,
+    "stakeholder_context_permission_relative": true,
+    "exact_source_rule_binding_and_prerequisite_pins": true,
+    "contradictory_importance_evidence_preserved": true,
+    "importance_policy_revision_pinned": true
+  }
+}

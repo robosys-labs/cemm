@@ -432,6 +432,12 @@ class PromotionCoordinator:
                 SchemaLifecycleStatus.ACTIVE if UseDecision.ALLOW in positive
                 else SchemaLifecycleStatus.PROVISIONAL
             )
+            if hasattr(record, "use_decision") and hasattr(record, "use_operation"):
+                declared = getattr(record, "use_operation")
+                matching = [item.decision for item in grants if item.operation == declared]
+                if not matching:
+                    return None
+                kwargs["use_decision"] = UseDecision.ALLOW if UseDecision.ALLOW in matching else UseDecision.PROVISIONAL
             return replace(record, **kwargs, lifecycle_status=lifecycle)
         return None
 

@@ -1,17 +1,5 @@
 """Normalized Phase-4 semantic storage substrate."""
 
-from .codec import (
-    RecordDecodeError,
-    decode_record,
-    encode_record,
-    record_context,
-    record_fingerprints,
-    record_lifecycle,
-    record_permission,
-    record_ref,
-    record_revision,
-)
-from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
 from .model import (
     AdmissionDecision,
     AdmissionLifecycleStatus,
@@ -43,14 +31,42 @@ from .model import (
     StoreSnapshot,
     StoredRecord,
 )
-from .repositories import RepositorySet, interval_contains
-from .store import (
-    ReadOnlyBootError,
-    SemanticStore,
-    StoreConflictError,
-    StoreError,
-)
-from .validation import CommitValidationError, CommitValidator, ValidationError
+
+_LAZY_EXPORTS = {
+    "RecordDecodeError": ".codec",
+    "decode_record": ".codec",
+    "encode_record": ".codec",
+    "record_context": ".codec",
+    "record_fingerprints": ".codec",
+    "record_lifecycle": ".codec",
+    "record_permission": ".codec",
+    "record_ref": ".codec",
+    "record_revision": ".codec",
+    "CapabilityDependencyRecord": "..transitions.model",
+    "TransitionContractRecord": "..transitions.model",
+    "TransitionProofRecord": "..transitions.model",
+    "RepositorySet": ".repositories",
+    "interval_contains": ".repositories",
+    "ReadOnlyBootError": ".store",
+    "SemanticStore": ".store",
+    "StoreConflictError": ".store",
+    "StoreError": ".store",
+    "CommitValidationError": ".validation",
+    "CommitValidator": ".validation",
+    "ValidationError": ".validation",
+}
+
+
+def __getattr__(name: str):
+    module_name = _LAZY_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    from importlib import import_module
+
+    module = import_module(module_name, __package__)
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "AdmissionDecision",

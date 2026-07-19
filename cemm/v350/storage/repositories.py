@@ -27,6 +27,9 @@ from ..goals.model import (
     GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord,
     SemanticObligationRecord,
 )
+from ..operations.model import OperationAdapterContractRecord, OperationAuthorizationRecord, OperationGateAssessmentRecord, OperationJournalRecord, OperationPlanRecord, OperationReconciliationRecord, OperationResultRecord
+from ..response.model import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord, ResponseUOLRecord
+from ..realization.model import ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticRoundTripRecord, SurfaceCandidateRecord
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -549,6 +552,25 @@ class RepositorySet:
         self.goal_candidates = TypedRepository(store, RecordKind.GOAL_CANDIDATE, GoalCandidateRecord)
         self.goal_conflicts = TypedRepository(store, RecordKind.GOAL_CONFLICT, GoalConflictRecord)
         self.goal_decisions = TypedRepository(store, RecordKind.GOAL_DECISION, GoalDecisionRecord)
+        self.operation_adapter_contracts = TypedRepository(store, RecordKind.OPERATION_ADAPTER_CONTRACT, OperationAdapterContractRecord)
+        self.operation_gate_assessments = TypedRepository(store, RecordKind.OPERATION_GATE_ASSESSMENT, OperationGateAssessmentRecord)
+        self.operation_plans = TypedRepository(store, RecordKind.OPERATION_PLAN, OperationPlanRecord)
+        self.operation_authorizations = TypedRepository(store, RecordKind.OPERATION_AUTHORIZATION, OperationAuthorizationRecord)
+        self.operation_journals = TypedRepository(store, RecordKind.OPERATION_JOURNAL, OperationJournalRecord)
+        self.operation_results = TypedRepository(store, RecordKind.OPERATION_RESULT, OperationResultRecord)
+        self.operation_reconciliations = TypedRepository(store, RecordKind.OPERATION_RECONCILIATION, OperationReconciliationRecord)
+        self.response_transform_rules = TypedRepository(store, RecordKind.RESPONSE_TRANSFORM_RULE, ResponseTransformRuleRecord)
+        self.response_transformation_proofs = TypedRepository(store, RecordKind.RESPONSE_TRANSFORMATION_PROOF, ResponseTransformationProof)
+        self.response_omissions = TypedRepository(store, RecordKind.RESPONSE_OMISSION, ResponseOmissionRecord)
+        self.response_uol = TypedRepository(store, RecordKind.RESPONSE_UOL, ResponseUOLRecord)
+        self.realization_requests = TypedRepository(store, RecordKind.REALIZATION_REQUEST, RealizationRequestRecord)
+        self.argument_frames = TypedRepository(store, RecordKind.ARGUMENT_FRAME, ArgumentFrameRecord)
+        self.morphology_rules = TypedRepository(store, RecordKind.MORPHOLOGY_RULE, MorphologyRuleRecord)
+        self.linearization_rules = TypedRepository(store, RecordKind.LINEARIZATION_RULE, LinearizationRuleRecord)
+        self.deep_clause_plans = TypedRepository(store, RecordKind.DEEP_CLAUSE_PLAN, DeepClausePlanRecord)
+        self.reference_plans = TypedRepository(store, RecordKind.REFERENCE_PLAN, ReferencePlanRecord)
+        self.surface_candidates = TypedRepository(store, RecordKind.SURFACE_CANDIDATE, SurfaceCandidateRecord)
+        self.semantic_roundtrips = TypedRepository(store, RecordKind.SEMANTIC_ROUNDTRIP, SemanticRoundTripRecord)
         self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)
         self.default_rules = DefaultRuleRepository(store)
         self.language = LanguageRepository(store)

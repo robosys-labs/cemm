@@ -1,0 +1,18 @@
+{"case_ref":"competence:phase16:selected-is-not-execution-authority","expected":"selected EXECUTE goal still requires fresh plan/authorization gates before external submission"}
+{"case_ref":"competence:phase16:journal-before-side-effect","expected":"PREPARED journal is durably committed before adapter invocation"}
+{"case_ref":"competence:phase16:unknown-outcome-no-blind-retry","expected":"non-idempotent unknown outcome is never blindly retried after restart"}
+{"case_ref":"competence:phase16:controlling-holder-capability","expected":"capability must belong to exact action controlling-port holder"}
+{"case_ref":"competence:phase16:result-not-state","expected":"adapter result becomes evidence/reconciliation input and cannot directly mutate world state"}
+{"case_ref":"competence:phase16:stale-goal-blocks","expected":"changed goal/source/capability/policy dependency blocks execution or Response UOL commit"}
+{"case_ref":"competence:phase16:all-and-only-authorized-response","expected":"every Response UOL root has selected-goal/source/transformation authorization lineage"}
+{"case_ref":"competence:phase16:unknown-answer-no-fabrication","expected":"missing response transform/answer produces explicit frontier, not invented answer"}
+{"case_ref":"competence:phase16:no-language-surface","expected":"Response UOL contains no target-language wording authority"}
+{"case_ref":"competence:phase16:journal-transition-skip-rejected","expected":"direct PREPARED to observed success/failure durable transition is rejected at coordinator and commit boundary"}
+{"case_ref":"competence:phase16:hard-gate-proof-required","expected":"permission/resource/risk/precondition gate cannot pass from arbitrary record presence; evaluator returns exact checked substrate"}
+{"case_ref":"competence:phase16:durable-hard-gate-assessments","expected":"ALLOW authorization depends on exactly one immutable current proof-bearing assessment for every required hard gate; passed gate names alone are not authority"}
+{"case_ref":"competence:phase16:atomic-result-journal-observation","expected":"local operation result and OBSERVED_* journal transition commit atomically after external observation"}
+{"case_ref":"competence:phase16:single-snapshot-operation-authority","expected":"planning, hard-gate evaluation, and PREPARED journal cannot mix store revisions; any intervening commit forces replan/reauthorization"}
+{"case_ref":"competence:phase16:response-nested-app-exact-closure","expected":"nested semantic applications in Response UOL require exact goal-lineage pins, are root-reachable, and are preserved as exact proof inputs"}
+{"case_ref":"competence:phase16:event-participant-exact-lineage","expected":"event-derived response/impact participant bindings use explicit exact participant application pins and never latest-by-ref recovery"}
+{"case_ref":"competence:phase16:submitted-crash-recovery","expected":"restart after durable SUBMITTED but before local observation queries adapter recovery and never automatically resubmits"}
+{"case_ref":"competence:phase16:terminal-outcome-proof","expected":"success/failure/partial cannot be durable from transport status alone; observed evidence or proof is required"}

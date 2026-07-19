@@ -16,20 +16,29 @@ class SignificanceCommitCoordinator:
         self,
         records: tuple[tuple[ImpactProofRecord, SignificanceAssessmentRecord], ...],
         frontiers: tuple[LearningFrontierRecord, ...] = (),
+        frontier_dependency_pins: tuple[PinnedRecord, ...] = (),
     ):
         if not records and not frontiers:
             raise ValueError("Phase-14 commit requires assessments or explicit uncertainty frontiers")
+        contexts = {item.context_ref for _, item in records} | {item.context_ref for item in frontiers}
+        permissions = {item.permission_ref for _, item in records} | {item.permission_ref for item in frontiers}
+        if len(contexts) > 1 or len(permissions) > 1:
+            raise ValueError("one Phase-14 patch cannot mix context or permission scopes")
+        if frontiers and not frontier_dependency_pins:
+            raise ValueError("significance frontiers require exact causal dependency pins")
         with self.store.snapshot() as snapshot:
             operations = []
             for proof, assessment in records:
                 source = self._exact(assessment.source_pin)
                 rule = self._exact(assessment.rule_pin)
                 proof_fp = record_fingerprints(RecordKind.IMPACT_PROOF, proof)[1]
-                proof_deps = (
+                proof_deps = [
                     RecordDependency(assessment.source_pin.record_kind, assessment.source_pin.record_ref, assessment.source_pin.revision, assessment.source_pin.record_fingerprint, "impact_source"),
                     RecordDependency(RecordKind.IMPACT_RULE, assessment.rule_pin.record_ref, assessment.rule_pin.revision, assessment.rule_pin.record_fingerprint, "impact_rule"),
-                )
-                operations.append(self._upsert(RecordKind.IMPACT_PROOF, proof, proof_deps, "persist proof-bearing impact binding"))
+                ]
+                proof_deps.extend(RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "impact_binding_source") for pin in proof.binding_source_pins)
+                proof_deps.extend(RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "impact_prerequisite_proof") for pin in proof.prerequisite_proof_pins)
+                operations.append(self._upsert(RecordKind.IMPACT_PROOF, proof, tuple(proof_deps), "persist proof-bearing impact binding"))
                 deps = [
                     RecordDependency(assessment.source_pin.record_kind, source.record_ref, source.revision, source.record_fingerprint, "significance_source"),
                     RecordDependency(RecordKind.IMPACT_RULE, rule.record_ref, rule.revision, rule.record_fingerprint, "significance_rule"),
@@ -45,8 +54,9 @@ class SignificanceCommitCoordinator:
                     self._exact(pin)
                     deps.append(RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "importance_policy"))
                 operations.append(self._upsert(RecordKind.SIGNIFICANCE_ASSESSMENT, assessment, tuple(deps), "persist stakeholder-relative significance"))
+            frontier_deps = tuple(RecordDependency(pin.record_kind, pin.record_ref, pin.revision, pin.record_fingerprint, "significance_frontier_cause") for pin in frontier_dependency_pins)
             for frontier in frontiers:
-                operations.append(self._upsert(RecordKind.LEARNING_FRONTIER, frontier, (), "persist unresolved significance binding frontier"))
+                operations.append(self._upsert(RecordKind.LEARNING_FRONTIER, frontier, frontier_deps, "persist unresolved significance binding frontier"))
             patch = GraphPatch(
                 patch_ref="graph-patch:phase14:" + semantic_fingerprint(
                     "phase14-patch", (snapshot.fingerprint, tuple(op.operation_ref for op in operations)), 24
