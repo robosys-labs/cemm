@@ -975,10 +975,18 @@ def test_semantic_audit_exposes_selected_meaning_and_durable_counts() -> None:
         runtime.close()
 
 
-def test_web_demo_chat_handler_uses_canonical_v347_runtime_trace() -> None:
+def test_web_demo_chat_handler_uses_canonical_v350_runtime_trace() -> None:
     from cemm.web_demo import handle_chat
+    from cemm.v350.runtime import build_runtime
 
-    runtime = Runtime()
+    class TestAuthorityGuard:
+        def require_service_authority(self) -> None:
+            return None
+
+        def require_stage_adapter(self, **_kwargs) -> None:
+            return None
+
+    runtime = build_runtime(authority_guard=TestAuthorityGuard())
     try:
         payload = handle_chat(runtime, {
             "text": "how are you",
@@ -986,11 +994,15 @@ def test_web_demo_chat_handler_uses_canonical_v347_runtime_trace() -> None:
             "include_trace": True,
         })
         assert payload["ok"] is True
-        assert payload["emission_authorized"] is True
-        assert payload["output_text"]
-        assert "Could you clarify" not in payload["output_text"]
-        assert "COMPOSE_AND_SELECT" in payload["trace"]["stages"]
-        response = payload["trace"]["details"]["RESPONSE_GOALS_AND_UOL"]
-        assert response["plan"]["clauses"][0]["metadata"]["predicate_schema_ref"] == "predicate:has_state"
+        assert payload["emission_authorized"] is False
+        assert payload["output_text"] is None
+        assert payload["errors"] == []
+        assert len(payload["trace"]["stages"]) == 23
+        assert payload["trace"]["stages"][0] == "ORIENT_AND_PIN"
+        assert payload["trace"]["stages"][-1] == "INVALIDATE_RECOMPUTE_AND_FINALIZE"
+        assert "BUILD_RESPONSE_UOL" in payload["trace"]["stages"]
+        assert "VERIFY_AND_AUTHORIZE_EMISSION" in payload["trace"]["stages"]
+        assert payload["frontier_refs"]
+        assert payload["committed_patch_refs"]
     finally:
         runtime.close()

@@ -5,12 +5,17 @@ from dataclasses import dataclass
 import hashlib
 import importlib
 import importlib.util
+import inspect
 import json
 from pathlib import Path
+import re
+import sqlite3
 import sys
 from typing import Any, Mapping
 
 from .orchestration import CoreStage
+from .runtime_graph import canonical_stage_descriptors, resolve_adapter_type
+from .storage import RecordKind
 
 
 class RuntimeAuthorityError(RuntimeError):
@@ -25,13 +30,29 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def _boot_pins(path: Path, kind: RecordKind) -> tuple[str, ...]:
+    connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        rows = connection.execute(
+            "SELECT record_ref, revision, record_fingerprint FROM record_index "
+            "WHERE record_kind=? ORDER BY record_ref, revision",
+            (kind.value,),
+        ).fetchall()
+    finally:
+        connection.close()
+    return tuple(f"{ref}@{int(revision)}#{fingerprint}" for ref, revision, fingerprint in rows)
+
+
 @dataclass(frozen=True, slots=True)
 class StageAdapterAuthority:
     stage: CoreStage
     adapter_ref: str
     adapter_revision: int
     factory_path: str
+    handler_name: str
     source_sha256: str
+    mutates_semantic_store: bool = False
+    permits_external_side_effect: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,29 +84,24 @@ class RuntimeAuthorityManifest:
     @classmethod
     def load(cls, path: str | Path) -> "RuntimeAuthorityManifest":
         doc = json.loads(Path(path).read_text(encoding="utf-8"))
-        adapters = tuple(
-            StageAdapterAuthority(
-                stage=CoreStage(int(item["stage"])),
-                adapter_ref=str(item["adapter_ref"]),
-                adapter_revision=int(item["adapter_revision"]),
-                factory_path=str(item["factory_path"]),
-                source_sha256=str(item["source_sha256"]),
-            )
-            for item in doc.get("stage_adapters", ())
-        )
+        adapters = tuple(StageAdapterAuthority(
+            stage=CoreStage(int(item["stage"])),
+            adapter_ref=str(item["adapter_ref"]),
+            adapter_revision=int(item["adapter_revision"]),
+            factory_path=str(item["factory_path"]),
+            handler_name=str(item.get("handler_name", "")),
+            source_sha256=str(item["source_sha256"]),
+            mutates_semantic_store=bool(item.get("mutates_semantic_store", False)),
+            permits_external_side_effect=bool(item.get("permits_external_side_effect", False)),
+        ) for item in doc.get("stage_adapters", ()))
         return cls(
-            manifest_version=int(doc["manifest_version"]),
-            release_version=str(doc["release_version"]),
-            release_commit=str(doc["release_commit"]),
-            source_manifest_sha256=str(doc["source_manifest_sha256"]),
-            boot_database_sha256=str(doc.get("boot_database_sha256", "")),
-            schema_version=int(doc["schema_version"]),
-            canonical_orchestrator=str(doc["canonical_orchestrator"]),
-            canonical_runtime_factory=str(doc["canonical_runtime_factory"]),
+            manifest_version=int(doc["manifest_version"]), release_version=str(doc["release_version"]),
+            release_commit=str(doc["release_commit"]), source_manifest_sha256=str(doc["source_manifest_sha256"]),
+            boot_database_sha256=str(doc.get("boot_database_sha256", "")), schema_version=int(doc["schema_version"]),
+            canonical_orchestrator=str(doc["canonical_orchestrator"]), canonical_runtime_factory=str(doc["canonical_runtime_factory"]),
             public_entrypoints=tuple(map(str, doc.get("public_entrypoints", ()))),
             forbidden_runtime_import_prefixes=tuple(map(str, doc.get("forbidden_runtime_import_prefixes", ()))),
-            stage_adapters=adapters,
-            allowed_runtime_modules=tuple(map(str, doc.get("allowed_runtime_modules", ()))),
+            stage_adapters=adapters, allowed_runtime_modules=tuple(map(str, doc.get("allowed_runtime_modules", ()))),
             allowed_record_kinds=tuple(map(str, doc.get("allowed_record_kinds", ()))),
             allowed_boot_data_modules=tuple(map(str, doc.get("allowed_boot_data_modules", ()))),
             allowed_language_packages=tuple(map(str, doc.get("allowed_language_packages", ()))),
@@ -93,67 +109,163 @@ class RuntimeAuthorityManifest:
             semantic_analyzer_contracts=tuple(map(str, doc.get("semantic_analyzer_contracts", ()))),
             channel_adapter_contracts=tuple(map(str, doc.get("channel_adapter_contracts", ()))),
             migration_modules_allowed_at_runtime=tuple(map(str, doc.get("migration_modules_allowed_at_runtime", ()))),
-            legacy_denylist_sha256=str(doc["legacy_denylist_sha256"]),
-            verification_report_sha256=str(doc["verification_report_sha256"]),
-            activation_ready=bool(doc.get("activation_ready", False)),
-            metadata=dict(doc.get("metadata", {})),
+            legacy_denylist_sha256=str(doc["legacy_denylist_sha256"]), verification_report_sha256=str(doc.get("verification_report_sha256", "")),
+            activation_ready=bool(doc.get("activation_ready", False)), metadata=dict(doc.get("metadata", {})),
         )
 
 
 class RuntimeAuthorityGuard:
-    """Validates the exact code/data topology before semantic service."""
+    """Validate exact code/data/release topology before semantic service."""
 
-    def __init__(self, manifest: RuntimeAuthorityManifest, *, repo_root: Path | None = None) -> None:
+    REQUIRED_FORBIDDEN_PREFIXES = (
+        "cemm.v347", "cemm.migration", "cemm.v350.migration",
+    )
+
+    def __init__(
+        self,
+        manifest: RuntimeAuthorityManifest,
+        *,
+        repo_root: Path | None = None,
+        boot_database_path: Path | None = None,
+        verification_report_path: Path | None = None,
+    ) -> None:
         self.manifest = manifest
         self.repo_root = repo_root
+        self.boot_database_path = boot_database_path
+        self.verification_report_path = verification_report_path
         self._by_stage = {item.stage: item for item in manifest.stage_adapters}
 
     def require_service_authority(self) -> None:
         m = self.manifest
+        errors: list[str] = []
         if not m.activation_ready:
-            raise RuntimeAuthorityError("v3.5 runtime authority manifest is not activation-ready")
+            errors.append("runtime authority manifest is not activation-ready")
+        if m.manifest_version < 2:
+            errors.append("runtime authority manifest version is obsolete")
         if m.release_version != "3.5.0":
-            raise RuntimeAuthorityError(f"unexpected release version: {m.release_version}")
+            errors.append(f"unexpected release version:{m.release_version}")
+        if not re.fullmatch(r"[0-9a-f]{40}", m.release_commit):
+            errors.append("release_commit must be one exact 40-hex git commit")
+        if m.canonical_orchestrator != "cemm.v350.orchestration:CanonicalOrchestrator":
+            errors.append("canonical orchestrator authority mismatch")
+        if m.canonical_runtime_factory != "cemm.v350.runtime:build_runtime":
+            errors.append("canonical runtime factory authority mismatch")
+        expected_entrypoints = {
+            "cemm:Runtime", "cemm.app.runtime:Runtime", "python -m cemm", "cemm.web_demo:serve",
+        }
+        if set(m.public_entrypoints) != expected_entrypoints:
+            errors.append("public runtime entrypoint set mismatch")
+        if set(m.allowed_runtime_modules) != {"cemm.v350"}:
+            errors.append("runtime module authority must be exactly cemm.v350")
+        if set(m.allowed_boot_data_modules) != {"cemm.data.v350"}:
+            errors.append("boot-data authority must be exactly cemm.data.v350")
+        if set(m.allowed_record_kinds) != {item.value for item in RecordKind}:
+            errors.append("manifest record-kind authority differs from v3.5 RecordKind contract")
         if m.migration_modules_allowed_at_runtime:
-            raise RuntimeAuthorityError("runtime manifest allows migration modules")
-        missing = [stage.name for stage in CoreStage if stage not in self._by_stage]
-        if missing:
-            raise RuntimeAuthorityError("runtime manifest missing stage adapters: " + ",".join(missing))
+            errors.append("runtime manifest allows migration modules")
+        missing_forbidden = [p for p in self.REQUIRED_FORBIDDEN_PREFIXES if p not in m.forbidden_runtime_import_prefixes]
+        if missing_forbidden:
+            errors.append("runtime manifest omits legacy forbidden prefixes:" + ",".join(missing_forbidden))
+
+        descriptors = canonical_stage_descriptors()
+        if len(m.stage_adapters) != len(descriptors) or tuple(item.stage for item in m.stage_adapters) != tuple(CoreStage):
+            errors.append("runtime manifest stage graph is not exact CoreStage 0..22 order")
+        if len(self._by_stage) != len(descriptors):
+            errors.append("runtime manifest contains duplicate/missing stage authorities")
+        for descriptor in descriptors:
+            authority = self._by_stage.get(descriptor.stage)
+            if authority is None:
+                errors.append(f"missing stage adapter:{descriptor.stage.name}")
+                continue
+            observed = (
+                authority.adapter_ref, authority.adapter_revision, authority.factory_path,
+                authority.handler_name, authority.mutates_semantic_store, authority.permits_external_side_effect,
+            )
+            expected = (
+                descriptor.adapter_ref, descriptor.adapter_revision, descriptor.adapter_class_path,
+                descriptor.handler_name, descriptor.mutates_semantic_store, descriptor.permits_external_side_effect,
+            )
+            if observed != expected:
+                errors.append(f"stage authority mismatch:{descriptor.stage.name}")
+            if not re.fullmatch(r"[0-9a-f]{64}", authority.source_sha256):
+                errors.append(f"invalid stage adapter source fingerprint:{descriptor.stage.name}")
+
         loaded = tuple(sys.modules)
-        forbidden = tuple(
-            name for name in loaded
-            if any(name == prefix or name.startswith(prefix + ".") for prefix in m.forbidden_runtime_import_prefixes)
-        )
+        forbidden = tuple(name for name in loaded if any(name == prefix or name.startswith(prefix + ".") for prefix in m.forbidden_runtime_import_prefixes))
         if forbidden:
-            raise RuntimeAuthorityError("forbidden runtime authority modules loaded: " + ",".join(sorted(forbidden)))
+            errors.append("forbidden runtime modules loaded:" + ",".join(sorted(forbidden)))
+
         if self.repo_root is not None:
             source_manifest = self.repo_root / "cemm/data/v350/manifest.json"
             denylist = self.repo_root / "cemm/data/v350/legacy_authority_denylist.json"
             if not source_manifest.is_file() or _sha256(source_manifest) != m.source_manifest_sha256:
-                raise RuntimeAuthorityError("source manifest fingerprint mismatch")
+                errors.append("source manifest fingerprint mismatch")
             if not denylist.is_file() or _sha256(denylist) != m.legacy_denylist_sha256:
-                raise RuntimeAuthorityError("legacy denylist fingerprint mismatch")
-        for adapter in m.stage_adapters:
-            module_name = adapter.factory_path.partition(":")[0]
-            if not module_name:
-                raise RuntimeAuthorityError(f"missing adapter factory module for {adapter.stage.name}")
-            spec = importlib.util.find_spec(module_name)
-            origin = None if spec is None else spec.origin
-            if not origin or origin in {"built-in", "frozen"}:
-                raise RuntimeAuthorityError(f"adapter source cannot be fingerprinted: {module_name}")
-            path = Path(origin)
-            if not path.is_file() or _sha256(path) != adapter.source_sha256:
-                raise RuntimeAuthorityError(f"stage adapter source fingerprint mismatch: {adapter.stage.name}")
+                errors.append("legacy denylist fingerprint mismatch")
+
+        if not m.boot_database_sha256:
+            errors.append("boot database fingerprint is missing")
+        elif self.boot_database_path is None or not self.boot_database_path.is_file():
+            errors.append("boot database artifact is unavailable")
+        elif _sha256(self.boot_database_path) != m.boot_database_sha256:
+            errors.append("boot database fingerprint mismatch")
+        else:
+            expected_boot_authorities = (
+                ("language_packages", m.allowed_language_packages, RecordKind.LANGUAGE_PACK),
+                ("operation_adapter_contracts", m.operation_adapter_contracts, RecordKind.OPERATION_ADAPTER_CONTRACT),
+                ("semantic_analyzer_contracts", m.semantic_analyzer_contracts, RecordKind.SEMANTIC_ANALYZER_CONTRACT),
+                ("channel_adapter_contracts", m.channel_adapter_contracts, RecordKind.CHANNEL_ADAPTER_CONTRACT),
+            )
+            for label, declared, kind in expected_boot_authorities:
+                try:
+                    observed = _boot_pins(self.boot_database_path, kind)
+                except (sqlite3.Error, OSError, ValueError) as exc:
+                    errors.append(f"cannot inspect signed boot authority {label}:{exc}")
+                    continue
+                if tuple(declared) != observed:
+                    errors.append(f"signed boot authority mismatch:{label}")
+
+        if not m.verification_report_sha256:
+            errors.append("verification report fingerprint is missing")
+        elif self.verification_report_path is None or not self.verification_report_path.is_file():
+            errors.append("verification report artifact is unavailable")
+        elif _sha256(self.verification_report_path) != m.verification_report_sha256:
+            errors.append("verification report fingerprint mismatch")
+        else:
+            try:
+                report = json.loads(self.verification_report_path.read_text(encoding="utf-8"))
+                if report.get("status") != "pass": errors.append("verification report is not passing")
+                if report.get("release_commit") != m.release_commit: errors.append("verification report release commit mismatch")
+                if report.get("boot_database_sha256") != m.boot_database_sha256: errors.append("verification report boot fingerprint mismatch")
+            except (OSError, ValueError, TypeError) as exc:
+                errors.append(f"verification report is invalid:{exc}")
+
+        for descriptor in descriptors:
+            authority = self._by_stage.get(descriptor.stage)
+            if authority is None:
+                continue
+            try:
+                adapter_type = resolve_adapter_type(descriptor)
+                if adapter_type.__module__ + ":" + adapter_type.__name__ != authority.factory_path:
+                    errors.append(f"resolved adapter symbol mismatch:{descriptor.stage.name}")
+                source_path = inspect.getsourcefile(adapter_type)
+                if not source_path or not Path(source_path).is_file() or _sha256(Path(source_path)) != authority.source_sha256:
+                    errors.append(f"stage adapter source fingerprint mismatch:{descriptor.stage.name}")
+                handler = getattr(adapter_type, "HANDLER", None)
+                if handler != descriptor.handler_name:
+                    errors.append(f"adapter handler declaration mismatch:{descriptor.stage.name}")
+            except Exception as exc:
+                errors.append(f"stage adapter resolution failed:{descriptor.stage.name}:{exc}")
+
+        if errors:
+            raise RuntimeAuthorityError("; ".join(errors))
 
     def require_stage_adapter(self, *, stage: CoreStage, adapter_ref: str, adapter_revision: int) -> None:
         expected = self._by_stage.get(stage)
         if expected is None:
             raise RuntimeAuthorityError(f"no authority for stage {stage.name}")
         if (expected.adapter_ref, expected.adapter_revision) != (adapter_ref, int(adapter_revision)):
-            raise RuntimeAuthorityError(
-                f"stage adapter authority mismatch for {stage.name}: "
-                f"{adapter_ref}@{adapter_revision} != {expected.adapter_ref}@{expected.adapter_revision}"
-            )
+            raise RuntimeAuthorityError(f"stage adapter authority mismatch for {stage.name}: {adapter_ref}@{adapter_revision} != {expected.adapter_ref}@{expected.adapter_revision}")
 
     def load_runtime_factory(self):
         self.require_service_authority()
@@ -161,7 +273,7 @@ class RuntimeAuthorityGuard:
         if not sep or not module_name or not symbol:
             raise RuntimeAuthorityError("canonical_runtime_factory must be module:symbol")
         if any(module_name == p or module_name.startswith(p + ".") for p in self.manifest.forbidden_runtime_import_prefixes):
-            raise RuntimeAuthorityError("canonical runtime factory points into forbidden authority namespace")
+            raise RuntimeAuthorityError("canonical runtime factory points into forbidden namespace")
         module = importlib.import_module(module_name)
         factory = getattr(module, symbol, None)
         if factory is None or not callable(factory):

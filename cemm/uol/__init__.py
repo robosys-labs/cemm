@@ -1,29 +1,7 @@
-"""Canonical UOL public surface for CEMM v3.4.7.
+"""Compatibility import surface bound exclusively to the canonical v3.5 UOL.
 
-All records are defined once in :mod:`cemm.v347.model`.  This package contains
-only stable imports; it is not a second implementation authority.
+This package name is retained for callers that imported ``cemm.uol`` historically,
+but it no longer exposes or imports any v3.4.7 runtime/model authority.
 """
-from cemm.v347.model import (
-    DiscourseRelation,
-    EmissionProof,
-    GraphPatch,
-    MeaningBundle,
-    MeaningHypothesis,
-    PatchOperation,
-    PatchOperationKind,
-    PortBinding,
-    Predication,
-    PropositionPayload,
-    Referent,
-    ReferentKind,
-    ResponseClausePlan,
-    UOLGraph,
-    UOLResponsePlan,
-)
-
-__all__ = [
-    "DiscourseRelation", "EmissionProof", "GraphPatch", "MeaningBundle",
-    "MeaningHypothesis", "PatchOperation", "PatchOperationKind", "PortBinding",
-    "Predication", "PropositionPayload", "Referent", "ReferentKind",
-    "ResponseClausePlan", "UOLGraph", "UOLResponsePlan",
-]
+from ..v350.uol import *  # noqa: F401,F403
+from ..v350.uol import __all__ as __all__

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Iterable
 
 from ..language import FormLattice, FormLatticeAnalyzer
@@ -11,13 +12,32 @@ from .candidates import GroundingCandidateProvider
 from .mentions import MentionCompiler
 from .model import (
     DiscourseAnchor,
+    GroundingCandidate,
     GroundingConstraint,
     GroundingConstraintKind,
     GroundingResult,
+    MentionHypothesis,
     MultimodalTrack,
     SystemOutputAnchor,
 )
 from .solver import JointGroundingSolver
+
+
+@dataclass(frozen=True, slots=True)
+class GroundingPreparation:
+    """Cycle-local Stage-3/4 evidence prepared for the unified meaning graph.
+
+    This record deliberately contains candidates and structural constraints only.
+    It carries no final referent selection authority. ``JointGroundingSolver`` may
+    subsequently enumerate coherent assignments, but Phase-9/CORE_LOOP Stage 6 is
+    still the only final meaning-selection solve.
+    """
+
+    lattice_ref: str
+    mentions: tuple[MentionHypothesis, ...]
+    candidates: tuple[GroundingCandidate, ...]
+    constraints: tuple[GroundingConstraint, ...]
+    evidence_refs: tuple[str, ...]
 
 
 class JointGrounder:
@@ -34,6 +54,69 @@ class JointGrounder:
         self.candidates = GroundingCandidateProvider(store)
         self.solver = solver or JointGroundingSolver()
 
+    def prepare_lattice(
+        self,
+        lattice: FormLattice,
+        *,
+        context_ref: str,
+        discourse_anchors: Iterable[DiscourseAnchor] = (),
+        multimodal_tracks: Iterable[MultimodalTrack] = (),
+        system_outputs: Iterable[SystemOutputAnchor] = (),
+        constraints: Iterable[GroundingConstraint] = (),
+        snapshot: StoreSnapshot | None = None,
+    ) -> GroundingPreparation:
+        """Generate Stage-3 candidates without selecting an authoritative identity."""
+
+        if snapshot is None:
+            with self.store.snapshot() as pinned:
+                return self.prepare_lattice(
+                    lattice,
+                    context_ref=context_ref,
+                    discourse_anchors=discourse_anchors,
+                    multimodal_tracks=multimodal_tracks,
+                    system_outputs=system_outputs,
+                    constraints=constraints,
+                    snapshot=pinned,
+                )
+        self.store.assert_snapshot(snapshot)
+        mentions = self.mentions.compile(lattice, context_ref=context_ref)
+        derived_constraints = self._derive_constraints(mentions, lattice, snapshot=snapshot)
+        candidates = self.candidates.generate(
+            mentions,
+            discourse_anchors=discourse_anchors,
+            multimodal_tracks=multimodal_tracks,
+            system_outputs=system_outputs,
+            snapshot=snapshot,
+        )
+        evidence_refs = tuple(sorted({
+            lattice.lattice_ref,
+            *(ref for mention in mentions for ref in mention.evidence_refs),
+            *(ref for candidate in candidates for factor in candidate.factors for ref in factor.evidence_refs),
+        }))
+        return GroundingPreparation(
+            lattice_ref=lattice.lattice_ref,
+            mentions=tuple(mentions),
+            candidates=tuple(candidates),
+            constraints=(*tuple(constraints), *derived_constraints),
+            evidence_refs=evidence_refs,
+        )
+
+    def solve_prepared(self, prepared: GroundingPreparation) -> GroundingResult:
+        """Enumerate coherent grounding assignments as defeasible Stage-5 evidence.
+
+        The returned ``selected_assignment_ref`` is a local grounding prior only.
+        ``MeaningFactorGraphBuilder`` retains every candidate and treats this local
+        selection as a soft coherence signal; final referent/schema meaning is
+        selected only by the bounded unified meaning solve.
+        """
+
+        return self.solver.solve(
+            prepared.mentions,
+            prepared.candidates,
+            constraints=prepared.constraints,
+            evidence_refs=prepared.evidence_refs,
+        )
+
     def ground_text(
         self,
         content: str,
@@ -47,25 +130,40 @@ class JointGrounder:
         constraints: Iterable[GroundingConstraint] = (),
         snapshot: StoreSnapshot | None = None,
     ) -> tuple[FormLattice, GroundingResult]:
+        """Compatibility composition of analysis, candidate preparation and local solve.
+
+        Runtime Stage 2-6 wiring should call ``FormLatticeAnalyzer.analyze``,
+        ``prepare_lattice`` and ``solve_prepared`` explicitly so stage ownership is
+        observable and enforceable.
+        """
+
+        if snapshot is None:
+            with self.store.snapshot() as pinned:
+                return self.ground_text(
+                    content,
+                    source_ref=source_ref,
+                    context_ref=context_ref,
+                    language_hints=language_hints,
+                    discourse_anchors=discourse_anchors,
+                    multimodal_tracks=multimodal_tracks,
+                    system_outputs=system_outputs,
+                    constraints=constraints,
+                    snapshot=pinned,
+                )
+        self.store.assert_snapshot(snapshot)
         lattice = self.analyzer.analyze(
             content, source_ref=source_ref, language_hints=language_hints
         )
-        mentions = self.mentions.compile(lattice, context_ref=context_ref)
-        derived_constraints = self._derive_constraints(mentions, lattice, snapshot=snapshot)
-        candidates = self.candidates.generate(
-            mentions,
+        prepared = self.prepare_lattice(
+            lattice,
+            context_ref=context_ref,
             discourse_anchors=discourse_anchors,
             multimodal_tracks=multimodal_tracks,
             system_outputs=system_outputs,
+            constraints=constraints,
             snapshot=snapshot,
         )
-        result = self.solver.solve(
-            mentions,
-            candidates,
-            constraints=(*tuple(constraints), *derived_constraints),
-            evidence_refs=(lattice.lattice_ref,),
-        )
-        return lattice, result
+        return lattice, self.solve_prepared(prepared)
 
     def _derive_constraints(
         self, mentions, lattice: FormLattice, *, snapshot: StoreSnapshot | None

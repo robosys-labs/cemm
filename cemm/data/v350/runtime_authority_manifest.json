@@ -1,0 +1,297 @@
+{
+  "activation_ready": false,
+  "allowed_boot_data_modules": [
+    "cemm.data.v350"
+  ],
+  "allowed_language_packages": [],
+  "allowed_record_kinds": [],
+  "allowed_runtime_modules": [
+    "cemm.v350"
+  ],
+  "boot_database_sha256": "",
+  "canonical_orchestrator": "cemm.v350.orchestration:CanonicalOrchestrator",
+  "canonical_runtime_factory": "cemm.v350.runtime:build_runtime",
+  "channel_adapter_contracts": [],
+  "forbidden_runtime_import_prefixes": [
+    "cemm.v347",
+    "cemm.migration",
+    "cemm.v350.migration"
+  ],
+  "legacy_denylist_sha256": "PREACTIVATION",
+  "manifest_version": 2,
+  "metadata": {
+    "generated_from_canonical_stage_graph": true,
+    "note": "Release tooling replaces fingerprints/commit/report and sets activation_ready only after final verification.",
+    "preactivation": true,
+    "stage_count": 23
+  },
+  "migration_modules_allowed_at_runtime": [],
+  "operation_adapter_contracts": [],
+  "public_entrypoints": [
+    "cemm:Runtime",
+    "cemm.app.runtime:Runtime",
+    "python -m cemm",
+    "cemm.web_demo:serve"
+  ],
+  "release_commit": "0000000000000000000000000000000000000000",
+  "release_version": "3.5.0",
+  "schema_version": 1,
+  "semantic_analyzer_contracts": [],
+  "source_manifest_sha256": "PREACTIVATION",
+  "stage_adapters": [
+    {
+      "adapter_ref": "v350.stage.00.orient_and_pin",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:OrientAndPinAdapter",
+      "handler_name": "stage_00_orient_and_pin",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 0,
+      "stage_name": "ORIENT_AND_PIN"
+    },
+    {
+      "adapter_ref": "v350.stage.01.observe",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ObserveAdapter",
+      "handler_name": "stage_01_observe",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 1,
+      "stage_name": "OBSERVE"
+    },
+    {
+      "adapter_ref": "v350.stage.02.analyze_and_fuse_form",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:AnalyzeAndFuseFormAdapter",
+      "handler_name": "stage_02_analyze_and_fuse_form",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 2,
+      "stage_name": "ANALYZE_AND_FUSE_FORM"
+    },
+    {
+      "adapter_ref": "v350.stage.03.generate_candidates",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:GenerateCandidatesAdapter",
+      "handler_name": "stage_03_generate_candidates",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 3,
+      "stage_name": "GENERATE_REFERENT_AND_SCHEMA_CANDIDATES"
+    },
+    {
+      "adapter_ref": "v350.stage.04.project_knowledge",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ProjectKnowledgeAdapter",
+      "handler_name": "stage_04_project_knowledge",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 4,
+      "stage_name": "PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS"
+    },
+    {
+      "adapter_ref": "v350.stage.05.build_factor_graph",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:BuildFactorGraphAdapter",
+      "handler_name": "stage_05_build_factor_graph",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 5,
+      "stage_name": "BUILD_UOL_FACTOR_GRAPH"
+    },
+    {
+      "adapter_ref": "v350.stage.06.solve_meaning",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:SolveMeaningAdapter",
+      "handler_name": "stage_06_solve_meaning",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 6,
+      "stage_name": "SOLVE_MEANING_HYPOTHESES"
+    },
+    {
+      "adapter_ref": "v350.stage.07.select_meaning",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:SelectMeaningAdapter",
+      "handler_name": "stage_07_select_meaning",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 7,
+      "stage_name": "SELECT_MEANING_BUNDLE"
+    },
+    {
+      "adapter_ref": "v350.stage.08.classify_discourse",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ClassifyDiscourseAdapter",
+      "handler_name": "stage_08_classify_discourse",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 8,
+      "stage_name": "CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS"
+    },
+    {
+      "adapter_ref": "v350.stage.09.epistemic_assessment",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:EpistemicAssessmentAdapter",
+      "handler_name": "stage_09_epistemically_assess",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 9,
+      "stage_name": "EPISTEMICALLY_ASSESS_AND_PLACE_CONTEXT"
+    },
+    {
+      "adapter_ref": "v350.stage.10.retrieve_and_bind",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:RetrieveAndBindAdapter",
+      "handler_name": "stage_10_retrieve_and_bind",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 10,
+      "stage_name": "RETRIEVE_AND_ANSWER_BIND"
+    },
+    {
+      "adapter_ref": "v350.stage.11.learning_frontiers",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:LearningFrontiersAdapter",
+      "handler_name": "stage_11_learning_frontiers",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 11,
+      "stage_name": "BUILD_OR_ADVANCE_LEARNING_FRONTIERS"
+    },
+    {
+      "adapter_ref": "v350.stage.12.preview_transitions",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:PreviewTransitionsAdapter",
+      "handler_name": "stage_12_preview_transitions",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 12,
+      "stage_name": "INFER_AND_PREVIEW_TRANSITIONS"
+    },
+    {
+      "adapter_ref": "v350.stage.13.commit_knowledge_state",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:CommitKnowledgeStateAdapter",
+      "handler_name": "stage_13_commit_knowledge_state",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 13,
+      "stage_name": "COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE"
+    },
+    {
+      "adapter_ref": "v350.stage.14.assess_significance",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:AssessSignificanceAdapter",
+      "handler_name": "stage_14_assess_significance",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 14,
+      "stage_name": "ASSESS_IMPACT_AND_IMPORTANCE"
+    },
+    {
+      "adapter_ref": "v350.stage.15.arbitrate_goals",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ArbitrateGoalsAdapter",
+      "handler_name": "stage_15_arbitrate_goals",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 15,
+      "stage_name": "DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS"
+    },
+    {
+      "adapter_ref": "v350.stage.16.execute_operations",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ExecuteOperationsAdapter",
+      "handler_name": "stage_16_plan_execute_operations",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": true,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 16,
+      "stage_name": "PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE"
+    },
+    {
+      "adapter_ref": "v350.stage.17.reconcile_operations",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:ReconcileOperationsAdapter",
+      "handler_name": "stage_17_reconcile_operations",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 17,
+      "stage_name": "RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS"
+    },
+    {
+      "adapter_ref": "v350.stage.18.build_response_uol",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:BuildResponseUOLAdapter",
+      "handler_name": "stage_18_build_response_uol",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 18,
+      "stage_name": "BUILD_RESPONSE_UOL"
+    },
+    {
+      "adapter_ref": "v350.stage.19.realize",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:RealizeTargetLanguageAdapter",
+      "handler_name": "stage_19_realize_target_language",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 19,
+      "stage_name": "REALIZE_TARGET_LANGUAGE"
+    },
+    {
+      "adapter_ref": "v350.stage.20.authorize_emission",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:AuthorizeEmissionAdapter",
+      "handler_name": "stage_20_verify_authorize_emission",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": true,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 20,
+      "stage_name": "VERIFY_AND_AUTHORIZE_EMISSION"
+    },
+    {
+      "adapter_ref": "v350.stage.21.commit_output_discourse",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:CommitOutputDiscourseAdapter",
+      "handler_name": "stage_21_commit_output_discourse",
+      "mutates_semantic_store": true,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 21,
+      "stage_name": "COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND"
+    },
+    {
+      "adapter_ref": "v350.stage.22.finalize",
+      "adapter_revision": 1,
+      "factory_path": "cemm.v350.stage_adapters:FinalizeAdapter",
+      "handler_name": "stage_22_finalize",
+      "mutates_semantic_store": false,
+      "permits_external_side_effect": false,
+      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "stage": 22,
+      "stage_name": "INVALIDATE_RECOMPUTE_AND_FINALIZE"
+    }
+  ],
+  "verification_report_sha256": ""
+}

@@ -49,7 +49,6 @@ class OperationExecutionCoordinator:
         try:
             obs=adapter.submit(plan,idempotency_key=plan.idempotency_key)
         except Exception:
-            # Submission may have reached the external system. Never report failure as proven success/failure.
             unknown=self.journals.advance(submitted,OperationJournalStatus.OUTCOME_UNKNOWN)
             return unknown,None
         state=(OperationJournalStatus.ACKNOWLEDGED if obs.transport_acknowledged else OperationJournalStatus.OUTCOME_UNKNOWN)
@@ -79,44 +78,21 @@ class OperationRecoveryCoordinator:
         return bool(contract.retry_safe_on_unknown and contract.idempotency_mode!=IdempotencyMode.NONE and journal.idempotency_key)
 
     def recover_observation(self, journal, plan: OperationPlanRecord, adapter: OperationAdapter) -> AdapterObservation | None:
-        """Query adapter recovery without resubmitting an external side effect.
-
-        A missing recovery observation never triggers an automatic retry. Even when
-        the adapter is idempotent, retry requires a fresh Phase-16 authorization cycle.
-        """
         if journal.status not in {OperationJournalStatus.SUBMITTED, OperationJournalStatus.OUTCOME_UNKNOWN, OperationJournalStatus.ACKNOWLEDGED}:
             raise ValueError("recovery is only valid for unresolved submitted operations")
-        contract_stored = self.store.get_record(
-            RecordKind.OPERATION_ADAPTER_CONTRACT,
-            plan.adapter_contract_pin.record_ref,
-            plan.adapter_contract_pin.revision,
-        )
+        contract_stored = self.store.get_record(RecordKind.OPERATION_ADAPTER_CONTRACT,plan.adapter_contract_pin.record_ref,plan.adapter_contract_pin.revision)
         if contract_stored is None or contract_stored.record_fingerprint != plan.adapter_contract_pin.record_fingerprint:
             raise ValueError("stale adapter contract during recovery")
         contract = contract_stored.payload
-        if not isinstance(contract, OperationAdapterContractRecord):
-            raise ValueError("invalid adapter contract during recovery")
-        if (adapter.adapter_ref, adapter.adapter_revision) != (contract.adapter_ref, contract.adapter_revision):
+        if not isinstance(contract,OperationAdapterContractRecord): raise ValueError("invalid adapter contract during recovery")
+        if (adapter.adapter_ref,adapter.adapter_revision)!=(contract.adapter_ref,contract.adapter_revision):
             raise ValueError("recovery adapter implementation does not match exact contract")
-        return adapter.recover(
-            idempotency_key=journal.idempotency_key,
-            external_correlation_refs=journal.external_correlation_refs,
-        )
-
+        return adapter.recover(idempotency_key=journal.idempotency_key,external_correlation_refs=journal.external_correlation_refs)
 
     def recover_and_persist(self, journal, plan: OperationPlanRecord, adapter: OperationAdapter):
-        """Query recovery and persist any observation without resubmitting.
-
-        This covers the crash window after durable SUBMITTED but before the normal
-        execution path records ACKNOWLEDGED/OUTCOME_UNKNOWN. Absence of a recovery
-        observation never proves failure and therefore only advances SUBMITTED to
-        OUTCOME_UNKNOWN.
-        """
-        obs=self.recover_observation(journal,plan,adapter)
-        coordinator=OperationJournalCoordinator(self.store)
+        obs=self.recover_observation(journal,plan,adapter); coordinator=OperationJournalCoordinator(self.store)
         if obs is None:
-            if journal.status==OperationJournalStatus.SUBMITTED:
-                return coordinator.advance(journal,OperationJournalStatus.OUTCOME_UNKNOWN),None
+            if journal.status==OperationJournalStatus.SUBMITTED:return coordinator.advance(journal,OperationJournalStatus.OUTCOME_UNKNOWN),None
             return journal,None
         current=journal
         if current.status==OperationJournalStatus.SUBMITTED:
@@ -132,18 +108,28 @@ class OperationRecoveryCoordinator:
         return final,result
 
     def automatic_retry_forbidden(self, journal) -> bool:
-        """Recovery may establish retry eligibility, never permission to execute."""
         return True
 
 
 class ReconciliationCoordinator:
-    """Builds reconciliation lineage only; observed effects must re-enter epistemics/transitions separately."""
+    """Build reconciliation lineage only; observed effects re-enter epistemics/transitions separately."""
     def __init__(self,store): self.store=store
-    def build(self,plan_pin:PinnedRecord,result_pin:PinnedRecord,*,observed_pins=(),generated_evidence_refs=(),replay_required_refs=(),contradiction_refs=(),frontier_refs=()):
-        plan=self._exact(plan_pin).payload; self._exact(result_pin)
+    def build(self,plan_pin:PinnedRecord,result_pin:PinnedRecord,*,observed_journal_pin:PinnedRecord,observed_pins=(),generated_evidence_refs=(),replay_required_refs=(),contradiction_refs=(),frontier_refs=()):
+        plan=self._exact(plan_pin).payload
+        result=self._exact(result_pin).payload
+        journal=self._exact(observed_journal_pin).payload
+        if observed_journal_pin.record_kind != RecordKind.OPERATION_JOURNAL:
+            raise ValueError("reconciliation requires exact observed operation-journal pin")
+        if result.journal_pin.record_ref != observed_journal_pin.record_ref:
+            raise ValueError("reconciliation result/journal identity mismatch")
+        if observed_journal_pin.revision < result.journal_pin.revision:
+            raise ValueError("reconciliation journal predates result observation")
+        for pin in observed_pins:
+            self._exact(pin)
         return OperationReconciliationRecord(
-            reconciliation_ref="operation-reconciliation:"+semantic_fingerprint("operation-reconciliation-ref",(plan_pin.key,result_pin.key,tuple(p.key for p in observed_pins)),24),
-            plan_pin=plan_pin,result_pin=result_pin,predicted_effect_pins=plan.predicted_effect_pins,observed_pins=tuple(observed_pins),generated_evidence_refs=tuple(generated_evidence_refs),
+            reconciliation_ref="operation-reconciliation:"+semantic_fingerprint("operation-reconciliation-ref",(plan_pin.key,result_pin.key,observed_journal_pin.key,tuple(p.key for p in observed_pins)),24),
+            plan_pin=plan_pin,result_pin=result_pin,observed_journal_pin=observed_journal_pin,
+            predicted_effect_pins=plan.predicted_effect_pins,observed_pins=tuple(observed_pins),generated_evidence_refs=tuple(generated_evidence_refs),
             replay_required_refs=tuple(replay_required_refs),contradiction_refs=tuple(contradiction_refs),invalidated_goal_decision_refs=(plan.goal_decision_pin.record_ref,),frontier_refs=tuple(frontier_refs),
             context_ref=plan.context_ref,permission_ref=plan.permission_ref)
     def _exact(self,p):

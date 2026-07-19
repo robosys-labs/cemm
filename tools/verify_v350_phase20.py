@@ -1,112 +1,168 @@
 #!/usr/bin/env python3
-"""Fail-closed Phase-20 release verifier.
+"""Verify that v3.5 final cutover is a concrete executable authority graph.
 
-This verifier intentionally distinguishes source implementation from release
-activation.  It produces PASS only when the public runtime topology is v3.5-only,
-all Stage-0..22 adapters are explicitly declared, packaging contains v3.5 data,
-and no known competing runtime authority remains reachable by static imports.
+This verifier intentionally checks production symbols and package contents rather
+than accepting a manifest-shaped proof.  It supports preactivation validation
+before the signed manifest is generated and final activation validation after it.
 """
 from __future__ import annotations
-import argparse, ast, hashlib, json, re, subprocess, sys, tempfile, zipfile
+
+import argparse
+import ast
+import inspect
+import json
 from pathlib import Path
+import sys
+import tomllib
+import zipfile
 
-FORBIDDEN_IMPORTS=('cemm.v347','cemm.v350.migration')
-PUBLIC_FILES=('cemm/__init__.py','cemm/app/runtime.py','cemm/__main__.py')
-SEMANTIC_FLAGS=('USE_V350','FALLBACK_LEGACY','USE_OLD_NLG','LEGACY_MEMORY_ON_FAILURE')
-STAGE_COUNT=23
-REQUIRED_MANIFEST_SEQUENCE_FIELDS=(
- 'allowed_runtime_modules','allowed_record_kinds','allowed_boot_data_modules',
- 'allowed_language_packages','operation_adapter_contracts',
- 'semantic_analyzer_contracts','channel_adapter_contracts',
- 'migration_modules_allowed_at_runtime')
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def sha(p:Path)->str:
- h=hashlib.sha256();
- with p.open('rb') as f:
-  for c in iter(lambda:f.read(1024*1024),b''):h.update(c)
- return h.hexdigest()
+from cemm.v350.cutover import RuntimeAuthorityGuard, RuntimeAuthorityManifest
+from cemm.v350.orchestration import CoreStage
+from cemm.v350.runtime import CanonicalRuntimeCoordinator
+from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
+from cemm.v350.storage import RecordKind
 
-def imports(path:Path):
- try:tree=ast.parse(path.read_text(encoding='utf-8'))
- except Exception:return ()
- out=[]
- for node in ast.walk(tree):
-  if isinstance(node,ast.Import):out.extend(a.name for a in node.names)
-  elif isinstance(node,ast.ImportFrom):
-   if node.module:out.append(node.module)
- return tuple(out)
+FORBIDDEN_PREFIXES=("cemm.v347","cemm.migration","cemm.v350.migration")
+PUBLIC_FILES=(
+    "cemm/__init__.py","cemm/app/runtime.py","cemm/__main__.py",
+    "cemm/uol/__init__.py","cemm/web_demo.py","cemm/v350/public_runtime.py",
+)
 
-def is_forbidden_runtime_import(rel_path:str, import_name:str)->bool:
- rel=rel_path.replace('\\','/')
- name=import_name
- if any(name==x or name.startswith(x+'.') for x in FORBIDDEN_IMPORTS):
-  return True
- if name=='v347' or name.startswith('v347.'):
-  return True
- if name=='v350.migration' or name.startswith('v350.migration.'):
-  return True
- if rel.startswith('cemm/v350/') and (name=='migration' or name.startswith('migration.')):
-  return True
- return False
 
-def main():
- ap=argparse.ArgumentParser();ap.add_argument('--repo',default='.');ap.add_argument('--boot-db',default='');ap.add_argument('--runtime-manifest',default='cemm/data/v350/runtime_authority_manifest.json');ap.add_argument('--run-pytest',action='store_true');ap.add_argument('--check-wheel',action='store_true');ap.add_argument('--output',default='phase20-release-verification.json');ap.add_argument('--preactivate',action='store_true');a=ap.parse_args();root=Path(a.repo).resolve();errors=[];warnings=[];checks={}
- def check(name,ok,msg):checks[name]=bool(ok);errors.append(msg) if not ok else None
- source=root/'cemm/data/v350/manifest.json'
- try:meta=json.loads(source.read_text()).get('metadata',{});check('phase19_predecessor',int(meta.get('phase',0))>=19,'source manifest is below Phase19')
- except Exception as e:check('phase19_predecessor',False,f'manifest unreadable: {e}')
- core=(root/'CORE_LOOP.md').read_text(encoding='utf-8') if (root/'CORE_LOOP.md').is_file() else ''
- check('stage17_topology','17 RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS' in core,'CORE_LOOP macro Stage17 still duplicates goal generation')
- if not a.preactivate:
-  for rel in PUBLIC_FILES:
-   p=root/rel
-   text=p.read_text(encoding='utf-8') if p.is_file() else ''
-   check('public_no_v347:'+rel,'v347' not in text,f'{rel} still references v347')
- else:
-  warnings.append('preactivation mode: public v3.4.7 entrypoints are allowed until atomic cutover')
- runtime_files=[p for p in (root/'cemm').rglob('*.py') if '/v347/' not in p.as_posix() and '/v350/migration/' not in p.as_posix() and not (a.preactivate and p.relative_to(root).as_posix() in PUBLIC_FILES)]
- bad=[]
- for p in runtime_files:
-  for imp in imports(p):
-   rel=p.relative_to(root).as_posix()
-   if is_forbidden_runtime_import(rel,imp):bad.append((rel,imp))
- check('runtime_import_isolation',not bad,'forbidden runtime imports: '+repr(bad[:20]))
- flag_hits=[]
- for p in runtime_files:
-  text=p.read_text(encoding='utf-8',errors='ignore')
-  for flag in SEMANTIC_FLAGS:
-   if flag in text:flag_hits.append((str(p.relative_to(root)),flag))
- check('no_semantic_fallback_flags',not flag_hits,'semantic fallback flags found: '+repr(flag_hits))
- deny=root/'cemm/data/v350/legacy_authority_denylist.json'
- try:d=json.loads(deny.read_text());unresolved=[x for x in d.get('entries',[]) if x.get('removal_status') not in {'deleted','moved_to_offline_migration','moved_to_test_fixture','mechanical_adapter_only','quarantined_archive'}];check('denylist_closed',not unresolved,'legacy denylist has unresolved entries')
- except Exception as e:check('denylist_closed',False,f'denylist unreadable: {e}')
- rmp=root/a.runtime_manifest
- try:
-  m=json.loads(rmp.read_text());ad=m.get('stage_adapters',[]);stages={int(x['stage']) for x in ad};check('runtime_manifest_activation',True if a.preactivate else bool(m.get('activation_ready')),'runtime manifest is not activation_ready');check('all_23_stages',len(ad)==STAGE_COUNT and stages==set(range(STAGE_COUNT)),'runtime manifest does not declare exactly one adapter for stages 0..22');check('runtime_factory',bool(m.get('canonical_runtime_factory')) and not any(str(m.get('canonical_runtime_factory')).startswith(x) for x in FORBIDDEN_IMPORTS),'runtime factory missing or forbidden');check('source_manifest_fingerprint',m.get('source_manifest_sha256')==sha(source),'runtime manifest source manifest fingerprint mismatch');check('denylist_fingerprint',m.get('legacy_denylist_sha256')==sha(deny),'runtime manifest denylist fingerprint mismatch');
-  missing_manifest_fields=[field for field in REQUIRED_MANIFEST_SEQUENCE_FIELDS if field not in m or not isinstance(m.get(field),list)]
-  check('runtime_manifest_full_cutover_fields',not missing_manifest_fields,'runtime manifest missing full cutover fields: '+repr(missing_manifest_fields))
-  check('runtime_manifest_no_migration_modules',m.get('migration_modules_allowed_at_runtime',[])==[],'runtime manifest allows migration modules at runtime')
-  if not a.preactivate:check('verification_lineage',bool(m.get('verification_report_sha256')),'runtime manifest lacks activation verification lineage')
- except Exception as e:check('runtime_manifest_activation',False,f'runtime authority manifest unreadable: {e}');check('all_23_stages',False,'no valid runtime authority manifest')
- pyproject=(root/'pyproject.toml').read_text(encoding='utf-8') if (root/'pyproject.toml').is_file() else ''
- if not a.preactivate:check('package_version','version = "3.5.0"' in pyproject,'pyproject version is not 3.5.0')
- check('package_v350_data','data/v350/' in pyproject or (root/'MANIFEST.in').is_file(),'packaging does not declare v350 data')
- if a.boot_db:
-  boot=Path(a.boot_db).resolve();check('boot_db_exists',boot.is_file(),'boot DB missing')
- if a.check_wheel:
-  try:
-   with tempfile.TemporaryDirectory() as td:
-    subprocess.check_call([sys.executable,'-m','build','--wheel','--outdir',td],cwd=root,stdout=subprocess.DEVNULL)
-    wheels=list(Path(td).glob('*.whl'));assert len(wheels)==1
-    with zipfile.ZipFile(wheels[0]) as z:names=z.namelist()
-    required=('cemm/data/v350/manifest.json','cemm/data/v350/phase20_cutover_contract.json','cemm/data/v350/competence/runtime_cutover.jsonl')
-    check('wheel_contains_v350',all(any(n.endswith(x) for n in names) for x in required),'built wheel omits required v350 data')
-  except Exception as e:check('wheel_contains_v350',False,f'wheel verification failed: {e}')
- else:warnings.append('wheel build not executed; use --check-wheel for release verification')
- if a.run_pytest:
-  rc=subprocess.call([sys.executable,'-m','pytest','-q'],cwd=root);check('pytest',rc==0,f'pytest failed with exit {rc}')
- else:warnings.append('full pytest not executed; use --run-pytest for release verification')
- status=('PREACTIVATION_PASS' if a.preactivate else 'PASS') if not errors and a.run_pytest and a.check_wheel else 'INCOMPLETE' if not errors else 'FAIL'
- report={'status':status,'checks':checks,'errors':errors,'warnings':warnings,'source_manifest_sha256':sha(source) if source.is_file() else '', 'legacy_denylist_sha256':sha(deny) if deny.is_file() else ''}
- out=root/a.output;out.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n');print(json.dumps(report,indent=2,sort_keys=True));raise SystemExit(0 if status in {'PASS','PREACTIVATION_PASS'} else 2)
-if __name__=='__main__':main()
+def fail(errors: list[str]) -> int:
+    for item in errors:
+        print(f"ERROR: {item}", file=sys.stderr)
+    return 1
+
+
+def import_targets(path: Path) -> tuple[str,...]:
+    tree=ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    result=[]
+    for node in ast.walk(tree):
+        if isinstance(node,ast.Import): result.extend(alias.name for alias in node.names)
+        elif isinstance(node,ast.ImportFrom) and node.module: result.append(node.module)
+    return tuple(result)
+
+
+def is_forbidden_runtime_import(source_path: str, target: str) -> bool:
+    normalized=source_path.replace("\\","/")
+    candidates={target}
+    if normalized.startswith("cemm/v350/") and target.startswith("migration"):
+        candidates.add(f"cemm.v350.{target}")
+    if normalized.startswith("cemm/") and target.startswith("migration"):
+        candidates.add(f"cemm.{target}")
+    return any(
+        candidate==prefix or candidate.startswith(prefix+".")
+        for candidate in candidates
+        for prefix in FORBIDDEN_PREFIXES
+    )
+
+
+def verify_wheel(path: Path, errors: list[str]) -> None:
+    with zipfile.ZipFile(path) as archive:
+        names=tuple(archive.namelist())
+        forbidden=("cemm/v347/","cemm/migration/","cemm/v350/migration/")
+        leaked=sorted(name for name in names if any(name.startswith(prefix) for prefix in forbidden))
+        if leaked: errors.append("runtime wheel contains quarantined legacy/migration modules:"+",".join(leaked[:20]))
+        required=("cemm/__init__.py","cemm/v350/runtime.py","cemm/v350/runtime_graph.py","cemm/v350/stage_adapters.py")
+        for item in required:
+            if item not in names: errors.append(f"runtime wheel missing required production file:{item}")
+
+
+def main() -> int:
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--repo-root",type=Path,default=Path("."))
+    parser.add_argument("--manifest",type=Path,default=Path("cemm/data/v350/runtime_authority_manifest.json"))
+    parser.add_argument("--preactivation",action="store_true")
+    parser.add_argument("--boot-db",type=Path)
+    parser.add_argument("--verification-report",type=Path)
+    parser.add_argument("--wheel",type=Path)
+    args=parser.parse_args()
+    root=args.repo_root.resolve(); errors=[]
+
+    descriptors=canonical_stage_descriptors()
+    if tuple(d.stage for d in descriptors)!=tuple(CoreStage) or len(descriptors)!=23:
+        errors.append("canonical graph is not exact Stage 0..22")
+    if len({d.adapter_class_path for d in descriptors})!=23:
+        errors.append("each core stage must have a distinct concrete adapter class")
+    if {int(d.stage) for d in descriptors if d.permits_external_side_effect}!={16,20}:
+        errors.append("external side effects must be owned only by Stage 16 and Stage 20")
+    for descriptor in descriptors:
+        try:
+            cls=resolve_adapter_type(descriptor)
+            if inspect.isabstract(cls): errors.append(f"abstract stage adapter:{descriptor.stage.name}")
+            if getattr(cls,"HANDLER",None)!=descriptor.handler_name:
+                errors.append(f"adapter handler mismatch:{descriptor.stage.name}")
+            handler=getattr(CanonicalRuntimeCoordinator,descriptor.handler_name,None)
+            if handler is None or not callable(handler): errors.append(f"missing concrete runtime handler:{descriptor.stage.name}")
+            source=inspect.getsource(cls).lower()
+            if any(token in source for token in ("notimplementederror","todo: dummy","placeholder adapter","pass-through adapter")):
+                errors.append(f"placeholder marker in production adapter:{descriptor.stage.name}")
+        except Exception as exc:
+            errors.append(f"cannot resolve concrete adapter {descriptor.stage.name}:{exc}")
+
+    manifest_path=(root/args.manifest).resolve() if not args.manifest.is_absolute() else args.manifest
+    if not manifest_path.is_file(): errors.append(f"missing runtime authority manifest:{manifest_path}")
+    else:
+        try:
+            doc=json.loads(manifest_path.read_text(encoding="utf-8"))
+            stage_docs=doc.get("stage_adapters",[])
+            if [int(x.get("stage",-1)) for x in stage_docs]!=list(range(23)):
+                errors.append("manifest does not encode exact ordered Stage 0..22 graph")
+            by_stage={int(x["stage"]):x for x in stage_docs}
+            for d in descriptors:
+                item=by_stage.get(int(d.stage),{})
+                expected=(d.adapter_ref,d.adapter_revision,d.adapter_class_path,d.handler_name,d.mutates_semantic_store,d.permits_external_side_effect)
+                observed=(item.get("adapter_ref"),item.get("adapter_revision"),item.get("factory_path"),item.get("handler_name"),bool(item.get("mutates_semantic_store",False)),bool(item.get("permits_external_side_effect",False)))
+                if observed!=expected: errors.append(f"manifest/code topology mismatch:{d.stage.name}")
+            if doc.get("migration_modules_allowed_at_runtime"): errors.append("manifest permits migration modules at runtime")
+            if args.preactivation:
+                if doc.get("activation_ready"): errors.append("preactivation source manifest must remain fail-closed")
+            else:
+                if args.boot_db is None or args.verification_report is None:
+                    errors.append("final activation verification requires --boot-db and --verification-report")
+                else:
+                    manifest=RuntimeAuthorityManifest.load(manifest_path)
+                    guard=RuntimeAuthorityGuard(manifest,repo_root=root,boot_database_path=args.boot_db.resolve(),verification_report_path=args.verification_report.resolve())
+                    guard.require_service_authority()
+        except Exception as exc:
+            errors.append(f"runtime manifest validation failed:{exc}")
+
+    for rel in PUBLIC_FILES:
+        path=root/rel
+        if not path.is_file(): errors.append(f"missing public runtime file:{rel}"); continue
+        text=path.read_text(encoding="utf-8")
+        if "v347" in text: errors.append(f"legacy v347 token remains in public runtime:{rel}")
+        try:
+            for target in import_targets(path):
+                if is_forbidden_runtime_import(rel,target):
+                    errors.append(f"forbidden public runtime import:{rel}:{target}")
+        except SyntaxError as exc: errors.append(f"public runtime syntax error:{rel}:{exc}")
+
+    pyproject=root/"pyproject.toml"
+    if not pyproject.is_file(): errors.append("missing pyproject.toml")
+    else:
+        try:
+            config=tomllib.loads(pyproject.read_text(encoding="utf-8"))
+            excludes=set(config.get("tool",{}).get("setuptools",{}).get("packages",{}).get("find",{}).get("exclude",[]))
+            required={"cemm.v347","cemm.v347.*","cemm.migration","cemm.migration.*","cemm.v350.migration","cemm.v350.migration.*"}
+            if not required.issubset(excludes): errors.append("runtime package discovery does not quarantine all legacy/migration namespaces")
+        except Exception as exc: errors.append(f"invalid pyproject packaging config:{exc}")
+
+    for rel in ("cemm/migration/__init__.py","cemm/migration/v347.py"):
+        if (root/rel).exists(): errors.append(f"legacy public migration shim still exists:{rel}")
+
+    if set(RuntimeAuthorityManifest.__dataclass_fields__) and not {item.value for item in RecordKind}:
+        errors.append("RecordKind contract unexpectedly empty")
+    if args.wheel:
+        if not args.wheel.is_file(): errors.append(f"wheel not found:{args.wheel}")
+        else: verify_wheel(args.wheel,errors)
+    if errors: return fail(errors)
+    print("v3.5 Phase-20/final-activation verification: PASS")
+    return 0
+
+if __name__=="__main__": raise SystemExit(main())

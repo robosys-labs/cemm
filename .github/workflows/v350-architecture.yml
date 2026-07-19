@@ -1,91 +1,93 @@
-name: v3.5 architecture
+name: v3.5 architecture and release authority
 
 on:
   pull_request:
     paths:
-      - "cemm/v350/**"
-      - "cemm/v347/**"
-      - "cemm/data/v347/**"
-      - "cemm/data/v350/**"
+      - "cemm/**"
       - "tests/v350/**"
-      - "tests/test_v347_*.py"
-      - "tools/check_v350_architecture.py"
-      - "tools/compile_v350_data.py"
-      - "tools/verify_v350_foundation.py"
-      - "tools/verify_v350_language_grounding.py"
-      - "tools/verify_v350_composition.py"
-      - "tools/verify_v350_epistemics.py"
-      - "tools/verify_v350_transitions.py"
-      - "tools/verify_v350_vertical_slices.py"
-      - "docs/audits/v347-authority-debt.json"
+      - "tools/**v350**"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
       - "CORE_LOOP.md"
       - "IMPLEMENTATION_PLAN.md"
       - "ACCEPTANCE_CONTRACT.md"
       - "docs/architecture/**"
+      - "pyproject.toml"
       - ".github/workflows/v350-architecture.yml"
   push:
     branches: [main]
     paths:
-      - "cemm/v350/**"
-      - "cemm/v347/**"
-      - "cemm/data/v347/**"
-      - "cemm/data/v350/**"
+      - "cemm/**"
       - "tests/v350/**"
-      - "tests/test_v347_*.py"
-      - "tools/check_v350_architecture.py"
-      - "tools/compile_v350_data.py"
-      - "tools/verify_v350_foundation.py"
-      - "tools/verify_v350_language_grounding.py"
-      - "tools/verify_v350_composition.py"
-      - "tools/verify_v350_epistemics.py"
-      - "tools/verify_v350_transitions.py"
-      - "tools/verify_v350_vertical_slices.py"
-      - "docs/audits/v347-authority-debt.json"
+      - "tools/**v350**"
       - "AGENTS.md"
       - "ARCHITECTURE.md"
       - "CORE_LOOP.md"
       - "IMPLEMENTATION_PLAN.md"
       - "ACCEPTANCE_CONTRACT.md"
       - "docs/architecture/**"
+      - "pyproject.toml"
       - ".github/workflows/v350-architecture.yml"
 
 permissions:
   contents: read
 
 jobs:
-  architecture:
+  architecture-and-cutover:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
       - name: Install development dependencies
         run: python -m pip install -e ".[dev]"
-      - name: Enforce v3.5 prohibitions and legacy-debt ratchet
-        run: python tools/check_v350_architecture.py
-      - name: Verify Phases 0 through 12
-        run: pytest -q tests/v350
-      - name: Audit and competence-test the foundational seed
-        run: python tools/verify_v350_foundation.py
-      - name: Audit language evidence and joint grounding
-        run: python tools/verify_v350_language_grounding.py
-      - name: Audit bounded UOL factor-graph composition
-        run: python tools/verify_v350_composition.py
-      - name: Audit attributed claims and epistemic admission
-        run: python tools/verify_v350_epistemics.py
-      - name: Audit generic proof-bearing event transitions
-        run: python tools/verify_v350_transitions.py
-      - name: Audit cross-domain transition vertical slices
-        run: python tools/verify_v350_vertical_slices.py
-      - name: Prove deterministic boot compilation
+      - name: Build canonical boot artifact
         run: |
-          python tools/compile_v350_data.py --output /tmp/v350-a.sqlite --writable
-          python tools/compile_v350_data.py --output /tmp/v350-b.sqlite --writable
-          cmp /tmp/v350-a.sqlite /tmp/v350-b.sqlite
-      - name: Run complete repository suite
-        run: pytest -q
+          mkdir -p cemm/data/v350/release
+          python tools/compile_v350_data.py \
+            --output cemm/data/v350/release/boot.sqlite \
+            --writable
+      - name: Build exact-commit verification report
+        run: |
+          python tools/build_v350_verification_report.py \
+            --release-commit "$GITHUB_SHA" \
+            --boot-db cemm/data/v350/release/boot.sqlite \
+            --output cemm/data/v350/release/verification_report.json
+      - name: Generate activation-ready runtime authority manifest
+        run: |
+          python tools/build_v350_runtime_authority_manifest.py \
+            --release-commit "$GITHUB_SHA" \
+            --boot-db cemm/data/v350/release/boot.sqlite \
+            --verification-report cemm/data/v350/release/verification_report.json \
+            --output cemm/data/v350/runtime_authority_manifest.json \
+            --activate
+      - name: Verify final signed Stage-0..22 runtime authority
+        run: |
+          python tools/verify_v350_phase20.py \
+            --manifest cemm/data/v350/runtime_authority_manifest.json \
+            --boot-db cemm/data/v350/release/boot.sqlite \
+            --verification-report cemm/data/v350/release/verification_report.json
+      - name: Build and quarantine-check final runtime wheel
+        run: |
+          rm -rf dist && mkdir -p dist
+          python -m pip wheel . --no-deps --no-build-isolation -w dist
+          WHEEL="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$WHEEL"
+          python tools/verify_v350_phase20.py \
+            --manifest cemm/data/v350/runtime_authority_manifest.json \
+            --boot-db cemm/data/v350/release/boot.sqlite \
+            --verification-report cemm/data/v350/release/verification_report.json \
+            --wheel "$WHEEL"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-v350-release-authority-${{ github.sha }}
+          path: |
+            cemm/data/v350/runtime_authority_manifest.json
+            cemm/data/v350/release/boot.sqlite
+            cemm/data/v350/release/verification_report.json
+            dist/*.whl

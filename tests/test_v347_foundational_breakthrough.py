@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import pytest
+import importlib.util
+import json
+from pathlib import Path
 
-from cemm.migration.v347 import LegacyMigrationError, migrate_legacy_fact
 from cemm.v347.goals import CapabilityState, OperationAuthorizer
 from cemm.v347.inference import InferenceBudget
 from cemm.v347.knowledge import _upsert_predication_op, _upsert_proposition_op
@@ -470,12 +471,13 @@ def test_realization_blocks_unknown_semantic_content() -> None:
         runtime.close()
 
 
-def test_legacy_migration_rejects_untyped_raw_fillers() -> None:
-    with pytest.raises(LegacyMigrationError):
-        migrate_legacy_fact(
-            {"fact_id": "legacy:1", "predicate_key": "named", "roles": {"holder": "user", "name": "Ada"}},
-            expected_store_revision=0,
-        )
+def test_legacy_migration_runtime_shim_is_quarantined() -> None:
+    root = Path(__file__).resolve().parents[1]
+    denylist = json.loads((root / "cemm/data/v350/legacy_authority_denylist.json").read_text(encoding="utf-8"))
+    entries = {item["path_or_symbol"]: item for item in denylist["entries"]}
+
+    assert importlib.util.find_spec("cemm.migration.v347") is None
+    assert entries["cemm.v350.migration"]["removal_status"] == "moved_to_offline_migration"
 
 
 def test_multilingual_alias_bootstrap_does_not_collapse_languages() -> None:
