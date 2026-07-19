@@ -915,6 +915,8 @@ Make the v3.5 core loop the sole public semantic authority and physically remove
 
 No public runtime request can reach a removed legacy semantic authority path.
 
+The final cutover design is maintained in `docs/implementation/v350-phase-20-plan.md`.
+
 ---
 
 ## 24. Final verification program

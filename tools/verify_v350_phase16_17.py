@@ -20,7 +20,9 @@ for token in ('OPERATION_GATE_ASSESSMENT','OPERATION_PLAN','OPERATION_AUTHORIZAT
     require(token in storage,f'missing RecordKind {token}')
 
 sqlite=text('cemm/v350/storage/sqlite_schema.py')
-require('SCHEMA_VERSION = 7' in sqlite,'Phase16/17 SQLite schema version must be 7')
+schema_version_line = next((line for line in sqlite.splitlines() if line.startswith('SCHEMA_VERSION = ')), '')
+schema_version = int(schema_version_line.split('=', 1)[1].strip()) if schema_version_line else 0
+require(schema_version >= 7,'Phase16/17 SQLite schema version must be at least 7')
 require('phase16_records' in sqlite and 'phase17_records' in sqlite,'Phase16/17 normalized projections missing')
 manifest=json.loads(text('cemm/data/v350/manifest.json'))
 require(int(manifest.get('metadata',{}).get('phase',0))>=17,'manifest phase lineage was not advanced to 17')

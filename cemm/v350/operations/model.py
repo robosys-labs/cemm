@@ -273,6 +273,7 @@ class OperationReconciliationRecord:
     reconciliation_ref: str
     plan_pin: PinnedRecord
     result_pin: PinnedRecord
+    observed_journal_pin: PinnedRecord
     predicted_effect_pins: tuple[PinnedRecord, ...]
     observed_pins: tuple[PinnedRecord, ...]
     generated_evidence_refs: tuple[str, ...]

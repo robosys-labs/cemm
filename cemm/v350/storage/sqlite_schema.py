@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -815,6 +815,31 @@ DDL: tuple[str, ...] = (
     ) WITHOUT ROWID
     """,
     "CREATE INDEX IF NOT EXISTS phase17_pack_idx ON phase17_records(record_kind, pack_ref, language_tag, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS phase18_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        parent_ref TEXT, status TEXT, context_ref TEXT, permission_ref TEXT, payload_json TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS phase18_parent_idx ON phase18_records(record_kind,parent_ref,status,revision DESC)",
+    "CREATE INDEX IF NOT EXISTS phase18_context_idx ON phase18_records(record_kind,context_ref,permission_ref,revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS migration_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        source_ref TEXT, source_refs_json TEXT NOT NULL, batch_ref TEXT, disposition TEXT, status TEXT, permission_ref TEXT, payload_json TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS migration_source_idx ON migration_records(record_kind,source_ref,disposition,revision DESC)",
+    "CREATE INDEX IF NOT EXISTS migration_batch_idx ON migration_records(batch_ref,record_kind,status,revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS migration_record_sources (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL, source_ref TEXT NOT NULL,
+        PRIMARY KEY(record_kind,record_ref,revision,source_ref)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS migration_record_sources_source_idx ON migration_record_sources(source_ref,record_kind,record_ref,revision DESC)",
 
 )
 

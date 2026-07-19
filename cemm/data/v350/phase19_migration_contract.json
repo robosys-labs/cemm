@@ -1,0 +1,33 @@
+{
+  "contract_ref": "contract:cemm:v350:migration-equivalence",
+  "phase": 19,
+  "laws": [
+    "legacy_material_is_input_evidence_not_runtime_authority",
+    "every_source_has_explicit_disposition",
+    "no_silent_coercion_or_collision_overwrite",
+    "exact_source_rule_target_lineage",
+    "quarantine_is_non_authoritative",
+    "unknown_permission_never_broadens",
+    "learned_material_does_not_bypass_phase13_promotion",
+    "migration_transformers_are_offline_only",
+    "rollback_removes_only_exact_batch_owned_target_revisions",
+    "rollback_blocks_when_later_non_migration_dependents_exist",
+    "equivalence_is_dimensioned_semantic_equivalence_not_string_similarity",
+    "intentional_behavior_changes_require_exact_reviewed_fixture_lineage",
+    "logical_batch_identity_is_idempotent_across_store_revision_changes",
+    "merge_and_split_topology_preserves_exact_source_and_target_sets",
+    "intentional_change_waiver_applies_only_to_its_exact_fixture_lineage",
+    "merged_target_dependency_lineage_includes_every_exact_source_pin"
+  ],
+  "required_record_families": [
+    "migration_source",
+    "migration_rule",
+    "migration_target_map",
+    "migration_decision",
+    "migration_batch",
+    "migration_quarantine",
+    "migration_intentional_change",
+    "semantic_equivalence",
+    "migration_rollback"
+  ]
+}

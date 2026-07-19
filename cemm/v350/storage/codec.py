@@ -65,8 +65,12 @@ from ..operations.codec import (adapter_contract_from_document, operation_author
 from ..operations.model import (OperationAdapterContractRecord, OperationAuthorizationRecord, OperationGateAssessmentRecord, OperationJournalRecord, OperationPlanRecord, OperationReconciliationRecord, OperationResultRecord)
 from ..response.codec import (response_omission_from_document, response_transform_rule_from_document, response_transformation_proof_from_document, response_uol_from_document)
 from ..response.model import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord, ResponseUOLRecord
-from ..realization.codec import (argument_frame_from_document, deep_clause_plan_from_document, linearization_rule_from_document, morphology_rule_from_document, realization_request_from_document, reference_plan_from_document, semantic_roundtrip_from_document, surface_candidate_from_document)
-from ..realization.model import (ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticRoundTripRecord, SurfaceCandidateRecord)
+from ..realization.codec import (argument_frame_from_document, deep_clause_plan_from_document, linearization_rule_from_document, morphology_rule_from_document, realization_request_from_document, reference_plan_from_document, semantic_analyzer_contract_from_document, semantic_roundtrip_from_document, surface_candidate_from_document)
+from ..realization.model import (ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticAnalyzerContractRecord, SemanticRoundTripRecord, SurfaceCandidateRecord)
+from ..output.codec import (channel_adapter_contract_from_document, literal_emission_policy_from_document, emission_gate_assessment_from_document, emission_authorization_from_document, emission_journal_from_document, emission_from_document, emission_anomaly_from_document, silence_outcome_from_document, output_discourse_act_from_document, output_commitment_from_document, common_ground_from_document, output_reference_anchor_from_document, output_correction_from_document)
+from ..output.model import (ChannelAdapterContractRecord, LiteralEmissionPolicyRecord, EmissionGateAssessmentRecord, EmissionAuthorizationRecord, EmissionJournalRecord, EmissionRecord, EmissionAnomalyRecord, SilenceOutcomeRecord, OutputDiscourseActRecord, OutputCommitmentRecord, CommonGroundRecord, OutputReferenceAnchorRecord, OutputCorrectionRecord)
+from ..migration.codec import (migration_source_from_document, migration_rule_from_document, migration_target_map_from_document, migration_decision_from_document, migration_batch_from_document, migration_quarantine_from_document, migration_intentional_change_from_document, semantic_equivalence_from_document, migration_rollback_from_document)
+from ..migration.model import (MigrationSourceRecord, MigrationRuleRecord, MigrationTargetMapRecord, MigrationDecisionRecord, MigrationBatchRecord, MigrationQuarantineRecord, MigrationIntentionalChangeRecord, SemanticEquivalenceRecord, MigrationRollbackRecord)
 from ..uol.codec import (
     application_from_document,
     capability_delta_from_document,
@@ -492,6 +496,29 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.REFERENCE_PLAN: reference_plan_from_document,
     RecordKind.SURFACE_CANDIDATE: surface_candidate_from_document,
     RecordKind.SEMANTIC_ROUNDTRIP: semantic_roundtrip_from_document,
+    RecordKind.SEMANTIC_ANALYZER_CONTRACT: semantic_analyzer_contract_from_document,
+    RecordKind.CHANNEL_ADAPTER_CONTRACT: channel_adapter_contract_from_document,
+    RecordKind.LITERAL_EMISSION_POLICY: literal_emission_policy_from_document,
+    RecordKind.EMISSION_GATE_ASSESSMENT: emission_gate_assessment_from_document,
+    RecordKind.EMISSION_AUTHORIZATION: emission_authorization_from_document,
+    RecordKind.EMISSION_JOURNAL: emission_journal_from_document,
+    RecordKind.EMISSION: emission_from_document,
+    RecordKind.EMISSION_ANOMALY: emission_anomaly_from_document,
+    RecordKind.SILENCE_OUTCOME: silence_outcome_from_document,
+    RecordKind.OUTPUT_DISCOURSE_ACT: output_discourse_act_from_document,
+    RecordKind.OUTPUT_COMMITMENT: output_commitment_from_document,
+    RecordKind.COMMON_GROUND: common_ground_from_document,
+    RecordKind.OUTPUT_REFERENCE_ANCHOR: output_reference_anchor_from_document,
+    RecordKind.OUTPUT_CORRECTION: output_correction_from_document,
+    RecordKind.MIGRATION_SOURCE: migration_source_from_document,
+    RecordKind.MIGRATION_RULE: migration_rule_from_document,
+    RecordKind.MIGRATION_TARGET_MAP: migration_target_map_from_document,
+    RecordKind.MIGRATION_DECISION: migration_decision_from_document,
+    RecordKind.MIGRATION_BATCH: migration_batch_from_document,
+    RecordKind.MIGRATION_QUARANTINE: migration_quarantine_from_document,
+    RecordKind.MIGRATION_INTENTIONAL_CHANGE: migration_intentional_change_from_document,
+    RecordKind.SEMANTIC_EQUIVALENCE: semantic_equivalence_from_document,
+    RecordKind.MIGRATION_ROLLBACK: migration_rollback_from_document,
     RecordKind.DEFAULT_RULE: _default_rule,
     RecordKind.DEPENDENCY: _dependency,
     RecordKind.LANGUAGE_PACK: language_pack_from_document,
@@ -607,6 +634,29 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.REFERENCE_PLAN: (ReferencePlanRecord,),
         RecordKind.SURFACE_CANDIDATE: (SurfaceCandidateRecord,),
         RecordKind.SEMANTIC_ROUNDTRIP: (SemanticRoundTripRecord,),
+        RecordKind.SEMANTIC_ANALYZER_CONTRACT: (SemanticAnalyzerContractRecord,),
+        RecordKind.CHANNEL_ADAPTER_CONTRACT: (ChannelAdapterContractRecord,),
+        RecordKind.LITERAL_EMISSION_POLICY: (LiteralEmissionPolicyRecord,),
+        RecordKind.EMISSION_GATE_ASSESSMENT: (EmissionGateAssessmentRecord,),
+        RecordKind.EMISSION_AUTHORIZATION: (EmissionAuthorizationRecord,),
+        RecordKind.EMISSION_JOURNAL: (EmissionJournalRecord,),
+        RecordKind.EMISSION: (EmissionRecord,),
+        RecordKind.EMISSION_ANOMALY: (EmissionAnomalyRecord,),
+        RecordKind.SILENCE_OUTCOME: (SilenceOutcomeRecord,),
+        RecordKind.OUTPUT_DISCOURSE_ACT: (OutputDiscourseActRecord,),
+        RecordKind.OUTPUT_COMMITMENT: (OutputCommitmentRecord,),
+        RecordKind.COMMON_GROUND: (CommonGroundRecord,),
+        RecordKind.OUTPUT_REFERENCE_ANCHOR: (OutputReferenceAnchorRecord,),
+        RecordKind.OUTPUT_CORRECTION: (OutputCorrectionRecord,),
+        RecordKind.MIGRATION_SOURCE: (MigrationSourceRecord,),
+        RecordKind.MIGRATION_RULE: (MigrationRuleRecord,),
+        RecordKind.MIGRATION_TARGET_MAP: (MigrationTargetMapRecord,),
+        RecordKind.MIGRATION_DECISION: (MigrationDecisionRecord,),
+        RecordKind.MIGRATION_BATCH: (MigrationBatchRecord,),
+        RecordKind.MIGRATION_QUARANTINE: (MigrationQuarantineRecord,),
+        RecordKind.MIGRATION_INTENTIONAL_CHANGE: (MigrationIntentionalChangeRecord,),
+        RecordKind.SEMANTIC_EQUIVALENCE: (SemanticEquivalenceRecord,),
+        RecordKind.MIGRATION_ROLLBACK: (MigrationRollbackRecord,),
         RecordKind.DEFAULT_RULE: (DefaultRuleRecord,),
         RecordKind.DEPENDENCY: (DependencyEdge,),
         RecordKind.LANGUAGE_PACK: (LanguagePackRecord,),
@@ -686,6 +736,29 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.REFERENCE_PLAN: "reference_ref",
         RecordKind.SURFACE_CANDIDATE: "candidate_ref",
         RecordKind.SEMANTIC_ROUNDTRIP: "roundtrip_ref",
+        RecordKind.SEMANTIC_ANALYZER_CONTRACT: "contract_ref",
+        RecordKind.CHANNEL_ADAPTER_CONTRACT: "contract_ref",
+        RecordKind.LITERAL_EMISSION_POLICY: "policy_ref",
+        RecordKind.EMISSION_GATE_ASSESSMENT: "assessment_ref",
+        RecordKind.EMISSION_AUTHORIZATION: "authorization_ref",
+        RecordKind.EMISSION_JOURNAL: "journal_ref",
+        RecordKind.EMISSION: "emission_ref",
+        RecordKind.EMISSION_ANOMALY: "anomaly_ref",
+        RecordKind.SILENCE_OUTCOME: "silence_ref",
+        RecordKind.OUTPUT_DISCOURSE_ACT: "discourse_ref",
+        RecordKind.OUTPUT_COMMITMENT: "commitment_ref",
+        RecordKind.COMMON_GROUND: "ground_ref",
+        RecordKind.OUTPUT_REFERENCE_ANCHOR: "anchor_ref",
+        RecordKind.OUTPUT_CORRECTION: "correction_ref",
+        RecordKind.MIGRATION_SOURCE: "source_ref",
+        RecordKind.MIGRATION_RULE: "rule_ref",
+        RecordKind.MIGRATION_TARGET_MAP: "map_ref",
+        RecordKind.MIGRATION_DECISION: "decision_ref",
+        RecordKind.MIGRATION_BATCH: "batch_ref",
+        RecordKind.MIGRATION_QUARANTINE: "quarantine_ref",
+        RecordKind.MIGRATION_INTENTIONAL_CHANGE: "change_ref",
+        RecordKind.SEMANTIC_EQUIVALENCE: "equivalence_ref",
+        RecordKind.MIGRATION_ROLLBACK: "rollback_ref",
         RecordKind.DEFAULT_RULE: "rule_ref",
         RecordKind.DEPENDENCY: "dependency_ref",
         RecordKind.LANGUAGE_PACK: "pack_ref",
@@ -725,7 +798,12 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.OPERATION_JOURNAL, RecordKind.OPERATION_RESULT, RecordKind.OPERATION_RECONCILIATION,
         RecordKind.RESPONSE_TRANSFORM_RULE, RecordKind.RESPONSE_TRANSFORMATION_PROOF, RecordKind.RESPONSE_OMISSION, RecordKind.RESPONSE_UOL,
         RecordKind.REALIZATION_REQUEST, RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
-        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP,
+        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP, RecordKind.SEMANTIC_ANALYZER_CONTRACT,
+        RecordKind.CHANNEL_ADAPTER_CONTRACT, RecordKind.LITERAL_EMISSION_POLICY, RecordKind.EMISSION_GATE_ASSESSMENT, RecordKind.EMISSION_AUTHORIZATION,
+        RecordKind.EMISSION_JOURNAL, RecordKind.EMISSION, RecordKind.EMISSION_ANOMALY, RecordKind.SILENCE_OUTCOME, RecordKind.OUTPUT_DISCOURSE_ACT, RecordKind.OUTPUT_COMMITMENT,
+        RecordKind.COMMON_GROUND, RecordKind.OUTPUT_REFERENCE_ANCHOR, RecordKind.OUTPUT_CORRECTION, RecordKind.MIGRATION_SOURCE, RecordKind.MIGRATION_RULE,
+        RecordKind.MIGRATION_TARGET_MAP, RecordKind.MIGRATION_DECISION, RecordKind.MIGRATION_BATCH, RecordKind.MIGRATION_QUARANTINE,
+        RecordKind.MIGRATION_INTENTIONAL_CHANGE, RecordKind.SEMANTIC_EQUIVALENCE, RecordKind.MIGRATION_ROLLBACK,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -762,6 +840,8 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         return str(record.decision.value)
     if resolved == RecordKind.LEARNING_INVALIDATION:
         return str(record.status.value)
+    if resolved in {RecordKind.SEMANTIC_ANALYZER_CONTRACT, RecordKind.CHANNEL_ADAPTER_CONTRACT, RecordKind.LITERAL_EMISSION_POLICY}:
+        return "active" if bool(getattr(record, "active", False)) else "inactive"
     if resolved in {
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT, RecordKind.DEFAULT_RULE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
@@ -769,7 +849,7 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
         RecordKind.LEARNING_PACKAGE, RecordKind.IMPACT_RULE, RecordKind.IMPORTANCE_POLICY,
         RecordKind.RESPONSE_POLICY_RULE, RecordKind.RESPONSE_TRANSFORM_RULE,
-        RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
+        RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE, RecordKind.MIGRATION_RULE,
     }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):

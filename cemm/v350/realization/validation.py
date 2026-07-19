@@ -4,7 +4,7 @@ from ..storage.model import DependencyEdge,RecordKind
 from ..learning.authority import record_supports_use
 from ..learning.model import PromotionDecisionKind,PromotionDecisionRecord
 from ..schema.model import SchemaLifecycleStatus,UseDecision,UseOperation
-from .model import DeepClausePlanRecord,RealizationRequestRecord,ReferencePlanRecord,SurfaceCandidateRecord,SemanticRoundTripRecord,RoundTripDecision
+from .model import DeepClausePlanRecord,RealizationRequestRecord,ReferencePlanRecord,SurfaceCandidateRecord,SemanticAnalyzerContractRecord,SemanticRoundTripRecord,RoundTripDecision
 
 class Phase17CommitValidator:
  def __init__(self,resolver):self.r=resolver
@@ -43,9 +43,20 @@ class Phase17CommitValidator:
    for p in (*record.frame_pins,*record.lexical_pins,*record.morphology_pins,*record.linearization_pins):
     if not self._language_use_authorized(p,UseOperation.REALIZE):raise ValueError(f'surface candidate uses non-REALIZE language authority: {p.key}')
     self._require_in_request_pack(record.request_pin,p)
+  elif op.record_kind==RecordKind.SEMANTIC_ANALYZER_CONTRACT:
+   if not isinstance(record,SemanticAnalyzerContractRecord):raise ValueError('semantic analyzer contract type mismatch')
+   if record.active and not record.competence_case_refs:raise ValueError('active semantic analyzer contract requires competence')
+   if record.supersedes_revision is not None and self.r.resolve(RecordKind.SEMANTIC_ANALYZER_CONTRACT,record.contract_ref,record.supersedes_revision) is None:raise ValueError('analyzer contract supersedes missing prior revision')
   elif op.record_kind==RecordKind.SEMANTIC_ROUNDTRIP:
    if not isinstance(record,SemanticRoundTripRecord):raise ValueError('roundtrip type mismatch')
-   self._require(op,record.request_pin);self._require(op,record.surface_candidate_pin)
+   self._require(op,record.request_pin);self._require(op,record.surface_candidate_pin);self._require(op,record.analyzer_contract_pin)
+   analyzer_contract=self.r.resolve(record.analyzer_contract_pin.record_kind,record.analyzer_contract_pin.record_ref,record.analyzer_contract_pin.revision)
+   if analyzer_contract is None or analyzer_contract.record_fingerprint!=record.analyzer_contract_pin.record_fingerprint or not isinstance(analyzer_contract.payload,SemanticAnalyzerContractRecord) or not analyzer_contract.payload.active:raise ValueError('roundtrip requires active exact semantic analyzer contract')
+   same=[x for x in self.r.records(RecordKind.SEMANTIC_ANALYZER_CONTRACT) if x.record_ref==analyzer_contract.record_ref and getattr(x.payload,'active',False)]
+   superseded={getattr(x.payload,'supersedes_revision',None) for x in same if getattr(x.payload,'supersedes_revision',None) is not None}
+   effective=[x for x in same if x.revision not in superseded]
+   if len(effective)!=1 or effective[0].revision!=analyzer_contract.revision or effective[0].record_fingerprint!=analyzer_contract.record_fingerprint:raise ValueError('roundtrip analyzer contract is not singular effective authority')
+   if analyzer_contract.payload.analyzer_ref!=record.analyzer_ref or analyzer_contract.payload.analyzer_revision!=record.analyzer_revision:raise ValueError('roundtrip analyzer identity differs from reviewed contract')
    request=self.r.resolve(record.request_pin.record_kind,record.request_pin.record_ref,record.request_pin.revision)
    if request is None or not isinstance(request.payload,RealizationRequestRecord):raise ValueError('roundtrip request is missing')
    response=self.r.resolve(request.payload.response_uol_pin.record_kind,request.payload.response_uol_pin.record_ref,request.payload.response_uol_pin.revision)
@@ -74,12 +85,16 @@ class Phase17CommitValidator:
   stored=self.r.resolve(pin.record_kind,pin.record_ref,pin.revision)
   if stored is None or stored.record_fingerprint!=pin.record_fingerprint:return False
   if getattr(stored.payload,'lifecycle_status',None)!=SchemaLifecycleStatus.ACTIVE or not record_supports_use(pin.record_kind,stored.payload,operation):return False
+  same=[x for x in self.r.records(pin.record_kind) if x.record_ref==pin.record_ref and getattr(x.payload,'lifecycle_status',None)==SchemaLifecycleStatus.ACTIVE]
+  superseded={getattr(x.payload,'supersedes_revision',None) for x in same if getattr(x.payload,'supersedes_revision',None) is not None}
+  effective=[x for x in same if x.revision not in superseded]
+  if len(effective)!=1 or effective[0].revision!=pin.revision or effective[0].record_fingerprint!=pin.record_fingerprint:return False
   edges=[e.payload for e in self.r.records(RecordKind.DEPENDENCY) if isinstance(e.payload,DependencyEdge) and e.payload.active and e.payload.dependent_kind==pin.record_kind and e.payload.dependent_ref==pin.record_ref and e.payload.dependent_revision==pin.revision]
   promotion=[e for e in edges if e.prerequisite_kind==RecordKind.PROMOTION_DECISION]
-  if not promotion:return True
+  if not promotion:return getattr(stored,'layer',None)=='boot'
   for edge in promotion:
    decision=self.r.resolve(RecordKind.PROMOTION_DECISION,edge.prerequisite_ref,edge.prerequisite_revision)
-   if decision is None or not isinstance(decision.payload,PromotionDecisionRecord) or decision.payload.decision!=PromotionDecisionKind.PROMOTE:continue
+   if decision is None or decision.record_fingerprint!=edge.prerequisite_fingerprint or not isinstance(decision.payload,PromotionDecisionRecord) or decision.payload.decision!=PromotionDecisionKind.PROMOTE:continue
    for grant in decision.payload.use_grants:
     if grant.operation==operation and grant.decision==UseDecision.ALLOW and grant.candidate_pin.record_kind==pin.record_kind and grant.candidate_pin.record_ref==pin.record_ref:
      if any(e.prerequisite_kind==grant.candidate_pin.record_kind and e.prerequisite_ref==grant.candidate_pin.record_ref and e.prerequisite_revision==grant.candidate_pin.revision and e.prerequisite_fingerprint==grant.candidate_pin.record_fingerprint for e in edges):return True

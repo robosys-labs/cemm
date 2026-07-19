@@ -29,7 +29,9 @@ from ..goals.model import (
 )
 from ..operations.model import OperationAdapterContractRecord, OperationAuthorizationRecord, OperationGateAssessmentRecord, OperationJournalRecord, OperationPlanRecord, OperationReconciliationRecord, OperationResultRecord
 from ..response.model import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord, ResponseUOLRecord
-from ..realization.model import ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticRoundTripRecord, SurfaceCandidateRecord
+from ..realization.model import ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticAnalyzerContractRecord, SemanticRoundTripRecord, SurfaceCandidateRecord
+from ..output.model import ChannelAdapterContractRecord, LiteralEmissionPolicyRecord, EmissionGateAssessmentRecord, EmissionAuthorizationRecord, EmissionJournalRecord, EmissionRecord, EmissionAnomalyRecord, SilenceOutcomeRecord, OutputDiscourseActRecord, OutputCommitmentRecord, CommonGroundRecord, OutputReferenceAnchorRecord, OutputCorrectionRecord
+from ..migration.model import MigrationSourceRecord, MigrationRuleRecord, MigrationTargetMapRecord, MigrationDecisionRecord, MigrationBatchRecord, MigrationQuarantineRecord, MigrationIntentionalChangeRecord, SemanticEquivalenceRecord, MigrationRollbackRecord
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -571,6 +573,29 @@ class RepositorySet:
         self.reference_plans = TypedRepository(store, RecordKind.REFERENCE_PLAN, ReferencePlanRecord)
         self.surface_candidates = TypedRepository(store, RecordKind.SURFACE_CANDIDATE, SurfaceCandidateRecord)
         self.semantic_roundtrips = TypedRepository(store, RecordKind.SEMANTIC_ROUNDTRIP, SemanticRoundTripRecord)
+        self.semantic_analyzer_contracts = TypedRepository(store, RecordKind.SEMANTIC_ANALYZER_CONTRACT, SemanticAnalyzerContractRecord)
+        self.channel_adapter_contracts = TypedRepository(store, RecordKind.CHANNEL_ADAPTER_CONTRACT, ChannelAdapterContractRecord)
+        self.literal_emission_policies = TypedRepository(store, RecordKind.LITERAL_EMISSION_POLICY, LiteralEmissionPolicyRecord)
+        self.emission_gate_assessments = TypedRepository(store, RecordKind.EMISSION_GATE_ASSESSMENT, EmissionGateAssessmentRecord)
+        self.emission_authorizations = TypedRepository(store, RecordKind.EMISSION_AUTHORIZATION, EmissionAuthorizationRecord)
+        self.emission_journals = TypedRepository(store, RecordKind.EMISSION_JOURNAL, EmissionJournalRecord)
+        self.emissions = TypedRepository(store, RecordKind.EMISSION, EmissionRecord)
+        self.emission_anomalies = TypedRepository(store, RecordKind.EMISSION_ANOMALY, EmissionAnomalyRecord)
+        self.silence_outcomes = TypedRepository(store, RecordKind.SILENCE_OUTCOME, SilenceOutcomeRecord)
+        self.output_discourse_acts = TypedRepository(store, RecordKind.OUTPUT_DISCOURSE_ACT, OutputDiscourseActRecord)
+        self.output_commitments = TypedRepository(store, RecordKind.OUTPUT_COMMITMENT, OutputCommitmentRecord)
+        self.common_ground = TypedRepository(store, RecordKind.COMMON_GROUND, CommonGroundRecord)
+        self.output_reference_anchors = TypedRepository(store, RecordKind.OUTPUT_REFERENCE_ANCHOR, OutputReferenceAnchorRecord)
+        self.output_corrections = TypedRepository(store, RecordKind.OUTPUT_CORRECTION, OutputCorrectionRecord)
+        self.migration_sources = TypedRepository(store, RecordKind.MIGRATION_SOURCE, MigrationSourceRecord)
+        self.migration_rules = TypedRepository(store, RecordKind.MIGRATION_RULE, MigrationRuleRecord)
+        self.migration_target_maps = TypedRepository(store, RecordKind.MIGRATION_TARGET_MAP, MigrationTargetMapRecord)
+        self.migration_decisions = TypedRepository(store, RecordKind.MIGRATION_DECISION, MigrationDecisionRecord)
+        self.migration_batches = TypedRepository(store, RecordKind.MIGRATION_BATCH, MigrationBatchRecord)
+        self.migration_quarantines = TypedRepository(store, RecordKind.MIGRATION_QUARANTINE, MigrationQuarantineRecord)
+        self.migration_intentional_changes = TypedRepository(store, RecordKind.MIGRATION_INTENTIONAL_CHANGE, MigrationIntentionalChangeRecord)
+        self.semantic_equivalence = TypedRepository(store, RecordKind.SEMANTIC_EQUIVALENCE, SemanticEquivalenceRecord)
+        self.migration_rollbacks = TypedRepository(store, RecordKind.MIGRATION_ROLLBACK, MigrationRollbackRecord)
         self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)
         self.default_rules = DefaultRuleRepository(store)
         self.language = LanguageRepository(store)

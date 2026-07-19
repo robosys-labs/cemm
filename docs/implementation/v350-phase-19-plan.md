@@ -402,3 +402,55 @@ Use bounded batches, resumable checkpoints, deterministic IDs, and content finge
 ## 14. Exit gate
 
 Phase 19 passes only when every retained legacy semantic artifact is either explainably mapped with exact lineage and validated v3.5 authority, explicitly quarantined/rejected, or intentionally omitted; claimed equivalence is evidence-backed; rollback is safe; privacy is preserved; and no legacy migration adapter remains a competing runtime semantic authority.
+
+---
+
+## 25. Applied implementation amendments after the Phase 16/17 audit
+
+The concrete Phase-19 implementation adds several stricter contracts:
+
+1. `MigrationTargetMapRecord` explicitly pins every target revision/fingerprint and preserves field-level source lineage.
+2. `MigrationIntentionalChangeRecord` requires exact fixture pins plus review identity; an unexplained semantic difference cannot be relabeled "intentional" after the fact.
+3. Migration rules and transformer implementations are explicitly offline-only. `runtime_reachable=true` is rejected at the commit boundary.
+4. Target collisions are fingerprint-checked. A pre-existing different target is quarantined rather than overwritten.
+5. Permission changes are delegated to an explicit migration permission policy; unknown/broader scope fails closed.
+6. Rollback ownership distinguishes targets newly created by the batch from identical pre-existing targets that were merely reused. Only batch-owned exact revisions are eligible for tombstoning.
+7. Rollback is blocked when later non-migration records depend on a batch-owned target revision; rollback never silently damages native v3.5 writes.
+8. Semantic equivalence is dimensioned across selected meaning, identity, epistemics, state, capabilities, significance, goals, operations, Response UOL and output commitments. Surface-string similarity is not an equivalence criterion.
+9. Quarantined material is explicitly `non_authority=True` and cannot participate in runtime semantic resolution.
+10. Migration audit/rollback history is durable historical evidence and is never treated as an auto-invalidatable derived view.
+
+### 25.1 Additional exit checks
+
+Phase 19 is not complete until:
+
+- every source snapshot has one explicit disposition;
+- replaying the same source/rule set is deterministic;
+- a conflicting existing target is quarantined;
+- unknown permission mapping cannot broaden scope;
+- rollback removes only exact batch-owned revisions and refuses unsafe dependent deletion;
+- every claimed `EQUIVALENT` dimension has matching semantic fingerprints;
+- every intentional difference points to exact approved fixtures;
+- no migration transformer/import helper is reachable from the public post-cutover semantic request graph.
+
+### 25.2 Final hardening discovered during Phase-19 implementation review
+
+11. **Logical migration batches are revision-independent and idempotent.** `batch_ref` is derived from the exact source set, exact rule set and exact decision set—not from the current mutable store snapshot. Re-running the same logical batch after unrelated store revisions returns the existing committed batch/rollback record rather than creating a second migration history.
+12. **Merge topology is represented exactly.** `MigrationTargetMapRecord` pins a tuple of exact `source_pins`, not a single source. `SPLIT` structurally requires one source→multiple targets; `MERGED` requires multiple sources→one target. General many-to-many transforms remain explicitly `TRANSFORMED` rather than being mislabeled.
+13. **Merge authority is explicit in rule cardinality.** Migration rules declare minimum/maximum source-record cardinality, and a merge requires a reviewed transformer implementation exposing `transform_many` under the same exact transformer identity.
+14. **Generator-backed transformer registries are deterministic.** Transformer iterables are materialized exactly once before duplicate detection; generators cannot be accidentally consumed and falsely rejected.
+15. **Intentional-change waivers are fixture-scoped.** A semantic difference can be marked intentional only when the waiver's exact fixture pins are contained in the exact comparison fixture/trace set. A previously approved unrelated difference cannot mask a new regression.
+16. **Batch planning deduplicates shared merge writes.** Multiple per-source decisions may point to the same merged target map, but the atomic patch contains only one identical write for each target/map identity and rejects conflicting duplicate writes.
+
+The exit gate therefore requires tested one→one, one→many, many→one and deterministic many→many migration topology, plus idempotent replay after unrelated store changes.
+
+## Final implementation-audit amendments
+
+The implemented Phase-19 boundary additionally requires:
+
+- every MERGED target write to depend on every exact source pin represented by its migration target map;
+- normalized multi-source indexing through `migration_record_sources`, so one legacy source can find every split/merge audit record without JSON scans;
+- exact singular effective migration-rule revisions per rule identity;
+- logical-batch replay idempotence independent of unrelated target-store revisions;
+- target ownership limited to revisions actually created by the batch;
+- fixture-scoped intentional-change waivers only.

@@ -75,7 +75,7 @@ def operation_result_from_document(v: Mapping[str, Any]) -> OperationResultRecor
 
 def operation_reconciliation_from_document(v: Mapping[str, Any]) -> OperationReconciliationRecord:
     d=dict(v); return OperationReconciliationRecord(
-        reconciliation_ref=str(d['reconciliation_ref']), plan_pin=_pin(dict(d['plan_pin'])), result_pin=_pin(dict(d['result_pin'])),
+        reconciliation_ref=str(d['reconciliation_ref']), plan_pin=_pin(dict(d['plan_pin'])), result_pin=_pin(dict(d['result_pin'])), observed_journal_pin=_pin(dict(d['observed_journal_pin'])),
         predicted_effect_pins=tuple(_pin(dict(x)) for x in d.get('predicted_effect_pins',())), observed_pins=tuple(_pin(dict(x)) for x in d.get('observed_pins',())),
         generated_evidence_refs=tuple(map(str,d.get('generated_evidence_refs',()))), replay_required_refs=tuple(map(str,d.get('replay_required_refs',()))),
         contradiction_refs=tuple(map(str,d.get('contradiction_refs',()))), invalidated_goal_decision_refs=tuple(map(str,d.get('invalidated_goal_decision_refs',()))), frontier_refs=tuple(map(str,d.get('frontier_refs',()))),

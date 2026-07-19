@@ -392,3 +392,56 @@ Required indexes:
 ## 13. Exit gate
 
 Phase 18 passes only when emitted output is semantically referable and auditable across restart, common ground changes only from evidence-bearing discourse events after emission authorization, corrections preserve history and invalidate projections, and no transcript string or pre-emission artifact acts as competing discourse authority.
+
+---
+
+## 24. Applied implementation amendments after the Phase 16/17 audit
+
+The concrete Phase-18 implementation strengthens the original design in the following ways:
+
+1. `EmissionGateAssessmentRecord` makes every hard emission gate durable and snapshot-pinned. An `ALLOW` authorization must depend on the exact passing assessment set; strings such as `passed_gates` are trace summaries only.
+2. `ChannelAdapterContractRecord` is revisioned authority for channel mechanics, payload budgets, transformations, idempotency and acknowledgement semantics. Runtime adapter identity must match it exactly.
+3. `LiteralEmissionPolicyRecord` is an explicit reviewed exception keyed by exact response-goal schema pins, language tag, surface SHA-256 and Response-UOL graph fingerprint. It cannot authorize a generic template family.
+4. `SilenceOutcomeRecord` represents selected semantic silence without manufacturing a fake emission/discourse event.
+5. The channel executor distinguishes `content_left_system`, channel acceptance, delivery confirmation and unknown delivery. Transport exceptions never imply success or failure.
+6. An authorized surface whose textual bytes are changed by the channel fails closed and must return through realization/round-trip; the channel cannot silently become a paraphraser.
+7. `OutputDiscourseActRecord` is created only from an actual `EmissionRecord`. Common-ground projections therefore cannot exist for content that never left the system.
+8. `CommonGroundRecord` begins at `EMITTED`, `RECEIVED_EVIDENCE` or `UNKNOWN_DELIVERY`; it never jumps to `SHARED`. `ACKNOWLEDGED`/`SHARED` require later interaction evidence.
+9. Output-reference ambiguity creates an explicit learning/reference frontier instead of a transcript-string guess.
+10. Corrections preserve immutable emission/discourse history and supersede commitment/common-ground projections rather than rewriting the past.
+
+### 24.1 Additional exit checks
+
+Phase 18 is not complete until the following also pass:
+
+- a semantic round-trip `PASS` without Phase-18 gate assessments cannot emit;
+- a stale emission authorization cannot be journaled after any intervening store revision;
+- an `UNKNOWN_DELIVERY` record cannot become `DELIVERED`, `ACKNOWLEDGED`, or `SHARED` without new evidence;
+- literal output with a mismatched surface hash or Response-UOL fingerprint is denied;
+- no-output/silence paths create no `EmissionRecord`, `OutputDiscourseActRecord`, or common-ground mutation;
+- correction retains old emission bytes/evidence and creates explicit superseding projections;
+- output reference resolution is invariant to transcript formatting changes.
+
+### 24.2 Final hardening discovered during Phase-18 implementation review
+
+11. **Observed unauthorized output is never erased.** If content leaves the process boundary but the observed surface differs from the authorized surface, or the channel reports a contradictory rejected-but-emitted outcome, CEMM persists an immutable `EmissionAnomalyRecord`. It is explicitly non-discourse authority: it cannot create normal commitments/common ground, but it preserves the real external side effect for audit, incident response and correction.
+12. **Operation freshness comes from explicit Response-UOL source pins, not metadata hints.** Every operation result reported by the response must be an exact `RecordKind.OPERATION_RESULT` source pin. Every non-UNKNOWN result must have exactly one supplied reconciliation bound to that result.
+13. **Acknowledgement is target-closed.** `acknowledgement_target_refs` must be a subset of the semantic targets of the exact selected target-bearing goals. A caller cannot attach a generic or unrelated acknowledgement after realization.
+14. **Output speaker identity is dependency-pinned.** The discourse record keeps the semantic speaker ref, while the commit dependency graph pins the exact durable speaker referent revision used at emission time.
+15. **Literal triggers are lineage-bound.** Literal policies must pin exact triggers that are present in the Response-UOL source/selected-goal lineage; an exact surface hash alone is insufficient.
+16. **Round-trip proof is required.** A nominal `PASS` without durable proof refs is not sufficient for Phase-18 emission authorization.
+
+These hardening rules extend the Phase-18 acceptance matrix with two explicit negative cases: a channel-side mutated emission must remain auditable without becoming authorized discourse, and arbitrary operation/acknowledgement/speaker lineage injection must be rejected.
+
+## Final implementation-audit amendments
+
+The implemented Phase-18 gate additionally requires:
+
+- exact durable speaker and addressee referent dependencies on every normal output discourse act;
+- structural channel-contract acknowledgement semantics (`delivery_ack_proves_recipient_receipt`) before transport delivery can initialize recipient-received common ground;
+- candidate refs, not evidence refs, for ambiguous output-reference frontiers;
+- correction replacement targets grounded in correcting-discourse roots and opposition targets grounded in exact prior commitments;
+- internally consistent channel observations before any journal/output mutation;
+- no synthetic exception/debug strings masquerading as durable evidence refs;
+- at least one explicit audience for normal ALLOW/emission paths; intentional no-output uses `SilenceOutcomeRecord`.
+- channel crash recovery is an explicitly reviewed query capability; it cannot silently become resubmission, and client-key idempotency is durable before submit.

@@ -1,0 +1,41 @@
+{
+  "contract_ref": "contract:cemm:v350:output-discourse",
+  "phase": 18,
+  "laws": [
+    "roundtrip_pass_is_necessary_not_sufficient_for_emission",
+    "emission_requires_fresh_exact_snapshot_hard_gate_assessments",
+    "journal_prepared_before_external_channel_side_effect",
+    "no_emission_record_without_observed_content_leaving_system",
+    "no_emission_means_no_output_discourse_or_common_ground",
+    "common_ground_is_not_world_truth",
+    "shared_common_ground_requires_interaction_evidence",
+    "literal_surface_requires_exact_reviewed_literal_policy",
+    "silence_is_auditable_without_fake_emission",
+    "output_reference_resolution_is_semantic_not_transcript_string",
+    "corrections_preserve_historical_emissions_and_supersede_projections",
+    "permission_and_audience_scope_never_widen",
+    "channel_side_mutation_or_contradictory_emit_is_preserved_as_non_discourse_anomaly",
+    "output_discourse_operation_and_acknowledgement_lineage_must_match_exact_response_goals",
+    "delivery_ack_only_advances_recipient_common_ground_when_channel_contract_structurally_proves_receipt",
+    "output_discourse_speaker_and_addressees_have_exact_durable_referent_dependencies",
+    "correction_replacement_targets_are_grounded_in_correcting_discourse_and_opposition_targets_in_prior_commitments",
+    "output_reference_frontier_candidate_refs_are_not_misrepresented_as_evidence_refs",
+    "recovery_query_requires_explicit_reviewed_channel_capability_and_never_implies_resubmit",
+    "client_key_idempotency_is_durable_before_submit_when_contract_requires_it"
+  ],
+  "required_record_families": [
+    "channel_adapter_contract",
+    "literal_emission_policy",
+    "emission_gate_assessment",
+    "emission_authorization",
+    "emission_journal",
+    "emission",
+    "emission_anomaly",
+    "silence_outcome",
+    "output_discourse_act",
+    "output_commitment",
+    "common_ground",
+    "output_reference_anchor",
+    "output_correction"
+  ]
+}

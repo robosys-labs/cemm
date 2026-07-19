@@ -1,0 +1,19 @@
+{"assertion":"legacy source snapshot is immutable and fingerprinted","case_ref":"competence:phase19:immutable-source"}
+{"assertion":"every migrated source has explicit mapped/transformed/split/merged/quarantine/reject/not-migrated decision","case_ref":"competence:phase19:explicit-disposition"}
+{"assertion":"different existing target fingerprint causes quarantine, never overwrite","case_ref":"competence:phase19:collision"}
+{"assertion":"migration permission widening fails closed","case_ref":"competence:phase19:permission"}
+{"assertion":"quarantined legacy material remains non-authoritative","case_ref":"competence:phase19:quarantine"}
+{"assertion":"migration transformer cannot remain runtime semantic authority","case_ref":"competence:phase19:offline-transformer"}
+{"assertion":"source-to-target map pins exact target revisions and fingerprints","case_ref":"competence:phase19:exact-map"}
+{"assertion":"replaying identical migration does not create divergent targets","case_ref":"competence:phase19:idempotent"}
+{"assertion":"rollback tombstones only exact target revisions first created by its batch","case_ref":"competence:phase19:rollback-owned-only"}
+{"assertion":"rollback blocks when later non-migration dependents exist","case_ref":"competence:phase19:rollback-dependent-block"}
+{"assertion":"legacy corrections/retractions migrate as history rather than overwritten final blob","case_ref":"competence:phase19:correction-preservation"}
+{"assertion":"migrated learned structures remain candidate unless normal promotion authority exists","case_ref":"competence:phase19:learned-authority"}
+{"assertion":"equivalence compares semantic dimensions, not output string similarity","case_ref":"competence:phase19:semantic-equivalence"}
+{"assertion":"intentional behavior difference requires exact reviewed fixture lineage","case_ref":"competence:phase19:intentional-change"}
+{"assertion":"untestable or differing dimensions cannot be labeled fully equivalent","case_ref":"competence:phase19:partial-equivalence"}
+{"assertion":"merged migration pins every exact source and one exact merged target; split pins one exact source and multiple targets","case_ref":"competence:phase19:merge-lineage"}
+{"assertion":"rerunning the same exact logical migration batch returns the existing committed batch despite later store revisions","case_ref":"competence:phase19:logical-batch-idempotence"}
+{"assertion":"intentional change waivers cannot mask differences outside their exact approved fixture pins","case_ref":"competence:phase19:intentional-change-fixture-scope"}
+{"assertion":"a merged target record depends on every exact source pin represented by its migration target map","case_ref":"competence:phase19:merge-target-all-sources"}

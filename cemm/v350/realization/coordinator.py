@@ -36,8 +36,10 @@ class RealizationCommitCoordinator:
     deps += tuple(RecordDependency(p.record_kind,p.record_ref,p.revision,p.record_fingerprint,'reference_identity_facet') for p in reference.allowed_identity_facet_pins)
     ops.append(self._upsert(RecordKind.REFERENCE_PLAN,reference,deps,'persist privacy-scoped reference plan'))
     reference_fps[reference.reference_ref]=record_fingerprints(RecordKind.REFERENCE_PLAN,reference)[1]
-   if set(reference_fps) != {p.record_ref for p in candidate.reference_pins}:
-    raise ValueError('surface candidate reference pins do not match committed reference plans')
+   committed_reference_map={(ref,1,fp) for ref,fp in reference_fps.items()}
+   candidate_reference_map={(p.record_ref,p.revision,p.record_fingerprint) for p in candidate.reference_pins}
+   if committed_reference_map != candidate_reference_map:
+    raise ValueError('surface candidate reference pins do not match exact committed reference plans')
    deps=[RecordDependency(RecordKind.REALIZATION_REQUEST,request.request_ref,1,request_pin.record_fingerprint,'realization_request')]
    deps += [RecordDependency(RecordKind.DEEP_CLAUSE_PLAN,p.record_ref,p.revision,p.record_fingerprint,'deep_clause_plan') for p in candidate.clause_pins]
    for kind,pins,label in ((None,candidate.frame_pins,'argument_frame'),(None,candidate.lexical_pins,'lexicalization'),(None,candidate.morphology_pins,'morphology'),(None,candidate.reference_pins,'reference'),(None,candidate.linearization_pins,'linearization')):
@@ -48,9 +50,9 @@ class RealizationCommitCoordinator:
   if not result.committed:raise RuntimeError('realization candidate commit failed: '+'; '.join(result.errors))
   return result
  def commit_roundtrip(self,record:SemanticRoundTripRecord):
-  self._exact(record.request_pin);self._exact(record.surface_candidate_pin)
+  self._exact(record.request_pin);self._exact(record.surface_candidate_pin);self._exact(record.analyzer_contract_pin)
   with self.store.snapshot() as snapshot:
-   deps=(RecordDependency(record.request_pin.record_kind,record.request_pin.record_ref,record.request_pin.revision,record.request_pin.record_fingerprint,'realization_request'),RecordDependency(record.surface_candidate_pin.record_kind,record.surface_candidate_pin.record_ref,record.surface_candidate_pin.revision,record.surface_candidate_pin.record_fingerprint,'surface_candidate'))
+   deps=(RecordDependency(record.request_pin.record_kind,record.request_pin.record_ref,record.request_pin.revision,record.request_pin.record_fingerprint,'realization_request'),RecordDependency(record.surface_candidate_pin.record_kind,record.surface_candidate_pin.record_ref,record.surface_candidate_pin.revision,record.surface_candidate_pin.record_fingerprint,'surface_candidate'),RecordDependency(record.analyzer_contract_pin.record_kind,record.analyzer_contract_pin.record_ref,record.analyzer_contract_pin.revision,record.analyzer_contract_pin.record_fingerprint,'semantic_analyzer_contract'))
    op=self._upsert(RecordKind.SEMANTIC_ROUNDTRIP,record,deps,'persist semantic round-trip verification; PASS required before emission')
    patch=GraphPatch(patch_ref='graph-patch:semantic-roundtrip:'+semantic_fingerprint('semantic-roundtrip-patch',(record.roundtrip_ref,snapshot.fingerprint),24),context_ref='realization:verification',scope_ref='phase17:realization',source_ref='source:phase17:roundtrip-verifier',permission_ref='internal',operations=(op,),expected_store_revision=snapshot.store_revision,metadata={'phase':17,'roundtrip_passed':record.decision==RoundTripDecision.PASS})
   result=self.store.apply_patch(patch)

@@ -12,7 +12,7 @@ from ..storage.model import RecordKind
 from ..uol.model import CoordinationGroup,FillerRef,SemanticApplication
 from .authority import LanguageUseAuthority
 from ..language.model import ConstructionKind,ConstructionRecord
-from .model import (ArgumentFrameRecord,DeepClausePlanRecord,LinearizationRuleRecord,MorphologyOperation,MorphologyRuleRecord,RealizationRequestRecord,ReferencePlanRecord,RoundTripDecision,SemanticRoundTripRecord,SurfaceCandidateRecord)
+from .model import (ArgumentFrameRecord,DeepClausePlanRecord,LinearizationRuleRecord,MorphologyOperation,MorphologyRuleRecord,RealizationRequestRecord,ReferencePlanRecord,RoundTripDecision,SemanticAnalyzerContractRecord,SemanticRoundTripRecord,SurfaceCandidateRecord)
 
 def _pin(s): return PinnedRecord(s.record_kind,s.record_ref,s.revision,s.record_fingerprint)
 
@@ -334,7 +334,18 @@ class SemanticAnalyzer(Protocol):
  def recover_graph_fingerprint(self,surface:str,language_tag:str)->tuple[str,tuple[str,...],tuple[str,...],tuple[str,...],tuple[str,...]]:...
 
 class RoundTripVerifier:
- def verify(self,request_pin:PinnedRecord,candidate_pin:PinnedRecord,expected_graph_fingerprint:str,surface:str,language_tag:str,analyzer:SemanticAnalyzer):
+ def __init__(self,store):self.store=store
+ def verify(self,request_pin:PinnedRecord,candidate_pin:PinnedRecord,expected_graph_fingerprint:str,surface:str,language_tag:str,analyzer:SemanticAnalyzer,analyzer_contract_pin:PinnedRecord):
+  contract_stored=self.store.get_record(analyzer_contract_pin.record_kind,analyzer_contract_pin.record_ref,analyzer_contract_pin.revision)
+  if contract_stored is None or contract_stored.record_fingerprint!=analyzer_contract_pin.record_fingerprint:raise ValueError('stale/missing semantic analyzer contract')
+  contract=contract_stored.payload
+  if not isinstance(contract,SemanticAnalyzerContractRecord) or not contract.active:raise ValueError('semantic analyzer contract is not active')
+  same=[x.payload for x in self.store.records(RecordKind.SEMANTIC_ANALYZER_CONTRACT,all_revisions=True) if x.record_ref==contract.contract_ref and getattr(x.payload,'active',False)]
+  superseded={x.supersedes_revision for x in same if x.supersedes_revision is not None}
+  effective=[x for x in same if x.revision not in superseded]
+  if len(effective)!=1 or effective[0].revision!=contract.revision:raise ValueError('semantic analyzer contract is not singular effective authority')
+  if contract.analyzer_ref!=analyzer.analyzer_ref or contract.analyzer_revision!=analyzer.analyzer_revision:raise ValueError('runtime analyzer identity differs from reviewed contract')
+  if contract.supported_language_tags and language_tag not in contract.supported_language_tags:raise ValueError('semantic analyzer contract does not cover requested language')
   recovered,additions,losses,drift,proofs=analyzer.recover_graph_fingerprint(surface,language_tag)
   decision=RoundTripDecision.PASS if recovered==expected_graph_fingerprint and not additions and not losses and not drift else RoundTripDecision.FAIL
-  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected_graph_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected_graph_fingerprint,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=tuple(drift),proof_refs=tuple(proofs))
+  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected_graph_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected_graph_fingerprint,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=tuple(drift),proof_refs=tuple(proofs))

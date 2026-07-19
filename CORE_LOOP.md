@@ -26,7 +26,7 @@
 14 ASSESS_IMPACT_AND_IMPORTANCE
 15 DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
 16 PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE
-17 GENERATE_RESPONSE_GOALS
+17 RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS
 18 BUILD_RESPONSE_UOL
 19 REALIZE_TARGET_LANGUAGE
 20 VERIFY_AND_AUTHORIZE_EMISSION
@@ -496,7 +496,9 @@ Verify:
 - impact qualification;
 - no unsupported additions.
 
-Explicit literal response policies are verified against the policy record and semantic trigger.
+Explicit literal response policies are verified against the exact policy record, semantic trigger, surface hash, and Response-UOL fingerprint.
+
+Semantic round-trip PASS is necessary but does **not** authorize emission. A fresh independent emission gate must also verify exact current response/goal/realization lineage, audience/permission scope, channel contract, safety/policy evidence, operation-result freshness, and qualification preservation. The emission journal is durable before the external channel side effect.
 
 ---
 
@@ -515,6 +517,8 @@ surface ref
 emission proof
 common-ground status
 ```
+
+No observed emission means no output discourse/common-ground commit. Channel acceptance or delivery does not by itself mean the addressee understood, accepted, or shares the content, and common ground never becomes world truth merely because CEMM said something.
 
 This enables “why?”, “for what?”, “understood what?”, and anaphora to system output.
 

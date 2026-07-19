@@ -181,50 +181,66 @@ class OperationJournalCoordinator:
     def persist_reconciliation(self,record: OperationReconciliationRecord):
         plan_stored=self._exact(record.plan_pin)
         result_stored=self._exact(record.result_pin)
+        observed_journal_stored=self._exact(record.observed_journal_pin)
         plan=plan_stored.payload
         result=result_stored.payload
-        journal_latest=self.store.get_record(RecordKind.OPERATION_JOURNAL,result.journal_pin.record_ref)
-        if journal_latest is None or not isinstance(journal_latest.payload,OperationJournalRecord):
-            raise ValueError("reconciliation requires the current operation journal")
-        journal=journal_latest.payload
+        journal=observed_journal_stored.payload
+        if not isinstance(journal,OperationJournalRecord):
+            raise ValueError("reconciliation observed_journal_pin must resolve an operation journal")
+        if journal.journal_ref != result.journal_pin.record_ref:
+            raise ValueError("reconciliation journal/result operation identity mismatch")
         if journal.status not in {OperationJournalStatus.OBSERVED_SUCCESS,OperationJournalStatus.OBSERVED_FAILURE,OperationJournalStatus.OBSERVED_PARTIAL}:
-            raise ValueError("reconciliation requires an observed terminal operation outcome")
-        prior_journal=_pin(RecordKind.OPERATION_JOURNAL,journal)
-        reconciled_journal=replace(
-            journal,revision=journal.revision+1,supersedes_revision=journal.revision,
-            prior_journal_pin=prior_journal,status=OperationJournalStatus.RECONCILED,
-        )
+            raise ValueError("reconciliation requires exact observed terminal journal")
+        # The observed journal revision must have been created by the exact result.
+        result_edge=False
+        for stored in self.store.records(RecordKind.DEPENDENCY):
+            edge=stored.payload
+            if (getattr(edge,'active',False) and getattr(edge,'dependent_kind',None)==RecordKind.OPERATION_JOURNAL
+                and getattr(edge,'dependent_ref',None)==journal.journal_ref and getattr(edge,'dependent_revision',None)==journal.revision
+                and getattr(edge,'prerequisite_kind',None)==RecordKind.OPERATION_RESULT and getattr(edge,'prerequisite_ref',None)==record.result_pin.record_ref
+                and getattr(edge,'prerequisite_revision',None)==record.result_pin.revision and getattr(edge,'prerequisite_fingerprint',None)==record.result_pin.record_fingerprint):
+                result_edge=True;break
+        if not result_edge:
+            raise ValueError("observed journal is not lineage-bound to the exact operation result")
+        latest=self.store.get_record(RecordKind.OPERATION_JOURNAL,journal.journal_ref)
+        if latest is None or latest.revision!=journal.revision or latest.record_fingerprint!=record.observed_journal_pin.record_fingerprint:
+            raise ValueError("reconciliation requires current exact observed journal; retry/recovery advanced it")
+        prior_journal=record.observed_journal_pin
+        reconciled_journal=replace(journal,revision=journal.revision+1,supersedes_revision=journal.revision,prior_journal_pin=prior_journal,status=OperationJournalStatus.RECONCILED)
         deps=[RecordDependency(record.plan_pin.record_kind,record.plan_pin.record_ref,record.plan_pin.revision,record.plan_pin.record_fingerprint,"reconciliation_plan"),
-              RecordDependency(record.result_pin.record_kind,record.result_pin.record_ref,record.result_pin.revision,record.result_pin.record_fingerprint,"reconciliation_result")]
+              RecordDependency(record.result_pin.record_kind,record.result_pin.record_ref,record.result_pin.revision,record.result_pin.record_fingerprint,"reconciliation_result"),
+              RecordDependency(record.observed_journal_pin.record_kind,record.observed_journal_pin.record_ref,record.observed_journal_pin.revision,record.observed_journal_pin.record_fingerprint,"reconciliation_observed_journal")]
         deps += [RecordDependency(p.record_kind,p.record_ref,p.revision,p.record_fingerprint,"reconciliation_observation") for p in (*record.predicted_effect_pins,*record.observed_pins)]
         reconciliation_fp=record_fingerprints(RecordKind.OPERATION_RECONCILIATION,record)[1]
         with self.store.snapshot() as snapshot:
-            reconcile_op=self._upsert(RecordKind.OPERATION_RECONCILIATION,record,tuple(deps),"persist operation reconciliation; state mutation remains ordinary epistemic/transition work")
-            journal_op=self._upsert(
-                RecordKind.OPERATION_JOURNAL,reconciled_journal,
+            reconcile_op=self._upsert(RecordKind.OPERATION_RECONCILIATION,record,tuple(deps),"persist exact result/journal-bound operation reconciliation; state mutation remains ordinary epistemic/transition work")
+            journal_op=self._upsert(RecordKind.OPERATION_JOURNAL,reconciled_journal,
                 (RecordDependency(RecordKind.OPERATION_JOURNAL,journal.journal_ref,journal.revision,prior_journal.record_fingerprint,"journal_prior"),
                  RecordDependency(RecordKind.OPERATION_RECONCILIATION,record.reconciliation_ref,1,reconciliation_fp,"operation_reconciliation")),
-                "atomically mark journal reconciled after reconciliation record",
-                expected_revision=journal.revision,expected_fingerprint=prior_journal.record_fingerprint,
-            )
+                "atomically mark journal reconciled after exact reconciliation",expected_revision=journal.revision,expected_fingerprint=prior_journal.record_fingerprint)
             decision_pin=plan.goal_decision_pin
-            invalidate_decision=PatchOperation(
-                operation_ref="patch-operation:operation-invalidates-goal:"+semantic_fingerprint("operation-invalidates-goal",(record.reconciliation_ref,decision_pin.key),20),
-                operation_kind=PatchOperationKind.TOMBSTONE,record_kind=decision_pin.record_kind,target_ref=decision_pin.record_ref,
-                record_revision=decision_pin.revision,expected_record_revision=decision_pin.revision,expected_record_fingerprint=decision_pin.record_fingerprint,
-                dependencies=(RecordDependency(RecordKind.OPERATION_RECONCILIATION,record.reconciliation_ref,1,reconciliation_fp,"operation_reconciliation"),),
-                reason="operation outcome consumed pre-operation goal decision; re-enter Phase15 before response planning",
-            )
-            patch=GraphPatch(
-                patch_ref="graph-patch:operation-reconcile:"+semantic_fingerprint("operation-reconcile",(record.reconciliation_ref,snapshot.fingerprint),24),
+            operations=[reconcile_op,journal_op]
+            decision_current=self.store.get_record(decision_pin.record_kind,decision_pin.record_ref,decision_pin.revision)
+            if decision_current is not None:
+                if decision_current.record_fingerprint!=decision_pin.record_fingerprint:
+                    raise ValueError("pre-operation goal decision identity changed unexpectedly")
+                operations.append(PatchOperation(
+                    operation_ref="patch-operation:operation-invalidates-goal:"+semantic_fingerprint("operation-invalidates-goal",(record.reconciliation_ref,decision_pin.key),20),
+                    operation_kind=PatchOperationKind.TOMBSTONE,record_kind=decision_pin.record_kind,target_ref=decision_pin.record_ref,
+                    record_revision=decision_pin.revision,expected_record_revision=decision_pin.revision,expected_record_fingerprint=decision_pin.record_fingerprint,
+                    dependencies=(RecordDependency(RecordKind.OPERATION_RECONCILIATION,record.reconciliation_ref,1,reconciliation_fp,"operation_reconciliation"),),
+                    reason="operation outcome consumed pre-operation goal decision; re-enter Phase15 before response planning"))
+            # If the exact decision is already tombstoned/invalidated, refresh has already been forced;
+            # reconciliation history and journal completion must not be stranded by a redundant tombstone.
+            patch=GraphPatch(patch_ref="graph-patch:operation-reconcile:"+semantic_fingerprint("operation-reconcile",(record.reconciliation_ref,snapshot.fingerprint),24),
                 context_ref=record.context_ref,scope_ref="phase16:reconciliation",source_ref="source:phase16:reconciliation",permission_ref=record.permission_ref,
-                operations=(reconcile_op,journal_op,invalidate_decision),expected_store_revision=snapshot.store_revision,
-                validation_requirements=("phase16_reconcile_before_goal_refresh",),
-                metadata={"phase":16,"direct_state_mutation":False,"requires_phase15_refresh":True},
-            )
+                operations=tuple(operations),expected_store_revision=snapshot.store_revision,
+                validation_requirements=("phase16_reconcile_before_goal_refresh","phase16_result_observed_journal_exact_lineage"),
+                metadata={"phase":16,"direct_state_mutation":False,"requires_phase15_refresh":True})
         commit=self.store.apply_patch(patch)
         if not commit.committed: raise RuntimeError("operation reconciliation commit failed: "+"; ".join(commit.errors))
         return commit,reconciled_journal
+
 
 
     def _adapter(self,plan): return self._exact(plan.adapter_contract_pin).payload

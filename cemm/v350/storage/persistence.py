@@ -216,9 +216,20 @@ def _write_normalized(
         RecordKind.OPERATION_JOURNAL, RecordKind.OPERATION_RESULT, RecordKind.OPERATION_RECONCILIATION,
         RecordKind.RESPONSE_TRANSFORM_RULE, RecordKind.RESPONSE_TRANSFORMATION_PROOF, RecordKind.RESPONSE_OMISSION, RecordKind.RESPONSE_UOL,
         RecordKind.REALIZATION_REQUEST, RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
-        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP,
+        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP, RecordKind.SEMANTIC_ANALYZER_CONTRACT,
     }:
         _write_phase16_17_record(connection, record_kind, record, revision)
+    elif record_kind in {
+        RecordKind.CHANNEL_ADAPTER_CONTRACT, RecordKind.LITERAL_EMISSION_POLICY, RecordKind.EMISSION_GATE_ASSESSMENT, RecordKind.EMISSION_AUTHORIZATION,
+        RecordKind.EMISSION_JOURNAL, RecordKind.EMISSION, RecordKind.EMISSION_ANOMALY, RecordKind.SILENCE_OUTCOME, RecordKind.OUTPUT_DISCOURSE_ACT, RecordKind.OUTPUT_COMMITMENT,
+        RecordKind.COMMON_GROUND, RecordKind.OUTPUT_REFERENCE_ANCHOR, RecordKind.OUTPUT_CORRECTION,
+    }:
+        _write_phase18_record(connection, record_kind, record, revision)
+    elif record_kind in {
+        RecordKind.MIGRATION_SOURCE, RecordKind.MIGRATION_RULE, RecordKind.MIGRATION_TARGET_MAP, RecordKind.MIGRATION_DECISION, RecordKind.MIGRATION_BATCH,
+        RecordKind.MIGRATION_QUARANTINE, RecordKind.MIGRATION_INTENTIONAL_CHANGE, RecordKind.SEMANTIC_EQUIVALENCE, RecordKind.MIGRATION_ROLLBACK,
+    }:
+        _write_phase19_record(connection, record_kind, record, revision)
 
 
 def _write_phase14_15_record(
@@ -267,7 +278,7 @@ def _write_phase16_17_record(connection: sqlite3.Connection, record_kind: Record
     payload = encode_record(record_kind, record)
     phase17 = record_kind in {
         RecordKind.REALIZATION_REQUEST, RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
-        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP,
+        RecordKind.DEEP_CLAUSE_PLAN, RecordKind.REFERENCE_PLAN, RecordKind.SURFACE_CANDIDATE, RecordKind.SEMANTIC_ROUNDTRIP, RecordKind.SEMANTIC_ANALYZER_CONTRACT,
     }
     if phase17:
         connection.execute("""INSERT OR REPLACE INTO phase17_records(record_kind,record_ref,revision,pack_ref,language_tag,status,permission_ref,payload_json) VALUES (?,?,?,?,?,?,?,?)""",
@@ -285,6 +296,37 @@ def _write_phase16_17_record(connection: sqlite3.Connection, record_kind: Record
             (record_kind.value, record_ref(record_kind,record), revision, parent_ref, record_lifecycle(record_kind,record),
              record_context(record_kind,record), record_permission(record_kind,record), canonical_json(payload)))
 
+
+def _write_phase18_record(connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int) -> None:
+    payload=encode_record(record_kind,record)
+    parent_ref=None
+    for name in ("authorization_ref","emission_ref","discourse_ref","response_ref","journal_ref"):
+        value=getattr(record,name,None)
+        if value: parent_ref=value; break
+    for name in ("authorization_pin","emission_pin","discourse_pin","response_uol_pin","goal_decision_pin"):
+        p=getattr(record,name,None)
+        if p is not None: parent_ref=p.record_ref; break
+    connection.execute("""INSERT OR REPLACE INTO phase18_records(record_kind,record_ref,revision,parent_ref,status,context_ref,permission_ref,payload_json) VALUES (?,?,?,?,?,?,?,?)""",
+        (record_kind.value,record_ref(record_kind,record),revision,parent_ref,record_lifecycle(record_kind,record),record_context(record_kind,record),record_permission(record_kind,record),canonical_json(payload)))
+
+def _write_phase19_record(connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int) -> None:
+    payload=encode_record(record_kind,record)
+    source_refs=[]
+    source_ref=getattr(record,"source_ref",None)
+    if source_ref: source_refs.append(str(source_ref))
+    source_pin=getattr(record,"source_pin",None)
+    if source_pin is not None: source_refs.append(str(source_pin.record_ref))
+    for p in getattr(record,"source_pins",()): source_refs.append(str(p.record_ref))
+    source_refs=tuple(sorted(set(source_refs)))
+    primary_source_ref=source_refs[0] if len(source_refs)==1 else None
+    batch_ref=getattr(record,"batch_ref",None)
+    disposition=getattr(record,"disposition",None)
+    rr=record_ref(record_kind,record)
+    connection.execute("""INSERT OR REPLACE INTO migration_records(record_kind,record_ref,revision,source_ref,source_refs_json,batch_ref,disposition,status,permission_ref,payload_json) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+        (record_kind.value,rr,revision,primary_source_ref,canonical_json(source_refs),batch_ref,None if disposition is None else getattr(disposition,"value",str(disposition)),record_lifecycle(record_kind,record),record_permission(record_kind,record),canonical_json(payload)))
+    connection.execute("DELETE FROM migration_record_sources WHERE record_kind=? AND record_ref=? AND revision=?",(record_kind.value,rr,revision))
+    connection.executemany("INSERT INTO migration_record_sources(record_kind,record_ref,revision,source_ref) VALUES (?,?,?,?)",
+        tuple((record_kind.value,rr,revision,ref) for ref in source_refs))
 
 def _write_learning_record(
     connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int

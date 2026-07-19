@@ -1,0 +1,23 @@
+{"assertion":"roundtrip PASS alone cannot create emission","case_ref":"competence:phase18:roundtrip-not-emission"}
+{"assertion":"store change after authorization requires fresh emission authorization","case_ref":"competence:phase18:stale-authorization"}
+{"assertion":"PREPARED journal is durable before channel invocation","case_ref":"competence:phase18:journal-before-side-effect"}
+{"assertion":"unknown delivery is not promoted to delivered/shared","case_ref":"competence:phase18:unknown-delivery"}
+{"assertion":"no observed emitted content creates no output discourse/common ground","case_ref":"competence:phase18:no-output-no-ground"}
+{"assertion":"literal surface requires exact reviewed surface hash and graph fingerprint policy","case_ref":"competence:phase18:literal-exact"}
+{"assertion":"emission audience cannot exceed Response UOL/realization audience","case_ref":"competence:phase18:audience-scope"}
+{"assertion":"semantic surface mutation after authorization fails closed","case_ref":"competence:phase18:channel-transform"}
+{"assertion":"common-ground records never admit propositions as world truth","case_ref":"competence:phase18:common-ground-not-truth"}
+{"assertion":"SHARED common ground requires interaction evidence","case_ref":"competence:phase18:shared-evidence"}
+{"assertion":"follow-up output references resolve via semantic anchors, not transcript substrings","case_ref":"competence:phase18:semantic-reference"}
+{"assertion":"equal semantic reference candidates create a frontier rather than arbitrary choice","case_ref":"competence:phase18:ambiguous-reference"}
+{"assertion":"correction preserves historical emission and supersedes commitment/common-ground projections","case_ref":"competence:phase18:correction-history"}
+{"assertion":"selected silence is auditable without fake emission record","case_ref":"competence:phase18:silence"}
+{"assertion":"reported terminal operation outcomes require exact reconciliation before emission","case_ref":"competence:phase18:operation-freshness"}
+{"assertion":"content that left the system with unauthorized/mutated surface is preserved as a non-discourse emission anomaly","case_ref":"competence:phase18:mutated-content-audit"}
+{"assertion":"acknowledgement targets must be authorized by exact selected target-bearing goals","case_ref":"competence:phase18:ack-target-exact"}
+{"assertion":"channel delivery advances recipient-received common ground only when the exact channel contract structurally proves recipient receipt","case_ref":"competence:phase18:delivery-semantics"}
+{"assertion":"output discourse pins exact durable speaker and every addressee referent dependency","case_ref":"competence:phase18:addressee-exact"}
+{"assertion":"replacement targets belong to correcting discourse roots and opposition targets belong to prior committed targets","case_ref":"competence:phase18:correction-target-grounding"}
+{"assertion":"ambiguous output reference candidates are candidate refs, never fabricated evidence refs","case_ref":"competence:phase18:reference-frontier-lineage"}
+{"assertion":"submitted/unknown emission recovery is queried only when the exact channel contract authorizes recovery-query capability; it never silently resubmits","case_ref":"competence:phase18:recovery-query-contract"}
+{"assertion":"client-key idempotency mode requires a durable idempotency key in the PREPARED journal before external submit","case_ref":"competence:phase18:client-idempotency-before-submit"}

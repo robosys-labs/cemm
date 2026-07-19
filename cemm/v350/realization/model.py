@@ -83,12 +83,23 @@ class SurfaceCandidateRecord:
   if not (0.0<=self.generation_score<=1.0): raise ValueError("generation score must be in [0,1]")
 
 @dataclass(frozen=True,slots=True)
+class SemanticAnalyzerContractRecord:
+ contract_ref:str; analyzer_ref:str; analyzer_revision:str; supported_language_tags:tuple[str,...]; competence_case_refs:tuple[str,...]; resource_fingerprint:str; permission_ref:str="internal"; active:bool=False; revision:int=1; supersedes_revision:int|None=None; metadata:Mapping[str,Any]=field(default_factory=dict)
+ def __post_init__(self):
+  for v,l in ((self.contract_ref,"analyzer contract_ref"),(self.analyzer_ref,"analyzer_ref"),(self.analyzer_revision,"analyzer_revision"),(self.resource_fingerprint,"analyzer resource fingerprint"),(self.permission_ref,"permission_ref")):_ref(v,l)
+  if self.revision<1:raise ValueError("analyzer contract revision must be positive")
+  if self.supersedes_revision is not None and not 1<=self.supersedes_revision<self.revision:raise ValueError("invalid analyzer contract supersession")
+  if self.active and not self.competence_case_refs:raise ValueError("active semantic analyzer contract requires competence cases")
+  _unique(self.supported_language_tags,"analyzer languages");_unique(self.competence_case_refs,"analyzer competence cases")
+
+@dataclass(frozen=True,slots=True)
 class SemanticRoundTripRecord:
- roundtrip_ref:str; request_pin:PinnedRecord; surface_candidate_pin:PinnedRecord; analyzer_ref:str; analyzer_revision:str; recovered_graph_fingerprint:str; expected_graph_fingerprint:str; decision:RoundTripDecision; additions:tuple[str,...]; losses:tuple[str,...]; drift_refs:tuple[str,...]; proof_refs:tuple[str,...]; revision:int=1
+ roundtrip_ref:str; request_pin:PinnedRecord; surface_candidate_pin:PinnedRecord; analyzer_ref:str; analyzer_revision:str; recovered_graph_fingerprint:str; expected_graph_fingerprint:str; decision:RoundTripDecision; additions:tuple[str,...]; losses:tuple[str,...]; drift_refs:tuple[str,...]; proof_refs:tuple[str,...]; analyzer_contract_pin:PinnedRecord|None=None; revision:int=1
  def __post_init__(self):
   for v,l in ((self.roundtrip_ref,"roundtrip_ref"),(self.analyzer_ref,"analyzer_ref"),(self.analyzer_revision,"analyzer_revision"),(self.recovered_graph_fingerprint,"recovered fingerprint"),(self.expected_graph_fingerprint,"expected fingerprint")): _ref(v,l)
   if self.revision!=1: raise ValueError("round-trip records are immutable")
   if self.decision==RoundTripDecision.PASS and (self.additions or self.losses or self.drift_refs): raise ValueError("PASS cannot contain semantic drift")
+  if self.analyzer_contract_pin is None: raise ValueError("roundtrip requires analyzer_contract_pin")
 
 def _ref(v,l):
  if not isinstance(v,str) or not v.strip(): raise ValueError(f"{l} must be non-empty")

@@ -19,7 +19,8 @@ class LanguageUseAuthority:
   if getattr(record,'lifecycle_status',None)!=SchemaLifecycleStatus.ACTIVE:return False
   same=[item for item in self.store.records(stored.record_kind,all_revisions=True) if item.record_ref==stored.record_ref and getattr(item.payload,'lifecycle_status',None)==SchemaLifecycleStatus.ACTIVE]
   superseded={getattr(item.payload,'supersedes_revision',None) for item in same if getattr(item.payload,'supersedes_revision',None) is not None}
-  if stored.revision in superseded:return False
+  effective=[item for item in same if item.revision not in superseded]
+  if len(effective)!=1 or effective[0].revision!=stored.revision or effective[0].record_fingerprint!=stored.record_fingerprint:return False
   if not record_supports_use(stored.record_kind,record,operation):return False
   edges=[]
   for edge_stored in self.store.records(RecordKind.DEPENDENCY,all_revisions=True):
@@ -29,10 +30,10 @@ class LanguageUseAuthority:
     edges.append(e)
   promotion_edges=[e for e in edges if e.prerequisite_kind==RecordKind.PROMOTION_DECISION]
   if not promotion_edges:
-   return True  # reviewed boot/manual authority
+   return stored.layer == 'boot'  # only immutable reviewed boot authority may omit promotion lineage
   for edge in promotion_edges:
    ds=self.store.get_record(RecordKind.PROMOTION_DECISION,edge.prerequisite_ref,edge.prerequisite_revision)
-   if ds is None or not isinstance(ds.payload,PromotionDecisionRecord) or ds.payload.decision!=PromotionDecisionKind.PROMOTE:continue
+   if ds is None or ds.record_fingerprint!=edge.prerequisite_fingerprint or not isinstance(ds.payload,PromotionDecisionRecord) or ds.payload.decision!=PromotionDecisionKind.PROMOTE:continue
    for grant in ds.payload.use_grants:
     if grant.operation!=operation or grant.decision!=UseDecision.ALLOW:continue
     if grant.candidate_pin.record_kind!=stored.record_kind or grant.candidate_pin.record_ref!=stored.record_ref:continue

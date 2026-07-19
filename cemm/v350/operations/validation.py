@@ -57,9 +57,14 @@ class Phase16CommitValidator:
    if journal is None or getattr(journal.payload,'status',None) not in {OperationJournalStatus.ACKNOWLEDGED,OperationJournalStatus.OUTCOME_UNKNOWN}:raise ValueError('operation result must pin an acknowledged/unknown submitted journal state')
   elif k==RecordKind.OPERATION_RECONCILIATION:
    if not isinstance(record,OperationReconciliationRecord):raise ValueError('operation reconciliation type mismatch')
-   self._require(op,record.plan_pin);self._require(op,record.result_pin)
+   self._require(op,record.plan_pin);self._require(op,record.result_pin);self._require(op,record.observed_journal_pin)
    result=self.r.resolve(record.result_pin.record_kind,record.result_pin.record_ref,record.result_pin.revision)
    if result is None or getattr(result.payload,'status',None)==OperationResultStatus.UNKNOWN:raise ValueError('unknown operation outcome cannot be reconciled as terminal')
+   observed_journal=self.r.resolve(record.observed_journal_pin.record_kind,record.observed_journal_pin.record_ref,record.observed_journal_pin.revision)
+   if observed_journal is None or getattr(observed_journal.payload,'status',None) not in {OperationJournalStatus.OBSERVED_SUCCESS,OperationJournalStatus.OBSERVED_FAILURE,OperationJournalStatus.OBSERVED_PARTIAL}:raise ValueError('reconciliation requires exact observed terminal journal')
+   if observed_journal.payload.journal_ref != result.payload.journal_pin.record_ref:raise ValueError('reconciliation journal/result operation identity mismatch')
+   edges=[e.payload for e in self.r.records(RecordKind.DEPENDENCY) if getattr(e.payload,'active',False)]
+   if not any(getattr(e,'dependent_kind',None)==RecordKind.OPERATION_JOURNAL and getattr(e,'dependent_ref',None)==observed_journal.payload.journal_ref and getattr(e,'dependent_revision',None)==observed_journal.payload.revision and getattr(e,'prerequisite_kind',None)==RecordKind.OPERATION_RESULT and getattr(e,'prerequisite_ref',None)==record.result_pin.record_ref and getattr(e,'prerequisite_revision',None)==record.result_pin.revision and getattr(e,'prerequisite_fingerprint',None)==record.result_pin.record_fingerprint for e in edges):raise ValueError('observed journal lacks exact operation-result lineage edge')
    plan=self.r.resolve(record.plan_pin.record_kind,record.plan_pin.record_ref,record.plan_pin.revision)
    if plan is None or tuple(record.invalidated_goal_decision_refs)!=(plan.payload.goal_decision_pin.record_ref,):raise ValueError('reconciliation must invalidate the exact pre-operation goal decision')
    for p in (*record.predicted_effect_pins,*record.observed_pins):self._require(op,p)
