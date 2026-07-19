@@ -1,0 +1,13 @@
+{
+  "denylist_ref": "denylist:cemm:v350:legacy-authority",
+  "version": 1,
+  "entries": [
+    {"path_or_symbol":"cemm.v347.runtime","category":"legacy_response_routers","replacement_authority":"cemm.v350.public_runtime:Runtime","removal_status":"moved_to_offline_migration","last_allowed_phase":19,"reason":"v3.4.7 composition root is a behavioral baseline only"},
+    {"path_or_symbol":"cemm.v347","category":"legacy_semantic_runtime","replacement_authority":"cemm.v350","removal_status":"moved_to_offline_migration","last_allowed_phase":19,"reason":"no public runtime import may resolve v3.4.7 semantic authority"},
+    {"path_or_symbol":"cemm.v350.migration","category":"migration_runtime_adapters","replacement_authority":"offline migration tooling only","removal_status":"moved_to_offline_migration","last_allowed_phase":19,"reason":"migration transforms are never runtime semantic authority"},
+    {"path_or_symbol":"legacy keyword/pattern semantic routers","category":"keyword_intent_maps","replacement_authority":"Phase7-9 language evidence + grounding/composition","removal_status":"deleted","last_allowed_phase":19,"reason":"surface words cannot directly authorize meaning"},
+    {"path_or_symbol":"per-predicate response sentences","category":"predicate_response_templates","replacement_authority":"ResponseUOL + Phase17 realization algebra","removal_status":"deleted","last_allowed_phase":19,"reason":"ordinary semantic schemas do not own full response sentences"},
+    {"path_or_symbol":"event-specific state mutation helpers","category":"event_specific_mutators","replacement_authority":"TransitionContract + TransitionProof + GraphPatch","removal_status":"deleted","last_allowed_phase":19,"reason":"events affect state only through generic proof-bearing transitions"},
+    {"path_or_symbol":"targetless acknowledgement paths","category":"targetless_acknowledgers","replacement_authority":"Phase15 target-bearing semantic obligations/goals","removal_status":"deleted","last_allowed_phase":19,"reason":"every selected response goal requires an exact semantic target"}
+  ]
+}

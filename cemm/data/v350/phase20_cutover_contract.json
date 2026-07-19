@@ -1,0 +1,23 @@
+{
+  "contract_ref": "contract:cemm:v350:runtime-cutover",
+  "phase": 20,
+  "authority": "reviewed_source",
+  "laws": [
+    "one_public_semantic_orchestrator",
+    "no_runtime_v347_authority",
+    "no_runtime_migration_authority",
+    "no_semantic_fallback_flags",
+    "stage15_is_sole_generic_goal_authority",
+    "unknown_and_frontier_are_valid_results",
+    "response_uol_precedes_realization",
+    "roundtrip_does_not_authorize_emission",
+    "emission_observation_precedes_output_discourse",
+    "common_ground_is_not_world_truth",
+    "runtime_code_data_boot_fingerprints_must_match",
+    "installed_artifact_must_include_v350_data",
+    "activation_requires_exact_verification_report"
+  ],
+  "required_core_stages": 23,
+  "forbidden_runtime_namespaces": ["cemm.v347", "cemm.v350.migration"],
+  "activation_policy": "fail_closed"
+}

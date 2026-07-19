@@ -1,0 +1,14 @@
+{"case_ref":"competence:phase20:public-entrypoint-v350-only","expected":"cemm, cemm.app.runtime and python -m cemm resolve only canonical v3.5 runtime after activation"}
+{"case_ref":"competence:phase20:no-v347-runtime-import","expected":"public runtime import closure contains no cemm.v347 module"}
+{"case_ref":"competence:phase20:no-runtime-migration-import","expected":"public runtime import closure contains no cemm.v350.migration module"}
+{"case_ref":"competence:phase20:all-core-stages-wired","expected":"runtime authority manifest contains exactly one reviewed adapter for every Stage 0 through 22"}
+{"case_ref":"competence:phase20:stage15-single-goal-authority","expected":"Stage17 may request bounded re-entry to Stage15 but cannot generate a second goal family"}
+{"case_ref":"competence:phase20:manifest-mismatch-fails","expected":"code/data/boot/denylist fingerprint mismatch prevents semantic service"}
+{"case_ref":"competence:phase20:installed-wheel-v350-data","expected":"built wheel contains v3.5 manifest contracts competence and language data"}
+{"case_ref":"competence:phase20:no-semantic-fallback-flags","expected":"no final runtime flag can route requests back to legacy semantic authority"}
+{"case_ref":"competence:phase20:unknown-no-legacy-fallback","expected":"unknown/frontier remains unknown/frontier and never invokes v3.4.7 for certainty"}
+{"case_ref":"competence:phase20:roundtrip-not-emission-authority","expected":"semantic roundtrip PASS alone cannot dispatch output"}
+{"case_ref":"competence:phase20:no-emission-no-common-ground","expected":"unemitted response cannot mutate output discourse/common ground"}
+{"case_ref":"competence:phase20:restart-no-legacy-read","expected":"restart reconstructs effective authority from v3.5 durable records without runtime reads from v3.4.7 state"}
+{"case_ref":"competence:phase20:semantic-debt-zero","expected":"public runtime authority paths contain zero denylisted semantic shortcuts"}
+{"case_ref":"competence:phase20:activation-proof-required","expected":"public cutover cannot activate without exact passing release verification report"}

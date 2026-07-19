@@ -1,3 +1,115 @@
+# CEMM v3.5 Phase 20 — Final Runtime Cutover and Completion Plan
+
+## Objective
+
+Phase 20 does not add another semantic theory. It makes the v3.5 Stage-0→22 pipeline the sole public semantic authority, proves installed-artifact correctness, removes runtime reachability of v3.4.7/migration authority, and prevents the release from being called complete unless the exact final code/data/boot/runtime topology passes all predecessor, security, restart, semantic-equivalence, multilingual and performance gates.
+
+## Newly confirmed completion blockers
+
+1. `pyproject.toml` still identifies the installable project as 3.4.7 and packages only v3.4.7 data.
+2. `cemm.__init__` still obtains `__version__` from `cemm.v347.version`.
+3. `cemm.app.runtime.Runtime` still imports `cemm.v347.runtime.Runtime`.
+4. `python -m cemm` still constructs the v3.4.7 runtime.
+5. `cemm.v350` explicitly describes itself as a migration substrate not yet wired as public runtime.
+
+A Phase-20 patch that merely renames these imports would be architecturally invalid. Activation must require one fully wired Stage-0..22 graph and a passing release-verification artifact.
+
+## Completion sequence
+
+### 20A — Freeze one canonical topology
+- Core stages exactly 0..22.
+- Stage 15 is sole generic goal authority.
+- Stage 17 can request bounded re-entry to Stage 15 only after operation reconciliation.
+- Phase numbers remain distinct from stage numbers.
+
+### 20B — Install cutover authority tooling
+- `phase20_cutover_contract.json`.
+- `legacy_authority_denylist.json`.
+- exact runtime-authority manifest builder.
+- public/import closure scanner.
+- release verifier.
+- Stage-0..22 orchestration boundary with exact adapter identity.
+
+### 20C — Build the concrete canonical stage graph
+For each of the 23 stages, register exactly one adapter with stable ref/revision/source hash. An adapter can coordinate multiple phase components, but no semantic stage may be missing, duplicated or reached out of order.
+
+Required mapping:
+- 0: snapshot/version/context/permission/resource pinning
+- 1–2: observation + language/form evidence
+- 3–4: joint grounding + referent knowledge/facet projection
+- 5–7: factor graph, bounded solve, MeaningBundle selection
+- 8–11: discourse/claim/event/gap classification, epistemics, retrieval, learning frontiers
+- 12–13: inference/transition preview + authorized semantic commits
+- 14: impact/importance
+- 15: obligations/goals
+- 16–17: operations/reconciliation/goal refresh
+- 18: Response UOL
+- 19: realization
+- 20: roundtrip + fresh emission authorization
+- 21: observed output discourse/common ground
+- 22: invalidation/recompute/finalization
+
+### 20D — Public runtime activation
+Only after `verify_v350_phase20.py --run-pytest --check-wheel` returns `PASS`:
+- `cemm` exports v3.5 version/runtime.
+- `cemm.app.runtime` points only to v3.5.
+- `python -m cemm` constructs only v3.5.
+- v3.4.7 remains offline migration/equivalence history, never a fallback.
+
+### 20E — Installed artifact proof
+Build the wheel and prove it includes:
+- v3.5 source manifest;
+- Phase 0–20 contracts/data;
+- competence cases;
+- language packages;
+- runtime authority/denylist manifests;
+- boot DB or exact external boot DB fingerprint contract.
+
+### 20F — Full semantic verification
+Must pass on one exact commit + data manifest + boot DB:
+- architecture/no-shortcut lints;
+- all unit/integration tests 0–20;
+- original demo regression for architectural reasons, never phrase patches;
+- claim vs truth and context isolation;
+- transition/capability proof and restart;
+- learning per-use promotion/invalidation/restart;
+- impact/importance/goal behavior;
+- operation crash/idempotency/reconciliation;
+- Response UOL all-and-only authority;
+- multilingual reusable realization + roundtrip;
+- emission/output discourse/common ground;
+- migration/equivalence/rollback;
+- correction/retraction/supersession fanout;
+- privacy/permission/adversarial forged-proof tests.
+
+### 20G — Performance/query-plan closure
+Capture realistic p50/p95/p99, memory/cycle, durable writes/cycle, startup/rehydration, DB growth, and critical SQLite `EXPLAIN QUERY PLAN` artifacts. Full scans on declared bounded critical paths are release blockers.
+
+## Non-negotiable final invariant
+
+A newly learned/promoted semantic structure must be able, without a new kernel concept-name branch, semantic word regex, event-specific mutation helper, Python domain enum or ordinary sentence template, to:
+1. ground from evidence;
+2. inherit/project applicable facets;
+3. compose in UOL;
+4. remain source-attributed until epistemically admitted;
+5. participate in proof-bearing transitions/capabilities;
+6. influence impact, goals and responses;
+7. be queried/explained with exact lineage;
+8. realize in independently reviewed language packages;
+9. survive restart and migration;
+10. be corrected/retracted/superseded with dependent invalidation;
+11. remain unknown/frontier when authority is insufficient.
+
+## Exit gate
+
+v3.5 is complete only when the exact release verifier says PASS, the public import/callgraph has no competing semantic authority, every Stage-0..22 adapter is explicitly pinned, the wheel/boot/data fingerprints reproduce, and all correctness/security/restart/migration/performance gates pass. Anything less is implemented or prepared—not verified completion.
+
+---
+
+# Part II — Comprehensive cutover design and release program
+
+The following detailed program remains binding; the preparation/activation state machine above is the implementation mechanism for enforcing it.
+
 # CEMM v3.5 Phase 20 — Runtime Cutover, Sole Semantic Authority, and Legacy Removal
 
 ## 1. Objective

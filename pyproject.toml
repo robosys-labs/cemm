@@ -17,4 +17,4 @@ where = ["."]
 include = ["cemm*"]
 
 [tool.setuptools.package-data]
-cemm = ["data/v347/*.json", "data/v347/languages/*.json", "*.md", "newarch/*.md", "uol/*.md"]
+cemm = ["data/v347/*.json", "data/v347/languages/*.json", "data/v350/*.json", "data/v350/*.jsonl", "data/v350/*/*.json", "data/v350/*/*.jsonl", "data/v350/*/*/*.json", "data/v350/*/*/*.jsonl", "*.md", "newarch/*.md", "uol/*.md"]
