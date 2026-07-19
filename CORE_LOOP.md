@@ -23,8 +23,8 @@
 11 BUILD_OR_ADVANCE_LEARNING_FRONTIERS
 12 INFER_AND_PREVIEW_TRANSITIONS
 13 COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE
-14 ASSESS_IMPACT_IMPORTANCE_AND_OBLIGATIONS
-15 GENERATE_AND_ARBITRATE_GOALS
+14 ASSESS_IMPACT_AND_IMPORTANCE
+15 DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
 16 PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE
 17 GENERATE_RESPONSE_GOALS
 18 BUILD_RESPONSE_UOL
@@ -368,7 +368,7 @@ State transition commits require an admitted trigger event and a valid proof.
 
 ---
 
-## 16. Stage 14 — ASSESS_IMPACT_IMPORTANCE_AND_OBLIGATIONS
+## 16. Stage 14 — ASSESS_IMPACT_AND_IMPORTANCE
 
 ### 16.1 Impact
 
@@ -388,26 +388,13 @@ Use:
 - irreversibility;
 - risk.
 
-### 16.3 Obligations
-
-Derive conversational obligations:
-
-- answer;
-- warn;
-- console;
-- acknowledge;
-- clarify;
-- learn;
-- act;
-- remain silent.
-
 This stage may search bounded session/history summaries for significance evidence. It must preserve the evidence and privacy scope.
 
 ---
 
-## 17. Stage 15 — GENERATE_AND_ARBITRATE_GOALS
+## 17. Stage 15 — DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
 
-Generate semantic goals from:
+Derive target-bearing semantic obligations from active response-policy rules, then generate semantic goals from:
 
 - queries;
 - directives;

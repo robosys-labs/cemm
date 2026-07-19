@@ -45,6 +45,22 @@ from ..learning.model import (
     CompetenceResultRecord, LearningEvidenceLink, LearningFrontierRecord,
     LearningInvalidationRecord, LearningPackageRecord, PromotionDecisionRecord,
 )
+from ..significance.codec import (
+    impact_proof_from_document, impact_rule_from_document, importance_evidence_from_document,
+    importance_policy_from_document, significance_assessment_from_document,
+)
+from ..significance.model import (
+    ImpactProofRecord, ImpactRuleRecord, ImportanceEvidenceRecord, ImportancePolicyRecord,
+    SignificanceAssessmentRecord,
+)
+from ..goals.codec import (
+    goal_candidate_from_document, goal_conflict_from_document, goal_decision_from_document,
+    response_policy_rule_from_document, semantic_obligation_from_document,
+)
+from ..goals.model import (
+    GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord,
+    SemanticObligationRecord,
+)
 from ..uol.codec import (
     application_from_document,
     capability_delta_from_document,
@@ -441,6 +457,16 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.SOURCE_ASSESSMENT: _source_assessment,
     RecordKind.IMPACT_ASSESSMENT: impact_from_document,
     RecordKind.IMPORTANCE_ASSESSMENT: importance_from_document,
+    RecordKind.IMPACT_RULE: impact_rule_from_document,
+    RecordKind.IMPACT_PROOF: impact_proof_from_document,
+    RecordKind.IMPORTANCE_EVIDENCE: importance_evidence_from_document,
+    RecordKind.IMPORTANCE_POLICY: importance_policy_from_document,
+    RecordKind.SIGNIFICANCE_ASSESSMENT: significance_assessment_from_document,
+    RecordKind.RESPONSE_POLICY_RULE: response_policy_rule_from_document,
+    RecordKind.SEMANTIC_OBLIGATION: semantic_obligation_from_document,
+    RecordKind.GOAL_CANDIDATE: goal_candidate_from_document,
+    RecordKind.GOAL_CONFLICT: goal_conflict_from_document,
+    RecordKind.GOAL_DECISION: goal_decision_from_document,
     RecordKind.DEFAULT_RULE: _default_rule,
     RecordKind.DEPENDENCY: _dependency,
     RecordKind.LANGUAGE_PACK: language_pack_from_document,
@@ -527,6 +553,16 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.SOURCE_ASSESSMENT: (SourceAssessmentRecord,),
         RecordKind.IMPACT_ASSESSMENT: (ImpactAssessment,),
         RecordKind.IMPORTANCE_ASSESSMENT: (ImportanceAssessment,),
+        RecordKind.IMPACT_RULE: (ImpactRuleRecord,),
+        RecordKind.IMPACT_PROOF: (ImpactProofRecord,),
+        RecordKind.IMPORTANCE_EVIDENCE: (ImportanceEvidenceRecord,),
+        RecordKind.IMPORTANCE_POLICY: (ImportancePolicyRecord,),
+        RecordKind.SIGNIFICANCE_ASSESSMENT: (SignificanceAssessmentRecord,),
+        RecordKind.RESPONSE_POLICY_RULE: (ResponsePolicyRuleRecord,),
+        RecordKind.SEMANTIC_OBLIGATION: (SemanticObligationRecord,),
+        RecordKind.GOAL_CANDIDATE: (GoalCandidateRecord,),
+        RecordKind.GOAL_CONFLICT: (GoalConflictRecord,),
+        RecordKind.GOAL_DECISION: (GoalDecisionRecord,),
         RecordKind.DEFAULT_RULE: (DefaultRuleRecord,),
         RecordKind.DEPENDENCY: (DependencyEdge,),
         RecordKind.LANGUAGE_PACK: (LanguagePackRecord,),
@@ -577,6 +613,16 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.EVIDENCE: "evidence_ref",
         RecordKind.IMPACT_ASSESSMENT: "assessment_ref",
         RecordKind.IMPORTANCE_ASSESSMENT: "assessment_ref",
+        RecordKind.IMPACT_RULE: "rule_ref",
+        RecordKind.IMPACT_PROOF: "proof_ref",
+        RecordKind.IMPORTANCE_EVIDENCE: "evidence_ref",
+        RecordKind.IMPORTANCE_POLICY: "policy_ref",
+        RecordKind.SIGNIFICANCE_ASSESSMENT: "assessment_ref",
+        RecordKind.RESPONSE_POLICY_RULE: "rule_ref",
+        RecordKind.SEMANTIC_OBLIGATION: "obligation_ref",
+        RecordKind.GOAL_CANDIDATE: "goal_ref",
+        RecordKind.GOAL_CONFLICT: "conflict_ref",
+        RecordKind.GOAL_DECISION: "decision_ref",
         RecordKind.DEFAULT_RULE: "rule_ref",
         RecordKind.DEPENDENCY: "dependency_ref",
         RecordKind.LANGUAGE_PACK: "pack_ref",
@@ -608,6 +654,10 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.LEARNING_PACKAGE, RecordKind.LEARNING_FRONTIER,
         RecordKind.LEARNING_EVIDENCE_LINK, RecordKind.COMPETENCE_RESULT,
         RecordKind.PROMOTION_DECISION, RecordKind.LEARNING_INVALIDATION,
+        RecordKind.IMPACT_RULE, RecordKind.IMPACT_PROOF, RecordKind.IMPORTANCE_EVIDENCE,
+        RecordKind.IMPORTANCE_POLICY, RecordKind.SIGNIFICANCE_ASSESSMENT,
+        RecordKind.RESPONSE_POLICY_RULE, RecordKind.SEMANTIC_OBLIGATION,
+        RecordKind.GOAL_CANDIDATE, RecordKind.GOAL_CONFLICT, RecordKind.GOAL_DECISION,
     }:
         return int(getattr(record, "revision"))
     if resolved == RecordKind.PROPOSITION:
@@ -649,7 +699,8 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXICAL_SENSE,
         RecordKind.FORM_SENSE_LINK, RecordKind.CONSTRUCTION, RecordKind.EPISTEMIC_ADMISSION,
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
-        RecordKind.LEARNING_PACKAGE,
+        RecordKind.LEARNING_PACKAGE, RecordKind.IMPACT_RULE, RecordKind.IMPORTANCE_POLICY,
+        RecordKind.RESPONSE_POLICY_RULE,
     }:
         return str(record.lifecycle_status.value)
     if hasattr(record, "status"):

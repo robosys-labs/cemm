@@ -19,6 +19,14 @@ from ..learning.model import (
     CompetenceResultRecord, LearningEvidenceLink, LearningFrontierRecord,
     LearningInvalidationRecord, LearningPackageRecord, PromotionDecisionRecord,
 )
+from ..significance.model import (
+    ImpactProofRecord, ImpactRuleRecord, ImportanceEvidenceRecord, ImportancePolicyRecord,
+    SignificanceAssessmentRecord,
+)
+from ..goals.model import (
+    GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord,
+    SemanticObligationRecord,
+)
 from ..uol.model import (
     CapabilityDelta,
     ClaimOccurrence,
@@ -531,6 +539,16 @@ class RepositorySet:
         self.transition_proofs = TypedRepository(store, RecordKind.TRANSITION_PROOF, TransitionProofRecord)
         self.impact_assessments = TypedRepository(store, RecordKind.IMPACT_ASSESSMENT, ImpactAssessment)
         self.importance_assessments = TypedRepository(store, RecordKind.IMPORTANCE_ASSESSMENT, ImportanceAssessment)
+        self.impact_rules = TypedRepository(store, RecordKind.IMPACT_RULE, ImpactRuleRecord)
+        self.impact_proofs = TypedRepository(store, RecordKind.IMPACT_PROOF, ImpactProofRecord)
+        self.importance_evidence = TypedRepository(store, RecordKind.IMPORTANCE_EVIDENCE, ImportanceEvidenceRecord)
+        self.importance_policies = TypedRepository(store, RecordKind.IMPORTANCE_POLICY, ImportancePolicyRecord)
+        self.significance_assessments = TypedRepository(store, RecordKind.SIGNIFICANCE_ASSESSMENT, SignificanceAssessmentRecord)
+        self.response_policy_rules = TypedRepository(store, RecordKind.RESPONSE_POLICY_RULE, ResponsePolicyRuleRecord)
+        self.semantic_obligations = TypedRepository(store, RecordKind.SEMANTIC_OBLIGATION, SemanticObligationRecord)
+        self.goal_candidates = TypedRepository(store, RecordKind.GOAL_CANDIDATE, GoalCandidateRecord)
+        self.goal_conflicts = TypedRepository(store, RecordKind.GOAL_CONFLICT, GoalConflictRecord)
+        self.goal_decisions = TypedRepository(store, RecordKind.GOAL_DECISION, GoalDecisionRecord)
         self.evidence = TypedRepository(store, RecordKind.EVIDENCE, EvidenceRecord)
         self.default_rules = DefaultRuleRepository(store)
         self.language = LanguageRepository(store)

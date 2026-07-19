@@ -34,6 +34,12 @@ _AUTO_DERIVED = {
     RecordKind.TRANSITION_PROOF,
     RecordKind.COMPETENCE_RESULT,
     RecordKind.PROMOTION_DECISION,
+    RecordKind.IMPACT_PROOF,
+    RecordKind.SIGNIFICANCE_ASSESSMENT,
+    RecordKind.SEMANTIC_OBLIGATION,
+    RecordKind.GOAL_CANDIDATE,
+    RecordKind.GOAL_CONFLICT,
+    RecordKind.GOAL_DECISION,
 }
 
 

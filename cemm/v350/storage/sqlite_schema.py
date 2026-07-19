@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -777,6 +777,27 @@ DDL: tuple[str, ...] = (
         UNIQUE(operation_ref)
     ) WITHOUT ROWID
     """,
+    """
+    CREATE TABLE IF NOT EXISTS phase14_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        source_ref TEXT, stakeholder_ref TEXT, affected_ref TEXT, context_ref TEXT,
+        permission_ref TEXT, lifecycle_status TEXT, use_operation TEXT, payload_json TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS phase14_source_idx ON phase14_records(record_kind, source_ref, context_ref, revision DESC)",
+    "CREATE INDEX IF NOT EXISTS phase14_stakeholder_idx ON phase14_records(stakeholder_ref, context_ref, permission_ref, revision DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS phase15_records (
+        record_kind TEXT NOT NULL, record_ref TEXT NOT NULL, revision INTEGER NOT NULL,
+        goal_schema_ref TEXT, operation TEXT, target_refs_json TEXT NOT NULL, authorized INTEGER,
+        context_ref TEXT, permission_ref TEXT, lifecycle_status TEXT, payload_json TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS phase15_goal_idx ON phase15_records(goal_schema_ref, operation, authorized, revision DESC)",
+    "CREATE INDEX IF NOT EXISTS phase15_context_idx ON phase15_records(record_kind, context_ref, permission_ref, revision DESC)",
+
 )
 
 

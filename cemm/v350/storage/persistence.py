@@ -204,6 +204,55 @@ def _write_normalized(
         RecordKind.PROMOTION_DECISION, RecordKind.LEARNING_INVALIDATION,
     }:
         _write_learning_record(connection, record_kind, record, revision)
+    elif record_kind in {
+        RecordKind.IMPACT_RULE, RecordKind.IMPACT_PROOF, RecordKind.IMPORTANCE_EVIDENCE,
+        RecordKind.IMPORTANCE_POLICY, RecordKind.SIGNIFICANCE_ASSESSMENT,
+        RecordKind.RESPONSE_POLICY_RULE, RecordKind.SEMANTIC_OBLIGATION,
+        RecordKind.GOAL_CANDIDATE, RecordKind.GOAL_CONFLICT, RecordKind.GOAL_DECISION,
+    }:
+        _write_phase14_15_record(connection, record_kind, record, revision)
+
+
+def _write_phase14_15_record(
+    connection: sqlite3.Connection, record_kind: RecordKind, record: Any, revision: int
+) -> None:
+    payload = encode_record(record_kind, record)
+    table = "phase14_records" if record_kind in {
+        RecordKind.IMPACT_RULE, RecordKind.IMPACT_PROOF, RecordKind.IMPORTANCE_EVIDENCE,
+        RecordKind.IMPORTANCE_POLICY, RecordKind.SIGNIFICANCE_ASSESSMENT,
+    } else "phase15_records"
+    source_ref = getattr(record, "source_ref", None)
+    source_pin = getattr(record, "source_pin", None)
+    if source_ref is None and source_pin is not None:
+        source_ref = source_pin.record_ref
+    stakeholder_ref = getattr(record, "stakeholder_ref", None)
+    affected_ref = getattr(record, "affected_ref", None)
+    impact = getattr(record, "impact", None)
+    if impact is not None:
+        stakeholder_ref = getattr(impact, "stakeholder_ref", stakeholder_ref)
+        affected_ref = getattr(impact, "affected_ref", affected_ref)
+    if table == "phase14_records":
+        connection.execute(
+            """INSERT OR REPLACE INTO phase14_records(
+                record_kind, record_ref, revision, source_ref, stakeholder_ref, affected_ref,
+                context_ref, permission_ref, lifecycle_status, use_operation, payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (record_kind.value, record_ref(record_kind, record), revision, source_ref, stakeholder_ref, affected_ref,
+             record_context(record_kind, record), record_permission(record_kind, record), record_lifecycle(record_kind, record),
+             getattr(getattr(record, "use_operation", None), "value", getattr(record, "use_operation", None)), canonical_json(payload)),
+        )
+    else:
+        target_refs = getattr(record, "target_refs", ())
+        connection.execute(
+            """INSERT OR REPLACE INTO phase15_records(
+                record_kind, record_ref, revision, goal_schema_ref, operation, target_refs_json,
+                authorized, context_ref, permission_ref, lifecycle_status, payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (record_kind.value, record_ref(record_kind, record), revision, getattr(record, "goal_schema_ref", None),
+             getattr(getattr(record, "operation", None), "value", getattr(record, "operation", None)), canonical_json(target_refs),
+             None if not hasattr(record, "authorized") else int(bool(record.authorized)), record_context(record_kind, record),
+             record_permission(record_kind, record), record_lifecycle(record_kind, record), canonical_json(payload)),
+        )
 
 
 def _write_learning_record(

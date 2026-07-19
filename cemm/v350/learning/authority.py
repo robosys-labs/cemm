@@ -28,6 +28,9 @@ _COMPATIBLE: dict[RecordKind, frozenset[UseOperation]] = {
     RecordKind.CONSTRUCTION: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.TRANSITION_CONTRACT: frozenset({UseOperation.TRANSITION}),
     RecordKind.CAPABILITY_DEPENDENCY: frozenset({UseOperation.TRANSITION}),
+    RecordKind.IMPACT_RULE: frozenset({UseOperation.IMPACT}),
+    RecordKind.IMPORTANCE_POLICY: frozenset({UseOperation.IMPACT}),
+    RecordKind.RESPONSE_POLICY_RULE: frozenset({UseOperation.RESPONSE_POLICY}),
 }
 
 

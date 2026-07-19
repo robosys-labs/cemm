@@ -25,6 +25,12 @@ from ..language.model import (
 )
 from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..learning.validation import LearningCommitValidator
+from ..significance.model import (
+    ImpactProofRecord, ImpactRuleRecord, ImportanceEvidenceRecord, ImportancePolicyRecord, SignificanceAssessmentRecord,
+)
+from ..goals.model import (
+    GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord, SemanticObligationRecord,
+)
 from ..transitions.admission import EventAdmissionGate
 from ..transitions.compiler import TransitionContractCompiler, TransitionContractError
 from ..transitions.state import StateConditionEvaluator, parse_optional_timeline_timestamp, parse_timeline_timestamp, require_concrete_timeline_timestamp
@@ -121,6 +127,7 @@ class CommitValidator:
                 self._validate_record(operation.record_kind, record, operation.record_revision)
                 self._validate_dependencies(operation.target_ref, operation.dependencies)
                 self._learning.validate_operation(operation, record)
+                self._validate_phase14_15(operation, record)
             except ValueError as exc:
                 errors.append(ValidationError("record_contract", operation.target_ref, str(exc)))
         return tuple(errors)
@@ -130,6 +137,37 @@ class CommitValidator:
         if errors:
             raise CommitValidationError(errors)
 
+
+
+    def _validate_phase14_15(self, operation: PatchOperation, record: Any) -> None:
+        kind = operation.record_kind
+        exact = {(d.record_kind, d.record_ref, d.revision, d.fingerprint, d.dependency_kind) for d in operation.dependencies}
+        if kind == RecordKind.IMPACT_PROOF and isinstance(record, ImpactProofRecord):
+            required = {
+                (record.source_pin.record_kind, record.source_pin.record_ref, record.source_pin.revision, record.source_pin.record_fingerprint, "impact_source"),
+                (RecordKind.IMPACT_RULE, record.rule_pin.record_ref, record.rule_pin.revision, record.rule_pin.record_fingerprint, "impact_rule"),
+            }
+            if not required.issubset(exact):
+                raise ValueError("impact proof requires exact source and rule dependency edges")
+        elif kind == RecordKind.SIGNIFICANCE_ASSESSMENT and isinstance(record, SignificanceAssessmentRecord):
+            if not any(d.record_kind == RecordKind.IMPACT_PROOF and d.record_ref == record.proof_ref for d in operation.dependencies):
+                raise ValueError("significance assessment requires exact impact proof dependency")
+        elif kind == RecordKind.SEMANTIC_OBLIGATION and isinstance(record, SemanticObligationRecord):
+            if not record.target_refs:
+                raise ValueError("targetless semantic obligation is forbidden")
+            if not any(d.record_kind == RecordKind.RESPONSE_POLICY_RULE for d in operation.dependencies):
+                raise ValueError("semantic obligation requires exact response-policy dependency")
+        elif kind == RecordKind.GOAL_CANDIDATE and isinstance(record, GoalCandidateRecord):
+            if not record.target_refs:
+                raise ValueError("targetless goal candidate is forbidden")
+            if not any(d.record_kind == RecordKind.SEMANTIC_OBLIGATION for d in operation.dependencies):
+                raise ValueError("goal candidate requires exact obligation dependency")
+        elif kind == RecordKind.GOAL_DECISION and isinstance(record, GoalDecisionRecord):
+            if record.selected_goal_refs and not all(
+                any(d.record_kind == RecordKind.GOAL_CANDIDATE and d.record_ref == ref for d in operation.dependencies)
+                for ref in record.selected_goal_refs
+            ):
+                raise ValueError("goal decision requires exact selected candidate dependencies")
 
     def _validate_default_rule_revisions(self) -> tuple[ValidationError, ...]:
         by_ref: dict[str, dict[int, DefaultRuleRecord]] = {}

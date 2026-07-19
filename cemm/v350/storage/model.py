@@ -46,6 +46,16 @@ class RecordKind(StrEnum):
     SOURCE_ASSESSMENT = "source_assessment"
     IMPACT_ASSESSMENT = "impact_assessment"
     IMPORTANCE_ASSESSMENT = "importance_assessment"
+    IMPACT_RULE = "impact_rule"
+    IMPACT_PROOF = "impact_proof"
+    IMPORTANCE_EVIDENCE = "importance_evidence"
+    IMPORTANCE_POLICY = "importance_policy"
+    SIGNIFICANCE_ASSESSMENT = "significance_assessment"
+    RESPONSE_POLICY_RULE = "response_policy_rule"
+    SEMANTIC_OBLIGATION = "semantic_obligation"
+    GOAL_CANDIDATE = "goal_candidate"
+    GOAL_CONFLICT = "goal_conflict"
+    GOAL_DECISION = "goal_decision"
     DEFAULT_RULE = "default_rule"
     DEPENDENCY = "dependency"
     LANGUAGE_PACK = "language_pack"
@@ -663,7 +673,13 @@ class PatchOperation:
             raise ValueError("upsert/materialize operation requires a payload")
         if self.operation_kind in {PatchOperationKind.TOMBSTONE, PatchOperationKind.INVALIDATE} and self.payload:
             raise ValueError("tombstone/invalidate operation cannot carry a record payload")
-        _require_unique(tuple(item.record_ref for item in self.dependencies), "operation dependency refs")
+        _require_unique(
+            tuple((
+                None if item.record_kind is None else item.record_kind.value,
+                item.record_ref, item.revision, item.fingerprint, item.dependency_kind
+            ) for item in self.dependencies),
+            "operation dependency identities",
+        )
 
 
 @dataclass(frozen=True, slots=True)

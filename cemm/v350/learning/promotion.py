@@ -68,11 +68,10 @@ class PromotionPolicyEngine:
         evidence: EvidenceSummary,
     ) -> PromotionPolicyResult:
         results = tuple(competence_results)
-        blocked: list[str] = []
+        global_blocked: list[str] = []
+        per_use_blocked: list[str] = []
         if evidence.correction_link_refs or evidence.retraction_link_refs:
-            blocked.append("correction_or_retraction_present")
-        if package.counterexample_link_refs and not results:
-            blocked.append("counterexamples_require_explicit_competence")
+            global_blocked.append("correction_or_retraction_present")
         grants: list[PromotionUseGrant] = []
         for requested in package.requested_use_authorizations:
             matching = tuple(
@@ -89,18 +88,18 @@ class PromotionPolicyEngine:
             }
             if requested.decision == UseDecision.ALLOW:
                 if not passed:
-                    blocked.append(f"missing_passed_competence:{requested.operation.value}")
+                    per_use_blocked.append(f"missing_passed_competence:{requested.operation.value}")
                     continue
                 missing_counterexamples = set(package.counterexample_link_refs).difference(covered_counterexamples)
                 if missing_counterexamples:
-                    blocked.append(f"uncovered_counterexamples:{requested.operation.value}")
+                    per_use_blocked.append(f"uncovered_counterexamples:{requested.operation.value}")
                     continue
                 compatible = tuple(
                     pin for pin in package.candidate_pins
                     if self._pin_supports_use(pin, requested.operation)
                 )
                 if not compatible:
-                    blocked.append(f"no_compatible_candidate_family:{requested.operation.value}")
+                    per_use_blocked.append(f"no_compatible_candidate_family:{requested.operation.value}")
                     continue
                 for pin in compatible:
                     grants.append(PromotionUseGrant(
@@ -116,14 +115,14 @@ class PromotionPolicyEngine:
                     if item.outcome in {CompetenceOutcome.PASSED, CompetenceOutcome.PARTIAL}
                 )
                 if not acceptable:
-                    blocked.append(f"missing_competence:{requested.operation.value}")
+                    per_use_blocked.append(f"missing_competence:{requested.operation.value}")
                     continue
                 compatible = tuple(
                     pin for pin in package.candidate_pins
                     if self._pin_supports_use(pin, requested.operation)
                 )
                 if not compatible:
-                    blocked.append(f"no_compatible_candidate_family:{requested.operation.value}")
+                    per_use_blocked.append(f"no_compatible_candidate_family:{requested.operation.value}")
                     continue
                 for pin in compatible:
                     grants.append(PromotionUseGrant(
@@ -137,17 +136,23 @@ class PromotionPolicyEngine:
                 for pin in package.candidate_pins:
                     if self._pin_supports_use(pin, requested.operation):
                         grants.append(PromotionUseGrant(pin, requested.operation, UseDecision.PRESERVE_ONLY))
-        if blocked:
-            return PromotionPolicyResult(PromotionDecisionKind.BLOCK, (), tuple(sorted(set(blocked))))
+        if global_blocked:
+            return PromotionPolicyResult(PromotionDecisionKind.BLOCK, (), tuple(sorted(set(global_blocked))))
         positive = tuple(
             grant for grant in grants
             if grant.decision in {UseDecision.ALLOW, UseDecision.PROVISIONAL}
         )
         if not positive:
-            return PromotionPolicyResult(
-                PromotionDecisionKind.PRESERVE_CANDIDATE, (), ("no_positive_use_authorization",)
-            )
-        return PromotionPolicyResult(PromotionDecisionKind.PROMOTE, tuple(grants), ())
+            reasons = tuple(sorted(set((*per_use_blocked, "no_positive_use_authorization"))))
+            if any(reason.startswith("uncovered_counterexamples:") for reason in reasons):
+                return PromotionPolicyResult(PromotionDecisionKind.BLOCK, (), reasons)
+            return PromotionPolicyResult(PromotionDecisionKind.PRESERVE_CANDIDATE, (), reasons)
+        # Per-use law: one missing/failed use axis may not erase exact grants for
+        # independently competence-authorized axes. Preserve blocked reasons in
+        # the decision trace without converting them into package-wide denial.
+        return PromotionPolicyResult(
+            PromotionDecisionKind.PROMOTE, tuple(grants), tuple(sorted(set(per_use_blocked)))
+        )
 
     def decision_record(
         self,
@@ -266,16 +271,13 @@ class PromotionCoordinator:
                     ))
             deduped_dependencies = {}
             for dep in decision_dependency_items:
-                prior = deduped_dependencies.get(dep.record_ref)
-                if prior is not None and (
-                    prior.record_kind, prior.revision, prior.fingerprint
-                ) != (dep.record_kind, dep.revision, dep.fingerprint):
-                    raise ValueError(
-                        f"promotion dependency ref resolves to conflicting exact identities: {dep.record_ref}"
-                    )
-                deduped_dependencies.setdefault(dep.record_ref, dep)
+                key = (
+                    None if dep.record_kind is None else dep.record_kind.value,
+                    dep.record_ref, dep.revision, dep.fingerprint, dep.dependency_kind,
+                )
+                deduped_dependencies.setdefault(key, dep)
             decision_dependencies = tuple(
-                deduped_dependencies[key] for key in sorted(deduped_dependencies)
+                deduped_dependencies[key] for key in sorted(deduped_dependencies, key=str)
             )
             operations.append(self._upsert_operation(
                 RecordKind.PROMOTION_DECISION,
