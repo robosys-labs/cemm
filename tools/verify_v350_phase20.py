@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from cemm.v350.cutover import RuntimeAuthorityGuard, RuntimeAuthorityManifest
+from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES, RuntimeAuthorityGuard, RuntimeAuthorityManifest
 from cemm.v350.orchestration import CoreStage
 from cemm.v350.runtime import CanonicalRuntimeCoordinator
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
@@ -120,12 +120,28 @@ def main() -> int:
                 observed=(item.get("adapter_ref"),item.get("adapter_revision"),item.get("factory_path"),item.get("handler_name"),bool(item.get("mutates_semantic_store",False)),bool(item.get("permits_external_side_effect",False)))
                 if observed!=expected: errors.append(f"manifest/code topology mismatch:{d.stage.name}")
             if doc.get("migration_modules_allowed_at_runtime"): errors.append("manifest permits migration modules at runtime")
+            source_manifest=root/"cemm/data/v350/manifest.json"
+            if not source_manifest.is_file():
+                errors.append("missing v3.5 source manifest")
+            else:
+                try:
+                    source_doc=json.loads(source_manifest.read_text(encoding="utf-8"))
+                    if doc.get("activation_ready") and source_doc.get("metadata",{}).get("runtime_cutover") is not True:
+                        errors.append("activated runtime manifest requires source metadata.runtime_cutover=true")
+                except (OSError, ValueError, TypeError) as exc:
+                    errors.append(f"invalid v3.5 source manifest:{exc}")
             if args.preactivation:
                 if doc.get("activation_ready"): errors.append("preactivation source manifest must remain fail-closed")
             else:
                 if args.boot_db is None or args.verification_report is None:
                     errors.append("final activation verification requires --boot-db and --verification-report")
                 else:
+                    for label, kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES:
+                        pins=doc.get(label, ())
+                        if label in {"response_policy_rules", "response_transform_rules", "argument_frames", "linearization_rules"}:
+                            continue
+                        if not pins:
+                            errors.append(f"activated runtime manifest has no {label}")
                     manifest=RuntimeAuthorityManifest.load(manifest_path)
                     guard=RuntimeAuthorityGuard(manifest,repo_root=root,boot_database_path=args.boot_db.resolve(),verification_report_path=args.verification_report.resolve())
                     guard.require_service_authority()

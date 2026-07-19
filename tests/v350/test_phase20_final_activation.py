@@ -39,6 +39,12 @@ def test_source_manifest_is_fail_closed_but_topologically_real():
     doc=json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(doc["activation_ready"], bool)
     assert doc["metadata"]["generated_from_canonical_stage_graph"] is True
+    source=json.loads((ROOT/"cemm/data/v350/manifest.json").read_text(encoding="utf-8"))
+    if doc["activation_ready"]:
+        assert source["metadata"].get("runtime_cutover") is True
+        assert doc["operation_adapter_contracts"]
+        assert doc["semantic_analyzer_contracts"]
+        assert doc["channel_adapter_contracts"]
     if not doc["activation_ready"]:
         assert doc["metadata"].get("preactivation") is True
     assert [item["stage"] for item in doc["stage_adapters"]]==list(range(23))
@@ -90,3 +96,12 @@ def test_operation_reconciliation_requires_exact_observed_journal_pin():
     signature=inspect.signature(ReconciliationCoordinator.build)
     assert "observed_journal_pin" in signature.parameters
     assert signature.parameters["observed_journal_pin"].default is inspect.Signature.empty
+
+
+def test_final_activation_verifier_rejects_current_manifest_without_live_runtime_authority(monkeypatch):
+    import tools.verify_v350_phase20 as verifier
+
+    monkeypatch.setattr("sys.argv", ["verify_v350_phase20.py"])
+    rc=verifier.main()
+
+    assert rc == 1

@@ -1,5 +1,5 @@
 {
-  "activation_ready": true,
+  "activation_ready": false,
   "allowed_boot_data_modules": [
     "cemm.data.v350"
   ],
@@ -117,6 +117,7 @@
   "metadata": {
     "boot_database_relpath": "cemm\\data\\v350\\release\\boot.sqlite",
     "generated_from_canonical_stage_graph": true,
+    "preactivation": true,
     "stage_count": 23,
     "verification_report_relpath": "cemm\\data\\v350\\release\\verification_report.json"
   },

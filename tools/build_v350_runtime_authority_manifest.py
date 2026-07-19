@@ -21,6 +21,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
+from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES
 from cemm.v350.storage import RecordKind
 
 
@@ -76,6 +77,13 @@ def main() -> int:
         })
 
     source_manifest=root/'cemm/data/v350/manifest.json'; denylist=root/'cemm/data/v350/legacy_authority_denylist.json'
+    source_doc=json.loads(source_manifest.read_text(encoding='utf-8'))
+    if args.activate and source_doc.get('metadata',{}).get('runtime_cutover') is not True:
+        raise SystemExit('activation requires source manifest metadata.runtime_cutover=true')
+    if args.activate:
+        missing=[label for label,kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES if not boot_pins(boot,kind)]
+        if missing:
+            raise SystemExit('activation requires non-empty boot authorities: '+','.join(missing))
     doc={
         'manifest_version':2,'release_version':'3.5.0','release_commit':args.release_commit,
         'source_manifest_sha256':sha256(source_manifest),'boot_database_sha256':boot_sha,'schema_version':1,

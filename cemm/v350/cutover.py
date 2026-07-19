@@ -43,6 +43,17 @@ def _boot_pins(path: Path, kind: RecordKind) -> tuple[str, ...]:
     return tuple(f"{ref}@{int(revision)}#{fingerprint}" for ref, revision, fingerprint in rows)
 
 
+REQUIRED_RUNTIME_BOOT_AUTHORITIES: tuple[tuple[str, RecordKind], ...] = (
+    ("response_policy_rules", RecordKind.RESPONSE_POLICY_RULE),
+    ("response_transform_rules", RecordKind.RESPONSE_TRANSFORM_RULE),
+    ("argument_frames", RecordKind.ARGUMENT_FRAME),
+    ("linearization_rules", RecordKind.LINEARIZATION_RULE),
+    ("operation_adapter_contracts", RecordKind.OPERATION_ADAPTER_CONTRACT),
+    ("semantic_analyzer_contracts", RecordKind.SEMANTIC_ANALYZER_CONTRACT),
+    ("channel_adapter_contracts", RecordKind.CHANNEL_ADAPTER_CONTRACT),
+)
+
+
 @dataclass(frozen=True, slots=True)
 class StageAdapterAuthority:
     stage: CoreStage
@@ -200,6 +211,13 @@ class RuntimeAuthorityGuard:
             denylist = self.repo_root / "cemm/data/v350/legacy_authority_denylist.json"
             if not source_manifest.is_file() or _sha256(source_manifest) != m.source_manifest_sha256:
                 errors.append("source manifest fingerprint mismatch")
+            else:
+                try:
+                    source_doc = json.loads(source_manifest.read_text(encoding="utf-8"))
+                    if source_doc.get("metadata", {}).get("runtime_cutover") is not True:
+                        errors.append("source manifest is not runtime_cutover=true")
+                except (OSError, ValueError, TypeError) as exc:
+                    errors.append(f"source manifest is invalid:{exc}")
             if not denylist.is_file() or _sha256(denylist) != m.legacy_denylist_sha256:
                 errors.append("legacy denylist fingerprint mismatch")
 
@@ -224,6 +242,12 @@ class RuntimeAuthorityGuard:
                     continue
                 if tuple(declared) != observed:
                     errors.append(f"signed boot authority mismatch:{label}")
+            for label, kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES:
+                try:
+                    if not _boot_pins(self.boot_database_path, kind):
+                        errors.append(f"missing active boot authority:{label}")
+                except (sqlite3.Error, OSError, ValueError) as exc:
+                    errors.append(f"cannot inspect required boot authority {label}:{exc}")
 
         if not m.verification_report_sha256:
             errors.append("verification report fingerprint is missing")
