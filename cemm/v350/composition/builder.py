@@ -70,6 +70,8 @@ class MeaningFactorGraphBuilder:
         forms = {item.candidate_ref: item for item in lattice.form_candidates}
         senses_by_form: dict[str, list[SenseCandidate]] = defaultdict(list)
         for sense in lattice.sense_candidates:
+            if sense.use_operation != UseOperation.GROUND:
+                continue
             senses_by_form[sense.form_candidate_ref].append(sense)
             evidence.update(sense.evidence_refs)
 

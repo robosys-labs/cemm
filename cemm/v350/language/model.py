@@ -511,6 +511,7 @@ class SenseCandidate:
     target_schema_class: SchemaClass | None
     confidence: float
     evidence_refs: tuple[str, ...]
+    use_operation: UseOperation = UseOperation.GROUND
     scope_behavior: str = "none"
     expected_type_refs: tuple[str, ...] = ()
     lexical_category: str = ""

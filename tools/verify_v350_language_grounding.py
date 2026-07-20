@@ -282,7 +282,10 @@ def _run_grounding(store, cases):
             )
             candidates = GroundingCandidateProvider(store).generate((mention,), allow_provisional=False)
             exact = next((item for item in candidates if item.target_ref == case["schema_ref"]), None)
-            if exact is None or exact.metadata.get("schema_revision") != case["expected_revision"]:
+            expected_revision = case["expected_revision"]
+            if expected_revision == "active":
+                expected_revision = store.repositories.schemas.authoritative(case["schema_ref"]).revision
+            if exact is None or exact.metadata.get("schema_revision") != expected_revision:
                 raise RuntimeError(f"{case['case_ref']}: schema topic revision mismatch")
         elif operation == "claim":
             anchor = DiscourseAnchor(

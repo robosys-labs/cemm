@@ -1,0 +1,61 @@
+{
+  "audit": {
+    "contract_ref": "contract:cemm:v350:language-grounding",
+    "counts_by_kind": {
+      "construction": 21,
+      "evidence": 1,
+      "form_sense_link": 85,
+      "language_form": 75,
+      "language_pack": 3,
+      "lexical_sense": 51
+    },
+    "issues": [],
+    "manifest_fingerprint": "source-manifest:e46844c92f2ce683fbd129d0ec052e8feadb8a6126c841cd34bedb4c1f12f65e",
+    "source_record_fingerprint": "phase7-language-source-records:5a8c724e636c7fa87bd64d04f6bfd0edbd82e77302bada9afb3753390ed69b17",
+    "valid": true
+  },
+  "base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
+  "competence": {
+    "composition": [
+      "competence:phase7:en-coordination",
+      "competence:phase7:fr-coordination",
+      "competence:phase7:sw-coordination",
+      "competence:phase7:en-complement",
+      "competence:phase7:fr-relative",
+      "competence:phase7:sw-relative",
+      "competence:phase7:en-ellipsis",
+      "competence:phase7:fr-claim-frame",
+      "competence:phase7:sw-observe-frame"
+    ],
+    "grounding": [
+      "competence:phase8:self-resolution",
+      "competence:phase8:unknown-provisional-frontier",
+      "competence:phase8:same-name-ambiguity",
+      "competence:phase8:addressee-discourse",
+      "competence:phase8:event-frontier",
+      "competence:phase8:multimodal-system-output",
+      "competence:phase8:schema-topic",
+      "competence:phase8:claim-attribution-no-admission",
+      "competence:phase8:provisional-patch-is-review-only",
+      "competence:phase8:identity-proposals-review-only"
+    ],
+    "multilingual": [
+      "competence:phase7:code-switch-en-fr",
+      "competence:phase7:operator-scope-candidates",
+      "competence:phase7:reversible-colloquial-normalization",
+      "competence:phase7:semantic-equivalence-capability",
+      "competence:phase7:semantic-equivalence-observe"
+    ],
+    "passed": 24
+  },
+  "compilation": {
+    "boot_fingerprint": "boot-database:6b6c549689f573f80cf36f10ba3c14df8b1a170bae42b72d4c89e4a1853ce35a",
+    "byte_deterministic": true,
+    "byte_size": 7856128,
+    "manifest_fingerprint": "source-manifest:e46844c92f2ce683fbd129d0ec052e8feadb8a6126c841cd34bedb4c1f12f65e",
+    "record_count": 1882,
+    "record_set_fingerprint": "compiled-record-set:41e53ee951af38682519c9c7d78c77810c74555f214f8056231667ecc154fd56"
+  },
+  "contract_ref": "contract:cemm:v350:language-grounding",
+  "valid": true
+}

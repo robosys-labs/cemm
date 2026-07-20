@@ -265,6 +265,7 @@ class FormLatticeAnalyzer:
                         *form_candidate.evidence_refs,
                         f"form-sense-link:{link.link_ref}@{link.revision}",
                     ),
+                    use_operation=sense.use_operation,
                     scope_behavior=sense.scope_behavior,
                     expected_type_refs=sense.expected_type_refs,
                     lexical_category=sense.lexical_category,

@@ -25,10 +25,23 @@ from .orchestration import CanonicalOrchestrator, CoreStage, CycleState, StageCa
 from .retrieval import SemanticRetriever
 from .runtime_artifacts import AuthorityPin, CyclePins, FinalizationSummary, RuntimeInput, RuntimeResult, StageReceipt, TextObservation
 from .runtime_graph import build_stage_adapters
-from .schema.model import SchemaClass, UseOperation, semantic_fingerprint
+from .schema.model import SchemaClass, StorageKind, UseOperation, semantic_fingerprint
 from .semantic_commit import SelectedUOLCommitPlanner
-from .storage import EvidenceRecord, RecordKind, SemanticStore, record_fingerprints
+from .storage import (
+    EvidenceRecord,
+    GraphPatch,
+    PatchOperation,
+    PatchOperationKind,
+    RecordDependency,
+    RecordKind,
+    AssertionStatus,
+    ReferentTypeAssertion,
+    SemanticStore,
+    encode_record,
+    record_fingerprints,
+)
 from .transitions.coordinator import TransitionCoordinator
+from .uol.model import IdentityStatus, Referent
 from .version import VERSION
 
 
@@ -959,6 +972,10 @@ class Runtime:
         ]
         evidence_fp = record_fingerprints(RecordKind.EVIDENCE, evidence)[1]
         if existing is None:
+            try:
+                agent_schema = self.store.repositories.schemas.authoritative("type:agent")
+            except KeyError:
+                agent_schema = None
             referent = Referent(
                 referent_ref=participant_ref,
                 storage_kind=StorageKind.ORDINARY,
@@ -991,41 +1008,42 @@ class Runtime:
                     reason="persist session-scoped discourse participant identity",
                 )
             )
-            assertion = ReferentTypeAssertion(
-                assertion_ref="type-assertion:session-agent:"
-                + semantic_fingerprint("session-agent-assertion", participant_ref, 20),
-                referent_ref=participant_ref,
-                type_schema_ref="type:agent",
-                type_revision=1,
-                status=AssertionStatus.SUPPORTED,
-                confidence=1.0,
-                context_ref=context_ref,
-                evidence_refs=(evidence_ref,),
-                source_refs=(source_ref,),
-                permission_ref=permission_ref,
-            )
-            operations.append(
-                PatchOperation(
-                    operation_ref="patch-operation:session-participant:type:"
-                    + semantic_fingerprint("session-participant-type-op", participant_ref, 20),
-                    operation_kind=PatchOperationKind.UPSERT,
-                    record_kind=RecordKind.TYPE_ASSERTION,
-                    target_ref=assertion.assertion_ref,
-                    record_revision=1,
-                    payload=encode_record(RecordKind.TYPE_ASSERTION, assertion),
-                    dependencies=(
-                        RecordDependency(
-                            RecordKind.REFERENT, participant_ref, 1, referent_fp,
-                            "session_participant_referent",
-                        ),
-                        RecordDependency(
-                            RecordKind.EVIDENCE, evidence_ref, 1, evidence_fp,
-                            "session_participant_type_evidence",
-                        ),
-                    ),
-                    reason="assert only the transport-grounded agent role of the session participant",
+            if agent_schema is not None:
+                assertion = ReferentTypeAssertion(
+                    assertion_ref="type-assertion:session-agent:"
+                    + semantic_fingerprint("session-agent-assertion", participant_ref, 20),
+                    referent_ref=participant_ref,
+                    type_schema_ref="type:agent",
+                    type_revision=agent_schema.revision,
+                    status=AssertionStatus.SUPPORTED,
+                    confidence=1.0,
+                    context_ref=context_ref,
+                    evidence_refs=(evidence_ref,),
+                    source_refs=(source_ref,),
+                    permission_ref=permission_ref,
                 )
-            )
+                operations.append(
+                    PatchOperation(
+                        operation_ref="patch-operation:session-participant:type:"
+                        + semantic_fingerprint("session-participant-type-op", participant_ref, 20),
+                        operation_kind=PatchOperationKind.UPSERT,
+                        record_kind=RecordKind.TYPE_ASSERTION,
+                        target_ref=assertion.assertion_ref,
+                        record_revision=1,
+                        payload=encode_record(RecordKind.TYPE_ASSERTION, assertion),
+                        dependencies=(
+                            RecordDependency(
+                                RecordKind.REFERENT, participant_ref, 1, referent_fp,
+                                "session_participant_referent",
+                            ),
+                            RecordDependency(
+                                RecordKind.EVIDENCE, evidence_ref, 1, evidence_fp,
+                                "session_participant_type_evidence",
+                            ),
+                        ),
+                        reason="assert only the transport-grounded agent role of the session participant",
+                    )
+                )
 
         with self.store.snapshot() as snapshot:
             patch = GraphPatch(

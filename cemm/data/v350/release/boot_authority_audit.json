@@ -1,34 +1,29 @@
 {
-  "advertised_realization_languages": [],
-  "boot_sha256": "266f5daa666fd0e083d6c1abe8b1a995cb8fbf53a65a0501b341b3a2a4017963",
+  "advertised_realization_languages": [
+    "en",
+    "fr"
+  ],
+  "boot_sha256": "78f3b6101d1a5b137b77b1be6367a8013101ac69246b68b36f95553902148c09",
   "compiler": {
-    "boot_fingerprint": "boot-database:2d7dfb0d02a748ceb3eba6c1db3a72b3ba5b90269284edc02bb8178e857e2b4f",
-    "byte_size": 3117056,
-    "manifest_fingerprint": "source-manifest:713a078645edcf3aacf070dcaa31c843308299defb6394a742a9441b2e05f403",
-    "record_count": 650,
-    "record_set_fingerprint": "compiled-record-set:fcef5f52903f6ea3466918787d590cceab95b59e56028a3e48446031b015848b"
+    "boot_fingerprint": "boot-database:6b6c549689f573f80cf36f10ba3c14df8b1a170bae42b72d4c89e4a1853ce35a",
+    "byte_size": 7856128,
+    "manifest_fingerprint": "source-manifest:e46844c92f2ce683fbd129d0ec052e8feadb8a6126c841cd34bedb4c1f12f65e",
+    "record_count": 1882,
+    "record_set_fingerprint": "compiled-record-set:41e53ee951af38682519c9c7d78c77810c74555f214f8056231667ecc154fd56"
   },
   "effective_counts": {
-    "argument_frame": 0,
-    "channel_adapter_contract": 0,
-    "linearization_rule": 0,
-    "morphology_rule": 0,
-    "response_policy_rule": 0,
-    "response_transform_rule": 0,
-    "semantic_analyzer_contract": 0
+    "argument_frame": 32,
+    "channel_adapter_contract": 1,
+    "linearization_rule": 32,
+    "morphology_rule": 2,
+    "response_policy_rule": 43,
+    "response_transform_rule": 43,
+    "semantic_analyzer_contract": 1
   },
-  "errors": [
-    "missing_effective_authority:response_policy_rule",
-    "missing_effective_authority:response_transform_rule",
-    "missing_effective_authority:argument_frame",
-    "missing_effective_authority:morphology_rule",
-    "missing_effective_authority:linearization_rule",
-    "missing_effective_authority:semantic_analyzer_contract",
-    "missing_effective_authority:channel_adapter_contract"
-  ],
+  "errors": [],
   "operation_adapter_contract_count": 0,
-  "record_count": 650,
+  "record_count": 1882,
   "sqlite_schema_version": 8,
-  "status": "fail",
+  "status": "pass",
   "warnings": []
 }

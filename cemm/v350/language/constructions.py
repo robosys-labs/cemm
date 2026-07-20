@@ -81,6 +81,8 @@ class ConstructionMatcher:
 
         result: list[ConstructionCandidate] = []
         for construction in self.registry.active_constructions():
+            if construction.metadata.get("interpretation_enabled") is False:
+                continue
             trigger_groups = self._trigger_groups(
                 construction, by_form_ref, by_sense_ref
             )

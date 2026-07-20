@@ -236,7 +236,8 @@ def test_schema_topics_pin_exact_active_schema_revision(store) -> None:
     candidates = GroundingCandidateProvider(store).generate((item,), allow_provisional=False)
     exact = next(candidate for candidate in candidates if candidate.target_ref == "event:observe")
     assert exact.origin == CandidateOrigin.SCHEMA
-    assert exact.metadata == {"schema_revision": 1, "schema_class": "event"}
+    active = store.repositories.schemas.authoritative("event:observe")
+    assert exact.metadata == {"schema_revision": active.revision, "schema_class": "event"}
 
 
 def test_demonstrative_jointly_considers_multimodal_and_system_output_only(grounder) -> None:

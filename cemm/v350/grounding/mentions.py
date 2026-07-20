@@ -10,7 +10,7 @@ import unicodedata
 
 from ..language.model import FormLattice, SenseCandidate, SenseTargetKind, Span
 from ..language.registry import LanguageRegistry
-from ..schema.model import SchemaClass, StorageKind, semantic_fingerprint
+from ..schema.model import SchemaClass, StorageKind, UseOperation, semantic_fingerprint
 from .model import MentionHypothesis, MentionTargetClass
 
 
@@ -37,7 +37,7 @@ class MentionCompiler:
         by_span: dict[tuple[int, int], list[SenseCandidate]] = defaultdict(list)
         for sense in lattice.sense_candidates:
             form = forms.get(sense.form_candidate_ref)
-            if form is None or not self._is_mention_sense(sense):
+            if form is None or sense.use_operation != UseOperation.GROUND or not self._is_mention_sense(sense):
                 continue
             by_span[(form.span.start, form.span.end)].append(sense)
 

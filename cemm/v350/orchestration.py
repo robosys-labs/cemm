@@ -79,6 +79,17 @@ class CycleState:
 
 
 @dataclass(frozen=True, slots=True)
+class SemanticPassSnapshot:
+    pass_ref: str
+    pass_index: int
+    parent_pass_ref: str | None
+    input_payload: Any
+    artifacts: Mapping[str, Any]
+    frontier_refs: tuple[str, ...]
+    trace: tuple[Mapping[str, Any], ...]
+
+
+@dataclass(frozen=True, slots=True)
 class StageOutcome:
     artifacts: Mapping[str, Any] = field(default_factory=dict)
     frontier_refs: tuple[str, ...] = ()

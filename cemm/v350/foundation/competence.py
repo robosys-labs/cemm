@@ -296,6 +296,7 @@ class FoundationCompetenceRunner:
             policies = [
                 schema for schema in registry.iter_schemas()
                 if isinstance(schema, ResponsePolicySchema)
+                and schema.metadata.get("foundation_layer") == "phase6"
             ]
             return {
                 "content_port_ref": act.content_port_ref,

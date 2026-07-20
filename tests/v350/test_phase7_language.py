@@ -168,11 +168,17 @@ def test_manifest_separates_foundation_and_language_authority() -> None:
 
 def test_compiled_language_tables_and_typed_repositories_are_populated(store) -> None:
     repos = store.repositories.language
+    phase7_forms = tuple(item for item in repos.forms.all() if item.payload.metadata.get("phase") == 7)
+    phase7_senses = tuple(item for item in repos.senses.all() if item.payload.metadata.get("phase") == 7)
+    phase7_links = tuple(item for item in repos.links.all() if item.payload.metadata.get("phase") == 7)
+    phase7_constructions = tuple(
+        item for item in repos.constructions.all() if item.payload.metadata.get("phase") == 7
+    )
     assert len(repos.packs.all()) == 3
-    assert len(repos.forms.all()) == 75
-    assert len(repos.senses.all()) == 51
-    assert len(repos.links.all()) == 85
-    assert len(repos.constructions.all()) == 21
+    assert len(phase7_forms) == 75
+    assert len(phase7_senses) == 51
+    assert len(phase7_links) == 85
+    assert len(phase7_constructions) == 21
     assert {item.payload.language_tag for item in repos.packs.all()} == {"en", "fr", "sw"}
 
 
