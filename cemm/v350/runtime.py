@@ -37,6 +37,7 @@ class RuntimeServices:
     """Reviewed/injected capability implementations at non-kernel boundaries."""
 
     syntax_adapters: Any | None = None
+    observation_analyzers: Mapping[str, Any] = field(default_factory=dict)
     operation_gate_evaluators: Mapping[str, Any] = field(default_factory=dict)
     operation_adapters: Mapping[str, Any] = field(default_factory=dict)
     semantic_analyzer: Any | None = None
@@ -44,6 +45,8 @@ class RuntimeServices:
     channel_adapters: Mapping[str, Any] = field(default_factory=dict)
     speaker_ref: str | None = None
     output_commitment_kind_ref: str | None = None
+    permission_evaluator: Any | None = None
+    clock: Any | None = None
 
 
 class StoreSnapshotProvider:
@@ -578,7 +581,13 @@ class CanonicalRuntimeCoordinator:
                 frontiers.append(f"frontier:operation-goal:{goal_ref}:stale")
                 continue
             goal=goal_stored.payload
-            app=self.store.get_record(RecordKind.SEMANTIC_APPLICATION,goal.target_refs[0]) if len(goal.target_refs)==1 else None
+            action_targets = tuple(
+                item.target_ref for item in getattr(goal, "target_bindings", ())
+                if item.role_ref in {"action_application", "execute_target", "application_port"}
+            )
+            if not action_targets and len(goal.target_refs) == 1:
+                action_targets = tuple(goal.target_refs)
+            app=self.store.get_record(RecordKind.SEMANTIC_APPLICATION,next(iter(action_targets))) if len(action_targets)==1 else None
             contracts=[]
             if app is not None:
                 with self.store.snapshot() as snapshot:
@@ -715,7 +724,7 @@ class CanonicalRuntimeCoordinator:
             if item.payload.language_tag==language_tag and item.payload in self.store.repositories.language.registry().active_packs(): pack_stored.append(item)
         if not pack_stored:
             return StageOutcome({"surface_candidate": None, "stage19_receipt": self._receipt(CoreStage.REALIZE_TARGET_LANGUAGE, "deferred", "active_language_pack_missing")},frontier_refs=(f"frontier:realization:language-pack:{language_tag}",))
-        request=RealizationRequestRecord(request_ref="realization-request:"+semantic_fingerprint("realization-request",(response.response_ref,language_tag,cycle.audience_refs),24),response_uol_pin=self._pin(response_stored),language_tag=language_tag,script=None,locale_ref=None,audience_refs=cycle.audience_refs,register_refs=(),language_pack_pins=tuple(self._pin(item) for item in pack_stored),budget_ref="budget:runtime-default",permission_ref=cycle.permission_ref,sensitivity=response.sensitivity)
+        request=RealizationRequestRecord(request_ref="realization-request:"+semantic_fingerprint("realization-request",(response.response_ref,language_tag,cycle.audience_refs),24),response_uol_pin=self._pin(response_stored),language_tag=language_tag,script=None,locale_ref=None,audience_refs=cycle.audience_refs,register_refs=(),language_pack_pins=tuple(self._pin(item) for item in pack_stored),budget_ref="budget:runtime-default",permission_ref=cycle.permission_ref,sensitivity=response.sensitivity,metadata={"speaker_ref":self.services.speaker_ref,"addressee_refs":cycle.audience_refs})
         frames=tuple((self._pin(item),item.payload) for item in self.store.repositories.argument_frames.all(all_revisions=True))
         morph=tuple((self._pin(item),item.payload) for item in self.store.repositories.morphology_rules.all(all_revisions=True))
         linear=tuple((self._pin(item),item.payload) for item in self.store.repositories.linearization_rules.all(all_revisions=True))
@@ -754,7 +763,19 @@ class CanonicalRuntimeCoordinator:
         contracts=[item for item in self.store.repositories.semantic_analyzer_contracts.all() if item.payload.active and item.payload.analyzer_ref==analyzer.analyzer_ref and item.payload.analyzer_revision==analyzer.analyzer_revision and (not item.payload.supported_language_tags or request.language_tag in item.payload.supported_language_tags)]
         if len(contracts)!=1:
             return StageOutcome({"emission": None, "stage20_receipt": self._receipt(CoreStage.VERIFY_AND_AUTHORIZE_EMISSION, "blocked", "semantic_analyzer_contract_not_singular")},frontier_refs=("frontier:emission:semantic-analyzer-contract",))
-        roundtrip=RoundTripVerifier(self.store).verify(self._pin(request_stored),self._pin(candidate_stored),response.graph.record_fingerprint,candidate.surface,request.language_tag,analyzer,self._pin(contracts[0]))
+        roundtrip=RoundTripVerifier(self.store).verify(
+            self._pin(request_stored),
+            self._pin(candidate_stored),
+            response.graph,
+            candidate.surface,
+            request.language_tag,
+            analyzer,
+            self._pin(contracts[0]),
+            context_ref=cycle.context_ref,
+            speaker_ref=self.services.speaker_ref or "referent:self",
+            addressee_refs=tuple(cycle.audience_refs),
+            permission_ref=cycle.permission_ref,
+        )
         RealizationCommitCoordinator(self.store).commit_roundtrip(roundtrip)
         if getattr(roundtrip.decision,"value",roundtrip.decision)!="pass":
             return StageOutcome({"semantic_roundtrip": roundtrip, "emission": None, "stage20_receipt": self._receipt(CoreStage.VERIFY_AND_AUTHORIZE_EMISSION, "blocked", "semantic_roundtrip_failed")},frontier_refs=("frontier:emission:roundtrip-drift",))
@@ -877,6 +898,168 @@ class Runtime:
     def __init__(self, *, store: SemanticStore, orchestrator: CanonicalOrchestrator) -> None:
         self.store=store; self.orchestrator=orchestrator
 
+    def _ensure_session_participant(
+        self,
+        context_ref: str,
+        permission_ref: str,
+        requested_ref: str | None = None,
+    ) -> tuple[str, str]:
+        participant_ref = requested_ref or (
+            "referent:session-participant:"
+            + semantic_fingerprint(
+                "session-participant", (context_ref, permission_ref), 24
+            )
+        )
+        existing = self.store.get_record(RecordKind.REFERENT, participant_ref)
+        if requested_ref is not None and existing is None:
+            raise ValueError(
+                "explicit speaker_ref must resolve to an existing durable referent"
+            )
+        if existing is not None:
+            visible_contexts = set(getattr(existing.payload, "context_refs", ()))
+            if "global" not in visible_contexts and context_ref not in visible_contexts:
+                raise ValueError("speaker referent is not visible in this context")
+
+        source_ref = "source:session-participant:" + semantic_fingerprint(
+            "session-participant-source",
+            (context_ref, participant_ref, permission_ref),
+            24,
+        )
+        evidence_ref = "evidence:session-participant:" + semantic_fingerprint(
+            "session-participant-evidence",
+            (context_ref, participant_ref, permission_ref),
+            24,
+        )
+        evidence = EvidenceRecord(
+            evidence_ref=evidence_ref,
+            source_ref=source_ref,
+            confidence=1.0,
+            lineage_ref=source_ref,
+            context_ref=context_ref,
+            permission_ref=permission_ref,
+            metadata={
+                "identity_criterion": "runtime_session_transport_participant",
+                "global_person_identity_claimed": False,
+            },
+        )
+        if self.store.get_record(RecordKind.EVIDENCE, evidence_ref) is not None:
+            return participant_ref, evidence_ref
+
+        operations = [
+            PatchOperation(
+                operation_ref="patch-operation:session-participant:evidence:"
+                + semantic_fingerprint("session-participant-evidence-op", evidence_ref, 20),
+                operation_kind=PatchOperationKind.UPSERT,
+                record_kind=RecordKind.EVIDENCE,
+                target_ref=evidence_ref,
+                record_revision=1,
+                payload=encode_record(RecordKind.EVIDENCE, evidence),
+                reason="persist session transport participant evidence before Stage 0",
+            )
+        ]
+        evidence_fp = record_fingerprints(RecordKind.EVIDENCE, evidence)[1]
+        if existing is None:
+            referent = Referent(
+                referent_ref=participant_ref,
+                storage_kind=StorageKind.ORDINARY,
+                identity_status=IdentityStatus.RESOLVED,
+                scope_ref=context_ref,
+                context_refs=(context_ref,),
+                provenance_refs=(source_ref, evidence_ref),
+                permission_ref=permission_ref,
+                metadata={
+                    "identity_criterion": "session_scoped_transport_participant",
+                    "global_person_identity_claimed": False,
+                },
+            )
+            referent_fp = record_fingerprints(RecordKind.REFERENT, referent)[1]
+            operations.append(
+                PatchOperation(
+                    operation_ref="patch-operation:session-participant:referent:"
+                    + semantic_fingerprint("session-participant-referent-op", participant_ref, 20),
+                    operation_kind=PatchOperationKind.UPSERT,
+                    record_kind=RecordKind.REFERENT,
+                    target_ref=participant_ref,
+                    record_revision=1,
+                    payload=encode_record(RecordKind.REFERENT, referent),
+                    dependencies=(
+                        RecordDependency(
+                            RecordKind.EVIDENCE, evidence_ref, 1, evidence_fp,
+                            "session_participant_identity_evidence",
+                        ),
+                    ),
+                    reason="persist session-scoped discourse participant identity",
+                )
+            )
+            assertion = ReferentTypeAssertion(
+                assertion_ref="type-assertion:session-agent:"
+                + semantic_fingerprint("session-agent-assertion", participant_ref, 20),
+                referent_ref=participant_ref,
+                type_schema_ref="type:agent",
+                type_revision=1,
+                status=AssertionStatus.SUPPORTED,
+                confidence=1.0,
+                context_ref=context_ref,
+                evidence_refs=(evidence_ref,),
+                source_refs=(source_ref,),
+                permission_ref=permission_ref,
+            )
+            operations.append(
+                PatchOperation(
+                    operation_ref="patch-operation:session-participant:type:"
+                    + semantic_fingerprint("session-participant-type-op", participant_ref, 20),
+                    operation_kind=PatchOperationKind.UPSERT,
+                    record_kind=RecordKind.TYPE_ASSERTION,
+                    target_ref=assertion.assertion_ref,
+                    record_revision=1,
+                    payload=encode_record(RecordKind.TYPE_ASSERTION, assertion),
+                    dependencies=(
+                        RecordDependency(
+                            RecordKind.REFERENT, participant_ref, 1, referent_fp,
+                            "session_participant_referent",
+                        ),
+                        RecordDependency(
+                            RecordKind.EVIDENCE, evidence_ref, 1, evidence_fp,
+                            "session_participant_type_evidence",
+                        ),
+                    ),
+                    reason="assert only the transport-grounded agent role of the session participant",
+                )
+            )
+
+        with self.store.snapshot() as snapshot:
+            patch = GraphPatch(
+                patch_ref="graph-patch:session-participant:"
+                + semantic_fingerprint(
+                    "session-participant-patch",
+                    (participant_ref, evidence_ref, snapshot.fingerprint),
+                    24,
+                ),
+                context_ref=context_ref,
+                scope_ref="runtime:session-participant",
+                source_ref=source_ref,
+                permission_ref=permission_ref,
+                operations=tuple(operations),
+                expected_store_revision=snapshot.store_revision,
+                evidence_refs=(evidence_ref,),
+                validation_requirements=(
+                    "session_participant_is_scope_local",
+                    "no_global_person_identity_invention",
+                ),
+            )
+        result = self.store.apply_patch(patch)
+        if not result.committed:
+            # A concurrent creator is safe only if the same deterministic identity/evidence now exists.
+            if (
+                self.store.get_record(RecordKind.REFERENT, participant_ref) is None
+                or self.store.get_record(RecordKind.EVIDENCE, evidence_ref) is None
+            ):
+                raise RuntimeError(
+                    "session participant initialization failed: "
+                    + "; ".join(result.errors)
+                )
+        return participant_ref, evidence_ref
+
     def run_text(
         self,
         text: str,
@@ -885,6 +1068,7 @@ class Runtime:
         language_hint: str | None = None,
         target_language: str | None = None,
         audience_refs: tuple[str, ...] = (),
+        speaker_ref: str | None = None,
         permission_ref: str = "conversation",
         channel_ref: str = "text",
         emission_idempotency_key: str | None = None,
@@ -896,6 +1080,10 @@ class Runtime:
         # Hints/anchors/tracks are evidence inputs only. Stage 2/3 validate and
         # combine them with reviewed language/schema authority; none route domain
         # semantics directly.
+        resolved_speaker_ref, participant_evidence_ref = self._ensure_session_participant(
+            context_id, permission_ref, speaker_ref
+        )
+        resolved_audience_refs = tuple(audience_refs) or (resolved_speaker_ref,)
         envelope = RuntimeInput(
             content=text,
             language_hints=() if language_hint is None else (language_hint,),
@@ -904,8 +1092,17 @@ class Runtime:
             multimodal_tracks=multimodal_tracks,
             system_output_anchors=system_output_anchors,
             grounding_constraints=grounding_constraints,
+            speaker_ref=resolved_speaker_ref,
+            participant_evidence_refs=(participant_evidence_ref,),
         )
-        cycle=self.orchestrator.run(envelope,context_ref=context_id,permission_ref=permission_ref,audience_refs=audience_refs,target_language=target_language,channel_ref=channel_ref)
+        cycle=self.orchestrator.run(
+            envelope,
+            context_ref=context_id,
+            permission_ref=permission_ref,
+            audience_refs=resolved_audience_refs,
+            target_language=target_language,
+            channel_ref=channel_ref,
+        )
         candidate=cycle.artifacts.get("surface_candidate"); emission=cycle.artifacts.get("emission")
         output_text=candidate.surface if emission is not None and candidate is not None else None
         committed=tuple(cycle.artifacts.get("committed_patch_refs",()))
@@ -920,7 +1117,11 @@ def build_runtime(*, database_path:str=":memory:",boot_database_path:str|Path|No
         raise TypeError("canonical v3.5 runtime requires RuntimeAuthorityGuard")
     authority_guard.require_service_authority()
     store=SemanticStore(database_path,boot_path=boot_database_path)
-    coordinator=CanonicalRuntimeCoordinator(store,services)
+    if services is None:
+        from .runtime_services import build_canonical_runtime_services
+        services=build_canonical_runtime_services(store)
+    from .runtime_hardening import HardenedRuntimeCoordinator
+    coordinator=HardenedRuntimeCoordinator(store,services)
     adapters=build_stage_adapters(coordinator)
     orchestrator=CanonicalOrchestrator(adapters,snapshot_provider=StoreSnapshotProvider(store),authority_guard=authority_guard)
     return Runtime(store=store,orchestrator=orchestrator)

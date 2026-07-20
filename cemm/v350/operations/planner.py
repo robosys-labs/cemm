@@ -51,9 +51,15 @@ class OperationPlanner:
             raise ValueError("OperationPlanner accepts only selected EXECUTE goals")
         if not candidate.authorized:
             raise ValueError("Phase-15 eligibility denied; operation cannot be planned")
-        if len(candidate.target_refs) != 1:
-            raise ValueError("EXECUTE goal requires exactly one target action application")
-        app_stored = self.store.get_record(RecordKind.SEMANTIC_APPLICATION, candidate.target_refs[0])
+        action_targets = tuple(
+            item.target_ref for item in candidate.target_bindings
+            if item.role_ref in {"action_application", "execute_target", "application_port"}
+        )
+        if not action_targets and len(candidate.target_refs) == 1:
+            action_targets = tuple(candidate.target_refs)
+        if len(action_targets) != 1:
+            raise ValueError("EXECUTE goal requires exactly one named target action application")
+        app_stored = self.store.get_record(RecordKind.SEMANTIC_APPLICATION, next(iter(action_targets)))
         if app_stored is None or not isinstance(app_stored.payload, SemanticApplication):
             raise ValueError("EXECUTE goal target must resolve to one SemanticApplication")
         app = app_stored.payload
@@ -129,8 +135,12 @@ class OperationPlanner:
         if pin.record_kind != expected_kind:
             raise ValueError(f"expected {expected_kind.value} pin, got {pin.record_kind.value}")
         stored = self.store.get_record(pin.record_kind, pin.record_ref, pin.revision)
-        if stored is None or stored.record_fingerprint != pin.record_fingerprint:
-            raise ValueError(f"stale exact operation dependency: {pin.key}")
+        if (
+            stored is None
+            or stored.record_fingerprint != pin.record_fingerprint
+            or self.store.is_invalidated(pin.record_kind, pin.record_ref, pin.revision)
+        ):
+            raise ValueError(f"stale/invalidated exact operation dependency: {pin.key}")
         return stored
 
 

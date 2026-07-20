@@ -33,6 +33,8 @@ class RuntimeInput:
     multimodal_tracks: tuple[Any, ...] = ()
     system_output_anchors: tuple[Any, ...] = ()
     grounding_constraints: tuple[Any, ...] = ()
+    speaker_ref: str | None = None
+    participant_evidence_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.content, str):
@@ -41,6 +43,12 @@ class RuntimeInput:
             raise ValueError("language hints must be unique")
         if self.emission_idempotency_key is not None and not self.emission_idempotency_key.strip():
             raise ValueError("emission idempotency key must be non-empty when supplied")
+        if self.speaker_ref is not None and not self.speaker_ref.strip():
+            raise ValueError("speaker_ref must be non-empty when supplied")
+        if len(self.participant_evidence_refs) != len(set(self.participant_evidence_refs)):
+            raise ValueError("participant evidence refs must be unique")
+        if self.speaker_ref is not None and not self.participant_evidence_refs:
+            raise ValueError("speaker_ref requires explicit participant identity evidence")
         for values, attribute, label in (
             (self.discourse_anchors, "anchor_ref", "discourse anchors"),
             (self.multimodal_tracks, "track_ref", "multimodal tracks"),

@@ -43,8 +43,12 @@ class GoalDecisionCoordinator:
                 candidate = candidate_map[ref]
                 for pin in (*candidate.source_pins, *candidate.policy_rule_pins, *candidate.authorization_pins):
                     exact = self.store.get_record(pin.record_kind, pin.record_ref, pin.revision)
-                    if exact is None or exact.record_fingerprint != pin.record_fingerprint:
-                        raise ValueError(f"selected goal authorization/source is stale: {pin.key}")
+                    if (
+                        exact is None
+                        or exact.record_fingerprint != pin.record_fingerprint
+                        or self.store.is_invalidated(pin.record_kind, pin.record_ref, pin.revision)
+                    ):
+                        raise ValueError(f"selected goal authorization/source is stale/invalidated: {pin.key}")
                     if pin.record_kind == RecordKind.RESPONSE_POLICY_RULE:
                         revisions = [item for item in self.store.records(RecordKind.RESPONSE_POLICY_RULE, all_revisions=True)
                                      if item.record_ref == pin.record_ref and getattr(item.payload, "executable", False)]

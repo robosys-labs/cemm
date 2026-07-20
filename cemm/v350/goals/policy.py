@@ -12,7 +12,7 @@ from ..uol.model import CapabilityStatus
 from ..uol.model import ClaimOccurrence, EventOccurrence, FillerRef, SemanticApplication
 from .model import (
     GoalCandidateRecord, GoalConflictRecord, ResponsePolicyRuleRecord, SemanticObligationRecord,
-    TargetSelectorMode,
+    GoalTargetBinding, TargetSelectorMode,
 )
 
 
@@ -55,7 +55,8 @@ class ObligationDeriver:
             support = self.store.get_record(pin.record_kind, pin.record_ref, pin.revision)
             if support is None or support.record_fingerprint != pin.record_fingerprint:
                 raise ValueError("stale supporting pin during obligation derivation")
-        targets = self._targets(stored.payload, rule, supporting_pins)
+        target_bindings = self._target_bindings(stored.payload, rule, supporting_pins)
+        targets = tuple(sorted({item.target_ref for item in target_bindings}))
         if rule.prohibition:
             return None
         if not targets:
@@ -72,33 +73,46 @@ class ObligationDeriver:
             priority=rule.priority, permission_ref=stored.permission_ref or getattr(stored.payload, "permission_ref", "conversation"),
             prerequisite_frontier_refs=frontier_refs, reason_refs=(rule.rule_ref,),
             metadata={"context_ref": stored.context_ref or getattr(stored.payload, "context_ref", "actual"), "conflict_key_refs": rule.conflict_key_refs},
+            target_bindings=target_bindings,
         )
 
     def _targets(self, source: object, rule: ResponsePolicyRuleRecord, supporting_pins: tuple[PinnedRecord, ...] = ()) -> tuple[str, ...]:
+        return tuple(sorted({item.target_ref for item in self._target_bindings(source, rule, supporting_pins)}))
+
+    def _target_bindings(self, source: object, rule: ResponsePolicyRuleRecord, supporting_pins: tuple[PinnedRecord, ...] = ()) -> tuple[GoalTargetBinding, ...]:
         result: list[str] = []
+        bindings: list[GoalTargetBinding] = []
         for selector in rule.target_selectors:
+            role_ref = selector.port_ref or selector.mode.value
             if selector.mode == TargetSelectorMode.SOURCE:
-                result.append(_primary_ref(source))
+                result.append(_primary_ref(source)); bindings.append(GoalTargetBinding(role_ref, result[-1]))
             elif selector.mode == TargetSelectorMode.SOURCE_PROPOSITION:
                 value = getattr(source, "proposition_ref", None)
                 if value:
-                    result.append(str(value))
+                    result.append(str(value)); bindings.append(GoalTargetBinding(role_ref, str(value)))
             elif selector.mode == TargetSelectorMode.FRONTIER_TARGET and isinstance(source, LearningFrontierRecord):
                 if source.target_ref:
-                    result.append(source.target_ref)
+                    result.append(source.target_ref); bindings.append(GoalTargetBinding(role_ref, source.target_ref))
             elif selector.mode == TargetSelectorMode.SIGNIFICANCE_STAKEHOLDER and isinstance(source, SignificanceAssessmentRecord):
-                result.append(source.impact.stakeholder_ref)
+                result.append(source.impact.stakeholder_ref); bindings.append(GoalTargetBinding(role_ref, source.impact.stakeholder_ref))
             elif selector.mode == TargetSelectorMode.SIGNIFICANCE_AFFECTED and isinstance(source, SignificanceAssessmentRecord):
-                result.append(source.impact.affected_ref)
+                result.append(source.impact.affected_ref); bindings.append(GoalTargetBinding(role_ref, source.impact.affected_ref))
             elif selector.mode == TargetSelectorMode.APPLICATION_PORT:
                 app = _application(source, self.store, supporting_pins)
                 if app is not None:
                     for binding in app.bindings:
                         if binding.port_ref == selector.port_ref:
-                            result.extend(f.ref for f in binding.fillers if isinstance(f, FillerRef))
+                            for filler in binding.fillers:
+                                if isinstance(filler, FillerRef):
+                                    result.append(filler.ref); bindings.append(GoalTargetBinding(role_ref, filler.ref))
             elif selector.mode == TargetSelectorMode.FIXED and selector.fixed_ref:
-                result.append(selector.fixed_ref)
-        return tuple(sorted(set(filter(None, result))))
+                result.append(selector.fixed_ref); bindings.append(GoalTargetBinding(role_ref, selector.fixed_ref))
+        unique = {
+            (item.role_ref, item.target_ref): item
+            for item in bindings
+            if item.target_ref
+        }
+        return tuple(unique[key] for key in sorted(unique))
 
 
 class GoalAuthorizationGate:
@@ -232,6 +246,7 @@ def build_candidate(obligation: SemanticObligationRecord, *, utility_score: floa
         importance_refs=obligation.importance_refs, reason_refs=obligation.reason_refs, proof_refs=obligation.proof_refs,
         permission_ref=obligation.permission_ref, sensitivity=obligation.sensitivity, priority=obligation.priority,
         utility_score=utility_score, metadata={**dict(obligation.metadata), **dict(metadata or {})},
+        target_bindings=obligation.target_bindings,
     )
 
 

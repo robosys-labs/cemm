@@ -564,6 +564,18 @@ DDL: tuple[str, ...] = (
     "CREATE INDEX IF NOT EXISTS dependencies_reverse_idx ON dependencies(prerequisite_ref, active, dependent_kind)",
     "CREATE INDEX IF NOT EXISTS dependencies_forward_idx ON dependencies(dependent_kind, dependent_ref, dependent_revision, active)",
     """
+    CREATE TABLE IF NOT EXISTS record_invalidations (
+        record_kind TEXT NOT NULL,
+        record_ref TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        invalidated_by_ref TEXT NOT NULL,
+        store_revision INTEGER NOT NULL,
+        reason TEXT NOT NULL,
+        PRIMARY KEY(record_kind, record_ref, revision, invalidated_by_ref)
+    ) WITHOUT ROWID
+    """,
+    "CREATE INDEX IF NOT EXISTS record_invalidations_lookup_idx ON record_invalidations(record_kind, record_ref, revision, store_revision DESC)",
+    """
     CREATE TABLE IF NOT EXISTS materialized_views (
         view_ref TEXT PRIMARY KEY,
         view_kind TEXT NOT NULL,

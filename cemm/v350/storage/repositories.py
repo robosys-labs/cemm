@@ -107,12 +107,21 @@ class TypedRepository(Generic[T]):
         *,
         all_revisions: bool = False,
         snapshot: StoreSnapshot | None = None,
+        include_invalidated: bool = False,
     ) -> tuple[StoredRecord[T], ...]:
         result = self._store.records(
             self.record_kind,
             all_revisions=all_revisions,
             snapshot=snapshot,
         )
+        if not include_invalidated:
+            result = tuple(
+                item
+                for item in result
+                if not self._store.is_invalidated(
+                    item.record_kind, item.record_ref, item.revision
+                )
+            )
         for item in result:
             if not isinstance(item.payload, self.expected_type):
                 raise TypeError(

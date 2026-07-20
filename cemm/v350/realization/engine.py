@@ -9,7 +9,8 @@ from ..response.model import ResponseUOLRecord
 from ..schema.model import PortFillerClass,UseOperation,semantic_fingerprint
 from ..storage.codec import record_fingerprints
 from ..storage.model import RecordKind
-from ..uol.model import CoordinationGroup,FillerRef,SemanticApplication
+from ..uol.equivalence import compare_uol_graphs
+from ..uol.model import CoordinationGroup,FillerRef,SemanticApplication,UOLGraph
 from .authority import LanguageUseAuthority
 from ..language.model import ConstructionKind,ConstructionRecord
 from .model import (ArgumentFrameRecord,DeepClausePlanRecord,LinearizationRuleRecord,MorphologyOperation,MorphologyRuleRecord,RealizationRequestRecord,ReferencePlanRecord,RoundTripDecision,SemanticAnalyzerContractRecord,SemanticRoundTripRecord,SurfaceCandidateRecord)
@@ -241,7 +242,7 @@ class RealizationCompiler:
   authorized_linear=[]
   for p,r in linearization_rules:
    stored=self._exact(p,RecordKind.LINEARIZATION_RULE)
-   if stored.payload==r and (r.pack_ref,r.pack_revision) in allowed_packs and stored.permission_ref in {None,'public',request.permission_ref} and self.authority.authorized(stored,UseOperation.REALIZE):authorized_linear.append((p,r))
+   if stored.payload==r and (r.pack_ref,r.pack_revision) in allowed_packs and self.permissions.can_read(stored.permission_ref or getattr(stored.payload,'permission_ref',None),request.permission_ref) and self.authority.authorized(stored,UseOperation.REALIZE):authorized_linear.append((p,r))
   request_pin=PinnedRecord(RecordKind.REALIZATION_REQUEST,request.request_ref,1,record_fingerprints(RecordKind.REALIZATION_REQUEST,request)[1])
   clauses=self.clauses.plan(request_pin,response,tuple(authorized_frames));clause_by_app={c.response_application_ref:c for c in clauses}
   all_tokens=[];clause_surfaces=[];lex_pins=[];morph_pins=[];ref_pins=[];reference_plans=[];lin_pins=[];frame_pins=[];rendered={};rendering=set()
@@ -331,11 +332,11 @@ class RealizationCompiler:
 
 class SemanticAnalyzer(Protocol):
  analyzer_ref:str;analyzer_revision:str
- def recover_graph_fingerprint(self,surface:str,language_tag:str)->tuple[str,tuple[str,...],tuple[str,...],tuple[str,...],tuple[str,...]]:...
+ def recover_graph(self,surface:str,language_tag:str,*,context_ref:str,speaker_ref:str,addressee_refs:tuple[str,...],permission_ref:str)->tuple[UOLGraph,tuple[str,...]]:...
 
 class RoundTripVerifier:
  def __init__(self,store):self.store=store
- def verify(self,request_pin:PinnedRecord,candidate_pin:PinnedRecord,expected_graph_fingerprint:str,surface:str,language_tag:str,analyzer:SemanticAnalyzer,analyzer_contract_pin:PinnedRecord):
+ def verify(self,request_pin:PinnedRecord,candidate_pin:PinnedRecord,expected_graph:UOLGraph,surface:str,language_tag:str,analyzer:SemanticAnalyzer,analyzer_contract_pin:PinnedRecord,*,context_ref:str,speaker_ref:str,addressee_refs:tuple[str,...],permission_ref:str):
   contract_stored=self.store.get_record(analyzer_contract_pin.record_kind,analyzer_contract_pin.record_ref,analyzer_contract_pin.revision)
   if contract_stored is None or contract_stored.record_fingerprint!=analyzer_contract_pin.record_fingerprint:raise ValueError('stale/missing semantic analyzer contract')
   contract=contract_stored.payload
@@ -346,6 +347,10 @@ class RoundTripVerifier:
   if len(effective)!=1 or effective[0].revision!=contract.revision:raise ValueError('semantic analyzer contract is not singular effective authority')
   if contract.analyzer_ref!=analyzer.analyzer_ref or contract.analyzer_revision!=analyzer.analyzer_revision:raise ValueError('runtime analyzer identity differs from reviewed contract')
   if contract.supported_language_tags and language_tag not in contract.supported_language_tags:raise ValueError('semantic analyzer contract does not cover requested language')
-  recovered,additions,losses,drift,proofs=analyzer.recover_graph_fingerprint(surface,language_tag)
-  decision=RoundTripDecision.PASS if recovered==expected_graph_fingerprint and not additions and not losses and not drift else RoundTripDecision.FAIL
-  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected_graph_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected_graph_fingerprint,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=tuple(drift),proof_refs=tuple(proofs))
+  recovered_graph,proofs=analyzer.recover_graph(surface,language_tag,context_ref=context_ref,speaker_ref=speaker_ref,addressee_refs=tuple(addressee_refs),permission_ref=permission_ref)
+  assessment=compare_uol_graphs(expected_graph,recovered_graph)
+  decision=RoundTripDecision.PASS if assessment.equivalent else RoundTripDecision.FAIL
+  additions=() if assessment.equivalent or assessment.right_node_count<=assessment.left_node_count else (f"node_count:{assessment.right_node_count-assessment.left_node_count}",)
+  losses=() if assessment.equivalent or assessment.left_node_count<=assessment.right_node_count else (f"node_count:{assessment.left_node_count-assessment.right_node_count}",)
+  drift=tuple(assessment.reasons)
+  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,assessment.right_fingerprint,assessment.left_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=assessment.right_fingerprint,expected_graph_fingerprint=assessment.left_fingerprint,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=drift,proof_refs=tuple(proofs))

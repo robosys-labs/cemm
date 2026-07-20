@@ -275,11 +275,25 @@ class SignificanceEngine:
                 assessment_ref = "significance:" + semantic_fingerprint(
                     "significance-ref", (impact_ref, None if importance is None else importance.assessment_ref), 24
                 )
+                support_weight = sum(
+                    item.weight for item in relevant
+                    if item.polarity == ImportanceEvidencePolarity.SUPPORT
+                )
+                opposition_weight = sum(
+                    item.weight for item in relevant
+                    if item.polarity == ImportanceEvidencePolarity.OPPOSE
+                )
                 results.append((proof, SignificanceAssessmentRecord(
                     assessment_ref=assessment_ref, source_pin=source_pin, rule_pin=rule_pin, proof_ref=proof_ref,
                     impact=impact, importance=importance,
                     importance_evidence_refs=tuple(sorted(item.evidence_ref for item in relevant)),
                     importance_policy_pin=importance_policy_pin, frontier_refs=(), context_ref=source.context_ref,
                     permission_ref=source.permission_ref,
+                    metadata={
+                        "importance_support_weight": support_weight,
+                        "importance_opposition_weight": opposition_weight,
+                        "importance_contradicted": bool(support_weight > 0.0 and opposition_weight > 0.0),
+                        "importance_projection_is_not_sole_semantic_authority": True,
+                    },
                 )))
         return tuple(results), tuple(frontiers)

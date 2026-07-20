@@ -1,7 +1,7 @@
 """Runtime-authority manifest and fail-closed cutover guard for CEMM v3.5."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import importlib
 import importlib.util
@@ -91,6 +91,14 @@ class RuntimeAuthorityManifest:
     verification_report_sha256: str
     activation_ready: bool
     metadata: Mapping[str, Any]
+    argument_frames: tuple[str, ...] = ()
+    morphology_rules: tuple[str, ...] = ()
+    linearization_rules: tuple[str, ...] = ()
+    runtime_service_bindings: tuple[Mapping[str, Any], ...] = ()
+    release_capabilities: Mapping[str, Any] = field(default_factory=dict)
+    realization_language_tags: tuple[str, ...] = ()
+    output_speaker_ref: str | None = None
+    output_commitment_kind_ref: str | None = None
 
     @classmethod
     def load(cls, path: str | Path) -> "RuntimeAuthorityManifest":
@@ -122,6 +130,17 @@ class RuntimeAuthorityManifest:
             migration_modules_allowed_at_runtime=tuple(map(str, doc.get("migration_modules_allowed_at_runtime", ()))),
             legacy_denylist_sha256=str(doc["legacy_denylist_sha256"]), verification_report_sha256=str(doc.get("verification_report_sha256", "")),
             activation_ready=bool(doc.get("activation_ready", False)), metadata=dict(doc.get("metadata", {})),
+            argument_frames=tuple(map(str, doc.get("argument_frames", ()))),
+            morphology_rules=tuple(map(str, doc.get("morphology_rules", ()))),
+            linearization_rules=tuple(map(str, doc.get("linearization_rules", ()))),
+            runtime_service_bindings=tuple(
+                dict(item) for item in doc.get("runtime_service_bindings", ())
+                if isinstance(item, Mapping)
+            ),
+            release_capabilities=dict(doc.get("release_capabilities", {})),
+            realization_language_tags=tuple(map(str, doc.get("realization_language_tags", ()))),
+            output_speaker_ref=None if doc.get("output_speaker_ref") is None else str(doc.get("output_speaker_ref")),
+            output_commitment_kind_ref=None if doc.get("output_commitment_kind_ref") is None else str(doc.get("output_commitment_kind_ref")),
         )
 
 
@@ -174,6 +193,53 @@ class RuntimeAuthorityGuard:
             errors.append("manifest record-kind authority differs from v3.5 RecordKind contract")
         if m.migration_modules_allowed_at_runtime:
             errors.append("runtime manifest allows migration modules")
+        service_kinds = {
+            str(item.get("service_kind", ""))
+            for item in m.runtime_service_bindings
+        }
+        for item in m.runtime_service_bindings:
+            class_path = str(item.get("class_path", ""))
+            source_sha = str(item.get("source_sha256", ""))
+            if not item.get("implementation_ref") or not re.fullmatch(r"[0-9a-f]{64}", source_sha):
+                errors.append("runtime service binding lacks exact implementation/source authority")
+                continue
+            module_name, sep, symbol = class_path.partition(":")
+            if not sep or not module_name or not symbol:
+                errors.append(f"runtime service binding has invalid class path:{class_path}")
+                continue
+            try:
+                module = importlib.import_module(module_name)
+                cls = getattr(module, symbol)
+                source_path = inspect.getsourcefile(cls)
+                if not source_path or not Path(source_path).is_file() or _sha256(Path(source_path)) != source_sha:
+                    errors.append(f"runtime service source fingerprint mismatch:{class_path}")
+            except Exception as exc:
+                errors.append(f"runtime service binding cannot resolve:{class_path}:{exc}")
+        required_services = {"clock"}
+        if m.release_capabilities.get("text_emission") is True:
+            required_services.update({"semantic_analyzer", "channel_adapter", "emission_gate_evaluator"})
+        if m.release_capabilities.get("epistemic_admission") is True:
+            required_services.add("epistemic_policy_provider")
+        if m.release_capabilities.get("generic_inference") is True:
+            required_services.add("inference_engine")
+        for required_service in sorted(required_services):
+            if required_service not in service_kinds:
+                errors.append(f"missing signed runtime service binding:{required_service}")
+        realization_languages = set(map(str, m.release_capabilities.get("realization_languages", ())))
+        if m.activation_ready and not {"en", "fr", "sw"}.issubset(realization_languages):
+            errors.append("activation does not prove reviewed en/fr/sw realization")
+        if m.release_capabilities.get("external_operations") and not m.operation_adapter_contracts:
+            errors.append("advertised external operations lack signed adapter contracts")
+        if m.activation_ready:
+            if not {"en", "fr", "sw"}.issubset(set(m.realization_language_tags)):
+                errors.append("activated boot does not contain en/fr/sw language packs")
+            if m.release_capabilities.get("output_discourse") is True:
+                if not m.output_speaker_ref or not m.output_commitment_kind_ref:
+                    errors.append("activated output discourse lacks signed speaker/commitment authority")
+                elif self.boot_database_path is not None:
+                    speaker_pins = _boot_pins(self.boot_database_path, RecordKind.REFERENT)
+                    if not any(pin.startswith(f"{m.output_speaker_ref}@") for pin in speaker_pins):
+                        errors.append("signed output speaker is absent from boot DB")
         missing_forbidden = [p for p in self.REQUIRED_FORBIDDEN_PREFIXES if p not in m.forbidden_runtime_import_prefixes]
         if missing_forbidden:
             errors.append("runtime manifest omits legacy forbidden prefixes:" + ",".join(missing_forbidden))

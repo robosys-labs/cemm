@@ -190,6 +190,19 @@ class EmissionGate:
         reconciliation_by_result={(r.result_pin.key,r.result_pin.record_fingerprint) for r in reconciliations}
         expected_reconciled={(p.key,p.record_fingerprint) for p,result in zip(result_pins,results) if result.status!=OperationResultStatus.UNKNOWN}
         ok=ok and reconciliation_by_result==expected_reconciled
+        # Non-UNKNOWN operation results need semantic re-entry substrate, not only
+        # adapter reports, before they can support surface emission.
+        for reconciliation in reconciliations:
+            matching=next(
+                (
+                    result
+                    for pin_value,result in zip(result_pins,results)
+                    if pin_value.record_ref==reconciliation.result_pin.record_ref
+                ),
+                None,
+            )
+            if matching is not None and matching.status!=OperationResultStatus.UNKNOWN:
+                ok=ok and bool(reconciliation.observed_pins)
         # No unrelated reconciliation may be attached to this emission authorization.
         ok=ok and all(r.result_pin.record_ref in {p.record_ref for p in result_pins} for r in reconciliations)
         checked=tuple((*reported,*reconciliation_pins)) or (response.goal_decision_pin,)

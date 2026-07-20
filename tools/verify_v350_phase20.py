@@ -22,7 +22,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES, RuntimeAuthorityGuard, RuntimeAuthorityManifest
 from cemm.v350.orchestration import CoreStage
-from cemm.v350.runtime import CanonicalRuntimeCoordinator
+from cemm.v350.runtime_hardening import HardenedRuntimeCoordinator
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
 from cemm.v350.storage import RecordKind
 
@@ -97,7 +97,7 @@ def main() -> int:
             if inspect.isabstract(cls): errors.append(f"abstract stage adapter:{descriptor.stage.name}")
             if getattr(cls,"HANDLER",None)!=descriptor.handler_name:
                 errors.append(f"adapter handler mismatch:{descriptor.stage.name}")
-            handler=getattr(CanonicalRuntimeCoordinator,descriptor.handler_name,None)
+            handler=getattr(HardenedRuntimeCoordinator,descriptor.handler_name,None)
             if handler is None or not callable(handler): errors.append(f"missing concrete runtime handler:{descriptor.stage.name}")
             source=inspect.getsource(cls).lower()
             if any(token in source for token in ("notimplementederror","todo: dummy","placeholder adapter","pass-through adapter")):
@@ -138,10 +138,29 @@ def main() -> int:
                 else:
                     for label, kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES:
                         pins=doc.get(label, ())
-                        if label in {"response_policy_rules", "response_transform_rules", "argument_frames", "linearization_rules"}:
-                            continue
                         if not pins:
                             errors.append(f"activated runtime manifest has no {label}")
+                    capabilities=dict(doc.get("release_capabilities", {}))
+                    required_true=(
+                        "epistemic_admission","generic_inference","transitions",
+                        "significance","response_policy","text_emission","output_discourse",
+                    )
+                    for key in required_true:
+                        if capabilities.get(key) is not True:
+                            errors.append(f"activated runtime lacks release capability:{key}")
+                    service_kinds={
+                        str(item.get("service_kind",""))
+                        for item in doc.get("runtime_service_bindings",())
+                        if isinstance(item,dict)
+                    }
+                    required_services={"clock","semantic_analyzer","channel_adapter","emission_gate_evaluator"}
+                    if capabilities.get("epistemic_admission") is True:
+                        required_services.add("epistemic_policy_provider")
+                    if capabilities.get("generic_inference") is True:
+                        required_services.add("inference_engine")
+                    for item in sorted(required_services):
+                        if item not in service_kinds:
+                            errors.append(f"activated runtime lacks signed service:{item}")
                     manifest=RuntimeAuthorityManifest.load(manifest_path)
                     guard=RuntimeAuthorityGuard(manifest,repo_root=root,boot_database_path=args.boot_db.resolve(),verification_report_path=args.verification_report.resolve())
                     guard.require_service_authority()
@@ -171,6 +190,17 @@ def main() -> int:
 
     for rel in ("cemm/migration/__init__.py","cemm/migration/v347.py"):
         if (root/rel).exists(): errors.append(f"legacy public migration shim still exists:{rel}")
+
+    hardened_source=inspect.getsource(HardenedRuntimeCoordinator)
+    if "request_goal_refresh=True" in hardened_source:
+        errors.append("hardened runtime contains forbidden direct Stage-17 -> Stage-15 refresh")
+    if "SemanticReentryRequest" not in hardened_source:
+        errors.append("hardened runtime lacks bounded semantic re-entry")
+    if "StructuredObservationAnalysis" not in hardened_source:
+        errors.append("operation/tool observations cannot re-enter through reviewed semantic analysis")
+    planner_source=(root/"cemm/v350/response/planner.py").read_text(encoding="utf-8")
+    if planner_source.count("class ResponseAuthorizationGate")!=1:
+        errors.append("response layer must have exactly one ResponseAuthorizationGate")
 
     if set(RuntimeAuthorityManifest.__dataclass_fields__) and not {item.value for item in RecordKind}:
         errors.append("RecordKind contract unexpectedly empty")

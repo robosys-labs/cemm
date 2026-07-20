@@ -30,12 +30,15 @@ class ResponseBindingSelector:
     source_port_ref: str|None=None
     fixed_ref: str|None=None
     target_index: int|None=None
+    target_port_ref: str|None=None
     def __post_init__(self):
         _ref(self.output_port_ref,"response output port")
         if self.mode==ResponseSelectorMode.SOURCE_FIELD and not self.source_field: raise ValueError("SOURCE_FIELD requires source_field")
         if self.mode==ResponseSelectorMode.APPLICATION_PORT and not self.source_port_ref: raise ValueError("APPLICATION_PORT requires source_port_ref")
         if self.mode==ResponseSelectorMode.FIXED and not self.fixed_ref: raise ValueError("FIXED requires fixed_ref")
-        if self.mode==ResponseSelectorMode.TARGET and (self.target_index is None or self.target_index<0): raise ValueError("TARGET requires non-negative target_index")
+        if self.mode==ResponseSelectorMode.TARGET:
+            if self.target_port_ref is None and (self.target_index is None or self.target_index<0): raise ValueError("TARGET requires target_port_ref or legacy non-negative target_index")
+            if self.target_port_ref is not None and not self.target_port_ref.strip(): raise ValueError("TARGET target_port_ref cannot be blank")
 
 
 @dataclass(frozen=True,slots=True)

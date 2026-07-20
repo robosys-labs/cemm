@@ -8,7 +8,7 @@ from ..schema.model import SchemaLifecycleStatus, UseDecision, UseOperation, can
 from ..storage.model import RecordKind
 from .model import (
     GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord,
-    SemanticObligationRecord, TargetSelector, TargetSelectorMode,
+    GoalTargetBinding, SemanticObligationRecord, TargetSelector, TargetSelectorMode,
 )
 
 
@@ -48,6 +48,10 @@ def semantic_obligation_from_document(value: Mapping[str, Any]) -> SemanticOblig
         prerequisite_frontier_refs=tuple(map(str, d.get("prerequisite_frontier_refs", ()))), impact_refs=tuple(map(str, d.get("impact_refs", ()))),
         importance_refs=tuple(map(str, d.get("importance_refs", ()))), reason_refs=tuple(map(str, d.get("reason_refs", ()))),
         proof_refs=tuple(map(str, d.get("proof_refs", ()))), revision=int(d.get("revision", 1)), metadata=dict(d.get("metadata", {})),
+        target_bindings=tuple(
+            GoalTargetBinding(str(x["role_ref"]), str(x["target_ref"]))
+            for x in d.get("target_bindings", ())
+        ),
     )
 
 
@@ -64,6 +68,10 @@ def goal_candidate_from_document(value: Mapping[str, Any]) -> GoalCandidateRecor
         reason_refs=tuple(map(str, d.get("reason_refs", ()))), proof_refs=tuple(map(str, d.get("proof_refs", ()))), permission_ref=str(d.get("permission_ref", "conversation")),
         sensitivity=str(d.get("sensitivity", "normal")), authorized=bool(d.get("authorized", False)), denial_reasons=tuple(map(str, d.get("denial_reasons", ()))),
         priority=int(d.get("priority", 0)), utility_score=float(d.get("utility_score", 0.0)), revision=int(d.get("revision", 1)), metadata=dict(d.get("metadata", {})),
+        target_bindings=tuple(
+            GoalTargetBinding(str(x["role_ref"]), str(x["target_ref"]))
+            for x in d.get("target_bindings", ())
+        ),
     )
 
 

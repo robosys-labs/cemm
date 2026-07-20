@@ -33,6 +33,16 @@ class GoalDisposition(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class GoalTargetBinding:
+    role_ref: str
+    target_ref: str
+
+    def __post_init__(self) -> None:
+        _ref(self.role_ref, "goal target role_ref")
+        _ref(self.target_ref, "goal target target_ref")
+
+
+@dataclass(frozen=True, slots=True)
 class TargetSelector:
     mode: TargetSelectorMode
     port_ref: str | None = None
@@ -116,6 +126,7 @@ class SemanticObligationRecord:
     proof_refs: tuple[str, ...] = ()
     revision: int = 1
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    target_bindings: tuple[GoalTargetBinding, ...] = ()
 
     def __post_init__(self) -> None:
         for value, label in (
@@ -141,6 +152,7 @@ class SemanticObligationRecord:
             (self.importance_refs, "obligation importance refs"),
             (self.reason_refs, "obligation reasons"),
             (self.proof_refs, "obligation proofs"),
+            (tuple((item.role_ref, item.target_ref) for item in self.target_bindings), "obligation target bindings"),
         ):
             _unique(values, label)
 
@@ -171,6 +183,7 @@ class GoalCandidateRecord:
     utility_score: float = 0.0
     revision: int = 1
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    target_bindings: tuple[GoalTargetBinding, ...] = ()
 
     def __post_init__(self) -> None:
         for value, label in (
@@ -204,6 +217,7 @@ class GoalCandidateRecord:
             (self.reason_refs, "goal reasons"),
             (self.proof_refs, "goal proofs"),
             (self.denial_reasons, "goal denial reasons"),
+            (tuple((item.role_ref, item.target_ref) for item in self.target_bindings), "goal target bindings"),
         ):
             _unique(values, label)
 

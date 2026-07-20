@@ -34,6 +34,11 @@ class Runtime:
             verification_report_path=report_path,
         )
         factory=guard.load_runtime_factory()
+        if "services" in kwargs:
+            raise ValueError(
+                "public v3.5 runtime forbids arbitrary service injection; "
+                "runtime services come from the signed canonical composition root"
+            )
         runtime=factory(*args,authority_guard=guard,boot_database_path=boot_path,**kwargs)
         if runtime is self or not hasattr(runtime,'run_text') or not hasattr(runtime,'close'):
             raise TypeError('canonical runtime factory must return run_text()/close() runtime')

@@ -237,6 +237,21 @@ class SemanticStore:
     ) -> StoredRecord[Any] | None:
         self.assert_snapshot(snapshot)
         resolved = record_kind if isinstance(record_kind, RecordKind) else RecordKind(record_kind)
+        if revision is not None:
+            best: StoredRecord[Any] | None = None
+            for connection, layer in ((self._boot, "boot"), (self._overlay, "overlay")):
+                if connection is None:
+                    continue
+                row = connection.execute(
+                    "SELECT * FROM record_index WHERE record_kind=? AND record_ref=? AND revision=?",
+                    (resolved.value, record_ref, revision),
+                ).fetchone()
+                if row is None:
+                    continue
+                item = self._row_to_stored(row, resolved, layer)
+                if not _tombstoned(self._tombstones(resolved), item.record_ref, item.revision):
+                    best = item
+            return best
         candidates = [
             item
             for item in self.records(resolved, all_revisions=True, snapshot=snapshot)
@@ -284,6 +299,11 @@ class SemanticStore:
             current = latest.get(item.record_ref)
             if current is None or item.revision > current.revision:
                 latest[item.record_ref] = item
+        latest = {
+            ref: item
+            for ref, item in latest.items()
+            if not self.is_invalidated(item.record_kind, item.record_ref, item.revision)
+        }
         result = tuple(latest[key] for key in sorted(latest))
         self._records_cache[cache_key] = result
         return result
@@ -296,6 +316,88 @@ class SemanticStore:
             item = self.get_record(kind, record_ref, snapshot=snapshot)
             if item is not None:
                 result.append(item)
+        return tuple(result)
+
+    def is_invalidated(
+        self,
+        record_kind: RecordKind | str,
+        record_ref: str,
+        revision: int,
+        *,
+        snapshot: StoreSnapshot | None = None,
+    ) -> bool:
+        self.assert_snapshot(snapshot)
+        resolved = record_kind if isinstance(record_kind, RecordKind) else RecordKind(record_kind)
+        row = self._overlay.execute(
+            "SELECT 1 FROM record_invalidations WHERE record_kind=? AND record_ref=? AND revision=? LIMIT 1",
+            (resolved.value, record_ref, int(revision)),
+        ).fetchone()
+        return row is not None
+
+    def knowledge_records_for_proposition(
+        self, proposition_ref: str, *, context_ref: str, snapshot: StoreSnapshot | None = None
+    ) -> tuple[StoredRecord[Any], ...]:
+        """Indexed current knowledge rows for one proposition/context.
+
+        This intentionally returns durable records so callers can retain exact
+        fingerprints and invalidation lineage instead of re-querying by payload.
+        """
+        self.assert_snapshot(snapshot)
+        refs: set[str] = set()
+        for connection in (self._boot, self._overlay):
+            if connection is None:
+                continue
+            rows = connection.execute(
+                "SELECT knowledge_ref FROM knowledge_records "
+                "WHERE proposition_ref=? AND context_ref IN ('global', ?)",
+                (proposition_ref, context_ref),
+            ).fetchall()
+            refs.update(str(row[0]) for row in rows)
+        result = []
+        for ref in sorted(refs):
+            stored = self.get_record(RecordKind.KNOWLEDGE, ref, snapshot=snapshot)
+            if stored is not None and not self.is_invalidated(
+                stored.record_kind, stored.record_ref, stored.revision
+            ):
+                result.append(stored)
+        return tuple(result)
+
+    def capability_records_for(
+        self,
+        *,
+        holder_ref: str,
+        action_schema_ref: str,
+        action_schema_revision: int,
+        context_ref: str,
+        status: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> tuple[StoredRecord[Any], ...]:
+        """Indexed current capability rows for exact holder/action/context."""
+        self.assert_snapshot(snapshot)
+        refs: set[str] = set()
+        for connection in (self._boot, self._overlay):
+            if connection is None:
+                continue
+            sql = (
+                "SELECT capability_ref FROM capability_instances "
+                "WHERE holder_ref=? AND action_schema_ref=? AND action_schema_revision=? "
+                "AND context_ref IN ('global', ?)"
+            )
+            params: tuple[object, ...] = (
+                holder_ref, action_schema_ref, action_schema_revision, context_ref
+            )
+            if status is not None:
+                sql += " AND status=?"
+                params = (*params, status)
+            rows = connection.execute(sql, params).fetchall()
+            refs.update(str(row[0]) for row in rows)
+        result = []
+        for ref in sorted(refs):
+            stored = self.get_record(RecordKind.CAPABILITY_INSTANCE, ref, snapshot=snapshot)
+            if stored is not None and not self.is_invalidated(
+                stored.record_kind, stored.record_ref, stored.revision
+            ):
+                result.append(stored)
         return tuple(result)
 
     def apply_patch(self, patch: GraphPatch) -> PatchCommitResult:
@@ -346,10 +448,14 @@ class SemanticStore:
                 )
                 after = before + 1
                 changed_refs: set[str] = set()
+                changed_keys: set[tuple[RecordKind, str]] = set()
+                written_identities: set[tuple[RecordKind, str, int]] = set()
                 applied: list[str] = []
                 for item in prepared:
                     operation = item.operation
                     changed_refs.add(operation.target_ref)
+                    changed_keys.add((operation.record_kind, operation.target_ref))
+                    written_identities.add((operation.record_kind, operation.target_ref, operation.record_revision))
                     if operation.operation_kind in {
                         PatchOperationKind.UPSERT,
                         PatchOperationKind.MATERIALIZE,
@@ -375,7 +481,7 @@ class SemanticStore:
                     elif operation.operation_kind == PatchOperationKind.INVALIDATE:
                         self._invalidate_target(operation.target_ref, after)
                     applied.append(operation.operation_ref)
-                invalidated = self._invalidate_dependents(changed_refs, after)
+                invalidated = self._invalidate_dependents(changed_keys, after, written_identities)
                 set_meta(self._overlay, "store_revision", str(after))
                 set_meta(
                     self._overlay,
@@ -586,35 +692,64 @@ class SemanticStore:
                 (target_ref,),
             )
 
-    def _invalidate_dependents(self, changed_refs: set[str], store_revision: int) -> set[str]:
+    def _invalidate_dependents(
+        self,
+        changed_keys: set[tuple[RecordKind, str]],
+        store_revision: int,
+        written_identities: set[tuple[RecordKind, str, int]] | None = None,
+    ) -> set[str]:
+        written = written_identities or set()
         invalidated: set[str] = set()
-        frontier = list(sorted(changed_refs))
+        frontier = list(sorted(changed_keys, key=lambda item: (item[0].value, item[1])))
         visited = set(frontier)
         while frontier:
-            prerequisite = frontier.pop(0)
+            prerequisite_kind, prerequisite_ref = frontier.pop(0)
+            params = (prerequisite_kind.value, prerequisite_ref)
             rows = self._overlay.execute(
-                "SELECT dependent_kind, dependent_ref FROM dependencies "
-                "WHERE prerequisite_ref=? AND active=1 ORDER BY dependent_kind, dependent_ref",
-                (prerequisite,),
+                "SELECT dependent_kind, dependent_ref, dependent_revision FROM dependencies "
+                "WHERE prerequisite_kind=? AND prerequisite_ref=? AND active=1 "
+                "ORDER BY dependent_kind, dependent_ref, dependent_revision",
+                params,
             ).fetchall()
             if self._boot is not None:
                 rows += self._boot.execute(
-                    "SELECT dependent_kind, dependent_ref FROM dependencies "
-                    "WHERE prerequisite_ref=? AND active=1 ORDER BY dependent_kind, dependent_ref",
-                    (prerequisite,),
+                    "SELECT dependent_kind, dependent_ref, dependent_revision FROM dependencies "
+                    "WHERE prerequisite_kind=? AND prerequisite_ref=? AND active=1 "
+                    "ORDER BY dependent_kind, dependent_ref, dependent_revision",
+                    params,
                 ).fetchall()
             for row in rows:
                 dependent_ref = str(row["dependent_ref"])
                 dependent_kind = RecordKind(str(row["dependent_kind"]))
+                dependent_revision = int(row["dependent_revision"])
+                if (dependent_kind, dependent_ref, dependent_revision) in written:
+                    continue
+                self._overlay.execute(
+                    """
+                    INSERT OR IGNORE INTO record_invalidations(
+                        record_kind, record_ref, revision, invalidated_by_ref,
+                        store_revision, reason
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        dependent_kind.value,
+                        dependent_ref,
+                        dependent_revision,
+                        f"{prerequisite_kind.value}:{prerequisite_ref}",
+                        store_revision,
+                        "dependency_prerequisite_changed",
+                    ),
+                )
+                invalidated.add(dependent_ref)
                 if dependent_kind == RecordKind.MATERIALIZED_VIEW:
                     self._overlay.execute(
                         "UPDATE materialized_views SET stale=1 WHERE view_ref=?",
                         (dependent_ref,),
                     )
-                    invalidated.add(dependent_ref)
-                if dependent_ref not in visited:
-                    visited.add(dependent_ref)
-                    frontier.append(dependent_ref)
+                dependent_key = (dependent_kind, dependent_ref)
+                if dependent_key not in visited:
+                    visited.add(dependent_key)
+                    frontier.append(dependent_key)
         return invalidated
 
     def _journal_patch(self, patch: GraphPatch, before: int, after: int) -> None:
@@ -686,31 +821,37 @@ class SemanticStore:
         ).fetchall()
         result = []
         for row in rows:
-            payload = decode_record(record_kind, json.loads(str(row["payload_json"])))
-            result.append(
-                StoredRecord(
-                    record_kind=record_kind,
-                    record_ref=str(row["record_ref"]),
-                    revision=int(row["revision"]),
-                    payload=payload,
-                    content_fingerprint=str(row["content_fingerprint"]),
-                    record_fingerprint=str(row["record_fingerprint"]),
-                    layer=layer,
-                    store_revision=int(row["store_revision"]),
-                    lifecycle_status=(
-                        None
-                        if row["lifecycle_status"] is None
-                        else str(row["lifecycle_status"])
-                    ),
-                    context_ref=None if row["context_ref"] is None else str(row["context_ref"]),
-                    valid_from=None if row["valid_from"] is None else str(row["valid_from"]),
-                    valid_to=None if row["valid_to"] is None else str(row["valid_to"]),
-                    permission_ref=(
-                        None if row["permission_ref"] is None else str(row["permission_ref"])
-                    ),
-                )
-            )
+            result.append(self._row_to_stored(row, record_kind, layer))
         return tuple(result)
+
+    def _row_to_stored(
+        self,
+        row: sqlite3.Row,
+        record_kind: RecordKind,
+        layer: str,
+    ) -> StoredRecord[Any]:
+        payload = decode_record(record_kind, json.loads(str(row["payload_json"])))
+        return StoredRecord(
+            record_kind=record_kind,
+            record_ref=str(row["record_ref"]),
+            revision=int(row["revision"]),
+            payload=payload,
+            content_fingerprint=str(row["content_fingerprint"]),
+            record_fingerprint=str(row["record_fingerprint"]),
+            layer=layer,
+            store_revision=int(row["store_revision"]),
+            lifecycle_status=(
+                None
+                if row["lifecycle_status"] is None
+                else str(row["lifecycle_status"])
+            ),
+            context_ref=None if row["context_ref"] is None else str(row["context_ref"]),
+            valid_from=None if row["valid_from"] is None else str(row["valid_from"]),
+            valid_to=None if row["valid_to"] is None else str(row["valid_to"]),
+            permission_ref=(
+                None if row["permission_ref"] is None else str(row["permission_ref"])
+            ),
+        )
 
     def _tombstones(self, record_kind: RecordKind) -> set[tuple[str, int | None]]:
         rows = self._overlay.execute(

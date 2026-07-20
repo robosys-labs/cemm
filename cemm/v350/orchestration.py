@@ -67,7 +67,15 @@ class CycleState:
     errors: list[str] = field(default_factory=list)
     trace: list[Mapping[str, Any]] = field(default_factory=list)
     current_stage: CoreStage | None = None
+    # Compatibility field only. Direct Stage-17 -> Stage-15 jumps are no longer
+    # semantic authority; operation feedback must use reentry_request.
     refresh_goal_stage15: bool = False
+    pass_ref: str = field(default_factory=lambda: "semantic-pass:" + uuid4().hex)
+    pass_index: int = 0
+    parent_pass_ref: str | None = None
+    pass_history: list[SemanticPassSnapshot] = field(default_factory=list)
+    frontier_history: list[tuple[str, ...]] = field(default_factory=list)
+    reentry_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +84,7 @@ class StageOutcome:
     frontier_refs: tuple[str, ...] = ()
     errors: tuple[str, ...] = ()
     request_goal_refresh: bool = False
+    reentry_request: Any | None = None
     terminal: bool = False
 
 
@@ -144,20 +153,8 @@ class CanonicalOrchestrator:
         )
         stage_index = 0
         stage_order = tuple(CoreStage)
-        refresh_count = 0
         while stage_index < len(stage_order):
             stage = stage_order[stage_index]
-            # Stage 17 may force a semantic re-entry to the sole generic goal
-            # authority at Stage 15.  It may not create another goal family.
-            if stage == CoreStage.BUILD_RESPONSE_UOL and cycle.refresh_goal_stage15:
-                refresh_count += 1
-                if refresh_count > 1:
-                    raise CanonicalOrchestrationError("bounded Stage-15 goal refresh exceeded")
-                cycle.refresh_goal_stage15 = False
-                stage_index = stage_order.index(
-                    CoreStage.DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
-                )
-                continue
             snapshot_fp = self.snapshot_provider.fingerprint()
             predecessor = cycle.current_stage
             capability = StageCapability(
@@ -182,9 +179,10 @@ class CanonicalOrchestrator:
             cycle.artifacts.update(dict(outcome.artifacts))
             cycle.frontiers.extend(outcome.frontier_refs)
             cycle.errors.extend(outcome.errors)
-            cycle.refresh_goal_stage15 = cycle.refresh_goal_stage15 or outcome.request_goal_refresh
             cycle.trace.append({
                 "cycle_ref": cycle.cycle_ref,
+                "pass_ref": cycle.pass_ref,
+                "pass_index": cycle.pass_index,
                 "stage": int(stage),
                 "stage_name": stage.name,
                 "adapter_ref": adapter.adapter_ref,
@@ -193,7 +191,70 @@ class CanonicalOrchestrator:
                 "frontier_refs": outcome.frontier_refs,
                 "errors": outcome.errors,
             })
+
+            if outcome.request_goal_refresh and outcome.reentry_request is None:
+                raise CanonicalOrchestrationError(
+                    "direct Stage-17 -> Stage-15 refresh is forbidden; "
+                    "operation outcomes must request semantic re-entry"
+                )
+
+            if outcome.reentry_request is not None:
+                if stage != CoreStage.RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS:
+                    raise CanonicalOrchestrationError(
+                        "semantic re-entry may be requested only by Stage 17"
+                    )
+                request = outcome.reentry_request
+                cycle.reentry_count += 1
+                if cycle.reentry_count > int(request.max_reentries):
+                    raise CanonicalOrchestrationError(
+                        "bounded semantic re-entry budget exceeded"
+                    )
+                cycle.pass_history.append(
+                    SemanticPassSnapshot(
+                        pass_ref=cycle.pass_ref,
+                        pass_index=cycle.pass_index,
+                        parent_pass_ref=cycle.parent_pass_ref,
+                        input_payload=cycle.input_payload,
+                        artifacts=dict(cycle.artifacts),
+                        frontier_refs=tuple(cycle.frontiers),
+                        trace=tuple(
+                            item for item in cycle.trace
+                            if item.get("pass_ref") == cycle.pass_ref
+                        ),
+                    )
+                )
+                carried = {
+                    key: cycle.artifacts[key]
+                    for key in request.carry_artifact_keys
+                    if key in cycle.artifacts
+                }
+                cycle.frontier_history.append(tuple(cycle.frontiers))
+                cycle.parent_pass_ref = cycle.pass_ref
+                cycle.pass_index += 1
+                cycle.pass_ref = "semantic-pass:" + uuid4().hex
+                cycle.input_payload = request.observation_batch
+                cycle.artifacts = carried
+                cycle.frontiers = []
+                cycle.current_stage = None
+                stage_index = 0
+                continue
+
             if outcome.terminal:
                 break
             stage_index += 1
+
+        cycle.pass_history.append(
+            SemanticPassSnapshot(
+                pass_ref=cycle.pass_ref,
+                pass_index=cycle.pass_index,
+                parent_pass_ref=cycle.parent_pass_ref,
+                input_payload=cycle.input_payload,
+                artifacts=dict(cycle.artifacts),
+                frontier_refs=tuple(cycle.frontiers),
+                trace=tuple(
+                    item for item in cycle.trace if item.get("pass_ref") == cycle.pass_ref
+                ),
+            )
+        )
+        cycle.artifacts["semantic_pass_history"] = tuple(cycle.pass_history)
         return cycle

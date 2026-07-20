@@ -8,6 +8,7 @@ resolved production adapter source.
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import hashlib
 import inspect
 import json
@@ -22,6 +23,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
 from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES
+from cemm.v350.runtime_services import canonical_service_descriptors
 from cemm.v350.storage import RecordKind
 
 
@@ -44,6 +46,24 @@ def boot_pins(path: Path, kind: RecordKind) -> list[str]:
     finally:
         connection.close()
     return [f"{ref}@{int(revision)}#{fingerprint}" for ref,revision,fingerprint in rows]
+
+
+def boot_language_tags(path: Path) -> list[str]:
+    connection=sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        rows=connection.execute(
+            "SELECT payload_json FROM record_index WHERE record_kind=? ORDER BY record_ref, revision",
+            (RecordKind.LANGUAGE_PACK.value,),
+        ).fetchall()
+    finally:
+        connection.close()
+    result=[]
+    for (payload_json,) in rows:
+        payload=json.loads(str(payload_json))
+        tag=payload.get("language_tag")
+        if tag:
+            result.append(str(tag))
+    return sorted(set(result))
 
 def main() -> int:
     parser=argparse.ArgumentParser()
@@ -78,12 +98,15 @@ def main() -> int:
 
     source_manifest=root/'cemm/data/v350/manifest.json'; denylist=root/'cemm/data/v350/legacy_authority_denylist.json'
     source_doc=json.loads(source_manifest.read_text(encoding='utf-8'))
-    if args.activate and source_doc.get('metadata',{}).get('runtime_cutover') is not True:
-        raise SystemExit('activation requires source manifest metadata.runtime_cutover=true')
+    source_metadata=dict(source_doc.get('metadata',{}))
+    if args.activate and source_metadata.get('phase20_prepared') is not True:
+        raise SystemExit('activation requires source manifest metadata.phase20_prepared=true')
+    capabilities=dict(source_metadata.get('release_capabilities',{}))
     if args.activate:
         missing=[label for label,kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES if not boot_pins(boot,kind)]
         if missing:
             raise SystemExit('activation requires non-empty boot authorities: '+','.join(missing))
+    services=[asdict(item) for item in canonical_service_descriptors()]
     doc={
         'manifest_version':2,'release_version':'3.5.0','release_commit':args.release_commit,
         'source_manifest_sha256':sha256(source_manifest),'boot_database_sha256':boot_sha,'schema_version':1,
@@ -99,13 +122,22 @@ def main() -> int:
         'operation_adapter_contracts':boot_pins(boot,RecordKind.OPERATION_ADAPTER_CONTRACT),
         'semantic_analyzer_contracts':boot_pins(boot,RecordKind.SEMANTIC_ANALYZER_CONTRACT),
         'channel_adapter_contracts':boot_pins(boot,RecordKind.CHANNEL_ADAPTER_CONTRACT),
+        'argument_frames':boot_pins(boot,RecordKind.ARGUMENT_FRAME),
+        'morphology_rules':boot_pins(boot,RecordKind.MORPHOLOGY_RULE),
+        'linearization_rules':boot_pins(boot,RecordKind.LINEARIZATION_RULE),
+        'runtime_service_bindings':services,
+        'release_capabilities':capabilities,
+        'realization_language_tags':boot_language_tags(boot),
+        'output_speaker_ref':source_metadata.get('output_speaker_ref'),
+        'output_commitment_kind_ref':source_metadata.get('output_commitment_kind_ref'),
         'migration_modules_allowed_at_runtime':[],
         'legacy_denylist_sha256':sha256(denylist),'verification_report_sha256':sha256(report_path),
         'activation_ready':bool(args.activate),
         'metadata':{
-            'boot_database_relpath':str(boot.relative_to(root)) if boot.is_relative_to(root) else str(boot),
-            'verification_report_relpath':str(report_path.relative_to(root)) if report_path.is_relative_to(root) else str(report_path),
+            'boot_database_relpath':boot.relative_to(root).as_posix() if boot.is_relative_to(root) else str(boot),
+            'verification_report_relpath':report_path.relative_to(root).as_posix() if report_path.is_relative_to(root) else str(report_path),
             'generated_from_canonical_stage_graph':True,'stage_count':len(stages),
+            'source_runtime_cutover':bool(source_metadata.get('runtime_cutover',False)),
         },
     }
     if args.activate and len(stages)!=23: raise SystemExit('activation requires exact 23-stage graph')

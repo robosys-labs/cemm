@@ -8,9 +8,11 @@ from .model import ResponseTransformationProof,ResponseUOLRecord
 from .planner import ResponseAuthorizationGate
 
 class ResponseUOLCommitCoordinator:
- def __init__(self,store): self.store=store
+ def __init__(self,store,permission_evaluator=None):
+  self.store=store
+  self.permission_evaluator=permission_evaluator
  def commit(self,response:ResponseUOLRecord,proofs:tuple[ResponseTransformationProof,...],frontiers:tuple[LearningFrontierRecord,...]=()):
-  ResponseAuthorizationGate(self.store).require_authorized(response,proofs)
+  ResponseAuthorizationGate(self.store,self.permission_evaluator).require_authorized(response,proofs)
   with self.store.snapshot() as snapshot:
    # Reject a plan built before any intervening store change. The exact response snapshot is authority.
    if snapshot.store_revision!=response.snapshot_revision or snapshot.fingerprint!=response.snapshot_fingerprint:

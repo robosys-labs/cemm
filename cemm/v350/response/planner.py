@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from ..goals.model import GoalCandidateRecord,GoalDecisionRecord
 from ..learning.model import FrontierResolutionStatus,LearningFrontierRecord,PinnedRecord
+from ..permissions import PermissionScopeEvaluator
 from ..schema.model import PortFillerClass,UseOperation,schema_authorizes_use,semantic_fingerprint
 from ..storage.codec import record_fingerprints
 from ..storage.model import RecordKind
@@ -131,7 +132,11 @@ class ResponseMeaningPlanner:
                 elif isinstance(val,(tuple,list)): refs=[str(x) for x in val if x]
             elif sel.mode==ResponseSelectorMode.APPLICATION_PORT and source_app is not None:
                 b=source_app.binding(sel.source_port_ref); refs=[] if b is None else [f.ref for f in b.fillers if isinstance(f,FillerRef)]
-            elif sel.mode==ResponseSelectorMode.TARGET and sel.target_index is not None and sel.target_index<len(goal.target_refs): refs=[goal.target_refs[sel.target_index]]
+            elif sel.mode==ResponseSelectorMode.TARGET:
+                if sel.target_port_ref is not None:
+                    refs=[item.target_ref for item in goal.target_bindings if item.role_ref==sel.target_port_ref]
+                elif sel.target_index is not None and sel.target_index<len(goal.target_refs):
+                    refs=[goal.target_refs[sel.target_index]]
             elif sel.mode==ResponseSelectorMode.FIXED and sel.fixed_ref: refs=[sel.fixed_ref]
             fillers=[]
             for ref in sorted(set(refs)):
@@ -201,11 +206,19 @@ class ResponseMeaningPlanner:
 
 
 class ResponseAuthorizationGate:
-    def __init__(self,store): self.store=store
+    def __init__(self,store,permission_evaluator:PermissionScopeEvaluator|None=None):
+        self.store=store
+        self.permissions=permission_evaluator or PermissionScopeEvaluator()
     def require_authorized(self,response:ResponseUOLRecord,proofs:tuple[ResponseTransformationProof,...]):
         decision=self._exact(response.goal_decision_pin)
         latest=self.store.get_record(RecordKind.GOAL_DECISION,response.goal_decision_pin.record_ref)
-        if latest is None or latest.revision!=response.goal_decision_pin.revision or latest.record_fingerprint!=response.goal_decision_pin.record_fingerprint: raise ValueError("stale goal decision before Response UOL commit")
+        if (
+            latest is None
+            or latest.revision!=response.goal_decision_pin.revision
+            or latest.record_fingerprint!=response.goal_decision_pin.record_fingerprint
+            or self.store.is_invalidated(response.goal_decision_pin.record_kind,response.goal_decision_pin.record_ref,response.goal_decision_pin.revision)
+        ):
+            raise ValueError("stale/invalidated goal decision before Response UOL commit")
         proof_map={p.proof_ref:p for p in proofs}
         if set(response.transformation_proof_refs)!=set(proof_map): raise ValueError("Response UOL proof set mismatch")
         selected={p.record_ref:p for p in response.selected_goal_pins}
@@ -215,9 +228,16 @@ class ResponseAuthorizationGate:
         for sp in response.source_pins:
             s=self._exact(sp)
             current=self.store.get_record(sp.record_kind,sp.record_ref)
-            if current is None or current.revision!=sp.revision or current.record_fingerprint!=sp.record_fingerprint: raise ValueError("Response UOL source is no longer current")
-            permission=s.permission_ref or getattr(s.payload,'permission_ref','conversation')
-            if permission not in {'public',response.permission_ref}: raise ValueError("Response UOL would widen source permission")
+            if (
+                current is None
+                or current.revision!=sp.revision
+                or current.record_fingerprint!=sp.record_fingerprint
+                or self.store.is_invalidated(sp.record_kind,sp.record_ref,sp.revision)
+            ):
+                raise ValueError("Response UOL source is no longer current")
+            permission=s.permission_ref or getattr(s.payload,'permission_ref',None)
+            if not self.permissions.can_read(permission,response.permission_ref):
+                raise ValueError("Response UOL would widen source permission")
         proof_outputs=set()
         proof_inputs=set()
         for proof in proofs:
@@ -227,7 +247,13 @@ class ResponseAuthorizationGate:
             for p in (*proof.input_pins,*proof.authorization_pins):
                 self._exact(p)
                 current=self.store.get_record(p.record_kind,p.record_ref)
-                if current is None or current.revision!=p.revision or current.record_fingerprint!=p.record_fingerprint: raise ValueError("response proof dependency is no longer current")
+                if (
+                    current is None
+                    or current.revision!=p.revision
+                    or current.record_fingerprint!=p.record_fingerprint
+                    or self.store.is_invalidated(p.record_kind,p.record_ref,p.revision)
+                ):
+                    raise ValueError("response proof dependency is no longer current")
             proof_outputs.update(proof.output_refs);proof_inputs.update(p.key for p in proof.input_pins)
         root_refs={root.ref for root in response.graph.root_refs if root.filler_class==PortFillerClass.SEMANTIC_APPLICATION}
         if proof_outputs != root_refs: raise ValueError("Response UOL roots must equal exact authorized proof outputs")
@@ -272,5 +298,10 @@ class ResponseAuthorizationGate:
         return seen
     def _exact(self,p):
         s=self.store.get_record(p.record_kind,p.record_ref,p.revision)
-        if s is None or s.record_fingerprint!=p.record_fingerprint: raise ValueError(f"stale response authorization pin: {p.key}")
+        if (
+            s is None
+            or s.record_fingerprint!=p.record_fingerprint
+            or self.store.is_invalidated(p.record_kind,p.record_ref,p.revision)
+        ):
+            raise ValueError(f"stale/invalidated response authorization pin: {p.key}")
         return s
