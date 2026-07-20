@@ -8,7 +8,9 @@ from __future__ import annotations
 from collections import defaultdict
 import unicodedata
 
-from ..language.model import FormLattice, SenseCandidate, SenseTargetKind, Span
+from ..language.model import (
+    FormLattice, SemanticContributionKind, SenseCandidate, SenseTargetKind, Span,
+)
 from ..language.registry import LanguageRegistry
 from ..schema.model import SchemaClass, StorageKind, UseOperation, semantic_fingerprint
 from .model import MentionHypothesis, MentionTargetClass
@@ -122,15 +124,21 @@ class MentionCompiler:
                     "candidate_target_classes": tuple(item.value for item in target_classes),
                     "lexical_categories": tuple(sorted({item.lexical_category for item in senses if item.lexical_category})),
                     "structural_targets": tuple(sorted(
-                        item.target_ref for item in senses if item.target_kind == SenseTargetKind.STRUCTURAL
+                        item.target_ref for item in senses
+                        if item.target_kind == SenseTargetKind.STRUCTURAL and item.target_ref is not None
                     )),
                     "schema_target_refs": tuple(sorted(
-                        item.target_ref for item in senses if item.target_kind != SenseTargetKind.STRUCTURAL
+                        item.target_ref for item in senses
+                        if item.target_kind is not None
+                        and item.target_kind != SenseTargetKind.STRUCTURAL
+                        and item.target_ref is not None
                     )),
                     "schema_target_pins": tuple(sorted({
                         (item.target_ref, item.target_revision)
                         for item in senses
-                        if item.target_kind != SenseTargetKind.STRUCTURAL
+                        if item.target_kind is not None
+                        and item.target_kind != SenseTargetKind.STRUCTURAL
+                        and item.target_ref is not None
                         and item.target_revision is not None
                     })),
                     "deictic_roles": tuple(sorted({
@@ -178,6 +186,11 @@ class MentionCompiler:
     @staticmethod
     def _is_mention_sense(sense: SenseCandidate) -> bool:
         if bool(sense.metadata.get("mention")) or bool(sense.metadata.get("event_mention")):
+            return True
+        if any(
+            item.contribution_kind == SemanticContributionKind.REFERENTIAL
+            for item in sense.contributions
+        ):
             return True
         if sense.target_kind == SenseTargetKind.REFERENT_TYPE:
             return True

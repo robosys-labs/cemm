@@ -16,7 +16,9 @@ from ..grounding.model import (
     GroundingResult,
     MentionHypothesis,
 )
-from ..language.model import FormLattice, SenseCandidate, SenseTargetKind
+from ..language.model import (
+    FormLattice, SemanticContributionKind, SenseCandidate, SenseTargetKind,
+)
 from ..schema.model import OpenBindingPurpose, PortFillerClass, UseOperation, semantic_fingerprint
 from ..storage import SemanticStore, StoreSnapshot
 from .model import (
@@ -99,11 +101,16 @@ class MeaningFactorGraphBuilder:
                         metadata={
                             "sense_ref": item.sense_ref,
                             "sense_revision": item.sense_revision,
-                            "target_kind": item.target_kind.value,
+                            "target_kind": None if item.target_kind is None else item.target_kind.value,
                             "target_ref": item.target_ref,
                             "target_revision": item.target_revision,
                             "target_schema_class": None if item.target_schema_class is None else item.target_schema_class.value,
                             "scope_behavior": item.scope_behavior,
+                            "lexeme_ref": item.lexeme_ref,
+                            "authority_path": item.authority_path,
+                            "semantic_contribution_refs": tuple(
+                                contribution.contribution_ref for contribution in item.contributions
+                            ),
                             "form_candidate_ref": item.form_candidate_ref,
                         },
                     )
@@ -116,40 +123,53 @@ class MeaningFactorGraphBuilder:
             schema_values: list[MeaningValue] = []
             allowed_links: list[tuple[str, str]] = []
             for item in candidates:
-                choice_ref = _choice_ref("schema", item.candidate_ref)
-                valid = True
-                schema_metadata = {
-                    "sense_candidate_ref": item.candidate_ref,
-                    "target_kind": item.target_kind.value,
-                    "target_ref": item.target_ref,
-                    "target_revision": item.target_revision,
-                }
-                if item.target_kind != SenseTargetKind.STRUCTURAL:
-                    if item.target_revision is None:
-                        valid = False
-                    else:
-                        try:
-                            schema = registry.schema(item.target_ref, item.target_revision)
-                        except Exception:
+                targets = tuple(
+                    contribution
+                    for contribution in item.contributions
+                    if contribution.contribution_kind == SemanticContributionKind.TARGET
+                    and contribution.target_ref is not None
+                )
+                for contribution in targets:
+                    choice_ref = _choice_ref("schema", contribution.contribution_ref)
+                    valid = True
+                    schema_metadata = {
+                        "sense_candidate_ref": item.candidate_ref,
+                        "semantic_contribution_ref": contribution.contribution_ref,
+                        "target_kind": None if contribution.target_kind is None else contribution.target_kind.value,
+                        "target_ref": contribution.target_ref,
+                        "target_revision": contribution.target_revision,
+                    }
+                    if contribution.target_kind != SenseTargetKind.STRUCTURAL:
+                        if contribution.target_revision is None:
                             valid = False
                         else:
-                            valid = schema.use_profile.permits(UseOperation.COMPOSE, provisional=True)
-                            schema_metadata.update({
-                                "schema_ref": schema.schema_ref,
-                                "schema_revision": schema.revision,
-                                "schema_class": schema.schema_class.value,
-                                "compose_authorized": valid,
-                            })
-                else:
-                    schema_metadata["structural"] = True
-                if valid:
-                    schema_values.append(MeaningValue(
-                        value_ref=choice_ref,
-                        score=0.0,
-                        evidence_refs=item.evidence_refs,
-                        metadata=schema_metadata,
-                    ))
-                    allowed_links.append((item.candidate_ref, choice_ref))
+                            try:
+                                schema = registry.schema(
+                                    contribution.target_ref,
+                                    contribution.target_revision,
+                                )
+                            except Exception:
+                                valid = False
+                            else:
+                                valid = schema.use_profile.permits(
+                                    UseOperation.COMPOSE, provisional=True
+                                )
+                                schema_metadata.update({
+                                    "schema_ref": schema.schema_ref,
+                                    "schema_revision": schema.revision,
+                                    "schema_class": schema.schema_class.value,
+                                    "compose_authorized": valid,
+                                })
+                    else:
+                        schema_metadata["structural"] = True
+                    if valid:
+                        schema_values.append(MeaningValue(
+                            value_ref=choice_ref,
+                            score=0.0,
+                            evidence_refs=contribution.evidence_refs or item.evidence_refs,
+                            metadata=schema_metadata,
+                        ))
+                        allowed_links.append((item.candidate_ref, choice_ref))
             if schema_values:
                 schema_var_ref = _var_ref("schema", lattice.lattice_ref, form_ref)
                 schema_var_for_form[form_ref] = schema_var_ref

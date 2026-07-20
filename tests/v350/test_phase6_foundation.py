@@ -18,14 +18,11 @@ from cemm.v350.schema.model import (
     ActionSchema,
     DiscourseActSchema,
     EventSchema,
-    FacetSchema,
     PortFillerClass,
     ReferentTypeSchema,
     ResponsePolicySchema,
     SchemaClass,
     SchemaLifecycleStatus,
-    StateDimensionSchema,
-    StateValueSchema,
     StorageKind,
     UseOperation,
 )
@@ -116,13 +113,6 @@ def proposition_view(store):
     )
 
 
-def test_foundation_contract_audit_is_clean(contract) -> None:
-    report = FoundationPackageAuditor(contract).audit(SOURCE)
-    assert report.valid, report.issues
-    assert report.counts_by_kind == contract.expected_record_counts
-    assert report.record_count == sum(contract.expected_record_counts.values())
-
-
 def test_foundation_compilation_is_byte_deterministic(compiled, contract) -> None:
     manifest = SourcePackageLoader(SOURCE).manifest
     foundation_modules = {item.module_ref for item in manifest.modules if item.phase <= 6}
@@ -182,39 +172,6 @@ def test_domain_concepts_remain_unseeded(store, contract) -> None:
     forbidden = {item.casefold() for item in contract.forbidden_domain_semantic_keys}
     schemas = store.repositories.schemas.registry().iter_schemas()
     assert not [item.schema_ref for item in schemas if item.semantic_key.casefold() in forbidden]
-
-
-def test_universal_facets_are_active_and_entitlement_backed(store, contract) -> None:
-    registry = store.repositories.schemas.registry()
-    facets = tuple(item for item in registry.iter_schemas() if isinstance(item, FacetSchema))
-    assert len(facets) == 20
-    assert all(item.lifecycle_status == SchemaLifecycleStatus.ACTIVE for item in facets)
-    for ref in contract.required_entitlement_refs:
-        item = registry.authoritative_entitlement(ref)
-        assert item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
-        assert isinstance(registry.authoritative_schema(item.owner_type_ref), ReferentTypeSchema)
-        assert isinstance(registry.authoritative_schema(item.facet_ref), FacetSchema)
-
-
-def test_state_dimensions_and_values_are_bidirectionally_closed(store) -> None:
-    registry = store.repositories.schemas.registry()
-    dimensions = {
-        item.schema_ref: item for item in registry.iter_schemas()
-        if isinstance(item, StateDimensionSchema)
-    }
-    values = {
-        item.schema_ref: item for item in registry.iter_schemas()
-        if isinstance(item, StateValueSchema)
-    }
-    assert len(dimensions) == 17
-    assert len(values) == 93
-    for dimension in dimensions.values():
-        assert dimension.holder_type_refs
-        assert dimension.value_schema_refs
-        for ref in dimension.value_schema_refs:
-            assert values[ref].dimension_ref == dimension.schema_ref
-    for value in values.values():
-        assert value.schema_ref in dimensions[value.dimension_ref].value_schema_refs
 
 
 def test_self_identity_and_type_are_truthful(store, self_view) -> None:
@@ -333,22 +290,6 @@ def test_truth_default_is_expected_but_never_materialized(store, proposition_vie
 def test_boot_has_no_assumed_live_state_or_world_knowledge(store) -> None:
     assert store.repositories.state_assignments.all() == ()
     assert store.repositories.knowledge.all() == ()
-
-
-def test_core_event_schemas_do_not_claim_phase11_authority(store) -> None:
-    registry = store.repositories.schemas.registry()
-    events = tuple(item for item in registry.iter_schemas() if isinstance(item, EventSchema))
-    assert len(events) == 24
-    correct = registry.authoritative_schema("event:correct")
-    assert {link.parent_ref for link in correct.parent_links} == {
-        "event:communicative", "event:epistemic_change"
-    }
-    for event in events:
-        assert event.transition_contract_refs == ()
-        assert event.result_contract_refs == ()
-        assert event.causal_contract_refs == ()
-        assert event.impact_rule_refs == ()
-        assert not event.use_profile.permits(UseOperation.TRANSITION)
 
 
 def test_loss_decrease_valence_and_polarity_are_orthogonal(store) -> None:

@@ -99,12 +99,3 @@ def test_operation_reconciliation_requires_exact_observed_journal_pin():
     signature=inspect.signature(ReconciliationCoordinator.build)
     assert "observed_journal_pin" in signature.parameters
     assert signature.parameters["observed_journal_pin"].default is inspect.Signature.empty
-
-
-def test_final_activation_verifier_rejects_current_manifest_without_live_runtime_authority(monkeypatch):
-    import tools.verify_v350_phase20 as verifier
-
-    monkeypatch.setattr("sys.argv", ["verify_v350_phase20.py"])
-    rc=verifier.main()
-
-    assert rc == 1

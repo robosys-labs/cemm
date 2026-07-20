@@ -16,7 +16,10 @@ from typing import Any, Mapping
 from ..data import SourcePackageLoader
 from ..schema.model import SchemaLifecycleStatus, canonical_data, semantic_fingerprint
 from ..storage import RecordKind
-from .model import ConstructionKind, ConstructionRecord, LexicalSenseRecord
+from .model import (
+    ConstructionKind, ConstructionRecord, FormLexemeLinkRecord, LexemeRecord,
+    LexemeSenseLinkRecord, LexicalSenseRecord, SemanticContributionSpecRecord,
+)
 from .registry import LanguageRegistry
 
 
@@ -119,11 +122,21 @@ class LanguageGroundingPackageAuditor:
 
         packs = tuple(item.record for item in records if item.record_kind == RecordKind.LANGUAGE_PACK)
         forms = tuple(item.record for item in records if item.record_kind == RecordKind.LANGUAGE_FORM)
+        lexemes = tuple(item.record for item in records if item.record_kind == RecordKind.LEXEME)
+        form_lexeme_links = tuple(item.record for item in records if item.record_kind == RecordKind.FORM_LEXEME_LINK)
         senses = tuple(item.record for item in records if item.record_kind == RecordKind.LEXICAL_SENSE)
+        lexeme_sense_links = tuple(item.record for item in records if item.record_kind == RecordKind.LEXEME_SENSE_LINK)
         links = tuple(item.record for item in records if item.record_kind == RecordKind.FORM_SENSE_LINK)
+        contribution_specs = tuple(
+            item.record for item in records
+            if item.record_kind == RecordKind.SEMANTIC_CONTRIBUTION_SPEC
+        )
         constructions = tuple(item.record for item in records if item.record_kind == RecordKind.CONSTRUCTION)
         try:
-            registry = LanguageRegistry(packs, forms, senses, links, constructions)
+            registry = LanguageRegistry(
+                packs, forms, senses, links, constructions,
+                lexemes, form_lexeme_links, lexeme_sense_links, contribution_specs,
+            )
         except Exception as exc:
             issues.append(f"language_registry:{exc}")
             registry = None
@@ -146,9 +159,18 @@ class LanguageGroundingPackageAuditor:
             for tag, expected_targets in sorted(self.contract.required_semantic_targets.items()):
                 pack = registry.pack_for_language(tag)
                 actual_targets = {
-                    item.target_ref for item in registry.active_senses()
+                    ref
+                    for item in registry.active_senses()
                     if pack is not None and item.pack_ref == pack.pack_ref
+                    for ref in ((item.target_ref,) if item.target_ref is not None else ())
                 }
+                actual_targets.update({
+                    item.target_ref
+                    for item in registry.active_contribution_specs()
+                    if pack is not None and item.pack_ref == pack.pack_ref
+                    and item.target_ref is not None
+                }
+                )
                 missing = sorted(set(expected_targets) - actual_targets)
                 if missing:
                     issues.append(f"semantic_targets:{tag}:missing={missing}")
@@ -160,7 +182,11 @@ class LanguageGroundingPackageAuditor:
                 if construction.construction_kind == ConstructionKind.ELLIPSIS and not construction.preserves_gap:
                     issues.append(f"ellipsis_without_gap:{construction.construction_ref}")
             for sense in registry.active_senses():
-                if sense.target_kind.value != "structural" and sense.target_revision is None:
+                if (
+                    sense.target_kind is not None
+                    and sense.target_kind.value != "structural"
+                    and sense.target_revision is None
+                ):
                     issues.append(f"unpinned_sense_target:{sense.sense_ref}")
                 if sense.lifecycle_status not in {SchemaLifecycleStatus.ACTIVE, SchemaLifecycleStatus.COMPETENCE_VERIFIED}:
                     issues.append(f"inactive_effective_sense:{sense.sense_ref}")

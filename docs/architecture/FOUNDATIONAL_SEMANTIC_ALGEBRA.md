@@ -1,230 +1,114 @@
-# CEMM v3.5 Canonical Learning-First Architecture
+# CEMM v3.5 Foundational Semantic Algebra
 
-**Status:** public v3.5 runtime authority is cut over; productive semantic activation is under remediation.  
-**Target:** a grounded, multilingual, learning-first cognitive meaning system that can understand and produce unseen compositions from a small reviewed semantic/language substrate.  
-**Primary law:** CEMM may use, learn, infer, act on, query, or express only meaning represented in active semantic authority and authorized for the requested use.
+This document defines the irreducible semantic substrate beneath UOL, language learning, query binding, referent knowledge, transition reasoning, and response generation. `ARCHITECTURE.md` remains the governing system contract.
 
----
+# 1. Irreducibility criterion
 
-# 1. What CEMM is
+A concept belongs in the stable kernel only when removing it would make a whole class of meanings structurally inexpressible or would require incompatible validation/execution semantics.
 
-CEMM is a grounded semantic machine.
+A concept does **not** become a kernel primitive merely because it is common, linguistically basic, or useful in early conversation.
 
-Its defining capability is not phrase coverage. It is the ability to:
-
-1. preserve uncertain evidence;
-2. identify the smallest justified semantic contributions;
-3. ground referents;
-4. compose partial meaning;
-5. project what can meaningfully apply to a referent;
-6. close variables through compatible knowledge;
-7. separate claims from truth;
-8. model state/process/event/action over time;
-9. learn missing reusable structure;
-10. derive transitions and consequences with proof;
-11. create semantic response goals;
-12. build Response UOL;
-13. realize equivalent meaning in a target language;
-14. remain partial or silent when authority is insufficient.
-
-CEMM is not a chatbot architecture and not an intent classifier with memory.
-
-CEMM is not:
-
-- a phrase matcher;
-- a sentence-intent router;
-- a bag-of-keywords system;
-- a response-template catalogue;
-- an LLM wrapper;
-- a transcript memory;
-- an ontology requiring source changes for new concepts;
-- a simulator that turns defaults into facts.
-
-## 1.1 Ordering laws
+Use four authority layers:
 
 ```text
-perceive before answering
-working graph before memory write
-compression before durable storage
-source before belief
-time before current-state claims
-permission before learning
-safety/policy before realization and emission
-committed write before claiming a write/state change
-meaning before wording
+A. kernel structural machinery
+B. reviewed foundational semantic axes
+C. learned/domain semantic concepts
+D. language/grammar authority
 ```
-
-The working graph is temporary cognition. It may contain alternatives, gaps, unresolved bindings, provisional referents and evidence. Durable memory stores compressed reusable structures: concepts/types, aliases/lexemes, inheritance, ports, predicate/state/event schemas, construction knowledge, causal/transition affordances, source/permission policies and compact competence exemplars. It must not become a transcript archive.
-
-## 1.2 Dual spine plus consolidation
-
-CEMM has two co-equal runtime concerns:
-
-```text
-execution spine
-  observe -> understand -> ground -> know -> decide -> act/respond
-
-acquisition spine
-  observe gaps/evidence -> induce candidates -> test competence -> promote bounded authority
-
-consolidation loop
-  compress -> merge/supersede -> invalidate -> rehydrate -> replay affected dependencies
-```
-
-The numbered Stage-0..22 loop is the execution ordering contract, not permission to relegate learning to one terminal stage. Learning evidence/frontiers may arise throughout analysis, grounding, query, transition, realization and response.
-
----
-
-# 2. The four-layer semantic architecture
-
-The architecture must keep four authority layers separate.
-
-## 2.1 Layer A — kernel structural primitives
-
-The kernel owns only stable execution machinery.
-
-### Identity and graph structure
-
-```text
-Referent
-SemanticVariable
-SemanticApplication
-Port
-Binding
-FillerRef
-CoordinationGroup
-ScopeRelation
-```
-
-### Meaning schema families
-
-```text
-ReferentType
-Property
-StateDimension
-StateValue
-Relation
-Role
-Function
-Action
-Event/Eventuality profile
-MeasureDimension
-Unit
-Operator
-DiscourseAct
-DiscourseRelation
-ResponsePolicy
-```
-
-### Cognition and truth machinery
-
-```text
-Proposition
-Claim
-Evidence
-Knowledge
-EpistemicAdmission
-Context
-Time
-Place/localization
-Quantity
-Capability
-Transition
-StateDelta
-LearningFrontier
-Goal
-Operation
-ResponseUOL
-```
-
-These categories exist because they require different validation/execution behavior.
-
-They must never expand merely because a new learned domain concept appears.
-
-## 2.2 Layer B — foundational semantic axes
-
-Foundational axes are reviewed, revisioned data built on the kernel.
 
 Examples:
 
 ```text
-identity / same / different
-classification
+SemanticVariable       -> kernel structural machinery
+degree/order           -> foundational semantic axis
+connectivity            -> entitlement-scoped state dimension
+manner                  -> eventuality characterization projection
+method                  -> composed means/procedure/causal structure
+adjective/adverb        -> language/grammar category
+```
+
+This prevents the foundation from becoming either too weak or a hard-coded dictionary of human vocabulary.
+
+# 2. Native semantic basis
+
+## 2.1 Kernel structural primitives
+
+The kernel must natively execute these structural families:
+
+```text
+Referent / identity
+semantic type / inheritance
+SemanticApplication
+SemanticVariable
+port / filler / binding
+property
+state dimension / state value
+relation
+role
+eventuality representation
+action/control
+event occurrence
+quantity / measure / unit
+time
+place / localization
+operator / scope
+proposition / claim / evidence / knowledge
+query / information-gap mechanics
+coordination
+capability / affordance / disposition / function
+transition / delta / dependency
+context / permission / provenance / lifecycle
+goal / operation / Response UOL
+learning frontier / competence / promotion / invalidation
+```
+
+Only stable structural discriminators may become Python enums/classes.
+
+## 2.2 Reviewed foundational semantic axes
+
+The boot semantic substrate should contain a small, revisioned, language-neutral set of cross-domain axes such as:
+
+```text
+identity / sameness / difference
+classification / membership
 existence
-applicability
-activation
-persistence
-change
+applicability / activation
+persistence / change
 polarity
 modality
-occurrence/aspect
+occurrence / aspect
 temporal relation
 localization
-quantity/measure/order
-degree/scalarity
-cause
-enable/prevent
-agency/control/affectedness
-containment/part-whole/possession
+quantity / measure / ordering / degree
+cause / enable / prevent
+agency / control / affectedness
+containment / mereology / possession
 capability status
-epistemic status
-query answer projection
-uncertainty/default expectation
-valence/significance
+epistemic status / source
+query answer projections
+uncertainty / default expectation
+reversibility
+valence / significance
 ```
 
-They are “native” because the boot semantic substrate can use them immediately.
+These are data authority. Kernel code must not inspect their English names to decide semantics.
 
-They are **not** native because Python checks their names.
+## 2.3 Learned semantic concepts
 
-## 2.3 Layer C — learned semantic world
+Open-ended concepts remain data and may be introduced without source changes: specific object types, emotions, diseases, procedures, institutions, social conventions, domain actions, state dimensions, state values, and relations.
 
-Open-ended domain concepts are data:
+## 2.4 Language/grammar authority
 
-```text
-fox
-battery
-server
-pregnancy
-fraud
-bank
-specific disease
-specific emotion
-specific procedure
-specific role
-specific social convention
-```
+Forms, morphemes, lexemes, allomorphs, lexical categories, agreement, tense/aspect/case, constructions, semantic-contribution specs, morphology, and linearization belong to language packages.
 
-Learning adds/revises schemas, relations, values, transitions, contributions and language competence.
+Grammar constrains semantics. It does not define world truth.
 
-## 2.4 Layer D — language/grammar authority
-
-Language packages contain:
-
-```text
-forms/morphemes
-lexemes
-allomorph/inflection links
-lexical senses/meanings
-semantic contribution specifications
-grammatical features
-constructions
-realization frames
-morphology
-linearization
-```
-
-Language is evidence and compositional constraint.
-
-Language does not define world truth.
-
----
-
-# 3. Canonical cognitive unit: semantic contribution
+# 3. Semantic Contribution and Meaning Closure
 
 A recognized unit need not independently denote a complete semantic application.
 
-The smallest cognitive unit is a **SemanticContribution**: evidence-backed constraints on a candidate meaning graph.
+The smallest cognitive unit is a **SemanticContribution**: an evidence-backed constraint on a candidate meaning graph.
 
 Contribution mechanics are structural:
 
@@ -242,7 +126,7 @@ RESTRICTION
   narrows what can satisfy an open binding
 
 PROJECTION
-  specifies what part/aspect of a matched structure is sought
+  specifies what aspect of a matched structure is sought
 
 SCOPE
   constrains logical/modal/temporal/discourse scope
@@ -254,14 +138,44 @@ GRAMMATICAL_FEATURE
   preserves tense/aspect/agreement/case/number/etc. as language evidence
 
 CONSTRUCTION
-  activates reusable graph-building/composition structure
+  activates reusable composition structure
 ```
 
-A token may emit multiple contributions.
+A token may emit multiple contributions. A contribution is not automatically a proposition, discourse act, response obligation, event occurrence, or fact.
 
-A contribution does not become truth merely because it was recognized.
+## 3.1 Meaning Closure Law
 
----
+Partial meaning is valid cognition.
+
+A partial meaning must preserve what is known and what remains open through:
+
+```text
+expected filler classes
+expected schema classes
+expected referent types
+restriction refs
+answer projection
+open-binding purpose
+scope/time/context
+evidence/lineage
+```
+
+Meaning closes only through compatible composition of lexical contributions, construction constraints, participant/discourse anchors, referent grounding, type/facet entitlements, state/capability knowledge, time/context, and epistemic authority.
+
+## 3.2 Query Separation Law
+
+Keep separate:
+
+```text
+information gap
+semantic variable
+restriction graph
+answer projection
+discourse act
+response obligation
+```
+
+A WH-like lexical item may contribute an information gap/projection without creating a matrix `ask` act. Embedded interrogatives are the decisive counterexample.
 
 # 4. Lexeme and form-family architecture
 

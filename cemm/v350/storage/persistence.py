@@ -1438,7 +1438,8 @@ def _write_lexical_sense(connection: sqlite3.Connection, item: LexicalSenseRecor
             lifecycle_status=excluded.lifecycle_status, competence_case_refs_json=excluded.competence_case_refs_json,
             permission_ref=excluded.permission_ref, metadata_json=excluded.metadata_json
         """,
-        (item.sense_ref, item.revision, item.supersedes_revision, item.pack_ref, item.pack_revision, item.target_kind.value,
+        (item.sense_ref, item.revision, item.supersedes_revision, item.pack_ref, item.pack_revision,
+         None if item.target_kind is None else item.target_kind.value,
          item.target_ref, item.target_revision, None if item.target_schema_class is None else item.target_schema_class.value,
          item.use_operation.value, item.lexical_category, item.frame_ref, canonical_json(item.argument_map),
          canonical_json(item.expected_type_refs), item.scope_behavior, canonical_json(item.context_constraints),

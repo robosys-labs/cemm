@@ -149,6 +149,7 @@ def application_from_document(value: Mapping[str, Any]) -> SemanticApplication:
 def variable_from_document(value: Mapping[str, Any]) -> SemanticVariable:
     data = dict(value)
     try:
+        purpose = data.get("open_binding_purpose")
         return SemanticVariable(
             variable_ref=str(data["variable_ref"]),
             expected_schema_classes=frozenset(SchemaClass(item) for item in data.get("expected_schema_classes", ())),
@@ -157,6 +158,11 @@ def variable_from_document(value: Mapping[str, Any]) -> SemanticVariable:
             projection_ref=None if data.get("projection_ref") is None else str(data["projection_ref"]),
             scope_ref=str(data.get("scope_ref", "local")),
             evidence_refs=_tuple_str(data.get("evidence_refs")),
+            expected_filler_classes=frozenset(
+                PortFillerClass(item) for item in data.get("expected_filler_classes", ())
+            ),
+            open_binding_purpose=None if purpose is None else OpenBindingPurpose(str(purpose)),
+            projection_revision=None if data.get("projection_revision") is None else int(data["projection_revision"]),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise UOLDecodeError(str(exc)) from exc

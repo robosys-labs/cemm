@@ -233,12 +233,23 @@ class SemanticVariable:
     projection_ref: str | None = None
     scope_ref: str = "local"
     evidence_refs: tuple[str, ...] = ()
+    expected_filler_classes: frozenset[PortFillerClass] = frozenset()
+    open_binding_purpose: OpenBindingPurpose | None = None
+    projection_revision: int | None = None
 
     def __post_init__(self) -> None:
         _require_ref(self.variable_ref, "variable_ref")
         _require_ref(self.scope_ref, "scope_ref")
         _require_unique(self.expected_type_refs, f"expected types of {self.variable_ref}")
         _require_unique(self.restriction_refs, f"restrictions of {self.variable_ref}")
+        if self.projection_ref is not None:
+            _require_ref(self.projection_ref, "projection_ref")
+        if self.projection_revision is not None and self.projection_revision < 1:
+            raise ValueError("projection_revision must be positive")
+        if self.open_binding_purpose is not None and not isinstance(
+            self.open_binding_purpose, OpenBindingPurpose
+        ):
+            raise TypeError("open_binding_purpose must be OpenBindingPurpose")
 
 
 @dataclass(frozen=True, slots=True)

@@ -3,16 +3,25 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from ..schema.model import SchemaClass, SchemaLifecycleStatus, UseOperation, canonical_data
+from ..schema.model import (
+    OpenBindingPurpose, PortFillerClass, SchemaClass, SchemaLifecycleStatus,
+    UseDecision, UseOperation, canonical_data,
+)
 from .model import (
     ConstructionKind,
     ConstructionRecord,
     ConstructionSlot,
+    FormLexemeLinkRecord,
+    FormLexemeRelationKind,
     FormKind,
     FormSenseLinkRecord,
     LanguageFormRecord,
     LanguagePackRecord,
+    LexemeRecord,
+    LexemeSenseLinkRecord,
     LexicalSenseRecord,
+    SemanticContributionKind,
+    SemanticContributionSpecRecord,
     SenseTargetKind,
 )
 
@@ -90,16 +99,91 @@ def language_form_from_document(value: Mapping[str, Any]) -> LanguageFormRecord:
         raise LanguageRecordDecodeError(str(exc)) from exc
 
 
+def lexeme_from_document(value: Mapping[str, Any]) -> LexemeRecord:
+    data = dict(value)
+    try:
+        return LexemeRecord(
+            lexeme_ref=str(data["lexeme_ref"]),
+            pack_ref=str(data["pack_ref"]),
+            pack_revision=int(data["pack_revision"]),
+            lemma_form_ref=str(data["lemma_form_ref"]),
+            lemma_form_revision=int(data["lemma_form_revision"]),
+            lexical_category=str(data["lexical_category"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            inflection_class_ref=str(data.get("inflection_class_ref", "")),
+            feature_defaults=_pairs(data.get("feature_defaults")),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            competence_case_refs=_tuple_str(data.get("competence_case_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
+def form_lexeme_link_from_document(value: Mapping[str, Any]) -> FormLexemeLinkRecord:
+    data = dict(value)
+    try:
+        return FormLexemeLinkRecord(
+            link_ref=str(data["link_ref"]),
+            form_ref=str(data["form_ref"]),
+            form_revision=int(data["form_revision"]),
+            lexeme_ref=str(data["lexeme_ref"]),
+            lexeme_revision=int(data["lexeme_revision"]),
+            relation_kind=FormLexemeRelationKind(data["relation_kind"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            feature_values=_pairs(data.get("feature_values")),
+            prior_weight=float(data.get("prior_weight", 1.0)),
+            condition_refs=_tuple_str(data.get("condition_refs")),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
+def lexeme_sense_link_from_document(value: Mapping[str, Any]) -> LexemeSenseLinkRecord:
+    data = dict(value)
+    try:
+        return LexemeSenseLinkRecord(
+            link_ref=str(data["link_ref"]),
+            lexeme_ref=str(data["lexeme_ref"]),
+            lexeme_revision=int(data["lexeme_revision"]),
+            sense_ref=str(data["sense_ref"]),
+            sense_revision=int(data["sense_revision"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            prior_weight=float(data.get("prior_weight", 1.0)),
+            condition_refs=_tuple_str(data.get("condition_refs")),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
 def lexical_sense_from_document(value: Mapping[str, Any]) -> LexicalSenseRecord:
     data = dict(value)
     try:
         target_class = data.get("target_schema_class")
+        target_kind = data.get("target_kind")
+        target_ref = data.get("target_ref")
         return LexicalSenseRecord(
             sense_ref=str(data["sense_ref"]),
             pack_ref=str(data["pack_ref"]),
             pack_revision=int(data["pack_revision"]),
-            target_kind=SenseTargetKind(data["target_kind"]),
-            target_ref=str(data["target_ref"]),
+            target_kind=None if target_kind is None else SenseTargetKind(target_kind),
+            target_ref=None if target_ref is None else str(target_ref),
             target_revision=None if data.get("target_revision") is None else int(data["target_revision"]),
             revision=int(data.get("revision", 1)),
             supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
@@ -113,6 +197,50 @@ def lexical_sense_from_document(value: Mapping[str, Any]) -> LexicalSenseRecord:
             scope_behavior=str(data.get("scope_behavior", "none")),
             context_constraints=_tuple_str(data.get("context_constraints")),
             feature_constraints=_pairs(data.get("feature_constraints")),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            competence_case_refs=_tuple_str(data.get("competence_case_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
+def semantic_contribution_spec_from_document(value: Mapping[str, Any]) -> SemanticContributionSpecRecord:
+    data = dict(value)
+    try:
+        target_kind = data.get("target_kind")
+        target_ref = data.get("target_ref")
+        target_class = data.get("target_schema_class")
+        purpose = data.get("open_binding_purpose")
+        return SemanticContributionSpecRecord(
+            spec_ref=str(data["spec_ref"]),
+            pack_ref=str(data["pack_ref"]),
+            pack_revision=int(data["pack_revision"]),
+            sense_ref=str(data["sense_ref"]),
+            sense_revision=int(data["sense_revision"]),
+            contribution_kind=SemanticContributionKind(data["contribution_kind"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            target_kind=None if target_kind is None else SenseTargetKind(target_kind),
+            target_ref=None if target_ref is None else str(target_ref),
+            target_revision=None if data.get("target_revision") is None else int(data["target_revision"]),
+            target_schema_class=None if target_class is None else SchemaClass(target_class),
+            expected_filler_classes=tuple(PortFillerClass(item) for item in data.get("expected_filler_classes", ())),
+            expected_schema_classes=tuple(SchemaClass(item) for item in data.get("expected_schema_classes", ())),
+            expected_type_refs=_tuple_str(data.get("expected_type_refs")),
+            open_binding_purpose=None if purpose is None else OpenBindingPurpose(purpose),
+            restriction_refs=_tuple_str(data.get("restriction_refs")),
+            projection_ref=None if data.get("projection_ref") is None else str(data["projection_ref"]),
+            projection_revision=None if data.get("projection_revision") is None else int(data["projection_revision"]),
+            role_ref=str(data.get("role_ref", "")),
+            source_role_ref=str(data.get("source_role_ref", "")),
+            scope_behavior=str(data.get("scope_behavior", "none")),
+            feature_constraints=_pairs(data.get("feature_constraints")),
+            use_operation=UseOperation(data.get("use_operation", UseOperation.COMPOSE.value)),
+            use_decision=UseDecision(data.get("use_decision", UseDecision.DENY.value)),
             source_refs=_tuple_str(data.get("source_refs")),
             evidence_refs=_tuple_str(data.get("evidence_refs")),
             competence_case_refs=_tuple_str(data.get("competence_case_refs")),

@@ -163,7 +163,17 @@ def _run_composition(store, cases):
 
 
 def _targets(lattice):
-    return {item.target_ref for item in lattice.sense_candidates}
+    targets = {
+        item.target_ref for item in lattice.sense_candidates
+        if item.target_ref is not None
+    }
+    targets.update(
+        contribution.target_ref
+        for item in lattice.sense_candidates
+        for contribution in item.contributions
+        if contribution.target_ref is not None
+    )
+    return targets
 
 
 def _run_multilingual(store, cases):

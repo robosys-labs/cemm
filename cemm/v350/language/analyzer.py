@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 import unicodedata
 from typing import Iterable
 
-from ..schema.model import semantic_fingerprint
+from ..schema.model import UseOperation, semantic_fingerprint
 from .adapters import SyntaxAdapterHub, SyntaxAdapterInput
 from .constructions import ConstructionMatcher
 from .model import (
@@ -13,12 +13,15 @@ from .model import (
     FormKind,
     FormLattice,
     FormObservation,
+    LexemeCandidate,
     LanguageEvidence,
     LatticeEdge,
     LatticeEdgeKind,
     LatticeNode,
     LatticeNodeKind,
     NormalizationEvidence,
+    SemanticContribution,
+    SemanticContributionKind,
     SenseCandidate,
     Span,
 )
@@ -53,7 +56,8 @@ class FormLatticeAnalyzer:
         observations = self._observe(content, source_ref)
         language_evidence = self._languages(observations, language_hints)
         forms, normalization = self._forms(content, observations, language_evidence)
-        senses = self._senses(forms)
+        lexemes = self._lexemes(forms)
+        senses = self._senses(forms, lexemes)
         tags = tuple(sorted({item.language_tag for item in language_evidence}))
         dependency, constituency = self.syntax_adapters.analyze(SyntaxAdapterInput(
             source_ref=source_ref,
@@ -65,7 +69,7 @@ class FormLatticeAnalyzer:
             observations, forms, senses, dependency, constituency
         )
         nodes, edges = self._graph(
-            observations, language_evidence, normalization, forms, senses, constructions
+            observations, language_evidence, normalization, forms, lexemes, senses, constructions
         )
         covered = set()
         for item in forms:
@@ -90,6 +94,7 @@ class FormLatticeAnalyzer:
             construction_candidates=constructions,
             nodes=nodes,
             edges=edges,
+            lexeme_candidates=lexemes,
             unresolved_spans=unresolved,
             metadata={
                 "code_switching": len(tags) > 1,
@@ -242,40 +247,404 @@ class FormLatticeAnalyzer:
             tuple(sorted(norm_dedup.values(), key=lambda item: (item.span.start, item.span.end, item.evidence_ref))),
         )
 
-    def _senses(self, forms: tuple[FormCandidate, ...]) -> tuple[SenseCandidate, ...]:
-        result = []
+    def _lexemes(self, forms: tuple[FormCandidate, ...]) -> tuple[LexemeCandidate, ...]:
+        result: list[LexemeCandidate] = []
         for form_candidate in forms:
-            for link in self.registry.links_for_form(form_candidate.form_ref, form_candidate.form_revision):
-                sense = self.registry.require_sense(link.sense_ref, link.sense_revision)
-                confidence = min(1.0, form_candidate.confidence * min(1.0, link.prior_weight))
-                candidate_ref = "sense-candidate:" + semantic_fingerprint(
-                    "sense-candidate", (form_candidate.candidate_ref, sense.sense_ref, sense.revision, link.link_ref), 20
+            form = self.registry.require_form(form_candidate.form_ref, form_candidate.form_revision)
+            links = self.registry.lexeme_links_for_form(form.form_ref, form.revision)
+            inherited_from = None
+            if not links and form.variant_of_ref is not None:
+                inherited_from = self.registry.require_form(form.variant_of_ref)
+                links = self.registry.lexeme_links_for_form(
+                    inherited_from.form_ref, inherited_from.revision
                 )
-                result.append(SenseCandidate(
-                    candidate_ref=candidate_ref,
+            for link in links:
+                lexeme = self.registry.require_lexeme(link.lexeme_ref, link.lexeme_revision)
+                features = dict(lexeme.feature_defaults)
+                if inherited_from is not None:
+                    features.update(dict(inherited_from.feature_values))
+                features.update(dict(form.feature_values))
+                features.update(dict(link.feature_values))
+                evidence = [
+                    *form_candidate.evidence_refs,
+                    f"form-lexeme-link:{link.link_ref}@{link.revision}",
+                ]
+                if inherited_from is not None:
+                    evidence.append(
+                        f"variant-lexeme-inheritance:{form.form_ref}->{inherited_from.form_ref}"
+                    )
+                result.append(LexemeCandidate(
+                    candidate_ref="lexeme-candidate:" + semantic_fingerprint(
+                        "lexeme-candidate",
+                        (
+                            form_candidate.candidate_ref,
+                            lexeme.lexeme_ref,
+                            lexeme.revision,
+                            link.link_ref,
+                            None if inherited_from is None else inherited_from.form_ref,
+                        ),
+                        20,
+                    ),
                     form_candidate_ref=form_candidate.candidate_ref,
-                    sense_ref=sense.sense_ref,
-                    sense_revision=sense.revision,
-                    target_kind=sense.target_kind,
-                    target_ref=sense.target_ref,
-                    target_revision=sense.target_revision,
-                    target_schema_class=sense.target_schema_class,
-                    confidence=confidence,
+                    lexeme_ref=lexeme.lexeme_ref,
+                    lexeme_revision=lexeme.revision,
+                    language_tag=form_candidate.language_tag,
+                    confidence=min(
+                        1.0,
+                        form_candidate.confidence * min(1.0, link.prior_weight),
+                    ),
+                    feature_values=tuple(sorted((str(k), str(v)) for k, v in features.items())),
+                    evidence_refs=tuple(evidence),
+                ))
+        dedup = {item.candidate_ref: item for item in result}
+        return tuple(sorted(
+            dedup.values(),
+            key=lambda item: (item.form_candidate_ref, item.lexeme_ref, item.candidate_ref),
+        ))
+
+    def _senses(
+        self,
+        forms: tuple[FormCandidate, ...],
+        lexemes: tuple[LexemeCandidate, ...],
+    ) -> tuple[SenseCandidate, ...]:
+        result: list[SenseCandidate] = []
+        lexemes_by_form: dict[str, list[LexemeCandidate]] = defaultdict(list)
+        for item in lexemes:
+            lexemes_by_form[item.form_candidate_ref].append(item)
+
+        def append_candidate(
+            form_candidate: FormCandidate,
+            sense,
+            *,
+            prior_weight: float,
+            evidence_refs: tuple[str, ...],
+            lexeme_candidate: LexemeCandidate | None,
+            authority_path: str,
+            authority_ref: str,
+        ) -> None:
+            confidence = min(1.0, form_candidate.confidence * min(1.0, prior_weight))
+            if lexeme_candidate is not None:
+                confidence = min(confidence, lexeme_candidate.confidence)
+            contributions = self._semantic_contributions(
+                form_candidate,
+                sense,
+                lexeme_candidate,
+                evidence_refs,
+                authority_path,
+            )
+            target_contributions = tuple(
+                item
+                for item in contributions
+                if item.contribution_kind == SemanticContributionKind.TARGET
+                and item.target_ref is not None
+            )
+            effective_target = (
+                target_contributions[0] if len(target_contributions) == 1 else None
+            )
+            scope_behaviors = tuple(
+                item.scope_behavior
+                for item in contributions
+                if item.contribution_kind == SemanticContributionKind.SCOPE
+                and item.scope_behavior != "none"
+            )
+            unique_scopes = tuple(sorted(set(scope_behaviors)))
+            effective_scope = (
+                unique_scopes[0] if len(unique_scopes) == 1 else sense.scope_behavior
+            )
+            effective_types = tuple(sorted({
+                *sense.expected_type_refs,
+                *(
+                    ref
+                    for contribution in contributions
+                    for ref in contribution.expected_type_refs
+                ),
+            }))
+            explicit_arguments = tuple(sorted({
+                (str(item.metadata.get("source_role") or ""), item.role_ref)
+                for item in contributions
+                if item.contribution_kind == SemanticContributionKind.ARGUMENT
+                and item.role_ref
+                and item.metadata.get("source_role")
+            }))
+            candidate_ref = "sense-candidate:" + semantic_fingerprint(
+                "sense-candidate",
+                (
+                    form_candidate.candidate_ref,
+                    None if lexeme_candidate is None else lexeme_candidate.candidate_ref,
+                    sense.sense_ref,
+                    sense.revision,
+                    authority_ref,
+                    tuple(item.contribution_ref for item in contributions),
+                ),
+                20,
+            )
+            result.append(SenseCandidate(
+                candidate_ref=candidate_ref,
+                form_candidate_ref=form_candidate.candidate_ref,
+                sense_ref=sense.sense_ref,
+                sense_revision=sense.revision,
+                target_kind=(
+                    effective_target.target_kind
+                    if effective_target is not None
+                    else sense.target_kind
+                ),
+                target_ref=(
+                    effective_target.target_ref
+                    if effective_target is not None
+                    else sense.target_ref
+                ),
+                target_revision=(
+                    effective_target.target_revision
+                    if effective_target is not None
+                    else sense.target_revision
+                ),
+                target_schema_class=(
+                    effective_target.target_schema_class
+                    if effective_target is not None
+                    else sense.target_schema_class
+                ),
+                confidence=confidence,
+                evidence_refs=evidence_refs,
+                contributions=contributions,
+                use_operation=sense.use_operation,
+                scope_behavior=effective_scope,
+                expected_type_refs=effective_types,
+                lexical_category=sense.lexical_category,
+                argument_map=explicit_arguments or sense.argument_map,
+                lexeme_ref=(
+                    None if lexeme_candidate is None else lexeme_candidate.lexeme_ref
+                ),
+                authority_path=authority_path,
+                metadata={**dict(sense.metadata), "authority_path": authority_path},
+            ))
+
+        for form_candidate in forms:
+            lexeme_path_used = False
+            for lexeme_candidate in sorted(
+                lexemes_by_form.get(form_candidate.candidate_ref, ()),
+                key=lambda item: item.candidate_ref,
+            ):
+                links = self.registry.sense_links_for_lexeme(
+                    lexeme_candidate.lexeme_ref,
+                    lexeme_candidate.lexeme_revision,
+                )
+                if not links:
+                    continue
+                lexeme_path_used = True
+                for link in links:
+                    sense = self.registry.require_sense(link.sense_ref, link.sense_revision)
+                    append_candidate(
+                        form_candidate,
+                        sense,
+                        prior_weight=link.prior_weight,
+                        evidence_refs=(
+                            *lexeme_candidate.evidence_refs,
+                            f"lexeme-sense-link:{link.link_ref}@{link.revision}",
+                        ),
+                        lexeme_candidate=lexeme_candidate,
+                        authority_path="lexeme",
+                        authority_ref=link.link_ref,
+                    )
+            if lexeme_path_used:
+                continue
+
+            # Explicitly bounded compatibility path for signed legacy boot data.
+            for link in self.registry.links_for_form(
+                form_candidate.form_ref,
+                form_candidate.form_revision,
+            ):
+                sense = self.registry.require_sense(link.sense_ref, link.sense_revision)
+                append_candidate(
+                    form_candidate,
+                    sense,
+                    prior_weight=link.prior_weight,
                     evidence_refs=(
                         *form_candidate.evidence_refs,
                         f"form-sense-link:{link.link_ref}@{link.revision}",
                     ),
-                    use_operation=sense.use_operation,
-                    scope_behavior=sense.scope_behavior,
+                    lexeme_candidate=None,
+                    authority_path="legacy_form_sense",
+                    authority_ref=link.link_ref,
+                )
+
+        return tuple(sorted(
+            result,
+            key=lambda item: (
+                item.form_candidate_ref,
+                -item.confidence,
+                item.sense_ref,
+                item.candidate_ref,
+            ),
+        ))
+
+    def _semantic_contributions(
+        self,
+        form_candidate: FormCandidate,
+        sense,
+        lexeme_candidate: LexemeCandidate | None,
+        evidence_refs: tuple[str, ...],
+        authority_path: str,
+    ) -> tuple[SemanticContribution, ...]:
+        specs = tuple(
+            item
+            for item in self.registry.contribution_specs_for_sense(
+                sense.sense_ref,
+                sense.revision,
+            )
+            if item.use_operation
+            in {UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.QUERY}
+        )
+        result: list[SemanticContribution] = []
+        for spec in specs:
+            result.append(SemanticContribution(
+                contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                    "semantic-contribution",
+                    (
+                        form_candidate.candidate_ref,
+                        None
+                        if lexeme_candidate is None
+                        else lexeme_candidate.candidate_ref,
+                        spec.spec_ref,
+                        spec.revision,
+                    ),
+                    20,
+                ),
+                contribution_kind=spec.contribution_kind,
+                spec_ref=spec.spec_ref,
+                target_kind=spec.target_kind,
+                target_ref=spec.target_ref,
+                target_revision=spec.target_revision,
+                target_schema_class=spec.target_schema_class,
+                expected_filler_classes=spec.expected_filler_classes,
+                expected_schema_classes=spec.expected_schema_classes,
+                expected_type_refs=spec.expected_type_refs,
+                open_binding_purpose=spec.open_binding_purpose,
+                restriction_refs=spec.restriction_refs,
+                projection_ref=spec.projection_ref,
+                projection_revision=spec.projection_revision,
+                role_ref=spec.role_ref,
+                scope_behavior=spec.scope_behavior,
+                feature_values=spec.feature_constraints,
+                evidence_refs=(
+                    *evidence_refs,
+                    f"semantic-contribution-spec:{spec.spec_ref}@{spec.revision}",
+                ),
+                metadata={
+                    "authority_path": "semantic_contribution_spec",
+                    "source_role": spec.source_role_ref,
+                },
+            ))
+
+        # Compatibility compiler for legacy signed form/sense authority. It emits
+        # explicit cycle contributions but does not create new durable semantics.
+        if not result and sense.target_ref is not None:
+            result.append(SemanticContribution(
+                contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                    "legacy-target-contribution",
+                    (form_candidate.candidate_ref, sense.sense_ref, sense.revision),
+                    20,
+                ),
+                contribution_kind=SemanticContributionKind.TARGET,
+                target_kind=sense.target_kind,
+                target_ref=sense.target_ref,
+                target_revision=sense.target_revision,
+                target_schema_class=sense.target_schema_class,
+                expected_type_refs=sense.expected_type_refs,
+                evidence_refs=evidence_refs,
+                metadata={"authority_path": authority_path},
+            ))
+            if sense.expected_type_refs:
+                result.append(SemanticContribution(
+                    contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                        "legacy-type-restriction",
+                        (
+                            form_candidate.candidate_ref,
+                            sense.sense_ref,
+                            sense.expected_type_refs,
+                        ),
+                        20,
+                    ),
+                    contribution_kind=SemanticContributionKind.RESTRICTION,
                     expected_type_refs=sense.expected_type_refs,
-                    lexical_category=sense.lexical_category,
-                    argument_map=sense.argument_map,
-                    metadata=dict(sense.metadata),
+                    evidence_refs=evidence_refs,
+                    metadata={"authority_path": authority_path},
                 ))
-        return tuple(sorted(result, key=lambda item: (item.form_candidate_ref, -item.confidence, item.sense_ref)))
+            if sense.scope_behavior != "none":
+                result.append(SemanticContribution(
+                    contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                        "legacy-scope",
+                        (
+                            form_candidate.candidate_ref,
+                            sense.sense_ref,
+                            sense.scope_behavior,
+                        ),
+                        20,
+                    ),
+                    contribution_kind=SemanticContributionKind.SCOPE,
+                    scope_behavior=sense.scope_behavior,
+                    evidence_refs=evidence_refs,
+                    metadata={"authority_path": authority_path},
+                ))
+            for source_role, semantic_port_ref in sense.argument_map:
+                result.append(SemanticContribution(
+                    contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                        "legacy-argument",
+                        (
+                            form_candidate.candidate_ref,
+                            sense.sense_ref,
+                            source_role,
+                            semantic_port_ref,
+                        ),
+                        20,
+                    ),
+                    contribution_kind=SemanticContributionKind.ARGUMENT,
+                    role_ref=semantic_port_ref,
+                    evidence_refs=evidence_refs,
+                    metadata={
+                        "source_role": source_role,
+                        "authority_path": authority_path,
+                    },
+                ))
+
+        # Surface/form-family features remain grammar evidence even when semantic
+        # contribution specs are fully migrated.
+        form = self.registry.require_form(
+            form_candidate.form_ref,
+            form_candidate.form_revision,
+        )
+        features = dict(form.feature_values)
+        if lexeme_candidate is not None:
+            features.update(dict(lexeme_candidate.feature_values))
+        features.update(dict(sense.feature_constraints))
+        if features:
+            values = tuple(sorted((str(k), str(v)) for k, v in features.items()))
+            result.append(SemanticContribution(
+                contribution_ref="semantic-contribution:" + semantic_fingerprint(
+                    "grammatical-feature-contribution",
+                    (
+                        form_candidate.candidate_ref,
+                        None
+                        if lexeme_candidate is None
+                        else lexeme_candidate.candidate_ref,
+                        sense.sense_ref,
+                        values,
+                    ),
+                    20,
+                ),
+                contribution_kind=SemanticContributionKind.GRAMMATICAL_FEATURE,
+                feature_values=values,
+                evidence_refs=evidence_refs,
+                metadata={"authority_path": authority_path},
+            ))
+
+        dedup = {item.contribution_ref: item for item in result}
+        return tuple(sorted(
+            dedup.values(),
+            key=lambda item: (item.contribution_kind.value, item.contribution_ref),
+        ))
 
     @staticmethod
-    def _graph(observations, languages, normalization, forms, senses, constructions):
+    def _graph(observations, languages, normalization, forms, lexemes, senses, constructions):
         nodes = []
         edges = []
         observation_nodes = {}
@@ -291,14 +660,46 @@ class FormLatticeAnalyzer:
             for observation_ref in item.observation_refs:
                 edge_ref = "lattice-edge:" + semantic_fingerprint("edge", (observation_nodes[observation_ref], ref, "covers"), 20)
                 edges.append(LatticeEdge(edge_ref, observation_nodes[observation_ref], ref, LatticeEdgeKind.COVERS, item.confidence, item.evidence_refs))
+        lexeme_nodes = {}
+        for item in lexemes:
+            form = next(candidate for candidate in forms if candidate.candidate_ref == item.form_candidate_ref)
+            ref = f"lattice-node:lexeme:{item.candidate_ref}"
+            lexeme_nodes[item.candidate_ref] = ref
+            nodes.append(LatticeNode(ref, LatticeNodeKind.LEXEME, form.span, item.lexeme_ref, item.confidence, item.evidence_refs))
+            edge_ref = "lattice-edge:" + semantic_fingerprint(
+                "edge", (form_nodes[item.form_candidate_ref], ref, "lexeme"), 20
+            )
+            edges.append(LatticeEdge(edge_ref, form_nodes[item.form_candidate_ref], ref, LatticeEdgeKind.LEXEME, item.confidence, item.evidence_refs))
         sense_nodes = {}
         for item in senses:
             form = next(candidate for candidate in forms if candidate.candidate_ref == item.form_candidate_ref)
             ref = f"lattice-node:sense:{item.candidate_ref}"
             sense_nodes[item.candidate_ref] = ref
             nodes.append(LatticeNode(ref, LatticeNodeKind.SENSE, form.span, item.sense_ref, item.confidence, item.evidence_refs))
-            edge_ref = "lattice-edge:" + semantic_fingerprint("edge", (form_nodes[item.form_candidate_ref], ref, "sense"), 20)
-            edges.append(LatticeEdge(edge_ref, form_nodes[item.form_candidate_ref], ref, LatticeEdgeKind.SENSE, item.confidence, item.evidence_refs))
+            lexeme_node = next(
+                (
+                    lexeme_nodes[candidate.candidate_ref]
+                    for candidate in lexemes
+                    if candidate.form_candidate_ref == item.form_candidate_ref
+                    and candidate.lexeme_ref == item.lexeme_ref
+                ),
+                None,
+            )
+            source = lexeme_node or form_nodes[item.form_candidate_ref]
+            edge_ref = "lattice-edge:" + semantic_fingerprint("edge", (source, ref, "sense"), 20)
+            edges.append(LatticeEdge(edge_ref, source, ref, LatticeEdgeKind.SENSE, item.confidence, item.evidence_refs))
+            for contribution in item.contributions:
+                cref = f"lattice-node:contribution:{contribution.contribution_ref}"
+                nodes.append(LatticeNode(
+                    cref, LatticeNodeKind.CONTRIBUTION, form.span,
+                    contribution.contribution_ref, item.confidence,
+                    contribution.evidence_refs or item.evidence_refs,
+                ))
+                edge_ref = "lattice-edge:" + semantic_fingerprint("edge", (ref, cref, "contribution"), 20)
+                edges.append(LatticeEdge(
+                    edge_ref, ref, cref, LatticeEdgeKind.CONTRIBUTION,
+                    item.confidence, contribution.evidence_refs or item.evidence_refs,
+                ))
         for item in constructions:
             ref = f"lattice-node:construction:{item.candidate_ref}"
             nodes.append(LatticeNode(ref, LatticeNodeKind.CONSTRUCTION, item.span, item.construction_ref, item.confidence, item.evidence_refs))

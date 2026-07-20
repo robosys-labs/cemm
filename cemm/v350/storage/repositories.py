@@ -10,8 +10,9 @@ from ..schema.model import (
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
-    ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
-    LanguagePackRecord, LexicalSenseRecord,
+    ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
+    LanguageFormRecord, LanguagePackRecord, LexemeRecord, LexemeSenseLinkRecord,
+    LexicalSenseRecord, SemanticContributionSpecRecord,
 )
 from ..language.registry import LanguageRegistry
 from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
@@ -494,8 +495,12 @@ class LanguageRepository:
         self._store = store
         self.packs = TypedRepository(store, RecordKind.LANGUAGE_PACK, LanguagePackRecord)
         self.forms = TypedRepository(store, RecordKind.LANGUAGE_FORM, LanguageFormRecord)
+        self.lexemes = TypedRepository(store, RecordKind.LEXEME, LexemeRecord)
+        self.form_lexeme_links = TypedRepository(store, RecordKind.FORM_LEXEME_LINK, FormLexemeLinkRecord)
         self.senses = TypedRepository(store, RecordKind.LEXICAL_SENSE, LexicalSenseRecord)
+        self.lexeme_sense_links = TypedRepository(store, RecordKind.LEXEME_SENSE_LINK, LexemeSenseLinkRecord)
         self.links = TypedRepository(store, RecordKind.FORM_SENSE_LINK, FormSenseLinkRecord)
+        self.contribution_specs = TypedRepository(store, RecordKind.SEMANTIC_CONTRIBUTION_SPEC, SemanticContributionSpecRecord)
         self.constructions = TypedRepository(store, RecordKind.CONSTRUCTION, ConstructionRecord)
         self._registry_cache: dict[tuple[int, str, str], LanguageRegistry] = {}
 
@@ -514,6 +519,10 @@ class LanguageRepository:
             (item.payload for item in self.senses.all(snapshot=snapshot, all_revisions=True)),
             (item.payload for item in self.links.all(snapshot=snapshot, all_revisions=True)),
             (item.payload for item in self.constructions.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.lexemes.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.form_lexeme_links.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.lexeme_sense_links.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.contribution_specs.all(snapshot=snapshot, all_revisions=True)),
         )
         self._registry_cache = {key: registry}
         return registry

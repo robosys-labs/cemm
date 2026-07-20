@@ -5,7 +5,7 @@ import sqlite3
 from typing import Iterable
 
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 APPLICATION_ID = 0x43454D4D  # CEMM
 
 
@@ -634,8 +634,8 @@ DDL: tuple[str, ...] = (
         supersedes_revision INTEGER,
         pack_ref TEXT NOT NULL,
         pack_revision INTEGER NOT NULL,
-        target_kind TEXT NOT NULL,
-        target_ref TEXT NOT NULL,
+        target_kind TEXT,
+        target_ref TEXT,
         target_revision INTEGER,
         target_schema_class TEXT,
         use_operation TEXT NOT NULL,

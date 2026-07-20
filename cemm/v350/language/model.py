@@ -11,7 +11,10 @@ from enum import Enum
 from math import isfinite
 from typing import Any, Mapping
 
-from ..schema.model import SchemaClass, SchemaLifecycleStatus, UseOperation, semantic_fingerprint
+from ..schema.model import (
+    OpenBindingPurpose, PortFillerClass, SchemaClass, SchemaLifecycleStatus,
+    UseDecision, UseOperation, semantic_fingerprint,
+)
 
 
 class StrEnum(str, Enum):
@@ -37,6 +40,27 @@ class SenseTargetKind(StrEnum):
     STRUCTURAL = "structural"
 
 
+class SemanticContributionKind(StrEnum):
+    TARGET = "target"
+    REFERENTIAL = "referential"
+    VARIABLE = "variable"
+    RESTRICTION = "restriction"
+    PROJECTION = "projection"
+    SCOPE = "scope"
+    ARGUMENT = "argument"
+    GRAMMATICAL_FEATURE = "grammatical_feature"
+    CONSTRUCTION = "construction"
+
+
+class FormLexemeRelationKind(StrEnum):
+    LEMMA = "lemma"
+    INFLECTED = "inflected"
+    SUPPLETIVE = "suppletive"
+    CLITIC = "clitic"
+    DERIVED = "derived"
+    ZERO = "zero"
+
+
 class ConstructionKind(StrEnum):
     COORDINATION = "coordination"
     COMPLEMENT = "complement"
@@ -55,7 +79,9 @@ class SyntaxEvidenceKind(StrEnum):
 class LatticeNodeKind(StrEnum):
     OBSERVATION = "observation"
     FORM = "form"
+    LEXEME = "lexeme"
     SENSE = "sense"
+    CONTRIBUTION = "contribution"
     CONSTRUCTION = "construction"
     GAP = "gap"
 
@@ -64,6 +90,8 @@ class LatticeEdgeKind(StrEnum):
     COVERS = "covers"
     TRIGGER = "trigger"
     VARIANT = "variant"
+    LEXEME = "lexeme"
+    CONTRIBUTION = "contribution"
     NORMALIZATION = "normalization"
     SENSE = "sense"
     COMPOSES = "composes"
@@ -179,13 +207,138 @@ class LanguageFormRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class LexemeRecord:
+    lexeme_ref: str
+    pack_ref: str
+    pack_revision: int
+    lemma_form_ref: str
+    lemma_form_revision: int
+    lexical_category: str
+    revision: int = 1
+    supersedes_revision: int | None = None
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    inflection_class_ref: str = ""
+    feature_defaults: tuple[tuple[str, str], ...] = ()
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    competence_case_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.lexeme_ref, "lexeme_ref"),
+            (self.pack_ref, "pack_ref"),
+            (self.lemma_form_ref, "lemma_form_ref"),
+            (self.lexical_category, "lexical_category"),
+        ):
+            _ref(value, label)
+        if min(self.pack_revision, self.lemma_form_revision, self.revision) < 1:
+            raise ValueError("lexeme revisions must be positive")
+        _supersession(self.revision, self.supersedes_revision, "lexeme")
+        _unique(tuple(name for name, _ in self.feature_defaults), "lexeme feature defaults")
+        _unique(self.source_refs, "lexeme sources")
+        _unique(self.evidence_refs, "lexeme evidence")
+        _unique(self.competence_case_refs, "lexeme competence cases")
+        if self.lifecycle_status == SchemaLifecycleStatus.ACTIVE and not self.competence_case_refs:
+            raise ValueError("active lexeme requires competence cases")
+        _reviewed_authority(self.lifecycle_status, self.source_refs, self.evidence_refs, "lexeme")
+
+    @property
+    def content_fingerprint(self) -> str:
+        return semantic_fingerprint("lexeme-content", {
+            "pack_ref": self.pack_ref,
+            "pack_revision": self.pack_revision,
+            "lemma_form_ref": self.lemma_form_ref,
+            "lemma_form_revision": self.lemma_form_revision,
+            "lexical_category": self.lexical_category,
+            "inflection_class_ref": self.inflection_class_ref,
+            "feature_defaults": self.feature_defaults,
+            "metadata": dict(self.metadata),
+        }, 64)
+
+
+@dataclass(frozen=True, slots=True)
+class FormLexemeLinkRecord:
+    link_ref: str
+    form_ref: str
+    form_revision: int
+    lexeme_ref: str
+    lexeme_revision: int
+    relation_kind: FormLexemeRelationKind
+    revision: int = 1
+    supersedes_revision: int | None = None
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    feature_values: tuple[tuple[str, str], ...] = ()
+    prior_weight: float = 1.0
+    condition_refs: tuple[str, ...] = ()
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.link_ref, "form-lexeme link_ref"),
+            (self.form_ref, "form_ref"),
+            (self.lexeme_ref, "lexeme_ref"),
+        ):
+            _ref(value, label)
+        if min(self.form_revision, self.lexeme_revision, self.revision) < 1:
+            raise ValueError("form-lexeme revisions must be positive")
+        _supersession(self.revision, self.supersedes_revision, "form-lexeme link")
+        if not isfinite(self.prior_weight) or self.prior_weight <= 0:
+            raise ValueError("form-lexeme prior_weight must be finite and positive")
+        _unique(tuple(name for name, _ in self.feature_values), "form-lexeme feature names")
+        _unique(self.condition_refs, "form-lexeme conditions")
+        _unique(self.source_refs, "form-lexeme sources")
+        _unique(self.evidence_refs, "form-lexeme evidence")
+        _reviewed_authority(self.lifecycle_status, self.source_refs, self.evidence_refs, "form-lexeme link")
+
+
+@dataclass(frozen=True, slots=True)
+class LexemeSenseLinkRecord:
+    link_ref: str
+    lexeme_ref: str
+    lexeme_revision: int
+    sense_ref: str
+    sense_revision: int
+    revision: int = 1
+    supersedes_revision: int | None = None
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    prior_weight: float = 1.0
+    condition_refs: tuple[str, ...] = ()
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.link_ref, "lexeme-sense link_ref"),
+            (self.lexeme_ref, "lexeme_ref"),
+            (self.sense_ref, "sense_ref"),
+        ):
+            _ref(value, label)
+        if min(self.lexeme_revision, self.sense_revision, self.revision) < 1:
+            raise ValueError("lexeme-sense revisions must be positive")
+        _supersession(self.revision, self.supersedes_revision, "lexeme-sense link")
+        if not isfinite(self.prior_weight) or self.prior_weight <= 0:
+            raise ValueError("lexeme-sense prior_weight must be finite and positive")
+        _unique(self.condition_refs, "lexeme-sense conditions")
+        _unique(self.source_refs, "lexeme-sense sources")
+        _unique(self.evidence_refs, "lexeme-sense evidence")
+        _reviewed_authority(self.lifecycle_status, self.source_refs, self.evidence_refs, "lexeme-sense link")
+
+
+@dataclass(frozen=True, slots=True)
 class LexicalSenseRecord:
     sense_ref: str
     pack_ref: str
     pack_revision: int
-    target_kind: SenseTargetKind
-    target_ref: str
-    target_revision: int | None
+    target_kind: SenseTargetKind | None = None
+    target_ref: str | None = None
+    target_revision: int | None = None
     revision: int = 1
     supersedes_revision: int | None = None
     lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
@@ -205,14 +358,21 @@ class LexicalSenseRecord:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        for value, label in ((self.sense_ref, "sense_ref"), (self.pack_ref, "pack_ref"), (self.target_ref, "target_ref")):
+        for value, label in ((self.sense_ref, "sense_ref"), (self.pack_ref, "pack_ref")):
             _ref(value, label)
+        if self.target_ref is not None:
+            _ref(self.target_ref, "target_ref")
+        if (self.target_kind is None) != (self.target_ref is None):
+            raise ValueError("lexical sense target kind/ref must be supplied together")
         if self.pack_revision < 1 or self.revision < 1:
             raise ValueError("sense and pack revisions must be positive")
         _supersession(self.revision, self.supersedes_revision, "lexical sense")
-        if self.target_revision is not None and self.target_revision < 1:
+        if self.target_revision is not None and (self.target_ref is None or self.target_revision < 1):
             raise ValueError("sense target revision must be positive")
-        if self.target_kind in {SenseTargetKind.SCHEMA, SenseTargetKind.REFERENT_TYPE, SenseTargetKind.OPERATOR, SenseTargetKind.DISCOURSE} and self.target_revision is None:
+        if self.target_kind in {
+            SenseTargetKind.SCHEMA, SenseTargetKind.REFERENT_TYPE,
+            SenseTargetKind.OPERATOR, SenseTargetKind.DISCOURSE,
+        } and self.target_revision is None:
             raise ValueError("schema-backed lexical sense requires exact target revision")
         if self.target_kind == SenseTargetKind.OPERATOR and self.target_schema_class not in {None, SchemaClass.OPERATOR}:
             raise ValueError("operator sense target class must be operator")
@@ -234,7 +394,7 @@ class LexicalSenseRecord:
         return semantic_fingerprint("lexical-sense-content", {
             "pack_ref": self.pack_ref,
             "pack_revision": self.pack_revision,
-            "target_kind": self.target_kind.value,
+            "target_kind": None if self.target_kind is None else self.target_kind.value,
             "target_ref": self.target_ref,
             "target_revision": self.target_revision,
             "target_schema_class": None if self.target_schema_class is None else self.target_schema_class.value,
@@ -252,6 +412,97 @@ class LexicalSenseRecord:
     @property
     def record_fingerprint(self) -> str:
         return semantic_fingerprint("lexical-sense-record", self, 64)
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticContributionSpecRecord:
+    spec_ref: str
+    pack_ref: str
+    pack_revision: int
+    sense_ref: str
+    sense_revision: int
+    contribution_kind: SemanticContributionKind
+    revision: int = 1
+    supersedes_revision: int | None = None
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    target_kind: SenseTargetKind | None = None
+    target_ref: str | None = None
+    target_revision: int | None = None
+    target_schema_class: SchemaClass | None = None
+    expected_filler_classes: tuple[PortFillerClass, ...] = ()
+    expected_schema_classes: tuple[SchemaClass, ...] = ()
+    expected_type_refs: tuple[str, ...] = ()
+    open_binding_purpose: OpenBindingPurpose | None = None
+    restriction_refs: tuple[str, ...] = ()
+    projection_ref: str | None = None
+    projection_revision: int | None = None
+    role_ref: str = ""
+    source_role_ref: str = ""
+    scope_behavior: str = "none"
+    feature_constraints: tuple[tuple[str, str], ...] = ()
+    use_operation: UseOperation = UseOperation.COMPOSE
+    use_decision: UseDecision = UseDecision.DENY
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    competence_case_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.spec_ref, "semantic contribution spec_ref"),
+            (self.pack_ref, "pack_ref"),
+            (self.sense_ref, "sense_ref"),
+        ):
+            _ref(value, label)
+        if min(self.pack_revision, self.sense_revision, self.revision) < 1:
+            raise ValueError("semantic contribution revisions must be positive")
+        _supersession(self.revision, self.supersedes_revision, "semantic contribution spec")
+        if self.target_ref is not None:
+            _ref(self.target_ref, "contribution target_ref")
+        if (self.target_kind is None) != (self.target_ref is None):
+            raise ValueError("contribution target kind/ref must be supplied together")
+        if self.target_revision is not None and (self.target_ref is None or self.target_revision < 1):
+            raise ValueError("contribution target revision requires a target")
+        if self.contribution_kind == SemanticContributionKind.TARGET and self.target_ref is None:
+            raise ValueError("TARGET contribution requires a target")
+        if self.contribution_kind == SemanticContributionKind.PROJECTION and self.projection_ref is None:
+            raise ValueError("PROJECTION contribution requires projection_ref")
+        if (self.projection_ref is None) != (self.projection_revision is None):
+            raise ValueError("projection ref/revision must be supplied together")
+        if self.projection_ref is not None:
+            _ref(self.projection_ref, "projection_ref")
+            if self.projection_revision is None or self.projection_revision < 1:
+                raise ValueError("projection revision must be positive")
+        if self.contribution_kind == SemanticContributionKind.ARGUMENT and (
+            not self.role_ref or not self.source_role_ref
+        ):
+            raise ValueError("ARGUMENT contribution requires source_role_ref and role_ref")
+        if self.role_ref:
+            _ref(self.role_ref, "role_ref")
+        if self.source_role_ref:
+            _ref(self.source_role_ref, "source_role_ref")
+        _unique(self.expected_filler_classes, "contribution filler classes")
+        _unique(self.expected_schema_classes, "contribution schema classes")
+        _unique(self.expected_type_refs, "contribution expected types")
+        _unique(self.restriction_refs, "contribution restrictions")
+        _unique(tuple(name for name, _ in self.feature_constraints), "contribution feature constraints")
+        _unique(self.source_refs, "contribution sources")
+        _unique(self.evidence_refs, "contribution evidence")
+        _unique(self.competence_case_refs, "contribution competence cases")
+        if self.lifecycle_status == SchemaLifecycleStatus.ACTIVE and not self.competence_case_refs:
+            raise ValueError("active semantic contribution requires competence cases")
+        _reviewed_authority(
+            self.lifecycle_status, self.source_refs, self.evidence_refs,
+            "semantic contribution spec",
+        )
+
+    @property
+    def executable(self) -> bool:
+        return (
+            self.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+            and self.use_decision == UseDecision.ALLOW
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -476,6 +727,75 @@ class NormalizationEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class LexemeCandidate:
+    candidate_ref: str
+    form_candidate_ref: str
+    lexeme_ref: str
+    lexeme_revision: int
+    language_tag: str
+    confidence: float
+    feature_values: tuple[tuple[str, str], ...]
+    evidence_refs: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.candidate_ref, "lexeme candidate_ref"),
+            (self.form_candidate_ref, "form_candidate_ref"),
+            (self.lexeme_ref, "lexeme_ref"),
+        ):
+            _ref(value, label)
+        if self.lexeme_revision < 1:
+            raise ValueError("lexeme candidate revision must be positive")
+        _language_tag(self.language_tag)
+        _confidence(self.confidence)
+        _unique(tuple(name for name, _ in self.feature_values), "lexeme candidate feature names")
+        if not self.evidence_refs:
+            raise ValueError("lexeme candidate requires evidence")
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticContribution:
+    contribution_ref: str
+    contribution_kind: SemanticContributionKind
+    spec_ref: str | None = None
+    target_kind: SenseTargetKind | None = None
+    target_ref: str | None = None
+    target_revision: int | None = None
+    target_schema_class: SchemaClass | None = None
+    expected_filler_classes: tuple[PortFillerClass, ...] = ()
+    expected_schema_classes: tuple[SchemaClass, ...] = ()
+    expected_type_refs: tuple[str, ...] = ()
+    open_binding_purpose: OpenBindingPurpose | None = None
+    restriction_refs: tuple[str, ...] = ()
+    projection_ref: str | None = None
+    projection_revision: int | None = None
+    role_ref: str = ""
+    scope_behavior: str = "none"
+    feature_values: tuple[tuple[str, str], ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        _ref(self.contribution_ref, "semantic contribution_ref")
+        if self.spec_ref is not None:
+            _ref(self.spec_ref, "semantic contribution spec_ref")
+        if self.target_ref is not None:
+            _ref(self.target_ref, "semantic contribution target_ref")
+        if self.projection_ref is not None:
+            _ref(self.projection_ref, "semantic contribution projection_ref")
+        if self.projection_revision is not None and self.projection_revision < 1:
+            raise ValueError("semantic contribution projection revision must be positive")
+        if self.role_ref:
+            _ref(self.role_ref, "semantic contribution role_ref")
+        _unique(self.expected_filler_classes, "semantic contribution filler classes")
+        _unique(self.expected_schema_classes, "semantic contribution schema classes")
+        _unique(self.expected_type_refs, "semantic contribution expected types")
+        _unique(self.restriction_refs, "semantic contribution restrictions")
+        _unique(tuple(name for name, _ in self.feature_values), "semantic contribution feature names")
+        _unique(self.evidence_refs, "semantic contribution evidence")
+
+
+@dataclass(frozen=True, slots=True)
 class FormCandidate:
     candidate_ref: str
     observation_refs: tuple[str, ...]
@@ -505,8 +825,8 @@ class SenseCandidate:
     form_candidate_ref: str
     sense_ref: str
     sense_revision: int
-    target_kind: SenseTargetKind
-    target_ref: str
+    target_kind: SenseTargetKind | None
+    target_ref: str | None
     target_revision: int | None
     target_schema_class: SchemaClass | None
     confidence: float
@@ -517,13 +837,21 @@ class SenseCandidate:
     lexical_category: str = ""
     argument_map: tuple[tuple[str, str], ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    contributions: tuple[SemanticContribution, ...] = ()
+    lexeme_ref: str | None = None
+    authority_path: str = "legacy_form_sense"
 
     def __post_init__(self) -> None:
-        for value, label in ((self.candidate_ref, "sense candidate_ref"), (self.form_candidate_ref, "form_candidate_ref"), (self.sense_ref, "sense_ref"), (self.target_ref, "target_ref")):
+        for value, label in ((self.candidate_ref, "sense candidate_ref"), (self.form_candidate_ref, "form_candidate_ref"), (self.sense_ref, "sense_ref")):
             _ref(value, label)
+        if self.target_ref is not None:
+            _ref(self.target_ref, "target_ref")
+        if self.lexeme_ref is not None:
+            _ref(self.lexeme_ref, "lexeme_ref")
         if self.sense_revision < 1:
             raise ValueError("sense candidate revision must be positive")
         _confidence(self.confidence)
+        _unique(tuple(item.contribution_ref for item in self.contributions), "sense candidate contributions")
         _unique(self.expected_type_refs, "sense candidate expected types")
         if not self.evidence_refs:
             raise ValueError("sense candidate requires evidence")
@@ -685,6 +1013,7 @@ class FormLattice:
     construction_candidates: tuple[ConstructionCandidate, ...]
     nodes: tuple[LatticeNode, ...]
     edges: tuple[LatticeEdge, ...]
+    lexeme_candidates: tuple[LexemeCandidate, ...] = ()
     unresolved_spans: tuple[Span, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
@@ -693,6 +1022,7 @@ class FormLattice:
         _ref(self.source_ref, "source_ref")
         _unique(tuple(item.observation_ref for item in self.observations), "observation refs")
         _unique(tuple(item.candidate_ref for item in self.form_candidates), "form candidate refs")
+        _unique(tuple(item.candidate_ref for item in self.lexeme_candidates), "lexeme candidate refs")
         _unique(tuple(item.candidate_ref for item in self.sense_candidates), "sense candidate refs")
         _unique(tuple(item.candidate_ref for item in self.construction_candidates), "construction candidate refs")
         node_refs = tuple(item.node_ref for item in self.nodes)

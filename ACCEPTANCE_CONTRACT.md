@@ -318,6 +318,42 @@ what's my name?
 
 No exact full-sequence construction is permitted.
 
+### 11.1 Semantic contribution productivity
+
+For synthetic vocabulary not present in canonical seeds:
+
+1. every recognized form must preserve at least one traceable contribution or explicit compatibility path;
+2. surface renaming must not alter semantic authority;
+3. grammatical features remain separate from semantic targets;
+4. partial query meaning preserves filler/schema/type/restriction/projection/purpose constraints;
+5. no recognized contribution disappears silently.
+
+### 11.2 Lexeme/form-family productivity
+
+Two or more forms may share one lexeme and one semantic authority while carrying distinct grammatical features.
+
+The competence case must not require direct form-sense links.
+
+### 11.3 Targetless contribution authority
+
+A lexical sense may be usable without a dummy target only when active reviewed semantic-contribution specs close its permitted use.
+
+### 11.4 Interrogative separation
+
+Information gap, query variable, answer projection, discourse act and response obligation are separate.
+
+An embedded interrogative must not automatically produce `discourse-act:ask`.
+
+### 11.5 Referent-driven closure
+
+Using identical grammar/lexical authority, changing only grounded referent type must change compatible state/property/action candidates through type/facet entitlement.
+
+### 11.6 Catalogue cardinality is not competence
+
+Release tests must not require exact counts of response policies, response transforms, argument frames, lexical senses, constructions or morphology rules as proof of semantic competence.
+
+Deterministic counts/fingerprints are permitted only for explicit source-tamper/integrity tests.
+
 ---
 
 ## 12. Final release gate

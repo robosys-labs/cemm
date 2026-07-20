@@ -23,8 +23,16 @@ _COMPATIBLE: dict[RecordKind, frozenset[UseOperation]] = {
     # axis is carried by the sense/construction record that consumes them.
     RecordKind.LANGUAGE_PACK: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.LANGUAGE_FORM: frozenset({UseOperation.GROUND, UseOperation.REALIZE}),
+    RecordKind.LEXEME: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
+    RecordKind.FORM_LEXEME_LINK: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.LEXICAL_SENSE: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
+    RecordKind.LEXEME_SENSE_LINK: frozenset({
+        UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.QUERY, UseOperation.REALIZE,
+    }),
     RecordKind.FORM_SENSE_LINK: frozenset({UseOperation.GROUND, UseOperation.REALIZE}),
+    RecordKind.SEMANTIC_CONTRIBUTION_SPEC: frozenset({
+        UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.QUERY,
+    }),
     RecordKind.CONSTRUCTION: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
     RecordKind.TRANSITION_CONTRACT: frozenset({UseOperation.TRANSITION}),
     RecordKind.CAPABILITY_DEPENDENCY: frozenset({UseOperation.TRANSITION}),

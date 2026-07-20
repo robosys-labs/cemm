@@ -108,6 +108,17 @@ class UOLHypothesisMaterializer:
             if chosen is not None:
                 selected_senses[chosen.value_ref] = chosen
 
+        selected_schema_by_sense = {}
+        for variable in factor_graph.variables:
+            if variable.variable_kind != MeaningVariableKind.SCHEMA:
+                continue
+            chosen = value_by_assignment.get(variable.variable_ref)
+            if chosen is None:
+                continue
+            sense_candidate_ref = str(chosen.metadata.get("sense_candidate_ref") or "")
+            if sense_candidate_ref:
+                selected_schema_by_sense[sense_candidate_ref] = chosen
+
         selected_constructions = {}
         for variable in factor_graph.variables:
             if variable.variable_kind != MeaningVariableKind.CONSTRUCTION:
@@ -139,6 +150,48 @@ class UOLHypothesisMaterializer:
         evidence = set(factor_graph.evidence_refs)
         app_ref_by_sense: dict[str, str] = {}
         covered_senses: set[str] = set()
+
+        # Preserve targetless/partial lexical meaning as typed UOL variables.
+        # Contributions are semantic constraints, not hidden intent labels.
+        sense_candidate_by_ref = {item.candidate_ref: item for item in lattice.sense_candidates}
+        for sense_candidate_ref in sorted(selected_senses):
+            source_sense = sense_candidate_by_ref.get(sense_candidate_ref)
+            if source_sense is None:
+                unresolved.add(sense_candidate_ref)
+                continue
+            contributions = tuple(getattr(source_sense, "contributions", ()))
+            projection_refs = tuple(sorted({
+                item.projection_ref for item in contributions
+                if item.contribution_kind.value == "projection" and item.projection_ref
+            }))
+            restriction_refs = tuple(sorted({
+                ref for item in contributions for ref in item.restriction_refs
+            }))
+            for contribution in contributions:
+                if contribution.contribution_kind.value != "variable":
+                    continue
+                variable_ref = "semantic-variable:" + semantic_fingerprint(
+                    "lexical-contribution-variable",
+                    (hypothesis.hypothesis_ref, contribution.contribution_ref),
+                    24,
+                )
+                projection_ref = contribution.projection_ref
+                if projection_ref is None and len(projection_refs) == 1:
+                    projection_ref = projection_refs[0]
+                if projection_ref is None and len(projection_refs) > 1:
+                    unresolved.update(projection_refs)
+                variables[variable_ref] = SemanticVariable(
+                    variable_ref=variable_ref,
+                    expected_schema_classes=frozenset(contribution.expected_schema_classes),
+                    expected_type_refs=tuple(contribution.expected_type_refs),
+                    restriction_refs=tuple(sorted(set((*restriction_refs, *contribution.restriction_refs)))),
+                    projection_ref=projection_ref,
+                    scope_ref="local",
+                    evidence_refs=contribution.evidence_refs or source_sense.evidence_refs,
+                    expected_filler_classes=frozenset(contribution.expected_filler_classes),
+                    open_binding_purpose=contribution.open_binding_purpose,
+                )
+                unresolved.add(variable_ref)
 
         # Active reviewed constructions with semantic output become the primary
         # clause applications.  Their exact ports are filled from the joint
@@ -280,9 +333,10 @@ class UOLHypothesisMaterializer:
             # for the same exact schema occurrence.
             trigger_span = candidate.span
             for sense_ref, selected_value in selected_senses.items():
-                if selected_value.metadata.get("target_ref") != schema.schema_ref:
+                schema_choice = selected_schema_by_sense.get(sense_ref)
+                if schema_choice is None or schema_choice.metadata.get("target_ref") != schema.schema_ref:
                     continue
-                if selected_value.metadata.get("target_revision") != schema.revision:
+                if schema_choice.metadata.get("target_revision") != schema.revision:
                     continue
                 source_sense = next(
                     (item for item in lattice.sense_candidates if item.candidate_ref == sense_ref), None
@@ -302,10 +356,13 @@ class UOLHypothesisMaterializer:
         for sense_candidate_ref, selected_value in sorted(selected_senses.items()):
             if sense_candidate_ref in covered_senses:
                 continue
-            if selected_value.metadata.get("target_kind") == SenseTargetKind.STRUCTURAL.value:
+            schema_choice = selected_schema_by_sense.get(sense_candidate_ref)
+            if schema_choice is None:
                 continue
-            target_ref = selected_value.metadata.get("target_ref")
-            revision = selected_value.metadata.get("target_revision")
+            if schema_choice.metadata.get("structural"):
+                continue
+            target_ref = schema_choice.metadata.get("target_ref")
+            revision = schema_choice.metadata.get("target_revision")
             if not target_ref or revision is None:
                 unresolved.add(sense_candidate_ref)
                 continue
@@ -413,6 +470,10 @@ class UOLHypothesisMaterializer:
                 evidence_refs=sense_evidence,
                 metadata={
                     "sense_candidate_ref": sense_candidate_ref,
+                    "authority_path": getattr(source_sense, "authority_path", ""),
+                    "semantic_contribution_refs": tuple(
+                        item.contribution_ref for item in getattr(source_sense, "contributions", ())
+                    ),
                     "partial": bool(unresolved.intersection(
                         binding.fillers[0].ref for binding in bindings
                         if binding.fillers and isinstance(binding.fillers[0], FillerRef)
@@ -549,8 +610,10 @@ class UOLHypothesisMaterializer:
             variable_ref=variable_ref,
             expected_schema_classes=frozenset(port.accepted_schema_classes),
             expected_type_refs=tuple(port.accepted_type_refs),
+            expected_filler_classes=frozenset(port.filler_classes),
             scope_ref="local",
             evidence_refs=tuple(evidence_refs),
+            open_binding_purpose=OpenBindingPurpose.PARTIAL_COMPOSITION,
         )
 
     @staticmethod

@@ -20,8 +20,9 @@ from ..schema.model import (
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
-    ConstructionRecord, FormSenseLinkRecord, LanguageFormRecord,
-    LanguagePackRecord, LexicalSenseRecord, SenseTargetKind,
+    ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
+    LanguageFormRecord, LanguagePackRecord, LexemeRecord, LexemeSenseLinkRecord,
+    LexicalSenseRecord, SemanticContributionSpecRecord, SenseTargetKind,
 )
 from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..learning.validation import LearningCommitValidator
@@ -224,6 +225,10 @@ class CommitValidator:
             records(RecordKind.LEXICAL_SENSE, LexicalSenseRecord),
             records(RecordKind.FORM_SENSE_LINK, FormSenseLinkRecord),
             records(RecordKind.CONSTRUCTION, ConstructionRecord),
+            records(RecordKind.LEXEME, LexemeRecord),
+            records(RecordKind.FORM_LEXEME_LINK, FormLexemeLinkRecord),
+            records(RecordKind.LEXEME_SENSE_LINK, LexemeSenseLinkRecord),
+            records(RecordKind.SEMANTIC_CONTRIBUTION_SPEC, SemanticContributionSpecRecord),
         )
 
     def _schema_registry(self) -> SchemaRegistry:
@@ -274,7 +279,11 @@ class CommitValidator:
         elif kind == RecordKind.REFERENT:
             self._validate_referent(record)
         elif kind == RecordKind.LEXICAL_SENSE:
-            self._validate_lexical_sense(record)
+            # Targetless lexical senses are validated by the staged LanguageRegistry,
+            # which requires executable contribution authority. The legacy target
+            # validator applies only when a direct target still exists.
+            if record.target_ref is not None:
+                self._validate_lexical_sense(record)
         elif kind == RecordKind.CONSTRUCTION:
             self._validate_construction(record)
         del revision
