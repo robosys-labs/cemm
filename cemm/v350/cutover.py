@@ -240,6 +240,9 @@ class RuntimeAuthorityGuard:
                     speaker_pins = _boot_pins(self.boot_database_path, RecordKind.REFERENT)
                     if not any(pin.startswith(f"{m.output_speaker_ref}@") for pin in speaker_pins):
                         errors.append("signed output speaker is absent from boot DB")
+                    commitment_pins = _boot_pins(self.boot_database_path, RecordKind.SCHEMA)
+                    if not any(pin.startswith(f"{m.output_commitment_kind_ref}@") for pin in commitment_pins):
+                        errors.append("signed output commitment kind is absent from boot DB")
         missing_forbidden = [p for p in self.REQUIRED_FORBIDDEN_PREFIXES if p not in m.forbidden_runtime_import_prefixes]
         if missing_forbidden:
             errors.append("runtime manifest omits legacy forbidden prefixes:" + ",".join(missing_forbidden))

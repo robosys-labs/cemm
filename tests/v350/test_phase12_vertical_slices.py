@@ -38,6 +38,7 @@ def test_phase12_canonical_source_does_not_promote_competence_packages_to_boot_a
     assert not [
         item for item in records
         if item.record_kind in {RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY}
+        and item.phase <= 12
     ]
     assert all("phase12" not in item.record_ref for item in records)
 

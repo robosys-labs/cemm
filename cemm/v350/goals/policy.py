@@ -196,17 +196,20 @@ class GoalConflictDetector:
         for i, left in enumerate(items):
             left_keys = set(left.metadata.get("conflict_key_refs", ()))
             for right in items[i + 1:]:
-                if not set(left.target_refs).intersection(right.target_refs):
-                    continue
+                shared_targets = set(left.target_refs).intersection(right.target_refs)
                 right_keys = set(right.metadata.get("conflict_key_refs", ()))
+                shared_keys = left_keys.intersection(right_keys)
+                if not shared_targets and not shared_keys:
+                    continue
                 if left.operation == right.operation and not left_keys.intersection(right_keys):
                     continue
+                target_refs = shared_targets or set(left.target_refs).union(right.target_refs)
                 ref = "goal-conflict:" + semantic_fingerprint(
-                    "goal-conflict-ref", (left.goal_ref, right.goal_ref, tuple(sorted(set(left.target_refs) & set(right.target_refs)))), 24
+                    "goal-conflict-ref", (left.goal_ref, right.goal_ref, tuple(sorted(target_refs)), tuple(sorted(shared_keys))), 24
                 )
                 result.append(GoalConflictRecord(
                     conflict_ref=ref, competing_goal_refs=tuple(sorted((left.goal_ref, right.goal_ref))),
-                    target_refs=tuple(sorted(set(left.target_refs).intersection(right.target_refs))),
+                    target_refs=tuple(sorted(target_refs)),
                     conflict_key_refs=tuple(sorted(left_keys.union(right_keys))), reason_refs=("structural_goal_conflict",),
                 ))
         return tuple(result)
@@ -219,7 +222,7 @@ class GoalArbitrator:
         items = tuple(candidates)
         unauthorized = {item.goal_ref for item in items if not item.authorized}
         conflict_pairs = {frozenset(c.competing_goal_refs) for c in conflicts}
-        eligible = sorted((item for item in items if item.authorized), key=lambda item: (-item.priority, -item.utility_score, item.goal_ref))
+        eligible = sorted((item for item in items if item.authorized), key=lambda item: (bool(item.prerequisite_frontier_refs), -item.priority, -item.utility_score, item.goal_ref))
         selected: list[str] = []; rejected_conflict: set[str] = set()
         for item in eligible:
             if any(frozenset((item.goal_ref, chosen)) in conflict_pairs for chosen in selected):

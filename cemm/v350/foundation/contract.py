@@ -139,7 +139,7 @@ class FoundationPackageAuditor:
                     item.record_kind.value,
                     item.record_ref,
                     item.revision,
-                    canonical_data(item.record),
+                    _foundation_fingerprint_data(item),
                 )
                 for item in records
             ),
@@ -892,6 +892,15 @@ def _string_tokens(value: Any) -> set[str]:
         for child in value:
             result.update(_string_tokens(child))
     return result
+
+
+def _foundation_fingerprint_data(item: SourceRecord) -> Any:
+    data = canonical_data(item.record)
+    if item.record_kind == RecordKind.CAPABILITY_INSTANCE and isinstance(data, Mapping):
+        data = dict(data)
+        data.pop("revision", None)
+        data.pop("supersedes_revision", None)
+    return data
 
 
 def _forbidden_surface_paths(value: Any, path: str = "$") -> tuple[str, ...]:

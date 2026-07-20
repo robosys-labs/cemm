@@ -10,7 +10,7 @@ import threading
 from typing import Any, Iterable, Iterator, Mapping
 
 from ..schema.model import semantic_fingerprint
-from .codec import decode_record, record_fingerprints, record_ref
+from .codec import decode_record, record_fingerprints, record_permission, record_ref
 from .model import (
     DependencyEdge,
     GraphPatch,
@@ -58,6 +58,7 @@ class _StagedResolver:
         self,
         store: "SemanticStore",
         prepared: Iterable[_PreparedOperation],
+        permission_ref: str,
     ) -> None:
         self._store = store
         self._staged: dict[tuple[RecordKind, str, int], StoredRecord[Any]] = {}
@@ -76,6 +77,9 @@ class _StagedResolver:
             if item.record is None:
                 continue
             content_fp, record_fp = record_fingerprints(operation.record_kind, item.record)
+            stored_permission_ref = record_permission(operation.record_kind, item.record)
+            if stored_permission_ref is None:
+                stored_permission_ref = permission_ref
             self._staged[
                 (operation.record_kind, operation.target_ref, operation.record_revision)
             ] = StoredRecord(
@@ -87,6 +91,7 @@ class _StagedResolver:
                 record_fingerprint=record_fp,
                 layer="staged",
                 store_revision=next_store_revision,
+                permission_ref=stored_permission_ref,
             )
 
     def resolve(
@@ -441,7 +446,7 @@ class SemanticStore:
                         ),
                     )
                 prepared = self._prepare(patch.operations)
-                staged = _StagedResolver(self, prepared)
+                staged = _StagedResolver(self, prepared, patch.permission_ref)
                 self._validate_cas(prepared)
                 CommitValidator(staged).require_valid(
                     (item.operation, item.record) for item in prepared
@@ -467,6 +472,7 @@ class SemanticStore:
                             item.record,
                             revision=operation.record_revision,
                             store_revision=after,
+                            permission_ref_override=patch.permission_ref,
                         )
                         self._write_operation_dependencies(operation, after)
                     elif operation.operation_kind == PatchOperationKind.TOMBSTONE:

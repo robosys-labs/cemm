@@ -42,7 +42,10 @@ def test_source_manifest_is_fail_closed_but_topologically_real():
     source=json.loads((ROOT/"cemm/data/v350/manifest.json").read_text(encoding="utf-8"))
     if doc["activation_ready"]:
         assert source["metadata"].get("runtime_cutover") is True
-        assert doc["operation_adapter_contracts"]
+        if doc.get("release_capabilities", {}).get("external_operations"):
+            assert doc["operation_adapter_contracts"]
+        else:
+            assert doc["operation_adapter_contracts"] == []
         assert doc["semantic_analyzer_contracts"]
         assert doc["channel_adapter_contracts"]
     if not doc["activation_ready"]:

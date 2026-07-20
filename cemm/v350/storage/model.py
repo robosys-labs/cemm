@@ -539,6 +539,8 @@ class CapabilityInstance:
     status: CapabilityStatus
     confidence: float
     context_ref: str
+    revision: int = 1
+    supersedes_revision: int | None = None
     valid_from: str | None = None
     valid_to: str | None = None
     dependency_refs: tuple[str, ...] = ()
@@ -555,6 +557,10 @@ class CapabilityInstance:
             _require_ref(value, label)
         if self.action_schema_revision < 1:
             raise ValueError("capability action schema revision must be positive")
+        if self.revision < 1:
+            raise ValueError("capability revision must be positive")
+        if self.supersedes_revision is not None and self.supersedes_revision >= self.revision:
+            raise ValueError("capability supersedes_revision must be lower than revision")
         _confidence(self.confidence, "capability confidence")
         _require_unique(self.dependency_refs, "capability dependencies")
         _require_unique(self.evidence_refs, "capability evidence")

@@ -5,7 +5,7 @@ import pytest
 from cemm.v350.goals.model import (
     GoalCandidateRecord, ResponsePolicyRuleRecord, TargetSelector, TargetSelectorMode,
 )
-from cemm.v350.goals.policy import GoalArbitrator, ResponsePolicyRegistry
+from cemm.v350.goals.policy import GoalArbitrator, GoalConflictDetector, ResponsePolicyRegistry
 from cemm.v350.learning.model import PinnedRecord
 from cemm.v350.schema.model import SchemaLifecycleStatus, UseDecision, UseOperation
 from cemm.v350.storage.model import RecordKind
@@ -48,6 +48,30 @@ def test_authorization_precedes_utility():
     selected, rejected, deferred = GoalArbitrator().select((unauthorized, authorized), ())
     assert selected == (authorized.goal_ref,)
     assert unauthorized.goal_ref in rejected
+    assert not deferred
+
+
+def test_turn_response_conflict_prefers_settled_goal_over_open_frontier():
+    base = dict(
+        goal_schema_ref="response-policy:test", goal_schema_revision=1,
+        operation=UseOperation.PLAN, obligation_refs=("obligation:x",),
+        policy_rule_pins=(_pin(RecordKind.RESPONSE_POLICY_RULE, "policy:x"),),
+        source_pins=(_pin(),), authorization_refs=(), authorized=True,
+        metadata={"conflict_key_refs": ("response:turn",)},
+    )
+    settled = GoalCandidateRecord(
+        goal_ref="goal:settled", target_refs=("semantic-application:greet",),
+        priority=95, prerequisite_frontier_refs=(), **base
+    )
+    clarify = GoalCandidateRecord(
+        goal_ref="goal:clarify", target_refs=("learning-frontier:x",),
+        priority=100, prerequisite_frontier_refs=("learning-frontier:x",), **base
+    )
+    conflicts = GoalConflictDetector().detect((settled, clarify))
+    selected, rejected, deferred = GoalArbitrator().select((clarify, settled), conflicts)
+    assert conflicts
+    assert selected == (settled.goal_ref,)
+    assert clarify.goal_ref in rejected
     assert not deferred
 
 

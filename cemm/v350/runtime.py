@@ -51,6 +51,8 @@ class RuntimeServices:
 
     syntax_adapters: Any | None = None
     observation_analyzers: Mapping[str, Any] = field(default_factory=dict)
+    epistemic_policy_provider: Any | None = None
+    inference_engine: Any | None = None
     operation_gate_evaluators: Mapping[str, Any] = field(default_factory=dict)
     operation_adapters: Mapping[str, Any] = field(default_factory=dict)
     semantic_analyzer: Any | None = None
@@ -1137,7 +1139,9 @@ def build_runtime(*, database_path:str=":memory:",boot_database_path:str|Path|No
     store=SemanticStore(database_path,boot_path=boot_database_path)
     if services is None:
         from .runtime_services import build_canonical_runtime_services
-        services=build_canonical_runtime_services(store)
+        services=build_canonical_runtime_services(
+            store, authority_manifest=getattr(authority_guard, "manifest", None)
+        )
     from .runtime_hardening import HardenedRuntimeCoordinator
     coordinator=HardenedRuntimeCoordinator(store,services)
     adapters=build_stage_adapters(coordinator)

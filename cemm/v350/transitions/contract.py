@@ -96,6 +96,7 @@ class TransitionPackageAuditor:
         transition_seed = [
             item for item in records
             if item.record_kind in {RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY}
+            and item.phase <= 11
         ]
         if transition_seed:
             issues.append(

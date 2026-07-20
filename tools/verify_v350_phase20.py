@@ -13,6 +13,7 @@ import inspect
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tomllib
 import zipfile
 
@@ -161,6 +162,18 @@ def main() -> int:
                     for item in sorted(required_services):
                         if item not in service_kinds:
                             errors.append(f"activated runtime lacks signed service:{item}")
+                    closure_tool=root/"tools/verify_v350_activation_closure.py"
+                    if not closure_tool.is_file():
+                        errors.append("missing deep activation closure verifier")
+                    else:
+                        closure=subprocess.run(
+                            [sys.executable,str(closure_tool),"--boot-db",str(args.boot_db.resolve()),
+                             "--source-manifest",str(root/"cemm/data/v350/manifest.json"),
+                             "--activation-required"],
+                            cwd=root,text=True,capture_output=True,check=False,
+                        )
+                        if closure.returncode!=0:
+                            errors.append("deep activation closure verification failed:" + (closure.stderr or closure.stdout)[-4000:])
                     manifest=RuntimeAuthorityManifest.load(manifest_path)
                     guard=RuntimeAuthorityGuard(manifest,repo_root=root,boot_database_path=args.boot_db.resolve(),verification_report_path=args.verification_report.resolve())
                     guard.require_service_authority()

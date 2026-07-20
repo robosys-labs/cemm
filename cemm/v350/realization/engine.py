@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ..learning.model import PinnedRecord
+from ..permissions import PermissionScopeEvaluator
 from ..response.model import ResponseUOLRecord
 from ..schema.model import PortFillerClass,UseOperation,semantic_fingerprint
 from ..storage.codec import record_fingerprints
@@ -211,8 +212,8 @@ class PrivacyAwareReferenceResolver:
   return matches[0]
 
 class RealizationCompiler:
- def __init__(self,store,reference_resolver:ReferenceResolver):
-  self.store=store;self.reference_resolver=reference_resolver;self.authority=LanguageUseAuthority(store);self.lexical=LexicalSelector(store);self.morphology=MorphologyExecutor();self.linearizer=Linearizer();self.clauses=ClausePlanner(store)
+ def __init__(self,store,reference_resolver:ReferenceResolver,permission_evaluator=None):
+  self.store=store;self.reference_resolver=reference_resolver;self.permissions=permission_evaluator or PermissionScopeEvaluator();self.authority=LanguageUseAuthority(store);self.lexical=LexicalSelector(store);self.morphology=MorphologyExecutor();self.linearizer=Linearizer();self.clauses=ClausePlanner(store)
  def compile(self,request:RealizationRequestRecord,*,frames:tuple[tuple[PinnedRecord,ArgumentFrameRecord],...],morphology_rules:tuple[tuple[PinnedRecord,MorphologyRuleRecord],...],linearization_rules:tuple[tuple[PinnedRecord,LinearizationRuleRecord],...]):
   with self.store.snapshot() as source_snapshot:
    pass
@@ -347,10 +348,37 @@ class RoundTripVerifier:
   if len(effective)!=1 or effective[0].revision!=contract.revision:raise ValueError('semantic analyzer contract is not singular effective authority')
   if contract.analyzer_ref!=analyzer.analyzer_ref or contract.analyzer_revision!=analyzer.analyzer_revision:raise ValueError('runtime analyzer identity differs from reviewed contract')
   if contract.supported_language_tags and language_tag not in contract.supported_language_tags:raise ValueError('semantic analyzer contract does not cover requested language')
-  recovered_graph,proofs=analyzer.recover_graph(surface,language_tag,context_ref=context_ref,speaker_ref=speaker_ref,addressee_refs=tuple(addressee_refs),permission_ref=permission_ref)
+  try:
+   recovered_graph,proofs=analyzer.recover_graph(surface,language_tag,context_ref=context_ref,speaker_ref=speaker_ref,addressee_refs=tuple(addressee_refs),permission_ref=permission_ref)
+  except Exception as exc:
+   expected=expected_graph.record_fingerprint
+   recovered='uol-semantic:recovery-error:'+semantic_fingerprint('roundtrip-recovery-error',(analyzer.analyzer_ref,analyzer.analyzer_revision,surface,language_tag,type(exc).__name__,str(exc)),32)
+   drift=(f"roundtrip_recovery_error:{type(exc).__name__}",)
+   proofs=(analyzer_contract_pin.record_ref,)
+   return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected,drift),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected,decision=RoundTripDecision.FAIL,additions=(),losses=(),drift_refs=drift,proof_refs=tuple(proofs))
+  recovered_graph=_drop_unreferenced_referents(recovered_graph)
   assessment=compare_uol_graphs(expected_graph,recovered_graph)
   decision=RoundTripDecision.PASS if assessment.equivalent else RoundTripDecision.FAIL
+  expected=expected_graph.record_fingerprint
+  recovered=expected if assessment.equivalent else assessment.right_fingerprint
   additions=() if assessment.equivalent or assessment.right_node_count<=assessment.left_node_count else (f"node_count:{assessment.right_node_count-assessment.left_node_count}",)
   losses=() if assessment.equivalent or assessment.left_node_count<=assessment.right_node_count else (f"node_count:{assessment.left_node_count-assessment.right_node_count}",)
   drift=tuple(assessment.reasons)
-  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,assessment.right_fingerprint,assessment.left_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=assessment.right_fingerprint,expected_graph_fingerprint=assessment.left_fingerprint,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=drift,proof_refs=tuple(proofs))
+  return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected,assessment.right_fingerprint,assessment.left_fingerprint),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected,decision=decision,additions=tuple(additions),losses=tuple(losses),drift_refs=drift,proof_refs=tuple(proofs))
+
+def _drop_unreferenced_referents(graph:UOLGraph)->UOLGraph:
+ referenced={root.ref for root in graph.root_refs if root.filler_class==PortFillerClass.REFERENT}
+ for app in graph.applications.values():
+  for binding in app.bindings:
+   for filler in binding.fillers:
+    if isinstance(filler,FillerRef) and filler.filler_class==PortFillerClass.REFERENT:
+     referenced.add(filler.ref)
+ return UOLGraph(
+  graph_ref=graph.graph_ref,
+  referents={ref:value for ref,value in graph.referents.items() if ref in referenced},
+  applications=graph.applications,variables=graph.variables,coordination_groups=graph.coordination_groups,
+  propositions=graph.propositions,claims=graph.claims,events=graph.events,scope_relations=graph.scope_relations,
+  state_deltas=graph.state_deltas,capability_deltas=graph.capability_deltas,
+  impact_assessments=graph.impact_assessments,importance_assessments=graph.importance_assessments,
+  root_refs=graph.root_refs,unresolved_refs=graph.unresolved_refs,assumptions=graph.assumptions,evidence_refs=graph.evidence_refs,
+ )

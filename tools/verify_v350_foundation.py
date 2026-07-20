@@ -7,6 +7,7 @@ from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 
@@ -24,6 +25,29 @@ from cemm.v350.foundation import (
 from cemm.v350.storage import SemanticStore
 
 
+def _phase_scoped_source(source: Path, target: Path, *, max_phase: int) -> Path:
+    manifest_data = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    manifest_data["modules"] = [
+        item for item in manifest_data["modules"]
+        if int(item.get("phase", 6)) <= max_phase
+    ]
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "manifest.json").write_text(
+        json.dumps(manifest_data, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    for relative in ("foundation_contract.json", "competence/foundation.jsonl"):
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source / relative, destination)
+    for module in manifest_data["modules"]:
+        relative = Path(module["path"])
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source / relative, destination)
+    return target
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=Path("cemm/data/v350"))
@@ -37,13 +61,14 @@ def main(argv: list[str] | None = None) -> int:
 
     with tempfile.TemporaryDirectory(prefix="cemm-v350-foundation-") as directory:
         temporary = Path(directory)
+        scoped_source = _phase_scoped_source(source, temporary / "source", max_phase=6)
         first_path = temporary / "foundation-a.sqlite"
         second_path = temporary / "foundation-b.sqlite"
-        first = DeterministicSQLiteCompiler().compile(source, first_path, make_read_only=False)
+        first = DeterministicSQLiteCompiler().compile(scoped_source, first_path, make_read_only=False)
         deterministic = True
         second = None
         if not args.skip_determinism:
-            second = DeterministicSQLiteCompiler().compile(source, second_path, make_read_only=False)
+            second = DeterministicSQLiteCompiler().compile(scoped_source, second_path, make_read_only=False)
             deterministic = (
                 first.boot_fingerprint == second.boot_fingerprint
                 and first.record_set_fingerprint == second.record_set_fingerprint
@@ -60,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
         output_result = None
         if args.output is not None:
             output_result = DeterministicSQLiteCompiler().compile(
-                source, args.output, make_read_only=True
+                scoped_source, args.output, make_read_only=True
             )
 
     required_cases = set(contract.required_competence_case_refs)

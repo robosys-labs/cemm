@@ -9,6 +9,8 @@ from .model import RealizationRequestRecord,DeepClausePlanRecord,ReferencePlanRe
 class RealizationCommitCoordinator:
  def __init__(self,store):self.store=store
  def commit_candidate(self,request:RealizationRequestRecord,clauses:tuple[DeepClausePlanRecord,...],reference_plans:tuple[ReferencePlanRecord,...],candidate:SurfaceCandidateRecord):
+  clauses=self._dedupe_records(RecordKind.DEEP_CLAUSE_PLAN,clauses)
+  reference_plans=self._dedupe_records(RecordKind.REFERENCE_PLAN,reference_plans)
   response=self._exact(request.response_uol_pin)
   response_current=self.store.get_record(request.response_uol_pin.record_kind,request.response_uol_pin.record_ref)
   if response_current is None or response_current.revision!=request.response_uol_pin.revision or response_current.record_fingerprint!=request.response_uol_pin.record_fingerprint:raise ValueError('stale Response UOL before realization commit')
@@ -65,3 +67,13 @@ class RealizationCommitCoordinator:
  @staticmethod
  def _upsert(kind,record,deps,reason):
   return PatchOperation(operation_ref='patch-operation:phase17:'+semantic_fingerprint('phase17-op',(kind.value,record_ref(kind,record),record_revision(kind,record),reason),20),operation_kind=PatchOperationKind.UPSERT,record_kind=kind,target_ref=record_ref(kind,record),record_revision=record_revision(kind,record),payload=encode_record(kind,record),dependencies=deps,reason=reason)
+ @staticmethod
+ def _dedupe_records(kind,records):
+  result={}
+  for record in records:
+   key=(record_ref(kind,record),record_revision(kind,record))
+   existing=result.get(key)
+   if existing is not None and existing!=record:
+    raise ValueError(f'conflicting duplicate realization record: {kind.value}:{key[0]}@{key[1]}')
+   result[key]=record
+  return tuple(result[key] for key in sorted(result))

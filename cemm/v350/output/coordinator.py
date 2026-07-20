@@ -65,7 +65,7 @@ class EmissionJournalCoordinator:
         prior=pin(RecordKind.EMISSION_JOURNAL,journal)
         nxt=replace(journal,revision=journal.revision+1,supersedes_revision=journal.revision,prior_journal_pin=prior,status=status,submission_attempt=journal.submission_attempt+(1 if status==EmissionJournalStatus.SUBMITTED else 0),request_evidence_refs=tuple(sorted(set((*journal.request_evidence_refs,*request_evidence_refs)))),response_evidence_refs=tuple(sorted(set((*journal.response_evidence_refs,*response_evidence_refs)))),external_correlation_refs=tuple(sorted(set((*journal.external_correlation_refs,*external_correlation_refs)))),submitted_at=submitted_at or journal.submitted_at,observed_at=observed_at or journal.observed_at)
         with self.store.snapshot() as snapshot:
-            op=_upsert(RecordKind.EMISSION_JOURNAL,nxt,(_dep(prior,"emission_journal_prior"),),f"advance emission journal to {status.value}",expected_revision=journal.revision,expected_fingerprint=fp)
+            op=_upsert(RecordKind.EMISSION_JOURNAL,nxt,(_dep(prior,"emission_journal_prior"),_dep(journal.authorization_pin,"emission_authorization")),f"advance emission journal to {status.value}",expected_revision=journal.revision,expected_fingerprint=fp)
             patch=GraphPatch(patch_ref="graph-patch:emission-journal:"+semantic_fingerprint("emission-journal-transition",(prior.key,status.value,snapshot.fingerprint),24),context_ref=journal.context_ref,scope_ref="phase18:emission",source_ref="source:phase18:channel-executor",permission_ref=journal.permission_ref,operations=(op,),expected_store_revision=snapshot.store_revision,metadata={"phase":18,"journal_status":status.value})
         result=self.store.apply_patch(patch)
         if not result.committed: raise RuntimeError("emission journal transition failed: "+"; ".join(result.errors))
@@ -83,7 +83,7 @@ class EmissionJournalCoordinator:
             efp=record_fingerprints(RecordKind.EMISSION_JOURNAL,journal)[1]
             deps=(_dep(jp,"emission_journal"),_dep(emission.authorization_pin,"emission_authorization"),_dep(emission.response_uol_pin,"emission_response_uol"),_dep(emission.surface_candidate_pin,"emission_surface"))
             eop=_upsert(RecordKind.EMISSION,emission,deps,"persist actual channel emission observation")
-            jop=_upsert(RecordKind.EMISSION_JOURNAL,next_journal,(_dep(jp,"emission_journal_prior"),_dep(pin(RecordKind.EMISSION,emission),"emission_observation")),f"advance journal atomically to {observed_status.value}",expected_revision=journal.revision,expected_fingerprint=efp)
+            jop=_upsert(RecordKind.EMISSION_JOURNAL,next_journal,(_dep(jp,"emission_journal_prior"),_dep(journal.authorization_pin,"emission_authorization"),_dep(pin(RecordKind.EMISSION,emission),"emission_observation")),f"advance journal atomically to {observed_status.value}",expected_revision=journal.revision,expected_fingerprint=efp)
             patch=GraphPatch(patch_ref="graph-patch:emission-observation:"+semantic_fingerprint("emission-observation",(emission.emission_ref,jp.key,observed_status.value),24),context_ref=emission.context_ref,scope_ref="phase18:emission",source_ref="source:phase18:channel-observation",permission_ref=emission.permission_ref,operations=(eop,jop),expected_store_revision=snapshot.store_revision,validation_requirements=("phase18_observation_and_journal_atomic",),metadata={"phase":18})
         result=self.store.apply_patch(patch)
         if not result.committed: raise RuntimeError("emission observation commit failed: "+"; ".join(result.errors))
@@ -104,7 +104,7 @@ class EmissionJournalCoordinator:
             ap=pin(RecordKind.EMISSION_ANOMALY,anomaly)
             adeps=(_dep(jp,"emission_anomaly_journal"),_dep(anomaly.authorization_pin,"emission_anomaly_authorization"),_dep(anomaly.channel_contract_pin,"emission_anomaly_channel_contract"))
             aop=_upsert(RecordKind.EMISSION_ANOMALY,anomaly,adeps,"persist observed unauthorized/ambiguous channel emission anomaly; no discourse authority")
-            jop=_upsert(RecordKind.EMISSION_JOURNAL,next_journal,(_dep(jp,"emission_journal_prior"),_dep(ap,"emission_anomaly")),f"advance journal atomically to {observed_status.value} after anomaly",expected_revision=journal.revision,expected_fingerprint=jfp)
+            jop=_upsert(RecordKind.EMISSION_JOURNAL,next_journal,(_dep(jp,"emission_journal_prior"),_dep(journal.authorization_pin,"emission_authorization"),_dep(ap,"emission_anomaly")),f"advance journal atomically to {observed_status.value} after anomaly",expected_revision=journal.revision,expected_fingerprint=jfp)
             patch=GraphPatch(patch_ref="graph-patch:emission-anomaly:"+semantic_fingerprint("emission-anomaly-patch",(anomaly.anomaly_ref,jp.key,observed_status.value),24),context_ref=anomaly.context_ref,scope_ref="phase18:emission",source_ref="source:phase18:channel-anomaly",permission_ref=anomaly.permission_ref,operations=(aop,jop),expected_store_revision=snapshot.store_revision,validation_requirements=("phase18_anomaly_audited_without_discourse_authority",),metadata={"phase":18,"content_left_system":anomaly.content_left_system,"authorized_emission":False})
         result=self.store.apply_patch(patch)
         if not result.committed:raise RuntimeError("emission anomaly commit failed: "+"; ".join(result.errors))

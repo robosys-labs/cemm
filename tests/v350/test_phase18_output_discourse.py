@@ -10,8 +10,12 @@ from cemm.v350.output.model import (
     EmissionAuthorizationDecision,
     EmissionAuthorizationRecord,
     EmissionIdempotencyMode,
+    EmissionJournalRecord,
+    EmissionJournalStatus,
 )
-from cemm.v350.storage.model import RecordKind
+from cemm.v350.output.validation import Phase18CommitValidator
+from cemm.v350.storage.codec import encode_record, record_fingerprints
+from cemm.v350.storage.model import PatchOperation, PatchOperationKind, RecordDependency, RecordKind
 
 
 def _pin(kind: RecordKind, ref: str) -> PinnedRecord:
@@ -122,3 +126,53 @@ def test_channel_contract_does_not_assume_delivery_proves_recipient_receipt():
         max_payload_bytes=1024,
     )
     assert contract.delivery_ack_proves_recipient_receipt is False
+
+
+def test_journal_transition_requires_exact_authorization_dependency():
+    auth_pin = _pin(RecordKind.EMISSION_AUTHORIZATION, "emission-auth:test")
+    prior = EmissionJournalRecord(
+        journal_ref="emission-journal:test",
+        authorization_pin=auth_pin,
+        status=EmissionJournalStatus.PREPARED,
+        idempotency_key=None,
+        adapter_ref="adapter:test",
+        adapter_revision=1,
+        surface_sha256="a" * 64,
+    )
+    prior_fp = record_fingerprints(RecordKind.EMISSION_JOURNAL, prior)[1]
+    prior_pin = PinnedRecord(RecordKind.EMISSION_JOURNAL, prior.journal_ref, 1, prior_fp)
+    transition = EmissionJournalRecord(
+        journal_ref=prior.journal_ref,
+        authorization_pin=auth_pin,
+        status=EmissionJournalStatus.SUBMITTED,
+        idempotency_key=None,
+        adapter_ref="adapter:test",
+        adapter_revision=1,
+        surface_sha256="a" * 64,
+        prior_journal_pin=prior_pin,
+        revision=2,
+        supersedes_revision=1,
+    )
+    op = PatchOperation(
+        operation_ref="patch-operation:test",
+        operation_kind=PatchOperationKind.UPSERT,
+        record_kind=RecordKind.EMISSION_JOURNAL,
+        target_ref=transition.journal_ref,
+        record_revision=2,
+        payload=encode_record(RecordKind.EMISSION_JOURNAL, transition),
+        dependencies=(
+            RecordDependency(RecordKind.EMISSION_JOURNAL, prior.journal_ref, 1, prior_fp, "emission_journal_prior"),
+        ),
+    )
+
+    class Resolver:
+        def resolve(self, kind, ref, revision=None):
+            class Stored:
+                payload = prior
+
+            if kind == RecordKind.EMISSION_JOURNAL and ref == prior.journal_ref and revision == 1:
+                return Stored()
+            return None
+
+    with pytest.raises(ValueError, match="emission_authorization"):
+        Phase18CommitValidator(Resolver()).validate_operation(op, transition)

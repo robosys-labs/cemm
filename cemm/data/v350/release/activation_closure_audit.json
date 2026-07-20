@@ -1,0 +1,73 @@
+{
+  "effective_analyzer_contracts": 1,
+  "effective_default_rules": 14,
+  "effective_impact_rules": 6,
+  "effective_importance_policies": 1,
+  "effective_language_packs": {
+    "en": "language-pack:en@2",
+    "fr": "language-pack:fr@2",
+    "sw": "language-pack:sw@2"
+  },
+  "effective_text_channel_contracts": 1,
+  "effective_transition_contracts": 4,
+  "errors": [],
+  "foreign_key_issues": 0,
+  "integrity_check": "ok",
+  "manifest": {
+    "output_commitment_kind_ref": "discourse-relation:semantic_commitment",
+    "output_speaker_ref": "referent:self",
+    "release_capabilities": {
+      "epistemic_admission": true,
+      "external_operations": [],
+      "generic_inference": true,
+      "output_discourse": true,
+      "realization_languages": [
+        "en",
+        "fr",
+        "sw"
+      ],
+      "response_policy": true,
+      "significance": true,
+      "text_emission": true,
+      "transitions": true
+    },
+    "runtime_cutover": true
+  },
+  "output_commitment_kind_ref": "discourse-relation:semantic_commitment",
+  "output_speaker_ref": "referent:self",
+  "per_language": {
+    "en": {
+      "constructions": 45,
+      "forms": 126,
+      "frames": 16,
+      "linearization": 16,
+      "morphology": 1,
+      "realize_senses": 45,
+      "senses": 150
+    },
+    "fr": {
+      "constructions": 45,
+      "forms": 126,
+      "frames": 16,
+      "linearization": 16,
+      "morphology": 1,
+      "realize_senses": 45,
+      "senses": 150
+    },
+    "sw": {
+      "constructions": 45,
+      "forms": 121,
+      "frames": 16,
+      "linearization": 16,
+      "morphology": 1,
+      "realize_senses": 45,
+      "senses": 153
+    }
+  },
+  "record_count": 2434,
+  "response_transform_count": 43,
+  "response_transform_coverage_issues": 0,
+  "status": "pass",
+  "unknown_or_undetermined_default_rules": 14,
+  "warnings": []
+}

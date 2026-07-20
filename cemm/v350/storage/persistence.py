@@ -65,10 +65,14 @@ def write_record(
     *,
     revision: int,
     store_revision: int,
+    permission_ref_override: str | None = None,
 ) -> tuple[str, str]:
     target_ref = record_ref(record_kind, record)
     content_fingerprint, complete_fingerprint = record_fingerprints(record_kind, record)
     valid_from, valid_to = record_interval(record_kind, record)
+    permission_ref = record_permission(record_kind, record)
+    if permission_ref is None:
+        permission_ref = permission_ref_override
     payload = encode_record(record_kind, record)
     connection.execute(
         """
@@ -96,7 +100,7 @@ def write_record(
             record_context(record_kind, record),
             valid_from,
             valid_to,
-            record_permission(record_kind, record),
+            permission_ref,
             content_fingerprint,
             complete_fingerprint,
             canonical_json(payload),

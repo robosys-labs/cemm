@@ -128,6 +128,8 @@ def main() -> int:
         'operation_adapter_contracts':boot_pins(boot,RecordKind.OPERATION_ADAPTER_CONTRACT),
         'semantic_analyzer_contracts':boot_pins(boot,RecordKind.SEMANTIC_ANALYZER_CONTRACT),
         'channel_adapter_contracts':boot_pins(boot,RecordKind.CHANNEL_ADAPTER_CONTRACT),
+        'response_policy_rules':boot_pins(boot,RecordKind.RESPONSE_POLICY_RULE),
+        'response_transform_rules':boot_pins(boot,RecordKind.RESPONSE_TRANSFORM_RULE),
         'argument_frames':boot_pins(boot,RecordKind.ARGUMENT_FRAME),
         'morphology_rules':boot_pins(boot,RecordKind.MORPHOLOGY_RULE),
         'linearization_rules':boot_pins(boot,RecordKind.LINEARIZATION_RULE),
@@ -143,6 +145,7 @@ def main() -> int:
             'boot_database_relpath':boot.relative_to(root).as_posix() if boot.is_relative_to(root) else str(boot),
             'verification_report_relpath':report_path.relative_to(root).as_posix() if report_path.is_relative_to(root) else str(report_path),
             'generated_from_canonical_stage_graph':True,'stage_count':len(stages),
+            'preactivation':not args.activate,
             'source_runtime_cutover':bool(source_metadata.get('runtime_cutover',False)),
         },
     }

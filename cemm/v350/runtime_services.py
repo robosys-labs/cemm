@@ -23,6 +23,11 @@ from .permissions import PermissionScopeEvaluator
 from .schema.model import semantic_fingerprint
 from .facets.projector import ReferentKnowledgeProjector
 from .uol.model import UOLGraph
+from .storage.model import RecordKind
+from .activation_services import (
+    ContextLocalEpistemicPolicyProvider,
+    ReviewedDefaultInferenceEngine,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -348,6 +353,18 @@ def canonical_service_descriptors() -> tuple[RuntimeServiceDescriptor, ...]:
     classes = (
         ("clock", SystemClock.clock_ref, SystemClock.clock_revision, SystemClock),
         (
+            "epistemic_policy_provider",
+            ContextLocalEpistemicPolicyProvider.provider_ref,
+            ContextLocalEpistemicPolicyProvider.provider_revision,
+            ContextLocalEpistemicPolicyProvider,
+        ),
+        (
+            "inference_engine",
+            ReviewedDefaultInferenceEngine.engine_ref,
+            ReviewedDefaultInferenceEngine.engine_revision,
+            ReviewedDefaultInferenceEngine,
+        ),
+        (
             "semantic_analyzer",
             CanonicalSemanticAnalyzer.analyzer_ref,
             CanonicalSemanticAnalyzer.analyzer_revision,
@@ -389,18 +406,46 @@ def canonical_service_descriptors() -> tuple[RuntimeServiceDescriptor, ...]:
     return tuple(result)
 
 
-def build_canonical_runtime_services(store):
-    """Construct the reviewed mechanical service set.
+def build_canonical_runtime_services(store, *, authority_manifest=None):
+    """Construct capability-gated reviewed/signed canonical runtime services.
 
-    No epistemic policy provider, operation adapter, or generic inference authority
-    is invented here. Those remain absent until exact reviewed capability data is
-    supplied and signed by the runtime manifest.
+    Actual-world epistemic admission remains fail-closed.  The context-local provider
+    and generic inference engine are instantiated only when the signed runtime
+    authority manifest advertises those capabilities.  External operation adapters
+    remain absent unless separately advertised and implemented.
     """
     from .runtime import RuntimeServices
+
+    capabilities = dict(getattr(authority_manifest, "release_capabilities", {}) or {})
+    activation_ready = bool(getattr(authority_manifest, "activation_ready", False))
+    speaker_ref = (
+        getattr(authority_manifest, "output_speaker_ref", None)
+        if activation_ready else "referent:self"
+    )
+    commitment_kind_ref = (
+        getattr(authority_manifest, "output_commitment_kind_ref", None)
+        if activation_ready else None
+    )
+    if activation_ready and capabilities.get("output_discourse") is True:
+        if not speaker_ref or not commitment_kind_ref:
+            raise RuntimeError("activated output discourse requires signed speaker/commitment refs")
+        if store.get_record(RecordKind.REFERENT, speaker_ref) is None:
+            raise RuntimeError("signed output speaker is absent from semantic store")
+        commitment = store.get_record(RecordKind.SCHEMA, commitment_kind_ref)
+        if commitment is None or getattr(getattr(commitment.payload, "lifecycle_status", None), "value", None) != "active":
+            raise RuntimeError("signed output commitment kind is absent/inactive in semantic store")
 
     return RuntimeServices(
         syntax_adapters=None,
         observation_analyzers={},
+        epistemic_policy_provider=(
+            ContextLocalEpistemicPolicyProvider()
+            if capabilities.get("epistemic_admission") is True else None
+        ),
+        inference_engine=(
+            ReviewedDefaultInferenceEngine(store)
+            if capabilities.get("generic_inference") is True else None
+        ),
         operation_gate_evaluators={},
         operation_adapters={},
         semantic_analyzer=CanonicalSemanticAnalyzer(store),
@@ -411,9 +456,9 @@ def build_canonical_runtime_services(store):
         channel_adapters={
             InProcessTextChannelAdapter.adapter_ref: InProcessTextChannelAdapter()
         },
-        speaker_ref="referent:self",
-        # Commitment kind is semantic policy/data, never invented by the mechanical service root.
-        output_commitment_kind_ref=None,
+        speaker_ref=speaker_ref,
+        # Bound only from the signed activation manifest; semantic meaning remains boot data.
+        output_commitment_kind_ref=commitment_kind_ref,
         permission_evaluator=PermissionScopeEvaluator(),
         clock=SystemClock(),
     )

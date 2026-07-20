@@ -364,6 +364,8 @@ def _capability(value: Mapping[str, Any]) -> CapabilityInstance:
             status=CapabilityStatus(data["status"]),
             confidence=float(data["confidence"]),
             context_ref=str(data["context_ref"]),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
             valid_from=None if data.get("valid_from") is None else str(data["valid_from"]),
             valid_to=None if data.get("valid_to") is None else str(data["valid_to"]),
             dependency_refs=_tuple_str(data.get("dependency_refs")),
@@ -576,6 +578,11 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
         document = uol_to_document(record)
     else:
         document = dict(_dataclass_document(record))
+    if resolved == RecordKind.CAPABILITY_INSTANCE:
+        if document.get("revision") == 1:
+            document.pop("revision", None)
+        if document.get("supersedes_revision") is None:
+            document.pop("supersedes_revision", None)
     return dict(document)
 
 
@@ -782,7 +789,7 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
     validate_record_kind(resolved, record)
     if resolved in {
         RecordKind.SCHEMA, RecordKind.FACET_ENTITLEMENT,
-        RecordKind.REFERENT, RecordKind.DEFAULT_RULE,
+        RecordKind.REFERENT, RecordKind.DEFAULT_RULE, RecordKind.CAPABILITY_INSTANCE,
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM,
         RecordKind.LEXICAL_SENSE, RecordKind.FORM_SENSE_LINK,
         RecordKind.CONSTRUCTION, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,

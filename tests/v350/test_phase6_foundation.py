@@ -53,18 +53,42 @@ SOURCE = ROOT / "cemm" / "data" / "v350"
 
 
 @pytest.fixture(scope="module")
+def phase6_source(tmp_path_factory):
+    package_root = tmp_path_factory.mktemp("phase6-source")
+    manifest_data = json.loads((SOURCE / "manifest.json").read_text(encoding="utf-8"))
+    manifest_data["modules"] = [
+        item for item in manifest_data["modules"]
+        if int(item.get("phase", 6)) <= 6
+    ]
+    (package_root / "manifest.json").write_text(
+        json.dumps(manifest_data, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    for relative in ("foundation_contract.json", "competence/foundation.jsonl"):
+        target = package_root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(SOURCE / relative, target)
+    for module in manifest_data["modules"]:
+        relative = Path(module["path"])
+        target = package_root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(SOURCE / relative, target)
+    return package_root
+
+
+@pytest.fixture(scope="module")
 def contract():
     return load_foundation_contract(SOURCE / "foundation_contract.json")
 
 
 @pytest.fixture(scope="module")
-def compiled(tmp_path_factory):
+def compiled(tmp_path_factory, phase6_source):
     directory = tmp_path_factory.mktemp("phase6")
     first = DeterministicSQLiteCompiler().compile(
-        SOURCE, directory / "foundation-a.sqlite", make_read_only=False
+        phase6_source, directory / "foundation-a.sqlite", make_read_only=False
     )
     second = DeterministicSQLiteCompiler().compile(
-        SOURCE, directory / "foundation-b.sqlite", make_read_only=False
+        phase6_source, directory / "foundation-b.sqlite", make_read_only=False
     )
     assert first.output_path.read_bytes() == second.output_path.read_bytes()
     assert first.boot_fingerprint == second.boot_fingerprint

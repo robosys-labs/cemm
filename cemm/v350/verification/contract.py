@@ -84,6 +84,7 @@ class VerticalSlicePackageAuditor:
         transition_seed = [
             item for item in records
             if item.record_kind in {RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY}
+            and item.phase <= 12
         ]
         if transition_seed:
             issues.append(

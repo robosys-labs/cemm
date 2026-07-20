@@ -149,7 +149,11 @@ def _execute(case, source_root: Path, runtime_root: Path):
     op = case["operation"]
     if op == "no_domain_transition_seed":
         records = SourcePackageLoader(source_root).load()
-        count = sum(i.record_kind in {RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY} for i in records)
+        count = sum(
+            i.record_kind in {RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY}
+            and i.phase <= 11
+            for i in records
+        )
         assert count == 0
         return {"seed_count": count}
     if op == "no_named_kernel_authority":
