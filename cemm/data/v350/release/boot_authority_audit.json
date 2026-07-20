@@ -1,0 +1,34 @@
+{
+  "advertised_realization_languages": [],
+  "boot_sha256": "266f5daa666fd0e083d6c1abe8b1a995cb8fbf53a65a0501b341b3a2a4017963",
+  "compiler": {
+    "boot_fingerprint": "boot-database:2d7dfb0d02a748ceb3eba6c1db3a72b3ba5b90269284edc02bb8178e857e2b4f",
+    "byte_size": 3117056,
+    "manifest_fingerprint": "source-manifest:713a078645edcf3aacf070dcaa31c843308299defb6394a742a9441b2e05f403",
+    "record_count": 650,
+    "record_set_fingerprint": "compiled-record-set:fcef5f52903f6ea3466918787d590cceab95b59e56028a3e48446031b015848b"
+  },
+  "effective_counts": {
+    "argument_frame": 0,
+    "channel_adapter_contract": 0,
+    "linearization_rule": 0,
+    "morphology_rule": 0,
+    "response_policy_rule": 0,
+    "response_transform_rule": 0,
+    "semantic_analyzer_contract": 0
+  },
+  "errors": [
+    "missing_effective_authority:response_policy_rule",
+    "missing_effective_authority:response_transform_rule",
+    "missing_effective_authority:argument_frame",
+    "missing_effective_authority:morphology_rule",
+    "missing_effective_authority:linearization_rule",
+    "missing_effective_authority:semantic_analyzer_contract",
+    "missing_effective_authority:channel_adapter_contract"
+  ],
+  "operation_adapter_contract_count": 0,
+  "record_count": 650,
+  "sqlite_schema_version": 8,
+  "status": "fail",
+  "warnings": []
+}

@@ -47,8 +47,8 @@ REQUIRED_RUNTIME_BOOT_AUTHORITIES: tuple[tuple[str, RecordKind], ...] = (
     ("response_policy_rules", RecordKind.RESPONSE_POLICY_RULE),
     ("response_transform_rules", RecordKind.RESPONSE_TRANSFORM_RULE),
     ("argument_frames", RecordKind.ARGUMENT_FRAME),
+    ("morphology_rules", RecordKind.MORPHOLOGY_RULE),
     ("linearization_rules", RecordKind.LINEARIZATION_RULE),
-    ("operation_adapter_contracts", RecordKind.OPERATION_ADAPTER_CONTRACT),
     ("semantic_analyzer_contracts", RecordKind.SEMANTIC_ANALYZER_CONTRACT),
     ("channel_adapter_contracts", RecordKind.CHANNEL_ADAPTER_CONTRACT),
 )
@@ -308,7 +308,12 @@ class RuntimeAuthorityGuard:
                     continue
                 if tuple(declared) != observed:
                     errors.append(f"signed boot authority mismatch:{label}")
-            for label, kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES:
+            required_boot_authorities = list(REQUIRED_RUNTIME_BOOT_AUTHORITIES)
+            if m.release_capabilities.get("external_operations"):
+                required_boot_authorities.append(
+                    ("operation_adapter_contracts", RecordKind.OPERATION_ADAPTER_CONTRACT)
+                )
+            for label, kind in required_boot_authorities:
                 try:
                     if not _boot_pins(self.boot_database_path, kind):
                         errors.append(f"missing active boot authority:{label}")

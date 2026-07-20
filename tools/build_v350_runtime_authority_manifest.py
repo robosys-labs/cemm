@@ -25,6 +25,7 @@ from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter
 from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES
 from cemm.v350.runtime_services import canonical_service_descriptors
 from cemm.v350.storage import RecordKind
+from cemm.v350.storage.sqlite_schema import SCHEMA_VERSION
 
 
 def sha256(path: Path) -> str:
@@ -103,13 +104,18 @@ def main() -> int:
         raise SystemExit('activation requires source manifest metadata.phase20_prepared=true')
     capabilities=dict(source_metadata.get('release_capabilities',{}))
     if args.activate:
-        missing=[label for label,kind in REQUIRED_RUNTIME_BOOT_AUTHORITIES if not boot_pins(boot,kind)]
+        required=list(REQUIRED_RUNTIME_BOOT_AUTHORITIES)
+        if capabilities.get("external_operations"):
+            required.append(("operation_adapter_contracts",RecordKind.OPERATION_ADAPTER_CONTRACT))
+        missing=[label for label,kind in required if not boot_pins(boot,kind)]
         if missing:
             raise SystemExit('activation requires non-empty boot authorities: '+','.join(missing))
     services=[asdict(item) for item in canonical_service_descriptors()]
     doc={
         'manifest_version':2,'release_version':'3.5.0','release_commit':args.release_commit,
-        'source_manifest_sha256':sha256(source_manifest),'boot_database_sha256':boot_sha,'schema_version':1,
+        'source_manifest_sha256':sha256(source_manifest),
+        'boot_database_sha256':boot_sha,
+        'schema_version':SCHEMA_VERSION,
         'canonical_orchestrator':'cemm.v350.orchestration:CanonicalOrchestrator',
         'canonical_runtime_factory':'cemm.v350.runtime:build_runtime',
         'public_entrypoints':['cemm:Runtime','cemm.app.runtime:Runtime','python -m cemm','cemm.web_demo:serve'],
