@@ -18,6 +18,7 @@ from .discourse import DiscourseClassifier
 from .epistemic_pipeline import AttributedClaimCompiler
 from .facets.projector import ReferentKnowledgeProjector
 from .grounding.coordinator import JointGrounder
+from .grounding.participants import participant_frame_anchors
 from .language.analyzer import FormLatticeAnalyzer
 from .learning.frontier import FrontierCollector, FrontierObservation
 from .learning.model import PinnedRecord
@@ -213,10 +214,21 @@ class CanonicalRuntimeCoordinator:
             analyzer = FormLatticeAnalyzer(self.store.repositories.language.registry(snapshot=snapshot), syntax_adapters=self.services.syntax_adapters)
             grounder = JointGrounder(self.store, analyzer)
             envelope = cycle.input_payload if isinstance(cycle.input_payload, RuntimeInput) else RuntimeInput(str(cycle.input_payload))
+            participant_anchors = participant_frame_anchors(
+                cycle.artifacts.get("participant_frame"),
+                store=self.store,
+                snapshot=snapshot,
+            )
+            anchors_by_ref = {
+                item.anchor_ref: item
+                for item in (*tuple(envelope.discourse_anchors), *participant_anchors)
+            }
             prepared = grounder.prepare_lattice(
                 lattice,
                 context_ref=cycle.context_ref,
-                discourse_anchors=envelope.discourse_anchors,
+                discourse_anchors=tuple(
+                    anchors_by_ref[key] for key in sorted(anchors_by_ref)
+                ),
                 multimodal_tracks=envelope.multimodal_tracks,
                 system_outputs=envelope.system_output_anchors,
                 constraints=envelope.grounding_constraints,
@@ -252,7 +264,13 @@ class CanonicalRuntimeCoordinator:
         cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
         try:
             composer = MeaningComposer(self.store)
-            factor_graph = composer.build_factor_graph(lattice, grounding, context_ref=cycle.context_ref, snapshot=snapshot)
+            factor_graph = composer.build_factor_graph(
+                lattice, grounding,
+                context_ref=cycle.context_ref,
+                referent_projections=cycle.artifacts.get("referent_projections", {}),
+                closure_candidates=cycle.artifacts.get("semantic_closure_candidates", ()),
+                snapshot=snapshot,
+            )
         finally:
             cm.__exit__(None, None, None)
         return StageOutcome({"grounding_result": grounding, "meaning_composer": composer, "meaning_factor_graph": factor_graph, "stage05_receipt": self._receipt(CoreStage.BUILD_UOL_FACTOR_GRAPH, "performed", "unified_factor_graph_built", evidence=factor_graph.evidence_refs)}, frontier_refs=tuple(grounding.frontier_refs))

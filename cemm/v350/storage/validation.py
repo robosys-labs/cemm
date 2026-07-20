@@ -20,9 +20,10 @@ from ..schema.model import (
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
-    ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
+    ConstructionProgramRecord, ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
     LanguageFormRecord, LanguagePackRecord, LexemeRecord, LexemeSenseLinkRecord,
-    LexicalSenseRecord, SemanticContributionSpecRecord, SenseTargetKind,
+    LexicalSenseRecord, MorphologyAnalysisRuleRecord,
+    SemanticContributionSpecRecord, SenseTargetKind,
 )
 from ..language.registry import LanguageRegistry, LanguageRegistryError
 from ..learning.validation import LearningCommitValidator
@@ -229,6 +230,8 @@ class CommitValidator:
             records(RecordKind.FORM_LEXEME_LINK, FormLexemeLinkRecord),
             records(RecordKind.LEXEME_SENSE_LINK, LexemeSenseLinkRecord),
             records(RecordKind.SEMANTIC_CONTRIBUTION_SPEC, SemanticContributionSpecRecord),
+            records(RecordKind.MORPHOLOGY_ANALYSIS_RULE, MorphologyAnalysisRuleRecord),
+            records(RecordKind.CONSTRUCTION_PROGRAM, ConstructionProgramRecord),
         )
 
     def _schema_registry(self) -> SchemaRegistry:

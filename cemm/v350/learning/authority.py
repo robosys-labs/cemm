@@ -33,7 +33,13 @@ _COMPATIBLE: dict[RecordKind, frozenset[UseOperation]] = {
     RecordKind.SEMANTIC_CONTRIBUTION_SPEC: frozenset({
         UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.QUERY,
     }),
+    RecordKind.MORPHOLOGY_ANALYSIS_RULE: frozenset({
+        UseOperation.GROUND,
+    }),
     RecordKind.CONSTRUCTION: frozenset({UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.REALIZE}),
+    RecordKind.CONSTRUCTION_PROGRAM: frozenset({
+        UseOperation.COMPOSE, UseOperation.QUERY,
+    }),
     RecordKind.TRANSITION_CONTRACT: frozenset({UseOperation.TRANSITION}),
     RecordKind.CAPABILITY_DEPENDENCY: frozenset({UseOperation.TRANSITION}),
     RecordKind.IMPACT_RULE: frozenset({UseOperation.IMPACT}),

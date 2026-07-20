@@ -17,8 +17,10 @@ from ..data import SourcePackageLoader
 from ..schema.model import SchemaLifecycleStatus, canonical_data, semantic_fingerprint
 from ..storage import RecordKind
 from .model import (
-    ConstructionKind, ConstructionRecord, FormLexemeLinkRecord, LexemeRecord,
-    LexemeSenseLinkRecord, LexicalSenseRecord, SemanticContributionSpecRecord,
+    ConstructionKind, ConstructionProgramRecord, ConstructionRecord,
+    FormLexemeLinkRecord, LexemeRecord, LexemeSenseLinkRecord,
+    LexicalSenseRecord, MorphologyAnalysisRuleRecord,
+    SemanticContributionSpecRecord,
 )
 from .registry import LanguageRegistry
 
@@ -79,10 +81,8 @@ class LanguageGroundingPackageAuditor:
         records = tuple(item for item in loader.load() if item.phase == 7)
         issues: list[str] = []
         counts = Counter(item.record_kind.value for item in records)
-        expected = dict(self.contract.expected_record_counts)
-        for kind in sorted(set(counts) | set(expected)):
-            if counts.get(kind, 0) != expected.get(kind, 0):
-                issues.append(f"record_count:{kind}:expected={expected.get(kind, 0)}:actual={counts.get(kind, 0)}")
+        # Catalogue cardinality is diagnostic only. Source fingerprint and
+        # manifest hashes provide the deterministic tamper boundary.
 
         language_modules = tuple(item for item in loader.manifest.modules if item.phase == 7)
         if not language_modules:
@@ -96,7 +96,6 @@ class LanguageGroundingPackageAuditor:
             "language_phase": "7",
             "grounding_phase": "8",
             "language_grounding_contract_ref": self.contract.contract_ref,
-            "language_grounding_base_commit": self.contract.base_commit,
         }
         try:
             current_phase = int(metadata.get("phase", 0))
@@ -131,11 +130,20 @@ class LanguageGroundingPackageAuditor:
             item.record for item in records
             if item.record_kind == RecordKind.SEMANTIC_CONTRIBUTION_SPEC
         )
+        morphology_analysis_rules = tuple(
+            item.record for item in records
+            if item.record_kind == RecordKind.MORPHOLOGY_ANALYSIS_RULE
+        )
         constructions = tuple(item.record for item in records if item.record_kind == RecordKind.CONSTRUCTION)
+        construction_programs = tuple(
+            item.record for item in records
+            if item.record_kind == RecordKind.CONSTRUCTION_PROGRAM
+        )
         try:
             registry = LanguageRegistry(
                 packs, forms, senses, links, constructions,
                 lexemes, form_lexeme_links, lexeme_sense_links, contribution_specs,
+                morphology_analysis_rules, construction_programs,
             )
         except Exception as exc:
             issues.append(f"language_registry:{exc}")

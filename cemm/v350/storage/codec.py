@@ -9,6 +9,7 @@ from ..schema.codec import record_from_document as schema_record_from_document
 from ..schema.codec import record_to_document as schema_record_to_document
 from ..schema.model import FacetEntitlement, MeaningSchema, canonical_data, semantic_fingerprint
 from ..language.codec import (
+    construction_program_from_document,
     construction_from_document,
     form_lexeme_link_from_document,
     form_sense_link_from_document,
@@ -18,9 +19,11 @@ from ..language.codec import (
     lexeme_from_document,
     lexeme_sense_link_from_document,
     lexical_sense_from_document,
+    morphology_analysis_rule_from_document,
     semantic_contribution_spec_from_document,
 )
 from ..language.model import (
+    ConstructionProgramRecord,
     ConstructionRecord,
     FormLexemeLinkRecord,
     FormSenseLinkRecord,
@@ -29,6 +32,7 @@ from ..language.model import (
     LexemeRecord,
     LexemeSenseLinkRecord,
     LexicalSenseRecord,
+    MorphologyAnalysisRuleRecord,
     SemanticContributionSpecRecord,
 )
 from ..transitions.codec import (
@@ -539,7 +543,9 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.LEXEME_SENSE_LINK: lexeme_sense_link_from_document,
     RecordKind.FORM_SENSE_LINK: form_sense_link_from_document,
     RecordKind.SEMANTIC_CONTRIBUTION_SPEC: semantic_contribution_spec_from_document,
+    RecordKind.MORPHOLOGY_ANALYSIS_RULE: morphology_analysis_rule_from_document,
     RecordKind.CONSTRUCTION: construction_from_document,
+    RecordKind.CONSTRUCTION_PROGRAM: construction_program_from_document,
     RecordKind.MATERIALIZED_VIEW: _view,
     RecordKind.LEARNING_PACKAGE: learning_package_from_document,
     RecordKind.LEARNING_FRONTIER: learning_frontier_from_document,
@@ -577,7 +583,9 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
         RecordKind.LEXEME_SENSE_LINK,
         RecordKind.FORM_SENSE_LINK,
         RecordKind.SEMANTIC_CONTRIBUTION_SPEC,
+        RecordKind.MORPHOLOGY_ANALYSIS_RULE,
         RecordKind.CONSTRUCTION,
+        RecordKind.CONSTRUCTION_PROGRAM,
     }:
         document = language_record_to_document(record)
     elif resolved in {
@@ -690,7 +698,9 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.LEXEME_SENSE_LINK: (LexemeSenseLinkRecord,),
         RecordKind.FORM_SENSE_LINK: (FormSenseLinkRecord,),
         RecordKind.SEMANTIC_CONTRIBUTION_SPEC: (SemanticContributionSpecRecord,),
+        RecordKind.MORPHOLOGY_ANALYSIS_RULE: (MorphologyAnalysisRuleRecord,),
         RecordKind.CONSTRUCTION: (ConstructionRecord,),
+        RecordKind.CONSTRUCTION_PROGRAM: (ConstructionProgramRecord,),
         RecordKind.MATERIALIZED_VIEW: (MaterializedViewRecord,),
         RecordKind.LEARNING_PACKAGE: (LearningPackageRecord,),
         RecordKind.LEARNING_FRONTIER: (LearningFrontierRecord,),
@@ -796,7 +806,9 @@ def record_ref(record_kind: RecordKind | str, record: Any) -> str:
         RecordKind.LEXEME_SENSE_LINK: "link_ref",
         RecordKind.FORM_SENSE_LINK: "link_ref",
         RecordKind.SEMANTIC_CONTRIBUTION_SPEC: "spec_ref",
+        RecordKind.MORPHOLOGY_ANALYSIS_RULE: "rule_ref",
         RecordKind.CONSTRUCTION: "construction_ref",
+        RecordKind.CONSTRUCTION_PROGRAM: "program_ref",
         RecordKind.MATERIALIZED_VIEW: "view_ref",
         RecordKind.LEARNING_PACKAGE: "package_ref",
         RecordKind.LEARNING_FRONTIER: "frontier_ref",
@@ -818,7 +830,8 @@ def record_revision(record_kind: RecordKind | str, record: Any, fallback: int = 
         RecordKind.FORM_LEXEME_LINK, RecordKind.LEXICAL_SENSE,
         RecordKind.LEXEME_SENSE_LINK, RecordKind.FORM_SENSE_LINK,
         RecordKind.SEMANTIC_CONTRIBUTION_SPEC,
-        RecordKind.CONSTRUCTION, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,
+        RecordKind.MORPHOLOGY_ANALYSIS_RULE, RecordKind.CONSTRUCTION,
+        RecordKind.CONSTRUCTION_PROGRAM, RecordKind.CLAIM_HISTORY, RecordKind.EPISTEMIC_ADMISSION, RecordKind.SOURCE_ASSESSMENT,
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
         RecordKind.LEARNING_PACKAGE, RecordKind.LEARNING_FRONTIER,
         RecordKind.LEARNING_EVIDENCE_LINK, RecordKind.COMPETENCE_RESULT,
@@ -880,7 +893,8 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXEME,
         RecordKind.FORM_LEXEME_LINK, RecordKind.LEXICAL_SENSE,
         RecordKind.LEXEME_SENSE_LINK, RecordKind.FORM_SENSE_LINK,
-        RecordKind.SEMANTIC_CONTRIBUTION_SPEC, RecordKind.CONSTRUCTION, RecordKind.EPISTEMIC_ADMISSION,
+        RecordKind.SEMANTIC_CONTRIBUTION_SPEC, RecordKind.MORPHOLOGY_ANALYSIS_RULE,
+        RecordKind.CONSTRUCTION, RecordKind.CONSTRUCTION_PROGRAM, RecordKind.EPISTEMIC_ADMISSION,
         RecordKind.TRANSITION_CONTRACT, RecordKind.CAPABILITY_DEPENDENCY,
         RecordKind.LEARNING_PACKAGE, RecordKind.IMPACT_RULE, RecordKind.IMPORTANCE_POLICY,
         RecordKind.RESPONSE_POLICY_RULE, RecordKind.RESPONSE_TRANSFORM_RULE,

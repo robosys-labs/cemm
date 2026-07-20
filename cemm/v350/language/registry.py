@@ -7,6 +7,7 @@ from typing import Iterable
 
 from ..schema.model import SchemaLifecycleStatus, UseOperation
 from .model import (
+    ConstructionProgramRecord,
     ConstructionRecord,
     FormLexemeLinkRecord,
     FormSenseLinkRecord,
@@ -15,6 +16,7 @@ from .model import (
     LexemeRecord,
     LexemeSenseLinkRecord,
     LexicalSenseRecord,
+    MorphologyAnalysisRuleRecord,
     SemanticContributionSpecRecord,
 )
 
@@ -37,6 +39,8 @@ class LanguageRegistrySnapshot:
     form_lexeme_links: tuple[FormLexemeLinkRecord, ...]
     lexeme_sense_links: tuple[LexemeSenseLinkRecord, ...]
     contribution_specs: tuple[SemanticContributionSpecRecord, ...]
+    morphology_analysis_rules: tuple[MorphologyAnalysisRuleRecord, ...]
+    construction_programs: tuple[ConstructionProgramRecord, ...]
 
 
 class LanguageRegistry:
@@ -51,6 +55,8 @@ class LanguageRegistry:
         form_lexeme_links: Iterable[FormLexemeLinkRecord] = (),
         lexeme_sense_links: Iterable[LexemeSenseLinkRecord] = (),
         contribution_specs: Iterable[SemanticContributionSpecRecord] = (),
+        morphology_analysis_rules: Iterable[MorphologyAnalysisRuleRecord] = (),
+        construction_programs: Iterable[ConstructionProgramRecord] = (),
     ) -> None:
         self._packs = _index(packs, lambda item: item.pack_ref, "language pack")
         self._forms = _index(forms, lambda item: item.form_ref, "language form")
@@ -61,6 +67,8 @@ class LanguageRegistry:
         self._form_lexeme_links = _index(form_lexeme_links, lambda item: item.link_ref, "form-lexeme link")
         self._lexeme_sense_links = _index(lexeme_sense_links, lambda item: item.link_ref, "lexeme-sense link")
         self._contribution_specs = _index(contribution_specs, lambda item: item.spec_ref, "semantic contribution spec")
+        self._morphology_analysis_rules = _index(morphology_analysis_rules, lambda item: item.rule_ref, "morphology analysis rule")
+        self._construction_programs = _index(construction_programs, lambda item: item.program_ref, "construction program")
         self._validate()
         self._forms_by_key: dict[tuple[str, str], list[LanguageFormRecord]] = defaultdict(list)
         for item in self.active_forms():
@@ -96,6 +104,34 @@ class LanguageRegistry:
                 self._contributions_by_sense[(item.sense_ref, item.sense_revision)].append(item)
         for values in self._contributions_by_sense.values():
             values.sort(key=lambda item: (item.contribution_kind.value, item.spec_ref, item.revision))
+        self._morphology_by_language = defaultdict(list)
+        for item in self.active_morphology_analysis_rules():
+            if item.executable:
+                pack = self.require_pack(item.pack_ref, item.pack_revision)
+                self._morphology_by_language[pack.language_tag].append(item)
+        for values in self._morphology_by_language.values():
+            values.sort(key=lambda item: (-item.priority, item.rule_ref, item.revision))
+        self._lexemes_by_inflection_lemma = defaultdict(list)
+        for item in self.active_lexemes():
+            if not item.inflection_class_ref:
+                continue
+            lemma = self.require_form(
+                item.lemma_form_ref, item.lemma_form_revision
+            )
+            self._lexemes_by_inflection_lemma[
+                (
+                    item.pack_ref,
+                    item.inflection_class_ref,
+                    lemma.normalized_form,
+                )
+            ].append(item)
+        for values in self._lexemes_by_inflection_lemma.values():
+            values.sort(key=lambda item: (item.lexeme_ref, item.revision))
+        self._programs_by_construction = defaultdict(list)
+        for item in self.active_construction_programs():
+            self._programs_by_construction[(item.construction_ref, item.construction_revision)].append(item)
+        for values in self._programs_by_construction.values():
+            values.sort(key=lambda item: (item.program_ref, item.revision))
 
     def _validate(self) -> None:
         for label, index in (
@@ -106,6 +142,8 @@ class LanguageRegistry:
             ("form-lexeme link", self._form_lexeme_links),
             ("lexeme-sense link", self._lexeme_sense_links),
             ("semantic contribution spec", self._contribution_specs),
+            ("morphology analysis rule", self._morphology_analysis_rules),
+            ("construction program", self._construction_programs),
         ):
             for ref, revisions in index.items():
                 for item in revisions.values():
@@ -187,6 +225,27 @@ class LanguageRegistry:
                 pack.lifecycle_status not in _ACTIVE or sense.lifecycle_status not in _ACTIVE
             ):
                 raise LanguageRegistryError(f"active contribution spec references inactive authority: {spec.spec_ref}")
+        for rule in self.iter_morphology_analysis_rules():
+            pack = self.require_pack(rule.pack_ref, rule.pack_revision)
+            if rule.lexeme_ref:
+                lexeme = self.require_lexeme(
+                    rule.lexeme_ref, rule.lexeme_revision
+                )
+                if pack.pack_ref != lexeme.pack_ref:
+                    raise LanguageRegistryError(
+                        f"morphology rule crosses packs:{rule.rule_ref}"
+                    )
+                if rule.lifecycle_status in _ACTIVE and (
+                    pack.lifecycle_status not in _ACTIVE
+                    or lexeme.lifecycle_status not in _ACTIVE
+                ):
+                    raise LanguageRegistryError(
+                        f"active morphology rule references inactive authority:{rule.rule_ref}"
+                    )
+            elif rule.lifecycle_status in _ACTIVE and pack.lifecycle_status not in _ACTIVE:
+                raise LanguageRegistryError(
+                    f"active morphology class rule uses inactive pack:{rule.rule_ref}"
+                )
         for construction in self.iter_constructions():
             pack = self.require_pack(construction.pack_ref, construction.pack_revision)
             if construction.lifecycle_status in _ACTIVE and pack.lifecycle_status not in _ACTIVE:
@@ -197,6 +256,36 @@ class LanguageRegistry:
             for ref in construction.trigger_sense_refs:
                 if self.require_sense(ref).pack_ref != construction.pack_ref:
                     raise LanguageRegistryError(f"construction trigger sense crosses pack: {construction.construction_ref}")
+        for program in self.iter_construction_programs():
+            pack = self.require_pack(program.pack_ref, program.pack_revision)
+            construction = self.require_construction(program.construction_ref, program.construction_revision)
+            if construction.pack_ref != program.pack_ref:
+                raise LanguageRegistryError(f"construction program crosses packs:{program.program_ref}")
+            if program.lifecycle_status in _ACTIVE and (
+                pack.lifecycle_status not in _ACTIVE or construction.lifecycle_status not in _ACTIVE
+            ):
+                raise LanguageRegistryError(f"active construction program references inactive authority:{program.program_ref}")
+            known_slots = {item.slot_ref for item in construction.slots}
+            known_symbols: set[str] = set()
+            for step in program.steps:
+                if step.slot_ref and step.slot_ref not in known_slots:
+                    raise LanguageRegistryError(f"construction program references unknown slot:{program.program_ref}:{step.slot_ref}")
+                missing_inputs = sorted(set(step.input_refs) - known_symbols)
+                if missing_inputs:
+                    raise LanguageRegistryError(
+                        f"construction program uses undeclared symbols:{program.program_ref}:{missing_inputs}"
+                    )
+                if step.result_ref:
+                    if step.result_ref in known_symbols:
+                        raise LanguageRegistryError(
+                            f"construction program redeclares symbol:{program.program_ref}:{step.result_ref}"
+                        )
+                    known_symbols.add(step.result_ref)
+            missing_roots = sorted(set(program.root_symbol_refs) - known_symbols)
+            if missing_roots:
+                raise LanguageRegistryError(
+                    f"construction program roots are undeclared:{program.program_ref}:{missing_roots}"
+                )
 
     def snapshot(self) -> LanguageRegistrySnapshot:
         return LanguageRegistrySnapshot(
@@ -206,6 +295,8 @@ class LanguageRegistry:
             form_lexeme_links=tuple(self.iter_form_lexeme_links()),
             lexeme_sense_links=tuple(self.iter_lexeme_sense_links()),
             contribution_specs=tuple(self.iter_contribution_specs()),
+            morphology_analysis_rules=tuple(self.iter_morphology_analysis_rules()),
+            construction_programs=tuple(self.iter_construction_programs()),
         )
 
     def iter_packs(self): return _flatten(self._packs)
@@ -217,6 +308,8 @@ class LanguageRegistry:
     def iter_form_lexeme_links(self): return _flatten(self._form_lexeme_links)
     def iter_lexeme_sense_links(self): return _flatten(self._lexeme_sense_links)
     def iter_contribution_specs(self): return _flatten(self._contribution_specs)
+    def iter_morphology_analysis_rules(self): return _flatten(self._morphology_analysis_rules)
+    def iter_construction_programs(self): return _flatten(self._construction_programs)
 
     def active_packs(self): return _effective_flatten(self._packs)
     def active_forms(self): return _effective_flatten(self._forms)
@@ -227,6 +320,8 @@ class LanguageRegistry:
     def active_form_lexeme_links(self): return _effective_flatten(self._form_lexeme_links)
     def active_lexeme_sense_links(self): return _effective_flatten(self._lexeme_sense_links)
     def active_contribution_specs(self): return _effective_flatten(self._contribution_specs)
+    def active_morphology_analysis_rules(self): return _effective_flatten(self._morphology_analysis_rules)
+    def active_construction_programs(self): return _effective_flatten(self._construction_programs)
 
     def require_pack(self, ref: str, revision: int | None = None) -> LanguagePackRecord:
         return _require(self._packs, ref, revision, "language pack")
@@ -246,6 +341,10 @@ class LanguageRegistry:
         return _require(self._lexeme_sense_links, ref, revision, "lexeme-sense link")
     def require_contribution_spec(self, ref: str, revision: int | None = None) -> SemanticContributionSpecRecord:
         return _require(self._contribution_specs, ref, revision, "semantic contribution spec")
+    def require_morphology_analysis_rule(self, ref: str, revision: int | None = None) -> MorphologyAnalysisRuleRecord:
+        return _require(self._morphology_analysis_rules, ref, revision, "morphology analysis rule")
+    def require_construction_program(self, ref: str, revision: int | None = None) -> ConstructionProgramRecord:
+        return _require(self._construction_programs, ref, revision, "construction program")
 
     def pack_for_language(self, language_tag: str) -> LanguagePackRecord | None:
         candidates = [item for item in self.active_packs() if item.language_tag == language_tag]
@@ -268,6 +367,75 @@ class LanguageRegistry:
 
     def contribution_specs_for_sense(self, sense_ref: str, revision: int) -> tuple[SemanticContributionSpecRecord, ...]:
         return tuple(self._contributions_by_sense.get((sense_ref, revision), ()))
+
+    def morphology_rules_for_language(self, language_tag: str) -> tuple[MorphologyAnalysisRuleRecord, ...]:
+        return tuple(self._morphology_by_language.get(language_tag, ()))
+
+    def morphology_lexemes(
+        self,
+        rule: MorphologyAnalysisRuleRecord,
+        *,
+        lemma_key: str,
+    ) -> tuple[LexemeRecord, ...]:
+        if rule.lexeme_ref:
+            lexeme = self.require_lexeme(
+                rule.lexeme_ref, rule.lexeme_revision
+            )
+            lemma = self.require_form(
+                lexeme.lemma_form_ref, lexeme.lemma_form_revision
+            )
+            return (lexeme,) if lemma.normalized_form == lemma_key else ()
+        return tuple(
+            self._lexemes_by_inflection_lemma.get(
+                (
+                    rule.pack_ref,
+                    rule.inflection_class_ref,
+                    lemma_key,
+                ),
+                (),
+            )
+        )
+
+    def programs_for_construction(self, construction_ref: str, revision: int) -> tuple[ConstructionProgramRecord, ...]:
+        return tuple(self._programs_by_construction.get((construction_ref, revision), ()))
+
+    def construction_match_authority(
+        self, construction: ConstructionRecord
+    ) -> tuple[bool, str, tuple[str, ...]]:
+        programs = self.programs_for_construction(
+            construction.construction_ref, construction.revision
+        )
+        if programs:
+            allowed = tuple(
+                item for item in programs
+                if item.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+                and item.use_operation == UseOperation.COMPOSE
+                and item.use_decision.value == "allow"
+            )
+            evidence = tuple(sorted({
+                ref for item in programs for ref in item.evidence_refs
+            }))
+            return (
+                bool(allowed),
+                "construction_program",
+                evidence or tuple(
+                    f"construction-program:{item.program_ref}@{item.revision}"
+                    for item in programs
+                ),
+            )
+        if construction.metadata.get("interpretation_enabled") is False:
+            return (
+                False,
+                "legacy_interpretation_metadata_compat",
+                construction.evidence_refs
+                or (f"construction:{construction.construction_ref}",),
+            )
+        return (
+            True,
+            "legacy_construction_compat",
+            construction.evidence_refs
+            or (f"construction:{construction.construction_ref}",),
+        )
 
 
 def _index(items, get_ref, label):

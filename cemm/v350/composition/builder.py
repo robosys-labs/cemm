@@ -7,8 +7,9 @@ proofs into finite factor tables.  The solver itself remains ontology-agnostic.
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from itertools import combinations
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from ..grounding.model import (
     GroundingCandidate,
@@ -19,6 +20,8 @@ from ..grounding.model import (
 from ..language.model import (
     FormLattice, SemanticContributionKind, SenseCandidate, SenseTargetKind,
 )
+from ..language.programs import ConstructionProgramCompiler
+from ..facets.closure import SemanticClosureCandidate
 from ..schema.model import OpenBindingPurpose, PortFillerClass, UseOperation, semantic_fingerprint
 from ..storage import SemanticStore, StoreSnapshot
 from .model import (
@@ -49,16 +52,19 @@ class MeaningFactorGraphBuilder:
         grounding: GroundingResult,
         *,
         context_ref: str,
+        closure_candidates: Iterable[SemanticClosureCandidate] = (),
         snapshot: StoreSnapshot | None = None,
     ) -> MeaningFactorGraph:
         if snapshot is None:
             with self.store.snapshot() as pinned:
                 return self.build(
-                    lattice, grounding, context_ref=context_ref, snapshot=pinned
+                    lattice, grounding, context_ref=context_ref,
+                    closure_candidates=closure_candidates, snapshot=pinned
                 )
         self.store.assert_snapshot(snapshot)
         registry = self.store.repositories.schemas.registry(snapshot=snapshot)
         language = self.store.repositories.language.registry(snapshot=snapshot)
+        closure_candidates = tuple(closure_candidates)
 
         variables: list[MeaningVariable] = []
         factors: list[MeaningFactor] = []
@@ -452,184 +458,23 @@ class MeaningFactorGraphBuilder:
                     MeaningFactorKind.GROUNDING_COHERENCE,
                 ))
 
-        # Construction variables preserve N-best clause analyses.  Activating a
-        # construction never creates meaning unless its exact output contract is
-        # composable and its semantic ports can be populated or explicitly left
-        # open under the schema's own policy.
-        construction_var: dict[str, str] = {}
-        candidate_by_ref = {item.candidate_ref: item for item in lattice.construction_candidates}
-        for candidate in sorted(lattice.construction_candidates, key=lambda item: item.candidate_ref):
-            record = language.require_construction(candidate.construction_ref, candidate.construction_revision)
-            active_allowed = True
-            if record.output_schema_ref is not None:
-                try:
-                    output_schema = registry.schema(record.output_schema_ref, record.output_schema_revision)
-                except Exception:
-                    active_allowed = False
-                else:
-                    active_allowed = output_schema.use_profile.permits(UseOperation.COMPOSE, provisional=True)
-            var_ref = _var_ref("construction", lattice.lattice_ref, candidate.candidate_ref)
-            construction_var[candidate.candidate_ref] = var_ref
-            values = [MeaningValue(
-                value_ref=_INACTIVE,
-                score=0.0,
-                evidence_refs=candidate.evidence_refs,
-                metadata={"active": False},
-            )]
-            if active_allowed:
-                values.append(MeaningValue(
-                    value_ref="choice:active",
-                    score=_confidence_logit(candidate.confidence),
-                    evidence_refs=candidate.evidence_refs,
-                    metadata={
-                        "active": True,
-                        "construction_ref": record.construction_ref,
-                        "construction_revision": record.revision,
-                        "construction_kind": record.construction_kind.value,
-                        "output_schema_ref": record.output_schema_ref,
-                        "output_schema_revision": record.output_schema_revision,
-                    },
-                ))
-            variables.append(MeaningVariable(
-                variable_ref=var_ref,
-                variable_kind=MeaningVariableKind.CONSTRUCTION,
-                values=tuple(values),
-                evidence_refs=candidate.evidence_refs,
-                metadata={"construction_candidate_ref": candidate.candidate_ref},
-            ))
-
-            trigger_sense_refs = set(record.trigger_sense_refs)
-            trigger_candidates = [
-                item for item in lattice.sense_candidates
-                if item.sense_ref in trigger_sense_refs and item.candidate_ref in candidate.trigger_refs
-            ]
-            # Some analyzers expose trigger form/observation refs rather than
-            # the sense-candidate ref.  A construction can still activate when
-            # no lexical ambiguity needs a linking factor.
-            for trigger in trigger_candidates:
-                sense_var_ref = sense_candidate_to_var.get(trigger.candidate_ref)
-                if sense_var_ref is None:
-                    continue
-                allowed = []
-                sense_var = next(item for item in variables if item.variable_ref == sense_var_ref)
-                for value in sense_var.values:
-                    allowed.append((value.value_ref, _INACTIVE))
-                    if value.value_ref == trigger.candidate_ref and active_allowed:
-                        allowed.append((value.value_ref, "choice:active"))
-                factors.append(_hard_factor(
-                    "construction-trigger",
-                    (sense_var_ref, var_ref),
-                    tuple(sorted(set(allowed))),
-                    candidate.evidence_refs,
-                    "active construction must be licensed by its reviewed trigger sense",
-                    MeaningFactorKind.CONSTRUCTION_COMPATIBILITY,
-                ))
-
-            if record.output_schema_ref is not None and active_allowed:
-                schema = registry.schema(record.output_schema_ref, record.output_schema_revision)
-                slot_map = {item.slot_ref: item for item in record.slots}
-                for slot_ref, filler_refs in candidate.slot_fillers:
-                    slot = slot_map.get(slot_ref)
-                    if slot is None or not slot.semantic_port_ref:
-                        continue
-                    try:
-                        port = schema.port(slot.semantic_port_ref)
-                    except KeyError:
-                        # The language record cannot smuggle a port that the
-                        # exact semantic schema does not own.
-                        factors.append(_hard_factor(
-                            "unknown-port",
-                            (var_ref,),
-                            ((_INACTIVE,),),
-                            candidate.evidence_refs,
-                            "construction semantic port is absent from the exact output schema",
-                            MeaningFactorKind.PORT_COMPATIBILITY,
-                        ))
-                        continue
-                    mention_refs = tuple(
-                        mention.mention_ref for mention in grounding.mentions
-                        if candidate.candidate_ref in mention.construction_candidate_refs
-                        and mention.syntactic_role in {slot.slot_ref, slot.semantic_port_ref, port.port_ref, port.role_family}
-                    )
-                    compatible = tuple(
-                        candidate_item
-                        for mention_ref in mention_refs
-                        for candidate_item in candidates_by_mention.get(mention_ref, ())
-                        if _port_accepts_candidate(port, candidate_item)
-                    )
-                    value_specs = _port_value_specs(
-                        compatible,
-                        minimum=port.cardinality.minimum,
-                        maximum=port.cardinality.maximum,
-                        allow_open=OpenBindingPurpose.PARTIAL_COMPOSITION in port.open_binding_purposes,
-                        allow_omitted=port.cardinality.minimum == 0,
-                        evidence_refs=candidate.evidence_refs,
-                    )
-                    port_var_ref = _var_ref(
-                        "port", candidate.candidate_ref, f"{schema.schema_ref}@{schema.revision}:{port.port_ref}"
-                    )
-                    variables.append(MeaningVariable(
-                        variable_ref=port_var_ref,
-                        variable_kind=MeaningVariableKind.PORT_FILLER,
-                        values=(MeaningValue(
-                            value_ref=_INACTIVE,
-                            score=0.0,
-                            evidence_refs=candidate.evidence_refs,
-                            metadata={"inactive": True},
-                        ), *value_specs),
-                        evidence_refs=candidate.evidence_refs,
-                        metadata={
-                            "construction_candidate_ref": candidate.candidate_ref,
-                            "schema_ref": schema.schema_ref,
-                            "schema_revision": schema.revision,
-                            "port_ref": port.port_ref,
-                            "role_family": port.role_family,
-                            "filler_classes": tuple(sorted(item.value for item in port.filler_classes)),
-                            "accepted_type_refs": port.accepted_type_refs,
-                            "accepted_storage_kinds": tuple(sorted(item.value for item in port.accepted_storage_kinds)),
-                            "open_binding_purposes": tuple(sorted(item.value for item in port.open_binding_purposes)),
-                        },
-                    ))
-                    factors.append(_hard_factor(
-                        "construction-port-active",
-                        (var_ref, port_var_ref),
-                        tuple(
-                            [(_INACTIVE, _INACTIVE)]
-                            + [
-                                ("choice:active", value.value_ref)
-                                for value in value_specs
-                            ]
-                        ),
-                        candidate.evidence_refs,
-                        "semantic port fillers are active exactly when their construction is active",
-                        MeaningFactorKind.PORT_COMPATIBILITY,
-                    ))
-
-                    # Tie selected port candidate(s) to the corresponding joint
-                    # referent variable so construction and identity cannot drift.
-                    for mention_ref in mention_refs:
-                        referent_var = referent_var_for_mention.get(mention_ref)
-                        if referent_var is None:
-                            continue
-                        referent_values = next(item.values for item in variables if item.variable_ref == referent_var)
-                        allowed_pairs = []
-                        for referent_value in referent_values:
-                            for port_value in value_specs:
-                                selected_refs = tuple(port_value.metadata.get("candidate_refs", ()))
-                                if port_value.value_ref in {_GAP, _OMITTED} or referent_value.value_ref in selected_refs:
-                                    allowed_pairs.append((referent_value.value_ref, port_value.value_ref))
-                        # Inactive construction leaves the port inactive; the
-                        # referent variable remains independently resolvable.
-                        allowed_pairs.extend((value.value_ref, _INACTIVE) for value in referent_values)
-                        if allowed_pairs:
-                            factors.append(_hard_factor(
-                                "port-grounding-link",
-                                (referent_var, port_var_ref),
-                                tuple(sorted(set(allowed_pairs))),
-                                candidate.evidence_refs,
-                                "port filler identity must agree with the selected grounding candidate",
-                                MeaningFactorKind.LINK,
-                            ))
+        # Construction matching is evidence; semantic authority is compiled from
+        # reviewed construction programs into bounded factor variables.
+        construction_compilation = ConstructionFactorCompiler(
+            registry=registry,
+            language=language,
+            closure_candidates=closure_candidates,
+        ).compile(
+            lattice,
+            grounding,
+            base_variables=variables,
+            candidates_by_mention=candidates_by_mention,
+            referent_var_for_mention=referent_var_for_mention,
+            sense_candidate_to_var=sense_candidate_to_var,
+        )
+        variables.extend(construction_compilation.variables)
+        factors.extend(construction_compilation.factors)
+        construction_var = dict(construction_compilation.construction_var)
 
         # Competing construction candidates that consume the same trigger span
         # and represent the same construction family cannot both be selected.
@@ -643,10 +488,25 @@ class MeaningFactorGraphBuilder:
                 continue
             if not set(left.trigger_refs).intersection(right.trigger_refs):
                 continue
+            left_variable = next(
+                item for item in variables
+                if item.variable_ref == construction_var[left.candidate_ref]
+            )
+            right_variable = next(
+                item for item in variables
+                if item.variable_ref == construction_var[right.candidate_ref]
+            )
+            allowed = tuple(
+                (left_value.value_ref, right_value.value_ref)
+                for left_value in left_variable.values
+                for right_value in right_variable.values
+                if left_value.value_ref == _INACTIVE
+                or right_value.value_ref == _INACTIVE
+            )
             factors.append(_hard_factor(
                 "construction-exclusivity",
                 (construction_var[left.candidate_ref], construction_var[right.candidate_ref]),
-                ((_INACTIVE, _INACTIVE), (_INACTIVE, "choice:active"), ("choice:active", _INACTIVE)),
+                allowed,
                 tuple(sorted(set(left.evidence_refs) | set(right.evidence_refs))),
                 "competing constructions may not double-consume the same trigger evidence",
                 MeaningFactorKind.EVIDENCE_EXCLUSIVITY,
@@ -770,6 +630,396 @@ class MeaningFactorGraphBuilder:
         )
         return graph
 
+
+@dataclass(frozen=True, slots=True)
+class ConstructionFactorCompilation:
+    variables: tuple[MeaningVariable, ...]
+    factors: tuple[MeaningFactor, ...]
+    construction_var: Mapping[str, str]
+
+
+class ConstructionFactorCompiler:
+    """Compile matched constructions into finite semantic-plan factor variables.
+
+    Construction matching is language evidence. Semantic authority comes from
+    ConstructionProgramRecord plans (or a trace-marked migration compatibility
+    plan). This compiler never branches on surface words or predicate names.
+    """
+
+    def __init__(
+        self,
+        *,
+        registry,
+        language,
+        closure_candidates: tuple[SemanticClosureCandidate, ...],
+    ) -> None:
+        self.registry = registry
+        self.language = language
+        self.program_compiler = ConstructionProgramCompiler(
+            language, registry
+        )
+        self.closure_candidates = closure_candidates
+
+    def compile(
+        self,
+        lattice,
+        grounding,
+        *,
+        base_variables: tuple[MeaningVariable, ...] | list[MeaningVariable],
+        candidates_by_mention,
+        referent_var_for_mention,
+        sense_candidate_to_var,
+    ) -> ConstructionFactorCompilation:
+        variables: list[MeaningVariable] = []
+        factors: list[MeaningFactor] = []
+        construction_var: dict[str, str] = {}
+        variable_index = {
+            item.variable_ref: item for item in base_variables
+        }
+
+        for candidate in sorted(
+            lattice.construction_candidates,
+            key=lambda item: item.candidate_ref,
+        ):
+            record = self.language.require_construction(
+                candidate.construction_ref,
+                candidate.construction_revision,
+            )
+            resolution = self.program_compiler.resolve(
+                record,
+                closure_candidates=self.closure_candidates,
+            )
+            plan_refs = tuple(item.plan_ref for item in resolution.plans)
+            var_ref = _var_ref(
+                "construction",
+                lattice.lattice_ref,
+                candidate.candidate_ref,
+            )
+            construction_var[candidate.candidate_ref] = var_ref
+
+            values = [
+                MeaningValue(
+                    value_ref=_INACTIVE,
+                    score=0.0,
+                    evidence_refs=candidate.evidence_refs,
+                    metadata={
+                        "active": False,
+                        "construction_authority_path": resolution.authority_path,
+                    },
+                )
+            ]
+            for plan in resolution.plans:
+                values.append(
+                    MeaningValue(
+                        value_ref=plan.plan_ref,
+                        score=_confidence_logit(candidate.confidence),
+                        evidence_refs=tuple(
+                            sorted(
+                                set(candidate.evidence_refs)
+                                | set(plan.evidence_refs)
+                            )
+                        ),
+                        metadata={
+                            "active": True,
+                            "construction_ref": record.construction_ref,
+                            "construction_revision": record.revision,
+                            "construction_kind": record.construction_kind.value,
+                            "semantic_plan": plan.to_metadata(),
+                            "construction_authority_path": resolution.authority_path,
+                            "construction_authority_ref": resolution.authority_ref,
+                        },
+                    )
+                )
+
+            construction_variable = MeaningVariable(
+                variable_ref=var_ref,
+                variable_kind=MeaningVariableKind.CONSTRUCTION,
+                values=tuple(values),
+                evidence_refs=candidate.evidence_refs,
+                metadata={
+                    "construction_candidate_ref": candidate.candidate_ref,
+                    "construction_authority_path": resolution.authority_path,
+                },
+            )
+            variables.append(construction_variable)
+            variable_index[var_ref] = construction_variable
+
+            trigger_sense_refs = set(record.trigger_sense_refs)
+            trigger_candidates = [
+                item
+                for item in lattice.sense_candidates
+                if item.sense_ref in trigger_sense_refs
+                and item.candidate_ref in candidate.trigger_refs
+            ]
+            for trigger in trigger_candidates:
+                sense_var_ref = sense_candidate_to_var.get(
+                    trigger.candidate_ref
+                )
+                if sense_var_ref is None:
+                    continue
+                sense_var = variable_index.get(sense_var_ref)
+                if sense_var is None:
+                    continue
+                allowed = []
+                for value in sense_var.values:
+                    allowed.append((value.value_ref, _INACTIVE))
+                    if value.value_ref == trigger.candidate_ref:
+                        allowed.extend(
+                            (value.value_ref, plan_ref)
+                            for plan_ref in plan_refs
+                        )
+                factors.append(
+                    _hard_factor(
+                        "construction-trigger",
+                        (sense_var_ref, var_ref),
+                        tuple(sorted(set(allowed))),
+                        tuple(
+                            sorted(
+                                set(candidate.evidence_refs)
+                                | set(resolution.evidence_refs)
+                            )
+                        ),
+                        (
+                            "selected construction semantic plan must be "
+                            "licensed by its reviewed trigger sense"
+                        ),
+                        MeaningFactorKind.CONSTRUCTION_COMPATIBILITY,
+                    )
+                )
+
+            slot_map = {
+                item.slot_ref: item for item in record.slots
+            }
+            for plan in resolution.plans:
+                for application_spec in plan.applications:
+                    schema = self.registry.schema(
+                        application_spec.schema_ref,
+                        application_spec.schema_revision,
+                    )
+                    slot_bindings = tuple(
+                        item
+                        for item in plan.bindings
+                        if item.application_symbol_ref
+                        == application_spec.symbol_ref
+                        and item.source_kind == "slot"
+                    )
+                    for binding_spec in slot_bindings:
+                        slot = slot_map.get(binding_spec.source_ref)
+                        if slot is None:
+                            continue
+                        try:
+                            port = schema.port(binding_spec.port_ref)
+                        except KeyError:
+                            factors.append(
+                                _hard_factor(
+                                    "unknown-program-port",
+                                    (var_ref,),
+                                    tuple(
+                                        (value_ref,)
+                                        for value_ref in (
+                                            _INACTIVE,
+                                            *(
+                                                other
+                                                for other in plan_refs
+                                                if other != plan.plan_ref
+                                            ),
+                                        )
+                                    ),
+                                    candidate.evidence_refs,
+                                    (
+                                        "construction program port is absent "
+                                        "from the exact semantic schema"
+                                    ),
+                                    MeaningFactorKind.PORT_COMPATIBILITY,
+                                )
+                            )
+                            continue
+
+                        mention_refs = tuple(
+                            mention.mention_ref
+                            for mention in grounding.mentions
+                            if candidate.candidate_ref
+                            in mention.construction_candidate_refs
+                            and mention.syntactic_role
+                            in {
+                                slot.slot_ref,
+                                binding_spec.port_ref,
+                                port.port_ref,
+                                port.role_family,
+                            }
+                        )
+                        compatible = tuple(
+                            grounding_candidate
+                            for mention_ref in mention_refs
+                            for grounding_candidate in candidates_by_mention.get(
+                                mention_ref, ()
+                            )
+                            if _port_accepts_candidate(
+                                port, grounding_candidate
+                            )
+                        )
+                        value_specs = _port_value_specs(
+                            compatible,
+                            minimum=port.cardinality.minimum,
+                            maximum=port.cardinality.maximum,
+                            allow_open=(
+                                OpenBindingPurpose.PARTIAL_COMPOSITION
+                                in port.open_binding_purposes
+                            ),
+                            allow_omitted=port.cardinality.minimum == 0,
+                            evidence_refs=candidate.evidence_refs,
+                        )
+                        port_var_ref = _var_ref(
+                            "port",
+                            candidate.candidate_ref,
+                            (
+                                f"{plan.plan_ref}:"
+                                f"{application_spec.symbol_ref}:"
+                                f"{schema.schema_ref}@{schema.revision}:"
+                                f"{port.port_ref}"
+                            ),
+                        )
+                        port_variable = MeaningVariable(
+                            variable_ref=port_var_ref,
+                            variable_kind=MeaningVariableKind.PORT_FILLER,
+                            values=(
+                                MeaningValue(
+                                    value_ref=_INACTIVE,
+                                    score=0.0,
+                                    evidence_refs=candidate.evidence_refs,
+                                    metadata={"inactive": True},
+                                ),
+                                *value_specs,
+                            ),
+                            evidence_refs=tuple(
+                                sorted(
+                                    set(candidate.evidence_refs)
+                                    | set(plan.evidence_refs)
+                                )
+                            ),
+                            metadata={
+                                "construction_candidate_ref": candidate.candidate_ref,
+                                "semantic_plan_ref": plan.plan_ref,
+                                "application_symbol_ref": application_spec.symbol_ref,
+                                "schema_ref": schema.schema_ref,
+                                "schema_revision": schema.revision,
+                                "port_ref": port.port_ref,
+                                "role_family": port.role_family,
+                                "filler_classes": tuple(
+                                    sorted(
+                                        item.value
+                                        for item in port.filler_classes
+                                    )
+                                ),
+                                "accepted_type_refs": port.accepted_type_refs,
+                                "accepted_storage_kinds": tuple(
+                                    sorted(
+                                        item.value
+                                        for item
+                                        in port.accepted_storage_kinds
+                                    )
+                                ),
+                                "open_binding_purposes": tuple(
+                                    sorted(
+                                        item.value
+                                        for item
+                                        in port.open_binding_purposes
+                                    )
+                                ),
+                            },
+                        )
+                        variables.append(port_variable)
+                        variable_index[port_var_ref] = port_variable
+
+                        activation_pairs = [
+                            (_INACTIVE, _INACTIVE),
+                            *[
+                                (other_ref, _INACTIVE)
+                                for other_ref in plan_refs
+                                if other_ref != plan.plan_ref
+                            ],
+                            *[
+                                (plan.plan_ref, value.value_ref)
+                                for value in value_specs
+                            ],
+                        ]
+                        factors.append(
+                            _hard_factor(
+                                "construction-program-port-active",
+                                (var_ref, port_var_ref),
+                                tuple(sorted(set(activation_pairs))),
+                                candidate.evidence_refs,
+                                (
+                                    "semantic port fillers are active exactly "
+                                    "for their selected construction plan"
+                                ),
+                                MeaningFactorKind.PORT_COMPATIBILITY,
+                            )
+                        )
+
+                        for mention_ref in mention_refs:
+                            referent_var = referent_var_for_mention.get(
+                                mention_ref
+                            )
+                            if referent_var is None:
+                                continue
+                            referent_variable = variable_index.get(
+                                referent_var
+                            )
+                            if referent_variable is None:
+                                continue
+                            allowed_pairs = []
+                            for referent_value in referent_variable.values:
+                                for port_value in value_specs:
+                                    selected_refs = tuple(
+                                        port_value.metadata.get(
+                                            "candidate_refs", ()
+                                        )
+                                    )
+                                    if (
+                                        port_value.value_ref
+                                        in {_GAP, _OMITTED}
+                                        or referent_value.value_ref
+                                        in selected_refs
+                                    ):
+                                        allowed_pairs.append(
+                                            (
+                                                referent_value.value_ref,
+                                                port_value.value_ref,
+                                            )
+                                        )
+                            allowed_pairs.extend(
+                                (
+                                    value.value_ref,
+                                    _INACTIVE,
+                                )
+                                for value in referent_variable.values
+                            )
+                            if allowed_pairs:
+                                factors.append(
+                                    _hard_factor(
+                                        "program-port-grounding-link",
+                                        (
+                                            referent_var,
+                                            port_var_ref,
+                                        ),
+                                        tuple(
+                                            sorted(set(allowed_pairs))
+                                        ),
+                                        candidate.evidence_refs,
+                                        (
+                                            "program port filler identity must "
+                                            "agree with selected grounding"
+                                        ),
+                                        MeaningFactorKind.LINK,
+                                    )
+                                )
+
+        return ConstructionFactorCompilation(
+            variables=tuple(variables),
+            factors=tuple(factors),
+            construction_var=construction_var,
+        )
 
 def _hard_grounding_factor_kind(kind: GroundingFactorKind) -> MeaningFactorKind:
     if kind == GroundingFactorKind.CONTEXT or kind == GroundingFactorKind.TIME:

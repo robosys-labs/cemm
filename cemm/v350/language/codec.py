@@ -8,6 +8,9 @@ from ..schema.model import (
     UseDecision, UseOperation, canonical_data,
 )
 from .model import (
+    ConstructionProgramOperation,
+    ConstructionProgramRecord,
+    ConstructionProgramStep,
     ConstructionKind,
     ConstructionRecord,
     ConstructionSlot,
@@ -20,6 +23,8 @@ from .model import (
     LexemeRecord,
     LexemeSenseLinkRecord,
     LexicalSenseRecord,
+    MorphologyAnalysisOperation,
+    MorphologyAnalysisRuleRecord,
     SemanticContributionKind,
     SemanticContributionSpecRecord,
     SenseTargetKind,
@@ -268,6 +273,85 @@ def form_sense_link_from_document(value: Mapping[str, Any]) -> FormSenseLinkReco
             condition_refs=_tuple_str(data.get("condition_refs")),
             source_refs=_tuple_str(data.get("source_refs")),
             evidence_refs=_tuple_str(data.get("evidence_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
+def morphology_analysis_rule_from_document(value: Mapping[str, Any]) -> MorphologyAnalysisRuleRecord:
+    data = dict(value)
+    try:
+        return MorphologyAnalysisRuleRecord(
+            rule_ref=str(data["rule_ref"]),
+            pack_ref=str(data["pack_ref"]),
+            pack_revision=int(data["pack_revision"]),
+            operation=MorphologyAnalysisOperation(data["operation"]),
+            revision=int(data.get("revision", 1)),
+            lexeme_ref=str(data.get("lexeme_ref", "")),
+            lexeme_revision=None if data.get("lexeme_revision") is None else int(data["lexeme_revision"]),
+            inflection_class_ref=str(data.get("inflection_class_ref", "")),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            surface_operand=str(data.get("surface_operand", "")),
+            lemma_operand=str(data.get("lemma_operand", "")),
+            feature_values=_pairs(data.get("feature_values")),
+            condition_refs=_tuple_str(data.get("condition_refs")),
+            priority=int(data.get("priority", 0)),
+            confidence=float(data.get("confidence", 1.0)),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            use_operation=UseOperation(data.get("use_operation", UseOperation.GROUND.value)),
+            use_decision=UseDecision(data.get("use_decision", UseDecision.DENY.value)),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            competence_case_refs=_tuple_str(data.get("competence_case_refs")),
+            permission_ref=str(data.get("permission_ref", "public")),
+            metadata=dict(data.get("metadata", {})),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LanguageRecordDecodeError(str(exc)) from exc
+
+
+def construction_program_from_document(value: Mapping[str, Any]) -> ConstructionProgramRecord:
+    data = dict(value)
+    try:
+        steps = tuple(
+            ConstructionProgramStep(
+                step_ref=str(item["step_ref"]),
+                operation=ConstructionProgramOperation(item["operation"]),
+                result_ref=str(item.get("result_ref", "")),
+                input_refs=_tuple_str(item.get("input_refs")),
+                slot_ref=str(item.get("slot_ref", "")),
+                port_ref=str(item.get("port_ref", "")),
+                schema_ref=str(item.get("schema_ref", "")),
+                schema_revision=None if item.get("schema_revision") is None else int(item["schema_revision"]),
+                schema_classes=tuple(SchemaClass(v) for v in item.get("schema_classes", ())),
+                expected_filler_classes=tuple(PortFillerClass(v) for v in item.get("expected_filler_classes", ())),
+                expected_schema_classes=tuple(SchemaClass(v) for v in item.get("expected_schema_classes", ())),
+                expected_type_refs=_tuple_str(item.get("expected_type_refs")),
+                open_binding_purpose=None if item.get("open_binding_purpose") is None else OpenBindingPurpose(item["open_binding_purpose"]),
+                value_ref=str(item.get("value_ref", "")),
+                value_revision=None if item.get("value_revision") is None else int(item["value_revision"]),
+                metadata=dict(item.get("metadata", {})),
+            )
+            for item in data.get("steps", ())
+        )
+        return ConstructionProgramRecord(
+            program_ref=str(data["program_ref"]),
+            pack_ref=str(data["pack_ref"]),
+            pack_revision=int(data["pack_revision"]),
+            construction_ref=str(data["construction_ref"]),
+            construction_revision=int(data["construction_revision"]),
+            steps=steps,
+            root_symbol_refs=_tuple_str(data.get("root_symbol_refs")),
+            revision=int(data.get("revision", 1)),
+            supersedes_revision=None if data.get("supersedes_revision") is None else int(data["supersedes_revision"]),
+            lifecycle_status=SchemaLifecycleStatus(data.get("lifecycle_status", "candidate")),
+            use_operation=UseOperation(data.get("use_operation", UseOperation.COMPOSE.value)),
+            use_decision=UseDecision(data.get("use_decision", UseDecision.DENY.value)),
+            source_refs=_tuple_str(data.get("source_refs")),
+            evidence_refs=_tuple_str(data.get("evidence_refs")),
+            competence_case_refs=_tuple_str(data.get("competence_case_refs")),
             permission_ref=str(data.get("permission_ref", "public")),
             metadata=dict(data.get("metadata", {})),
         )

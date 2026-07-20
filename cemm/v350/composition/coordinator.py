@@ -52,17 +52,34 @@ class MeaningComposer:
         grounding: GroundingResult,
         *,
         context_ref: str,
+        referent_projections=None,
+        closure_candidates=(),
         snapshot: StoreSnapshot | None = None,
     ) -> MeaningFactorGraph:
         if snapshot is None:
             with self.store.snapshot() as pinned:
                 return self.build_factor_graph(
-                    lattice, grounding, context_ref=context_ref, snapshot=pinned
+                    lattice, grounding, context_ref=context_ref,
+                    referent_projections=referent_projections,
+                    closure_candidates=closure_candidates,
+                    snapshot=pinned,
                 )
         self.store.assert_snapshot(snapshot)
-        return self.builder.build(
-            lattice, grounding, context_ref=context_ref, snapshot=snapshot
+        graph = self.builder.build(
+            lattice, grounding, context_ref=context_ref,
+            closure_candidates=closure_candidates,
+            snapshot=snapshot,
         )
+        if referent_projections:
+            from ..knowledge_factors import ReferentKnowledgeFactorBinder
+            graph = ReferentKnowledgeFactorBinder(self.store).bind(
+                graph,
+                grounding=grounding,
+                projections=referent_projections,
+                closure_candidates=tuple(closure_candidates),
+                snapshot=snapshot,
+            )
+        return graph
 
     def solve_factor_graph(self, factor_graph: MeaningFactorGraph) -> MeaningSolveResult:
         return self.solver.solve(factor_graph)

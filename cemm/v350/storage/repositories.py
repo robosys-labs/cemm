@@ -10,9 +10,9 @@ from ..schema.model import (
 )
 from ..schema.registry import SchemaRegistry
 from ..language.model import (
-    ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
+    ConstructionProgramRecord, ConstructionRecord, FormLexemeLinkRecord, FormSenseLinkRecord,
     LanguageFormRecord, LanguagePackRecord, LexemeRecord, LexemeSenseLinkRecord,
-    LexicalSenseRecord, SemanticContributionSpecRecord,
+    LexicalSenseRecord, MorphologyAnalysisRuleRecord, SemanticContributionSpecRecord,
 )
 from ..language.registry import LanguageRegistry
 from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
@@ -501,7 +501,9 @@ class LanguageRepository:
         self.lexeme_sense_links = TypedRepository(store, RecordKind.LEXEME_SENSE_LINK, LexemeSenseLinkRecord)
         self.links = TypedRepository(store, RecordKind.FORM_SENSE_LINK, FormSenseLinkRecord)
         self.contribution_specs = TypedRepository(store, RecordKind.SEMANTIC_CONTRIBUTION_SPEC, SemanticContributionSpecRecord)
+        self.morphology_analysis_rules = TypedRepository(store, RecordKind.MORPHOLOGY_ANALYSIS_RULE, MorphologyAnalysisRuleRecord)
         self.constructions = TypedRepository(store, RecordKind.CONSTRUCTION, ConstructionRecord)
+        self.construction_programs = TypedRepository(store, RecordKind.CONSTRUCTION_PROGRAM, ConstructionProgramRecord)
         self._registry_cache: dict[tuple[int, str, str], LanguageRegistry] = {}
 
     def registry(self, *, snapshot: StoreSnapshot | None = None) -> LanguageRegistry:
@@ -523,6 +525,8 @@ class LanguageRepository:
             (item.payload for item in self.form_lexeme_links.all(snapshot=snapshot, all_revisions=True)),
             (item.payload for item in self.lexeme_sense_links.all(snapshot=snapshot, all_revisions=True)),
             (item.payload for item in self.contribution_specs.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.morphology_analysis_rules.all(snapshot=snapshot, all_revisions=True)),
+            (item.payload for item in self.construction_programs.all(snapshot=snapshot, all_revisions=True)),
         )
         self._registry_cache = {key: registry}
         return registry

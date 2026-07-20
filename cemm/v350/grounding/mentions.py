@@ -90,6 +90,13 @@ class MentionCompiler:
                 | {ref for _, _, refs in construction_links for ref in refs}
             ))
             mention_ref = self._mention_ref(lattice.source_ref, span, tuple(item.candidate_ref for item in senses))
+            contribution_discourse_roles = tuple(sorted({
+                contribution.role_ref
+                for item in senses
+                for contribution in item.contributions
+                if contribution.contribution_kind == SemanticContributionKind.REFERENTIAL
+                and contribution.role_ref
+            }))
             lexical_source_role = next((
                 str(item.metadata.get("source_role"))
                 for item in senses if item.metadata.get("source_role")
@@ -154,10 +161,16 @@ class MentionCompiler:
                         str(role)
                         for item in senses
                         for role in item.metadata.get("required_discourse_roles", ())
-                    })),
+                    } | set(contribution_discourse_roles))),
                     "discourse_required": any(
                         bool(item.metadata.get("discourse_required")) for item in senses
-                    ),
+                    ) or bool(contribution_discourse_roles),
+                    "referential_contribution_refs": tuple(sorted({
+                        contribution.contribution_ref
+                        for item in senses
+                        for contribution in item.contributions
+                        if contribution.contribution_kind == SemanticContributionKind.REFERENTIAL
+                    })),
                     "candidate_syntactic_roles": construction_role_values,
                 },
             ))

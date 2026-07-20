@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from .knowledge_factors import ReferentKnowledgeFactorBinder
 from .epistemic_runtime import AdmittedEventProjector, RuntimeEpistemicCoordinator
 from .learning.frontier import FrontierCollector, FrontierObservation
 from .runtime import CanonicalRuntimeCoordinator
@@ -278,6 +277,7 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
         graph = cycle.artifacts.get("structured_observation_graph")
         if graph is None:
             return super().stage_04_project_knowledge(cycle, capability)
+        from .facets.closure import ReferentKnowledgeClosureCompiler
         from .facets.projector import ReferentKnowledgeProjector
 
         projections = {}
@@ -293,11 +293,15 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
                     at_time=None,
                     snapshot=snapshot,
                 )
+            closure_candidates = ReferentKnowledgeClosureCompiler(self.store).compile(
+                projections, snapshot=snapshot
+            )
         finally:
             cm.__exit__(None, None, None)
         return StageOutcome(
             {
                 "referent_projections": projections,
+                "semantic_closure_candidates": closure_candidates,
                 "stage04_receipt": self._receipt(
                     CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS,
                     "performed",
@@ -324,36 +328,7 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
                 frontier_refs=tuple(structured.unresolved_refs),
             )
         outcome = super().stage_05_build_factor_graph(cycle, capability)
-        graph = outcome.artifacts.get("meaning_factor_graph")
-        lattice = cycle.artifacts.get("form_lattice")
-        grounding = outcome.artifacts.get("grounding_result")
-        projections = cycle.artifacts.get("referent_projections", {})
-        if graph is None or lattice is None or grounding is None:
-            return outcome
-        cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
-        try:
-            bound = ReferentKnowledgeFactorBinder(self.store).bind(
-                graph,
-                lattice=lattice,
-                projections=projections,
-                snapshot=snapshot,
-            )
-        finally:
-            cm.__exit__(None, None, None)
-        return StageOutcome(
-            {
-                **dict(outcome.artifacts),
-                "meaning_factor_graph": bound,
-                "stage05_receipt": self._receipt(
-                    CoreStage.BUILD_UOL_FACTOR_GRAPH,
-                    "performed",
-                    "unified_factor_graph_includes_stage4_projection_constraints",
-                    evidence=bound.evidence_refs,
-                ),
-            },
-            frontier_refs=tuple(sorted(set((*outcome.frontier_refs, *bound.unresolved_refs)))),
-            errors=outcome.errors,
-        )
+        return outcome
 
     def stage_06_solve_meaning(
         self, cycle: CycleState, capability: StageCapability

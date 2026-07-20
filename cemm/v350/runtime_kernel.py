@@ -30,6 +30,13 @@ class ObservationKind(StrEnum):
     TEACHING = "teaching"
 
 
+class ParticipantRole(StrEnum):
+    SYSTEM = "participant-role:system"
+    INPUT_SPEAKER = "participant-role:input-speaker"
+    INPUT_ADDRESSEE = "participant-role:input-addressee"
+    RESPONSE_AUDIENCE = "participant-role:response-audience"
+
+
 class FrontierClass(StrEnum):
     SEMANTIC_LEARNING = "semantic_learning"
     GROUNDING_AMBIGUITY = "grounding_ambiguity"

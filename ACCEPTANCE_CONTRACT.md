@@ -354,6 +354,58 @@ Release tests must not require exact counts of response policies, response trans
 
 Deterministic counts/fingerprints are permitted only for explicit source-tamper/integrity tests.
 
+### 11.7 Productive input morphology
+
+An unseen surface form may be analyzed only through reviewed morphology authority.
+
+The competence case must prove:
+
+1. the surface form itself is absent from durable `LanguageFormRecord` authority;
+2. a reviewed morphology rule recovers an exact lexeme revision;
+3. grammatical features remain evidence and do not invent semantic targets;
+4. no regex/word-specific semantic branch participates;
+5. exact/irregular reviewed forms override productive class analysis while remaining traceable.
+
+### 11.8 Construction semantic programs
+
+Ordinary compositional constructions must build semantic graph fragments through
+bounded declarative construction programs.
+
+The kernel executor must not contain language-specific construction names or
+predicate names.
+
+`metadata.interpretation_enabled` is not authoritative for newly reviewed
+construction programs.
+
+### 11.9 Predication/eventuality productivity
+
+Synthetic renamed constructions must distinguish compatible
+state/property/relation predication and dynamic eventuality readings through
+schema/aspect/type constraints, not through English BE or adjective/adverb checks.
+
+### 11.10 Participant grounding
+
+Speaker/addressee lexical contributions bind through `ParticipantFrame` role
+anchors. Renaming the surface pronouns must preserve the same role-grounding
+behavior.
+
+### 11.11 Referent-driven semantic closure
+
+Stage 4 must export exact schema/referent closure candidates to Stage 5.
+
+Changing only grounded referent type/entitlement/state/capability knowledge must
+be able to change candidate semantic closure.
+
+Surface-span equality must not be semantic compatibility authority.
+
+### 11.12 Signed release artifacts after record-kind expansion
+
+Any phase that adds `RecordKind` values must regenerate the signed runtime-authority
+manifest, boot database and verification report through deterministic release
+tooling.
+
+Tests must not weaken `RuntimeAuthorityGuard` exact record-kind equality.
+
 ---
 
 ## 12. Final release gate

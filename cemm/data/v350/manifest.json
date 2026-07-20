@@ -1,1 +1,703 @@
-{"metadata":{"activation_closure_prepared":true,"activation_closure_version":"1","activation_notes":{"epistemic_policy":"context_local_admission_only; actual-world remains explicit/fail-closed","external_operations":"not_advertised","generic_inference":"proof-bearing reviewed defaults; 14 open-world unknown/undetermined defaults; explicit active state defeats default","productive_sw_morphology_beyond_seed":"frontier","sw_realization_scope":"controlled_basic_conversation_and_foundation_predicates"},"authority":"reviewed_source","composition_base_commit":"e362bf82da4ee4f6704be2ed522cd7bf9418d6bf","composition_competence_sha256":"3ad2fec0f0a4318084baf3e17b712336f1506332cfc8743a89de036b6a3ab3a3","composition_contract_ref":"contract:cemm:v350:composition","composition_contract_sha256":"6bc8575c8cb3bdb8b194687bd6ca92af7e4b2ce33fd645b0ef47a217a5d595cc","composition_phase":"9","conversation_seed":"basic_conversation_learning_and_reversible_realization","conversation_seed_bundle_sha256":"47260ef838ee7d87ac1f8508cf09da297f84716db7935959f454539d9f511fe0","conversation_seed_record_delta":1190,"domain_light":true,"epistemic_base_commit":"390610c0f17f83d309d8d7e83bd63ce5b68c03a7","epistemic_competence_sha256":"cc12602fbdfcfbbc40ece2e7695e93c294498e344c3ac5d77032d65897d08c94","epistemic_contract_ref":"contract:cemm:v350:epistemics","epistemic_contract_sha256":"3d978b042e753867260e2fe5dc2b3fe3921d4e32dd64183a615a498afb21f439","epistemic_phase":"10","foundation_competence_sha256":"e404ebc317522f7821fa49912d8f6b759c8a520a4bc7e0bdc870dde07ca3bcf8","foundation_contract_ref":"contract:cemm:v350:foundation","foundation_contract_sha256":"8e04867fa6ecc16bd651717798e648f737d32a953140718161a35bb0b8a4f963","foundation_phase":"6","grounding_competence_sha256":"e530001b992de235d0dd40e58179c5d5fbfa69cb6a849b350f43cf716d394669","grounding_phase":"8","language_grounding_base_commit":"e362bf82da4ee4f6704be2ed522cd7bf9418d6bf","language_grounding_contract_ref":"contract:cemm:v350:language-grounding","language_grounding_contract_sha256":"04bfc9dffad6cbfe197cd38d6387d8b77b652056867ca73d6cf3ae406a8a886c","language_neutral":true,"language_phase":"7","learning_competence_sha256":"7c1ba29fe85a42c20defffdebb96ad130338d90d5b57303e8f08b53cfa5addb8","learning_contract_ref":"contract:cemm:v350:learning-promotion","learning_contract_sha256":"579139203bd3051969e3b46509fe02fd56e60c1f73ede0e37989b1233bf7d69d","learning_phase":"13","learning_runtime_cutover":false,"legacy_authority_denylist_sha256":"40f0381df7b2dcd2942bd933afe44e8473906853a86f64cd8fca1c028b8416d8","meaning_composition_competence_sha256":"1de55417ca6e76a335685032a7a287c69dc60e0c155a5b64c9c667c13baaa31f","multilingual_competence_sha256":"51fc999fe06c3a7d28405fd87d9d156ea31a2466f06c07ea1a9e055ede522ae3","output_commitment_kind_ref":"discourse-relation:semantic_commitment","output_speaker_ref":"referent:self","phase":19,"phase14":"14","phase14_competence_sha256":"aa828ccba351bbf7b94ba41d0fbcd22b9368b57bae6aa3261905843ff025b961","phase14_contract_ref":"contract:cemm:v350:phase14-significance","phase14_contract_sha256":"2190660e361c84145b984a45a6378dd84be051033fa288f7dca2714949fb4cb7","phase15":"15","phase15_competence_sha256":"20ebe90a24dc40dcf67c6e3e983edceb947858457ab96bbea768a70357937aff","phase15_contract_ref":"contract:cemm:v350:phase15-goals","phase15_contract_sha256":"d69e8d4da5f84655ecef25a411f9cf8d6fac1f1618ef30adf39a0de5e82a729a","phase16":"16","phase16_17_base_commit":"59705333a8892cfb3b37aae21f87d5cc6c5c72dc","phase16_17_runtime_cutover":false,"phase16_competence_sha256":"d045452b6ccf411926fa62c651294d3d030087d21e673d1bfa799636a9dc8ae5","phase16_contract_ref":"contract:cemm:v350:phase16-operation-response-uol","phase16_contract_sha256":"32081929f1db7c15467a4550afe16729534d9c5d958383f542c978ca6949c7a3","phase17":"17","phase17_competence_sha256":"3a3a6a576b85df7039f34e7bb234317ef5c1f47b1c274c151c4ee61fea383011","phase17_contract_ref":"contract:cemm:v350:phase17-realization-algebra","phase17_contract_sha256":"43c269458e95e59b1303b8605e7f9ee33e700081d795d7fd075210dcb6348494","phase18_base_commit":"e58f5f3fbd9d1146b32ab86f32be3e83d291de96","phase18_competence_sha256":"c8e352199ad29ce7c1bff5667e2ac08ecb4b3bef27e30094dc1e97160f0190dd","phase18_contract_ref":"contract:cemm:v350:output-discourse","phase18_contract_sha256":"c99b770d6e8a574b26e6e0192a434df678fd6a265ebb81febf84377722007b60","phase19_base_commit":"e58f5f3fbd9d1146b32ab86f32be3e83d291de96","phase19_competence_sha256":"cfbd874510e2d46cac865608e04aeffc9dcf23457b7c89cf98215b53f9e63391","phase19_contract_ref":"contract:cemm:v350:migration-equivalence","phase19_contract_sha256":"5675f863f4eda5568e1d608ab43de585c78d28cac5c732e24b871653bccd700d","phase20_competence_sha256":"be171814ce6dc0ccce5a9b43f8740ddff4e266df8d92a3f59d1bd8d491be233f","phase20_contract_sha256":"82397dc434d4662dac9f7d2a8672b55fe606e18bc695622cd10c1c3921d8d147","phase20_cutover_contract_ref":"contract:cemm:v350:runtime-cutover","phase20_prepared":true,"phase20_prepared_base_commit":"7436426c0ee0788e3081903fd9fb06a2c29d68b3","release_capabilities":{"epistemic_admission":true,"external_operations":[],"generic_inference":true,"output_discourse":true,"realization_languages":["en","fr","sw"],"response_policy":true,"significance":true,"text_emission":true,"transitions":true},"runtime_cutover":true,"seed_languages":["en","fr","sw"],"transition_base_commit":"60b2fe7026fe1e6204b1dc682977de93c13e515e","transition_competence_sha256":"94ce850b7ee630b8446e6223e19a498d206e0a3db461c4cbb305f4df4802294c","transition_contract_ref":"contract:cemm:v350:transitions","transition_contract_sha256":"74893a4f820e9ac9b0da83e78472427a45a91ed906a1ef2927a6ded2fcdc0306","transition_phase":"11","vertical_slice_base_commit":"735d13d11f112d0062972a9a66d59100fa8a406c","vertical_slice_competence_sha256":"97dbdaf2fc433d17141a1bbb7768237fe857a0f346ca0e3df2596baf16eae2e5","vertical_slice_contract_ref":"contract:cemm:v350:transition-vertical-slices","vertical_slice_contract_sha256":"8e5f116e9a34f716846c7c40a912f89c08f57447e12230df0704b33801cc6c89","vertical_slice_phase":"12"},"modules":[{"allow_empty":false,"authority_scope":"foundation","module_ref":"dynamics:default_rules","path":"dynamics/default_rules.jsonl","phase":6,"record_kind":"default_rule"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:capabilities","path":"foundation/capabilities.jsonl","phase":6,"record_kind":"capability_instance"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:evidence","path":"foundation/evidence.jsonl","phase":6,"record_kind":"evidence"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:identity_facets","path":"foundation/identity_facets.jsonl","phase":6,"record_kind":"identity_facet"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:seed_applications","path":"foundation/seed_applications.jsonl","phase":6,"record_kind":"semantic_application"},{"allow_empty":true,"authority_scope":"foundation","module_ref":"foundation:seed_knowledge","path":"foundation/seed_knowledge.jsonl","phase":6,"record_kind":"knowledge"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:seed_referents","path":"foundation/seed_referents.jsonl","phase":6,"record_kind":"referent"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:self","path":"foundation/self.jsonl","phase":6,"record_kind":"referent"},{"allow_empty":true,"authority_scope":"foundation","module_ref":"foundation:state_assignments","path":"foundation/state_assignments.jsonl","phase":6,"record_kind":"state_assignment"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"foundation:type_assertions","path":"foundation/type_assertions.jsonl","phase":6,"record_kind":"type_assertion"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:actions","path":"schemas/actions.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:discourse_acts","path":"schemas/discourse_acts.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:discourse_relations","path":"schemas/discourse_relations.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:events","path":"schemas/events.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:facet_entitlements","path":"schemas/facet_entitlements.jsonl","phase":6,"record_kind":"facet_entitlement"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:facets","path":"schemas/facets.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:functions","path":"schemas/functions.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:measure_dimensions","path":"schemas/measure_dimensions.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:operators","path":"schemas/operators.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:properties","path":"schemas/properties.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:referent_types","path":"schemas/referent_types.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:relations","path":"schemas/relations.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:response_policies","path":"schemas/response_policies.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:roles","path":"schemas/roles.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:state_dimensions","path":"schemas/state_dimensions.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:state_values","path":"schemas/state_values.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"foundation","module_ref":"schemas:units","path":"schemas/units.jsonl","phase":6,"record_kind":"schema"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:constructions","path":"languages/constructions.jsonl","phase":7,"record_kind":"construction"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:evidence","path":"languages/evidence.jsonl","phase":7,"record_kind":"evidence"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:form_sense_links","path":"languages/form_sense_links.jsonl","phase":7,"record_kind":"form_sense_link"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:forms","path":"languages/forms.jsonl","phase":7,"record_kind":"language_form"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:packs","path":"languages/packs.jsonl","phase":7,"record_kind":"language_pack"},{"allow_empty":false,"authority_scope":"language_evidence","module_ref":"languages:senses","path":"languages/senses.jsonl","phase":7,"record_kind":"lexical_sense"},{"allow_empty":true,"authority_scope":"transition_authority","module_ref":"dynamics:capability_dependencies","path":"dynamics/capability_dependencies.jsonl","phase":11,"record_kind":"capability_dependency"},{"allow_empty":true,"authority_scope":"transition_authority","module_ref":"dynamics:transition_contracts","path":"dynamics/transition_contracts.jsonl","phase":11,"record_kind":"transition_contract"},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:argument_frame","path":"activation_closure/argument_frame.jsonl","phase":20,"record_kind":"argument_frame","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:capability_instance","path":"activation_closure/capability_instance.jsonl","phase":20,"record_kind":"capability_instance","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:channel_adapter_contract","path":"activation_closure/channel_adapter_contract.jsonl","phase":20,"record_kind":"channel_adapter_contract","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:construction","path":"activation_closure/construction.jsonl","phase":20,"record_kind":"construction","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:default_rule","path":"activation_closure/default_rule.jsonl","phase":20,"record_kind":"default_rule","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:evidence","path":"activation_closure/evidence.jsonl","phase":20,"record_kind":"evidence","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:form_sense_link","path":"activation_closure/form_sense_link.jsonl","phase":20,"record_kind":"form_sense_link","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:impact_rule","path":"activation_closure/impact_rule.jsonl","phase":20,"record_kind":"impact_rule","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:importance_policy","path":"activation_closure/importance_policy.jsonl","phase":20,"record_kind":"importance_policy","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:language_form","path":"activation_closure/language_form.jsonl","phase":20,"record_kind":"language_form","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:language_pack","path":"activation_closure/language_pack.jsonl","phase":20,"record_kind":"language_pack","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:lexical_sense","path":"activation_closure/lexical_sense.jsonl","phase":20,"record_kind":"lexical_sense","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:linearization_rule","path":"activation_closure/linearization_rule.jsonl","phase":20,"record_kind":"linearization_rule","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:morphology_rule","path":"activation_closure/morphology_rule.jsonl","phase":20,"record_kind":"morphology_rule","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:schema","path":"activation_closure/schema.jsonl","phase":20,"record_kind":"schema","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:semantic_analyzer_contract","path":"activation_closure/semantic_analyzer_contract.jsonl","phase":20,"record_kind":"semantic_analyzer_contract","required":true},{"allow_empty":false,"authority_scope":"activation_closure","module_ref":"activation-closure:transition_contract","path":"activation_closure/transition_contract.jsonl","phase":20,"record_kind":"transition_contract","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:argument_frame","path":"conversation_seed/argument_frame.jsonl","phase":20,"record_kind":"argument_frame","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:channel_adapter_contract","path":"conversation_seed/channel_adapter_contract.jsonl","phase":20,"record_kind":"channel_adapter_contract","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:construction","path":"conversation_seed/construction.jsonl","phase":20,"record_kind":"construction","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:evidence","path":"conversation_seed/evidence.jsonl","phase":20,"record_kind":"evidence","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:form_sense_link","path":"conversation_seed/form_sense_link.jsonl","phase":20,"record_kind":"form_sense_link","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:identity_facet","path":"conversation_seed/identity_facet.jsonl","phase":20,"record_kind":"identity_facet","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:language_form","path":"conversation_seed/language_form.jsonl","phase":20,"record_kind":"language_form","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:language_pack","path":"conversation_seed/language_pack.jsonl","phase":20,"record_kind":"language_pack","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:lexical_sense","path":"conversation_seed/lexical_sense.jsonl","phase":20,"record_kind":"lexical_sense","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:linearization_rule","path":"conversation_seed/linearization_rule.jsonl","phase":20,"record_kind":"linearization_rule","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:morphology_rule","path":"conversation_seed/morphology_rule.jsonl","phase":20,"record_kind":"morphology_rule","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:referent","path":"conversation_seed/referent.jsonl","phase":20,"record_kind":"referent","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:response_policy_rule","path":"conversation_seed/response_policy_rule.jsonl","phase":20,"record_kind":"response_policy_rule","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:response_transform_rule","path":"conversation_seed/response_transform_rule.jsonl","phase":20,"record_kind":"response_transform_rule","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:schema","path":"conversation_seed/schema.jsonl","phase":20,"record_kind":"schema","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:semantic_analyzer_contract","path":"conversation_seed/semantic_analyzer_contract.jsonl","phase":20,"record_kind":"semantic_analyzer_contract","required":true},{"allow_empty":false,"authority_scope":"conversation_seed","module_ref":"conversation_seed:semantic_application","path":"conversation_seed/semantic_application.jsonl","phase":20,"record_kind":"semantic_application","required":true}],"package_ref":"cemm:v350:foundation-source","schema_version":1,"version":"3.5.0-dev"}
+{
+  "metadata": {
+    "activation_closure_prepared": true,
+    "activation_closure_version": "1",
+    "activation_notes": {
+      "epistemic_policy": "context_local_admission_only; actual-world remains explicit/fail-closed",
+      "external_operations": "not_advertised",
+      "generic_inference": "proof-bearing reviewed defaults; 14 open-world unknown/undetermined defaults; explicit active state defeats default",
+      "productive_sw_morphology_beyond_seed": "frontier",
+      "sw_realization_scope": "controlled_basic_conversation_and_foundation_predicates"
+    },
+    "authority": "reviewed_source",
+    "composition_base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
+    "composition_competence_sha256": "3ad2fec0f0a4318084baf3e17b712336f1506332cfc8743a89de036b6a3ab3a3",
+    "composition_contract_ref": "contract:cemm:v350:composition",
+    "composition_contract_sha256": "6bc8575c8cb3bdb8b194687bd6ca92af7e4b2ce33fd645b0ef47a217a5d595cc",
+    "composition_phase": "9",
+    "conversation_seed": "basic_conversation_learning_and_reversible_realization",
+    "conversation_seed_bundle_sha256": "47260ef838ee7d87ac1f8508cf09da297f84716db7935959f454539d9f511fe0",
+    "conversation_seed_record_delta": 1190,
+    "domain_light": true,
+    "epistemic_base_commit": "390610c0f17f83d309d8d7e83bd63ce5b68c03a7",
+    "epistemic_competence_sha256": "cc12602fbdfcfbbc40ece2e7695e93c294498e344c3ac5d77032d65897d08c94",
+    "epistemic_contract_ref": "contract:cemm:v350:epistemics",
+    "epistemic_contract_sha256": "3d978b042e753867260e2fe5dc2b3fe3921d4e32dd64183a615a498afb21f439",
+    "epistemic_phase": "10",
+    "foundation_competence_sha256": "e404ebc317522f7821fa49912d8f6b759c8a520a4bc7e0bdc870dde07ca3bcf8",
+    "foundation_contract_ref": "contract:cemm:v350:foundation",
+    "foundation_contract_sha256": "8e04867fa6ecc16bd651717798e648f737d32a953140718161a35bb0b8a4f963",
+    "foundation_phase": "6",
+    "grounding_competence_sha256": "e530001b992de235d0dd40e58179c5d5fbfa69cb6a849b350f43cf716d394669",
+    "grounding_phase": "8",
+    "language_grounding_base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
+    "language_grounding_contract_ref": "contract:cemm:v350:language-grounding",
+    "language_grounding_contract_sha256": "a8b3efa681fd7afbee138882f4057afe6dfb6fa5c8a24ad9571959b27a4ac666",
+    "language_neutral": true,
+    "language_phase": "7",
+    "learning_competence_sha256": "7c1ba29fe85a42c20defffdebb96ad130338d90d5b57303e8f08b53cfa5addb8",
+    "learning_contract_ref": "contract:cemm:v350:learning-promotion",
+    "learning_contract_sha256": "579139203bd3051969e3b46509fe02fd56e60c1f73ede0e37989b1233bf7d69d",
+    "learning_phase": "13",
+    "learning_runtime_cutover": false,
+    "legacy_authority_denylist_sha256": "40f0381df7b2dcd2942bd933afe44e8473906853a86f64cd8fca1c028b8416d8",
+    "meaning_composition_competence_sha256": "1de55417ca6e76a335685032a7a287c69dc60e0c155a5b64c9c667c13baaa31f",
+    "multilingual_competence_sha256": "51fc999fe06c3a7d28405fd87d9d156ea31a2466f06c07ea1a9e055ede522ae3",
+    "output_commitment_kind_ref": "discourse-relation:semantic_commitment",
+    "output_speaker_ref": "referent:self",
+    "phase": 19,
+    "phase14": "14",
+    "phase14_competence_sha256": "aa828ccba351bbf7b94ba41d0fbcd22b9368b57bae6aa3261905843ff025b961",
+    "phase14_contract_ref": "contract:cemm:v350:phase14-significance",
+    "phase14_contract_sha256": "2190660e361c84145b984a45a6378dd84be051033fa288f7dca2714949fb4cb7",
+    "phase15": "15",
+    "phase15_competence_sha256": "20ebe90a24dc40dcf67c6e3e983edceb947858457ab96bbea768a70357937aff",
+    "phase15_contract_ref": "contract:cemm:v350:phase15-goals",
+    "phase15_contract_sha256": "d69e8d4da5f84655ecef25a411f9cf8d6fac1f1618ef30adf39a0de5e82a729a",
+    "phase16": "16",
+    "phase16_17_base_commit": "59705333a8892cfb3b37aae21f87d5cc6c5c72dc",
+    "phase16_17_runtime_cutover": false,
+    "phase16_competence_sha256": "d045452b6ccf411926fa62c651294d3d030087d21e673d1bfa799636a9dc8ae5",
+    "phase16_contract_ref": "contract:cemm:v350:phase16-operation-response-uol",
+    "phase16_contract_sha256": "32081929f1db7c15467a4550afe16729534d9c5d958383f542c978ca6949c7a3",
+    "phase17": "17",
+    "phase17_competence_sha256": "3a3a6a576b85df7039f34e7bb234317ef5c1f47b1c274c151c4ee61fea383011",
+    "phase17_contract_ref": "contract:cemm:v350:phase17-realization-algebra",
+    "phase17_contract_sha256": "43c269458e95e59b1303b8605e7f9ee33e700081d795d7fd075210dcb6348494",
+    "phase18_base_commit": "e58f5f3fbd9d1146b32ab86f32be3e83d291de96",
+    "phase18_competence_sha256": "c8e352199ad29ce7c1bff5667e2ac08ecb4b3bef27e30094dc1e97160f0190dd",
+    "phase18_contract_ref": "contract:cemm:v350:output-discourse",
+    "phase18_contract_sha256": "c99b770d6e8a574b26e6e0192a434df678fd6a265ebb81febf84377722007b60",
+    "phase19_base_commit": "e58f5f3fbd9d1146b32ab86f32be3e83d291de96",
+    "phase19_competence_sha256": "cfbd874510e2d46cac865608e04aeffc9dcf23457b7c89cf98215b53f9e63391",
+    "phase19_contract_ref": "contract:cemm:v350:migration-equivalence",
+    "phase19_contract_sha256": "5675f863f4eda5568e1d608ab43de585c78d28cac5c732e24b871653bccd700d",
+    "phase20_competence_sha256": "be171814ce6dc0ccce5a9b43f8740ddff4e266df8d92a3f59d1bd8d491be233f",
+    "phase20_contract_sha256": "82397dc434d4662dac9f7d2a8672b55fe606e18bc695622cd10c1c3921d8d147",
+    "phase20_cutover_contract_ref": "contract:cemm:v350:runtime-cutover",
+    "phase20_prepared": true,
+    "phase20_prepared_base_commit": "7436426c0ee0788e3081903fd9fb06a2c29d68b3",
+    "release_capabilities": {
+      "epistemic_admission": true,
+      "external_operations": [],
+      "generic_inference": true,
+      "output_discourse": true,
+      "realization_languages": [
+        "en",
+        "fr",
+        "sw"
+      ],
+      "response_policy": true,
+      "significance": true,
+      "text_emission": true,
+      "transitions": true
+    },
+    "runtime_cutover": true,
+    "seed_languages": [
+      "en",
+      "fr",
+      "sw"
+    ],
+    "transition_base_commit": "60b2fe7026fe1e6204b1dc682977de93c13e515e",
+    "transition_competence_sha256": "94ce850b7ee630b8446e6223e19a498d206e0a3db461c4cbb305f4df4802294c",
+    "transition_contract_ref": "contract:cemm:v350:transitions",
+    "transition_contract_sha256": "74893a4f820e9ac9b0da83e78472427a45a91ed906a1ef2927a6ded2fcdc0306",
+    "transition_phase": "11",
+    "vertical_slice_base_commit": "735d13d11f112d0062972a9a66d59100fa8a406c",
+    "vertical_slice_competence_sha256": "97dbdaf2fc433d17141a1bbb7768237fe857a0f346ca0e3df2596baf16eae2e5",
+    "vertical_slice_contract_ref": "contract:cemm:v350:transition-vertical-slices",
+    "vertical_slice_contract_sha256": "8e5f116e9a34f716846c7c40a912f89c08f57447e12230df0704b33801cc6c89",
+    "vertical_slice_phase": "12"
+  },
+  "modules": [
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "dynamics:default_rules",
+      "path": "dynamics/default_rules.jsonl",
+      "phase": 6,
+      "record_kind": "default_rule"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:capabilities",
+      "path": "foundation/capabilities.jsonl",
+      "phase": 6,
+      "record_kind": "capability_instance"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:evidence",
+      "path": "foundation/evidence.jsonl",
+      "phase": 6,
+      "record_kind": "evidence"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:identity_facets",
+      "path": "foundation/identity_facets.jsonl",
+      "phase": 6,
+      "record_kind": "identity_facet"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:seed_applications",
+      "path": "foundation/seed_applications.jsonl",
+      "phase": 6,
+      "record_kind": "semantic_application"
+    },
+    {
+      "allow_empty": true,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:seed_knowledge",
+      "path": "foundation/seed_knowledge.jsonl",
+      "phase": 6,
+      "record_kind": "knowledge"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:seed_referents",
+      "path": "foundation/seed_referents.jsonl",
+      "phase": 6,
+      "record_kind": "referent"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:self",
+      "path": "foundation/self.jsonl",
+      "phase": 6,
+      "record_kind": "referent"
+    },
+    {
+      "allow_empty": true,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:state_assignments",
+      "path": "foundation/state_assignments.jsonl",
+      "phase": 6,
+      "record_kind": "state_assignment"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "foundation:type_assertions",
+      "path": "foundation/type_assertions.jsonl",
+      "phase": 6,
+      "record_kind": "type_assertion"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:actions",
+      "path": "schemas/actions.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:discourse_acts",
+      "path": "schemas/discourse_acts.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:discourse_relations",
+      "path": "schemas/discourse_relations.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:events",
+      "path": "schemas/events.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:facet_entitlements",
+      "path": "schemas/facet_entitlements.jsonl",
+      "phase": 6,
+      "record_kind": "facet_entitlement"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:facets",
+      "path": "schemas/facets.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:functions",
+      "path": "schemas/functions.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:measure_dimensions",
+      "path": "schemas/measure_dimensions.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:operators",
+      "path": "schemas/operators.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:properties",
+      "path": "schemas/properties.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:referent_types",
+      "path": "schemas/referent_types.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:relations",
+      "path": "schemas/relations.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:response_policies",
+      "path": "schemas/response_policies.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:roles",
+      "path": "schemas/roles.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:state_dimensions",
+      "path": "schemas/state_dimensions.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:state_values",
+      "path": "schemas/state_values.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "foundation",
+      "module_ref": "schemas:units",
+      "path": "schemas/units.jsonl",
+      "phase": 6,
+      "record_kind": "schema"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:constructions",
+      "path": "languages/constructions.jsonl",
+      "phase": 7,
+      "record_kind": "construction"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:evidence",
+      "path": "languages/evidence.jsonl",
+      "phase": 7,
+      "record_kind": "evidence"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:form_sense_links",
+      "path": "languages/form_sense_links.jsonl",
+      "phase": 7,
+      "record_kind": "form_sense_link"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:forms",
+      "path": "languages/forms.jsonl",
+      "phase": 7,
+      "record_kind": "language_form"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:packs",
+      "path": "languages/packs.jsonl",
+      "phase": 7,
+      "record_kind": "language_pack"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "language_evidence",
+      "module_ref": "languages:senses",
+      "path": "languages/senses.jsonl",
+      "phase": 7,
+      "record_kind": "lexical_sense"
+    },
+    {
+      "allow_empty": true,
+      "authority_scope": "transition_authority",
+      "module_ref": "dynamics:capability_dependencies",
+      "path": "dynamics/capability_dependencies.jsonl",
+      "phase": 11,
+      "record_kind": "capability_dependency"
+    },
+    {
+      "allow_empty": true,
+      "authority_scope": "transition_authority",
+      "module_ref": "dynamics:transition_contracts",
+      "path": "dynamics/transition_contracts.jsonl",
+      "phase": 11,
+      "record_kind": "transition_contract"
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:argument_frame",
+      "path": "activation_closure/argument_frame.jsonl",
+      "phase": 20,
+      "record_kind": "argument_frame",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:capability_instance",
+      "path": "activation_closure/capability_instance.jsonl",
+      "phase": 20,
+      "record_kind": "capability_instance",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:channel_adapter_contract",
+      "path": "activation_closure/channel_adapter_contract.jsonl",
+      "phase": 20,
+      "record_kind": "channel_adapter_contract",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:construction",
+      "path": "activation_closure/construction.jsonl",
+      "phase": 20,
+      "record_kind": "construction",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:default_rule",
+      "path": "activation_closure/default_rule.jsonl",
+      "phase": 20,
+      "record_kind": "default_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:evidence",
+      "path": "activation_closure/evidence.jsonl",
+      "phase": 20,
+      "record_kind": "evidence",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:form_sense_link",
+      "path": "activation_closure/form_sense_link.jsonl",
+      "phase": 20,
+      "record_kind": "form_sense_link",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:impact_rule",
+      "path": "activation_closure/impact_rule.jsonl",
+      "phase": 20,
+      "record_kind": "impact_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:importance_policy",
+      "path": "activation_closure/importance_policy.jsonl",
+      "phase": 20,
+      "record_kind": "importance_policy",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:language_form",
+      "path": "activation_closure/language_form.jsonl",
+      "phase": 20,
+      "record_kind": "language_form",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:language_pack",
+      "path": "activation_closure/language_pack.jsonl",
+      "phase": 20,
+      "record_kind": "language_pack",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:lexical_sense",
+      "path": "activation_closure/lexical_sense.jsonl",
+      "phase": 20,
+      "record_kind": "lexical_sense",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:linearization_rule",
+      "path": "activation_closure/linearization_rule.jsonl",
+      "phase": 20,
+      "record_kind": "linearization_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:morphology_rule",
+      "path": "activation_closure/morphology_rule.jsonl",
+      "phase": 20,
+      "record_kind": "morphology_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:schema",
+      "path": "activation_closure/schema.jsonl",
+      "phase": 20,
+      "record_kind": "schema",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:semantic_analyzer_contract",
+      "path": "activation_closure/semantic_analyzer_contract.jsonl",
+      "phase": 20,
+      "record_kind": "semantic_analyzer_contract",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "activation_closure",
+      "module_ref": "activation-closure:transition_contract",
+      "path": "activation_closure/transition_contract.jsonl",
+      "phase": 20,
+      "record_kind": "transition_contract",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:argument_frame",
+      "path": "conversation_seed/argument_frame.jsonl",
+      "phase": 20,
+      "record_kind": "argument_frame",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:channel_adapter_contract",
+      "path": "conversation_seed/channel_adapter_contract.jsonl",
+      "phase": 20,
+      "record_kind": "channel_adapter_contract",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:construction",
+      "path": "conversation_seed/construction.jsonl",
+      "phase": 20,
+      "record_kind": "construction",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:evidence",
+      "path": "conversation_seed/evidence.jsonl",
+      "phase": 20,
+      "record_kind": "evidence",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:form_sense_link",
+      "path": "conversation_seed/form_sense_link.jsonl",
+      "phase": 20,
+      "record_kind": "form_sense_link",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:identity_facet",
+      "path": "conversation_seed/identity_facet.jsonl",
+      "phase": 20,
+      "record_kind": "identity_facet",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:language_form",
+      "path": "conversation_seed/language_form.jsonl",
+      "phase": 20,
+      "record_kind": "language_form",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:language_pack",
+      "path": "conversation_seed/language_pack.jsonl",
+      "phase": 20,
+      "record_kind": "language_pack",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:lexical_sense",
+      "path": "conversation_seed/lexical_sense.jsonl",
+      "phase": 20,
+      "record_kind": "lexical_sense",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:linearization_rule",
+      "path": "conversation_seed/linearization_rule.jsonl",
+      "phase": 20,
+      "record_kind": "linearization_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:morphology_rule",
+      "path": "conversation_seed/morphology_rule.jsonl",
+      "phase": 20,
+      "record_kind": "morphology_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:referent",
+      "path": "conversation_seed/referent.jsonl",
+      "phase": 20,
+      "record_kind": "referent",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:response_policy_rule",
+      "path": "conversation_seed/response_policy_rule.jsonl",
+      "phase": 20,
+      "record_kind": "response_policy_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:response_transform_rule",
+      "path": "conversation_seed/response_transform_rule.jsonl",
+      "phase": 20,
+      "record_kind": "response_transform_rule",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:schema",
+      "path": "conversation_seed/schema.jsonl",
+      "phase": 20,
+      "record_kind": "schema",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:semantic_analyzer_contract",
+      "path": "conversation_seed/semantic_analyzer_contract.jsonl",
+      "phase": 20,
+      "record_kind": "semantic_analyzer_contract",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "conversation_seed",
+      "module_ref": "conversation_seed:semantic_application",
+      "path": "conversation_seed/semantic_application.jsonl",
+      "phase": 20,
+      "record_kind": "semantic_application",
+      "required": true
+    }
+  ],
+  "package_ref": "cemm:v350:foundation-source",
+  "schema_version": 1,
+  "version": "3.5.0-dev"
+}

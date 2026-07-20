@@ -61,6 +61,33 @@ class FormLexemeRelationKind(StrEnum):
     ZERO = "zero"
 
 
+class MorphologyAnalysisOperation(StrEnum):
+    IDENTITY = "identity"
+    PREFIX = "prefix"
+    SUFFIX = "suffix"
+    CLITIC_PREFIX = "clitic_prefix"
+    CLITIC_SUFFIX = "clitic_suffix"
+    REPLACE_SUFFIX = "replace_suffix"
+    ZERO = "zero"
+
+
+class ConstructionProgramOperation(StrEnum):
+    INTRODUCE_VARIABLE = "introduce_variable"
+    INSTANTIATE_SCHEMA = "instantiate_schema"
+    ACTIVATE_SCHEMA_CLASS_CANDIDATES = "activate_schema_class_candidates"
+    BIND_PORT_FROM_SLOT = "bind_port_from_slot"
+    BIND_PORT_FROM_SYMBOL = "bind_port_from_symbol"
+    UNIFY = "unify"
+    ADD_RESTRICTION = "add_restriction"
+    SET_PROJECTION = "set_projection"
+    ADD_SCOPE = "add_scope"
+    ADD_TIME_FEATURE = "add_time_feature"
+    ADD_ASPECT_FEATURE = "add_aspect_feature"
+    ADD_MODALITY = "add_modality"
+    WRAP_DISCOURSE_ACT = "wrap_discourse_act"
+    PRESERVE_GAP = "preserve_gap"
+
+
 class ConstructionKind(StrEnum):
     COORDINATION = "coordination"
     COMPLEMENT = "complement"
@@ -506,6 +533,196 @@ class SemanticContributionSpecRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class MorphologyAnalysisRuleRecord:
+    rule_ref: str
+    pack_ref: str
+    pack_revision: int
+    operation: MorphologyAnalysisOperation
+    revision: int = 1
+    lexeme_ref: str = ""
+    lexeme_revision: int | None = None
+    inflection_class_ref: str = ""
+    supersedes_revision: int | None = None
+    surface_operand: str = ""
+    lemma_operand: str = ""
+    feature_values: tuple[tuple[str, str], ...] = ()
+    condition_refs: tuple[str, ...] = ()
+    priority: int = 0
+    confidence: float = 1.0
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    use_operation: UseOperation = UseOperation.GROUND
+    use_decision: UseDecision = UseDecision.DENY
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    competence_case_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.rule_ref, "morphology analysis rule_ref"),
+            (self.pack_ref, "morphology analysis pack_ref"),
+        ):
+            _ref(value, label)
+        if min(self.pack_revision, self.revision) < 1:
+            raise ValueError("morphology analysis revisions must be positive")
+        exact_target = bool(self.lexeme_ref)
+        class_target = bool(self.inflection_class_ref)
+        if exact_target == class_target:
+            raise ValueError("morphology analysis rule requires exactly one lexeme or inflection-class target")
+        if exact_target:
+            _ref(self.lexeme_ref, "morphology analysis lexeme_ref")
+            if self.lexeme_revision is None or self.lexeme_revision < 1:
+                raise ValueError("exact morphology lexeme target requires positive revision")
+        elif self.lexeme_revision is not None:
+            raise ValueError("inflection-class morphology rule cannot pin lexeme_revision")
+        if class_target:
+            _ref(self.inflection_class_ref, "morphology analysis inflection_class_ref")
+        _supersession(self.revision, self.supersedes_revision, "morphology analysis rule")
+        if self.operation in {
+            MorphologyAnalysisOperation.PREFIX,
+            MorphologyAnalysisOperation.SUFFIX,
+            MorphologyAnalysisOperation.CLITIC_PREFIX,
+            MorphologyAnalysisOperation.CLITIC_SUFFIX,
+            MorphologyAnalysisOperation.REPLACE_SUFFIX,
+        } and not self.surface_operand:
+            raise ValueError("productive morphology operation requires surface_operand")
+        if not isfinite(self.confidence) or not 0.0 < self.confidence <= 1.0:
+            raise ValueError("morphology analysis confidence must be in (0,1]")
+        if self.use_operation != UseOperation.GROUND:
+            raise ValueError("input morphology analysis must use GROUND authority")
+        _unique(tuple(name for name, _ in self.feature_values), "morphology analysis feature names")
+        _unique(self.condition_refs, "morphology analysis conditions")
+        _unique(self.source_refs, "morphology analysis sources")
+        _unique(self.evidence_refs, "morphology analysis evidence")
+        _unique(self.competence_case_refs, "morphology analysis competence cases")
+        if self.lifecycle_status == SchemaLifecycleStatus.ACTIVE and not self.competence_case_refs:
+            raise ValueError("active morphology analysis rule requires competence cases")
+        _reviewed_authority(
+            self.lifecycle_status, self.source_refs, self.evidence_refs,
+            "morphology analysis rule",
+        )
+
+    @property
+    def executable(self) -> bool:
+        return (
+            self.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+            and self.use_operation == UseOperation.GROUND
+            and self.use_decision == UseDecision.ALLOW
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ConstructionProgramStep:
+    step_ref: str
+    operation: ConstructionProgramOperation
+    result_ref: str = ""
+    input_refs: tuple[str, ...] = ()
+    slot_ref: str = ""
+    port_ref: str = ""
+    schema_ref: str = ""
+    schema_revision: int | None = None
+    schema_classes: tuple[SchemaClass, ...] = ()
+    expected_filler_classes: tuple[PortFillerClass, ...] = ()
+    expected_schema_classes: tuple[SchemaClass, ...] = ()
+    expected_type_refs: tuple[str, ...] = ()
+    open_binding_purpose: OpenBindingPurpose | None = None
+    value_ref: str = ""
+    value_revision: int | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        _ref(self.step_ref, "construction program step_ref")
+        _unique(self.input_refs, "construction program input refs")
+        _unique(self.schema_classes, "construction program schema classes")
+        _unique(self.expected_filler_classes, "construction program filler classes")
+        _unique(self.expected_schema_classes, "construction program expected schema classes")
+        _unique(self.expected_type_refs, "construction program expected types")
+        if self.operation in {
+            ConstructionProgramOperation.INTRODUCE_VARIABLE,
+            ConstructionProgramOperation.INSTANTIATE_SCHEMA,
+            ConstructionProgramOperation.ACTIVATE_SCHEMA_CLASS_CANDIDATES,
+            ConstructionProgramOperation.WRAP_DISCOURSE_ACT,
+        }:
+            _ref(self.result_ref, "construction program result_ref")
+        if self.operation in {
+            ConstructionProgramOperation.INSTANTIATE_SCHEMA,
+            ConstructionProgramOperation.WRAP_DISCOURSE_ACT,
+        }:
+            _ref(self.schema_ref, "construction program schema_ref")
+            if self.schema_revision is None or self.schema_revision < 1:
+                raise ValueError("construction program exact schema requires positive revision")
+        if self.operation == ConstructionProgramOperation.ACTIVATE_SCHEMA_CLASS_CANDIDATES and not self.schema_classes:
+            raise ValueError("schema-class activation requires schema_classes")
+        if self.operation == ConstructionProgramOperation.BIND_PORT_FROM_SLOT:
+            if len(self.input_refs) != 1:
+                raise ValueError("BIND_PORT_FROM_SLOT requires one application input")
+            _ref(self.slot_ref, "construction program slot_ref")
+            _ref(self.port_ref, "construction program port_ref")
+        if self.operation == ConstructionProgramOperation.BIND_PORT_FROM_SYMBOL:
+            if len(self.input_refs) != 2:
+                raise ValueError("BIND_PORT_FROM_SYMBOL requires application and source symbols")
+            _ref(self.port_ref, "construction program port_ref")
+        if self.operation == ConstructionProgramOperation.ADD_RESTRICTION:
+            _ref(self.value_ref, "construction program restriction_ref")
+        if self.operation == ConstructionProgramOperation.SET_PROJECTION:
+            _ref(self.value_ref, "construction program projection_ref")
+            if self.value_revision is None or self.value_revision < 1:
+                raise ValueError("SET_PROJECTION requires exact projection revision")
+        if self.operation == ConstructionProgramOperation.WRAP_DISCOURSE_ACT:
+            if len(self.input_refs) != 1:
+                raise ValueError("WRAP_DISCOURSE_ACT requires one content input")
+            _ref(self.port_ref, "discourse wrapper content port")
+
+
+@dataclass(frozen=True, slots=True)
+class ConstructionProgramRecord:
+    program_ref: str
+    pack_ref: str
+    pack_revision: int
+    construction_ref: str
+    construction_revision: int
+    steps: tuple[ConstructionProgramStep, ...]
+    root_symbol_refs: tuple[str, ...]
+    revision: int = 1
+    supersedes_revision: int | None = None
+    lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
+    use_operation: UseOperation = UseOperation.COMPOSE
+    use_decision: UseDecision = UseDecision.DENY
+    source_refs: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    competence_case_refs: tuple[str, ...] = ()
+    permission_ref: str = "public"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for value, label in (
+            (self.program_ref, "construction program_ref"),
+            (self.pack_ref, "construction program pack_ref"),
+            (self.construction_ref, "construction program construction_ref"),
+        ):
+            _ref(value, label)
+        if min(self.pack_revision, self.construction_revision, self.revision) < 1:
+            raise ValueError("construction program revisions must be positive")
+        _supersession(self.revision, self.supersedes_revision, "construction program")
+        if not self.steps:
+            raise ValueError("construction program requires steps")
+        _unique(tuple(item.step_ref for item in self.steps), "construction program steps")
+        _unique(self.root_symbol_refs, "construction program roots")
+        if self.use_operation != UseOperation.COMPOSE:
+            raise ValueError("construction programs must use COMPOSE authority")
+        _unique(self.source_refs, "construction program sources")
+        _unique(self.evidence_refs, "construction program evidence")
+        _unique(self.competence_case_refs, "construction program competence cases")
+        if self.lifecycle_status == SchemaLifecycleStatus.ACTIVE and not self.competence_case_refs:
+            raise ValueError("active construction program requires competence cases")
+        _reviewed_authority(
+            self.lifecycle_status, self.source_refs, self.evidence_refs,
+            "construction program",
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class FormSenseLinkRecord:
     link_ref: str
     form_ref: str
@@ -807,6 +1024,11 @@ class FormCandidate:
     evidence_refs: tuple[str, ...]
     via_variant: bool = False
     via_normalization: bool = False
+    morphology_rule_ref: str | None = None
+    morphology_rule_revision: int | None = None
+    derived_lexeme_ref: str | None = None
+    derived_lexeme_revision: int | None = None
+    derived_feature_values: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         _ref(self.candidate_ref, "form candidate_ref")
@@ -817,6 +1039,17 @@ class FormCandidate:
         _confidence(self.confidence)
         if not self.observation_refs or not self.evidence_refs:
             raise ValueError("form candidate requires observations and evidence")
+        if (self.morphology_rule_ref is None) != (self.morphology_rule_revision is None):
+            raise ValueError("morphology rule ref/revision must be supplied together")
+        if self.morphology_rule_revision is not None and self.morphology_rule_revision < 1:
+            raise ValueError("morphology rule revision must be positive")
+        if (self.derived_lexeme_ref is None) != (self.derived_lexeme_revision is None):
+            raise ValueError("derived lexeme ref/revision must be supplied together")
+        if self.derived_lexeme_ref is not None:
+            _ref(self.derived_lexeme_ref, "form candidate derived lexeme")
+        if self.derived_lexeme_revision is not None and self.derived_lexeme_revision < 1:
+            raise ValueError("derived lexeme revision must be positive")
+        _unique(tuple(name for name, _ in self.derived_feature_values), "derived form feature names")
 
 
 @dataclass(frozen=True, slots=True)

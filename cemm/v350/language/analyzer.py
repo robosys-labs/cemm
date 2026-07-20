@@ -8,6 +8,7 @@ from typing import Iterable
 from ..schema.model import UseOperation, semantic_fingerprint
 from .adapters import SyntaxAdapterHub, SyntaxAdapterInput
 from .constructions import ConstructionMatcher
+from .morphology import ProductiveMorphologyAnalyzer
 from .model import (
     FormCandidate,
     FormKind,
@@ -204,6 +205,7 @@ class FormLatticeAnalyzer:
                 if not tags:
                     tags = {pack.language_tag for pack in self.registry.active_packs()}
                 for tag in sorted(tags):
+                    produced_for_tag = False
                     exact = self.registry.forms_for(tag, normalized_key)
                     explicit_normalized = self.registry.normalization_forms_for(tag, normalized_key)
                     for form in (*exact, *explicit_normalized):
@@ -240,6 +242,21 @@ class FormLatticeAnalyzer:
                             via_variant=form.variant_of_ref is not None,
                             via_normalization=via_normalization,
                         ))
+                        produced_for_tag = True
+                    if (
+                        len(refs) == 1
+                        and item.category == "word"
+                        and not produced_for_tag
+                    ):
+                        derived, _analyses = ProductiveMorphologyAnalyzer(
+                            self.registry
+                        ).analyze_observation(
+                            observed_key=normalized_key,
+                            span=span,
+                            observation_refs=tuple(refs),
+                            language_tag=tag,
+                        )
+                        result.extend(derived)
         dedup = {item.candidate_ref: item for item in result}
         norm_dedup = {item.evidence_ref: item for item in normalization}
         return (
@@ -250,6 +267,30 @@ class FormLatticeAnalyzer:
     def _lexemes(self, forms: tuple[FormCandidate, ...]) -> tuple[LexemeCandidate, ...]:
         result: list[LexemeCandidate] = []
         for form_candidate in forms:
+            if form_candidate.derived_lexeme_ref is not None:
+                lexeme = self.registry.require_lexeme(
+                    form_candidate.derived_lexeme_ref,
+                    form_candidate.derived_lexeme_revision,
+                )
+                features = dict(lexeme.feature_defaults)
+                features.update(dict(form_candidate.derived_feature_values))
+                result.append(LexemeCandidate(
+                    candidate_ref="lexeme-candidate:" + semantic_fingerprint(
+                        "morphology-lexeme-candidate",
+                        (form_candidate.candidate_ref, lexeme.lexeme_ref,
+                         lexeme.revision, form_candidate.morphology_rule_ref,
+                         form_candidate.morphology_rule_revision),
+                        20,
+                    ),
+                    form_candidate_ref=form_candidate.candidate_ref,
+                    lexeme_ref=lexeme.lexeme_ref,
+                    lexeme_revision=lexeme.revision,
+                    language_tag=form_candidate.language_tag,
+                    confidence=form_candidate.confidence,
+                    feature_values=tuple(sorted((str(k), str(v)) for k, v in features.items())),
+                    evidence_refs=form_candidate.evidence_refs,
+                ))
+                continue
             form = self.registry.require_form(form_candidate.form_ref, form_candidate.form_revision)
             links = self.registry.lexeme_links_for_form(form.form_ref, form.revision)
             inherited_from = None

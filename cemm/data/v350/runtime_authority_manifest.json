@@ -92,9 +92,15 @@
     "dependency",
     "language_pack",
     "language_form",
+    "lexeme",
+    "form_lexeme_link",
     "lexical_sense",
+    "lexeme_sense_link",
     "form_sense_link",
+    "semantic_contribution_spec",
+    "morphology_analysis_rule",
     "construction",
+    "construction_program",
     "materialized_view",
     "learning_package",
     "learning_frontier",
@@ -156,7 +162,7 @@
     "argument-frame:sw:activation:property-holder-value-none@1#argument_frame-record:2e1fb4ccb7a307e44b10d8d200971bd02f34fa8b2325bd4649c4782b67eaea59",
     "argument-frame:sw:activation:relation-left-right-none@1#argument_frame-record:32497948adb28d9de61f3f6414c0b30f22980af00a7999168b647151c00854dd"
   ],
-  "boot_database_sha256": "6fa7b6fdbc47bfd8fbf0a77a6f1f12ffab182ed82d3f9b60647d52450de95f9d",
+  "boot_database_sha256": "d470b22227b3b20445f5fdf7cd468de86cecd2feb40e20daaad95a6394316be3",
   "canonical_orchestrator": "cemm.v350.orchestration:CanonicalOrchestrator",
   "canonical_runtime_factory": "cemm.v350.runtime:build_runtime",
   "channel_adapter_contracts": [
@@ -413,12 +419,12 @@
       "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
     }
   ],
-  "schema_version": 8,
+  "schema_version": 9,
   "semantic_analyzer_contracts": [
     "semantic-analyzer-contract:canonical-v350:conversation-core@1#semantic_analyzer_contract-record:bbb3f870847ee36c779008a60f3b763dcb15e282c37e78783c6e593fc17f2321",
     "semantic-analyzer-contract:canonical-v350:conversation-core@2#semantic_analyzer_contract-record:3cc8814c818cbd9586ae99097d84c229c37c0c9a5a1d0387c82f6f8747857702"
   ],
-  "source_manifest_sha256": "1a29e73204d0ba0769fa3164032363be70e3b6d22db5b06e969dd3cffffc283e",
+  "source_manifest_sha256": "24b2982ade34b7fe53693d1950f4c880f36bc83974970ecf2241cadaf7e904e0",
   "stage_adapters": [
     {
       "adapter_ref": "v350.stage.00.orient_and_pin",

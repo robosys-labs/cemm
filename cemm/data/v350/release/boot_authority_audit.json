@@ -1,29 +1,30 @@
 {
   "advertised_realization_languages": [
     "en",
-    "fr"
+    "fr",
+    "sw"
   ],
-  "boot_sha256": "78f3b6101d1a5b137b77b1be6367a8013101ac69246b68b36f95553902148c09",
+  "boot_sha256": "d470b22227b3b20445f5fdf7cd468de86cecd2feb40e20daaad95a6394316be3",
   "compiler": {
-    "boot_fingerprint": "boot-database:6b6c549689f573f80cf36f10ba3c14df8b1a170bae42b72d4c89e4a1853ce35a",
-    "byte_size": 7856128,
-    "manifest_fingerprint": "source-manifest:e46844c92f2ce683fbd129d0ec052e8feadb8a6126c841cd34bedb4c1f12f65e",
-    "record_count": 1882,
-    "record_set_fingerprint": "compiled-record-set:41e53ee951af38682519c9c7d78c77810c74555f214f8056231667ecc154fd56"
+    "boot_fingerprint": "boot-database:30aa77cf2448520a032a0532cba5d522e3b8667e54d7dadab9726b51e0fabb57",
+    "byte_size": 9834496,
+    "manifest_fingerprint": "source-manifest:155c6ef0c8d18e9531091e393959259dac977146e650e712e32c323a6ae184ea",
+    "record_count": 2434,
+    "record_set_fingerprint": "compiled-record-set:b2e56ff465e094ba7ee074bde210d47309eebfb81ef4c1ecfd4d5e6bd6cbccdf"
   },
   "effective_counts": {
-    "argument_frame": 32,
+    "argument_frame": 48,
     "channel_adapter_contract": 1,
-    "linearization_rule": 32,
-    "morphology_rule": 2,
+    "linearization_rule": 48,
+    "morphology_rule": 3,
     "response_policy_rule": 43,
     "response_transform_rule": 43,
     "semantic_analyzer_contract": 1
   },
   "errors": [],
   "operation_adapter_contract_count": 0,
-  "record_count": 1882,
-  "sqlite_schema_version": 8,
+  "record_count": 2434,
+  "sqlite_schema_version": 9,
   "status": "pass",
   "warnings": []
 }

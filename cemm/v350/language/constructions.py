@@ -81,7 +81,10 @@ class ConstructionMatcher:
 
         result: list[ConstructionCandidate] = []
         for construction in self.registry.active_constructions():
-            if construction.metadata.get("interpretation_enabled") is False:
+            match_allowed, match_authority, match_evidence = (
+                self.registry.construction_match_authority(construction)
+            )
+            if not match_allowed:
                 continue
             trigger_groups = self._trigger_groups(
                 construction, by_form_ref, by_sense_ref
@@ -135,13 +138,17 @@ class ConstructionMatcher:
                         )
                         if not gaps:
                             continue
-                    evidence = self._evidence(
-                        all_refs,
-                        forms,
-                        senses,
-                        dependencies,
-                        constituencies,
-                    )
+                    evidence = tuple(sorted(set(
+                        self._evidence(
+                            all_refs,
+                            forms,
+                            senses,
+                            dependencies,
+                            constituencies,
+                        )
+                    ) | set(match_evidence) | {
+                        f"construction-match-authority:{match_authority}"
+                    }))
                     candidate_ref = "construction-candidate:" + semantic_fingerprint(
                         "construction-candidate",
                         (
