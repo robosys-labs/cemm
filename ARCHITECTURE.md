@@ -614,6 +614,7 @@ WorldRevision
 DiscourseRevision
 RuntimeObservationRevision
 AuditRevision
+EffectJournalRevision
 EffectAuthorizationBoundary
 ```
 

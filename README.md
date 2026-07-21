@@ -8,9 +8,9 @@ The long-term target is a **grounded semantic brain**: a system that represents 
 
 > **Current repository status:** the public runtime has cut over to the signed CEMM v3.5 Stage-0..22 runtime. Runtime cutover is complete, but the current v3.5 substrate still contains important architectural, correctness, performance, authority, identity, persistence, learning, realization, and semantic-productivity defects.
 >
-> **v3.5.1 must not be implemented directly on top of those defects.** The immediate priority is a controlled pre-v3.5.1 stabilization phase that preserves exactness, provenance, permissions, effect authorization, and release integrity while removing authority overreach, whole-store coupling, hot-path verification, false identity collisions, unnecessary persistence, and concurrency bottlenecks.
+> **v3.5.1 must not be implemented directly on top of those defects.** The unified `IMPLEMENTATION_PLAN.md` integrates stabilization (Phases 0–4, Milestone M0) and semantic-brain migration (Phases 5–18) into one roadmap. It preserves exactness, provenance, permissions, effect authorization, and release integrity while removing authority overreach, whole-store coupling, hot-path verification, false identity collisions, unnecessary persistence, and concurrency bottlenecks.
 >
-> Do not describe v3.5 as fully semantically verified or v3.5.1 as implementation-ready until the stabilization and release acceptance gates pass.
+> Do not describe v3.5 as fully semantically verified or v3.5.1 as implementation-ready until the acceptance gates pass.
 
 ---
 
@@ -215,7 +215,19 @@ Durable memory is structured semantic/world/history state—not a transcript arc
 
 ---
 
-# Immediate priority: stabilize v3.5 before v3.5.1
+# Current implementation sequence
+
+The unified roadmap in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) integrates stabilization and semantic-brain migration into five sequential milestones:
+
+```text
+M0 STABILIZED RUNTIME SUBSTRATE   (Phases 0–4)
+M1 EXACT CSIR SEMANTIC SPINE       (Phases 5–8)
+M2 ENGLISH CONVERSATIONAL KERNEL   (Phases 9–12)
+M3 WORKING LEARNING + RECURRENT SEMANTIC BRAIN  (Phases 13–14)
+M4 FULL STATE/CAUSAL/MULTIMODAL CUTOVER         (Phases 15–18)
+```
+
+The key correction is to build a usable vertical slice early (M2) rather than implementing every advanced subsystem before proving basic cognition.
 
 The current v3.5 runtime solved important problems:
 
@@ -228,32 +240,9 @@ The current v3.5 runtime solved important problems:
 * response meaning before wording;
 * release/cutover verification.
 
-But several safeguards have become too deeply coupled to ordinary cognition.
+But several safeguards have become too deeply coupled to ordinary cognition. The defects are catalogued in [`CORE_ISSUES.md`](CORE_ISSUES.md) and addressed by the unified plan.
 
-The pre-v3.5.1 stabilization work must address, among other issues:
-
-```text
-full release verification in the request hot path
-duplicated authority checks
-runtime self-observation before Stage 0
-deterministic evidence identity collisions
-raw object equality across persistence boundaries
-one snapshot fingerprint conflating authority and mutable state
-global snapshot / SQLite lock serialization
-whole-overlay fingerprint recomputation on every write
-broad cache invalidation after unrelated writes
-RecordKind-wide lookup scans
-per-request learning-promotion scans
-overly fine-grained semantic use authorization
-floating executable semantic dependencies
-transient compiler artifacts persisted mid-cycle
-full semantic round-trip cost on every emission
-frontiers that do not propagate into honest final status
-```
-
-The correction is **not** to remove rigor.
-
-The correction is to place each invariant at the narrowest correct boundary.
+The correction is **not** to remove rigor. The correction is to place each invariant at the narrowest correct boundary.
 
 ---
 
@@ -307,50 +296,6 @@ The system must not spend more computation proving it is allowed to think than a
 
 ---
 
-# Current implementation sequence
-
-The required sequence is now:
-
-```text
-CURRENT v3.5
-      │
-      ▼
-S0  Measure current runtime costs and failure modes
-      │
-S1  Fix deterministic identity and runtime-self crashes
-      │
-S2  Replace repeated release verification with one-time RuntimeAttestation
-      │
-S3  Split immutable authority from mutable world/discourse snapshots
-      │
-S4  Fix storage asymptotics, indexes and cache invalidation
-      │
-S5  Remove global snapshot serialization and double-snapshot ceremony
-      │
-S6  Move learning promotion and runtime observation off ordinary request frequency
-      │
-S7  Compile semantic eligibility; keep strict authorization for actual effects
-      │
-S8  Introduce CycleWorkspace and reduce transient persistence
-      │
-S9  Introduce proof-carrying realization with selective full round-trip verification
-      │
-S10 Make partial/deferred/blocked outcomes explicit
-      │
-S11 Pass performance, concurrency and correctness acceptance gates
-      │
-S12 Freeze the stabilized substrate interfaces
-      │
-      ▼
-v3.5.1 CSIR + recurrent grounded semantic-brain implementation
-```
-
-Do not combine the first stabilization patch with the CSIR/neural semantic rewrite.
-
-Regression isolation matters.
-
----
-
 # Canonical documentation
 
 ## Read these first — in order of importance
@@ -397,15 +342,7 @@ This is the implementation "do not recreate these mistakes" document.
 
 Every code review and AI implementation pass should use it as a negative architectural checklist.
 
-### 4. [`PRE_3_5_1_STABILIZATION_PLAN.md`](PRE_3_5_1_STABILIZATION_PLAN.md)
-
-The immediate implementation plan.
-
-This must be completed before the main v3.5.1 semantic-brain migration begins.
-
-It defines the staged stabilization sequence, safe patch boundaries, instrumentation, rollback expectations, concurrency/performance work and go/no-go criteria.
-
-### 5. [`ARCHITECTURE.md`](ARCHITECTURE.md)
+### 4. [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
 The target CEMM computational architecture.
 
@@ -424,7 +361,7 @@ Defines:
 * versioning;
 * effect boundaries.
 
-### 6. [`CEMM_CORE_MATHS.md`](CEMM_CORE_MATHS.md)
+### 5. [`CEMM_CORE_MATHS.md`](CEMM_CORE_MATHS.md)
 
 The mathematical contract behind the architecture.
 
@@ -444,7 +381,7 @@ Defines the formal machinery for:
 * semantic equivalence;
 * invalidation and computational budgets.
 
-### 7. [`CORE_LOOP.md`](CORE_LOOP.md)
+### 6. [`CORE_LOOP.md`](CORE_LOOP.md)
 
 The canonical Stage-0..22 cognitive loop.
 
@@ -470,29 +407,40 @@ Defines how the architecture executes over time, including:
 
 Stages are **logical computational boundaries**, not mandatory database transaction boundaries.
 
-### 8. [`V3_5_1_IMPLEMENTATION_PLAN.md`](V3_5_1_IMPLEMENTATION_PLAN.md)
+### 7. [`RUNTIME_PLAN.md`](RUNTIME_PLAN.md)
 
-The main implementation roadmap for v3.5.1.
+The canonical concrete runtime implementation contract.
 
-Use only after the stabilization plan has reached its go/no-go threshold.
+Bridges `ARCHITECTURE.md` + `CORE_LOOP.md` to actual runtime code. Defines:
 
-It covers:
+* process-lifetime, session-lifetime, and cycle-lifetime objects;
+* authority and mutable-state generation model;
+* stage capability tokens;
+* `CycleWorkspace`;
+* stage persistence/effect matrix;
+* concrete stage artifact contracts;
+* pre-cycle/post-cycle maintenance;
+* participant/session lifecycle;
+* epistemic admission policy;
+* learning runtime;
+* re-entry protocol;
+* realization verification;
+* storage architecture;
+* v3.5 → v3.5.1 migration runtime rule.
 
-* Kernel Semantic ABI;
-* CSIR;
-* exact semantic-definition authority;
-* operational profiles;
-* semantic compiler;
-* Stage-5 compile barrier;
-* recurrent semantic dynamics;
-* grounded state;
-* causal inference;
-* recursive learning;
-* response generation;
-* authority roots;
-* migration;
-* acceptance;
-* cutover.
+### 8. [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)
+
+The **sole active implementation roadmap** for v3.5.1.
+
+Integrates stabilization and semantic-brain migration into one unified plan with five milestones:
+
+* M0 — Stabilized runtime substrate (Phases 0–4);
+* M1 — Exact CSIR semantic spine (Phases 5–8);
+* M2 — English conversational kernel (Phases 9–12);
+* M3 — Working learning + recurrent semantic brain (Phases 13–14);
+* M4 — Full state/causal/multimodal cutover (Phases 15–18).
+
+Supersedes `PRE_3_5_1_STABILIZATION_PLAN.md` and `V3_5_1_IMPLEMENTATION_PLAN.md` (both archived under `docs/archive/`).
 
 ### 9. [`ACCEPTANCE_CONTRACT.md`](ACCEPTANCE_CONTRACT.md)
 
@@ -514,7 +462,15 @@ concurrency
 release verification
 ```
 
-### 10. [`docs/architecture/TERMINOLOGY.md`](docs/architecture/TERMINOLOGY.md)
+### 10. [`ISSUES_TO_AVOID.md`](ISSUES_TO_AVOID.md)
+
+Mandatory anti-regression contract.
+
+This is the implementation "do not recreate these mistakes" document.
+
+Every code review and AI implementation pass should use it as a negative architectural checklist.
+
+### 11. [`docs/architecture/TERMINOLOGY.md`](docs/architecture/TERMINOLOGY.md)
 
 Canonical terminology.
 
@@ -541,7 +497,9 @@ AGENTS.md
 → ARCHITECTURE.md
 → CEMM_CORE_MATHS.md
 → CORE_LOOP.md
-→ current stabilization / implementation plan
+→ RUNTIME_PLAN.md
+→ IMPLEMENTATION_PLAN.md
+→ ACCEPTANCE_CONTRACT.md
 ```
 
 ---
@@ -551,8 +509,9 @@ AGENTS.md
 These are useful for reasoning about migration history and architectural changes but are not higher authority than the canonical documents above.
 
 * [`ARCHITECTURE_AUDIT.md`](ARCHITECTURE_AUDIT.md)
-* [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)
 * [`phased-fixes.md`](phased-fixes.md)
+* [`PRE_3_5_1_STABILIZATION_PLAN.md`](PRE_3_5_1_STABILIZATION_PLAN.md) — **SUPERSEDED**, archived at `docs/archive/`
+* [`V3_5_1_IMPLEMENTATION_PLAN.md`](V3_5_1_IMPLEMENTATION_PLAN.md) — **SUPERSEDED**, archived at `docs/archive/`
 * historical documents under `docs/archive/`
 
 Old runtime code, archived plans, deprecated bootstrap scripts and historical acceptance assumptions are not current semantic authority.
@@ -608,7 +567,7 @@ concurrency tests
 release-verifier gates
 ```
 
-For pre-v3.5.1 stabilization, additionally measure:
+For Phase 0 baseline and stabilization gates (M0), additionally measure:
 
 ```text
 files hashed per normal cycle
@@ -718,6 +677,6 @@ concurrent
 replayable
 ```
 
-The goal of v3.5 stabilization is to make the runtime lean enough to support cognition without weakening its guarantees.
+The goal of M0 (Phases 0–4) is to make the runtime lean enough to support cognition without weakening its guarantees.
 
-The goal of v3.5.1 is to build the grounded semantic brain on that stabilized foundation.
+The goal of v3.5.1 (Phases 5–18) is to build the grounded semantic brain on that stabilized foundation.

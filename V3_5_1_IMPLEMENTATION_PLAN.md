@@ -1,3 +1,15 @@
+# SUPERSEDED — historical planning context only
+
+**Canonical roadmap: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)**
+
+This document has been moved to [`docs/archive/V3_5_1_IMPLEMENTATION_PLAN.md`](docs/archive/V3_5_1_IMPLEMENTATION_PLAN.md).
+
+Its useful reasoning has been integrated into the unified `IMPLEMENTATION_PLAN.md` (Phases 5–18).
+
+Do not follow this as an active implementation plan.
+
+---
+
 # CEMM v3.5.1 Semantic Brain Implementation Plan
 
 **Purpose:** migrate the current v3.5 runtime from a primarily typed symbolic pipeline into a grounded recurrent semantic dynamical architecture without losing exact authority, proof, safety or multilingual compositionality.

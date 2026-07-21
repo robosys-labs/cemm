@@ -1,3 +1,15 @@
+# SUPERSEDED — historical planning context only
+
+**Canonical roadmap: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)**
+
+This document has been moved to [`docs/archive/PRE_3_5_1_STABILIZATION_PLAN.md`](docs/archive/PRE_3_5_1_STABILIZATION_PLAN.md).
+
+Its useful reasoning has been integrated into the unified `IMPLEMENTATION_PLAN.md` (Phases 0–4 + Milestone M0).
+
+Do not follow this as an active implementation plan.
+
+---
+
 # CEMM v3.5 — Pre-v3.5.1 Stabilization Plan
 
 **Goal:** repair the v3.5 substrate before introducing CSIR semantic-brain dynamics.  
