@@ -1,961 +1,843 @@
-# CEMM v3.5 Canonical Implementation Plan
+# CEMM v3.5.1 Unified Implementation Plan
 
-**Status:** canonical replacement execution plan
-**Purpose:** implement and cut over a learning-first, grounded, multilingual semantic runtime without allowing implementation examples, test fixtures, language forms, or domain concepts to become hidden kernel authority.
+**Status:** sole active implementation roadmap  
+**Supersedes:** `PRE_3_5_1_STABILIZATION_PLAN.md` and `V3_5_1_IMPLEMENTATION_PLAN.md`  
+**Goal:** turn CEMM into a working learning-first semantic system, beginning with robust basic English conversation, while preserving exact authority, provenance, safety, replay, and multilingual architecture.
 
 ---
 
-## 1. Governing laws
+# 0. Global release state machine
 
-### 1.1 Completion is a five-gate state
-
-A phase is not complete because classes, JSON, tests, or documentation exist. Every phase is tracked independently as:
+Every phase/component is tracked as:
 
 ```text
-specified -> implemented -> wired -> authoritative -> verified
+specified
+→ implemented
+→ wired
+→ authoritative
+→ verified
+→ calibrated (if probabilistic)
+→ replayable (if learned/stateful)
 ```
 
-A phase may be implemented and phase-verified while remaining intentionally non-authoritative until runtime cutover.
-
-### 1.2 Plans do not define ontology
-
-This document specifies **machinery, authority boundaries, proof obligations, and coverage classes**. It does not define a vocabulary of world concepts.
-
-Therefore:
-
-- a noun, verb, state, event, language form, or example mentioned in documentation or a test is never automatically a boot concept;
-- lists of semantic phenomena are coverage requirements, not privileged schema enumerations;
-- test fixtures and demonstration packages are non-authoritative unless separately promoted through the reviewed data path;
-- no phase may introduce a Python branch merely because an example needs a new type, event, property, relation, state, response, or lexicalization;
-- no later phase may silently reinterpret an earlier record family through metadata flags or naming conventions.
-
-### 1.3 Data authority must be explicit
-
-Executable semantic behavior must come from revisioned, validated, evidence-bearing records with explicit use authorization. Kernel code may implement generic record families and algorithms, but must not know named domain semantics.
-
-Forbidden kernel authority includes:
-
-- language-specific semantic word tests;
-- predicate/action keyword catalogues used as cognition;
-- named event-to-effect branches;
-- named type-to-capability branches;
-- full-sentence response templates used as semantic authority;
-- metadata booleans that bypass first-class semantic records;
-- implicit actual-world context defaults;
-- defaults copied into active state;
-- claims treated as facts because they are grammatical or confidently grounded.
-
-### 1.4 Every stage owns only its artifact
-
-No core-loop stage may manufacture a downstream artifact. In particular:
-
-- form analysis does not choose referent identity;
-- grounding does not admit truth;
-- composition does not commit state;
-- epistemic admission does not derive event effects;
-- transition preview does not mutate durable state;
-- impact assessment does not invent state change;
-- response planning does not invent facts;
-- realization does not choose meaning.
-
-### 1.5 Exact revision and snapshot pinning
-
-Every executable decision that depends on mutable authority must pin the exact relevant revisions or snapshot fingerprints. A later correction must not retroactively change why an earlier decision was authorized.
-
-### 1.6 Partial understanding is a valid result
-
-Budget exhaustion, ambiguity, missing schema structure, missing evidence, unresolved time/context, or unknown state produces a proof-bearing frontier. It must not be replaced by guessed meaning or generic clarification unless policy later selects that response.
+A file or passing unit test alone does not make a component complete.
 
 ---
 
-## 2. Cross-phase release gates
+# 1. Program strategy
 
-The release remains incomplete until all of the following are true:
-
-1. **Specification gate** — governing documents and executable contracts agree.
-2. **Implementation gate** — canonical v3.5 components exist without delegating semantic authority to legacy code.
-3. **Wiring gate** — core-loop stage outputs feed the intended next stage through typed contracts.
-4. **Authority gate** — public runtime decisions come from v3.5 authorities rather than retained legacy shortcuts.
-5. **Verification gate** — unit, integration, competence, restart, migration, adversarial, performance, and semantic-equivalence evidence passes.
-
-A missing measurement is recorded as pending, never inferred as passing.
-
----
-
-## 3. Phase 0 — Baseline, authority, and measurement audit
-
-### Objective
-
-Create a reproducible baseline and map every active authority before replacement.
-
-### Required coverage
-
-- exact repository/runtime version and executable composition root;
-- core-loop stage order and all durable commit boundaries;
-- schema, referent, UOL, epistemic, inference, transition, operation, response, and realization authorities;
-- semantic shortcuts, language-specific branches, templates, mutable opaque state, and claim-to-fact paths;
-- legacy enums/control flow that constrain learnable semantic structure;
-- representative transcripts/traces;
-- database schema, row/size measurements, principal query plans;
-- stage latency/memory budgets and available performance evidence;
-- preserve/replace/migrate/remove disposition for every active component.
-
-### Exit gates
-
-- machine-ratcheted authority-debt inventory exists;
-- baseline measurements are captured or explicitly marked pending;
-- no later cutover may claim parity without comparing against this baseline.
-
----
-
-## 4. Phase 1 — Governing contracts and architectural enforcement
-
-### Objective
-
-Install one mutually consistent architecture contract and make major prohibitions executable in CI.
-
-### Required work
-
-- canonical architecture, foundational knowledge, UOL, core-loop, data, implementation, acceptance, and agent-governance documents;
-- archive conflicting governing material;
-- AST/data lints for semantic hardcoding, language-specific authority, implicit context, templates, event-specific mutation, and legacy semantic delegation;
-- legacy-debt ratchet with explicit allowed migration-only exclusions;
-- CI entrypoint that runs architecture checks on the complete repository.
-
-### Exit gate
-
-Documents, lints, debt inventory, and CI describe and enforce the same authority boundaries.
-
----
-
-## 5. Phase 2 — Revisioned semantic schema metamodel
-
-### Objective
-
-Provide one data-driven authority for semantic schema families without requiring source-code ontology edits for learned concepts.
-
-### Required capabilities
-
-- typed schema families with shared lifecycle/provenance/dependency infrastructure;
-- multiple inheritance and cycle/family validation;
-- exact/minimum/authoritative revision links;
-- independent per-use authorization;
-- typed local ports for referents, applications, variables, coordination, and explicit quoted literals;
-- storage-kind, semantic-type, schema-class, cardinality, ordering, context/time, and open-binding constraints;
-- semantic-content and full-record fingerprints;
-- competence hooks and invalidation dependencies;
-- unresolved candidate frontiers but hard failure for broken active authority.
-
-### Exit gate
-
-Every schema family round-trips through reviewed data and can be selected/authorized deterministically by exact revision.
-
----
-
-## 6. Phase 3 — UOL records and semantic graph equivalence
-
-### Objective
-
-Provide the language-neutral runtime graph records used by all later cognition.
-
-### Required capabilities
-
-- referent-backed identity for ordinary entities, propositions, claims, events, states, quantities, time, contexts, and schema topics;
-- semantic applications and typed bindings;
-- open variables with explicit purpose/restrictions;
-- scope and coordination;
-- proposition/claim/event separation;
-- state and capability deltas separated from event occurrence;
-- impact/importance separated from truth polarity and state change;
-- context/time/proof/revision qualification;
-- semantic equivalence invariant to generated local IDs while sensitive to all meaning-bearing axes.
-
-### Exit gate
-
-Graph identity/order noise does not change semantic equivalence; any meaning-bearing change does.
-
----
-
-## 7. Phase 4 — Deterministic data compiler and normalized semantic store
-
-### Objective
-
-Make reviewed semantic authority durable, deterministic, revisioned, and safely mutable through overlays.
-
-### Required capabilities
-
-- modular source manifest and validators;
-- deterministic SQLite compilation;
-- immutable read-only boot database;
-- writable overlay database;
-- typed repositories;
-- snapshot/CAS semantics;
-- GraphPatch commit boundary;
-- normalized persistence for canonical record families;
-- dependency fingerprints, invalidation, and derived-view recomputation.
-
-### Exit gate
-
-Double compilation is byte-identical and concurrent/stale writes cannot bypass revision or dependency checks.
-
----
-
-## 8. Phase 5 — Universal facet, entitlement, and referent projection engine
-
-### Objective
-
-Derive what knowledge families are meaningful for any referent from its data-driven type closure.
-
-### Required capabilities
-
-- type closure;
-- facet entitlement inheritance/blocking/narrowing;
-- applicable/latent/default-expected/unknown/blocked/terminated/inapplicable/contradicted distinctions;
-- state applicability;
-- default expectations without materialization;
-- referent knowledge views;
-- affordance/function/capability separation;
-- context/time/access restrictions.
-
-### Exit gate
-
-Projection is deterministic, revision-pinned, contradiction-safe, and does not create facts from defaults.
-
----
-
-## 9. Phase 6 — Minimal structural foundation
-
-### Objective
-
-Seed only the smallest structural semantic substrate required to learn and operate.
-
-### Required coverage
-
-- broad structural referent-type anchors;
-- universal facets and entitlement machinery;
-- orthogonal native semantic axes;
-- minimal generic property/state/relation/role/action/event/discourse structure;
-- claim/proposition/context structure;
-- function/capability distinction;
-- truthful self identity and runtime-backed capability contracts;
-- independent competence/audit contract.
-
-### Prohibitions
-
-- no convenience domain taxonomy;
-- no domain event effects;
-- no sentence templates;
-- no language-specific lexical forms as foundation ontology;
-- no capability prose treated as executable semantics.
-
-### Exit gate
-
-The foundation is small, domain-light, language-neutral, audited, and cryptographically pinned.
-
----
-
-## 10. Phase 7 — Form lattice and lexical-sense evidence
-
-### Objective
-
-Represent multilingual form evidence without making surface forms semantic authority.
-
-### Required capabilities
-
-- language packs as reviewed data;
-- exact source spans and reversible normalization evidence;
-- forms separated from senses;
-- many-to-many form/sense links with exact semantic target revisions;
-- span-local language/script evidence and code switching;
-- dependency/constituency adapters as evidence only;
-- compositional constructions for reusable grammatical relations;
-- coordination, complementation, modification/relative structure, ellipsis, scope cues, and unresolved spans;
-- full-sentence patterns permitted only for independently reviewed genuine idioms, never ordinary semantic routing.
-
-### Exit gate
-
-Equivalent semantic targets can be reached across reviewed language packages without language-specific kernel semantic branches.
-
----
-
-## 11. Phase 8 — Joint referent and claim grounding
-
-### Objective
-
-Resolve identity/reference jointly while preserving ambiguity and provisional frontiers.
-
-### Required capabilities
-
-- participants and discourse anchors supplied explicitly by the cycle;
-- names, identifiers, descriptions, aliases, discourse chains, multimodal tracks, prior system output, event/proposition history, schema topics, and provisional typed mentions;
-- joint coreference/distinctness constraints;
-- type/storage/context/time compatibility;
-- source/audience/role grounding through reviewed semantic/construction ports;
-- bounded deterministic solving with ranked alternatives;
-- review-only provisional creation and identity merge/split proposals.
-
-### Prohibitions
-
-- no named ontology refs in grounding control flow;
-- no sole-provisional candidate reported as resolved;
-- no lexical event predicate automatically equated with an arbitrary historical event;
-- no implicit actual-context or implicit self/user anchor;
-- grounding does not admit truth or mutate identity.
-
-### Exit gate
-
-Grounding outputs candidates/assignments/frontiers/proposals with traceable evidence and no downstream epistemic side effects.
-
----
-
-## 12. Phase 9 — UOL factor-graph composition
-
-### Objective
-
-Compose selected meaning hypotheses from reviewed form, grounding, schema, and context evidence without predicate-specific assembly code.
-
-### Required capabilities
-
-- variables for sense, schema, referent, port filler, scope, time, context, and construction;
-- exact schema/use/port/type/entitlement/context hard factors;
-- traceable discourse/world/default/complexity soft factors;
-- nested operators and explicit scope;
-- queries and typed open variables;
-- proposition/claim/event composition;
-- shared arguments and multi-clause bundles;
-- partial understanding/frontiers;
-- deterministic bounded best-first/beam solving and pruning trace;
-- close-alternative preservation and selection assessment.
-
-### Prohibitions
-
-- solver has no named semantic vocabulary;
-- no realization score influences meaning selection;
-- no claim admission or state/capability effect occurs here.
-
-### Exit gate
-
-Composition is language-neutral, bounded, deterministic under pinned inputs, and partial-safe.
-
----
-
-## 13. Phase 10 — Epistemic and attributed-claim architecture
-
-### Objective
-
-Keep what was said, who said it, what CEMM admits, and what is actually projected as knowledge as separate durable authorities.
-
-### Required capabilities
-
-- structural claim occurrence compilation;
-- source and attributed-context separation;
-- append-only claim history;
-- source-local corrections/retractions;
-- durable multidimensional source assessment;
-- explicit proof/policy/authorization gate for cross-context admission;
-- exact source-assessment revision pins;
-- independent support and opposition admissions;
-- derived four-state truth projection;
-- knowledge projection with exact admission lineage;
-- contradiction without destructive overwrite.
-
-### Prohibitions
-
-- grammar or grounding confidence cannot authorize fact admission;
-- metadata flags cannot authorize context crossing;
-- one record cannot directly assert the derived BOTH state;
-- this phase cannot create state/capability effects.
-
-### Exit gate
-
-A well-formed claim can remain attributed evidence indefinitely without becoming actual-world knowledge unless independently admitted.
-
----
-
-## 14. Phase 11 — Generic event transition and dependent-capability engine
-
-### Objective
-
-Convert independently admitted event occurrences into **previewed, proof-bearing, generic state effects** and dependent capability reevaluations without placing any event-specific mutation knowledge in Python.
-
-### 14.1 Authority records
-
-Implement revisioned, evidence-bearing records for:
+The program has five sequential milestones:
 
 ```text
-TransitionContract
-CapabilityDependency
-TransitionProof
+M0 STABILIZED RUNTIME SUBSTRATE
+M1 EXACT CSIR SEMANTIC SPINE
+M2 ENGLISH CONVERSATIONAL KERNEL
+M3 WORKING LEARNING + RECURRENT SEMANTIC BRAIN
+M4 FULL STATE/CAUSAL/MULTIMODAL CUTOVER
 ```
 
-A transition contract must refer only to exact schema revisions, typed event ports, explicit preconditions, and explicit effects. It must not be inferred from semantic-key strings or event names.
+The key correction is to build a usable vertical slice early rather than implementing every advanced subsystem before proving basic cognition.
 
-### 14.2 Generic runtime components
+---
+
+# Phase 0 — Documentation integrity, defect registry, and baseline freeze
+
+## Objective
+Create one non-conflicting contract set and exact evidence of current behavior.
+
+## Work
+- adopt this documentation set;
+- restore/create `CORE_ISSUES.md`;
+- retire old competing plans;
+- capture exact `main` commit and release artifacts;
+- capture Stage-0..22 traces;
+- benchmark latency, storage, locks, queries, hashing and cache behavior;
+- classify current components:
+
+```text
+PRESERVE
+STABILIZE
+COMPILE_TO_CSIR
+REPLACE
+MIGRATION_ONLY
+DELETE
+```
+
+## Baseline dialogues
+At minimum:
+
+```text
+hello
+hii
+how are you?
+my name is Chibu
+what's my name?
+I like mangoes
+what do I like?
+what can you do?
+why?
+for what?
+unknown word
+correction
+```
+
+## Exit
+- machine-readable defect registry;
+- baseline trace corpus;
+- architecture/acceptance tests mapped to issues.
+
+---
+
+# Phase 1 — Stabilize identity, runtime epoch, and release attestation
+
+## Implement
+- canonical persisted identity/fingerprints;
+- typed idempotency outcomes;
+- `RuntimeEpoch`;
+- stable runtime-observation identity;
+- `RuntimeAttestation`;
+- startup/reload verification;
+- O(1) hot-path generation check.
+
+## Remove
+- full release verification per request;
+- duplicate service authority rechecks;
+- timestamp/request-frequency identity errors.
+
+## Exit
+Normal request performs:
+
+```text
+0 release file hashes
+0 boot hashes
+0 full manifest enumeration
+```
+
+---
+
+# Phase 2 — Split authority from mutable state; fix storage asymptotics and concurrency
+
+## Implement
+
+```text
+AuthorityGeneration
+AuthoritySnapshot
+WorldRevision
+DiscourseRevision
+RuntimeObservationRevision
+AuditRevision
+GenerationAwareCache
+ref→kind index
+incremental overlay authenticated root
+indexed exact/effective lookup
+concurrent read snapshots
+short write transaction path
+```
+
+## Remove
+- one global snapshot fingerprint;
+- `for kind in RecordKind` hot lookup;
+- full overlay scan per write;
+- global lock across semantic analysis;
+- broad unrelated cache flush.
+
+## Exit
+- concurrent 1/4/16/64 read-only cycles overlap;
+- O(1) writes do not scan O(total history);
+- query-plan tests prove indexes.
+
+---
+
+# Phase 3 — CycleWorkspace, event-driven maintenance, and honest final status
+
+## Implement
+
+```text
+CycleWorkspace
+CycleCompletionStatus
+FrontierEffect
+MaintenanceScheduler
+session participant lifecycle
+runtime observation snapshots
+event-driven learning activation/promotion
+```
+
+## Move out of `run_text()`
+- learning promotion scan;
+- runtime-self observation persistence;
+- unrelated maintenance.
+
+## Completion statuses
+
+```text
+SUCCESS
+PARTIAL
+NO_RESPONSE_REQUIRED
+RESPONSE_DEFERRED
+RESPONSE_BLOCKED
+ACTION_UNCERTAIN
+RUNTIME_ERROR
+```
+
+## Exit
+- `errors=[]` cannot imply success;
+- optional frontiers do not block unrelated grounded cognition.
+
+---
+
+# Phase 4 — Semantic eligibility/effect authorization split, proof-carrying realization, stabilization gate
+
+## Implement
+
+```text
+CompiledSemanticCapability
+EffectAuthorizationBoundary
+proof-carrying realization
+selective independent round-trip policy
+performance/concurrency gate
+```
+
+Strict effect authorization remains for:
+
+```text
+durable semantic mutation
+external operation
+protected disclosure
+external emission
+```
+
+## Milestone M0 — STABILIZED RUNTIME SUBSTRATE
+
+Proceed only when:
+
+```text
+correctness gates pass
+behavior regression suite passes
+authority invariants pass
+performance budgets pass
+concurrency tests pass
+known crash reproducers eliminated
+no safeguard hidden/bypassed
+```
+
+Freeze stable substrate interfaces.
+
+---
+
+# Phase 5 — Stage 0–22 ABI migration and concrete runtime contract
+
+## Objective
+Make code match the new `CORE_LOOP.md` and `RUNTIME_PLAN.md`.
+
+## Implement
+- new `CoreStage` names/ABI;
+- new `StageCapability`;
+- `CognitiveCycleState`;
+- stage input/output artifact contracts;
+- persistence/effect matrix enforcement;
+- bounded re-entry protocol;
+- stage contract tests.
+
+## Critical
+Do not merely rename existing UOL stages.
+
+Stage 5/6/7 must genuinely become:
+
+```text
+compile to CSIR
+→ recurrent dynamics
+→ attractor stabilization
+```
+
+## Exit
+Every Stage 0–22 has:
+
+```text
+inputs
+outputs
+authority/read generations
+allowed writes
+frontier types
+budgets
+proof requirements
+```
+
+---
+
+# Phase 6 — Exact CSIR v2 kernel and canonical equivalence
+
+## Implement
+
+```text
+SemanticTerm
+SemanticVariable
+SemanticApplication
+PortBinding
+Qualifier
+ScopeEmbedding
+Coordination
+ProofLink
+ExactAuthorityPin
+CSIRGraph
+```
 
 Implement:
 
 ```text
-TransitionContractCompiler
-EventAdmissionGate
-TransitionPreviewEngine
-StateDeltaValidator
-StateTimelineProjector
-CapabilityDependencyEngine
-EffectCommitCoordinator
-TransitionCoordinator
+canonical labeling
+normalization
+typed substitution
+composition
+matching
+unification
+projection
+scope/context/time qualification
+semantic equivalence
 ```
 
-Names above describe generic responsibilities, not domain semantics.
-
-### 14.3 Admission gate
-
-A transition requires:
-
-- a durable event occurrence;
-- an exact transition-authorized EventSchema revision;
-- an active exact TransitionContract revision linked by reviewed authority;
-- independent active epistemic admission into the target context;
-- structural equivalence between admitted proposition content and the target-context event application;
-- non-negated, transitioning occurrence status;
-- resolvable required participant bindings;
-- satisfied or explicitly handled preconditions.
-
-Attributed content may cross into another context only through explicit epistemic admission. Matching record IDs or metadata are not sufficient.
-
-### 14.4 Preview and proof
-
-Preview must be non-mutating and produce either:
-
-```text
-TransitionPreview
-  -> StateDelta candidates
-  -> TransitionProof
-```
-
-or explicit blocked reasons/frontiers.
-
-Each proof must pin:
-
-- exact event occurrence;
-- exact transition-contract revision;
-- exact epistemic-admission revisions;
-- exact pre-transition state-assignment revisions used by conditions;
-- condition evidence;
-- exact derived delta refs;
-- target context;
-- resolved effective time;
-- evidence/provenance.
-
-Unresolved semantic time references must remain frontiers until a concrete timeline timestamp is explicitly resolved; they must never be parsed by naming convention.
-
-### 14.5 State timeline rules
-
-- state assignments are revisioned/interval-based, never destructively overwritten;
-- exclusivity/order/domain/holder applicability comes from StateDimension/StateValue schemas;
-- scalar direction requires an ordered domain and explicit target semantics; the kernel does not infer arithmetic from labels;
-- defaults are never transition effects;
-- every committed delta must be reproducible from its exact reviewed contract effect and pre-state proof.
-
-### 14.6 Capability dependency rules
-
-Capabilities are reevaluated through separate generic dependency records after projected state changes.
-
-- an event contract must not directly encode named capability mutations;
-- a capability dependency targets exact action/type/state schema revisions;
-- unavailable/blocked/conditional/available changes remain distinguishable;
-- function semantics remain independent of current capability.
-
-### 14.7 Atomic commit
-
-The effect commit must use one snapshot-pinned/CAS GraphPatch containing all authorized records required for the transition, including proof, deltas, immutable timeline revisions, and capability reevaluation.
-
-A stale snapshot, changed boot/overlay fingerprint, missing revision, retracted admission, altered pre-state, forged delta, or dependency mismatch must reject the commit rather than recompute silently.
-
-### 14.8 Deliberate Phase-11 boundary
-
-Phase 11 does **not** fabricate genericity that the data model cannot yet express.
-
-- relation/role lifecycle effects require first-class generic lifecycle/delta records before activation;
-- causal chaining is not inferred from sequence;
-- impact/importance remains a later assessment stage;
-- no domain transition contracts are seeded into the structural foundation merely for demonstrations;
-- runtime cutover remains separate from phase implementation.
-
-### 14.9 Exit gate
-
-Phase 11 passes only when synthetic/adversarial reviewed contracts prove that:
-
-- the same kernel executes multiple structurally different transitions without named branches;
-- non-occurring/negated/unadmitted/context-isolated events cannot mutate state;
-- preview is non-mutating;
-- proofs pin exact authority/pre-state revisions;
-- forged effects fail commit validation;
-- stale plans fail CAS;
-- state history remains immutable/queryable;
-- capability effects arise only through separate dependencies;
-- restart reproduces committed records;
-- canonical foundation contains zero convenience domain transition seed.
+## Tests
+- serialization round-trip;
+- alpha-renaming invariance;
+- ordering independence;
+- graph isomorphism canonical identity;
+- qualification/scope distinctions;
+- proof-lineage stability.
 
 ---
 
-## 15. Phase 12 — Cross-domain transition vertical-slice proof
+# Phase 7 — Definition/profile/parameter authority split and exact closure compiler
 
-### Objective
-
-Prove that Phases 2–11 form a reusable learning-first transition architecture by running several independently reviewed **domain packages** through the same kernel with zero new semantic control-flow branches.
-
-Phase 12 is a proof program, not a new kernel ontology.
-
-### 15.1 Package selection
-
-Select multiple unrelated promoted/test-only packages whose transition structures exercise different generic phenomena, such as:
-
-- irreversible terminal state change;
-- reversible activation/deactivation or restoration;
-- ordered/scalar/resource state change;
-- externally caused localization/movement;
-- capability changes that depend on resulting state;
-- polysemous surface forms that resolve to different schemas by type/context.
-
-The package names and lexical forms are deliberately **not specified here**. They must be replaceable without kernel changes.
-
-### 15.2 Required contrast matrix
-
-For every applicable package, test contrasts covering:
-
-- admitted positive actual occurrence;
-- truth negation;
-- possibility/modality;
-- prevented/failed/non-occurring event;
-- hypothetical/counterfactual content;
-- attributed report not admitted to target context;
-- fictional/simulated context isolation;
-- ambiguous/polysemous lexicalization;
-- stale/retracted admission;
-- conflicting pre-state;
-- restart after commit;
-- correction/retraction and invalidation.
-
-### 15.3 Cross-domain invariants
-
-The slice must prove:
-
-- no new kernel branch or enum was added for any package;
-- no package relies on semantic-key/name inspection;
-- all effects originate from reviewed contracts;
-- all context crossing is epistemically explicit;
-- the same transition compiler/preview/validator/projector/commit coordinator executes every package;
-- capabilities change only through dependency records;
-- historical identity and state remain queryable after terminal/irreversible transitions;
-- external movement is not conflated with self-initiated capability;
-- truth polarity, occurrence, change direction, capability status, valence, and importance remain orthogonal;
-- impact is assessed later from committed/proposed consequences and stakeholder context, never baked into transition semantics;
-- equivalent UOL across language packages yields equivalent transition semantics.
-
-### 15.4 Relation/role effects gate
-
-A vertical slice that requires ending/creating a relation or role may only activate after a generic relation/role lifecycle/delta representation is specified, implemented, validated, persisted, and proof-bound. Until then, the slice must expose an explicit frontier rather than use a custom helper.
-
-### 15.5 Exit gate
-
-Phase 12 passes only when at least three structurally distinct packages satisfy the full path:
+## Implement
 
 ```text
-form evidence
--> grounding
--> UOL composition
--> claim/epistemic placement where applicable
--> independently admitted event
--> generic transition preview
--> proof-bearing atomic commit
--> state/capability projection
--> restart/re-query
+SemanticDefinition
+OperationalProfile
+DynamicsParameterArtifact
+ObservationModel
+CausalMechanism
+UseAuthorization
+DefinitionClosureResolver
+SemanticDefinitionCompiler
+CSIRNormalizer
+ClosureProof
+AuthoritySnapshotV351
 ```
 
-with zero package-specific kernel edits.
+## Reject
+- floating executable dependencies;
+- semantic/lifecycle/privacy/competence bundling into one meaning revision.
 
-A detailed executable test matrix is maintained in `docs/implementation/v350-phase-12-plan.md` rather than encoding domain concepts in this root plan.
+## Exit
+Every executable higher-order concept has exact closure proof.
 
 ---
 
-## 16. Phase 13 — Learning-first promotion coordinator
+# Phase 8 — UOL/schema → CSIR compatibility compiler and early shadow migration
 
-### Objective
-
-Turn unresolved frontiers, explicit teaching, repeated evidence, corrections, and counterexamples into reviewable semantic packages without letting examples become definitions or letting the learning subsystem become a second semantic authority.
-
-Phase 13 owns **candidate-package lifecycle and promotion decisions**. It does not own the meaning of learned schemas after promotion; promoted records must enter the same canonical schema/language/transition authorities already used by Phases 2–12.
-
-### 16.1 Governing laws
-
-- learning evidence is not semantic authority by itself;
-- one example never silently becomes a definition;
-- repeated examples may raise support but do not bypass contradiction/counterexample checks;
-- promotion is per exact record revision and per authorized use;
-- lexical evidence, schema structure, transition behavior, realization, and response policy remain independently promotable;
-- candidate packages declare exact dependencies and unresolved frontier nodes;
-- promoted packages survive restart through the normal reviewed data/store path;
-- corrections/retractions create explicit invalidation and recomputation, not destructive history rewrite;
-- learning budgets bound recursion, package breadth, competence generation, and dependency expansion;
-- no learning coordinator branch may inspect a domain concept, language word, predicate name, or demonstration fixture to choose semantics.
-
-### 16.2 First-class durable learning records
-
-Implement revisioned records for at least:
+## Implement
 
 ```text
-LearningPackageRecord
-LearningFrontierRecord
-LearningEvidenceLink
-CompetenceResultRecord
-PromotionDecisionRecord
-LearningInvalidationRecord
+legacy record
+→ deterministic CSIR compilation
+→ normalization
+→ equivalence/closure report
 ```
 
-The records must preserve exact evidence/provenance, dependencies, candidate revisions, counterevidence, competence scope, promotion policy, use authorization, invalidation lineage, permission/privacy scope, and deterministic fingerprints.
-
-### 16.3 Package families
-
-The coordinator must support packages for structural families rather than named concepts:
-
-- referent/identity;
-- semantic type and inheritance;
-- facet entitlement;
-- property/state/value structure;
-- action/event schema;
-- transition/dependency contract;
-- relation/role/rule;
-- lexical form/sense/construction;
-- realization knowledge;
-- response-policy knowledge.
-
-This list identifies record families, not a boot vocabulary. A package may span several families, but each family must retain independent competence and activation status.
-
-### 16.4 Required runtime components
-
-Implement generic components equivalent in responsibility to:
+Classify migrations:
 
 ```text
-FrontierCollector
-EvidenceAggregator
-CandidateStructureInducer
-PackageAssembler
-LearningDependencyResolver
-CompetenceCaseBuilder
-LearningCompetenceRunner
-PromotionPolicyEngine
-PromotionCoordinator
-LearningInvalidationManager
-LearningRetractionCoordinator
-LearningRehydrationCoordinator
+LOSSLESS
+REQUIRES_EXPLICIT_INTERPRETATION
+AMBIGUOUS
+DEPRECATED
+QUARANTINED
 ```
 
-`CandidateStructureInducer` is an evidence-to-candidate interface, not a privileged model authority. Any heuristic/model proposal remains candidate evidence until validated and promoted through canonical record validators.
+Begin Stage-5 shadow comparison now.
 
-### 16.5 Lifecycle
+## Prohibitions
+- no legacy fallback when CSIR fails;
+- no two authoritative brains.
 
-A package must move explicitly through states equivalent to:
+---
+
+# Phase 9 — Grounded referents, minimal state substrate, discourse primitives, English package
+
+## 9A. Grounded semantic substrate
+
+Implement:
+
+```text
+Referent
+type assertions
+aliases/names
+identity candidates
+properties
+relations
+state variables
+time/context
+participant roles
+mention chains
+propositions
+claims
+queries
+gaps
+answer projections
+corrections/retractions
+```
+
+## 9B. Minimum reviewed English package
+
+Must support composition for:
+
+```text
+pronouns/deixis
+proper names
+determiners
+identity/classification
+property/state predication
+possession
+simple relations
+simple events
+negation
+modality/capability
+WH queries
+yes/no queries
+corrections
+definition/teaching
+greetings
+requests/imperatives
+```
+
+Add reviewed morphology and reversible normalization.
+
+No English semantic branches in kernel code.
+
+---
+
+# Phase 10 — Deterministic exact semantic composition baseline
+
+## Objective
+Make basic meaning work before learned recurrent parameters are required.
+
+Pipeline:
+
+```text
+forms/senses/constructions
++ grounding
++ referent/type/state projection
+→ CSIR candidate fragments
+→ hard pruning
+→ typed constraint propagation
+→ bounded discrete search
+→ canonical semantic classes
+→ partial graph/frontiers
+```
+
+This solver becomes:
+- debugging oracle;
+- shadow comparator for recurrent dynamics.
+
+It is not a permanent second brain.
+
+## Exit
+Synthetic vocabulary renaming preserves semantics.
+
+---
+
+# Phase 11 — Epistemic admission, conversational memory, discourse/coreference, query
+
+## Implement
+
+```text
+EpistemicAdmissionPolicy
+ParticipantFrame
+mention/coreference resolution
+open-question state
+clarification targets
+common-ground state
+scoped participant/world belief
+query binder
+proof-path retrieval
+correction/supersession
+```
+
+Admission classes:
+
+```text
+ATTRIBUTED_ONLY
+SESSION_PARTICIPANT_FACT
+SCOPED_USER_ASSERTED_FACT
+CORROBORATION_REQUIRED
+HIGH_RISK_NO_AUTO_ADMISSION
+HYPOTHETICAL_ONLY
+```
+
+## Required end-to-end examples
+
+```text
+My name is Chibu.
+What's my name?
+
+I like mangoes.
+What do I like?
+
+My name is Chibu.
+No, my name is Chibueze.
+What's my name?
+```
+
+No internal role labels may leak into answers.
+
+---
+
+# Phase 12 — Response CSIR, English realization, and Conversational Kernel Alpha
+
+## Implement
+Semantic response families:
+
+```text
+ANSWER_QUERY
+REPORT_STATE
+REPORT_RELATION
+REPORT_EVENT
+ACKNOWLEDGE_TARGETED_CLAIM
+REQUEST_CLARIFICATION
+CORRECT_PRIOR_OUTPUT
+QUALIFY_UNCERTAINTY
+REPORT_CAPABILITY
+ASK_LEARNING_QUESTION
+NO_RESPONSE_REQUIRED
+```
+
+Realization:
+
+```text
+Response CSIR
+→ clause/discourse plan
+→ role/reference realization
+→ morphology
+→ linearization
+→ preservation proof
+→ surface
+```
+
+## Milestone M2 — ENGLISH CONVERSATIONAL KERNEL
+
+Must pass:
+
+### Participant memory
+```text
+My name is Chibu.
+What's my name?
+My full name is Chibueze Opata.
+What's my full name?
+```
+
+### Compositional teaching
+```text
+A zorb is a toy.
+The zorb is blue.
+What is a zorb?
+What color is the zorb?
+```
+
+### Correction
+```text
+My name is Chibu.
+No, my name is Chibueze.
+What's my name?
+```
+
+### Partial meaning
+Unknown material yields clarification/learning frontier without erasing known meaning.
+
+### Discourse follow-up
+```text
+What did you mean?
+Why?
+For what?
+What happened to it?
+```
+
+Tests assert semantic graphs/bindings/response acts, not exact wording.
+
+---
+
+# Phase 13 — Typed activation graph and recurrent attractor solver
+
+## Implement
+
+```text
+SemanticActivationNode
+TypedMessageEdge
+HardConstraintMask
+ActivationTrace
+ConvergenceAssessment
+DynamicsParameterSet
+```
+
+Start with deterministic immutable parameters.
+
+Then implement:
+
+```text
+exact pruning
+→ sparse recurrent propagation
+→ inhibition
+→ convergence/budget
+→ semantic-class clustering
+```
+
+Required message families:
+
+```text
+lexical
+construction
+port/role
+type
+identity
+scope
+time/aspect
+context
+state
+causal expectation
+discourse
+multimodal
+```
+
+Budget exhaustion yields partial cognition, never fabricated certainty.
+
+---
+
+# Phase 14 — Prediction, frontier classifier, and end-to-end learning
+
+## Fix existing learning runtime first
+- invalid `_package` call;
+- undefined dependency variables;
+- preserve dependency pins;
+- no default-empty inducer claim;
+- event-driven promotion.
+
+## Implement candidate inducers
+
+```text
+FormNormalizationInducer
+LexicalizationInducer
+SenseInducer
+ConstructionInducer
+SemanticDefinitionInducer
+StateSchemaInducer
+TransitionCausalInducer
+ParameterCandidateTrainer
+```
+
+## Learning loop
 
 ```text
 frontier
--> candidate
--> evidence_accumulating
--> competence_pending
--> promotable | blocked | contradicted
--> promoted_for_selected_uses
--> superseded | retracted | invalidated
+→ evidence/counterexamples
+→ candidate
+→ exact dependencies
+→ competence
+→ requested scoped uses
+→ promotion
+→ immutable new authority generation
+→ next-cycle activation
+→ restart
+→ replay/invalidation
 ```
 
-No state transition in this lifecycle may silently activate semantic use. Promotion decisions must pin the exact candidate record revisions and exact competence/evidence revisions they relied on.
+## Milestone M3 — WORKING LEARNING
 
-### 16.6 Evidence and counterexamples
+Required test:
+
+```text
+teach genuinely unseen concept
+→ create candidate
+→ promote under policy
+→ restart
+→ understand unseen new composition using learned concept
+→ answer query about it
+```
+
+No custom concept code.
+
+---
+
+# Phase 15 — Full entitled state spaces, role-sensitive transitions, capability dependencies
+
+Expand state domains:
+
+```text
+categorical
+ordered
+continuous
+vector/manifold
+relational
+set-valued
+process-valued
+probabilistic
+```
+
+Implement:
+
+```text
+ParticipantRoleBinding
+StateTransformExpression
+MechanismPrecondition
+MechanismDefeater
+TransitionPreviewProof
+TransitionDistribution
+CapabilityDependencyGraph
+```
+
+Acceptance:
+- active/passive semantic equivalence;
+- cross-type different consequences;
+- no event-name mutators.
+
+---
+
+# Phase 16 — Structural causal model, impact, goals, planning, operations
+
+Implement:
+
+```text
+CausalVariable
+CausalMechanismGraph
+InterventionContext
+CounterfactualContext
+CausalPropagationEngine
+ExplanationExtractor
+ImpactVector
+GoalArbitrator
+CausalPlanner
+```
 
 Support:
 
-- explicit teaching;
-- repeated independent observation;
-- corrections;
-- negative examples/counterexamples;
-- cross-modal corroboration;
-- cross-language lexical evidence;
-- failed competence cases;
-- unresolved grounding/composition/transition frontiers.
-
-Counterexamples must defeat or narrow candidate rules without requiring deletion of the candidate's historical evidence. Contradictory evidence remains independently attributable.
-
-### 16.7 Competence and per-use promotion
-
-Competence must be independently evaluable for relevant use profiles such as:
-
 ```text
-mention
-grounding
-composition
-query
-inference
-transition
-impact
-operation
-realization
-response-policy
+direct deltas
+dependency propagation
+secondary events
+threshold triggers
+bounded recursion
+counterfactual isolation
 ```
 
-A package that can be mentioned or grounded must not thereby become transition-authorized. A transition-capable package must separately satisfy the Phase-11/12 proof contracts. A lexicalization may be promoted without promoting a proposed world rule.
+Keep physical state, affective consequence, reported emotion and response stance separate.
 
-### 16.8 Dependency and recursion safety
-
-- exact dependency revisions are mandatory;
-- dependency cycles are detected before promotion;
-- unresolved dependencies remain frontier nodes;
-- recursive learning has explicit depth/node/time budgets;
-- partial packages remain usable only for independently authorized uses;
-- dependency invalidation propagates deterministically to affected competence/promotion decisions.
-
-### 16.9 Restart, supersession, and invalidation
-
-After restart, the system must reconstruct the same effective promoted authority from durable records. Supersession/retraction/correction must:
-
-- preserve historical revisions and evidence;
-- invalidate dependent materialized views/competence decisions;
-- prevent stale promoted revisions from remaining silently authoritative;
-- require recomputation before dependent higher-risk uses reactivate.
-
-### 16.10 Security, provenance, and privacy
-
-Learning must retain permission/access scope. Evidence learned in one privacy/context scope may not be promoted into broader authority without explicit authorization. Untrusted external content cannot self-authorize executable transition/operation/response policy.
-
-### 16.11 Determinism and performance
-
-Package fingerprints, dependency closure, competence inputs, promotion decisions, and effective active revisions must be deterministic for a pinned snapshot. Expensive induction may be asynchronous in a future runtime, but no pending work may be reported as completed or authoritative.
-
-Index package/evidence/dependency/frontier/promotion/invalidation records for bounded lookup and restart rehydration. Preserve learning frontiers under budget exhaustion.
-
-### 16.12 Acceptance matrix
-
-Phase 13 must prove at minimum:
-
-- explicit teaching creates a candidate, not immediate authority;
-- repeated evidence can advance confidence without bypassing competence;
-- a counterexample narrows/blocks a defeasible candidate;
-- independent use profiles promote independently;
-- a newly learned type inherits structural facets after promotion without Python edits;
-- a newly learned event/transition uses the Phase-11 generic path after separate transition competence;
-- a cross-language lexicalization maps to equivalent UOL without changing schema semantics;
-- restart preserves promoted authority and unresolved frontiers;
-- correction/retraction invalidates dependents and prevents stale use;
-- conflicting evidence preserves alternatives rather than arbitrary winner selection;
-- package renaming does not change structural behavior;
-- adding a learned concept produces zero semantic control-flow diff in kernel paths.
-
-### 16.13 Exit gate
-
-Phase 13 passes only when a newly learned/promoted semantic structure can survive restart and participate **only** in independently competence-authorized uses, with exact evidence/dependency/promotion lineage, counterexample handling, bounded recursive learning, deterministic invalidation, and zero concept-specific kernel branches.
-
-The comprehensive implementation design is maintained in `docs/implementation/v350-phase-13-plan.md`.
+Operations remain explicitly authorized and journaled.
 
 ---
 
-## 17. Phase 14 — Impact, importance, and stakeholder assessment
+# Phase 17 — Multimodal grounding and additional language packs
 
-### Objective
+Add calibrated evidence adapters for:
 
-Assess consequences without conflating them with event truth or transition semantics.
+```text
+speech/prosody
+vision/tracks
+location
+environmental sensors
+runtime telemetry
+operation results
+```
 
-### Required capabilities
+Add additional language packs only through shared semantics.
 
-- stakeholder resolution;
-- proof-bearing impact rules/assessments;
-- importance/significance evidence collection;
-- goal/relation/history/affective/risk/irreversibility evidence with privacy scope;
-- contradiction and uncertainty;
-- durable versus transient significance separated.
-
-### Exit gate
-
-Assessments remain stakeholder/context relative and cannot create or rewrite state facts.
-
----
-
-## 18. Phase 15 — Goals, obligations, and semantic response policy
-
-### Objective
-
-Generate and arbitrate goals from semantic obligations rather than surface intent labels.
-
-### Required capabilities
-
-- answer/act/learn/clarify/qualify/acknowledge/warn/support/silence classes represented through semantic policy data;
-- target-bearing obligations;
-- provenance and literal-policy overrides;
-- conflict arbitration, repetition cost, social/risk constraints;
-- no generic targetless acknowledgement.
-
-### Exit gate
-
-Every selected response/action goal has a semantic target, reason, policy basis, and authorization trace.
+Prove equivalent CSIR for shared competence across:
+- English;
+- at least one typologically different real language;
+- synthetic renamed language.
 
 ---
 
-## 19. Phase 16 — Response UOL planner
+# Phase 18 — Migration completion, shadow comparison, cutover, legacy removal
 
-### Objective
+Run old/new paths on identical observations and compare:
 
-Build proof-carrying response meaning graphs before any target-language realization.
+```text
+grounding
+canonical meaning
+query bindings
+epistemic placement
+durable deltas
+frontiers
+response semantics
+realization
+latency
+storage volume
+```
 
-### Required capabilities
+Cut over only when:
 
-- query closure;
-- perspective transformation;
-- state/property/event/capability reporting;
-- qualification and uncertainty;
-- impact-sensitive discourse acts;
-- exact repair/learning questions;
-- aggregation, ordering, and omission under authorization constraints.
+```text
+all public higher-order meaning compiles to CSIR
+new Stage 0–22 ABI is authoritative
+English conversational kernel passes
+learning→promotion→restart passes
+recurrent solver bounded/calibrated
+state/causal proofs replayable
+runtime manifest pins all roots
+no floating authority
+no legacy fallback
+performance/concurrency gates pass
+```
 
-### Exit gate
+After cutover:
 
-Response UOL contains all and only authorized meaning, with no target-language wording embedded as semantic authority.
-
-The comprehensive implementation design is maintained in `docs/implementation/v350-phase-16-plan.md`.
-
----
-
-## 20. Phase 17 — Multilingual realization algebra
-
-### Objective
-
-Realize Response UOL through language-package grammar/morphology rather than predicate-specific sentences.
-
-### Required capabilities
-
-- deep clause plans;
-- data-driven argument frames;
-- feature unification;
-- reference generation;
-- modality/negation/tense/aspect/scope;
-- coordination;
-- morphology and linearization;
-- semantic round-trip verification;
-- language packages independently reviewable and replaceable.
-
-### Prohibition
-
-Adding a new domain schema must not require adding a full sentence template.
-
-### Exit gate
-
-Shared semantic competence cases round-trip across multiple reviewed language packages without semantic drift.
-
-The comprehensive implementation design is maintained in `docs/implementation/v350-phase-17-plan.md`.
+```text
+legacy UOL public runtime authority = zero
+legacy imports = migration-only or deleted
+signed v3.5.1 release artifacts regenerated deterministically
+```
 
 ---
 
-## 21. Phase 18 — Output discourse and common-ground authority
+# 2. Recommended patch/PR sequence
 
-### Objective
-
-Make system output semantically referable and auditable.
-
-### Required capabilities
-
-- persist emitted output UOL, targets, reasons, commitments, policy refs, realization evidence, and permissions;
-- update common ground only after emission authorization;
-- allow later reference to prior system propositions/events/targets;
-- corrections invalidate dependent common-ground projections.
-
-### Exit gate
-
-Follow-up references can resolve against semantic output history without transcript-string hacks.
-
-The comprehensive implementation design is maintained in `docs/implementation/v350-phase-18-plan.md`.
-
----
-
-## 22. Phase 19 — Migration and semantic equivalence
-
-### Objective
-
-Migrate retained useful legacy data without migrating legacy authority or semantic shortcuts.
-
-### Required capabilities
-
-- explicit source→target ref map;
-- rejected/quarantined records with reasons;
-- semantic-equivalence report;
-- rollback database;
-- learned schemas/rules/referents/knowledge/states/aliases/operations/language data migrated only when representable under v3.5 contracts;
-- no migration adapter remains a permanent competing authority.
-
-### Exit gate
-
-Migrated state is explainable, reversible, and behaviorally equivalent where equivalence is claimed.
-
-The comprehensive implementation design is maintained in `docs/implementation/v350-phase-19-plan.md`.
+```text
+PR1  docs + defect registry + acceptance reset + baseline tools
+PR2  identity + RuntimeEpoch + RuntimeAttestation
+PR3  generation split + store/index/cache/concurrency
+PR4  CycleWorkspace + event-driven maintenance + final status
+PR5  semantic eligibility/effect split + proof realization + stabilization gate
+PR6  new Stage ABI + runtime contracts
+PR7  CSIR v2 + exact closure/authority
+PR8  UOL→CSIR migration/shadow compiler
+PR9  grounded substrate + English package
+PR10 deterministic semantic composition
+PR11 discourse/memory/query
+PR12 Response CSIR + English realization + conversational alpha
+PR13 recurrent dynamics + calibration
+PR14 prediction/frontiers + working learning/promotion/restart
+PR15 state/action/capability
+PR16 causality/impact/goals/operations
+PR17 multimodal/multilingual
+PR18 cutover + legacy removal + signed release
+```
 
 ---
 
-## 23. Phase 20 — Runtime cutover and legacy authority removal
+# 3. Definition of a working v3.5.1
 
-### Objective
+CEMM is not considered working because all stage adapters execute.
 
-Make the v3.5 core loop the sole public semantic authority and physically remove or isolate superseded legacy paths.
+It must:
 
-### Required removals
-
-- direct word/pattern-to-semantic shortcuts;
-- per-predicate response sentences;
-- generic targetless response moves;
-- event-specific mutation helpers;
-- mutable monolithic semantic state blobs;
-- input-only discourse commit shortcuts;
-- source-code semantic type expansion requirements;
-- legacy assemblers/routers that can bypass v3.5 grounding/composition/epistemics/transitions.
-
-### Exit gate
-
-No public runtime request can reach a removed legacy semantic authority path.
-
-The final cutover design is maintained in `docs/implementation/v350-phase-20-plan.md`.
-
----
-
-## 24. Final verification program
-
-Run on a complete repository/runtime environment:
-
-- architecture/data lints and legacy-debt ratchet;
-- all unit and integration tests;
-- declarative semantic competence;
-- Stage-0 through output end-to-end traces;
-- multilingual semantic equivalence and NLG round-trip;
-- epistemic contradiction/correction/retraction;
-- transition and restart/history tests;
-- learning/promotion/restart tests;
-- multimodal grounding;
-- long-session/common-ground/significance tests;
-- migration and rollback;
-- permission/privacy/security boundaries;
-- adversarial stale-revision/context-leakage/forged-proof tests;
-- performance/memory/database/query-plan budgets.
-
----
-
-## 25. Definition of v3.5 completion
-
-v3.5 is complete only when a newly learned/promoted semantic structure can, without new kernel semantic branches:
-
-1. be grounded from one or more evidence modalities;
-2. inherit/project applicable facets;
-3. constrain composition by exact schema contracts;
-4. participate in attributed claims without automatic fact admission;
-5. be independently admitted or opposed with proof;
-6. drive generic event/state transitions when separately transition-authorized;
-7. alter dependent capabilities through generic dependency records;
-8. support inference and contextual assessment;
-9. influence semantic goals/responses;
-10. be queried and explained with lineage;
-11. be realized through multiple language packages;
-12. survive restart and migration;
-13. be corrected/retracted/superseded with dependent invalidation;
-14. preserve uncertainty/frontiers when knowledge is insufficient;
-15. do all of the above without a source-code ontology edit, named event-effect branch, semantic word regex, or ordinary full-sentence template.
+```text
+understand known vocabulary compositionally
+ground self/user/referents
+remember scoped facts
+answer queries with semantic values
+maintain discourse across turns
+preserve uncertainty/partial meaning
+learn a new reusable concept
+reuse it after restart
+construct Response CSIR before text
+realize English without predicate-specific sentence code
+preserve exact authority/proof/replay
+remain performant under concurrent ordinary use
+```

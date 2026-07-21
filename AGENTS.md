@@ -1,230 +1,191 @@
-# CEMM v3.5.1 Governing Agent Instructions — Semantic Brain Architecture
+# CEMM v3.5.1 Governing Agent Instructions
 
-This file is the highest-priority local implementation contract for the v3.5.1 semantic-brain remediation.
+**Status:** highest-priority local implementation contract  
+**Version target:** CEMM v3.5.1  
+**Purpose:** keep every human or AI implementation pass aligned to one architecture, one runtime, one semantic substrate, and one implementation roadmap.
 
 ---
 
-# 1. Primary architecture law
+## 1. Canonical authority order
 
-CEMM has two inseparable planes:
+Use the following documents in this order:
+
+1. `AGENTS.md` — implementation governance and prohibitions.
+2. `ARCHITECTURE.md` — stable target architecture and invariants.
+3. `CORE_LOOP.md` — logical Stage 0–22 cognitive contract.
+4. `RUNTIME_PLAN.md` — concrete runtime ownership, stage artifacts, persistence/effect boundaries, bootstrap, maintenance, re-entry, and migration behavior.
+5. `CEMM_CORE_MATHS.md` — mathematical contract for exact semantics, dynamics, uncertainty, state, causality, learning, and equivalence.
+6. `IMPLEMENTATION_PLAN.md` — the **only active implementation roadmap**.
+7. `CORE_ISSUES.md` — defect register and remediation trace.
+8. `ISSUES_TO_AVOID.md` — mandatory negative/anti-regression contract.
+9. `ACCEPTANCE_CONTRACT.md` — executable release and competence gates.
+10. implementation code and reviewed data.
+
+If a lower document conflicts with a higher document, fix or quarantine the lower document. Do not invent a second path.
+
+`PRE_3_5_1_STABILIZATION_PLAN.md` and `V3_5_1_IMPLEMENTATION_PLAN.md` are superseded by `IMPLEMENTATION_PLAN.md` after this documentation set is adopted.
+
+---
+
+## 2. One-brain rule
+
+CEMM has one canonical semantic brain:
 
 ```text
-exact semantic plane: content-addressed CSIR, definitions, profiles, proofs and authority
-continuous dynamics plane: activation, uncertainty, prediction, learned parameters and recurrent relaxation
+observations
+→ language/multimodal evidence
+→ grounded referents and state spaces
+→ exact CSIR candidates
+→ recurrent semantic dynamics
+→ stable/partial semantic attractors
+→ discourse/epistemic/world structures
+→ query, prediction, causal simulation and learning
+→ goals and Response CSIR
+→ realization
+→ semantic-preservation/effect authorization
+→ emission/common-ground update
 ```
 
-Never replace the exact plane with embeddings or learned weights. Never reduce the dynamic plane to static rule lookup.
-
----
-
-# 2. Meaning and operational specialization
-
-- A specialized record does not imply an irreducible semantic atom.
-- State, event, claim, query, capability, goal, impact and response meanings must compile to CSIR.
-- Operational profiles may add validation/lifecycle/commit behavior but no semantic content.
-- Every high-order executable concept requires an exact definition closure proof.
-
----
-
-# 3. Neural dynamics law
-
-Neural-style computation means:
-
-- sparse activation over typed CSIR candidates;
-- relation-specific message passing;
-- recurrent bottom-up/top-down integration;
-- inhibitory competition among incompatible hypotheses;
-- attractor convergence or explicit incompleteness;
-- prediction-error-driven learning.
-
-It does not mean:
-
-- next-token prediction as semantic authority;
-- opaque embedding equality;
-- an unrestricted neural network bypassing type, scope, context or use authorization;
-- silently mutable model weights.
-
-All promoted parameter artifacts are immutable, versioned and pinned.
-
----
-
-# 4. Grounding law
-
-All text, vision, audio, sensors, telemetry and operation results are evidence.
-
-A modality adapter must preserve:
+There must never be:
 
 ```text
-source
-calibration authority
-time and spatial extent
-identity/track candidates
-state likelihoods
-permission
-lineage
+legacy UOL brain
++ CSIR brain
++ neural brain
 ```
 
-No modality automatically creates truth.
+Legacy UOL/schema material may be migration input or a temporary shadow oracle. It may not be a public fallback after CSIR cutover.
 
 ---
 
-# 5. State-space law
+## 3. Two inseparable computational planes
 
-- Referent types entitle state dimensions.
-- State dimensions have explicit domains and observation/transition contracts.
-- Geospatial, temporal, thermal, physical, structural, biological, cognitive, affective, social, resource, capability and epistemic dimensions remain orthogonal.
-- Cross-dimensional influence requires an explicit causal mechanism.
-- Physical temperature never directly becomes emotion or mood.
-- Defaults remain expectations, never active state.
+### 3.1 Exact semantic plane
+
+Defines what meaning **is**:
+
+- content-addressed CSIR;
+- exact semantic definitions and closure;
+- typed ports, roles, variables, scope, context and time;
+- state dimensions and domains;
+- causal mechanism structure;
+- operational profiles;
+- evidence/proof lineage;
+- exact authority generations.
+
+### 3.2 Dynamic semantic plane
+
+Defines how meaning becomes active, competes, settles, predicts and learns:
+
+- sparse activation;
+- typed relation-specific message passing;
+- bottom-up evidence;
+- top-down semantic prediction;
+- inhibition;
+- uncertainty;
+- recurrent convergence;
+- learned parameter artifacts;
+- prediction error.
+
+Continuous representations and activations never define semantic identity.
 
 ---
 
-# 6. Action and role law
+## 4. Meaning laws
 
-- Grammatical subject/object are language evidence only.
-- Action effects target semantic roles and typed dimensions.
-- Active/passive and cross-language paraphrases with equivalent role-bound CSIR must yield equivalent transition candidates.
-- No event/action name branch in Python.
-- No operation result directly mutates world state; it re-enters as evidence.
+1. A recognized form contributes only the smallest semantic constraints licensed by evidence.
+2. Grammar is evidence about meaning, not ontology.
+3. `subject` is not universally `agent`; `object` is not universally `affected`.
+4. Referent identity is distinct from state continuity.
+5. Defaults are expectations, not active facts.
+6. Claims are not automatically world truth.
+7. Event occurrence is not automatically state mutation.
+8. Simulation is not commit.
+9. Correlation and temporal adjacency are not causal authority.
+10. Response meaning exists before wording.
+11. Realization may choose wording but may not invent semantic content.
+12. Partial understanding is valid cognition and must remain explicit.
 
 ---
 
-# 7. Causal law
+## 5. Authority and control-plane separation
 
-Keep separate:
+Keep these predicates distinct:
 
 ```text
-correlation
-default expectation
-causal mechanism
-intervention effect
-counterfactual result
-logical implication
-temporal sequence
+release-attested
+semantically-defined
+activated/eligible
+epistemically-supported
+permitted-to-read
+permitted-to-retain
+permitted-to-disclose
+permitted-to-mutate
+permitted-to-execute
+competent
+realisable
+emittable
 ```
 
-Causal propagation must be context-isolated, bounded, cycle-detected and proof-bearing.
+Do not replace them with one `authorized` or `trusted` boolean.
 
-Temporal order alone is not causal evidence.
+Normal semantic cognition must not repeatedly perform release verification or execute-level authorization.
+
+Fail-closed effect authorization belongs at the narrowest boundary where an irreversible or protected effect can occur.
 
 ---
 
-# 8. Recursive learning law
+## 6. Runtime and persistence laws
 
-Prediction error must be classified into precise frontiers rather than patched by phrase rules.
+- Stage 0–22 are logical cognitive boundaries, not 23 database transactions.
+- Use a cycle-local `CycleWorkspace` for transient cognition.
+- A cycle pins one immutable semantic authority generation.
+- Mutable world/discourse generations are tracked separately.
+- No semantic authority mutation mid-pass.
+- No global lock across semantic solving.
+- No O(total history) operation for an O(1) write.
+- No per-request full learning promotion scan.
+- No request-frequency runtime telemetry persistence.
+- No `for kind in RecordKind` hot-path resolution.
+- Every cache declares generation ownership and invalidation domains.
 
-Learning separates:
+---
+
+## 7. Learning laws
+
+Separate:
+
+1. episodic/participant knowledge;
+2. lexicalization and language learning;
+3. semantic-definition learning;
+4. state-schema learning;
+5. causal/transition structure learning;
+6. continuous parameter learning;
+7. operational-profile learning;
+8. use authorization/promotion.
+
+A learning loop is complete only when it supports:
 
 ```text
-continuous parameters
-semantic definitions
-causal structure
-language/construction authority
-observation calibration
-operational profiles
-use authorization
+frontier
+→ evidence
+→ candidate
+→ exact dependencies
+→ competence/counterexamples
+→ scoped promotion decision
+→ immutable new authority generation
+→ next-cycle use
+→ restart rehydration
+→ replay/invalidation
 ```
 
-Each has independent competence, provenance and promotion.
-
-Co-activation may propose association; it does not prove semantic equivalence or causality.
+Learning candidates do not self-promote merely because they were observed frequently.
 
 ---
 
-# 9. Versioning law
+## 8. Completion vocabulary
 
-A cycle pins all meaning-bearing and dynamics-bearing roots:
-
-```text
-semantic ABI
-compiler/normalizer ABI
-definition closure
-operational profiles
-dynamics parameters
-causal mechanisms and parameters
-use authorizations
-language/multimodal packages
-calibration models
-policies and adapters
-```
-
-Forbidden executable resolution:
-
-```text
-latest
-maximum revision
-minimum compatible revision
-floating authoritative parent
-semantic-key lookup without exact pin
-mutable model file
-```
-
-Historical decisions retain their original authority root.
-
----
-
-# 10. Response law
-
-Response is a semantic action intended to change discourse/common ground.
-
-Generate Response CSIR from grounded query, epistemic, causal, impact and goal state.
-
-No:
-
-- predicate-specific sentence;
-- targetless acknowledgement;
-- keyword-based consolation/warning;
-- unsupported causal explanation;
-- realization-added fact, relationship, affect or certainty.
-
----
-
-# 11. Implementation prohibitions
-
-A patch is invalid if it introduces:
-
-- transcript or phrase matching as cognition;
-- language-specific semantic branches in the kernel;
-- named concept/action/type branches;
-- event-specific mutators;
-- subject/object-based universal effects;
-- universal state fields without entitlement;
-- one confidence scalar replacing structured uncertainty;
-- correlation treated as causal authority;
-- embeddings treated as semantic identity;
-- unpinned or in-place mutable neural parameters;
-- claims/defaults/simulations committed as actual state;
-- response text before Response CSIR;
-- weakening of round-trip, authority or emission gates.
-
----
-
-# 12. Required tests for every semantic change
-
-Where applicable include:
-
-```text
-positive and negative case
-paraphrase and active/passive contrast
-synthetic vocabulary rename
-cross-language equivalent role graph
-cross-type consequence contrast
-context/hypothetical/counterfactual isolation
-multimodal evidence agreement and disagreement
-state-domain and entitlement contrast
-causal defeater/counterexample
-recursive propagation cycle bound
-restart/rehydration
-exact authority-root change
-prediction-error frontier
-no-shortcut lint
-```
-
----
-
-# 13. Completion gates
-
-A component is complete only when:
+A component is complete only when applicable statuses are all true:
 
 ```text
 specified
@@ -232,15 +193,95 @@ implemented
 wired
 authoritative
 verified
-calibrated where probabilistic
-replayable where learned or stateful
+calibrated
+replayable
 ```
 
-A neural/dynamics component additionally requires:
+Do not call a phase complete because files, schemas, or tests merely exist.
 
-- exact parameter artifact;
-- training/evidence lineage;
-- calibration report;
-- independent competence;
-- drift/invalidation behavior;
-- deterministic or tolerance-bounded replay.
+---
+
+## 9. Mandatory implementation workflow
+
+For every phase:
+
+1. read the relevant canonical contracts;
+2. identify old authority and new authority;
+3. state exact invariants preserved;
+4. implement the smallest coherent vertical slice;
+5. add positive, negative, partial and restart tests;
+6. run anti-regression lints;
+7. run architecture/competence tests;
+8. run performance/concurrency tests where relevant;
+9. update `CORE_ISSUES.md`;
+10. only then update status to verified.
+
+Never weaken tests, hide blockers, add dummy adapters, or patch signed hashes manually.
+
+---
+
+## 10. Forbidden shortcuts
+
+A patch is invalid if it introduces or preserves as public authority:
+
+- transcript/phrase matching as cognition;
+- English word checks in the semantic kernel;
+- named concept/action/type branches;
+- predicate-specific response sentences;
+- event-specific state mutators;
+- subject/object-based universal effects;
+- universal state fields without entitlement;
+- confidence used as authority;
+- embeddings used as semantic identity;
+- unpinned executable semantic dependencies;
+- mutable in-place promoted neural parameters;
+- claims/defaults/simulations committed as actual state without policy;
+- response text before Response CSIR;
+- hidden legacy fallback;
+- fake authority records;
+- verifier exclusions to force activation.
+
+---
+
+## 11. Required test dimensions
+
+Where applicable, every semantic change includes:
+
+```text
+positive case
+negative case
+partial/ambiguous case
+correction/retraction case
+synthetic vocabulary rename
+paraphrase
+active/passive contrast
+cross-type contrast
+context/hypothetical/counterfactual isolation
+restart/rehydration
+authority-generation change
+prediction-error frontier
+no-shortcut lint
+performance budget
+```
+
+---
+
+## 12. Release law
+
+Correct order:
+
+```text
+implementation
+→ behavior tests
+→ semantic competence tests
+→ learning/restart tests
+→ performance/concurrency tests
+→ migration/shadow evidence
+→ boot/release artifacts
+→ exact authority roots
+→ deterministic verification report
+→ signed release manifest
+→ cutover
+```
+
+Never sign first and then make behavior fit the artifact.
