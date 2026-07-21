@@ -6,6 +6,7 @@ import unicodedata
 from typing import Iterable
 
 from ..schema.model import UseOperation, semantic_fingerprint
+from ..final_activation import decide_turn_language
 from .adapters import SyntaxAdapterHub, SyntaxAdapterInput
 from .constructions import ConstructionMatcher
 from .morphology import ProductiveMorphologyAnalyzer
@@ -59,7 +60,16 @@ class FormLatticeAnalyzer:
         forms, normalization = self._forms(content, observations, language_evidence)
         lexemes = self._lexemes(forms)
         senses = self._senses(forms, lexemes)
-        tags = tuple(sorted({item.language_tag for item in language_evidence}))
+        language_decision = decide_turn_language(
+            observations, forms, language_hints
+        )
+        # Syntax adapters receive only positive lexical/form evidence when
+        # available. Weak script-compatible tags stay span evidence and never
+        # manufacture turn-level multilinguality.
+        tags = (
+            language_decision.positive_language_tags
+            or tuple(sorted({item.language_tag for item in language_evidence}))
+        )
         dependency, constituency = self.syntax_adapters.analyze(SyntaxAdapterInput(
             source_ref=source_ref,
             content=content,
@@ -77,7 +87,7 @@ class FormLatticeAnalyzer:
             covered.update(range(item.span.start, item.span.end))
         unresolved = tuple(
             item.span for item in observations
-            if item.category not in {"punctuation", "symbol"}
+            if item.category not in {"punctuation", "symbol", "whitespace"}
             and not any(index in covered for index in range(item.span.start, item.span.end))
         )
         lattice_ref = "form-lattice:" + semantic_fingerprint(
@@ -98,8 +108,12 @@ class FormLatticeAnalyzer:
             lexeme_candidates=lexemes,
             unresolved_spans=unresolved,
             metadata={
-                "code_switching": len(tags) > 1,
+                "code_switching": language_decision.code_switching,
                 "language_tags": tags,
+                "turn_language_tag": language_decision.language_tag,
+                "turn_language_confidence": language_decision.confidence,
+                "turn_language_competing_tags": language_decision.competing_tags,
+                "positive_language_tags": language_decision.positive_language_tags,
                 "dependency_parse_refs": tuple(item.parse_ref for item in dependency),
                 "constituency_parse_refs": tuple(item.parse_ref for item in constituency),
             },
@@ -465,7 +479,7 @@ class FormLatticeAnalyzer:
             ))
 
         for form_candidate in forms:
-            lexeme_path_used = False
+            usable_lexeme_candidate_emitted = False
             for lexeme_candidate in sorted(
                 lexemes_by_form.get(form_candidate.candidate_ref, ()),
                 key=lambda item: item.candidate_ref,
@@ -476,9 +490,9 @@ class FormLatticeAnalyzer:
                 )
                 if not links:
                     continue
-                lexeme_path_used = True
                 for link in links:
                     sense = self.registry.require_sense(link.sense_ref, link.sense_revision)
+                    before = len(result)
                     append_candidate(
                         form_candidate,
                         sense,
@@ -491,7 +505,11 @@ class FormLatticeAnalyzer:
                         authority_path="lexeme",
                         authority_ref=link.link_ref,
                     )
-            if lexeme_path_used:
+                    if len(result) > before:
+                        usable_lexeme_candidate_emitted = True
+            # A canonical lexeme link that yields no GROUND-authorized sense must
+            # not suppress the explicit bounded signed compatibility path.
+            if usable_lexeme_candidate_emitted:
                 continue
 
             # Explicitly bounded compatibility path for signed legacy boot data.
@@ -576,6 +594,7 @@ class FormLatticeAnalyzer:
                     f"semantic-contribution-spec:{spec.spec_ref}@{spec.revision}",
                 ),
                 metadata={
+                    **dict(spec.metadata),
                     "authority_path": "semantic_contribution_spec",
                     "source_role": spec.source_role_ref,
                 },
@@ -767,8 +786,14 @@ class FormLatticeAnalyzer:
                 nodes.append(LatticeNode(gap_ref, LatticeNodeKind.GAP, item.span, gap, item.confidence, item.evidence_refs))
                 edge_ref = "lattice-edge:" + semantic_fingerprint("edge", (gap_ref, ref, "ellipsis"), 20)
                 edges.append(LatticeEdge(edge_ref, gap_ref, ref, LatticeEdgeKind.ELLIPSIS, item.confidence, item.evidence_refs))
+        seen = set()
+        unique_nodes = []
+        for node in sorted(nodes, key=lambda item: (item.span.start, item.span.end, item.node_kind.value, item.node_ref)):
+            if node.node_ref not in seen:
+                seen.add(node.node_ref)
+                unique_nodes.append(node)
         return (
-            tuple(sorted(nodes, key=lambda item: (item.span.start, item.span.end, item.node_kind.value, item.node_ref))),
+            tuple(unique_nodes),
             tuple(sorted(edges, key=lambda item: item.edge_ref)),
         )
 

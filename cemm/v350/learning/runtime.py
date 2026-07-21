@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ..schema.model import SchemaClass
 from ..storage.model import RecordKind
+from ..runtime_kernel import FrontierClass
 from .frontier import EvidenceAggregator, FrontierObservation
 from .model import LearningPackageStatus, PromotionDecisionKind
 from .promotion import PromotionCoordinator, PromotionPolicyEngine
@@ -30,6 +31,72 @@ class TypedRuntimeFrontierCompiler:
 
         lattice = cycle.artifacts.get("form_lattice")
         if lattice is not None:
+            senses_by_form = {}
+            for sense in getattr(lattice, "sense_candidates", ()):
+                senses_by_form.setdefault(
+                    sense.form_candidate_ref, []
+                ).append(sense)
+            for form in getattr(lattice, "form_candidates", ()):
+                if senses_by_form.get(form.candidate_ref):
+                    continue
+                add(FrontierObservation(
+                    missing_contract=(
+                        "lexical_sense:"
+                        f"{form.form_ref}@{form.form_revision}"
+                    ),
+                    expected_record_kinds=(
+                        RecordKind.LEXEME,
+                        RecordKind.FORM_LEXEME_LINK,
+                        RecordKind.LEXICAL_SENSE,
+                        RecordKind.LEXEME_SENSE_LINK,
+                        RecordKind.SEMANTIC_CONTRIBUTION_SPEC,
+                    ),
+                    expected_schema_classes=(),
+                    accepted_anchor_types=(
+                        "form_candidate",
+                        "lexical_sense",
+                    ),
+                    evidence_refs=form.evidence_refs
+                    or (lattice.lattice_ref,),
+                    candidate_refs=(),
+                    target_ref=form.form_ref,
+                    context_ref=cycle.context_ref,
+                    permission_ref=cycle.permission_ref,
+                ))
+            for sense in getattr(lattice, "sense_candidates", ()):
+                semantic = tuple(
+                    contribution
+                    for contribution in sense.contributions
+                    if contribution.contribution_kind.value
+                    != "grammatical_feature"
+                )
+                if semantic or bool(
+                    sense.metadata.get("semantic_targetless", False)
+                ):
+                    continue
+                add(FrontierObservation(
+                    missing_contract=(
+                        "semantic_contribution:"
+                        f"{sense.sense_ref}@{sense.sense_revision}"
+                    ),
+                    expected_record_kinds=(
+                        RecordKind.SEMANTIC_CONTRIBUTION_SPEC,
+                        RecordKind.CONSTRUCTION,
+                        RecordKind.CONSTRUCTION_PROGRAM,
+                    ),
+                    expected_schema_classes=(),
+                    accepted_anchor_types=(
+                        "lexical_sense",
+                        "semantic_contribution",
+                        "semantic_construction",
+                    ),
+                    evidence_refs=sense.evidence_refs
+                    or (lattice.lattice_ref,),
+                    candidate_refs=(),
+                    target_ref=sense.sense_ref,
+                    context_ref=cycle.context_ref,
+                    permission_ref=cycle.permission_ref,
+                ))
             for span in getattr(lattice, "unresolved_spans", ()):
                 add(FrontierObservation(
                     missing_contract=f"form_span:{span.start}:{span.end}",
@@ -46,6 +113,33 @@ class TypedRuntimeFrontierCompiler:
                     context_ref=cycle.context_ref,
                     permission_ref=cycle.permission_ref,
                 ))
+
+        bundle = cycle.artifacts.get("meaning_bundle")
+        if (
+            bundle is not None
+            and bundle.metadata.get("selection_authority")
+            == "ambiguous_semantic_clusters"
+        ):
+            add(FrontierObservation(
+                missing_contract="meaning_selection:semantic_cluster_ambiguity",
+                expected_record_kinds=(
+                    RecordKind.SCHEMA,
+                    RecordKind.SEMANTIC_APPLICATION,
+                ),
+                expected_schema_classes=(),
+                accepted_anchor_types=(
+                    "meaning_hypothesis",
+                    "clarification",
+                ),
+                evidence_refs=bundle.evidence_refs
+                or (cycle.cycle_ref,),
+                candidate_refs=tuple(
+                    bundle.selection.close_alternative_refs
+                ),
+                target_ref=None,
+                context_ref=cycle.context_ref,
+                permission_ref=cycle.permission_ref,
+            ))
 
         grounding = cycle.artifacts.get("grounding_result") or cycle.artifacts.get("grounding_preparation")
         if grounding is not None:
@@ -99,6 +193,38 @@ class TypedRuntimeFrontierCompiler:
                 ))
 
         covered = {item.missing_contract for item in observations.values()}
+        learnable_classes = {
+            FrontierClass.SEMANTIC_LEARNING,
+            FrontierClass.GROUNDING_AMBIGUITY,
+            FrontierClass.REFERENCE_AMBIGUITY,
+            FrontierClass.REALIZATION_GAP,
+        }
+        for frontier in cycle.artifacts.get("runtime_frontiers", ()):
+            if frontier.frontier_class not in learnable_classes and not bool(
+                frontier.metadata.get("learnable", False)
+            ):
+                continue
+            if frontier.missing_contract in covered:
+                continue
+            kinds = (
+                (RecordKind.LEXICAL_SENSE, RecordKind.LEXEME,
+                 RecordKind.LEXEME_SENSE_LINK, RecordKind.LANGUAGE_FORM,
+                 RecordKind.ARGUMENT_FRAME, RecordKind.LINEARIZATION_RULE)
+                if frontier.frontier_class == FrontierClass.REALIZATION_GAP
+                else (RecordKind.SCHEMA, RecordKind.SEMANTIC_APPLICATION)
+            )
+            add(FrontierObservation(
+                missing_contract=frontier.missing_contract,
+                expected_record_kinds=tuple(kinds),
+                expected_schema_classes=(),
+                accepted_anchor_types=(frontier.frontier_class.value,),
+                evidence_refs=frontier.evidence_refs or (cycle.cycle_ref,),
+                candidate_refs=frontier.candidate_refs,
+                target_ref=frontier.target_refs[0] if len(frontier.target_refs) == 1 else None,
+                context_ref=frontier.context_ref,
+                permission_ref=frontier.permission_ref,
+            ))
+            covered.add(frontier.missing_contract)
         compatibility = (
             (("frontier:realization:",), (RecordKind.LEXICAL_SENSE, RecordKind.LEXEME, RecordKind.LEXEME_SENSE_LINK, RecordKind.LANGUAGE_FORM, RecordKind.ARGUMENT_FRAME, RecordKind.LINEARIZATION_RULE), ("response_uol",)),
             (("frontier:operation:", "frontier:operation-"), (RecordKind.OPERATION_ADAPTER_CONTRACT, RecordKind.CAPABILITY_INSTANCE), ("operation_contract",)),
@@ -112,7 +238,12 @@ class TypedRuntimeFrontierCompiler:
                 if ref.startswith(prefixes):
                     matched = (kinds, anchors)
                     break
-            kinds, anchors = matched or ((RecordKind.SCHEMA,), ("runtime_frontier",))
+            # Unknown raw frontier prefixes are diagnostics until a producer emits
+            # a typed learnable RuntimeFrontier. Do not convert every runtime
+            # failure into a generic schema-learning task.
+            if matched is None:
+                continue
+            kinds, anchors = matched
             add(FrontierObservation(
                 missing_contract=ref,
                 expected_record_kinds=tuple(kinds),

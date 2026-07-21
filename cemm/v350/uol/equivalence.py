@@ -138,6 +138,28 @@ def _nodes(graph: UOLGraph) -> dict[str, _Node]:
                 "scope_ref": _external_semantic_ref(graph, referent.scope_ref),
                 "context_count": len(referent.context_refs),
                 "stable_identity_ref": ref if stable_identity else None,
+                # Schema-topic query answers are semantic identities, not generic
+                # anonymous referents. Omitting this made two different schema
+                # topics alpha-equivalent merely because both used storage_kind
+                # SCHEMA_TOPIC.
+                "schema_topic_ref": (
+                    str(
+                        referent.metadata.get("schema_ref")
+                        or referent.metadata.get("schema_topic_ref")
+                        or ""
+                    )
+                    if referent.storage_kind.value == "schema_topic"
+                    else None
+                ),
+                "schema_topic_revision": (
+                    int(
+                        referent.metadata.get("schema_revision")
+                        or referent.metadata.get("schema_topic_revision")
+                        or 0
+                    )
+                    if referent.storage_kind.value == "schema_topic"
+                    else None
+                ),
             },
             tuple(edges),
         )

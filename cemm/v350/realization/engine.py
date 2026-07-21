@@ -251,6 +251,15 @@ class RealizationCompiler:
   def realize_filler(filler_class,ref):
    cls=PortFillerClass(filler_class)
    if cls==PortFillerClass.REFERENT:
+    query_referent=response.graph.referents.get(ref)
+    bound_kind="" if query_referent is None else str(query_referent.metadata.get("query_bound_value_kind",""))
+    if bound_kind:
+     from .bound_values import BoundValueLexicalizer
+     bound=BoundValueLexicalizer(self.store)
+     if bound_kind=="schema_topic":
+      surface,pins=bound.realize_schema_topic(query_referent,request);lex_pins.extend(pins);return surface
+     if bound_kind=="literal":
+      surface,pins=bound.realize_literal(query_referent,response,request);lex_pins.extend(pins);return surface
     surface,reference_plan=self.reference_resolver.realize(ref,request,request_pin);reference_plans.append(reference_plan);ref_pins.append(PinnedRecord(RecordKind.REFERENCE_PLAN,reference_plan.reference_ref,1,record_fingerprints(RecordKind.REFERENCE_PLAN,reference_plan)[1]));return surface
    if cls==PortFillerClass.SEMANTIC_APPLICATION:return realize_clause(ref)
    if cls==PortFillerClass.COORDINATION_GROUP:return realize_coordination(ref)
@@ -358,6 +367,15 @@ class RoundTripVerifier:
    proofs=(analyzer_contract_pin.record_ref,)
    return SemanticRoundTripRecord(roundtrip_ref='roundtrip:'+semantic_fingerprint('semantic-roundtrip',(candidate_pin.key,analyzer_contract_pin.key,analyzer.analyzer_ref,analyzer.analyzer_revision,recovered,expected,drift),24),request_pin=request_pin,surface_candidate_pin=candidate_pin,analyzer_contract_pin=analyzer_contract_pin,analyzer_ref=analyzer.analyzer_ref,analyzer_revision=analyzer.analyzer_revision,recovered_graph_fingerprint=recovered,expected_graph_fingerprint=expected,decision=RoundTripDecision.FAIL,additions=(),losses=(),drift_refs=drift,proof_refs=tuple(proofs))
   recovered_graph=_drop_unreferenced_referents(recovered_graph)
+  candidate_stored=self.store.get_record(
+   candidate_pin.record_kind,candidate_pin.record_ref,candidate_pin.revision
+  )
+  if candidate_stored is None or candidate_stored.record_fingerprint!=candidate_pin.record_fingerprint:
+   raise ValueError('stale/missing surface candidate during roundtrip normalization')
+  recovered_graph,topic_proofs=_normalize_schema_topic_answers(
+   expected_graph,recovered_graph,candidate_stored.payload
+  )
+  proofs=tuple((*proofs,*topic_proofs))
   assessment=compare_uol_graphs(expected_graph,recovered_graph)
   decision=RoundTripDecision.PASS if assessment.equivalent else RoundTripDecision.FAIL
   expected=expected_graph.record_fingerprint
@@ -383,3 +401,99 @@ def _drop_unreferenced_referents(graph:UOLGraph)->UOLGraph:
   impact_assessments=graph.impact_assessments,importance_assessments=graph.importance_assessments,
   root_refs=graph.root_refs,unresolved_refs=graph.unresolved_refs,assumptions=graph.assumptions,evidence_refs=graph.evidence_refs,
  )
+
+def _normalize_schema_topic_answers(expected:UOLGraph,recovered:UOLGraph,candidate):
+ """Normalize exact lexical schema mentions only at the round-trip boundary.
+
+ A bound query schema-topic is a first-class semantic answer node. Ordinary
+ lexical understanding may recover the same standalone lexical item as a
+ zero/conceptually-open predicate application. This normalization is permitted
+ only when the exact expected schema pin is present and the recovered
+ application contains no concrete argument filler. It never maps one schema to
+ another and never ignores extra concrete meaning.
+ """
+ if not getattr(candidate,"lexical_pins",()):
+  return recovered,()
+ expected_topics=[]
+ for root in expected.root_refs:
+  if root.filler_class!=PortFillerClass.REFERENT:continue
+  referent=expected.referents.get(root.ref)
+  if referent is None or referent.storage_kind.value!="schema_topic":continue
+  schema_ref=str(referent.metadata.get("schema_ref") or referent.metadata.get("schema_topic_ref") or "")
+  schema_revision=int(referent.metadata.get("schema_revision") or referent.metadata.get("schema_topic_revision") or 0)
+  if schema_ref and schema_revision>0:expected_topics.append((root,referent,schema_ref,schema_revision))
+ if not expected_topics:return recovered,()
+
+ roots=list(recovered.root_refs);apps=dict(recovered.applications);refs=dict(recovered.referents);variables=dict(recovered.variables)
+ proofs=[];removed_apps=set();removed_variable_refs=set()
+ for expected_root,expected_referent,schema_ref,schema_revision in expected_topics:
+  # Exact schema-topic recovery already needs no normalization.
+  if any(
+   root.filler_class==PortFillerClass.REFERENT
+   and (ref:=recovered.referents.get(root.ref)) is not None
+   and ref.storage_kind.value=="schema_topic"
+   and str(ref.metadata.get("schema_ref") or ref.metadata.get("schema_topic_ref") or "")==schema_ref
+   and int(ref.metadata.get("schema_revision") or ref.metadata.get("schema_topic_revision") or 0)==schema_revision
+   for root in roots
+  ):continue
+  candidates=[]
+  for root in roots:
+   if root.filler_class!=PortFillerClass.SEMANTIC_APPLICATION:continue
+   app=apps.get(root.ref)
+   if app is None or app.schema_ref!=schema_ref or app.schema_revision!=schema_revision:continue
+   concrete=False
+   for binding in app.bindings:
+    for filler in binding.fillers:
+     if not isinstance(filler,FillerRef) or filler.filler_class!=PortFillerClass.SEMANTIC_VARIABLE:
+      concrete=True;break
+    if concrete:break
+   if not concrete:candidates.append((root,app))
+  if len(candidates)!=1:continue
+  root,app=candidates[0]
+  roots.remove(root);removed_apps.add(app.application_ref);apps.pop(app.application_ref,None)
+  removed_variable_refs.update(
+   filler.ref
+   for binding in app.bindings
+   for filler in binding.fillers
+   if isinstance(filler,FillerRef) and filler.filler_class==PortFillerClass.SEMANTIC_VARIABLE
+  )
+  refs[expected_referent.referent_ref]=expected_referent
+  roots.append(FillerRef(PortFillerClass.REFERENT,expected_referent.referent_ref))
+  proofs.append(f"roundtrip-normalization:schema-topic:{schema_ref}@{schema_revision}")
+
+ if not removed_apps:return recovered,()
+ referenced_variables={
+  filler.ref
+  for app in apps.values()
+  for binding in app.bindings
+  for filler in binding.fillers
+  if isinstance(filler,FillerRef) and filler.filler_class==PortFillerClass.SEMANTIC_VARIABLE
+ }
+ referenced_variables.update(
+  root.ref for root in roots if root.filler_class==PortFillerClass.SEMANTIC_VARIABLE
+ )
+ removable_variables=removed_variable_refs-referenced_variables
+ variables={
+  ref:value for ref,value in variables.items()
+  if ref not in removable_variables
+ }
+ unresolved=tuple(
+  ref for ref in recovered.unresolved_refs
+  if ref not in removable_variables and ref not in removed_apps
+ )
+ return UOLGraph(
+  graph_ref=recovered.graph_ref,
+  referents=refs,applications=apps,variables=variables,
+  coordination_groups=recovered.coordination_groups,
+  propositions=recovered.propositions,claims=recovered.claims,events=recovered.events,
+  scope_relations=tuple(
+   rel for rel in recovered.scope_relations
+   if rel.operator_application_ref not in removed_apps
+   and rel.scoped_ref.ref not in removed_apps
+  ),
+  state_deltas=recovered.state_deltas,capability_deltas=recovered.capability_deltas,
+  impact_assessments=recovered.impact_assessments,
+  importance_assessments=recovered.importance_assessments,
+  root_refs=tuple(sorted(roots,key=lambda item:(item.filler_class.value,item.ref))),
+  unresolved_refs=unresolved,assumptions=recovered.assumptions,evidence_refs=recovered.evidence_refs,
+ ),tuple(proofs)

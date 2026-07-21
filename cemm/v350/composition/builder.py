@@ -22,6 +22,7 @@ from ..language.model import (
 )
 from ..language.programs import ConstructionProgramCompiler
 from ..facets.closure import SemanticClosureCandidate
+from ..final_activation import enumerate_form_paths
 from ..schema.model import OpenBindingPurpose, PortFillerClass, UseOperation, semantic_fingerprint
 from ..storage import SemanticStore, StoreSnapshot
 from .model import (
@@ -83,6 +84,35 @@ class MeaningFactorGraphBuilder:
             senses_by_form[sense.form_candidate_ref].append(sense)
             evidence.update(sense.evidence_refs)
 
+        # A form lattice is a lattice of alternative explanations, not a bag of
+        # simultaneous tokens. Make exact/variant/morphology/multiword coverage a
+        # first-class bounded factor variable before activating lexical senses.
+        form_paths = enumerate_form_paths(
+            lattice.observations, lattice.form_candidates
+        )
+        form_path_var_ref = _var_ref(
+            "form-path", lattice.lattice_ref, context_ref
+        )
+        variables.append(MeaningVariable(
+            variable_ref=form_path_var_ref,
+            variable_kind=MeaningVariableKind.FORM_PATH,
+            values=tuple(
+                MeaningValue(
+                    value_ref=path.path_ref,
+                    score=path.score,
+                    evidence_refs=path.evidence_refs or (lattice.lattice_ref,),
+                    metadata={
+                        "selected_form_candidate_refs":
+                            path.selected_form_candidate_refs,
+                        "gap_observation_refs": path.gap_observation_refs,
+                    },
+                )
+                for path in form_paths
+            ),
+            evidence_refs=(lattice.lattice_ref,),
+            metadata={"exact_observation_coverage": True},
+        ))
+
         # Stage-5 sense/schema variables.  The exact target schema revision is
         # carried by the lexical candidate and validated against schema use.
         sense_var_for_form: dict[str, str] = {}
@@ -99,7 +129,16 @@ class MeaningFactorGraphBuilder:
             variables.append(MeaningVariable(
                 variable_ref=sense_var_ref,
                 variable_kind=MeaningVariableKind.SENSE,
-                values=tuple(
+                values=(
+                    MeaningValue(
+                        value_ref=_INACTIVE,
+                        score=0.0,
+                        evidence_refs=tuple(sorted({
+                            ref for item in candidates for ref in item.evidence_refs
+                        })) or (lattice.lattice_ref,),
+                        metadata={"inactive": True},
+                    ),
+                    *tuple(
                     MeaningValue(
                         value_ref=item.candidate_ref,
                         score=_confidence_logit(item.confidence),
@@ -121,13 +160,43 @@ class MeaningFactorGraphBuilder:
                         },
                     )
                     for item in candidates
+                    ),
                 ),
                 evidence_refs=tuple(sorted({ref for item in candidates for ref in item.evidence_refs})),
                 metadata={"form_candidate_ref": form_ref},
             ))
+            path_links = []
+            for path in form_paths:
+                selected = set(path.selected_form_candidate_refs)
+                if form_ref in selected:
+                    path_links.extend(
+                        (path.path_ref, item.candidate_ref)
+                        for item in candidates
+                    )
+                else:
+                    path_links.append((path.path_ref, _INACTIVE))
+            factors.append(_hard_factor(
+                "form-path-sense",
+                (form_path_var_ref, sense_var_ref),
+                tuple(sorted(set(path_links))),
+                tuple(sorted({
+                    ref for item in candidates for ref in item.evidence_refs
+                })) or (lattice.lattice_ref,),
+                "lexical sense may activate only when its form coverage path is selected",
+                MeaningFactorKind.EVIDENCE_EXCLUSIVITY,
+            ))
 
-            schema_values: list[MeaningValue] = []
-            allowed_links: list[tuple[str, str]] = []
+            schema_values: list[MeaningValue] = [
+                MeaningValue(
+                    value_ref=_INACTIVE,
+                    score=0.0,
+                    evidence_refs=tuple(sorted({
+                        ref for item in candidates for ref in item.evidence_refs
+                    })) or (lattice.lattice_ref,),
+                    metadata={"inactive": True},
+                )
+            ]
+            allowed_links: list[tuple[str, str]] = [(_INACTIVE, _INACTIVE)]
             for item in candidates:
                 targets = tuple(
                     contribution
@@ -135,6 +204,8 @@ class MeaningFactorGraphBuilder:
                     if contribution.contribution_kind == SemanticContributionKind.TARGET
                     and contribution.target_ref is not None
                 )
+                if not targets:
+                    allowed_links.append((item.candidate_ref, _INACTIVE))
                 for contribution in targets:
                     choice_ref = _choice_ref("schema", contribution.contribution_ref)
                     valid = True
@@ -176,7 +247,7 @@ class MeaningFactorGraphBuilder:
                             metadata=schema_metadata,
                         ))
                         allowed_links.append((item.candidate_ref, choice_ref))
-            if schema_values:
+            if len(schema_values) > 1:
                 schema_var_ref = _var_ref("schema", lattice.lattice_ref, form_ref)
                 schema_var_for_form[form_ref] = schema_var_ref
                 variables.append(MeaningVariable(
@@ -712,7 +783,37 @@ class ConstructionFactorCompiler:
                 record,
                 closure_candidates=scoped_closure,
             )
-            plan_refs = tuple(item.plan_ref for item in resolution.plans)
+            plans = tuple(resolution.plans)
+            predicate_slot = str(
+                record.metadata.get("predicate_schema_slot") or ""
+            )
+            if predicate_slot and plans:
+                slot_refs = set(dict(candidate.slot_fillers).get(
+                    predicate_slot, ()
+                ))
+                predicate_senses = set()
+                for ref in slot_refs:
+                    if ref in sense_candidate_to_var:
+                        predicate_senses.add(ref)
+                    predicate_senses.update(
+                        item.candidate_ref
+                        for item in senses_by_form.get(ref, ())
+                    )
+                target_pins = {
+                    (item.target_ref, item.target_revision)
+                    for item in lattice.sense_candidates
+                    if item.candidate_ref in predicate_senses
+                    and item.target_ref
+                    and item.target_revision
+                }
+                plans = tuple(
+                    plan for plan in plans
+                    if any(
+                        (app.schema_ref, app.schema_revision) in target_pins
+                        for app in plan.applications
+                    )
+                )
+            plan_refs = tuple(item.plan_ref for item in plans)
             var_ref = _var_ref(
                 "construction",
                 lattice.lattice_ref,
@@ -731,7 +832,7 @@ class ConstructionFactorCompiler:
                     },
                 )
             ]
-            for plan in resolution.plans:
+            for plan in plans:
                 values.append(
                     MeaningValue(
                         value_ref=plan.plan_ref,
@@ -771,8 +872,12 @@ class ConstructionFactorCompiler:
             trigger_candidates = [
                 item
                 for item in lattice.sense_candidates
-                if item.sense_ref in trigger_sense_refs
-                and item.candidate_ref in candidate.trigger_refs
+                if item.candidate_ref in candidate.trigger_refs
+                and (
+                    not trigger_sense_refs
+                    or item.sense_ref in trigger_sense_refs
+                    or bool(record.metadata.get("trigger_open_binding_purpose"))
+                )
             ]
             for trigger in trigger_candidates:
                 sense_var_ref = sense_candidate_to_var.get(
@@ -813,7 +918,7 @@ class ConstructionFactorCompiler:
             slot_map = {
                 item.slot_ref: item for item in record.slots
             }
-            for plan in resolution.plans:
+            for plan in plans:
                 for application_spec in plan.applications:
                     schema = self.registry.schema(
                         application_spec.schema_ref,
@@ -858,18 +963,38 @@ class ConstructionFactorCompiler:
                             )
                             continue
 
+                        direct_slot_refs = set(
+                            dict(candidate.slot_fillers).get(slot.slot_ref, ())
+                        )
+                        direct_slot_senses = {
+                            ref for ref in direct_slot_refs
+                            if ref in sense_candidate_to_var
+                        }
+                        for ref in direct_slot_refs:
+                            direct_slot_senses.update(
+                                item.candidate_ref
+                                for item in senses_by_form.get(ref, ())
+                            )
                         mention_refs = tuple(
                             mention.mention_ref
                             for mention in grounding.mentions
-                            if candidate.candidate_ref
-                            in mention.construction_candidate_refs
-                            and mention.syntactic_role
-                            in {
-                                slot.slot_ref,
-                                binding_spec.port_ref,
-                                port.port_ref,
-                                port.role_family,
-                            }
+                            if (
+                                (
+                                    candidate.candidate_ref
+                                    in mention.construction_candidate_refs
+                                    and mention.syntactic_role
+                                    in {
+                                        slot.slot_ref,
+                                        binding_spec.port_ref,
+                                        port.port_ref,
+                                        port.role_family,
+                                    }
+                                )
+                                or bool(
+                                    set(mention.sense_candidate_refs)
+                                    .intersection(direct_slot_senses)
+                                )
+                            )
                         )
                         compatible = tuple(
                             grounding_candidate

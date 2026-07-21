@@ -476,7 +476,10 @@ def test_legacy_migration_runtime_shim_is_quarantined() -> None:
     denylist = json.loads((root / "cemm/data/v350/legacy_authority_denylist.json").read_text(encoding="utf-8"))
     entries = {item["path_or_symbol"]: item for item in denylist["entries"]}
 
-    assert importlib.util.find_spec("cemm.migration.v347") is None
+    try:
+        assert importlib.util.find_spec("cemm.migration.v347") is None
+    except ModuleNotFoundError:
+        pass
     assert entries["cemm.v350.migration"]["removal_status"] == "moved_to_offline_migration"
 
 

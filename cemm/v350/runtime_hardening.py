@@ -370,6 +370,24 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
     def stage_08_classify_discourse(
         self, cycle: CycleState, capability: StageCapability
     ) -> StageOutcome:
+        bundle = cycle.artifacts.get("meaning_bundle")
+        if (
+            bundle is not None
+            and bundle.metadata.get("selection_authority")
+            == "ambiguous_semantic_clusters"
+        ):
+            return StageOutcome(
+                {
+                    "stage08_receipt": self._receipt(
+                        CoreStage.CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS,
+                        "deferred",
+                        "semantically_distinct_close_alternatives_require_resolution",
+                    )
+                },
+                frontier_refs=(
+                    "frontier:meaning:semantic-cluster-ambiguity",
+                ),
+            )
         graph = cycle.artifacts.get("selected_structured_uol_graph")
         if graph is None:
             return super().stage_08_classify_discourse(cycle, capability)
@@ -421,6 +439,55 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
                 ),
             },
             frontier_refs=frontiers,
+        )
+
+    def stage_19_realize_target_language(
+        self, cycle: CycleState, capability: StageCapability
+    ) -> StageOutcome:
+        if not cycle.target_language:
+            lattice = cycle.artifacts.get("form_lattice")
+            if lattice is not None:
+                resolved = str(
+                    lattice.metadata.get("turn_language_tag") or ""
+                )
+                if resolved:
+                    cycle.target_language = resolved
+        return super().stage_19_realize_target_language(cycle, capability)
+
+    def stage_22_finalize(
+        self, cycle: CycleState, capability: StageCapability
+    ) -> StageOutcome:
+        # Stages 12-20 can create competence gaps after the canonical Stage-11
+        # learning pass. Consolidate them here without turning policy/runtime/
+        # budget failures into semantic learning.
+        from .learning.runtime import TypedRuntimeFrontierCompiler
+        from .learning.coordinator import LearningCoordinator
+        observations = TypedRuntimeFrontierCompiler().compile(cycle)
+        trace = LearningCoordinator(self.store).collect_frontiers(
+            observations,
+            persist=True,
+            source_ref="source:stage22:late-learning-consolidation",
+        )
+        from .learning.runtime_advance import RuntimeLearningAdvancer
+        advance = RuntimeLearningAdvancer(
+            self.store,
+            inducers=tuple(self.services.learning_inducers),
+            competence_executors=dict(
+                self.services.learning_competence_executors
+            ),
+        ).advance(
+            context_ref=cycle.context_ref,
+            permission_ref=cycle.permission_ref,
+        )
+        base = super().stage_22_finalize(cycle, capability)
+        return StageOutcome(
+            {
+                **dict(base.artifacts),
+                "late_learning_trace": trace,
+                "late_learning_advance_trace": advance,
+            },
+            frontier_refs=base.frontier_refs,
+            errors=base.errors,
         )
 
     @staticmethod

@@ -21,6 +21,7 @@ class StrEnum(str, Enum):
 
 
 class MeaningVariableKind(StrEnum):
+    FORM_PATH = "form_path"
     SENSE = "sense"
     SCHEMA = "schema"
     REFERENT = "referent"

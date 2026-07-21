@@ -44,9 +44,15 @@ class LearningCoordinator:
                 if isinstance(item.payload, LearningFrontierRecord)
             ) if hasattr(self.store.repositories, "learning_frontiers") else ()
             produced = self.frontiers.collect(observations, existing)
-            patch = None
+            patches = []
             if persist and produced:
-                operations = tuple(PatchOperation(
+                grouped = {}
+                for item in produced:
+                    grouped.setdefault(
+                        (item.context_ref, item.permission_ref), []
+                    ).append(item)
+                for (context_ref, permission_ref), group in sorted(grouped.items()):
+                    operations = tuple(PatchOperation(
                     operation_ref="patch-operation:learning-frontier:" + semantic_fingerprint(
                         "learning-frontier-operation", (item.frontier_ref, item.revision), 20
                     ),
@@ -56,25 +62,32 @@ class LearningCoordinator:
                     record_revision=record_revision(RecordKind.LEARNING_FRONTIER, item),
                     payload=encode_record(RecordKind.LEARNING_FRONTIER, item),
                     reason="persist typed unresolved learning frontier without granting authority",
-                ) for item in produced)
-                patch = GraphPatch(
+                    ) for item in group)
+                    patches.append(GraphPatch(
                     patch_ref="graph-patch:learning-frontiers:" + semantic_fingerprint(
-                        "learning-frontiers-patch", (snapshot.fingerprint, tuple((item.frontier_ref, item.revision) for item in produced)), 24
+                        "learning-frontiers-patch", (snapshot.fingerprint, context_ref, permission_ref, tuple((item.frontier_ref, item.revision) for item in group)), 24
                     ),
-                    context_ref="learning:frontier",
+                    context_ref=context_ref,
                     scope_ref="phase13:learning-shadow",
                     source_ref=source_ref,
-                    permission_ref="conversation",
+                    permission_ref=permission_ref,
                     operations=operations,
                     expected_store_revision=snapshot.store_revision,
                     validation_requirements=("phase13_frontiers_are_not_authority",),
                     metadata={"phase": 13, "runtime_cutover": False, "automatic_promotion": False},
-                )
+                    ))
             trace_ref = "learning-trace:" + semantic_fingerprint(
                 "learning-cycle-trace", (snapshot.fingerprint, tuple((item.frontier_ref, item.revision) for item in produced), persist), 24
             )
             trace = LearningCycleTrace(trace_ref, snapshot.store_revision, tuple(item.frontier_ref for item in produced), persist)
-        if patch is not None:
+        for index, patch in enumerate(patches):
+            if index:
+                with self.store.snapshot() as refreshed:
+                    from dataclasses import replace
+                    patch = replace(
+                        patch,
+                        expected_store_revision=refreshed.store_revision,
+                    )
             result = self.store.apply_patch(patch)
             if not result.committed:
                 raise ValueError("frontier persistence failed: " + "; ".join(result.errors))

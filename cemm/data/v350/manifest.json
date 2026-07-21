@@ -35,7 +35,7 @@
     "grounding_phase": "8",
     "language_grounding_base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
     "language_grounding_contract_ref": "contract:cemm:v350:language-grounding",
-    "language_grounding_contract_sha256": "9eb26e78e913fb65a24463651cfe577c1f20f73ccbeb03dba35a077f3096bb21",
+    "language_grounding_contract_sha256": "ea6b2bf00ccf464e5d20cfbe4928abec900da366a7cd9710521f01e65d945e4f",
     "language_neutral": true,
     "language_phase": "7",
     "learning_competence_sha256": "7c1ba29fe85a42c20defffdebb96ad130338d90d5b57303e8f08b53cfa5addb8",
@@ -742,6 +742,105 @@
       "path": "conversation_seed/semantic_application.jsonl",
       "phase": 20,
       "record_kind": "semantic_application",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:evidence",
+      "path": "final_fixes/evidence.jsonl",
+      "phase": 20,
+      "record_kind": "evidence",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:schema",
+      "path": "final_fixes/schema.jsonl",
+      "phase": 20,
+      "record_kind": "schema",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:identity-facet",
+      "path": "final_fixes/identity_facet.jsonl",
+      "phase": 20,
+      "record_kind": "identity_facet",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:language-form",
+      "path": "final_fixes/language_form.jsonl",
+      "phase": 20,
+      "record_kind": "language_form",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:lexeme",
+      "path": "final_fixes/lexeme.jsonl",
+      "phase": 20,
+      "record_kind": "lexeme",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:form-lexeme-link",
+      "path": "final_fixes/form_lexeme_link.jsonl",
+      "phase": 20,
+      "record_kind": "form_lexeme_link",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:lexical-sense",
+      "path": "final_fixes/lexical_sense.jsonl",
+      "phase": 20,
+      "record_kind": "lexical_sense",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:lexeme-sense-link",
+      "path": "final_fixes/lexeme_sense_link.jsonl",
+      "phase": 20,
+      "record_kind": "lexeme_sense_link",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:semantic-contribution-spec",
+      "path": "final_fixes/semantic_contribution_spec.jsonl",
+      "phase": 20,
+      "record_kind": "semantic_contribution_spec",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:construction",
+      "path": "final_fixes/construction.jsonl",
+      "phase": 20,
+      "record_kind": "construction",
+      "required": true
+    },
+    {
+      "allow_empty": false,
+      "authority_scope": "final_semantic_activation",
+      "module_ref": "final-fixes:construction-program",
+      "path": "final_fixes/construction_program.jsonl",
+      "phase": 20,
+      "record_kind": "construction_program",
       "required": true
     }
   ],

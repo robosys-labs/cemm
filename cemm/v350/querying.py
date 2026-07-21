@@ -182,7 +182,10 @@ class SemanticQueryCompiler:
             ))
             evidence.update(variable.evidence_refs)
 
-        response_requested = False
+        response_requested = bool(
+            classification is not None
+            and getattr(classification, "response_requested", False)
+        )
         discourse_refs: list[str] = []
         if classification is not None:
             registry = self.store.repositories.schemas.registry(snapshot=snapshot)
@@ -400,6 +403,22 @@ class UniversalSemanticBinder:
             return self._type_values(holders, context_ref=context_ref, snapshot=snapshot, projection=schema)
         if adapter == "state_assignment" or schema.schema_class == SchemaClass.STATE_DIMENSION:
             return self._state_values(schema.schema_ref, schema.revision, holders, context_ref=context_ref, views=views, snapshot=snapshot)
+        if adapter == "state_view":
+            result = []
+            for holder in holders:
+                view = views.get(holder)
+                if view is None:
+                    continue
+                for state in view.state_applicability:
+                    result.extend(self._state_values(
+                        state.dimension_ref,
+                        state.dimension_revision,
+                        (holder,),
+                        context_ref=context_ref,
+                        views=views,
+                        snapshot=snapshot,
+                    ))
+            return tuple(result)
         if adapter == "capability_instance":
             return self._capability_values(schema.schema_ref if schema.schema_class == SchemaClass.ACTION else None, schema.revision if schema.schema_class == SchemaClass.ACTION else None, holders, context_ref=context_ref, snapshot=snapshot)
         if adapter == "event_occurrence":
@@ -530,6 +549,28 @@ class UniversalSemanticBinder:
             if item.context_ref not in {context_ref, "global"}:
                 continue
             if item.facet_schema_ref != selector_ref and item.identity_facet_ref != selector_ref:
+                continue
+            anchored = None
+            if item.anchor_ref and item.anchor_ref != item.referent_ref:
+                anchored = self.store.get_record(
+                    RecordKind.REFERENT, item.anchor_ref, snapshot=snapshot
+                )
+            if anchored is not None:
+                result.append(BoundSemanticValue(
+                    value_ref=f"bound-identity-anchor:{item.anchor_ref}",
+                    value_kind=BoundValueKind.REFERENT,
+                    source_pin=self._pin(stored),
+                    filler_class=PortFillerClass.REFERENT,
+                    filler_ref=item.anchor_ref,
+                    schema_ref=None,
+                    schema_revision=None,
+                    projection_ref=projection.schema_ref,
+                    projection_revision=projection.revision,
+                    evidence_refs=item.evidence_refs or (stored.record_ref,),
+                    qualification_refs=("identity_facet", "durable_value_anchor"),
+                    confidence=item.confidence,
+                    metadata={"identity_facet_ref": item.identity_facet_ref},
+                ))
                 continue
             literal_ref = "query-literal:" + semantic_fingerprint(
                 "query-identity-literal", (item.identity_facet_ref, item.normalized_value), 20

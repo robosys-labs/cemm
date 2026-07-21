@@ -113,6 +113,7 @@
     "cemm.v350"
   ],
   "argument_frames": [
+    "argument-frame:en:seed:discourse-act-asserted-content@1#argument_frame-record:cfafd0083b7e075f8bed8a5ffd4bf7d314bd60f265787b27a44b9fa79205cc16",
     "argument-frame:en:seed:discourse-act-none-speaker-addressee@1#argument_frame-record:f81fa06a118b31532e71b0bbb346c75e65dae751419300ecc4a7b422d4a25d56",
     "argument-frame:en:seed:discourse-act-speaker-addressee@1#argument_frame-record:e97d799c8136a62dfc67f188c098dc2a99bb524ac9f0fecc218d30285a6283c9",
     "argument-frame:en:seed:discourse-act-speaker-content-addressee@1#argument_frame-record:4850a322e9b467f37bded823da895526c5a8039ba37506d5a5f9f8a1926b182a",
@@ -129,6 +130,7 @@
     "argument-frame:en:seed:event-speaker-content-audience@1#argument_frame-record:c2367a2507be36fa99640d228f705ee8ab9477d5125adce3024c687c1693a8e4",
     "argument-frame:en:seed:property-holder-value-none@1#argument_frame-record:a584635390d0c1aaa2f24f12f32670eb078532570c08ddae18cb5a75c9419ccd",
     "argument-frame:en:seed:relation-left-right-none@1#argument_frame-record:b02f53d8b437675e445e637a25ace4801f102666e3a352ced423a403eab4cbd9",
+    "argument-frame:fr:seed:discourse-act-asserted-content@1#argument_frame-record:84f82555b233aa13ae2b05d404df58d60489401bb59320a2e3560c103840166a",
     "argument-frame:fr:seed:discourse-act-none-speaker-addressee@1#argument_frame-record:8a2e0a4ace45f007e1ba9ec64615449a5c6295a26166e01e7c2f96307d8bf126",
     "argument-frame:fr:seed:discourse-act-speaker-addressee@1#argument_frame-record:2c51ec3091833c161f2eb04027e91935560073fb6da361526297b7dfd9a29283",
     "argument-frame:fr:seed:discourse-act-speaker-content-addressee@1#argument_frame-record:b98a12ba2e37ba8675b05c1c71cd4585b39c6c59a9f74046de52a8068b9e9243",
@@ -160,9 +162,10 @@
     "argument-frame:sw:activation:event-observer-observed-none@1#argument_frame-record:101037c9c22b77586470b4bd6d5a1b765f33fef095413328d4f1e140b46c37ac",
     "argument-frame:sw:activation:event-speaker-content-audience@1#argument_frame-record:9237b0ccdece98c335d39def3790f34e45e1d60164eac18179d269db34220d10",
     "argument-frame:sw:activation:property-holder-value-none@1#argument_frame-record:2e1fb4ccb7a307e44b10d8d200971bd02f34fa8b2325bd4649c4782b67eaea59",
-    "argument-frame:sw:activation:relation-left-right-none@1#argument_frame-record:32497948adb28d9de61f3f6414c0b30f22980af00a7999168b647151c00854dd"
+    "argument-frame:sw:activation:relation-left-right-none@1#argument_frame-record:32497948adb28d9de61f3f6414c0b30f22980af00a7999168b647151c00854dd",
+    "argument-frame:sw:seed:discourse-act-asserted-content@1#argument_frame-record:8f048e9ab1a6d03a717be2ed2e86c9aac43ef2699fecb1f40f0dd325e02b4b23"
   ],
-  "boot_database_sha256": "c57e5c4afe893acaabebfed32475351d6bc071e943decea62c5263e75fb62071",
+  "boot_database_sha256": "d920bbace5b1acab86a390b96d4e8634978be8236d063c5f44bc744cdff299bd",
   "canonical_orchestrator": "cemm.v350.orchestration:CanonicalOrchestrator",
   "canonical_runtime_factory": "cemm.v350.runtime:build_runtime",
   "channel_adapter_contracts": [
@@ -176,6 +179,7 @@
   ],
   "legacy_denylist_sha256": "40f0381df7b2dcd2942bd933afe44e8473906853a86f64cd8fca1c028b8416d8",
   "linearization_rules": [
+    "linearization-rule:en:seed:discourse-act-asserted-content@1#linearization_rule-record:d481f67829d3af76a91382f61da97b35e61325624183611c4b24679208201581",
     "linearization-rule:en:seed:discourse-act-none-speaker-addressee@1#linearization_rule-record:235add290c725c19e6fea7e249e543afbc1679a0a34fd1941015c3d04ebbaf7d",
     "linearization-rule:en:seed:discourse-act-speaker-addressee@1#linearization_rule-record:5f7102c0529a92743c7be1982b0259b5154ed9955e2ea49700f3fe2276552742",
     "linearization-rule:en:seed:discourse-act-speaker-content-addressee@1#linearization_rule-record:bc51b1e18e3558d25822e2c176a80128ef1bd86c35c1bfbc9bebc1f64d3f7f8f",
@@ -192,6 +196,7 @@
     "linearization-rule:en:seed:event-speaker-content-audience@1#linearization_rule-record:07b85f1679e5542489bbf51c88c0fc814808aaac0a1ba1eeae8395fe1db3ec38",
     "linearization-rule:en:seed:property-holder-value-none@1#linearization_rule-record:4aa57498f4f6bce405b84eccf1eb330096a7793d7e97a80f8e2f6d97b6093dfe",
     "linearization-rule:en:seed:relation-left-right-none@1#linearization_rule-record:46c7f0c9299c854ef8a9078aeefcf0f7c7b1afc3e14784b73fbeaf09a6c7eb15",
+    "linearization-rule:fr:seed:discourse-act-asserted-content@1#linearization_rule-record:b20d84f8fd2a2c3e4effa5c2c971cfd32d313cf753d2c588118f875902660974",
     "linearization-rule:fr:seed:discourse-act-none-speaker-addressee@1#linearization_rule-record:82ae9408c5caf51236f2faaf6a78e508f2e8beb041868bca00c2a02ef7490356",
     "linearization-rule:fr:seed:discourse-act-speaker-addressee@1#linearization_rule-record:97554d60b0447df4884f35da9d1e29465f49ecc07dcfb594a3ee5affdf010592",
     "linearization-rule:fr:seed:discourse-act-speaker-content-addressee@1#linearization_rule-record:6352aca2f45dfe5480cb75e9604b742a3015337e16472f0ba2363b787ba98d23",
@@ -223,7 +228,8 @@
     "linearization-rule:sw:activation:event-observer-observed-none@1#linearization_rule-record:d01b917032aa54c599f6ab12ae6af118db38ac7951dd4731d3b4e3b1d3547ccb",
     "linearization-rule:sw:activation:event-speaker-content-audience@1#linearization_rule-record:b179cdd6370817faf71d54f0d1bc508dff7ffc6838a6d3c74c773d5fb1a8616f",
     "linearization-rule:sw:activation:property-holder-value-none@1#linearization_rule-record:c096811b4364f7e009d491cc3feea4dfa9380bcf59979d6f4481d02973913e21",
-    "linearization-rule:sw:activation:relation-left-right-none@1#linearization_rule-record:e59903e339eeba8be8b809a21724f7a5d45b78725c05f4c841cbc71a7a9cad65"
+    "linearization-rule:sw:activation:relation-left-right-none@1#linearization_rule-record:e59903e339eeba8be8b809a21724f7a5d45b78725c05f4c841cbc71a7a9cad65",
+    "linearization-rule:sw:seed:discourse-act-asserted-content@1#linearization_rule-record:8c0aee3adc54eaffd986ec2c99d25d4450fc2da322dcd7b9069bac2c594ec1a2"
   ],
   "manifest_version": 2,
   "metadata": {
@@ -269,97 +275,23 @@
     "text_emission": true,
     "transitions": true
   },
-  "release_commit": "7218421956282c9eda576ee25c0942efc22f3771",
+  "release_commit": "3ebdb26f6b9247bbf73583e7fd3aac12c054679a",
   "release_version": "3.5.0",
   "response_policy_rules": [
-    "response-policy-rule:acknowledge-claim-receipt@1#response_policy_rule-record:2b2f656df34c14c2b67280337dbabc85325a508cdff3d0b742f2f223678e1940",
-    "response-policy-rule:answer:event-activate@1#response_policy_rule-record:69011570083773fe9c852debc0572d7efbd7b9e042a890acb1e6ee18a2078328",
-    "response-policy-rule:answer:event-claim@1#response_policy_rule-record:cbb3939a2e5e09378ae75ef6931ddbff08cff56080b0805ce8b941b015686aa0",
-    "response-policy-rule:answer:event-communicate@1#response_policy_rule-record:24b4c01f5edc46eccc85b71bb4c691185532064a35efb388c13e9e9a54238dd0",
-    "response-policy-rule:answer:event-correct@1#response_policy_rule-record:12085630c887d93750980403164200c533466b76b3ff179e4f99f803401d5d81",
-    "response-policy-rule:answer:event-create@1#response_policy_rule-record:df50c448d42447d197d3c7ea948d67ca7415439372464d2cebd2b3b2f272692a",
-    "response-policy-rule:answer:event-deactivate@1#response_policy_rule-record:66490f9553f4d12d60f7c720879486a02f31461ba63d321529a8d77a1616402c",
-    "response-policy-rule:answer:event-decrease@1#response_policy_rule-record:6236ae7b2b16c7015ffd0467d963b4b5d622632b92b862951237a616f3990f45",
-    "response-policy-rule:answer:event-destroy@1#response_policy_rule-record:01e9f29ba7eaf49b4845261c1ae92f925f7552f79705f4c661c1f2c3b0c26ddb",
-    "response-policy-rule:answer:event-gain@1#response_policy_rule-record:dda29d6fc46485e64af973b374e13a4867bc5b4ca29495c50a38730c0f6c86b5",
-    "response-policy-rule:answer:event-increase@1#response_policy_rule-record:fd02eb12de3c8c7a5537d940a14039849a5a2546b78a7e44da29e37ac77ea217",
-    "response-policy-rule:answer:event-learn@1#response_policy_rule-record:23746896928f22e7a879be379da473dc76887ba63f0730d173e6fb2c75f8f5cf",
-    "response-policy-rule:answer:event-lose@1#response_policy_rule-record:160b5a4b05811f842aa35e9a4ae4f626feacbe9f7a4a8993dd3437858b0fb91d",
-    "response-policy-rule:answer:event-move@1#response_policy_rule-record:3ea7ad6a6e342a765a10e39f13080807e457fca6c1b45e1a6926c54a6404035d",
-    "response-policy-rule:answer:event-observe@1#response_policy_rule-record:5022936ac50ededf9446bf4758ea38da67cbc9dba1079fa1e5704cbef4b14691",
-    "response-policy-rule:answer:event-start@1#response_policy_rule-record:c29843ed2a7edf7d1dbc7c242c134becbcf098637112a19c671f243848f27da8",
-    "response-policy-rule:answer:event-stop@1#response_policy_rule-record:c910383b85bc48a056fb5562c50123b3d1174f41b3751b34aeaf081508e42511",
-    "response-policy-rule:answer:property-classification@1#response_policy_rule-record:fb7af454762a3b8787eda9393c5749c9611f8dfc92abaf2d5db74fff5140be2d",
-    "response-policy-rule:answer:property-identifier@1#response_policy_rule-record:a537bee2afe2c34291a64eef0ef3e9d8164a716d15a36c9f52ec80805f86548a",
-    "response-policy-rule:answer:property-material@1#response_policy_rule-record:4e6ca2f59360f4a4e348c46ef8589cf596f79fae04d3055401319c1ce9c62d1f",
-    "response-policy-rule:answer:property-name@1#response_policy_rule-record:ea3faa009f9db11a37528e16cb8b096c2514058986a68dbe2da83b9908b337a8",
-    "response-policy-rule:answer:property-owner@1#response_policy_rule-record:33e8cee8238890d55abd8ff0cf26fd3783e54eff23e5b4e4e27393d5e2716d7e",
-    "response-policy-rule:answer:property-source-attribution@1#response_policy_rule-record:62008b6814eea2752a480d83fe541db7bd971b51035a5c65110213f88c7abdc9",
-    "response-policy-rule:answer:property-version@1#response_policy_rule-record:9f75ccbbcbb59bf069e10e9e04de4f33e5b9d88d4409b1e556a149906ded1184",
-    "response-policy-rule:answer:relation-about@1#response_policy_rule-record:e7215975ad0074ca3e35c77afcfa99ec3d9752b3c85d72d96f2e328bd800592e",
-    "response-policy-rule:answer:relation-component-of@1#response_policy_rule-record:c2523e5ba92c0e2522b3962489b14300bdc4a300cf8a83b3dedce8643f1dbc19",
-    "response-policy-rule:answer:relation-contains@1#response_policy_rule-record:9fcadbf9453aa7296546bb7562d40a5756b5c55041765cc1b9817645cd8af909",
-    "response-policy-rule:answer:relation-depends-on@1#response_policy_rule-record:56e77a47d4a1eef01dba004a324e1a040ff9977e2f970956e3c1c3a741fc97c5",
-    "response-policy-rule:answer:relation-different-from@1#response_policy_rule-record:c89a856e435d7f934520a6151448e27ee0df6737a93a38993f181a50c187d183",
-    "response-policy-rule:answer:relation-has-component@1#response_policy_rule-record:57a77e6a7c8f611c6942bff040e7f568cd4ce4a868a5693fcd8462f2a03dd4e9",
-    "response-policy-rule:answer:relation-has-member@1#response_policy_rule-record:68dee6efe89929a4aa64c9cac0d17789c1ee1bfcbb52995d7ab1ef7111aab1a2",
-    "response-policy-rule:answer:relation-located-at@1#response_policy_rule-record:900925cbc757c2b29801fc2a8339ff99aa10ccce3b688ac4ba728e249f55d43e",
-    "response-policy-rule:answer:relation-member-of@1#response_policy_rule-record:43731392333a9553803071cfc4eedb788874cc8414dc67f80d2821bc16207738",
-    "response-policy-rule:answer:relation-opposes@1#response_policy_rule-record:b900e3b3382d907856c212c46dda2b9e0259ab0169cee6023fd12b7eb28c0c1d",
-    "response-policy-rule:answer:relation-part-of@1#response_policy_rule-record:d725c46d238717d3b7b017e88742b6d60a412b2c5966b5dd486a23d1a04eb06a",
-    "response-policy-rule:answer:relation-representation-of@1#response_policy_rule-record:d3978770836f58b00d0a65af6c258f188080fb34cd00113c837c8a349edfa48d",
-    "response-policy-rule:answer:relation-represented-by@1#response_policy_rule-record:62e6aa524fa5349b7290459c818bbb8e88f5952d0029ca7964aefb8360e9c87c",
-    "response-policy-rule:answer:relation-same-as@1#response_policy_rule-record:01b05f17cf47d77cf06095b0bdc574690745821bc15f40dec601f87d7a3a1573",
-    "response-policy-rule:answer:relation-supports@1#response_policy_rule-record:32214c043451273318a82f144d0f2fdc50e2e7a983c4d31509918fa4c6b2a252",
-    "response-policy-rule:farewell@1#response_policy_rule-record:cd28c6004d0388fb410e6b95a29781699219504facf9871384301ada0ef05033",
-    "response-policy-rule:greeting@1#response_policy_rule-record:93e1cd203b6993bd4c1c62c42c83ab98a735174bcbd7e6a9d16ad3f5c4205623",
-    "response-policy-rule:request-clarification@1#response_policy_rule-record:c5692ce5eac0234859b7757bf8f3f749db49215d4b6304f76bb932990540df4b",
-    "response-policy-rule:thanks@1#response_policy_rule-record:a2e4a83f21436c9bde7713d8833035d3bf27beac50f55aaf3d712235d2b302da"
+    "response-policy-rule:acknowledge-claim-receipt@1#response_policy_rule-record:44541b2661ad3d99e8e2bb97c2d1da2e72e9feb6937ddf7797f2e3b03f13a167",
+    "response-policy-rule:farewell@1#response_policy_rule-record:2bdf227bcfee586a1651804cdc0a4e5421c1c40a1118a97473e97f7565cdfba6",
+    "response-policy-rule:greeting@1#response_policy_rule-record:93d11303a4ccd3b7a915d207d1b2142469e60dd92fb21cad40194c196565420f",
+    "response-policy-rule:phase9:bound-query@1#response_policy_rule-record:62fe3d93289181a916e99ec84f60dd4eb70119b50f9b52065aa8e079003db885",
+    "response-policy-rule:request-clarification@1#response_policy_rule-record:928b5414805d13a4f842342650ad453cd038c5f71de916496aaa7b2f0150c8c7",
+    "response-policy-rule:thanks@1#response_policy_rule-record:1f99cea631421f919335fe1598b563d43513fb612e0563a03588a8a9007e1a9b"
   ],
   "response_transform_rules": [
-    "response-transform-rule:acknowledge-claim-receipt@1#response_transform_rule-record:a9747cc0598fcd5f6926aeaf411b93cbf85c24138599f99a1682f4de55592a2e",
-    "response-transform-rule:answer:event-activate@1#response_transform_rule-record:1ce0dceda379cf0f36b8e2b7534777cc2294d89e2a5abcd371c28a874cbddd66",
-    "response-transform-rule:answer:event-claim@1#response_transform_rule-record:2588aaf4fdc32e94a71c37afc49ba7c9affa635b9c1c75db83b12ad5a4b77a52",
-    "response-transform-rule:answer:event-communicate@1#response_transform_rule-record:5f7302b1600029e103b4b578580f7d0fe2de43051804541b01d5bf95af9eb736",
-    "response-transform-rule:answer:event-correct@1#response_transform_rule-record:c306f30063ed975c5b22c48e3ff5876999e6d0d09693f85bfda7a0fcee900b68",
-    "response-transform-rule:answer:event-create@1#response_transform_rule-record:9b5dfc4a8d2ac11da199bb93a99bcf14c5f2005861a14f3fe4405feb5d1f86aa",
-    "response-transform-rule:answer:event-deactivate@1#response_transform_rule-record:b53707f2ab85062c1302a3a014f19627b54860048e85800304c49d6292936a98",
-    "response-transform-rule:answer:event-decrease@1#response_transform_rule-record:c41cc56f3b62dee37cd5be1e8ebcd4620964294288bfe87619afe16c47c30fb6",
-    "response-transform-rule:answer:event-destroy@1#response_transform_rule-record:e28dadcfe42de09d13020651051f9b917b10b780314aec742e0f28f975cb92c4",
-    "response-transform-rule:answer:event-gain@1#response_transform_rule-record:561731e972107858a79e203ea6deca34b89130aa1caab596d9949c642ff451a0",
-    "response-transform-rule:answer:event-increase@1#response_transform_rule-record:e057c17452c1e11fff36bb7a9dc3d43523d7b3e2851644c75b8039d97a6e9f56",
-    "response-transform-rule:answer:event-learn@1#response_transform_rule-record:13f35f6e2d8c4e0975e614b5b6c67c8e414c6eb2f461dfa69dfb089f44b0d97a",
-    "response-transform-rule:answer:event-lose@1#response_transform_rule-record:31fa512d44d5f61b96a4614dc26237f4dbb63478837c010b580cc4e6dafb3959",
-    "response-transform-rule:answer:event-move@1#response_transform_rule-record:3b351be9b5c7db9f8fd4506ef61f1577a63d2fa48edda089faf74b2d2a065a55",
-    "response-transform-rule:answer:event-observe@1#response_transform_rule-record:c6d319caad100b2d1de72a545a50933084a2fecb8d796abb324d099ec75dad1c",
-    "response-transform-rule:answer:event-start@1#response_transform_rule-record:349c5c0a38129dbdd9c4796e5d6ef4e308c7796412c4247baf56299e43ad2f51",
-    "response-transform-rule:answer:event-stop@1#response_transform_rule-record:db0fc79f5dffff57fe2e670fe71dfd1df45e2039eb7523df4634f83ae7cce651",
-    "response-transform-rule:answer:property-classification@1#response_transform_rule-record:5f6485d78b0860477709e0982bd460cf7e709ddccea324b5ce5a6f319992bbb4",
-    "response-transform-rule:answer:property-identifier@1#response_transform_rule-record:123cb1b536fa6609946ddc62413e9e128917f407d58318cf3d9e66f3b5f9b009",
-    "response-transform-rule:answer:property-material@1#response_transform_rule-record:80585cd0d559b1b4df2ff3574c7e264e1b3594088af7ef61188d1a78930171dd",
-    "response-transform-rule:answer:property-name@1#response_transform_rule-record:902f8af8e05b22a6ec773f77c4f9c7cbd859388b9d68be0c6f4d38f2af79b822",
-    "response-transform-rule:answer:property-owner@1#response_transform_rule-record:9497c96131f644697ba62ce738d95809d6d4850a2f9aac8b73006414d7245281",
-    "response-transform-rule:answer:property-source-attribution@1#response_transform_rule-record:bcc7c21dbc3c66fc92b58f30f8bf5410dd7be60c2ed7ed7c117e16b13cec239e",
-    "response-transform-rule:answer:property-version@1#response_transform_rule-record:e675a70d0896f3acd65c779697db500035c40696dc91ce84a002c019bb87af24",
-    "response-transform-rule:answer:relation-about@1#response_transform_rule-record:33ec892f9f2840878a47d613305dac9bb74b0f4e11faa988c79756ec43df3f41",
-    "response-transform-rule:answer:relation-component-of@1#response_transform_rule-record:10c32218335d3655df7712fb3014b81db2a3d9ca3b987c01fc1c27c361fa11d5",
-    "response-transform-rule:answer:relation-contains@1#response_transform_rule-record:60997c260828a7b8e44dae43bca9761141d4e2b9022bc69e907b5ff5a7bcf742",
-    "response-transform-rule:answer:relation-depends-on@1#response_transform_rule-record:b36e707ea45ce699ccde38831a261fee39ff4ade4108f29aa54dcb3505930a09",
-    "response-transform-rule:answer:relation-different-from@1#response_transform_rule-record:77b40bfb114218713e8ab8fdb49261833ca320412d56bd7d767c4384005ee612",
-    "response-transform-rule:answer:relation-has-component@1#response_transform_rule-record:b038a1bf4a089ed6166a1673769935ce13c138325f7481b3109a994ce787c7f2",
-    "response-transform-rule:answer:relation-has-member@1#response_transform_rule-record:2812641effd72bfc386b885126ccce1340f916c0ca155834d347c32b7c12a5e1",
-    "response-transform-rule:answer:relation-located-at@1#response_transform_rule-record:06f3f4fe842cfa0e0738c70ce4bb42b6455303f63716110458e886c96d265c7b",
-    "response-transform-rule:answer:relation-member-of@1#response_transform_rule-record:49b984f45d3941d6f8926e8b8e0d871f4edb5e7d24e69d92bb29b07878ef44e1",
-    "response-transform-rule:answer:relation-opposes@1#response_transform_rule-record:597c94d0843931a9d828eb49e4a0b6651f0bb561cc641268a96fb5d89b746ff5",
-    "response-transform-rule:answer:relation-part-of@1#response_transform_rule-record:a9adff7c817dcb9b73713415fd96776acc43e191c694c0c2c943eee0109b34bc",
-    "response-transform-rule:answer:relation-representation-of@1#response_transform_rule-record:64ead76937f13225538cd2e721a655822e2827a049f8a8871a07686dd096d3ed",
-    "response-transform-rule:answer:relation-represented-by@1#response_transform_rule-record:49c50748a6cfe39ebfd03586aef530c7a31576813b0f939399bf95548e60cb9f",
-    "response-transform-rule:answer:relation-same-as@1#response_transform_rule-record:661bbb0c23423fd7008663fb0b9366d1e293b766e9c5c469a0607d6032dfe13f",
-    "response-transform-rule:answer:relation-supports@1#response_transform_rule-record:68092fd7a47a609156a2d82ae1884adbbc913541c564abb8ab033d0a0f1dfa17",
-    "response-transform-rule:farewell@1#response_transform_rule-record:d67f6c4822bc5d388a55fddf9bd9a391a32440dd09f22a8dcef9f540fd03018b",
-    "response-transform-rule:greeting@1#response_transform_rule-record:41cd437549d9ee74d690cdd08974980bd88d04a11b56d5b34f1abf7a53f51346",
-    "response-transform-rule:request-clarification@1#response_transform_rule-record:f450cb85346eee6dbbbaef185e49fd5b84c6eb3b5f206bbf403a9808dfec52bc",
-    "response-transform-rule:thanks@1#response_transform_rule-record:33b596e08ac464953eb596ef16ca93153697445eb28c558148b948e152a17463"
+    "response-transform-rule:acknowledge-claim-receipt@1#response_transform_rule-record:8cc492b0953e595b9daf8d8f83f1c8c216f23f86b58be305748c29880ac00c90",
+    "response-transform-rule:farewell@1#response_transform_rule-record:dd3c397dc99870ad9ee3a41b0e682009a5ed4f7baf176e7ef0486ca298e9cb0e",
+    "response-transform-rule:greeting@1#response_transform_rule-record:289accf4743ba7cc09f6bea319aec1b470f2da9694403ed5a3dc5bc12a4eabc7",
+    "response-transform-rule:phase9:bound-query@1#response_transform_rule-record:aaf809ab5b73604692ce17a776f8b01cf4f68cf98f7561cf55582d65ce8582cc",
+    "response-transform-rule:request-clarification@1#response_transform_rule-record:89e403caddc0de42a266f0881765aac26d96a0c0ee21109639c2c0d39e3da7f3",
+    "response-transform-rule:thanks@1#response_transform_rule-record:58107cf9c59bfdec7cb70936f370af1e23943953e6c63e5a6cca56feb431c778"
   ],
   "runtime_service_bindings": [
     {
@@ -368,7 +300,7 @@
       "implementation_ref": "clock:system-utc",
       "implementation_revision": "1",
       "service_kind": "clock",
-      "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
+      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
     },
     {
       "class_path": "cemm.v350.activation_services:ContextLocalEpistemicPolicyProvider",
@@ -392,7 +324,7 @@
       "implementation_ref": "semantic-analyzer:canonical-v350",
       "implementation_revision": "2",
       "service_kind": "semantic_analyzer",
-      "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
+      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
     },
     {
       "class_path": "cemm.v350.runtime_services:InProcessTextChannelAdapter",
@@ -400,7 +332,7 @@
       "implementation_ref": "channel-adapter:in-process-text",
       "implementation_revision": "1",
       "service_kind": "channel_adapter",
-      "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
+      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
     },
     {
       "class_path": "cemm.v350.runtime_services:StructuralPolicySafetyEvaluator",
@@ -408,7 +340,7 @@
       "implementation_ref": "emission-evaluator:structural-policy-safety",
       "implementation_revision": "2",
       "service_kind": "emission_gate_evaluator",
-      "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
+      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
     },
     {
       "class_path": "cemm.v350.runtime_services:QualificationPreservedEvaluator",
@@ -416,7 +348,7 @@
       "implementation_ref": "emission-evaluator:qualification-preserved",
       "implementation_revision": "2",
       "service_kind": "emission_gate_evaluator",
-      "source_sha256": "a2a67e02708a5896501ee350a97aeb8397685d7ba79036840028e5ff5a3594dd"
+      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
     }
   ],
   "schema_version": 9,
@@ -424,7 +356,7 @@
     "semantic-analyzer-contract:canonical-v350:conversation-core@1#semantic_analyzer_contract-record:bbb3f870847ee36c779008a60f3b763dcb15e282c37e78783c6e593fc17f2321",
     "semantic-analyzer-contract:canonical-v350:conversation-core@2#semantic_analyzer_contract-record:3cc8814c818cbd9586ae99097d84c229c37c0c9a5a1d0387c82f6f8747857702"
   ],
-  "source_manifest_sha256": "214c1aa28bf7ab9e3ede3e7253e8a93ba3e2ebc798392b84b73e9d9ee68cc3d4",
+  "source_manifest_sha256": "d88f7285cc9427e5531bb36d321444dbb3bc5681e78cc5acf34c1d971f49b57c",
   "stage_adapters": [
     {
       "adapter_ref": "v350.stage.00.orient_and_pin",
@@ -680,5 +612,5 @@
       "stage_name": "INVALIDATE_RECOMPUTE_AND_FINALIZE"
     }
   ],
-  "verification_report_sha256": "94510d76fb7cf64939d8407d83ca4ffe2b1503b0b8a39f1590156ddf940a64eb"
+  "verification_report_sha256": "042c527e3e7ad717ed0a57f943a37efd5a744d32e561ba530c892ab9902f9781"
 }

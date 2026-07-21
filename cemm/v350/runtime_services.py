@@ -96,35 +96,27 @@ class CanonicalSemanticAnalyzer:
             (context_ref, speaker_ref, addressee_refs, permission_ref),
             24,
         )
-        anchors = [
-            DiscourseAnchor(
-                anchor_ref="anchor:roundtrip:speaker:" + semantic_fingerprint(
-                    "roundtrip-speaker-anchor", (speaker_ref, context_ref), 16
-                ),
-                referent_ref=speaker_ref,
-                context_ref=context_ref,
-                salience=1.0,
-                turn_index=0,
-                role_refs=("speaker",),
-                evidence_refs=(anchor_evidence,),
-            )
-        ]
-        anchors.extend(
-            DiscourseAnchor(
-                anchor_ref="anchor:roundtrip:addressee:" + semantic_fingerprint(
-                    "roundtrip-addressee-anchor", (ref, context_ref), 16
-                ),
-                referent_ref=ref,
-                context_ref=context_ref,
-                salience=0.95,
-                turn_index=0,
-                role_refs=("addressee",),
-                evidence_refs=(anchor_evidence,),
-            )
-            for ref in addressee_refs
+        from .runtime_kernel import ParticipantFrame
+        from .grounding.participants import participant_frame_anchors
+        participant_frame = ParticipantFrame(
+            frame_ref="participant-frame:roundtrip:" + semantic_fingerprint(
+                "roundtrip-participant-frame",
+                (context_ref, speaker_ref, addressee_refs, permission_ref),
+                24,
+            ),
+            system_ref=speaker_ref,
+            input_speaker_ref=speaker_ref,
+            input_addressee_refs=tuple(addressee_refs),
+            response_audience_refs=tuple(addressee_refs),
+            context_ref=context_ref,
+            permission_ref=permission_ref,
+            identity_evidence_refs=(anchor_evidence,),
         )
 
         with self.store.snapshot() as snapshot:
+            anchors = participant_frame_anchors(
+                participant_frame, store=self.store, snapshot=snapshot
+            )
             language_registry = self.store.repositories.language.registry(snapshot=snapshot)
             form_analyzer = FormLatticeAnalyzer(language_registry)
             lattice = form_analyzer.analyze(
@@ -145,17 +137,28 @@ class CanonicalSemanticAnalyzer:
             grounding = grounder.solve_prepared(prepared)
             projections = {}
             projector = ReferentKnowledgeProjector(self.store)
-            for target_ref in sorted({item.target_ref for item in prepared.candidates}):
-                if self.store.get_record(
+            by_target = {}
+            for candidate in prepared.candidates:
+                by_target.setdefault(candidate.target_ref, []).append(candidate)
+            for target_ref in sorted(by_target):
+                candidates = tuple(by_target[target_ref])
+                durable = self.store.get_record(
                     self.store.repositories.referents.record_kind,
                     target_ref,
                     snapshot=snapshot,
-                ) is not None:
+                )
+                if durable is not None:
                     projections[target_ref] = projector.project(
-                        target_ref,
-                        context_ref=context_ref,
-                        at_time=None,
-                        snapshot=snapshot,
+                        target_ref, context_ref=context_ref,
+                        at_time=None, snapshot=snapshot,
+                    )
+                elif len({
+                    (tuple(sorted(item.type_refs)), item.storage_kind.value)
+                    for item in candidates
+                }) == 1:
+                    projections[target_ref] = projector.project_candidate(
+                        candidates[0], context_ref=context_ref,
+                        at_time=None, snapshot=snapshot,
                     )
             from .facets.closure import ReferentKnowledgeClosureCompiler
             closure_candidates = ReferentKnowledgeClosureCompiler(self.store).compile(
@@ -183,8 +186,12 @@ class CanonicalSemanticAnalyzer:
         graph = result.bundle.uol_graph
         if graph is None:
             raise ValueError("round-trip analyzer produced no semantic graph")
-        if graph.unresolved_refs or result.bundle.partial_understanding.unresolved_refs:
-            raise ValueError("round-trip analyzer retained unresolved semantic meaning")
+        if result.bundle.metadata.get("selection_authority") == "ambiguous_semantic_clusters":
+            raise ValueError("round-trip analyzer retained semantically distinct alternatives")
+        # Recovery is evidence, not authorization. Preserve partial recovered
+        # structure for the verifier instead of failing before it can compare the
+        # intended graph. The verifier still fails closed unless every residual
+        # gap is eliminated by an explicit semantic-equivalence normalization.
         proof_refs = tuple(
             sorted(
                 set(

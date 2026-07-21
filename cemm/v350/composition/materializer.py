@@ -106,7 +106,7 @@ class UOLHypothesisMaterializer:
             if variable.variable_kind != MeaningVariableKind.SENSE:
                 continue
             chosen = value_by_assignment.get(variable.variable_ref)
-            if chosen is not None:
+            if chosen is not None and chosen.value_ref != _INACTIVE:
                 selected_senses[chosen.value_ref] = chosen
 
         selected_schema_by_sense = {}
@@ -114,7 +114,7 @@ class UOLHypothesisMaterializer:
             if variable.variable_kind != MeaningVariableKind.SCHEMA:
                 continue
             chosen = value_by_assignment.get(variable.variable_ref)
-            if chosen is None:
+            if chosen is None or chosen.value_ref == _INACTIVE:
                 continue
             sense_candidate_ref = str(chosen.metadata.get("sense_candidate_ref") or "")
             if sense_candidate_ref:
@@ -159,6 +159,20 @@ class UOLHypothesisMaterializer:
         evidence = set(factor_graph.evidence_refs)
         app_ref_by_sense: dict[str, str] = {}
         covered_senses: set[str] = set()
+
+        # Preserve the selected lexical coverage explanation. Unknown observations
+        # are precise typed gaps; unselected overlapping forms do not leak semantic
+        # nodes into the materialized UOL.
+        for variable in factor_graph.variables:
+            if variable.variable_kind != MeaningVariableKind.FORM_PATH:
+                continue
+            chosen = value_by_assignment.get(variable.variable_ref)
+            if chosen is None:
+                continue
+            unresolved.update(
+                f"form-observation:{ref}"
+                for ref in chosen.metadata.get("gap_observation_refs", ())
+            )
 
         # Preserve targetless/partial lexical meaning as typed UOL variables.
         # Contributions are semantic constraints, not hidden intent labels.
@@ -572,6 +586,24 @@ class UOLHypothesisMaterializer:
                 roots.append(FillerRef(PortFillerClass.SEMANTIC_APPLICATION, app_ref))
         # If an inner operator is scoped by another operator it is naturally
         # removed as a root by the same rule above.
+
+        referenced_referents = {
+            root.ref for root in roots
+            if root.filler_class == PortFillerClass.REFERENT
+        }
+        for application in applications.values():
+            for binding in application.bindings:
+                referenced_referents.update(
+                    filler.ref
+                    for filler in binding.fillers
+                    if isinstance(filler, FillerRef)
+                    and filler.filler_class == PortFillerClass.REFERENT
+                )
+        referenced_referents.update(events)
+        referents = {
+            ref: value for ref, value in referents.items()
+            if ref in referenced_referents
+        }
 
         graph = UOLGraph(
             graph_ref="uol-graph:" + semantic_fingerprint(

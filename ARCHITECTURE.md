@@ -1,1090 +1,906 @@
-# CEMM v3.5 Canonical Learning-First Architecture
+# CEMM v3.5.1 Grounded Semantic Brain Architecture
 
-**Status:** public v3.5 runtime authority is cut over; productive semantic activation is under remediation.  
-**Target:** a grounded, multilingual, learning-first cognitive meaning system that can understand and produce unseen compositions from a small reviewed semantic/language substrate.  
-**Primary law:** CEMM may use, learn, infer, act on, query, or express only meaning represented in active semantic authority and authorized for the requested use.
-
----
-
-# 1. What CEMM is
-
-CEMM is a grounded semantic machine.
-
-Its defining capability is not phrase coverage. It is the ability to:
-
-1. preserve uncertain evidence;
-2. identify the smallest justified semantic contributions;
-3. ground referents;
-4. compose partial meaning;
-5. project what can meaningfully apply to a referent;
-6. close variables through compatible knowledge;
-7. separate claims from truth;
-8. model state/process/event/action over time;
-9. learn missing reusable structure;
-10. derive transitions and consequences with proof;
-11. create semantic response goals;
-12. build Response UOL;
-13. realize equivalent meaning in a target language;
-14. remain partial or silent when authority is insufficient.
-
-CEMM is not a chatbot architecture and not an intent classifier with memory.
-
-CEMM is not:
-
-- a phrase matcher;
-- a sentence-intent router;
-- a bag-of-keywords system;
-- a response-template catalogue;
-- an LLM wrapper;
-- a transcript memory;
-- an ontology requiring source changes for new concepts;
-- a simulator that turns defaults into facts.
-
-## 1.1 Ordering laws
-
-```text
-perceive before answering
-working graph before memory write
-compression before durable storage
-source before belief
-time before current-state claims
-permission before learning
-safety/policy before realization and emission
-committed write before claiming a write/state change
-meaning before wording
-```
-
-The working graph is temporary cognition. It may contain alternatives, gaps, unresolved bindings, provisional referents and evidence. Durable memory stores compressed reusable structures: concepts/types, aliases/lexemes, inheritance, ports, predicate/state/event schemas, construction knowledge, causal/transition affordances, source/permission policies and compact competence exemplars. It must not become a transcript archive.
-
-## 1.2 Dual spine plus consolidation
-
-CEMM has two co-equal runtime concerns:
-
-```text
-execution spine
-  observe -> understand -> ground -> know -> decide -> act/respond
-
-acquisition spine
-  observe gaps/evidence -> induce candidates -> test competence -> promote bounded authority
-
-consolidation loop
-  compress -> merge/supersede -> invalidate -> rehydrate -> replay affected dependencies
-```
-
-The numbered Stage-0..22 loop is the execution ordering contract, not permission to relegate learning to one terminal stage. Learning evidence/frontiers may arise throughout analysis, grounding, query, transition, realization and response.
+**Status:** proposed governing replacement  
+**Purpose:** define a grounded, multilingual, recurrent semantic computational architecture in which perception, language, world state, causal inference, learning, action, impact, and response are different operations over one canonical meaning substrate.  
+**Primary law:** semantic identity is exact and content-addressed; semantic activation and uncertainty are continuous and recurrent; learned dynamics may rank, predict, and generalize, but may not silently redefine meaning.
 
 ---
 
-# 2. The four-layer semantic architecture
+# 0. Architectural correction
 
-The architecture must keep four authority layers separate.
+The earlier CSIR proposal fixed an important problem: higher-order schemas must reduce into one canonical semantic representation before reasoning. That is necessary but insufficient.
 
-## 2.1 Layer A — kernel structural primitives
+A semantic brain also needs to explain:
 
-The kernel owns only stable execution machinery.
+1. how partial lexical and multimodal evidence activates candidate meaning;
+2. how a sentence becomes a coherent whole rather than a bag of atoms;
+3. how entities expose type-entitled state spaces;
+4. how actions and events change the state of role-bound participants;
+5. how one state dimension causally affects another without collapsing their meanings;
+6. how causal effects recursively propagate through capabilities, structures, goals, and social consequences;
+7. how prediction error creates learning frontiers;
+8. how learned definitions, causal mechanisms, and continuous parameters become safely authoritative;
+9. how response meaning is generated from the resulting world, epistemic, impact, and obligation state;
+10. how the system remains neural in computational character without becoming an opaque token predictor.
 
-### Identity and graph structure
-
-```text
-Referent
-SemanticVariable
-SemanticApplication
-Port
-Binding
-FillerRef
-CoordinationGroup
-ScopeRelation
-```
-
-### Meaning schema families
+CEMM v3.5.1 therefore adopts a **dual semantic architecture**:
 
 ```text
-ReferentType
-Property
-StateDimension
-StateValue
-Relation
-Role
-Function
-Action
-Event/Eventuality profile
-MeasureDimension
-Unit
-Operator
-DiscourseAct
-DiscourseRelation
-ResponsePolicy
+Exact semantic plane
+  content-addressed CSIR graphs
+  definitions, roles, scopes, contexts, state dimensions, causal mechanisms
+  operational profiles, proofs, authorizations, version closure
+
+Dynamic neural plane
+  sparse activation fields over CSIR candidates
+  recurrent typed message passing
+  grounded state-belief distributions
+  predictive and causal parameter fields
+  attention/salience, uncertainty, energy, prediction error
 ```
 
-### Cognition and truth machinery
+The exact plane defines what a meaning is. The dynamic plane defines how candidate meanings are activated, integrated, predicted, learned, and selected.
 
-```text
-Proposition
-Claim
-Evidence
-Knowledge
-EpistemicAdmission
-Context
-Time
-Place/localization
-Quantity
-Capability
-Transition
-StateDelta
-LearningFrontier
-Goal
-Operation
-ResponseUOL
-```
-
-These categories exist because they require different validation/execution behavior.
-
-They must never expand merely because a new learned domain concept appears.
-
-## 2.2 Layer B — foundational semantic axes
-
-Foundational axes are reviewed, revisioned data built on the kernel.
-
-Examples:
-
-```text
-identity / same / different
-classification
-existence
-applicability
-activation
-persistence
-change
-polarity
-modality
-occurrence/aspect
-temporal relation
-localization
-quantity/measure/order
-degree/scalarity
-cause
-enable/prevent
-agency/control/affectedness
-containment/part-whole/possession
-capability status
-epistemic status
-query answer projection
-uncertainty/default expectation
-valence/significance
-```
-
-They are “native” because the boot semantic substrate can use them immediately.
-
-They are **not** native because Python checks their names.
-
-## 2.3 Layer C — learned semantic world
-
-Open-ended domain concepts are data:
-
-```text
-fox
-battery
-server
-pregnancy
-fraud
-bank
-specific disease
-specific emotion
-specific procedure
-specific role
-specific social convention
-```
-
-Learning adds/revises schemas, relations, values, transitions, contributions and language competence.
-
-## 2.4 Layer D — language/grammar authority
-
-Language packages contain:
-
-```text
-forms/morphemes
-lexemes
-allomorph/inflection links
-lexical senses/meanings
-semantic contribution specifications
-grammatical features
-constructions
-realization frames
-morphology
-linearization
-```
-
-Language is evidence and compositional constraint.
-
-Language does not define world truth.
+Neither plane replaces the other.
 
 ---
 
-# 3. Canonical cognitive unit: semantic contribution
+# 1. CEMM as a semantic brain
 
-A recognized unit need not independently denote a complete semantic application.
+CEMM is a **grounded semantic dynamical network**.
 
-The smallest cognitive unit is a **SemanticContribution**: evidence-backed constraints on a candidate meaning graph.
+It is not primarily a token sequence model. Its core state is a sparse, typed, recurrent semantic graph coupled to a grounded world-state model.
 
-Contribution mechanics are structural:
+Its computation resembles a brain in the following architectural sense:
+
+- knowledge is distributed across reusable semantic assemblies rather than stored as sentence handlers;
+- activation spreads locally through typed connections;
+- bottom-up observations and top-down predictions interact recurrently;
+- incompatible interpretations inhibit one another;
+- coherent interpretations become stable attractor assemblies;
+- prediction error drives parameter and structural learning;
+- episodic evidence and reusable semantic knowledge have different consolidation paths;
+- state, action, goals, affect, and language share one graph but remain orthogonal dimensions;
+- multiple modalities converge on the same referents and semantic state variables;
+- response generation is an action over common ground, not next-token continuation.
+
+CEMM is neural-symbolic, but **semantics-first**:
 
 ```text
-TARGET
-  proposes a semantic schema/structural target
+symbolic/exact:
+  semantic identity, type contracts, scope, context, role bindings,
+  authority closure, causal rule structure, proof, safety and commit
 
-REFERENTIAL
-  requires or constrains a discourse/referent role
+neural/continuous:
+  activation, ranking, uncertainty, similarity, predictive parameters,
+  causal strengths, salience, confidence calibration and attractor dynamics
+```
+
+A continuous model may propose or score a graph. Only an exact CSIR graph with valid authority closure can become executable meaning.
+
+---
+
+# 2. The canonical cognitive state
+
+At cycle time `t`, CEMM's cognitive state is:
+
+```text
+CognitiveState_t
+  authority_snapshot
+  working_csir_graph
+  activation_field
+  grounded_world_belief
+  causal_mechanism_graph
+  epistemic_support_graph
+  goal_and_value_field
+  discourse_common_ground
+  learning_frontiers
+  proof_and_lineage_graph
+```
+
+Formally:
+
+\[
+\mathcal C_t = (S_t,G_t,\alpha_t,B_t,\mathcal M_t,E_t,V_t,D_t,F_t,\Pi_t)
+\]
+
+where:
+
+- \(S_t\) is the exact authority snapshot;
+- \(G_t\) is the current CSIR graph;
+- \(\alpha_t\) is the activation field over candidate terms, applications, bindings and hypotheses;
+- \(B_t\) is the grounded belief state of referents and state dimensions;
+- \(\mathcal M_t\) is the versioned causal/dynamic mechanism graph;
+- \(E_t\) is epistemic support and opposition;
+- \(V_t\) is goals, values, impact and significance;
+- \(D_t\) is discourse and common ground;
+- \(F_t\) is the frontier set;
+- \(\Pi_t\) is proof, evidence, authority and derivation lineage.
+
+The working graph may be incomplete, ambiguous and contradictory. Durable commits require exact closure, authorization and proof.
+
+---
+
+# 3. Semantic constructors versus computational operations
+
+The architecture must not confuse semantic atoms with the instruction set that manipulates them.
+
+## 3.1 Kernel semantic constructors
+
+The smallest stable semantic constructors are:
+
+```text
+TERM
+  identity-bearing referent, value, literal, time, interval, context or schema topic
 
 VARIABLE
-  introduces an open semantic binding
+  typed open term or graph position
 
-RESTRICTION
-  narrows what can satisfy an open binding
+APPLICATION
+  typed n-ary semantic relation/eventuality/operator with local ports
 
-PROJECTION
-  specifies what part/aspect of a matched structure is sought
+BINDING
+  connection between an application port and a term, variable or application
 
-SCOPE
-  constrains logical/modal/temporal/discourse scope
+QUALIFICATION
+  context, time, polarity, modality, source, evidence, permission or uncertainty
 
-ARGUMENT
-  connects grammatical roles/slots to semantic ports
+SCOPE_EMBEDDING
+  graph containment and operator/discourse/proposition scope
 
-GRAMMATICAL_FEATURE
-  preserves tense/aspect/agreement/case/number/etc. as language evidence
+COORDINATION
+  typed conjunction, disjunction, sequence, collection or alternative
 
-CONSTRUCTION
-  activates reusable graph-building/composition structure
+PROOF_LINK
+  exact derivation, evidence, authority and dependency connection
 ```
 
-A token may emit multiple contributions.
+Everything else must be definable as a graph over these constructors or justified through a Kernel Semantic ABI migration.
 
-A contribution does not become truth merely because it was recognized.
+## 3.2 Semantic machine operations
+
+The semantic machine executes a bounded algebra:
+
+```text
+INSTANTIATE     create a typed term/application from exact authority
+BIND            attach a filler to a port
+UNIFY           solve equality and compatibility constraints
+COMPOSE         merge compatible graph fragments
+QUALIFY         add context/time/polarity/modality/evidence
+EMBED           place a graph under proposition, scope, world or discourse structure
+PROJECT         expose selected terms/subgraphs for query or response
+MATCH           find graph homomorphisms/substitutions
+COMPARE         evaluate equality, ordering, distance or change under a dimension contract
+REWRITE         apply proof-bearing graph deltas
+PROPAGATE       send typed activation/evidence messages
+INTEGRATE       combine dependent evidence without double counting
+NORMALIZE       produce canonical semantic normal form
+ABSTRACT        recognize a reusable higher-order definition conservatively
+AUTHORIZE       validate exact definition/profile/use/scope authority
+SIMULATE        preview causal/state consequences without durable mutation
+COMMIT          apply a CAS-protected graph patch
+INVALIDATE      retract derived authority after dependency change
+CONSOLIDATE     compress repeated structure into reusable definitions/parameters
+```
+
+These are operations of the semantic computer, not named world concepts.
 
 ---
 
-# 4. Lexeme and form-family architecture
+# 4. CSIR as the exact semantic substrate
 
-Direct `form -> sense` links are insufficient for a multilingual learning system.
+CSIR is a finite typed attributed hypergraph.
 
-The target architecture is:
-
-```text
-observed surface
-→ LanguageForm candidate
-→ Lexeme/form-family candidate
-→ LexicalSense/meaning candidate
-→ SemanticContributionSpec records
-→ cycle-local SemanticContribution instances
-```
-
-## 4.1 LanguageForm
-
-A form is an observed or realizable surface/morpheme identity.
-
-It may carry surface features but does not own semantic meaning.
-
-## 4.2 Lexeme
-
-A lexeme groups forms that share lexical semantic authority.
-
-Examples conceptually:
+Every executable semantic application pins:
 
 ```text
-BE:
-  be
-  am
-  is
-  are
-  was
-  were
-  been
-  being
+definition_hash
+semantic_abi_version
+operational_profile_hash where required
+use_authorization_hash
+context and time qualifications
+proof and evidence lineage
 ```
 
-The relation may be regular inflection, suppletion, cliticization or another reviewed form relation.
-
-## 4.3 FormLexemeLink
-
-A form→lexeme link carries grammatical evidence such as:
-
-```text
-tense=present
-finite=true
-person=2
-number=plural-compatible
-aspect=participle
-```
-
-The link is language data, not semantic truth.
-
-## 4.4 LexemeSenseLink
-
-A lexeme may have multiple senses.
-
-Sense choice remains probabilistic/constraint-based and context-sensitive.
-
-## 4.5 SemanticContributionSpec
-
-A lexical sense may have zero, one or multiple contribution specifications.
-
-A sense therefore need not be forced to one complete `target_ref`.
-
-Legacy `form -> sense -> target` authority remains a bounded compatibility path until seed migration.
-
----
-
-# 5. Qualitative meaning: property, state, process, degree, manner and method
-
-These concepts are frequently confused and must remain orthogonal.
-
-## 5.1 Property
-
-A relatively stable or identity-descriptive semantic relation.
+CSIR represents both lower- and higher-order meaning, but higher-order definitions compile to the same substrate.
 
 Examples:
 
 ```text
-name
-material
-version
-owner
-color
+property(holder, value)
+state(holder, dimension, value, interval)
+event(participant bindings, temporal profile)
+query(variable, restriction graph, projection)
+claim(claimant, proposition, audience, commitment)
+capability(holder, action, dependency state)
+impact(source delta, stakeholder, goal-relative evaluation)
+response_act(speaker, audience, semantic target, social commitment)
 ```
 
-Properties may still be time-qualified and corrected.
-
-## 5.2 State
-
-A time/context-indexed condition along a dimension.
-
-```text
-state_dimension(holder, value, interval, context)
-```
-
-Examples:
-
-```text
-operational_status
-connectivity
-availability
-life_status
-charge_status
-```
-
-Applicability is entitlement-based.
-
-A state dimension is not universal merely because it is foundational.
-
-## 5.3 Process/activity
-
-A dynamic eventuality unfolding over an interval without requiring a terminal boundary.
-
-Examples conceptually:
-
-```text
-running
-thinking
-charging
-learning-in-progress
-```
-
-The architecture must represent this distinction even if the stable Python schema class remains `EventSchema` plus aspect/temporal profile.
-
-## 5.4 Event/transition
-
-An occurrence/change structure that may have boundaries/results and trigger transitions.
-
-## 5.5 Action
-
-An eventuality with control/intentionality semantics.
-
-Action is not identical to event occurrence.
-
-## 5.6 Manner
-
-Manner is not a universal state.
-
-It is a projection/modification relation over an eventuality:
-
-```text
-characterize_how(eventuality, ?description)
-```
-
-Possible answers can derive from many semantic families: speed, style, trajectory, care, instrument use, physical configuration, etc.
-
-## 5.7 Degree
-
-Degree is based on ordered/scalar structure.
-
-```text
-dimension(holder, ?value)
-ordered_scale(dimension)
-project(?value or range)
-```
-
-It supports comparison, intensity and measurement.
-
-## 5.8 Method
-
-Method is structured means/procedure knowledge:
-
-```text
-goal/result
-+ action/process sequence
-+ means/instruments/resources
-+ enabling/causal relations
-```
-
-It is not a single irreducible enum.
+These may use specialized operational profiles while retaining reducible semantic definitions.
 
 ---
 
-# 6. Interrogatives and information gaps
+# 5. Authority architecture
 
-Interrogative lexicalizations contribute typed information-gap constraints.
+CEMM uses eight orthogonal authority planes.
 
-The semantic architecture must separate:
+## 5.1 Kernel Semantic ABI
 
-```text
-information gap
-semantic variable
-restriction graph
-answer projection
-discourse act
-response obligation
-```
+Defines the machine semantics of the kernel constructors and graph operations.
 
-Examples of projection families, represented as data:
+## 5.2 Semantic Definition Authority
 
-```text
-WHO
-  referent/identity projection
+Immutable content-addressed graph definitions for types, relations, states, eventualities, operators, discourse structures and learned concepts.
 
-WHERE
-  localization projection
+## 5.3 Operational Profile Authority
 
-WHEN
-  temporal projection
+Validation, lifecycle, indexing, transition, query, execution and persistence behavior for closed meanings.
 
-WHY
-  cause/reason/explanation projection
+## 5.4 Semantic Dynamics Parameter Authority
 
-HOW
-  candidate projections such as:
-    qualitative condition
-    manner
-    scalar degree
-    means/procedure
+Versioned continuous parameters used by:
 
-WHAT
-  broad value/referent/schema/action projection constrained by construction
-```
+- typed message-passing functions;
+- observation likelihoods;
+- priors and salience;
+- causal mechanism strengths;
+- state estimators;
+- calibration curves;
+- learned similarity indexes;
+- response and question utility models.
 
-These are not direct word→intent mappings.
+These parameters influence activation and prediction. They do not change semantic definitions.
 
-## 6.1 Example: `how are you`
+## 5.5 Use Authorization Authority
 
-A correct decomposition is approximately:
+Per-definition/profile/use/scope/context permission, including provisional and high-risk thresholds.
 
-```text
-HOW
-  introduce/query ?answer
-  candidate projection = qualitative/manner/degree/means
-  target restriction still open
+## 5.6 Language and Multimodal Projection Authority
 
-ARE / BE-family
-  finite present grammatical evidence
-  candidate structural uses:
-    copular predication
-    progressive auxiliary
-    passive auxiliary
-    existential structure
+Lexemes, morphology, constructions, realization, vision/audio/sensor concept projections and calibration contracts.
 
-YOU
-  referential requirement = discourse addressee
-```
+## 5.7 Instance Knowledge and Evidence Authority
 
-Grounding closes:
+Referents, observations, claims, admitted knowledge, state timelines, event occurrences, goals, discourse and proofs.
 
-```text
-addressee -> ParticipantFrame.input_addressee -> referent:self
-```
+## 5.8 Runtime Adapter and Policy Authority
 
-Predicative structure plus `HOW` ranks a qualitative condition/state/property projection.
+Sensor adapters, operation adapters, channel adapters, safety, privacy, resource and emission policy.
 
-Stage-4 self knowledge exposes applicable facets/dimensions.
-
-Stage 5 forms candidates such as supported current self-state descriptions.
-
-Stage 10 binds current values.
-
-Only matrix interrogative/discourse structure establishes `ask` and a response obligation.
-
-No `"how are you"` phrase record is required.
-
-## 6.2 Example: `what can you do`
-
-Conceptually:
-
-```text
-WHAT
-  ?answer projection constrained by construction
-
-CAN
-  modality/capability contribution
-
-YOU
-  addressee -> self
-
-DO
-  open action/eventuality slot
-```
-
-Composition should converge on:
-
-```text
-QUERY ?action
-WHERE capability(holder=self, action=?action) is available/conditional
-PROJECT ?action
-```
-
-Stage 10 binds live `CapabilityInstance`/affordance knowledge.
-
-No capability list is hard-coded in a response rule.
+A cycle pins all relevant roots. A neural weight file without an exact authority pin is no more acceptable than a floating schema revision.
 
 ---
 
-# 7. BE/copular architecture
+# 6. Grounded referent state spaces
 
-English BE is a language-specific lexeme family.
+A referent is not a flat object with arbitrary fields. Its active types entitle it to a product of typed state spaces.
 
-It must not directly mean:
+For referent \(r\):
+
+\[
+\mathcal Z_r = \prod_{d \in Entitled(r,S)} \mathcal V_d
+\]
+
+A dimension may be:
 
 ```text
-state
-becoming
-operational
-identity
+categorical       operational_status, life_status
+ordered discrete  severity, charge band
+continuous        temperature, mass, speed
+vector/manifold   position, orientation, color distribution
+relational        ownership, support, containment, connection
+set-valued        active roles, installed components
+process-valued    ongoing activity or resource flow
+probabilistic     uncertain identity, location or state
 ```
 
-Depending on construction, BE may participate in:
+Foundational dimension families include, but are not limited to:
 
-- copular predication;
-- classification;
-- equative/identity structure;
-- localization;
-- progressive auxiliary;
-- passive auxiliary;
-- existential constructions.
+```text
+identity and type
+geospatial position, topology, containment and orientation
+temporal interval, sequence, duration and frequency
+physical dimensions: temperature, mass, shape, integrity, pressure, motion
+structural dimensions: part-whole, connectivity, dependency, configuration
+biological dimensions: life, health, energy, homeostasis
+cognitive dimensions: attention, belief, memory availability, intention
+affective dimensions: valence, arousal, comfort, mood, emotion episode
+social/normative dimensions: role, relationship, permission, obligation
+resource dimensions: quantity, availability, capacity, depletion
+capability dimensions: affordance, dependency satisfaction, competence, readiness
+epistemic dimensions: support, opposition, uncertainty, source reliability
+operational dimensions: adapter availability, channel state, runtime health
+```
 
-“Becoming” is a change/eventuality meaning and must be independently represented.
+These are not universally active fields. Type/facet entitlement determines applicability.
 
-This rule generalizes to other languages, including languages with zero copula or different copular systems.
+## 6.1 Cross-dimensional causality is not semantic collapse
+
+Physical temperature does not *become* emotion.
+
+For a living referent, thermal state may causally influence homeostasis, comfort, stress, arousal or mood through type- and context-conditioned mechanisms. For a server, thermal state may affect hardware integrity and processing capability. For a room, temperature may affect habitability but not possess a mood.
+
+Correct representation:
+
+```text
+thermal_state(fox) increases
++ fox is a living animal
++ range exceeds comfort threshold
++ exposure duration and context
+→ predicted discomfort/stress state
+→ possible behavior/capability effects
+```
+
+The thermal and affective dimensions remain distinct. Their causal link is explicit, versioned, defeasible and evidence-bearing.
 
 ---
 
-# 8. Referent and knowledge envelope
+# 7. Multimodal grounding
 
-A `Referent` is anything with trackable semantic identity.
-
-Examples:
-
-- agents;
-- organisms;
-- physical/digital objects;
-- places;
-- event/state occurrences;
-- propositions;
-- quantities/units;
-- times;
-- collections;
-- contexts;
-- schemas when discussed.
-
-Storage kind is serialization shape, not semantic type.
-
-All referents share one derived knowledge envelope:
+All modalities produce evidence envelopes, not facts.
 
 ```text
-identity
-existence
-semantic_type
-temporal
-localization
-composition/mereology
-descriptive_property
-state
-relation
-role
-event_participation
-action_affordance
-capability/disposition
-function/purpose
-resource
-epistemic
-social/normative
-affective
-significance
-provenance/access
+text
+speech and prosody
+vision and tracking
+location sensors
+temperature and environmental sensors
+system telemetry
+operation results
+human teaching
 ```
 
-Types and entitlements determine applicability.
+A modality adapter emits:
 
-A `ReferentKnowledgeView` is derived and cycle-pinned, not a competing truth store.
+```text
+observed signal
+candidate referent/track links
+candidate dimension/value likelihoods
+spatial and temporal extent
+calibration authority
+source, permission and lineage
+```
+
+For modality \(m\):
+
+\[
+p(o_t^m \mid z_{r,d,t},\kappa_m)
+\]
+
+is an observation model pinned by calibration authority \(\kappa_m\).
+
+Multiple modalities update the same grounded state variable only after identity, context and time alignment. Text saying “the box is hot,” a thermal camera reading, and a temperature probe may support the same thermal-state proposition while remaining independently attributable evidence.
+
+Language does not receive privileged world-truth status.
 
 ---
 
-# 9. Entitlements and candidate closure
+# 8. Meaning as a recurrent attractor
 
-Facet entitlements decide what kinds of predicates/states/capabilities may meaningfully apply.
+A sentence or multimodal episode is not interpreted by independently decoding each word and concatenating outputs.
 
-Runtime projection statuses:
-
-```text
-active
-latent
-default_expected
-unknown
-blocked
-terminated
-inapplicable
-contradicted
-```
-
-Stage 4 must do more than filter same-span lexical candidates.
-
-It must provide semantic closure candidates through graph relationships.
-
-Correct direction:
+Each contribution activates candidate CSIR fragments. Candidate fragments exchange typed messages through:
 
 ```text
-open predication/query variable
-→ holder/actor/affected semantic port
-→ grounded referent candidate
-→ ReferentKnowledgeView
-→ applicable property/state/capability schemas
-→ candidate closure values
-```
-
-No span equality is semantic authority.
-
----
-
-# 10. Participant grounding
-
-Stage 0 constructs an evidence-backed `ParticipantFrame`:
-
-```text
-system_ref
-input_speaker_ref
-input_addressee_refs
-response_audience_refs
-context_ref
-permission_ref
-identity_evidence_refs
-```
-
-Language deixis uses this frame generically.
-
-A lexical sense may contribute:
-
-```text
-speaker_role
-addressee_role
-demonstrative role
-prior-output role
-```
-
-Grounding resolves the role.
-
-No kernel code checks English pronoun strings.
-
----
-
-# 11. UOL variable contract
-
-A semantic variable must be capable of preserving:
-
-```text
-variable_ref
-expected_filler_classes
-expected_schema_classes
-expected_type_refs
-restriction_refs
-projection_ref
-open_binding_purpose
-scope_ref
-evidence_refs
-```
-
-Open-binding purposes include at least:
-
-```text
-query
-learning
-rule
-partial_composition
-response_planning
-```
-
-A generic “gap” without these constraints is insufficient for learning-first cognition.
-
----
-
-# 12. Composition and semantic construction algebra
-
-Constructions must eventually build graph fragments, not merely map a surface pattern to one output predicate.
-
-Required bounded operations include:
-
-```text
-INTRODUCE_VARIABLE
-INSTANTIATE_EXACT_SCHEMA
-ACTIVATE_SCHEMA_CLASS_CANDIDATES
-BIND_PORT_FROM_SLOT
-UNIFY
-ADD_RESTRICTION
-SET_PROJECTION
-ADD_SCOPE
-ADD_TIME_FEATURE
-ADD_ASPECT_FEATURE
-ADD_MODALITY
-WRAP_DISCOURSE_ACT
-PRESERVE_GAP
-```
-
-The executor is generic.
-
-The program/data is language-specific and reviewed.
-
-No arbitrary code in data.
-
-No full-sentence construction except genuine idiom/literal-policy cases.
-
----
-
-# 13. Factor graph and joint meaning solve
-
-Stage 5 builds one bounded factor graph containing:
-
-```text
-sense/lexeme choices
-semantic contribution choices
-referent identity
-schema activation
-port fillers
-query variables
-projection/restriction compatibility
+port compatibility
+type entitlement
+reference/coreference
 scope
-time/aspect/modality
-context
-discourse act
-construction choices
+time and aspect
+context/world
+causal expectations
+state plausibility
+discourse continuity
+construction constraints
+multimodal alignment
 ```
 
-Hard factors:
+Bottom-up evidence activates candidate assemblies. Higher-order candidate definitions send top-down predictions about missing roles, expected types, state dimensions and scopes.
 
-- type/facet entitlement;
-- port/filler compatibility;
-- participant grounding constraints;
-- context isolation;
-- query variable typing;
-- state applicability;
-- exact revision/use authorization.
+The network recurrently relaxes until it reaches:
 
-Soft factors:
+- one or more stable semantic-equivalence classes;
+- a partial stable graph with open variables/frontiers;
+- a contradiction set;
+- or budget-limited incompleteness.
 
-- form/morphology evidence;
-- lexical priors;
-- discourse salience;
-- temporal coherence;
-- referent knowledge plausibility;
-- defaults as ranking only;
-- complexity/assumptions.
+Hard semantic constraints clamp impossible states. Continuous activation never overrides an exact type, scope, context or authorization violation.
 
-The solver preserves close alternatives and partial meaning.
+This is the core neural character of CEMM.
 
 ---
 
-# 14. Claims, contexts and truth
+# 9. Higher-order grammatical meaning
 
-Input discourse content is first attributed.
+Language packages map grammatical evidence into graph constraints rather than world-specific outputs.
 
-A grammatical assertion does not automatically become actual-world knowledge.
+## 9.1 Nominal expressions
 
-Keep:
+May contribute:
+
+- referent introduction or retrieval;
+- type restrictions;
+- quantity/determination;
+- identity and discourse status;
+- relational or event nominalization.
+
+## 9.2 Predicates and action words
+
+May activate:
+
+- state/property/relation applications;
+- process/event/action definitions;
+- participant-role frames;
+- expected transitions;
+- aspectual alternatives.
+
+A verb does not directly mutate state.
+
+## 9.3 Grammatical subject and object
+
+Subject/object are language relations and evidence for semantic roles. Effects are controlled by the selected semantic role bindings.
 
 ```text
-proposition
-claim occurrence
-source evidence
-epistemic assessment
-admission decision
-knowledge status
+John pushed the box.
 ```
 
-separate.
+The subject may support `agent=John`; the object may support `affected/theme=box`. The action transition targets the affected role, not “the object” as a universal rule.
 
-Contexts include actual, reported, belief, hypothetical, planned, desired, counterfactual, fictional/simulated and quoted.
+Passive, ergative, causative, applicative and topic-prominent languages must reach the same role graph through different grammar.
 
----
+## 9.4 Modifiers
 
-# 15. Universal semantic query binding
+Adjectives/adverbs may constrain:
 
-Stage 10 must bind restriction graphs against **semantic knowledge**, not one storage record kind.
+- state/value;
+- type/classification;
+- scalar degree;
+- manner;
+- duration/frequency;
+- result;
+- epistemic or discourse stance.
 
-Queryable sources include:
+They are not semantic ontology classes.
 
-- semantic applications;
-- referent/type/identity projections;
-- properties;
-- state assignments/timelines/default expectations;
-- relations/roles;
-- capabilities/affordances/functions;
-- events;
-- propositions/claims/knowledge;
-- quantities/measures;
-- time/place;
-- proofs/explanations.
+## 9.5 Tense, aspect and modality
 
-Storage representation is an implementation detail.
-
-Query output is semantic bindings, never final text.
+These qualify the event/state/proposition graph and determine temporal/world placement. They do not directly authorize actual-world state change.
 
 ---
 
-# 16. Self model
+# 10. Actions, events and role-sensitive transition programs
 
-`referent:self` is a real referent.
+An action/event definition contains participant roles and may reference one or more causal transition mechanisms.
 
-Its knowledge is derived from:
+A transition mechanism is a role-bound state transformer:
 
-- software-agent type closure;
-- runtime adapters;
-- active language competence;
-- semantic-store access;
-- memory/learning authority;
-- channel availability;
-- operation capability;
-- current runtime state.
+\[
+T_a : (\mathbf z_{P,t},c,t) \rightarrow
+P(\Delta \mathbf z_P, E_{secondary} \mid \mathbf z_{P,t},c,t)
+\]
 
-Self states must be evidence-backed.
+where \(P\) is the set of bound participants.
 
-Examples of potentially applicable dimensions:
+Effects target semantic roles and dimensions:
 
 ```text
-operational_status
-availability
-connectivity
-capability_status
-resource state
+affected.temperature += delta
+moved_entity.position := destination
+container.contains -= content
+recipient.possession += transferred_item
+server.processing_capability := blocked
+speaker.commitment += proposition
 ```
 
-Applicability must be entitlement-correct.
+Each effect requires:
 
-Do not fabricate human affective states for a software agent unless explicitly modeled and evidenced.
+- exact action/event definition closure;
+- exact role bindings;
+- exact dimension and value-domain authority;
+- context and time;
+- preconditions and defeaters;
+- warrant and confidence;
+- transition authorization.
+
+No event-name Python branch is permitted.
 
 ---
 
-# 17. Capabilities and actions
+# 11. Recursive causal propagation
 
-Distinguish:
+Causal reasoning operates in layers.
+
+## 11.1 Direct mechanism
+
+The event directly changes one or more participant dimensions.
+
+## 11.2 Dependency propagation
+
+Changed dimensions alter dependent states or capabilities.
+
+## 11.3 Secondary event generation
+
+A state threshold may instantiate a secondary event candidate.
+
+## 11.4 Goal and impact propagation
+
+Changes affect stakeholder goals, resources, relationships, risks and obligations.
+
+## 11.5 Discourse and response propagation
+
+New epistemic/impact state creates response obligations or learning questions.
+
+Propagation is recursive but bounded, cycle-detected and proof-bearing.
+
+A causal path is retained as a graph:
+
+```text
+source observation/event
+→ admitted occurrence
+→ mechanism
+→ direct delta
+→ dependency delta
+→ secondary event
+→ impact/goal consequence
+→ response obligation
+```
+
+The system can therefore answer `why`, `how`, `what changed`, `what will happen`, and counterfactual questions from the same proof graph.
+
+---
+
+# 12. Structural causal world model
+
+CEMM represents causal mechanisms separately from mere correlations.
+
+For semantic state variable \(X_i\):
+
+\[
+X_i(t+1) := f_i(Pa_i(t),A_t,C_t,U_i;\theta_i)
+\]
+
+where:
+
+- \(Pa_i\) are semantic parent variables;
+- \(A_t\) is action/event intervention;
+- \(C_t\) is context;
+- \(U_i\) is unobserved disturbance;
+- \(\theta_i\) is versioned parameter authority.
+
+The system supports:
+
+```text
+observation        condition on evidence
+prediction         propagate current belief forward
+intervention       do(action/event)
+counterfactual     compare factual and intervened worlds
+explanation        return minimal warranted causal path
+```
+
+Temporal sequence alone is not causal authority. Learned causal edges require classified warrants and competence.
+
+---
+
+# 13. Inference families
+
+Inference is not one generic rule engine. CEMM supports typed families over CSIR:
+
+```text
+deductive/type closure
+constraint propagation
+relational and graph query
+spatial/topological reasoning
+temporal interval reasoning
+quantitative and ordered-dimension reasoning
+causal prediction and intervention
+default/non-monotonic reasoning
+paraconsistent epistemic reasoning
+abductive explanation
+analogical candidate proposal
+planning and means-end reasoning
+social/normative reasoning
+impact and stakeholder reasoning
+```
+
+Every inference result records:
+
+- inference family;
+- exact premises and authority closure;
+- rule/mechanism and parameters;
+- context/time;
+- proof or approximation trace;
+- confidence and uncertainty;
+- use authorization.
+
+Analogy and similarity may propose candidates. They cannot independently authorize high-risk conclusions.
+
+---
+
+# 14. Recursive learning
+
+Learning is continuous across perception, meaning, state, causality, action and response.
+
+## 14.1 Prediction-error frontier
+
+For predicted observation/state \(\hat o_t,\hat z_t\):
+
+\[
+\epsilon_t = (o_t-\hat o_t, z_t-\hat z_t)
+\]
+
+The system classifies error as a possible failure of:
+
+```text
+grounding or identity
+observation calibration
+definition or lexicalization
+role binding or construction
+state dimension/value model
+causal structure
+causal parameter
+context/time placement
+default expectation
+capability dependency
+goal/impact model
+response competence
+```
+
+## 14.2 Continuous parameter learning
+
+Observation likelihoods, message weights, causal strengths and priors may update through Bayesian or gradient-based learning under pinned model architecture and replayable evidence.
+
+## 14.3 Discrete semantic learning
+
+New concepts, state dimensions, roles, causal mechanisms and constructions are candidate graph definitions. They require closure, independent competence, counterexamples and per-use promotion.
+
+## 14.4 Structure learning
+
+Repeated role-bound pre/post patterns can propose a causal mechanism. Structure selection uses intervention evidence where available, temporal precedence, confounder checks, counterexamples and compression gain.
+
+## 14.5 Semantic consolidation
+
+Repeated equivalent subgraphs may be abstracted into a reusable definition only when abstraction is conservative:
+
+```text
+expanded definition meaning == observed canonical subgraph class
+```
+
+Compression never replaces proof lineage or turns a phrase into ontology.
+
+---
+
+# 15. Capability, physical structure and embodied consequences
+
+Capability is derived from:
 
 ```text
 affordance
-  action is structurally meaningful
-
-disposition
-  latent ability under conditions
-
-capability
-  current ability under known dependencies
-
+dependency satisfaction
+resource state
+structural integrity
+current context
+adapter availability
 competence
-  verified execution/semantic skill
-
-permission
-  authorization to perform
-
-function
-  intended/system contribution
-
-intention/goal
-  selected desired action/result
 ```
 
-A query such as “what can you do?” must bind live capability/affordance semantics, not a canned list.
+A physical or structural state change can therefore alter capability through dependencies.
 
----
-
-# 18. Events and transitions
-
-An event occurrence is context/time qualified.
-
-Only admitted events can mutate the corresponding world context.
-
-Transitions are:
+Examples:
 
 ```text
-event occurrence
-→ transition contract match
-→ proof
-→ state/relation/capability delta candidates
-→ authorization
-→ atomic commit
+server temperature too high
+→ cooling dependency violated
+→ processing capability degraded/blocked
+
+animal leg injured
+→ structural/motor dependency degraded
+→ locomotion capability reduced
+
+battery charge reaches zero
+→ energy dependency violated
+→ powered actions unavailable
 ```
 
-No event-specific Python mutator.
-
-State history remains queryable.
+The event does not directly delete capability. The dependency graph derives the change and preserves historical capability.
 
 ---
 
-# 19. Learning architecture boundary
+# 16. Impact, affect and significance
 
-Every unresolved dependency should produce a typed frontier such as:
+Impact compares before/after state relative to stakeholders and goals.
 
 ```text
-unknown form
-unknown lexeme/form family
-unknown lexical sense
-unknown semantic contribution
-unknown construction
-unknown referent/type
-missing state dimension/value
-missing port/filler
-missing query projection
-missing transition/dependency
-missing realization competence
-missing response competence
+state delta
++ stakeholder relation
++ goal/resource dependency
++ magnitude, duration, reversibility and risk
+→ impact vector
 ```
 
-Learning lifecycle:
+Affective inference is grounded in explicit affective evidence or causal mechanisms over biological/cognitive/social state. It is not inferred from keywords alone.
+
+CEMM distinguishes:
 
 ```text
-candidate
-→ structurally_closed
-→ provisional
-→ competence_verified
-→ active
-→ superseded/rejected
+physical state of an entity
+predicted affective consequence for a living experiencer
+user emotional evidence
+system social response stance
 ```
 
-Promotion is independent by use operation.
-
-Learning must survive restart and invalidate dependent projections when revised.
+A sympathetic response does not assert that the system experiences human grief.
 
 ---
 
-# 20. Response cognition
+# 17. Response generation as semantic action
 
-Stage 15 derives semantic obligations/goals.
+A response is an intended change to discourse/common ground.
 
-Stage 18 builds Response UOL with generic transforms such as:
+The system first derives semantic obligations:
 
 ```text
-answer_bound_query
-report_value
-report_state
-report_set
-report_event
-report_capability
-describe_referent_projection
-qualify_epistemic_status
-clarify_missing_binding
+answer an open query
+report a relevant state or event
+qualify source/uncertainty
+clarify a missing binding
+warn about predicted risk
+acknowledge a target-bearing claim
+provide causal explanation
+propose an authorized action
+teach or request learning evidence
+remain silent for an explicit reason
 ```
 
-Ordinary predicates do not own response sentences.
+It then constructs candidate Response CSIR graphs and selects among them under:
 
-A new learned state or action should become answerable without a new predicate-specific response policy.
+- truth and proof preservation;
+- query coverage;
+- relevance and information gain;
+- stakeholder impact and social appropriateness;
+- permission, safety and privacy;
+- operation freshness;
+- target-language realizability;
+- cost and interaction burden.
+
+Language realization is the final projection. It cannot add unsupported emotion, causality, certainty or relationships.
 
 ---
 
-# 21. Realization
+# 18. Worked semantic-brain examples
 
-Target-language realization:
+## 18.1 “John pushed the box off the table.”
+
+Language analysis proposes:
 
 ```text
-Response UOL
-→ clause plan
-→ argument frame
-→ reference plan
-→ morphology/agreement
-→ linearization
-→ surface
+eventuality: push
+agent: John
+affected/theme: box
+source/support: table
+result/path: off(table)
+past/completed evidence
 ```
 
-The realizer may choose wording but may not invent:
+Multimodal grounding may align John, box and table with visual tracks.
 
-- facts;
-- relationships;
-- certainty;
-- emotional stance;
-- impact;
-- unsupported referents.
-
-Round-trip semantic equivalence is mandatory before emission.
-
----
-
-# 22. Compatibility and migration
-
-The current signed boot contains legacy direct language authority.
-
-During remediation:
-
-1. old records remain readable;
-2. new learned/reviewed language authority uses lexemes and semantic-contribution specs;
-3. runtime prefers new authority when present;
-4. legacy fallback is explicit and traceable;
-5. later seed-rebuild phase migrates canonical language data;
-6. only then may the compatibility path be removed.
-
-No silent reinterpretation of signed source fingerprints.
-
----
-
-# 23. Non-negotiable productivity invariant
-
-A newly learned/promoted semantic structure must be able to:
-
-- ground;
-- compose;
-- project referent facets;
-- participate in queries;
-- remain attributed/epistemically qualified;
-- participate in transitions/capability recomputation when contracts exist;
-- influence goals/responses;
-- realize in authorized languages;
-- survive restart;
-- invalidate dependents when revised;
-
-without adding:
-
-- concept-name Python branches;
-- regex/keyword semantic routing;
-- event-specific mutators;
-- predicate-specific answer sentences;
-- transcript phrase constructions.
-
----
-
-# 24. Acceptance examples are consequences, not authorities
-
-Examples such as:
+The selected action mechanism predicts:
 
 ```text
-how are you?
-what can you do?
-my name is X
-what is my name?
+box support_relation(table) terminates
+box geospatial position changes
+box velocity may become non-zero
+John contact/effort event occurs
 ```
 
-are release regressions.
+Secondary mechanisms may predict collision or structural damage only if trajectory, environment and impact evidence support them.
 
-They must pass for architectural reasons.
+The grammatical object is not mutated because it is an object; the role-bound affected entity is transformed.
 
-Exact phrase mappings, full-sequence constructions or canned answers are prohibited.
+## 18.2 “The heater warmed the fox, so it relaxed.”
 
-The decisive tests use synthetic renamed vocabulary, changed referent types, new states/actions/capabilities, multilingual lexicalizations and restart/rehydration.
+Direct event:
+
+```text
+heater = causer/instrument
+fox = affected
+fox thermal state increases
+```
+
+Type-conditioned causal model:
+
+```text
+if fox thermal state moves toward comfort range
+and exposure is safe
+then comfort increases
+and relaxation probability increases
+```
+
+If temperature exceeds a stress threshold, the same thermal increase can instead predict distress, harm or escape behavior. Context and individual state matter.
+
+`temperature` and `relaxation` remain distinct dimensions connected by an explicit mechanism.
+
+## 18.3 “The server overheated and stopped processing requests.”
+
+```text
+server thermal state exceeds limit
+→ cooling/thermal dependency fails
+→ processing capability becomes blocked
+→ request operations fail or queue
+→ service impact and warning goal generated
+```
+
+The architecture can answer:
+
+- what happened;
+- why processing stopped;
+- which capability is affected;
+- whether cooling restoration could recover it;
+- what evidence supports the conclusion.
+
+---
+
+# 19. Versioning and historical meaning
+
+An executable meaning pins:
+
+```text
+Kernel Semantic ABI root
+CSIR/normalizer ABI root
+semantic definition closure root
+operational profile root
+semantic-dynamics parameter root
+use authorization root
+language/multimodal authority root
+causal mechanism root
+policy and adapter roots
+competence/calibration roots
+```
+
+A top-level schema revision is insufficient.
+
+Changing a parent definition, state domain, causal parameter set, observation calibration, message-passing model or operational profile creates a new authority closure. Historical decisions retain their original closure.
+
+Neural parameters are immutable artifacts once promoted. Learning creates a new parameter revision rather than silently mutating the model used to justify prior decisions.
+
+---
+
+# 20. Core invariants
+
+1. No higher-order concept executes before exact CSIR compilation.
+2. No continuous activation or embedding can override a hard semantic constraint.
+3. No grammatical subject/object rule directly determines world-state effects.
+4. Effects target semantic roles and typed dimensions.
+5. Cross-dimensional influence requires an explicit causal mechanism.
+6. Correlation does not become causal authority without classified evidence.
+7. Multimodal observations remain source-attributed and calibration-pinned.
+8. Claims do not become actual-world state without epistemic admission.
+9. Simulation does not become durable state without commit authorization.
+10. Capability changes derive from dependency state, not event-name branches.
+11. Recursive propagation is bounded, cycle-detected and proof-bearing.
+12. Continuous parameter learning and discrete semantic learning have separate promotion gates.
+13. Response generation operates on semantic obligations and grounded effects, not predicates or phrases.
+14. Every durable result can be reconstructed from exact authority, evidence and pre-state.
+15. Budget exhaustion produces incompleteness, not fabricated certainty.
+
+---
+
+# 21. Final architectural statement
+
+The final CEMM computational architecture is:
+
+\[
+\boxed{
+\text{Content-addressed semantic algebra}
++
+\text{typed recurrent activation network}
++
+\text{grounded multimodal state estimator}
++
+\text{structural causal world model}
++
+\text{proof-bearing learning and action}
+}
+\]
+
+CSIR is the exact language of thought. The activation field is the neural dynamics. The grounded state space is the embodied world model. The causal mechanism graph is the predictive/action model. Versioned proof and authorization keep the system trustworthy.

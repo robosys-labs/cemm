@@ -101,6 +101,26 @@ class ReferentKnowledgeClosureCompiler:
             )
 
         for view in projections.values():
+            # Structural property applicability is referent-driven, not a global
+            # answer catalogue. A PropertySchema's holder-type contract licenses a
+            # latent composition candidate; it does not assert that the referent
+            # currently has a value for that property.
+            type_refs = set(view.type_closure.type_refs)
+            for schema in registry.active_schemas(SchemaClass.PROPERTY):
+                holder_types = set(getattr(schema, "holder_type_refs", ()))
+                if holder_types and not holder_types.intersection(type_refs):
+                    continue
+                add(
+                    view,
+                    schema.schema_ref,
+                    schema.revision,
+                    ProjectionStatus.LATENT,
+                    "property_applicability",
+                    (
+                        schema.schema_ref,
+                        *tuple(sorted(holder_types.intersection(type_refs))),
+                    ),
+                )
             for application in (
                 *view.property_applications,
                 *view.relation_applications,

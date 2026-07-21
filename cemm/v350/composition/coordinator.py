@@ -16,6 +16,7 @@ from .model import (
     SelectionAssessment,
 )
 from .solver import MeaningFactorSolver
+from ..uol.equivalence import semantic_graph_fingerprint
 
 
 class MeaningComposer:
@@ -127,30 +128,62 @@ class MeaningComposer:
                 continue
             materialized.append((hypothesis, uol, report))
 
-        selected_hypothesis = materialized[0][0] if materialized else None
-        selected_uol = materialized[0][1] if materialized else None
-        selected_report = materialized[0][2] if materialized else None
+        semantic_clusters = {}
+        for hypothesis, uol, report in materialized:
+            semantic_clusters.setdefault(
+                semantic_graph_fingerprint(uol), []
+            ).append((hypothesis, uol, report))
+        ranked_clusters = sorted(
+            semantic_clusters.values(),
+            key=lambda cluster: (
+                -max(item[0].score for item in cluster),
+                cluster[0][0].hypothesis_ref,
+            ),
+        )
+        selected_cluster = ranked_clusters[0] if ranked_clusters else ()
+        selected_hypothesis = selected_cluster[0][0] if selected_cluster else None
+        selected_uol = selected_cluster[0][1] if selected_cluster else None
+        selected_report = selected_cluster[0][2] if selected_cluster else None
         if selected_hypothesis is None:
             margin = 0.0
             close = ()
             uncertainty = ("no materializable meaning hypothesis",)
         else:
-            next_score = materialized[1][0].score if len(materialized) > 1 else None
+            next_score = (
+                max(item[0].score for item in ranked_clusters[1])
+                if len(ranked_clusters) > 1 else None
+            )
             margin = (
                 selected_hypothesis.score - next_score
                 if next_score is not None
                 else float("inf")
             )
             close = tuple(
-                hypothesis.hypothesis_ref
-                for hypothesis, _uol, _report in materialized[1:]
-                if selected_hypothesis.score - hypothesis.score
+                cluster[0][0].hypothesis_ref
+                for cluster in ranked_clusters[1:]
+                if selected_hypothesis.score
+                - max(item[0].score for item in cluster)
                 <= self.close_alternative_margin
             )
             uncertainty_list = []
-            if selected_hypothesis.unresolved_refs or (
-                selected_uol and selected_uol.unresolved_refs
-            ):
+            intentional_query_refs = {
+                ref
+                for ref, variable in (
+                    selected_uol.variables.items()
+                    if selected_uol is not None else ()
+                )
+                if getattr(
+                    variable.open_binding_purpose, "value", None
+                ) == "query"
+            }
+            semantic_unresolved = set(
+                selected_hypothesis.unresolved_refs
+            ) | (
+                set(selected_uol.unresolved_refs)
+                if selected_uol is not None else set()
+            )
+            semantic_unresolved.difference_update(intentional_query_refs)
+            if semantic_unresolved:
                 uncertainty_list.append(
                     "selected meaning retains unresolved semantic frontiers"
                 )
@@ -248,6 +281,21 @@ class MeaningComposer:
                 "realization_influenced_selection": False,
                 "actual_world_admission": False,
                 "transition_commit": False,
+                "selection_authority": (
+                    "no_materializable_meaning"
+                    if selected_hypothesis is None
+                    else "ambiguous_semantic_clusters"
+                    if close
+                    else "semantically_equivalent_alternatives"
+                    if len(selected_cluster) > 1
+                    else "single_semantic_cluster"
+                ),
+                "equivalent_alternative_refs": tuple(
+                    item[0].hypothesis_ref for item in selected_cluster[1:]
+                ),
+                "intentional_query_gap_refs": tuple(
+                    sorted(intentional_query_refs)
+                ),
             },
         )
         return MeaningCompositionResult(

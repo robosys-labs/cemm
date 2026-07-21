@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from .schema.model import OpenBindingPurpose, PortFillerClass, SchemaClass, StorageKind, semantic_fingerprint
+from .schema.model import OpenBindingPurpose, PortFillerClass, SchemaClass, StorageKind, UseOperation, semantic_fingerprint
 from .storage import SemanticStore, StoreSnapshot
 from .uol.model import (
     ApplicationBinding,
@@ -109,7 +109,73 @@ class DiscourseClassifier:
             if claim_force is not None and not _act_has_explicit_claim(graph, application.application_ref):
                 needs_attribution.add(application.application_ref)
 
+        # Matrix information-request force is structural. A QUERY variable may
+        # exist in embedded content without creating a top-level response
+        # obligation. Only a root variable or a variable hosted by root/unembedded
+        # semantic content is matrix.
+        inbound_apps = {
+            filler.ref
+            for application in graph.applications.values()
+            for binding in application.bindings
+            for filler in binding.fillers
+            if isinstance(filler, FillerRef)
+            and filler.filler_class == PortFillerClass.SEMANTIC_APPLICATION
+        }
+        root_apps = {
+            root.ref for root in graph.root_refs
+            if root.filler_class == PortFillerClass.SEMANTIC_APPLICATION
+        }
+        matrix_variables = {
+            root.ref for root in graph.root_refs
+            if root.filler_class == PortFillerClass.SEMANTIC_VARIABLE
+            and root.ref in query_variables
+        }
+        matrix_hosts = set()
+        for application in graph.applications.values():
+            query_vars = {
+                filler.ref
+                for binding in application.bindings
+                if binding.open_binding_purpose == OpenBindingPurpose.QUERY
+                for filler in binding.fillers
+                if isinstance(filler, FillerRef)
+                and filler.filler_class == PortFillerClass.SEMANTIC_VARIABLE
+            }
+            if query_vars and (
+                application.application_ref in root_apps
+                or application.application_ref not in inbound_apps
+            ):
+                matrix_hosts.add(application.application_ref)
+                matrix_variables.update(query_vars)
+        matrix_force_missing = False
+        if matrix_variables and not response_requested:
+            ask_schemas = tuple(
+                schema for schema in registry.iter_schemas()
+                if schema.schema_class == SchemaClass.DISCOURSE_ACT
+                and bool(schema.metadata.get("requests_information"))
+                and schema.use_profile.permits(
+                    UseOperation.QUERY, provisional=True
+                )
+            )
+            if len(ask_schemas) == 1:
+                response_requested = True
+                force_ref = "matrix-information-request:" + semantic_fingerprint(
+                    "matrix-information-request",
+                    (
+                        tuple(sorted(matrix_hosts)),
+                        tuple(sorted(matrix_variables)),
+                        ask_schemas[0].schema_ref,
+                        ask_schemas[0].revision,
+                    ),
+                    24,
+                )
+                response_request_evidence.add(force_ref)
+                evidence.add(force_ref)
+            else:
+                matrix_force_missing = True
+
         unresolved = set(graph.unresolved_refs)
+        if matrix_force_missing:
+            unresolved.add("discourse-force:matrix-information-request-authority")
         if graph.root_refs and not acts and not queries:
             unresolved.add("discourse-force:unresolved")
 

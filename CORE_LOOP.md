@@ -1,867 +1,494 @@
-# CEMM v3.5 Canonical Learning-First Core Loop
+# CEMM v3.5.1 Grounded Semantic Brain Core Loop
 
-**Status:** sole public Stage-0..22 runtime contract.  
-**Depends on:** `ARCHITECTURE.md`, `FOUNDATIONAL_KNOWLEDGE_ARCHITECTURE.md`, `FOUNDATIONAL_SEMANTIC_ALGEBRA.md`, `UOL.md`.  
-**Core law:** every stage preserves evidence and uncertainty; no stage manufactures downstream meaning merely to make the system respond.
-
-Execution obeys these ordering constraints:
-
-```text
-perceive before answering
-working graph before memory write
-compression before durable storage
-source before belief
-time before current-state claims
-permission before learning
-safety/policy before realization/emission
-committed outcome before claiming memory/state changed
-meaning before wording
-```
-
-The Stage-0..22 loop is paired with a continuous acquisition/consolidation spine. Stages may emit learning evidence/frontiers; candidate induction, competence, promotion, compression, invalidation and rehydration remain bounded and proof-bearing.
+**Status:** proposed Stage-0..22 governing runtime contract  
+**Core law:** every stage operates over the same pinned semantic brain state; perception, meaning, state, causality, learning and response are recurrent transformations, not disconnected pipelines.
 
 ---
 
-# 1. Macro loop
+# 1. Macro topology
 
 ```text
-0  ORIENT_AND_PIN
-1  OBSERVE
-2  ANALYZE_AND_FUSE_FORM
-3  GENERATE_REFERENT_AND_SCHEMA_CANDIDATES
-4  PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS
-5  BUILD_UOL_FACTOR_GRAPH
-6  SOLVE_MEANING_HYPOTHESES
-7  SELECT_MEANING_BUNDLE
-8  CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS
-9  EPISTEMICALLY_ASSESS_AND_PLACE_CONTEXT
-10 RETRIEVE_AND_ANSWER_BIND
-11 BUILD_OR_ADVANCE_LEARNING_FRONTIERS
-12 INFER_AND_PREVIEW_TRANSITIONS
-13 COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE
-14 ASSESS_IMPACT_AND_IMPORTANCE
-15 DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
-16 PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE
-17 RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS
-18 BUILD_RESPONSE_UOL
-19 REALIZE_TARGET_LANGUAGE
-20 VERIFY_AND_AUTHORIZE_EMISSION
+0  ORIENT_AND_PIN_SEMANTIC_BRAIN
+1  OBSERVE_MULTIMODAL_EVIDENCE
+2  ENCODE_FORM_AND_SENSOR_EVIDENCE
+3  ACTIVATE_AND_GROUND_REFERENTS
+4  PROJECT_ENTITLED_STATE_SPACES
+5  COMPILE_CANDIDATES_TO_CSIR
+6  RUN_RECURRENT_MEANING_DYNAMICS
+7  STABILIZE_SEMANTIC_ATTRACTORS
+8  BUILD_DISCOURSE_PROPOSITION_EVENT_AND_QUERY STRUCTURES
+9  PLACE_EPISTEMIC_CONTEXT_AND_ASSIMILATE_WORLD_BELIEF
+10 QUERY_AND_EXPLAIN_FROM_GROUNDED_WORLD_MODEL
+11 CLASSIFY_PREDICTION_ERROR_AND_ADVANCE_LEARNING
+12 SIMULATE_CAUSAL_TRANSITIONS_AND_COUNTERFACTUALS
+13 COMMIT_AUTHORIZED_KNOWLEDGE_STATE_AND_LEARNING ARTIFACTS
+14 PROPAGATE_CAPABILITY_IMPACT_AFFECT_AND_SIGNIFICANCE
+15 DERIVE_OBLIGATIONS_AND_ARBITRATE_GOALS
+16 PLAN_AUTHORIZE_EXECUTE_AND_OBSERVE
+17 ASSIMILATE_OPERATION_OUTCOMES_AND_RECUR
+18 CONSTRUCT_RESPONSE_CSIR
+19 REALIZE_TARGET_LANGUAGE_OR_MODALITY
+20 VERIFY_SEMANTIC_EQUIVALENCE_AND_AUTHORIZE_EMISSION
 21 COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND
-22 INVALIDATE_RECOMPUTE_AND_FINALIZE
+22 CONSOLIDATE_INVALIDATE_REPLAY_AND_FINALIZE
 ```
 
-Learning is cross-cutting. Stages 2–13 may emit typed learning evidence/frontiers.
+The public stage count remains stable, but Stages 3–7 and 11–17 contain bounded recurrent subloops.
 
 ---
 
-# 2. Stage 0 — ORIENT_AND_PIN
+# 2. Cross-stage brain state
 
-Pin the exact cycle authority:
-
-- semantic store snapshot/revision/fingerprint;
-- signed boot and learned overlay;
-- language packs;
-- lexeme/contribution authority;
-- construction authority;
-- schema revisions;
-- participant frame;
-- self referent knowledge view;
-- discourse/common-ground revision;
-- context and clock;
-- permissions;
-- capabilities/resources;
-- learning/inference/transition/realization budgets;
-- operation/channel/analyzer contracts.
-
-Create immutable cycle/pass identity.
-
-### Required invariant
-
-A `ParticipantFrame` is established before language grounding:
+Every stage receives an immutable view of:
 
 ```text
-system_ref
-input_speaker_ref
-input_addressee_refs
-response_audience_refs
-context_ref
-permission_ref
-identity_evidence_refs
+exact authority snapshot
+working CSIR graph
+activation field
+grounded belief state
+causal mechanism graph
+epistemic graph
+goals/values/impact field
+discourse/common ground
+frontier and proof graph
+budgets
 ```
 
-No pronoun string decides participant identity.
+A stage may propose an updated cycle-local state. Only Stage 13, Stage 16 side-effect journals, and Stage 21 discourse commit may create their authorized durable effects.
 
 ---
 
-# 3. Stage 1 — OBSERVE
+# 3. Stage 0 — ORIENT_AND_PIN_SEMANTIC_BRAIN
 
-Create evidence envelopes from:
-
-- text;
-- audio/prosody;
-- vision/tracks;
-- sensor data;
-- tool/database output;
-- operation result;
-- timers/system events;
-- explicit teaching.
-
-Preserve:
+Pin exact roots for:
 
 ```text
-payload identity
-source
-time
-span/track
-confidence
-permission
-lineage
+Kernel Semantic ABI
+CSIR compiler and normalizer ABI
+semantic definitions and dependency closures
+operational profiles
+semantic-dynamics parameters
+causal mechanisms and parameters
+use authorizations
+language and multimodal packages
+sensor calibration and observation models
+epistemic, safety, privacy and response policies
+runtime adapters
+boot and overlays
 ```
 
-No semantic interpretation yet.
+Construct:
+
+- ParticipantFrame;
+- context/world stack;
+- cycle clock and temporal frame;
+- active self referent and runtime-backed state/capability view;
+- resource and inference budgets.
+
+No later stage resolves a floating semantic or parameter revision.
 
 ---
 
-# 4. Stage 2 — ANALYZE_AND_FUSE_FORM
+# 4. Stage 1 — OBSERVE_MULTIMODAL_EVIDENCE
 
-Produce an N-best evidence lattice.
+Create source-attributed evidence envelopes from text, audio, vision, location, temperature, telemetry, operation results and teaching.
 
-## 4.1 Text path
+Preserve raw signal identity, source, calibration reference, time, spatial extent, permission and lineage.
+
+No semantic fact is asserted.
+
+---
+
+# 5. Stage 2 — ENCODE_FORM_AND_SENSOR_EVIDENCE
+
+## 5.1 Language path
 
 ```text
-raw spans
-→ normalized observations
-→ language/script evidence
-→ form/morpheme candidates
-→ lexeme/form-family candidates
-→ lexical sense/meaning candidates
-→ semantic contributions
+surface spans
+→ reversible normalization
+→ script/language evidence
+→ morphology/form lattice
+→ lexeme/sense candidates
+→ semantic contribution graph fragments
 → construction candidates
 ```
 
-### Required records/evidence
-
-- forms and morphemes;
-- lexeme/form-family identity;
-- allomorph/inflection relation;
-- grammatical features;
-- lexical senses;
-- semantic contribution specs;
-- clause/phrase/construction evidence;
-- optional dependency/constituency evidence;
-- tense/aspect/modality/polarity cues;
-- mentions/deixis;
-- question/information-gap contributions;
-- ellipsis;
-- unresolved spans.
-
-## 4.2 Legacy compatibility
-
-If no active lexeme authority exists for a form, the runtime may read legacy direct form→sense links.
-
-The trace must mark that path as legacy compatibility.
-
-Newly learned/reviewed authority must prefer:
+## 5.2 Non-language path
 
 ```text
-form → lexeme → sense → semantic contribution
+sensor/track signal
+→ calibrated feature likelihoods
+→ candidate referent/identity links
+→ candidate state-dimension observations
+→ spatial/temporal relations
 ```
 
-## 4.3 Stage boundary
+## 5.3 Output
 
-Stage 2 may emit semantic constraints/contributions.
-
-It must not select:
-
-- final referent identity;
-- final schema application;
-- actual-world truth;
-- response obligation.
-
-External parsers provide evidence only.
+A unified evidence lattice. Evidence candidates may overlap and disagree.
 
 ---
 
-# 5. Stage 3 — GENERATE_REFERENT_AND_SCHEMA_CANDIDATES
+# 6. Stage 3 — ACTIVATE_AND_GROUND_REFERENTS
 
-Use Stage-2 contributions and context to generate candidates.
-
-## 5.1 Referent candidates
-
-From:
-
-- ParticipantFrame/deictic roles;
-- identifiers/aliases;
-- known referent registry;
-- discourse mention chains;
-- prior output anchors;
-- event/proposition history;
-- time/place indexes;
-- multimodal tracks;
-- provisional mentions.
-
-A referential contribution such as `addressee` closes through evidence, never a surface-word branch.
-
-## 5.2 Schema candidates
-
-From:
-
-- explicit TARGET contributions;
-- expected schema classes;
-- construction programs;
-- referent facet entitlements;
-- learned lexical indexes;
-- operator/query restrictions.
-
-Candidate families may include:
-
-- types;
-- properties;
-- states;
-- relations/roles;
-- actions/eventualities/events;
-- operators;
-- discourse acts.
-
-Unknown material creates typed frontiers without deleting known contributions.
-
----
-
-# 6. Stage 4 — PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS
-
-For every durable/provisional referent candidate:
-
-1. compute type closure;
-2. project facet entitlements;
-3. project properties;
-4. project state applicability/timelines/current supported assignments;
-5. project defaults separately as expectations;
-6. project relations/roles/events;
-7. project affordances/functions;
-8. compute live capabilities/dependencies;
-9. apply context/time/access restrictions;
-10. expose conflicts/staleness.
-
-### Critical closure interface
-
-Stage 4 must export candidate-generating compatibility to Stage 5.
-
-Example:
-
-```text
-open qualitative predicate
-+ holder=self
-→ self type/facet projection
-→ applicable state/property dimensions
-→ candidate schemas/values
-```
-
-Do not couple semantic compatibility by surface span equality.
-
----
-
-# 7. Stage 5 — BUILD_UOL_FACTOR_GRAPH
-
-Build one bounded factor graph.
-
-Variables include:
-
-```text
-language/lexeme sense
-semantic contribution choice
-referent identity
-semantic type
-schema activation
-port filler
-open semantic variable
-answer projection
-restriction
-operator scope
-time/aspect
-eventuality interpretation
-event occurrence
-context
-coordination
-discourse act
-construction
-```
-
-## 7.1 Hard factors
-
-- exact revision/use authorization;
-- type/facet entitlement;
-- port/filler class;
-- referent identity incompatibility;
-- ParticipantFrame/deictic constraints;
-- context isolation;
-- state applicability;
-- event participant contract;
-- query variable typing;
-- projection/restriction compatibility;
-- permission/access.
-
-## 7.2 Soft factors
-
-- form/morphology evidence;
-- lexical priors;
-- construction evidence;
-- salience/topic continuity;
-- referent knowledge plausibility;
-- temporal coherence;
-- multimodal coherence;
-- defaults as rankers;
-- complexity/assumptions.
-
-### Requirement
-
-A recognized contribution must remain traceable into factor values/constraints or an explicit unresolved frontier.
-
----
-
-# 8. Stage 6 — SOLVE_MEANING_HYPOTHESES
-
-Use bounded constraint propagation plus best-first/beam search.
-
-Must support:
-
-- nested/multi-port operators;
-- multiple clauses;
-- shared arguments;
-- state/process/eventuality alternatives;
-- event/state reification;
-- proposition/claim embedding;
-- typed query variables;
-- partial meaning;
-- multiple contexts;
-- unresolved spans.
-
-Do not prefer a meaning because it is easier to realize.
-
-Pruning is traceable.
-
----
-
-# 9. Stage 7 — SELECT_MEANING_BUNDLE
-
-Select a compatible semantic subgraph.
-
-Preserve:
-
-- coordinated content;
-- close alternatives;
-- explicit uncertainty;
-- unresolved typed variables;
-- contribution lineage;
-- context/time consistency.
-
-Output conceptually:
-
-```text
-MeaningBundle
-SelectionAssessment
-Alternatives
-PartialUnderstandingMap
-```
-
----
-
-# 10. Stage 8 — CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS
-
-Classify selected meaning into:
-
-- discourse acts;
-- information gaps/queries;
-- claim occurrences;
-- proposition content;
-- event occurrences;
-- state/property assertions;
-- directives/desires;
-- corrections/retractions;
-- learning contributions;
-- typed unresolved gaps.
-
-## Query separation
-
-An information gap is not automatically `ask`.
-
-Matrix/interrogative/discourse structure determines whether an `ask` act exists.
-
-Embedded questions remain embedded semantic structures.
-
-No system acknowledgement is chosen here.
-
----
-
-# 11. Stage 9 — EPISTEMICALLY_ASSESS_AND_PLACE_CONTEXT
-
-Determine placement:
-
-```text
-actual
-attributed report
-belief
-hypothetical
-planned
-desired
-counterfactual
-fictional/simulated
-quoted
-```
-
-Assess:
-
-- source;
-- evidence;
-- confidence;
-- contradiction;
-- sensitivity;
-- permission;
-- admission policy.
-
-Understanding does not imply admission as actual truth.
-
----
-
-# 12. Stage 10 — RETRIEVE_AND_ANSWER_BIND
-
-Bind query restriction graphs against admissible semantic knowledge.
-
-The binder is semantic, not storage-kind specific.
-
-Sources include:
-
-- referent knowledge views;
-- semantic applications;
-- identity/type assertions;
-- properties;
-- state assignments/timelines;
-- qualified defaults;
-- relations/roles;
-- capabilities/affordances/functions;
-- events;
-- propositions/claims/knowledge;
-- quantities/measures;
-- time/place;
-- proof/explanation structures.
-
-Output:
-
-```text
-bound semantic values
-binding proof/lineage
-qualification
-remaining open variables
-```
-
-No surface text.
-
-### Example
-
-`what can you do?` should bind `?action` against live self capability/affordance semantics.
-
-`how are you?` should bind a qualitative self-state/property projection, qualified by actual known/unknown runtime state.
-
----
-
-# 13. Stage 11 — BUILD_OR_ADVANCE_LEARNING_FRONTIERS
-
-Create typed frontiers.
-
-Required classes include:
-
-```text
-unknown_form
-unknown_lexeme
-unknown_morphology
-unknown_lexical_sense
-missing_semantic_contribution
-missing_construction
-reference_ambiguity
-unknown_type
-missing_state_dimension
-missing_state_value
-missing_port_filler
-missing_query_projection
-missing_transition
-missing_capability_dependency
-missing_realization
-missing_response_competence
-policy_block
-runtime_capability
-```
-
-Frontiers carry:
-
-- exact missing contract;
-- target refs;
-- expected record kinds/classes;
-- accepted anchor/filler types;
-- evidence/lineage;
-- context/permission;
-- competence needed to close.
-
-Generic “schema or application missing” is insufficient when a more precise frontier is known.
-
----
-
-# 14. Stage 12 — INFER_AND_PREVIEW_TRANSITIONS
-
-Run proof-bearing inference.
-
-For selected admitted-context event candidates:
-
-```text
-event
-→ transition contract candidates
-→ state/relation/role deltas
-→ capability/resource deltas
-→ secondary events
-→ impact candidates
-```
-
-Preview only.
-
-Hypothetical/reported/fictional events do not mutate actual state.
-
-Defaults are expectations.
-
-Budget exhaustion remains incomplete.
-
----
-
-# 15. Stage 13 — COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE
-
-Compile atomic GraphPatches only after the working graph has produced authorized, attributable semantic records. Durable writes must be compressed reusable structure/state/history—not raw transcript substitution.
-
-Compile atomic GraphPatches for:
-
-- claim records;
-- epistemic admissions/knowledge;
-- property/state assignments;
-- event occurrences;
-- state/capability deltas;
-- learning candidates;
-- corrections/retractions;
-- discourse updates.
-
-Transition commits require:
-
-- admitted trigger;
-- exact transition proof;
-- context consistency;
-- CAS/dependency validation.
-
-Learning promotion/rehydration must use the same durable record authority path.
-
----
-
-# 16. Stage 14 — ASSESS_IMPACT_AND_IMPORTANCE
-
-Assess impact and significance from selected/admitted meaning.
-
-Never infer emotional significance from a surface keyword.
+Initialize sparse activations for candidate referents, identities, types and role anchors.
 
 Use:
 
-- affected referents/stakeholders;
-- goals;
-- relationships;
-- magnitude;
-- irreversibility;
-- risk;
-- history;
-- explicit affective evidence;
-- importance policy.
+- ParticipantFrame;
+- aliases and identifiers;
+- discourse mention chains;
+- visual/audio tracks;
+- spatial continuity;
+- prior system output;
+- event/proposition history;
+- type/context/time compatibility.
 
-Preserve evidence and privacy scope.
+Run bounded joint identity/coreference message passing.
+
+A high activation does not convert a provisional referent into resolved identity without the required evidence contract.
 
 ---
 
-# 17. Stage 15 — DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS
+# 7. Stage 4 — PROJECT_ENTITLED_STATE_SPACES
 
-Derive semantic obligations/goals from:
+For each candidate referent:
 
-- bound queries;
-- directives;
-- claims;
+1. resolve exact type-definition closure;
+2. derive facet entitlements;
+3. instantiate applicable state-variable domains;
+4. project current state-belief distributions;
+5. expose relation, structure, location and temporal state;
+6. expose affordances, capabilities, dependencies and resources;
+7. expose causal mechanisms applicable by type/role/context;
+8. retain defaults separately from active state;
+9. expose conflicts, staleness and missing dimensions.
+
+Stage 4 generates semantic closure candidates for Stage 5.
+
+---
+
+# 8. Stage 5 — COMPILE_CANDIDATES_TO_CSIR
+
+This is the mandatory semantic compiler barrier.
+
+For every lexical, construction, grounding, state and causal candidate:
+
+```text
+resolve exact definition/profile/parameter/use pins
+expand definition closure
+bind grounded participants and variables
+add context/time/scope/polarity/evidence
+compile to CSIR
+canonicalize
+validate hard constraints
+emit closure proof
+```
+
+No opaque schema label enters the meaning solver.
+
+Candidate neural embeddings/activations remain annotations over exact CSIR candidates.
+
+---
+
+# 9. Stage 6 — RUN_RECURRENT_MEANING_DYNAMICS
+
+Construct the typed factor/message graph over CSIR candidates.
+
+Run recurrent bottom-up/top-down propagation:
+
+- evidence supports candidate fragments;
+- candidate definitions predict roles and restrictions;
+- type/state knowledge activates compatible closures;
+- incompatible identities, bindings and scopes inhibit one another;
+- causal/state plausibility contributes soft evidence;
+- hard semantic violations are clamped out.
+
+The stage stops on convergence, certified bound, or budget exhaustion.
+
+It emits activation history, pruning trace and best semantic-equivalence classes.
+
+---
+
+# 10. Stage 7 — STABILIZE_SEMANTIC_ATTRACTORS
+
+Cluster derivations by canonical CSIR normal form.
+
+Produce:
+
+```text
+stable meaning classes
+posterior/energy assessment
+close alternatives
+partial graph
+open variables
+contradictions
+unresolved evidence
+convergence/budget status
+```
+
+Use-specific decisiveness is assessed. A graph may be adequate for mention but not transition or execution.
+
+---
+
+# 11. Stage 8 — BUILD DISCOURSE, PROPOSITION, EVENT AND QUERY STRUCTURES
+
+Re-abstract stable CSIR subgraphs through authorized operational profiles:
+
+- propositions and claim occurrences;
+- event/action/process occurrences;
+- state/property assertions;
+- queries and projections;
+- directives, desires and plans;
+- corrections and retractions;
+- discourse acts and commitments.
+
+Operational records add validation/lifecycle behavior, not new meaning.
+
+---
+
+# 12. Stage 9 — PLACE EPISTEMIC CONTEXT AND ASSIMILATE WORLD BELIEF
+
+Determine actual, reported, believed, hypothetical, planned, desired, fictional, quoted or counterfactual placement.
+
+Evaluate source, evidence, contradiction, calibration, sensitivity and permission.
+
+Update cycle-local grounded belief through source-aware Bayesian/paraconsistent assimilation.
+
+A claim may remain an attributed proposition indefinitely.
+
+---
+
+# 13. Stage 10 — QUERY AND EXPLAIN FROM GROUNDED WORLD MODEL
+
+Bind query restriction graphs against the canonical semantic world model:
+
+- identity and type;
+- state belief/timelines;
+- relations and spatial structure;
+- events and causal paths;
+- capabilities and dependencies;
+- epistemic support/opposition;
+- goals, impact and commitments.
+
+Return semantic bindings and proof paths.
+
+Explanation is graph extraction from the causal/proof model, not a generated story.
+
+---
+
+# 14. Stage 11 — CLASSIFY PREDICTION ERROR AND ADVANCE LEARNING
+
+Compare predicted and observed meaning/state/outcome.
+
+Create precise frontiers for:
+
+```text
+unknown form/sense/construction
+identity or grounding error
+missing state dimension/value
+observation calibration error
+missing role or transition effect
+causal-structure error
+causal-parameter error
+context/time error
+capability dependency error
+impact/goal error
+realization/response error
+```
+
+Advance:
+
+- continuous parameter candidates;
+- discrete definition candidates;
+- causal mechanism candidates;
+- competence and counterexample cases;
+- learning questions selected by information gain.
+
+No candidate becomes authoritative here.
+
+---
+
+# 15. Stage 12 — SIMULATE CAUSAL TRANSITIONS AND COUNTERFACTUALS
+
+For admitted actual events, intended actions, hypotheses or planning candidates:
+
+1. match applicable role-bound mechanisms;
+2. compute direct state deltas;
+3. propagate dependency and cross-dimensional effects;
+4. generate secondary event candidates;
+5. update capability/resource predictions;
+6. calculate confidence and causal paths;
+7. preserve alternate outcome branches;
+8. detect cycles and budget limits.
+
+Actual, hypothetical and counterfactual simulations remain in separate contexts.
+
+Preview never mutates durable state.
+
+---
+
+# 16. Stage 13 — COMMIT AUTHORIZED KNOWLEDGE, STATE AND LEARNING ARTIFACTS
+
+Compile one or more atomic GraphPatches for:
+
+- observations/evidence;
+- claim and knowledge records;
+- admitted event occurrences;
+- state and relation timeline changes;
+- causal/transition proofs;
+- candidate learned definitions/parameters;
+- corrections, retractions and invalidations.
+
+Commit requires exact pre-state, authority root, proof, context, permission and CAS validation.
+
+Learning candidates are committed as candidates, not active authority.
+
+---
+
+# 17. Stage 14 — PROPAGATE CAPABILITY, IMPACT, AFFECT AND SIGNIFICANCE
+
+Using committed or admissible preview deltas:
+
+- reevaluate capability dependencies;
+- assess physical/structural/biological/cognitive/social consequences;
+- evaluate stakeholder- and goal-relative impact;
+- infer affective consequences only through explicit mechanisms/evidence;
+- distinguish salience, durable importance, urgency and risk;
+- preserve uncertainty and privacy scope.
+
+No keyword-based emotional inference.
+
+---
+
+# 18. Stage 15 — DERIVE OBLIGATIONS AND ARBITRATE GOALS
+
+Generate goals from:
+
+- open queries;
+- directives and commitments;
+- predicted risks;
+- impact and stakeholder state;
 - learning frontiers;
-- impacts;
-- commitments;
-- policies;
-- current self state.
+- operation outcomes;
+- discourse/social obligations;
+- safety and privacy policy.
 
-Response policy should be structural.
+Optimize a compatible goal set under benefit, information gain, risk, cost, obligation, urgency, resources and conflicts.
 
-Avoid predicate catalogues.
+---
 
-Typical generic goals:
+# 19. Stage 16 — PLAN, AUTHORIZE, EXECUTE AND OBSERVE
+
+Use causal simulation to construct plans.
+
+External action requires:
 
 ```text
-answer_query
-report_semantic_result
-clarify_missing_binding
-execute_authorized_action
-acknowledge_specific_target
-qualify_uncertainty
+affordance
+live capability
+permission
+required role bindings
+resources
+acceptable predicted risk
+operation adapter authority
+journal/idempotency
 ```
 
-Every selected acknowledgement/response goal is target-bearing.
+Operation results return as new Stage-1 evidence. Operations never directly write semantic state.
 
 ---
 
-# 18. Stage 16 — PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE
+# 20. Stage 17 — ASSIMILATE OPERATION OUTCOMES AND RECUR
 
-External actions require:
+Compare predicted operation outcome with observation.
+
+Update cycle-local world belief, causal prediction error, capability state and goals.
+
+If materially changed, rerun bounded portions of Stages 9–16 using the same cycle authority or restart if authority/pre-state changed.
+
+No stale response goal survives material outcome change.
+
+---
+
+# 21. Stage 18 — CONSTRUCT RESPONSE CSIR
+
+Construct target-bearing semantic response actions such as:
 
 ```text
-afforded
-AND live capability
-AND permission
-AND resources
-AND grounded required ports
-AND acceptable risk
+answer bound query
+report current state/event/set
+provide causal explanation
+qualify uncertainty/source
+warn about predicted risk
+clarify missing identity/binding
+acknowledge a specific claim or impact
+propose an authorized operation
+ask a high-information learning question
+remain silent for an explicit reason
 ```
 
-Plan/authorize/execute/reconcile with exact adapter contracts and journals.
+Response selection uses truth, coverage, information gain, impact sensitivity, social appropriateness, risk and cost.
 
-Operations never mutate semantic state directly.
-
-Observed results re-enter as evidence.
+No final surface strings.
 
 ---
 
-# 19. Stage 17 — RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS
+# 22. Stage 19 — REALIZE TARGET LANGUAGE OR MODALITY
 
-Operation outcomes re-enter epistemics/transitions.
-
-If semantic state changed, invalidate stale goal decisions and re-run Stage 15.
-
-No second hidden goal family.
-
-No stale pre-operation response may surface.
-
----
-
-# 20. Stage 18 — BUILD_RESPONSE_UOL
-
-Transform selected goals/bindings into semantic response meaning.
-
-Generic transformations include:
+Compile Response CSIR through target-language or multimodal realization authority:
 
 ```text
-answer_bound_query
-report_value
-report_state
-report_set
-report_event
-report_capability
-describe_referent_projection
-aggregate
-perspective_shift
-qualify_epistemic_status
-clarify_missing_binding
-```
-
-No final strings.
-
-No predicate-specific sentence authority.
-
----
-
-# 21. Stage 19 — REALIZE_TARGET_LANGUAGE
-
-```text
-Response UOL
-→ deep clause plans
-→ argument frames/constructions
-→ information structure
-→ references
-→ morphology/agreement
-→ linearization
+semantic response graph
+→ discourse/clause plan
+→ role realization and information structure
+→ reference generation
+→ morphology/prosody/layout
 → surface candidates
 ```
 
-Language authority may choose grammatical form only.
-
-It may not invent meaning.
+The realizer may choose wording, not meaning.
 
 ---
 
-# 22. Stage 20 — VERIFY_AND_AUTHORIZE_EMISSION
+# 23. Stage 20 — VERIFY SEMANTIC EQUIVALENCE AND AUTHORIZE EMISSION
 
-Round-trip analyze generated surface through the canonical semantic analyzer.
+Re-analyze each generated candidate under pinned compatible authority.
 
-Compare:
+Require semantic equivalence of:
 
-- schema/application structure;
-- referents/bindings;
-- query/answer structure;
+- target and role bindings;
+- context/time/aspect;
 - polarity/modality;
-- time/aspect;
-- discourse act;
-- qualification;
-- unsupported additions/losses.
+- causal and epistemic qualification;
+- discourse act and commitment;
+- uncertainty and source attribution.
 
-Semantic round-trip PASS is necessary but does **not** authorize emission.
-
-Independent emission gate verifies:
-
-- exact goal/response/realization lineage;
-- audience/permission;
-- safety/policy;
-- operation-result freshness;
-- channel contract;
-- qualification preservation.
-
-Journal before external side effect.
+Then independently verify safety, privacy, freshness, audience, channel and emission policy.
 
 ---
 
-# 23. Stage 21 — COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND
+# 24. Stage 21 — COMMIT OUTPUT DISCOURSE AND COMMON GROUND
 
 Only observed emission creates output discourse records.
 
-Commit:
+Commit speaker, audience, response goal, semantic content, surface, emission proof and common-ground proposal.
 
-```text
-speaker
-addressee
-goal
-discourse act
-semantic content refs
-acknowledgement target
-surface ref
-emission proof
-common-ground status
-```
-
-System output becomes referable.
-
-Delivery does not prove user understanding/agreement.
-
-System speech never becomes world truth merely because it was emitted.
+Delivery does not prove user acceptance, understanding or truth.
 
 ---
 
-# 24. Stage 22 — INVALIDATE_RECOMPUTE_AND_FINALIZE
+# 25. Stage 22 — CONSOLIDATE, INVALIDATE, REPLAY AND FINALIZE
 
-Invalidate dependencies affected by:
+Perform bounded consolidation:
 
-- correction/retraction;
-- state/capability changes;
-- schema/lexeme/contribution revision;
-- learning promotion;
-- operation result;
-- context closure.
+- merge equivalent episodic evidence;
+- abstract reusable subgraphs conservatively;
+- evaluate parameter/definition/causal candidate competence;
+- promote only authorized uses;
+- supersede exact prior authority;
+- invalidate affected projections and decisions;
+- schedule replay under new snapshots;
+- retain unresolved frontiers and budget incompleteness.
 
-Record:
-
-- final snapshot;
-- unresolved frontiers;
-- replay requirements;
-- incomplete budgets.
-
-A changed semantic substrate requires deterministic recomputation/replay where dependencies demand it.
-
----
-
-# 25. Worked compositional traces
-
-## 25.1 `how are you?`
-
-Expected architecture:
-
-```text
-HOW
-  VARIABLE ?answer
-  PROJECTION candidates:
-    qualitative_condition
-    manner
-    degree
-    means
-  target restriction open
-
-ARE
-  lexeme BE
-  grammatical features:
-    finite
-    present
-    agreement evidence
-  construction candidates:
-    copular predication
-    progressive
-    passive
-    existential
-
-YOU
-  REFERENTIAL addressee
-```
-
-Participant grounding:
-
-```text
-addressee -> referent:self
-```
-
-Construction/knowledge closure:
-
-```text
-copular predication(subject=self, predicate=?p)
-HOW restricts/project ?p toward qualitative description
-Stage-4 self entitlements expose applicable property/state dimensions
-Stage-5 ranks compatible closures
-```
-
-Stage 8 matrix interrogative may yield `ask`.
-
-Stage 10 binds current supported value or returns qualified unknown.
-
-Stage 18 builds semantic report.
-
-No phrase-specific rule.
-
-## 25.2 `what can you do?`
-
-```text
-WHAT
-  open projected answer
-
-CAN
-  capability/modal contribution
-
-YOU
-  addressee -> self
-
-DO
-  open action/eventuality slot
-```
-
-Compose:
-
-```text
-query(
-  variable=?action,
-  restriction=capability(holder=self, action=?action),
-  projection=?action
-)
-```
-
-Stage 10 binds capabilities/affordances.
-
-No canned capability sentence/list.
-
----
-
-# 26. Failure invariants
-
-- recognized contributions may not silently disappear;
-- no selected meaning -> typed partial map/frontier;
-- no referent evidence -> unresolved identity, not guessed binding;
-- no epistemic admission -> no actual-world transition;
-- no transition rule -> understood event remains without guessed effect;
-- no state evidence -> qualified unknown/default expectation, not fabricated state;
-- no target -> no generic acknowledgement;
-- no response transform -> explicit response competence gap;
-- no realization -> realization frontier/silence;
-- timeout -> partial/incomplete, never success;
-- no parser -> native construction evidence path must still be possible when reviewed grammar is sufficient.
+Produce final cycle summary with exact initial/final roots and replay requirements.

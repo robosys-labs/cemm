@@ -37,6 +37,8 @@ from .model import (
     CapabilityProjection,
     ProjectionStatus,
     ReferentKnowledgeView,
+    TypeClosure,
+    TypeClosureMember,
 )
 
 
@@ -81,6 +83,153 @@ class ReferentKnowledgeProjector:
             context_ref=context_ref,
             at_time=at_time,
             snapshot=snapshot,
+        )
+
+    def project_candidate(
+        self,
+        candidate,
+        *,
+        context_ref: str,
+        at_time: str | None = None,
+        snapshot: StoreSnapshot | None = None,
+    ) -> ReferentKnowledgeView:
+        """Project a durable or provisional grounding candidate read-only.
+
+        Provisional projection derives type closure + entitlements only. It never
+        invents durable identity, state assignments, defaults or capabilities.
+        """
+        if snapshot is None:
+            with self._store.snapshot() as pinned:
+                return self.project_candidate(
+                    candidate,
+                    context_ref=context_ref,
+                    at_time=at_time,
+                    snapshot=pinned,
+                )
+        self._store.assert_snapshot(snapshot)
+        durable = self._store.repositories.referents.get(
+            candidate.target_ref, snapshot=snapshot
+        )
+        if durable is not None:
+            return self._project(
+                candidate.target_ref,
+                context_ref=context_ref,
+                at_time=at_time,
+                snapshot=snapshot,
+            )
+
+        registry = self._store.repositories.schemas.registry(snapshot=snapshot)
+        direct = tuple(sorted(set(candidate.type_refs)))
+        members = {}
+        direct_evidence = tuple(sorted({
+            ref
+            for factor in candidate.factors
+            for ref in factor.evidence_refs
+        }))
+        queue = [
+            (type_ref, 0, (type_ref,))
+            for type_ref in direct
+        ]
+        while queue:
+            type_ref, depth, path = queue.pop(0)
+            try:
+                schema = registry.schema(type_ref)
+            except Exception:
+                continue
+            current = members.get(type_ref)
+            if current is not None and current.depth <= depth:
+                continue
+            members[type_ref] = TypeClosureMember(
+                type_ref=type_ref,
+                revision=schema.revision,
+                depth=depth,
+                direct=depth == 0,
+                source_assertion_refs=direct_evidence if depth == 0 else (),
+                path_refs=path,
+            )
+            for link in getattr(schema, "parent_links", ()):
+                try:
+                    parent = registry.resolve_parent(link)
+                except Exception:
+                    continue
+                if parent.schema_ref in path:
+                    continue
+                queue.append((
+                    parent.schema_ref,
+                    depth + 1,
+                    (*path, parent.schema_ref),
+                ))
+        deps = tuple(sorted({
+            *members,
+            *tuple(
+                ref
+                for factor in candidate.factors
+                for ref in factor.evidence_refs
+            ),
+        }))
+        closure = TypeClosure(
+            referent_ref=candidate.target_ref,
+            context_ref=context_ref,
+            at_time=at_time,
+            members=tuple(
+                sorted(members.values(), key=lambda item: (item.depth, item.type_ref))
+            ),
+            unresolved_type_refs=tuple(
+                sorted(set(direct) - set(members))
+            ),
+            dependency_refs=deps,
+            dependency_fingerprint=semantic_fingerprint(
+                "provisional-type-closure",
+                (candidate.target_ref, direct, deps, context_ref),
+                64,
+            ),
+        )
+        entitlements = self.entitlements.project(
+            closure,
+            context_ref=context_ref,
+            at_time=at_time,
+            snapshot=snapshot,
+        )
+        dependency_refs = tuple(sorted({
+            *deps,
+            *(ref for item in entitlements for ref in item.dependency_refs),
+        }))
+        return ReferentKnowledgeView(
+            referent_ref=candidate.target_ref,
+            referent_revision=0,
+            context_ref=context_ref,
+            at_time=at_time,
+            snapshot_revision=snapshot.store_revision,
+            type_closure=closure,
+            identity_facet_refs=(),
+            facet_entitlements=entitlements,
+            property_applications=(),
+            state_timelines={},
+            state_applicability=(),
+            relation_applications=(),
+            role_applications=(),
+            event_refs=(),
+            afforded_action_refs=(),
+            live_capabilities=(),
+            function_applications=(),
+            resource_applications=(),
+            significance_assessment_refs=(),
+            epistemic_record_refs=(),
+            default_expectations=(),
+            unresolved_conflicts=tuple(
+                f"unresolved-type:{ref}" for ref in closure.unresolved_type_refs
+            ),
+            dependency_refs=dependency_refs,
+            dependency_fingerprint=semantic_fingerprint(
+                "provisional-referent-knowledge",
+                (candidate.target_ref, closure, entitlements, dependency_refs),
+                64,
+            ),
+            metadata={
+                "cycle_local": True,
+                "provisional": True,
+                "grounding_candidate_ref": candidate.candidate_ref,
+            },
         )
 
     def _project(

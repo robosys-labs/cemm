@@ -207,6 +207,38 @@ class ConstructionMatcher:
             if not values:
                 return ()
             dimensions.append(values)
+        dynamic_purpose = str(
+            construction.metadata.get("trigger_open_binding_purpose") or ""
+        )
+        if dynamic_purpose:
+            expected_classes = {
+                str(value)
+                for value in construction.metadata.get(
+                    "trigger_expected_schema_classes", ()
+                )
+            }
+            dynamic = tuple(sorted({
+                item.candidate_ref
+                for values in senses.values()
+                for item in values
+                if any(
+                    contribution.open_binding_purpose is not None
+                    and contribution.open_binding_purpose.value == dynamic_purpose
+                    and (
+                        not expected_classes
+                        or bool(
+                            expected_classes.intersection(
+                                value.value
+                                for value in contribution.expected_schema_classes
+                            )
+                        )
+                    )
+                    for contribution in item.contributions
+                )
+            }))
+            if not dynamic:
+                return ()
+            dimensions.append(dynamic)
         if not dimensions:
             return ((),)
         groups = {
@@ -351,6 +383,15 @@ class ConstructionMatcher:
                         eligible_forms.append(form.candidate_ref)
 
             refs = tuple(sorted(set((*eligible_senses, *eligible_forms))))
+            if slot.slot_ref in {
+                str(value)
+                for value in construction.metadata.get(
+                    "reuse_trigger_slots", ()
+                )
+            }:
+                refs = tuple(
+                    ref for ref in refs if ref in set(trigger_refs)
+                )
             minimum = 0 if slot.optional_when_licensed else slot.minimum
             maximum = len(refs) if slot.maximum is None else min(
                 len(refs), slot.maximum

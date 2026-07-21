@@ -83,12 +83,31 @@ class FrontierCollector:
                 frontier_ref = "learning-frontier:" + semantic_fingerprint("learning-frontier-ref", probe.structural_key, 24)
                 item = replace(probe, frontier_ref=frontier_ref)
             else:
+                merged_evidence = tuple(sorted(set(
+                    (*current.evidence_refs, *observation.evidence_refs)
+                )))
+                merged_candidates = tuple(sorted(set(
+                    (*current.candidate_refs, *observation.candidate_refs)
+                )))
+                if (
+                    merged_evidence == current.evidence_refs
+                    and merged_candidates == current.candidate_refs
+                    and observation.dependency_depth >= current.dependency_depth
+                    and (
+                        not observation.best_question_uol_ref
+                        or observation.best_question_uol_ref
+                        == current.best_question_uol_ref
+                    )
+                ):
+                    # Same structural observation in a later Stage-22 consolidation
+                    # must not manufacture a new frontier revision.
+                    continue
                 item = replace(
                     current,
                     revision=current.revision + 1,
                     supersedes_revision=current.revision,
-                    evidence_refs=tuple(sorted(set((*current.evidence_refs, *observation.evidence_refs)))),
-                    candidate_refs=tuple(sorted(set((*current.candidate_refs, *observation.candidate_refs)))),
+                    evidence_refs=merged_evidence,
+                    candidate_refs=merged_candidates,
                     dependency_depth=min(current.dependency_depth, observation.dependency_depth),
                     best_question_uol_ref=observation.best_question_uol_ref or current.best_question_uol_ref,
                     resolution_status=FrontierResolutionStatus.OPEN,

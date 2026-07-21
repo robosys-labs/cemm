@@ -64,6 +64,8 @@ class RuntimeServices:
     permission_evaluator: Any | None = None
     clock: Any | None = None
     runtime_signal_provider: Any | None = None
+    learning_inducers: tuple[Any, ...] = ()
+    learning_competence_executors: Mapping[str, Any] = field(default_factory=dict)
 
 
 class StoreSnapshotProvider:
@@ -245,17 +247,52 @@ class CanonicalRuntimeCoordinator:
             return self._missing(CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS, "grounding_preparation")
         cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
         projections = {}
+        projection_frontiers = []
         try:
             projector = ReferentKnowledgeProjector(self.store)
-            for target_ref in sorted({item.target_ref for item in prepared.candidates}):
-                if self.store.get_record(RecordKind.REFERENT, target_ref, snapshot=snapshot) is None:
+            by_target = {}
+            for item in prepared.candidates:
+                by_target.setdefault(item.target_ref, []).append(item)
+            for target_ref in sorted(by_target):
+                candidates = tuple(by_target[target_ref])
+                durable = self.store.get_record(
+                    RecordKind.REFERENT, target_ref, snapshot=snapshot
+                )
+                if durable is not None:
+                    projections[target_ref] = projector.project(
+                        target_ref,
+                        context_ref=cycle.context_ref,
+                        at_time=None,
+                        snapshot=snapshot,
+                    )
                     continue
-                projections[target_ref] = projector.project(target_ref, context_ref=cycle.context_ref, at_time=None, snapshot=snapshot)
+                envelopes = {
+                    (
+                        tuple(sorted(item.type_refs)),
+                        item.storage_kind.value,
+                        tuple(sorted(item.context_refs)),
+                    )
+                    for item in candidates
+                }
+                if len(envelopes) != 1:
+                    projection_frontiers.append(
+                        f"frontier:referent-knowledge:{target_ref}:candidate-envelope-ambiguous"
+                    )
+                    continue
+                projections[target_ref] = projector.project_candidate(
+                    candidates[0],
+                    context_ref=cycle.context_ref,
+                    at_time=None,
+                    snapshot=snapshot,
+                )
             from .facets.closure import ReferentKnowledgeClosureCompiler
             closure_candidates = ReferentKnowledgeClosureCompiler(self.store).compile(projections, snapshot=snapshot)
         finally:
             cm.__exit__(None, None, None)
-        return StageOutcome({"referent_projections": projections, "semantic_closure_candidates": closure_candidates, "stage04_receipt": self._receipt(CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS, "performed", "referent_knowledge_and_semantic_closure_projected", evidence=tuple(sorted({*projections, *(item.candidate_ref for item in closure_candidates)})))})
+        return StageOutcome(
+            {"referent_projections": projections, "semantic_closure_candidates": closure_candidates, "stage04_receipt": self._receipt(CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS, "performed", "referent_knowledge_and_semantic_closure_projected", evidence=tuple(sorted({*projections, *(item.candidate_ref for item in closure_candidates)})))},
+            frontier_refs=tuple(projection_frontiers),
+        )
 
     def stage_05_build_factor_graph(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
         grounder = cycle.artifacts.get("grounder")
@@ -297,7 +334,27 @@ class CanonicalRuntimeCoordinator:
             result = composer.select_bundle(graph, solved, lattice, grounding, context_ref=cycle.context_ref, snapshot=snapshot)
         finally:
             cm.__exit__(None, None, None)
-        frontiers = tuple(sorted(set((*result.bundle.partial_understanding.frontier_refs, *result.bundle.partial_understanding.unresolved_refs))))
+        intentional_query_refs = {
+            ref
+            for ref, variable in (
+                result.bundle.uol_graph.variables.items()
+                if result.bundle.uol_graph is not None else ()
+            )
+            if getattr(
+                variable.open_binding_purpose, "value", None
+            ) == "query"
+        }
+        frontiers = tuple(sorted(
+            set((
+                *result.bundle.partial_understanding.frontier_refs,
+                *(
+                    ref
+                    for ref
+                    in result.bundle.partial_understanding.unresolved_refs
+                    if ref not in intentional_query_refs
+                ),
+            ))
+        ))
         status = "performed" if result.bundle.uol_graph is not None else "deferred"
         return StageOutcome({"meaning_composition": result, "meaning_bundle": result.bundle, "stage07_receipt": self._receipt(CoreStage.SELECT_MEANING_BUNDLE, status, "meaning_bundle_selected", evidence=result.bundle.evidence_refs)}, frontier_refs=frontiers)
 
@@ -440,6 +497,19 @@ class CanonicalRuntimeCoordinator:
                 persist=True,
                 source_ref="source:stage13:learning-frontier",
             )
+        learning_advance_trace = None
+        if observations:
+            from .learning.runtime_advance import RuntimeLearningAdvancer
+            learning_advance_trace = RuntimeLearningAdvancer(
+                self.store,
+                inducers=tuple(self.services.learning_inducers),
+                competence_executors=dict(
+                    self.services.learning_competence_executors
+                ),
+            ).advance(
+                context_ref=cycle.context_ref,
+                permission_ref=cycle.permission_ref,
+            )
         # Recompute transition plans only after the semantic records are durable.
         canonical_transition_plans = []
         if graph is not None:
@@ -467,6 +537,7 @@ class CanonicalRuntimeCoordinator:
                 "persisted_semantic_refs": tuple(sorted(set(persisted_semantic_refs))),
                 "canonical_transition_plans": tuple(canonical_transition_plans),
                 "learning_commit_trace": learning_commit_trace,
+                "learning_advance_trace": learning_advance_trace,
                 "stage13_receipt": self._receipt(
                     CoreStage.COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE,
                     status,
@@ -1167,7 +1238,7 @@ class Runtime:
         candidate=cycle.artifacts.get("surface_candidate"); emission=cycle.artifacts.get("emission")
         output_text=candidate.surface if emission is not None and candidate is not None else None
         committed=tuple(cycle.artifacts.get("committed_patch_refs",()))
-        return RuntimeResult(cycle.cycle_ref,cycle.context_ref,output_text,target_language,tuple(cycle.trace),tuple(sorted(set(cycle.frontiers))),tuple(cycle.errors),dict(cycle.artifacts),committed)
+        return RuntimeResult(cycle.cycle_ref,cycle.context_ref,output_text,cycle.target_language,tuple(cycle.trace),tuple(sorted(set(cycle.frontiers))),tuple(cycle.errors),dict(cycle.artifacts),committed)
 
     def close(self) -> None:
         self.store.close()
