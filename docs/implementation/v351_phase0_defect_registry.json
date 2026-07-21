@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "baseline_origin_commit": "41fc70ab35d72b3d167fef9fb5c16ce3f8c2ecd6",
+  "phase": 0,
+  "issues": [
+    {
+      "issue_ref": "CI-001",
+      "phase": 0,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A0"
+      ],
+      "status": "implemented_by_docs"
+    },
+    {
+      "issue_ref": "CI-003",
+      "phase": 3,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-004",
+      "phase": 1,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1"
+      ],
+      "status": "implementation_pending_verification"
+    },
+    {
+      "issue_ref": "CI-005",
+      "phase": 2,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1",
+        "A20"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-006",
+      "phase": 2,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1",
+        "A21"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-007",
+      "phase": 2,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1",
+        "A21"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-008",
+      "phase": 2,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1",
+        "A21"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-009",
+      "phase": 3,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-010",
+      "phase": 3,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1",
+        "A12"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-011",
+      "phase": 14,
+      "classification": "REPLACE",
+      "acceptance_gates": [
+        "A12"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-012",
+      "phase": 14,
+      "classification": "REPLACE",
+      "acceptance_gates": [
+        "A12",
+        "A20"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-013",
+      "phase": 14,
+      "classification": "REPLACE",
+      "acceptance_gates": [
+        "A12"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-016",
+      "phase": 12,
+      "classification": "REPLACE",
+      "acceptance_gates": [
+        "A4",
+        "A5",
+        "A7",
+        "A10",
+        "A18"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-018",
+      "phase": 8,
+      "classification": "COMPILE_TO_CSIR",
+      "acceptance_gates": [
+        "A22"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-022",
+      "phase": 0,
+      "classification": "REPLACE",
+      "acceptance_gates": [
+        "A0"
+      ],
+      "status": "implemented_by_docs"
+    },
+    {
+      "issue_ref": "CI-023",
+      "phase": 0,
+      "classification": "PRESERVE",
+      "acceptance_gates": [
+        "A0"
+      ],
+      "status": "implemented_by_docs"
+    },
+    {
+      "issue_ref": "CI-024",
+      "phase": 4,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A19",
+        "A21"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-025",
+      "phase": 3,
+      "classification": "STABILIZE",
+      "acceptance_gates": [
+        "A1"
+      ],
+      "status": "open"
+    },
+    {
+      "issue_ref": "CI-027",
+      "phase": 18,
+      "classification": "PRESERVE",
+      "acceptance_gates": [
+        "A22"
+      ],
+      "status": "open"
+    }
+  ]
+}

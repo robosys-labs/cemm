@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from .identity import IdempotencyOutcome, classify_persisted_identity
 from .schema.model import ActionSchema, StateDimensionSchema, semantic_fingerprint
 from .storage import (
     EvidenceRecord,
@@ -37,6 +38,26 @@ class RuntimeSignal:
             raise ValueError("runtime signal confidence must be within [0,1]")
 
 
+_VOLATILE_RUNTIME_METADATA = frozenset({
+    "observed_at",
+    "observed_time",
+    "timestamp",
+    "collected_at",
+    "request_id",
+    "cycle_ref",
+    "trace_ref",
+})
+
+
+def _stable_runtime_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Exclude request-frequency occurrence fields from durable snapshot identity."""
+    return {
+        str(key): value
+        for key, value in metadata.items()
+        if str(key) not in _VOLATILE_RUNTIME_METADATA
+    }
+
+
 class RuntimeSelfObserver:
     """Persist mechanically observed self state/capabilities before Stage 0.
 
@@ -61,9 +82,10 @@ class RuntimeSelfObserver:
         evidence_by_signal: dict[str, str] = {}
 
         for signal in signals:
+            stable_metadata = _stable_runtime_metadata(signal.metadata)
             evidence_ref = "evidence:runtime-signal:" + semantic_fingerprint(
                 "runtime-signal-evidence",
-                (signal.signal_ref, signal.value, context_ref, tuple(sorted(signal.metadata.items()))),
+                (signal.signal_ref, signal.value, context_ref, stable_metadata),
                 24,
             )
             evidence = EvidenceRecord(
@@ -77,7 +99,7 @@ class RuntimeSelfObserver:
                     "runtime_signal_ref": signal.signal_ref,
                     "value": signal.value,
                     "source_evidence_refs": tuple(signal.evidence_refs),
-                    **dict(signal.metadata),
+                    **stable_metadata,
                 },
             )
             evidence_by_signal[signal.signal_ref] = evidence_ref
@@ -94,7 +116,9 @@ class RuntimeSelfObserver:
                     payload=encode_record(RecordKind.EVIDENCE, evidence),
                     reason="persist mechanical runtime signal before Stage 0",
                 ))
-            elif existing.payload != evidence:
+            elif classify_persisted_identity(
+                existing, RecordKind.EVIDENCE, evidence, revision=1
+            ).outcome is IdempotencyOutcome.CONFLICT:
                 raise RuntimeError(
                     f"deterministic runtime evidence identity collision:{evidence_ref}"
                 )
@@ -188,7 +212,9 @@ class RuntimeSelfObserver:
                     payload=encode_record(RecordKind.STATE_ASSIGNMENT, assignment),
                     reason="map mechanical runtime signal through reviewed state binding",
                 ))
-            elif existing.payload != assignment:
+            elif classify_persisted_identity(
+                existing, RecordKind.STATE_ASSIGNMENT, assignment, revision=1
+            ).outcome is IdempotencyOutcome.CONFLICT:
                 raise RuntimeError(
                     f"deterministic runtime state identity collision:{assignment_ref}"
                 )
@@ -293,7 +319,27 @@ class RuntimeSelfObserver:
         # Reaching Runtime.run_text with an initialized canonical orchestrator is
         # mechanically sufficient only for this narrow signal. It says nothing
         # about network, emotional state, health, or external service availability.
-        result = [RuntimeSignal("runtime:core-loop", "operational")]
+        runtime_metadata = {}
+        epoch_ref = getattr(self.services, "runtime_epoch_ref", None)
+        attestation_ref = getattr(self.services, "runtime_attestation_ref", None)
+        authority_generation = getattr(
+            self.services, "runtime_authority_generation", None
+        )
+        if epoch_ref:
+            runtime_metadata["runtime_epoch_ref"] = epoch_ref
+        if attestation_ref:
+            runtime_metadata["runtime_attestation_ref"] = attestation_ref
+        if authority_generation is not None:
+            runtime_metadata["runtime_authority_generation"] = int(
+                authority_generation
+            )
+        result = [
+            RuntimeSignal(
+                "runtime:core-loop",
+                "operational",
+                metadata=runtime_metadata,
+            )
+        ]
         provider = getattr(self.services, "runtime_signal_provider", None)
         if provider is not None:
             provider_ref = str(getattr(provider, "provider_ref", "") or "")

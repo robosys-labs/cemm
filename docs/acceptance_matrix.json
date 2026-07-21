@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "gate": "A0",
+      "phase_refs": [
+        0
+      ],
+      "issue_refs": [
+        "CI-001",
+        "CI-022",
+        "CI-023"
+      ],
+      "test_refs": [
+        "tests/v350/test_v351_phase0_1_stabilization.py::test_phase0_machine_readable_contracts_exist_and_reference_acceptance"
+      ]
+    },
+    {
+      "gate": "A1",
+      "phase_refs": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "issue_refs": [
+        "CI-003",
+        "CI-004",
+        "CI-005",
+        "CI-006",
+        "CI-007",
+        "CI-008",
+        "CI-009",
+        "CI-010",
+        "CI-025"
+      ],
+      "test_refs": [
+        "tests/v350/test_v351_phase0_1_stabilization.py::test_runtime_attestation_runs_full_guard_once_then_hot_checks_are_o1",
+        "tools/capture_v351_phase0_baseline.py --strict-hot-path"
+      ]
+    },
+    {
+      "gate": "A20",
+      "phase_refs": [
+        1,
+        2,
+        14,
+        18
+      ],
+      "issue_refs": [
+        "CI-005",
+        "CI-012"
+      ],
+      "test_refs": [
+        "tests/v350/test_v351_phase0_1_stabilization.py::test_reload_verifies_again_advances_generation_and_invalidates_old_epoch"
+      ]
+    },
+    {
+      "gate": "A21",
+      "phase_refs": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "issue_refs": [
+        "CI-006",
+        "CI-007",
+        "CI-008",
+        "CI-024"
+      ],
+      "test_refs": [
+        "tools/capture_v351_phase0_baseline.py"
+      ]
+    }
+  ]
+}

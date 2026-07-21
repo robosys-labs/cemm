@@ -16,6 +16,7 @@ from .composition.coordinator import MeaningComposer
 from .cutover import RuntimeAuthorityGuard
 from .discourse import DiscourseClassifier
 from .epistemic_pipeline import AttributedClaimCompiler
+from .identity import IdempotencyOutcome, classify_persisted_identity
 from .facets.projector import ReferentKnowledgeProjector
 from .grounding.coordinator import JointGrounder
 from .grounding.participants import participant_frame_anchors
@@ -66,6 +67,11 @@ class RuntimeServices:
     runtime_signal_provider: Any | None = None
     learning_inducers: tuple[Any, ...] = ()
     learning_competence_executors: Mapping[str, Any] = field(default_factory=dict)
+    # Process/reload identity is injected from AttestedRuntimeAuthority by the
+    # composition root.  It is observational metadata, never semantic authority.
+    runtime_epoch_ref: str | None = None
+    runtime_attestation_ref: str | None = None
+    runtime_authority_generation: int | None = None
 
 
 class StoreSnapshotProvider:
@@ -1065,11 +1071,21 @@ class Runtime:
                 "global_person_identity_claimed": False,
             },
         )
-        if self.store.get_record(RecordKind.EVIDENCE, evidence_ref) is not None:
+        existing_evidence = self.store.get_record(RecordKind.EVIDENCE, evidence_ref)
+        evidence_idempotency = classify_persisted_identity(
+            existing_evidence, RecordKind.EVIDENCE, evidence, revision=1
+        )
+        if evidence_idempotency.outcome is IdempotencyOutcome.CONFLICT:
+            raise RuntimeError(
+                "deterministic session participant evidence identity collision:"
+                + evidence_ref
+            )
+        if existing_evidence is not None and existing is not None:
             return participant_ref, evidence_ref
 
-        operations = [
-            PatchOperation(
+        operations = []
+        if existing_evidence is None:
+            operations.append(PatchOperation(
                 operation_ref="patch-operation:session-participant:evidence:"
                 + semantic_fingerprint("session-participant-evidence-op", evidence_ref, 20),
                 operation_kind=PatchOperationKind.UPSERT,
@@ -1078,9 +1094,8 @@ class Runtime:
                 record_revision=1,
                 payload=encode_record(RecordKind.EVIDENCE, evidence),
                 reason="persist session transport participant evidence before Stage 0",
-            )
-        ]
-        evidence_fp = record_fingerprints(RecordKind.EVIDENCE, evidence)[1]
+            ))
+        evidence_fp = evidence_idempotency.expected.record_fingerprint
         if existing is None:
             try:
                 agent_schema = self.store.repositories.schemas.authoritative("type:agent")
@@ -1254,6 +1269,13 @@ def build_runtime(*, database_path:str=":memory:",boot_database_path:str|Path|No
         services=build_canonical_runtime_services(
             store, authority_manifest=getattr(authority_guard, "manifest", None)
         )
+    epoch=getattr(authority_guard,"runtime_epoch",None)
+    attestation=getattr(authority_guard,"attestation",None)
+    if epoch is not None:
+        services.runtime_epoch_ref=epoch.epoch_ref
+        services.runtime_authority_generation=epoch.generation
+    if attestation is not None:
+        services.runtime_attestation_ref=attestation.attestation_ref
     from .runtime_hardening import HardenedRuntimeCoordinator
     coordinator=HardenedRuntimeCoordinator(store,services)
     adapters=build_stage_adapters(coordinator)

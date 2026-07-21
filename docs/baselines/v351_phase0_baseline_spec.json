@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "baseline_origin_commit": "41fc70ab35d72b3d167fef9fb5c16ce3f8c2ecd6",
+  "runtime_authority_manifest_blob_sha": "7adb90c5093b0b5e7cd7dd6a1dd2e3a88c6d240a",
+  "source_manifest_sha256": "d88f7285cc9427e5531bb36d321444dbb3bc5681e78cc5acf34c1d971f49b57c",
+  "verification_report_sha256": "042c527e3e7ad717ed0a57f943a37efd5a744d32e561ba530c892ab9902f9781",
+  "capture_tool": "tools/capture_v351_phase0_baseline.py",
+  "trace_output": "docs/baselines/v351_phase0_trace_corpus.json",
+  "required_cases": [
+    "hello",
+    "hii",
+    "how_are_you",
+    "name_memory",
+    "preference_memory",
+    "capability",
+    "why_followup",
+    "for_what_followup",
+    "unknown_word",
+    "correction"
+  ],
+  "required_measurements": [
+    "stage_trace",
+    "frontiers",
+    "errors",
+    "output",
+    "latency_ms",
+    "store_revision_movement",
+    "sha256_calls",
+    "boot_pin_scans",
+    "full_authority_verifications"
+  ],
+  "phase1_hot_path_exit": {
+    "release_file_hashes_per_turn": 0,
+    "boot_pin_scans_per_turn": 0,
+    "full_service_authority_verifications_per_turn": 0
+  }
+}
