@@ -49,7 +49,7 @@ def main() -> None:
     }
     actual = {item.value for item in RecordKind}
     require(required_kinds <= actual, f"missing RecordKinds: {sorted(required_kinds - actual)}")
-    require(SCHEMA_VERSION == 8, f"expected SQLite schema 8, found {SCHEMA_VERSION}")
+    require(SCHEMA_VERSION == 9, f"expected SQLite schema 9, found {SCHEMA_VERSION}")
 
     con = sqlite3.connect(":memory:")
     initialize_schema(con)

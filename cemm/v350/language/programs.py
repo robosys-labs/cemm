@@ -210,6 +210,18 @@ class ConstructionProgramCompiler:
         *,
         closure_candidates: Iterable[SemanticClosureCandidate] = (),
     ) -> ConstructionProgramResolution:
+        if construction.use_authority_explicit and UseOperation.COMPOSE not in construction.authorized_use_operations:
+            return ConstructionProgramResolution(
+                construction_ref=construction.construction_ref,
+                construction_revision=construction.revision,
+                decision=UseDecision.DENY,
+                authority_path="typed_construction_use_authority",
+                authority_ref=construction.construction_ref,
+                authority_revision=construction.revision,
+                plans=(),
+                evidence_refs=construction.evidence_refs,
+                reason="construction does not authorize compose use",
+            )
         programs = self.language.programs_for_construction(
             construction.construction_ref, construction.revision
         )
@@ -575,13 +587,22 @@ class ConstructionProgramCompiler:
                     for item in branch["applications"].values()
                 )
             )
+            semantic_signature = (
+                schema_pins,
+                tuple(sorted((item.application_symbol_ref, item.port_ref, item.source_kind, item.source_ref) for item in branch["bindings"])),
+                tuple(sorted(set(branch["unifications"]))),
+                tuple(sorted((item.operator_symbol_ref, item.target_symbol_ref, item.scope_kind) for item in branch["scopes"])),
+                tuple(sorted(branch["features"])),
+                tuple(sorted(branch["roots"])),
+                tuple(sorted((key, value.symbol_ref, tuple(x.value for x in value.expected_filler_classes), tuple(x.value for x in value.expected_schema_classes), value.expected_type_refs, value.restriction_refs, value.projection_ref, value.projection_revision, None if value.open_binding_purpose is None else value.open_binding_purpose.value, value.preserve_gap) for key, value in branch["variables"].items())),
+            )
             plans.append(
                 ConstructionSemanticPlan(
                     plan_ref=_plan_ref(
                         construction.construction_ref,
                         construction.revision,
                         program.program_ref,
-                        schema_pins,
+                        semantic_signature,
                     ),
                     construction_ref=construction.construction_ref,
                     construction_revision=construction.revision,
@@ -620,6 +641,10 @@ class ConstructionProgramCompiler:
             for item in closure_candidates
             if item.schema_class in classes and item.usable_for_composition
         }
+        # Broad schema-class activation is referent-knowledge closure, never a
+        # global ontology scan. An empty closure remains an explicit frontier.
+        if not allowed_pins:
+            return ()
         result = []
         for schema in self.schemas.iter_schemas():
             if schema.schema_class not in classes:
@@ -661,10 +686,10 @@ def _plan_ref(
     construction_ref: str,
     construction_revision: int,
     authority_ref: str,
-    schema_pins: tuple[tuple[str, int], ...],
+    semantic_signature,
 ) -> str:
     return "construction-semantic-plan:" + semantic_fingerprint(
         "construction-semantic-plan",
-        (construction_ref, construction_revision, authority_ref, schema_pins),
+        (construction_ref, construction_revision, authority_ref, semantic_signature),
         24,
     )

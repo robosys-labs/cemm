@@ -8,7 +8,7 @@ from ..schema.model import SchemaLifecycleStatus, UseDecision, UseOperation, can
 from ..storage.model import RecordKind
 from .model import (
     GoalCandidateRecord, GoalConflictRecord, GoalDecisionRecord, ResponsePolicyRuleRecord,
-    GoalTargetBinding, SemanticObligationRecord, TargetSelector, TargetSelectorMode,
+    GoalTargetBinding, ResponseTriggerArtifactKind, SemanticObligationRecord, TargetSelector, TargetSelectorMode,
 )
 
 
@@ -28,6 +28,7 @@ def response_policy_rule_from_document(value: Mapping[str, Any]) -> ResponsePoli
         trigger_schema_pins=tuple((str(x[0]), int(x[1])) for x in d.get("trigger_schema_pins", ())),
         goal_schema_ref=str(d["goal_schema_ref"]), goal_schema_revision=int(d["goal_schema_revision"]),
         goal_operation=UseOperation(str(d["goal_operation"])), target_selectors=tuple(_selector(x) for x in d.get("target_selectors", ())),
+        trigger_artifact_kinds=tuple(ResponseTriggerArtifactKind(str(x)) for x in d.get("trigger_artifact_kinds", ())),
         priority=int(d.get("priority", 0)), require_permission=bool(d.get("require_permission", True)),
         require_epistemic_support=bool(d.get("require_epistemic_support", False)), require_capability=bool(d.get("require_capability", False)),
         block_on_open_frontier=bool(d.get("block_on_open_frontier", False)), conflict_key_refs=tuple(map(str, d.get("conflict_key_refs", ()))),

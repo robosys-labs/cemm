@@ -363,6 +363,11 @@ class FormLatticeAnalyzer:
             authority_path: str,
             authority_ref: str,
         ) -> None:
+            # FormLatticeAnalyzer is the understanding/GROUND path. A migrated or
+            # learned multi-use sense participates only when GROUND is explicitly
+            # authorized; REALIZE-only senses must never leak into understanding.
+            if not sense.supports_use(UseOperation.GROUND):
+                return
             confidence = min(1.0, form_candidate.confidence * min(1.0, prior_weight))
             if lexeme_candidate is not None:
                 confidence = min(confidence, lexeme_candidate.confidence)
@@ -447,7 +452,7 @@ class FormLatticeAnalyzer:
                 confidence=confidence,
                 evidence_refs=evidence_refs,
                 contributions=contributions,
-                use_operation=sense.use_operation,
+                use_operation=UseOperation.GROUND,
                 scope_behavior=effective_scope,
                 expected_type_refs=effective_types,
                 lexical_category=sense.lexical_category,

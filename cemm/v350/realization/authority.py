@@ -11,7 +11,7 @@ from ..schema.model import SchemaLifecycleStatus,UseDecision,UseOperation
 from ..storage.model import DependencyEdge,RecordKind
 
 class LanguageUseAuthority:
- LANGUAGE_KINDS={RecordKind.LANGUAGE_PACK,RecordKind.LANGUAGE_FORM,RecordKind.LEXICAL_SENSE,RecordKind.FORM_SENSE_LINK,RecordKind.CONSTRUCTION,RecordKind.ARGUMENT_FRAME,RecordKind.MORPHOLOGY_RULE,RecordKind.LINEARIZATION_RULE}
+ LANGUAGE_KINDS={RecordKind.LANGUAGE_PACK,RecordKind.LANGUAGE_FORM,RecordKind.LEXEME,RecordKind.FORM_LEXEME_LINK,RecordKind.LEXICAL_SENSE,RecordKind.LEXEME_SENSE_LINK,RecordKind.FORM_SENSE_LINK,RecordKind.SEMANTIC_CONTRIBUTION_SPEC,RecordKind.CONSTRUCTION,RecordKind.CONSTRUCTION_PROGRAM,RecordKind.ARGUMENT_FRAME,RecordKind.MORPHOLOGY_RULE,RecordKind.LINEARIZATION_RULE}
  def __init__(self,store): self.store=store
  def authorized(self,stored,operation:UseOperation)->bool:
   if stored.record_kind not in self.LANGUAGE_KINDS:return False

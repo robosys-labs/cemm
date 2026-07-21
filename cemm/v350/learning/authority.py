@@ -67,6 +67,11 @@ def record_supports_use(record_kind: RecordKind, record: Any, operation: UseOper
     if not record_kind_supports_use(record_kind, operation):
         return False
     declared = getattr(record, "use_operation", None)
+    extra = tuple(getattr(record, "authorized_use_operations", ()))
+    if getattr(record, "use_authority_explicit", False):
+        return operation in extra
     if declared is not None:
-        return declared == operation
+        return declared == operation or operation in extra
+    if extra:
+        return operation in extra
     return True

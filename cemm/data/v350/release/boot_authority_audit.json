@@ -4,26 +4,26 @@
     "fr",
     "sw"
   ],
-  "boot_sha256": "d470b22227b3b20445f5fdf7cd468de86cecd2feb40e20daaad95a6394316be3",
+  "boot_sha256": "c57e5c4afe893acaabebfed32475351d6bc071e943decea62c5263e75fb62071",
   "compiler": {
-    "boot_fingerprint": "boot-database:30aa77cf2448520a032a0532cba5d522e3b8667e54d7dadab9726b51e0fabb57",
-    "byte_size": 9834496,
-    "manifest_fingerprint": "source-manifest:155c6ef0c8d18e9531091e393959259dac977146e650e712e32c323a6ae184ea",
-    "record_count": 2434,
-    "record_set_fingerprint": "compiled-record-set:b2e56ff465e094ba7ee074bde210d47309eebfb81ef4c1ecfd4d5e6bd6cbccdf"
+    "boot_fingerprint": "boot-database:b87469a4e17264eb4d418f578b3a76f9cd21627d1148ed9275532d6ee13073dc",
+    "byte_size": 13266944,
+    "manifest_fingerprint": "source-manifest:d28e0bbebc1e2c25e204fd838ce2a0bd8d468b377f222f8326c052066f3b6664",
+    "record_count": 3812,
+    "record_set_fingerprint": "compiled-record-set:e2eed66e4a9a15524d47074061de22c6aeccbe51c67b7ae6c6cb8a70e1b30788"
   },
   "effective_counts": {
-    "argument_frame": 48,
+    "argument_frame": 51,
     "channel_adapter_contract": 1,
-    "linearization_rule": 48,
+    "linearization_rule": 51,
     "morphology_rule": 3,
-    "response_policy_rule": 43,
-    "response_transform_rule": 43,
+    "response_policy_rule": 6,
+    "response_transform_rule": 6,
     "semantic_analyzer_contract": 1
   },
   "errors": [],
   "operation_adapter_contract_count": 0,
-  "record_count": 2434,
+  "record_count": 3812,
   "sqlite_schema_version": 9,
   "status": "pass",
   "warnings": []

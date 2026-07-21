@@ -163,6 +163,7 @@ def variable_from_document(value: Mapping[str, Any]) -> SemanticVariable:
             ),
             open_binding_purpose=None if purpose is None else OpenBindingPurpose(str(purpose)),
             projection_revision=None if data.get("projection_revision") is None else int(data["projection_revision"]),
+            projection_candidates=tuple((str(item[0]), int(item[1])) for item in data.get("projection_candidates", ())),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise UOLDecodeError(str(exc)) from exc

@@ -236,6 +236,7 @@ class SemanticVariable:
     expected_filler_classes: frozenset[PortFillerClass] = frozenset()
     open_binding_purpose: OpenBindingPurpose | None = None
     projection_revision: int | None = None
+    projection_candidates: tuple[tuple[str, int], ...] = ()
 
     def __post_init__(self) -> None:
         _require_ref(self.variable_ref, "variable_ref")
@@ -246,6 +247,11 @@ class SemanticVariable:
             _require_ref(self.projection_ref, "projection_ref")
         if self.projection_revision is not None and self.projection_revision < 1:
             raise ValueError("projection_revision must be positive")
+        _require_unique(self.projection_candidates, f"projection candidates of {self.variable_ref}")
+        for ref, revision in self.projection_candidates:
+            _require_ref(ref, "projection candidate ref")
+            if revision < 1:
+                raise ValueError("projection candidate revision must be positive")
         if self.open_binding_purpose is not None and not isinstance(
             self.open_binding_purpose, OpenBindingPurpose
         ):

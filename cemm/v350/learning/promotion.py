@@ -426,6 +426,14 @@ class PromotionCoordinator:
             return replace(record, **kwargs, lifecycle_status=lifecycle, use_profile=UseProfile(tuple(authorizations)))
         if hasattr(record, "lifecycle_status"):
             positive = {item.decision for item in grants}
+            if hasattr(record, "authorized_use_operations"):
+                granted_operations = tuple(sorted(
+                    {item.operation for item in grants if item.decision in {UseDecision.ALLOW, UseDecision.PROVISIONAL}},
+                    key=lambda item: item.value,
+                ))
+                kwargs["authorized_use_operations"] = granted_operations
+                if hasattr(record, "use_authority_explicit"):
+                    kwargs["use_authority_explicit"] = True
             if positive == {UseDecision.PRESERVE_ONLY}:
                 return None
             lifecycle = (

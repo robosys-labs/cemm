@@ -371,6 +371,8 @@ class LexicalSenseRecord:
     lifecycle_status: SchemaLifecycleStatus = SchemaLifecycleStatus.CANDIDATE
     target_schema_class: SchemaClass | None = None
     use_operation: UseOperation = UseOperation.GROUND
+    authorized_use_operations: tuple[UseOperation, ...] = ()
+    use_authority_explicit: bool = False
     lexical_category: str = ""
     frame_ref: str = ""
     argument_map: tuple[tuple[str, str], ...] = ()
@@ -406,6 +408,7 @@ class LexicalSenseRecord:
         if self.target_kind == SenseTargetKind.REFERENT_TYPE and self.target_schema_class not in {None, SchemaClass.REFERENT_TYPE}:
             raise ValueError("referent-type sense target class must be referent_type")
         _unique(tuple(port for port, _ in self.argument_map), "sense argument source roles")
+        _unique(self.authorized_use_operations, "sense authorized use operations")
         _unique(self.expected_type_refs, "sense expected types")
         _unique(self.context_constraints, "sense context constraints")
         _unique(tuple(name for name, _ in self.feature_constraints), "sense feature constraints")
@@ -426,6 +429,8 @@ class LexicalSenseRecord:
             "target_revision": self.target_revision,
             "target_schema_class": None if self.target_schema_class is None else self.target_schema_class.value,
             "use_operation": self.use_operation.value,
+            "authorized_use_operations": tuple(item.value for item in self.authorized_use_operations),
+            "use_authority_explicit": self.use_authority_explicit,
             "lexical_category": self.lexical_category,
             "frame_ref": self.frame_ref,
             "argument_map": self.argument_map,
@@ -435,6 +440,11 @@ class LexicalSenseRecord:
             "feature_constraints": self.feature_constraints,
             "metadata": dict(self.metadata),
         }, 64)
+
+    def supports_use(self, operation: UseOperation) -> bool:
+        if self.use_authority_explicit:
+            return operation in self.authorized_use_operations
+        return operation == self.use_operation or operation in self.authorized_use_operations
 
     @property
     def record_fingerprint(self) -> str:
@@ -528,6 +538,7 @@ class SemanticContributionSpecRecord:
     def executable(self) -> bool:
         return (
             self.lifecycle_status == SchemaLifecycleStatus.ACTIVE
+            and self.use_operation in {UseOperation.GROUND, UseOperation.QUERY}
             and self.use_decision == UseDecision.ALLOW
         )
 
@@ -607,7 +618,7 @@ class MorphologyAnalysisRuleRecord:
     def executable(self) -> bool:
         return (
             self.lifecycle_status == SchemaLifecycleStatus.ACTIVE
-            and self.use_operation == UseOperation.GROUND
+            and self.use_operation in {UseOperation.GROUND, UseOperation.QUERY}
             and self.use_decision == UseDecision.ALLOW
         )
 
@@ -816,6 +827,8 @@ class ConstructionRecord:
     full_sentence_pattern: bool = False
     genuine_idiom: bool = False
     preserves_gap: bool = False
+    authorized_use_operations: tuple[UseOperation, ...] = ()
+    use_authority_explicit: bool = False
     source_refs: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
     competence_case_refs: tuple[str, ...] = ()
@@ -833,6 +846,7 @@ class ConstructionRecord:
         _unique(tuple(item.slot_ref for item in self.slots), "construction slots")
         _unique(self.trigger_form_refs, "construction forms")
         _unique(self.trigger_sense_refs, "construction senses")
+        _unique(self.authorized_use_operations, "construction authorized use operations")
         if (self.output_schema_ref is None) != (self.output_schema_revision is None):
             raise ValueError("construction output schema and revision must be supplied together")
         if self.output_schema_ref is not None:
@@ -867,8 +881,13 @@ class ConstructionRecord:
             "full_sentence_pattern": self.full_sentence_pattern,
             "genuine_idiom": self.genuine_idiom,
             "preserves_gap": self.preserves_gap,
+            "authorized_use_operations": tuple(item.value for item in self.authorized_use_operations),
+            "use_authority_explicit": self.use_authority_explicit,
             "metadata": dict(self.metadata),
         }, 64)
+
+    def supports_use(self, operation: UseOperation) -> bool:
+        return (not self.use_authority_explicit) or operation in self.authorized_use_operations
 
     @property
     def record_fingerprint(self) -> str:

@@ -264,10 +264,10 @@ def test_language_revision_supersession_selects_one_effective_revision(store) ->
     snapshot = store.repositories.language.registry().snapshot()
     old = next(item for item in snapshot.forms if item.form_ref == "form:en:see")
     newer = replace(old, revision=2, supersedes_revision=1, written_form="SEE")
-    registry = LanguageRegistry(snapshot.packs, (*snapshot.forms, newer), snapshot.senses, snapshot.links, snapshot.constructions)
+    registry = LanguageRegistry(snapshot.packs, (*snapshot.forms, newer), snapshot.senses, snapshot.links, snapshot.constructions, contribution_specs=snapshot.contribution_specs)
     assert registry.require_form(old.form_ref).revision == 2
     with pytest.raises(LanguageRegistryError, match="multiple effective active revisions"):
-        LanguageRegistry(snapshot.packs, (*snapshot.forms, replace(old, revision=2)), snapshot.senses, snapshot.links, snapshot.constructions)
+        LanguageRegistry(snapshot.packs, (*snapshot.forms, replace(old, revision=2)), snapshot.senses, snapshot.links, snapshot.constructions, contribution_specs=snapshot.contribution_specs)
 
 
 def test_language_revision_commits_through_graph_patch_and_typed_repository(store) -> None:

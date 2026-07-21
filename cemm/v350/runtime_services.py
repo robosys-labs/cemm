@@ -17,7 +17,6 @@ from typing import Any, Mapping
 from .composition.coordinator import MeaningComposer
 from .grounding.coordinator import JointGrounder
 from .grounding.model import DiscourseAnchor
-from .knowledge_factors import ReferentKnowledgeFactorBinder
 from .language.analyzer import FormLatticeAnalyzer
 from .permissions import PermissionScopeEvaluator
 from .schema.model import semantic_fingerprint
@@ -158,17 +157,17 @@ class CanonicalSemanticAnalyzer:
                         at_time=None,
                         snapshot=snapshot,
                     )
+            from .facets.closure import ReferentKnowledgeClosureCompiler
+            closure_candidates = ReferentKnowledgeClosureCompiler(self.store).compile(
+                projections, snapshot=snapshot
+            )
             composer = MeaningComposer(self.store)
             factor_graph = composer.build_factor_graph(
                 lattice,
                 grounding,
                 context_ref=context_ref,
-                snapshot=snapshot,
-            )
-            factor_graph = ReferentKnowledgeFactorBinder(self.store).bind(
-                factor_graph,
-                lattice=lattice,
-                projections=projections,
+                referent_projections=projections,
+                closure_candidates=closure_candidates,
                 snapshot=snapshot,
             )
             solved = composer.solve_factor_graph(factor_graph)

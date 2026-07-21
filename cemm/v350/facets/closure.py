@@ -118,13 +118,15 @@ class ReferentKnowledgeClosureCompiler:
                 )
 
             for state in view.state_applicability:
+                try:
+                    dimension = registry.schema(state.dimension_ref, state.dimension_revision)
+                except KeyError:
+                    continue
+                if bool(dimension.metadata.get("requires_applicability_evidence")) and not state.assignment_refs and not state.active_value_refs:
+                    continue
                 add(
-                    view,
-                    state.dimension_ref,
-                    state.dimension_revision,
-                    state.status,
-                    "state_applicability",
-                    (*state.assignment_refs, *state.dependency_refs),
+                    view, state.dimension_ref, state.dimension_revision, state.status,
+                    "state_applicability", (*state.assignment_refs, *state.dependency_refs),
                 )
 
             for action_ref in view.afforded_action_refs:

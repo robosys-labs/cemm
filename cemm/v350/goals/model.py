@@ -16,6 +16,11 @@ class StrEnum(str, Enum):
         return self.value
 
 
+class ResponseTriggerArtifactKind(StrEnum):
+    BOUND_QUERY = "bound_query"
+    PARTIAL_QUERY = "partial_query"
+
+
 class TargetSelectorMode(StrEnum):
     SOURCE = "source"
     SOURCE_PROPOSITION = "source_proposition"
@@ -24,6 +29,7 @@ class TargetSelectorMode(StrEnum):
     SIGNIFICANCE_AFFECTED = "significance_affected"
     APPLICATION_PORT = "application_port"
     FIXED = "fixed"
+    QUERY_VALUE = "query_value"
 
 
 class GoalDisposition(StrEnum):
@@ -66,6 +72,7 @@ class ResponsePolicyRuleRecord:
     goal_schema_revision: int
     goal_operation: UseOperation
     target_selectors: tuple[TargetSelector, ...]
+    trigger_artifact_kinds: tuple[ResponseTriggerArtifactKind, ...] = ()
     priority: int = 0
     require_permission: bool = True
     require_epistemic_support: bool = False
@@ -94,12 +101,13 @@ class ResponsePolicyRuleRecord:
             raise ValueError("response-policy supersedes_revision must target an older revision")
         if self.use_operation != UseOperation.RESPONSE_POLICY:
             raise ValueError("response-policy rule must use RESPONSE_POLICY axis")
-        if not self.trigger_record_kinds:
-            raise ValueError("response-policy rule requires structural trigger record kinds")
+        if not self.trigger_record_kinds and not self.trigger_artifact_kinds:
+            raise ValueError("response-policy rule requires record or artifact trigger kinds")
         if not self.target_selectors and not self.prohibition:
             raise ValueError("positive response-policy rule requires explicit target selectors")
         _unique(self.trigger_record_kinds, "response policy trigger kinds")
         _unique(self.trigger_schema_pins, "response policy trigger schema pins")
+        _unique(self.trigger_artifact_kinds, "response policy trigger artifact kinds")
         _unique(self.conflict_key_refs, "response policy conflict keys")
 
     @property

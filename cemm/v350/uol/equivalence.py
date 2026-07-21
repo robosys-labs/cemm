@@ -149,14 +149,20 @@ def _nodes(graph: UOLGraph) -> dict[str, _Node]:
         ]
         if variable.projection_ref:
             edges.append(("projection", _any_local_key(graph, variable.projection_ref)))
+        for proj_ref, proj_rev in variable.projection_candidates:
+            edges.append(("projection_candidate", _any_local_key(graph, proj_ref)))
         nodes[f"v:{ref}"] = _Node(
             "variable",
             {
                 "expected_schema_classes": sorted(item.value for item in variable.expected_schema_classes),
+                "expected_filler_classes": sorted(item.value for item in variable.expected_filler_classes),
                 "expected_type_refs": sorted(variable.expected_type_refs),
                 "scope_ref": _external_semantic_ref(graph, variable.scope_ref),
                 "restriction_count": len(variable.restriction_refs),
                 "has_projection": bool(variable.projection_ref),
+                "projection_revision": variable.projection_revision,
+                "projection_candidate_count": len(variable.projection_candidates),
+                "open_binding_purpose": None if variable.open_binding_purpose is None else variable.open_binding_purpose.value,
             },
             tuple(edges),
         )

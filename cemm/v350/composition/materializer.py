@@ -163,15 +163,16 @@ class UOLHypothesisMaterializer:
         # Preserve targetless/partial lexical meaning as typed UOL variables.
         # Contributions are semantic constraints, not hidden intent labels.
         sense_candidate_by_ref = {item.candidate_ref: item for item in lattice.sense_candidates}
+        lexical_variable_by_sense: dict[str, str] = {}
         for sense_candidate_ref in sorted(selected_senses):
             source_sense = sense_candidate_by_ref.get(sense_candidate_ref)
             if source_sense is None:
                 unresolved.add(sense_candidate_ref)
                 continue
             contributions = tuple(getattr(source_sense, "contributions", ()))
-            projection_refs = tuple(sorted({
-                item.projection_ref for item in contributions
-                if item.contribution_kind.value == "projection" and item.projection_ref
+            projection_pins = tuple(sorted({
+                (item.projection_ref, item.projection_revision) for item in contributions
+                if item.contribution_kind.value == "projection" and item.projection_ref and item.projection_revision
             }))
             restriction_refs = tuple(sorted({
                 ref for item in contributions for ref in item.restriction_refs
@@ -185,21 +186,23 @@ class UOLHypothesisMaterializer:
                     24,
                 )
                 projection_ref = contribution.projection_ref
-                if projection_ref is None and len(projection_refs) == 1:
-                    projection_ref = projection_refs[0]
-                if projection_ref is None and len(projection_refs) > 1:
-                    unresolved.update(projection_refs)
+                projection_revision = contribution.projection_revision
+                if projection_ref is None and len(projection_pins) == 1:
+                    projection_ref, projection_revision = projection_pins[0]
                 variables[variable_ref] = SemanticVariable(
                     variable_ref=variable_ref,
                     expected_schema_classes=frozenset(contribution.expected_schema_classes),
                     expected_type_refs=tuple(contribution.expected_type_refs),
                     restriction_refs=tuple(sorted(set((*restriction_refs, *contribution.restriction_refs)))),
                     projection_ref=projection_ref,
+                    projection_revision=projection_revision,
+                    projection_candidates=projection_pins if projection_ref is None else (),
                     scope_ref="local",
                     evidence_refs=contribution.evidence_refs or source_sense.evidence_refs,
                     expected_filler_classes=frozenset(contribution.expected_filler_classes),
                     open_binding_purpose=contribution.open_binding_purpose,
                 )
+                lexical_variable_by_sense[sense_candidate_ref] = variable_ref
                 unresolved.add(variable_ref)
 
         # Active reviewed constructions with semantic output become the primary
@@ -247,6 +250,8 @@ class UOLHypothesisMaterializer:
                     unresolved=unresolved,
                     covered_senses=covered_senses,
                     app_ref_by_sense=app_ref_by_sense,
+                    lexical_variable_by_sense=lexical_variable_by_sense,
+                    sense_candidate_by_ref=sense_candidate_by_ref,
                 )
                 continue
             if construction_record.output_schema_ref is None:
@@ -621,6 +626,8 @@ class UOLHypothesisMaterializer:
         unresolved,
         covered_senses,
         app_ref_by_sense,
+        lexical_variable_by_sense,
+        sense_candidate_by_ref,
     ) -> None:
         aliases = _program_symbol_aliases(plan)
         app_specs_by_symbol = {
@@ -895,28 +902,53 @@ class UOLHypothesisMaterializer:
                 if choice.value_ref == _OMITTED:
                     continue
                 if choice.value_ref == _GAP:
+                    slot_refs = tuple(next(
+                        (refs for slot_ref, refs in candidate.slot_fillers if slot_ref == binding_spec.source_ref),
+                        (),
+                    ))
+                    slot_sense_refs = set()
+                    for slot_ref in slot_refs:
+                        if slot_ref in lexical_variable_by_sense:
+                            slot_sense_refs.add(slot_ref)
+                            continue
+                        for selected_sense_ref in selected_senses:
+                            selected_source_sense = sense_candidate_by_ref.get(selected_sense_ref)
+                            if selected_source_sense is not None and selected_source_sense.form_candidate_ref == slot_ref:
+                                slot_sense_refs.add(selected_sense_ref)
+                    query_variables = []
+                    for selected_sense_ref in sorted(slot_sense_refs):
+                        variable_ref = lexical_variable_by_sense.get(selected_sense_ref)
+                        if variable_ref is None:
+                            continue
+                        lexical_variable = variables[variable_ref]
+                        if lexical_variable.open_binding_purpose != OpenBindingPurpose.QUERY:
+                            continue
+                        if lexical_variable.expected_filler_classes and not set(lexical_variable.expected_filler_classes).intersection(port.filler_classes):
+                            continue
+                        if lexical_variable.expected_schema_classes and port.accepted_schema_classes and not set(lexical_variable.expected_schema_classes).intersection(port.accepted_schema_classes):
+                            continue
+                        query_variables.append(variable_ref)
+                    query_variables = tuple(sorted(set(query_variables)))
+                    if OpenBindingPurpose.QUERY in port.open_binding_purposes and len(query_variables) == 1:
+                        query_ref = query_variables[0]
+                        bindings.append(ApplicationBinding(
+                            port_ref=port.port_ref,
+                            fillers=(FillerRef(PortFillerClass.SEMANTIC_VARIABLE, query_ref),),
+                            confidence=0.8, evidence_refs=choice.evidence_refs,
+                            open_binding_purpose=OpenBindingPurpose.QUERY, ordered=port.ordered_fillers,
+                        ))
+                        unresolved.add(query_ref)
+                        continue
                     variable = self._semantic_gap(
-                        hypothesis.hypothesis_ref,
-                        app_ref,
-                        port,
-                        choice.evidence_refs,
+                        hypothesis.hypothesis_ref, app_ref, port, choice.evidence_refs
                     )
                     variables[variable.variable_ref] = variable
-                    bindings.append(
-                        ApplicationBinding(
-                            port_ref=port.port_ref,
-                            fillers=(
-                                FillerRef(
-                                    PortFillerClass.SEMANTIC_VARIABLE,
-                                    variable.variable_ref,
-                                ),
-                            ),
-                            confidence=0.45,
-                            evidence_refs=choice.evidence_refs,
-                            open_binding_purpose=OpenBindingPurpose.PARTIAL_COMPOSITION,
-                            ordered=port.ordered_fillers,
-                        )
-                    )
+                    bindings.append(ApplicationBinding(
+                        port_ref=port.port_ref,
+                        fillers=(FillerRef(PortFillerClass.SEMANTIC_VARIABLE, variable.variable_ref),),
+                        confidence=0.45, evidence_refs=choice.evidence_refs,
+                        open_binding_purpose=OpenBindingPurpose.PARTIAL_COMPOSITION, ordered=port.ordered_fillers,
+                    ))
                     unresolved.add(variable.variable_ref)
                     continue
     

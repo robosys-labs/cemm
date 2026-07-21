@@ -78,7 +78,7 @@ class LanguageGroundingPackageAuditor:
     def audit(self, package_root: str | Path) -> LanguageGroundingAuditReport:
         root = Path(package_root).resolve()
         loader = SourcePackageLoader(root)
-        records = tuple(item for item in loader.load() if item.phase == 7)
+        records = tuple(loader.load())
         issues: list[str] = []
         counts = Counter(item.record_kind.value for item in records)
         # Catalogue cardinality is diagnostic only. Source fingerprint and

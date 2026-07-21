@@ -63,6 +63,7 @@ class RuntimeServices:
     output_commitment_kind_ref: str | None = None
     permission_evaluator: Any | None = None
     clock: Any | None = None
+    runtime_signal_provider: Any | None = None
 
 
 class StoreSnapshotProvider:
@@ -250,9 +251,11 @@ class CanonicalRuntimeCoordinator:
                 if self.store.get_record(RecordKind.REFERENT, target_ref, snapshot=snapshot) is None:
                     continue
                 projections[target_ref] = projector.project(target_ref, context_ref=cycle.context_ref, at_time=None, snapshot=snapshot)
+            from .facets.closure import ReferentKnowledgeClosureCompiler
+            closure_candidates = ReferentKnowledgeClosureCompiler(self.store).compile(projections, snapshot=snapshot)
         finally:
             cm.__exit__(None, None, None)
-        return StageOutcome({"referent_projections": projections, "stage04_receipt": self._receipt(CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS, "performed", "referent_knowledge_projected", evidence=tuple(sorted(projections)))})
+        return StageOutcome({"referent_projections": projections, "semantic_closure_candidates": closure_candidates, "stage04_receipt": self._receipt(CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS, "performed", "referent_knowledge_and_semantic_closure_projected", evidence=tuple(sorted({*projections, *(item.candidate_ref for item in closure_candidates)})))})
 
     def stage_05_build_factor_graph(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
         grounder = cycle.artifacts.get("grounder")
@@ -346,23 +349,19 @@ class CanonicalRuntimeCoordinator:
             return self._missing(CoreStage.RETRIEVE_AND_ANSWER_BIND, "epistemic_uol_graph")
         cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
         try:
-            retrieval = SemanticRetriever(self.store).bind(graph, context_ref=cycle.context_ref, snapshot=snapshot)
+            from .querying import UniversalSemanticBinder
+            retrieval = UniversalSemanticBinder(self.store).bind(
+                graph, classification=cycle.artifacts.get("discourse_classification"),
+                context_ref=cycle.context_ref, permission_ref=cycle.permission_ref,
+                referent_projections=cycle.artifacts.get("referent_projections", {}), snapshot=snapshot,
+            )
         finally:
             cm.__exit__(None, None, None)
-        return StageOutcome({"retrieval_result": retrieval, "stage10_receipt": self._receipt(CoreStage.RETRIEVE_AND_ANSWER_BIND, "performed", "semantic_retrieval_completed", evidence=retrieval.evidence_refs)}, frontier_refs=tuple(retrieval.unresolved_query_refs))
+        return StageOutcome({"retrieval_result": retrieval, "stage10_receipt": self._receipt(CoreStage.RETRIEVE_AND_ANSWER_BIND, "performed", "universal_semantic_query_binding_completed", evidence=retrieval.evidence_refs)}, frontier_refs=tuple(retrieval.unresolved_query_refs))
 
     def stage_11_learning_frontiers(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
-        unresolved = tuple(sorted(set(cycle.frontiers)))
-        observations = tuple(FrontierObservation(
-            missing_contract=ref,
-            expected_record_kinds=(RecordKind.SCHEMA, RecordKind.SEMANTIC_APPLICATION),
-            expected_schema_classes=(),
-            accepted_anchor_types=(),
-            evidence_refs=(cycle.cycle_ref,),
-            target_ref=None,
-            context_ref=cycle.context_ref,
-            permission_ref=cycle.permission_ref,
-        ) for ref in unresolved)
+        from .learning.runtime import TypedRuntimeFrontierCompiler
+        observations = TypedRuntimeFrontierCompiler().compile(cycle)
         cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
         try:
             existing = tuple(
@@ -546,6 +545,15 @@ class CanonicalRuntimeCoordinator:
                 obligation=deriver.derive(self._pin(source),rule,self._pin(rule_stored))
                 if obligation is None: continue
                 obligations.append(obligation); candidates.append(auth.authorize(build_candidate(obligation),rule))
+        retrieval = cycle.artifacts.get("retrieval_result")
+        if retrieval is not None and getattr(getattr(retrieval, "request", None), "response_requested", False):
+            from .goals.query_policy import QueryResponseGoalDeriver
+            frontier_pins=[]
+            for item in cycle.artifacts.get("learning_frontier_records", ()):
+                stored=self.store.get_record(RecordKind.LEARNING_FRONTIER,item.frontier_ref,item.revision)
+                if stored is not None: frontier_pins.append(self._pin(stored))
+            q_obligations,q_candidates=QueryResponseGoalDeriver(self.store,registry).derive(retrieval,frontier_pins=tuple(frontier_pins))
+            obligations.extend(q_obligations); candidates.extend(q_candidates)
         if not candidates:
             return StageOutcome({"goal_decision": None, "stage15_receipt": self._receipt(CoreStage.DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS, "no_authorized_work", "no_policy_licensed_goal")})
         conflicts=GoalConflictDetector().detect(candidates)
@@ -731,8 +739,19 @@ class CanonicalRuntimeCoordinator:
         from .response.coordinator import ResponseUOLCommitCoordinator
         decision_stored=self.store.get_record(RecordKind.GOAL_DECISION,decision.decision_ref)
         rules=tuple(item.payload for item in self.store.repositories.response_transform_rules.all(all_revisions=True))
+        retrieval=cycle.artifacts.get("retrieval_result")
         try:
-            response,proofs,frontiers=ResponseMeaningPlanner(self.store,rules).plan(self._pin(decision_stored),audience_refs=cycle.audience_refs,perspective_ref="perspective:self")
+            selected_query_goal=any(
+                self.store.get_record(pin.record_kind,pin.record_ref,pin.revision) is not None
+                and self.store.get_record(pin.record_kind,pin.record_ref,pin.revision).payload.metadata.get("query_result_ref")==getattr(retrieval,"result_ref",None)
+                and pin.record_ref in decision.selected_goal_refs
+                for pin in decision.candidate_pins
+            ) if retrieval is not None else False
+            if selected_query_goal:
+                from .response.query_response import BoundQueryResponsePlanner
+                response,proofs,frontiers=BoundQueryResponsePlanner(self.store,rules).plan(self._pin(decision_stored),retrieval,audience_refs=cycle.audience_refs,perspective_ref="perspective:self")
+            else:
+                response,proofs,frontiers=ResponseMeaningPlanner(self.store,rules).plan(self._pin(decision_stored),audience_refs=cycle.audience_refs,perspective_ref="perspective:self")
         except ValueError as exc:
             return StageOutcome({"response_uol": None, "stage18_receipt": self._receipt(CoreStage.BUILD_RESPONSE_UOL, "deferred", "response_uol_not_authorized")},frontier_refs=("frontier:response:"+semantic_fingerprint("response-frontier",str(exc),20),))
         ResponseUOLCommitCoordinator(self.store).commit(response,proofs,frontiers)
@@ -928,8 +947,8 @@ class CanonicalRuntimeCoordinator:
 class Runtime:
     VERSION = VERSION
 
-    def __init__(self, *, store: SemanticStore, orchestrator: CanonicalOrchestrator) -> None:
-        self.store=store; self.orchestrator=orchestrator
+    def __init__(self, *, store: SemanticStore, orchestrator: CanonicalOrchestrator, services: RuntimeServices | None = None) -> None:
+        self.store=store; self.orchestrator=orchestrator; self.services=services or RuntimeServices()
 
     def _ensure_session_participant(
         self,
@@ -1118,6 +1137,10 @@ class Runtime:
         # Hints/anchors/tracks are evidence inputs only. Stage 2/3 validate and
         # combine them with reviewed language/schema authority; none route domain
         # semantics directly.
+        from .learning.runtime import LearningRuntimeActivator
+        from .runtime_state import RuntimeSelfObserver
+        _learning_activation = LearningRuntimeActivator(self.store).activate_ready()
+        RuntimeSelfObserver(self.store, self.services).observe(context_ref=context_id, permission_ref=permission_ref)
         resolved_speaker_ref, participant_evidence_ref = self._ensure_session_participant(
             context_id, permission_ref, speaker_ref
         )
@@ -1164,7 +1187,7 @@ def build_runtime(*, database_path:str=":memory:",boot_database_path:str|Path|No
     coordinator=HardenedRuntimeCoordinator(store,services)
     adapters=build_stage_adapters(coordinator)
     orchestrator=CanonicalOrchestrator(adapters,snapshot_provider=StoreSnapshotProvider(store),authority_guard=authority_guard)
-    return Runtime(store=store,orchestrator=orchestrator)
+    return Runtime(store=store,orchestrator=orchestrator,services=services)
 
 
 __all__=["Runtime","RuntimeServices","CanonicalRuntimeCoordinator","StoreSnapshotProvider","build_runtime"]

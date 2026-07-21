@@ -94,10 +94,14 @@ class LanguageRegistry:
         for values in self._lexeme_links_by_form.values():
             values.sort(key=lambda item: (-item.prior_weight, item.lexeme_ref, item.revision))
         self._sense_links_by_lexeme: dict[tuple[str, int], list[LexemeSenseLinkRecord]] = defaultdict(list)
+        self._lexeme_links_by_sense: dict[tuple[str, int], list[LexemeSenseLinkRecord]] = defaultdict(list)
         for item in self.active_lexeme_sense_links():
             self._sense_links_by_lexeme[(item.lexeme_ref, item.lexeme_revision)].append(item)
+            self._lexeme_links_by_sense[(item.sense_ref, item.sense_revision)].append(item)
         for values in self._sense_links_by_lexeme.values():
             values.sort(key=lambda item: (-item.prior_weight, item.sense_ref, item.revision))
+        for values in self._lexeme_links_by_sense.values():
+            values.sort(key=lambda item: (-item.prior_weight, item.lexeme_ref, item.revision))
         self._contributions_by_sense: dict[tuple[str, int], list[SemanticContributionSpecRecord]] = defaultdict(list)
         for item in self.active_contribution_specs():
             if item.executable:
@@ -364,6 +368,9 @@ class LanguageRegistry:
 
     def sense_links_for_lexeme(self, lexeme_ref: str, revision: int) -> tuple[LexemeSenseLinkRecord, ...]:
         return tuple(self._sense_links_by_lexeme.get((lexeme_ref, revision), ()))
+
+    def lexeme_links_for_sense(self, sense_ref: str, revision: int) -> tuple[LexemeSenseLinkRecord, ...]:
+        return tuple(self._lexeme_links_by_sense.get((sense_ref, revision), ()))
 
     def contribution_specs_for_sense(self, sense_ref: str, revision: int) -> tuple[SemanticContributionSpecRecord, ...]:
         return tuple(self._contributions_by_sense.get((sense_ref, revision), ()))

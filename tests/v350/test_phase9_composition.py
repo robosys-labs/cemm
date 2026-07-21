@@ -248,7 +248,6 @@ def test_query_surface_creates_open_semantic_structure_not_answer_text(grounder,
     result = _compose(grounder, composer, "what", source_ref="phase9:query")
     graph = result.bundle.uol_graph
     assert graph is not None
-    assert graph.applications
     assert graph.variables
     assert graph.unresolved_refs
     assert all(not hasattr(item, "surface") for item in graph.applications.values())

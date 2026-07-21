@@ -99,7 +99,7 @@
       "event:state_change"
     ]
   },
-  "expected_source_record_fingerprint": "foundation-source-records:99e5b2f5562de01a2f21b5980d6dd22086f1a76e12338013add3afddac4b074b",
+  "expected_source_record_fingerprint": "foundation-source-records:2db397f6679ec48f774a6734c7af2cee8f158138a2015c17635100e413361c80",
   "expected_type_parents": {
     "type:agent": [
       "type:referent"

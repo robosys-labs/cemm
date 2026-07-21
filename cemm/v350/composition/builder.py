@@ -471,6 +471,7 @@ class MeaningFactorGraphBuilder:
             candidates_by_mention=candidates_by_mention,
             referent_var_for_mention=referent_var_for_mention,
             sense_candidate_to_var=sense_candidate_to_var,
+            senses_by_form=senses_by_form,
         )
         variables.extend(construction_compilation.variables)
         factors.extend(construction_compilation.factors)
@@ -669,6 +670,7 @@ class ConstructionFactorCompiler:
         candidates_by_mention,
         referent_var_for_mention,
         sense_candidate_to_var,
+        senses_by_form,
     ) -> ConstructionFactorCompilation:
         variables: list[MeaningVariable] = []
         factors: list[MeaningFactor] = []
@@ -685,9 +687,30 @@ class ConstructionFactorCompiler:
                 candidate.construction_ref,
                 candidate.construction_revision,
             )
+            slot_refs = {ref for _slot_ref, refs in candidate.slot_fillers for ref in refs}
+            slot_sense_refs = set()
+            for ref in slot_refs:
+                if ref in sense_candidate_to_var:
+                    slot_sense_refs.add(ref)
+                slot_sense_refs.update(item.candidate_ref for item in senses_by_form.get(ref, ()))
+            linked_mention_refs = {
+                mention.mention_ref
+                for mention in grounding.mentions
+                if candidate.candidate_ref in mention.construction_candidate_refs
+                or set(mention.sense_candidate_refs).intersection(slot_sense_refs)
+            }
+            linked_referent_refs = {
+                grounded.target_ref
+                for mention_ref in linked_mention_refs
+                for grounded in candidates_by_mention.get(mention_ref, ())
+            }
+            scoped_closure = tuple(
+                item for item in self.closure_candidates
+                if item.referent_ref in linked_referent_refs
+            )
             resolution = self.program_compiler.resolve(
                 record,
-                closure_candidates=self.closure_candidates,
+                closure_candidates=scoped_closure,
             )
             plan_refs = tuple(item.plan_ref for item in resolution.plans)
             var_ref = _var_ref(

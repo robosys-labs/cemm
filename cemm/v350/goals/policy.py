@@ -12,7 +12,7 @@ from ..uol.model import CapabilityStatus
 from ..uol.model import ClaimOccurrence, EventOccurrence, FillerRef, SemanticApplication
 from .model import (
     GoalCandidateRecord, GoalConflictRecord, ResponsePolicyRuleRecord, SemanticObligationRecord,
-    GoalTargetBinding, TargetSelectorMode,
+    GoalTargetBinding, ResponseTriggerArtifactKind, TargetSelectorMode,
 )
 
 
@@ -28,6 +28,9 @@ class ResponsePolicyRegistry:
             superseded = {r.supersedes_revision for r in revisions if r.supersedes_revision is not None}
             effective.extend(r for r in revisions if r.revision not in superseded)
         self._rules = tuple(sorted(effective, key=lambda r: (r.rule_ref, r.revision)))
+
+    def artifact_candidates(self, artifact_kind: ResponseTriggerArtifactKind) -> tuple[ResponsePolicyRuleRecord, ...]:
+        return tuple(sorted((rule for rule in self._rules if artifact_kind in rule.trigger_artifact_kinds), key=lambda r: (-r.priority, r.rule_ref, r.revision)))
 
     def candidates(self, source_kind: RecordKind, source_payload: object) -> tuple[ResponsePolicyRuleRecord, ...]:
         schema_pin = _schema_pin(source_payload)
@@ -142,7 +145,7 @@ class GoalAuthorizationGate:
             for target in candidate.target_refs:
                 matches = [item for item in self.store.records(RecordKind.KNOWLEDGE)
                     if getattr(item.payload, "proposition_ref", None) == target
-                    and getattr(item.payload, "status", None) == KnowledgeStatus.SUPPORTED
+                    and getattr(item.payload, "truth_status", None) in {KnowledgeStatus.SUPPORTED, KnowledgeStatus.BOTH}
                     and getattr(item.payload, "context_ref", None) in {"global", context_ref}
                     and item.permission_ref in {None, "public", candidate.permission_ref}]
                 if len(matches) != 1:

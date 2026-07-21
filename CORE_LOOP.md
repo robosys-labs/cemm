@@ -702,7 +702,7 @@ Compare:
 - qualification;
 - unsupported additions/losses.
 
-Round-trip PASS is necessary but not sufficient.
+Semantic round-trip PASS is necessary but does **not** authorize emission.
 
 Independent emission gate verifies:
 

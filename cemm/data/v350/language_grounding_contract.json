@@ -1,1 +1,129 @@
-{"base_commit":"e362bf82da4ee4f6704be2ed522cd7bf9418d6bf","contract_ref":"contract:cemm:v350:language-grounding","expected_record_counts":{"construction":21,"evidence":1,"form_sense_link":85,"language_form":75,"language_pack":3,"lexical_sense":51},"expected_source_record_fingerprint":"phase7-language-source-records:5a8c724e636c7fa87bd64d04f6bfd0edbd82e77302bada9afb3753390ed69b17","metadata":{"claims_are_not_facts":true,"full_sentence_patterns":"genuine idioms only","identity_changes_require_review":true,"language_specific_kernel_branches":false,"phase_7_authority":"reversible language evidence only","phase_8_authority":"grounding hypotheses and reviewable proposals only","runtime_cutover":false},"required_competence_case_refs":["competence:phase7:code-switch-en-fr","competence:phase7:en-complement","competence:phase7:en-coordination","competence:phase7:en-ellipsis","competence:phase7:fr-claim-frame","competence:phase7:fr-coordination","competence:phase7:fr-relative","competence:phase7:operator-scope-candidates","competence:phase7:reversible-colloquial-normalization","competence:phase7:semantic-equivalence-capability","competence:phase7:semantic-equivalence-observe","competence:phase7:sw-coordination","competence:phase7:sw-observe-frame","competence:phase7:sw-relative","competence:phase8:addressee-discourse","competence:phase8:claim-attribution-no-admission","competence:phase8:event-frontier","competence:phase8:identity-proposals-review-only","competence:phase8:multimodal-system-output","competence:phase8:provisional-patch-is-review-only","competence:phase8:same-name-ambiguity","competence:phase8:schema-topic","competence:phase8:self-resolution","competence:phase8:unknown-provisional-frontier"],"required_construction_kinds":{"en":["argument_structure","complement","coordination","ellipsis","relative_clause"],"fr":["argument_structure","complement","coordination","ellipsis","relative_clause"],"sw":["argument_structure","complement","coordination","ellipsis","relative_clause"]},"required_language_tags":["en","fr","sw"],"required_semantic_targets":{"en":["deictic:self","deictic:addressee","deictic:multimodal","deictic:system_output","coordination:and","coordination:or","construction:complement","construction:relative_clause","construction:ellipsis","event:claim","event:observe","event:move","operator:polarity:negative","operator:modality:possible","operator:modality:capable","discourse-act:ask"],"fr":["deictic:self","deictic:addressee","deictic:multimodal","deictic:system_output","coordination:and","coordination:or","construction:complement","construction:relative_clause","construction:ellipsis","event:claim","event:observe","event:move","operator:polarity:negative","operator:modality:possible","operator:modality:capable","discourse-act:ask"],"sw":["deictic:self","deictic:addressee","deictic:multimodal","deictic:system_output","coordination:and","coordination:or","construction:complement","construction:relative_clause","construction:ellipsis","event:claim","event:observe","event:move","operator:polarity:negative","operator:modality:possible","operator:modality:capable","discourse-act:ask"]}}
+{
+  "base_commit": "e362bf82da4ee4f6704be2ed522cd7bf9418d6bf",
+  "contract_ref": "contract:cemm:v350:language-grounding",
+  "expected_record_counts": {
+    "construction": 21,
+    "evidence": 1,
+    "form_sense_link": 85,
+    "language_form": 75,
+    "language_pack": 3,
+    "lexical_sense": 51
+  },
+  "expected_source_record_fingerprint": "phase7-language-source-records:4017fd0e675caa998ccb9189665943daa176f79df5d08a8ca8318bc318c13d5a",
+  "metadata": {
+    "claims_are_not_facts": true,
+    "full_sentence_patterns": "genuine idioms only",
+    "identity_changes_require_review": true,
+    "language_specific_kernel_branches": false,
+    "phase_7_authority": "reversible language evidence only",
+    "phase_8_authority": "grounding hypotheses and reviewable proposals only",
+    "runtime_cutover": false
+  },
+  "required_competence_case_refs": [
+    "competence:phase7:code-switch-en-fr",
+    "competence:phase7:en-complement",
+    "competence:phase7:en-coordination",
+    "competence:phase7:en-ellipsis",
+    "competence:phase7:fr-claim-frame",
+    "competence:phase7:fr-coordination",
+    "competence:phase7:fr-relative",
+    "competence:phase7:operator-scope-candidates",
+    "competence:phase7:reversible-colloquial-normalization",
+    "competence:phase7:semantic-equivalence-capability",
+    "competence:phase7:semantic-equivalence-observe",
+    "competence:phase7:sw-coordination",
+    "competence:phase7:sw-observe-frame",
+    "competence:phase7:sw-relative",
+    "competence:phase8:addressee-discourse",
+    "competence:phase8:claim-attribution-no-admission",
+    "competence:phase8:event-frontier",
+    "competence:phase8:identity-proposals-review-only",
+    "competence:phase8:multimodal-system-output",
+    "competence:phase8:provisional-patch-is-review-only",
+    "competence:phase8:same-name-ambiguity",
+    "competence:phase8:schema-topic",
+    "competence:phase8:self-resolution",
+    "competence:phase8:unknown-provisional-frontier"
+  ],
+  "required_construction_kinds": {
+    "en": [
+      "argument_structure",
+      "complement",
+      "coordination",
+      "ellipsis",
+      "relative_clause"
+    ],
+    "fr": [
+      "argument_structure",
+      "complement",
+      "coordination",
+      "ellipsis",
+      "relative_clause"
+    ],
+    "sw": [
+      "argument_structure",
+      "complement",
+      "coordination",
+      "ellipsis",
+      "relative_clause"
+    ]
+  },
+  "required_language_tags": [
+    "en",
+    "fr",
+    "sw"
+  ],
+  "required_semantic_targets": {
+    "en": [
+      "deictic:self",
+      "deictic:addressee",
+      "deictic:multimodal",
+      "deictic:system_output",
+      "coordination:and",
+      "coordination:or",
+      "construction:complement",
+      "construction:relative_clause",
+      "construction:ellipsis",
+      "event:claim",
+      "event:observe",
+      "event:move",
+      "operator:polarity:negative",
+      "operator:modality:possible",
+      "operator:modality:capable"
+    ],
+    "fr": [
+      "deictic:self",
+      "deictic:addressee",
+      "deictic:multimodal",
+      "deictic:system_output",
+      "coordination:and",
+      "coordination:or",
+      "construction:complement",
+      "construction:relative_clause",
+      "construction:ellipsis",
+      "event:claim",
+      "event:observe",
+      "event:move",
+      "operator:polarity:negative",
+      "operator:modality:possible",
+      "operator:modality:capable"
+    ],
+    "sw": [
+      "deictic:self",
+      "deictic:addressee",
+      "deictic:multimodal",
+      "deictic:system_output",
+      "coordination:and",
+      "coordination:or",
+      "construction:complement",
+      "construction:relative_clause",
+      "construction:ellipsis",
+      "event:claim",
+      "event:observe",
+      "event:move",
+      "operator:polarity:negative",
+      "operator:modality:possible",
+      "operator:modality:capable"
+    ]
+  }
+}

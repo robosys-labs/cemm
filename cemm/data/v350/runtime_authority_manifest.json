@@ -162,7 +162,7 @@
     "argument-frame:sw:activation:property-holder-value-none@1#argument_frame-record:2e1fb4ccb7a307e44b10d8d200971bd02f34fa8b2325bd4649c4782b67eaea59",
     "argument-frame:sw:activation:relation-left-right-none@1#argument_frame-record:32497948adb28d9de61f3f6414c0b30f22980af00a7999168b647151c00854dd"
   ],
-  "boot_database_sha256": "d470b22227b3b20445f5fdf7cd468de86cecd2feb40e20daaad95a6394316be3",
+  "boot_database_sha256": "c57e5c4afe893acaabebfed32475351d6bc071e943decea62c5263e75fb62071",
   "canonical_orchestrator": "cemm.v350.orchestration:CanonicalOrchestrator",
   "canonical_runtime_factory": "cemm.v350.runtime:build_runtime",
   "channel_adapter_contracts": [
@@ -424,7 +424,7 @@
     "semantic-analyzer-contract:canonical-v350:conversation-core@1#semantic_analyzer_contract-record:bbb3f870847ee36c779008a60f3b763dcb15e282c37e78783c6e593fc17f2321",
     "semantic-analyzer-contract:canonical-v350:conversation-core@2#semantic_analyzer_contract-record:3cc8814c818cbd9586ae99097d84c229c37c0c9a5a1d0387c82f6f8747857702"
   ],
-  "source_manifest_sha256": "24b2982ade34b7fe53693d1950f4c880f36bc83974970ecf2241cadaf7e904e0",
+  "source_manifest_sha256": "214c1aa28bf7ab9e3ede3e7253e8a93ba3e2ebc798392b84b73e9d9ee68cc3d4",
   "stage_adapters": [
     {
       "adapter_ref": "v350.stage.00.orient_and_pin",

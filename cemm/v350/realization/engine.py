@@ -71,6 +71,7 @@ class ClausePlanner:
    visiting.remove(app_ref);planned.add(app_ref)
   for root in response.graph.root_refs:
    if root.filler_class==PortFillerClass.SEMANTIC_APPLICATION:visit(root.ref)
+   elif root.filler_class in {PortFillerClass.REFERENT,PortFillerClass.SEMANTIC_VARIABLE}:continue
    elif root.filler_class==PortFillerClass.COORDINATION_GROUP:
     group=response.graph.coordination_groups.get(root.ref)
     if group is None:raise RealizationFrontier('missing_coordination_group',(root.ref,))
@@ -81,7 +82,7 @@ class ClausePlanner:
     if len({rel.order for rel in root_scopes})!=len(root_scopes):raise RealizationFrontier('ambiguous_scope_order',tuple(rel.scope_relation_ref for rel in root_scopes))
     for rel in root_scopes:visit(rel.operator_application_ref)
    else:raise RealizationFrontier('unsupported_response_root',(root.filler_class.value,root.ref))
-  if not result and response.graph.root_refs:raise RealizationFrontier('unsupported_response_root',tuple(r.ref for r in response.graph.root_refs))
+  if not result and any(r.filler_class not in {PortFillerClass.REFERENT,PortFillerClass.SEMANTIC_VARIABLE} for r in response.graph.root_refs):raise RealizationFrontier('unsupported_response_root',tuple(r.ref for r in response.graph.root_refs))
   return tuple(result)
 
 class FeatureUnifier:

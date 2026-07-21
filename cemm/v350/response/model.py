@@ -14,12 +14,19 @@ class StrEnum(str,Enum):
     def __str__(self): return self.value
 
 
+class ResponseTransformKind(StrEnum):
+    BUILD_APPLICATION = "build_application"
+    BOUND_QUERY_GRAPH = "bound_query_graph"
+    CLARIFY_QUERY_GAP = "clarify_query_gap"
+
+
 class ResponseSelectorMode(StrEnum):
     SOURCE = "source"
     SOURCE_FIELD = "source_field"
     APPLICATION_PORT = "application_port"
     TARGET = "target"
     FIXED = "fixed"
+    QUERY_VALUE = "query_value"
 
 
 @dataclass(frozen=True,slots=True)
@@ -59,6 +66,7 @@ class ResponseTransformRuleRecord:
     revision: int=1
     supersedes_revision: int|None=None
     metadata: Mapping[str,Any]=field(default_factory=dict)
+    transform_kind: ResponseTransformKind=ResponseTransformKind.BUILD_APPLICATION
     def __post_init__(self):
         for v,l in ((self.rule_ref,"response transform rule"),(self.output_schema_ref,"output schema"),(self.permission_ref,"permission")): _ref(v,l)
         if min(self.output_schema_revision,self.revision)<1: raise ValueError("response transform revisions must be positive")
