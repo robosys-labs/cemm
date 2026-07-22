@@ -16,8 +16,6 @@ dev = ["pytest>=8.0"]
 where = ["."]
 include = ["cemm*"]
 exclude = [
-  "cemm.v347",
-  "cemm.v347.*",
   "cemm.migration",
   "cemm.migration.*",
   "cemm.v350.migration",
