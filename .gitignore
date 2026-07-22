@@ -12,3 +12,13 @@ __pycache__/
 
 # Documentation cutover rollback backups
 .documentation-cutover-backups/
+.phase14_15_backup/
+.phase16_17_backup/
+.phase18_19_backup/
+build/
+cemm.egg-info/
+dist/
+apply_final_fixes_lenient.py
+final-fixes-implementation.md
+tools/check_v351_legacy_boundaries.py
+tools/check_v351_m0_gate.py
