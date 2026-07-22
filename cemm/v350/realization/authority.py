@@ -1,65 +1,43 @@
-"""Operation-aware language authority for Phase 17.
+"""Generation-compiled REALIZE eligibility for language/realization authority.
 
-ACTIVE lifecycle is necessary but learned language records additionally require
-an exact per-use PromotionDecision lineage. Reviewed boot authority without a
-promotion edge remains usable according to structural compatibility.
+This compatibility-shaped API delegates to CompiledSemanticCapabilityRegistry.  It
+contains no independent authorization logic and therefore cannot become a second brain.
 """
 from __future__ import annotations
-from ..learning.authority import record_supports_use
-from ..learning.model import PromotionDecisionKind,PromotionDecisionRecord
-from ..schema.model import SchemaLifecycleStatus,UseDecision,UseOperation
-from ..storage.model import DependencyEdge,RecordKind
+
+from ..learning.model import PinnedRecord
+from ..schema.model import UseOperation
+from ..semantic_capability import CompiledSemanticCapabilityRegistry
+from ..storage.model import RecordKind
+
 
 class LanguageUseAuthority:
- LANGUAGE_KINDS={RecordKind.LANGUAGE_PACK,RecordKind.LANGUAGE_FORM,RecordKind.LEXEME,RecordKind.FORM_LEXEME_LINK,RecordKind.LEXICAL_SENSE,RecordKind.LEXEME_SENSE_LINK,RecordKind.FORM_SENSE_LINK,RecordKind.SEMANTIC_CONTRIBUTION_SPEC,RecordKind.CONSTRUCTION,RecordKind.CONSTRUCTION_PROGRAM,RecordKind.ARGUMENT_FRAME,RecordKind.MORPHOLOGY_RULE,RecordKind.LINEARIZATION_RULE}
- def __init__(self,store): self.store=store
- def authorized(self,stored,operation:UseOperation)->bool:
-  if stored.record_kind not in self.LANGUAGE_KINDS:return False
-  record=stored.payload
-  if getattr(record,'lifecycle_status',None)!=SchemaLifecycleStatus.ACTIVE:return False
-  same=[item for item in self.store.records(stored.record_kind,all_revisions=True) if item.record_ref==stored.record_ref and getattr(item.payload,'lifecycle_status',None)==SchemaLifecycleStatus.ACTIVE]
-  superseded={getattr(item.payload,'supersedes_revision',None) for item in same if getattr(item.payload,'supersedes_revision',None) is not None}
-  effective=[item for item in same if item.revision not in superseded]
-  if len(effective)!=1 or effective[0].revision!=stored.revision or effective[0].record_fingerprint!=stored.record_fingerprint:return False
-  if not record_supports_use(stored.record_kind,record,operation):return False
-  edges=[]
-  for edge_stored in self.store.records(RecordKind.DEPENDENCY,all_revisions=True):
-   e=edge_stored.payload
-   if not isinstance(e,DependencyEdge) or not e.active:continue
-   if e.dependent_kind==stored.record_kind and e.dependent_ref==stored.record_ref and e.dependent_revision==stored.revision:
-    edges.append(e)
-  promotion_edges=[e for e in edges if e.prerequisite_kind==RecordKind.PROMOTION_DECISION]
-  if not promotion_edges:
-   return stored.layer == 'boot'  # only immutable reviewed boot authority may omit promotion lineage
-  for edge in promotion_edges:
-   ds=self.store.get_record(RecordKind.PROMOTION_DECISION,edge.prerequisite_ref,edge.prerequisite_revision)
-   if ds is None or ds.record_fingerprint!=edge.prerequisite_fingerprint or not isinstance(ds.payload,PromotionDecisionRecord) or ds.payload.decision!=PromotionDecisionKind.PROMOTE:continue
-   for grant in ds.payload.use_grants:
-    if grant.operation!=operation or grant.decision!=UseDecision.ALLOW:continue
-    if grant.candidate_pin.record_kind!=stored.record_kind or grant.candidate_pin.record_ref!=stored.record_ref:continue
-    source_ok=any(
-     e.prerequisite_kind==grant.candidate_pin.record_kind
-     and e.prerequisite_ref==grant.candidate_pin.record_ref
-     and e.prerequisite_revision==grant.candidate_pin.revision
-     and e.prerequisite_fingerprint==grant.candidate_pin.record_fingerprint
-     for e in edges
-    )
-    if source_ok:return True
-  return False
+    LANGUAGE_KINDS = {
+        RecordKind.LANGUAGE_PACK, RecordKind.LANGUAGE_FORM, RecordKind.LEXEME,
+        RecordKind.FORM_LEXEME_LINK, RecordKind.LEXICAL_SENSE,
+        RecordKind.LEXEME_SENSE_LINK, RecordKind.FORM_SENSE_LINK,
+        RecordKind.SEMANTIC_CONTRIBUTION_SPEC, RecordKind.CONSTRUCTION,
+        RecordKind.CONSTRUCTION_PROGRAM, RecordKind.ARGUMENT_FRAME,
+        RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE,
+    }
 
- def records_for_use(self,kind:RecordKind,operation:UseOperation):
-  by_ref={}
-  for stored in self.store.records(kind,all_revisions=True):
-   by_ref.setdefault(stored.record_ref,[]).append(stored)
-  result=[]
-  for ref in sorted(by_ref):
-   values=by_ref[ref]
-   superseded={
-    getattr(item.payload,'supersedes_revision',None) for item in values
-    if getattr(item.payload,'lifecycle_status',None)==SchemaLifecycleStatus.ACTIVE
-    and getattr(item.payload,'supersedes_revision',None) is not None
-   }
-   effective=[item for item in values if getattr(item.payload,'lifecycle_status',None)==SchemaLifecycleStatus.ACTIVE and item.revision not in superseded]
-   for item in sorted(effective,key=lambda x:x.revision):
-    if self.authorized(item,operation):result.append(item)
-  return tuple(result)
+    def __init__(self, store, registry: CompiledSemanticCapabilityRegistry | None = None) -> None:
+        self.store = store
+        self.registry = registry or CompiledSemanticCapabilityRegistry(store)
+
+    @staticmethod
+    def _pin(stored):
+        return PinnedRecord(stored.record_kind, stored.record_ref, stored.revision, stored.record_fingerprint)
+
+    def authorized(self, stored, operation: UseOperation) -> bool:
+        if stored.record_kind not in self.LANGUAGE_KINDS:
+            return False
+        return self.registry.compile(self._pin(stored), operation).eligible
+
+    def records_for_use(self, kind: RecordKind, operation: UseOperation):
+        if kind not in self.LANGUAGE_KINDS:
+            return ()
+        return self.registry.records_for_use(kind, operation)
+
+
+__all__ = ["LanguageUseAuthority"]

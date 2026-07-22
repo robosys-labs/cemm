@@ -610,8 +610,11 @@ def test_invalidated_materialized_view_can_be_rebuilt_at_a_new_revision() -> Non
             target_ref=second_view.view_ref,
             record_revision=2,
             payload=encode_record(RecordKind.MATERIALIZED_VIEW, second_view),
-            expected_record_revision=prior_view.revision,
-            expected_record_fingerprint=prior_view.record_fingerprint,
+            **(
+                {"expected_record_revision": prior_view.revision,
+                 "expected_record_fingerprint": prior_view.record_fingerprint}
+                if prior_view is not None else {}
+            ),
             dependencies=(RecordDependency(
                 RecordKind.REFERENT,
                 person.referent_ref,

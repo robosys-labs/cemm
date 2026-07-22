@@ -6,6 +6,7 @@ from enum import Enum
 from threading import RLock
 from typing import Any, Generic, Iterable, MutableMapping, TypeVar
 
+from .csir.authority import CURRENT_KERNEL_ABI
 from .schema.model import semantic_fingerprint
 from .storage.model import GraphPatch, RecordKind
 
@@ -29,12 +30,15 @@ class AuthoritySnapshot:
     authority_fingerprint: str
     boot_fingerprint: str
     runtime_attestation_ref: str = ""
+    kernel_abi_fingerprint: str = CURRENT_KERNEL_ABI.fingerprint
 
     def __post_init__(self) -> None:
         if self.generation < 1:
             raise ValueError("authority generation must be positive")
         if not self.authority_fingerprint or not self.boot_fingerprint:
             raise ValueError("authority snapshot requires exact fingerprints")
+        if self.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
+            raise ValueError("authority snapshot Kernel Semantic ABI mismatch")
 
     @property
     def fingerprint(self) -> str:
@@ -45,6 +49,7 @@ class AuthoritySnapshot:
                 self.authority_fingerprint,
                 self.boot_fingerprint,
                 self.runtime_attestation_ref,
+                self.kernel_abi_fingerprint,
             ),
             64,
         )

@@ -1,14 +1,19 @@
-"""Concrete capability adapters for the canonical CEMM v3.5 core loop.
+"""Explicit concrete v3.5.1 Stage-0..22 adapters.
 
-Adapters validate capability ownership and call one explicit coordinator handler.
-They contain no domain semantics or phrase routing. Every canonical stage has a
-real, separately inspectable class; there is no generated/dummy/no-op adapter path.
+Every adapter is separately inspectable and has one fixed stage/ref/handler identity.
+There is no generated, dummy, no-op, placeholder, or legacy-alias adapter path.
 """
 from __future__ import annotations
 
 from typing import ClassVar
 
-from .orchestration import CoreStage, CycleState, StageCapability, StageOutcome
+from .orchestration import (
+    CognitiveCycleState,
+    CoreStage,
+    StageCapability,
+    StageExecutionStatus,
+    StageOutcome,
+)
 
 
 class StageAdapterExecutionError(RuntimeError):
@@ -25,76 +30,204 @@ class _ConcreteStageAdapter:
         self._coordinator = coordinator
         handler = getattr(coordinator, self.HANDLER, None)
         if handler is None or not callable(handler):
-            raise TypeError(f"coordinator lacks concrete handler {self.HANDLER}")
+            raise TypeError(f"coordinator lacks concrete handler:{self.HANDLER}")
 
     @property
-    def stage(self) -> CoreStage: return self.STAGE
-    @property
-    def adapter_ref(self) -> str: return self.ADAPTER_REF
-    @property
-    def adapter_revision(self) -> int: return self.ADAPTER_REVISION
+    def stage(self) -> CoreStage:
+        return self.STAGE
 
-    def execute(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
-        if capability.cycle_ref != cycle.cycle_ref:
-            raise StageAdapterExecutionError("stage capability belongs to another cycle")
+    @property
+    def adapter_ref(self) -> str:
+        return self.ADAPTER_REF
+
+    @property
+    def adapter_revision(self) -> int:
+        return self.ADAPTER_REVISION
+
+    def execute(
+        self,
+        cycle: CognitiveCycleState,
+        capability: StageCapability,
+    ) -> StageOutcome:
+        if capability.cycle_ref != cycle.cycle_ref or capability.pass_ref != cycle.pass_ref:
+            raise StageAdapterExecutionError("stage capability belongs to another cycle/pass")
         if capability.stage != self.STAGE:
-            raise StageAdapterExecutionError(f"stage capability mismatch: {capability.stage.name} != {self.STAGE.name}")
+            raise StageAdapterExecutionError("stage capability stage mismatch")
         if capability.predecessor_stage != cycle.current_stage:
             raise StageAdapterExecutionError("stage capability predecessor mismatch")
-        outcome = getattr(self._coordinator, self.HANDLER)(cycle, capability)
-        if not isinstance(outcome, StageOutcome):
-            raise StageAdapterExecutionError(f"{self.HANDLER} returned {type(outcome).__name__}, expected StageOutcome")
-        if not outcome.artifacts and not outcome.frontier_refs and not outcome.errors:
-            raise StageAdapterExecutionError(f"{self.HANDLER} produced an unobservable empty stage outcome")
-        return outcome
+        result = getattr(self._coordinator, self.HANDLER)(cycle, capability)
+        if not isinstance(result, StageOutcome):
+            raise StageAdapterExecutionError(
+                f"{self.HANDLER} returned {type(result).__name__}, expected StageOutcome"
+            )
+        if result.status is StageExecutionStatus.PERFORMED and not result.artifacts:
+            raise StageAdapterExecutionError(
+                f"{self.HANDLER} claimed performed with no inspectable artifacts"
+            )
+        return result
 
 
-class OrientAndPinAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.ORIENT_AND_PIN; ADAPTER_REF="v350.stage.00.orient_and_pin"; HANDLER="stage_00_orient_and_pin"
-class ObserveAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.OBSERVE; ADAPTER_REF="v350.stage.01.observe"; HANDLER="stage_01_observe"
-class AnalyzeAndFuseFormAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.ANALYZE_AND_FUSE_FORM; ADAPTER_REF="v350.stage.02.analyze_and_fuse_form"; HANDLER="stage_02_analyze_and_fuse_form"
-class GenerateCandidatesAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.GENERATE_REFERENT_AND_SCHEMA_CANDIDATES; ADAPTER_REF="v350.stage.03.generate_candidates"; HANDLER="stage_03_generate_candidates"
-class ProjectKnowledgeAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS; ADAPTER_REF="v350.stage.04.project_knowledge"; HANDLER="stage_04_project_knowledge"
-class BuildFactorGraphAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.BUILD_UOL_FACTOR_GRAPH; ADAPTER_REF="v350.stage.05.build_factor_graph"; HANDLER="stage_05_build_factor_graph"
-class SolveMeaningAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.SOLVE_MEANING_HYPOTHESES; ADAPTER_REF="v350.stage.06.solve_meaning"; HANDLER="stage_06_solve_meaning"
-class SelectMeaningAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.SELECT_MEANING_BUNDLE; ADAPTER_REF="v350.stage.07.select_meaning"; HANDLER="stage_07_select_meaning"
-class ClassifyDiscourseAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS; ADAPTER_REF="v350.stage.08.classify_discourse"; HANDLER="stage_08_classify_discourse"
-class EpistemicAssessmentAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.EPISTEMICALLY_ASSESS_AND_PLACE_CONTEXT; ADAPTER_REF="v350.stage.09.epistemic_assessment"; HANDLER="stage_09_epistemically_assess"
-class RetrieveAndBindAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.RETRIEVE_AND_ANSWER_BIND; ADAPTER_REF="v350.stage.10.retrieve_and_bind"; HANDLER="stage_10_retrieve_and_bind"
-class LearningFrontiersAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.BUILD_OR_ADVANCE_LEARNING_FRONTIERS; ADAPTER_REF="v350.stage.11.learning_frontiers"; HANDLER="stage_11_learning_frontiers"
-class PreviewTransitionsAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.INFER_AND_PREVIEW_TRANSITIONS; ADAPTER_REF="v350.stage.12.preview_transitions"; HANDLER="stage_12_preview_transitions"
-class CommitKnowledgeStateAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE; ADAPTER_REF="v350.stage.13.commit_knowledge_state"; HANDLER="stage_13_commit_knowledge_state"
-class AssessSignificanceAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.ASSESS_IMPACT_AND_IMPORTANCE; ADAPTER_REF="v350.stage.14.assess_significance"; HANDLER="stage_14_assess_significance"
+class OrientAndPinSemanticBrainAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.ORIENT_AND_PIN_SEMANTIC_BRAIN
+    ADAPTER_REF = "v351.stage.00.orient_and_pin_semantic_brain"
+    HANDLER = "stage_00_orient_and_pin_semantic_brain"
+
+
+class ObserveMultimodalEvidenceAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.OBSERVE_MULTIMODAL_EVIDENCE
+    ADAPTER_REF = "v351.stage.01.observe_multimodal_evidence"
+    HANDLER = "stage_01_observe_multimodal_evidence"
+
+
+class EncodeFormAndSensorEvidenceAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.ENCODE_FORM_AND_SENSOR_EVIDENCE
+    ADAPTER_REF = "v351.stage.02.encode_form_and_sensor_evidence"
+    HANDLER = "stage_02_encode_form_and_sensor_evidence"
+
+
+class ActivateAndGroundReferentsAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.ACTIVATE_AND_GROUND_REFERENTS
+    ADAPTER_REF = "v351.stage.03.activate_and_ground_referents"
+    HANDLER = "stage_03_activate_and_ground_referents"
+
+
+class ProjectEntitledStateSpacesAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.PROJECT_ENTITLED_STATE_SPACES
+    ADAPTER_REF = "v351.stage.04.project_entitled_state_spaces"
+    HANDLER = "stage_04_project_entitled_state_spaces"
+
+
+class CompileCandidatesToCSIRAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.COMPILE_CANDIDATES_TO_CSIR
+    ADAPTER_REF = "v351.stage.05.compile_candidates_to_csir"
+    HANDLER = "stage_05_compile_candidates_to_csir"
+
+
+class RunRecurrentMeaningDynamicsAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.RUN_RECURRENT_MEANING_DYNAMICS
+    ADAPTER_REF = "v351.stage.06.run_recurrent_meaning_dynamics"
+    HANDLER = "stage_06_run_recurrent_meaning_dynamics"
+
+
+class StabilizeSemanticAttractorsAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.STABILIZE_SEMANTIC_ATTRACTORS
+    ADAPTER_REF = "v351.stage.07.stabilize_semantic_attractors"
+    HANDLER = "stage_07_stabilize_semantic_attractors"
+
+
+class BuildDiscourseStructuresAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.BUILD_DISCOURSE_PROPOSITION_EVENT_AND_QUERY_STRUCTURES
+    ADAPTER_REF = "v351.stage.08.build_discourse_proposition_event_and_query_structures"
+    HANDLER = "stage_08_build_discourse_proposition_event_and_query_structures"
+
+
+class PlaceEpistemicContextAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.PLACE_EPISTEMIC_CONTEXT_AND_ASSIMILATE_WORLD_BELIEF
+    ADAPTER_REF = "v351.stage.09.place_epistemic_context_and_assimilate_world_belief"
+    HANDLER = "stage_09_place_epistemic_context_and_assimilate_world_belief"
+
+
+class QueryGroundedWorldModelAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.QUERY_AND_EXPLAIN_FROM_GROUNDED_WORLD_MODEL
+    ADAPTER_REF = "v351.stage.10.query_and_explain_from_grounded_world_model"
+    HANDLER = "stage_10_query_and_explain_from_grounded_world_model"
+
+
+class AdvanceLearningAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.CLASSIFY_PREDICTION_ERROR_AND_ADVANCE_LEARNING
+    ADAPTER_REF = "v351.stage.11.classify_prediction_error_and_advance_learning"
+    HANDLER = "stage_11_classify_prediction_error_and_advance_learning"
+
+
+class SimulateCausalTransitionsAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.SIMULATE_CAUSAL_TRANSITIONS_AND_COUNTERFACTUALS
+    ADAPTER_REF = "v351.stage.12.simulate_causal_transitions_and_counterfactuals"
+    HANDLER = "stage_12_simulate_causal_transitions_and_counterfactuals"
+
+
+class CommitAuthorizedKnowledgeAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.COMMIT_AUTHORIZED_KNOWLEDGE_STATE_AND_LEARNING_ARTIFACTS
+    ADAPTER_REF = "v351.stage.13.commit_authorized_knowledge_state_and_learning_artifacts"
+    HANDLER = "stage_13_commit_authorized_knowledge_state_and_learning_artifacts"
+
+
+class PropagateImpactAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.PROPAGATE_CAPABILITY_IMPACT_AFFECT_AND_SIGNIFICANCE
+    ADAPTER_REF = "v351.stage.14.propagate_capability_impact_affect_and_significance"
+    HANDLER = "stage_14_propagate_capability_impact_affect_and_significance"
+
+
 class ArbitrateGoalsAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS; ADAPTER_REF="v350.stage.15.arbitrate_goals"; HANDLER="stage_15_arbitrate_goals"
-class ExecuteOperationsAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE; ADAPTER_REF="v350.stage.16.execute_operations"; HANDLER="stage_16_plan_execute_operations"
-class ReconcileOperationsAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS; ADAPTER_REF="v350.stage.17.reconcile_operations"; HANDLER="stage_17_reconcile_operations"
-class BuildResponseUOLAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.BUILD_RESPONSE_UOL; ADAPTER_REF="v350.stage.18.build_response_uol"; HANDLER="stage_18_build_response_uol"
+    STAGE = CoreStage.DERIVE_OBLIGATIONS_AND_ARBITRATE_GOALS
+    ADAPTER_REF = "v351.stage.15.derive_obligations_and_arbitrate_goals"
+    HANDLER = "stage_15_derive_obligations_and_arbitrate_goals"
+
+
+class PlanAuthorizeExecuteObserveAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.PLAN_AUTHORIZE_EXECUTE_AND_OBSERVE
+    ADAPTER_REF = "v351.stage.16.plan_authorize_execute_and_observe"
+    HANDLER = "stage_16_plan_authorize_execute_and_observe"
+
+
+class AssimilateOperationOutcomesAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.ASSIMILATE_OPERATION_OUTCOMES_AND_RECUR
+    ADAPTER_REF = "v351.stage.17.assimilate_operation_outcomes_and_recur"
+    HANDLER = "stage_17_assimilate_operation_outcomes_and_recur"
+
+
+class ConstructResponseCSIRAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.CONSTRUCT_RESPONSE_CSIR
+    ADAPTER_REF = "v351.stage.18.construct_response_csir"
+    HANDLER = "stage_18_construct_response_csir"
+
+
 class RealizeTargetLanguageAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.REALIZE_TARGET_LANGUAGE; ADAPTER_REF="v350.stage.19.realize"; HANDLER="stage_19_realize_target_language"
-class AuthorizeEmissionAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.VERIFY_AND_AUTHORIZE_EMISSION; ADAPTER_REF="v350.stage.20.authorize_emission"; HANDLER="stage_20_verify_authorize_emission"
+    STAGE = CoreStage.REALIZE_TARGET_LANGUAGE_OR_MODALITY
+    ADAPTER_REF = "v351.stage.19.realize_target_language_or_modality"
+    HANDLER = "stage_19_realize_target_language_or_modality"
+
+
+class VerifySemanticEquivalenceAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.VERIFY_SEMANTIC_EQUIVALENCE_AND_AUTHORIZE_EMISSION
+    ADAPTER_REF = "v351.stage.20.verify_semantic_equivalence_and_authorize_emission"
+    HANDLER = "stage_20_verify_semantic_equivalence_and_authorize_emission"
+
+
 class CommitOutputDiscourseAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND; ADAPTER_REF="v350.stage.21.commit_output_discourse"; HANDLER="stage_21_commit_output_discourse"
-class FinalizeAdapter(_ConcreteStageAdapter):
-    STAGE=CoreStage.INVALIDATE_RECOMPUTE_AND_FINALIZE; ADAPTER_REF="v350.stage.22.finalize"; HANDLER="stage_22_finalize"
+    STAGE = CoreStage.COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND
+    ADAPTER_REF = "v351.stage.21.commit_output_discourse_and_common_ground"
+    HANDLER = "stage_21_commit_output_discourse_and_common_ground"
 
 
-__all__ = [name for name in globals() if name.endswith("Adapter") or name == "StageAdapterExecutionError"]
+class ConsolidateFinalizeAdapter(_ConcreteStageAdapter):
+    STAGE = CoreStage.CONSOLIDATE_INVALIDATE_REPLAY_AND_FINALIZE
+    ADAPTER_REF = "v351.stage.22.consolidate_invalidate_replay_and_finalize"
+    HANDLER = "stage_22_consolidate_invalidate_replay_and_finalize"
+
+
+__all__ = [
+    "ActivateAndGroundReferentsAdapter",
+    "AdvanceLearningAdapter",
+    "ArbitrateGoalsAdapter",
+    "AssimilateOperationOutcomesAdapter",
+    "BuildDiscourseStructuresAdapter",
+    "CommitAuthorizedKnowledgeAdapter",
+    "CommitOutputDiscourseAdapter",
+    "CompileCandidatesToCSIRAdapter",
+    "ConsolidateFinalizeAdapter",
+    "ConstructResponseCSIRAdapter",
+    "EncodeFormAndSensorEvidenceAdapter",
+    "ObserveMultimodalEvidenceAdapter",
+    "OrientAndPinSemanticBrainAdapter",
+    "PlaceEpistemicContextAdapter",
+    "PlanAuthorizeExecuteObserveAdapter",
+    "ProjectEntitledStateSpacesAdapter",
+    "PropagateImpactAdapter",
+    "QueryGroundedWorldModelAdapter",
+    "RealizeTargetLanguageAdapter",
+    "RunRecurrentMeaningDynamicsAdapter",
+    "SimulateCausalTransitionsAdapter",
+    "StabilizeSemanticAttractorsAdapter",
+    "StageAdapterExecutionError",
+    "VerifySemanticEquivalenceAdapter",
+]

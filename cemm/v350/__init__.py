@@ -1,6 +1,9 @@
-"""CEMM v3.5 migration substrate.
+"""CEMM v3.5.1 implementation namespace.
 
-This package is intentionally not wired as the public runtime until the v3.5
-cutover reaches the authoritative and verified gates.
+The physical ``v350`` package path is retained for repository/module stability; active
+runtime/version authority is v3.5.1 and is declared only by ``version.py`` and the
+signed runtime manifest. No legacy Runtime or UOL API is re-exported here.
 """
-VERSION = "3.5.0-dev"
+from .version import VERSION
+
+__all__ = ["VERSION"]

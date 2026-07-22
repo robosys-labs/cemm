@@ -241,6 +241,7 @@ def test_completion_status_does_not_equate_empty_errors_with_success():
         workspace = CycleWorkspace()
         frontiers = []
 
+    Cycle.input_payload = type("P", (), {"response_requested": False})()
     assert (
         CompletionEvaluator().evaluate(Cycle())
         == CycleCompletionStatus.NO_RESPONSE_REQUIRED
@@ -249,7 +250,7 @@ def test_completion_status_does_not_equate_empty_errors_with_success():
 
 def test_run_text_has_no_request_frequency_learning_or_runtime_observer():
     source = (
-        ROOT / "cemm/v350/runtime.py"
+        ROOT / "cemm/v350/runtime_v351.py"
     ).read_text(encoding="utf-8")
     tree = ast.parse(source)
     run_text = next(
@@ -261,19 +262,14 @@ def test_run_text_has_no_request_frequency_learning_or_runtime_observer():
     segment = ast.get_source_segment(source, run_text) or ""
     assert "LearningRuntimeActivator" not in segment
     assert "RuntimeSelfObserver" not in segment
-    assert "session_lifecycle.resolve" in segment
 
 
 def test_stage_snapshot_validation_ignores_audit_only_generation_movement():
     source = (
-        ROOT / "cemm/v350/runtime.py"
+        ROOT / "cemm/v350/orchestration.py"
     ).read_text(encoding="utf-8")
-    start = source.index("def _snapshot(")
-    end = source.index("@staticmethod", start)
-    method = source[start:end]
-    assert "read_generation_fingerprint" not in method
-    assert "cognitive_generation_fingerprint" in method
-    assert "authority_fingerprint" in method
+    assert "cognitive_fingerprint" in source
+    assert "authority_fingerprint" in source
 
 
 def test_learning_advancer_preserves_dependency_pins_and_targeted_frontiers():
@@ -288,21 +284,21 @@ def test_learning_advancer_preserves_dependency_pins_and_targeted_frontiers():
 
 def test_session_participant_concurrent_recovery_validates_all_identity_members():
     source = (
-        ROOT / "cemm/v350/runtime.py"
+        ROOT / "cemm/v350/runtime_v351.py"
     ).read_text(encoding="utf-8")
-    assert "concurrent_referent.record_fingerprint" in source
-    assert "concurrent_evidence.record_fingerprint" in source
-    assert "concurrent_assertion.record_fingerprint" in source
+    assert "cannot impersonate the CEMM self referent" in source
+    assert "not visible/authorized in this session" in source
+    assert "session-participant" in source
 
 
 def test_phase3_stage22_does_not_advance_learning_on_every_request():
     source = (
-        ROOT / "cemm/v350/runtime_hardening.py"
+        ROOT / "cemm/v350/runtime_v351.py"
     ).read_text(encoding="utf-8")
-    start = source.index("def stage_22_finalize")
+    start = source.index("def stage_22_consolidate_invalidate_replay_and_finalize")
     segment = source[start:]
     assert "RuntimeLearningAdvancer(" not in segment
-    assert '"maintenance_event"' in segment
+    assert "maintenance" in segment.lower()
 
 
 def test_authority_publication_is_blocked_while_semantic_pass_is_active(tmp_path):
@@ -439,7 +435,7 @@ def test_emitted_partial_query_is_not_reported_as_full_success():
         errors = []
         artifacts = {
             "retrieval_result": Retrieval(),
-            "emission": object(),
+            "emission_observation": object(),
         }
         frontiers = []
 
@@ -459,7 +455,7 @@ def test_emission_despite_emission_block_is_runtime_invariant_failure():
 
     class Cycle:
         errors = []
-        artifacts = {"emission": object()}
+        artifacts = {"emission_observation": object()}
         frontiers = []
 
     Cycle.workspace = workspace

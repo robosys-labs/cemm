@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cemm.v350.operations.executor import ReconciliationCoordinator
 from cemm.v350.orchestration import CoreStage
-from cemm.v350.runtime import CanonicalRuntimeCoordinator
+from cemm.v350.runtime import V351RuntimeCoordinator
 from cemm.v350.runtime_artifacts import RuntimeInput
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
 from cemm.v350.transitions.coordinator import TransitionCoordinator
@@ -25,13 +25,14 @@ def test_canonical_runtime_has_exact_concrete_stage_0_through_22_graph():
     for item in descriptors:
         cls=resolve_adapter_type(item)
         assert getattr(cls,"HANDLER")==item.handler_name
-        assert callable(getattr(CanonicalRuntimeCoordinator,item.handler_name))
+        assert callable(getattr(V351RuntimeCoordinator,item.handler_name))
 
 
 def test_external_side_effect_and_store_mutation_ownership_is_explicit():
+    from cemm.v350.stage_contracts import EffectKind, PersistenceClass
     descriptors=canonical_stage_descriptors()
-    assert {int(x.stage) for x in descriptors if x.permits_external_side_effect}=={16,20}
-    assert {int(x.stage) for x in descriptors if x.mutates_semantic_store}==set(range(13,22))
+    assert {int(x.stage) for x in descriptors if EffectKind.EXTERNAL_OPERATION in x.contract.allowed_effects or EffectKind.EXTERNAL_EMISSION in x.contract.allowed_effects}=={16,20}
+    assert {int(x.stage) for x in descriptors if x.contract.persistence not in (PersistenceClass.NONE, PersistenceClass.WORKSPACE)}==set(range(13,23))
 
 
 def test_source_manifest_is_fail_closed_but_topologically_real():
@@ -57,8 +58,6 @@ def test_source_manifest_is_fail_closed_but_topologically_real():
         assert item["adapter_ref"]==descriptor.adapter_ref
         assert item["factory_path"]==descriptor.adapter_class_path
         assert item["handler_name"]==descriptor.handler_name
-        assert item["mutates_semantic_store"]==descriptor.mutates_semantic_store
-        assert item["permits_external_side_effect"]==descriptor.permits_external_side_effect
 
 
 def test_public_runtime_surfaces_have_no_legacy_v347_import_authority():

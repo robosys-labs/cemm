@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "target_baseline_commit": "306da1a150738b486a2cd0af27e6c3773aa42e63",
+  "phase4": {
+    "status": "implemented_unverified",
+    "subtasks": [
+      "4A compiled semantic eligibility",
+      "4B narrow effect authorization",
+      "4C cycle-local transient record view",
+      "4D proof-carrying realization",
+      "4E selective independent round-trip",
+      "4F event-boundary maintenance",
+      "4G M0 legacy/performance gates"
+    ]
+  },
+  "phase5": {
+    "status": "implemented_unverified",
+    "subtasks": [
+      "5A exact Stage 0-22 ABI",
+      "5B machine-readable StageContract",
+      "5C StageCapability and CognitiveCycleState",
+      "5D persistence/effect matrix enforcement",
+      "5E concrete v351 adapters",
+      "5F CSIR/recurrent/attractor service boundaries without UOL fallback",
+      "5G bounded re-entry and generation enforcement",
+      "5H legacy runtime/v347/stale-test boundaries",
+      "5I acceptance/document contract reset"
+    ],
+    "authoritative_semantic_services_ready": false,
+    "reason": "Phase 6-8 must supply exact CSIR kernel/compiler/recurrent implementations; missing services defer and never fall back to UOL"
+  },
+  "remaining_open_core_issues": [
+    "CI-013 honest/general learning capability and canonical inducer families",
+    "CI-014 practical scoped epistemic admission policy",
+    "CI-016 early end-to-end English conversational kernel gate",
+    "CI-017 minimum reviewed English substrate",
+    "CI-018 public UOL fallback removed, but one-way UOL-to-CSIR migration compiler remains required before closure",
+    "CI-019 UOL-to-CSIR shadow migration compiler",
+    "CI-020 recurrent bootstrap/calibration artifact",
+    "CI-021 discourse/common-ground ownership",
+    "CI-027 final release artifact regeneration"
+  ],
+  "residual_bugs_fixed": [
+    "Phase-2 indexed get_record restored record_invalidations filtering",
+    "Stage-22 authority publication moved to post-pass maintenance boundary",
+    "post-commit cognitive generation drift fails closed to replay",
+    "compiled semantic capability requires singular effective active authority revision",
+    "Phase-3 maintenance events are drained only after semantic-pass lease release",
+    "stale v3.5.0/version UOL authority metadata replaced with v3.5.1 CSIR authority",
+    "old runtime_services UOL composition root tombstoned",
+    "signed services require explicit RUNTIME_ABI=v351 and matching SERVICE_KIND",
+    "invalidated authority/dependency revisions excluded from compiled semantic capability",
+    "durable audit/effect/discourse persistence now requires exact-generation persistence authorization receipts",
+    "Stage-20 emitter split into read-only authorize then effect-authorized emit; service cannot bypass kernel proof boundary with prebuilt StageOutcome",
+    "v347 executable runtime entrypoint removed from active tree",
+    "raw-store persistence bypass removed: services receive read-only cycle views plus pre-effect exact-patch AuthorizedEffectStore receipts",
+    "Stage-16 external operation split into prepare/journal -> kernel authorization receipt -> execute -> observation lineage"
+  ],
+  "phase6": "implemented_source_bundle_kernel_tests_passed_full_repo_unverified",
+  "v347_cleanup_baseline": "required_absent"
+}

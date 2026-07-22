@@ -73,6 +73,7 @@ class RuntimeAttestation:
     legacy_denylist_sha256: str
     canonical_runtime_factory: str
     canonical_orchestrator: str
+    kernel_semantic_abi_fingerprint: str
     verified_at: str
 
     @classmethod
@@ -102,6 +103,7 @@ class RuntimeAttestation:
             str(manifest.legacy_denylist_sha256),
             str(manifest.canonical_runtime_factory),
             str(manifest.canonical_orchestrator),
+            str(getattr(manifest, "kernel_semantic_abi_fingerprint", "")),
         )
         return cls(
             attestation_ref="runtime-attestation:"
@@ -117,6 +119,9 @@ class RuntimeAttestation:
             legacy_denylist_sha256=str(manifest.legacy_denylist_sha256),
             canonical_runtime_factory=str(manifest.canonical_runtime_factory),
             canonical_orchestrator=str(manifest.canonical_orchestrator),
+            kernel_semantic_abi_fingerprint=str(
+                getattr(manifest, "kernel_semantic_abi_fingerprint", "")
+            ),
             verified_at=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -186,6 +191,7 @@ class AttestedRuntimeAuthority:
             str(manifest.legacy_denylist_sha256),
             str(manifest.canonical_runtime_factory),
             str(manifest.canonical_orchestrator),
+            str(getattr(manifest, "kernel_semantic_abi_fingerprint", "")),
         )
         expected = (
             self.attestation.release_version,
@@ -196,6 +202,7 @@ class AttestedRuntimeAuthority:
             self.attestation.legacy_denylist_sha256,
             self.attestation.canonical_runtime_factory,
             self.attestation.canonical_orchestrator,
+            self.attestation.kernel_semantic_abi_fingerprint,
         )
         if observed != expected:
             raise RuntimeAttestationError(

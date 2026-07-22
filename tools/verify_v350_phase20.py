@@ -23,7 +23,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from cemm.v350.cutover import REQUIRED_RUNTIME_BOOT_AUTHORITIES, RuntimeAuthorityGuard, RuntimeAuthorityManifest
 from cemm.v350.orchestration import CoreStage
-from cemm.v350.runtime_hardening import HardenedRuntimeCoordinator
+from cemm.v350.runtime_v351 import V351RuntimeCoordinator as HardenedRuntimeCoordinator
 from cemm.v350.runtime_graph import canonical_stage_descriptors, resolve_adapter_type
 from cemm.v350.storage import RecordKind
 

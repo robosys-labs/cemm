@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 @dataclass
 class _Manifest:
-    release_version: str = "3.5.0"
+    release_version: str = "3.5.1"
     release_commit: str = "a" * 40
     source_manifest_sha256: str = "b" * 64
     boot_database_sha256: str = "c" * 64

@@ -1,4 +1,4 @@
-"""Public v3.5 runtime facade with one-time release attestation."""
+"""Public v3.5.1 runtime facade with one-time release attestation."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -61,7 +61,7 @@ class Runtime:
 
         if "services" in kwargs:
             raise ValueError(
-                "public v3.5 runtime forbids arbitrary service injection; "
+                "public v3.5.1 runtime forbids arbitrary service injection; "
                 "runtime services come from the signed canonical composition root"
             )
 

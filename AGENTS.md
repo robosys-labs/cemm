@@ -285,3 +285,21 @@ implementation
 ```
 
 Never sign first and then make behavior fit the artifact.
+
+
+## v3.5.1 Legacy Quarantine and Stage ABI
+
+- `IMPLEMENTATION_PLAN.md` is the sole active roadmap.
+- Canonical runtime code must not import `cemm.v347`, the legacy UOL request brain,
+  `MeaningComposer`, or old runtime-hardening wrappers.
+- v347 and v3.5 UOL code may exist only in explicit offline/migration/shadow paths;
+  failure of CSIR/recurrent services must never fall back to them.
+- Canonical Stage names and contracts come only from `cemm/v350/stage_contracts.py`
+  and must match `CORE_LOOP.md` exactly.
+- Stages 14, 15, 18 and 19 are workspace-by-default. Optional audit retention never
+  grants semantic authority or changes world truth.
+- Semantic eligibility and effect authorization are distinct. Only the narrow effect
+  boundary may authorize durable mutation, external operation, protected disclosure
+  or emission.
+- Do not skip or hide stale legacy tests. Rewrite them for v3.5.1 or move genuinely
+  historical/migration-only assertions into an explicitly named migration suite.

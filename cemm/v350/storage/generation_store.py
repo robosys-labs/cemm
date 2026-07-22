@@ -459,7 +459,12 @@ class SemanticStore(_LegacySemanticStore):
 
         if not candidates:
             return None
-        return candidates[max(candidates)]
+        chosen = candidates[max(candidates)]
+        if self.is_invalidated(
+            chosen.record_kind, chosen.record_ref, chosen.revision, snapshot=snapshot
+        ):
+            return None
+        return chosen
 
     def _cache_generation_token(
         self,

@@ -13,8 +13,8 @@ def test_phase20_contract_and_competence_exist():
 def test_core_stage_topology_is_exact():
  from cemm.v350.orchestration import CoreStage
  assert [int(x) for x in CoreStage]==list(range(23))
- assert CoreStage.DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS==15
- assert CoreStage.RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS==17
+ assert CoreStage.DERIVE_OBLIGATIONS_AND_ARBITRATE_GOALS==15
+ assert CoreStage.ASSIMILATE_OPERATION_OUTCOMES_AND_RECUR==17
 
 def test_orchestrator_rejects_incomplete_stage_graph():
  from cemm.v350.orchestration import CanonicalOrchestrator,CanonicalOrchestrationError
@@ -22,7 +22,7 @@ def test_orchestrator_rejects_incomplete_stage_graph():
   def fingerprint(self):return 'snapshot:x'
  class G:pass
  try:CanonicalOrchestrator((),snapshot_provider=S(),authority_guard=G())
- except CanonicalOrchestrationError as e:assert 'missing stages' in str(e)
+ except CanonicalOrchestrationError as e:assert 'canonical adapters must cover' in str(e)
  else:raise AssertionError('incomplete stage graph must fail closed')
 
 def test_denylist_has_no_runtime_reachable_status():
@@ -39,10 +39,10 @@ def test_phase20_verifier_normalizes_windows_style_v350_paths():
 def test_runtime_authority_manifest_loads_full_cutover_fields():
  from cemm.v350.cutover import RuntimeAuthorityManifest
  doc={
-  'manifest_version':1,'release_version':'3.5.0','release_commit':'commit:x',
+  'manifest_version':3,'release_version':'3.5.1','release_commit':'commit:x',
   'source_manifest_sha256':'a','boot_database_sha256':'b','schema_version':8,
   'canonical_orchestrator':'cemm.v350.orchestration:CanonicalOrchestrator',
-  'canonical_runtime_factory':'cemm.v350.runtime:build_runtime',
+  'canonical_runtime_factory':'cemm.v350.runtime_v351:build_runtime',
   'public_entrypoints':['cemm:Runtime'],
   'forbidden_runtime_import_prefixes':['cemm.v347','cemm.v350.migration'],
   'stage_adapters':[],

@@ -1,510 +1,160 @@
-# CEMM v3.5.1 Acceptance Contract
+# CEMM v3.5.1 Acceptance Contract — Canonical CSIR Runtime
 
-**Status:** canonical executable competence/release contract  
-**Purpose:** prove that CEMM is a working learning-first semantic system rather than a larger set of rules, gates, templates, or release artifacts.
+**Status:** active canonical acceptance contract  
+**Roadmap authority:** `IMPLEMENTATION_PLAN.md`  
+**Runtime authority:** `RUNTIME_PLAN.md` + `CORE_LOOP.md` + `CEMM_CORE_MATHS.md`
 
-Tests must primarily assert semantic structures, bindings, state effects, frontiers, proofs and authority—not exact wording.
+This contract replaces UOL-era public-runtime acceptance criteria. Historical UOL/v347
+behavior may be tested only under explicit migration/offline suites and may never be a
+fallback authority for a public request.
 
----
+## A. Architecture and legacy quarantine
 
-# Gate A0 — Documentation and authority integrity
+1. Public/runtime modules import no `cemm.v347` code.
+2. `cemm.v347` exports no `Runtime` and no wildcard semantic API.
+3. Canonical runtime imports no legacy UOL/composition request brain.
+4. Old Stage names (`BUILD_UOL_FACTOR_GRAPH`, `SOLVE_MEANING_HYPOTHESES`,
+   `SELECT_MEANING_BUNDLE`, `BUILD_RESPONSE_UOL`) do not occur in canonical runtime,
+   runtime graph or canonical tests.
+5. v3.5 UOL may exist only in explicit offline/shadow migration code. CSIR failure never
+   routes a public request back to UOL.
 
-Must prove:
+## B. Stage ABI
 
-```text
-one active implementation roadmap
-one canonical core loop
-one runtime plan
-CORE_ISSUES exists
-superseded plans are archived/non-authoritative
-no broken canonical references
-```
+The machine-readable `CoreStage` and `StageContract` sequence must match
+`CORE_LOOP.md` Stage 0–22 exactly.
 
----
-
-# Gate A1 — Stabilized runtime substrate
-
-Required:
-
-```text
-0 release hashes per normal turn
-0 boot hashes per normal turn
-0 full overlay scan for O(1) write
-no RecordKind-wide hot lookup
-no global lock across semantic solve
-no per-turn full learning promotion scan
-stable runtime observation does not persist per request
-authority generation separate from mutable world/discourse revisions
-concurrent reads overlap
-typed final completion status
-```
-
----
-
-# Gate A2 — Architectural prohibition tests
-
-CI fails if public kernel/runtime contains:
-
-- transcript-specific phrase routing;
-- language-specific semantic word branches;
-- direct `who/what/where/why/how` → completed response intent mapping;
-- predicate-specific answer sentences;
-- generic targetless acknowledgement as success;
-- event-specific state mutators;
-- subject/object universal effect rules;
-- source-code type additions required for learned domain types;
-- defaults inserted as active state;
-- claims automatically treated as actual facts;
-- hidden legacy semantic fallback;
-- floating executable semantic dependencies.
-
----
-
-# Gate A3 — CSIR exactness
-
-Required property tests:
+Stages 5–7 are semantic operations, not renamed wrappers:
 
 ```text
-canonical labeling independent of insertion order
-serialization round trip
-alpha-renaming invariance
-graph-isomorphism identity
-scope distinction
-context distinction
-time/aspect distinction
-polarity/modality distinction
-role-binding distinction
-proof-lineage stability
-exact closure reconstruction
+5 COMPILE_CANDIDATES_TO_CSIR
+6 RUN_RECURRENT_MEANING_DYNAMICS
+7 STABILIZE_SEMANTIC_ATTRACTORS
 ```
 
-Equivalent meaning normalizes equivalently under the same authority generation.
+A missing CSIR compiler/recurrent solver/attractor stabilizer produces a typed runtime
+capability frontier. It must never invoke the old UOL factor-graph solver.
 
-Distinct meaning does not collapse.
+Every stage contract declares:
+- required inputs;
+- produced outputs;
+- allowed mutable generations;
+- persistence class;
+- effect classes;
+- frontier classes;
+- budgets;
+- proof requirements.
 
----
+A stage that changes an undeclared generation fails the cycle as a contract violation.
 
-# Gate A4 — Participant grounding and reference
+## C. Authority and semantic eligibility
 
-Prove:
+1. Executable semantic authority is pinned to exact `AuthorityGeneration` and content
+   fingerprint.
+2. Candidate/provisional records do not become executable by frequency or persistence.
+3. `CompiledSemanticCapability` is compiled from exact lifecycle, use profile,
+   dependencies and promotion lineage.
+4. Semantic eligibility never grants durable mutation, external operation, protected
+   disclosure or emission authority.
+5. Learned overlay authority requires exact promotion/use-grant lineage.
+
+## D. Effect authorization
+
+`EffectAuthorizationBoundary` is fail-closed at the actual effect boundary.
+
+- Durable semantic/world/learning commit: Stage 13, with exact GraphPatch identity,
+  pre-effect CAS revision, target set and policy prerequisites through the guarded store; Stage 22 may consolidate/invalidate and schedule promotion, but a
+  new executable AuthorityGeneration is published only after the current semantic-pass
+  lease is released through an explicit maintenance/promotion boundary.
+- External operation: Stage 16 only. The kernel requires `prepare()` first (including
+  guarded prepared-journal persistence), then issues an exact external-operation receipt,
+  and only then calls `execute()`; every observation must map to an authorized operation.
+- Protected disclosure/external emission: Stage 20 only, after exact audience/scope,
+  semantic-preservation proof and emission gate authorization.
+
+No broad cognition gate may substitute for these narrow checks.
+
+## E. Cycle-local cognition and persistence
+
+Default behavior:
+
+| Stage | Persistence |
+|---|---|
+| 0–12 | workspace only |
+| 13 | semantic/world/learning CAS commit |
+| 14 | workspace; optional audit |
+| 15 | workspace; optional decision audit |
+| 16 | effect journal only when an operation is attempted |
+| 17 | reconciliation/evidence only |
+| 18 | workspace; optional audit |
+| 19 | workspace; optional audit |
+| 20 | emission/effect journal only when attempted |
+| 21 | output discourse/common-ground commit |
+| 22 | consolidation/invalidation/replay; promotion publication scheduled post-pass |
+
+A simple read-only conversation must not persist significance, goals, response
+compiler graphs or realization intermediates merely because stages executed.
+
+## F. Proof-carrying realization
+
+Every deterministic realization candidate carries a `RealizationProof` with:
+- exact semantic input fingerprint;
+- exact authority generation;
+- exact rule/lexical/morphology/linearization pins;
+- semantic coverage;
+- qualification fingerprint;
+- permission/audience scope;
+- surface hash.
+
+Cheap proof verification is mandatory for every emission.
+
+Independent semantic re-analysis is policy-driven:
+- mandatory for release competence;
+- mandatory for declared high-risk/novel/audit/unreviewed/channel-transform cases;
+- not mandatory for an ordinary reviewed deterministic path whose proof verifies.
+
+A failed cheap proof cannot be rescued by a successful independent round-trip.
+
+## G. Learning maintenance
+
+Learning advancement occurs because a typed event exists, not because a chat request
+occurred. Targeted post-cycle learning events may run only after the semantic-pass
+AuthorityGeneration lease is released.
+
+An empty inducer/learning service set must report learning capability as unavailable;
+it must not claim successful general learning.
+
+## H. Completion semantics
+
+The runtime distinguishes at least:
 
 ```text
-speaker/addressee from ParticipantFrame
-pronouns contribute discourse-role requirements
-synthetic renamed pronouns preserve same grounding behavior
-proper names/aliases do not become kernel branches
-pronoun/coreference can remain ambiguous
+SUCCESS
+PARTIAL
+NO_RESPONSE_REQUIRED
+RESPONSE_DEFERRED
+RESPONSE_BLOCKED
+ACTION_UNCERTAIN
+RUNTIME_ERROR
 ```
 
-Required conversation:
+`errors=[]` is not success. Optional enrichment/frontiers may not block an otherwise
+fully grounded requested answer.
 
-```text
-I have a box.
-It is blue.
-What color is it?
+## I. Required gates for Phase 4–5
+
+```bash
+python tools/check_v351_legacy_boundaries.py
+pytest -q tests/v350/test_v351_phase4_capabilities_effects.py
+pytest -q tests/v350/test_v351_phase4_realization_proof.py
+pytest -q tests/v350/test_v351_phase5_stage_abi.py
+pytest -q tests/v350/test_v351_phase5_cutover_contract.py
+pytest -q tests/v350/test_v351_legacy_boundaries.py
+python tools/capture_v351_phase0_baseline.py --strict-hot-path
+python tools/benchmark_v351_phase2_store.py --scales 1000,10000,100000
+pytest -q tests/v350
 ```
 
-Answer binding must resolve the box color through discourse-compatible reference.
-
----
-
-# Gate A5 — English compositional semantic kernel
-
-Minimum reviewed English package must support:
-
-```text
-identity/classification
-property/state predication
-possession
-simple relation
-simple event
-negation
-modality/capability
-WH query
-yes/no query
-correction
-definition/teaching
-greeting
-request/imperative
-```
-
-### Synthetic rename test
-
-Rename content vocabulary while preserving language/construction authority.
-
-Expected:
-- equivalent CSIR;
-- no new kernel code;
-- no phrase-specific patch.
-
----
-
-# Gate A6 — Query separation
-
-Keep separate:
-
-```text
-information gap
-variable
-restriction graph
-answer projection
-discourse act
-response obligation
-```
-
-Embedded interrogatives must not automatically become top-level ask acts.
-
-Internal role labels must never be returned as answers.
-
----
-
-# Gate A7 — Conversational memory and epistemic admission
-
-### Case A — participant fact
-
-```text
-My name is Chibu.
-What's my name?
-```
-
-Expected:
-- claim occurrence;
-- speaker referent grounding;
-- scoped admission under participant-fact policy;
-- answer `Chibu` semantically;
-- no `target`/`holder`/`possessor` leakage.
-
-### Case B — correction
-
-```text
-My name is Chibu.
-No, my name is Chibueze.
-What's my name?
-```
-
-Expected:
-- prior claim retained in history;
-- new current belief selected;
-- answer reflects correction.
-
-### Case C — high-risk assertion
-
-A high-impact world claim remains attributed/corroboration-required unless policy admits it.
-
----
-
-# Gate A8 — Definition/teaching without concept-specific code
-
-Teach:
-
-```text
-A zorb is a toy.
-The zorb is blue.
-```
-
-Then ask:
-
-```text
-What is a zorb?
-What color is the zorb?
-```
-
-Expected:
-- generic definitional/classification semantics;
-- reusable learned/scoped structure;
-- no `zorb` source-code branch;
-- restart behavior according to promotion/retention policy.
-
----
-
-# Gate A9 — Partial cognition
-
-Unknown material around known meaning must not erase grounded structure.
-
-Example:
-
-```text
-My zorb is florp.
-```
-
-When `my`, possession and `zorb` are known but `florp` is not:
-
-Expected:
-
-```text
-known participant/possession structure preserved
-unknown semantic frontier for florp
-clarification/learning possible
-no fabricated property meaning
-```
-
----
-
-# Gate A10 — Discourse and common ground
-
-Required follow-ups:
-
-```text
-Why?
-For what?
-What did you mean?
-Understood what?
-What happened to it?
-Can it still move?
-```
-
-Tests assert that the correct prior semantic target is selected by discourse/type/context compatibility.
-
-No exact transcript sequence handler.
-
----
-
-# Gate A11 — Self/runtime capability honesty
-
-Queries such as:
-
-```text
-How are you?
-What can you do?
-```
-
-must use actual self/runtime state and active capabilities.
-
-Expected:
-- no invented human emotions;
-- unavailable adapter means unavailable/unknown capability, not a fabricated positive claim;
-- capability, permission and competence remain distinct.
-
----
-
-# Gate A12 — Learning end-to-end
-
-A learning test is valid only when it proves:
-
-```text
-unknown/frontier
-→ candidate induction
-→ exact dependency closure
-→ supporting/opposing evidence
-→ competence
-→ promotion decision
-→ immutable new authority generation
-→ restart
-→ unseen compositional reuse
-```
-
-### New type
-
-Teach a previously unknown type and compatible properties/capabilities.
-
-After promotion/restart:
-- type inheritance works;
-- mention grounds;
-- entitled state dimensions apply;
-- no source-code type addition.
-
-### New lexicalization
-
-Teach a new surface for an existing semantic definition.
-
-After promotion/restart:
-- new surface resolves to existing semantics;
-- synthetic rename behaves equivalently.
-
-### Counterexample
-
-Teach an exception and prove a default is defeated without deleting the reusable schema.
-
----
-
-# Gate A13 — Recurrent semantic dynamics
-
-Required:
-
-```text
-deterministic baseline oracle
-typed relation-specific messages
-hard constraint mask
-bounded iterations
-convergence assessment
-partial output on budget exhaustion
-calibrated probabilities only where calibration exists
-```
-
-Reference cases must converge to the same canonical semantic class as the exact baseline or document valid ambiguity.
-
----
-
-# Gate A14 — State entitlement
-
-Examples:
-
-- living animal: biological health applicable;
-- proposition: biological health inapplicable;
-- digital agent: runtime/capability dimensions may apply;
-- room: temperature applies, mood does not;
-- server: thermal state may affect processing capability through a mechanism.
-
-Defaults do not create active state assignments.
-
----
-
-# Gate A15 — Claims/context safety
-
-Required contrasts:
-
-```text
-John says the fox died.
-I saw the fox die.
-The fox did not die.
-The fox may die.
-The fox almost died.
-The fox died in the story.
-```
-
-Expected:
-- correct proposition/claim/context/polarity/modality;
-- no inappropriate actual-world transition.
-
----
-
-# Gate A16 — Role-sensitive event/transition
-
-Equivalent active/passive forms produce equivalent role-bound CSIR and transition candidates.
-
-Effects target semantic roles, not grammatical positions.
-
-Cross-type polysemy must not force one event effect universally.
-
----
-
-# Gate A17 — Causal reasoning
-
-Prove separation of:
-
-```text
-temporal order
-correlation
-default expectation
-causal mechanism
-intervention
-counterfactual
-```
-
-Required:
-- defeater test;
-- context isolation;
-- recursive propagation cycle bound;
-- proof-bearing explanation path.
-
----
-
-# Gate A18 — Response CSIR and realization
-
-One realization grammar family must handle arbitrary compatible content for:
-
-```text
-identity/property/state
-relation
-query answer
-negative modality
-past/completed event
-uncertainty qualification
-clarification
-capability report
-```
-
-Adding a new learned concept/property/value must not require a new whole-sentence template.
-
-Realization cannot invent missing semantics.
-
----
-
-# Gate A19 — Semantic preservation and emission
-
-Every emission requires:
-
-```text
-valid response semantics
-realization proof
-qualification preservation
-privacy/safety/audience/channel checks
-emission authorization
-journal/idempotency where required
-observed boundary result
-```
-
-Full independent round trip is required for:
-- release competence;
-- novelty/risk/policy cases;
-- configured audit sampling.
-
-No verifier bypass.
-
----
-
-# Gate A20 — Restart, versioning, invalidation, replay
-
-Required:
-
-```text
-historical record rehydrates under original authority
-promoted learned artifact rehydrates exactly
-authority generation change invalidates only dependencies
-world/discourse writes do not redefine semantic meaning
-replay requirements are explicit
-no floating latest resolution
-```
-
----
-
-# Gate A21 — Performance/concurrency
-
-Set concrete numeric budgets from Phase-0 baseline, but structural rules are mandatory:
-
-```text
-steady state = O(semantic work + bounded indexed reads)
-not O(release size + boot size + overlay history + all record kinds)
-```
-
-Required:
-- 1/4/16/64 request concurrency tests;
-- 1k/10k/100k overlay scale tests;
-- solver candidate/iteration budgets;
-- no hidden global serialization.
-
----
-
-# Gate A22 — Legacy isolation/cutover
-
-Release rejected if:
-
-```text
-public runtime imports legacy semantic authority
-CSIR failure falls back to UOL
-legacy store is lazily queried for meaning
-signed artifact contains unapproved legacy adapter
-migration and runtime authority are combined
-```
-
-Migration tooling may remain offline/read-only.
-
----
-
-# Final release gate
-
-CEMM v3.5.1 is releasable only when:
-
-```text
-A0–A22 pass
-+
-critical/high CORE_ISSUES are VERIFIED or migration-only with zero public authority
-+
-English Conversational Kernel passes
-+
-learning→promotion→restart passes
-+
-performance/concurrency gates pass
-+
-signed release artifacts are regenerated deterministically after behavior is proven
-```
+Signed release artifacts are regenerated only after behavior, architecture,
+concurrency, performance and competence gates pass. Hashes/verifiers must never be
+patched to manufacture success.

@@ -231,7 +231,7 @@
     "linearization-rule:sw:activation:relation-left-right-none@1#linearization_rule-record:e59903e339eeba8be8b809a21724f7a5d45b78725c05f4c841cbc71a7a9cad65",
     "linearization-rule:sw:seed:discourse-act-asserted-content@1#linearization_rule-record:8c0aee3adc54eaffd986ec2c99d25d4450fc2da322dcd7b9069bac2c594ec1a2"
   ],
-  "manifest_version": 2,
+  "manifest_version": 3,
   "metadata": {
     "boot_database_relpath": "cemm/data/v350/release/boot.sqlite",
     "generated_from_canonical_stage_graph": true,
@@ -276,7 +276,7 @@
     "transitions": true
   },
   "release_commit": "3ebdb26f6b9247bbf73583e7fd3aac12c054679a",
-  "release_version": "3.5.0",
+  "release_version": "3.5.1",
   "response_policy_rules": [
     "response-policy-rule:acknowledge-claim-receipt@1#response_policy_rule-record:44541b2661ad3d99e8e2bb97c2d1da2e72e9feb6937ddf7797f2e3b03f13a167",
     "response-policy-rule:farewell@1#response_policy_rule-record:2bdf227bcfee586a1651804cdc0a4e5421c1c40a1118a97473e97f7565cdfba6",
@@ -359,257 +359,257 @@
   "source_manifest_sha256": "d88f7285cc9427e5531bb36d321444dbb3bc5681e78cc5acf34c1d971f49b57c",
   "stage_adapters": [
     {
-      "adapter_ref": "v350.stage.00.orient_and_pin",
+      "adapter_ref": "v351.stage.00.orient_and_pin_semantic_brain",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:OrientAndPinAdapter",
-      "handler_name": "stage_00_orient_and_pin",
+      "factory_path": "cemm.v350.stage_adapters:OrientAndPinSemanticBrainAdapter",
+      "handler_name": "stage_00_orient_and_pin_semantic_brain",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 0,
-      "stage_name": "ORIENT_AND_PIN"
+      "stage_name": "ORIENT_AND_PIN_SEMANTIC_BRAIN"
     },
     {
-      "adapter_ref": "v350.stage.01.observe",
+      "adapter_ref": "v351.stage.01.observe_multimodal_evidence",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:ObserveAdapter",
-      "handler_name": "stage_01_observe",
+      "factory_path": "cemm.v350.stage_adapters:ObserveMultimodalEvidenceAdapter",
+      "handler_name": "stage_01_observe_multimodal_evidence",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 1,
-      "stage_name": "OBSERVE"
+      "stage_name": "OBSERVE_MULTIMODAL_EVIDENCE"
     },
     {
-      "adapter_ref": "v350.stage.02.analyze_and_fuse_form",
+      "adapter_ref": "v351.stage.02.encode_form_and_sensor_evidence",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:AnalyzeAndFuseFormAdapter",
-      "handler_name": "stage_02_analyze_and_fuse_form",
+      "factory_path": "cemm.v350.stage_adapters:EncodeFormAndSensorEvidenceAdapter",
+      "handler_name": "stage_02_encode_form_and_sensor_evidence",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 2,
-      "stage_name": "ANALYZE_AND_FUSE_FORM"
+      "stage_name": "ENCODE_FORM_AND_SENSOR_EVIDENCE"
     },
     {
-      "adapter_ref": "v350.stage.03.generate_candidates",
+      "adapter_ref": "v351.stage.03.activate_and_ground_referents",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:GenerateCandidatesAdapter",
-      "handler_name": "stage_03_generate_candidates",
+      "factory_path": "cemm.v350.stage_adapters:ActivateAndGroundReferentsAdapter",
+      "handler_name": "stage_03_activate_and_ground_referents",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 3,
-      "stage_name": "GENERATE_REFERENT_AND_SCHEMA_CANDIDATES"
+      "stage_name": "ACTIVATE_AND_GROUND_REFERENTS"
     },
     {
-      "adapter_ref": "v350.stage.04.project_knowledge",
+      "adapter_ref": "v351.stage.04.project_entitled_state_spaces",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:ProjectKnowledgeAdapter",
-      "handler_name": "stage_04_project_knowledge",
+      "factory_path": "cemm.v350.stage_adapters:ProjectEntitledStateSpacesAdapter",
+      "handler_name": "stage_04_project_entitled_state_spaces",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 4,
-      "stage_name": "PROJECT_REFERENT_KNOWLEDGE_AND_ENTITLEMENTS"
+      "stage_name": "PROJECT_ENTITLED_STATE_SPACES"
     },
     {
-      "adapter_ref": "v350.stage.05.build_factor_graph",
+      "adapter_ref": "v351.stage.05.compile_candidates_to_csir",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:BuildFactorGraphAdapter",
-      "handler_name": "stage_05_build_factor_graph",
+      "factory_path": "cemm.v350.stage_adapters:CompileCandidatesToCSIRAdapter",
+      "handler_name": "stage_05_compile_candidates_to_csir",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 5,
-      "stage_name": "BUILD_UOL_FACTOR_GRAPH"
+      "stage_name": "COMPILE_CANDIDATES_TO_CSIR"
     },
     {
-      "adapter_ref": "v350.stage.06.solve_meaning",
+      "adapter_ref": "v351.stage.06.run_recurrent_meaning_dynamics",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:SolveMeaningAdapter",
-      "handler_name": "stage_06_solve_meaning",
+      "factory_path": "cemm.v350.stage_adapters:RunRecurrentMeaningDynamicsAdapter",
+      "handler_name": "stage_06_run_recurrent_meaning_dynamics",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 6,
-      "stage_name": "SOLVE_MEANING_HYPOTHESES"
+      "stage_name": "RUN_RECURRENT_MEANING_DYNAMICS"
     },
     {
-      "adapter_ref": "v350.stage.07.select_meaning",
+      "adapter_ref": "v351.stage.07.stabilize_semantic_attractors",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:SelectMeaningAdapter",
-      "handler_name": "stage_07_select_meaning",
+      "factory_path": "cemm.v350.stage_adapters:StabilizeSemanticAttractorsAdapter",
+      "handler_name": "stage_07_stabilize_semantic_attractors",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 7,
-      "stage_name": "SELECT_MEANING_BUNDLE"
+      "stage_name": "STABILIZE_SEMANTIC_ATTRACTORS"
     },
     {
-      "adapter_ref": "v350.stage.08.classify_discourse",
+      "adapter_ref": "v351.stage.08.build_discourse_proposition_event_and_query_structures",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:ClassifyDiscourseAdapter",
-      "handler_name": "stage_08_classify_discourse",
+      "factory_path": "cemm.v350.stage_adapters:BuildDiscourseStructuresAdapter",
+      "handler_name": "stage_08_build_discourse_proposition_event_and_query_structures",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 8,
-      "stage_name": "CLASSIFY_DISCOURSE_CLAIMS_EVENTS_AND_GAPS"
+      "stage_name": "BUILD_DISCOURSE_PROPOSITION_EVENT_AND_QUERY_STRUCTURES"
     },
     {
-      "adapter_ref": "v350.stage.09.epistemic_assessment",
+      "adapter_ref": "v351.stage.09.place_epistemic_context_and_assimilate_world_belief",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:EpistemicAssessmentAdapter",
-      "handler_name": "stage_09_epistemically_assess",
+      "factory_path": "cemm.v350.stage_adapters:PlaceEpistemicContextAdapter",
+      "handler_name": "stage_09_place_epistemic_context_and_assimilate_world_belief",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 9,
-      "stage_name": "EPISTEMICALLY_ASSESS_AND_PLACE_CONTEXT"
+      "stage_name": "PLACE_EPISTEMIC_CONTEXT_AND_ASSIMILATE_WORLD_BELIEF"
     },
     {
-      "adapter_ref": "v350.stage.10.retrieve_and_bind",
+      "adapter_ref": "v351.stage.10.query_and_explain_from_grounded_world_model",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:RetrieveAndBindAdapter",
-      "handler_name": "stage_10_retrieve_and_bind",
+      "factory_path": "cemm.v350.stage_adapters:QueryGroundedWorldModelAdapter",
+      "handler_name": "stage_10_query_and_explain_from_grounded_world_model",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 10,
-      "stage_name": "RETRIEVE_AND_ANSWER_BIND"
+      "stage_name": "QUERY_AND_EXPLAIN_FROM_GROUNDED_WORLD_MODEL"
     },
     {
-      "adapter_ref": "v350.stage.11.learning_frontiers",
+      "adapter_ref": "v351.stage.11.classify_prediction_error_and_advance_learning",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:LearningFrontiersAdapter",
-      "handler_name": "stage_11_learning_frontiers",
+      "factory_path": "cemm.v350.stage_adapters:AdvanceLearningAdapter",
+      "handler_name": "stage_11_classify_prediction_error_and_advance_learning",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 11,
-      "stage_name": "BUILD_OR_ADVANCE_LEARNING_FRONTIERS"
+      "stage_name": "CLASSIFY_PREDICTION_ERROR_AND_ADVANCE_LEARNING"
     },
     {
-      "adapter_ref": "v350.stage.12.preview_transitions",
+      "adapter_ref": "v351.stage.12.simulate_causal_transitions_and_counterfactuals",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:PreviewTransitionsAdapter",
-      "handler_name": "stage_12_preview_transitions",
+      "factory_path": "cemm.v350.stage_adapters:SimulateCausalTransitionsAdapter",
+      "handler_name": "stage_12_simulate_causal_transitions_and_counterfactuals",
       "mutates_semantic_store": false,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 12,
-      "stage_name": "INFER_AND_PREVIEW_TRANSITIONS"
+      "stage_name": "SIMULATE_CAUSAL_TRANSITIONS_AND_COUNTERFACTUALS"
     },
     {
-      "adapter_ref": "v350.stage.13.commit_knowledge_state",
+      "adapter_ref": "v351.stage.13.commit_authorized_knowledge_state_and_learning_artifacts",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:CommitKnowledgeStateAdapter",
-      "handler_name": "stage_13_commit_knowledge_state",
+      "factory_path": "cemm.v350.stage_adapters:CommitAuthorizedKnowledgeAdapter",
+      "handler_name": "stage_13_commit_authorized_knowledge_state_and_learning_artifacts",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 13,
-      "stage_name": "COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE"
+      "stage_name": "COMMIT_AUTHORIZED_KNOWLEDGE_STATE_AND_LEARNING_ARTIFACTS"
     },
     {
-      "adapter_ref": "v350.stage.14.assess_significance",
+      "adapter_ref": "v351.stage.14.propagate_capability_impact_affect_and_significance",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:AssessSignificanceAdapter",
-      "handler_name": "stage_14_assess_significance",
+      "factory_path": "cemm.v350.stage_adapters:PropagateImpactAdapter",
+      "handler_name": "stage_14_propagate_capability_impact_affect_and_significance",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 14,
-      "stage_name": "ASSESS_IMPACT_AND_IMPORTANCE"
+      "stage_name": "PROPAGATE_CAPABILITY_IMPACT_AFFECT_AND_SIGNIFICANCE"
     },
     {
-      "adapter_ref": "v350.stage.15.arbitrate_goals",
+      "adapter_ref": "v351.stage.15.derive_obligations_and_arbitrate_goals",
       "adapter_revision": 1,
       "factory_path": "cemm.v350.stage_adapters:ArbitrateGoalsAdapter",
-      "handler_name": "stage_15_arbitrate_goals",
+      "handler_name": "stage_15_derive_obligations_and_arbitrate_goals",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 15,
-      "stage_name": "DERIVE_OBLIGATIONS_GENERATE_AND_ARBITRATE_GOALS"
+      "stage_name": "DERIVE_OBLIGATIONS_AND_ARBITRATE_GOALS"
     },
     {
-      "adapter_ref": "v350.stage.16.execute_operations",
+      "adapter_ref": "v351.stage.16.plan_authorize_execute_and_observe",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:ExecuteOperationsAdapter",
-      "handler_name": "stage_16_plan_execute_operations",
+      "factory_path": "cemm.v350.stage_adapters:PlanAuthorizeExecuteObserveAdapter",
+      "handler_name": "stage_16_plan_authorize_execute_and_observe",
       "mutates_semantic_store": true,
       "permits_external_side_effect": true,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 16,
-      "stage_name": "PLAN_AUTHORIZE_EXECUTE_AND_RECONCILE"
+      "stage_name": "PLAN_AUTHORIZE_EXECUTE_AND_OBSERVE"
     },
     {
-      "adapter_ref": "v350.stage.17.reconcile_operations",
+      "adapter_ref": "v351.stage.17.assimilate_operation_outcomes_and_recur",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:ReconcileOperationsAdapter",
-      "handler_name": "stage_17_reconcile_operations",
+      "factory_path": "cemm.v350.stage_adapters:AssimilateOperationOutcomesAdapter",
+      "handler_name": "stage_17_assimilate_operation_outcomes_and_recur",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 17,
-      "stage_name": "RECONCILE_OPERATION_OUTCOMES_AND_REFRESH_GOALS"
+      "stage_name": "ASSIMILATE_OPERATION_OUTCOMES_AND_RECUR"
     },
     {
-      "adapter_ref": "v350.stage.18.build_response_uol",
+      "adapter_ref": "v351.stage.18.construct_response_csir",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:BuildResponseUOLAdapter",
-      "handler_name": "stage_18_build_response_uol",
+      "factory_path": "cemm.v350.stage_adapters:ConstructResponseCSIRAdapter",
+      "handler_name": "stage_18_construct_response_csir",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 18,
-      "stage_name": "BUILD_RESPONSE_UOL"
+      "stage_name": "CONSTRUCT_RESPONSE_CSIR"
     },
     {
-      "adapter_ref": "v350.stage.19.realize",
+      "adapter_ref": "v351.stage.19.realize_target_language_or_modality",
       "adapter_revision": 1,
       "factory_path": "cemm.v350.stage_adapters:RealizeTargetLanguageAdapter",
-      "handler_name": "stage_19_realize_target_language",
+      "handler_name": "stage_19_realize_target_language_or_modality",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 19,
-      "stage_name": "REALIZE_TARGET_LANGUAGE"
+      "stage_name": "REALIZE_TARGET_LANGUAGE_OR_MODALITY"
     },
     {
-      "adapter_ref": "v350.stage.20.authorize_emission",
+      "adapter_ref": "v351.stage.20.verify_semantic_equivalence_and_authorize_emission",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:AuthorizeEmissionAdapter",
-      "handler_name": "stage_20_verify_authorize_emission",
+      "factory_path": "cemm.v350.stage_adapters:VerifySemanticEquivalenceAdapter",
+      "handler_name": "stage_20_verify_semantic_equivalence_and_authorize_emission",
       "mutates_semantic_store": true,
       "permits_external_side_effect": true,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 20,
-      "stage_name": "VERIFY_AND_AUTHORIZE_EMISSION"
+      "stage_name": "VERIFY_SEMANTIC_EQUIVALENCE_AND_AUTHORIZE_EMISSION"
     },
     {
-      "adapter_ref": "v350.stage.21.commit_output_discourse",
+      "adapter_ref": "v351.stage.21.commit_output_discourse_and_common_ground",
       "adapter_revision": 1,
       "factory_path": "cemm.v350.stage_adapters:CommitOutputDiscourseAdapter",
-      "handler_name": "stage_21_commit_output_discourse",
+      "handler_name": "stage_21_commit_output_discourse_and_common_ground",
       "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 21,
       "stage_name": "COMMIT_OUTPUT_DISCOURSE_AND_COMMON_GROUND"
     },
     {
-      "adapter_ref": "v350.stage.22.finalize",
+      "adapter_ref": "v351.stage.22.consolidate_invalidate_replay_and_finalize",
       "adapter_revision": 1,
-      "factory_path": "cemm.v350.stage_adapters:FinalizeAdapter",
-      "handler_name": "stage_22_finalize",
-      "mutates_semantic_store": false,
+      "factory_path": "cemm.v350.stage_adapters:ConsolidateFinalizeAdapter",
+      "handler_name": "stage_22_consolidate_invalidate_replay_and_finalize",
+      "mutates_semantic_store": true,
       "permits_external_side_effect": false,
-      "source_sha256": "33d02d7c9918ee71cafb273178d87cdc5361279671fd5a0b7edbb913d8e3212b",
+      "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "stage": 22,
-      "stage_name": "INVALIDATE_RECOMPUTE_AND_FINALIZE"
+      "stage_name": "CONSOLIDATE_INVALIDATE_REPLAY_AND_FINALIZE"
     }
   ],
   "verification_report_sha256": "042c527e3e7ad717ed0a57f943a37efd5a744d32e561ba530c892ab9902f9781"

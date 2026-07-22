@@ -20,11 +20,10 @@ def test_roundtrip_pins_reviewed_semantic_analyzer_contract():
 
 def test_overlay_language_records_do_not_self_authorize_by_active_status():
     source=inspect.getsource(LanguageUseAuthority.authorized)
-    assert 'stored.layer == "boot"' in source or "stored.layer == 'boot'" in source
-    assert "PROMOTION_DECISION" in source
+    assert "self.registry.compile" in source
+    assert "LANGUAGE_KINDS" in source
 
 
 def test_language_authority_requires_singular_effective_revision():
-    source=inspect.getsource(LanguageUseAuthority.authorized)
-    assert "len(effective)!=1" in source.replace(" ","")
-    assert "prerequisite_fingerprint" in source
+    source=inspect.getsource(LanguageUseAuthority)
+    assert "self.registry.compile(self._pin(stored), operation).eligible" in source

@@ -30,7 +30,7 @@ QUARANTINED_MIGRATION_ONLY
 ## CI-001 — Runtime plan/documentation conflict
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 The repository contains multiple plans/contracts with different ordering and authority assumptions.
@@ -49,7 +49,7 @@ Documentation-lint verifies no active root document points implementers to super
 ## CI-002 — Proposed v3.5.1 Core Loop does not match current runtime Stage ABI
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Current runtime still uses UOL-oriented stages such as:
@@ -81,7 +81,7 @@ Machine-readable stage contract matches `CORE_LOOP.md` exactly.
 ## CI-003 — Pre-Stage-0 request-frequency cognition/maintenance
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 `run_text()` currently performs learning activation, runtime-self observation, and participant setup before Stage 0.
@@ -106,7 +106,7 @@ Normal request performs no unrelated durable maintenance before Stage 0.
 ## CI-004 — Per-request release/service authority overwork
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Full/duplicated authority checks are coupled to ordinary cognition.
@@ -126,7 +126,7 @@ One-time `RuntimeAttestation` plus O(1) generation checks.
 ## CI-005 — One mutable snapshot fingerprint conflates authority and world state
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Stage capability/read consistency relies on one snapshot fingerprint spanning mutable store state.
@@ -152,7 +152,7 @@ Audit/emission write does not invalidate definition closure cache.
 ## CI-006 — RecordKind-wide lookup scans
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Runtime resolves refs by iterating all `RecordKind`.
@@ -168,7 +168,7 @@ Hot lookup query plan contains no all-kind probe.
 ## CI-007 — Whole-store/overlay asymptotic coupling
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 O(1) writes may trigger O(total history) fingerprint/cache behavior.
@@ -184,7 +184,7 @@ Incremental authenticated roots + domain generations + targeted invalidation.
 ## CI-008 — Global snapshot/SQLite serialization and double-snapshot ceremony
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 - concurrent read connections/snapshots;
@@ -200,7 +200,7 @@ Concurrent read-only cycles overlap.
 ## CI-009 — Transient cognition persisted across too many stages
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Current runtime persists significance, goals, response UOL, realization artifacts and other intermediate structures as routine stage behavior.
@@ -216,7 +216,7 @@ Simple read-only conversation does not persist transient compiler/goal/realizati
 ## CI-010 — Learning promotion/activation coupled to every request
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 Event/schedule/startup/consolidation-driven promotion and activation.
@@ -229,7 +229,7 @@ Unrelated chat request performs no full learning package/promotion scan.
 ## CI-011 — Broken `RuntimeLearningAdvancer` candidate packaging call
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Current learning advancement calls `_package(frontier, pins, dependency_pins)` while the method accepts `(frontier, pins)` and the call-site variable is undefined.
@@ -250,7 +250,7 @@ A real frontier can create candidate package without exception and with complete
 ## CI-012 — Candidate dependency pins are discarded
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Package dependency assembly currently derives from an empty iterator in the runtime learning path.
@@ -298,7 +298,7 @@ Explicit admission classes and policy.
 ## CI-015 — Participant/session initialization is mixed with request execution
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 Session/context lifecycle with idempotent initialization independent of message count.
@@ -393,7 +393,7 @@ Dedicated participant/coreference/open-question/clarification/common-ground impl
 ## CI-022 — Acceptance contract terminology/version drift
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Problem
 Old acceptance tests still describe v3.5/UOL as canonical.
@@ -406,7 +406,7 @@ Replace with v3.5.1 CSIR acceptance contract.
 ## CI-023 — Missing canonical `CORE_ISSUES.md`
 
 **Severity:** critical  
-**Status:** OPEN until this file is adopted
+**Status:** FIXED_UNVERIFIED until this file is adopted
 
 ### Problem
 README/governance references a mandatory file that was absent at the expected path.
@@ -419,7 +419,7 @@ Adopt this register and maintain it continuously.
 ## CI-024 — Full semantic round-trip on every emission is too expensive
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 Proof-carrying deterministic realization + selective independent re-analysis policy.
@@ -432,7 +432,7 @@ Release competence still uses full round trip; ordinary reviewed deterministic p
 ## CI-025 — Final status can hide blocked requested behavior
 
 **Severity:** critical  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 `CycleCompletionStatus` + frontier effects.
@@ -445,7 +445,7 @@ No-response due to blocking frontier cannot be reported as success.
 ## CI-026 — Response/realization can be blocked by unrelated frontiers
 
 **Severity:** high  
-**Status:** OPEN
+**Status:** FIXED_UNVERIFIED
 
 ### Required fix
 Typed frontier effects and requested-outcome relevance.

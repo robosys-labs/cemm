@@ -1,4 +1,4 @@
-"""Runtime-authority manifest and fail-closed cutover guard for CEMM v3.5."""
+"""Runtime-authority manifest and fail-closed cutover guard for CEMM v3.5.1."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -43,15 +43,10 @@ def _boot_pins(path: Path, kind: RecordKind) -> tuple[str, ...]:
     return tuple(f"{ref}@{int(revision)}#{fingerprint}" for ref, revision, fingerprint in rows)
 
 
-REQUIRED_RUNTIME_BOOT_AUTHORITIES: tuple[tuple[str, RecordKind], ...] = (
-    ("response_policy_rules", RecordKind.RESPONSE_POLICY_RULE),
-    ("response_transform_rules", RecordKind.RESPONSE_TRANSFORM_RULE),
-    ("argument_frames", RecordKind.ARGUMENT_FRAME),
-    ("morphology_rules", RecordKind.MORPHOLOGY_RULE),
-    ("linearization_rules", RecordKind.LINEARIZATION_RULE),
-    ("semantic_analyzer_contracts", RecordKind.SEMANTIC_ANALYZER_CONTRACT),
-    ("channel_adapter_contracts", RecordKind.CHANNEL_ADAPTER_CONTRACT),
-)
+# v3.5.1 authority is the exact AuthoritySnapshot/StageContract closure.
+# Special boot-kind requirements are capability-driven below; stale UOL-era
+# record-family requirements must never force dummy runtime authority.
+REQUIRED_RUNTIME_BOOT_AUTHORITIES: tuple[tuple[str, RecordKind], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,8 +57,10 @@ class StageAdapterAuthority:
     factory_path: str
     handler_name: str
     source_sha256: str
-    mutates_semantic_store: bool = False
-    permits_external_side_effect: bool = False
+    contract_fingerprint: str
+    persistence_class: str
+    allowed_generation_changes: tuple[str, ...] = ()
+    allowed_effects: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,8 +107,10 @@ class RuntimeAuthorityManifest:
             factory_path=str(item["factory_path"]),
             handler_name=str(item.get("handler_name", "")),
             source_sha256=str(item["source_sha256"]),
-            mutates_semantic_store=bool(item.get("mutates_semantic_store", False)),
-            permits_external_side_effect=bool(item.get("permits_external_side_effect", False)),
+            contract_fingerprint=str(item.get("contract_fingerprint", "")),
+            persistence_class=str(item.get("persistence_class", "")),
+            allowed_generation_changes=tuple(sorted(map(str, item.get("allowed_generation_changes", ())))),
+            allowed_effects=tuple(sorted(map(str, item.get("allowed_effects", ())))),
         ) for item in doc.get("stage_adapters", ()))
         return cls(
             manifest_version=int(doc["manifest_version"]), release_version=str(doc["release_version"]),
@@ -149,6 +148,8 @@ class RuntimeAuthorityGuard:
 
     REQUIRED_FORBIDDEN_PREFIXES = (
         "cemm.v347", "cemm.migration", "cemm.v350.migration",
+        "cemm.v350.runtime_hardening", "cemm.v350.runtime_services",
+        "cemm.v350.composition",
     )
 
     def __init__(
@@ -167,18 +168,20 @@ class RuntimeAuthorityGuard:
 
     def require_service_authority(self) -> None:
         m = self.manifest
+        # Reject obsolete manifests before importing any service class. A failed old
+        # activation must not contaminate sys.modules with the UOL/composition brain.
+        if m.manifest_version < 3:
+            raise RuntimeAuthorityError("runtime authority manifest v3 is required for v3.5.1")
+        if m.release_version != "3.5.1":
+            raise RuntimeAuthorityError(f"unexpected release version:{m.release_version}")
         errors: list[str] = []
         if not m.activation_ready:
             errors.append("runtime authority manifest is not activation-ready")
-        if m.manifest_version < 2:
-            errors.append("runtime authority manifest version is obsolete")
-        if m.release_version != "3.5.0":
-            errors.append(f"unexpected release version:{m.release_version}")
         if not re.fullmatch(r"[0-9a-f]{40}", m.release_commit):
             errors.append("release_commit must be one exact 40-hex git commit")
         if m.canonical_orchestrator != "cemm.v350.orchestration:CanonicalOrchestrator":
             errors.append("canonical orchestrator authority mismatch")
-        if m.canonical_runtime_factory != "cemm.v350.runtime:build_runtime":
+        if m.canonical_runtime_factory != "cemm.v350.runtime_v351:build_runtime":
             errors.append("canonical runtime factory authority mismatch")
         expected_entrypoints = {
             "cemm:Runtime", "cemm.app.runtime:Runtime", "python -m cemm", "cemm.web_demo:serve",
@@ -190,16 +193,31 @@ class RuntimeAuthorityGuard:
         if set(m.allowed_boot_data_modules) != {"cemm.data.v350"}:
             errors.append("boot-data authority must be exactly cemm.data.v350")
         if set(m.allowed_record_kinds) != {item.value for item in RecordKind}:
-            errors.append("manifest record-kind authority differs from v3.5 RecordKind contract")
+            errors.append("manifest record-kind authority differs from v3.5.1 storage contract")
         if m.migration_modules_allowed_at_runtime:
             errors.append("runtime manifest allows migration modules")
         service_kinds = {
             str(item.get("service_kind", ""))
             for item in m.runtime_service_bindings
         }
+        forbidden_service_prefixes = (
+            "cemm.v347", "cemm.migration", "cemm.v350.migration",
+            "cemm.v350.runtime_services", "cemm.v350.runtime_hardening",
+            "cemm.v350.activation_services", "cemm.v350.uol", "cemm.v350.composition",
+        )
         for item in m.runtime_service_bindings:
             class_path = str(item.get("class_path", ""))
             source_sha = str(item.get("source_sha256", ""))
+            binding_module = class_path.partition(":")[0]
+            if any(
+                binding_module == prefix or binding_module.startswith(prefix + ".")
+                for prefix in forbidden_service_prefixes
+            ):
+                errors.append(f"legacy runtime service binding forbidden:{class_path}")
+                continue
+            if str(item.get("runtime_abi", "")) != "v351":
+                errors.append(f"runtime service binding lacks v351 ABI declaration:{class_path}")
+                continue
             if not item.get("implementation_ref") or not re.fullmatch(r"[0-9a-f]{64}", source_sha):
                 errors.append("runtime service binding lacks exact implementation/source authority")
                 continue
@@ -210,29 +228,49 @@ class RuntimeAuthorityGuard:
             try:
                 module = importlib.import_module(module_name)
                 cls = getattr(module, symbol)
+                if getattr(cls, "RUNTIME_ABI", None) != "v351":
+                    errors.append(f"runtime service implementation lacks RUNTIME_ABI=v351:{class_path}")
+                    continue
+                if getattr(cls, "SERVICE_KIND", None) != str(item.get("service_kind", "")):
+                    errors.append(f"runtime service implementation SERVICE_KIND mismatch:{class_path}")
+                    continue
                 source_path = inspect.getsourcefile(cls)
                 if not source_path or not Path(source_path).is_file() or _sha256(Path(source_path)) != source_sha:
                     errors.append(f"runtime service source fingerprint mismatch:{class_path}")
             except Exception as exc:
                 errors.append(f"runtime service binding cannot resolve:{class_path}:{exc}")
         required_services = {"clock"}
-        if m.release_capabilities.get("text_emission") is True:
-            required_services.update({"semantic_analyzer", "channel_adapter", "emission_gate_evaluator"})
-        if m.release_capabilities.get("epistemic_admission") is True:
-            required_services.add("epistemic_policy_provider")
-        if m.release_capabilities.get("generic_inference") is True:
-            required_services.add("inference_engine")
+        capabilities = dict(m.release_capabilities)
+        if m.activation_ready:
+            for required_capability in ("csir_compilation", "recurrent_semantics"):
+                if capabilities.get(required_capability) is not True:
+                    errors.append(f"activation-ready v3.5.1 release lacks required capability:{required_capability}")
+        if capabilities.get("csir_compilation") is True:
+            required_services.add("csir_compiler")
+        if capabilities.get("recurrent_semantics") is True:
+            required_services.update({"recurrent_semantic_solver", "semantic_attractor_stabilizer"})
+        if capabilities.get("epistemic_admission") is True:
+            required_services.add("epistemic_coordinator")
+        if capabilities.get("causal_reasoning") is True:
+            required_services.add("causal_simulator")
+        if capabilities.get("text_emission") is True:
+            required_services.update({"response_csir_builder", "realization_engine", "emission_engine"})
+        if capabilities.get("independent_roundtrip") is True:
+            required_services.add("independent_semantic_analyzer")
         for required_service in sorted(required_services):
             if required_service not in service_kinds:
                 errors.append(f"missing signed runtime service binding:{required_service}")
-        realization_languages = set(map(str, m.release_capabilities.get("realization_languages", ())))
-        if m.activation_ready and not {"en", "fr", "sw"}.issubset(realization_languages):
-            errors.append("activation does not prove reviewed en/fr/sw realization")
-        if m.release_capabilities.get("external_operations") and not m.operation_adapter_contracts:
+        realization_languages = set(map(str, capabilities.get("realization_languages", ())))
+        if capabilities.get("english_conversational_kernel") is True and "en" not in realization_languages:
+            errors.append("English conversational-kernel capability requires reviewed en realization")
+        if capabilities.get("text_emission") is True:
+            if not realization_languages:
+                errors.append("text emission requires at least one reviewed realization language")
+            elif not realization_languages.issubset(set(m.realization_language_tags)):
+                errors.append("advertised realization language is absent from signed boot language packs")
+        if capabilities.get("external_operations") and not m.operation_adapter_contracts:
             errors.append("advertised external operations lack signed adapter contracts")
         if m.activation_ready:
-            if not {"en", "fr", "sw"}.issubset(set(m.realization_language_tags)):
-                errors.append("activated boot does not contain en/fr/sw language packs")
             if m.release_capabilities.get("output_discourse") is True:
                 if not m.output_speaker_ref or not m.output_commitment_kind_ref:
                     errors.append("activated output discourse lacks signed speaker/commitment authority")
@@ -259,16 +297,21 @@ class RuntimeAuthorityGuard:
                 continue
             observed = (
                 authority.adapter_ref, authority.adapter_revision, authority.factory_path,
-                authority.handler_name, authority.mutates_semantic_store, authority.permits_external_side_effect,
+                authority.handler_name, authority.contract_fingerprint, authority.persistence_class,
+                tuple(authority.allowed_generation_changes), tuple(authority.allowed_effects),
             )
             expected = (
                 descriptor.adapter_ref, descriptor.adapter_revision, descriptor.adapter_class_path,
-                descriptor.handler_name, descriptor.mutates_semantic_store, descriptor.permits_external_side_effect,
+                descriptor.handler_name, descriptor.contract.fingerprint, descriptor.contract.persistence.value,
+                tuple(sorted(x.value for x in descriptor.contract.allowed_generation_changes)),
+                tuple(sorted(x.value for x in descriptor.contract.allowed_effects)),
             )
             if observed != expected:
                 errors.append(f"stage authority mismatch:{descriptor.stage.name}")
             if not re.fullmatch(r"[0-9a-f]{64}", authority.source_sha256):
                 errors.append(f"invalid stage adapter source fingerprint:{descriptor.stage.name}")
+            if not authority.contract_fingerprint.startswith("stage-contract-v351:"):
+                errors.append(f"missing/invalid v3.5.1 stage contract fingerprint:{descriptor.stage.name}")
 
         loaded = tuple(sys.modules)
         forbidden = tuple(name for name in loaded if any(name == prefix or name.startswith(prefix + ".") for prefix in m.forbidden_runtime_import_prefixes))
@@ -315,6 +358,14 @@ class RuntimeAuthorityGuard:
             if m.release_capabilities.get("external_operations"):
                 required_boot_authorities.append(
                     ("operation_adapter_contracts", RecordKind.OPERATION_ADAPTER_CONTRACT)
+                )
+            if m.release_capabilities.get("text_emission"):
+                required_boot_authorities.append(
+                    ("channel_adapter_contracts", RecordKind.CHANNEL_ADAPTER_CONTRACT)
+                )
+            if m.release_capabilities.get("independent_roundtrip"):
+                required_boot_authorities.append(
+                    ("semantic_analyzer_contracts", RecordKind.SEMANTIC_ANALYZER_CONTRACT)
                 )
             for label, kind in required_boot_authorities:
                 try:
