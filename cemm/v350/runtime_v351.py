@@ -7,7 +7,7 @@ not fall back to the quarantined v3.5 pipeline.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from threading import RLock
 from pathlib import Path
 from typing import Any, Mapping
@@ -16,9 +16,10 @@ from .csir.authority import CURRENT_KERNEL_ABI
 from .csir.authority_v351 import AuthoritySnapshotV351
 from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
-from .composition import (
-    DeterministicAttractorStabilizer, DeterministicMeaningDynamics,
-    ProjectionAwareDeterministicCSIRComposer,
+from .composition import ProjectionAwareDeterministicCSIRComposer
+from .dynamics import (
+    RecurrentAttractorStabilizerV351, RecurrentSemanticDynamicsV351,
+    compile_reviewed_phase13_parameter_artifacts,
 )
 from .conversation import SessionDiscourseMemory, SessionMemoryCommitCoordinatorV351, participant_frame_session_anchors
 from .discourse import DiscourseAuthorityMap, DiscourseStructureBuilderV351
@@ -45,6 +46,9 @@ from .grounding.coordinator import JointGrounder
 from .grounding.participants import participant_frame_anchors
 from .language.analyzer import FormLatticeAnalyzer
 from .learning.model import PinnedRecord
+from .learning.engine_v351 import Phase14LearningEngineV351
+from .learning.commit_v351 import Stage13LearningCommitterV351
+from .learning.maintenance_v351 import Phase14LearningMaintenanceV351
 from .maintenance import MaintenanceEvent, MaintenanceScheduler, MaintenanceTrigger
 from .orchestration import (
     CanonicalOrchestrator, CognitiveCycleState, CoreStage, StageCapability,
@@ -110,6 +114,7 @@ class RuntimeServices:
     consolidation_engine: Any | None = None
     runtime_signal_provider: Any | None = None
     learning_maintenance: Any | None = None
+    learning_competence_executors: Mapping[str, Any] = field(default_factory=dict)
     system_ref: str = "referent:self"
     runtime_epoch_ref: str | None = None
     runtime_attestation_ref: str | None = None
@@ -181,6 +186,12 @@ class V351RuntimeCoordinator:
         self.session_memory = SessionDiscourseMemory()
         self._minimum_response_authority = compile_minimum_response_authority()
         self._minimum_english_realization = compile_minimum_english_realization_package()
+        self._reviewed_phase13_dynamics = compile_reviewed_phase13_parameter_artifacts()
+        if self.services.learning_maintenance is None:
+            self.services.learning_maintenance = Phase14LearningMaintenanceV351(
+                store,
+                competence_executors=self.services.learning_competence_executors,
+            )
         response_authority_map = (
             self.services.response_authority_map or self._minimum_response_authority.authority_map
         )
@@ -194,8 +205,8 @@ class V351RuntimeCoordinator:
             "csir_compiler": ProjectionAwareDeterministicCSIRComposer(
                 store, constraint_evaluator=self.services.composition_constraint_evaluator
             ),
-            "recurrent_semantic_solver": DeterministicMeaningDynamics(),
-            "semantic_attractor_stabilizer": DeterministicAttractorStabilizer(),
+            "recurrent_semantic_solver": RecurrentSemanticDynamicsV351(),
+            "semantic_attractor_stabilizer": RecurrentAttractorStabilizerV351(),
             "discourse_structure_builder": DiscourseStructureBuilderV351(
                 self.session_memory, authority_map=self.services.discourse_authority_map
             ),
@@ -203,7 +214,8 @@ class V351RuntimeCoordinator:
                 self.session_memory, policy=self.services.epistemic_admission_policy
             ),
             "query_engine": GroundedQueryEngineV351(self.session_memory),
-            "commit_coordinator": SessionMemoryCommitCoordinatorV351(self.session_memory),
+            "learning_engine": Phase14LearningEngineV351(),
+            "commit_coordinator": Stage13LearningCommitterV351(self.session_memory),
             # Phase-12 alpha bridge. The general Phase-16 arbitrator may replace this slot.
             "goal_engine": ConversationalGoalBridgeV351(),
             "response_csir_builder": ResponseCSIRBuilderV351(
@@ -356,6 +368,14 @@ class V351RuntimeCoordinator:
             generation=authority.generation,
             authority_fingerprint=authority.authority_fingerprint,
         )
+        # Phase 13 requires an explicit immutable Θ inventory.  The reviewed canonical
+        # baseline is pinned only when the supplied semantic snapshot has no dynamics
+        # artifacts at all; a partial/custom inventory is never silently completed.
+        if not semantic_authority.dynamics_parameters:
+            semantic_authority = replace(
+                semantic_authority,
+                dynamics_parameters=tuple(self._reviewed_phase13_dynamics),
+            )
         if (semantic_authority.generation, semantic_authority.authority_fingerprint) != (
             authority.generation, authority.authority_fingerprint
         ):
@@ -689,6 +709,11 @@ class V351RuntimeCoordinator:
             dynamics_parameters=cycle.artifacts["semantic_authority_snapshot_v351"].dynamics_parameters,
             read_generation=cycle.artifacts["read_generation"],
             budgets=cycle.artifacts["runtime_budgets"],
+            evidence_lattice=cycle.artifacts.get("evidence_lattice"),
+            evidence_envelopes=cycle.artifacts.get("evidence_envelopes", ()),
+            grounding_candidates=cycle.artifacts.get("grounding_candidates"),
+            referent_projections=cycle.artifacts.get("referent_projections"),
+            state_space_projections=cycle.artifacts.get("state_space_projections"),
         )
         if not isinstance(graph, ActivationGraph) or not isinstance(trace, ActivationTrace):
             raise TypeError("recurrent_semantic_solver must return ActivationGraph, ActivationTrace")
@@ -1331,8 +1356,9 @@ class Runtime:
                 event.trigger, refs=event.ref_set, context_ref=event.context_ref,
                 permission_ref=event.permission_ref,
             )
+        maintenance_results = ()
         if cycle.artifacts.get("_maintenance_events"):
-            self.maintenance_scheduler.drain()
+            maintenance_results = self.maintenance_scheduler.drain()
         emission = cycle.artifacts.get("emission_observation")
         output = None
         if emission is not None:
@@ -1341,7 +1367,14 @@ class Runtime:
             cycle_ref=cycle.cycle_ref, context_ref=cycle.context_ref, output_text=output,
             target_language=cycle.target_language, stage_trace=tuple(cycle.trace),
             frontier_refs=tuple(sorted(set(cycle.frontiers))), errors=tuple(cycle.errors),
-            artifacts=dict(cycle.artifacts),
+            artifacts={
+                **dict(cycle.artifacts),
+                "_post_cycle_maintenance_results": tuple(maintenance_results),
+                "_runtime_restart_required": any(
+                    bool(getattr(getattr(item, "details", {}).get("result"), "restart_required", False))
+                    for item in maintenance_results
+                ),
+            },
         )
 
     def run_maintenance(self, trigger=MaintenanceTrigger.MANUAL):

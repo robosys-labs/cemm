@@ -29,6 +29,9 @@ from .model import (
     PromotionUseGrant,
 )
 from .package import LearningDependencyResolver
+from .promotion_rewire_v351 import (
+    plan_promoted_revisions, promoted_internal_dependencies, rewire_promoted_record,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,7 +289,8 @@ class PromotionCoordinator:
                 reason="persist exact reviewed per-use promotion decision",
             ))
             decision_fingerprint = record_fingerprints(RecordKind.PROMOTION_DECISION, decision)[1]
-            promoted_count = 0
+            revision_map = plan_promoted_revisions(self.store, package.candidate_pins, decision)
+            planned_promotions = {}
             for pin in package.candidate_pins:
                 grants = decision.grants_for(pin)
                 if not grants:
@@ -297,6 +301,25 @@ class PromotionCoordinator:
                 promoted = self._promoted_revision(pin, source.payload, grants, package.permission_ref)
                 if promoted is None:
                     continue
+                expected_revision = revision_map.get(pin.key)
+                if expected_revision is None or int(getattr(promoted, "revision", 0)) != expected_revision:
+                    raise ValueError("planned promotion revision differs from canonical promoted revision")
+                promoted = rewire_promoted_record(
+                    promoted,
+                    candidate_pins=package.candidate_pins,
+                    revision_map=revision_map,
+                )
+                planned_promotions[pin.key] = (pin, grants, promoted)
+
+            if set(planned_promotions) != set(revision_map):
+                missing = sorted(set(revision_map).difference(planned_promotions), key=str)
+                raise ValueError(
+                    "positive promotion plan contains records that cannot materialize:" + repr(missing)
+                )
+            promoted_payloads = {key: item[2] for key, item in planned_promotions.items()}
+            promoted_count = 0
+            for key in sorted(planned_promotions):
+                pin, grants, promoted = planned_promotions[key]
                 promoted_count += 1
                 deps = [
                     RecordDependency(RecordKind.PROMOTION_DECISION, decision.decision_ref, decision.revision, decision_fingerprint, "promotion_decision"),
@@ -314,13 +337,26 @@ class PromotionCoordinator:
                     RecordDependency(dep.record_kind, dep.record_ref, dep.revision, dep.record_fingerprint, "promotion_dependency")
                     for dep in package.dependency_pins
                 )
+                deps.extend(promoted_internal_dependencies(
+                    record=promoted,
+                    candidate_pins=package.candidate_pins,
+                    revision_map=revision_map,
+                    promoted_payloads=promoted_payloads,
+                ))
+                deduped = {}
+                for dep in deps:
+                    dep_key = (
+                        dep.record_kind.value if dep.record_kind is not None else "",
+                        dep.record_ref, dep.revision, dep.fingerprint, dep.dependency_kind,
+                    )
+                    deduped.setdefault(dep_key, dep)
                 operations.append(self._upsert_operation(
                     pin.record_kind,
                     promoted,
-                    dependencies=tuple(deps),
+                    dependencies=tuple(deduped[item] for item in sorted(deduped, key=str)),
                     expected_record_revision=self._latest_revision(pin.record_kind, pin.record_ref),
                     expected_record_fingerprint=self._latest_fingerprint(pin.record_kind, pin.record_ref),
-                    reason="activate exact candidate only for competence-authorized uses",
+                    reason="activate exact dependency-closed candidate graph only for competence-authorized uses",
                 ))
             if promoted_count == 0:
                 raise ValueError("promotion decision produced no promotable canonical record revisions")

@@ -68,6 +68,8 @@ class RuntimeLearningAdvancer:
         permission_ref: str,
         frontier_refs: tuple[str, ...] | None = None,
     ) -> RuntimeLearningAdvanceTrace:
+        if frontier_refs is None:
+            raise ValueError("runtime learning advancement requires explicit event-targeted frontier_refs")
         if frontier_refs:
             frontiers = tuple(
                 stored.payload
@@ -79,13 +81,7 @@ class RuntimeLearningAdvancer:
                 and stored.payload.resolution_status.value in {"open", "partial"}
             )
         else:
-            frontiers = tuple(
-                item.payload
-                for item in self.store.repositories.learning_frontiers.all()
-                if item.payload.context_ref in {context_ref, "global"}
-                and item.payload.permission_ref in {permission_ref, "public"}
-                and item.payload.resolution_status.value in {"open", "partial"}
-            )
+            frontiers = ()
         candidate_refs = []
         package_refs = []
         competence_refs = []
@@ -94,6 +90,9 @@ class RuntimeLearningAdvancer:
 
         for frontier in frontiers:
             proposals = list(self._existing_candidate_proposals(frontier))
+            if not proposals and not self.inducers:
+                deferred.append(f"learning:explicit-inducer-required:{frontier.frontier_ref}")
+                continue
             if not proposals:
                 with self.store.snapshot() as snapshot:
                     evidence = EvidenceAggregator.summarize(
@@ -183,7 +182,10 @@ class RuntimeLearningAdvancer:
                 record_kind=stored.record_kind,
                 payload=stored.payload,
                 evidence_refs=frontier.evidence_refs,
-                dependency_pins=(),
+                dependency_pins=tuple(
+                    pin for pin in getattr(stored.payload, "dependency_pins", ())
+                    if isinstance(pin, PinnedRecord)
+                ),
                 confidence=float(getattr(stored.payload, "confidence", 1.0)),
                 proposer_ref="candidate-inducer:existing-exact-frontier-ref",
             )
@@ -451,91 +453,12 @@ class RuntimeLearningAdvancer:
         }
         if not set(requested).issubset(passed):
             return None
-        if (
-            not package.review_refs
-            or not package.metadata.get("authorization_refs")
-        ):
+        if not package.review_refs or not package.metadata.get("authorization_refs"):
             return None
-        current = self.store.get_record(
-            RecordKind.LEARNING_PACKAGE, package.package_ref
-        )
+        current = self.store.get_record(RecordKind.LEARNING_PACKAGE, package.package_ref)
         if current is None:
             return None
-        if current.payload.lifecycle_status == LearningPackageStatus.PROMOTABLE:
-            return current.payload
-        next_package = replace(
-            current.payload,
-            revision=current.revision + 1,
-            supersedes_revision=current.revision,
-            lifecycle_status=LearningPackageStatus.PROMOTABLE,
-        )
-        dependencies = [
-            RecordDependency(
-                RecordKind.LEARNING_PACKAGE,
-                current.record_ref,
-                current.revision,
-                current.record_fingerprint,
-                "learning_package_prior_revision",
-            )
-        ]
-        for result in results:
-            stored = self.store.get_record(
-                RecordKind.COMPETENCE_RESULT, result.result_ref
-            )
-            if stored is not None:
-                dependencies.append(RecordDependency(
-                    stored.record_kind,
-                    stored.record_ref,
-                    stored.revision,
-                    stored.record_fingerprint,
-                    "learning_competence",
-                ))
-        with self.store.snapshot() as snapshot:
-            patch = GraphPatch(
-                patch_ref="graph-patch:learning-package-promotable:"
-                + semantic_fingerprint(
-                    "learning-package-promotable",
-                    (
-                        next_package.package_ref,
-                        next_package.revision,
-                        snapshot.fingerprint,
-                    ),
-                    24,
-                ),
-                context_ref=package.scope_ref,
-                scope_ref=package.scope_ref,
-                source_ref="source:runtime-learning-advance",
-                permission_ref=package.permission_ref,
-                operations=(PatchOperation(
-                    operation_ref="patch-operation:learning-package-promotable:"
-                    + semantic_fingerprint(
-                        "learning-package-promotable-operation",
-                        (
-                            next_package.package_ref,
-                            next_package.revision,
-                        ),
-                        20,
-                    ),
-                    operation_kind=PatchOperationKind.UPSERT,
-                    record_kind=RecordKind.LEARNING_PACKAGE,
-                    target_ref=next_package.package_ref,
-                    record_revision=next_package.revision,
-                    payload=encode_record(
-                        RecordKind.LEARNING_PACKAGE, next_package
-                    ),
-                    expected_record_revision=current.revision,
-                    expected_record_fingerprint=current.record_fingerprint,
-                    dependencies=tuple(dependencies),
-                    reason=(
-                        "all explicitly requested use axes passed independent "
-                        "competence and carry review/authorization"
-                    ),
-                ),),
-                expected_store_revision=snapshot.store_revision,
-                validation_requirements=(
-                    "independent_competence_complete",
-                    "review_authorization_present",
-                ),
-            )
-        committed = self.store.apply_patch(patch)
-        return next_package if committed.committed else None
+        # Never sever exact competence/evidence lineage with a synthetic PROMOTABLE
+        # revision. Event-driven Phase-14 maintenance evaluates and promotes this exact
+        # competence-tested package revision.
+        return current.payload

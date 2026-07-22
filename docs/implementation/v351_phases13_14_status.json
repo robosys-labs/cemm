@@ -1,0 +1,103 @@
+{
+  "version": "v3.5.1",
+  "phases": [13, 14],
+  "baseline_commit": "0dc1d64b78d0f1b620b224bdb74265e8b85763c6",
+  "status": "IMPLEMENTED_STATICALLY_VERIFIED_DEPLOYMENT_AUTHORITY_REBUILD_AND_FULL_SUITE_PENDING",
+  "canonical_runtime_changes": {
+    "stage6": "RecurrentSemanticDynamicsV351",
+    "stage7": "RecurrentAttractorStabilizerV351",
+    "stage11": "Phase14LearningEngineV351",
+    "stage13": "Stage13LearningCommitterV351",
+    "post_pass_maintenance": "Phase14LearningMaintenanceV351"
+  },
+  "phase13": {
+    "typed_message_families": 12,
+    "exact_immutable_parameter_inventory": true,
+    "hard_mask_before_soft_dynamics": true,
+    "semantic_class_competition": true,
+    "evidence_lineage_discounting": true,
+    "derivation_evidence_separation": true,
+    "bounded_sparse_recurrence": true,
+    "local_inhibition": true,
+    "convergence_and_oscillation_detection": true,
+    "partial_on_budget_or_nonconvergence": true,
+    "absolute_attractor_support_preserved": true,
+    "global_softmax_used": false,
+    "deterministic_stage6_7_fallback": false
+  },
+  "phase14": {
+    "required_inducers": 8,
+    "prediction_error_driven": true,
+    "candidate_only_stage11": true,
+    "candidate_persistence_stage13": true,
+    "event_driven_promotion": true,
+    "exact_dependency_dag": true,
+    "genuinely_new_referent_type_induction": true,
+    "generic_lexicalization_induction": true,
+    "independent_competence_required_for_positive_use": true,
+    "exact_competence_executor_identity_required_for_automatic_execution": true,
+    "review_and_authorization_required": true,
+    "new_authority_generation_on_promotion": true,
+    "restart_required_after_authority_change": true,
+    "multi_record_promotion_revision_rewiring": true,
+    "candidate_revision_dependency_leak_blocked": true,
+    "concept_specific_handlers": false,
+    "raw_surface_semantic_branching": false,
+    "unknown_word_to_noun_heuristic": false
+  },
+  "reviewed_language_authority": {
+    "minimum_english_source_revision_after_patch": 4,
+    "definition_learning_source_contract": true,
+    "exact_lowering_validator": true,
+    "signed_manifest_or_boot_database_hand_edited": false,
+    "current_baseline_manifest_already_activates_revision_4": false,
+    "canonical_release_rebuild_required_before_live_m3_claim": true
+  },
+  "deep_fixes": [
+    "Stage11 now reads unresolved observations from EvidenceLattice.form_lattice",
+    "legacy request-frequency global learning scans are blocked",
+    "empty inducer registry cannot claim learning",
+    "legacy candidate dependency reconstruction no longer defaults to empty",
+    "competence-tested package revision is not severed by synthetic promotable revision",
+    "resolved or terminal frontiers/packages are filtered before candidate staging",
+    "promotion event scope and permission must match package governance",
+    "derivation lineage is separated from evidence lineage",
+    "shared or unknown evidence lineage is clustered and capped rather than naively multiplied",
+    "weak single attractor support is not renormalized to certainty",
+    "multi-record promoted authority rewires exact candidate revisions to active revisions atomically",
+    "positive promotion cannot publish a record retaining an unpromoted candidate dependency",
+    "automatic competence cannot use an undeclared executor identity",
+    "reviewed definition-teaching source contract is explicit and content-addressed via a new source revision"
+  ],
+  "meaningful_use_case_contract": {
+    "milestone": "M3",
+    "generic_unseen_symbol": true,
+    "genuinely_new_semantic_schema_candidate": true,
+    "candidate_schema_form_sense_link_dag": true,
+    "candidate_before_authority": true,
+    "promotion_revision_rewire": true,
+    "fresh_registry_restart_resolution": true,
+    "sample_nonce_absent_from_production": true,
+    "full_text_to_answer_e2e_executed_here": false,
+    "live_boot_definition_learning_authority_verified_here": false
+  },
+  "parameter_learning": {
+    "trainer_implemented": true,
+    "immutable_candidate_artifacts": true,
+    "current_cycle_theta_mutation": false,
+    "automatic_durable_theta_publication": false,
+    "reason": "current canonical semantic store ontology has no dynamics-parameter RecordKind; candidate theta remains non-authoritative calibration work until exact authority publication/release tooling"
+  },
+  "verification": {
+    "python_ast_parse": true,
+    "compileall": true,
+    "status_json_valid": true,
+    "todo_fixme_scan": true,
+    "sample_nonce_production_scan": true,
+    "apply_script_anchor_dry_run_against_live_checkout": false,
+    "full_repository_pytest": false,
+    "m2_m3_end_to_end_runtime": false,
+    "live_boot_authority_rebuild": false,
+    "concurrency_performance_suite": false
+  }
+}

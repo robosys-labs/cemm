@@ -17,6 +17,7 @@ from typing import Any, Mapping
 from ..csir.authority_v351 import AuthoritySnapshotV351
 from ..csir.model import ExactAuthorityPin
 from .model import ConstructionProgramOperation
+from .phase14_learning_authority_v351 import DefinitionLearningContractSeedV351
 
 
 class EnglishPackageError(ValueError):
@@ -94,6 +95,7 @@ class ConstructionSeed:
     required_features: tuple[tuple[str, str], ...]
     program: tuple[ProgramStep, ...]
     competence_cases: tuple[str, ...]
+    learning_contract: DefinitionLearningContractSeedV351 | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -322,6 +324,11 @@ CONSTRUCTIONS: tuple[ConstructionSeed, ...] = (
         ("term", "definition_predicate", "definition_content"), (),
         (ProgramStep(ConstructionProgramOperation.WRAP_DISCOURSE_ACT, "discourse:definition"),),
         ("case:en:definition:means", "case:en:teaching:is"),
+        DefinitionLearningContractSeedV351(
+            form_category="term",
+            parent_category="definition_content",
+            definition_relation="subtype",
+        ),
     ),
     ConstructionSeed(
         "construction:en:v351:greeting", CompositionFamily.GREETINGS,
@@ -509,7 +516,7 @@ class ReviewedEnglishPackage:
             raise EnglishPackageError("minimum English analysis morphology must be reversible")
 
 
-_ENGLISH_REVISION = 3
+_ENGLISH_REVISION = 4
 _ENGLISH_REVIEW_REFS = ("review:v351:english-minimum-substrate",)
 _ENGLISH_COMPETENCE_CASES = tuple(
     sorted({case for construction in CONSTRUCTIONS for case in construction.competence_cases})
