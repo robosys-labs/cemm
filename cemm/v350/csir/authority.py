@@ -52,12 +52,12 @@ class KernelSemanticABI:
 
 
 CURRENT_KERNEL_ABI = KernelSemanticABI(
-    kernel_semantic_abi="cemm-csir-kernel-v2",
+    kernel_semantic_abi="cemm-csir-kernel-v3-authority-separated",
     serialization_abi="cemm-csir-json-v2",
-    canonicalization_abi="cemm-csir-canonical-label-v2",
-    normalizer_abi="cemm-csir-normal-form-v2",
-    operations_abi="cemm-csir-kernel-ops-v2",
-    compiler_barrier_abi="cemm-stage5-exact-csir-compiler-v2",
+    canonicalization_abi="cemm-csir-canonical-label-v3-profile-separated",
+    normalizer_abi="cemm-csir-normal-form-v3-profile-separated",
+    operations_abi="cemm-csir-kernel-ops-v3-profile-separated",
+    compiler_barrier_abi="cemm-stage5-exact-csir-compiler-v3-typed-closure",
 )
 
 KERNEL_SEMANTIC_ABI = CURRENT_KERNEL_ABI.kernel_semantic_abi

@@ -28,6 +28,7 @@ from .model import (
     Span,
 )
 from .registry import LanguageRegistry
+from .reversible_normalization import ReversibleNormalization, normalize_with_provenance
 
 
 class FormLatticeAnalyzer:
@@ -55,7 +56,8 @@ class FormLatticeAnalyzer:
             raise TypeError("content must be a string")
         if not source_ref.strip():
             raise ValueError("source_ref is required")
-        observations = self._observe(content, source_ref)
+        source_normalization = normalize_with_provenance(content)
+        observations = self._observe(content, source_ref, source_normalization)
         language_evidence = self._languages(observations, language_hints)
         forms, normalization = self._forms(content, observations, language_evidence)
         lexemes = self._lexemes(forms)
@@ -108,6 +110,16 @@ class FormLatticeAnalyzer:
             lexeme_candidates=lexemes,
             unresolved_spans=unresolved,
             metadata={
+                "normalization_ref": source_normalization.normalization_ref,
+                "normalization_profile_ref": source_normalization.profile_ref,
+                "normalization_segments": tuple(
+                    (
+                        item.source_start, item.source_end,
+                        item.normalized_start, item.normalized_end,
+                        item.operations,
+                    )
+                    for item in source_normalization.segments
+                ),
                 "code_switching": language_decision.code_switching,
                 "language_tags": tags,
                 "turn_language_tag": language_decision.language_tag,
@@ -120,12 +132,15 @@ class FormLatticeAnalyzer:
         )
 
     @staticmethod
-    def _observe(content: str, source_ref: str) -> tuple[FormObservation, ...]:
+    def _observe(
+        content: str, source_ref: str, normalization: ReversibleNormalization
+    ) -> tuple[FormObservation, ...]:
         spans = _unicode_segments(content)
         result = []
         for index, (start, end, category) in enumerate(spans):
             original = content[start:end]
-            canonical = unicodedata.normalize("NFKC", original).casefold()
+            normalized_start, normalized_end = normalization.normalized_span_for(start, end)
+            canonical = normalization.normalized_text[normalized_start:normalized_end]
             script = _script_of(original)
             result.append(FormObservation(
                 observation_ref=f"observation:{semantic_fingerprint('observation', (source_ref, start, end, original), 20)}",

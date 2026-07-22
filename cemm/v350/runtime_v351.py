@@ -13,12 +13,14 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .csir.authority import CURRENT_KERNEL_ABI
-from .csir.compiler import ExactCSIRCompiler, ExactCompilationResult
+from .csir.authority_v351 import AuthoritySnapshotV351
+from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
 from .effects.authorization import (
     EffectAuthorizationBoundary, EffectAuthorizationReceipt, EffectAuthorizationRequest,
 )
 from .effects.store import AuthorizedEffectStore
+from .facets.applicability_index_v351 import SchemaApplicabilityIndex
 from .facets.closure import ReferentKnowledgeClosureCompiler
 from .facets.projector import ReferentKnowledgeProjector
 from .grounding.coordinator import JointGrounder
@@ -56,6 +58,7 @@ class RuntimeServices:
     Empty semantic-brain slots are reported honestly as runtime capability frontiers;
     an empty slot never triggers a legacy fallback.
     """
+    semantic_authority_snapshot: AuthoritySnapshotV351 | None = None
     syntax_adapters: Any | None = None
     clock: Any | None = None
     observation_analyzers: Mapping[str, Any] = field(default_factory=dict)
@@ -145,9 +148,35 @@ class V351RuntimeCoordinator:
         self.services = services or RuntimeServices()
         self.semantic_capabilities = CompiledSemanticCapabilityRegistry(store)
         self.exact_csir_compiler = ExactCSIRCompiler()
+        self._authority_index_lock = RLock()
+        self._schema_applicability_indexes = {}
         self.effect_boundary = EffectAuthorizationBoundary(store)
         self.realization_proof_verifier = RealizationProofVerifier(store, self.semantic_capabilities)
         self.roundtrip_policy = SelectiveRoundTripPolicy()
+
+    def _schema_applicability_index(self, registry, capability: StageCapability):
+        key = (capability.authority_generation, capability.authority_fingerprint)
+        with self._authority_index_lock:
+            cached = self._schema_applicability_indexes.get(key)
+        if cached is not None:
+            return cached
+
+        # Build outside the lock: authority is immutable and duplicate concurrent builds
+        # are harmless, while holding a runtime-global lock across schema computation is
+        # forbidden by ISSUES_TO_AVOID. Only the tiny ownership swap is synchronized.
+        built = SchemaApplicabilityIndex.build(
+            registry,
+            authority_generation=capability.authority_generation,
+            authority_fingerprint=capability.authority_fingerprint,
+        )
+        with self._authority_index_lock:
+            cached = self._schema_applicability_indexes.get(key)
+            if cached is None:
+                # Retain only the active generation so vocabulary growth cannot create an
+                # unbounded process-global cache.
+                self._schema_applicability_indexes = {key: built}
+                cached = built
+            return cached
 
     def _read(self, capability: StageCapability):
         cm = self.store.snapshot()
@@ -252,6 +281,14 @@ class V351RuntimeCoordinator:
         authority = self.store.current_authority_snapshot(
             runtime_attestation_ref=str(self.services.runtime_attestation_ref or "")
         )
+        semantic_authority = self.services.semantic_authority_snapshot or AuthoritySnapshotV351(
+            generation=authority.generation,
+            authority_fingerprint=authority.authority_fingerprint,
+        )
+        if (semantic_authority.generation, semantic_authority.authority_fingerprint) != (
+            authority.generation, authority.authority_fingerprint
+        ):
+            raise ValueError("semantic authority snapshot differs from Stage-0 AuthorityGeneration")
         pins = CognitiveCyclePins(
             authority_snapshot=authority,
             read_generation=capability.read_generation,
@@ -261,11 +298,17 @@ class V351RuntimeCoordinator:
             channel_ref=cycle.channel_ref,
             target_language=cycle.target_language,
             cycle_time=str(self.services.clock.now_iso()),
+            semantic_authority_snapshot_fingerprint=semantic_authority.snapshot_fingerprint,
+            dynamics_parameter_pins=tuple(
+                item.parameter_pin
+                for item in sorted(semantic_authority.dynamics_parameters, key=lambda item: item.parameter_family)
+            ),
             runtime_attestation_ref=str(self.services.runtime_attestation_ref or ""),
         )
         context_stack = (cycle.context_ref,)
         return self._performed(
             authority_snapshot=authority,
+            semantic_authority_snapshot_v351=semantic_authority,
             read_generation=capability.read_generation,
             kernel_semantic_abi=CURRENT_KERNEL_ABI,
             participant_frame=frame,
@@ -411,7 +454,11 @@ class V351RuntimeCoordinator:
                     projection = projector.project_candidate(candidates[0], context_ref=cycle.context_ref, at_time=None, snapshot=snapshot)
                 projections[target_ref] = projection
                 state_spaces[target_ref] = tuple(getattr(projection, "state_spaces", ()) or ())
-            closure = ReferentKnowledgeClosureCompiler(self.store).compile(projections, snapshot=snapshot)
+            schema_registry = self.store.repositories.schemas.registry(snapshot=snapshot)
+            applicability_index = self._schema_applicability_index(schema_registry, capability)
+            closure = ReferentKnowledgeClosureCompiler(self.store).compile(
+                projections, snapshot=snapshot, applicability_index=applicability_index
+            )
         finally:
             cm.__exit__(None, None, None)
         return StageOutcome(
@@ -437,37 +484,26 @@ class V351RuntimeCoordinator:
                 state_space_projections=cycle.artifacts["state_space_projections"],
                 closure_candidates=cycle.artifacts["semantic_closure_candidates"],
                 authority_snapshot=cycle.artifacts["authority_snapshot"],
+                semantic_authority_snapshot_v351=cycle.artifacts["semantic_authority_snapshot_v351"],
                 read_generation=cycle.artifacts["read_generation"],
                 kernel_semantic_abi=CURRENT_KERNEL_ABI,
                 context_ref=cycle.context_ref,
                 permission_ref=cycle.permission_ref,
             )
-            if isinstance(result, CSIRCandidateSet):
-                proposed.extend(
-                    CSIRCandidateFragment(
-                        fragment_ref=item.candidate_ref, graph=item.graph,
-                        evidence_refs=item.evidence_refs,
-                        closure_proof_refs=item.closure_proof_refs,
-                        hard_constraint_trace_refs=item.hard_constraint_trace_refs,
-                        prior_score=item.prior_score,
-                    )
-                    for item in result.candidates
-                )
-            elif isinstance(result, ExactCompilationResult):
-                proposed.extend(
-                    CSIRCandidateFragment(
-                        fragment_ref=item.candidate_ref, graph=item.graph,
-                        evidence_refs=item.evidence_refs, closure_proof_refs=item.closure_proof_refs,
-                        hard_constraint_trace_refs=item.hard_constraint_trace_refs, prior_score=item.prior_score,
-                    ) for item in result.candidates
-                )
-            elif isinstance(result, Mapping):
+            # Phase-7 Stage-5 service boundary accepts proposed fragments with typed
+            # ClosureProof payloads. Pre-final candidates carrying only proof refs cannot
+            # re-authorize themselves at the kernel barrier.
+            if isinstance(result, Mapping):
                 proposed.extend(tuple(result.get("candidate_fragments", ()) or ()))
             else:
                 try:
                     proposed.extend(tuple(result))
                 except TypeError as exc:
-                    raise TypeError("csir_compiler must return exact CSIR fragments/candidates") from exc
+                    raise TypeError("csir_compiler must return exact CSIR candidate fragments") from exc
+            if any(isinstance(item, (CSIRCandidate, CSIRCandidateSet)) for item in proposed):
+                raise TypeError(
+                    "Stage-5 proposal service must return CSIRCandidateFragment with typed closure proofs"
+                )
         else:
             # Phase-6 kernel may consume explicit CSIR fragments produced by already
             # migrated authorities. Opaque v3.5 closure objects are rejected and become
@@ -478,6 +514,12 @@ class V351RuntimeCoordinator:
             proposed,
             authority_generation=capability.authority_generation,
             authority_fingerprint=capability.authority_fingerprint,
+            semantic_authority_snapshot=cycle.artifacts["semantic_authority_snapshot_v351"],
+            context_ref=cycle.context_ref,
+            permission_ref=cycle.permission_ref,
+            # Stage 5 compiles meaning from language/multimodal evidence. Projection
+            # authority is a boundary invariant, never a proposal-service-controlled flag.
+            require_projection_authority=True,
         )
         if not compiled.candidates:
             return StageOutcome(
@@ -516,12 +558,41 @@ class V351RuntimeCoordinator:
             raise ValueError("Stage 6 candidates were compiled under another AuthorityGeneration")
         if candidates.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("Stage 6 candidate kernel ABI mismatch")
+        semantic_authority = cycle.artifacts["semantic_authority_snapshot_v351"]
+        expected_dynamics = tuple(
+            item.parameter_pin.key
+            for item in sorted(semantic_authority.dynamics_parameters, key=lambda item: item.parameter_family)
+        )
+        for candidate in candidates.candidates:
+            if candidate.graph.applications:
+                if not candidate.execution_authority_ref:
+                    raise ValueError("Stage 6 candidate lacks exact execution authority envelope")
+                if candidate.semantic_authority_snapshot_fingerprint != semantic_authority.snapshot_fingerprint:
+                    raise ValueError("Stage 6 candidate semantic authority snapshot mismatch")
+                if tuple(pin.key for pin in candidate.dynamics_parameter_pins) != expected_dynamics:
+                    raise ValueError("Stage 6 candidate dynamics parameter pins mismatch")
+                rebound_graph, rebound_authority = semantic_authority.bind_execution_authority(
+                    candidate.graph,
+                    operation="compose",
+                    context_ref=cycle.context_ref,
+                    permission_ref=cycle.permission_ref,
+                    projection_authority_pins=candidate.projection_authority_pins,
+                    causal_mechanism_pins=candidate.causal_mechanism_pins,
+                    policy_adapter_pins=candidate.policy_adapter_pins,
+                    require_projection_authority=candidate.projection_authority_required,
+                )
+                if rebound_graph != candidate.graph or rebound_authority.envelope_ref != candidate.execution_authority_ref:
+                    raise ValueError("Stage 6 candidate execution authority envelope cannot be replayed exactly")
+                if rebound_authority.use_authorization_pins != candidate.use_authorization_pins:
+                    raise ValueError("Stage 6 candidate use authorization pins mismatch")
         service = self.services.recurrent_semantic_solver
         if service is None:
             return self._gap(capability.stage, "recurrent_semantic_solver")
         graph, trace = service.run(
             csir_candidates=cycle.artifacts["csir_candidates"],
             authority_snapshot=cycle.artifacts["authority_snapshot"],
+            semantic_authority_snapshot_v351=cycle.artifacts["semantic_authority_snapshot_v351"],
+            dynamics_parameters=cycle.artifacts["semantic_authority_snapshot_v351"].dynamics_parameters,
             read_generation=cycle.artifacts["read_generation"],
             budgets=cycle.artifacts["runtime_budgets"],
         )
@@ -531,6 +602,15 @@ class V351RuntimeCoordinator:
             raise ValueError("activation graph belongs to another AuthorityGeneration")
         if graph.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("activation graph kernel ABI mismatch")
+        semantic_authority = cycle.artifacts["semantic_authority_snapshot_v351"]
+        expected_dynamics = tuple(
+            item.parameter_pin.key
+            for item in sorted(semantic_authority.dynamics_parameters, key=lambda item: item.parameter_family)
+        )
+        if graph.semantic_authority_snapshot_fingerprint != semantic_authority.snapshot_fingerprint:
+            raise ValueError("activation graph semantic authority snapshot mismatch")
+        if tuple(pin.key for pin in graph.dynamics_parameter_pins) != expected_dynamics:
+            raise ValueError("activation graph dynamics parameter pins mismatch")
         return self._performed(activation_graph=graph, activation_trace=trace)
 
     def stage_07_stabilize_semantic_attractors(self, cycle, capability):
@@ -541,6 +621,7 @@ class V351RuntimeCoordinator:
             activation_graph=cycle.artifacts["activation_graph"],
             activation_trace=cycle.artifacts["activation_trace"],
             authority_snapshot=cycle.artifacts["authority_snapshot"],
+            semantic_authority_snapshot_v351=cycle.artifacts["semantic_authority_snapshot_v351"],
             budgets=cycle.artifacts["runtime_budgets"],
         )
         if not isinstance(result, SemanticAttractorSet):
@@ -549,6 +630,15 @@ class V351RuntimeCoordinator:
             raise ValueError("semantic attractors belong to another AuthorityGeneration")
         if result.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("semantic attractor kernel ABI mismatch")
+        semantic_authority = cycle.artifacts["semantic_authority_snapshot_v351"]
+        expected_dynamics = tuple(
+            item.parameter_pin.key
+            for item in sorted(semantic_authority.dynamics_parameters, key=lambda item: item.parameter_family)
+        )
+        if result.semantic_authority_snapshot_fingerprint != semantic_authority.snapshot_fingerprint:
+            raise ValueError("semantic attractor semantic authority snapshot mismatch")
+        if tuple(pin.key for pin in result.dynamics_parameter_pins) != expected_dynamics:
+            raise ValueError("semantic attractor dynamics parameter pins mismatch")
         return self._performed(
             semantic_attractors=result,
             partial_meaning=result.partial_meaning,

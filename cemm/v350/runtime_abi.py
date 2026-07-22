@@ -9,8 +9,8 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from .csir.authority import CURRENT_KERNEL_ABI
-from .csir.canonical import semantic_fingerprint
-from .csir.model import CSIRCandidate, CSIRGraph, CSIRRef
+from .csir.canonical_v351 import exact_fingerprint, semantic_fingerprint
+from .csir.model import CSIRCandidate, CSIRGraph, CSIRRef, ExactAuthorityPin
 from .runtime_generations import AuthoritySnapshot, ReadGeneration
 from .schema.model import semantic_fingerprint as runtime_fingerprint
 
@@ -98,6 +98,8 @@ class CSIRCandidateSet:
                 raise ValueError("CSIR candidate authority/kernel ABI differs from candidate set")
             if semantic_fingerprint(item.graph) != item.semantic_fingerprint:
                 raise ValueError("CSIR candidate semantic fingerprint is not kernel-derived")
+            if exact_fingerprint(item.graph) != item.exact_fingerprint:
+                raise ValueError("CSIR candidate exact fingerprint is not kernel-derived")
 
     @property
     def semantic_fingerprints(self) -> tuple[str, ...]:
@@ -110,12 +112,16 @@ class ActivationGraph:
     payload: Any
     authority_generation: int
     authority_fingerprint: str
+    semantic_authority_snapshot_fingerprint: str = ""
+    dynamics_parameter_pins: tuple[ExactAuthorityPin, ...] = ()
     kernel_abi_fingerprint: str = CURRENT_KERNEL_ABI.fingerprint
     proof_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("activation graph kernel ABI mismatch")
+        if len({pin.key for pin in self.dynamics_parameter_pins}) != len(self.dynamics_parameter_pins):
+            raise ValueError("activation graph dynamics pins must be unique")
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,12 +164,16 @@ class SemanticAttractorSet:
     convergence: ConvergenceAssessment
     authority_generation: int
     authority_fingerprint: str
+    semantic_authority_snapshot_fingerprint: str = ""
+    dynamics_parameter_pins: tuple[ExactAuthorityPin, ...] = ()
     kernel_abi_fingerprint: str = CURRENT_KERNEL_ABI.fingerprint
     proof_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.kernel_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("semantic attractor set kernel ABI mismatch")
+        if len({pin.key for pin in self.dynamics_parameter_pins}) != len(self.dynamics_parameter_pins):
+            raise ValueError("semantic attractor dynamics pins must be unique")
         fps = tuple(item.semantic_fingerprint for item in self.attractors)
         if len(fps) != len(set(fps)):
             raise ValueError("attractor set contains duplicate semantic equivalence classes")
@@ -183,6 +193,8 @@ class CognitiveCyclePins:
     channel_ref: str
     target_language: str | None
     cycle_time: str
+    semantic_authority_snapshot_fingerprint: str = ""
+    dynamics_parameter_pins: tuple[ExactAuthorityPin, ...] = ()
     runtime_attestation_ref: str = ""
 
     def __post_init__(self) -> None:

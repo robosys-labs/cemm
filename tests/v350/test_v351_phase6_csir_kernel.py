@@ -208,13 +208,19 @@ def test_compiler_rejects_opaque_legacy_input_and_requires_closure_proof_for_app
 
 
 def test_compiler_deduplicates_semantic_classes_and_recomputes_kernel_identity():
+    # Deduplication itself is tested without executable applications. Opaque closure-ref
+    # strings are no longer authority after Phase 7 and are covered by the rejection test.
+    left = CSIRGraph(terms=(SemanticTerm("x", TermKind.LITERAL, literal_value="same"),),
+                     root_refs=(CSIRRef(CSIRNodeKind.TERM, "x"),))
+    right = CSIRGraph(terms=(SemanticTerm("renamed", TermKind.LITERAL, literal_value="same"),),
+                      root_refs=(CSIRRef(CSIRNodeKind.TERM, "renamed"),))
     compiler = ExactCSIRCompiler()
-    a = CSIRCandidateFragment("a", relation_graph(), evidence_refs=("e1",), closure_proof_refs=("closure:1",))
-    b = CSIRCandidateFragment("b", relation_graph(app_ref="other", left_ref="l", right_ref="r"), evidence_refs=("e2",), closure_proof_refs=("closure:2",))
+    a = CSIRCandidateFragment("a", left, evidence_refs=("e1",))
+    b = CSIRCandidateFragment("b", right, evidence_refs=("e2",))
     result = compiler.compile_fragments((a, b), authority_generation=7, authority_fingerprint="auth7")
     assert len(result.candidates) == 1
     candidate = result.candidates[0]
     assert candidate.semantic_fingerprint == semantic_fingerprint(candidate.graph)
     assert candidate.kernel_abi_fingerprint == CURRENT_KERNEL_ABI.fingerprint
     assert candidate.evidence_refs == ("e1", "e2")
-    assert candidate.closure_proof_refs == ("closure:1", "closure:2")
+    assert candidate.closure_proof_refs == ()

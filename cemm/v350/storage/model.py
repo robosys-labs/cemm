@@ -13,12 +13,27 @@ from math import isfinite
 from typing import Any, Generic, Iterable, Mapping, TypeVar
 
 from ..schema.model import SchemaLifecycleStatus, semantic_fingerprint
-from ..uol.model import CapabilityStatus
 
 
 class StrEnum(str, Enum):
     def __str__(self) -> str:
         return self.value
+
+
+class CapabilityStatus(StrEnum):
+    """Structural capability-state discriminator owned by canonical storage.
+
+    Action concepts remain data-driven schema refs; this enum describes only the state
+    of a capability instance and no longer imports the quarantined UOL model.
+    """
+
+    AVAILABLE = "available"
+    CONDITIONAL = "conditional"
+    DEGRADED = "degraded"
+    BLOCKED = "blocked"
+    UNAVAILABLE = "unavailable"
+    TERMINATED = "terminated"
+    UNKNOWN = "unknown"
 
 
 class RecordKind(StrEnum):

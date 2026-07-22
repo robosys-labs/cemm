@@ -10,7 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from ..schema.model import SchemaClass, UseOperation, semantic_fingerprint
+from ..schema.model import SchemaClass, semantic_fingerprint
+from .applicability_index_v351 import SchemaApplicabilityIndex
 from .model import ProjectionStatus, ReferentKnowledgeView
 
 
@@ -46,6 +47,7 @@ class ReferentKnowledgeClosureCompiler:
         projections: Mapping[str, ReferentKnowledgeView],
         *,
         snapshot,
+        applicability_index: SchemaApplicabilityIndex,
     ) -> tuple[SemanticClosureCandidate, ...]:
         self.store.assert_snapshot(snapshot)
         registry = self.store.repositories.schemas.registry(snapshot=snapshot)
@@ -64,10 +66,9 @@ class ReferentKnowledgeClosureCompiler:
                 schema = registry.schema(schema_ref, revision)
             except Exception:
                 return
-            if not schema.use_profile.permits(
-                UseOperation.COMPOSE, provisional=True
-            ):
-                return
+            # Stage 4 emits structural/evidential applicability only. Executable
+            # use authority belongs to the exact v3.5.1 profile/use artifacts pinned at
+            # Stage 0 and is enforced at/after the Stage-5 compiler barrier.
             key = (
                 view.referent_ref,
                 schema.schema_ref,
@@ -106,10 +107,8 @@ class ReferentKnowledgeClosureCompiler:
             # latent composition candidate; it does not assert that the referent
             # currently has a value for that property.
             type_refs = set(view.type_closure.type_refs)
-            for schema in registry.active_schemas(SchemaClass.PROPERTY):
+            for schema in applicability_index.property_schemas_for_types(type_refs, registry):
                 holder_types = set(getattr(schema, "holder_type_refs", ()))
-                if holder_types and not holder_types.intersection(type_refs):
-                    continue
                 add(
                     view,
                     schema.schema_ref,

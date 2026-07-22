@@ -452,6 +452,14 @@ class CSIRCandidate:
     evidence_refs: tuple[str, ...] = ()
     closure_proof_refs: tuple[str, ...] = ()
     hard_constraint_trace_refs: tuple[str, ...] = ()
+    execution_authority_ref: str = ""
+    semantic_authority_snapshot_fingerprint: str = ""
+    dynamics_parameter_pins: tuple[ExactAuthorityPin, ...] = ()
+    use_authorization_pins: tuple[ExactAuthorityPin, ...] = ()
+    projection_authority_pins: tuple[ExactAuthorityPin, ...] = ()
+    causal_mechanism_pins: tuple[ExactAuthorityPin, ...] = ()
+    policy_adapter_pins: tuple[ExactAuthorityPin, ...] = ()
+    projection_authority_required: bool = False
     prior_score: float = 0.0
 
     def __post_init__(self) -> None:
@@ -470,6 +478,14 @@ class CSIRCandidate:
         _unique(self.evidence_refs, "candidate evidence refs")
         _unique(self.closure_proof_refs, "candidate closure proof refs")
         _unique(self.hard_constraint_trace_refs, "candidate hard constraint refs")
+        for label, pins in (
+            ("dynamics", self.dynamics_parameter_pins),
+            ("use authorization", self.use_authorization_pins),
+            ("projection authority", self.projection_authority_pins),
+            ("causal mechanism", self.causal_mechanism_pins),
+            ("policy/adapter", self.policy_adapter_pins),
+        ):
+            _unique((pin.key for pin in pins), f"candidate {label} pins")
 
 
 @dataclass(frozen=True, slots=True)
@@ -477,14 +493,36 @@ class CSIRCandidateFragment:
     fragment_ref: str
     graph: CSIRGraph
     evidence_refs: tuple[str, ...] = ()
+    # Opaque refs are retained only as historical/audit metadata. Stage 5 authority
+    # requires the typed payloads below and validates them against the normalized graph.
     closure_proof_refs: tuple[str, ...] = ()
+    closure_proofs: tuple[Any, ...] = ()
     hard_constraint_trace_refs: tuple[str, ...] = ()
+    hard_constraint_traces: tuple[Any, ...] = ()
+    projection_authority_pins: tuple[ExactAuthorityPin, ...] = ()
+    causal_mechanism_pins: tuple[ExactAuthorityPin, ...] = ()
+    policy_adapter_pins: tuple[ExactAuthorityPin, ...] = ()
+    requires_projection_authority: bool = False
     prior_score: float = 0.0
 
     def __post_init__(self) -> None:
         _ref(self.fragment_ref, "fragment_ref")
         if not math.isfinite(self.prior_score):
             raise CSIRValidationError("fragment prior score must be finite")
+        _unique(self.evidence_refs, "fragment evidence refs")
+        _unique(self.closure_proof_refs, "fragment closure proof refs")
+        proof_refs = tuple(getattr(item, "proof_ref", "") for item in self.closure_proofs)
+        if any(not ref for ref in proof_refs):
+            raise CSIRValidationError("typed closure proof payloads require stable proof_ref")
+        _unique(proof_refs, "fragment typed closure proofs")
+        _unique(self.hard_constraint_trace_refs, "fragment hard constraint refs")
+        trace_refs = tuple(getattr(item, "trace_ref", "") for item in self.hard_constraint_traces)
+        if any(not ref for ref in trace_refs):
+            raise CSIRValidationError("typed hard constraint traces require stable trace_ref")
+        _unique(trace_refs, "fragment typed hard constraint traces")
+        _unique((pin.key for pin in self.projection_authority_pins), "fragment projection authority pins")
+        _unique((pin.key for pin in self.causal_mechanism_pins), "fragment causal mechanism pins")
+        _unique((pin.key for pin in self.policy_adapter_pins), "fragment policy/adapter pins")
 
 
 def _ref(value: str, label: str) -> None:

@@ -6,6 +6,7 @@ from cemm.v350.csir import (
     CURRENT_KERNEL_ABI, CSIRCandidateFragment, CSIRGraph, CSIRNodeKind, CSIRRef,
     ExactAuthorityPin, ExactCSIRCompiler, PortBinding, SemanticApplication, SemanticTerm, TermKind,
 )
+from cemm.v350.csir.authority_v351 import AuthoritySnapshotV351
 from cemm.v350.orchestration import StageExecutionStatus
 from cemm.v350.runtime_abi import CSIRCandidateSet
 from cemm.v350.runtime_v351 import RuntimeServices, V351RuntimeCoordinator
@@ -39,6 +40,9 @@ def cycle(closure):
             "referent_projections": {}, "state_space_projections": {},
             "semantic_closure_candidates": tuple(closure),
             "authority_snapshot": object(), "read_generation": object(),
+            "semantic_authority_snapshot_v351": AuthoritySnapshotV351(
+                generation=3, authority_fingerprint="authority:3",
+            ),
         },
     )
 
@@ -55,7 +59,13 @@ def test_stage5_never_falls_back_to_opaque_uol_or_legacy_closure_objects():
 
 
 def test_stage5_kernel_recomputes_candidate_identity_from_exact_fragment():
-    fragment = CSIRCandidateFragment("f", graph(), closure_proof_refs=("closure:exact",))
+    # After Phase 7, opaque closure-proof strings are no longer authority.
+    # The kernel recomputes identity from the graph itself.
+    simple = CSIRGraph(
+        terms=(SemanticTerm("x", TermKind.LITERAL, literal_value="same"),),
+        root_refs=(CSIRRef(CSIRNodeKind.TERM, "x"),),
+    )
+    fragment = CSIRCandidateFragment("f", simple, evidence_refs=("e1",))
     result = coordinator().stage_05_compile_candidates_to_csir(cycle((fragment,)), capability())
     assert result.status is StageExecutionStatus.PERFORMED
     candidate_set = result.artifacts["csir_candidates"]
@@ -66,9 +76,13 @@ def test_stage5_kernel_recomputes_candidate_identity_from_exact_fragment():
 
 
 def test_signed_candidate_provider_is_still_revalidated_by_kernel():
+    simple = CSIRGraph(
+        terms=(SemanticTerm("x", TermKind.LITERAL, literal_value="same"),),
+        root_refs=(CSIRRef(CSIRNodeKind.TERM, "x"),),
+    )
     class Provider:
         def compile(self, **_kwargs):
-            return {"candidate_fragments": (CSIRCandidateFragment("f", graph(), closure_proof_refs=("closure:exact",)),)}
+            return {"candidate_fragments": (CSIRCandidateFragment("f", simple, evidence_refs=("e1",)),)}
     result = coordinator(Provider()).stage_05_compile_candidates_to_csir(cycle(()), capability())
     assert result.status is StageExecutionStatus.PERFORMED
     candidate = result.artifacts["csir_candidates"].candidates[0]

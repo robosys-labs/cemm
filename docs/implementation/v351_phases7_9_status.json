@@ -1,0 +1,65 @@
+{
+  "baseline_commit": "e09fdfd5e4db041a46165e7f3573605fbc88cacd",
+  "implementation": "v3.5.1-phases-7-9",
+  "status": "PATCH_READY_UNVERIFIED_IN_FULL_REPOSITORY",
+  "phases": {
+    "7": {
+      "status": "implemented_in_patch",
+      "features": [
+        "semantic_definition_authority_split",
+        "exact_definition_closure",
+        "typed_closure_proof",
+        "authority_snapshot_v351",
+        "profile_free_semantic_identity",
+        "stage0_split_authority_pin",
+        "typed_hard_constraint_trace",
+        "exact_executable_authority_envelope",
+        "stage6_7_dynamics_snapshot_pinning",
+        "non_definition_exact_dependency_leaf_closure",
+        "unique_profile_selection_replay",
+        "boundary_owned_projection_authority_requirement",
+        "lock_free_semantic_index_build"
+      ]
+    },
+    "8": {
+      "status": "implemented_in_patch",
+      "features": [
+        "one_way_legacy_to_csir_compiler",
+        "migration_classification",
+        "stage5_shadow_comparator",
+        "no_runtime_fallback",
+        "content_bound_meaning_schema_split_migration",
+        "schema_lifecycle_use_profile_equivalence_validation"
+      ]
+    },
+    "9": {
+      "status": "implemented_in_patch",
+      "features": [
+        "grounded_semantic_substrate",
+        "minimum_reviewed_english_package",
+        "reversible_unicode_normalization",
+        "authority_generation_property_applicability_index",
+        "content_addressed_english_package_pin",
+        "deterministic_unicode_alignment",
+        "generic_construction_program_vm_only",
+        "exact_language_package_activation_against_authority_snapshot",
+        "ambiguous_no_preserved_as_multiple_senses"
+      ]
+    }
+  },
+  "phase0_6_corrective_findings": 20,
+  "issues_to_mark_fixed_unverified_after_tests": [
+    "CI-017",
+    "CI-018",
+    "CI-019"
+  ],
+  "issues_intentionally_remaining_open": [
+    "CI-013",
+    "CI-014",
+    "CI-016",
+    "CI-020",
+    "CI-021"
+  ],
+  "release_artifacts_regeneration_required": true,
+  "github_write_attempt": "blocked_403_resource_not_accessible_by_integration"
+}

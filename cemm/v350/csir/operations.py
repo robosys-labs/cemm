@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Iterable, Mapping
 
-from .canonical import ComparisonAssessment, compare as compare_graphs, normalize
+from .canonical_v351 import ComparisonAssessment, compare as compare_graphs, normalize
 from .model import (
     CSIRGraph,
     CSIRNodeKind,
@@ -386,8 +386,11 @@ def _unify_ref(
     if left.kind is CSIRNodeKind.APPLICATION:
         l = _app_map(left_graph)[left.ref]
         r = _app_map(right_graph)[right.ref]
-        if l.predicate_pin != r.predicate_pin or set(l.operational_profile_pins) != set(r.operational_profile_pins):
-            raise KernelOperationError("application exact authority differs")
+        # Operational profiles authorize/use an application but do not alter denotation.
+        # Semantic unification therefore compares the exact predicate definition only;
+        # executable-profile compatibility is enforced by the execution-authority envelope.
+        if l.predicate_pin != r.predicate_pin:
+            raise KernelOperationError("application semantic predicate authority differs")
         lb = _binding_map(left_graph).get(left.ref, ())
         rb = _binding_map(right_graph).get(right.ref, ())
         lmap = {x.port_pin: x for x in lb}; rmap = {x.port_pin: x for x in rb}
