@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import combinations, product
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from ..schema.model import semantic_fingerprint
 from .model import (
@@ -78,6 +78,7 @@ class ConstructionMatcher:
         sense_to_form = {
             item.candidate_ref: form_map.get(item.form_candidate_ref) for item in senses
         }
+        observation_map = {item.observation_ref: item for item in observations}
 
         result: list[ConstructionCandidate] = []
         for construction in self.registry.active_constructions():
@@ -98,6 +99,7 @@ class ConstructionMatcher:
                     trigger_refs,
                     forms,
                     senses,
+                    observations,
                     dependencies,
                     constituencies,
                     category_by_form_candidate,
@@ -112,6 +114,7 @@ class ConstructionMatcher:
                         fillers,
                         form_map=form_map,
                         sense_to_form=sense_to_form,
+                        observation_map=observation_map,
                         allow_shared=bool(construction.metadata.get("allow_shared_fillers")),
                     ):
                         continue
@@ -119,7 +122,7 @@ class ConstructionMatcher:
                     spans = tuple(
                         span
                         for ref in all_refs
-                        if (span := _candidate_span(ref, form_map, sense_to_form)) is not None
+                        if (span := _candidate_span(ref, form_map, sense_to_form, observation_map)) is not None
                     )
                     if not spans:
                         continue
@@ -141,6 +144,7 @@ class ConstructionMatcher:
                     evidence = tuple(sorted(set(
                         self._evidence(
                             all_refs,
+                            observations,
                             forms,
                             senses,
                             dependencies,
@@ -170,7 +174,7 @@ class ConstructionMatcher:
                         slot_fillers=fillers,
                         span=span,
                         confidence=self._confidence(
-                            all_refs, forms, senses, dependencies, constituencies
+                            all_refs, observations, forms, senses, dependencies, constituencies
                         ),
                         evidence_refs=evidence
                         or (f"construction:{construction.construction_ref}",),
@@ -254,6 +258,7 @@ class ConstructionMatcher:
         trigger_refs: tuple[str, ...],
         forms: tuple[FormCandidate, ...],
         senses: tuple[SenseCandidate, ...],
+        observations: tuple[FormObservation, ...],
         dependencies: tuple[DependencyParseEvidence, ...],
         constituencies: tuple[ConstituencyParseEvidence, ...],
         category_by_form_candidate,
@@ -271,6 +276,9 @@ class ConstructionMatcher:
             for item in senses
             if sense_to_form.get(item.candidate_ref) is not None
         })
+        candidate_spans.update({item.observation_ref: item.span for item in observations})
+        observation_by_ref = {item.observation_ref: item for item in observations}
+        covered_observation_refs = {ref for form in forms for ref in form.observation_refs}
         arcs_by_relation: dict[str, list] = defaultdict(list)
         for parse in dependencies:
             for arc in parse.arcs:
@@ -281,6 +289,8 @@ class ConstructionMatcher:
                 nodes_by_label[node.label].append(node)
 
         def candidate_observations(ref: str) -> set[str]:
+            if ref in observation_by_ref:
+                return {ref}
             if ref in form_by_candidate:
                 return set(form_by_candidate[ref].observation_refs)
             form = sense_to_form.get(ref)
@@ -383,6 +393,35 @@ class ConstructionMatcher:
                         eligible_forms.append(form.candidate_ref)
 
             refs = tuple(sorted(set((*eligible_senses, *eligible_forms))))
+
+            # A versioned ConstructionRecord may explicitly license raw unresolved
+            # observations for one slot. This is authority-carrying reviewed data,
+            # never a global unknown-word heuristic.
+            raw_open = construction.metadata.get("open_observation_slots", {})
+            open_config = None
+            if isinstance(raw_open, Mapping):
+                configured = raw_open.get(slot.slot_ref)
+                if configured is True:
+                    open_config = {}
+                elif isinstance(configured, Mapping):
+                    open_config = dict(configured)
+            elif slot.slot_ref in {str(value) for value in (raw_open or ())}:
+                open_config = {}
+            if open_config is not None:
+                categories = {
+                    str(value) for value in open_config.get(
+                        "observation_categories", ("word", "number")
+                    )
+                }
+                open_refs = tuple(
+                    item.observation_ref
+                    for item in observations
+                    if item.observation_ref not in covered_observation_refs
+                    and item.category in categories
+                    and syntax_licensed(item.observation_ref, slot)
+                )
+                refs = tuple(sorted(set((*refs, *open_refs))))
+
             if slot.slot_ref in {
                 str(value)
                 for value in construction.metadata.get(
@@ -421,6 +460,7 @@ class ConstructionMatcher:
         *,
         form_map: dict[str, FormCandidate],
         sense_to_form: dict[str, FormCandidate | None],
+        observation_map: dict[str, FormObservation],
         allow_shared: bool,
     ) -> bool:
         if allow_shared:
@@ -429,6 +469,9 @@ class ConstructionMatcher:
         for _, refs in fillers:
             observations: set[str] = set()
             for ref in refs:
+                if ref in observation_map:
+                    observations.add(ref)
+                    continue
                 form = form_map.get(ref) or sense_to_form.get(ref)
                 if form is not None:
                     observations.update(form.observation_refs)
@@ -440,6 +483,7 @@ class ConstructionMatcher:
     @staticmethod
     def _evidence(
         refs: tuple[str, ...],
+        observations: tuple[FormObservation, ...],
         forms: tuple[FormCandidate, ...],
         senses: tuple[SenseCandidate, ...],
         dependencies: tuple[DependencyParseEvidence, ...],
@@ -447,6 +491,7 @@ class ConstructionMatcher:
     ) -> tuple[str, ...]:
         wanted = set(refs)
         return tuple(sorted({
+            *(ref for item in observations if item.observation_ref in wanted for ref in item.evidence_refs),
             *(ref for item in forms if item.candidate_ref in wanted for ref in item.evidence_refs),
             *(ref for item in senses if item.candidate_ref in wanted for ref in item.evidence_refs),
             *(item.parse_ref for item in dependencies),
@@ -454,11 +499,12 @@ class ConstructionMatcher:
         }))
 
     @staticmethod
-    def _confidence(refs, forms, senses, dependencies, constituencies) -> float:
+    def _confidence(refs, observations, forms, senses, dependencies, constituencies) -> float:
         wanted = set(refs)
-        values = [
+        values = [0.35 for item in observations if item.observation_ref in wanted]
+        values.extend([
             item.confidence for item in forms if item.candidate_ref in wanted
-        ]
+        ])
         values.extend(
             item.confidence for item in senses if item.candidate_ref in wanted
         )
@@ -471,6 +517,10 @@ def _candidate_span(
     ref: str,
     form_map: dict[str, FormCandidate],
     sense_to_form: dict[str, FormCandidate | None],
+    observation_map: dict[str, FormObservation],
 ) -> Span | None:
+    observation = observation_map.get(ref)
+    if observation is not None:
+        return observation.span
     form = form_map.get(ref) or sense_to_form.get(ref)
     return None if form is None else form.span

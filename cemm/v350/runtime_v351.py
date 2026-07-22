@@ -16,11 +16,24 @@ from .csir.authority import CURRENT_KERNEL_ABI
 from .csir.authority_v351 import AuthoritySnapshotV351
 from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
-from .composition import DeterministicAttractorStabilizer, DeterministicCSIRComposer, DeterministicMeaningDynamics
+from .composition import (
+    DeterministicAttractorStabilizer, DeterministicMeaningDynamics,
+    ProjectionAwareDeterministicCSIRComposer,
+)
 from .conversation import SessionDiscourseMemory, SessionMemoryCommitCoordinatorV351, participant_frame_session_anchors
 from .discourse import DiscourseAuthorityMap, DiscourseStructureBuilderV351
 from .epistemic import EpistemicAdmissionPolicy, EpistemicCoordinatorV351
 from .query import GroundedQueryEngineV351
+from .response import (
+    ConversationalGoalBridgeV351, ResponseAuthorityMapV351, ResponseCSIRBuilderV351,
+    ResponseFamily, compile_minimum_response_authority,
+)
+from .realization.english_v351 import (
+    EnglishCSIRRealizerV351, EnglishRealizationPackageV351,
+    compile_minimum_english_realization_package,
+)
+from .output.runtime_v351 import InProcessTextEmissionEngineV351, OutputDiscourseCommitterV351
+from .output.authorization_v351 import DisclosureAuthorizationGrantV351
 from .effects.authorization import (
     EffectAuthorizationBoundary, EffectAuthorizationReceipt, EffectAuthorizationRequest,
 )
@@ -38,7 +51,7 @@ from .orchestration import (
     StageExecutionStatus, StageOutcome,
 )
 from .realization.policy import SelectiveRoundTripPolicy, VerificationMode
-from .realization.proof import RealizationProof, RealizationProofVerifier
+from .realization.proof_v351 import ExactRealizationProof, ExactRealizationProofVerifier
 from .runtime_abi import (
     ActivationGraph, ActivationTrace, CSIRCandidateSet, CognitiveCyclePins,
     EmissionObservationArtifact, EvidenceEnvelope, EvidenceLattice, GroundingCandidateSet,
@@ -70,6 +83,10 @@ class RuntimeServices:
     composition_constraint_evaluator: Any | None = None
     discourse_authority_map: DiscourseAuthorityMap | None = None
     epistemic_admission_policy: EpistemicAdmissionPolicy | None = None
+    response_authority_map: ResponseAuthorityMapV351 | None = None
+    english_realization_package: EnglishRealizationPackageV351 | None = None
+    text_channel_contract_pin: PinnedRecord | None = None
+    disclosure_authorization_grants: tuple[DisclosureAuthorizationGrantV351, ...] = ()
     csir_compiler: Any | None = None
     recurrent_semantic_solver: Any | None = None
     semantic_attractor_stabilizer: Any | None = None
@@ -159,14 +176,22 @@ class V351RuntimeCoordinator:
         self._authority_index_lock = RLock()
         self._schema_applicability_indexes = {}
         self.effect_boundary = EffectAuthorizationBoundary(store)
-        self.realization_proof_verifier = RealizationProofVerifier(store, self.semantic_capabilities)
+        self.realization_proof_verifier = ExactRealizationProofVerifier()
         self.roundtrip_policy = SelectiveRoundTripPolicy()
         self.session_memory = SessionDiscourseMemory()
+        self._minimum_response_authority = compile_minimum_response_authority()
+        self._minimum_english_realization = compile_minimum_english_realization_package()
+        response_authority_map = (
+            self.services.response_authority_map or self._minimum_response_authority.authority_map
+        )
+        english_realization_package = (
+            self.services.english_realization_package or self._minimum_english_realization
+        )
         # Canonical pre-learned baseline services. Injected signed services replace
         # these by slot; this is not legacy fallback and never introduces another
         # semantic representation. All paths consume/produce exact CSIR.
         self._canonical_services = {
-            "csir_compiler": DeterministicCSIRComposer(
+            "csir_compiler": ProjectionAwareDeterministicCSIRComposer(
                 store, constraint_evaluator=self.services.composition_constraint_evaluator
             ),
             "recurrent_semantic_solver": DeterministicMeaningDynamics(),
@@ -179,6 +204,21 @@ class V351RuntimeCoordinator:
             ),
             "query_engine": GroundedQueryEngineV351(self.session_memory),
             "commit_coordinator": SessionMemoryCommitCoordinatorV351(self.session_memory),
+            # Phase-12 alpha bridge. The general Phase-16 arbitrator may replace this slot.
+            "goal_engine": ConversationalGoalBridgeV351(),
+            "response_csir_builder": ResponseCSIRBuilderV351(
+                authority_map=response_authority_map, session_memory=self.session_memory,
+            ),
+            "realization_engine": EnglishCSIRRealizerV351(
+                package=english_realization_package,
+                response_authority_map=response_authority_map,
+                session_memory=self.session_memory,
+            ),
+            "emission_engine": InProcessTextEmissionEngineV351(
+                channel_contract_pin=self.services.text_channel_contract_pin,
+                disclosure_authorization_grants=self.services.disclosure_authorization_grants,
+            ),
+            "output_discourse_engine": OutputDiscourseCommitterV351(self.session_memory),
         }
 
     def _schema_applicability_index(self, registry, capability: StageCapability):
@@ -443,7 +483,7 @@ class V351RuntimeCoordinator:
                 item.anchor_ref: item
                 for item in (
                     *tuple(getattr(envelope, "discourse_anchors", ()) or ()),
-                    *session_snapshot.discourse_anchors,
+                    *self.session_memory.grounding_anchors(cycle.context_ref, cycle.permission_ref),
                     *participant_anchors,
                     *cycle_participant_anchors,
                 )
@@ -453,7 +493,10 @@ class V351RuntimeCoordinator:
                 context_ref=cycle.context_ref,
                 discourse_anchors=tuple(anchors[key] for key in sorted(anchors)),
                 multimodal_tracks=tuple(getattr(envelope, "multimodal_tracks", ()) or ()),
-                system_outputs=tuple(getattr(envelope, "system_output_anchors", ()) or ()),
+                system_outputs=(
+                    *tuple(getattr(envelope, "system_output_anchors", ()) or ()),
+                    *self.session_memory.system_output_anchors(cycle.context_ref, cycle.permission_ref),
+                ),
                 constraints=tuple(getattr(envelope, "grounding_constraints", ()) or ()),
                 snapshot=snapshot,
             )
@@ -835,7 +878,7 @@ class V351RuntimeCoordinator:
         return getattr(plan, name, default)
 
     def stage_19_realize_target_language_or_modality(self, c, cap):
-        service = self.services.realization_engine
+        service = self._resolved_service("realization_engine")
         if service is None:
             return self._gap(cap.stage, "realization_engine")
         read_store, _effect_store = self._stage_stores(c, cap)
@@ -853,19 +896,32 @@ class V351RuntimeCoordinator:
         plan = result.get("realization_plan")
         candidates = tuple(result.get("surface_candidates", ()) or ())
         proofs = tuple(result.get("realization_proofs", ()) or ())
+        if bool(result.get("no_response_required", False)):
+            if plan is None:
+                raise ValueError("NO_RESPONSE_REQUIRED realization requires explicit plan artifact")
+            return StageOutcome(
+                StageExecutionStatus.PERFORMED,
+                artifacts={
+                    "realization_plan": plan,
+                    "surface_candidates": (),
+                    "realization_proofs": (),
+                    "_no_response_required": True,
+                    "_effect_authorization_receipts": _effect_store.receipts,
+                },
+            )
         if plan is None or not candidates or not proofs:
             return StageOutcome(
                 StageExecutionStatus.DEFERRED,
-                frontier_refs=("frontier:realization:incomplete-proof-carrying-result",),
+                frontier_refs=tuple(result.get("frontier_refs", ()) or ("frontier:realization:incomplete-proof-carrying-result",)),
             )
 
         refs = [self._candidate_ref(item) for item in candidates]
         if any(not ref for ref in refs) or len(refs) != len(set(refs)):
             raise ValueError("realization candidates require unique stable candidate refs")
-        by_candidate: dict[str, RealizationProof] = {}
+        by_candidate: dict[str, ExactRealizationProof] = {}
         for proof in proofs:
-            if not isinstance(proof, RealizationProof):
-                raise TypeError("Stage 19 realization_proofs must be RealizationProof records")
+            if not isinstance(proof, ExactRealizationProof):
+                raise TypeError("Stage 19 realization_proofs must be ExactRealizationProof records")
             if proof.surface_candidate_ref in by_candidate:
                 raise ValueError("one surface candidate cannot carry multiple competing realization proofs")
             if (
@@ -924,6 +980,25 @@ class V351RuntimeCoordinator:
         return getattr(value, name, default)
 
     def stage_20_verify_semantic_equivalence_and_authorize_emission(self, c, cap):
+        if bool(c.artifacts.get("_no_response_required", False)):
+            decision = c.artifacts.get("response_decision")
+            if decision is None or getattr(decision, "family", None) is not ResponseFamily.NO_RESPONSE_REQUIRED:
+                raise ValueError("semantic silence marker requires NO_RESPONSE_REQUIRED ResponseDecision")
+            silence = EmissionObservationArtifact(
+                emission_ref=artifact_ref("observed-non-emission", c.cycle_ref, decision.decision_ref),
+                surface_candidate_ref="no-response:" + decision.selected_candidate_ref,
+                output_text="",
+                evidence_refs=tuple(filter(None, (decision.no_response_reason_ref, *decision.proof_refs))),
+                channel_ref=c.channel_ref,
+            )
+            return StageOutcome(
+                StageExecutionStatus.PERFORMED,
+                artifacts={
+                    "semantic_preservation_assessments": (),
+                    "emission_authorization": {"decision": "no_response_required", "reason_ref": decision.no_response_reason_ref},
+                    "emission_observation": silence,
+                },
+            )
         plan = c.artifacts["realization_plan"]
         candidates = tuple(c.artifacts["surface_candidates"])
         proofs = tuple(c.artifacts["realization_proofs"])
@@ -946,7 +1021,19 @@ class V351RuntimeCoordinator:
             semantic_input=c.artifacts["response_decision"],
             surface=surface,
             proof=proof,
+            authority_snapshot=c.artifacts["semantic_authority_snapshot_v351"],
         )
+        service = self._resolved_service("emission_engine")
+        verification_channel = self._plan_value(plan, "channel_metadata", None)
+        if service is not None:
+            channel_metadata = getattr(service, "verification_channel_metadata", None)
+            if callable(channel_metadata):
+                read_view = CycleArtifactStoreView(self.store, c.workspace)
+                before_channel_read = self.store.current_read_generation()
+                verification_channel = channel_metadata(cycle=c, store=read_view)
+                after_channel_read = self.store.current_read_generation()
+                if before_channel_read.fingerprint != after_channel_read.fingerprint:
+                    raise ValueError("emission channel metadata lookup must be read-only")
         decision = self.roundtrip_policy.decide(
             preservation=preservation,
             novelty=bool(self._plan_value(plan, "novelty", False)),
@@ -954,7 +1041,7 @@ class V351RuntimeCoordinator:
             audit_required=bool(self._plan_value(plan, "audit_required", False)),
             release_competence=bool(self._plan_value(plan, "release_competence", False)),
             unreviewed_transform=bool(self._plan_value(plan, "unreviewed_transform", False)),
-            channel=self._plan_value(plan, "channel_metadata", None),
+            channel=verification_channel,
         )
         if decision.mode is VerificationMode.BLOCK:
             return StageOutcome(
@@ -995,7 +1082,7 @@ class V351RuntimeCoordinator:
             if not independent_proof_refs:
                 raise ValueError("independent semantic round-trip pass requires proof lineage")
 
-        service = self.services.emission_engine
+        # emission service was resolved before preservation policy so exact channel transforms could influence round-trip.
         if service is None:
             return self._gap(cap.stage, "emission_engine")
         authorize = getattr(service, "authorize", None)
@@ -1032,7 +1119,39 @@ class V351RuntimeCoordinator:
                 frontier_refs=tuple(authorization.get("frontier_refs", ()) or ("frontier:emission:gate-denied",)),
             )
 
+        disclosure_grant = authorization.get("disclosure_authorization_grant")
+        if not isinstance(disclosure_grant, DisclosureAuthorizationGrantV351):
+            return StageOutcome(
+                StageExecutionStatus.BLOCKED,
+                artifacts={
+                    "semantic_preservation_assessments": (preservation,),
+                    "emission_authorization": dict(authorization),
+                },
+                frontier_refs=("frontier:emission:typed-disclosure-authorization-required",),
+            )
+        try:
+            disclosure_grant.validate_exact_authority(c.artifacts["semantic_authority_snapshot_v351"])
+            grant_allowed, grant_reasons = disclosure_grant.matches(
+                cycle=c, selected_candidate=selected
+            )
+        except Exception:
+            grant_allowed, grant_reasons = False, ("disclosure_grant_invalid",)
+        if not grant_allowed:
+            return StageOutcome(
+                StageExecutionStatus.BLOCKED,
+                artifacts={
+                    "semantic_preservation_assessments": (preservation,),
+                    "emission_authorization": dict(authorization),
+                },
+                frontier_refs=tuple(
+                    "frontier:emission:" + reason for reason in grant_reasons
+                ) or ("frontier:emission:disclosure-grant-rejected",),
+            )
         auth_pins = tuple(authorization.get("authorization_pins", ()) or ())
+        supplied = {(pin.key, pin.record_fingerprint) for pin in auth_pins if isinstance(pin, PinnedRecord)}
+        required = {(pin.key, pin.record_fingerprint) for pin in disclosure_grant.substrate_pins}
+        if not required.issubset(supplied):
+            raise ValueError("emission authorization omitted exact disclosure substrate pins")
         if any(not isinstance(pin, PinnedRecord) for pin in auth_pins):
             raise TypeError("emission authorization_pins must be exact PinnedRecord values")
         proof_refs = tuple(sorted(set((
@@ -1059,7 +1178,13 @@ class V351RuntimeCoordinator:
                 capability_nonce=cap.nonce,
                 effect_kind=EffectKind.PROTECTED_DISCLOSURE,
                 target_refs=(selected_ref,),
-                metadata={"disclosure_gate_passed": bool(authorization.get("disclosure_gate_passed", False))},
+                metadata={
+                    "disclosure_gate_passed": bool(authorization.get("disclosure_gate_passed", False)),
+                    "disclosure_authorization_ref": str(authorization.get("disclosure_authorization_ref", "")),
+                    "disclosure_authorization_content_hash": str(
+                        authorization.get("disclosure_authorization_content_hash", "")
+                    ),
+                },
                 **common,
             )
         )

@@ -183,6 +183,10 @@ class EffectAuthorizationBoundary:
                 reasons.append("explicit_audience_required")
             if not metadata.get("disclosure_gate_passed", False):
                 reasons.append("disclosure_gate_not_passed")
+            if not str(metadata.get("disclosure_authorization_ref", "")).strip():
+                reasons.append("exact_disclosure_authorization_ref_required")
+            if not str(metadata.get("disclosure_authorization_content_hash", "")).strip():
+                reasons.append("exact_disclosure_authorization_content_hash_required")
             if not request.authorization_pins:
                 reasons.append("protected_disclosure_requires_exact_authorization_pins")
             if not request.proof_refs:

@@ -144,6 +144,12 @@ class GroundingCandidateProvider:
                         continue
                     if required_discourse_roles and not required_discourse_roles.intersection(anchor.role_refs):
                         continue
+                    surface_match = bool(
+                        anchor.normalized_surface_keys
+                        and _normalize(mention.normalized_surface) in set(anchor.normalized_surface_keys)
+                    )
+                    if bool(mention.metadata.get("unresolved_form")) and not required_discourse_roles and not surface_match:
+                        continue
                     if mention.expected_storage_kinds and StorageKind.ORDINARY not in mention.expected_storage_kinds:
                         continue
                     if not _target_accepts_storage(mention.target_class, StorageKind.ORDINARY):
@@ -155,7 +161,14 @@ class GroundingCandidateProvider:
                     if key in seen_targets:
                         continue
                     evidence = anchor.evidence_refs or mention.evidence_refs
-                    factors = [
+                    factors = []
+                    if surface_match:
+                        factors.append(_factor(
+                            mention, anchor.referent_ref, GroundingFactorKind.IDENTITY, 4.5,
+                            evidence, "session reference surface matches unresolved mention", hard=True,
+                            metadata={"anchor_ref": anchor.anchor_ref, "normalized_surface": _normalize(mention.normalized_surface)},
+                        ))
+                    factors.extend([
                         _factor(
                             mention, anchor.referent_ref, GroundingFactorKind.DISCOURSE,
                             2.0 + anchor.salience + min(anchor.turn_index, 20) * 0.01,
@@ -172,7 +185,7 @@ class GroundingCandidateProvider:
                             evidence, "scope-local referent uses ordinary referent storage semantics", hard=True,
                             metadata={"storage_kind": StorageKind.ORDINARY.value},
                         ),
-                    ]
+                    ])
                     if mention.expected_type_refs:
                         factors.append(_factor(
                             mention, anchor.referent_ref, GroundingFactorKind.TYPE, 2.0, evidence,

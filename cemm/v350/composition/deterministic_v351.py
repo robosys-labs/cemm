@@ -134,6 +134,10 @@ class DeterministicCSIRComposer:
     def _candidate_span(ref: str, form_lattice) -> tuple[int, int] | None:
         forms = {item.candidate_ref: item for item in form_lattice.form_candidates}
         senses = {item.candidate_ref: item for item in form_lattice.sense_candidates}
+        observations = {item.observation_ref: item for item in form_lattice.observations}
+        observation = observations.get(ref)
+        if observation is not None:
+            return observation.span.start, observation.span.end
         form = forms.get(ref)
         if form is None:
             sense = senses.get(ref)

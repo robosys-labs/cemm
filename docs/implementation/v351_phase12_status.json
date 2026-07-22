@@ -1,0 +1,62 @@
+{
+  "version": "v3.5.1",
+  "phase": 12,
+  "baseline_commit": "d871615e8e7152bd38a599832c2830107557a87b",
+  "implementation_status": "IMPLEMENTED_BASELINE_LOCKED",
+  "verification_status": "STATIC_VALIDATION_PASS_FULL_SUITE_PENDING",
+  "canonical_semantic_representation": "CSIR_v2_only",
+  "response_families": [
+    "ANSWER_QUERY",
+    "REPORT_STATE",
+    "REPORT_RELATION",
+    "REPORT_EVENT",
+    "ACKNOWLEDGE_TARGETED_CLAIM",
+    "REQUEST_CLARIFICATION",
+    "CORRECT_PRIOR_OUTPUT",
+    "QUALIFY_UNCERTAINTY",
+    "REPORT_CAPABILITY",
+    "ASK_LEARNING_QUESTION",
+    "NO_RESPONSE_REQUIRED"
+  ],
+  "major_phase12_components": [
+    "CSIR-native ResponseDecision/ResponseCSIRCandidate contracts",
+    "conversational semantic goal bridge",
+    "exact response-family authority compiler",
+    "English CSIR realization package and exact lexical/application-frame extensions",
+    "trace-complete semantic-preservation proof",
+    "cycle-pinned authority proof verification",
+    "typed content-addressed disclosure authorization",
+    "channel-aware selective independent round-trip policy",
+    "observed output discourse/session-output memory",
+    "generic first-use unresolved-observation construction slots"
+  ],
+  "phase9_11_fixes": [
+    "Stage-3 local grounding prior no longer becomes resolved identity authority",
+    "non-actual/unknown explicit contexts remain non-admitting",
+    "event/discourse/context re-abstraction hardened",
+    "open-world yes/no query semantics",
+    "prior system output queryable as output occurrence but not world belief",
+    "partial meaning identity preserved across canonical deduplication",
+    "reference surfaces committed only from resolved mention chains",
+    "session recency replacement advances deterministically",
+    "output semantic targets persist for follow-up grounding",
+    "same source/reported context allowed for distinct claim roles",
+    "proof verification bound to Stage-0 authority",
+    "scope/coordination included in exact realization coverage"
+  ],
+  "focused_test_count": 29,
+  "static_validation": {
+    "ast_parse": "PASS",
+    "compileall": "PASS",
+    "apply_script_syntax": "PASS"
+  },
+  "full_suite": "NOT_RUN_IN_THIS_ENVIRONMENT",
+  "release_inputs_required": [
+    "new immutable authority generation containing reviewed response/discourse/English realization authority",
+    "exact active channel adapter contract",
+    "typed DisclosureAuthorizationGrantV351 exact-pinned in AuthoritySnapshotV351",
+    "exact durable disclosure policy/competence substrate pins",
+    "reviewed lowered minimum-English construction metadata for any first-use open_observation_slots"
+  ],
+  "phase13_plan": "docs/implementation/v351_phase13_implementation_plan.md"
+}

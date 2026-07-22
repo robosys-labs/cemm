@@ -159,6 +159,7 @@ class DiscourseAnchor:
     role_refs: tuple[str, ...] = ()
     type_refs: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
+    normalized_surface_keys: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for value, label in ((self.anchor_ref, "anchor_ref"), (self.referent_ref, "referent_ref"),
@@ -169,6 +170,7 @@ class DiscourseAnchor:
         _unique(self.role_refs, "discourse roles")
         _unique(self.type_refs, "discourse types")
         _unique(self.evidence_refs, "discourse evidence")
+        _unique(self.normalized_surface_keys, "discourse normalized surface keys")
         if not self.evidence_refs:
             raise ValueError("discourse anchor requires evidence")
 

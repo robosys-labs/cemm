@@ -182,6 +182,13 @@ class MentionCompiler:
                     continue
                 if any(_overlaps(observation.span, span) for span in covered):
                     continue
+                construction_links = tuple(construction_roles.get(observation.observation_ref, ()))
+                construction_refs = tuple(sorted({item[0] for item in construction_links}))
+                construction_roles_for_observation = tuple(sorted({item[1] for item in construction_links}))
+                evidence = tuple(sorted(
+                    set(observation.evidence_refs)
+                    | {ref for _, _, refs in construction_links for ref in refs}
+                ))
                 mentions.append(MentionHypothesis(
                     mention_ref=self._mention_ref(lattice.source_ref, observation.span, (observation.observation_ref,)),
                     source_ref=lattice.source_ref,
@@ -189,10 +196,17 @@ class MentionCompiler:
                     surface=observation.original,
                     normalized_surface=observation.canonical,
                     target_class=MentionTargetClass.REFERENT,
+                    construction_candidate_refs=construction_refs,
                     context_ref=context_ref,
+                    syntactic_role=(construction_roles_for_observation[0] if len(construction_roles_for_observation) == 1 else ""),
                     salience=0.35,
-                    evidence_refs=observation.evidence_refs,
-                    metadata={"unresolved_form": True, "script": observation.script},
+                    evidence_refs=evidence,
+                    metadata={
+                        "unresolved_form": True,
+                        "script": observation.script,
+                        "candidate_syntactic_roles": construction_roles_for_observation,
+                        "open_observation_construction_refs": construction_refs,
+                    },
                 ))
         return tuple(sorted(mentions, key=lambda item: (item.span.start, item.span.end, item.mention_ref)))
 
