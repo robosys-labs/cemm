@@ -44,7 +44,11 @@ class EvidenceSummary:
 
     @property
     def contradicted(self) -> bool:
-        return bool(self.counterexample_link_refs or self.correction_link_refs or self.retraction_link_refs)
+        return bool(
+            self.counterexample_link_refs
+            or self.correction_link_refs
+            or self.retraction_link_refs
+        )
 
 
 class FrontierCollector:
@@ -53,42 +57,78 @@ class FrontierCollector:
     def __init__(self, budget: LearningBudget | None = None) -> None:
         self.budget = budget or LearningBudget()
 
+    @staticmethod
+    def probe(observation: FrontierObservation) -> LearningFrontierRecord:
+        return LearningFrontierRecord(
+            frontier_ref="frontier:probe",
+            missing_contract=observation.missing_contract,
+            expected_record_kinds=tuple(
+                sorted(
+                    set(observation.expected_record_kinds),
+                    key=lambda item: item.value,
+                )
+            ),
+            expected_schema_classes=tuple(
+                sorted(
+                    set(observation.expected_schema_classes),
+                    key=lambda item: item.value,
+                )
+            ),
+            accepted_anchor_types=tuple(
+                sorted(set(observation.accepted_anchor_types))
+            ),
+            evidence_refs=tuple(sorted(set(observation.evidence_refs))),
+            candidate_refs=tuple(sorted(set(observation.candidate_refs))),
+            target_ref=observation.target_ref,
+            dependency_depth=observation.dependency_depth,
+            sensitivity=observation.sensitivity,
+            best_question_uol_ref=observation.best_question_uol_ref,
+            context_ref=observation.context_ref,
+            permission_ref=observation.permission_ref,
+        )
+
+    @classmethod
+    def frontier_ref_for_observation(cls, observation: FrontierObservation) -> str:
+        probe = cls.probe(observation)
+        return "learning-frontier:" + semantic_fingerprint(
+            "learning-frontier-ref", probe.structural_key, 24
+        )
+
     def collect(
         self,
         observations: Iterable[FrontierObservation],
         existing: Iterable[LearningFrontierRecord] = (),
     ) -> tuple[LearningFrontierRecord, ...]:
-        by_key = {item.structural_key: item for item in existing if item.resolution_status != FrontierResolutionStatus.SUPERSEDED}
+        by_key = {
+            item.structural_key: item
+            for item in existing
+            if item.resolution_status != FrontierResolutionStatus.SUPERSEDED
+        }
         produced: list[LearningFrontierRecord] = []
+
         for observation in observations:
             if observation.dependency_depth > self.budget.maximum_dependency_depth:
                 continue
-            probe = LearningFrontierRecord(
-                frontier_ref="frontier:probe",
-                missing_contract=observation.missing_contract,
-                expected_record_kinds=tuple(sorted(set(observation.expected_record_kinds), key=lambda item: item.value)),
-                expected_schema_classes=tuple(sorted(set(observation.expected_schema_classes), key=lambda item: item.value)),
-                accepted_anchor_types=tuple(sorted(set(observation.accepted_anchor_types))),
-                evidence_refs=tuple(sorted(set(observation.evidence_refs))),
-                candidate_refs=tuple(sorted(set(observation.candidate_refs))),
-                target_ref=observation.target_ref,
-                dependency_depth=observation.dependency_depth,
-                sensitivity=observation.sensitivity,
-                best_question_uol_ref=observation.best_question_uol_ref,
-                context_ref=observation.context_ref,
-                permission_ref=observation.permission_ref,
-            )
+
+            probe = self.probe(observation)
             current = by_key.get(probe.structural_key)
+
             if current is None:
-                frontier_ref = "learning-frontier:" + semantic_fingerprint("learning-frontier-ref", probe.structural_key, 24)
-                item = replace(probe, frontier_ref=frontier_ref)
+                item = replace(
+                    probe,
+                    frontier_ref=self.frontier_ref_for_observation(observation),
+                )
             else:
-                merged_evidence = tuple(sorted(set(
-                    (*current.evidence_refs, *observation.evidence_refs)
-                )))
-                merged_candidates = tuple(sorted(set(
-                    (*current.candidate_refs, *observation.candidate_refs)
-                )))
+                merged_evidence = tuple(
+                    sorted(
+                        set((*current.evidence_refs, *observation.evidence_refs))
+                    )
+                )
+                merged_candidates = tuple(
+                    sorted(
+                        set((*current.candidate_refs, *observation.candidate_refs))
+                    )
+                )
                 if (
                     merged_evidence == current.evidence_refs
                     and merged_candidates == current.candidate_refs
@@ -99,29 +139,38 @@ class FrontierCollector:
                         == current.best_question_uol_ref
                     )
                 ):
-                    # Same structural observation in a later Stage-22 consolidation
-                    # must not manufacture a new frontier revision.
                     continue
+
                 item = replace(
                     current,
                     revision=current.revision + 1,
                     supersedes_revision=current.revision,
                     evidence_refs=merged_evidence,
                     candidate_refs=merged_candidates,
-                    dependency_depth=min(current.dependency_depth, observation.dependency_depth),
-                    best_question_uol_ref=observation.best_question_uol_ref or current.best_question_uol_ref,
+                    dependency_depth=min(
+                        current.dependency_depth, observation.dependency_depth
+                    ),
+                    best_question_uol_ref=(
+                        observation.best_question_uol_ref
+                        or current.best_question_uol_ref
+                    ),
                     resolution_status=FrontierResolutionStatus.OPEN,
                 )
+
             by_key[item.structural_key] = item
             produced.append(item)
             if len(by_key) >= self.budget.maximum_frontiers:
                 break
-        return tuple(sorted(produced, key=lambda item: (item.frontier_ref, item.revision)))
+
+        return tuple(
+            sorted(
+                produced,
+                key=lambda item: (item.frontier_ref, item.revision),
+            )
+        )
 
 
 class EvidenceAggregator:
-    """Aggregate attributable evidence without converting frequency into authority."""
-
     @staticmethod
     def summarize(links: Iterable[LearningEvidenceLink]) -> EvidenceSummary:
         support = []
@@ -132,6 +181,7 @@ class EvidenceAggregator:
         counter_lineages: set[str] = set()
         support_weight = 0.0
         counter_weight = 0.0
+
         for item in links:
             if item.polarity == EvidencePolarity.SUPPORT:
                 support.append(item.link_ref)
@@ -149,7 +199,14 @@ class EvidenceAggregator:
                 retraction.append(item.link_ref)
                 counter_lineages.update(item.source_lineage_refs)
                 counter_weight += item.weight
+
         return EvidenceSummary(
-            tuple(sorted(support)), tuple(sorted(counter)), tuple(sorted(correction)), tuple(sorted(retraction)),
-            tuple(sorted(support_lineages)), tuple(sorted(counter_lineages)), support_weight, counter_weight,
+            tuple(sorted(support)),
+            tuple(sorted(counter)),
+            tuple(sorted(correction)),
+            tuple(sorted(retraction)),
+            tuple(sorted(support_lineages)),
+            tuple(sorted(counter_lineages)),
+            support_weight,
+            counter_weight,
         )

@@ -487,7 +487,7 @@ def test_snapshot_detects_overlay_fingerprint_change_without_revision_change() -
             overlay_fingerprint=store.overlay_fingerprint,
         )
         store._overlay.execute(
-            "UPDATE meta SET value=? WHERE key='record_set_fingerprint'",
+            "UPDATE meta SET value=? WHERE key='overlay_root'",
             ("overlay-records:fixture-drift",),
         )
         store._overlay.commit()

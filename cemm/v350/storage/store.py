@@ -123,8 +123,17 @@ class _StagedResolver:
         return tuple(base[key] for key in sorted(base))
 
     def resolve_any(self, record_ref: str) -> tuple[StoredRecord[Any], ...]:
+        kinds = {
+            kind
+            for (kind, ref, _revision) in self._staged
+            if ref == record_ref
+        }
+        kinds.update(
+            item.record_kind
+            for item in self._store.resolve_any(record_ref)
+        )
         result = []
-        for kind in RecordKind:
+        for kind in sorted(kinds, key=lambda item: item.value):
             value = self.resolve(kind, record_ref)
             if value is not None:
                 result.append(value)
@@ -152,6 +161,7 @@ class SemanticStore:
         self._lock = threading.RLock()
         self._overlay = sqlite3.connect(
             self.overlay_path,
+            uri=self.overlay_path.startswith("file:"),
             check_same_thread=False,
             isolation_level=None,
         )
@@ -198,6 +208,23 @@ class SemanticStore:
 
             self._repositories = RepositorySet(self)
         return self._repositories
+
+    def current_authority_snapshot(self, *, runtime_attestation_ref: str = ""):
+        from ..runtime_generations import AuthoritySnapshot
+        authority_fp = get_meta(self._overlay, "authority_fingerprint", "")
+        if not authority_fp:
+            authority_fp = semantic_fingerprint(
+                "legacy-authority-root",
+                (self.boot_fingerprint, self.overlay_fingerprint),
+                64,
+            )
+        generation = int(get_meta(self._overlay, "authority_generation", "1"))
+        return AuthoritySnapshot(
+            generation=generation,
+            authority_fingerprint=authority_fp,
+            boot_fingerprint=self.boot_fingerprint,
+            runtime_attestation_ref=runtime_attestation_ref,
+        )
 
     def close(self) -> None:
         with self._lock:
@@ -321,7 +348,7 @@ class SemanticStore:
             item = self.get_record(kind, record_ref, snapshot=snapshot)
             if item is not None:
                 result.append(item)
-        return tuple(result)
+        return tuple(sorted(result, key=lambda item: (item.record_kind.value, item.revision)))
 
     def is_invalidated(
         self,

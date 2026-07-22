@@ -816,14 +816,43 @@ class StoreSnapshot:
     boot_fingerprint: str
     overlay_fingerprint: str
     opened_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    snapshot_ref: str = ""
+    authority_generation: int = 1
+    authority_fingerprint: str = ""
+    world_revision: int = 0
+    discourse_revision: int = 0
+    runtime_observation_revision: int = 0
+    audit_revision: int = 0
+    effect_journal_revision: int = 0
+
+    @property
+    def read_generation(self):
+        from ..runtime_generations import ReadGeneration
+        authority_fingerprint = self.authority_fingerprint or semantic_fingerprint(
+            "legacy-authority-root",
+            (self.boot_fingerprint, self.overlay_fingerprint),
+            64,
+        )
+        return ReadGeneration(
+            store_revision=self.store_revision,
+            authority_generation=self.authority_generation,
+            authority_fingerprint=authority_fingerprint,
+            world_revision=self.world_revision,
+            discourse_revision=self.discourse_revision,
+            runtime_observation_revision=self.runtime_observation_revision,
+            audit_revision=self.audit_revision,
+            effect_journal_revision=self.effect_journal_revision,
+            overlay_fingerprint=self.overlay_fingerprint,
+            boot_fingerprint=self.boot_fingerprint,
+        )
+
+    @property
+    def cognitive_fingerprint(self) -> str:
+        return self.read_generation.cognitive_fingerprint
 
     @property
     def fingerprint(self) -> str:
-        return semantic_fingerprint(
-            "store-snapshot",
-            (self.store_revision, self.boot_fingerprint, self.overlay_fingerprint),
-            64,
-        )
+        return self.read_generation.fingerprint
 
 
 def _confidence(value: float, label: str) -> None:

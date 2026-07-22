@@ -468,23 +468,17 @@ class HardenedRuntimeCoordinator(CanonicalRuntimeCoordinator):
             persist=True,
             source_ref="source:stage22:late-learning-consolidation",
         )
-        from .learning.runtime_advance import RuntimeLearningAdvancer
-        advance = RuntimeLearningAdvancer(
-            self.store,
-            inducers=tuple(self.services.learning_inducers),
-            competence_executors=dict(
-                self.services.learning_competence_executors
-            ),
-        ).advance(
-            context_ref=cycle.context_ref,
-            permission_ref=cycle.permission_ref,
-        )
+        advance = None
         base = super().stage_22_finalize(cycle, capability)
         return StageOutcome(
             {
                 **dict(base.artifacts),
                 "late_learning_trace": trace,
                 "late_learning_advance_trace": advance,
+                "maintenance_event": (
+                    "learning_evidence_changed",
+                    tuple(trace.frontier_refs),
+                ) if trace.frontier_refs else cycle.artifacts.get("maintenance_event"),
             },
             frontier_refs=base.frontier_refs,
             errors=base.errors,

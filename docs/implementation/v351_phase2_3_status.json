@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "target_baseline_commit": "2cad08fd5bbf2f0a6dd74500a450dad2cdee4883",
+  "phase1_review": {
+    "status": "fixes_included_unverified",
+    "issues": [
+      {
+        "ref": "P1-RACE-IDENTITY",
+        "severity": "critical",
+        "fix": "Concurrent session participant CAS recovery validates deterministic referent, evidence, and type-assertion fingerprints before accepting the concurrent result."
+      },
+      {
+        "ref": "P1-ATTESTATION-NESTED-MUTABILITY",
+        "severity": "high",
+        "fix": "Runtime consumers receive a sealed deep-frozen manifest copy after full attestation."
+      },
+      {
+        "ref": "CI-011-CI-012",
+        "severity": "critical",
+        "fix": "RuntimeLearningAdvancer undefined dependency_pins call corrected and exact proposal dependency pins preserved into LearningPackageRecord."
+      }
+    ]
+  },
+  "phase2": {
+    "status": "implemented_unverified",
+    "implements": [
+      "AuthorityGeneration/AuthoritySnapshot separate from mutable ReadGeneration",
+      "WorldRevision",
+      "DiscourseRevision",
+      "RuntimeObservationRevision",
+      "AuditRevision",
+      "EffectJournalRevision",
+      "generation-scoped caches",
+      "record-ref indexed resolve_any using existing record_index_ref_idx",
+      "direct indexed get_record",
+      "append-authenticated overlay root",
+      "independent SQLite read snapshots",
+      "short writer lock only",
+      "dependency-aware generation advancement",
+      "authority-only schema/language registry invalidation"
+    ],
+    "issues_addressed": [
+      "CI-005",
+      "CI-006",
+      "CI-007",
+      "CI-008"
+    ]
+  },
+  "phase3": {
+    "status": "implemented_unverified",
+    "implements": [
+      "CycleWorkspace",
+      "FrontierEffect",
+      "CycleCompletionStatus",
+      "bounded pre-commit read-generation restart",
+      "SessionParticipantLifecycle",
+      "RuntimeObservationSnapshot",
+      "MaintenanceScheduler",
+      "startup/change-driven runtime observation",
+      "event-driven learning activation/advancement",
+      "targeted learning-frontier lookup",
+      "no request-frequency LearningRuntimeActivator",
+      "no request-frequency RuntimeSelfObserver",
+      "Stage14-19 compatibility durable copies isolated to AuditRevision rather than semantic authority/world state"
+    ],
+    "issues_addressed": [
+      "CI-003",
+      "CI-009",
+      "CI-010",
+      "CI-015",
+      "CI-025",
+      "CI-026"
+    ]
+  },
+  "deliberately_deferred": {
+    "phase4": [
+      "proof-carrying realization as the normal path",
+      "selective independent semantic roundtrip",
+      "final removal of compatibility audit persistence where legacy downstream exact-pin coordinators still require durable records"
+    ],
+    "phase5_plus": [
+      "v3.5.1 Stage ABI rename/rewrite",
+      "CSIR v2",
+      "UOL-to-CSIR compiler",
+      "recurrent attractor solver"
+    ]
+  },
+  "verification_required": [
+    "python -m compileall cemm/v350",
+    "pytest -q tests/v350/test_v351_phase0_1_stabilization.py",
+    "pytest -q tests/v350/test_v351_phase2_3_runtime_substrate.py",
+    "python tools/capture_v351_phase0_baseline.py --strict-hot-path",
+    "python tools/benchmark_v351_phase2_store.py --scales 1000,10000,100000",
+    "pytest -q tests/v350"
+  ]
+}

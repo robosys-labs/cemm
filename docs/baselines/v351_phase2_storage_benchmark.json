@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "scale": 100,
+      "write_ms": {
+        "median": 2.1567499989032513,
+        "p95_approx": 3.3891999992192723,
+        "max": 8.592700000008335,
+        "first_100_median": 2.1567499989032513,
+        "last_100_median": 2.1567499989032513
+      },
+      "concurrency": {
+        "1": {
+          "wall_ms": 27.558800000406336,
+          "worker_median_ms": 26.342000001022825,
+          "worker_max_ms": 26.342000001022825
+        },
+        "4": {
+          "wall_ms": 44.060000000172295,
+          "worker_median_ms": 22.27879999736615,
+          "worker_max_ms": 43.017399999371264
+        },
+        "16": {
+          "wall_ms": 141.51700000002165,
+          "worker_median_ms": 104.32919999948354,
+          "worker_max_ms": 137.45530000232975
+        },
+        "64": {
+          "wall_ms": 496.3510000015958,
+          "worker_median_ms": 197.96465000035823,
+          "worker_max_ms": 317.4381999997422
+        }
+      },
+      "query_plan": [
+        "3 | 0 | 54 | SEARCH record_index USING COVERING INDEX record_index_ref_idx (record_ref=?)"
+      ],
+      "generation": {
+        "store_revision": 100,
+        "authority_generation": 1,
+        "world_revision": 100,
+        "audit_revision": 100
+      }
+    },
+    {
+      "scale": 1000,
+      "write_ms": {
+        "median": 4.303949999666656,
+        "p95_approx": 5.679099998815218,
+        "max": 28.274799999053357,
+        "first_100_median": 4.579250000460888,
+        "last_100_median": 4.190949999610893
+      },
+      "concurrency": {
+        "1": {
+          "wall_ms": 31.04180000082124,
+          "worker_median_ms": 30.37130000302568,
+          "worker_max_ms": 30.37130000302568
+        },
+        "4": {
+          "wall_ms": 41.06060000049183,
+          "worker_median_ms": 34.61385000264272,
+          "worker_max_ms": 39.700299999822164
+        },
+        "16": {
+          "wall_ms": 184.73939999967115,
+          "worker_median_ms": 151.6986500009807,
+          "worker_max_ms": 178.76230000183568
+        },
+        "64": {
+          "wall_ms": 716.7781999996805,
+          "worker_median_ms": 577.4080499995762,
+          "worker_max_ms": 711.2745999984327
+        }
+      },
+      "query_plan": [
+        "3 | 0 | 54 | SEARCH record_index USING COVERING INDEX record_index_ref_idx (record_ref=?)"
+      ],
+      "generation": {
+        "store_revision": 1000,
+        "authority_generation": 1,
+        "world_revision": 1000,
+        "audit_revision": 1000
+      }
+    },
+    {
+      "scale": 10000,
+      "write_ms": {
+        "median": 4.557150001346599,
+        "p95_approx": 6.005999999615597,
+        "max": 315.8696999998938,
+        "first_100_median": 4.095300000699353,
+        "last_100_median": 4.415800000060699
+      },
+      "concurrency": {
+        "1": {
+          "wall_ms": 32.86459999799263,
+          "worker_median_ms": 32.12809999968158,
+          "worker_max_ms": 32.12809999968158
+        },
+        "4": {
+          "wall_ms": 60.21099999998114,
+          "worker_median_ms": 38.3241999988968,
+          "worker_max_ms": 59.358599999541184
+        },
+        "16": {
+          "wall_ms": 170.58410000026925,
+          "worker_median_ms": 134.37549999980547,
+          "worker_max_ms": 168.6069999996107
+        },
+        "64": {
+          "wall_ms": 736.7029000015464,
+          "worker_median_ms": 561.0785500011843,
+          "worker_max_ms": 701.2031999984174
+        }
+      },
+      "query_plan": [
+        "3 | 0 | 54 | SEARCH record_index USING COVERING INDEX record_index_ref_idx (record_ref=?)"
+      ],
+      "generation": {
+        "store_revision": 10000,
+        "authority_generation": 1,
+        "world_revision": 10000,
+        "audit_revision": 10000
+      }
+    }
+  ]
+}

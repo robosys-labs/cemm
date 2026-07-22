@@ -862,6 +862,14 @@ _META_DEFAULTS = {
     "boot_fingerprint": "",
     "compiled_manifest_fingerprint": "",
     "record_set_fingerprint": "",
+    "authority_generation": "1",
+    "authority_fingerprint": "",
+    "world_revision": "0",
+    "discourse_revision": "0",
+    "runtime_observation_revision": "0",
+    "audit_revision": "0",
+    "effect_journal_revision": "0",
+    "overlay_root": "",
 }
 
 

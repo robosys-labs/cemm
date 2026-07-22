@@ -66,14 +66,26 @@ class RuntimeLearningAdvancer:
         *,
         context_ref: str,
         permission_ref: str,
+        frontier_refs: tuple[str, ...] | None = None,
     ) -> RuntimeLearningAdvanceTrace:
-        frontiers = tuple(
-            item.payload
-            for item in self.store.repositories.learning_frontiers.all()
-            if item.payload.context_ref in {context_ref, "global"}
-            and item.payload.permission_ref in {permission_ref, "public"}
-            and item.payload.resolution_status.value in {"open", "partial"}
-        )
+        if frontier_refs:
+            frontiers = tuple(
+                stored.payload
+                for ref in sorted(set(frontier_refs))
+                for stored in (self.store.get_record(RecordKind.LEARNING_FRONTIER, ref),)
+                if stored is not None
+                and stored.payload.context_ref in {context_ref, "global"}
+                and stored.payload.permission_ref in {permission_ref, "public"}
+                and stored.payload.resolution_status.value in {"open", "partial"}
+            )
+        else:
+            frontiers = tuple(
+                item.payload
+                for item in self.store.repositories.learning_frontiers.all()
+                if item.payload.context_ref in {context_ref, "global"}
+                and item.payload.permission_ref in {permission_ref, "public"}
+                and item.payload.resolution_status.value in {"open", "partial"}
+            )
         candidate_refs = []
         package_refs = []
         competence_refs = []
@@ -112,7 +124,7 @@ class RuntimeLearningAdvancer:
                 )
                 continue
 
-            pins = self._persist_proposals(frontier, tuple(proposals))
+            pins, dependency_pins = self._persist_proposals(frontier, tuple(proposals))
             candidate_refs.extend(pin.record_ref for pin in pins)
             if not pins:
                 deferred.append(
@@ -120,9 +132,7 @@ class RuntimeLearningAdvancer:
                 )
                 continue
 
-            package, links = self._package(
-               frontier, pins, dependency_pins
-           )
+            package, links = self._package(frontier, pins, dependency_pins)
             existing = self.store.get_record(
                 RecordKind.LEARNING_PACKAGE, package.package_ref
             )
@@ -198,6 +208,11 @@ class RuntimeLearningAdvancer:
             unique[(kind, ref, revision)] = proposal
         operations = []
         pins = []
+        dependency_pins = {
+            pin.key: pin
+            for proposal in proposals
+            for pin in proposal.dependency_pins
+        }
         with self.store.snapshot() as snapshot:
             for (kind, ref, revision), proposal in sorted(
                 unique.items(),
@@ -273,10 +288,13 @@ class RuntimeLearningAdvancer:
         if operations:
             result = self.store.apply_patch(patch)
             if not result.committed:
-                return ()
-        return tuple(pins)
+                return (), ()
+        return (
+            tuple(pins),
+            tuple(dependency_pins[key] for key in sorted(dependency_pins)),
+        )
 
-    def _package(self, frontier, pins):
+    def _package(self, frontier, pins, dependency_pins):
         requested = []
         raw_uses = dict(
             frontier.metadata.get("requested_use_decisions", {})
@@ -305,11 +323,7 @@ class RuntimeLearningAdvancer:
                 or frontier.missing_contract.split(":", 1)[0]
             ),
             candidate_pins=pins,
-            dependency_pins=tuple(
-                pin
-                for proposal in ()
-                for pin in proposal.dependency_pins
-            ),
+            dependency_pins=tuple(dependency_pins),
             frontier_refs=(frontier.frontier_ref,),
             evidence_link_refs=(),
             counterexample_link_refs=(),

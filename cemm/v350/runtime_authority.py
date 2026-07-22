@@ -11,9 +11,10 @@ new attestation can become active.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import importlib
+from types import MappingProxyType
 from threading import RLock
 from typing import Any
 from uuid import uuid4
@@ -120,6 +121,30 @@ class RuntimeAttestation:
         )
 
 
+def _deep_freeze(value):
+    if isinstance(value, dict):
+        return MappingProxyType({key: _deep_freeze(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_freeze(item) for item in value)
+    if isinstance(value, set):
+        return frozenset(_deep_freeze(item) for item in value)
+    return value
+
+
+def _sealed_manifest_copy(manifest):
+    fields = {}
+    for name in ("metadata", "release_capabilities"):
+        value = getattr(manifest, name, None)
+        if value is not None:
+            fields[name] = _deep_freeze(dict(value))
+    bindings = getattr(manifest, "runtime_service_bindings", None)
+    if bindings is not None:
+        fields["runtime_service_bindings"] = tuple(
+            _deep_freeze(dict(item)) for item in bindings
+        )
+    return replace(manifest, **fields) if fields else manifest
+
+
 class AttestedRuntimeAuthority:
     """Hot-path authority facade backed by one verified attestation.
 
@@ -131,6 +156,7 @@ class AttestedRuntimeAuthority:
         if guard is None or getattr(guard, "manifest", None) is None:
             raise TypeError("attested authority requires its verified guard")
         self._guard = guard
+        self._sealed_manifest = _sealed_manifest_copy(guard.manifest)
         self.attestation = attestation
         self._lock = RLock()
         self._active = True
@@ -139,7 +165,7 @@ class AttestedRuntimeAuthority:
 
     @property
     def manifest(self) -> Any:
-        return self._guard.manifest
+        return self._sealed_manifest
 
     @property
     def runtime_epoch(self) -> RuntimeEpoch:

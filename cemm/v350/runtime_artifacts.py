@@ -14,18 +14,19 @@ class StageReceipt:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if self.status not in {"performed", "deferred", "blocked", "no_authorized_work"}:
-            raise ValueError(f"invalid stage receipt status: {self.status}")
+        if self.status not in {
+            "performed",
+            "deferred",
+            "blocked",
+            "no_authorized_work",
+        }:
+            raise ValueError(
+                f"invalid stage receipt status: {self.status}"
+            )
 
 
 @dataclass(frozen=True, slots=True)
 class RuntimeInput:
-    """Normalized public input envelope pinned before Stage 0.
-
-    Language hints are evidence only.  They are validated against active language
-    packs at Stage 2 and never route semantic behavior directly.
-    """
-
     content: str
     language_hints: tuple[str, ...] = ()
     emission_idempotency_key: str | None = None
@@ -38,26 +39,76 @@ class RuntimeInput:
 
     def __post_init__(self) -> None:
         if not isinstance(self.content, str):
-            raise TypeError("runtime input content must be text")
-        if len(self.language_hints) != len(set(self.language_hints)):
-            raise ValueError("language hints must be unique")
-        if self.emission_idempotency_key is not None and not self.emission_idempotency_key.strip():
-            raise ValueError("emission idempotency key must be non-empty when supplied")
-        if self.speaker_ref is not None and not self.speaker_ref.strip():
-            raise ValueError("speaker_ref must be non-empty when supplied")
-        if len(self.participant_evidence_refs) != len(set(self.participant_evidence_refs)):
-            raise ValueError("participant evidence refs must be unique")
-        if self.speaker_ref is not None and not self.participant_evidence_refs:
-            raise ValueError("speaker_ref requires explicit participant identity evidence")
-        for values, attribute, label in (
-            (self.discourse_anchors, "anchor_ref", "discourse anchors"),
-            (self.multimodal_tracks, "track_ref", "multimodal tracks"),
-            (self.system_output_anchors, "output_ref", "system-output anchors"),
-            (self.grounding_constraints, "constraint_ref", "grounding constraints"),
+            raise TypeError(
+                "runtime input content must be text"
+            )
+        if len(self.language_hints) != len(
+            set(self.language_hints)
         ):
-            refs = tuple(getattr(item, attribute, None) for item in values)
-            if any(not ref for ref in refs) or len(refs) != len(set(refs)):
-                raise ValueError(f"{label} require unique stable refs")
+            raise ValueError(
+                "language hints must be unique"
+            )
+        if (
+            self.emission_idempotency_key is not None
+            and not self.emission_idempotency_key.strip()
+        ):
+            raise ValueError(
+                "emission idempotency key must be non-empty"
+            )
+        if (
+            self.speaker_ref is not None
+            and not self.speaker_ref.strip()
+        ):
+            raise ValueError(
+                "speaker_ref must be non-empty"
+            )
+        if len(self.participant_evidence_refs) != len(
+            set(self.participant_evidence_refs)
+        ):
+            raise ValueError(
+                "participant evidence refs must be unique"
+            )
+        if (
+            self.speaker_ref is not None
+            and not self.participant_evidence_refs
+        ):
+            raise ValueError(
+                "speaker_ref requires explicit "
+                "participant identity evidence"
+            )
+        for values, attribute, label in (
+            (
+                self.discourse_anchors,
+                "anchor_ref",
+                "discourse anchors",
+            ),
+            (
+                self.multimodal_tracks,
+                "track_ref",
+                "multimodal tracks",
+            ),
+            (
+                self.system_output_anchors,
+                "output_ref",
+                "system-output anchors",
+            ),
+            (
+                self.grounding_constraints,
+                "constraint_ref",
+                "grounding constraints",
+            ),
+        ):
+            refs = tuple(
+                getattr(item, attribute, None)
+                for item in values
+            )
+            if (
+                any(not ref for ref in refs)
+                or len(refs) != len(set(refs))
+            ):
+                raise ValueError(
+                    f"{label} require unique stable refs"
+                )
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +142,14 @@ class CyclePins:
     channel_ref: str
     target_language: str | None
     runtime_version: str
+    authority_generation: int = 1
+    authority_fingerprint: str = ""
+    cognitive_generation_fingerprint: str = ""
+    world_revision: int = 0
+    discourse_revision: int = 0
+    runtime_observation_revision: int = 0
+    audit_revision: int = 0
+    effect_journal_revision: int = 0
     language_pack_pins: tuple[AuthorityPin, ...] = ()
     operation_adapter_pins: tuple[AuthorityPin, ...] = ()
     semantic_analyzer_pins: tuple[AuthorityPin, ...] = ()
@@ -108,17 +167,39 @@ class FinalizationSummary:
     replay_required_refs: tuple[str, ...] = ()
     unresolved_frontier_refs: tuple[str, ...] = ()
     incomplete_budget_refs: tuple[str, ...] = ()
-    invalidation_authority: str = "semantic_store_dependency_graph"
+    invalidation_authority: str = (
+        "semantic_store_dependency_graph"
+    )
 
     def __post_init__(self) -> None:
-        if self.initial_store_revision < 0 or self.final_store_revision < self.initial_store_revision:
-            raise ValueError("finalization store revision must be monotonic")
-        if not self.initial_snapshot_fingerprint or not self.final_snapshot_fingerprint:
-            raise ValueError("finalization requires exact initial/final snapshot fingerprints")
-        if len(self.replay_required_refs) != len(set(self.replay_required_refs)):
-            raise ValueError("replay requirements must be unique")
-        if len(self.unresolved_frontier_refs) != len(set(self.unresolved_frontier_refs)):
-            raise ValueError("finalization frontiers must be unique")
+        if (
+            self.initial_store_revision < 0
+            or self.final_store_revision
+            < self.initial_store_revision
+        ):
+            raise ValueError(
+                "finalization store revision must be monotonic"
+            )
+        if (
+            not self.initial_snapshot_fingerprint
+            or not self.final_snapshot_fingerprint
+        ):
+            raise ValueError(
+                "finalization requires exact "
+                "initial/final snapshot fingerprints"
+            )
+        if len(self.replay_required_refs) != len(
+            set(self.replay_required_refs)
+        ):
+            raise ValueError(
+                "replay requirements must be unique"
+            )
+        if len(self.unresolved_frontier_refs) != len(
+            set(self.unresolved_frontier_refs)
+        ):
+            raise ValueError(
+                "finalization frontiers must be unique"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,9 +234,21 @@ class RuntimeResult:
         return self.context_ref
 
     @property
+    def completion_status(self) -> str:
+        return str(
+            self.artifacts.get(
+                "cycle_completion_status",
+                "PARTIAL",
+            )
+        )
+
+    @property
     def trace(self) -> RuntimeTrace:
         return RuntimeTrace(
-            stages=tuple(str(item.get("stage_name", "")) for item in self.stage_trace),
+            stages=tuple(
+                str(item.get("stage_name", ""))
+                for item in self.stage_trace
+            ),
             details=self.stage_trace,
             errors=self.errors,
         )

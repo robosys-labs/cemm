@@ -134,22 +134,15 @@ class TypedRepository(Generic[T]):
 class SchemaRepository(TypedRepository[MeaningSchema]):
     def __init__(self, store):
         super().__init__(store, RecordKind.SCHEMA, MeaningSchema)
-        self._registry_cache: dict[tuple[int, str, str], SchemaRegistry] = {}
+        self._registry_cache: dict[tuple[int, str], SchemaRegistry] = {}
 
     def registry(self, *, snapshot: StoreSnapshot | None = None) -> SchemaRegistry:
         if snapshot is None:
-            key = (
-                self._store.revision,
-                self._store.boot_fingerprint,
-                self._store.overlay_fingerprint,
-            )
+            authority = self._store.current_authority_snapshot()
+            key = (authority.generation, authority.authority_fingerprint)
         else:
             self._store.assert_snapshot(snapshot)
-            key = (
-                snapshot.store_revision,
-                snapshot.boot_fingerprint,
-                snapshot.overlay_fingerprint,
-            )
+            key = (snapshot.authority_generation, snapshot.authority_fingerprint)
         cached = self._registry_cache.get(key)
         if cached is not None:
             return cached
@@ -504,14 +497,15 @@ class LanguageRepository:
         self.morphology_analysis_rules = TypedRepository(store, RecordKind.MORPHOLOGY_ANALYSIS_RULE, MorphologyAnalysisRuleRecord)
         self.constructions = TypedRepository(store, RecordKind.CONSTRUCTION, ConstructionRecord)
         self.construction_programs = TypedRepository(store, RecordKind.CONSTRUCTION_PROGRAM, ConstructionProgramRecord)
-        self._registry_cache: dict[tuple[int, str, str], LanguageRegistry] = {}
+        self._registry_cache: dict[tuple[int, str], LanguageRegistry] = {}
 
     def registry(self, *, snapshot: StoreSnapshot | None = None) -> LanguageRegistry:
         if snapshot is None:
-            key = (self._store.revision, self._store.boot_fingerprint, self._store.overlay_fingerprint)
+            authority = self._store.current_authority_snapshot()
+            key = (authority.generation, authority.authority_fingerprint)
         else:
             self._store.assert_snapshot(snapshot)
-            key = (snapshot.store_revision, snapshot.boot_fingerprint, snapshot.overlay_fingerprint)
+            key = (snapshot.authority_generation, snapshot.authority_fingerprint)
         cached = self._registry_cache.get(key)
         if cached is not None:
             return cached

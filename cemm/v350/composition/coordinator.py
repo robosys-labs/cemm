@@ -144,6 +144,7 @@ class MeaningComposer:
         selected_hypothesis = selected_cluster[0][0] if selected_cluster else None
         selected_uol = selected_cluster[0][1] if selected_cluster else None
         selected_report = selected_cluster[0][2] if selected_cluster else None
+        intentional_query_refs: set[str] = set()
         if selected_hypothesis is None:
             margin = 0.0
             close = ()

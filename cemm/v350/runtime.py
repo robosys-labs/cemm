@@ -72,6 +72,8 @@ class RuntimeServices:
     runtime_epoch_ref: str | None = None
     runtime_attestation_ref: str | None = None
     runtime_authority_generation: int | None = None
+    runtime_observation_snapshot: Any | None = None
+    retain_transient_audit: bool = True
 
 
 class StoreSnapshotProvider:
@@ -79,8 +81,18 @@ class StoreSnapshotProvider:
         self.store = store
 
     def fingerprint(self) -> str:
-        with self.store.snapshot() as snapshot:
-            return snapshot.fingerprint
+        return self.store.current_read_generation().fingerprint
+
+    def generation(self):
+        return self.store.current_read_generation()
+
+    def authority_snapshot(self, *, runtime_attestation_ref: str = ""):
+        return self.store.current_authority_snapshot(
+            runtime_attestation_ref=runtime_attestation_ref
+        )
+
+    def semantic_pass(self):
+        return self.store.semantic_pass()
 
 
 class CanonicalRuntimeCoordinator:
@@ -95,16 +107,30 @@ class CanonicalRuntimeCoordinator:
         return StageReceipt(int(stage), status, tuple(reasons), tuple(evidence), metadata)
 
     def _snapshot(self, capability: StageCapability, cycle: CycleState | None = None, *, require_cycle_pin: bool = False):
+        from .runtime_generations import ReadGenerationChanged
         cm = self.store.snapshot()
         snapshot = cm.__enter__()
-        if snapshot.fingerprint != capability.snapshot_fingerprint:
+        if capability.authority_generation and snapshot.authority_generation != capability.authority_generation:
             cm.__exit__(None, None, None)
-            raise RuntimeError("stage capability snapshot differs from current store snapshot")
+            raise ReadGenerationChanged("authority generation changed before stage execution")
+        if capability.authority_fingerprint and snapshot.authority_fingerprint != capability.authority_fingerprint:
+            cm.__exit__(None, None, None)
+            raise ReadGenerationChanged("authority fingerprint changed before stage execution")
+        # Audit/effect-only revision movement must not restart unrelated cognition.
+        # Pre-commit semantic stability is enforced by the cognitive generation below,
+        # while exact semantic authority is checked independently above.
         if require_cycle_pin and cycle is not None:
             pins = cycle.artifacts.get("cycle_pins")
-            if pins is None or snapshot.fingerprint != pins.snapshot_fingerprint:
+            if pins is None:
                 cm.__exit__(None, None, None)
-                raise RuntimeError("Stage-0 semantic substrate changed before the Stage-13 commit boundary; restart cycle")
+                raise RuntimeError("cycle pins missing")
+            if snapshot.authority_fingerprint != pins.authority_fingerprint:
+                cm.__exit__(None, None, None)
+                raise ReadGenerationChanged("semantic authority changed during one pass")
+            if int(capability.stage) <= int(CoreStage.COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE):
+                if snapshot.cognitive_fingerprint != pins.cognitive_generation_fingerprint:
+                    cm.__exit__(None, None, None)
+                    raise ReadGenerationChanged("mutable cognitive read generation changed before commit")
         return cm, snapshot
 
     @staticmethod
@@ -120,15 +146,12 @@ class CanonicalRuntimeCoordinator:
     def _resolve_any(self, record_ref: str) -> tuple[Any, ...]:
         if not record_ref:
             return ()
-        found = []
-        for kind in RecordKind:
-            try:
-                stored = self.store.get_record(kind, record_ref)
-            except (KeyError, ValueError, TypeError):
-                continue
-            if stored is not None:
-                found.append(stored)
-        return tuple(sorted(found, key=lambda item: (item.record_kind.value, item.revision)))
+        return tuple(
+            sorted(
+                self.store.resolve_any(record_ref),
+                key=lambda item: (item.record_kind.value, item.revision),
+            )
+        )
 
     def _cycle_source_records(self, cycle: CycleState) -> tuple[Any, ...]:
         refs = set(cycle.artifacts.get("persisted_semantic_refs", ()))
@@ -166,6 +189,14 @@ class CanonicalRuntimeCoordinator:
                 channel_ref=cycle.channel_ref,
                 target_language=cycle.target_language,
                 runtime_version=VERSION,
+                authority_generation=snapshot.authority_generation,
+                authority_fingerprint=snapshot.authority_fingerprint,
+                cognitive_generation_fingerprint=snapshot.cognitive_fingerprint,
+                world_revision=snapshot.world_revision,
+                discourse_revision=snapshot.discourse_revision,
+                runtime_observation_revision=snapshot.runtime_observation_revision,
+                audit_revision=snapshot.audit_revision,
+                effect_journal_revision=snapshot.effect_journal_revision,
                 language_pack_pins=pins_for(RecordKind.LANGUAGE_PACK),
                 operation_adapter_pins=pins_for(RecordKind.OPERATION_ADAPTER_CONTRACT),
                 semantic_analyzer_pins=pins_for(RecordKind.SEMANTIC_ANALYZER_CONTRACT),
@@ -425,18 +456,36 @@ class CanonicalRuntimeCoordinator:
     def stage_11_learning_frontiers(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
         from .learning.runtime import TypedRuntimeFrontierCompiler
         observations = TypedRuntimeFrontierCompiler().compile(cycle)
+        collector = FrontierCollector()
         cm, snapshot = self._snapshot(capability, cycle, require_cycle_pin=True)
         try:
-            existing = tuple(
-                item.payload
-                for item in self.store.repositories.learning_frontiers.all(
-                    all_revisions=True, snapshot=snapshot
+            existing = []
+            for frontier_ref in sorted({
+                collector.frontier_ref_for_observation(item)
+                for item in observations
+            }):
+                stored = self.store.get_record(
+                    RecordKind.LEARNING_FRONTIER,
+                    frontier_ref,
+                    snapshot=snapshot,
                 )
-            )
+                if stored is not None:
+                    existing.append(stored.payload)
         finally:
             cm.__exit__(None, None, None)
-        frontiers = FrontierCollector().collect(observations, existing)
-        return StageOutcome({"learning_observations": observations, "learning_frontier_records": frontiers, "stage11_receipt": self._receipt(CoreStage.BUILD_OR_ADVANCE_LEARNING_FRONTIERS, "performed" if observations else "no_authorized_work", "learning_frontiers_built")}, frontier_refs=tuple(item.frontier_ref for item in frontiers))
+        frontiers = collector.collect(observations, tuple(existing))
+        return StageOutcome(
+            {
+                "learning_observations": observations,
+                "learning_frontier_records": frontiers,
+                "stage11_receipt": self._receipt(
+                    CoreStage.BUILD_OR_ADVANCE_LEARNING_FRONTIERS,
+                    "performed" if observations else "no_authorized_work",
+                    "learning_frontiers_built",
+                ),
+            },
+            frontier_refs=tuple(item.frontier_ref for item in frontiers),
+        )
 
     def stage_12_preview_transitions(self, cycle: CycleState, capability: StageCapability) -> StageOutcome:
         graph = cycle.artifacts.get("epistemic_uol_graph")
@@ -504,18 +553,11 @@ class CanonicalRuntimeCoordinator:
                 source_ref="source:stage13:learning-frontier",
             )
         learning_advance_trace = None
-        if observations:
-            from .learning.runtime_advance import RuntimeLearningAdvancer
-            learning_advance_trace = RuntimeLearningAdvancer(
-                self.store,
-                inducers=tuple(self.services.learning_inducers),
-                competence_executors=dict(
-                    self.services.learning_competence_executors
-                ),
-            ).advance(
-                context_ref=cycle.context_ref,
-                permission_ref=cycle.permission_ref,
-            )
+        maintenance_event = (
+            ("learning_evidence_changed", tuple(learning_commit_trace.frontier_refs))
+            if learning_commit_trace is not None and learning_commit_trace.frontier_refs
+            else None
+        )
         # Recompute transition plans only after the semantic records are durable.
         canonical_transition_plans = []
         if graph is not None:
@@ -544,6 +586,7 @@ class CanonicalRuntimeCoordinator:
                 "canonical_transition_plans": tuple(canonical_transition_plans),
                 "learning_commit_trace": learning_commit_trace,
                 "learning_advance_trace": learning_advance_trace,
+                "maintenance_event": maintenance_event,
                 "stage13_receipt": self._receipt(
                     CoreStage.COMMIT_AUTHORIZED_KNOWLEDGE_AND_STATE,
                     status,
@@ -986,8 +1029,8 @@ class CanonicalRuntimeCoordinator:
             final_fp=snapshot.fingerprint
             final_revision=snapshot.store_revision
         substrate_changed=(
-            final_revision != pins.store_revision
-            or final_fp != pins.snapshot_fingerprint
+            snapshot.authority_generation != pins.authority_generation
+            or snapshot.authority_fingerprint != pins.authority_fingerprint
         )
         unresolved=tuple(sorted(set(cycle.frontiers)))
         summary=FinalizationSummary(
@@ -1024,8 +1067,21 @@ class CanonicalRuntimeCoordinator:
 class Runtime:
     VERSION = VERSION
 
-    def __init__(self, *, store: SemanticStore, orchestrator: CanonicalOrchestrator, services: RuntimeServices | None = None) -> None:
-        self.store=store; self.orchestrator=orchestrator; self.services=services or RuntimeServices()
+    def __init__(
+        self,
+        *,
+        store: SemanticStore,
+        orchestrator: CanonicalOrchestrator,
+        services: RuntimeServices | None = None,
+        maintenance_scheduler=None,
+        session_lifecycle=None,
+    ) -> None:
+        from .maintenance import SessionParticipantLifecycle
+        self.store = store
+        self.orchestrator = orchestrator
+        self.services = services or RuntimeServices()
+        self.maintenance_scheduler = maintenance_scheduler
+        self.session_lifecycle = session_lifecycle or SessionParticipantLifecycle()
 
     def _ensure_session_participant(
         self,
@@ -1096,6 +1152,7 @@ class Runtime:
                 reason="persist session transport participant evidence before Stage 0",
             ))
         evidence_fp = evidence_idempotency.expected.record_fingerprint
+        expected_type_assertion = None
         if existing is None:
             try:
                 agent_schema = self.store.repositories.schemas.authoritative("type:agent")
@@ -1169,6 +1226,7 @@ class Runtime:
                         reason="assert only the transport-grounded agent role of the session participant",
                     )
                 )
+                expected_type_assertion = assertion
 
         with self.store.snapshot() as snapshot:
             patch = GraphPatch(
@@ -1192,13 +1250,46 @@ class Runtime:
             )
         result = self.store.apply_patch(patch)
         if not result.committed:
-            # A concurrent creator is safe only if the same deterministic identity/evidence now exists.
+            concurrent_referent = self.store.get_record(RecordKind.REFERENT, participant_ref)
+            concurrent_evidence = self.store.get_record(RecordKind.EVIDENCE, evidence_ref)
+            concurrent_assertion = (
+                None
+                if expected_type_assertion is None
+                else self.store.get_record(
+                    RecordKind.TYPE_ASSERTION,
+                    expected_type_assertion.assertion_ref,
+                )
+            )
+            expected_referent_fp = (
+                None
+                if existing is not None
+                else record_fingerprints(RecordKind.REFERENT, referent)[1]
+            )
+            expected_assertion_fp = (
+                None
+                if expected_type_assertion is None
+                else record_fingerprints(
+                    RecordKind.TYPE_ASSERTION, expected_type_assertion
+                )[1]
+            )
             if (
-                self.store.get_record(RecordKind.REFERENT, participant_ref) is None
-                or self.store.get_record(RecordKind.EVIDENCE, evidence_ref) is None
+                concurrent_referent is None
+                or concurrent_evidence is None
+                or concurrent_evidence.record_fingerprint != evidence_fp
+                or (
+                    expected_referent_fp is not None
+                    and concurrent_referent.record_fingerprint != expected_referent_fp
+                )
+                or (
+                    expected_assertion_fp is not None
+                    and (
+                        concurrent_assertion is None
+                        or concurrent_assertion.record_fingerprint != expected_assertion_fp
+                    )
+                )
             ):
                 raise RuntimeError(
-                    "session participant initialization failed: "
+                    "session participant initialization failed or collided: "
                     + "; ".join(result.errors)
                 )
         return participant_ref, evidence_ref
@@ -1223,12 +1314,11 @@ class Runtime:
         # Hints/anchors/tracks are evidence inputs only. Stage 2/3 validate and
         # combine them with reviewed language/schema authority; none route domain
         # semantics directly.
-        from .learning.runtime import LearningRuntimeActivator
-        from .runtime_state import RuntimeSelfObserver
-        _learning_activation = LearningRuntimeActivator(self.store).activate_ready()
-        RuntimeSelfObserver(self.store, self.services).observe(context_ref=context_id, permission_ref=permission_ref)
-        resolved_speaker_ref, participant_evidence_ref = self._ensure_session_participant(
-            context_id, permission_ref, speaker_ref
+        resolved_speaker_ref, participant_evidence_ref = self.session_lifecycle.resolve(
+            context_id,
+            permission_ref,
+            speaker_ref,
+            initializer=self._ensure_session_participant,
         )
         resolved_audience_refs = tuple(audience_refs) or (resolved_speaker_ref,)
         envelope = RuntimeInput(
@@ -1250,10 +1340,59 @@ class Runtime:
             target_language=target_language,
             channel_ref=channel_ref,
         )
+        maintenance_event = cycle.artifacts.get("maintenance_event")
+        if maintenance_event and self.maintenance_scheduler is not None:
+            from .maintenance import MaintenanceTrigger
+            trigger_name, refs = maintenance_event
+            if trigger_name == "learning_evidence_changed":
+                self.maintenance_scheduler.notify(
+                    MaintenanceTrigger.LEARNING_EVIDENCE_CHANGED,
+                    refs=refs,
+                    context_ref=context_id,
+                    permission_ref=permission_ref,
+                )
         candidate=cycle.artifacts.get("surface_candidate"); emission=cycle.artifacts.get("emission")
         output_text=candidate.surface if emission is not None and candidate is not None else None
         committed=tuple(cycle.artifacts.get("committed_patch_refs",()))
         return RuntimeResult(cycle.cycle_ref,cycle.context_ref,output_text,cycle.target_language,tuple(cycle.trace),tuple(sorted(set(cycle.frontiers))),tuple(cycle.errors),dict(cycle.artifacts),committed)
+
+    def prepare_session(
+        self,
+        *,
+        context_id: str = "conversation",
+        permission_ref: str = "conversation",
+        speaker_ref: str | None = None,
+    ) -> tuple[str, str]:
+        return self.session_lifecycle.resolve(
+            context_id,
+            permission_ref,
+            speaker_ref,
+            initializer=self._ensure_session_participant,
+        )
+
+    def run_maintenance(self, trigger=None):
+        if self.maintenance_scheduler is None:
+            return ()
+        from .maintenance import MaintenanceEvent, MaintenanceTrigger
+        resolved = (
+            MaintenanceTrigger.STARTUP
+            if trigger is None
+            else trigger if isinstance(trigger, MaintenanceTrigger) else MaintenanceTrigger(str(trigger))
+        )
+        return self.maintenance_scheduler.run_event(MaintenanceEvent(resolved))
+
+    def drain_maintenance(self):
+        if self.maintenance_scheduler is None:
+            return ()
+        return self.maintenance_scheduler.drain()
+
+    def refresh_runtime_observation(self):
+        if self.maintenance_scheduler is None:
+            return ()
+        from .maintenance import MaintenanceEvent, MaintenanceTrigger
+        return self.maintenance_scheduler.run_event(
+            MaintenanceEvent(MaintenanceTrigger.RUNTIME_SIGNAL_CHANGED)
+        )
 
     def close(self) -> None:
         self.store.close()
@@ -1279,8 +1418,27 @@ def build_runtime(*, database_path:str=":memory:",boot_database_path:str|Path|No
     from .runtime_hardening import HardenedRuntimeCoordinator
     coordinator=HardenedRuntimeCoordinator(store,services)
     adapters=build_stage_adapters(coordinator)
-    orchestrator=CanonicalOrchestrator(adapters,snapshot_provider=StoreSnapshotProvider(store),authority_guard=authority_guard)
-    return Runtime(store=store,orchestrator=orchestrator,services=services)
+    orchestrator=CanonicalOrchestrator(
+        adapters,
+        snapshot_provider=StoreSnapshotProvider(store),
+        authority_guard=authority_guard,
+    )
+    from .maintenance import (
+        MaintenanceEvent,
+        MaintenanceTrigger,
+        SessionParticipantLifecycle,
+        build_default_maintenance_scheduler,
+    )
+    scheduler = build_default_maintenance_scheduler(store, services)
+    runtime = Runtime(
+        store=store,
+        orchestrator=orchestrator,
+        services=services,
+        maintenance_scheduler=scheduler,
+        session_lifecycle=SessionParticipantLifecycle(),
+    )
+    scheduler.run_event(MaintenanceEvent(MaintenanceTrigger.STARTUP))
+    return runtime
 
 
 __all__=["Runtime","RuntimeServices","CanonicalRuntimeCoordinator","StoreSnapshotProvider","build_runtime"]

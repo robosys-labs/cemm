@@ -48,7 +48,7 @@ _LAZY_EXPORTS = {
     "RepositorySet": ".repositories",
     "interval_contains": ".repositories",
     "ReadOnlyBootError": ".store",
-    "SemanticStore": ".store",
+    "SemanticStore": ".generation_store",
     "StoreConflictError": ".store",
     "StoreError": ".store",
     "CommitValidationError": ".validation",
