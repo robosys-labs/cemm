@@ -23,6 +23,8 @@ from ..schema.model import (
 from ..storage.codec import record_fingerprints, record_ref, record_revision
 from ..storage.model import RecordKind
 from ..transitions.model import TransitionContractRecord
+from ..state.model_v351 import TransitionMechanismV351
+from ..state.capability_v351 import CapabilityDependencyGraph
 from .model import PinnedRecord
 from .package import CandidateProposal
 from .phase14_model_v351 import (
@@ -456,8 +458,14 @@ class TransitionCausalInducer(_ExactStructuralInducer):
         # Call the structural base directly because this inducer intentionally accepts
         # several transition/causal prediction-error families.
         _ExactStructuralInducer.validate(self, signal)
-        if signal.record_kind == RecordKind.TRANSITION_CONTRACT and not isinstance(signal.payload, TransitionContractRecord):
-            raise TypeError("causal transition candidate must be canonical TransitionContractRecord")
+        if signal.record_kind == RecordKind.TRANSITION_CONTRACT and not isinstance(
+            signal.payload, (TransitionContractRecord, TransitionMechanismV351)
+        ):
+            raise TypeError("causal transition candidate must be canonical transition authority")
+        if signal.record_kind == RecordKind.CAPABILITY_DEPENDENCY and not isinstance(
+            signal.payload, CapabilityDependencyGraph
+        ):
+            raise TypeError("capability dependency candidate must be canonical CapabilityDependencyGraph")
         # Temporal/coactivation-only evidence cannot become causal structure.
         if not signal.metadata.get("intervention_or_mechanism_evidence", False):
             raise ValueError("causal candidate requires intervention/mechanism evidence, not coactivation alone")

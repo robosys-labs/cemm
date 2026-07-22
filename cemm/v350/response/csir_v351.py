@@ -30,6 +30,7 @@ class ResponseFamily(str, Enum):
     CORRECT_PRIOR_OUTPUT = "correct_prior_output"
     QUALIFY_UNCERTAINTY = "qualify_uncertainty"
     REPORT_CAPABILITY = "report_capability"
+    PROVIDE_CAUSAL_EXPLANATION = "provide_causal_explanation"
     ASK_LEARNING_QUESTION = "ask_learning_question"
     NO_RESPONSE_REQUIRED = "no_response_required"
 
@@ -49,11 +50,14 @@ class ResponseFamilyAuthority:
     source_port_pin: ExactAuthorityPin | None = None
     uncertainty_port_pin: ExactAuthorityPin | None = None
     reason_port_pin: ExactAuthorityPin | None = None
+    cause_port_pin: ExactAuthorityPin | None = None
+    effect_port_pin: ExactAuthorityPin | None = None
 
     def exact_pins(self) -> tuple[ExactAuthorityPin, ...]:
         values = (
             self.definition_pin, self.content_port_pin, self.target_port_pin,
             self.source_port_pin, self.uncertainty_port_pin, self.reason_port_pin,
+            self.cause_port_pin, self.effect_port_pin,
         )
         return tuple(pin for pin in values if pin is not None)
 

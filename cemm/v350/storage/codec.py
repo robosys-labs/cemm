@@ -45,6 +45,14 @@ from ..transitions.model import (
     TransitionContractRecord,
     TransitionProofRecord,
 )
+from ..state.codec_v351 import (
+    capability_dependency_graph_from_document, capability_dependency_graph_to_document,
+    transition_mechanism_from_document, transition_mechanism_to_document,
+)
+from ..state.model_v351 import TransitionMechanismV351
+from ..state.capability_v351 import CapabilityDependencyGraph
+from ..causal.codec_v351 import causal_proof_from_document, causal_proof_to_document
+from ..causal.model_v351 import CausalProofV351
 from ..learning.codec import (
     competence_result_from_document,
     learning_evidence_link_from_document,
@@ -358,13 +366,14 @@ def _state_assignment(value: Mapping[str, Any]) -> StateAssignment:
             evidence_refs=_tuple_str(data.get("evidence_refs")),
             proof_refs=_tuple_str(data.get("proof_refs")),
             source_refs=_tuple_str(data.get("source_refs")),
+            value_document=dict(data.get("value_document", {})),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise RecordDecodeError(str(exc)) from exc
 
 
 def _capability(value: Mapping[str, Any]) -> CapabilityInstance:
-    from ..uol.model import CapabilityStatus
+    from .model import CapabilityStatus
 
     data = dict(value)
     try:
@@ -473,9 +482,21 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.STATE_DELTA: state_delta_from_document,
     RecordKind.CAPABILITY_INSTANCE: _capability,
     RecordKind.CAPABILITY_DELTA: capability_delta_from_document,
-    RecordKind.TRANSITION_CONTRACT: transition_contract_from_document,
-    RecordKind.CAPABILITY_DEPENDENCY: capability_dependency_from_document,
-    RecordKind.TRANSITION_PROOF: transition_proof_from_document,
+    RecordKind.TRANSITION_CONTRACT: lambda value: (
+        transition_mechanism_from_document(value)
+        if str(value.get("model_version", "")) == "v351"
+        else transition_contract_from_document(value)
+    ),
+    RecordKind.CAPABILITY_DEPENDENCY: lambda value: (
+        capability_dependency_graph_from_document(value)
+        if str(value.get("model_version", "")) == "capability-dependency-v351"
+        else capability_dependency_from_document(value)
+    ),
+    RecordKind.TRANSITION_PROOF: lambda value: (
+        causal_proof_from_document(value)
+        if str(value.get("model_version", "")) == "causal-proof-v351"
+        else transition_proof_from_document(value)
+    ),
     RecordKind.KNOWLEDGE: _knowledge,
     RecordKind.EVIDENCE: _evidence,
     RecordKind.SOURCE_ASSESSMENT: _source_assessment,
@@ -588,6 +609,12 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
         RecordKind.CONSTRUCTION_PROGRAM,
     }:
         document = language_record_to_document(record)
+    elif resolved == RecordKind.TRANSITION_CONTRACT and isinstance(record, TransitionMechanismV351):
+        document = transition_mechanism_to_document(record)
+    elif resolved == RecordKind.CAPABILITY_DEPENDENCY and isinstance(record, CapabilityDependencyGraph):
+        document = capability_dependency_graph_to_document(record)
+    elif resolved == RecordKind.TRANSITION_PROOF and isinstance(record, CausalProofV351):
+        document = causal_proof_to_document(record)
     elif resolved in {
         RecordKind.REFERENT,
         RecordKind.SEMANTIC_APPLICATION,
@@ -628,9 +655,9 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.STATE_DELTA: (StateDelta,),
         RecordKind.CAPABILITY_INSTANCE: (CapabilityInstance,),
         RecordKind.CAPABILITY_DELTA: (CapabilityDelta,),
-        RecordKind.TRANSITION_CONTRACT: (TransitionContractRecord,),
-        RecordKind.CAPABILITY_DEPENDENCY: (CapabilityDependencyRecord,),
-        RecordKind.TRANSITION_PROOF: (TransitionProofRecord,),
+        RecordKind.TRANSITION_CONTRACT: (TransitionContractRecord, TransitionMechanismV351),
+        RecordKind.CAPABILITY_DEPENDENCY: (CapabilityDependencyRecord, CapabilityDependencyGraph),
+        RecordKind.TRANSITION_PROOF: (TransitionProofRecord, CausalProofV351),
         RecordKind.KNOWLEDGE: (KnowledgeRecord,),
         RecordKind.EVIDENCE: (EvidenceRecord,),
         RecordKind.SOURCE_ASSESSMENT: (SourceAssessmentRecord,),
@@ -900,7 +927,7 @@ def record_lifecycle(record_kind: RecordKind | str, record: Any) -> str | None:
         RecordKind.RESPONSE_POLICY_RULE, RecordKind.RESPONSE_TRANSFORM_RULE,
         RecordKind.ARGUMENT_FRAME, RecordKind.MORPHOLOGY_RULE, RecordKind.LINEARIZATION_RULE, RecordKind.MIGRATION_RULE,
     }:
-        return str(record.lifecycle_status.value)
+        return str(getattr(record.lifecycle_status, "value", record.lifecycle_status))
     if hasattr(record, "status"):
         return str(_enum_value(getattr(record, "status")))
     if resolved == RecordKind.EVENT_OCCURRENCE:

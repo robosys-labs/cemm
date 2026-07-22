@@ -735,3 +735,13 @@ English conversational kernel passes
 learning→promotion→restart passes
 no legacy fallback exists
 ```
+
+# Phase 15–16 runtime completion addendum
+
+- Stage 10 may emit a `CausalQueryRequest` only from exact answer-projection authority; never from question words.
+- Stage 12 is simulation-only: typed state snapshot -> exact mechanism preview -> bounded causal branches/proofs.
+- Stage 13 commits only actual-context, probability-1, frontier-free, exact-authority consequences; it durably persists their exact causal proof DAG and mechanism dependencies. All other simulations remain cycle-local.
+- Stage 14 derives capability/impact from the same causal deltas/proofs and keeps physical, affective, reported emotion and response stance separate. Impact retains context semantics; only actual-context impact may automatically create goal pressure.
+- Stage 15 produces both conversational response goals and, when exact policy exists, vector-valued causal goals.
+- Stage 16 plans by causal simulation. A selected causal plan is semantic eligibility only; existing adapter/gate/journal/effect authorization remains mandatory before I/O.
+- Stage 17 observed outcomes re-enter cognition as evidence and may create prediction-error/causal-learning frontiers; expected effects are never written as observations.

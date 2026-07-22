@@ -25,6 +25,14 @@ from .conversation import SessionDiscourseMemory, SessionMemoryCommitCoordinator
 from .discourse import DiscourseAuthorityMap, DiscourseStructureBuilderV351
 from .epistemic import EpistemicAdmissionPolicy, EpistemicCoordinatorV351
 from .query import GroundedQueryEngineV351
+from .causal.commit_v351 import CompositeStage13CommitterV351
+from .causal.authority_projection_v351 import project_state_causal_authority
+from .causal.query_v351 import Phase16QueryEngineV351
+from .causal.response_v351 import Phase16ResponseCSIRBuilderV351
+from .causal.runtime_v351 import (
+    CausalPlanningOperationEngineV351, CompositeGoalArbitratorV351,
+    Phase15CausalSimulatorV351, Phase16ImpactRuntimeV351,
+)
 from .response import (
     ConversationalGoalBridgeV351, ResponseAuthorityMapV351, ResponseCSIRBuilderV351,
     ResponseFamily, compile_minimum_response_authority,
@@ -115,6 +123,17 @@ class RuntimeServices:
     runtime_signal_provider: Any | None = None
     learning_maintenance: Any | None = None
     learning_competence_executors: Mapping[str, Any] = field(default_factory=dict)
+    causal_query_contracts: tuple[Any, ...] = ()
+    causal_impact_rules: tuple[Any, ...] = ()
+    causal_goal_policy: Any | None = None
+    causal_utility_evaluator: Any | None = None
+    causal_utility_policy_pin: Any | None = None
+    causal_parameter_lookup: Any | None = None
+    state_manifold_transform_resolver: Any | None = None
+    state_set_member_type_resolver: Any | None = None
+    causal_capability_leaf_resolver: Any | None = None
+    causal_aggregation_selection_evaluators: Mapping[str, Any] = field(default_factory=dict)
+    causal_simulation_budget: Any | None = None
     system_ref: str = "referent:self"
     runtime_epoch_ref: str | None = None
     runtime_attestation_ref: str | None = None
@@ -213,12 +232,35 @@ class V351RuntimeCoordinator:
             "epistemic_coordinator": EpistemicCoordinatorV351(
                 self.session_memory, policy=self.services.epistemic_admission_policy
             ),
-            "query_engine": GroundedQueryEngineV351(self.session_memory),
+            "query_engine": Phase16QueryEngineV351(
+                self.session_memory, causal_query_contracts=self.services.causal_query_contracts,
+            ),
             "learning_engine": Phase14LearningEngineV351(),
-            "commit_coordinator": Stage13LearningCommitterV351(self.session_memory),
-            # Phase-12 alpha bridge. The general Phase-16 arbitrator may replace this slot.
-            "goal_engine": ConversationalGoalBridgeV351(),
-            "response_csir_builder": ResponseCSIRBuilderV351(
+            "causal_simulator": Phase15CausalSimulatorV351(
+                parameter_lookup=self.services.causal_parameter_lookup,
+                manifold_transform_resolver=self.services.state_manifold_transform_resolver,
+                set_member_type_resolver=self.services.state_set_member_type_resolver,
+                simulation_budget=self.services.causal_simulation_budget,
+                aggregation_selection_evaluators=self.services.causal_aggregation_selection_evaluators,
+            ),
+            "commit_coordinator": CompositeStage13CommitterV351(self.session_memory),
+            "impact_engine": Phase16ImpactRuntimeV351(
+                self.services.causal_impact_rules,
+                capability_leaf_resolver=self.services.causal_capability_leaf_resolver,
+                manifold_transform_resolver=self.services.state_manifold_transform_resolver,
+                set_member_type_resolver=self.services.state_set_member_type_resolver,
+            ),
+            "goal_engine": CompositeGoalArbitratorV351(policy=self.services.causal_goal_policy),
+            "operation_engine": CausalPlanningOperationEngineV351(
+                utility_evaluator=self.services.causal_utility_evaluator,
+                utility_policy_pin=self.services.causal_utility_policy_pin,
+                parameter_lookup=self.services.causal_parameter_lookup,
+                manifold_transform_resolver=self.services.state_manifold_transform_resolver,
+                set_member_type_resolver=self.services.state_set_member_type_resolver,
+                simulation_budget=self.services.causal_simulation_budget,
+                aggregation_selection_evaluators=self.services.causal_aggregation_selection_evaluators,
+            ),
+            "response_csir_builder": Phase16ResponseCSIRBuilderV351(
                 authority_map=response_authority_map, session_memory=self.session_memory,
             ),
             "realization_engine": EnglishCSIRRealizerV351(
@@ -376,6 +418,9 @@ class V351RuntimeCoordinator:
                 semantic_authority,
                 dynamics_parameters=tuple(self._reviewed_phase13_dynamics),
             )
+        # Deterministically project only already-promoted Phase-15/16 operational authority
+        # from this exact store AuthorityGeneration into the cycle-local split snapshot.
+        semantic_authority = project_state_causal_authority(self.store, semantic_authority)
         if (semantic_authority.generation, semantic_authority.authority_fingerprint) != (
             authority.generation, authority.authority_fingerprint
         ):

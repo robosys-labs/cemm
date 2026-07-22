@@ -473,8 +473,8 @@ class Stage13LearningCommitterV351:
             cycle.context_ref, cycle.permission_ref,
         )
         current_generation = (
-            effect_store.base_store.current_read_generation()
-            if hasattr(effect_store.base_store, "current_read_generation") else capability.read_generation
+            effect_store.read_store.current_read_generation()
+            if hasattr(effect_store.read_store, "current_read_generation") else capability.read_generation
         )
         return StageOutcome(
             session_outcome.status,

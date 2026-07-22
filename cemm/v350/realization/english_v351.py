@@ -273,6 +273,9 @@ def compile_minimum_english_realization_package() -> EnglishRealizationPackageV3
         (ResponseFamily.REPORT_RELATION, "content_fragment", (), (".",)),
         (ResponseFamily.REPORT_EVENT, "content_fragment", (), (".",)),
         (ResponseFamily.REPORT_CAPABILITY, "content_fragment", (), (".",)),
+        # English projection only: semantic causality is already represented by exact
+        # cause/effect ports in Response CSIR. The connector is content-addressed language data.
+        (ResponseFamily.PROVIDE_CAUSAL_EXPLANATION, "causal_explanation", ("because",), (".",)),
         (ResponseFamily.ACKNOWLEDGE_TARGETED_CLAIM, "fixed_discourse", ("Noted",), (".",)),
         (ResponseFamily.REQUEST_CLARIFICATION, "fixed_discourse", ("Could", "you", "clarify"), ("?",)),
         (ResponseFamily.CORRECT_PRIOR_OUTPUT, "content_fragment", ("Actually,",), (".",)),
@@ -425,6 +428,24 @@ class EnglishCSIRRealizerV351:
         bindings = [
             item for item in decision.graph.bindings_for(root_apps[0].application_ref)
             if item.port_pin.key == authority.content_port_pin.key
+        ]
+        if len(bindings) != 1 or len(bindings[0].fillers) != 1:
+            return None
+        return decision.graph.node(bindings[0].fillers[0])
+
+    def _port_node(self, decision: ResponseDecision, port_pin: ExactAuthorityPin | None):
+        if port_pin is None:
+            return None
+        authority = self.response_authority_map.require(decision.family)
+        root_apps = [
+            app for app in decision.graph.applications
+            if app.predicate_pin.key == authority.definition_pin.key
+        ]
+        if len(root_apps) != 1:
+            return None
+        bindings = [
+            item for item in decision.graph.bindings_for(root_apps[0].application_ref)
+            if item.port_pin.key == port_pin.key
         ]
         if len(bindings) != 1 or len(bindings[0].fillers) != 1:
             return None
@@ -684,7 +705,27 @@ class EnglishCSIRRealizerV351:
                     "realization_plan": None, "surface_candidates": (), "realization_proofs": (),
                     "frontier_refs": ("frontier:realization:reference-or-lexicalization-gap",),
                 }
-        surface = self._join(rule.prefix_tokens, content, rule.suffix_tokens)
+        elif rule.mode == "causal_explanation":
+            authority = self.response_authority_map.require(decision.family)
+            cause = self._surface_for_node(
+                self._port_node(decision, authority.cause_port_pin), cycle=cycle, graph=decision.graph,
+                used_lexical=used_lexical, used_frames=used_frames,
+                source_bindings={item.semantic_ref: item for item in decision.source_bindings},
+                covered_semantics=covered_semantics, used_reference_evidence=used_reference_evidence,
+            )
+            effect = self._surface_for_node(
+                self._port_node(decision, authority.effect_port_pin), cycle=cycle, graph=decision.graph,
+                used_lexical=used_lexical, used_frames=used_frames,
+                source_bindings={item.semantic_ref: item for item in decision.source_bindings},
+                covered_semantics=covered_semantics, used_reference_evidence=used_reference_evidence,
+            )
+            if not cause or not effect or len(rule.prefix_tokens) != 1:
+                return {
+                    "realization_plan": None, "surface_candidates": (), "realization_proofs": (),
+                    "frontier_refs": ("frontier:realization:causal-explanation-projection-gap",),
+                }
+            content = f"{effect} {rule.prefix_tokens[0]} {cause}"
+        surface = self._join(() if rule.mode == "causal_explanation" else rule.prefix_tokens, content, rule.suffix_tokens)
         if not surface:
             return {
                 "realization_plan": None, "surface_candidates": (), "realization_proofs": (),

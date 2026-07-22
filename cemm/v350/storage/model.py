@@ -530,6 +530,9 @@ class StateAssignment:
     evidence_refs: tuple[str, ...] = ()
     proof_refs: tuple[str, ...] = ()
     source_refs: tuple[str, ...] = ()
+    # Phase-15 typed value occurrence. Empty means legacy categorical value_ref/value_revision.
+    # Rich values are content-addressed documents and do not turn storage into an ontology.
+    value_document: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for value, label in (

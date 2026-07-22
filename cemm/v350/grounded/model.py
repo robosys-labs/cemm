@@ -39,6 +39,7 @@ class GapKind(str, Enum):
     EVENT_ROLE = "event_role"
     PROPOSITION_TRUTH = "proposition_truth"
     DEFINITION = "definition"
+    CAUSAL_EXPLANATION = "causal_explanation"
     OTHER = "other"
 
 
@@ -403,6 +404,12 @@ class AnswerProjection:
     requested_variable_ref: CSIRRef
     projection_pin: ExactAuthorityPin | None = None
     requested_port_pin: ExactAuthorityPin | None = None
+    # Exact grounded causal projection identities. Empty for ordinary queries; these are
+    # semantic projection outputs and are never inferred from English wording in Stage 10.
+    causal_target_variable_ref: str = ""
+    causal_source_variable_ref: str = ""
+    causal_contrast_value_ref: str = ""
+    causal_intervention_context_ref: str = ""
 
     def __post_init__(self) -> None:
         _ref(self.projection_ref, "answer projection_ref")

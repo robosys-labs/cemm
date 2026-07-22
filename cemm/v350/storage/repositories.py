@@ -16,6 +16,9 @@ from ..language.model import (
 )
 from ..language.registry import LanguageRegistry
 from ..transitions.model import CapabilityDependencyRecord, TransitionContractRecord, TransitionProofRecord
+from ..state.model_v351 import TransitionMechanismV351
+from ..state.capability_v351 import CapabilityDependencyGraph
+from ..causal.model_v351 import CausalProofV351
 from ..learning.model import (
     CompetenceResultRecord, LearningEvidenceLink, LearningFrontierRecord,
     LearningInvalidationRecord, LearningPackageRecord, PromotionDecisionRecord,
@@ -85,8 +88,12 @@ class TypedRepository(Generic[T]):
         if stored is None:
             return None
         if not isinstance(stored.payload, self.expected_type):
+            expected_name = (
+                "|".join(item.__name__ for item in self.expected_type)
+                if isinstance(self.expected_type, tuple) else self.expected_type.__name__
+            )
             raise TypeError(
-                f"{self.record_kind.value} repository decoded {type(stored.payload).__name__}"
+                f"{self.record_kind.value} repository expected {expected_name}, decoded {type(stored.payload).__name__}"
             )
         return stored
 
@@ -125,8 +132,12 @@ class TypedRepository(Generic[T]):
             )
         for item in result:
             if not isinstance(item.payload, self.expected_type):
+                expected_name = (
+                    "|".join(value.__name__ for value in self.expected_type)
+                    if isinstance(self.expected_type, tuple) else self.expected_type.__name__
+                )
                 raise TypeError(
-                    f"{self.record_kind.value} repository decoded {type(item.payload).__name__}"
+                    f"{self.record_kind.value} repository expected {expected_name}, decoded {type(item.payload).__name__}"
                 )
         return result  # type: ignore[return-value]
 
@@ -555,9 +566,15 @@ class RepositorySet:
         self.state_deltas = TypedRepository(store, RecordKind.STATE_DELTA, StateDelta)
         self.capability_instances = TypedRepository(store, RecordKind.CAPABILITY_INSTANCE, CapabilityInstance)
         self.capability_deltas = TypedRepository(store, RecordKind.CAPABILITY_DELTA, CapabilityDelta)
-        self.transition_contracts = TypedRepository(store, RecordKind.TRANSITION_CONTRACT, TransitionContractRecord)
-        self.capability_dependencies = TypedRepository(store, RecordKind.CAPABILITY_DEPENDENCY, CapabilityDependencyRecord)
-        self.transition_proofs = TypedRepository(store, RecordKind.TRANSITION_PROOF, TransitionProofRecord)
+        self.transition_contracts = TypedRepository(
+            store, RecordKind.TRANSITION_CONTRACT, (TransitionContractRecord, TransitionMechanismV351)
+        )
+        self.capability_dependencies = TypedRepository(
+            store, RecordKind.CAPABILITY_DEPENDENCY, (CapabilityDependencyRecord, CapabilityDependencyGraph)
+        )
+        self.transition_proofs = TypedRepository(
+            store, RecordKind.TRANSITION_PROOF, (TransitionProofRecord, CausalProofV351)
+        )
         self.impact_assessments = TypedRepository(store, RecordKind.IMPACT_ASSESSMENT, ImpactAssessment)
         self.importance_assessments = TypedRepository(store, RecordKind.IMPORTANCE_ASSESSMENT, ImportanceAssessment)
         self.impact_rules = TypedRepository(store, RecordKind.IMPACT_RULE, ImpactRuleRecord)

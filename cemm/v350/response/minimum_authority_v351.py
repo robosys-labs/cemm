@@ -48,6 +48,7 @@ def compile_minimum_response_authority() -> MinimumResponseAuthorityArtifacts:
         (ResponseFamily.CORRECT_PRIOR_OUTPUT, (("content", 1),)),
         (ResponseFamily.QUALIFY_UNCERTAINTY, ()),
         (ResponseFamily.REPORT_CAPABILITY, (("content", 1),)),
+        (ResponseFamily.PROVIDE_CAUSAL_EXPLANATION, (("cause", 1), ("effect", 1))),
         (ResponseFamily.ASK_LEARNING_QUESTION, ()),
     )
     definitions = []
@@ -126,6 +127,8 @@ def compile_minimum_response_authority() -> MinimumResponseAuthorityArtifacts:
             content_port_pin=role_pins.get("content"),
             target_port_pin=role_pins.get("target"),
             uncertainty_port_pin=role_pins.get("uncertainty"),
+            cause_port_pin=role_pins.get("cause"),
+            effect_port_pin=role_pins.get("effect"),
         ))
 
     return MinimumResponseAuthorityArtifacts(

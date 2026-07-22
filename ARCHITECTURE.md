@@ -643,3 +643,64 @@ Mutable world/discourse state may refresh only at explicit consistency/re-entry 
 13. Durable/effect results are reconstructible from authority, evidence and pre-state.
 14. Performance and boundedness are correctness properties.
 15. Unknown optional enrichment must not block grounded core meaning.
+
+# Phase 15–16 mathematical completion addendum — typed state and causal mechanics
+
+This section is normative for v3.5.1 state/causal implementation.
+
+## Typed state value algebra
+
+A state dimension declares an exact `StateDomainContract` separate from the semantic identity
+of the dimension. Runtime state is a typed occurrence value, never a new ontology class:
+
+`StateValue = Categorical | Ordered | Continuous | Vector/Manifold | Relational | Set | Process | Distribution`.
+
+For each active `(referent, dimension, context, time)` there is exactly one domain contract.
+Every transform is type checked against that contract. Units, coordinate frames, manifolds,
+relation types, element types, process types and categorical values are exact-pinned authority.
+An ordered `increase/decrease` is movement in reviewed order, not a guessed target. A manifold
+cannot silently use Euclidean addition; nonlinear transforms require exact operator authority.
+Probabilistic state is a distribution over typed `StateValue` support occurrences. Every support
+value is validated by the same exact underlying domain algebra; opaque outcome labels are not state.
+
+## Structural causal mechanism contract
+
+A causal mechanism is an exact, competence-gated authority record with:
+- trigger kind and exact trigger definition or source state dimensions;
+- exact semantic participant-role pins and optional exact type requirements;
+- preconditions and defeaters over typed state variables;
+- typed role-addressed state transforms and/or secondary-event templates;
+- optional mutually exclusive stochastic branches whose mass sums to one;
+- exact parameter, aggregation and stochastic-independence authority where applicable;
+- explicit per-use `TRANSITION` authority distinct from lifecycle and competence.
+
+Surface grammar never supplies causal participant roles. Active/passive or language-specific
+surface differences must converge to the same semantic role bindings before mechanism use.
+Competing mechanisms may not sequentially overwrite one state variable. They require an exact
+aggregation contract and evaluator. Joint stochastic multiplication requires exact independence
+authority; otherwise the result stays unresolved.
+
+## Interventions and counterfactuals
+
+Observation conditions on a variable. Intervention `do(X=x)` replaces the structural equation
+for X in an isolated context and cuts incoming causal edges to X. Counterfactual evaluation is:
+
+`abduce U from factual evidence -> clone isolated context -> restore U -> apply do(...) -> predict`.
+
+If abduction is underidentified, CEMM must preserve an explicit frontier; it may not fabricate a
+counterfactual. No hypothetical/interventional/counterfactual/planning state may commit into the
+actual world merely because it was simulated. Likewise, non-actual impact may inform explicit
+evaluation but may not silently become actual goal pressure or obligations.
+
+## One causal proof substrate
+
+Prediction, explanation, causal question answering, impact propagation, planning and recursive
+causal learning consume the same `CausalProof` DAG. A proof step separately records exact
+mechanism authority, source state variables, source event occurrences, target state variable or
+secondary event, branch probability, confidence, warrants and parent causal steps. A deterministic
+actual consequence that crosses the world-state commit boundary must persist this exact proof DAG
+with exact mechanism and pre/post value identity; an opaque proof string is insufficient.
+
+Causal learning may propose a mechanism only from explicit mechanism/intervention evidence and
+exact dependency closure. Co-occurrence alone is not causal authority. Candidate score does not
+bypass competence/review/promotion or immutable authority-generation restart.

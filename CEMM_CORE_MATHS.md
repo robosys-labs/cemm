@@ -817,3 +817,48 @@ Historical records retain their original snapshot roots.
 18. response semantics preserve causal/epistemic qualification;
 19. realization cannot invent unsupported meaning;
 20. every committed state/action/response decision is replayable from exact snapshot and pre-state.
+
+# Phase 15–16 causal/state mathematics completion
+
+## Typed state domains
+For exact dimension `d`, let its reviewed domain be `D_d` and runtime value `z_{r,d,t} in D_d`.
+A transform is a partial typed function `T_m : D_1 x ... x D_k -> D_d`; it is undefined rather
+than coerced when unit/frame/manifold/type constraints fail. Categorical assignment is equality;
+ordered shift follows exact reviewed order; scalar affine transforms preserve units; vector
+transforms preserve exact coordinate/manifold contracts; set/process/relation/distribution
+operators preserve their own algebra. A probabilistic value is a normalized measure over typed
+state values from the exact support domain, not over untyped string keys.
+
+## Structural equations and interventions
+For endogenous variable `X_i`:
+`X_i := f_i(Pa_i, U_i ; theta_i)`.
+Observation computes `P(Y | X=x, E)`. Intervention computes the mutilated model
+`M_do(X=x)` by replacing `f_X` with constant `x` and removing all incoming edges to `X`.
+
+Counterfactual:
+1. `P(U | E=e)` (abduction),
+2. build `M_do(X=x)`,
+3. evaluate `Y_x(U)` while holding the abducted exogenous/background realization fixed.
+Unidentified abduction is an information frontier, not a probability invented from absence.
+
+## Bounded propagation and probability mass
+Each branch b carries absolute probability `p_b` and confidence `c_b`. Exact-independent
+stochastic mechanisms may compose by product; independence may never be inferred merely because
+two branch sets are present. Pruning/budget exhaustion reports unresolved probability mass
+`1 - sum_b p_b`; a surviving branch is never renormalized to false certainty.
+
+## Competing mechanism aggregation
+For simultaneous mechanisms `{m_j}` targeting the same variable/time, an explicit aggregation
+operator `A` is required:
+`Delta Z = A(Delta Z_1, ..., Delta Z_n | exact authority)`.
+Absent an exact aggregation contract/evaluator, the transition is unresolved; mechanism order is
+not used as a hidden conflict policy.
+
+## Causal proof and explanation
+A proof DAG step is `s=(M, X_src, E_src, Y, p, c, W, Parents)`. Explanation is a minimal
+warranted reverse subgraph from target Y to root causes. Query, prediction, impact, planning and
+learning must reuse this DAG. Causal candidate research scores explicit hypotheses using
+lineage-discounted evidence plus complexity penalty and requires intervention/mechanism evidence;
+association alone cannot activate an edge. `why/cause-of` explanation traverses this DAG toward
+ancestors; `effect-of` traverses toward descendants. Direction is part of the semantic projection,
+not inferred from language wording.

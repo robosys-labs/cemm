@@ -182,7 +182,7 @@ _CONTRACTS = (
        ("capability_deltas", "impact_assessments", "affect_estimates", "significance_assessments"),
        persistence=PersistenceClass.OPTIONAL_AUDIT, generations=(GenerationDomain.AUDIT,), effects=(EffectKind.DURABLE_PERSISTENCE,), frontiers=("impact_gap",), proofs=("impact_mechanism_lineage",)),
     _c(CoreStage.DERIVE_OBLIGATIONS_AND_ARBITRATE_GOALS,
-       (), ("goal_candidates", "goal_decision"), optional=("query_results", "learning_frontiers", "significance_assessments", "epistemic_placement"), persistence=PersistenceClass.OPTIONAL_AUDIT,
+       (), ("goal_candidates", "goal_decision", "causal_goal_candidates", "causal_goal_decision"), optional=("query_results", "learning_frontiers", "significance_assessments", "epistemic_placement"), persistence=PersistenceClass.OPTIONAL_AUDIT,
        generations=(GenerationDomain.AUDIT,), effects=(EffectKind.DURABLE_PERSISTENCE,), frontiers=("goal_conflict", "policy_block"), proofs=("authorization_before_utility",)),
     _c(CoreStage.PLAN_AUTHORIZE_EXECUTE_AND_OBSERVE, ("goal_decision",),
        ("plans", "effect_authorizations", "operation_journals", "operation_observations"),

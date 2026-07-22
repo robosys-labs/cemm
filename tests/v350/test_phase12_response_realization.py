@@ -105,5 +105,5 @@ def test_all_required_phase12_response_families_are_explicit():
         "answer_query", "report_state", "report_relation", "report_event",
         "acknowledge_targeted_claim", "request_clarification", "correct_prior_output",
         "qualify_uncertainty", "report_capability", "ask_learning_question",
-        "no_response_required",
+        "no_response_required", "provide_causal_explanation",
     }
