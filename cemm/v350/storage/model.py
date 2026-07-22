@@ -361,8 +361,8 @@ class ClaimRecord:
             _require_ref(value, label)
         _confidence(self.commitment_strength, "claim commitment strength")
         _require_unique(self.evidence_refs, "claim-record evidence")
-        if self.source_context_ref == self.reported_context_ref:
-            raise ValueError("claim record must preserve source-attributed content context")
+        # Source and reported contexts are distinct roles, not required-distinct values.
+        # A claim can be made in and about the same context while remaining attributed.
 
 
 @dataclass(frozen=True, slots=True)

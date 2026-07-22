@@ -16,6 +16,11 @@ from .csir.authority import CURRENT_KERNEL_ABI
 from .csir.authority_v351 import AuthoritySnapshotV351
 from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
+from .composition import DeterministicAttractorStabilizer, DeterministicCSIRComposer, DeterministicMeaningDynamics
+from .conversation import SessionDiscourseMemory, SessionMemoryCommitCoordinatorV351, participant_frame_session_anchors
+from .discourse import DiscourseAuthorityMap, DiscourseStructureBuilderV351
+from .epistemic import EpistemicAdmissionPolicy, EpistemicCoordinatorV351
+from .query import GroundedQueryEngineV351
 from .effects.authorization import (
     EffectAuthorizationBoundary, EffectAuthorizationReceipt, EffectAuthorizationRequest,
 )
@@ -62,6 +67,9 @@ class RuntimeServices:
     syntax_adapters: Any | None = None
     clock: Any | None = None
     observation_analyzers: Mapping[str, Any] = field(default_factory=dict)
+    composition_constraint_evaluator: Any | None = None
+    discourse_authority_map: DiscourseAuthorityMap | None = None
+    epistemic_admission_policy: EpistemicAdmissionPolicy | None = None
     csir_compiler: Any | None = None
     recurrent_semantic_solver: Any | None = None
     semantic_attractor_stabilizer: Any | None = None
@@ -153,6 +161,25 @@ class V351RuntimeCoordinator:
         self.effect_boundary = EffectAuthorizationBoundary(store)
         self.realization_proof_verifier = RealizationProofVerifier(store, self.semantic_capabilities)
         self.roundtrip_policy = SelectiveRoundTripPolicy()
+        self.session_memory = SessionDiscourseMemory()
+        # Canonical pre-learned baseline services. Injected signed services replace
+        # these by slot; this is not legacy fallback and never introduces another
+        # semantic representation. All paths consume/produce exact CSIR.
+        self._canonical_services = {
+            "csir_compiler": DeterministicCSIRComposer(
+                store, constraint_evaluator=self.services.composition_constraint_evaluator
+            ),
+            "recurrent_semantic_solver": DeterministicMeaningDynamics(),
+            "semantic_attractor_stabilizer": DeterministicAttractorStabilizer(),
+            "discourse_structure_builder": DiscourseStructureBuilderV351(
+                self.session_memory, authority_map=self.services.discourse_authority_map
+            ),
+            "epistemic_coordinator": EpistemicCoordinatorV351(
+                self.session_memory, policy=self.services.epistemic_admission_policy
+            ),
+            "query_engine": GroundedQueryEngineV351(self.session_memory),
+            "commit_coordinator": SessionMemoryCommitCoordinatorV351(self.session_memory),
+        }
 
     def _schema_applicability_index(self, registry, capability: StageCapability):
         key = (capability.authority_generation, capability.authority_fingerprint)
@@ -240,8 +267,12 @@ class V351RuntimeCoordinator:
             errors=outcome.errors, reentry_request=outcome.reentry_request, terminal=outcome.terminal,
         )
 
+    def _resolved_service(self, service_name: str):
+        injected = getattr(self.services, service_name, None)
+        return injected if injected is not None else self._canonical_services.get(service_name)
+
     def _service(self, cycle, capability, service_name: str, method: str = "run"):
-        service = getattr(self.services, service_name, None)
+        service = self._resolved_service(service_name)
         if service is None:
             return self._gap(capability.stage, service_name)
         fn = getattr(service, method, None)
@@ -402,8 +433,21 @@ class V351RuntimeCoordinator:
             analyzer = FormLatticeAnalyzer(self.store.repositories.language.registry(snapshot=snapshot), syntax_adapters=self.services.syntax_adapters)
             grounder = JointGrounder(self.store, analyzer)
             envelope = cycle.input_payload
-            participant_anchors = participant_frame_anchors(cycle.artifacts["participant_frame"], store=self.store, snapshot=snapshot)
-            anchors = {x.anchor_ref: x for x in (*tuple(getattr(envelope, "discourse_anchors", ()) or ()), *participant_anchors)}
+            frame = cycle.artifacts["participant_frame"]
+            participant_anchors = participant_frame_anchors(frame, store=self.store, snapshot=snapshot)
+            session_snapshot = self.session_memory.snapshot(cycle.context_ref, cycle.permission_ref)
+            cycle_participant_anchors = participant_frame_session_anchors(
+                frame, turn_index=session_snapshot.revision + 1
+            )
+            anchors = {
+                item.anchor_ref: item
+                for item in (
+                    *tuple(getattr(envelope, "discourse_anchors", ()) or ()),
+                    *session_snapshot.discourse_anchors,
+                    *participant_anchors,
+                    *cycle_participant_anchors,
+                )
+            }
             prepared = grounder.prepare_lattice(
                 lattice.form_lattice,
                 context_ref=cycle.context_ref,
@@ -475,7 +519,8 @@ class V351RuntimeCoordinator:
         if cycle.artifacts["kernel_semantic_abi"].fingerprint != CURRENT_KERNEL_ABI.fingerprint:
             raise ValueError("Stage 5 kernel ABI differs from Stage-0 pinned semantic brain")
         proposed = []
-        service = self.services.csir_compiler
+        proposal_frontiers = []
+        service = self._resolved_service("csir_compiler")
         if service is not None:
             result = service.compile(
                 evidence_lattice=cycle.artifacts["evidence_lattice"],
@@ -495,6 +540,7 @@ class V351RuntimeCoordinator:
             # re-authorize themselves at the kernel barrier.
             if isinstance(result, Mapping):
                 proposed.extend(tuple(result.get("candidate_fragments", ()) or ()))
+                proposal_frontiers.extend(tuple(result.get("composition_frontiers", ()) or ()))
             else:
                 try:
                     proposed.extend(tuple(result))
@@ -521,11 +567,16 @@ class V351RuntimeCoordinator:
             # authority is a boundary invariant, never a proposal-service-controlled flag.
             require_projection_authority=True,
         )
+        combined_frontiers = tuple((*proposal_frontiers, *compiled.frontiers))
+        combined_frontier_refs = tuple(sorted(set((
+            *(str(getattr(item, "frontier_ref", "")) for item in proposal_frontiers if getattr(item, "frontier_ref", "")),
+            *compiled.unresolved_refs,
+        ))))
         if not compiled.candidates:
             return StageOutcome(
                 StageExecutionStatus.DEFERRED,
-                artifacts={"_runtime_frontiers": compiled.frontiers},
-                frontier_refs=tuple(compiled.unresolved_refs),
+                artifacts={"_runtime_frontiers": combined_frontiers},
+                frontier_refs=combined_frontier_refs,
             )
         candidate_set = CSIRCandidateSet(
             candidate_set_ref=artifact_ref(
@@ -545,9 +596,9 @@ class V351RuntimeCoordinator:
                 "csir_candidates": candidate_set,
                 "closure_proofs": candidate_set.closure_proof_refs,
                 "hard_constraint_trace": candidate_set.hard_constraint_trace_refs,
-                "_runtime_frontiers": compiled.frontiers,
+                "_runtime_frontiers": combined_frontiers,
             },
-            frontier_refs=tuple(compiled.unresolved_refs),
+            frontier_refs=combined_frontier_refs,
         )
 
     def stage_06_run_recurrent_meaning_dynamics(self, cycle, capability):
@@ -585,7 +636,7 @@ class V351RuntimeCoordinator:
                     raise ValueError("Stage 6 candidate execution authority envelope cannot be replayed exactly")
                 if rebound_authority.use_authorization_pins != candidate.use_authorization_pins:
                     raise ValueError("Stage 6 candidate use authorization pins mismatch")
-        service = self.services.recurrent_semantic_solver
+        service = self._resolved_service("recurrent_semantic_solver")
         if service is None:
             return self._gap(capability.stage, "recurrent_semantic_solver")
         graph, trace = service.run(
@@ -614,7 +665,7 @@ class V351RuntimeCoordinator:
         return self._performed(activation_graph=graph, activation_trace=trace)
 
     def stage_07_stabilize_semantic_attractors(self, cycle, capability):
-        service = self.services.semantic_attractor_stabilizer
+        service = self._resolved_service("semantic_attractor_stabilizer")
         if service is None:
             return self._gap(capability.stage, "semantic_attractor_stabilizer")
         result = service.stabilize(
@@ -646,8 +697,8 @@ class V351RuntimeCoordinator:
             convergence_assessment=result.convergence,
         )
 
-    # Stages 8-22 are exact service boundaries.  Their semantic implementations land
-    # in later roadmap phases; missing services defer honestly instead of invoking UOL.
+    # Stages 8-10 now have canonical Phase-11 CSIR/discourse/epistemic/query services.
+    # Later services remain exact replaceable boundaries and never invoke legacy UOL.
     def stage_08_build_discourse_proposition_event_and_query_structures(self, c, cap): return self._service(c, cap, "discourse_structure_builder", "build")
     def stage_09_place_epistemic_context_and_assimilate_world_belief(self, c, cap): return self._service(c, cap, "epistemic_coordinator", "place")
     def stage_10_query_and_explain_from_grounded_world_model(self, c, cap): return self._service(c, cap, "query_engine", "query")

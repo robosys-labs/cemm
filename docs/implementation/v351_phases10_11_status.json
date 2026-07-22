@@ -1,0 +1,66 @@
+{
+  "version": "3.5.1",
+  "baseline_commit": "aa86c1c487fade3f821818d5f86616f6927e6781",
+  "phases": [10, 11],
+  "status": "IMPLEMENTED_UNVERIFIED",
+  "phase10": {
+    "objective": "Deterministic exact semantic composition baseline and pre-recurrent Stage 5-7 bridge",
+    "implemented": [
+      "bounded generic ConstructionProgramRecord VM",
+      "exact semantic-definition instantiation and closure-proof propagation",
+      "grounded slot-to-CSIR binding without grammar-role hardcoding",
+      "hard-constraint evaluation boundary",
+      "bounded schema-class candidate branching",
+      "canonical semantic-class compilation",
+      "partial graph and unresolved frontier preservation",
+      "deterministic one-pass dynamics baseline",
+      "canonical attractor stabilization preserving close alternatives",
+      "synthetic vocabulary/source renaming invariance test"
+    ],
+    "not_claimed": [
+      "learned recurrent meaning dynamics",
+      "automatic lowering of incomplete Phase-9 English source programs",
+      "full release competence"
+    ]
+  },
+  "phase11": {
+    "objective": "Epistemic admission, conversational memory, discourse/coreference, correction and grounded query",
+    "implemented": [
+      "six explicit epistemic admission classes",
+      "participant-centered session-scoped admission policy",
+      "attributed-only preservation for unrelated third-party claims",
+      "high-risk/corroboration policy pin hooks",
+      "grounded proposition/claim/query/correction re-abstraction",
+      "bounded session belief memory with CAS commit",
+      "open-question, clarification, common-ground and discourse-anchor state",
+      "scope-local participant/coreference anchor bridge",
+      "non-durable discourse-anchor candidates in grounding",
+      "correction/retraction/supersession lineage",
+      "bounded CSIR query binding and minimal proof-path retrieval",
+      "open-world yes/no query semantics",
+      "change-triggered session memory commits"
+    ],
+    "not_claimed": [
+      "global truth promotion from user assertions",
+      "durable restart-persistent world belief without an injected authorized durable commit coordinator",
+      "response realization/emission phases",
+      "full multi-turn conversational alpha milestone"
+    ]
+  },
+  "prerequisite_bug_fixes": [
+    "ClaimRecord permits equal source/reported context values while preserving distinct roles",
+    "ClaimGrounding permits equal source/reported context values",
+    "GroundingCandidateProvider materializes discourse-anchor iterables once",
+    "GroundingCandidateProvider can represent scope-local non-durable anchored referents",
+    "truth-query absence remains unknown rather than false",
+    "session correction targeting preserves temporal recency rather than lexical ref ordering",
+    "generic VM variable-variable unification uses typed substitution instead of asymmetric kernel unification"
+  ],
+  "verification": {
+    "syntax_compile": "passed",
+    "bundle_compileall": "passed",
+    "full_repository_pytest": "not_run_environment_has_no_repository_checkout",
+    "github_write": "unavailable_403",
+    "core_issue_statuses_changed": false
+  }
+}

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Mapping
 
-from .composition.model import (
+from .composition_pre_phase10_backup.model import (
     MeaningFactor,
     MeaningFactorGraph,
     MeaningFactorKind,

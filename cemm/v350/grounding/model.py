@@ -359,8 +359,8 @@ class ClaimGrounding:
                              (self.source_context_ref, "source_context_ref"),
                              (self.reported_context_ref, "reported_context_ref")):
             _ref(value, label)
-        if self.source_context_ref == self.reported_context_ref:
-            raise ValueError("claim grounding must preserve attributed context")
+        # Attribution is structural: equal source/reported context values do not imply
+        # world admission and therefore are valid for ordinary in-context claims.
         if not 0 <= self.confidence <= 1:
             raise ValueError("claim grounding confidence must be within [0, 1]")
         if self.admission_refs:

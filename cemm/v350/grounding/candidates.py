@@ -53,6 +53,9 @@ class GroundingCandidateProvider:
         for stored in self.store.repositories.identity_facets.all(snapshot=snapshot):
             facet = stored.payload
             identities[_normalize(facet.normalized_value)].append(facet)
+        # Materialize once because anchors feed both durable referents and
+        # Phase-11 scope-local/session identities. Iterable inputs may be generators.
+        discourse_anchors = tuple(discourse_anchors)
         anchor_by_ref = defaultdict(list)
         for anchor in discourse_anchors:
             anchor_by_ref[anchor.referent_ref].append(anchor)
@@ -129,6 +132,61 @@ class GroundingCandidateProvider:
                         continue
                     candidates.append(candidate)
                     seen_targets.add((candidate.target_ref, candidate.origin))
+
+            # Session/cycle discourse anchors may identify scope-local participants or
+            # previously grounded referents that are intentionally not durable store rows.
+            # This creates a candidate only; it does not create durable identity or belief.
+            if not deictic_external and not introduces_occurrence:
+                for anchor in discourse_anchors:
+                    if anchor.referent_ref in by_ref:
+                        continue
+                    if anchor.context_ref not in {mention.context_ref, "global"}:
+                        continue
+                    if required_discourse_roles and not required_discourse_roles.intersection(anchor.role_refs):
+                        continue
+                    if mention.expected_storage_kinds and StorageKind.ORDINARY not in mention.expected_storage_kinds:
+                        continue
+                    if not _target_accepts_storage(mention.target_class, StorageKind.ORDINARY):
+                        continue
+                    anchor_types = declared_type_closure(anchor.type_refs)
+                    if mention.expected_type_refs and not _type_compatible(anchor_types, mention.expected_type_refs):
+                        continue
+                    key = (anchor.referent_ref, CandidateOrigin.DISCOURSE)
+                    if key in seen_targets:
+                        continue
+                    evidence = anchor.evidence_refs or mention.evidence_refs
+                    factors = [
+                        _factor(
+                            mention, anchor.referent_ref, GroundingFactorKind.DISCOURSE,
+                            2.0 + anchor.salience + min(anchor.turn_index, 20) * 0.01,
+                            evidence, "scope-local discourse anchor supports the referent",
+                            hard=bool(required_discourse_roles),
+                            metadata={"anchor_ref": anchor.anchor_ref, "role_refs": anchor.role_refs},
+                        ),
+                        _factor(
+                            mention, anchor.referent_ref, GroundingFactorKind.CONTEXT, 0.8,
+                            evidence, "scope-local referent is visible in the selected context", hard=True,
+                        ),
+                        _factor(
+                            mention, anchor.referent_ref, GroundingFactorKind.STORAGE, 1.0,
+                            evidence, "scope-local referent uses ordinary referent storage semantics", hard=True,
+                            metadata={"storage_kind": StorageKind.ORDINARY.value},
+                        ),
+                    ]
+                    if mention.expected_type_refs:
+                        factors.append(_factor(
+                            mention, anchor.referent_ref, GroundingFactorKind.TYPE, 2.0, evidence,
+                            "scope-local anchor type closure satisfies mention constraints", hard=True,
+                            metadata={"type_refs": anchor_types},
+                        ))
+                    candidates.append(GroundingCandidate(
+                        candidate_ref=_candidate_ref(mention, anchor.referent_ref, CandidateOrigin.DISCOURSE),
+                        mention_ref=mention.mention_ref, target_ref=anchor.referent_ref,
+                        origin=CandidateOrigin.DISCOURSE, storage_kind=StorageKind.ORDINARY,
+                        type_refs=anchor_types, context_refs=(mention.context_ref,), factors=tuple(factors),
+                        provisional=False, metadata={"scope_local": True, "anchor_ref": anchor.anchor_ref},
+                    ))
+                    seen_targets.add(key)
 
             if mention.target_class == MentionTargetClass.SCHEMA_TOPIC:
                 candidates.extend(self._schema_candidates(mention, snapshot=snapshot))

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from cemm.v350.composition import (
+from cemm.v350.composition_pre_phase10_backup import (
     MeaningComposer,
     MeaningFactor,
     MeaningFactorGraph,

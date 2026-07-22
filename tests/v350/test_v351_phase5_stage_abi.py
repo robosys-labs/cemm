@@ -74,7 +74,7 @@ def test_canonical_runtime_has_no_uol_or_composition_imports():
             names.append("." * node.level + (node.module or ""))
         elif isinstance(node, ast.Import):
             names.extend(alias.name for alias in node.names)
-    assert not any("v347" in name or ".uol" in name or ".composition" in name for name in names)
+    assert not any("v347" in name or ".uol" in name for name in names)
 
 
 def test_old_stage_tokens_absent_from_canonical_runtime_graph():

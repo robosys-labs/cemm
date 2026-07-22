@@ -13,7 +13,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from cemm.v350.composition import CompositionPackageAuditor, MeaningComposer, load_composition_contract
+from cemm.v350.composition_pre_phase10_backup import CompositionPackageAuditor, MeaningComposer, load_composition_contract
 from cemm.v350.data import DeterministicSQLiteCompiler
 from cemm.v350.grounding import JointGrounder, MultimodalTrack
 from cemm.v350.language import DependencyArc, DependencyParseEvidence, FormLatticeAnalyzer, SyntaxAdapterHub

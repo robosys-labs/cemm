@@ -28,6 +28,7 @@ def coordinator(service=None):
     value = object.__new__(V351RuntimeCoordinator)
     value.services = RuntimeServices(csir_compiler=service)
     value.exact_csir_compiler = ExactCSIRCompiler()
+    value._canonical_services = {}
     return value
 
 

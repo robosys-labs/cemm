@@ -12,7 +12,7 @@ from tempfile import TemporaryDirectory
 from time import perf_counter
 from typing import Any, Mapping
 
-from ..composition import MeaningComposer
+from ..composition_pre_phase10_backup import MeaningComposer
 from ..grounding import DiscourseAnchor, JointGrounder
 from ..language import (
     ConstructionKind, ConstructionRecord, ConstructionSlot, DependencyArc,
