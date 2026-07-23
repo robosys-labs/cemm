@@ -10,7 +10,7 @@ from ..storage.model import (
     EpistemicAdmissionRecord,
     RecordKind,
 )
-from ..uol.model import (
+from ..semantic_records.model import (
     EventOccurrence,
     FillerRef,
     Polarity,

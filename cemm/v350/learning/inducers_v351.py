@@ -70,12 +70,11 @@ class FormNormalizationInducer:
             script=signal.script,
             token_count=signal.token_count,
             feature_values=(("category", signal.category),) if signal.category else (),
-            source_refs=signal.source_lineage_refs,
-            evidence_refs=signal.evidence_refs,
+            source_refs=("source:phase14:candidate-induction:v351",),
+            evidence_refs=(),
             permission_ref=signal.permission_ref,
             metadata={
                 "learned_by": "phase14.form_normalization_inducer.v351",
-                "observation_ref": signal.observation_ref,
                 "candidate_not_authority": True,
             },
         )
@@ -123,8 +122,8 @@ class SenseInducer:
             authorized_use_operations=(),
             use_authority_explicit=False,
             lexical_category=signal.lexical_category,
-            source_refs=signal.source_lineage_refs,
-            evidence_refs=signal.evidence_refs,
+            source_refs=("source:phase14:candidate-induction:v351",),
+            evidence_refs=(),
             competence_case_refs=signal.competence_case_refs,
             permission_ref=signal.permission_ref,
             metadata={
@@ -180,7 +179,6 @@ class LexicalizationInducer:
             requested_uses=projection.requested_uses,
             permission_ref=form_signal.permission_ref,
             metadata={
-                "teaching_projection_ref": projection.projection_ref,
                 "construction_pin": projection.construction_pin.key,
             },
         )
@@ -188,7 +186,7 @@ class LexicalizationInducer:
         sense_pin = candidate_pin(sense_proposal.record_kind, sense_proposal.payload)
         link_ref = "form-sense-link:learned:" + semantic_fingerprint(
             "learned-form-sense-link-v351",
-            (form_pin.key, sense_pin.key, projection.construction_pin.key),
+            (form_pin.key, sense_pin.key),
             24,
         )
         link = FormSenseLinkRecord(
@@ -199,12 +197,11 @@ class LexicalizationInducer:
             sense_revision=sense_pin.revision,
             lifecycle_status=SchemaLifecycleStatus.CANDIDATE,
             prior_weight=1.0,
-            source_refs=lexical_signal.source_lineage_refs,
-            evidence_refs=lexical_signal.evidence_refs,
+            source_refs=("source:phase14:candidate-induction:v351",),
+            evidence_refs=(),
             permission_ref=lexical_signal.permission_ref,
             metadata={
                 "learned_by": "phase14.lexicalization_inducer.v351",
-                "teaching_projection_ref": projection.projection_ref,
                 "candidate_not_authority": True,
             },
         )
@@ -259,8 +256,8 @@ class ConstructionInducer:
             preserves_gap=signal.construction_kind.value == "ellipsis",
             authorized_use_operations=(),
             use_authority_explicit=False,
-            source_refs=signal.source_lineage_refs,
-            evidence_refs=signal.evidence_refs,
+            source_refs=("source:phase14:candidate-induction:v351",),
+            evidence_refs=(),
             competence_case_refs=signal.competence_case_refs,
             metadata={
                 "learned_by": "phase14.construction_inducer.v351",
@@ -378,11 +375,9 @@ class SemanticDefinitionInducer(_ExactStructuralInducer):
             confidence=1.0,
             permission_ref=form_signal.permission_ref,
             provenance=SchemaProvenance(
-                evidence_refs=signal.evidence_refs,
-                source_refs=(
-                    f"construction:{signal.construction_pin.record_ref}@{signal.construction_pin.revision}",
-                ),
-                lineage_refs=signal.source_lineage_refs,
+                evidence_refs=(),
+                source_refs=("source:phase14:candidate-induction:v351",),
+                lineage_refs=(),
                 created_by="candidate-inducer:semantic-definition:v351",
             ),
             dependencies=(SchemaDependency(
@@ -399,9 +394,6 @@ class SemanticDefinitionInducer(_ExactStructuralInducer):
                 "learned_by": "phase14.semantic_definition_inducer.v351",
                 "candidate_not_authority": True,
                 "definition_relation": signal.definition_relation,
-                "definition_projection_ref": signal.projection_ref,
-                "linguistic_anchor_signal_ref": form_signal.signal_ref,
-                "construction_pin": signal.construction_pin.key,
             },
             # These are structural denotation constraints inherited from the exact parent;
             # facet and identity-rule refs remain inherited through the parent link rather

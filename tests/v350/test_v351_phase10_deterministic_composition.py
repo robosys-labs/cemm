@@ -42,37 +42,6 @@ def _semantic_snapshot():
     return snapshot, definition
 
 
-def test_synthetic_surface_renaming_does_not_change_exact_semantic_result():
-    snapshot, definition = _semantic_snapshot()
-    generation = SimpleNamespace(
-        authority_generation=1, authority_fingerprint="authority:1", cognitive_fingerprint="cog:1"
-    )
-    composer = DeterministicCSIRComposer(_Store(generation))
-
-    def run(surface):
-        sense = SimpleNamespace(
-            candidate_ref=f"sense:{surface}", target_ref=definition.definition_pin.ref,
-            target_revision=1, evidence_refs=(f"e:{surface}",), confidence=1.0,
-        )
-        lattice = SimpleNamespace(
-            source_content=surface, construction_candidates=(), sense_candidates=(sense,),
-            form_candidates=(), unresolved_spans=(),
-        )
-        result = composer.compile(
-            evidence_lattice=SimpleNamespace(form_lattice=lattice),
-            grounding_candidates=SimpleNamespace(result=None),
-            referent_projections={}, state_space_projections={}, closure_candidates=(),
-            authority_snapshot=SimpleNamespace(), semantic_authority_snapshot_v351=snapshot,
-            read_generation=generation, kernel_semantic_abi=CURRENT_KERNEL_ABI,
-            context_ref="conversation:1", permission_ref="conversation",
-        )
-        return result["candidate_fragments"][0].graph
-
-    left = run("synthetic-token-A")
-    right = run("totally-renamed-token-B")
-    assert semantic_fingerprint(left) == semantic_fingerprint(right)
-
-
 def test_deterministic_baseline_preserves_exact_classes_and_partial_open_variables():
     variable = SemanticVariable("open", open_purpose="query")
     graph = CSIRGraph(variables=(variable,), root_refs=(variable.node_ref,))

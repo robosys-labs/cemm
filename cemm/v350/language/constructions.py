@@ -299,9 +299,66 @@ class ConstructionMatcher:
         trigger_observations = set().union(
             *(candidate_observations(ref) for ref in trigger_refs)
         ) if trigger_refs else set()
+        trigger_spans = tuple(
+            candidate_spans[ref] for ref in trigger_refs if ref in candidate_spans
+        )
+        trigger_start = min((span.start for span in trigger_spans), default=None)
+        trigger_end = max((span.end for span in trigger_spans), default=None)
+        def rank_spans_for_slot(slot):
+            values = set()
+            for sense in senses:
+                if slot.accepted_categories and sense.lexical_category not in slot.accepted_categories:
+                    continue
+                target_class = class_by_sense_candidate.get(sense.candidate_ref)
+                if slot.accepted_target_classes and target_class not in slot.accepted_target_classes:
+                    continue
+                span = candidate_spans.get(sense.candidate_ref)
+                if span is not None:
+                    values.add((span.start, span.end))
+            if not slot.accepted_target_classes:
+                for form in forms:
+                    category = category_by_form_candidate.get(form.candidate_ref, "")
+                    if slot.accepted_categories and category not in slot.accepted_categories:
+                        continue
+                    span = candidate_spans.get(form.candidate_ref)
+                    if span is not None:
+                        values.add((span.start, span.end))
+                for observation in observations:
+                    if observation.observation_ref in covered_observation_refs:
+                        continue
+                    if observation.category not in {"word", "number"}:
+                        continue
+                    values.add((observation.span.start, observation.span.end))
+            return tuple(sorted(values))
 
         def syntax_licensed(ref, slot) -> bool:
             observations = candidate_observations(ref)
+            span = candidate_spans.get(ref)
+            if span is None:
+                return False
+            if slot.relative_position == "before":
+                if trigger_start is None or span.end > trigger_start:
+                    return False
+            elif slot.relative_position == "after":
+                if trigger_end is None or span.start < trigger_end:
+                    return False
+            if slot.linear_rank is not None:
+                if slot.relative_position == "after":
+                    ordered = [
+                        value for value in rank_spans_for_slot(slot)
+                        if trigger_end is not None and value[0] >= trigger_end
+                    ]
+                else:
+                    ordered = list(reversed([
+                        value for value in rank_spans_for_slot(slot)
+                        if trigger_start is not None and value[1] <= trigger_start
+                    ]))
+                try:
+                    observed_rank = ordered.index((span.start, span.end))
+                except ValueError:
+                    return False
+                if observed_rank != slot.linear_rank:
+                    return False
             if slot.dependency_relations:
                 arcs = [
                     arc

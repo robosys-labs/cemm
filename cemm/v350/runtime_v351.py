@@ -14,6 +14,11 @@ from typing import Any, Mapping
 
 from .csir.authority import CURRENT_KERNEL_ABI
 from .csir.authority_v351 import AuthoritySnapshotV351
+from .schema.model import UseOperation
+from .csir.runtime_projection_v351 import (
+    load_semantic_authority_supplement_v351,
+    project_runtime_semantic_authority_v351,
+)
 from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
 from .observation import CanonicalOperationOutcomeAssimilatorV351, canonical_observation_adapters_v351
@@ -85,6 +90,8 @@ from .semantic_capability import CompiledSemanticCapabilityRegistry
 from .service_loader import load_signed_runtime_services
 from .stage_contracts import EffectKind
 from .storage import SemanticStore
+from .bootstrap.conversational_seed_v351 import install_signed_conversational_seed_v351
+from .learning.contextual_competence_v351 import ContextualLexicalCompetenceExecutorV351
 from .version import VERSION
 from .workspace_store import CycleArtifactStoreView
 
@@ -97,6 +104,7 @@ class RuntimeServices:
     an empty slot never triggers a legacy fallback.
     """
     semantic_authority_snapshot: AuthoritySnapshotV351 | None = None
+    semantic_authority_supplement: Mapping[str, Any] | None = None
     syntax_adapters: Any | None = None
     clock: Any | None = None
     observation_analyzers: Mapping[str, Any] = field(default_factory=dict)
@@ -214,9 +222,15 @@ class V351RuntimeCoordinator:
         self._minimum_response_authority = compile_minimum_response_authority()
         self._minimum_english_realization = compile_minimum_english_realization_package()
         self._reviewed_phase13_dynamics = compile_reviewed_phase13_parameter_artifacts()
+        self._semantic_authority_snapshots = {}
         if self.services.clock is None:
             self.services.clock = SystemUTCClockV351()
         self._canonical_observation_adapters = canonical_observation_adapters_v351()
+        contextual_competence = ContextualLexicalCompetenceExecutorV351()
+        executors = dict(self.services.learning_competence_executors or {})
+        for operation in (UseOperation.GROUND, UseOperation.COMPOSE, UseOperation.QUERY):
+            executors.setdefault(operation.value, contextual_competence)
+        self.services.learning_competence_executors = executors
         if self.services.learning_maintenance is None:
             self.services.learning_maintenance = Phase14LearningMaintenanceV351(
                 store,
@@ -309,6 +323,49 @@ class V351RuntimeCoordinator:
                 # Retain only the active generation so vocabulary growth cannot create an
                 # unbounded process-global cache.
                 self._schema_applicability_indexes = {key: built}
+                cached = built
+            return cached
+
+    def _semantic_authority_snapshot(self, authority):
+        base = self.services.semantic_authority_snapshot or AuthoritySnapshotV351(
+            generation=authority.generation,
+            authority_fingerprint=authority.authority_fingerprint,
+        )
+        if (base.generation, base.authority_fingerprint) != (
+            authority.generation, authority.authority_fingerprint
+        ):
+            raise ValueError("injected semantic authority snapshot belongs to another AuthorityGeneration")
+        key = (authority.generation, authority.authority_fingerprint, base.snapshot_fingerprint)
+        with self._authority_index_lock:
+            cached = self._semantic_authority_snapshots.get(key)
+        if cached is not None:
+            return cached
+
+        # Build outside the lock. Authority publication is generation-pinned; duplicate concurrent
+        # first builds are harmless and the ownership swap below is O(1).
+        dynamics = tuple(base.dynamics_parameters) or tuple(self._reviewed_phase13_dynamics)
+        built = project_runtime_semantic_authority_v351(
+            self.store,
+            base,
+            dynamics_parameters=dynamics,
+            supplement=self.services.semantic_authority_supplement,
+        )
+        built = project_state_causal_authority(self.store, built)
+        observed = self.store.current_authority_snapshot(
+            runtime_attestation_ref=str(self.services.runtime_attestation_ref or "")
+        )
+        if (observed.generation, observed.authority_fingerprint) != (
+            authority.generation, authority.authority_fingerprint
+        ):
+            from .runtime_generations import ReadGenerationChanged
+            raise ReadGenerationChanged(
+                "semantic authority changed during restart-safe snapshot projection"
+            )
+        with self._authority_index_lock:
+            cached = self._semantic_authority_snapshots.get(key)
+            if cached is None:
+                # Retain only the active generation; no vocabulary-sized cache growth across reloads.
+                self._semantic_authority_snapshots = {key: built}
                 cached = built
             return cached
 
@@ -419,21 +476,7 @@ class V351RuntimeCoordinator:
         authority = self.store.current_authority_snapshot(
             runtime_attestation_ref=str(self.services.runtime_attestation_ref or "")
         )
-        semantic_authority = self.services.semantic_authority_snapshot or AuthoritySnapshotV351(
-            generation=authority.generation,
-            authority_fingerprint=authority.authority_fingerprint,
-        )
-        # Phase 13 requires an explicit immutable Θ inventory.  The reviewed canonical
-        # baseline is pinned only when the supplied semantic snapshot has no dynamics
-        # artifacts at all; a partial/custom inventory is never silently completed.
-        if not semantic_authority.dynamics_parameters:
-            semantic_authority = replace(
-                semantic_authority,
-                dynamics_parameters=tuple(self._reviewed_phase13_dynamics),
-            )
-        # Deterministically project only already-promoted Phase-15/16 operational authority
-        # from this exact store AuthorityGeneration into the cycle-local split snapshot.
-        semantic_authority = project_state_causal_authority(self.store, semantic_authority)
+        semantic_authority = self._semantic_authority_snapshot(authority)
         if (semantic_authority.generation, semantic_authority.authority_fingerprint) != (
             authority.generation, authority.authority_fingerprint
         ):
@@ -1481,14 +1524,28 @@ def _build_scheduler(services: RuntimeServices) -> MaintenanceScheduler:
 
 
 def build_runtime(*, database_path: str = ":memory:", boot_database_path: str | Path | None = None,
-                  authority_guard, services: RuntimeServices | None = None) -> Runtime:
+                  authority_guard, services: RuntimeServices | None = None,
+                  semantic_authority_supplement_path: str | Path | None = None,
+                  conversational_seed_path: str | Path | None = None) -> Runtime:
     if authority_guard is None:
         raise TypeError("canonical v3.5.1 runtime requires attested authority")
     authority_guard.require_service_authority()
     store = SemanticStore(database_path, boot_path=boot_database_path)
     manifest = getattr(authority_guard, "manifest", None)
+    if conversational_seed_path is not None:
+        install_signed_conversational_seed_v351(
+            store, conversational_seed_path,
+            expected_sha256=str(getattr(manifest, "conversational_seed_sha256", "") or ""),
+        )
     if services is None:
         services = load_signed_runtime_services(store, manifest, RuntimeServices)
+    if semantic_authority_supplement_path is not None:
+        if services.semantic_authority_supplement is not None:
+            raise ValueError("semantic authority supplement is already installed")
+        services.semantic_authority_supplement = load_semantic_authority_supplement_v351(
+            semantic_authority_supplement_path,
+            expected_sha256=str(getattr(manifest, "semantic_authority_supplement_sha256", "") or ""),
+        )
     signed_system_ref = getattr(manifest, "output_speaker_ref", None) if manifest is not None else None
     if signed_system_ref:
         services.system_ref = str(signed_system_ref)

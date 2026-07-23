@@ -182,21 +182,71 @@ class DeterministicCSIRComposer:
 
     @staticmethod
     def _projection_pins(form_lattice, registry, snapshot: AuthoritySnapshotV351) -> tuple[ExactAuthorityPin, ...]:
-        pack_keys: set[tuple[str, int]] = set()
-        for form in form_lattice.form_candidates:
-            stored = registry.require_form(form.form_ref, form.form_revision)
-            pack_keys.add((stored.pack_ref, stored.pack_revision))
+        """Pin every independently revisioned language authority used by the lattice."""
+        auxiliary = tuple(snapshot.auxiliary_exact_pins)
         result: dict[tuple[str, str, str, int, str, str], ExactAuthorityPin] = {}
-        for pack_ref, revision in sorted(pack_keys):
-            pack = registry.require_pack(pack_ref, revision)
-            aliases = {pack_ref, f"language-pack:{pack.language_tag}"}
+
+        def add(kind: str, ref: str, revision: int) -> None:
             matches = tuple(
-                pin for pin in snapshot.auxiliary_exact_pins
-                if pin.revision == revision and pin.ref in aliases
-                and pin.kind in {"language_package", "language_pack", "language_projection"}
+                pin for pin in auxiliary
+                if pin.kind == kind and pin.ref == ref and pin.revision == revision
             )
-            if len(matches) == 1:
-                result[matches[0].key] = matches[0]
+            if len(matches) != 1:
+                raise DeterministicCompositionError(
+                    f"exact language projection authority requires one pin:{kind}:{ref}@{revision}:{len(matches)}"
+                )
+            result[matches[0].key] = matches[0]
+
+        def add_pack(item) -> None:
+            if hasattr(item, "pack_ref") and hasattr(item, "pack_revision"):
+                add("language_pack", str(item.pack_ref), int(item.pack_revision))
+
+        for candidate in form_lattice.form_candidates:
+            form = registry.require_form(candidate.form_ref, candidate.form_revision)
+            add("language_form", form.form_ref, form.revision); add_pack(form)
+            if candidate.morphology_rule_ref is not None:
+                rule = registry.require_morphology_analysis_rule(
+                    candidate.morphology_rule_ref, candidate.morphology_rule_revision
+                )
+                add("morphology_analysis_rule", rule.rule_ref, rule.revision); add_pack(rule)
+            if candidate.derived_lexeme_ref is not None:
+                lexeme = registry.require_lexeme(candidate.derived_lexeme_ref, candidate.derived_lexeme_revision)
+                add("lexeme", lexeme.lexeme_ref, lexeme.revision); add_pack(lexeme)
+
+        for candidate in form_lattice.lexeme_candidates:
+            lexeme = registry.require_lexeme(candidate.lexeme_ref, candidate.lexeme_revision)
+            add("lexeme", lexeme.lexeme_ref, lexeme.revision); add_pack(lexeme)
+            if candidate.link_ref is not None:
+                add("form_lexeme_link", candidate.link_ref, int(candidate.link_revision))
+
+        for candidate in form_lattice.sense_candidates:
+            sense = registry.require_sense(candidate.sense_ref, candidate.sense_revision)
+            add("lexical_sense", sense.sense_ref, sense.revision); add_pack(sense)
+            if candidate.lexeme_ref is not None:
+                lexeme = registry.require_lexeme(candidate.lexeme_ref, candidate.lexeme_revision)
+                add("lexeme", lexeme.lexeme_ref, lexeme.revision); add_pack(lexeme)
+            if candidate.authority_ref:
+                kind = (
+                    "lexeme_sense_link" if candidate.authority_path == "lexeme"
+                    else "form_sense_link"
+                )
+                add(kind, candidate.authority_ref, int(candidate.authority_revision))
+            for contribution in candidate.contributions:
+                if contribution.spec_ref is not None:
+                    add(
+                        "semantic_contribution_spec", contribution.spec_ref,
+                        int(contribution.spec_revision),
+                    )
+
+        for candidate in form_lattice.construction_candidates:
+            construction = registry.require_construction(
+                candidate.construction_ref, candidate.construction_revision
+            )
+            add("construction", construction.construction_ref, construction.revision); add_pack(construction)
+            for program in registry.programs_for_construction(
+                construction.construction_ref, construction.revision
+            ):
+                add("construction_program", program.program_ref, program.revision); add_pack(program)
         return tuple(result[key] for key in sorted(result))
 
     @staticmethod

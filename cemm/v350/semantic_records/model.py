@@ -1,8 +1,6 @@
-"""CEMM v3.5 Universal Operational Language records.
+"""Canonical v3.5 semantic/durable record contracts required by the CSIR runtime.
 
-The records are cycle-local cognition. They do not write durable state and do
-not admit claims into the actual world. Durable mutation remains a later
-GraphPatch concern.
+This module is mechanically dependency-closed from the exact migration-era record definitions. It deliberately excludes the legacy cognitive graph type and unrelated legacy cognitive types.
 """
 from __future__ import annotations
 
@@ -12,16 +10,13 @@ import hashlib
 import json
 from math import isfinite
 from typing import Any, Iterable, Mapping
-
 from ..schema.model import (
     OpenBindingPurpose, PortFillerClass, SchemaClass, StorageKind, UseOperation,
 )
 
-
 class StrEnum(str, Enum):
     def __str__(self) -> str:
         return self.value
-
 
 class IdentityStatus(StrEnum):
     CANDIDATE = "candidate"
@@ -32,18 +27,15 @@ class IdentityStatus(StrEnum):
     SPLIT = "split"
     RETIRED = "retired"
 
-
 class Polarity(StrEnum):
     POSITIVE = "positive"
     NEGATIVE = "negative"
-
 
 class CoordinationKind(StrEnum):
     AND = "and"
     OR = "or"
     LIST = "list"
     ALTERNATIVE = "alternative"
-
 
 class ScopeKind(StrEnum):
     LOGICAL = "logical"
@@ -53,7 +45,6 @@ class ScopeKind(StrEnum):
     DISCOURSE = "discourse"
     NEGATION = "negation"
 
-
 class ClaimForce(StrEnum):
     ASSERTED = "asserted"
     SUGGESTED = "suggested"
@@ -62,7 +53,6 @@ class ClaimForce(StrEnum):
     DENIED = "denied"
     CORRECTED = "corrected"
     RETRACTED = "retracted"
-
 
 class OccurrenceStatus(StrEnum):
     MENTIONED = "mentioned"
@@ -81,7 +71,6 @@ class OccurrenceStatus(StrEnum):
     FICTIONAL = "fictional"
     NON_OCCURRING = "non_occurring"
 
-
 class ChangeOperation(StrEnum):
     SET = "set"
     ACTIVATE = "activate"
@@ -95,7 +84,6 @@ class ChangeOperation(StrEnum):
     ENABLE = "enable"
     DISABLE = "disable"
 
-
 _STATE_DELTA_OPERATIONS = frozenset({
     ChangeOperation.SET,
     ChangeOperation.ACTIVATE,
@@ -106,7 +94,6 @@ _STATE_DELTA_OPERATIONS = frozenset({
     ChangeOperation.RESTORE,
 })
 
-
 class CapabilityStatus(StrEnum):
     AVAILABLE = "available"
     CONDITIONAL = "conditional"
@@ -116,14 +103,12 @@ class CapabilityStatus(StrEnum):
     TERMINATED = "terminated"
     UNKNOWN = "unknown"
 
-
 class Valence(StrEnum):
     BENEFICIAL = "beneficial"
     HARMFUL = "harmful"
     MIXED = "mixed"
     NEUTRAL = "neutral"
     UNKNOWN = "unknown"
-
 
 class ImportanceClass(StrEnum):
     NEGLIGIBLE = "negligible"
@@ -132,13 +117,11 @@ class ImportanceClass(StrEnum):
     HIGH = "high"
     CRITICAL = "critical"
 
-
 class Reversibility(StrEnum):
     REVERSIBLE = "reversible"
     PARTIALLY_REVERSIBLE = "partially_reversible"
     IRREVERSIBLE = "irreversible"
     UNKNOWN = "unknown"
-
 
 @dataclass(frozen=True, slots=True)
 class QuotedLiteral:
@@ -152,7 +135,6 @@ class QuotedLiteral:
         if not isinstance(self.surface, str):
             raise TypeError("quoted literal surface must be text")
 
-
 @dataclass(frozen=True, slots=True)
 class FillerRef:
     filler_class: PortFillerClass
@@ -163,9 +145,7 @@ class FillerRef:
         if self.filler_class == PortFillerClass.QUOTED_LITERAL:
             raise ValueError("quoted literals use QuotedLiteral, not FillerRef")
 
-
 PortFiller = FillerRef | QuotedLiteral
-
 
 @dataclass(frozen=True, slots=True)
 class ApplicationBinding:
@@ -190,7 +170,6 @@ class ApplicationBinding:
             raise ValueError("semantic-variable binding requires an explicit open_binding_purpose")
         if not has_variable and self.open_binding_purpose is not None:
             raise ValueError("open_binding_purpose requires a semantic-variable filler")
-
 
 @dataclass(frozen=True, slots=True)
 class Referent:
@@ -222,7 +201,6 @@ class Referent:
     @property
     def record_fingerprint(self) -> str:
         return fingerprint("uol-referent-record", canonical_data(self))
-
 
 @dataclass(frozen=True, slots=True)
 class SemanticVariable:
@@ -257,7 +235,6 @@ class SemanticVariable:
         ):
             raise TypeError("open_binding_purpose must be OpenBindingPurpose")
 
-
 @dataclass(frozen=True, slots=True)
 class SemanticApplication:
     application_ref: str
@@ -285,7 +262,6 @@ class SemanticApplication:
     def binding(self, port_ref: str) -> ApplicationBinding | None:
         return next((item for item in self.bindings if item.port_ref == port_ref), None)
 
-
 @dataclass(frozen=True, slots=True)
 class ScopeRelation:
     scope_relation_ref: str
@@ -298,7 +274,6 @@ class ScopeRelation:
     def __post_init__(self) -> None:
         _require_ref(self.scope_relation_ref, "scope_relation_ref")
         _require_ref(self.operator_application_ref, "operator_application_ref")
-
 
 @dataclass(frozen=True, slots=True)
 class CoordinationGroup:
@@ -314,7 +289,6 @@ class CoordinationGroup:
         if len(self.members) < 2:
             raise ValueError("coordination requires at least two members")
         _require_unique(tuple(_filler_key(item) for item in self.members), f"members of {self.group_ref}")
-
 
 @dataclass(frozen=True, slots=True)
 class PropositionReferent:
@@ -341,7 +315,6 @@ class PropositionReferent:
     @property
     def proposition_ref(self) -> str:
         return self.referent.referent_ref
-
 
 @dataclass(frozen=True, slots=True)
 class ClaimOccurrence:
@@ -374,7 +347,6 @@ class ClaimOccurrence:
     @property
     def claim_ref(self) -> str:
         return self.referent.referent_ref
-
 
 @dataclass(frozen=True, slots=True)
 class EventOccurrence:
@@ -409,7 +381,6 @@ class EventOccurrence:
     @property
     def event_ref(self) -> str:
         return self.referent.referent_ref
-
 
 @dataclass(frozen=True, slots=True)
 class StateDelta:
@@ -463,7 +434,6 @@ class StateDelta:
         if self.operation in {ChangeOperation.INCREASE, ChangeOperation.DECREASE} and self.magnitude_ref is None and self.to_value_ref is None:
             raise ValueError("scalar delta requires magnitude_ref or to_value_ref")
 
-
 @dataclass(frozen=True, slots=True)
 class CapabilityDelta:
     delta_ref: str
@@ -498,7 +468,6 @@ class CapabilityDelta:
         if self.prior_status == self.new_status:
             raise ValueError("capability delta must change status")
 
-
 @dataclass(frozen=True, slots=True)
 class ImpactAssessment:
     assessment_ref: str
@@ -532,7 +501,6 @@ class ImpactAssessment:
         if not self.proof_refs:
             raise ValueError("impact assessment requires proof references")
 
-
 @dataclass(frozen=True, slots=True)
 class ImportanceAssessment:
     assessment_ref: str
@@ -559,64 +527,6 @@ class ImportanceAssessment:
         if not self.evidence_refs or not self.reasons:
             raise ValueError("importance assessment requires evidence and reasons")
 
-
-@dataclass(frozen=True, slots=True)
-class UOLGraph:
-    graph_ref: str
-    referents: Mapping[str, Referent] = field(default_factory=dict)
-    applications: Mapping[str, SemanticApplication] = field(default_factory=dict)
-    variables: Mapping[str, SemanticVariable] = field(default_factory=dict)
-    coordination_groups: Mapping[str, CoordinationGroup] = field(default_factory=dict)
-    propositions: Mapping[str, PropositionReferent] = field(default_factory=dict)
-    claims: Mapping[str, ClaimOccurrence] = field(default_factory=dict)
-    events: Mapping[str, EventOccurrence] = field(default_factory=dict)
-    scope_relations: tuple[ScopeRelation, ...] = ()
-    state_deltas: tuple[StateDelta, ...] = ()
-    capability_deltas: tuple[CapabilityDelta, ...] = ()
-    impact_assessments: tuple[ImpactAssessment, ...] = ()
-    importance_assessments: tuple[ImportanceAssessment, ...] = ()
-    root_refs: tuple[FillerRef, ...] = ()
-    unresolved_refs: tuple[str, ...] = ()
-    assumptions: tuple[str, ...] = ()
-    evidence_refs: tuple[str, ...] = ()
-
-    def __post_init__(self) -> None:
-        _require_ref(self.graph_ref, "graph_ref")
-        _mapping_keys(self.referents, "referent_ref")
-        _mapping_keys(self.applications, "application_ref")
-        _mapping_keys(self.variables, "variable_ref")
-        _mapping_keys(self.coordination_groups, "group_ref")
-        for key, value in self.propositions.items():
-            if key != value.proposition_ref:
-                raise ValueError("proposition mapping key mismatch")
-        for key, value in self.claims.items():
-            if key != value.claim_ref:
-                raise ValueError("claim mapping key mismatch")
-        for key, value in self.events.items():
-            if key != value.event_ref:
-                raise ValueError("event mapping key mismatch")
-        _require_unique(tuple(item.scope_relation_ref for item in self.scope_relations), "scope relation refs")
-        _require_unique(tuple(item.delta_ref for item in self.state_deltas), "state delta refs")
-        _require_unique(tuple(item.delta_ref for item in self.capability_deltas), "capability delta refs")
-        _require_unique(tuple(item.assessment_ref for item in self.impact_assessments), "impact assessment refs")
-        _require_unique(tuple(item.assessment_ref for item in self.importance_assessments), "importance assessment refs")
-        specialized_sets = (set(self.propositions), set(self.claims), set(self.events))
-        for index, left in enumerate(specialized_sets):
-            for right in specialized_sets[index + 1:]:
-                overlap = left.intersection(right)
-                if overlap:
-                    raise ValueError(f"referent has competing UOL specializations: {sorted(overlap)}")
-        for mapping in (self.propositions, self.claims, self.events):
-            for ref, specialized in mapping.items():
-                base = self.referents.get(ref)
-                if base is not None and base != specialized.referent:
-                    raise ValueError(f"specialized referent differs from graph base: {ref}")
-
-    @property
-    def record_fingerprint(self) -> str:
-        return fingerprint("uol-graph-record", canonical_data(self), 64)
-
-
 def canonical_data(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
@@ -630,47 +540,30 @@ def canonical_data(value: Any) -> Any:
         return sorted((canonical_data(item) for item in value), key=_canonical_sort_key)
     return value
 
-
 def fingerprint(prefix: str, value: Any, length: int = 32) -> str:
     payload = json.dumps(canonical_data(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return f"{prefix}:{hashlib.sha256(payload).hexdigest()[:length]}"
-
-
-def _mapping_keys(mapping: Mapping[str, Any], attribute: str) -> None:
-    for key, value in mapping.items():
-        if key != getattr(value, attribute):
-            raise ValueError(f"mapping key mismatch for {attribute}: {key}")
-
 
 def _filler_key(value: PortFiller) -> tuple[str, str]:
     if isinstance(value, FillerRef):
         return value.filler_class.value, value.ref
     return PortFillerClass.QUOTED_LITERAL.value, value.literal_ref
 
-
 def _confidence(value: float, label: str) -> None:
     if not isfinite(value) or not 0.0 <= value <= 1.0:
         raise ValueError(f"{label} must be within [0, 1]")
 
-
 def _require_ref(value: str, label: str) -> None:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{label} is required")
-
 
 def _require_unique(values: Iterable[Any], label: str) -> None:
     items = tuple(values)
     if len(items) != len(set(items)):
         raise ValueError(f"duplicate {label}")
 
-
 def _canonical_sort_key(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
-# Final-v3.5.1 migration compatibility: shared durable/record DTO names resolve to the
-# canonical non-graph classes.  UOLGraph remains local to this migration namespace.
-from ..semantic_records import model as _canonical_record_model_v351
-for _record_name in _canonical_record_model_v351.CANONICAL_RECORD_EXPORTS:
-    if _record_name != "UOLGraph":
-        globals()[_record_name] = getattr(_canonical_record_model_v351, _record_name)
-del _record_name, _canonical_record_model_v351
+
+CANONICAL_RECORD_EXPORTS = ('ApplicationBinding', 'CapabilityDelta', 'CapabilityStatus', 'ChangeOperation', 'ClaimForce', 'ClaimOccurrence', 'CoordinationGroup', 'CoordinationKind', 'EventOccurrence', 'FillerRef', 'IdentityStatus', 'ImpactAssessment', 'ImportanceAssessment', 'ImportanceClass', 'OccurrenceStatus', 'Polarity', 'PropositionReferent', 'QuotedLiteral', 'Referent', 'Reversibility', 'ScopeKind', 'ScopeRelation', 'SemanticApplication', 'SemanticVariable', 'StateDelta', 'StrEnum', 'Valence', 'canonical_data', 'fingerprint')

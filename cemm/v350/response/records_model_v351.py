@@ -1,4 +1,4 @@
-"""Phase-16 proof-carrying Response UOL contracts."""
+"""Canonical response transformation/proof record contracts for v3.5.1."""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
@@ -110,34 +110,6 @@ class ResponseOmissionRecord:
         if self.mandatory and self.authorized: raise ValueError("mandatory content cannot be authorized for omission")
 
 
-@dataclass(frozen=True,slots=True)
-class ResponseUOLRecord:
-    response_ref: str
-    goal_decision_pin: PinnedRecord
-    selected_goal_pins: tuple[PinnedRecord,...]
-    source_pins: tuple[PinnedRecord,...]
-    transformation_proof_refs: tuple[str,...]
-    omission_refs: tuple[str,...]
-    graph: Any
-    unresolved_frontier_refs: tuple[str,...]
-    audience_refs: tuple[str,...]
-    perspective_ref: str
-    context_ref: str
-    permission_ref: str
-    sensitivity: str="normal"
-    snapshot_revision: int=0
-    snapshot_fingerprint: str=""
-    revision: int=1
-    metadata: Mapping[str,Any]=field(default_factory=dict)
-    def __post_init__(self):
-        for v,l in ((self.response_ref,"response_ref"),(self.perspective_ref,"perspective_ref"),(self.context_ref,"context_ref"),(self.permission_ref,"permission_ref"),(self.snapshot_fingerprint,"snapshot fingerprint")): _ref(v,l)
-        if self.revision!=1 or self.snapshot_revision<0: raise ValueError("Response UOL is immutable and snapshot must be valid")
-        if not self.selected_goal_pins: raise ValueError("Response UOL requires selected goal lineage")
-        if not self.graph.root_refs and not self.unresolved_frontier_refs: raise ValueError("Response UOL must contain authorized roots or explicit unresolved frontiers")
-        _unique(tuple(p.key for p in self.selected_goal_pins),"response selected goal pins"); _unique(tuple(p.key for p in self.source_pins),"response source pins")
-        _unique(self.transformation_proof_refs,"response proof refs"); _unique(self.omission_refs,"response omissions"); _unique(self.unresolved_frontier_refs,"response frontiers"); _unique(self.audience_refs,"response audiences")
-    @property
-    def fingerprint(self): return semantic_fingerprint("response-uol",self,64)
 
 
 def _ref(v,l):

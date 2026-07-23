@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Iterable
 
 from ..language import FormLattice, FormLatticeAnalyzer
@@ -81,6 +81,31 @@ class JointGrounder:
         self.store.assert_snapshot(snapshot)
         mentions = self.mentions.compile(lattice, context_ref=context_ref)
         derived_constraints = self._derive_constraints(mentions, lattice, snapshot=snapshot)
+        # Exact construction-port constraints may type an unresolved occurrence without
+        # assigning a global lexical meaning. Project those local accepted types onto the
+        # mention before provisional candidate generation so the same hard port contract
+        # can be satisfied. Participant/deictic role mentions remain role-grounded and are
+        # never constrained by this occurrence-local projection.
+        local_types = defaultdict(set)
+        for constraint in derived_constraints:
+            if constraint.constraint_kind != GroundingConstraintKind.PORT_COMPATIBLE:
+                continue
+            for mention_ref in constraint.mention_refs:
+                for contract in tuple(constraint.metadata.get("port_contracts", ()) or ()):
+                    local_types[mention_ref].update(map(str, contract.get("accepted_type_refs", ())))
+        mentions = tuple(
+            replace(
+                mention,
+                expected_type_refs=tuple(sorted(local_types.get(mention.mention_ref, ()))),
+            )
+            if (
+                local_types.get(mention.mention_ref)
+                and not mention.expected_type_refs
+                and not tuple(mention.metadata.get("required_discourse_roles", ()) or ())
+            )
+            else mention
+            for mention in mentions
+        )
         candidates = self.candidates.generate(
             mentions,
             discourse_anchors=discourse_anchors,

@@ -58,6 +58,17 @@ class ConversationalGoalBridgeV351:
                     priority=int(intent.priority),
                 ))
 
+            if discourse is not None:
+                from ..discourse.model import DiscourseActKind
+                for act in tuple(getattr(discourse, "acts", ()) or ()):
+                    if getattr(act, "act_kind", None) is DiscourseActKind.GREETING:
+                        candidates.append(ConversationalGoalCandidate(
+                            goal_ref=artifact_ref("goal:greet", act.act_ref),
+                            family=ResponseFamily.GREET,
+                            target_refs=(act.act_ref,), source_refs=(act.semantic_ref,),
+                            reason_refs=("grounded_greeting_discourse_act",), priority=700,
+                        ))
+
             for result in query_results:
                 if getattr(result, "answered", False):
                     candidates.append(ConversationalGoalCandidate(

@@ -75,12 +75,15 @@ def test_m3_restart_registry_resolves_arbitrary_new_symbol_through_promoted_exac
     link_pin = _pin(RecordKind.FORM_SENSE_LINK, link.link_ref, revision=1)
     revisions = {form_pin.key: 2, sense_pin.key: 2, link_pin.key: 2}
 
-    active_form = replace(form, revision=2, supersedes_revision=1, lifecycle_status=SchemaLifecycleStatus.ACTIVE)
+    active_form = replace(form, revision=2, supersedes_revision=1, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
+                          source_refs=("source:m3-restart",), evidence_refs=("evidence:m3-restart",))
     active_sense = replace(
         sense, revision=2, supersedes_revision=1, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
         authorized_use_operations=(UseOperation.GROUND,), use_authority_explicit=True,
+        source_refs=("source:m3-restart",), evidence_refs=("evidence:m3-restart",),
     )
-    active_link = replace(link, revision=2, supersedes_revision=1, lifecycle_status=SchemaLifecycleStatus.ACTIVE)
+    active_link = replace(link, revision=2, supersedes_revision=1, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
+                          source_refs=("source:m3-restart",), evidence_refs=("evidence:m3-restart",))
     active_link = rewire_promoted_record(
         active_link, candidate_pins=(form_pin, sense_pin, link_pin), revision_map=revisions,
     )
@@ -160,16 +163,19 @@ def test_m3_genuinely_new_concept_definition_promotes_schema_and_lexical_graph_t
         replace(schema_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE),
         candidate_pins=candidate_pins, revision_map=revisions,
     )
-    active_form = replace(form_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE)
+    active_form = replace(form_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
+                          source_refs=("source:m3d",), evidence_refs=("evidence:m3d",))
     active_sense = rewire_promoted_record(
         replace(
             sense_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
             authorized_use_operations=(UseOperation.GROUND,), use_authority_explicit=True,
+            source_refs=("source:m3d",), evidence_refs=("evidence:m3d",),
         ),
         candidate_pins=candidate_pins, revision_map=revisions,
     )
     active_link = rewire_promoted_record(
-        replace(link_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE),
+        replace(link_proposal.payload, revision=2, lifecycle_status=SchemaLifecycleStatus.ACTIVE,
+                source_refs=("source:m3d",), evidence_refs=("evidence:m3d",)),
         candidate_pins=candidate_pins, revision_map=revisions,
     )
     assert active_schema.schema_ref != parent.schema_ref

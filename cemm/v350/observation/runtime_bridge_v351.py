@@ -7,6 +7,7 @@ grounding, CSIR and recurrent services.
 from __future__ import annotations
 
 from ..conversation import participant_frame_session_anchors
+from ..csir.authority_v351 import MissingExactDependency, SemanticAuthorityError
 from ..grounding.coordinator import JointGrounder
 from ..grounding.participants import participant_frame_anchors
 from ..language.analyzer import FormLatticeAnalyzer
@@ -113,6 +114,9 @@ def stage_02_encode_form_and_sensor_evidence_v351(coordinator, cycle, capability
                 observation, authority_snapshot_v351=semantic_authority,
                 cycle=cycle, capability=capability,
             )
+        except (MissingExactDependency, SemanticAuthorityError):
+            # Exact authority failure is never downgraded to an ordinary sensor frontier.
+            raise
         except (ValueError, TypeError) as exc:
             unresolved.append(f"sensor-analysis:{observation.observation_ref}:{type(exc).__name__}")
             continue

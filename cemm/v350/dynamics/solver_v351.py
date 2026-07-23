@@ -23,6 +23,8 @@ class RecurrentSemanticDynamicsV351:
     This is the canonical Stage-6 mechanism.  No learned score can create semantic
     authority, satisfy a hard mask, or fabricate a missing filler.
     """
+    RUNTIME_ABI = 'v351'
+    SERVICE_KIND = 'recurrent_semantic_solver'
 
     def __init__(self, *, compiler: TypedActivationGraphCompilerV351 | None = None) -> None:
         self.compiler = compiler or TypedActivationGraphCompilerV351()

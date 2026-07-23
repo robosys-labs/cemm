@@ -12,6 +12,8 @@ from .model_v351 import ActivationNodeKind, ConvergenceKind, TypedActivationPayl
 
 
 class RecurrentAttractorStabilizerV351:
+    RUNTIME_ABI = 'v351'
+    SERVICE_KIND = 'semantic_attractor_stabilizer'
     def stabilize(
         self,
         *,

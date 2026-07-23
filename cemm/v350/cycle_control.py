@@ -9,6 +9,7 @@ from typing import Any, Iterable, Mapping
 class FrontierEffect(str, Enum):
     INFORMATIONAL = "informational"
     LEARNING = "learning"
+    CLARIFICATION = "clarification"
     BLOCKS_QUERY_ANSWER = "blocks_query_answer"
     BLOCKS_COMMIT = "blocks_commit"
     BLOCKS_EFFECT = "blocks_effect"

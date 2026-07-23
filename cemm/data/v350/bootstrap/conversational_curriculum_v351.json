@@ -1,0 +1,113 @@
+{
+  "curriculum_ref": "cemm-v351-basic-conversation-learning-v1",
+  "episodes": [
+    {
+      "goals": [
+        "greeting_discourse"
+      ],
+      "id": "greeting",
+      "turns": [
+        "hello",
+        "hi"
+      ]
+    },
+    {
+      "goals": [
+        "query_self_state",
+        "qualified_answer"
+      ],
+      "id": "self_state",
+      "turns": [
+        "how are you?",
+        "how are you today?"
+      ]
+    },
+    {
+      "goals": [
+        "participant_identity",
+        "correction_extension",
+        "restart_reuse"
+      ],
+      "id": "name_memory",
+      "turns": [
+        "my name is Chibueze",
+        "what is my name?",
+        "my full name is Chibueze Opata",
+        "what is my full name?"
+      ]
+    },
+    {
+      "goals": [
+        "new_type",
+        "lexicalization",
+        "property",
+        "query"
+      ],
+      "id": "explicit_definition",
+      "turns": [
+        "A zorb is an animal.",
+        "The zorb is blue.",
+        "What is a zorb?",
+        "What color is the zorb?"
+      ]
+    },
+    {
+      "goals": [
+        "correction",
+        "supersession"
+      ],
+      "id": "correction",
+      "turns": [
+        "The zorb is red.",
+        "No, the zorb is blue.",
+        "What color is the zorb?"
+      ]
+    },
+    {
+      "goals": [
+        "contextual_unknown_word",
+        "independent_evidence_aggregation",
+        "animal_like_hypothesis",
+        "run_capability_hypothesis",
+        "do_not_infer_medium_size",
+        "do_not_promote_herbivore_from_single_carrot"
+      ],
+      "id": "wug_context",
+      "turns": [
+        "The wug ran across the field.",
+        "She fed the wug a carrot.",
+        "The wug's fur was soft and brown.",
+        "A wug can run up to 20 miles per hour.",
+        "What do you think a wug is?"
+      ]
+    },
+    {
+      "goals": [
+        "name_as_referent_evidence",
+        "no_named_entity_ontology_seed"
+      ],
+      "id": "proper_name_without_ner_list",
+      "turns": [
+        "This is Amaka.",
+        "Amaka is a person.",
+        "Who is Amaka?"
+      ]
+    },
+    {
+      "goals": [
+        "partial_meaning",
+        "frontier_not_hallucination"
+      ],
+      "id": "unknown_partial",
+      "turns": [
+        "The dax moved.",
+        "What is a dax?"
+      ]
+    }
+  ],
+  "promotion_expectations": {
+    "tier_b_lexicalization": "may auto-promote only under signed low-risk policy + independent competence",
+    "tier_c_semantic_definition": "requires independent contextual lineages and exact type constraints; otherwise remain candidate"
+  },
+  "schema_version": 1
+}

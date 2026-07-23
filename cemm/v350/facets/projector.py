@@ -25,7 +25,7 @@ from ..storage.model import (
     RecordKind,
     StoreSnapshot,
 )
-from ..uol.model import CapabilityStatus, SemanticApplication
+from ..semantic_records.model import CapabilityStatus, SemanticApplication
 from .conditions import ConditionEvaluator
 from .engine import (
     DefaultExpectationProjector,

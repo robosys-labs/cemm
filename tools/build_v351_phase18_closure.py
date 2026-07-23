@@ -47,8 +47,14 @@ def _special_validate(gate: str, doc):
         )
         if not all(doc.get(key) is True for key in required):
             raise ValueError("authority snapshot does not prove signed restart reconstruction")
+        if int(doc.get("semantic_definition_count", 0)) < 1:
+            raise ValueError("restart projection evidence contains no semantic definitions")
         if int(doc.get("observation_model_count", 0)) < 1:
             raise ValueError("restart projection evidence contains no active ObservationModel authority")
+        first = doc.get("first") or {}
+        second = doc.get("second") or {}
+        if not first.get("snapshot_fingerprint") or first.get("snapshot_fingerprint") != second.get("snapshot_fingerprint"):
+            raise ValueError("restart projection semantic snapshot fingerprint is not deterministic")
     elif gate == "active_knowledge_acquisition":
         if not doc.get("novel_gap_detected") or not doc.get("evidence_acquired") or not doc.get("candidate_reused"):
             raise ValueError("active knowledge acquisition evidence is incomplete")

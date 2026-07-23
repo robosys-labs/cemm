@@ -83,15 +83,13 @@ from ..goals.model import (
 )
 from ..operations.codec import (adapter_contract_from_document, operation_authorization_from_document, operation_gate_assessment_from_document, operation_journal_from_document, operation_plan_from_document, operation_reconciliation_from_document, operation_result_from_document)
 from ..operations.model import (OperationAdapterContractRecord, OperationAuthorizationRecord, OperationGateAssessmentRecord, OperationJournalRecord, OperationPlanRecord, OperationReconciliationRecord, OperationResultRecord)
-from ..response.codec import (response_omission_from_document, response_transform_rule_from_document, response_transformation_proof_from_document, response_uol_from_document)
-from ..response.model import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord, ResponseUOLRecord
 from ..realization.codec import (argument_frame_from_document, deep_clause_plan_from_document, linearization_rule_from_document, morphology_rule_from_document, realization_request_from_document, reference_plan_from_document, semantic_analyzer_contract_from_document, semantic_roundtrip_from_document, surface_candidate_from_document)
 from ..realization.model import (ArgumentFrameRecord, DeepClausePlanRecord, LinearizationRuleRecord, MorphologyRuleRecord, RealizationRequestRecord, ReferencePlanRecord, SemanticAnalyzerContractRecord, SemanticRoundTripRecord, SurfaceCandidateRecord)
 from ..output.codec import (channel_adapter_contract_from_document, literal_emission_policy_from_document, emission_gate_assessment_from_document, emission_authorization_from_document, emission_journal_from_document, emission_from_document, emission_anomaly_from_document, silence_outcome_from_document, output_discourse_act_from_document, output_commitment_from_document, common_ground_from_document, output_reference_anchor_from_document, output_correction_from_document)
 from ..output.model import (ChannelAdapterContractRecord, LiteralEmissionPolicyRecord, EmissionGateAssessmentRecord, EmissionAuthorizationRecord, EmissionJournalRecord, EmissionRecord, EmissionAnomalyRecord, SilenceOutcomeRecord, OutputDiscourseActRecord, OutputCommitmentRecord, CommonGroundRecord, OutputReferenceAnchorRecord, OutputCorrectionRecord)
 from ..migration_records.codec import (migration_source_from_document, migration_rule_from_document, migration_target_map_from_document, migration_decision_from_document, migration_batch_from_document, migration_quarantine_from_document, migration_intentional_change_from_document, semantic_equivalence_from_document, migration_rollback_from_document)
 from ..migration_records.model import (MigrationSourceRecord, MigrationRuleRecord, MigrationTargetMapRecord, MigrationDecisionRecord, MigrationBatchRecord, MigrationQuarantineRecord, MigrationIntentionalChangeRecord, SemanticEquivalenceRecord, MigrationRollbackRecord)
-from ..uol.codec import (
+from ..semantic_records.codec import (
     application_from_document,
     capability_delta_from_document,
     claim_from_document,
@@ -101,9 +99,9 @@ from ..uol.codec import (
     proposition_from_document,
     referent_from_document,
     state_delta_from_document,
-    uol_to_document,
+    semantic_record_to_document,
 )
-from ..uol.model import (
+from ..semantic_records.model import (
     CapabilityDelta,
     ClaimOccurrence,
     EventOccurrence,
@@ -465,6 +463,19 @@ def _view(value: Mapping[str, Any]) -> MaterializedViewRecord:
         raise RecordDecodeError(str(exc)) from exc
 
 
+def _lazy_response_transform_rule_from_document(v):
+    from ..response.records_codec_v351 import response_transform_rule_from_document
+    return response_transform_rule_from_document(v)
+
+def _lazy_response_transformation_proof_from_document(v):
+    from ..response.records_codec_v351 import response_transformation_proof_from_document
+    return response_transformation_proof_from_document(v)
+
+def _lazy_response_omission_from_document(v):
+    from ..response.records_codec_v351 import response_omission_from_document
+    return response_omission_from_document(v)
+
+
 _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.SCHEMA: schema_record_from_document,
     RecordKind.FACET_ENTITLEMENT: schema_record_from_document,
@@ -519,10 +530,9 @@ _DECODERS: Mapping[RecordKind, Decoder] = {
     RecordKind.OPERATION_JOURNAL: operation_journal_from_document,
     RecordKind.OPERATION_RESULT: operation_result_from_document,
     RecordKind.OPERATION_RECONCILIATION: operation_reconciliation_from_document,
-    RecordKind.RESPONSE_TRANSFORM_RULE: response_transform_rule_from_document,
-    RecordKind.RESPONSE_TRANSFORMATION_PROOF: response_transformation_proof_from_document,
-    RecordKind.RESPONSE_OMISSION: response_omission_from_document,
-    RecordKind.RESPONSE_UOL: response_uol_from_document,
+    RecordKind.RESPONSE_TRANSFORM_RULE: _lazy_response_transform_rule_from_document,
+    RecordKind.RESPONSE_TRANSFORMATION_PROOF: _lazy_response_transformation_proof_from_document,
+    RecordKind.RESPONSE_OMISSION: _lazy_response_omission_from_document,
     RecordKind.REALIZATION_REQUEST: realization_request_from_document,
     RecordKind.ARGUMENT_FRAME: argument_frame_from_document,
     RecordKind.MORPHOLOGY_RULE: morphology_rule_from_document,
@@ -626,7 +636,7 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
         RecordKind.IMPACT_ASSESSMENT,
         RecordKind.IMPORTANCE_ASSESSMENT,
     }:
-        document = uol_to_document(record)
+        document = semantic_record_to_document(record)
     else:
         document = dict(_dataclass_document(record))
     if resolved == RecordKind.CAPABILITY_INSTANCE:
@@ -638,6 +648,9 @@ def encode_record(record_kind: RecordKind | str, record: Any) -> dict[str, Any]:
 
 
 def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
+    if record_kind == RecordKind.RESPONSE_UOL:
+        raise TypeError("response_uol is migration-only and unavailable to canonical runtime storage")
+    from ..response.records_model_v351 import ResponseOmissionRecord, ResponseTransformationProof, ResponseTransformRuleRecord
     expected: Mapping[RecordKind, tuple[type[Any], ...]] = {
         RecordKind.SCHEMA: (MeaningSchema,),
         RecordKind.FACET_ENTITLEMENT: (FacetEntitlement,),
@@ -683,7 +696,6 @@ def validate_record_kind(record_kind: RecordKind, record: Any) -> None:
         RecordKind.RESPONSE_TRANSFORM_RULE: (ResponseTransformRuleRecord,),
         RecordKind.RESPONSE_TRANSFORMATION_PROOF: (ResponseTransformationProof,),
         RecordKind.RESPONSE_OMISSION: (ResponseOmissionRecord,),
-        RecordKind.RESPONSE_UOL: (ResponseUOLRecord,),
         RecordKind.REALIZATION_REQUEST: (RealizationRequestRecord,),
         RecordKind.ARGUMENT_FRAME: (ArgumentFrameRecord,),
         RecordKind.MORPHOLOGY_RULE: (MorphologyRuleRecord,),

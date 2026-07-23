@@ -15,7 +15,7 @@ from ..transitions.model import (
     TransitionContractRecord,
     TransitionProofRecord,
 )
-from ..uol.model import (
+from ..semantic_records.model import (
     CapabilityDelta,
     ClaimOccurrence,
     EventOccurrence,

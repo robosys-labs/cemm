@@ -796,6 +796,8 @@ class ConstructionSlot:
     constituency_labels: tuple[str, ...] = ()
     optional_when_licensed: bool = False
     semantic_port_ref: str = ""
+    relative_position: str = "either"
+    linear_rank: int | None = None
 
     def __post_init__(self) -> None:
         _ref(self.slot_ref, "construction slot_ref")
@@ -807,6 +809,12 @@ class ConstructionSlot:
         if self.dependency_position not in {"head", "dependent", "either"}:
             raise ValueError("dependency_position must be head, dependent, or either")
         _unique(self.constituency_labels, "slot constituency labels")
+        if self.relative_position not in {"before", "after", "either"}:
+            raise ValueError("relative_position must be before, after, or either")
+        if self.linear_rank is not None and self.linear_rank < 0:
+            raise ValueError("linear_rank must be non-negative")
+        if self.linear_rank is not None and self.relative_position == "either":
+            raise ValueError("linear_rank requires before/after relative_position")
 
 
 @dataclass(frozen=True, slots=True)
@@ -972,6 +980,8 @@ class LexemeCandidate:
     confidence: float
     feature_values: tuple[tuple[str, str], ...]
     evidence_refs: tuple[str, ...]
+    link_ref: str | None = None
+    link_revision: int | None = None
 
     def __post_init__(self) -> None:
         for value, label in (
@@ -982,6 +992,12 @@ class LexemeCandidate:
             _ref(value, label)
         if self.lexeme_revision < 1:
             raise ValueError("lexeme candidate revision must be positive")
+        if (self.link_ref is None) != (self.link_revision is None):
+            raise ValueError("lexeme candidate link ref/revision must be supplied together")
+        if self.link_ref is not None:
+            _ref(self.link_ref, "lexeme candidate link_ref")
+        if self.link_revision is not None and self.link_revision < 1:
+            raise ValueError("lexeme candidate link revision must be positive")
         _language_tag(self.language_tag)
         _confidence(self.confidence)
         _unique(tuple(name for name, _ in self.feature_values), "lexeme candidate feature names")
@@ -994,6 +1010,7 @@ class SemanticContribution:
     contribution_ref: str
     contribution_kind: SemanticContributionKind
     spec_ref: str | None = None
+    spec_revision: int | None = None
     target_kind: SenseTargetKind | None = None
     target_ref: str | None = None
     target_revision: int | None = None
@@ -1015,6 +1032,10 @@ class SemanticContribution:
         _ref(self.contribution_ref, "semantic contribution_ref")
         if self.spec_ref is not None:
             _ref(self.spec_ref, "semantic contribution spec_ref")
+        if (self.spec_ref is None) != (self.spec_revision is None):
+            raise ValueError("semantic contribution spec ref/revision must be supplied together")
+        if self.spec_revision is not None and self.spec_revision < 1:
+            raise ValueError("semantic contribution spec revision must be positive")
         if self.target_ref is not None:
             _ref(self.target_ref, "semantic contribution target_ref")
         if self.projection_ref is not None:
@@ -1091,7 +1112,10 @@ class SenseCandidate:
     metadata: Mapping[str, Any] = field(default_factory=dict)
     contributions: tuple[SemanticContribution, ...] = ()
     lexeme_ref: str | None = None
+    lexeme_revision: int | None = None
     authority_path: str = "legacy_form_sense"
+    authority_ref: str = ""
+    authority_revision: int | None = None
 
     def __post_init__(self) -> None:
         for value, label in ((self.candidate_ref, "sense candidate_ref"), (self.form_candidate_ref, "form_candidate_ref"), (self.sense_ref, "sense_ref")):
@@ -1100,6 +1124,16 @@ class SenseCandidate:
             _ref(self.target_ref, "target_ref")
         if self.lexeme_ref is not None:
             _ref(self.lexeme_ref, "lexeme_ref")
+        if (self.lexeme_ref is None) != (self.lexeme_revision is None):
+            raise ValueError("sense candidate lexeme ref/revision must be supplied together")
+        if self.lexeme_revision is not None and self.lexeme_revision < 1:
+            raise ValueError("sense candidate lexeme revision must be positive")
+        if bool(self.authority_ref) != (self.authority_revision is not None):
+            raise ValueError("sense candidate authority ref/revision must be supplied together")
+        if self.authority_ref:
+            _ref(self.authority_ref, "sense candidate authority_ref")
+        if self.authority_revision is not None and self.authority_revision < 1:
+            raise ValueError("sense candidate authority revision must be positive")
         if self.sense_revision < 1:
             raise ValueError("sense candidate revision must be positive")
         _confidence(self.confidence)

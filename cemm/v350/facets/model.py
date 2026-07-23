@@ -17,7 +17,7 @@ from ..schema.model import (
     canonical_data,
 )
 from ..storage.model import ConditionTruth
-from ..uol.model import CapabilityStatus, SemanticApplication
+from ..semantic_records.model import CapabilityStatus, SemanticApplication
 
 
 class StrEnum(str, Enum):

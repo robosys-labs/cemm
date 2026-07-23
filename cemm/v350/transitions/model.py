@@ -13,7 +13,7 @@ from math import isfinite
 from typing import Any, Mapping
 
 from ..schema.model import SchemaLifecycleStatus
-from ..uol.model import CapabilityDelta, CapabilityStatus, ChangeOperation, StateDelta
+from ..semantic_records.model import CapabilityDelta, CapabilityStatus, ChangeOperation, StateDelta
 
 
 class StrEnum(str, Enum):

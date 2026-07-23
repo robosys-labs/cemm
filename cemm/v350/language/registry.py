@@ -430,16 +430,10 @@ class LanguageRegistry:
                     for item in programs
                 ),
             )
-        if construction.metadata.get("interpretation_enabled") is False:
-            return (
-                False,
-                "legacy_interpretation_metadata_compat",
-                construction.evidence_refs
-                or (f"construction:{construction.construction_ref}",),
-            )
+        # Final v3.5.1 requires active exact ConstructionProgram authority.
         return (
-            True,
-            "legacy_construction_compat",
+            False,
+            "missing_active_construction_program",
             construction.evidence_refs
             or (f"construction:{construction.construction_ref}",),
         )

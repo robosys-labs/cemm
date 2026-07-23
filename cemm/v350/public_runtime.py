@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .cutover import RuntimeAuthorityGuard, RuntimeAuthorityManifest
+from .cutover import RuntimeAuthorityError, RuntimeAuthorityGuard, RuntimeAuthorityManifest
 from .runtime_authority import AttestedRuntimeAuthority
 from .version import VERSION
 
@@ -40,6 +40,14 @@ class Runtime:
             distribution_root,
             manifest.metadata.get("verification_report_relpath"),
         )
+        supplement_path = _artifact_path(
+            distribution_root,
+            manifest.metadata.get("semantic_authority_supplement_relpath"),
+        )
+        conversational_seed_path = _artifact_path(
+            distribution_root,
+            manifest.metadata.get("conversational_seed_relpath"),
+        )
         requested_boot = kwargs.pop("boot_database_path", None)
         if requested_boot is not None:
             requested = Path(requested_boot).resolve()
@@ -65,12 +73,21 @@ class Runtime:
                 "runtime services come from the signed canonical composition root"
             )
 
-        runtime = factory(
-            *args,
-            authority_guard=authority,
-            boot_database_path=boot_path,
-            **kwargs,
-        )
+        try:
+            runtime = factory(
+                *args,
+                authority_guard=authority,
+                boot_database_path=boot_path,
+                semantic_authority_supplement_path=supplement_path,
+                conversational_seed_path=conversational_seed_path,
+                **kwargs,
+            )
+        except RuntimeAuthorityError:
+            raise
+        except Exception as exc:
+            raise RuntimeAuthorityError(
+                f"runtime activation failed:{type(exc).__name__}:{exc}"
+            ) from exc
         if (
             runtime is self
             or not hasattr(runtime, "run_text")

@@ -9,7 +9,9 @@ from collections import defaultdict
 
 from ..language.model import SenseTargetKind
 from ..schema.model import SchemaClass, UseOperation, semantic_fingerprint
+from ..storage.model import RecordKind
 from .frontier_classifier_v351 import PredictionFrontierClassifierV351
+from .contextual_induction_v351 import ContextualSemanticInducerV351
 from .inducers_v351 import (
     ConstructionInducer,
     FormNormalizationInducer,
@@ -47,6 +49,7 @@ class Phase14LearningEngineV351:
         self.parameter_trainer = ParameterCandidateTrainer()
         self.classifier = PredictionFrontierClassifierV351()
         self.teaching_extractor = TeachingProjectionExtractorV351()
+        self.contextual = ContextualSemanticInducerV351()
 
     def advance(self, *, cycle, capability, store, effect_store, semantic_capabilities):
         del capability, effect_store, semantic_capabilities  # Stage 11 is pure candidate work.
@@ -143,6 +146,31 @@ class Phase14LearningEngineV351:
                     competence_case_refs=(),
                     deferred_reason_refs=("frontier:learning:semantic-target-required",),
                 )
+
+        # Contextual bridge: group repeated unknown forms into one stable lexical hypothesis.
+        contextual_groups = defaultdict(list)
+        explicitly_projected = set(projection_by_form)
+        for signal in novel_by_ref.values():
+            if signal.signal_ref in explicitly_projected or signal.observation_ref in definition_observations:
+                continue
+            key = (
+                signal.pack_pin.key, signal.language_tag,
+                signal.normalized_form, signal.permission_ref,
+            )
+            contextual_groups[key].append(signal)
+        for key in sorted(contextual_groups, key=repr):
+            grouped = tuple(sorted(contextual_groups[key], key=lambda value: value.signal_ref))
+            item = self.contextual.induce_group(cycle=cycle, store=store, signals=grouped)
+            observations = {signal.observation_ref for signal in grouped}
+            for work_ref in tuple(work):
+                existing = work[work_ref]
+                if (
+                    existing.frontier.target_ref in observations
+                    and existing.proposals
+                    and all(p.record_kind == RecordKind.LANGUAGE_FORM for p in existing.proposals)
+                ):
+                    work.pop(work_ref, None)
+            work[item.work_ref] = item
 
         # Genuinely new concept path: a reviewed definition construction introduces a new
         # referent-type schema as a subtype of an exact parent, then lexicalizes the new

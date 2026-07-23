@@ -6,8 +6,8 @@ from typing import Any, Mapping
 from ..learning.codec import _pin
 from ..schema.model import SchemaLifecycleStatus, UseDecision, UseOperation, canonical_data
 from ..storage.model import RecordKind
-from ..uol.codec import impact_from_document, importance_from_document
-from ..uol.model import ChangeOperation, Reversibility, Valence
+from ..semantic_records.codec import impact_from_document, importance_from_document
+from ..semantic_records.model import ChangeOperation, Reversibility, Valence
 from .model import (
     ImpactProofRecord,
     ImpactRuleRecord,

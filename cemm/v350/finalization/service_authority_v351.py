@@ -62,7 +62,7 @@ def canonical_service_authorities_v351():
         for method in methods:
             if not callable(getattr(cls, method, None)):
                 raise TypeError(f"canonical service lacks required method:{slot}:{class_path}:{method}")
-        runtime_abi = str(getattr(cls, "RUNTIME_ABI", "v351"))
+        runtime_abi = getattr(cls, "RUNTIME_ABI", None)
         if runtime_abi != "v351":
             raise ValueError(f"canonical service lacks final v351 ABI:{slot}:{runtime_abi}")
         source_path = inspect.getsourcefile(cls)
@@ -73,7 +73,16 @@ def canonical_service_authorities_v351():
             class_path=class_path,
             required_methods=tuple(methods),
             runtime_abi="v351",
-            implementation_service_kind=str(getattr(cls, "SERVICE_KIND", slot)),
+            implementation_service_kind=(
+                str(getattr(cls, "SERVICE_KIND"))
+                if isinstance(getattr(cls, "SERVICE_KIND", None), str)
+                and str(getattr(cls, "SERVICE_KIND")).strip()
+                else (_ for _ in ()).throw(
+                    ValueError(
+                        f"canonical service lacks explicit SERVICE_KIND:{slot}:{class_path}"
+                    )
+                )
+            ),
             source_sha256=sha256_file(Path(source_path)),
         ))
     return tuple(result)

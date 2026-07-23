@@ -59,25 +59,31 @@ def compile_minimum_discourse_authority() -> MinimumDiscourseAuthorityArtifacts:
     for semantic_slot, act_kind in specs:
         payload = {"semantic_slot": semantic_slot, "act_kind": act_kind.value, "revision": 1}
         definition_pin = _pin("semantic_definition", semantic_slot, payload)
-        content_port = _pin("semantic_port", f"{semantic_slot}:port:content", (payload, "content"))
-        variable = SemanticVariable(
-            variable_ref=f"discourse-var:{act_kind.value}:content",
-            allowed_kinds=frozenset({CSIRNodeKind.TERM, CSIRNodeKind.APPLICATION, CSIRNodeKind.COORDINATION}),
-            scope_ref="discourse", open_purpose="discourse_content",
-        )
         app = SemanticApplication(f"discourse-template:{act_kind.value}", definition_pin)
-        body = CSIRGraph(
-            variables=(variable,), applications=(app,),
-            bindings=(PortBinding(
-                binding_ref=f"discourse-binding:{act_kind.value}:content",
-                application_ref=app.application_ref, port_pin=content_port,
-                fillers=(variable.node_ref,),
-            ),),
-            root_refs=(app.node_ref,),
-        )
+        if act_kind is DiscourseActKind.GREETING:
+            content_port = None
+            body = CSIRGraph(applications=(app,), root_refs=(app.node_ref,))
+            formal_ports = ()
+        else:
+            content_port = _pin("semantic_port", f"{semantic_slot}:port:content", (payload, "content"))
+            variable = SemanticVariable(
+                variable_ref=f"discourse-var:{act_kind.value}:content",
+                allowed_kinds=frozenset({CSIRNodeKind.TERM, CSIRNodeKind.APPLICATION, CSIRNodeKind.COORDINATION}),
+                scope_ref="discourse", open_purpose="discourse_content",
+            )
+            body = CSIRGraph(
+                variables=(variable,), applications=(app,),
+                bindings=(PortBinding(
+                    binding_ref=f"discourse-binding:{act_kind.value}:content",
+                    application_ref=app.application_ref, port_pin=content_port,
+                    fillers=(variable.node_ref,),
+                ),),
+                root_refs=(app.node_ref,),
+            )
+            formal_ports = (FormalPort(content_port, variable.variable_ref, 1, 1),)
         definitions.append(SemanticDefinition(
             definition_pin=definition_pin, body=body,
-            formal_ports=(FormalPort(content_port, variable.variable_ref, 1, 1),),
+            formal_ports=formal_ports,
             provenance_refs=("review:v351:phase12:minimum-discourse-authority",),
         ))
         case_ref = f"competence:discourse:{act_kind.value}:reabstraction"

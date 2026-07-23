@@ -5,7 +5,7 @@ from .model import (OperationAuthorizationDecision,OperationAuthorizationRecord,
 from .coordinator import _ALLOWED_JOURNAL_TRANSITIONS
 from ..response.model import ResponseTransformationProof,ResponseUOLRecord
 from ..schema.model import PortFillerClass
-from ..uol.model import FillerRef
+from ..semantic_records.model import FillerRef
 
 class Phase16CommitValidator:
  def __init__(self,resolver):self.r=resolver

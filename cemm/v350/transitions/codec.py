@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from ..schema.model import SchemaLifecycleStatus, canonical_data
-from ..uol.model import CapabilityStatus, ChangeOperation
+from ..semantic_records.model import CapabilityStatus, ChangeOperation
 from .model import (
     CapabilityDependencyRecord,
     ConditionOperator,

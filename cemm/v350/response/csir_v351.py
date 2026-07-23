@@ -22,6 +22,7 @@ class ResponseError(ValueError):
 
 class ResponseFamily(str, Enum):
     ANSWER_QUERY = "answer_query"
+    GREET = "greet"
     REPORT_STATE = "report_state"
     REPORT_RELATION = "report_relation"
     REPORT_EVENT = "report_event"

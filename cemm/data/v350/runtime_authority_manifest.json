@@ -158,15 +158,23 @@
   ],
   "boot_database_sha256": "d920bbace5b1acab86a390b96d4e8634978be8236d063c5f44bc744cdff299bd",
   "canonical_orchestrator": "cemm.v350.orchestration:CanonicalOrchestrator",
-  "canonical_runtime_factory": "cemm.v350.runtime:build_runtime",
+  "canonical_runtime_factory": "cemm.v350.runtime_v351:build_runtime",
+  "canonical_service_authorities": [],
   "channel_adapter_contracts": [
     "channel-adapter-contract:in-process-text:v1@1#channel_adapter_contract-record:d93c23f89d4e02cc978a257ef6479931e0ceffd772ca379e31dca9776f06ebe0",
     "channel-adapter-contract:in-process-text:v1@2#channel_adapter_contract-record:def3181ede9afcb433b44d5c705819eb5846e5a214b4d00a71a04c8c73c8ab13"
   ],
+  "closure_ledger_sha256": "",
+  "conversational_seed_sha256": "e3e04b2dfa3224d56b07b1612a39cee4625e4e8e521d4c876831363917c0fbb2",
+  "detached_signature": {},
   "forbidden_runtime_import_prefixes": [
     "cemm.v347",
     "cemm.migration",
-    "cemm.v350.migration"
+    "cemm.v350.migration",
+    "cemm.v350.runtime_hardening",
+    "cemm.v350.runtime_services",
+    "cemm.v350.activation_services",
+    "cemm.v350.uol"
   ],
   "legacy_denylist_sha256": "40f0381df7b2dcd2942bd933afe44e8473906853a86f64cd8fca1c028b8416d8",
   "linearization_rules": [
@@ -225,10 +233,14 @@
   "manifest_version": 5,
   "metadata": {
     "boot_database_relpath": "cemm/data/v350/release/boot.sqlite",
+    "conversational_curriculum_relpath": "cemm/data/v350/bootstrap/conversational_curriculum_v351.json",
+    "conversational_curriculum_sha256": "b4965f8d72f8cdd64a3100912c55f7875b5892b37714b891113f1ad39e455a10",
+    "conversational_seed_relpath": "cemm/data/v350/bootstrap/conversational_core_v351.json",
     "generated_from_canonical_stage_graph": true,
     "phase17_18_status": "preactivation",
     "preactivation": true,
-    "reason": "final Phase-18 closure/signature artifacts must be regenerated from exact patched checkout",
+    "reason": "activation repair applied; regenerate boot-bound verification, closure ledger and detached signature from the exact committed checkout",
+    "semantic_authority_supplement_relpath": "cemm/data/v350/semantic_authority_supplement_v351.json",
     "source_runtime_cutover": true,
     "stage_count": 23,
     "verification_report_relpath": "cemm/data/v350/release/verification_report.json"
@@ -286,69 +298,14 @@
     "response-transform-rule:request-clarification@1#response_transform_rule-record:89e403caddc0de42a266f0881765aac26d96a0c0ee21109639c2c0d39e3da7f3",
     "response-transform-rule:thanks@1#response_transform_rule-record:58107cf9c59bfdec7cb70936f370af1e23943953e6c63e5a6cca56feb431c778"
   ],
-  "runtime_service_bindings": [
-    {
-      "class_path": "cemm.v350.runtime_services:SystemClock",
-      "config_fingerprint": "",
-      "implementation_ref": "clock:system-utc",
-      "implementation_revision": "1",
-      "service_kind": "clock",
-      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
-    },
-    {
-      "class_path": "cemm.v350.activation_services:ContextLocalEpistemicPolicyProvider",
-      "config_fingerprint": "",
-      "implementation_ref": "epistemic-policy-provider:context-local-v350",
-      "implementation_revision": "1",
-      "service_kind": "epistemic_policy_provider",
-      "source_sha256": "46a0d9871fa759bf65453d4e11fea2e61be6c32efca294c5405f762790ed7ae2"
-    },
-    {
-      "class_path": "cemm.v350.activation_services:ReviewedDefaultInferenceEngine",
-      "config_fingerprint": "",
-      "implementation_ref": "inference-engine:reviewed-defaults-v350",
-      "implementation_revision": "1",
-      "service_kind": "inference_engine",
-      "source_sha256": "46a0d9871fa759bf65453d4e11fea2e61be6c32efca294c5405f762790ed7ae2"
-    },
-    {
-      "class_path": "cemm.v350.runtime_services:CanonicalSemanticAnalyzer",
-      "config_fingerprint": "",
-      "implementation_ref": "semantic-analyzer:canonical-v350",
-      "implementation_revision": "2",
-      "service_kind": "semantic_analyzer",
-      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
-    },
-    {
-      "class_path": "cemm.v350.runtime_services:InProcessTextChannelAdapter",
-      "config_fingerprint": "",
-      "implementation_ref": "channel-adapter:in-process-text",
-      "implementation_revision": "1",
-      "service_kind": "channel_adapter",
-      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
-    },
-    {
-      "class_path": "cemm.v350.runtime_services:StructuralPolicySafetyEvaluator",
-      "config_fingerprint": "",
-      "implementation_ref": "emission-evaluator:structural-policy-safety",
-      "implementation_revision": "2",
-      "service_kind": "emission_gate_evaluator",
-      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
-    },
-    {
-      "class_path": "cemm.v350.runtime_services:QualificationPreservedEvaluator",
-      "config_fingerprint": "",
-      "implementation_ref": "emission-evaluator:qualification-preserved",
-      "implementation_revision": "2",
-      "service_kind": "emission_gate_evaluator",
-      "source_sha256": "f35ae11e0d414cd38714079359eeda2914dc3d8d66b95efd2be18a7697b9a8a7"
-    }
-  ],
+  "runtime_service_bindings": [],
+  "runtime_source_root_sha256": "",
   "schema_version": 9,
   "semantic_analyzer_contracts": [
     "semantic-analyzer-contract:canonical-v350:conversation-core@1#semantic_analyzer_contract-record:bbb3f870847ee36c779008a60f3b763dcb15e282c37e78783c6e593fc17f2321",
     "semantic-analyzer-contract:canonical-v350:conversation-core@2#semantic_analyzer_contract-record:3cc8814c818cbd9586ae99097d84c229c37c0c9a5a1d0387c82f6f8747857702"
   ],
+  "semantic_authority_supplement_sha256": "c0b770a480c7b0ecf02838619960a46469af31d8b54dacd8aaaeb62362aa3865",
   "source_manifest_sha256": "d88f7285cc9427e5531bb36d321444dbb3bc5681e78cc5acf34c1d971f49b57c",
   "stage_adapters": [
     {
@@ -605,5 +562,5 @@
       "stage_name": "CONSOLIDATE_INVALIDATE_REPLAY_AND_FINALIZE"
     }
   ],
-  "verification_report_sha256": "042c527e3e7ad717ed0a57f943a37efd5a744d32e561ba530c892ab9902f9781"
+  "verification_report_sha256": ""
 }

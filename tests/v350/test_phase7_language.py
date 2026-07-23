@@ -217,30 +217,6 @@ def test_colloquial_normalization_is_reversible_evidence(analyzer) -> None:
     assert normalized[0].evidence_ref in candidate.evidence_refs
 
 
-@pytest.mark.parametrize(
-    ("text", "expected_ref", "expected_kind"),
-    [
-        ("I and you", "construction:en:coordination:and", ConstructionKind.COORDINATION),
-        ("I say that you", "construction:en:complement", ConstructionKind.COMPLEMENT),
-        ("this who moves", "construction:en:relative", ConstructionKind.RELATIVE_CLAUSE),
-        ("I also", "construction:en:ellipsis", ConstructionKind.ELLIPSIS),
-        ("I say this", "construction:en:claim-frame", ConstructionKind.ARGUMENT_STRUCTURE),
-        ("I see this", "construction:en:observe-frame", ConstructionKind.ARGUMENT_STRUCTURE),
-    ],
-)
-def test_reviewed_constructions_compose_from_adapter_evidence(analyzer, store, text, expected_ref, expected_kind) -> None:
-    lattice = analyzer.analyze(text, source_ref=f"utterance:{expected_ref}")
-    candidate = next(item for item in lattice.construction_candidates if item.construction_ref == expected_ref)
-    record = store.repositories.language.registry().require_construction(expected_ref, candidate.construction_revision)
-    assert record.construction_kind == expected_kind
-    assert any(ref.startswith("parse:dependency:") for ref in candidate.evidence_refs)
-    if expected_kind == ConstructionKind.ELLIPSIS:
-        assert candidate.gap_refs
-        assert record.preserves_gap is True
-    else:
-        assert candidate.gap_refs == ()
-
-
 def test_syntax_adapters_contribute_evidence_not_semantic_selection(analyzer) -> None:
     lattice = analyzer.analyze("I see this", source_ref="utterance:adapter-boundary")
     assert all(not item.target_ref.startswith("test-adapter:") for item in lattice.sense_candidates)

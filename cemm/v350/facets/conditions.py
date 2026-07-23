@@ -12,7 +12,7 @@ from ..storage.model import (
     StoreSnapshot,
 )
 from ..storage.repositories import interval_contains
-from ..uol.model import CapabilityStatus, OccurrenceStatus
+from ..semantic_records.model import CapabilityStatus, OccurrenceStatus
 from .model import ConditionAssessment
 
 

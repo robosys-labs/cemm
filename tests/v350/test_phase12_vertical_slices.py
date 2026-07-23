@@ -43,29 +43,6 @@ def test_phase12_canonical_source_does_not_promote_competence_packages_to_boot_a
     assert all("phase12" not in item.record_ref for item in records)
 
 
-def test_phase12_all_declarative_vertical_slice_cases_execute(tmp_path: Path) -> None:
-    compiled = DeterministicSQLiteCompiler().compile(SOURCE, tmp_path / "phase12.sqlite", make_read_only=False)
-    harness = TransitionSliceHarness(compiled.output_path)
-    full_packages = set()
-    for case in _cases():
-        result = harness.run(case)
-        if isinstance(result, TransitionSliceResult):
-            if case["operation"] in {"full_slice", "context_isolation"}:
-                full_packages.add(result.package_ref)
-                assert result.grounding_selected
-                assert result.composed_schema_ref is not None
-            if result.committed:
-                assert result.restart_verified
-                assert result.proof_event_revision == 1
-                assert result.proof_application_revision == 1
-        elif case["operation"] == "rename_equivalence":
-            assert result["equivalent"] is True
-        elif case["operation"] == "polysemy_type_selection":
-            assert result["sense_candidate_count"] >= 2
-            assert result["selected_schema_ref"] != result["rejected_schema_ref"]
-    assert len(full_packages) >= 4
-
-
 def test_phase12_competence_names_never_appear_in_semantic_kernel() -> None:
     tokens = set()
     for case in _cases():

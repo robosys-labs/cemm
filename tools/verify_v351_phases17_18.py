@@ -67,11 +67,12 @@ def _module_path(root: Path, module: str) -> Path | None:
     if not module.startswith("cemm"):
         return None
     base = root.joinpath(*module.split("."))
-    file_path = base.with_suffix(".py")
-    if file_path.is_file():
-        return file_path
+    # Match Python import precedence when both module.py and module/__init__.py exist.
     init_path = base / "__init__.py"
-    return init_path if init_path.is_file() else None
+    if init_path.is_file():
+        return init_path
+    file_path = base.with_suffix(".py")
+    return file_path if file_path.is_file() else None
 
 
 def legacy_import_scan(root: Path):
@@ -123,6 +124,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, default=Path("."))
     parser.add_argument("--boot-database", type=Path, help="exact boot.sqlite used by this verification run")
+    parser.add_argument("--semantic-authority-supplement", type=Path,
+                        default=Path("cemm/data/v350/semantic_authority_supplement_v351.json"))
+    parser.add_argument("--conversational-seed", type=Path,
+                        default=Path("cemm/data/v350/bootstrap/conversational_core_v351.json"))
     parser.add_argument("--run-tests", action="store_true")
     parser.add_argument("--full-tests", action="store_true")
     parser.add_argument("--report", type=Path)
@@ -135,6 +140,8 @@ def main() -> int:
     from cemm.v350.finalization.service_authority_v351 import canonical_service_authorities_v351
     from cemm.v350.finalization.source_attestation_v351 import runtime_source_root_v351
     from cemm.v350.storage import RecordKind
+    from cemm.v350.csir.runtime_projection_v351 import CANONICAL_AUTHORITY_SET_REFS
+    from cemm.v350.bootstrap.conversational_seed_v351 import install_signed_conversational_seed_v351
 
     check(len(tuple(CoreStage)) == 23, "CoreStage is not exact Stage 0..22", failures)
     check(len(canonical_stage_contracts()) == 23, "stage contract graph is not 23 stages", failures)
@@ -151,7 +158,14 @@ def main() -> int:
 
     runtime_text = (root / "cemm/v350/runtime_v351.py").read_text(encoding="utf-8")
     check("observations=" in runtime_text or "envelope.observations" in runtime_text, "typed RuntimeInput observations not wired", failures)
-    check("prepare_nonlexical_multimodal_grounding_v351" in runtime_text, "multimodal-only grounding not wired", failures)
+    bridge_text = (root / "cemm/v350/observation/runtime_bridge_v351.py").read_text(encoding="utf-8")
+    check(
+        "stage_03_activate_and_ground_referents_v351" in runtime_text
+        and "prepare_nonlexical_multimodal_grounding_v351" in bridge_text,
+        "multimodal-only grounding delegate/implementation not wired", failures,
+    )
+    check("project_runtime_semantic_authority_v351" in runtime_text,
+          "Stage0 restart-safe semantic authority projection not wired", failures)
     check("CanonicalOperationOutcomeAssimilatorV351" in runtime_text, "canonical operation result recurrence not wired", failures)
     check("CanonicalCycleFinalizerV351" in runtime_text, "canonical Stage22 finalizer not wired", failures)
     check("self._resolved_service(\"operation_engine\")" in runtime_text, "Stage16 bypasses canonical service resolver", failures)
@@ -183,11 +197,69 @@ def main() -> int:
         check(completed.returncode == 0, f"pytest failed:{completed.returncode}", failures)
 
     boot_sha = ""
+    semantic_snapshot_fingerprint = ""
+    semantic_definition_count = 0
+    observation_model_count = 0
+    supplement_path = (
+        args.semantic_authority_supplement
+        if args.semantic_authority_supplement.is_absolute()
+        else root / args.semantic_authority_supplement
+    ).resolve()
+    supplement_sha = sha256_file(supplement_path) if supplement_path.is_file() else ""
+    check(supplement_path.is_file(), f"semantic authority supplement missing:{supplement_path}", failures)
+    seed_path = (args.conversational_seed if args.conversational_seed.is_absolute() else root / args.conversational_seed).resolve()
+    seed_sha = sha256_file(seed_path) if seed_path.is_file() else ""
+    check(seed_path.is_file(), f"conversational seed missing:{seed_path}", failures)
+    conversational_seed_schema_count = 0
+    conversational_seed_language_form_count = 0
+    canonical_authority_set_refs = ()
+    if supplement_path.is_file():
+        supplement_doc = json.loads(supplement_path.read_text(encoding="utf-8"))
+        canonical_entries = tuple(supplement_doc.get("canonical_authority_sets", ()) or ())
+        canonical_authority_set_refs = tuple(sorted(str(item.get("set_ref", "")) for item in canonical_entries))
+        check(set(canonical_authority_set_refs) == set(CANONICAL_AUTHORITY_SET_REFS),
+              "semantic authority supplement lacks exact required canonical authority sets", failures)
+        check(all(str(item.get("expected_fingerprint", "")) for item in canonical_entries),
+              "canonical authority set fingerprint is not content-addressed", failures)
     if args.boot_database is not None:
         boot_path = args.boot_database.resolve()
         check(boot_path.is_file(), f"boot database missing:{boot_path}", failures)
         if boot_path.is_file():
             boot_sha = sha256_file(boot_path)
+            try:
+                from cemm.v350.csir.authority_v351 import AuthoritySnapshotV351
+                from cemm.v350.csir.runtime_projection_v351 import (
+                    load_semantic_authority_supplement_v351,
+                    project_runtime_semantic_authority_v351,
+                )
+                from cemm.v350.dynamics import compile_reviewed_phase13_parameter_artifacts
+                from cemm.v350.storage import SemanticStore
+                store = SemanticStore(":memory:", boot_path=boot_path)
+                try:
+                    referents_before = len(store.records(RecordKind.REFERENT))
+                    install_signed_conversational_seed_v351(store, seed_path, expected_sha256=seed_sha)
+                    check(len(store.records(RecordKind.REFERENT)) == referents_before,
+                          "conversational seed must not preseed named entity instances", failures)
+                    conversational_seed_schema_count = len(store.records(RecordKind.SCHEMA))
+                    conversational_seed_language_form_count = len(store.records(RecordKind.LANGUAGE_FORM))
+                    authority = store.current_authority_snapshot()
+                    projected = project_runtime_semantic_authority_v351(
+                        store,
+                        AuthoritySnapshotV351(
+                            generation=authority.generation,
+                            authority_fingerprint=authority.authority_fingerprint,
+                        ),
+                        dynamics_parameters=compile_reviewed_phase13_parameter_artifacts(),
+                        supplement=load_semantic_authority_supplement_v351(supplement_path),
+                    )
+                    semantic_snapshot_fingerprint = projected.snapshot_fingerprint
+                    semantic_definition_count = len(projected.semantic_definitions)
+                    observation_model_count = len(projected.observation_models)
+                    check(semantic_definition_count > 0, "boot restart projection produced no semantic definitions", failures)
+                finally:
+                    store.close()
+            except Exception as exc:
+                failures.append(f"semantic authority restart projection failed:{type(exc).__name__}:{exc}")
 
     source_root, _source_inventory = runtime_source_root_v351(root)
     report = {
@@ -195,6 +267,14 @@ def main() -> int:
         "release_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
         "boot_database_sha256": boot_sha,
         "runtime_source_root_sha256": source_root,
+        "semantic_authority_supplement_sha256": supplement_sha,
+        "conversational_seed_sha256": seed_sha,
+        "conversational_seed_schema_count": conversational_seed_schema_count,
+        "conversational_seed_language_form_count": conversational_seed_language_form_count,
+        "semantic_authority_snapshot_fingerprint": semantic_snapshot_fingerprint,
+        "semantic_definition_count": semantic_definition_count,
+        "observation_model_count": observation_model_count,
+        "canonical_authority_set_refs": list(canonical_authority_set_refs),
         "failures": failures,
         "checks": {
             "stage_count": 23,

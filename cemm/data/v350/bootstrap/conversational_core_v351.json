@@ -1,0 +1,2305 @@
+{
+  "actions": [
+    {
+      "id": "run",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "destination",
+          "place",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "walk",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "destination",
+          "place",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "move",
+      "ports": [
+        [
+          "theme",
+          "physical_entity",
+          1,
+          "after",
+          0
+        ],
+        [
+          "destination",
+          "place",
+          0,
+          "after",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "go",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "destination",
+          "place",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "come",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "destination",
+          "place",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "feed",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "recipient",
+          "animal",
+          1,
+          "after",
+          0
+        ],
+        [
+          "theme",
+          "food",
+          1,
+          "after",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "eat",
+      "ports": [
+        [
+          "agent",
+          "animal",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "food",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "give",
+      "ports": [
+        [
+          "agent",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "recipient",
+          "living_thing",
+          1,
+          "after",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "take",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "have",
+      "ports": [
+        [
+          "holder",
+          "entity",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "see",
+      "ports": [
+        [
+          "experiencer",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "hear",
+      "ports": [
+        [
+          "experiencer",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "say",
+      "ports": [
+        [
+          "speaker",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "tell",
+      "ports": [
+        [
+          "speaker",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "addressee",
+          "person",
+          1,
+          "after",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "ask",
+      "ports": [
+        [
+          "speaker",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "addressee",
+          "person",
+          0,
+          "after",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "know",
+      "ports": [
+        [
+          "knower",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "think",
+      "ports": [
+        [
+          "experiencer",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "want",
+      "ports": [
+        [
+          "experiencer",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "like",
+      "ports": [
+        [
+          "experiencer",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "make",
+      "ports": [
+        [
+          "agent",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "result",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "use",
+      "ports": [
+        [
+          "agent",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "instrument",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "help",
+      "ports": [
+        [
+          "agent",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "beneficiary",
+          "living_thing",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "learn",
+      "ports": [
+        [
+          "learner",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "teach",
+      "ports": [
+        [
+          "teacher",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "learner",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "read",
+      "ports": [
+        [
+          "reader",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "write",
+      "ports": [
+        [
+          "writer",
+          "person",
+          1,
+          "before",
+          0
+        ],
+        [
+          "content",
+          "information",
+          1,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "work",
+      "ports": [
+        [
+          "agent",
+          "person",
+          1,
+          "before",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "live",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "place",
+          "place",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "play",
+      "ports": [
+        [
+          "agent",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "theme",
+          "entity",
+          0,
+          "after",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "sleep",
+      "ports": [
+        [
+          "agent",
+          "animal",
+          1,
+          "before",
+          0
+        ]
+      ]
+    },
+    {
+      "id": "feel",
+      "ports": [
+        [
+          "experiencer",
+          "living_thing",
+          1,
+          "before",
+          0
+        ],
+        [
+          "state",
+          "entity",
+          1,
+          "after",
+          0
+        ]
+      ]
+    }
+  ],
+  "competence_case_ref": "competence:conversational-core-v351",
+  "evidence_ref": "evidence:reviewed-conversational-core-v351",
+  "language_tag": "en",
+  "lexicalizations": [
+    {
+      "category": "determiner",
+      "form": "a",
+      "metadata": {
+        "genericity_cue": true
+      }
+    },
+    {
+      "category": "determiner",
+      "form": "an",
+      "metadata": {
+        "genericity_cue": true
+      }
+    },
+    {
+      "category": "determiner",
+      "form": "the"
+    },
+    {
+      "category": "determiner",
+      "form": "this"
+    },
+    {
+      "category": "determiner",
+      "form": "that"
+    },
+    {
+      "category": "determiner",
+      "form": "these"
+    },
+    {
+      "category": "determiner",
+      "form": "those"
+    },
+    {
+      "category": "pronoun",
+      "form": "i",
+      "metadata": {
+        "discourse_required": true,
+        "mention": true,
+        "required_discourse_roles": [
+          "input_speaker"
+        ],
+        "structural_target": "participant_role:input_speaker"
+      }
+    },
+    {
+      "category": "pronoun",
+      "form": "you",
+      "metadata": {
+        "discourse_required": true,
+        "mention": true,
+        "required_discourse_roles": [
+          "input_addressee"
+        ],
+        "structural_target": "participant_role:input_addressee"
+      }
+    },
+    {
+      "category": "pronoun",
+      "form": "he"
+    },
+    {
+      "category": "pronoun",
+      "form": "she"
+    },
+    {
+      "category": "pronoun",
+      "form": "it"
+    },
+    {
+      "category": "pronoun",
+      "form": "we"
+    },
+    {
+      "category": "pronoun",
+      "form": "they"
+    },
+    {
+      "category": "possessive",
+      "form": "my",
+      "metadata": {
+        "discourse_required": true,
+        "mention": true,
+        "required_discourse_roles": [
+          "input_speaker"
+        ],
+        "structural_target": "participant_role:input_speaker"
+      }
+    },
+    {
+      "category": "possessive",
+      "form": "your",
+      "metadata": {
+        "discourse_required": true,
+        "mention": true,
+        "required_discourse_roles": [
+          "input_addressee"
+        ],
+        "structural_target": "participant_role:input_addressee"
+      }
+    },
+    {
+      "category": "possessive",
+      "form": "his"
+    },
+    {
+      "category": "possessive",
+      "form": "her"
+    },
+    {
+      "category": "possessive",
+      "form": "its"
+    },
+    {
+      "category": "possessive",
+      "form": "our"
+    },
+    {
+      "category": "possessive",
+      "form": "their"
+    },
+    {
+      "category": "copula",
+      "form": "is"
+    },
+    {
+      "category": "copula",
+      "form": "are"
+    },
+    {
+      "category": "copula",
+      "form": "am"
+    },
+    {
+      "category": "copula",
+      "form": "was"
+    },
+    {
+      "category": "copula",
+      "form": "were"
+    },
+    {
+      "category": "copula",
+      "form": "be"
+    },
+    {
+      "category": "copula",
+      "form": "been"
+    },
+    {
+      "category": "copula",
+      "form": "being"
+    },
+    {
+      "category": "modal",
+      "form": "can",
+      "metadata": {
+        "modal_capability_cue": true
+      }
+    },
+    {
+      "category": "modal",
+      "form": "could",
+      "metadata": {
+        "modal_capability_cue": true
+      }
+    },
+    {
+      "category": "modal",
+      "form": "may"
+    },
+    {
+      "category": "modal",
+      "form": "might"
+    },
+    {
+      "category": "modal",
+      "form": "will"
+    },
+    {
+      "category": "modal",
+      "form": "would"
+    },
+    {
+      "category": "modal",
+      "form": "should"
+    },
+    {
+      "category": "auxiliary",
+      "form": "do"
+    },
+    {
+      "category": "auxiliary",
+      "form": "does"
+    },
+    {
+      "category": "auxiliary",
+      "form": "did"
+    },
+    {
+      "category": "negation",
+      "form": "not"
+    },
+    {
+      "category": "negation",
+      "form": "no"
+    },
+    {
+      "category": "discourse",
+      "form": "yes"
+    },
+    {
+      "category": "discourse",
+      "form": "okay"
+    },
+    {
+      "category": "discourse",
+      "form": "ok"
+    },
+    {
+      "category": "wh",
+      "form": "what"
+    },
+    {
+      "category": "wh",
+      "form": "who"
+    },
+    {
+      "category": "wh",
+      "form": "where"
+    },
+    {
+      "category": "wh",
+      "form": "when"
+    },
+    {
+      "category": "wh",
+      "form": "why"
+    },
+    {
+      "category": "wh",
+      "form": "how"
+    },
+    {
+      "category": "wh",
+      "form": "which"
+    },
+    {
+      "category": "connective",
+      "form": "and"
+    },
+    {
+      "category": "connective",
+      "form": "or"
+    },
+    {
+      "category": "connective",
+      "form": "but"
+    },
+    {
+      "category": "connective",
+      "form": "if"
+    },
+    {
+      "category": "connective",
+      "form": "then"
+    },
+    {
+      "category": "adposition",
+      "form": "to"
+    },
+    {
+      "category": "adposition",
+      "form": "from"
+    },
+    {
+      "category": "adposition",
+      "form": "in"
+    },
+    {
+      "category": "adposition",
+      "form": "on"
+    },
+    {
+      "category": "adposition",
+      "form": "at"
+    },
+    {
+      "category": "adposition",
+      "form": "with"
+    },
+    {
+      "category": "adposition",
+      "form": "for"
+    },
+    {
+      "category": "adposition",
+      "form": "of"
+    },
+    {
+      "category": "adposition",
+      "form": "across"
+    },
+    {
+      "category": "adposition",
+      "form": "up"
+    },
+    {
+      "category": "adposition",
+      "form": "per"
+    },
+    {
+      "category": "greeting",
+      "form": "hello"
+    },
+    {
+      "category": "greeting",
+      "form": "hi"
+    },
+    {
+      "category": "greeting",
+      "form": "hey"
+    },
+    {
+      "category": "deictic",
+      "form": "today"
+    },
+    {
+      "category": "deictic",
+      "form": "now"
+    },
+    {
+      "category": "deictic",
+      "form": "here"
+    },
+    {
+      "category": "deictic",
+      "form": "there"
+    },
+    {
+      "category": "noun",
+      "form": "entity",
+      "target": "type:entity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "thing",
+      "target": "type:entity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "person",
+      "target": "type:person",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "people",
+      "target": "type:person",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "human",
+      "target": "type:person",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "animal",
+      "target": "type:animal",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "creature",
+      "target": "type:animal",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "plant",
+      "target": "type:plant",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "object",
+      "target": "type:object",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "item",
+      "target": "type:object",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "food",
+      "target": "type:food",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "place",
+      "target": "type:place",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "location",
+      "target": "type:place",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "organization",
+      "target": "type:organization",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "information",
+      "target": "type:information",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "field",
+      "target": "type:field",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "carrot",
+      "target": "type:carrot",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "fur",
+      "target": "type:body_covering",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "name",
+      "target": "property:name",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "color",
+      "target": "property:color",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "colour",
+      "target": "property:color",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "size",
+      "target": "property:size",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "speed",
+      "target": "property:speed",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "mile",
+      "target": "type:quantity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "miles",
+      "target": "type:quantity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "hour",
+      "target": "type:quantity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "noun",
+      "form": "hours",
+      "target": "type:quantity",
+      "target_class": "referent_type"
+    },
+    {
+      "category": "adjective",
+      "form": "brown",
+      "target": "state:color:brown",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "red",
+      "target": "state:color:red",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "blue",
+      "target": "state:color:blue",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "green",
+      "target": "state:color:green",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "black",
+      "target": "state:color:black",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "white",
+      "target": "state:color:white",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "soft",
+      "target": "state:texture:soft",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "hard",
+      "target": "state:texture:hard",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "rough",
+      "target": "state:texture:rough",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "smooth",
+      "target": "state:texture:smooth",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "small",
+      "target": "state:size:small",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "large",
+      "target": "state:size:large",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "still",
+      "target": "state:motion_state:still",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "moving",
+      "target": "state:motion_state:moving",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "good",
+      "target": "state:condition:good",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "bad",
+      "target": "state:condition:bad",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "broken",
+      "target": "state:condition:broken",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "working",
+      "target": "state:condition:working",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "happy",
+      "target": "state:affect:happy",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "sad",
+      "target": "state:affect:sad",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "calm",
+      "target": "state:affect:calm",
+      "target_class": "state_value"
+    },
+    {
+      "category": "adjective",
+      "form": "afraid",
+      "target": "state:affect:afraid",
+      "target_class": "state_value"
+    },
+    {
+      "category": "verb",
+      "form": "run",
+      "target": "action:run",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "runs",
+      "target": "action:run",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "ran",
+      "target": "action:run",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "running",
+      "target": "action:run",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "walk",
+      "target": "action:walk",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "walks",
+      "target": "action:walk",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "walked",
+      "target": "action:walk",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "walking",
+      "target": "action:walk",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "move",
+      "target": "action:move",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "moves",
+      "target": "action:move",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "moved",
+      "target": "action:move",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "moving",
+      "target": "action:move",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "go",
+      "target": "action:go",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "goes",
+      "target": "action:go",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "went",
+      "target": "action:go",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "going",
+      "target": "action:go",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "come",
+      "target": "action:come",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "comes",
+      "target": "action:come",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "came",
+      "target": "action:come",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "coming",
+      "target": "action:come",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feed",
+      "target": "action:feed",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feeds",
+      "target": "action:feed",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "fed",
+      "target": "action:feed",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feeding",
+      "target": "action:feed",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "eat",
+      "target": "action:eat",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "eats",
+      "target": "action:eat",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "ate",
+      "target": "action:eat",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "eating",
+      "target": "action:eat",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "give",
+      "target": "action:give",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "gives",
+      "target": "action:give",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "gave",
+      "target": "action:give",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "giving",
+      "target": "action:give",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "take",
+      "target": "action:take",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "takes",
+      "target": "action:take",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "took",
+      "target": "action:take",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "taking",
+      "target": "action:take",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "have",
+      "target": "action:have",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "has",
+      "target": "action:have",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "had",
+      "target": "action:have",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "having",
+      "target": "action:have",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "see",
+      "target": "action:see",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "sees",
+      "target": "action:see",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "saw",
+      "target": "action:see",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "seeing",
+      "target": "action:see",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "hear",
+      "target": "action:hear",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "hears",
+      "target": "action:hear",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "heard",
+      "target": "action:hear",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "hearing",
+      "target": "action:hear",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "say",
+      "target": "action:say",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "says",
+      "target": "action:say",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "said",
+      "target": "action:say",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "saying",
+      "target": "action:say",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "tell",
+      "target": "action:tell",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "tells",
+      "target": "action:tell",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "told",
+      "target": "action:tell",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "telling",
+      "target": "action:tell",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "ask",
+      "target": "action:ask",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "asks",
+      "target": "action:ask",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "asked",
+      "target": "action:ask",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "asking",
+      "target": "action:ask",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "know",
+      "target": "action:know",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "knows",
+      "target": "action:know",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "knew",
+      "target": "action:know",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "knowing",
+      "target": "action:know",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "think",
+      "target": "action:think",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "thinks",
+      "target": "action:think",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "thought",
+      "target": "action:think",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "thinking",
+      "target": "action:think",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "want",
+      "target": "action:want",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "wants",
+      "target": "action:want",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "wanted",
+      "target": "action:want",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "wanting",
+      "target": "action:want",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "like",
+      "target": "action:like",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "likes",
+      "target": "action:like",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "liked",
+      "target": "action:like",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "liking",
+      "target": "action:like",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "make",
+      "target": "action:make",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "makes",
+      "target": "action:make",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "made",
+      "target": "action:make",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "making",
+      "target": "action:make",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "use",
+      "target": "action:use",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "uses",
+      "target": "action:use",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "used",
+      "target": "action:use",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "using",
+      "target": "action:use",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "help",
+      "target": "action:help",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "helps",
+      "target": "action:help",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "helped",
+      "target": "action:help",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "helping",
+      "target": "action:help",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "learn",
+      "target": "action:learn",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "learns",
+      "target": "action:learn",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "learned",
+      "target": "action:learn",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "learnt",
+      "target": "action:learn",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "learning",
+      "target": "action:learn",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "teach",
+      "target": "action:teach",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "teaches",
+      "target": "action:teach",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "taught",
+      "target": "action:teach",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "teaching",
+      "target": "action:teach",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "read",
+      "target": "action:read",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "reads",
+      "target": "action:read",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "reading",
+      "target": "action:read",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "write",
+      "target": "action:write",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "writes",
+      "target": "action:write",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "wrote",
+      "target": "action:write",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "written",
+      "target": "action:write",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "writing",
+      "target": "action:write",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "work",
+      "target": "action:work",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "works",
+      "target": "action:work",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "worked",
+      "target": "action:work",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "working",
+      "target": "action:work",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "live",
+      "target": "action:live",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "lives",
+      "target": "action:live",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "lived",
+      "target": "action:live",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "living",
+      "target": "action:live",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "play",
+      "target": "action:play",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "plays",
+      "target": "action:play",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "played",
+      "target": "action:play",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "playing",
+      "target": "action:play",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "sleep",
+      "target": "action:sleep",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "sleeps",
+      "target": "action:sleep",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "slept",
+      "target": "action:sleep",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "sleeping",
+      "target": "action:sleep",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feel",
+      "target": "action:feel",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feels",
+      "target": "action:feel",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "felt",
+      "target": "action:feel",
+      "target_class": "action"
+    },
+    {
+      "category": "verb",
+      "form": "feeling",
+      "target": "action:feel",
+      "target_class": "action"
+    },
+    {
+      "category": "adposition",
+      "form": "with",
+      "target": "relation:possession",
+      "target_class": "relation"
+    },
+    {
+      "category": "adposition",
+      "form": "near",
+      "target": "relation:near",
+      "target_class": "relation"
+    },
+    {
+      "category": "noun",
+      "form": "condition",
+      "target": "property:condition",
+      "target_class": "property"
+    },
+    {
+      "category": "noun",
+      "form": "status",
+      "target": "property:condition",
+      "target_class": "property"
+    }
+  ],
+  "metadata": {
+    "design": "semantic kernel + high precision conversational lexicalizations",
+    "named_entity_policy": "do_not_seed_entity_instances; learn names as referent evidence",
+    "participant_reference_policy": "pronouns/possessives are structural discourse-role evidence; never fixed entity identities",
+    "unknown_word_policy": "preserve frontier; contextual induction proposes candidates only"
+  },
+  "properties": [
+    {
+      "holder": "entity",
+      "id": "name",
+      "value": "information"
+    },
+    {
+      "holder": "physical_entity",
+      "id": "color",
+      "value": "color_value"
+    },
+    {
+      "holder": "physical_entity",
+      "id": "texture",
+      "value": "texture_value"
+    },
+    {
+      "holder": "physical_entity",
+      "id": "size",
+      "value": "size_value"
+    },
+    {
+      "holder": "physical_entity",
+      "id": "speed",
+      "value": "quantity"
+    },
+    {
+      "holder": "entity",
+      "id": "condition",
+      "value": "condition_value"
+    }
+  ],
+  "relations": [
+    {
+      "id": "identity",
+      "ports": [
+        [
+          "left",
+          "entity",
+          1
+        ],
+        [
+          "right",
+          "entity",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "classification",
+      "ports": [
+        [
+          "instance",
+          "entity",
+          1
+        ],
+        [
+          "class",
+          "entity",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "possession",
+      "ports": [
+        [
+          "holder",
+          "entity",
+          1
+        ],
+        [
+          "possessed",
+          "entity",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "located_at",
+      "ports": [
+        [
+          "theme",
+          "entity",
+          1
+        ],
+        [
+          "place",
+          "place",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "part_of",
+      "ports": [
+        [
+          "part",
+          "entity",
+          1
+        ],
+        [
+          "whole",
+          "entity",
+          1
+        ]
+      ]
+    },
+    {
+      "id": "near",
+      "ports": [
+        [
+          "left",
+          "physical_entity",
+          1
+        ],
+        [
+          "right",
+          "physical_entity",
+          1
+        ]
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "seed_ref": "conversational-core-v351.1",
+  "source_ref": "source:reviewed-conversational-core-v351",
+  "states": [
+    {
+      "holder": "physical_entity",
+      "id": "color",
+      "values": [
+        "brown",
+        "red",
+        "blue",
+        "green",
+        "black",
+        "white"
+      ]
+    },
+    {
+      "holder": "physical_entity",
+      "id": "texture",
+      "values": [
+        "soft",
+        "hard",
+        "rough",
+        "smooth"
+      ]
+    },
+    {
+      "holder": "physical_entity",
+      "id": "size",
+      "values": [
+        "small",
+        "large"
+      ]
+    },
+    {
+      "holder": "physical_entity",
+      "id": "motion_state",
+      "values": [
+        "still",
+        "moving"
+      ]
+    },
+    {
+      "holder": "physical_entity",
+      "id": "condition",
+      "values": [
+        "good",
+        "bad",
+        "broken",
+        "working"
+      ]
+    },
+    {
+      "holder": "living_thing",
+      "id": "affect",
+      "values": [
+        "happy",
+        "sad",
+        "calm",
+        "afraid"
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "entity"
+    },
+    {
+      "id": "physical_entity",
+      "parent": "entity"
+    },
+    {
+      "id": "abstract_entity",
+      "parent": "entity"
+    },
+    {
+      "id": "living_thing",
+      "parent": "physical_entity"
+    },
+    {
+      "id": "person",
+      "parent": "living_thing"
+    },
+    {
+      "id": "animal",
+      "parent": "living_thing"
+    },
+    {
+      "id": "plant",
+      "parent": "living_thing"
+    },
+    {
+      "id": "object",
+      "parent": "physical_entity"
+    },
+    {
+      "id": "artifact",
+      "parent": "object"
+    },
+    {
+      "id": "food",
+      "parent": "physical_entity"
+    },
+    {
+      "id": "place",
+      "parent": "physical_entity"
+    },
+    {
+      "id": "organization",
+      "parent": "entity"
+    },
+    {
+      "id": "information",
+      "parent": "abstract_entity"
+    },
+    {
+      "id": "quantity",
+      "parent": "abstract_entity"
+    },
+    {
+      "id": "time",
+      "parent": "abstract_entity"
+    },
+    {
+      "id": "body_covering",
+      "metadata": {
+        "typical_holder_type_refs": [
+          "animal"
+        ]
+      },
+      "parent": "object"
+    },
+    {
+      "id": "field",
+      "parent": "place"
+    },
+    {
+      "id": "carrot",
+      "metadata": {
+        "plant_food": true
+      },
+      "parent": "food"
+    },
+    {
+      "id": "condition_value",
+      "parent": "abstract_entity"
+    }
+  ]
+}

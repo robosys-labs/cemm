@@ -14,7 +14,7 @@ from typing import Any, Mapping
 from ..learning.model import PinnedRecord
 from ..schema.model import SchemaLifecycleStatus, UseDecision, UseOperation, semantic_fingerprint
 from ..storage.model import RecordKind
-from ..uol.model import ChangeOperation, ImpactAssessment, ImportanceAssessment, Reversibility, Valence
+from ..semantic_records.model import ChangeOperation, ImpactAssessment, ImportanceAssessment, Reversibility, Valence
 
 
 class StrEnum(str, Enum):

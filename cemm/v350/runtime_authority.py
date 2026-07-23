@@ -19,11 +19,17 @@ from threading import RLock
 from typing import Any
 from uuid import uuid4
 
-from .schema.model import semantic_fingerprint
+from .schema.model import canonical_data, semantic_fingerprint
 
 
 class RuntimeAttestationError(RuntimeError):
     """Raised when a runtime attestation is stale, invalidated, or mismatched."""
+
+
+def _manifest_fingerprint(manifest: Any) -> str:
+    return semantic_fingerprint(
+        "runtime-authority-manifest-complete", canonical_data(manifest), 64
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +80,8 @@ class RuntimeAttestation:
     canonical_runtime_factory: str
     canonical_orchestrator: str
     kernel_semantic_abi_fingerprint: str
+    semantic_authority_supplement_sha256: str
+    manifest_fingerprint: str
     verified_at: str
 
     @classmethod
@@ -92,19 +100,8 @@ class RuntimeAttestation:
             )
 
         epoch = RuntimeEpoch.create(manifest, generation=generation)
-        fields = (
-            epoch.epoch_ref,
-            epoch.generation,
-            str(manifest.release_version),
-            str(manifest.release_commit),
-            str(manifest.source_manifest_sha256),
-            str(manifest.boot_database_sha256),
-            str(manifest.verification_report_sha256),
-            str(manifest.legacy_denylist_sha256),
-            str(manifest.canonical_runtime_factory),
-            str(manifest.canonical_orchestrator),
-            str(getattr(manifest, "kernel_semantic_abi_fingerprint", "")),
-        )
+        manifest_fingerprint = _manifest_fingerprint(manifest)
+        fields = (epoch.epoch_ref, epoch.generation, manifest_fingerprint)
         return cls(
             attestation_ref="runtime-attestation:"
             + semantic_fingerprint("runtime-attestation", fields, 64),
@@ -122,6 +119,10 @@ class RuntimeAttestation:
             kernel_semantic_abi_fingerprint=str(
                 getattr(manifest, "kernel_semantic_abi_fingerprint", "")
             ),
+            semantic_authority_supplement_sha256=str(
+                getattr(manifest, "semantic_authority_supplement_sha256", "")
+            ),
+            manifest_fingerprint=manifest_fingerprint,
             verified_at=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -138,15 +139,14 @@ def _deep_freeze(value):
 
 def _sealed_manifest_copy(manifest):
     fields = {}
-    for name in ("metadata", "release_capabilities"):
+    for name in ("metadata", "release_capabilities", "detached_signature"):
         value = getattr(manifest, name, None)
         if value is not None:
             fields[name] = _deep_freeze(dict(value))
-    bindings = getattr(manifest, "runtime_service_bindings", None)
-    if bindings is not None:
-        fields["runtime_service_bindings"] = tuple(
-            _deep_freeze(dict(item)) for item in bindings
-        )
+    for field_name in ("runtime_service_bindings", "canonical_service_authorities"):
+        bindings = getattr(manifest, field_name, None)
+        if bindings is not None:
+            fields[field_name] = tuple(_deep_freeze(dict(item)) for item in bindings)
     return replace(manifest, **fields) if fields else manifest
 
 
@@ -162,6 +162,7 @@ class AttestedRuntimeAuthority:
             raise TypeError("attested authority requires its verified guard")
         self._guard = guard
         self._sealed_manifest = _sealed_manifest_copy(guard.manifest)
+        self._sealed_manifest_fingerprint = _manifest_fingerprint(self._sealed_manifest)
         self.attestation = attestation
         self._lock = RLock()
         self._active = True
@@ -181,32 +182,10 @@ class AttestedRuntimeAuthority:
         return self._generation
 
     def _assert_manifest_identity(self) -> None:
-        manifest = self._guard.manifest
-        observed = (
-            str(manifest.release_version),
-            str(manifest.release_commit),
-            str(manifest.source_manifest_sha256),
-            str(manifest.boot_database_sha256),
-            str(manifest.verification_report_sha256),
-            str(manifest.legacy_denylist_sha256),
-            str(manifest.canonical_runtime_factory),
-            str(manifest.canonical_orchestrator),
-            str(getattr(manifest, "kernel_semantic_abi_fingerprint", "")),
-        )
-        expected = (
-            self.attestation.release_version,
-            self.attestation.release_commit,
-            self.attestation.source_manifest_sha256,
-            self.attestation.boot_database_sha256,
-            self.attestation.verification_report_sha256,
-            self.attestation.legacy_denylist_sha256,
-            self.attestation.canonical_runtime_factory,
-            self.attestation.canonical_orchestrator,
-            self.attestation.kernel_semantic_abi_fingerprint,
-        )
-        if observed != expected:
+        live_fingerprint = _manifest_fingerprint(self._guard.manifest)
+        if live_fingerprint != self.attestation.manifest_fingerprint:
             raise RuntimeAttestationError(
-                "runtime authority manifest identity changed after attestation"
+                "sealed runtime authority manifest differs from fully verified attestation"
             )
 
     def require_service_authority(self) -> None:

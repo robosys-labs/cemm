@@ -152,9 +152,14 @@ class Stage13LearningCommitterV351:
         # 2) Persist attributable evidence identities used by learning links.  Existing
         # exact evidence is reused; missing source-span evidence is materialized with its
         # original ref and cycle/source lineage, never synthesized as semantic truth.
-        evidence_refs = sorted({ref for work in work_items for p in work.proposals for ref in p.evidence_refs})
+        evidence_refs = sorted({
+            *(ref for work in work_items for p in work.proposals for ref in p.evidence_refs),
+            *(ref for work in work_items for ref in work.frontier.evidence_refs),
+        })
         lineage_by_evidence = {}
         for work in work_items:
+            for ref in work.frontier.evidence_refs:
+                lineage_by_evidence.setdefault(ref, set()).update(work.source_lineage_refs)
             for proposal in work.proposals:
                 for ref in proposal.evidence_refs:
                     lineage_by_evidence.setdefault(ref, set()).update(work.source_lineage_refs)
@@ -195,6 +200,40 @@ class Stage13LearningCommitterV351:
                 payload=encode_record(RecordKind.EVIDENCE, evidence),
                 reason="persist attributable evidence identity for Phase-14 learning",
             ))
+
+        # 2b) Persist evidence-accumulating frontiers before candidate threshold.
+        for work in sorted(work_items, key=lambda item: item.work_ref):
+            if work.proposals:
+                continue
+            frontier = work.frontier
+            current_frontier = store.get_record(RecordKind.LEARNING_FRONTIER, frontier.frontier_ref)
+            if current_frontier is not None and current_frontier.payload.resolution_status in {
+                FrontierResolutionStatus.RESOLVED, FrontierResolutionStatus.SUPERSEDED,
+            }:
+                continue
+            if current_frontier is not None:
+                old = current_frontier.payload
+                frontier = replace(
+                    frontier,
+                    revision=current_frontier.revision + 1,
+                    supersedes_revision=current_frontier.revision,
+                    evidence_refs=tuple(sorted(set((*old.evidence_refs, *frontier.evidence_refs)))),
+                )
+            operations.append(PatchOperation(
+                operation_ref="patch-operation:phase14-frontier-only:" + semantic_fingerprint(
+                    "phase14-frontier-only-op",
+                    (frontier.frontier_ref, frontier.revision, frontier.evidence_refs), 20,
+                ),
+                operation_kind=PatchOperationKind.UPSERT,
+                record_kind=RecordKind.LEARNING_FRONTIER,
+                target_ref=frontier.frontier_ref,
+                record_revision=frontier.revision,
+                payload=encode_record(RecordKind.LEARNING_FRONTIER, frontier),
+                expected_record_revision=None if current_frontier is None else current_frontier.revision,
+                expected_record_fingerprint=None if current_frontier is None else current_frontier.record_fingerprint,
+                reason="persist evidence-accumulating contextual learning frontier",
+            ))
+            proof_refs.append(work.work_ref)
 
         # 3) Build one exact package per work item. Internal candidate dependencies remain
         # candidate_pins; external prerequisites remain dependency_pins. Evidence links
@@ -278,6 +317,12 @@ class Stage13LearningCommitterV351:
                     "risk_refs": tuple(work.risk_refs),
                     "deferred_reason_refs": tuple(work.deferred_reason_refs),
                     "event_driven": True,
+                    "competence_executor_pins": dict(
+                        work.frontier.metadata.get("competence_executor_pins", {}) or {}
+                    ),
+                    "contextual_induction_v351": bool(
+                        work.frontier.metadata.get("contextual_induction_abi")
+                    ),
                 },
             )
             package_refs.append(package.package_ref)

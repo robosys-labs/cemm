@@ -8,18 +8,30 @@ import importlib.util
 import inspect
 import json
 from pathlib import Path
+from types import MappingProxyType
 import re
 import sqlite3
 import sys
 from typing import Any, Mapping
 
 from .orchestration import CoreStage
+from .csir.authority import CURRENT_KERNEL_ABI
 from .runtime_graph import canonical_stage_descriptors, resolve_adapter_type
 from .storage import RecordKind
 
 
 class RuntimeAuthorityError(RuntimeError):
     pass
+
+
+def _deep_freeze_authority(value):
+    if isinstance(value, Mapping):
+        return MappingProxyType({str(key): _deep_freeze_authority(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_freeze_authority(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(_deep_freeze_authority(item) for item in value)
+    return value
 
 
 def _sha256(path: Path) -> str:
@@ -94,6 +106,9 @@ class RuntimeAuthorityManifest:
     runtime_service_bindings: tuple[Mapping[str, Any], ...] = ()
     canonical_service_authorities: tuple[Mapping[str, Any], ...] = ()
     runtime_source_root_sha256: str = ""
+    semantic_authority_supplement_sha256: str = ""
+    conversational_seed_sha256: str = ""
+    kernel_semantic_abi_fingerprint: str = ""
     closure_ledger_sha256: str = ""
     detached_signature: Mapping[str, Any] = field(default_factory=dict)
     release_capabilities: Mapping[str, Any] = field(default_factory=dict)
@@ -132,22 +147,26 @@ class RuntimeAuthorityManifest:
             channel_adapter_contracts=tuple(map(str, doc.get("channel_adapter_contracts", ()))),
             migration_modules_allowed_at_runtime=tuple(map(str, doc.get("migration_modules_allowed_at_runtime", ()))),
             legacy_denylist_sha256=str(doc["legacy_denylist_sha256"]), verification_report_sha256=str(doc.get("verification_report_sha256", "")),
-            activation_ready=bool(doc.get("activation_ready", False)), metadata=dict(doc.get("metadata", {})),
+            activation_ready=bool(doc.get("activation_ready", False)),
+            metadata=_deep_freeze_authority(dict(doc.get("metadata", {}))),
             argument_frames=tuple(map(str, doc.get("argument_frames", ()))),
             morphology_rules=tuple(map(str, doc.get("morphology_rules", ()))),
             linearization_rules=tuple(map(str, doc.get("linearization_rules", ()))),
             runtime_service_bindings=tuple(
-                dict(item) for item in doc.get("runtime_service_bindings", ())
+                _deep_freeze_authority(dict(item)) for item in doc.get("runtime_service_bindings", ())
                 if isinstance(item, Mapping)
             ),
             canonical_service_authorities=tuple(
-                dict(item) for item in doc.get("canonical_service_authorities", ())
+                _deep_freeze_authority(dict(item)) for item in doc.get("canonical_service_authorities", ())
                 if isinstance(item, Mapping)
             ),
             runtime_source_root_sha256=str(doc.get("runtime_source_root_sha256", "")),
+            semantic_authority_supplement_sha256=str(doc.get("semantic_authority_supplement_sha256", "")),
+            conversational_seed_sha256=str(doc.get("conversational_seed_sha256", "")),
+            kernel_semantic_abi_fingerprint=str(doc.get("kernel_semantic_abi_fingerprint", "")),
             closure_ledger_sha256=str(doc.get("closure_ledger_sha256", "")),
-            detached_signature=dict(doc.get("detached_signature", {}) or {}),
-            release_capabilities=dict(doc.get("release_capabilities", {})),
+            detached_signature=_deep_freeze_authority(dict(doc.get("detached_signature", {}) or {})),
+            release_capabilities=_deep_freeze_authority(dict(doc.get("release_capabilities", {}))),
             realization_language_tags=tuple(map(str, doc.get("realization_language_tags", ()))),
             output_speaker_ref=None if doc.get("output_speaker_ref") is None else str(doc.get("output_speaker_ref")),
             output_commitment_kind_ref=None if doc.get("output_commitment_kind_ref") is None else str(doc.get("output_commitment_kind_ref")),
@@ -186,6 +205,8 @@ class RuntimeAuthorityGuard:
         if m.release_version != "3.5.1":
             raise RuntimeAuthorityError(f"unexpected release version:{m.release_version}")
         errors: list[str] = []
+        if m.kernel_semantic_abi_fingerprint != CURRENT_KERNEL_ABI.fingerprint:
+            errors.append("kernel semantic ABI fingerprint mismatch")
         if not m.activation_ready:
             errors.append("runtime authority manifest is not activation-ready")
         if not re.fullmatch(r"[0-9a-f]{40}", m.release_commit):
@@ -232,11 +253,14 @@ class RuntimeAuthorityGuard:
                 for method in tuple(item.get("required_methods", ()) or ()):
                     if not callable(getattr(cls, str(method), None)):
                         errors.append(f"canonical service lacks required method:{class_path}:{method}")
-                runtime_abi = str(getattr(cls, "RUNTIME_ABI", "v351"))
+                runtime_abi = getattr(cls, "RUNTIME_ABI", None)
                 if runtime_abi != "v351" or str(item.get("runtime_abi", "")) != "v351":
                     errors.append(f"canonical service lacks final v351 ABI:{class_path}")
-                declared_kind = str(getattr(cls, "SERVICE_KIND", item.get("service_kind", "")))
-                if declared_kind != str(item.get("implementation_service_kind", declared_kind)):
+                declared_kind = getattr(cls, "SERVICE_KIND", None)
+                if not isinstance(declared_kind, str) or not declared_kind.strip():
+                    errors.append(f"canonical service lacks explicit SERVICE_KIND:{class_path}")
+                    continue
+                if declared_kind != str(item.get("implementation_service_kind", "")):
                     errors.append(f"canonical service implementation kind mismatch:{class_path}")
                 source_path = inspect.getsourcefile(cls)
                 if not source_path or not Path(source_path).is_file() or _sha256(Path(source_path)) != str(item.get("source_sha256", "")):
@@ -382,6 +406,28 @@ class RuntimeAuthorityGuard:
                     errors.append("runtime source-tree root fingerprint mismatch")
             except Exception as exc:
                 errors.append(f"cannot attest runtime source-tree root:{exc}")
+            supplement_rel = str(m.metadata.get("semantic_authority_supplement_relpath", "") or "")
+            supplement_path = self.repo_root / supplement_rel if supplement_rel else None
+            if m.activation_ready and (
+                not m.semantic_authority_supplement_sha256
+                or supplement_path is None
+                or not supplement_path.is_file()
+            ):
+                errors.append("activation-ready release lacks signed semantic authority supplement")
+            elif m.semantic_authority_supplement_sha256:
+                if supplement_path is None or not supplement_path.is_file():
+                    errors.append("semantic authority supplement artifact is unavailable")
+                elif _sha256(supplement_path) != m.semantic_authority_supplement_sha256:
+                    errors.append("semantic authority supplement fingerprint mismatch")
+            seed_rel = str(m.metadata.get("conversational_seed_relpath", "") or "")
+            seed_path = self.repo_root / seed_rel if seed_rel else None
+            if m.activation_ready and (not m.conversational_seed_sha256 or seed_path is None or not seed_path.is_file()):
+                errors.append("activation-ready release lacks signed conversational seed")
+            elif m.conversational_seed_sha256:
+                if seed_path is None or not seed_path.is_file():
+                    errors.append("conversational seed artifact is unavailable")
+                elif _sha256(seed_path) != m.conversational_seed_sha256:
+                    errors.append("conversational seed fingerprint mismatch")
 
         if not m.boot_database_sha256:
             errors.append("boot database fingerprint is missing")

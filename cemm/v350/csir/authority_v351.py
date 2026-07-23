@@ -493,8 +493,18 @@ class AuthoritySnapshotV351:
                     )
 
     @staticmethod
-    def _scope_matches(scopes: tuple[str, ...], value: str) -> bool:
+    def _context_scope_matches(scopes: tuple[str, ...], value: str) -> bool:
         return not scopes or value in scopes or "global" in scopes
+
+    @staticmethod
+    def _permission_scope_matches(scopes: tuple[str, ...], value: str) -> bool:
+        # Public permission is universally usable; it is not a semantic context wildcard.
+        return not scopes or value in scopes or "public" in scopes
+
+    @staticmethod
+    def _scope_matches(scopes: tuple[str, ...], value: str) -> bool:
+        """Backward-compatible context matcher retained for migration tooling."""
+        return AuthoritySnapshotV351._context_scope_matches(scopes, value)
 
     def select_operational_profile(
         self,
@@ -508,7 +518,7 @@ class AuthoritySnapshotV351:
             if item.definition_pin.key == definition_pin.key
             and item.lifecycle_status.casefold() == "active"
             and operation in item.allowed_operations
-            and self._scope_matches(item.permission_scopes, permission_ref)
+            and self._permission_scope_matches(item.permission_scopes, permission_ref)
         ]
         if len(candidates) != 1:
             raise SemanticAuthorityError(
@@ -530,8 +540,8 @@ class AuthoritySnapshotV351:
             item for item in self.use_authorizations
             if item.target_pin.key in target_keys
             and item.operation == operation
-            and self._scope_matches(item.context_scopes, context_ref)
-            and self._scope_matches(item.permission_scopes, permission_ref)
+            and self._context_scope_matches(item.context_scopes, context_ref)
+            and self._permission_scope_matches(item.permission_scopes, permission_ref)
         ]
         if any(item.decision.casefold() == "deny" for item in matching):
             raise SemanticAuthorityError(

@@ -365,6 +365,8 @@ class FormLatticeAnalyzer:
                     ),
                     feature_values=tuple(sorted((str(k), str(v)) for k, v in features.items())),
                     evidence_refs=tuple(evidence),
+                    link_ref=link.link_ref,
+                    link_revision=link.revision,
                 ))
         dedup = {item.candidate_ref: item for item in result}
         return tuple(sorted(
@@ -391,6 +393,7 @@ class FormLatticeAnalyzer:
             lexeme_candidate: LexemeCandidate | None,
             authority_path: str,
             authority_ref: str,
+            authority_revision: int,
         ) -> None:
             # FormLatticeAnalyzer is the understanding/GROUND path. A migrated or
             # learned multi-use sense participates only when GROUND is explicitly
@@ -449,6 +452,7 @@ class FormLatticeAnalyzer:
                     sense.sense_ref,
                     sense.revision,
                     authority_ref,
+                    authority_revision,
                     tuple(item.contribution_ref for item in contributions),
                 ),
                 20,
@@ -489,7 +493,12 @@ class FormLatticeAnalyzer:
                 lexeme_ref=(
                     None if lexeme_candidate is None else lexeme_candidate.lexeme_ref
                 ),
+                lexeme_revision=(
+                    None if lexeme_candidate is None else lexeme_candidate.lexeme_revision
+                ),
                 authority_path=authority_path,
+                authority_ref=authority_ref,
+                authority_revision=authority_revision,
                 metadata={**dict(sense.metadata), "authority_path": authority_path},
             ))
 
@@ -519,6 +528,7 @@ class FormLatticeAnalyzer:
                         lexeme_candidate=lexeme_candidate,
                         authority_path="lexeme",
                         authority_ref=link.link_ref,
+                        authority_revision=link.revision,
                     )
                     if len(result) > before:
                         usable_lexeme_candidate_emitted = True
@@ -544,6 +554,7 @@ class FormLatticeAnalyzer:
                     lexeme_candidate=None,
                     authority_path="legacy_form_sense",
                     authority_ref=link.link_ref,
+                    authority_revision=link.revision,
                 )
 
         return tuple(sorted(
@@ -590,6 +601,7 @@ class FormLatticeAnalyzer:
                 ),
                 contribution_kind=spec.contribution_kind,
                 spec_ref=spec.spec_ref,
+                spec_revision=spec.revision,
                 target_kind=spec.target_kind,
                 target_ref=spec.target_ref,
                 target_revision=spec.target_revision,

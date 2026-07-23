@@ -40,6 +40,7 @@ def compile_minimum_response_authority() -> MinimumResponseAuthorityArtifacts:
     # semantic-role identifiers inside this authority package; they are never emitted.
     specs = (
         (ResponseFamily.ANSWER_QUERY, (("content", 1),)),
+        (ResponseFamily.GREET, ()),
         (ResponseFamily.REPORT_STATE, (("content", 1),)),
         (ResponseFamily.REPORT_RELATION, (("content", 1),)),
         (ResponseFamily.REPORT_EVENT, (("content", 1),)),

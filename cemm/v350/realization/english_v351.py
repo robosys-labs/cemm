@@ -269,6 +269,7 @@ def compile_minimum_english_realization_package() -> EnglishRealizationPackageV3
     # loaded content is inserted only through the mode declared by the exact rule.
     specs = (
         (ResponseFamily.ANSWER_QUERY, "content_fragment", (), (".",)),
+        (ResponseFamily.GREET, "fixed_discourse", ("Hello",), (".",)),
         (ResponseFamily.REPORT_STATE, "content_fragment", (), (".",)),
         (ResponseFamily.REPORT_RELATION, "content_fragment", (), (".",)),
         (ResponseFamily.REPORT_EVENT, "content_fragment", (), (".",)),

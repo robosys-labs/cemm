@@ -1,0 +1,24 @@
+{
+  "auxiliary_exact_pins": [],
+  "canonical_authority_sets": [
+    {
+      "expected_fingerprint": "",
+      "set_ref": "minimum_discourse_v351"
+    },
+    {
+      "expected_fingerprint": "",
+      "set_ref": "minimum_response_v351"
+    },
+    {
+      "expected_fingerprint": "",
+      "set_ref": "minimum_english_realization_v351"
+    }
+  ],
+  "metadata": {
+    "canonical_sets_status": "run tools/build_v351_semantic_authority_supplement.py after applying patch",
+    "note": "Do not add dummy models. Every model must name exact projected semantic output revisions and, when required, exact calibration authority.",
+    "status": "review_required_before_multimodal_activation"
+  },
+  "observation_models": [],
+  "schema_version": 1
+}

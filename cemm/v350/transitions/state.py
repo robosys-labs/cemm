@@ -9,7 +9,7 @@ from typing import Any, Iterable, Protocol
 from ..schema.model import StateDimensionSchema, StateValueSchema, UseOperation, schema_authorizes_use
 from ..schema.registry import SchemaRegistry
 from ..storage.model import AssignmentStatus, RecordKind, StateAssignment, StoredRecord
-from ..uol.model import ChangeOperation, StateDelta
+from ..semantic_records.model import ChangeOperation, StateDelta
 from .model import (
     AssignmentMutation,
     ConditionOperator,
