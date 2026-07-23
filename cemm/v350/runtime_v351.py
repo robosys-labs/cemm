@@ -16,6 +16,14 @@ from .csir.authority import CURRENT_KERNEL_ABI
 from .csir.authority_v351 import AuthoritySnapshotV351
 from .csir.compiler import ExactCSIRCompiler
 from .csir.model import CSIRCandidate, CSIRCandidateFragment, CSIRGraph
+from .observation import CanonicalOperationOutcomeAssimilatorV351, canonical_observation_adapters_v351
+from .observation.runtime_bridge_v351 import (
+    stage_01_observe_multimodal_evidence_v351,
+    stage_02_encode_form_and_sensor_evidence_v351,
+    stage_03_activate_and_ground_referents_v351,
+)
+from .finalization.runtime_v351 import CanonicalCycleFinalizerV351
+from .runtime_support_v351 import SystemUTCClockV351
 from .composition import ProjectionAwareDeterministicCSIRComposer
 from .dynamics import (
     RecurrentAttractorStabilizerV351, RecurrentSemanticDynamicsV351,
@@ -206,6 +214,9 @@ class V351RuntimeCoordinator:
         self._minimum_response_authority = compile_minimum_response_authority()
         self._minimum_english_realization = compile_minimum_english_realization_package()
         self._reviewed_phase13_dynamics = compile_reviewed_phase13_parameter_artifacts()
+        if self.services.clock is None:
+            self.services.clock = SystemUTCClockV351()
+        self._canonical_observation_adapters = canonical_observation_adapters_v351()
         if self.services.learning_maintenance is None:
             self.services.learning_maintenance = Phase14LearningMaintenanceV351(
                 store,
@@ -260,6 +271,7 @@ class V351RuntimeCoordinator:
                 simulation_budget=self.services.causal_simulation_budget,
                 aggregation_selection_evaluators=self.services.causal_aggregation_selection_evaluators,
             ),
+            "operation_outcome_assimilator": CanonicalOperationOutcomeAssimilatorV351(),
             "response_csir_builder": Phase16ResponseCSIRBuilderV351(
                 authority_map=response_authority_map, session_memory=self.session_memory,
             ),
@@ -273,6 +285,7 @@ class V351RuntimeCoordinator:
                 disclosure_authorization_grants=self.services.disclosure_authorization_grants,
             ),
             "output_discourse_engine": OutputDiscourseCommitterV351(self.session_memory),
+            "consolidation_engine": CanonicalCycleFinalizerV351(),
         }
 
     def _schema_applicability_index(self, registry, capability: StageCapability):
@@ -453,7 +466,7 @@ class V351RuntimeCoordinator:
             _cycle_pins=pins,
         )
 
-    def stage_01_observe_multimodal_evidence(self, cycle, capability):
+    def _inactive_pre_phase17_stage_01_observe_multimodal_evidence(self, cycle, capability):
         envelope = cycle.input_payload if isinstance(cycle.input_payload, RuntimeInput) else RuntimeInput(str(cycle.input_payload))
         items = []
         participant_frame = cycle.artifacts.get("participant_frame")
@@ -493,7 +506,7 @@ class V351RuntimeCoordinator:
             return StageOutcome(StageExecutionStatus.DEFERRED, frontier_refs=("frontier:observation:no-evidence",))
         return self._performed(evidence_envelopes=tuple(items))
 
-    def stage_02_encode_form_and_sensor_evidence(self, cycle, capability):
+    def _inactive_pre_phase17_stage_02_encode_form_and_sensor_evidence(self, cycle, capability):
         envelopes = tuple(cycle.artifacts["evidence_envelopes"])
         text_items = [item for item in envelopes if item.kind == "text"]
         form_lattice = None
@@ -529,7 +542,7 @@ class V351RuntimeCoordinator:
             frontier_refs=tuple(f"frontier:{x}" for x in unresolved),
         )
 
-    def stage_03_activate_and_ground_referents(self, cycle, capability):
+    def _inactive_pre_phase17_stage_03_activate_and_ground_referents(self, cycle, capability):
         lattice: EvidenceLattice = cycle.artifacts["evidence_lattice"]
         if lattice.form_lattice is None:
             return self._gap(capability.stage, "multimodal_grounder")
@@ -580,6 +593,15 @@ class V351RuntimeCoordinator:
             artifacts={"grounding_candidates": artifact, "identity_coreference_trace": tuple(result.evidence_refs)},
             frontier_refs=tuple(result.frontier_refs),
         )
+
+    def stage_01_observe_multimodal_evidence(self, cycle, capability):
+        return stage_01_observe_multimodal_evidence_v351(self, cycle, capability)
+
+    def stage_02_encode_form_and_sensor_evidence(self, cycle, capability):
+        return stage_02_encode_form_and_sensor_evidence_v351(self, cycle, capability)
+
+    def stage_03_activate_and_ground_referents(self, cycle, capability):
+        return stage_03_activate_and_ground_referents_v351(self, cycle, capability)
 
     def stage_04_project_entitled_state_spaces(self, cycle, capability):
         grounding: GroundingCandidateSet = cycle.artifacts["grounding_candidates"]
@@ -675,6 +697,21 @@ class V351RuntimeCoordinator:
             # authority is a boundary invariant, never a proposal-service-controlled flag.
             require_projection_authority=True,
         )
+        # Exact observation-model projections may contribute already-typed CSIR fragments.
+        # They join the same Stage-5 compiler barrier; they never bypass closure/authority validation.
+        for analysis in tuple(cycle.artifacts.get("_structured_observation_analyses", ()) or ()):
+            fragments = tuple(getattr(analysis, "semantic_fragments", ()) or ())
+            if fragments and not tuple(getattr(analysis, "semantic_projection_pins", ()) or ()):
+                raise ValueError("semantic observation fragments require exact ObservationModel projection pins")
+            proposed.extend(fragments)
+        if proposed and tuple(cycle.artifacts.get("_structured_observation_analyses", ()) or ()):
+            compiled = self.exact_csir_compiler.compile_fragments(
+                proposed, authority_generation=capability.authority_generation,
+                authority_fingerprint=capability.authority_fingerprint,
+                semantic_authority_snapshot=cycle.artifacts["semantic_authority_snapshot_v351"],
+                context_ref=cycle.context_ref, permission_ref=cycle.permission_ref,
+                require_projection_authority=True,
+            )
         combined_frontiers = tuple((*proposal_frontiers, *compiled.frontiers))
         combined_frontier_refs = tuple(sorted(set((
             *(str(getattr(item, "frontier_ref", "")) for item in proposal_frontiers if getattr(item, "frontier_ref", "")),
@@ -830,7 +867,7 @@ class V351RuntimeCoordinator:
         return getattr(value, name, default)
 
     def stage_16_plan_authorize_execute_and_observe(self, c, cap):
-        service = self.services.operation_engine
+        service = self._resolved_service("operation_engine")
         if service is None:
             return self._gap(cap.stage, "operation_engine")
         prepare = getattr(service, "prepare", None)
@@ -1067,6 +1104,7 @@ class V351RuntimeCoordinator:
                     "semantic_preservation_assessments": (),
                     "emission_authorization": {"decision": "no_response_required", "reason_ref": decision.no_response_reason_ref},
                     "emission_observation": silence,
+                    "_no_effectful_work": True,
                 },
             )
         plan = c.artifacts["realization_plan"]
@@ -1344,21 +1382,10 @@ class V351RuntimeCoordinator:
         return self._service(c, cap, "output_discourse_engine", "commit")
 
     def stage_22_consolidate_invalidate_replay_and_finalize(self, c, cap):
-        service = self.services.consolidation_engine
-        if service is not None:
-            return self._service(c, cap, "consolidation_engine", "finalize")
-        from .cycle_control import CompletionEvaluator
-        status = CompletionEvaluator().evaluate(c).value
-        return self._performed(
-            cycle_completion_status=status,
-            invalidation_set=(), replay_requirements=(), consolidation_results=(),
-            final_cycle_summary={
-                "cycle_ref": c.cycle_ref,
-                "frontier_refs": tuple(sorted(set(c.frontiers))),
-                "errors": tuple(c.errors),
-                "authority_generation": cap.authority_generation,
-            },
-        )
+        service = self._resolved_service("consolidation_engine")
+        if service is None:
+            return self._gap(cap.stage, "consolidation_engine")
+        return self._service(c, cap, "consolidation_engine", "finalize")
 
 
 class Runtime:
@@ -1376,7 +1403,7 @@ class Runtime:
                  permission_ref: str = "conversation", channel_ref: str = "text", emission_idempotency_key: str | None = None,
                  discourse_anchors: tuple[Any, ...] = (), multimodal_tracks: tuple[Any, ...] = (),
                  system_output_anchors: tuple[Any, ...] = (), grounding_constraints: tuple[Any, ...] = (),
-                 response_requested: bool = True) -> RuntimeResult:
+                 response_requested: bool = True, observations: tuple[Any, ...] = ()) -> RuntimeResult:
         participant_ref, evidence_ref = self.sessions.resolve(
             context_id, permission_ref, speaker_ref, self.store, system_ref=self.services.system_ref
         )
@@ -1387,7 +1414,7 @@ class Runtime:
             discourse_anchors=discourse_anchors, multimodal_tracks=multimodal_tracks,
             system_output_anchors=system_output_anchors, grounding_constraints=grounding_constraints,
             speaker_ref=participant_ref, participant_evidence_refs=(evidence_ref,),
-            response_requested=bool(response_requested),
+            response_requested=bool(response_requested), observations=tuple(observations),
         )
         cycle = self.orchestrator.run(
             envelope, context_ref=context_id, permission_ref=permission_ref,
@@ -1408,6 +1435,8 @@ class Runtime:
         output = None
         if emission is not None:
             output = getattr(emission, "surface", None) or getattr(emission, "output_text", None)
+        if output == "":
+            output = None
         return RuntimeResult(
             cycle_ref=cycle.cycle_ref, context_ref=cycle.context_ref, output_text=output,
             target_language=cycle.target_language, stage_trace=tuple(cycle.trace),

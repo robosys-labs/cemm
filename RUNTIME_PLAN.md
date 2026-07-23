@@ -745,3 +745,8 @@ no legacy fallback exists
 - Stage 15 produces both conversational response goals and, when exact policy exists, vector-valued causal goals.
 - Stage 16 plans by causal simulation. A selected causal plan is semantic eligibility only; existing adapter/gate/journal/effect authorization remains mandatory before I/O.
 - Stage 17 observed outcomes re-enter cognition as evidence and may create prediction-error/causal-learning frontiers; expected effects are never written as observations.
+
+## Phase 17–18 final runtime closure
+
+Final runtime authority uses manifest v5 with exact Stage 0–22 adapters, canonical service slot + implementation method/source attestations, runtime source-tree Merkle-style root, boot-derived exact pins, legacy-free runtime record families, closure-ledger hash and detached signature metadata. Checked-in manifests remain preactivation until every closure gate passes against the same commit, boot hash, source root and authority payload hash.
+

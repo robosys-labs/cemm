@@ -1,0 +1,26 @@
+{
+  "activation_ready": false,
+  "baseline_commit": "aefe8b2530d960804417acbbf47e9c0ca3723389",
+  "phase": "17-18",
+  "release": "3.5.1",
+  "status": "preactivation",
+  "unexecuted_release_obligations": [
+    "full_repository_tests",
+    "boot_database_rebuild_and_pin_derivation",
+    "stage_0_22_end_to_end_corpus",
+    "english_conversational_kernel",
+    "learning_promotion_restart_reuse",
+    "authority_snapshot_restart_projection",
+    "recurrent_calibration",
+    "causal_state_proof_replay",
+    "multimodal_corpus",
+    "cross_language_canonical_csir_equivalence",
+    "operation_result_recurrence_and_idempotency",
+    "active_knowledge_acquisition",
+    "old_new_shadow_corpus",
+    "concurrency",
+    "performance_storage",
+    "deterministic_rebuild",
+    "detached_signature_verification"
+  ]
+}

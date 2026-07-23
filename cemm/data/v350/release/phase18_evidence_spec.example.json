@@ -1,0 +1,13 @@
+{
+  "gate": "REPLACE_WITH_EXACT_GATE_NAME",
+  "status": "pass",
+  "pass": true,
+  "release_commit": "40_HEX_COMMIT",
+  "authority_payload_sha256": "64_HEX_SHA256",
+  "boot_database_sha256": "64_HEX_SHA256",
+  "runtime_source_root_sha256": "64_HEX_SHA256",
+  "proof_refs": [
+    "stable-proof-or-report-reference"
+  ],
+  "notes": "Gate-specific fields are required for special closure gates; do not reuse evidence from another release root."
+}

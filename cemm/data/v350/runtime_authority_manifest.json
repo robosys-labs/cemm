@@ -1,5 +1,5 @@
 {
-  "activation_ready": true,
+  "activation_ready": false,
   "allowed_boot_data_modules": [
     "cemm.data.v350"
   ],
@@ -56,7 +56,6 @@
     "response_transform_rule",
     "response_transformation_proof",
     "response_omission",
-    "response_uol",
     "realization_request",
     "argument_frame",
     "morphology_rule",
@@ -79,15 +78,7 @@
     "common_ground",
     "output_reference_anchor",
     "output_correction",
-    "migration_source",
-    "migration_rule",
-    "migration_target_map",
-    "migration_decision",
-    "migration_batch",
-    "migration_quarantine",
-    "migration_intentional_change",
     "semantic_equivalence",
-    "migration_rollback",
     "default_rule",
     "dependency",
     "language_pack",
@@ -231,11 +222,13 @@
     "linearization-rule:sw:activation:relation-left-right-none@1#linearization_rule-record:e59903e339eeba8be8b809a21724f7a5d45b78725c05f4c841cbc71a7a9cad65",
     "linearization-rule:sw:seed:discourse-act-asserted-content@1#linearization_rule-record:8c0aee3adc54eaffd986ec2c99d25d4450fc2da322dcd7b9069bac2c594ec1a2"
   ],
-  "manifest_version": 3,
+  "manifest_version": 5,
   "metadata": {
     "boot_database_relpath": "cemm/data/v350/release/boot.sqlite",
     "generated_from_canonical_stage_graph": true,
-    "preactivation": false,
+    "phase17_18_status": "preactivation",
+    "preactivation": true,
+    "reason": "final Phase-18 closure/signature artifacts must be regenerated from exact patched checkout",
     "source_runtime_cutover": true,
     "stage_count": 23,
     "verification_report_relpath": "cemm/data/v350/release/verification_report.json"

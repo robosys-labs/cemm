@@ -27,6 +27,7 @@ class RuntimeInput:
     speaker_ref: str | None = None
     participant_evidence_refs: tuple[str, ...] = ()
     response_requested: bool = True
+    observations: tuple[Any, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.content, str):
@@ -35,6 +36,9 @@ class RuntimeInput:
             raise ValueError("speaker_ref must be non-empty")
         if len(self.participant_evidence_refs) != len(set(self.participant_evidence_refs)):
             raise ValueError("participant evidence refs must be unique")
+        observation_refs = tuple(str(getattr(item, "observation_ref", "") or "") for item in self.observations)
+        if any(not ref for ref in observation_refs) or len(observation_refs) != len(set(observation_refs)):
+            raise ValueError("typed observations require unique stable observation_ref values")
 
 
 @dataclass(frozen=True, slots=True)

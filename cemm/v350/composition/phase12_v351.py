@@ -16,8 +16,8 @@ from .model import CompositionFrontier
 
 
 class ProjectionAwareDeterministicCSIRComposer(DeterministicCSIRComposer):
-    RUNTIME_ABI = "v351-phase12"
-    SERVICE_KIND = "projection_aware_deterministic_csir_composer"
+    RUNTIME_ABI = "v351"
+    SERVICE_KIND = "csir_compiler"
 
     def __init__(self, *args, maximum_grounding_assignments: int = 32, **kwargs) -> None:
         super().__init__(*args, **kwargs)

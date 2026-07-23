@@ -444,3 +444,8 @@ no protected disclosure without permission
 8. Does it block unrelated cognition?
 9. What is its asymptotic cost?
 10. Which test proves the gate is necessary?
+
+## Phase 17–18 anti-regressions
+
+Do not infer ontology from detector labels, ASR tokens, telemetry keys or sensor field names. Do not count correlated transforms as independent evidence. Do not create a separate multimodal grounding/semantic brain. Do not let operation recurrence cross AuthorityGeneration, exceed its bounded budget, replay anonymous participant identity, or mutate world state outside normal commit stages. Do not call a release active because a manifest boolean says so: closure evidence, source roots, boot roots and signature authority must all bind to the same payload.
+

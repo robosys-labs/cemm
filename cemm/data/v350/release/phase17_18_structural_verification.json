@@ -1,0 +1,460 @@
+{
+  "boot_database_sha256": "",
+  "checks": {
+    "canonical_service_count": 19,
+    "legacy_import_findings": [
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ApplicationBinding",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimForce",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimOccurrence",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.FillerRef",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.IdentityStatus",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Referent",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.UOLGraph",
+        "path": "cemm/v350/discourse.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/facets/conditions.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/facets/conditions.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.OccurrenceStatus",
+        "path": "cemm/v350/facets/conditions.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/facets/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/facets/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/facets/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/facets/projector.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/facets/projector.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/facets/projector.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/operations/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.FillerRef",
+        "path": "cemm/v350/operations/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec",
+        "path": "cemm/v350/response/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.uol_graph_from_document",
+        "path": "cemm/v350/response/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/response/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.UOLGraph",
+        "path": "cemm/v350/response/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.impact_from_document",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.importance_from_document",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Reversibility",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Valence",
+        "path": "cemm/v350/significance/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImpactAssessment",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImportanceAssessment",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Reversibility",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Valence",
+        "path": "cemm/v350/significance/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.application_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.capability_delta_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.claim_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.event_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.impact_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.importance_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.proposition_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.referent_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.state_delta_from_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.codec.uol_to_document",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityDelta",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimOccurrence",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.EventOccurrence",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImpactAssessment",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImportanceAssessment",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Referent",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/storage/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityDelta",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimOccurrence",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.EventOccurrence",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImpactAssessment",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImportanceAssessment",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.QuotedLiteral",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Referent",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/storage/persistence.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityDelta",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimOccurrence",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.EventOccurrence",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImpactAssessment",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ImportanceAssessment",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Referent",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/storage/repositories.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityDelta",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ClaimOccurrence",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.EventOccurrence",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.FillerRef",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.QuotedLiteral",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Referent",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/storage/validation.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.EventOccurrence",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.FillerRef",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.Polarity",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PortFillerClass",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.PropositionReferent",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.QuotedLiteral",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.SemanticApplication",
+        "path": "cemm/v350/transitions/admission.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/transitions/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/transitions/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/transitions/codec.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/transitions/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityDelta",
+        "path": "cemm/v350/transitions/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.CapabilityStatus",
+        "path": "cemm/v350/transitions/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/transitions/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/transitions/model.py"
+      },
+      {
+        "module": "cemm.v350.uol.model",
+        "path": "cemm/v350/transitions/state.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.ChangeOperation",
+        "path": "cemm/v350/transitions/state.py"
+      },
+      {
+        "module": "cemm.v350.uol.model.StateDelta",
+        "path": "cemm/v350/transitions/state.py"
+      }
+    ],
+    "stage_count": 23
+  },
+  "failures": [
+    "multimodal-only grounding not wired",
+    "legacy imports remain in canonical/public Python graph:[{'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.ApplicationBinding'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.ClaimForce'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.ClaimOccurrence'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.FillerRef'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.IdentityStatus'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.PropositionReferent'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.Referent'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.SemanticApplication'}, {'path': 'cemm/v350/discourse.py', 'module': 'cemm.v350.uol.model.UOLGraph'}, {'path': 'cemm/v350/facets/conditions.py', 'module': 'cemm.v350.uol.model'}, {'path': 'cemm/v350/facets/conditions.py', 'module': 'cemm.v350.uol.model.CapabilityStatus'}, {'path': 'cemm/v350/facets/conditions.py', 'module': 'cemm.v350.uol.model.OccurrenceStatus'}, {'path': 'cemm/v350/facets/model.py', 'module': 'cemm.v350.uol.model'}, {'path': 'cemm/v350/facets/model.py', 'module': 'cemm.v350.uol.model.CapabilityStatus'}, {'path': 'cemm/v350/facets/model.py', 'module': 'cemm.v350.uol.model.SemanticApplication'}, {'path': 'cemm/v350/facets/projector.py', 'module': 'cemm.v350.uol.model'}, {'path': 'cemm/v350/facets/projector.py', 'module': 'cemm.v350.uol.model.CapabilityStatus'}, {'path': 'cemm/v350/facets/projector.py', 'module': 'cemm.v350.uol.model.SemanticApplication'}, {'path': 'cemm/v350/operations/validation.py', 'module': 'cemm.v350.uol.model'}]"
+  ],
+  "release_commit": "aefe8b2530d960804417acbbf47e9c0ca3723389",
+  "runtime_source_root_sha256": "a1df0257e7536d86c544e91353e43dfec4b0294dd726e50d86c0943482d62ac5",
+  "status": "fail"
+}

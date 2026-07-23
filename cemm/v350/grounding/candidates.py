@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 import unicodedata
-from typing import Iterable
+from typing import Any, Iterable
 
 from ..facets import TypeClosureCompiler
 from ..schema.model import PortFillerClass, ReferentTypeSchema, SchemaClass, StorageKind, semantic_fingerprint
 from ..storage import SemanticStore, StoreSnapshot
-from ..uol.model import Referent
 from .model import (
     CandidateOrigin,
     DiscourseAnchor,
@@ -77,7 +76,7 @@ class GroundingCandidateProvider:
                     closure.add(type_ref)
             return tuple(sorted(closure))
 
-        def type_closure(ref: str, referent: Referent) -> tuple[str, ...]:
+        def type_closure(ref: str, referent: Any) -> tuple[str, ...]:
             cached = type_cache.get(ref)
             if cached is not None:
                 return cached
@@ -240,7 +239,7 @@ class GroundingCandidateProvider:
     def _referent_candidate(
         self,
         mention: MentionHypothesis,
-        referent: Referent,
+        referent: Any,
         type_refs: tuple[str, ...],
         *,
         identities,
@@ -401,10 +400,13 @@ class GroundingCandidateProvider:
     def _multimodal_candidate(
         mention: MentionHypothesis,
         track: MultimodalTrack,
-        by_ref: dict[str, Referent],
+        by_ref: dict[str, Any],
         type_cache: dict[str, tuple[str, ...]],
     ) -> GroundingCandidate | None:
         if track.context_ref not in {"global", mention.context_ref}:
+            return None
+        source_track_ref = str(mention.metadata.get("source_track_ref", "") or "")
+        if source_track_ref and source_track_ref != track.track_ref:
             return None
         target_ref = track.referent_ref or track.track_ref
         referent = by_ref.get(target_ref)
@@ -441,7 +443,7 @@ class GroundingCandidateProvider:
     def _system_output_candidates(
         mention: MentionHypothesis,
         output: SystemOutputAnchor,
-        by_ref: dict[str, Referent],
+        by_ref: dict[str, Any],
         type_cache: dict[str, tuple[str, ...]],
     ) -> tuple[GroundingCandidate, ...]:
         if output.context_ref not in {"global", mention.context_ref}:

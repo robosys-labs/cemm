@@ -549,29 +549,44 @@ class TypedActivationGraphCompilerV351:
     def _add_multimodal_edges(candidate, class_node, nodes, add_node, add_edge, evidence_lattice):
         if evidence_lattice is None:
             return
+        predicate_keys = {app.predicate_pin.key for app in candidate.graph.applications}
+        identities = {term.identity_ref for term in candidate.graph.terms if term.identity_ref}
         for item in tuple(getattr(evidence_lattice, "structured_observations", ()) or ()):
-            source_ref = str(getattr(item, "track_ref", None) or getattr(item, "observation_ref", None) or repr(item))
-            node_ref = "activation-node:multimodal:" + semantic_fingerprint(
-                "activation-multimodal-v351", source_ref, 24
-            )
+            source_ref = str(getattr(item, "analysis_ref", None) or getattr(item, "track_ref", None) or getattr(item, "observation_ref", None) or repr(item))
+            node_ref = "activation-node:multimodal:" + semantic_fingerprint("activation-multimodal-v351", source_ref, 24)
             evidence = tuple(getattr(item, "evidence_refs", ()) or ())
+            lineage = tuple(getattr(item, "lineage_refs", ()) or evidence or (source_ref,))
             if node_ref not in nodes:
                 add_node(SemanticActivationNode(
-                    node_ref=node_ref,
-                    node_kind=ActivationNodeKind.MULTIMODAL_TRACK,
+                    node_ref=node_ref, node_kind=ActivationNodeKind.MULTIMODAL_TRACK,
                     semantic_class_ref="multimodal-evidence:not-semantic-identity",
-                    source_ref=source_ref,
-                    initial_activation=1.0,
-                    current_activation=1.0,
-                    evidence_refs=evidence,
-                    lineage_refs=evidence or (source_ref,),
+                    source_ref=source_ref, initial_activation=1.0, current_activation=1.0,
+                    evidence_refs=evidence, lineage_refs=lineage,
                 ))
-            # Only align when the observation itself explicitly names semantic/referent
-            # targets that occur in the candidate. No proximity-based semantic identity.
             target_refs = set(tuple(getattr(item, "target_refs", ()) or ()))
-            identities = {term.identity_ref for term in candidate.graph.terms if term.identity_ref}
-            if target_refs.intersection(identities):
-                add_edge(MessageFamily.MULTIMODAL, node_ref, class_node, evidence_refs=evidence, feature_refs=tuple(sorted(target_refs.intersection(identities))))
+            direct_match = tuple(sorted(target_refs.intersection(identities)))
+            projection_pins = tuple(getattr(item, "semantic_projection_pins", ()) or ())
+            semantic_pins = tuple(pin for pin in projection_pins if pin.key in predicate_keys)
+            if not direct_match and not semantic_pins:
+                continue
+            features = tuple(getattr(item, "features", ()) or ())
+            clusters = {}
+            for feature in features:
+                key = str(getattr(feature, "dependence_ref", "") or getattr(feature, "feature_ref", "") or source_ref)
+                clusters.setdefault(key, []).append(feature)
+            if not clusters:
+                clusters = {"lineage:" + "|".join(sorted(lineage)): ()}
+            for dependence_ref in sorted(clusters):
+                values = tuple(clusters[dependence_ref])
+                confidences = tuple(float(getattr(feature, "confidence", 1.0)) for feature in values)
+                # One contribution per dependence class. Correlated transforms cannot multiply support.
+                strength = min(confidences) if confidences else 1.0
+                cluster_evidence = tuple(sorted(set((*evidence, *(ref for feature in values for ref in tuple(getattr(feature, "evidence_refs", ()) or ()))))))
+                add_edge(
+                    MessageFamily.MULTIMODAL, node_ref, class_node, strength=strength,
+                    evidence_refs=cluster_evidence, authority_pins=semantic_pins,
+                    feature_refs=tuple(sorted(set((dependence_ref, *direct_match, *(pin.ref for pin in semantic_pins))))),
+                )
 
 
 __all__ = ["TypedActivationGraphCompilerV351"]

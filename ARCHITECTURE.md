@@ -704,3 +704,8 @@ with exact mechanism and pre/post value identity; an opaque proof string is insu
 Causal learning may propose a mechanism only from explicit mechanism/intervention evidence and
 exact dependency closure. Co-occurrence alone is not causal authority. Candidate score does not
 bypass competence/review/promotion or immutable authority-generation restart.
+
+## Phase 17–18 final activation clarification
+
+Multimodal observation models are exact authority artifacts. Provider labels are evidence, not ontology. All modalities enter the same grounding → CSIR → recurrent semantic dynamics path; there is no second multimodal brain. Final activation additionally requires a content-addressed runtime source-tree root, exact canonical service-method inventory, legacy-free runtime record families, complete Phase-18 closure evidence, and detached release signature.
+

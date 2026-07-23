@@ -17,11 +17,11 @@ def test_active_version_authority_is_v351_csir_not_uol():
 
 def test_cutover_requires_manifest_v3_before_service_import_resolution():
     source = (ROOT / "cemm/v350/cutover.py").read_text(encoding="utf-8")
-    version_guard = source.index("if m.manifest_version < 3")
+    version_guard = source.index("if m.manifest_version < 5")
     service_loop = source.index("for item in m.runtime_service_bindings")
     assert version_guard < service_loop
     assert 'm.release_version != "3.5.1"' in source
-    assert "runtime authority manifest v3 is required for v3.5.1" in source
+    assert "runtime authority manifest v5 is required for final v3.5.1 cutover" in source
 
 
 def test_cutover_uses_stage_contract_fingerprint_not_legacy_mutation_booleans():

@@ -234,6 +234,8 @@ class CanonicalOrchestrator:
         )
         operation_observed = bool(outcome.artifacts.get("operation_observations"))
         emission_observed = outcome.artifacts.get("emission_observation") is not None
+        if outcome.artifacts.get("_no_effectful_work"):
+            return
         if not (durable_changed or operation_observed or emission_observed):
             return
 
@@ -413,6 +415,16 @@ class CanonicalOrchestrator:
                 if stage != CoreStage.ASSIMILATE_OPERATION_OUTCOMES_AND_RECUR:
                     raise CanonicalOrchestrationError("only Stage 17 may request semantic re-entry")
                 request = outcome.reentry_request
+                from .observation.operation_outcome_v351 import SemanticReentryRequestV351
+                if not isinstance(request, SemanticReentryRequestV351):
+                    raise CanonicalOrchestrationError("Stage 17 re-entry requires SemanticReentryRequestV351")
+                if (request.authority_generation, request.authority_fingerprint) != (
+                    capability.authority_generation, capability.authority_fingerprint
+                ):
+                    raise CanonicalOrchestrationError("semantic re-entry cannot cross AuthorityGeneration")
+                guard = cycle.artifacts.get("_operation_reentry_guard")
+                if guard != request.guard:
+                    raise CanonicalOrchestrationError("semantic re-entry request guard differs from Stage-17 artifact")
                 cycle.reentry_count += 1
                 if cycle.reentry_count > int(request.max_reentries):
                     raise CanonicalOrchestrationError("bounded semantic re-entry budget exceeded")

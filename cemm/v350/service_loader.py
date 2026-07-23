@@ -22,7 +22,6 @@ FORBIDDEN_SERVICE_MODULE_FRAGMENTS = (
     "cemm.v350.runtime_hardening",
     "cemm.v350.activation_services",
     "cemm.v350.uol",
-    "cemm.v350.composition",
 )
 
 SCALAR_SERVICE_SLOTS = frozenset({

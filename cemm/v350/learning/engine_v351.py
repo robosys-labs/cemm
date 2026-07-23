@@ -32,8 +32,8 @@ from .teaching_v351 import TeachingProjectionExtractorV351
 
 
 class Phase14LearningEngineV351:
-    RUNTIME_ABI = "v351-phase14"
-    SERVICE_KIND = "prediction_error_learning_engine_v351"
+    RUNTIME_ABI = "v351"
+    SERVICE_KIND = "learning_engine"
 
     def __init__(self) -> None:
         # Explicit inventory: Phase 14 must never become an empty/default inducer registry.

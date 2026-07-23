@@ -1,6 +1,6 @@
 # CEMM v3.5.1 Core Mathematics — Grounded Semantic Dynamics
 
-**Status:** proposed canonical mathematical contract  
+**Status:** canonical mathematical contract  
 **Purpose:** formalize exact semantic representation, recurrent neural-style meaning formation, multimodal grounding, world-state estimation, role-sensitive action dynamics, causal inference, recursive learning, impact, goals and response generation.
 
 ---
@@ -862,3 +862,8 @@ lineage-discounted evidence plus complexity penalty and requires intervention/me
 association alone cannot activate an edge. `why/cause-of` explanation traverses this DAG toward
 ancestors; `effect-of` traverses toward descendants. Direction is part of the semantic projection,
 not inferred from language wording.
+
+## Final v3.5.1 mathematical clarifications
+
+This document is the canonical mathematical contract for v3.5.1. Inactive hard-masked semantic states are bottom/ineligible states, not ordinary zero-evidence states. Posterior/support aggregation is over evidence-dependence quotient classes rather than derivation count. Without an exact joint model, correlated transforms cannot multiply support. Multimodal fusion is conditioned on candidate identity hypotheses. Interventions use do-semantics rather than conditioning; feedback requires explicit equilibrium authority or time-unrolling. Operation results re-enter as observations under the same AuthorityGeneration with a bounded two-hop recurrence budget. Oscillation or budget exhaustion is typed partial cognition, never convergence.
+

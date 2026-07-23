@@ -92,6 +92,10 @@ class RuntimeAuthorityManifest:
     morphology_rules: tuple[str, ...] = ()
     linearization_rules: tuple[str, ...] = ()
     runtime_service_bindings: tuple[Mapping[str, Any], ...] = ()
+    canonical_service_authorities: tuple[Mapping[str, Any], ...] = ()
+    runtime_source_root_sha256: str = ""
+    closure_ledger_sha256: str = ""
+    detached_signature: Mapping[str, Any] = field(default_factory=dict)
     release_capabilities: Mapping[str, Any] = field(default_factory=dict)
     realization_language_tags: tuple[str, ...] = ()
     output_speaker_ref: str | None = None
@@ -136,6 +140,13 @@ class RuntimeAuthorityManifest:
                 dict(item) for item in doc.get("runtime_service_bindings", ())
                 if isinstance(item, Mapping)
             ),
+            canonical_service_authorities=tuple(
+                dict(item) for item in doc.get("canonical_service_authorities", ())
+                if isinstance(item, Mapping)
+            ),
+            runtime_source_root_sha256=str(doc.get("runtime_source_root_sha256", "")),
+            closure_ledger_sha256=str(doc.get("closure_ledger_sha256", "")),
+            detached_signature=dict(doc.get("detached_signature", {}) or {}),
             release_capabilities=dict(doc.get("release_capabilities", {})),
             realization_language_tags=tuple(map(str, doc.get("realization_language_tags", ()))),
             output_speaker_ref=None if doc.get("output_speaker_ref") is None else str(doc.get("output_speaker_ref")),
@@ -149,7 +160,7 @@ class RuntimeAuthorityGuard:
     REQUIRED_FORBIDDEN_PREFIXES = (
         "cemm.v347", "cemm.migration", "cemm.v350.migration",
         "cemm.v350.runtime_hardening", "cemm.v350.runtime_services",
-        "cemm.v350.composition",
+        "cemm.v350.activation_services", "cemm.v350.uol",
     )
 
     def __init__(
@@ -170,8 +181,8 @@ class RuntimeAuthorityGuard:
         m = self.manifest
         # Reject obsolete manifests before importing any service class. A failed old
         # activation must not contaminate sys.modules with the UOL/composition brain.
-        if m.manifest_version < 3:
-            raise RuntimeAuthorityError("runtime authority manifest v3 is required for v3.5.1")
+        if m.manifest_version < 5:
+            raise RuntimeAuthorityError("runtime authority manifest v5 is required for final v3.5.1 cutover")
         if m.release_version != "3.5.1":
             raise RuntimeAuthorityError(f"unexpected release version:{m.release_version}")
         errors: list[str] = []
@@ -192,18 +203,50 @@ class RuntimeAuthorityGuard:
             errors.append("runtime module authority must be exactly cemm.v350")
         if set(m.allowed_boot_data_modules) != {"cemm.data.v350"}:
             errors.append("boot-data authority must be exactly cemm.data.v350")
-        if set(m.allowed_record_kinds) != {item.value for item in RecordKind}:
-            errors.append("manifest record-kind authority differs from v3.5.1 storage contract")
+        runtime_safe_record_kinds = {item.value for item in RecordKind if not item.value.startswith("migration_")} - {"response_uol"}
+        if set(m.allowed_record_kinds) != runtime_safe_record_kinds:
+            errors.append("manifest runtime record-kind authority is not the exact legacy-free v3.5.1 set")
         if m.migration_modules_allowed_at_runtime:
             errors.append("runtime manifest allows migration modules")
-        service_kinds = {
-            str(item.get("service_kind", ""))
-            for item in m.runtime_service_bindings
-        }
+        service_kinds = {str(item.get("service_kind", "")) for item in m.runtime_service_bindings}
+        canonical_service_kinds = {str(item.get("service_kind", "")) for item in m.canonical_service_authorities}
+        service_kinds.update(canonical_service_kinds)
+        if m.activation_ready:
+            if not m.closure_ledger_sha256 or not re.fullmatch(r"[0-9a-f]{64}", m.closure_ledger_sha256):
+                errors.append("activation-ready manifest lacks exact Phase-18 closure ledger")
+            signature_sha = str(m.detached_signature.get("sha256", ""))
+            if not re.fullmatch(r"[0-9a-f]{64}", signature_sha) or not m.detached_signature.get("signer_identity"):
+                errors.append("activation-ready manifest lacks exact detached signature authority")
+        for item in m.canonical_service_authorities:
+            class_path = str(item.get("class_path", ""))
+            module_name, sep, symbol = class_path.partition(":")
+            if not sep or not module_name or not symbol:
+                errors.append(f"invalid canonical service class path:{class_path}")
+                continue
+            if any(module_name == prefix or module_name.startswith(prefix + ".") for prefix in self.REQUIRED_FORBIDDEN_PREFIXES):
+                errors.append(f"canonical service points into forbidden namespace:{class_path}")
+                continue
+            try:
+                module = importlib.import_module(module_name)
+                cls = getattr(module, symbol)
+                for method in tuple(item.get("required_methods", ()) or ()):
+                    if not callable(getattr(cls, str(method), None)):
+                        errors.append(f"canonical service lacks required method:{class_path}:{method}")
+                runtime_abi = str(getattr(cls, "RUNTIME_ABI", "v351"))
+                if runtime_abi != "v351" or str(item.get("runtime_abi", "")) != "v351":
+                    errors.append(f"canonical service lacks final v351 ABI:{class_path}")
+                declared_kind = str(getattr(cls, "SERVICE_KIND", item.get("service_kind", "")))
+                if declared_kind != str(item.get("implementation_service_kind", declared_kind)):
+                    errors.append(f"canonical service implementation kind mismatch:{class_path}")
+                source_path = inspect.getsourcefile(cls)
+                if not source_path or not Path(source_path).is_file() or _sha256(Path(source_path)) != str(item.get("source_sha256", "")):
+                    errors.append(f"canonical service source fingerprint mismatch:{class_path}")
+            except Exception as exc:
+                errors.append(f"canonical service authority cannot resolve:{class_path}:{exc}")
         forbidden_service_prefixes = (
             "cemm.v347", "cemm.migration", "cemm.v350.migration",
             "cemm.v350.runtime_services", "cemm.v350.runtime_hardening",
-            "cemm.v350.activation_services", "cemm.v350.uol", "cemm.v350.composition",
+            "cemm.v350.activation_services", "cemm.v350.uol",
         )
         for item in m.runtime_service_bindings:
             class_path = str(item.get("class_path", ""))
@@ -332,6 +375,13 @@ class RuntimeAuthorityGuard:
                     errors.append(f"source manifest is invalid:{exc}")
             if not denylist.is_file() or _sha256(denylist) != m.legacy_denylist_sha256:
                 errors.append("legacy denylist fingerprint mismatch")
+            try:
+                from .finalization.source_attestation_v351 import runtime_source_root_v351
+                observed_root, _inventory = runtime_source_root_v351(self.repo_root)
+                if not m.runtime_source_root_sha256 or observed_root != m.runtime_source_root_sha256:
+                    errors.append("runtime source-tree root fingerprint mismatch")
+            except Exception as exc:
+                errors.append(f"cannot attest runtime source-tree root:{exc}")
 
         if not m.boot_database_sha256:
             errors.append("boot database fingerprint is missing")

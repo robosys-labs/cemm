@@ -477,3 +477,17 @@ VERIFIED
 or
 QUARANTINED_MIGRATION_ONLY with zero public authority
 ```
+
+## Phase 17–18 closure defects
+
+- FIXED BY PHASE17_18 PATCH: multimodal-only Stage-3 hidden text dependency.
+- FIXED: canonical composition namespace incorrectly forbidden by cutover/service-loader policy.
+- FIXED: Stage-16 direct injected-only operation service lookup.
+- FIXED: missing canonical Stage-17 operation-result assimilation and bounded recurrence.
+- FIXED: recurrence participant/session identity loss.
+- FIXED: observation provider labels/direct referent bindings could bypass exact model/binding authority.
+- FIXED: correlated multimodal transforms could overcount support.
+- FIXED: final authority conflated runtime slot identity with implementation SERVICE_KIND.
+- FIXED: activation evidence could be mixed across different release roots.
+- OPEN UNTIL EXECUTED: full corpus, learning→promotion→restart, causal replay, multimodal, cross-language, active acquisition, concurrency/performance, deterministic rebuild and detached-signature gates.
+

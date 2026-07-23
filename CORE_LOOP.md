@@ -674,3 +674,8 @@ RUNTIME_ERROR
 ```
 
 Return exact initial/final authority and read generations plus replay requirements.
+
+## Phase 17–18 final loop clarification
+
+Stage 1 accepts typed observations as well as text. Stage 2 applies only reviewed, exact ObservationModel/calibration authority. Stage 3 supports nonlexical multimodal-only grounding without fabricating a text lattice. Stage 17 may request only typed, same-authority, bounded operation-result semantic re-entry while preserving participant/session identity. Stage 22 owns explicit invalidation/replay/consolidation/final status.
+
