@@ -1,0 +1,969 @@
+{
+  "language": "en",
+  "interpretation_examples": [
+    {
+      "example_ref": "en:mil-arrival:1",
+      "surface": "My mother in-law arrived today.",
+      "mentions": [
+        {
+          "surface": "My",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "mother in-law",
+          "ref": "rel:mother_in_law"
+        },
+        {
+          "surface": "arrived",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "entity"
+          },
+          {
+            "token": "@X1",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "@X0",
+              "role:relation": "rel:mother_in_law",
+              "role:object": "participant:user"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X1",
+              "role:type": "event:arrive",
+              "role:actor": "@X0",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:mil-arrival:2",
+      "surface": "My mother-in-law came today.",
+      "mentions": [
+        {
+          "surface": "My",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "mother-in-law",
+          "ref": "rel:mother_in_law"
+        },
+        {
+          "surface": "came",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "entity"
+          },
+          {
+            "token": "@X1",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "@X0",
+              "role:relation": "rel:mother_in_law",
+              "role:object": "participant:user"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X1",
+              "role:type": "event:arrive",
+              "role:actor": "@X0",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:state-query:1",
+      "surface": "Am I married?",
+      "mentions": [
+        {
+          "surface": "I",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "married",
+          "ref": "value:married"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "participant:user",
+            "role:value": "value:married"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:type-assert:1",
+      "surface": "Ada is a doctor.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": "entity:ada",
+              "role:class": "concept:doctor"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:type-query:1",
+      "surface": "Is Ada a doctor?",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "entity:ada",
+            "role:class": "concept:doctor"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:describe-who:1",
+      "surface": "Who is Ada?",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        }
+      ],
+      "semantic": {
+        "describe": "entity:ada"
+      }
+    },
+    {
+      "example_ref": "en:describe-what:1",
+      "surface": "What is evidence?",
+      "mentions": [
+        {
+          "surface": "evidence",
+          "ref": "concept:evidence"
+        }
+      ],
+      "semantic": {
+        "describe": "concept:evidence"
+      }
+    },
+    {
+      "example_ref": "en:event:1",
+      "surface": "Ada arrived today.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "arrived",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:arrive",
+              "role:actor": "entity:ada",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:greeting:1",
+      "surface": "Hi.",
+      "mentions": [
+        {
+          "surface": "Hi",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:state:conflict",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:consistency",
+              "role:value": "value:conflicting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:synth:type2",
+      "surface": "Bola is a teacher.",
+      "mentions": [
+        {
+          "surface": "Bola",
+          "ref": "syn:bola",
+          "kind": "entity"
+        },
+        {
+          "surface": "teacher",
+          "ref": "syn:teacher",
+          "kind": "concept"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": "syn:bola",
+              "role:class": "syn:teacher"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:synth:typeq2",
+      "surface": "Is Bola a teacher?",
+      "mentions": [
+        {
+          "surface": "Bola",
+          "ref": "syn:bola",
+          "kind": "entity"
+        },
+        {
+          "surface": "teacher",
+          "ref": "syn:teacher",
+          "kind": "concept"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "syn:bola",
+            "role:class": "syn:teacher"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:synth:describe2",
+      "surface": "Who is Bola?",
+      "mentions": [
+        {
+          "surface": "Bola",
+          "ref": "syn:bola",
+          "kind": "entity"
+        }
+      ],
+      "semantic": {
+        "describe": "syn:bola"
+      }
+    },
+    {
+      "example_ref": "en:synth:event2",
+      "surface": "Bola travelled yesterday.",
+      "mentions": [
+        {
+          "surface": "Bola",
+          "ref": "syn:bola",
+          "kind": "entity"
+        },
+        {
+          "surface": "travelled",
+          "ref": "syn:travel",
+          "kind": "event_type"
+        },
+        {
+          "surface": "yesterday",
+          "ref": "syn:yesterday",
+          "kind": "time"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "syn:travel",
+              "role:actor": "syn:bola",
+              "role:time": "syn:yesterday"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:synth:rel1",
+      "surface": "Ada is a friend of Bola.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada",
+          "kind": "entity"
+        },
+        {
+          "surface": "friend",
+          "ref": "syn:friend",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "Bola",
+          "ref": "syn:bola",
+          "kind": "entity"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "entity:ada",
+              "role:relation": "syn:friend",
+              "role:object": "syn:bola"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:synth:state1",
+      "surface": "The server is active.",
+      "mentions": [
+        {
+          "surface": "server",
+          "ref": "syn:server",
+          "kind": "entity"
+        },
+        {
+          "surface": "active",
+          "ref": "syn:active",
+          "kind": "value"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "syn:server",
+              "role:value": "syn:active"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:synth:stateq1",
+      "surface": "Is the server active?",
+      "mentions": [
+        {
+          "surface": "server",
+          "ref": "syn:server",
+          "kind": "entity"
+        },
+        {
+          "surface": "active",
+          "ref": "syn:active",
+          "kind": "value"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "syn:server",
+            "role:value": "syn:active"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:synth:conceptdef",
+      "surface": "Heat is energy.",
+      "mentions": [
+        {
+          "surface": "Heat",
+          "ref": "syn:heat",
+          "kind": "concept"
+        },
+        {
+          "surface": "energy",
+          "ref": "syn:energy",
+          "kind": "concept"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": "syn:heat",
+              "role:class": "syn:energy"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "realization_examples": [
+    {
+      "example_ref": "en:r:type",
+      "surface": "Ada is a doctor.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "a doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "fact": {
+        "operator": "op:type",
+        "args": {
+          "role:instance": "entity:ada",
+          "role:class": "concept:doctor"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:state",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "fact": {
+        "operator": "op:state",
+        "args": {
+          "role:subject": "concept:evidence",
+          "role:dimension": "dim:consistency",
+          "role:value": "value:conflicting"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:relation",
+      "surface": "Ada is a wife of you.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "wife",
+          "ref": "rel:wife"
+        },
+        {
+          "surface": "you",
+          "ref": "participant:user"
+        }
+      ],
+      "fact": {
+        "operator": "op:relation",
+        "args": {
+          "role:subject": "entity:ada",
+          "role:relation": "rel:wife",
+          "role:object": "participant:user"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:yes",
+      "surface": "Yes.",
+      "mentions": [
+        {
+          "surface": "Yes",
+          "ref": "value:affirmative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:confirm",
+        "value": "value:affirmative"
+      }
+    },
+    {
+      "example_ref": "en:r:no",
+      "surface": "No.",
+      "mentions": [
+        {
+          "surface": "No",
+          "ref": "value:negative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:deny",
+        "value": "value:negative"
+      }
+    },
+    {
+      "example_ref": "en:r:unknown",
+      "surface": "Evidence is insufficient.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "insufficient",
+          "ref": "value:insufficient"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_uncertainty",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:sufficiency",
+              "role:value": "value:insufficient"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:conflict",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_conflict",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:consistency",
+              "role:value": "value:conflicting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:learned",
+      "surface": "Meaning is stored.",
+      "mentions": [
+        {
+          "surface": "Meaning",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "stored",
+          "ref": "value:stored"
+        }
+      ],
+      "plan": {
+        "goal": "goal:acknowledge_learning",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:storage_state",
+              "role:value": "value:stored"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:frontier",
+      "surface": "Meaning is unresolved.",
+      "mentions": [
+        {
+          "surface": "Meaning",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "unresolved",
+          "ref": "value:unresolved"
+        }
+      ],
+      "plan": {
+        "goal": "goal:request_clarification",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:resolution_state",
+              "role:value": "value:unresolved"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:greet",
+      "surface": "Hello.",
+      "mentions": [
+        {
+          "surface": "Hello",
+          "ref": "value:greeting_ack"
+        }
+      ],
+      "plan": {
+        "goal": "goal:greet",
+        "value": "value:greeting_ack"
+      }
+    },
+    {
+      "example_ref": "en:r:type-info",
+      "surface": "Evidence is information.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "information",
+          "ref": "concept:information"
+        }
+      ],
+      "fact": {
+        "operator": "op:type",
+        "args": {
+          "role:instance": "concept:evidence",
+          "role:class": "concept:information"
+        }
+      }
+    }
+  ],
+  "definition_examples": [
+    {
+      "example_ref": "en:def:stepmentor",
+      "surface": "A step mentor is the mentor of a partner.",
+      "mentions": [
+        {
+          "surface": "step mentor",
+          "ref": "syn:step_mentor",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "mentor",
+          "ref": "syn:mentor",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "partner",
+          "ref": "syn:partner",
+          "kind": "relation_type"
+        }
+      ],
+      "rule": {
+        "rule_kind": "definition",
+        "if": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:step_mentor",
+              "role:object": "?y"
+            }
+          }
+        ],
+        "then": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:mentor",
+              "role:object": "!z"
+            }
+          },
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "!z",
+              "role:relation": "syn:partner",
+              "role:object": "?y"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:def:grandguide",
+      "surface": "A grand guide is the guide of a parent.",
+      "mentions": [
+        {
+          "surface": "grand guide",
+          "ref": "syn:grand_guide",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "guide",
+          "ref": "syn:guide",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "parent",
+          "ref": "syn:parent",
+          "kind": "relation_type"
+        }
+      ],
+      "rule": {
+        "rule_kind": "definition",
+        "if": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:grand_guide",
+              "role:object": "?y"
+            }
+          }
+        ],
+        "then": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:guide",
+              "role:object": "!z"
+            }
+          },
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "!z",
+              "role:relation": "syn:parent",
+              "role:object": "?y"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:def:coachlaw",
+      "surface": "A coach in-law is the coach of a partner.",
+      "mentions": [
+        {
+          "surface": "coach in-law",
+          "ref": "syn:coach_law",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "coach",
+          "ref": "syn:coach",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "partner",
+          "ref": "syn:partner",
+          "kind": "relation_type"
+        }
+      ],
+      "rule": {
+        "rule_kind": "definition",
+        "if": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:coach_law",
+              "role:object": "?y"
+            }
+          }
+        ],
+        "then": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:coach",
+              "role:object": "!z"
+            }
+          },
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "!z",
+              "role:relation": "syn:partner",
+              "role:object": "?y"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:def:guardianlaw",
+      "surface": "A guardian in-law means the guardian of a partner.",
+      "mentions": [
+        {
+          "surface": "guardian in-law",
+          "ref": "syn:guardian_law",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "guardian",
+          "ref": "syn:guardian",
+          "kind": "relation_type"
+        },
+        {
+          "surface": "partner",
+          "ref": "syn:partner",
+          "kind": "relation_type"
+        }
+      ],
+      "rule": {
+        "rule_kind": "definition",
+        "if": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:guardian_law",
+              "role:object": "?y"
+            }
+          }
+        ],
+        "then": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "?x",
+              "role:relation": "syn:guardian",
+              "role:object": "!z"
+            }
+          },
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "!z",
+              "role:relation": "syn:partner",
+              "role:object": "?y"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
