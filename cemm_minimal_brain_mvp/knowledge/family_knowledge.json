@@ -1,0 +1,1871 @@
+{
+  "atoms": [
+    {
+      "ref": "rel:mother_in_law",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:family_relative",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:mother_of",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:partner",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:spouse",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:wife",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:husband",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "concept:human",
+      "kind": "concept",
+      "metadata": {}
+    },
+    {
+      "ref": "concept:living_entity",
+      "kind": "concept",
+      "metadata": {}
+    },
+    {
+      "ref": "concept:female",
+      "kind": "concept",
+      "metadata": {}
+    },
+    {
+      "ref": "concept:male",
+      "kind": "concept",
+      "metadata": {}
+    },
+    {
+      "ref": "concept:doctor",
+      "kind": "concept",
+      "metadata": {}
+    },
+    {
+      "ref": "dim:marital_status",
+      "kind": "state_dimension",
+      "metadata": {
+        "exclusive": true
+      }
+    },
+    {
+      "ref": "dim:marriage_eligibility",
+      "kind": "state_dimension",
+      "metadata": {
+        "exclusive": true
+      }
+    },
+    {
+      "ref": "value:married",
+      "kind": "value",
+      "metadata": {}
+    },
+    {
+      "ref": "value:eligible",
+      "kind": "value",
+      "metadata": {}
+    },
+    {
+      "ref": "event:arrive",
+      "kind": "event_type",
+      "metadata": {}
+    },
+    {
+      "ref": "time:today",
+      "kind": "time",
+      "metadata": {}
+    },
+    {
+      "ref": "entity:ada",
+      "kind": "entity",
+      "metadata": {
+        "gender": "female"
+      }
+    },
+    {
+      "ref": "entity:alex_a",
+      "kind": "entity",
+      "metadata": {
+        "gender": "male"
+      }
+    },
+    {
+      "ref": "entity:alex_b",
+      "kind": "entity",
+      "metadata": {
+        "gender": "male"
+      }
+    },
+    {
+      "ref": "dim:location_status",
+      "kind": "state_dimension",
+      "metadata": {
+        "exclusive": true
+      }
+    },
+    {
+      "ref": "value:present",
+      "kind": "value",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:subrelation_of",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:subject_type",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:implies_subject_state",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:implies_object_state",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:state_dimension",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "rel:state_value",
+      "kind": "relation_type",
+      "metadata": {}
+    },
+    {
+      "ref": "spec:married",
+      "kind": "state_spec",
+      "metadata": {}
+    },
+    {
+      "ref": "spec:eligible",
+      "kind": "state_spec",
+      "metadata": {}
+    }
+  ],
+  "facts": [
+    {
+      "fact_ref": "des:rel:mother_in_law:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_in_law",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "mother in-law"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:mother_in_law:1",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_in_law",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "mother-in-law"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:family_relative:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:family_relative",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "family relative"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:mother_of:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "mother"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:partner:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:partner",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "partner"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:spouse:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:spouse",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "spouse"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:wife:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:wife",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "wife"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:husband:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:husband",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "husband"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:concept:human:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:human",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "human"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:concept:living_entity:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:living_entity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "living entity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:concept:female:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:female",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "female"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:concept:male:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:male",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "male"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:concept:doctor:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:doctor",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "doctor"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:value:married:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:married",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "married"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:value:eligible:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:eligible",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "old enough for marriage"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:event:arrive:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:arrive",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "arrived"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:event:arrive:1",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:arrive",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "came"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:time:today:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "time:today",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "today"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:entity:ada:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "entity:ada",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "Ada"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:entity:alex_a:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "entity:alex_a",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "Alex Kim"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:entity:alex_a:1",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "entity:alex_a",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "Alex J. Kim"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:entity:alex_b:0",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "entity:alex_b",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "Alex Kim"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:mil-family",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:mother_in_law",
+        "role:relation": "rel:subrelation_of",
+        "role:object": "rel:family_relative"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:partner-spouse",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:partner",
+        "role:relation": "rel:subrelation_of",
+        "role:object": "rel:spouse"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:wife-spouse",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:wife",
+        "role:relation": "rel:subrelation_of",
+        "role:object": "rel:spouse"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:husband-spouse",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:husband",
+        "role:relation": "rel:subrelation_of",
+        "role:object": "rel:spouse"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:mother-subject-female",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:mother_of",
+        "role:relation": "rel:subject_type",
+        "role:object": "concept:female"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:wife-subject-female",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:wife",
+        "role:relation": "rel:subject_type",
+        "role:object": "concept:female"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:husband-subject-male",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:husband",
+        "role:relation": "rel:subject_type",
+        "role:object": "concept:male"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:female-human",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "concept:female",
+        "role:class": "concept:human"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:male-human",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "concept:male",
+        "role:class": "concept:human"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:human-living",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "concept:human",
+        "role:class": "concept:living_entity"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:spouse-subj-married",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:spouse",
+        "role:relation": "rel:implies_subject_state",
+        "role:object": "spec:married"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:spouse-obj-married",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:spouse",
+        "role:relation": "rel:implies_object_state",
+        "role:object": "spec:married"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:married-dimension",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "spec:married",
+        "role:relation": "rel:state_dimension",
+        "role:object": "dim:marital_status"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:married-value",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "spec:married",
+        "role:relation": "rel:state_value",
+        "role:object": "value:married"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:wife-eligible",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:wife",
+        "role:relation": "rel:implies_subject_state",
+        "role:object": "spec:eligible"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:husband-eligible",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "rel:husband",
+        "role:relation": "rel:implies_subject_state",
+        "role:object": "spec:eligible"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:eligible-dimension",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "spec:eligible",
+        "role:relation": "rel:state_dimension",
+        "role:object": "dim:marriage_eligibility"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "meta:eligible-value",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "spec:eligible",
+        "role:relation": "rel:state_value",
+        "role:object": "value:eligible"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "seed:ada-female",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "entity:ada",
+        "role:class": "concept:female"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "seed:alex-a-male",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "entity:alex_a",
+        "role:class": "concept:male"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "seed:alex-b-male",
+      "operator": "op:type",
+      "args": {
+        "role:instance": "entity:alex_b",
+        "role:class": "concept:male"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:mil",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_in_law",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "suegra"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:married:m",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:married",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "casado"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:married:f",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:married",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "casada"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:arrive",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:arrive",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "llegó"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:today",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "time:today",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "hoy"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:family",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:family_relative",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "pariente familiar"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:mother",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "madre"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:partner",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:partner",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "pareja"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:es:spouse",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:spouse",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "cónyuge"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "des:rel:mother_in_law:2",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:mother_in_law",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "mother in law"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "authority_status": "reviewed"
+    }
+  ],
+  "rules": [
+    {
+      "rule_ref": "rule:subrelation-inheritance",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r1",
+            "role:relation": "rel:subrelation_of",
+            "role:object": "?r2"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r1",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r2",
+            "role:object": "?y"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:relation-subject-type",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:subject_type",
+            "role:object": "?c"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?c"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:type-transitive",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?a"
+          }
+        },
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?a",
+            "role:class": "?b"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?b"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:relation-subject-state",
+      "rule_kind": "entailment",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:implies_subject_state",
+            "role:object": "?spec"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_dimension",
+            "role:object": "?dim"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_value",
+            "role:object": "?val"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "?x",
+            "role:dimension": "?dim",
+            "role:value": "?val"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:relation-object-state",
+      "rule_kind": "entailment",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:implies_object_state",
+            "role:object": "?spec"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_dimension",
+            "role:object": "?dim"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_value",
+            "role:object": "?val"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "?y",
+            "role:dimension": "?dim",
+            "role:value": "?val"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:mil-decompose",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?m",
+            "role:relation": "rel:mother_in_law",
+            "role:object": "?p"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?m",
+            "role:relation": "rel:mother_of",
+            "role:object": "!partner"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "!partner",
+            "role:relation": "rel:partner",
+            "role:object": "?p"
+          }
+        }
+      ]
+    },
+    {
+      "rule_ref": "rule:arrival-presence-causal",
+      "rule_kind": "causal",
+      "if": [
+        {
+          "operator": "op:event",
+          "args": {
+            "role:event": "?e",
+            "role:type": "event:arrive",
+            "role:actor": "?x"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "?x",
+            "role:dimension": "dim:location_status",
+            "role:value": "value:present"
+          }
+        }
+      ]
+    }
+  ]
+}

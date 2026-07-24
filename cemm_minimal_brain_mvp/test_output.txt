@@ -1,0 +1,36 @@
+test_causal_rule_is_not_silently_asserted_as_actual_truth (test_mvp.MVPTests.test_causal_rule_is_not_silently_asserted_as_actual_truth) ... /opt/pyvenv/lib/python3.13/site-packages/torch/nn/modules/transformer.py:531: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+ok
+test_denial_does_not_supersede_unrelated_positive_current_state (test_mvp.MVPTests.test_denial_does_not_supersede_unrelated_positive_current_state) ... ok
+test_designations_are_semantic_facts_and_dynamic_ranking_is_not_authority (test_mvp.MVPTests.test_designations_are_semantic_facts_and_dynamic_ranking_is_not_authority) ... ok
+test_domain_import_does_not_expand_operator_schema (test_mvp.MVPTests.test_domain_import_does_not_expand_operator_schema) ... ok
+test_exclusive_state_dimension_supersedes_previous_state_generically (test_mvp.MVPTests.test_exclusive_state_dimension_supersedes_previous_state_generically) ... ok
+test_family_observation_infers_marriage_with_proof (test_mvp.MVPTests.test_family_observation_infers_marriage_with_proof) ... ok
+test_inference_is_ephemeral_and_repeated_queries_do_not_bloat_store (test_mvp.MVPTests.test_inference_is_ephemeral_and_repeated_queries_do_not_bloat_store) ... ok
+test_inference_limit_is_frontier_not_false_unknown (test_mvp.MVPTests.test_inference_limit_is_frontier_not_false_unknown) ... ok
+test_inferred_role_types_support_followup_queries_without_materialization (test_mvp.MVPTests.test_inferred_role_types_support_followup_queries_without_materialization) ... ok
+test_input_codec_requires_independent_model_agreement (test_mvp.MVPTests.test_input_codec_requires_independent_model_agreement) ... ok
+test_internal_semantic_ids_are_never_emitted (test_mvp.MVPTests.test_internal_semantic_ids_are_never_emitted) ... ok
+test_kernel_has_no_family_domain_hardcoding (test_mvp.MVPTests.test_kernel_has_no_family_domain_hardcoding) ... ok
+test_learned_language_program_contains_only_foundational_structure (test_mvp.MVPTests.test_learned_language_program_contains_only_foundational_structure) ... ok
+test_mother_role_reuses_type_lattice (test_mvp.MVPTests.test_mother_role_reuses_type_lattice) ... ok
+test_multilingual_interface_reuses_same_semantic_rules (test_mvp.MVPTests.test_multilingual_interface_reuses_same_semantic_rules) ... ok
+test_multisentence_coreference_reuses_same_exact_entity (test_mvp.MVPTests.test_multisentence_coreference_reuses_same_exact_entity) ... ok
+test_provisional_rules_do_not_execute_as_authority (test_mvp.MVPTests.test_provisional_rules_do_not_execute_as_authority) ... ok
+test_reference_resolution_can_use_inferred_semantic_type (test_mvp.MVPTests.test_reference_resolution_can_use_inferred_semantic_type) ... ok
+test_reimport_is_semantically_replay_stable (test_mvp.MVPTests.test_reimport_is_semantically_replay_stable) ... ok
+test_repeated_user_observations_are_distinct_but_reuse_grounded_referents (test_mvp.MVPTests.test_repeated_user_observations_are_distinct_but_reuse_grounded_referents) ... ok
+test_rule_admission_rejects_unbound_variables_and_language_can_create_only_declared_kinds (test_mvp.MVPTests.test_rule_admission_rejects_unbound_variables_and_language_can_create_only_declared_kinds) ... ok
+test_same_name_entities_remain_ambiguous_until_context_resolves (test_mvp.MVPTests.test_same_name_entities_remain_ambiguous_until_context_resolves) ... ok
+test_semantically_duplicate_rule_does_not_bloat_rule_store (test_mvp.MVPTests.test_semantically_duplicate_rule_does_not_bloat_rule_store) ... ok
+test_surface_variants_converge_without_new_semantic_programs (test_mvp.MVPTests.test_surface_variants_converge_without_new_semantic_programs) ... ok
+test_unicode_casefold_resolution_is_multilingual_safe (test_mvp.MVPTests.test_unicode_casefold_resolution_is_multilingual_safe) ... ok
+test_universal_role_typing_rejects_wrong_semantic_kind (test_mvp.MVPTests.test_universal_role_typing_rejects_wrong_semantic_kind) ... ok
+test_unknown_is_not_false (test_mvp.MVPTests.test_unknown_is_not_false) ... ok
+test_unsupported_multivalued_roles_fail_explicitly (test_mvp.MVPTests.test_unsupported_multivalued_roles_fail_explicitly) ... ok
+test_wife_semantics_compose_through_generic_meta_rules (test_mvp.MVPTests.test_wife_semantics_compose_through_generic_meta_rules) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 25.261s
+
+OK

@@ -1,0 +1,669 @@
+{
+  "atoms": [
+    {
+      "ref": "op:designation",
+      "kind": "operator",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "op:type",
+      "kind": "operator",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "op:relation",
+      "kind": "operator",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "op:state",
+      "kind": "operator",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "op:event",
+      "kind": "operator",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:target",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:label_type",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:surface",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:language",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:script",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:prior",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:preferred",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:context",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:instance",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:class",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:subject",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:relation",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:object",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:dimension",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:value",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:event",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:type",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:actor",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "role:time",
+      "kind": "role",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "participant:user",
+      "kind": "participant",
+      "metadata": {
+        "foundational": true,
+        "person": "user"
+      }
+    },
+    {
+      "ref": "participant:system",
+      "kind": "participant",
+      "metadata": {
+        "foundational": true,
+        "person": "system"
+      }
+    },
+    {
+      "ref": "label:name_full",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "label:name_alias",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "label:lexical",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:yes",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:no",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:unknown",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:conflict",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:learned",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    },
+    {
+      "ref": "resp:frontier",
+      "kind": "response_semantic",
+      "metadata": {
+        "foundational": true
+      }
+    }
+  ],
+  "operator_roles": [
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:target",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:label_type",
+      "required": true,
+      "filler_kind": "label_type"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:surface",
+      "required": true,
+      "filler_kind": "literal:text"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:language",
+      "required": false,
+      "filler_kind": "literal:text"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:script",
+      "required": false,
+      "filler_kind": "literal:text"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:prior",
+      "required": false,
+      "filler_kind": "literal:float"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:preferred",
+      "required": false,
+      "filler_kind": "literal:bool"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:context",
+      "required": false,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:type",
+      "role_ref": "role:instance",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:type",
+      "role_ref": "role:class",
+      "required": true,
+      "filler_kind": "concept"
+    },
+    {
+      "operator_ref": "op:relation",
+      "role_ref": "role:subject",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:relation",
+      "role_ref": "role:relation",
+      "required": true,
+      "filler_kind": "relation_type"
+    },
+    {
+      "operator_ref": "op:relation",
+      "role_ref": "role:object",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:state",
+      "role_ref": "role:subject",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:state",
+      "role_ref": "role:dimension",
+      "required": true,
+      "filler_kind": "state_dimension"
+    },
+    {
+      "operator_ref": "op:state",
+      "role_ref": "role:value",
+      "required": true,
+      "filler_kind": "value"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:event",
+      "required": true,
+      "filler_kind": "event"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:type",
+      "required": true,
+      "filler_kind": "event_type"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:actor",
+      "required": false,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:time",
+      "required": false,
+      "filler_kind": "time"
+    }
+  ],
+  "control_symbols": {
+    "operator.designation": "op:designation",
+    "operator.state": "op:state",
+    "role.subject": "role:subject",
+    "role.dimension": "role:dimension",
+    "role.value": "role:value",
+    "designation.target": "role:target",
+    "designation.type": "role:label_type",
+    "designation.surface": "role:surface",
+    "designation.language": "role:language",
+    "designation.script": "role:script",
+    "designation.prior": "role:prior",
+    "designation.preferred": "role:preferred",
+    "designation.context": "role:context",
+    "response.yes": "resp:yes",
+    "response.no": "resp:no",
+    "response.unknown": "resp:unknown",
+    "response.conflict": "resp:conflict",
+    "response.learned": "resp:learned",
+    "response.frontier": "resp:frontier",
+    "new_kind.entity": "entity",
+    "new_kind.event": "event"
+  },
+  "reference_forms": [
+    {
+      "language": "en",
+      "surface": "I",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "en",
+      "surface": "me",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "en",
+      "surface": "my",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "en",
+      "surface": "you",
+      "bound_ref": "participant:system"
+    },
+    {
+      "language": "en",
+      "surface": "your",
+      "bound_ref": "participant:system"
+    },
+    {
+      "language": "en",
+      "surface": "she",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:female"
+      }
+    },
+    {
+      "language": "en",
+      "surface": "her",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:female"
+      }
+    },
+    {
+      "language": "en",
+      "surface": "he",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:male"
+      }
+    },
+    {
+      "language": "en",
+      "surface": "him",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:male"
+      }
+    },
+    {
+      "language": "es",
+      "surface": "yo",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "es",
+      "surface": "me",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "es",
+      "surface": "mi",
+      "bound_ref": "participant:user"
+    },
+    {
+      "language": "es",
+      "surface": "tú",
+      "bound_ref": "participant:system"
+    },
+    {
+      "language": "es",
+      "surface": "ella",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:female"
+      }
+    },
+    {
+      "language": "es",
+      "surface": "él",
+      "features": {
+        "kind": "entity",
+        "required_type": "concept:male"
+      }
+    }
+  ],
+  "language_examples": [
+    {
+      "example_ref": "en:rel-event:1",
+      "language": "en",
+      "delex_surface": "@A0 @A1 @A2 @A3.",
+      "program": "new @X0 entity | new @X1 event | app g0 op:relation role:subject=@X0 role:relation=@A1 role:object=@A0 | app g1 op:event role:event=@X1 role:type=@A2 role:actor=@X0 role:time=@A3"
+    },
+    {
+      "example_ref": "en:state-query:1",
+      "language": "en",
+      "delex_surface": "Am @A0 @A1?",
+      "program": "query op:state role:subject=@A0 role:value=@A1"
+    },
+    {
+      "example_ref": "en:state-query:2",
+      "language": "en",
+      "delex_surface": "Is @A0 @A1?",
+      "program": "query op:state role:subject=@A0 role:value=@A1"
+    },
+    {
+      "example_ref": "en:type-assert:1",
+      "language": "en",
+      "delex_surface": "@A0 is a @A1.",
+      "program": "app g0 op:type role:instance=@A0 role:class=@A1"
+    },
+    {
+      "example_ref": "en:describe:1",
+      "language": "en",
+      "delex_surface": "Who is @A0?",
+      "program": "describe @A0"
+    },
+    {
+      "example_ref": "en:doc:1",
+      "language": "en",
+      "delex_surface": "@A0 is a @A1. @A0 @A2 @A3.",
+      "program": "new @X0 event | app g0 op:type role:instance=@A0 role:class=@A1 | app g1 op:event role:event=@X0 role:type=@A2 role:actor=@A0 role:time=@A3"
+    },
+    {
+      "example_ref": "es:rel-event:1",
+      "language": "es",
+      "delex_surface": "@A0 @A1 @A2 @A3.",
+      "program": "new @X0 entity | new @X1 event | app g0 op:relation role:subject=@X0 role:relation=@A1 role:object=@A0 | app g1 op:event role:event=@X1 role:type=@A2 role:actor=@X0 role:time=@A3"
+    },
+    {
+      "example_ref": "es:state-query:1",
+      "language": "es",
+      "delex_surface": "¿Estoy @A0?",
+      "program": "query op:state role:subject=participant:user role:value=@A0"
+    },
+    {
+      "example_ref": "es:type-assert:1",
+      "language": "es",
+      "delex_surface": "@A0 es @A1.",
+      "program": "app g0 op:type role:instance=@A0 role:class=@A1"
+    },
+    {
+      "example_ref": "es:describe:1",
+      "language": "es",
+      "delex_surface": "¿Quién es @A0?",
+      "program": "describe @A0"
+    },
+    {
+      "example_ref": "en:type-query:1",
+      "language": "en",
+      "delex_surface": "Is @A0 a @A1?",
+      "program": "query op:type role:instance=@A0 role:class=@A1"
+    }
+  ],
+  "realization_examples": [
+    {
+      "example_ref": "r:yes",
+      "language": "en",
+      "semantic": "RESP resp:yes",
+      "surface": "Yes."
+    },
+    {
+      "example_ref": "r:no",
+      "language": "en",
+      "semantic": "RESP resp:no",
+      "surface": "No."
+    },
+    {
+      "example_ref": "r:unknown",
+      "language": "en",
+      "semantic": "RESP resp:unknown",
+      "surface": "I do not have enough evidence to decide."
+    },
+    {
+      "example_ref": "r:conflict",
+      "language": "en",
+      "semantic": "RESP resp:conflict",
+      "surface": "I have conflicting evidence about that."
+    },
+    {
+      "example_ref": "r:learned",
+      "language": "en",
+      "semantic": "RESP resp:learned",
+      "surface": "I have stored that meaning."
+    },
+    {
+      "example_ref": "r:frontier",
+      "language": "en",
+      "semantic": "RESP resp:frontier",
+      "surface": "I do not yet have enough semantic evidence to resolve that."
+    },
+    {
+      "example_ref": "r:type",
+      "language": "en",
+      "semantic": "FACT support op:type role:class @0 role:instance @1",
+      "surface": "@1 is a @0."
+    },
+    {
+      "example_ref": "r:state",
+      "language": "en",
+      "semantic": "FACT support op:state role:dimension @0 role:subject @1 role:value @2",
+      "surface": "@1 is @2."
+    },
+    {
+      "example_ref": "r:relation",
+      "language": "en",
+      "semantic": "FACT support op:relation role:object @0 role:relation @1 role:subject @2",
+      "surface": "@2 is @1 of @0."
+    },
+    {
+      "example_ref": "es:r:yes",
+      "language": "es",
+      "semantic": "RESP resp:yes",
+      "surface": "Sí."
+    },
+    {
+      "example_ref": "es:r:no",
+      "language": "es",
+      "semantic": "RESP resp:no",
+      "surface": "No."
+    },
+    {
+      "example_ref": "es:r:unknown",
+      "language": "es",
+      "semantic": "RESP resp:unknown",
+      "surface": "No tengo evidencia suficiente para decidir."
+    },
+    {
+      "example_ref": "es:r:conflict",
+      "language": "es",
+      "semantic": "RESP resp:conflict",
+      "surface": "Tengo evidencia contradictoria sobre eso."
+    },
+    {
+      "example_ref": "es:r:learned",
+      "language": "es",
+      "semantic": "RESP resp:learned",
+      "surface": "He almacenado ese significado."
+    },
+    {
+      "example_ref": "es:r:frontier",
+      "language": "es",
+      "semantic": "RESP resp:frontier",
+      "surface": "Aún no tengo suficiente evidencia semántica para resolver eso."
+    },
+    {
+      "example_ref": "es:r:type",
+      "language": "es",
+      "semantic": "FACT support op:type role:class @0 role:instance @1",
+      "surface": "@1 es @0."
+    },
+    {
+      "example_ref": "es:r:state",
+      "language": "es",
+      "semantic": "FACT support op:state role:dimension @0 role:subject @1 role:value @2",
+      "surface": "@1 está @2."
+    },
+    {
+      "example_ref": "es:r:relation",
+      "language": "es",
+      "semantic": "FACT support op:relation role:object @0 role:relation @1 role:subject @2",
+      "surface": "@2 es @1 de @0."
+    }
+  ]
+}
