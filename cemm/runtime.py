@@ -242,6 +242,21 @@ class Runtime:
             return self._frontier(text, "interpretation_error", {"error": str(e)})
         if not packet:
             return self._frontier(text, trace.get("reason", "no_candidate"), trace)
+        # Pragmatic intent override: when learn=True and the input has no
+        # question punctuation, the user is explicitly asserting a fact. If
+        # the codec mispredicted query intent, convert the query packet to an
+        # assert packet so the fact gets stored. Question marks are a
+        # universal pragmatic signal — this uses surface form as evidence
+        # about intent, not as semantic ontology.
+        if learn and packet.get("query") and not packet.get("describe"):
+            if not text.rstrip().endswith(("?", "？")):
+                q = packet["query"]
+                packet["apps"] = [{
+                    "operator": q.get("operator", "op:type"),
+                    "args": q.get("args", {}),
+                    "stance": q.get("stance", "support"),
+                }]
+                packet["query"] = None
         # Greeting is an ordinary event recognized through a pinned semantic ref.
         greet = (
             self.s.symbol("event.greeting")
