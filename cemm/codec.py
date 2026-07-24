@@ -20,7 +20,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from cemm.config import Config
-from cemm.model import toks
+
+# NOTE: v4's structured_codec.py uses its own TOK regex that handles @A1<entity>
+# style anchors, which differs from cemm.model.toks. We keep the codec's original
+# tokenizer to preserve training behavior.
+import re as _re
+_TOK = _re.compile(r"@[A-Z]\d+<[^>]+>|@[A-Z]\d+|<[A-Za-z0-9_:.=-]+>|[\wÀ-ÿ:/?.!'-]+|[^\s]", _re.UNICODE)
+def toks(s): return _TOK.findall(str(s))
 
 try:
     import torch
