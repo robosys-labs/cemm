@@ -1,0 +1,104 @@
+{
+  "language": "es",
+  "interpretation_examples": [
+    {
+      "example_ref": "es:mil-arrival:1",
+      "language": "es",
+      "delex_surface": "@A0 @A1 @A2 @A3.",
+      "program": "new @X0 entity | new @X1 event | app g0 op:relation role:subject=@X0 role:relation=@A1 role:object=@A0 | app g1 op:event role:event=@X1 role:type=@A2 role:actor=@X0 role:time=@A3",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:state-query:1",
+      "language": "es",
+      "delex_surface": "¿Estoy @A0?",
+      "program": "query op:state role:subject=participant:user role:value=@A0",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:describe:1",
+      "language": "es",
+      "delex_surface": "¿Qué es @A0?",
+      "program": "describe @A0",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:greeting:1",
+      "language": "es",
+      "delex_surface": "@A0.",
+      "program": "new @X0 event | app g0 op:event role:event=@X0 role:type=@A0 role:actor=participant:user",
+      "weight": 1.0
+    }
+  ],
+  "realization_examples": [
+    {
+      "example_ref": "es:r:type",
+      "language": "es",
+      "semantic": "FACT support op:type role:class @A0 role:instance @A1",
+      "surface_plan": "@A1 es @A0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:state",
+      "language": "es",
+      "semantic": "FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
+      "surface_plan": "@A1 está @A2.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:yes",
+      "language": "es",
+      "semantic": "PLAN goal:confirm VALUE @A0",
+      "surface_plan": "@A0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:no",
+      "language": "es",
+      "semantic": "PLAN goal:deny VALUE @A0",
+      "surface_plan": "@A0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:unknown",
+      "language": "es",
+      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
+      "surface_plan": "@A1 está @A2.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:conflict",
+      "language": "es",
+      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
+      "surface_plan": "@A1 está @A2.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:learned",
+      "language": "es",
+      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
+      "surface_plan": "@A1 está @A2.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:frontier",
+      "language": "es",
+      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
+      "surface_plan": "@A1 está @A2.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:r:greet",
+      "language": "es",
+      "semantic": "PLAN goal:greet VALUE @A0",
+      "surface_plan": "@A0.",
+      "weight": 1.0
+    }
+  ],
+  "grammar_tokens": [
+    ".",
+    "es",
+    "está"
+  ],
+  "pack_hash": "6906fa71a48fea0ce75a867db420ab374054acc39ee4a9d0c0d85440c322d585"
+}

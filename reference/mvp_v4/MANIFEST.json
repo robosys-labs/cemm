@@ -1,0 +1,97 @@
+{
+  "bundle": "cemm_minimal_brain_mvp_v4",
+  "version": "4.0.0-mvp",
+  "test_status": "37/37 passing",
+  "architecture_sources": {
+    "ARCHITECTURE.md": "a9f3b6712f7253422cd5b5f183db29860dd16232",
+    "RUNTIME_PLAN.md": "197360cf0d7ba8b47303b2bf69570d07a592e2c8",
+    "CORE_LOOP.md": "118332e54d84d6ee98f7780c2fb6ab7fc98b0bd9"
+  },
+  "files": [
+    {
+      "path": "MVP_ARCHITECTURE.md",
+      "size": 30961,
+      "sha256": "d89189511441b145790ca3a80da876244b7d66420ef11ba861a6420b15785448"
+    },
+    {
+      "path": "README.md",
+      "size": 1240,
+      "sha256": "5c13dba51dee0e14ffa8b5262f30736c68a5df784fe64a91189f7ab8123e9297"
+    },
+    {
+      "path": "V4_CHANGELOG.md",
+      "size": 1138,
+      "sha256": "5d1e227d4413a860188a7b70ef5c869b6a0fa6fd853a66f4c40615a501f19ffd"
+    },
+    {
+      "path": "acquisition.py",
+      "size": 2383,
+      "sha256": "ba99a84285b4e13a31162b128d7276a0da2333359bdaefd0020cba3215437e16"
+    },
+    {
+      "path": "acquisition_examples/friction.json",
+      "size": 221,
+      "sha256": "f0470cfa774abe41db30f041f00032c95828d30c2f79b01045f17a6c35a26cc5"
+    },
+    {
+      "path": "cemm_mvp.py",
+      "size": 60362,
+      "sha256": "94ef9dd56ae001b59fc9506558f8b1bf1679b6f35e197b4ad1a573164cebc410"
+    },
+    {
+      "path": "demo_transcript.txt",
+      "size": 4067,
+      "sha256": "ddcef8af3ae6b915ee9bc27b47079da2c6a7ceb49e3f95916e49ecc921b48fe1"
+    },
+    {
+      "path": "knowledge/base.json",
+      "size": 63827,
+      "sha256": "8b503695aa8d38e3bd9f7bef62b1cf25cce9d17e5254f4e9c345d17205a0e3e6"
+    },
+    {
+      "path": "knowledge/family_knowledge.json",
+      "size": 44044,
+      "sha256": "d964e9b34b6eb4d9dd018624d3672c6a13ba26f77fffdf7d881c74b973277432"
+    },
+    {
+      "path": "language_packs/en.json",
+      "size": 14468,
+      "sha256": "30193e36f98b17d11528b016f87ecdb6b2386afabf386752d9081abb25328ff8"
+    },
+    {
+      "path": "language_packs/es.json",
+      "size": 4449,
+      "sha256": "c4c0cfc972029c26611c9bd33a7cd49efe0420e92de387603124dc545cb54fc9"
+    },
+    {
+      "path": "structured_codec.py",
+      "size": 14083,
+      "sha256": "626196f1e3ff298e3e5a4949d8a8b5691c0a66058a37d81bbda2cb1205b0dde8"
+    },
+    {
+      "path": "test_output.txt",
+      "size": 5312,
+      "sha256": "d4630e720d566f9933c5308e35a042fb0c3630847ac0f41d8b379f4bc0440c52"
+    },
+    {
+      "path": "tests/test_mvp.py",
+      "size": 17606,
+      "sha256": "56cc054892a4c3079ef8349169dc0d88f8896c4520ca08afa9d70ddde2f02f8a"
+    },
+    {
+      "path": "trainer.py",
+      "size": 9229,
+      "sha256": "d22d2af2f25fc917d76117ca045788ac9441f2cc5b5022f2ea9dec67616f7929"
+    },
+    {
+      "path": "training/en_seed.json",
+      "size": 21793,
+      "sha256": "3dffaa48d703e401dd24c430d3c58b7547c561a4419f2a73bb3486be7a684bfc"
+    },
+    {
+      "path": "training/es_seed.json",
+      "size": 7052,
+      "sha256": "e7266b147fda71416d1b705b8dd8c7637fa50502335fa3b8ba5662ebe0078e27"
+    }
+  ]
+}

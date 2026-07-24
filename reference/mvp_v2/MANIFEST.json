@@ -1,0 +1,60 @@
+{
+  "bundle": "cemm_minimal_brain_mvp_v2",
+  "files": [
+    {
+      "path": "ARCHITECTURE_AUDIT.md",
+      "sha256": "402c5536e2ee7889fe3c40b57ed8da980d61b7b35888ad4100d56a0563d53123",
+      "bytes": 15787
+    },
+    {
+      "path": "MVP_ARCHITECTURE.md",
+      "sha256": "25948b82e59e0f346211b1174635a614d346789c9801f9a447e76dc0c0acb693",
+      "bytes": 44410
+    },
+    {
+      "path": "README.md",
+      "sha256": "bfa195aca465a850fee91a6dd471ba9d08233d0e2b3c2a553dd79d6247031ae7",
+      "bytes": 4568
+    },
+    {
+      "path": "cemm_mvp.py",
+      "sha256": "4601a755fafba96511b3925c3a7a0a69a9b41f79023a095742a62380e2af3f73",
+      "bytes": 41900
+    },
+    {
+      "path": "demo_transcript.txt",
+      "sha256": "600ed40a97d9979faeef256edde6929544d448fb7ca58b1795e17d4973e6be74",
+      "bytes": 1982
+    },
+    {
+      "path": "knowledge/FAMILY_SEMANTIC_COMPILATION.md",
+      "sha256": "d58577dbc5a9d6ced276ad19c504cd05b4a5433cf151c86b8fb4857a6610c10f",
+      "bytes": 2677
+    },
+    {
+      "path": "knowledge/base.json",
+      "sha256": "19834fe1323782820997a2ca56fdae33a9cf202b65fb194536e50f8fd4197bb4",
+      "bytes": 15371
+    },
+    {
+      "path": "knowledge/family_knowledge.json",
+      "sha256": "cb25f0bf77b90a3bbfd05aaa1603e3c794dff879617c94b12b1a72e1962c66d7",
+      "bytes": 42219
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "6647b8314a965c8c1c888a358ad46dcd51955fdad5bc439a26fe0efd6aca8933",
+      "bytes": 6
+    },
+    {
+      "path": "test_output.txt",
+      "sha256": "137811fe79acdee371ffebd1155968d551d2d4d9e0abfe7fefea63bb90462649",
+      "bytes": 4685
+    },
+    {
+      "path": "tests/test_mvp.py",
+      "sha256": "284e1ca74f9cbc09ed1380181027d9312cd52cb70fd25d994a30ebb4cbe88189",
+      "bytes": 20940
+    }
+  ]
+}

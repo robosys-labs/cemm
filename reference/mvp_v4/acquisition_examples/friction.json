@@ -1,0 +1,9 @@
+{
+  "document_ref": "training:friction:001",
+  "language": "en",
+  "text": "Friction is resistance.",
+  "mentions": [
+    {"surface": "Friction", "kind": "concept"},
+    {"surface": "resistance", "kind": "concept"}
+  ]
+}

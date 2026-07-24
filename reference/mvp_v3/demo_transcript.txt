@@ -1,0 +1,82 @@
+=== EN SESSION ===
+RuntimeAttestation: {'authority_generation': 3, 'authority_generation_hash': '813cfd1954508b179db26cdc37ed5bff3b9eee2fd45ea9fbb52cb5062696e930', 'language_pack_hash': 'cc302294381aa43c75528db267d2fbbaf71f19ebaff4393b46f7b069c3303a50', 'read_generation': 3}
+
+USER: Hi.
+CEMM: Hello.
+status: ok result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+USER: What is evidence?
+CEMM: Evidence is information.
+status: ok result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+
+USER: What is conflict?
+CEMM: Conflict is a state.
+status: ok result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+
+USER: What is meaning?
+CEMM: Meaning is structured semantic content.
+status: ok result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+
+USER: Am I married?
+CEMM: Evidence is insufficient.
+status: ok result: unknown
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:insufficient'}
+workspace_selected: 24
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+USER: My mother in-law arrived today.
+CEMM: Meaning is stored.
+status: learned result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+USER: Am I married?
+CEMM: Yes.
+status: ok result: supported
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+proof_root_rule: rule:relation-object-state
+
+USER: Ada is a doctor. She arrived today.
+CEMM: Meaning is stored.
+status: learned result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+USER: Who is Ada?
+CEMM: Ada is a doctor. Ada is female. Ada is a human. Ada is a living entity.
+status: ok result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+
+USER: totally unknown flibbertigibbet
+CEMM: Meaning is unresolved.
+status: frontier result: None
+self_state: {'dim:response_state': 'value:confused', 'dim:interpretation_state': 'value:unresolved', 'dim:epistemic_state': 'value:sufficient'}
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+=== ES SESSION ===
+RuntimeAttestation: {'authority_generation': 3, 'authority_generation_hash': '813cfd1954508b179db26cdc37ed5bff3b9eee2fd45ea9fbb52cb5062696e930', 'language_pack_hash': '6906fa71a48fea0ce75a867db420ab374054acc39ee4a9d0c0d85440c322d585', 'read_generation': 3}
+
+USER: Mi suegra llegó hoy.
+CEMM: Significado está almacenado.
+status: learned result: None
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+
+USER: ¿Estoy casado?
+CEMM: Sí.
+status: ok result: supported
+self_state: {'dim:response_state': 'value:ready', 'dim:interpretation_state': 'value:resolved', 'dim:epistemic_state': 'value:sufficient'}
+workspace_selected: 24
+realization: {'verified': True, 'mode': 'semantic_pointer_provenance', 'roundtrip_used': False, 'authorized_transform': True}
+proof_root_rule: rule:relation-object-state

@@ -1,0 +1,593 @@
+{
+  "language": "en",
+  "interpretation_examples": [
+    {
+      "example_ref": "en:mil-arrival:1",
+      "surface": "My mother in-law arrived today.",
+      "mentions": [
+        {
+          "surface": "My",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "mother in-law",
+          "ref": "rel:mother_in_law"
+        },
+        {
+          "surface": "arrived",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "entity"
+          },
+          {
+            "token": "@X1",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "@X0",
+              "role:relation": "rel:mother_in_law",
+              "role:object": "participant:user"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X1",
+              "role:type": "event:arrive",
+              "role:actor": "@X0",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:mil-arrival:2",
+      "surface": "My mother-in-law came today.",
+      "mentions": [
+        {
+          "surface": "My",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "mother-in-law",
+          "ref": "rel:mother_in_law"
+        },
+        {
+          "surface": "came",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "entity"
+          },
+          {
+            "token": "@X1",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "@X0",
+              "role:relation": "rel:mother_in_law",
+              "role:object": "participant:user"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X1",
+              "role:type": "event:arrive",
+              "role:actor": "@X0",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:state-query:1",
+      "surface": "Am I married?",
+      "mentions": [
+        {
+          "surface": "I",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "married",
+          "ref": "value:married"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "participant:user",
+            "role:value": "value:married"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:type-assert:1",
+      "surface": "Ada is a doctor.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": "entity:ada",
+              "role:class": "concept:doctor"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:type-query:1",
+      "surface": "Is Ada a doctor?",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "entity:ada",
+            "role:class": "concept:doctor"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "en:describe-who:1",
+      "surface": "Who is Ada?",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        }
+      ],
+      "semantic": {
+        "describe": "entity:ada"
+      }
+    },
+    {
+      "example_ref": "en:describe-what:1",
+      "surface": "What is evidence?",
+      "mentions": [
+        {
+          "surface": "evidence",
+          "ref": "concept:evidence"
+        }
+      ],
+      "semantic": {
+        "describe": "concept:evidence"
+      }
+    },
+    {
+      "example_ref": "en:event:1",
+      "surface": "Ada arrived today.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "arrived",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:arrive",
+              "role:actor": "entity:ada",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:doc:1",
+      "surface": "Ada is a doctor. She arrived today.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "She",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "doctor",
+          "ref": "concept:doctor"
+        },
+        {
+          "surface": "arrived",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "today",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": "entity:ada",
+              "role:class": "concept:doctor"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:arrive",
+              "role:actor": "entity:ada",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:greeting:1",
+      "surface": "Hi.",
+      "mentions": [
+        {
+          "surface": "Hi",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:state:conflict",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "semantic": {
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:consistency",
+              "role:value": "value:conflicting"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "realization_examples": [
+    {
+      "example_ref": "en:r:type",
+      "surface": "Ada is a doctor.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "a doctor",
+          "ref": "concept:doctor"
+        }
+      ],
+      "fact": {
+        "operator": "op:type",
+        "args": {
+          "role:instance": "entity:ada",
+          "role:class": "concept:doctor"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:state",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "fact": {
+        "operator": "op:state",
+        "args": {
+          "role:subject": "concept:evidence",
+          "role:dimension": "dim:consistency",
+          "role:value": "value:conflicting"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:relation",
+      "surface": "Ada is a wife of you.",
+      "mentions": [
+        {
+          "surface": "Ada",
+          "ref": "entity:ada"
+        },
+        {
+          "surface": "wife",
+          "ref": "rel:wife"
+        },
+        {
+          "surface": "you",
+          "ref": "participant:user"
+        }
+      ],
+      "fact": {
+        "operator": "op:relation",
+        "args": {
+          "role:subject": "entity:ada",
+          "role:relation": "rel:wife",
+          "role:object": "participant:user"
+        }
+      }
+    },
+    {
+      "example_ref": "en:r:yes",
+      "surface": "Yes.",
+      "mentions": [
+        {
+          "surface": "Yes",
+          "ref": "value:affirmative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:confirm",
+        "value": "value:affirmative"
+      }
+    },
+    {
+      "example_ref": "en:r:no",
+      "surface": "No.",
+      "mentions": [
+        {
+          "surface": "No",
+          "ref": "value:negative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:deny",
+        "value": "value:negative"
+      }
+    },
+    {
+      "example_ref": "en:r:unknown",
+      "surface": "Evidence is insufficient.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "insufficient",
+          "ref": "value:insufficient"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_uncertainty",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:sufficiency",
+              "role:value": "value:insufficient"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:conflict",
+      "surface": "Evidence is conflicting.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "conflicting",
+          "ref": "value:conflicting"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_conflict",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:consistency",
+              "role:value": "value:conflicting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:learned",
+      "surface": "Meaning is stored.",
+      "mentions": [
+        {
+          "surface": "Meaning",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "stored",
+          "ref": "value:stored"
+        }
+      ],
+      "plan": {
+        "goal": "goal:acknowledge_learning",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:storage_state",
+              "role:value": "value:stored"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:frontier",
+      "surface": "Meaning is unresolved.",
+      "mentions": [
+        {
+          "surface": "Meaning",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "unresolved",
+          "ref": "value:unresolved"
+        }
+      ],
+      "plan": {
+        "goal": "goal:request_clarification",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:resolution_state",
+              "role:value": "value:unresolved"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "en:r:greet",
+      "surface": "Hello.",
+      "mentions": [
+        {
+          "surface": "Hello",
+          "ref": "value:greeting_ack"
+        }
+      ],
+      "plan": {
+        "goal": "goal:greet",
+        "value": "value:greeting_ack"
+      }
+    },
+    {
+      "example_ref": "en:r:type-info",
+      "surface": "Evidence is information.",
+      "mentions": [
+        {
+          "surface": "Evidence",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "information",
+          "ref": "concept:information"
+        }
+      ],
+      "fact": {
+        "operator": "op:type",
+        "args": {
+          "role:instance": "concept:evidence",
+          "role:class": "concept:information"
+        }
+      }
+    }
+  ]
+}

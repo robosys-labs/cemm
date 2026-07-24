@@ -1,0 +1,12 @@
+Hardcoding scan:
+OK absent: mother_in_law
+OK absent: mother-in-law
+OK absent: spouse
+OK absent: wife
+OK absent: husband
+OK absent: married
+OK absent: president
+OK absent: doctor
+OK absent: I have conflicting evidence
+OK absent: Evidence is insufficient
+OK absent: Meaning is stored

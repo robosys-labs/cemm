@@ -1,0 +1,44 @@
+/opt/pyvenv/lib/python3.13/site-packages/torch/nn/modules/transformer.py:531: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+test_acquisition_does_not_add_operator_schema (tests.test_mvp.Tests.test_acquisition_does_not_add_operator_schema) ... ok
+test_causal_rule_not_asserted_as_actual (tests.test_mvp.Tests.test_causal_rule_not_asserted_as_actual) ... ok
+test_exact_compiler_rejects_semantic_kind_mismatch (tests.test_mvp.Tests.test_exact_compiler_rejects_semantic_kind_mismatch) ... ok
+test_exclusive_state_denial_does_not_supersede_support (tests.test_mvp.Tests.test_exclusive_state_denial_does_not_supersede_support) ... ok
+test_family_import_does_not_expand_operator_schema (tests.test_mvp.Tests.test_family_import_does_not_expand_operator_schema) ... ok
+test_family_reasoning_after_promoted_rule_has_proof_chain (tests.test_mvp.Tests.test_family_reasoning_after_promoted_rule_has_proof_chain) ... ok
+test_family_specific_rule_is_not_hardseeded (tests.test_mvp.Tests.test_family_specific_rule_is_not_hardseeded) ... ok
+test_greeting_grounded_semantics_and_pointer_nlg (tests.test_mvp.Tests.test_greeting_grounded_semantics_and_pointer_nlg) ... ok
+test_inference_budget_exhaustion_frontier (tests.test_mvp.Tests.test_inference_budget_exhaustion_frontier) ... ok
+test_inference_ephemeral_no_query_bloat (tests.test_mvp.Tests.test_inference_ephemeral_no_query_bloat) ... ok
+test_inferred_type_supports_pronoun_resolution (tests.test_mvp.Tests.test_inferred_type_supports_pronoun_resolution) ... ok
+test_internal_ids_never_emit (tests.test_mvp.Tests.test_internal_ids_never_emit) ... ok
+test_kernel_has_no_family_or_literal_response_hardcoding (tests.test_mvp.Tests.test_kernel_has_no_family_or_literal_response_hardcoding) ... ok
+test_multilingual_interface_reuses_promoted_semantic_rule (tests.test_mvp.Tests.test_multilingual_interface_reuses_promoted_semantic_rule) ... ok
+test_nbest_structured_prediction_and_settling (tests.test_mvp.Tests.test_nbest_structured_prediction_and_settling) ... ok
+test_open_prediction_is_compositional_not_document_class (tests.test_mvp.Tests.test_open_prediction_is_compositional_not_document_class) ... ok
+test_operational_response_words_are_meaning (tests.test_mvp.Tests.test_operational_response_words_are_meaning) ... ok
+test_pack_has_structured_supervision_not_closed_program_classes (tests.test_mvp.Tests.test_pack_has_structured_supervision_not_closed_program_classes) ... ok
+test_pointer_nlg_no_mandatory_roundtrip (tests.test_mvp.Tests.test_pointer_nlg_no_mandatory_roundtrip) ... ok
+test_promoted_authority_does_not_mutate_existing_pin (tests.test_mvp.Tests.test_promoted_authority_does_not_mutate_existing_pin) ... ok
+test_promotion_requires_evidence_and_activation_reload (tests.test_mvp.Tests.test_promotion_requires_evidence_and_activation_reload) ... ok
+test_provisional_rule_does_not_execute (tests.test_mvp.Tests.test_provisional_rule_does_not_execute) ... ok
+test_reimport_semantic_replay_stable (tests.test_mvp.Tests.test_reimport_semantic_replay_stable) ... ok
+test_repeated_observations_distinct_apps_dedup (tests.test_mvp.Tests.test_repeated_observations_distinct_apps_dedup) ... ok
+test_reviewed_designation_acquisition_changes_authority_but_user_fact_does_not (tests.test_mvp.Tests.test_reviewed_designation_acquisition_changes_authority_but_user_fact_does_not) ... ok
+test_reviewed_new_concept_acquisition_uses_same_codec (tests.test_mvp.Tests.test_reviewed_new_concept_acquisition_uses_same_codec) ... ok
+test_rule_candidate_not_in_authority_hash_until_promotion_activation (tests.test_mvp.Tests.test_rule_candidate_not_in_authority_hash_until_promotion_activation) ... ok
+test_rule_induction_is_structured_and_provisional_first (tests.test_mvp.Tests.test_rule_induction_is_structured_and_provisional_first) ... ok
+test_rule_semantic_dedup_across_paraphrases (tests.test_mvp.Tests.test_rule_semantic_dedup_across_paraphrases) ... ok
+test_same_name_entities_not_merged (tests.test_mvp.Tests.test_same_name_entities_not_merged) ... ok
+test_self_state_recovers_after_supported_answer (tests.test_mvp.Tests.test_self_state_recovers_after_supported_answer) ... ok
+test_trainer_deterministic_and_language_generic (tests.test_mvp.Tests.test_trainer_deterministic_and_language_generic) ... ok
+test_unicode_casefold_resolution (tests.test_mvp.Tests.test_unicode_casefold_resolution) ... ok
+test_unknown_and_conflict_are_grounded_response_plans (tests.test_mvp.Tests.test_unknown_and_conflict_are_grounded_response_plans) ... ok
+test_unsupported_multivalue_role_fails (tests.test_mvp.Tests.test_unsupported_multivalue_role_fails) ... ok
+test_workspace_bounded_and_self_state_present (tests.test_mvp.Tests.test_workspace_bounded_and_self_state_present) ... ok
+test_world_occurrence_atoms_never_enter_authority_hash (tests.test_mvp.Tests.test_world_occurrence_atoms_never_enter_authority_hash) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 12.736s
+
+OK

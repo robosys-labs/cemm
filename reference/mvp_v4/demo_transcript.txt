@@ -1,0 +1,52 @@
+USER: What is evidence?
+CEMM: Evidence is information.
+status: ok result: None
+
+USER: Am I married?
+CEMM: Evidence is insufficient.
+status: ok result: unknown
+
+USER: A mother in-law is the mother of a partner.
+CEMM: Meaning is stored.
+status: provisional_rule result: None
+rule: {"if": [{"args": {"role:object": "?v1", "role:relation": "rel:mother_in_law", "role:subject": "?v0"}, "operator": "op:relation"}], "rule_kind": "definition", "then": [{"args": {"role:object": "!e0", "role:relation": "rel:mother_of", "role:subject": "?v0"}, "operator": "op:relation"}, {"args": {"role:object": "?v1", "role:relation": "rel:partner", "role:subject": "!e0"}, "operator": "op:relation"}]}
+
+USER: A mother-in-law is the mother of a partner.
+CEMM: Meaning is stored.
+status: promoted_rule result: None
+rule: {"if": [{"args": {"role:object": "?v1", "role:relation": "rel:mother_in_law", "role:subject": "?v0"}, "operator": "op:relation"}], "rule_kind": "definition", "then": [{"args": {"role:object": "!e0", "role:relation": "rel:mother_of", "role:subject": "?v0"}, "operator": "op:relation"}, {"args": {"role:object": "?v1", "role:relation": "rel:partner", "role:subject": "!e0"}, "operator": "op:relation"}]}
+
+BEFORE AUTHORITY RELOAD:
+USER: Am I married?
+CEMM: Evidence is insufficient.
+status: ok result: unknown
+
+AUTHORITY RELOAD: {"authority_generation": 5, "authority_generation_hash": "d6ec2f109138e3d003d0a40006bd0ecd86c64218e1b9c6a4264d4690f20e8cab", "language_pack_hash": "5d6578510fd4cc625076dbb6c9285cbf8b8cb27a5c6a86da918d7d6b2d4e840b", "read_generation": 5}
+
+USER: My mother in-law arrived today.
+CEMM: Meaning is stored.
+status: learned result: None
+structured: {"structured_prediction": true, "clauses": [{"status": "settled", "posterior": 0.999960177497256, "margin": 0.9999203549947374, "candidates": [{"posterior": 1.0, "packet": {"apps": [{"operator": "op:relation", "args": {"role:object": "participant:user", "role:relation": "rel:mother_in_law", "role:subject": {"new": "@X_C0_ENTITY_0", "kind": "entity"}}, "stance": "support"}, {"operator": "op:event", "args": {"role:actor": {"new": "@X_C0_ENTITY_0", "kind": "entity"}, "role:event": {"new": "@X_C0_EVENT_0", "kind": "event"}, "role:time": "time:today", "role:type": "event:arrive"}, "stance": "support"}], "query": null, "describe": null}, "neural": {"intent": "assert", "active_slots": [0, 1], "operators": ["op:relation", "op:event"]}}, {"posterior": 0.0, "packet": {"apps": [], "query": {"operator": "op:relation", "args": {"role:object": "participant:user", "role:relation": "rel:mother_in_law", ...
+
+USER: Am I married?
+CEMM: Yes.
+status: ok result: supported
+
+USER: Is she a human?
+CEMM: Yes.
+status: ok result: supported
+
+USER: Ada is a doctor. She arrived today.
+CEMM: Meaning is stored.
+status: learned result: None
+structured: {"structured_prediction": true, "clauses": [{"status": "settled", "posterior": 0.9999212762370759, "margin": 0.9998425524741519, "candidates": [{"posterior": 0.9999, "packet": {"apps": [{"operator": "op:type", "args": {"role:class": "concept:doctor", "role:instance": "entity:ada"}, "stance": "support"}], "query": null, "describe": null}, "neural": {"intent": "assert", "active_slots": [0], "operators": ["op:type"]}}, {"posterior": 0.0001, "packet": {"apps": [], "query": {"operator": "op:type", "args": {"role:class": "concept:doctor", "role:instance": "entity:ada"}, "stance": "support"}, "describe": null}, "neural": {"intent": "query", "active_slots": [0], "operators": ["op:type"]}}], "input": "@A0<entity> is a @A1<concept>."}, {"status": "settled", "posterior": 0.9999999958401344, "margin": 0.9999999916802689, "candidates": [{"posterior": 1.0, "packet": {"apps": [{"operator": "op:event", ...
+
+REVIEWED ACQUISITION: Friction is resistance.
+{"Friction": "atom:584ea700dcf248f7c175355a", "resistance": "atom:0809e0a3542304781617f940"}
+acquisition status: learned
+
+USER: What is Friction?
+CEMM: Friction is resistance.
+status: ok result: None
+
+COUNTS: {'atoms': 125, 'applications': 133, 'rules': 7, 'rule_candidates': 1, 'frontiers': 0, 'generations': 9}

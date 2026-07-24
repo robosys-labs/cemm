@@ -1,0 +1,314 @@
+{
+  "language": "es",
+  "interpretation_examples": [
+    {
+      "example_ref": "es:mil-arrival:1",
+      "surface": "Mi suegra llegó hoy.",
+      "mentions": [
+        {
+          "surface": "Mi",
+          "ref": "participant:user"
+        },
+        {
+          "surface": "suegra",
+          "ref": "rel:mother_in_law"
+        },
+        {
+          "surface": "llegó",
+          "ref": "event:arrive"
+        },
+        {
+          "surface": "hoy",
+          "ref": "time:today"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "entity"
+          },
+          {
+            "token": "@X1",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:relation",
+            "args": {
+              "role:subject": "@X0",
+              "role:relation": "rel:mother_in_law",
+              "role:object": "participant:user"
+            }
+          },
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X1",
+              "role:type": "event:arrive",
+              "role:actor": "@X0",
+              "role:time": "time:today"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "es:state-query:1",
+      "surface": "¿Estoy casado?",
+      "mentions": [
+        {
+          "surface": "casado",
+          "ref": "value:married"
+        }
+      ],
+      "semantic": {
+        "query": {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "participant:user",
+            "role:value": "value:married"
+          }
+        }
+      }
+    },
+    {
+      "example_ref": "es:describe:1",
+      "surface": "¿Qué es evidencia?",
+      "mentions": [
+        {
+          "surface": "evidencia",
+          "ref": "concept:evidence"
+        }
+      ],
+      "semantic": {
+        "describe": "concept:evidence"
+      }
+    },
+    {
+      "example_ref": "es:greeting:1",
+      "surface": "Hola.",
+      "mentions": [
+        {
+          "surface": "Hola",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "realization_examples": [
+    {
+      "example_ref": "es:r:type",
+      "surface": "Evidencia es información.",
+      "mentions": [
+        {
+          "surface": "Evidencia",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "información",
+          "ref": "concept:information"
+        }
+      ],
+      "fact": {
+        "operator": "op:type",
+        "args": {
+          "role:instance": "concept:evidence",
+          "role:class": "concept:information"
+        }
+      }
+    },
+    {
+      "example_ref": "es:r:state",
+      "surface": "Evidencia está contradictoria.",
+      "mentions": [
+        {
+          "surface": "Evidencia",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "contradictoria",
+          "ref": "value:conflicting"
+        }
+      ],
+      "fact": {
+        "operator": "op:state",
+        "args": {
+          "role:subject": "concept:evidence",
+          "role:dimension": "dim:consistency",
+          "role:value": "value:conflicting"
+        }
+      }
+    },
+    {
+      "example_ref": "es:r:yes",
+      "surface": "Sí.",
+      "mentions": [
+        {
+          "surface": "Sí",
+          "ref": "value:affirmative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:confirm",
+        "value": "value:affirmative"
+      }
+    },
+    {
+      "example_ref": "es:r:no",
+      "surface": "No.",
+      "mentions": [
+        {
+          "surface": "No",
+          "ref": "value:negative"
+        }
+      ],
+      "plan": {
+        "goal": "goal:deny",
+        "value": "value:negative"
+      }
+    },
+    {
+      "example_ref": "es:r:unknown",
+      "surface": "Evidencia está insuficiente.",
+      "mentions": [
+        {
+          "surface": "Evidencia",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "insuficiente",
+          "ref": "value:insufficient"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_uncertainty",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:sufficiency",
+              "role:value": "value:insufficient"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "es:r:conflict",
+      "surface": "Evidencia está contradictoria.",
+      "mentions": [
+        {
+          "surface": "Evidencia",
+          "ref": "concept:evidence"
+        },
+        {
+          "surface": "contradictoria",
+          "ref": "value:conflicting"
+        }
+      ],
+      "plan": {
+        "goal": "goal:report_conflict",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:evidence",
+              "role:dimension": "dim:consistency",
+              "role:value": "value:conflicting"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "es:r:learned",
+      "surface": "Significado está almacenado.",
+      "mentions": [
+        {
+          "surface": "Significado",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "almacenado",
+          "ref": "value:stored"
+        }
+      ],
+      "plan": {
+        "goal": "goal:acknowledge_learning",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:storage_state",
+              "role:value": "value:stored"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "es:r:frontier",
+      "surface": "Significado está no resuelto.",
+      "mentions": [
+        {
+          "surface": "Significado",
+          "ref": "concept:meaning"
+        },
+        {
+          "surface": "no resuelto",
+          "ref": "value:unresolved"
+        }
+      ],
+      "plan": {
+        "goal": "goal:request_clarification",
+        "facts": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": "concept:meaning",
+              "role:dimension": "dim:resolution_state",
+              "role:value": "value:unresolved"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "example_ref": "es:r:greet",
+      "surface": "Hola.",
+      "mentions": [
+        {
+          "surface": "Hola",
+          "ref": "value:greeting_ack"
+        }
+      ],
+      "plan": {
+        "goal": "goal:greet",
+        "value": "value:greeting_ack"
+      }
+    }
+  ],
+  "definition_examples": []
+}

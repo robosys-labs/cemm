@@ -1,0 +1,39 @@
+/opt/pyvenv/lib/python3.13/site-packages/torch/nn/modules/transformer.py:531: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+test_authority_attestation_is_stable_across_mutable_learning (tests.test_mvp.Tests.test_authority_attestation_is_stable_across_mutable_learning) ... ok
+test_base_has_no_language_or_realization_examples (tests.test_mvp.Tests.test_base_has_no_language_or_realization_examples) ... ok
+test_causal_rules_are_not_asserted_as_actual_world_truth (tests.test_mvp.Tests.test_causal_rules_are_not_asserted_as_actual_world_truth) ... ok
+test_contextual_realization_labels_do_not_corrupt_input_resolution (tests.test_mvp.Tests.test_contextual_realization_labels_do_not_corrupt_input_resolution) ... ok
+test_denied_new_state_does_not_supersede_supported_current_state (tests.test_mvp.Tests.test_denied_new_state_does_not_supersede_supported_current_state) ... ok
+test_description_hides_operational_policy_edges (tests.test_mvp.Tests.test_description_hides_operational_policy_edges) ... ok
+test_family_import_does_not_expand_operator_schema (tests.test_mvp.Tests.test_family_import_does_not_expand_operator_schema) ... ok
+test_family_reasoning_still_answers_marriage (tests.test_mvp.Tests.test_family_reasoning_still_answers_marriage) ... ok
+test_greeting_is_grounded_semantics_with_pointer_nlg (tests.test_mvp.Tests.test_greeting_is_grounded_semantics_with_pointer_nlg) ... ok
+test_inference_budget_exhaustion_is_not_reported_as_unknown (tests.test_mvp.Tests.test_inference_budget_exhaustion_is_not_reported_as_unknown) ... ok
+test_inference_is_ephemeral_and_queries_do_not_bloat (tests.test_mvp.Tests.test_inference_is_ephemeral_and_queries_do_not_bloat) ... ok
+test_internal_ids_never_emit_when_no_referring_expression (tests.test_mvp.Tests.test_internal_ids_never_emit_when_no_referring_expression) ... ok
+test_kernel_has_no_domain_or_literal_response_hardcoding (tests.test_mvp.Tests.test_kernel_has_no_domain_or_literal_response_hardcoding) ... ok
+test_language_pack_is_pinned_separately_from_meaning_hash (tests.test_mvp.Tests.test_language_pack_is_pinned_separately_from_meaning_hash) ... ok
+test_multilingual_pack_reuses_same_meaning_and_rules (tests.test_mvp.Tests.test_multilingual_pack_reuses_same_meaning_and_rules) ... ok
+test_multisentence_clause_composition_and_coreference (tests.test_mvp.Tests.test_multisentence_clause_composition_and_coreference) ... ok
+test_nlg_requires_authorized_learned_transform_class (tests.test_mvp.Tests.test_nlg_requires_authorized_learned_transform_class) ... ok
+test_no_opaque_response_atoms (tests.test_mvp.Tests.test_no_opaque_response_atoms) ... ok
+test_operational_words_are_meaning_db_concepts (tests.test_mvp.Tests.test_operational_words_are_meaning_db_concepts) ... ok
+test_pointer_verification_replaces_mandatory_roundtrip (tests.test_mvp.Tests.test_pointer_verification_replaces_mandatory_roundtrip) ... ok
+test_provisional_rules_do_not_execute (tests.test_mvp.Tests.test_provisional_rules_do_not_execute) ... ok
+test_reimport_is_semantically_replay_stable (tests.test_mvp.Tests.test_reimport_is_semantically_replay_stable) ... ok
+test_repeated_observations_are_distinct_but_semantic_apps_deduplicate (tests.test_mvp.Tests.test_repeated_observations_are_distinct_but_semantic_apps_deduplicate) ... ok
+test_same_name_identity_conflict_is_not_merged (tests.test_mvp.Tests.test_same_name_identity_conflict_is_not_merged) ... ok
+test_self_epistemic_state_recovers_after_supported_answer (tests.test_mvp.Tests.test_self_epistemic_state_recovers_after_supported_answer) ... ok
+test_self_state_transitions_are_semantic_session_state (tests.test_mvp.Tests.test_self_state_transitions_are_semantic_session_state) ... ok
+test_trainer_is_deterministic_and_language_generic (tests.test_mvp.Tests.test_trainer_is_deterministic_and_language_generic) ... ok
+test_training_corpus_contains_structured_semantics_not_compiled_program_strings (tests.test_mvp.Tests.test_training_corpus_contains_structured_semantics_not_compiled_program_strings) ... ok
+test_unicode_casefold_label_resolution (tests.test_mvp.Tests.test_unicode_casefold_label_resolution) ... ok
+test_unknown_and_conflict_responses_are_grounded_plans (tests.test_mvp.Tests.test_unknown_and_conflict_responses_are_grounded_plans) ... ok
+test_unsupported_multivalued_role_fails_explicitly (tests.test_mvp.Tests.test_unsupported_multivalued_role_fails_explicitly) ... ok
+test_workspace_is_bounded_and_contains_self_state (tests.test_mvp.Tests.test_workspace_is_bounded_and_contains_self_state) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 8.181s
+
+OK

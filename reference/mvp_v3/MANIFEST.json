@@ -1,0 +1,104 @@
+{
+  "bundle": "cemm_minimal_brain_mvp_v3",
+  "version": "3",
+  "canonical_sources": {
+    "ARCHITECTURE.md": "a9f3b6712f7253422cd5b5f183db29860dd16232",
+    "CORE_LOOP.md": "118332e54d84d6ee98f7780c2fb6ab7fc98b0bd9",
+    "RUNTIME_PLAN.md": "197360cf0d7ba8b47303b2bf69570d07a592e2c8"
+  },
+  "language_packs": {
+    "en": "cc302294381aa43c75528db267d2fbbaf71f19ebaff4393b46f7b069c3303a50",
+    "es": "6906fa71a48fea0ce75a867db420ab374054acc39ee4a9d0c0d85440c322d585"
+  },
+  "tests": {
+    "count": 32,
+    "status": "PASS"
+  },
+  "source_lines": {
+    "cemm_mvp.py": 614,
+    "trainer.py": 102,
+    "kernel_plus_trainer": 716
+  },
+  "files": [
+    {
+      "path": "MVP_ARCHITECTURE.md",
+      "sha256": "f1414ca246ab39382e8aa5232ef6be89199963f50ea1b367c1869334a8857028",
+      "bytes": 46924
+    },
+    {
+      "path": "README.md",
+      "sha256": "77a6b5f63053917ae19e925b34105c158fe40564cb6ae35bdc0e643256ccc48d",
+      "bytes": 2203
+    },
+    {
+      "path": "V3_CHANGELOG.md",
+      "sha256": "b632686c4240315c57a3fe1024e3ee5cb2fa8a030b58fd742367d1d589c6f83f",
+      "bytes": 1903
+    },
+    {
+      "path": "cemm_mvp.py",
+      "sha256": "1676f5f97b946f3214f0b3861bdc9fc433e2d24f1c07ccf63ae76f859a962fee",
+      "bytes": 51672
+    },
+    {
+      "path": "demo_transcript.txt",
+      "sha256": "16c04bf2c1e0cd31e43f0931a63d3b669d6fc4e05168adec9d598ae719afacf8",
+      "bytes": 4490
+    },
+    {
+      "path": "hardcoding_scan.txt",
+      "sha256": "614fffa030169a03f47de94cdc0338466cb0480f7c2c4a6109148c0f6bbbe53a",
+      "bytes": 282
+    },
+    {
+      "path": "knowledge/base.json",
+      "sha256": "8b503695aa8d38e3bd9f7bef62b1cf25cce9d17e5254f4e9c345d17205a0e3e6",
+      "bytes": 63827
+    },
+    {
+      "path": "knowledge/family_knowledge.json",
+      "sha256": "71777be229930fca14a81078b2a19f17bc088c62c92cc0661434d9ab609d0432",
+      "bytes": 44795
+    },
+    {
+      "path": "language_packs/en.json",
+      "sha256": "87eebf8cc4f30f84b6d3e32f26e0442762097be012a288ee81d6844b3b5c196e",
+      "bytes": 5289
+    },
+    {
+      "path": "language_packs/es.json",
+      "sha256": "16529b23e9927cecd6a04f06b0aefd404cfdb0f755321ed46d67841ec31df92a",
+      "bytes": 3163
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "b36f2f2486ae678c3f0c57166517120468d911b5f254e2701246763df336939f",
+      "bytes": 11
+    },
+    {
+      "path": "test_output.txt",
+      "sha256": "751559e965241dc77328ff87998dc954cfb390bf733fa121b1cfc3270610f16c",
+      "bytes": 4969
+    },
+    {
+      "path": "tests/test_mvp.py",
+      "sha256": "51bd0109feacdc21ac2a23ed2307fb523984d894c852312532d897c924365c67",
+      "bytes": 14853
+    },
+    {
+      "path": "trainer.py",
+      "sha256": "dac19ddbe0e5da2dd1d7812cd13e8b59aef3d29836823d210fb551dc71972dd8",
+      "bytes": 5232
+    },
+    {
+      "path": "training/en_seed.json",
+      "sha256": "68a48cda64399395f319c3558f39332c288d47ac96a7a0024f8b53c963ad8060",
+      "bytes": 13099
+    },
+    {
+      "path": "training/es_seed.json",
+      "sha256": "4e2f210f5a31c3c074b468dc75287de2eed0100bbc7075cc551062f2b4467e87",
+      "bytes": 4461
+    }
+  ]
+}

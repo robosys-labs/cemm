@@ -1,0 +1,49 @@
+=== FIXED KERNEL BEFORE DOMAIN KNOWLEDGE ===
+operators: 5
+operator roles: 20
+
+=== AFTER FAMILY KNOWLEDGE IMPORT ===
+operators: 5
+operator roles: 20
+rules: 7
+schema grew: False
+
+USER: Am I married?
+CEMM: I do not have enough evidence to decide. [ unknown ]
+
+USER: My mother in-law arrived today.
+CEMM: I have stored that meaning.
+captured applications:
+  op:relation {'role:object': 'participant:user', 'role:relation': 'rel:mother_in_law', 'role:subject': 'atom:ffd783b70d6f2a2e2a16ff63'}
+  op:event {'role:actor': 'atom:ffd783b70d6f2a2e2a16ff63', 'role:event': 'atom:24c3f3d20fc56a5c8e0875f6', 'role:time': 'time:today', 'role:type': 'event:arrive'}
+
+USER: Am I married?
+CEMM: Yes. [ supported ]
+proof rules: rule:relation-object-state -> rule:subrelation-inheritance -> rule:mil-decompose
+ephemeral derived facts: 17
+inferred mother-in-law referent types: ['concept:female', 'concept:human', 'concept:living_entity']
+
+USER: Is she a human?
+CEMM: Yes.
+USER: Is she a living entity?
+CEMM: Yes.
+
+=== ANTI-BLOAT CHECK AFTER 10 REPEATED INFERENCE QUERIES ===
+persistent counts before: {'applications': 54, 'bindings': 281, 'claims': 54, 'proof_links': 54, 'rules': 7}
+persistent counts after : {'applications': 54, 'bindings': 281, 'claims': 54, 'proof_links': 54, 'rules': 7}
+persistent semantic snapshot unchanged: True
+arrival causal consequence asserted as actual: False
+
+=== SAME EXACT MEANING, DIFFERENT LANGUAGE INTERFACE ===
+USER (es): ¿Estoy casado?
+CEMM: Sí. [ supported ]
+
+=== SAME-NAME ENTITY SAFETY ===
+Alex Kim -> ambiguous: ['entity:alex_a', 'entity:alex_b']
+Alex J. Kim -> entity:alex_a
+Alex Kim after unique discourse grounding -> entity:alex_a
+
+=== COMPRESSION / REUSE ===
+generic rules: ['rule:relation-object-state', 'rule:relation-subject-state', 'rule:relation-subject-type', 'rule:subrelation-inheritance', 'rule:type-transitive']
+family-specific compositional rule: rule:mil-decompose
+causal rules are stored but excluded from actual-world entailment closure
