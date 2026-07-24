@@ -30,10 +30,10 @@ class LanguagePack:
 
 
 class PointerRealizer:
-    def __init__(self, s: Store, pack: LanguagePack):
+    def __init__(self, s: Store, pack: LanguagePack, cache=None):
         self.s = s
         self.pack = pack
-        self.codec = SurfaceCodec.get(pack)
+        self.codec = SurfaceCodec.get(pack, cache)
 
     def _render(self, semantic, ph_info):
         plan, trace = self.codec.realize(semantic)

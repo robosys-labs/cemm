@@ -94,8 +94,15 @@ class SurfaceCodec:
             )
 
     @classmethod
-    def get(cls, pack):
+    def get(cls, pack, cache=None):
         key = (pack.hash, "surface-v4")
+        if cache is not None:
+            existing = cache.get(key)
+            if existing is not None:
+                return existing
+            val = cls(pack)
+            cache.put(key, val)
+            return val
         if key not in MODEL_CACHE:
             MODEL_CACHE[key] = cls(pack)
         return MODEL_CACHE[key]

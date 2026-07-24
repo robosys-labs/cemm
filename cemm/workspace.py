@@ -55,9 +55,13 @@ class WorkspaceNet(nn.Module):
         return self.out(self.enc(self.proj(x))).squeeze(-1)
 
 
-def workspace_model():
+def workspace_model(cache=None):
     k = "workspace-v3"
-    if k in MODEL_CACHE:
+    if cache is not None:
+        existing = cache.get(k)
+        if existing is not None:
+            return existing
+    elif k in MODEL_CACHE:
         return MODEL_CACHE[k]
     torch.manual_seed(7)
     random.seed(7)
@@ -95,16 +99,20 @@ def workspace_model():
         loss.backward()
         opt.step()
     net.eval()
-    MODEL_CACHE[k] = net
+    if cache is not None:
+        cache.put(k, net)
+    else:
+        MODEL_CACHE[k] = net
     return net
 
 
 class Workspace:
-    def __init__(self, s: Store, selfstate: SessionSelf, config: Config | None = None):
+    def __init__(self, s: Store, selfstate: SessionSelf, config: Config | None = None, cache=None):
         self.s = s
         self.selfstate = selfstate
         self.config = config or Config()
         self.top_k = self.config.workspace_top_k
+        self.cache = cache
 
     def build(self, facts, query=None, proof_refs=()):
         context = {self.s.symbol("self.ref")}
@@ -138,7 +146,7 @@ class Workspace:
             )
         if not vecs:
             return [], {"selected": [], "top_k": self.top_k}
-        model = workspace_model()
+        model = workspace_model(self.cache)
         with torch.no_grad():
             scores = model(torch.tensor([vecs], dtype=torch.float32))[0].tolist()
         hard = set(proof_refs)
