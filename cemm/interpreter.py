@@ -246,6 +246,24 @@ class Interpreter:
         self.codec = StructuredSemanticCodec(pack, self.config)
         self.compiler = ExactStructuredCompiler(s)
         self.settler = SemanticSettler(s, self.compiler, self.config)
+        # Autonomous acquisition (weakness #11 fix)
+        # Lazy import to avoid circular dependency: acquisition.py imports
+        # Runtime which imports Interpreter.
+        if self.config.autonomous_acquisition:
+            from cemm.acquisition import AutonomousAcquirer
+            self.acquirer = AutonomousAcquirer(s, self.config)
+        else:
+            self.acquirer = None
+        # Build function-word set from training examples: words that appear in
+        # training inputs as raw text (not placeholders) are syntactic markers,
+        # not content words to be acquired.
+        self._function_words = set()
+        d = pack.data if hasattr(pack, "data") else pack
+        for ex in d.get("structured_examples", []) + d.get("rule_examples", []):
+            for m in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", ex.get("input", "")):
+                word = m.group()
+                if not word.startswith("@"):
+                    self._function_words.add(norm_text(word))
 
     def _localize(self, clause, global_ph):
         order = []
@@ -263,8 +281,107 @@ class Interpreter:
             local = local.replace(l, f"{l}<{kind}>")
         return local, anchors
 
+    def _find_unknown_surfaces(self, delex):
+        """Find content-word tokens in delexicalized text that have no designation.
+
+        Scans the delexicalized text for word tokens that are not placeholders,
+        not function words (syntactic markers from training examples), and not
+        already known via designation_index or reference_forms.
+        """
+        # Gather all known surfaces (normalized)
+        known = set()
+        for r in self.s.db.execute(
+            "SELECT DISTINCT surface FROM designation_index "
+            "WHERE language IN (?, 'und') AND context_ref IS NULL",
+            (self.lang,),
+        ).fetchall():
+            known.add(norm_text(str(r[0])))
+        for r in self.s.db.execute(
+            "SELECT DISTINCT surface FROM reference_forms "
+            "WHERE language IN (?, 'und')",
+            (self.lang,),
+        ).fetchall():
+            known.add(norm_text(str(r[0])))
+        unknown = []
+        seen = set()
+        for m in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", delex):
+            word = m.group()
+            if word.startswith("@"):
+                continue
+            nw = norm_text(word)
+            if nw in seen:
+                continue
+            seen.add(nw)
+            if nw in known or nw in self._function_words:
+                continue
+            unknown.append(word)
+        return unknown
+
+    def _infer_kinds_from_candidates(self, cands, unknown_surfaces):
+        """Infer kinds for unknown surfaces from codec candidates' new-token roles.
+
+        Maps ``new`` tokens in the best candidate to unknown surfaces by order,
+        then uses ``KIND_INFERENCE`` to determine the semantic kind.
+        """
+        kinds = {}
+        if not cands or not unknown_surfaces:
+            return kinds
+        best = cands[0]
+        # Collect (operator, role) for each new token
+        new_token_roles = {}
+        for app in best.packet.get("apps", []):
+            op = app.get("operator")
+            for role, val in app.get("args", {}).items():
+                if isinstance(val, dict) and "new" in val:
+                    new_token_roles[val["new"]] = (op, role)
+        if not new_token_roles:
+            return kinds
+        # Sort new tokens by their numeric suffix
+        def _idx(t):
+            m = re.search(r"\d+", t)
+            return int(m.group()) if m else 0
+        sorted_tokens = sorted(new_token_roles.keys(), key=_idx)
+        for i, token in enumerate(sorted_tokens):
+            if i < len(unknown_surfaces):
+                op, role = new_token_roles[token]
+                kinds[unknown_surfaces[i]] = self.acquirer.infer_kind(op, role)
+        return kinds
+
+    def _autonomous_acquire(self, text, delex, ph):
+        """Acquire unknown surfaces and return updated delexer output.
+
+        Returns ``(delex, ph, uses, acquired)`` where ``acquired`` is True if
+        any surfaces were acquired (warranting a retry).
+        """
+        unknown = self._find_unknown_surfaces(delex)
+        if not unknown:
+            return delex, ph, [], False
+        # Try to infer kinds from codec candidates (best-effort)
+        clauses = [
+            x.strip() for x in re.split(r"(?<=[.!?])\s+", delex.strip()) if x.strip()
+        ]
+        kinds = {}
+        for clause in (clauses or [delex]):
+            local, anchors = self._localize(clause, ph)
+            cands = self.codec.predict(local, anchors, self.s, top_k=10)
+            kinds = self._infer_kinds_from_candidates(cands, unknown)
+            break
+        # Acquire each unknown surface with inferred or default kind
+        for surf in unknown:
+            kind = kinds.get(surf, "concept")
+            self.acquirer.acquire(surf, kind, self.lang)
+        # Re-run delexer with new designations
+        new_delex, new_ph, new_uses = Delexer(
+            self.s, self.lang, self.authority_generation
+        ).run(text)
+        return new_delex, new_ph, new_uses, True
+
     def parse(self, text):
         delex, ph, uses = Delexer(self.s, self.lang, self.authority_generation).run(text)
+        # Autonomous acquisition: if there are unknown surfaces, acquire them
+        # and re-run the delexer before proceeding with prediction.
+        if self.acquirer:
+            delex, ph, uses, acquired = self._autonomous_acquire(text, delex, ph)
         clauses = [
             x.strip() for x in re.split(r"(?<=[.!?])\s+", delex.strip()) if x.strip()
         ]
