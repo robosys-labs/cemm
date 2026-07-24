@@ -19,17 +19,21 @@ class InferenceTimeoutError(TimeoutError):
 
 
 class Inference:
-    def __init__(self, store, config=None, authority_generation=None):
+    def __init__(self, store, config=None, authority_generation=None,
+                 max_rounds=None, max_facts=None):
         self.store = store
         self.config = config or Config()
         self.authority_generation = authority_generation
+        # Optional per-instance overrides (backward-compatible with v4 API).
+        self._max_rounds = max_rounds
+        self._max_facts = max_facts
         self.incomplete = False
         self.incomplete_reason = None
         self._timed_out = False
 
     def closure(self, extra=(), max_rounds=None, max_facts=None):
-        max_rounds = max_rounds or self.config.inference_max_rounds
-        max_facts = max_facts or self.config.inference_max_facts
+        max_rounds = max_rounds or self._max_rounds or self.config.inference_max_rounds
+        max_facts = max_facts or self._max_facts or self.config.inference_max_facts
         self._timed_out = False
         self.incomplete = False
         self.incomplete_reason = None
