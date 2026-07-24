@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cemm"
+version = "1.0.0"
+description = "CEMM v1 — Modular semantic cognition kernel"
+requires-python = ">=3.11"
+dependencies = ["torch>=2.0"]
+
+[project.scripts]
+cemm = "cemm.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cemm*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
