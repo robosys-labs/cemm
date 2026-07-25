@@ -1,174 +1,330 @@
 #!/usr/bin/env python3
-"""CEMM v1 language-pack trainer.
-
-Compiles reviewed text+meaning examples into *structured supervision*.
-It deliberately does NOT serialize a closed semantic program class. Interpretation
-supervision is decomposed into intent, application slots, operators and binding
-sources. Definition supervision is decomposed into antecedent/consequent graph slots.
-Surface realization remains a learned language plan over exact semantic pointers.
-"""
+"""Compile reviewed language evidence into open structured supervision."""
 from __future__ import annotations
-import argparse, hashlib, json, re, unicodedata
+
+import argparse
+import hashlib
+import json
+import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
-MAX_ANCHORS=8
-MAX_APPS=3
-MAX_RULE_IF=3
-MAX_RULE_THEN=3
-SOURCE_CLASSES=["NONE","FRAME_SPEAKER","FRAME_ADDRESSEE"]+[f"A{i}" for i in range(MAX_ANCHORS)]+["NEW_ENTITY_0","NEW_ENTITY_1","NEW_EVENT_0","NEW_EVENT_1"]
-RULE_SOURCES=["NONE"]+[f"A{i}" for i in range(MAX_ANCHORS)]+["V0","V1","V2","E0","E1"]
+MAX_ANCHORS = 8
+MAX_APPS = 3
+MAX_RULE_IF = 3
+MAX_RULE_THEN = 3
+SOURCE_CLASSES = (
+    ["NONE", "FRAME_SPEAKER", "FRAME_ADDRESSEE"]
+    + [f"A{i}" for i in range(MAX_ANCHORS)]
+    + ["Q0", "Q1", "Q2", "NEW_ENTITY_0", "NEW_ENTITY_1", "NEW_EVENT_0", "NEW_EVENT_1"]
+)
+RULE_SOURCES = ["NONE"] + [f"A{i}" for i in range(MAX_ANCHORS)] + ["V0", "V1", "V2", "E0", "E1"]
 
-def canonical(x):return json.dumps(x,sort_keys=True,ensure_ascii=False,separators=(",",":"))
-def norm(s):return unicodedata.normalize("NFKC",str(s))
-def pack_hash(x):return hashlib.sha256(canonical(x).encode()).hexdigest()
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
+def norm(value):
+    return unicodedata.normalize("NFKC", str(value))
+
+
+def pack_hash(value):
+    return hashlib.sha256(canonical(value).encode()).hexdigest()
+
 
 def load_kinds(paths):
-    out={}
-    for p in paths:
-        d=json.loads(Path(p).read_text(encoding="utf-8"))
-        for a in d.get("atoms",[]):out[a["ref"]]=a["kind"]
-    out.setdefault("participant:user","participant");out.setdefault("participant:system","participant")
-    return out
+    output = {}
+    for path in paths:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        for atom in data.get("atoms", []):
+            output[atom["ref"]] = atom["kind"]
+    output.setdefault("participant:user", "participant")
+    output.setdefault("participant:system", "participant")
+    return output
 
-def replace_mentions(surface:str,mentions:list[dict[str,Any]],kind_map:dict[str,str]):
-    refs=[]
-    for m in mentions:
-        if m["ref"] not in refs:refs.append(m["ref"])
-    ref_to_ph={r:f"A{i}" for i,r in enumerate(refs)}
-    spans=[]
-    for m in mentions:
-        q=m["surface"]
-        for hit in re.finditer(r"(?<!\w)"+re.escape(q)+r"(?!\w)",surface,flags=re.I|re.UNICODE):spans.append((hit.start(),hit.end(),len(q),m["ref"]))
-    chosen=[]
-    for x in sorted(spans,key=lambda z:(z[0],-z[2])):
-        if not any(x[0]<y[1] and x[1]>y[0] for y in chosen):chosen.append(x)
-    out=[];p=0
-    for a,b,_,ref in sorted(chosen):
-        out.append(surface[p:a]);kind=next((m.get("kind") for m in mentions if m["ref"]==ref and m.get("kind")),None) or kind_map.get(ref,"atom");out.append(f"@{ref_to_ph[ref]}<{kind}>");p=b
-    out.append(surface[p:])
-    return "".join(out),ref_to_ph
 
-def source_for(v,ref_to_ph,new_map):
-    if isinstance(v,str) and v in ref_to_ph:return ref_to_ph[v]
-    # Training corpora describe input turns. Participant identities are encoded
-    # as frame roles so the language artifact remains valid when speakers swap.
-    if v=="participant:user":return "FRAME_SPEAKER"
-    if v=="participant:system":return "FRAME_ADDRESSEE"
-    if isinstance(v,str) and v in new_map:return new_map[v]
-    if isinstance(v,dict) and "literal" in v:return "NONE"
-    # Unanchored domain constants are intentionally not teachable through the language codec.
+def replace_mentions(surface: str, mentions: list[dict[str, Any]], kind_map: dict[str, str]):
+    refs = []
+    for mention in mentions:
+        if mention["ref"] not in refs:
+            refs.append(mention["ref"])
+    ref_to_placeholder = {ref: f"A{i}" for i, ref in enumerate(refs)}
+    spans = []
+    for mention in mentions:
+        phrase = mention["surface"]
+        for hit in re.finditer(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", surface, flags=re.I | re.UNICODE):
+            spans.append((hit.start(), hit.end(), len(phrase), mention["ref"]))
+    chosen = []
+    for span in sorted(spans, key=lambda item: (item[0], -item[2])):
+        if not any(span[0] < other[1] and span[1] > other[0] for other in chosen):
+            chosen.append(span)
+    output = []
+    position = 0
+    for start, end, _, ref in sorted(chosen):
+        output.append(surface[position:start])
+        kind = next(
+            (item.get("kind") for item in mentions if item["ref"] == ref and item.get("kind")),
+            None,
+        ) or kind_map.get(ref, "atom")
+        output.append(f"@{ref_to_placeholder[ref]}<{kind}>")
+        position = end
+    output.append(surface[position:])
+    return "".join(output), ref_to_placeholder
+
+
+def source_for(value, ref_to_placeholder, new_map):
+    if isinstance(value, str) and value in ref_to_placeholder:
+        return ref_to_placeholder[value]
+    if value == "participant:user":
+        return "FRAME_SPEAKER"
+    if value == "participant:system":
+        return "FRAME_ADDRESSEE"
+    if isinstance(value, str) and value.startswith("?q") and value[2:].isdigit():
+        return f"Q{value[2:]}"
+    if isinstance(value, str) and value in new_map:
+        return new_map[value]
+    if isinstance(value, dict) and "literal" in value:
+        return "NONE"
     return None
 
-def structured_target(semantic,ref_to_ph):
-    new_map={};ec=vc=0
-    for n in semantic.get("new",[]):
-        if n["kind"]=="entity":new_map[n["token"]]=f"NEW_ENTITY_{ec}";ec+=1
-        elif n["kind"]=="event":new_map[n["token"]]=f"NEW_EVENT_{vc}";vc+=1
+
+def structured_target(semantic, ref_to_placeholder):
+    new_map = {}
+    entity_count = event_count = 0
+    for item in semantic.get("new", []):
+        if item["kind"] == "entity":
+            new_map[item["token"]] = f"NEW_ENTITY_{entity_count}"
+            entity_count += 1
+        elif item["kind"] == "event":
+            new_map[item["token"]] = f"NEW_EVENT_{event_count}"
+            event_count += 1
+    force = semantic.get("force")
+    if not force:
+        force = "query" if semantic.get("query") else "description_request" if semantic.get("describe") else "claim"
     if semantic.get("describe"):
-        s=source_for(semantic["describe"],ref_to_ph,new_map)
-        if not s:raise ValueError("describe target must be grounded")
-        return {"intent":"describe","describe_source":s,"apps":[]}
-    query=semantic.get("query")
-    apps=[query] if query else semantic.get("apps",[])
-    intent="query" if query else "assert"
-    out=[]
-    for a in apps[:MAX_APPS]:
-        binds={}
-        for role,v in a.get("args",{}).items():
-            # State dimension may be reconstructed from a grounded value in exact meaning data.
-            if a["operator"]=="op:state" and role=="role:dimension" and source_for(v,ref_to_ph,new_map) is None:continue
-            s=source_for(v,ref_to_ph,new_map)
-            if s:binds[role]=s
-        out.append({"operator":a["operator"],"bindings":binds})
-    return {"intent":intent,"describe_source":"NONE","apps":out}
+        source = source_for(semantic["describe"], ref_to_placeholder, new_map)
+        if not source:
+            raise ValueError("describe target must be grounded")
+        return {"force": force, "intent": "describe", "describe_source": source, "apps": []}
 
-def rule_value(v,ref_to_ph,var_map):
-    if isinstance(v,str) and v in ref_to_ph:return ref_to_ph[v]
-    if isinstance(v,str) and v in var_map:return var_map[v]
+    raw_query = semantic.get("query")
+    if raw_query and raw_query.get("operator"):
+        raw_query = {"restrictions": [raw_query]}
+    applications = raw_query.get("restrictions", []) if raw_query else semantic.get("apps", [])
+    output = []
+    for application in applications[:MAX_APPS]:
+        bindings = {}
+        for role, value in application.get("args", {}).items():
+            source = source_for(value, ref_to_placeholder, new_map)
+            if source:
+                bindings[role] = source
+        output.append({"operator": application["operator"], "bindings": bindings})
+    projection = []
+    for value in (raw_query or {}).get("projection", []):
+        source = source_for(value, ref_to_placeholder, new_map)
+        if source:
+            projection.append(source)
+    legacy_intent = "query" if force == "query" else "describe" if force == "description_request" else "assert"
+    return {
+        "force": force,
+        "intent": legacy_intent,
+        "describe_source": "NONE",
+        "apps": output,
+        "projection": projection,
+    }
+
+
+def rule_value(value, ref_to_placeholder, variable_map):
+    if isinstance(value, str) and value in ref_to_placeholder:
+        return ref_to_placeholder[value]
+    if isinstance(value, str) and value in variable_map:
+        return variable_map[value]
     return None
 
-def rule_target(rule,ref_to_ph):
-    vars_seen=[];exists=[]
-    for side in (rule.get("if",[]),rule.get("then",[])):
-        for a in side:
-            for v in a.get("args",{}).values():
-                if isinstance(v,str) and v.startswith("?") and v not in vars_seen:vars_seen.append(v)
-                if isinstance(v,str) and v.startswith("!") and v not in exists:exists.append(v)
-    vm={v:f"V{i}" for i,v in enumerate(vars_seen[:3])};vm.update({v:f"E{i}" for i,v in enumerate(exists[:2])})
-    def side(xs,maxn):
-        out=[]
-        for a in xs[:maxn]:
-            b={}
-            for r,v in a.get("args",{}).items():
-                q=rule_value(v,ref_to_ph,vm)
-                if not q:raise ValueError(f"rule constant must be mention-grounded or variable: {v}")
-                b[r]=q
-            out.append({"operator":a["operator"],"bindings":b})
-        return out
-    return {"rule_kind":rule.get("rule_kind","definition"),"if":side(rule.get("if",[]),MAX_RULE_IF),"then":side(rule.get("then",[]),MAX_RULE_THEN)}
 
-def realization_refs(x):
-    refs=[]
-    def add(v):
-        if isinstance(v,str) and ":" in v and v not in refs:refs.append(v)
-    if "plan" in x:
-        p=x["plan"]
-        if p.get("value"):add(p["value"])
-        for f in p.get("facts",[]):
-            for _,v in sorted(f.get("args",{}).items()):add(v)
+def rule_target(rule, ref_to_placeholder):
+    variables = []
+    existentials = []
+    for side in (rule.get("if", []), rule.get("then", [])):
+        for application in side:
+            for value in application.get("args", {}).values():
+                if isinstance(value, str) and value.startswith("?") and value not in variables:
+                    variables.append(value)
+                if isinstance(value, str) and value.startswith("!") and value not in existentials:
+                    existentials.append(value)
+    variable_map = {value: f"V{i}" for i, value in enumerate(variables[:3])}
+    variable_map.update({value: f"E{i}" for i, value in enumerate(existentials[:2])})
+
+    def compile_side(items, maximum):
+        output = []
+        for application in items[:maximum]:
+            bindings = {}
+            for role, value in application.get("args", {}).items():
+                source = rule_value(value, ref_to_placeholder, variable_map)
+                if not source:
+                    raise ValueError(f"rule constant must be mention-grounded or variable: {value}")
+                bindings[role] = source
+            output.append({"operator": application["operator"], "bindings": bindings})
+        return output
+
+    return {
+        "rule_kind": rule.get("rule_kind", "definition"),
+        "if": compile_side(rule.get("if", []), MAX_RULE_IF),
+        "then": compile_side(rule.get("then", []), MAX_RULE_THEN),
+    }
+
+
+def realization_refs(example):
+    refs = []
+
+    def add(value):
+        if isinstance(value, str) and ":" in value and value not in refs:
+            refs.append(value)
+
+    if "plan" in example:
+        plan = example["plan"]
+        if plan.get("value"):
+            add(plan["value"])
+        for fact in plan.get("facts", []):
+            for value in fact.get("args", {}).values():
+                add(value)
     else:
-        for _,v in sorted(x["fact"].get("args",{}).items()):add(v)
-    return {r:f"@A{i}" for i,r in enumerate(refs)}
+        for value in example["fact"].get("args", {}).values():
+            add(value)
+    return {ref: f"@A{i}" for i, ref in enumerate(refs)}
 
-def replace_with_map(surface,mentions,refs):
-    spans=[]
-    for m in mentions:
-        if m["ref"] not in refs:continue
-        for hit in re.finditer(r"(?<!\w)"+re.escape(m["surface"])+r"(?!\w)",surface,flags=re.I|re.UNICODE):spans.append((hit.start(),hit.end(),len(m["surface"]),refs[m["ref"]]))
-    chosen=[]
-    for x in sorted(spans,key=lambda z:(z[0],-z[2])):
-        if not any(x[0]<y[1] and x[1]>y[0] for y in chosen):chosen.append(x)
-    out=[];p=0
-    for a,b,_,ph in sorted(chosen):out += [surface[p:a],ph];p=b
-    out.append(surface[p:]);return "".join(out)
 
-def val(v,refs):
-    if isinstance(v,str) and v in refs:return refs[v]
-    if isinstance(v,dict) and "literal" in v:return f"lit:{v['literal']['type']}:{v['literal']['value']}"
-    return str(v)
-def serialize_fact(f,refs):
-    parts=["FACT",f.get("stance","support"),f["operator"]]
-    for r,v in sorted(f.get("args",{}).items()):parts += [r,val(v,refs)]
+def replace_with_map(surface, mentions, refs):
+    spans = []
+    for mention in mentions:
+        if mention["ref"] not in refs:
+            continue
+        for hit in re.finditer(r"(?<!\w)" + re.escape(mention["surface"]) + r"(?!\w)", surface, flags=re.I | re.UNICODE):
+            spans.append((hit.start(), hit.end(), len(mention["surface"]), refs[mention["ref"]]))
+    chosen = []
+    for span in sorted(spans, key=lambda item: (item[0], -item[2])):
+        if not any(span[0] < other[1] and span[1] > other[0] for other in chosen):
+            chosen.append(span)
+    output = []
+    position = 0
+    for start, end, _, placeholder in sorted(chosen):
+        output += [surface[position:start], placeholder]
+        position = end
+    output.append(surface[position:])
+    return "".join(output)
+
+
+def _value(value, refs):
+    if isinstance(value, str) and value in refs:
+        return refs[value]
+    if isinstance(value, dict) and "literal" in value:
+        return f"lit:{value['literal']['type']}:{value['literal']['value']}"
+    return str(value)
+
+
+def serialize_fact(fact, refs):
+    parts = ["FACT", fact.get("stance", "support"), fact["operator"]]
+    for role, value in sorted(fact.get("args", {}).items()):
+        parts += [role, _value(value, refs)]
     return " ".join(parts)
-def serialize_plan(plan,refs):
-    parts=["PLAN",plan["goal"]]
-    if plan.get("value"):parts += ["VALUE",val(plan["value"],refs)]
-    for f in plan.get("facts",[]):parts += ["|",serialize_fact(f,refs)]
+
+
+def serialize_plan(plan, refs):
+    parts = ["PLAN", plan["goal"]]
+    if plan.get("value"):
+        parts += ["VALUE", _value(plan["value"], refs)]
+    for fact in plan.get("facts", []):
+        parts += ["|", serialize_fact(fact, refs)]
     return " ".join(parts)
 
-def compile_corpus(corpus:Path,knowledge_paths:list[Path]):
-    d=json.loads(corpus.read_text(encoding="utf-8"));kinds=load_kinds(knowledge_paths);lang=d["language"]
-    out={"version":4,"language":lang,"source_classes":SOURCE_CLASSES,"rule_sources":RULE_SOURCES,"operators":[],"roles":[],"structured_examples":[],"rule_examples":[],"realization_examples":[],"grammar_tokens":[]}
-    for i,x in enumerate(d.get("interpretation_examples",[])):
-        inp,refs=replace_mentions(x["surface"],x.get("mentions",[]),kinds);target=structured_target(x["semantic"],refs)
-        out["structured_examples"].append({"example_ref":x.get("example_ref",f"{lang}:s:{i}"),"input":inp,"target":target,"weight":float(x.get("weight",1))})
-    for i,x in enumerate(d.get("definition_examples",[])):
-        inp,refs=replace_mentions(x["surface"],x.get("mentions",[]),kinds);target=rule_target(x["rule"],refs)
-        out["rule_examples"].append({"example_ref":x.get("example_ref",f"{lang}:d:{i}"),"input":inp,"target":target,"weight":float(x.get("weight",1))})
-    for i,x in enumerate(d.get("realization_examples",[])):
-        refs=realization_refs(x);delex=replace_with_map(x["surface"],x.get("mentions",[]),refs);sem=serialize_plan(x["plan"],refs) if "plan" in x else serialize_fact(x["fact"],refs)
-        out["realization_examples"].append({"example_ref":x.get("example_ref",f"{lang}:r:{i}"),"semantic":sem,"surface_plan":delex,"weight":float(x.get("weight",1))})
-        out["grammar_tokens"].extend(t for t in re.findall(r"@[A-Z]\d+|[\wÀ-ÿ'’-]+|[^\w\s]",delex,re.UNICODE) if not t.startswith("@A"))
-    ops=set();roles=set()
-    for ex in out["structured_examples"]:
-        for a in ex["target"].get("apps",[]):ops.add(a["operator"]);roles.update(a.get("bindings",{}))
-    for ex in out["rule_examples"]:
-        for side in ("if","then"):
-            for a in ex["target"].get(side,[]):ops.add(a["operator"]);roles.update(a.get("bindings",{}))
-    out["operators"]=sorted(ops);out["roles"]=sorted(roles)
-    out["grammar_tokens"]=sorted(set(t.casefold() for t in out["grammar_tokens"]));out["pack_hash"]=pack_hash({k:v for k,v in out.items() if k!="pack_hash"});return out
+
+def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
+    source = json.loads(corpus.read_text(encoding="utf-8"))
+    kinds = load_kinds(knowledge_paths)
+    language = source["language"]
+    output = {
+        "version": 5,
+        "language": language,
+        "forces": sorted(set(source.get("forces", ["claim", "query", "description_request", "directive", "correction", "retraction", "acknowledgment"]))),
+        "source_classes": SOURCE_CLASSES,
+        "rule_sources": RULE_SOURCES,
+        "operators": [],
+        "roles": [],
+        "structured_examples": [],
+        "rule_examples": [],
+        "realization_examples": [],
+        "grammar_tokens": [],
+        "function_forms": sorted(set(item.casefold() for item in source.get("function_forms", []))),
+    }
+    for index, example in enumerate(source.get("interpretation_examples", [])):
+        input_text, refs = replace_mentions(example["surface"], example.get("mentions", []), kinds)
+        output["structured_examples"].append(
+            {
+                "example_ref": example.get("example_ref", f"{language}:s:{index}"),
+                "input": input_text,
+                "target": structured_target(example["semantic"], refs),
+                "weight": float(example.get("weight", 1)),
+            }
+        )
+    for index, example in enumerate(source.get("definition_examples", [])):
+        input_text, refs = replace_mentions(example["surface"], example.get("mentions", []), kinds)
+        output["rule_examples"].append(
+            {
+                "example_ref": example.get("example_ref", f"{language}:d:{index}"),
+                "input": input_text,
+                "target": rule_target(example["rule"], refs),
+                "weight": float(example.get("weight", 1)),
+            }
+        )
+    for index, example in enumerate(source.get("realization_examples", [])):
+        refs = realization_refs(example)
+        delex = replace_with_map(example["surface"], example.get("mentions", []), refs)
+        semantic = serialize_plan(example["plan"], refs) if "plan" in example else serialize_fact(example["fact"], refs)
+        output["realization_examples"].append(
+            {
+                "example_ref": example.get("example_ref", f"{language}:r:{index}"),
+                "semantic": semantic,
+                "surface_plan": delex,
+                "weight": float(example.get("weight", 1)),
+            }
+        )
+        output["grammar_tokens"].extend(
+            token
+            for token in re.findall(r"@[A-Z]\d+|[\wÀ-ÿ'’-]+|[^\w\s]", delex, re.UNICODE)
+            if not token.startswith("@A")
+        )
+    operators = set()
+    roles = set()
+    for example in output["structured_examples"]:
+        for application in example["target"].get("apps", []):
+            operators.add(application["operator"])
+            roles.update(application.get("bindings", {}))
+    for example in output["rule_examples"]:
+        for side in ("if", "then"):
+            for application in example["target"].get(side, []):
+                operators.add(application["operator"])
+                roles.update(application.get("bindings", {}))
+    if "op:state" in operators:
+        roles.add("role:dimension")
+    output["operators"] = sorted(operators)
+    output["roles"] = sorted(roles)
+    output["grammar_tokens"] = sorted(set(token.casefold() for token in output["grammar_tokens"]))
+    output["pack_hash"] = pack_hash({key: value for key, value in output.items() if key != "pack_hash"})
+    return output
+
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument("corpus");p.add_argument("output");p.add_argument("--knowledge",action="append",default=[]);a=p.parse_args();pack=compile_corpus(Path(a.corpus),[Path(x) for x in a.knowledge]);Path(a.output).write_text(json.dumps(pack,ensure_ascii=False,indent=2),encoding="utf-8");print(pack["pack_hash"])
-if __name__=="__main__":main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("corpus")
+    parser.add_argument("output")
+    parser.add_argument("--knowledge", action="append", default=[])
+    args = parser.parse_args()
+    pack = compile_corpus(Path(args.corpus), [Path(item) for item in args.knowledge])
+    Path(args.output).write_text(json.dumps(pack, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(pack["pack_hash"])
+
+
+if __name__ == "__main__":
+    main()

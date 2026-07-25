@@ -139,6 +139,8 @@ married state.
 |------------------|-----------------------------------------------------------------------|
 | `constants.py`   | Database DDL, tokenizer regex, shared constants.                      |
 | `config.py`      | Configurable thresholds for the runtime.                              |
+| `cognition.py`   | Cycle-local interpretation, discourse, query, epistemic and frontier artifacts. |
+| `epistemics.py`  | Claim-occurrence placement and explicit admission policy.                    |
 | `model.py`       | Core model types and helper functions.                                |
 | `context.py`     | Session/cycle participant, temporal, and workspace grounding artifacts.|
 | `store.py`       | Semantic meaning database; authority/world atom separation.           |
@@ -147,7 +149,7 @@ married state.
 | `compiler.py`    | Exact structured compiler (compile/clamp candidates).                 |
 | `settler.py`     | Semantic settler (recurrent candidate settling).                      |
 | `workspace.py`   | Bounded active semantic workspace.                                    |
-| `selfstate.py`   | Session self-state and state transitions.                             |
+| `selfstate.py`   | Compatibility facade; runtime cognition no longer emits semantic self-state facts.                             |
 | `inference.py`   | Forward-chaining inference engine.                                    |
 | `rules.py`       | Rule learner (provisional→promoted lifecycle).                        |
 | `interpreter.py` | Interpreter, SurfaceCodec, and Delexer.                               |
@@ -159,6 +161,8 @@ married state.
 | `cli.py`         | Command-line interface (8 subcommands).                               |
 
 ## Current status
+
+Phase 5–9 foundation: scoped cognition/frontiers, first-class state dimensions, QueryCSIR bindings, discourse force, and explicit epistemic admission are implemented under active verification. Causal transitions, complete canonical orchestration, derived self-readiness and target-aware Response CSIR remain later phases.
 
 Architecture proof, under active verification. The executable test suite—not a
 hard-coded README pass count—is the acceptance source of truth. Bundled

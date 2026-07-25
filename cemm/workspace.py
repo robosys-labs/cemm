@@ -1,17 +1,7 @@
-"""Bounded semantic workspace for CEMM v1.
+"""Bounded active semantic workspace for CEMM v1.
 
-Ported from v4 MVP (cemm_mvp.py lines 517-556).
-
-The Workspace selects a bounded set of salient facts (plus session self-state
-slots) to keep in attention for the current turn. A small transformer ranks
-candidate facts by overlap with the query, self-reference, confidence,
-derived-ness, discourse salience, and recency.
-
-Weakness #5 (synthetic training): The workspace ranking model is trained on
-synthetically generated feature vectors with hand-tuned weights. This is
-sufficient for the MVP but production deployments should retrain on real
-semantic attention patterns gathered from actual discourse before relying on
-the ranking for user-facing behavior.
+Runtime/cognitive bookkeeping is supplied as typed cycle artifacts and is never
+injected into world semantics as synthetic self-state facts.
 """
 from __future__ import annotations
 
@@ -19,9 +9,7 @@ import random
 from dataclasses import dataclass
 
 from cemm.config import Config
-from cemm.store import Store
-from cemm.selfstate import SessionSelf
-from cemm.model import norm_text, toks, stable, canonical, Fact
+from cemm.model import Fact
 
 try:
     import torch
@@ -30,8 +18,6 @@ except Exception as exc:
     raise SystemExit("pip install torch") from exc
 
 torch.set_num_threads(1)
-
-# Module-level cache for the workspace ranking net (mirrors v4 MODEL_CACHE).
 MODEL_CACHE: dict[str, "WorkspaceNet"] = {}
 
 
@@ -56,120 +42,131 @@ class WorkspaceNet(nn.Module):
 
 
 def workspace_model(cache=None):
-    k = "workspace-v3"
+    key = "workspace-v4-no-global-self-slots"
     if cache is not None:
-        existing = cache.get(k)
+        existing = cache.get(key)
         if existing is not None:
             return existing
-    elif k in MODEL_CACHE:
-        return MODEL_CACHE[k]
+    elif key in MODEL_CACHE:
+        return MODEL_CACHE[key]
     torch.manual_seed(7)
     random.seed(7)
     net = WorkspaceNet()
     opt = torch.optim.AdamW(net.parameters(), lr=0.01)
-    X = []
-    Y = []
+    x_train = []
+    y_train = []
     for _ in range(96):
-        seq = []
+        sequence = []
         target = []
         for _j in range(8):
             overlap = random.random()
-            selfish = random.choice([0.0, 1.0])
-            conf = random.uniform(0.5, 1)
+            self_relevance = random.choice([0.0, 1.0])
+            confidence = random.uniform(0.5, 1)
             derived = random.choice([0.0, 1.0])
-            sal = random.random()
-            recent = random.random()
-            seq.append([overlap, selfish, conf, derived, sal, recent])
+            salience = random.random()
+            recency = random.random()
+            sequence.append([overlap, self_relevance, confidence, derived, salience, recency])
             target.append(
                 2.4 * overlap
-                + 0.7 * selfish
-                + 0.35 * conf
-                + 0.25 * sal
-                + 0.15 * recent
+                + 0.7 * self_relevance
+                + 0.35 * confidence
+                + 0.25 * salience
+                + 0.15 * recency
                 - 0.08 * derived
             )
-        X.append(seq)
-        Y.append(target)
-    X = torch.tensor(X, dtype=torch.float32)
-    Y = torch.tensor(Y, dtype=torch.float32)
+        x_train.append(sequence)
+        y_train.append(target)
+    x_tensor = torch.tensor(x_train, dtype=torch.float32)
+    y_tensor = torch.tensor(y_train, dtype=torch.float32)
     for _ in range(55):
         opt.zero_grad()
-        q = net(X)
-        loss = nn.functional.mse_loss(q, Y)
+        loss = nn.functional.mse_loss(net(x_tensor), y_tensor)
         loss.backward()
         opt.step()
     net.eval()
     if cache is not None:
-        cache.put(k, net)
+        cache.put(key, net)
     else:
-        MODEL_CACHE[k] = net
+        MODEL_CACHE[key] = net
     return net
 
 
 class Workspace:
-    def __init__(self, s: Store, selfstate: SessionSelf, config: Config | None = None, cache=None):
-        self.s = s
-        self.selfstate = selfstate
+    def __init__(self, store, config: Config | None = None, cache=None):
+        self.s = store
         self.config = config or Config()
         self.top_k = self.config.workspace_top_k
         self.cache = cache
 
-    def build(self, facts, query=None, proof_refs=()):
-        context = {self.s.symbol("self.ref")}
-        if query:
-            for v in query.get("args", {}).values():
-                if isinstance(v, str):
-                    context.add(v)
+    @staticmethod
+    def _query_values(query):
+        if not query:
+            return []
+        if query.get("operator"):
+            restrictions = [query]
+        else:
+            restrictions = query.get("restrictions", ())
+        return [
+            value
+            for restriction in restrictions
+            for value in restriction.get("args", {}).values()
+            if isinstance(value, str) and not value.startswith("?")
+        ]
+
+    def build(self, facts, query=None, proof_refs=(), required_facts=(), cycle_turn=0):
+        context = {self.s.symbol("self.ref"), *self._query_values(query)}
         discourse = {
-            r["atom_ref"]: (float(r["salience"]), int(r["last_turn"]))
-            for r in self.s.db.execute("SELECT * FROM discourse_entities")
+            row["atom_ref"]: (float(row["salience"]), int(row["last_turn"]))
+            for row in self.s.db.execute("SELECT * FROM discourse_entities")
         }
-        allfacts = list(facts) + self.selfstate.slots()
-        vecs = []
-        for f in allfacts:
-            refs = {f.operator} | {
-                str(v) for v in f.args.values() if isinstance(v, str)
+        all_facts = list(facts)
+        existing = {fact.ref for fact in all_facts}
+        all_facts.extend(fact for fact in required_facts if fact.ref not in existing)
+        vectors = []
+        for fact in all_facts:
+            refs = {fact.operator} | {
+                str(value) for value in fact.args.values() if isinstance(value, str)
             }
             overlap = len(refs & context) / max(1, len(context))
-            selfish = float(self.s.symbol("self.ref") in refs)
-            sal = max([discourse.get(r, (0, 0))[0] for r in refs] or [0])
-            recent = max([discourse.get(r, (0, 0))[1] for r in refs] or [0])
-            vecs.append(
+            self_relevance = float(self.s.symbol("self.ref") in refs)
+            salience = max([discourse.get(ref, (0, 0))[0] for ref in refs] or [0])
+            last_turn = max([discourse.get(ref, (0, 0))[1] for ref in refs] or [0])
+            vectors.append(
                 [
                     overlap,
-                    selfish,
-                    float(f.confidence),
-                    float(f.derived),
-                    min(1, sal / 3),
-                    1 / (1 + max(0, self.selfstate.turn - recent)),
+                    self_relevance,
+                    float(fact.confidence),
+                    float(fact.derived),
+                    min(1, salience / 3),
+                    1 / (1 + max(0, cycle_turn - last_turn)),
                 ]
             )
-        if not vecs:
+        if not vectors:
             return [], {"selected": [], "top_k": self.top_k}
         model = workspace_model(self.cache)
         with torch.no_grad():
-            scores = model(torch.tensor([vecs], dtype=torch.float32))[0].tolist()
-        hard = set(proof_refs)
+            scores = model(torch.tensor([vectors], dtype=torch.float32))[0].tolist()
+        hard = set(proof_refs) | {fact.ref for fact in required_facts}
         ranked = sorted(
-            zip(allfacts, scores, vecs),
-            key=lambda x: (x[0].ref not in hard, -x[1], x[0].ref),
+            zip(all_facts, scores, vectors),
+            key=lambda item: (item[0].ref not in hard, -item[1], item[0].ref),
         )
         selected = []
-        for f, score, v in ranked:
-            if len(selected) >= self.top_k and f.ref not in hard:
+        for fact, score, vector in ranked:
+            if len(selected) >= self.top_k and fact.ref not in hard:
                 continue
             selected.append(
                 WorkspaceSlot(
-                    f.ref,
-                    f,
+                    fact.ref,
+                    fact,
                     float(score),
                     {
-                        "overlap": v[0],
-                        "self": v[1],
-                        "confidence": v[2],
-                        "derived": v[3],
-                        "salience": v[4],
-                        "recency": v[5],
+                        "overlap": vector[0],
+                        "self": vector[1],
+                        "confidence": vector[2],
+                        "derived": vector[3],
+                        "salience": vector[4],
+                        "recency": vector[5],
                     },
                 )
             )
@@ -177,11 +174,12 @@ class Workspace:
             "top_k": self.top_k,
             "selected": [
                 {
-                    "ref": x.ref,
-                    "operator": x.fact.operator,
-                    "score": round(x.score, 4),
-                    "features": x.features,
+                    "ref": item.ref,
+                    "operator": item.fact.operator,
+                    "score": round(item.score, 4),
+                    "features": item.features,
+                    "hard_required": item.ref in hard,
                 }
-                for x in selected
+                for item in selected
             ],
         }

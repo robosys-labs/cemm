@@ -76,7 +76,7 @@ class Phase1To4Tests(unittest.TestCase):
             self.assertEqual(news, [])
             self.assertEqual(trace["reason"], "unknown_form")
             self.assertTrue(trace["unknown_form_evidence"])
-            self.assertGreater(len(trace["semantic_kind_candidate_set"]), 1)
+            self.assertGreater(len(trace["unknown_form_evidence"][0]["semantic_kind_candidates"]), 1)
             self.assertNotIn("selected_kind", trace["unknown_form_evidence"][0])
             self.assertEqual(before, s.snapshot_hash())
 

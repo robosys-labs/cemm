@@ -1,7 +1,4 @@
-"""Constants for CEMM v1: database DDL and tokenizer regex.
-
-Ported from v4 MVP kernel (cemm_mvp.py lines 27-48).
-"""
+"""Database DDL and tokenizer constants for CEMM v1."""
 import re
 
 DDL = r"""
@@ -12,6 +9,10 @@ CREATE TABLE IF NOT EXISTS applications(app_ref TEXT PRIMARY KEY,operator_ref TE
 CREATE TABLE IF NOT EXISTS bindings(binding_ref TEXT PRIMARY KEY,app_ref TEXT NOT NULL,role_ref TEXT NOT NULL,filler_kind TEXT NOT NULL CHECK(filler_kind IN('atom','literal','app')),filler_value TEXT NOT NULL,ordinal INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS observations(observation_ref TEXT PRIMARY KEY,surface TEXT NOT NULL,modality TEXT NOT NULL,language TEXT NOT NULL,source_ref TEXT NOT NULL,observed_at TEXT NOT NULL,packet TEXT NOT NULL,confidence REAL NOT NULL,generation INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS claims(claim_ref TEXT PRIMARY KEY,app_ref TEXT NOT NULL,observation_ref TEXT NOT NULL,stance TEXT NOT NULL CHECK(stance IN('support','deny')),confidence REAL NOT NULL,authority_status TEXT NOT NULL,valid_from TEXT,valid_to TEXT,generation INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS claim_occurrences(occurrence_ref TEXT PRIMARY KEY,observation_ref TEXT NOT NULL,act_ref TEXT NOT NULL,force TEXT NOT NULL,speaker_ref TEXT NOT NULL,addressee_ref TEXT NOT NULL,content TEXT NOT NULL,context_ref TEXT,modality TEXT NOT NULL,created_at TEXT NOT NULL,generation INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS epistemic_placements(placement_ref TEXT PRIMARY KEY,occurrence_ref TEXT NOT NULL,admission_class TEXT NOT NULL,admitted INTEGER NOT NULL,reason TEXT NOT NULL,context_ref TEXT,target_refs TEXT NOT NULL,created_at TEXT NOT NULL,generation INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_claim_occurrence_observation ON claim_occurrences(observation_ref);
+CREATE INDEX IF NOT EXISTS idx_epistemic_occurrence ON epistemic_placements(occurrence_ref);
 CREATE TABLE IF NOT EXISTS proof_links(proof_ref TEXT PRIMARY KEY,subject_ref TEXT NOT NULL,observation_ref TEXT NOT NULL,operation TEXT NOT NULL,parent_refs TEXT NOT NULL DEFAULT '[]');
 CREATE TABLE IF NOT EXISTS rules(rule_ref TEXT PRIMARY KEY,rule_kind TEXT NOT NULL CHECK(rule_kind IN('definition','entailment','causal','default')),antecedent TEXT NOT NULL,consequent TEXT NOT NULL,confidence REAL NOT NULL DEFAULT 1,authority_status TEXT NOT NULL DEFAULT 'reviewed',generation INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS rule_candidates(candidate_ref TEXT PRIMARY KEY,rule_kind TEXT NOT NULL,antecedent TEXT NOT NULL,consequent TEXT NOT NULL,evidence_count INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'provisional',confidence REAL NOT NULL DEFAULT 0,first_generation INTEGER NOT NULL,last_generation INTEGER NOT NULL);

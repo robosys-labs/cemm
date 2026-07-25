@@ -1,7 +1,7 @@
 """Session and cycle-local grounding artifacts for CEMM v1.
 
-These objects carry transport/session facts into cognition without turning
-language forms into participant identity or persisting transient cycle state.
+Transport/session facts orient cognition without becoming lexical identity or
+ordinary semantic self/world state.
 """
 from __future__ import annotations
 
@@ -13,8 +13,6 @@ from cemm.model import now, stable
 
 @dataclass(frozen=True)
 class ParticipantFrame:
-    """Transport-grounded participant roles for one semantic pass."""
-
     self_ref: str
     speaker_ref: str
     addressee_ref: str
@@ -24,11 +22,6 @@ class ParticipantFrame:
     channel: str = "text"
 
     def resolve_requirement(self, features: Mapping[str, Any]) -> str | None:
-        """Resolve language participant requirements against this frame.
-
-        Language contributes person/role requirements.  It never creates the
-        identity of speaker/addressee by itself.
-        """
         role = features.get("participant_role")
         person = features.get("person")
         if role == "speaker" or (not role and person == "first"):
@@ -53,8 +46,6 @@ class ParticipantFrame:
 
 @dataclass(frozen=True)
 class SessionContext:
-    """Stable session/transport bindings; no semantic authority is created here."""
-
     session_ref: str
     conversation_ref: str
     self_ref: str
@@ -124,22 +115,38 @@ class TemporalFrame:
 
 @dataclass(frozen=True)
 class SelfRuntimeView:
-    """Cycle-local runtime facts, deliberately not ordinary semantic self-state."""
+    """Cycle-local operational view, not a vocabulary-dependent self label."""
 
     self_ref: str
     authority_generation: int
     read_generation: int
     process_available: bool = True
+    adapter_support: float = 1.0
+    semantic_runtime_support: float = 1.0
+    critical_blockers: tuple[str, ...] = ()
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "self_ref": self.self_ref,
+            "authority_generation": self.authority_generation,
+            "read_generation": self.read_generation,
+            "process_available": self.process_available,
+            "adapter_support": self.adapter_support,
+            "semantic_runtime_support": self.semantic_runtime_support,
+            "critical_blockers": list(self.critical_blockers),
+        }
 
 
 @dataclass
 class CycleWorkspace:
-    """Transient artifact owner for one cycle/pass."""
-
     artifacts: dict[str, Any] = field(default_factory=dict)
 
     def put(self, name: str, value: Any) -> Any:
         self.artifacts[name] = value
+        return value
+
+    def append(self, name: str, value: Any) -> Any:
+        self.artifacts.setdefault(name, []).append(value)
         return value
 
     def get(self, name: str, default: Any = None) -> Any:
@@ -165,4 +172,5 @@ class CycleState:
             "authority_generation": self.authority_generation,
             "read_generation": self.read_generation,
             "participant_frame": self.participant_frame.as_dict(),
+            "self_runtime_view": self.self_runtime_view.as_dict(),
         }

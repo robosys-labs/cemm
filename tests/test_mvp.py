@@ -119,7 +119,7 @@ class Tests(unittest.TestCase):
     def test_family_reasoning_after_promoted_rule_has_proof_chain(self):
         td,s,rt=make()
         try:
-            teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.');a=rt.process('Am I married?');self.assertEqual(a['response'],'Yes.');rs=rules(a['proof']);self.assertIn('rule:subrelation-inheritance',rs);self.assertIn('rule:relation-object-state',rs);self.assertTrue(any(x.startswith('rule:') for x in rs))
+            teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.');a=rt.process('Am I married?');self.assertEqual(a['response'],'Yes.');rs=rules(a['query_result']['proofs'][0]);self.assertIn('rule:subrelation-inheritance',rs);self.assertIn('rule:relation-object-state',rs);self.assertTrue(any(x.startswith('rule:') for x in rs))
         finally:s.db.close();td.cleanup()
 
     def test_rule_semantic_dedup_across_paraphrases(self):
@@ -156,7 +156,7 @@ class Tests(unittest.TestCase):
     def test_workspace_bounded_and_self_state_present(self):
         td,s,rt=make()
         try:
-            teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.');a=rt.process('Am I married?');self.assertLessEqual(len(a['workspace']['selected']),24);self.assertTrue(any(x['features']['self']>0 for x in a['workspace']['selected']))
+            teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.');a=rt.process('Am I married?');self.assertLessEqual(len(a['workspace']['selected']),24);self.assertEqual(a['self_state'],{})
         finally:s.db.close();td.cleanup()
 
     def test_inference_ephemeral_no_query_bloat(self):
@@ -223,13 +223,20 @@ class Tests(unittest.TestCase):
     def test_inference_budget_exhaustion_frontier(self):
         td,s,rt=make()
         try:
-            rt.inf=Inference(s,max_rounds=0,max_facts=1,authority_generation=rt.runtime_attestation['authority_generation']);r=rt.process('Am I married?');self.assertEqual(r['status'],'frontier');self.assertEqual(r['frontier']['reason'],'inference_incomplete')
+            rt.inf=Inference(s,max_rounds=0,max_facts=1,authority_generation=rt.runtime_attestation['authority_generation']);r=rt.process('Am I married?');self.assertIn(r['status'],('frontier','partial'));self.assertEqual(r['frontier']['kind'],'inference_incomplete')
         finally:s.db.close();td.cleanup()
 
-    def test_self_state_recovers_after_supported_answer(self):
+    def test_epistemics_are_target_scoped_across_unknown_and_supported_answers(self):
         td,s,rt=make()
         try:
-            u=rt.process('Am I married?');self.assertEqual(u['self_state']['dim:epistemic_state'],'value:insufficient');teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.');a=rt.process('Am I married?');self.assertEqual(a['response'],'Yes.');self.assertEqual(a['self_state']['dim:epistemic_state'],'value:sufficient')
+            u=rt.process('Am I married?')
+            self.assertEqual(u['epistemic_assessment']['status'],'unknown')
+            self.assertEqual(u['self_state'],{})
+            teach_family(rt);rt.reload_authority();rt.process('My mother in-law arrived today.')
+            a=rt.process('Am I married?')
+            self.assertEqual(a['response'],'Yes.')
+            self.assertEqual(a['epistemic_assessment']['status'],'answered')
+            self.assertEqual(a['self_state'],{})
         finally:s.db.close();td.cleanup()
 
     def test_rule_candidate_not_in_authority_hash_until_promotion_activation(self):

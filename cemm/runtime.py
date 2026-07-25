@@ -1,45 +1,38 @@
-"""Runtime orchestrator for CEMM v1.
-
-Ported from v4 MVP (cemm_mvp.py lines 614-705).
-
-The Runtime wires together every subsystem (interpreter, inference, workspace,
-response planner, pointer realizer, rule learner) and exposes a single
-``process`` entry point that turns natural language into learned knowledge,
-answered queries, or frontier reports.
-
-Weakness #10 fix: v4 used an unbounded global ``MODEL_CACHE = {}`` that grew
-without limit for the lifetime of the process.  This module replaces it with a
-bounded LRU cache (``BoundedModelCache``) that is owned by the Runtime instance
-and shared with the subsystems that need it (surface codec, workspace net).
-"""
+"""CEMM v1 runtime orchestrator for grounded cycles, queries and admission."""
 from __future__ import annotations
 
 import hashlib
 import json
 from collections import OrderedDict
 
+from cemm.cognition import (
+    FORCE_ACKNOWLEDGMENT,
+    FORCE_CLAIM,
+    FORCE_CORRECTION,
+    FORCE_DESCRIPTION,
+    FORCE_DIRECTIVE,
+    FORCE_QUERY,
+    FORCE_RETRACTION,
+    FrontierGraph,
+    InterpretationAssessment,
+    LearningFrontier,
+    ScopedEpistemicAssessment,
+    build_discourse_act,
+)
 from cemm.config import Config
-from cemm.store import Store
-from cemm.interpreter import Interpreter
+from cemm.context import ContextStack, CycleState, SelfRuntimeView, SessionContext, TemporalFrame
+from cemm.epistemics import EpistemicPolicy
 from cemm.inference import Inference
-from cemm.workspace import Workspace
-from cemm.selfstate import SessionSelf
-from cemm.context import SessionContext, CycleState, ContextStack, TemporalFrame, SelfRuntimeView
-from cemm.state import StateProjector
+from cemm.interpreter import Interpreter
+from cemm.model import AmbiguousReferent, canonical, now, stable
+from cemm.realizer import LanguagePack, PointerRealizer
 from cemm.response import ResponsePlanner
-from cemm.realizer import PointerRealizer, LanguagePack
 from cemm.rules import RuleLearner
-from cemm.model import Fact, stable, canonical, now, AmbiguousReferent
+from cemm.state import StateProjector
+from cemm.workspace import Workspace
 
 
 class BoundedModelCache:
-    """LRU cache for neural models.  Bounded by ``config.model_cache_limit``.
-
-    Uses :class:`collections.OrderedDict` so that the least-recently-used entry
-    is evicted when the cache exceeds its limit.  This replaces v4's unbounded
-    global ``MODEL_CACHE`` dict (weakness #10).
-    """
-
     def __init__(self, limit: int = 8):
         self._cache: OrderedDict = OrderedDict()
         self._limit = limit
@@ -56,41 +49,47 @@ class BoundedModelCache:
         else:
             self._cache[key] = value
             if len(self._cache) > self._limit:
-                self._cache.popitem(last=False)  # evict oldest
+                self._cache.popitem(last=False)
 
     def __len__(self):
         return len(self._cache)
 
 
 class Runtime:
-    """Top-level orchestrator that ties all CEMM subsystems together."""
-
-    def __init__(self, s: Store, pack_path: str, config: Config | None = None, session_context: SessionContext | None = None):
-        self.s = s
+    def __init__(self, store, pack_path: str, config: Config | None = None, session_context: SessionContext | None = None):
+        self.s = store
         self.config = config or Config()
         self.pack = LanguagePack(pack_path)
         self.lang = self.pack.language
         self.cache = BoundedModelCache(self.config.model_cache_limit)
-        self.session = session_context or SessionContext.default(s.symbol("self.ref"))
+        self.session = session_context or SessionContext.default(store.symbol("self.ref"))
         self._cycle_counter = 0
-        self.selfstate = SessionSelf(s)
-        self.r = PointerRealizer(s, self.pack, self.cache)
-        self.planner = ResponsePlanner(s)
+        self.r = PointerRealizer(store, self.pack, self.cache)
+        self.planner = ResponsePlanner(store)
+        self.epistemic_policy = EpistemicPolicy(store)
         self.runtime_attestation = {
-            "authority_generation": s.generation,
-            "authority_generation_hash": s.authority_hash(s.generation),
+            "authority_generation": store.generation,
+            "authority_generation_hash": store.authority_hash(store.generation),
             "language_pack_hash": self.pack.hash,
-            "read_generation": s.generation,
+            "read_generation": store.generation,
         }
         self._bind_authority()
 
     def _bind_authority(self):
-        g = int(self.runtime_attestation["authority_generation"])
-        self.i = Interpreter(self.s, self.pack, g, self.config)
+        generation = int(self.runtime_attestation["authority_generation"])
+        self.i = Interpreter(self.s, self.pack, generation, self.config)
         self.rulelearner = RuleLearner(self.s, self.i, config=self.config)
-        self.inf = Inference(self.s, self.config, authority_generation=g)
-        self.ws = Workspace(self.s, self.selfstate, self.config, self.cache)
-        self.state_projector = StateProjector(self.s, self.config, authority_generation=g)
+        self.inf = Inference(self.s, self.config, authority_generation=generation)
+        self.ws = Workspace(self.s, self.config, self.cache)
+        self.state_projector = StateProjector(self.s, self.config, authority_generation=generation)
+
+    def reload_authority(self):
+        generation = self.s.generation
+        self.runtime_attestation["authority_generation"] = generation
+        self.runtime_attestation["authority_generation_hash"] = self.s.authority_hash(generation)
+        self.runtime_attestation["read_generation"] = generation
+        self._bind_authority()
+        return dict(self.runtime_attestation)
 
     def _new_cycle(self, participant_frame=None, source="user", channel="text"):
         self._cycle_counter += 1
@@ -111,331 +110,488 @@ class Runtime:
             ),
         )
 
+    @staticmethod
+    def _packet_applications(packet):
+        applications = list(packet.get("apps", []))
+        query = packet.get("query")
+        if query:
+            applications += [query] if query.get("operator") else list(query.get("restrictions", []))
+        directive = packet.get("directive")
+        if directive:
+            applications += list(directive.get("content", []))
+        return applications
+
     def _project_referenced_state_spaces(self, packet, cycle):
         refs = set()
-        apps = list(packet.get("apps", [])) + ([packet["query"]] if packet.get("query") else [])
-        for app in apps:
+        for application in self._packet_applications(packet):
             for role in ("role:subject", "role:instance", "role:actor", "role:object"):
-                v = app.get("args", {}).get(role)
-                atom = self.s.atom(v) if isinstance(v, str) else None
+                value = application.get("args", {}).get(role)
+                atom = self.s.atom(value) if isinstance(value, str) and not value.startswith("?") else None
                 if atom and atom["kind"] in {"entity", "participant", "resource", "source", "existential"}:
-                    refs.add(v)
-        projections = {ref: self.state_projector.project(ref).as_dict() for ref in sorted(refs)}
+                    refs.add(value)
+        projections = {
+            ref: self.state_projector.project(ref).as_dict()
+            for ref in sorted(refs)
+        }
         cycle.workspace.put("state_space_projections", projections)
         return projections
 
-    def reload_authority(self):
-        g = self.s.generation
-        self.runtime_attestation["authority_generation"] = g
-        self.runtime_attestation["authority_generation_hash"] = self.s.authority_hash(g)
-        self.runtime_attestation["read_generation"] = g
-        self._bind_authority()
-        return dict(self.runtime_attestation)
-
-    def _materialize(self, packet, news, g, seed):
+    def _materialize(self, packet, news, generation, seed):
         facts, _ = self.inf.closure()
         mapping = {}
-        for x in news:
-            tok, kind = x["token"], x["kind"]
+        applications = self._packet_applications(packet)
+        for item in news:
+            token, kind = item["token"], item["kind"]
             candidates = None
-            for a in packet.get("apps", []):
+            for application in applications:
                 roles = [
-                    r
-                    for r, v in a.get("args", {}).items()
-                    if isinstance(v, dict) and v.get("new") == tok
+                    role
+                    for role, value in application.get("args", {}).items()
+                    if isinstance(value, dict) and value.get("new") == token
                 ]
                 if len(roles) != 1:
                     continue
                 role = roles[0]
                 known = {}
-                for r, v in a.get("args", {}).items():
-                    if r == role:
+                for other_role, value in application.get("args", {}).items():
+                    if other_role == role:
                         continue
-                    if isinstance(v, dict) and "new" in v:
-                        if v["new"] in mapping:
-                            known[r] = mapping[v["new"]]
+                    if isinstance(value, dict) and "new" in value:
+                        if value["new"] in mapping:
+                            known[other_role] = mapping[value["new"]]
                         continue
-                    known[r] = v
+                    if not (isinstance(value, str) and value.startswith("?")):
+                        known[other_role] = value
                 if not known:
                     continue
-                vals = set()
-                for f in self.inf.match({"operator": a["operator"], "args": known}, facts):
-                    v = f.args.get(role)
-                    atom = self.s.atom(v) if isinstance(v, str) else None
+                values = set()
+                for fact in self.inf.match({"operator": application["operator"], "args": known}, facts):
+                    candidate = fact.args.get(role)
+                    atom = self.s.atom(candidate) if isinstance(candidate, str) else None
                     if atom and atom["kind"] == kind:
-                        vals.add(v)
-                if vals:
-                    candidates = vals if candidates is None else candidates & vals
+                        values.add(candidate)
+                if values:
+                    candidates = values if candidates is None else candidates & values
             if candidates and len(candidates) > 1:
-                raise AmbiguousReferent(
-                    tok, [{"ref": r, "score": 1.0} for r in sorted(candidates)]
-                )
-            mapping[tok] = next(iter(candidates)) if candidates else stable("atom", kind, seed, tok)
-        for x in news:
-            ref = mapping[x["token"]]
+                raise AmbiguousReferent(token, [{"ref": ref, "score": 1.0} for ref in sorted(candidates)])
+            mapping[token] = next(iter(candidates)) if candidates else stable("atom", kind, seed, token)
+        for item in news:
+            ref = mapping[item["token"]]
             if not self.s.atom(ref):
                 self.s.exact(
                     "atoms",
                     ["ref", "kind", "metadata", "generation", "authority_scope"],
-                    [ref, x["kind"], "{}", g, "world"],
+                    [ref, item["kind"], "{}", generation, "world"],
                     ["ref"],
                     {"generation"},
                 )
-        p = json.loads(canonical(packet))
-        cv = lambda v: mapping[v["new"]] if isinstance(v, dict) and "new" in v else v
-        for a in p.get("apps", []):
-            a["args"] = {k: cv(v) for k, v in a["args"].items()}
-        if p.get("query"):
-            p["query"]["args"] = {k: cv(v) for k, v in p["query"]["args"].items()}
-        return p, mapping
 
-    def _outcome(self, key, cause):
-        if key in {"frontier"}:
-            self.selfstate.set(
-                self.s.symbol("self.interpretation_state_dimension"),
-                self.s.symbol("self.unresolved"),
-                cause,
-            )
-            self.selfstate.set(
-                self.s.symbol("self.response_state_dimension"),
-                self.s.symbol("self.confused"),
-                cause,
-            )
-        elif key in {"unknown", "conflict"}:
-            self.selfstate.set(
-                self.s.symbol("self.epistemic_state_dimension"),
-                self.s.symbol("self.insufficient" if key == "unknown" else "self.uncertain"),
-                cause,
-            )
-            self.selfstate.set(
-                self.s.symbol("self.response_state_dimension"),
-                self.s.symbol("self.ready"),
-                cause,
-            )
-        else:
-            self.selfstate.set(
-                self.s.symbol("self.interpretation_state_dimension"),
-                self.s.symbol("self.resolved"),
-                cause,
-            )
-            self.selfstate.set(
-                self.s.symbol("self.epistemic_state_dimension"),
-                self.s.symbol("self.sufficient"),
-                cause,
-            )
-            self.selfstate.set(
-                self.s.symbol("self.response_state_dimension"),
-                self.s.symbol("self.ready"),
-                cause,
-            )
+        output = json.loads(canonical(packet))
+
+        def convert(value):
+            return mapping[value["new"]] if isinstance(value, dict) and "new" in value else value
+
+        for application in self._packet_applications(output):
+            application["args"] = {role: convert(value) for role, value in application["args"].items()}
+        return output, mapping
+
+    def _outcome(self, key):
         plan = self.planner.plan(key)
         return self.r.plan(plan), plan
 
-    def _plan_json(self, p):
+    @staticmethod
+    def _plan_json(plan):
+        if plan is None:
+            return None
         return {
-            "goal": p["goal"],
-            "value": p.get("value"),
-            "facts": [{"operator": f.operator, "args": f.args} for f in p.get("facts", [])],
+            "goal": plan["goal"],
+            "value": plan.get("value"),
+            "facts": [
+                {"operator": fact.operator, "args": fact.args}
+                for fact in plan.get("facts", [])
+            ],
         }
 
-    def _frontier(self, text, reason, details, *, persist=False, cycle=None):
-        ref = self.s.frontier(text, reason, details) if persist else stable("frontier", getattr(cycle, "cycle_ref", "ephemeral"), text, reason, details)
-        (out, p), plan = self._outcome("frontier", reason)
+    def _interpretation_from_trace(self, trace, packet=None):
+        raw = trace.get("interpretation_assessment", {})
+        status = raw.get("status") or ("resolved" if packet else "unresolved")
+        return InterpretationAssessment(
+            status=status,
+            stable_packet=packet,
+            grounded_refs=tuple(raw.get("grounded_refs", trace.get("grounded_anchors", {}).values())),
+            open_variables=tuple(raw.get("open_variables", ())),
+            unresolved_evidence=tuple(raw.get("unresolved_evidence", trace.get("unknown_form_evidence", ()))),
+            blockers=tuple(raw.get("blockers", (trace.get("reason"),) if trace.get("reason") else ())),
+        )
+
+    def _frontier(self, text, reason, details, cycle, packet=None):
+        interpretation = self._interpretation_from_trace(details, packet)
+        evidence = details.get("unknown_form_evidence") or details.get("skipped_clauses") or [{"reason": reason}]
+        frontier = LearningFrontier.create(
+            details.get("learning_frontier", {}).get("kind", reason),
+            evidence,
+            blocks=("interpretation",),
+            cycle_ref=cycle.cycle_ref,
+        )
+        graph = FrontierGraph((frontier,))
+        cycle.workspace.put("interpretation_assessment", interpretation)
+        cycle.workspace.put("frontier_graph", graph)
+        (response, proof), plan = self._outcome("frontier")
         return {
-            "status": "frontier",
-            "response": out,
-            "frontier": {"ref": ref, "reason": reason, "details": details},
+            "status": "frontier" if packet is None else "partial",
+            "response": response,
+            "frontier": frontier.as_dict(),
+            "frontier_graph": graph.as_dict(),
+            "interpretation": interpretation.as_dict(),
             "response_plan": self._plan_json(plan),
-            "realization_proof": p,
-            "self_state": dict(self.selfstate.state),
-            "cycle": cycle.trace() if cycle else None,
+            "realization_proof": proof,
+            "self_state": {},
+            "self_runtime_view": cycle.self_runtime_view.as_dict(),
+            "cycle": cycle.trace(),
         }
+
+    def _query_response(self, query_result, facts_by_ref):
+        if query_result.status == "conflict":
+            (response, proof), plan = self._outcome("conflict")
+            return response, proof, plan
+        if query_result.bindings:
+            outputs = []
+            proofs = []
+            used = set()
+            for binding in query_result.bindings[:5]:
+                for ref in binding.proof_refs:
+                    if ref in used or ref not in facts_by_ref:
+                        continue
+                    used.add(ref)
+                    surface, proof = self.r.fact(facts_by_ref[ref])
+                    if surface:
+                        outputs.append(surface)
+                        proofs.append(proof)
+            if outputs:
+                return " ".join(outputs), {"verified": all(item.get("verified") for item in proofs), "fact_proofs": proofs}, None
+        legacy = {
+            "answered": "supported",
+            "partial": "unknown",
+            "supported": "supported",
+            "contradicted": "contradicted",
+            "conflict": "conflict",
+            "unknown": "unknown",
+        }[query_result.status]
+        (response, proof), plan = self._outcome(legacy)
+        return response, proof, plan
 
     def process(self, text, learn=True, teach=False, participant_frame=None, source="user", channel="text"):
         self.runtime_attestation["read_generation"] = self.s.generation
         cycle = self._new_cycle(participant_frame, source, channel)
         if teach:
-            rr = self.rulelearner.teach(text, cycle.participant_frame)
-            if rr.get("status") == "frontier":
-                return self._frontier(text, rr.get("reason", "rule_learning_frontier"), rr, persist=True, cycle=cycle)
-            (out, rp), plan = self._outcome("learned", "rule_learning")
+            result = self.rulelearner.teach(text, cycle.participant_frame)
+            if result.get("status") == "frontier":
+                return self._frontier(text, result.get("reason", "rule_learning_frontier"), result, cycle)
+            (response, proof), plan = self._outcome("learned")
             return {
-                **rr,
-                "response": out,
-                "response_plan": self._plan_json(plan),
-                "realization_proof": rp,
-                "self_state": dict(self.selfstate.state),
-            }
-        self.selfstate.set(
-            self.s.symbol("self.response_state_dimension"),
-            self.s.symbol("self.processing"),
-            "new_observation",
-        )
-        try:
-            packet, news, uses, trace = self.i.parse(text, cycle.participant_frame)
-        except AmbiguousReferent as e:
-            return self._frontier(
-                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}, persist=bool(learn), cycle=cycle
-            )
-        except Exception as e:
-            return self._frontier(text, "interpretation_error", {"error": str(e)}, cycle=cycle)
-        if not packet:
-            return self._frontier(text, trace.get("reason", "no_candidate"), trace, persist=bool(learn), cycle=cycle)
-        # Pragmatic intent override: when learn=True and the input has no
-        # question punctuation, the user is explicitly asserting a fact. If
-        # the codec mispredicted query intent, convert the query packet to an
-        # assert packet so the fact gets stored. Question marks are a
-        # universal pragmatic signal — this uses surface form as evidence
-        # about intent, not as semantic ontology.
-        if learn and packet.get("query") and not packet.get("describe"):
-            if not text.rstrip().endswith(("?", "？")):
-                q = packet["query"]
-                packet["apps"] = [{
-                    "operator": q.get("operator", "op:type"),
-                    "args": q.get("args", {}),
-                    "stance": q.get("stance", "support"),
-                }]
-                packet["query"] = None
-        trace["state_space_projections"] = self._project_referenced_state_spaces(packet, cycle)
-        # Greeting is an ordinary event recognized through a pinned semantic ref.
-        greet = (
-            self.s.symbol("event.greeting")
-            if self.s.db.execute(
-                "SELECT 1 FROM control_symbols WHERE role='event.greeting'"
-            ).fetchone()
-            else None
-        )
-        if greet and any(
-            a["operator"] == "op:event" and a["args"].get("role:type") == greet
-            for a in packet.get("apps", [])
-        ):
-            (out, proof), plan = self._outcome("greeting", "greeting_event")
-            return {
-                "status": "ok",
-                "response": out,
+                **result,
+                "response": response,
                 "response_plan": self._plan_json(plan),
                 "realization_proof": proof,
-                "self_state": dict(self.selfstate.state),
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
             }
-        if packet.get("query") or packet.get("describe"):
-            facts, byref = self.inf.closure()
-            if self.inf.incomplete:
-                return self._frontier(
-                    text, "inference_incomplete", {"reason": self.inf.incomplete_reason}, persist=bool(learn), cycle=cycle
-                )
-            if packet.get("describe"):
-                target = packet["describe"]
-                des = self.s.symbol("operator.designation")
-                xs = [
-                    f
-                    for f in facts
-                    if f.stance == "support"
-                    and self.s.user_visible_fact(f)
-                    and target in f.args.values()
-                ]
-                workspace, wtrace = self.ws.build(
-                    facts, {"operator": "describe", "args": {"target": target}}, [f.ref for f in xs]
-                )
-                outs = []
-                proofs = []
-                for f in xs[:5]:
-                    x, p = self.r.fact(f)
-                    if x:
-                        outs.append(x)
-                        proofs.append(p)
-                if outs:
-                    self.selfstate.set(
-                        self.s.symbol("self.interpretation_state_dimension"),
-                        self.s.symbol("self.resolved"),
-                        "describe_resolved",
-                    )
-                    self.selfstate.set(
-                        self.s.symbol("self.response_state_dimension"),
-                        self.s.symbol("self.ready"),
-                        "describe_resolved",
-                    )
-                    return {
-                        "status": "ok",
-                        "response": " ".join(outs),
-                        "facts": [f.__dict__ for f in xs[:10]],
-                        "workspace": wtrace,
-                        "realization_proofs": proofs,
-                        "self_state": dict(self.selfstate.state),
-                    }
-                (out, p), plan = self._outcome("unknown", "describe_no_fact")
-                return {
-                    "status": "unknown",
-                    "response": out,
-                    "workspace": wtrace,
-                    "response_plan": self._plan_json(plan),
-                    "realization_proof": p,
-                    "self_state": dict(self.selfstate.state),
-                }
-            pos = self.inf.match(packet["query"], facts)
-            neg = self.inf.match({**packet["query"], "stance": "deny"}, facts)
-            result = (
-                "conflict" if pos and neg else "supported" if pos else "contradicted" if neg else "unknown"
+        try:
+            packet, news, uses, trace = self.i.parse(text, cycle.participant_frame)
+        except AmbiguousReferent as exc:
+            return self._frontier(
+                text,
+                "ambiguous_referent",
+                {"surface": exc.surface, "candidates": exc.candidates},
+                cycle,
             )
-            chosen = pos or neg
-            proof_refs = []
-            if chosen:
+        except Exception as exc:
+            return self._frontier(text, "interpretation_error", {"error": str(exc)}, cycle)
+        if not packet:
+            return self._frontier(text, trace.get("reason", "no_candidate"), trace, cycle)
 
-                def collect(n):
-                    proof_refs.append(n.ref)
-                    if n.derived:
-                        for r in n.proof["parents"]:
-                            if r in byref:
-                                collect(byref[r])
+        interpretation = self._interpretation_from_trace(trace, packet)
+        cycle.workspace.put("interpretation_assessment", interpretation)
+        act = build_discourse_act(packet, cycle.participant_frame, trace)
+        cycle.workspace.put("discourse_act", act)
+        projections = self._project_referenced_state_spaces(packet, cycle)
+        trace["state_space_projections"] = projections
+        trace["discourse_act"] = act.as_dict()
 
-                collect(chosen[0])
-            workspace, wtrace = self.ws.build(facts, packet["query"], proof_refs)
-            (out, rp), plan = self._outcome(result, f"query:{result}")
-            exp = self.inf.explain(chosen[0], byref) if chosen else None
+        greeting = None
+        try:
+            greeting = self.s.symbol("event.greeting")
+        except ValueError:
+            pass
+        if greeting and any(
+            application["operator"] == "op:event"
+            and application["args"].get("role:type") == greeting
+            for application in act.content
+        ):
+            (response, proof), plan = self._outcome("greeting")
             return {
                 "status": "ok",
-                "response": out,
-                "result": result,
-                "query": packet["query"],
-                "proof": exp,
-                "workspace": wtrace,
+                "response": response,
+                "discourse_act": act.as_dict(),
+                "interpretation": interpretation.as_dict(),
                 "response_plan": self._plan_json(plan),
-                "realization_proof": rp,
-                "ephemeral_fact_count": sum(f.derived for f in facts),
-                "self_state": dict(self.selfstate.state),
-                "self_transitions": [t.__dict__ for t in self.selfstate.transitions[-6:]],
+                "realization_proof": proof,
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
+            }
+
+        if act.force == FORCE_DESCRIPTION and act.describe_target:
+            facts, _ = self.inf.closure()
+            visible = [
+                fact
+                for fact in facts
+                if fact.stance == "support"
+                and self.s.user_visible_fact(fact)
+                and act.describe_target in fact.args.values()
+            ]
+            _, workspace_trace = self.ws.build(
+                facts,
+                {"restrictions": [{"operator": "describe", "args": {"target": act.describe_target}}]},
+                [fact.ref for fact in visible],
+                cycle_turn=self._cycle_counter,
+            )
+            outputs = []
+            proofs = []
+            for fact in visible[:5]:
+                surface, proof = self.r.fact(fact)
+                if surface:
+                    outputs.append(surface)
+                    proofs.append(proof)
+            if outputs:
+                return {
+                    "status": "ok",
+                    "response": " ".join(outputs),
+                    "facts": [fact.__dict__ for fact in visible[:10]],
+                    "workspace": workspace_trace,
+                    "discourse_act": act.as_dict(),
+                    "interpretation": interpretation.as_dict(),
+                    "realization_proofs": proofs,
+                    "self_state": {},
+                    "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                    "cycle": cycle.trace(),
+                }
+            (response, proof), plan = self._outcome("unknown")
+            assessment = ScopedEpistemicAssessment(
+                target_ref=act.describe_target,
+                status="unknown",
+                missing=("description",),
+            )
+            return {
+                "status": "unknown",
+                "response": response,
+                "workspace": workspace_trace,
+                "discourse_act": act.as_dict(),
+                "interpretation": interpretation.as_dict(),
+                "epistemic_assessment": assessment.as_dict(),
+                "response_plan": self._plan_json(plan),
+                "realization_proof": proof,
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
+            }
+
+        if act.force == FORCE_QUERY and act.query:
+            facts, by_ref = self.inf.closure()
+            if self.inf.incomplete:
+                return self._frontier(
+                    text,
+                    "inference_incomplete",
+                    {"reason": self.inf.incomplete_reason},
+                    cycle,
+                    packet,
+                )
+            query_result = self.inf.execute_query(act.query, facts, by_ref)
+            proof_refs = sorted(
+                {ref for binding in query_result.bindings for ref in binding.proof_refs}
+            )
+            _, workspace_trace = self.ws.build(
+                facts,
+                act.query.as_dict(),
+                proof_refs,
+                cycle_turn=self._cycle_counter,
+            )
+            response, realization_proof, plan = self._query_response(query_result, by_ref)
+            assessment = ScopedEpistemicAssessment(
+                target_ref=query_result.query_ref,
+                status=query_result.status,
+                support_refs=tuple(proof_refs),
+                opposition_refs=(),
+                missing=query_result.unresolved_variables,
+                coverage=query_result.coverage,
+            )
+            cycle.workspace.put("query_result", query_result)
+            cycle.workspace.put("epistemic_assessment", assessment)
+            response_inputs = {
+                "query_result": query_result.as_dict(),
+                "epistemic_assessment": assessment.as_dict(),
+                "state_space_projections": projections,
+                "interpretation": interpretation.as_dict(),
+                "discourse_act": act.as_dict(),
+                "transition_candidates": [],
+            }
+            return {
+                "status": "ok",
+                "response": response,
+                "result": query_result.status,
+                "query": act.query.as_dict(),
+                "query_result": query_result.as_dict(),
+                "epistemic_assessment": assessment.as_dict(),
+                "workspace": workspace_trace,
+                "response_plan": self._plan_json(plan),
+                "realization_proof": realization_proof,
+                "response_inputs": response_inputs,
+                "ephemeral_fact_count": sum(fact.derived for fact in facts),
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
+            }
+
+        if act.force == FORCE_DIRECTIVE:
+            # Phase 10 will populate role-addressed transition previews.  A
+            # directive is neither a claim nor an already executed effect.
+            cycle.workspace.put("transition_candidates", [])
+            return {
+                "status": "interpreted_directive",
+                "response": "",
+                "discourse_act": act.as_dict(),
+                "interpretation": interpretation.as_dict(),
+                "goal_candidate": {
+                    "source_act_ref": act.act_ref,
+                    "requires_capability_check": True,
+                    "requires_permission_check": True,
+                    "requires_transition_preview": True,
+                },
+                "transition_candidates": [],
+                "blocks_effect": True,
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
+            }
+
+        if act.force not in {FORCE_CLAIM, FORCE_CORRECTION, FORCE_RETRACTION, FORCE_ACKNOWLEDGMENT}:
+            return {
+                "status": "interpreted",
+                "response": "",
+                "packet": packet,
+                "discourse_act": act.as_dict(),
+                "interpretation": interpretation.as_dict(),
+                "trace": trace,
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
             }
         if not learn:
-            return {"status": "interpreted", "packet": packet, "trace": trace}
+            return {
+                "status": "interpreted",
+                "response": "",
+                "packet": packet,
+                "discourse_act": act.as_dict(),
+                "interpretation": interpretation.as_dict(),
+                "trace": trace,
+                "side_effect_free": True,
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
+            }
+
         try:
             with self.s.db:
-                g = self.s.begin("learn:" + hashlib.sha256(text.encode()).hexdigest()[:12])
-                p, m = self._materialize(packet, news, g, f"generation:{g}")
-                obs = self.s.add_observation(text, p, self.lang, "user", g, occurrence_ref=f"generation:{g}")
+                generation = self.s.begin("learn:" + hashlib.sha256(text.encode()).hexdigest()[:12])
+                materialized_packet, mapping = self._materialize(packet, news, generation, f"generation:{generation}")
+                materialized_act = build_discourse_act(materialized_packet, cycle.participant_frame, trace)
+                observation_packet = {
+                    "packet": materialized_packet,
+                    "discourse_act": materialized_act.as_dict(),
+                    "context_ref": materialized_act.context_ref,
+                    "qualifiers": materialized_packet.get("qualifiers", {}),
+                }
+                observation = self.s.add_observation(
+                    text,
+                    observation_packet,
+                    self.lang,
+                    materialized_act.speaker_ref,
+                    generation,
+                    occurrence_ref=f"generation:{generation}",
+                )
+                occurrence_ref = self.s.add_claim_occurrence(observation, materialized_act, generation)
+                placement = self.epistemic_policy.place(materialized_act)
+                self.s.add_epistemic_placement(occurrence_ref, placement, generation)
                 refs = []
-                for a in p.get("apps", []):
-                    self.s.insert_app(a["operator"], a["args"], g, obs, a.get("stance", "support"), 0.95, "provisional")
-                    refs += [v for v in a["args"].values() if isinstance(v, str)]
-                for surf_, ref in uses:
-                    self.s.record_use(surf_, self.lang, ref)
-                self.s.touch(refs)
-                self.s.rebuild_designations()
-                self.s.finish(g)
-            (out, rp), plan = self._outcome("learned", "knowledge_committed")
+                committed_apps = []
+                if placement.admitted:
+                    for application in materialized_act.content:
+                        committed_apps.append(
+                            self.s.insert_app(
+                                application["operator"],
+                                application["args"],
+                                generation,
+                                observation,
+                                application.get("stance", "support"),
+                                self.config.epistemic_default_claim_confidence,
+                                "provisional",
+                            )
+                        )
+                        refs += [
+                            value
+                            for value in application["args"].values()
+                            if isinstance(value, str)
+                        ]
+                for surface_value, ref in uses:
+                    self.s.record_use(surface_value, self.lang, ref)
+                if placement.admitted:
+                    self.s.touch(refs)
+                    self.s.rebuild_designations()
+                self.s.finish(generation)
+            if placement.admitted:
+                (response, proof), plan = self._outcome("learned")
+            else:
+                response, proof, plan = "", None, None
+            status = (
+                "partially_learned"
+                if placement.admitted and interpretation.status == "partial"
+                else "learned"
+                if placement.admitted
+                else "recorded_claim"
+            )
             return {
-                "status": "learned",
-                "response": out,
-                "packet": p,
-                "generation": g,
-                "new_atoms": m,
+                "status": status,
+                "response": response,
+                "packet": materialized_packet,
+                "generation": generation,
+                "new_atoms": mapping,
+                "claim_occurrence_ref": occurrence_ref,
+                "epistemic_placement": placement.as_dict(),
+                "committed_apps": committed_apps,
+                "discourse_act": materialized_act.as_dict(),
+                "interpretation": interpretation.as_dict(),
                 "trace": trace,
                 "response_plan": self._plan_json(plan),
-                "realization_proof": rp,
-                "self_state": dict(self.selfstate.state),
+                "realization_proof": proof,
+                "transition_candidates": [],
+                "self_state": {},
+                "self_runtime_view": cycle.self_runtime_view.as_dict(),
+                "cycle": cycle.trace(),
             }
-        except AmbiguousReferent as e:
+        except AmbiguousReferent as exc:
             return self._frontier(
-                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}, persist=bool(learn), cycle=cycle
+                text,
+                "ambiguous_referent",
+                {"surface": exc.surface, "candidates": exc.candidates},
+                cycle,
+                packet,
             )
-        except Exception as e:
-            return self._frontier(text, "learning_rejected", {"error": str(e), "packet": packet}, persist=bool(learn), cycle=cycle)
-
+        except Exception as exc:
+            return self._frontier(
+                text,
+                "learning_rejected",
+                {"error": str(exc), "packet": packet},
+                cycle,
+                packet,
+            )

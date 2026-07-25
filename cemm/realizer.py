@@ -1,88 +1,131 @@
-"""Pointer realizer and language pack for CEMM v1.
-
-Ported from v4 MVP (cemm_mvp.py lines 271-273, 597-612).
-
-The LanguagePack loads a JSON language definition (grammar tokens,
-realization examples, pack hash). The PointerRealizer turns pointerized
-semantic strings (with @A placeholders) into natural-language surface text by
-invoking the SurfaceCodec and substituting preferred lexical forms for each
-pointer, then verifying the result against the language pack grammar.
-"""
+"""Pointer realizer and mergeable language package for CEMM v1."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
 
-from cemm.store import Store
-from cemm.model import norm_text, toks, surface, stable, canonical
+from cemm.model import canonical, norm_text, surface, toks
 from cemm.interpreter import SurfaceCodec
 from cemm.response import pointerize_fact, pointerize_plan
 
 
 class LanguagePack:
+    """Load a generated base pack plus an optional reviewed v1 extension.
+
+    Sidecar extensions keep architectural supervision reviewable without
+    hand-editing generated packs or branching on a language inside the kernel.
+    """
+
+    _LIST_KEYS = {
+        "source_classes",
+        "rule_sources",
+        "operators",
+        "roles",
+        "forces",
+        "structured_examples",
+        "rule_examples",
+        "realization_examples",
+        "grammar_tokens",
+        "function_forms",
+    }
+
     def __init__(self, path):
-        self.path = str(path)
-        self.data = json.loads(Path(path).read_text(encoding="utf-8"))
-        self.language = self.data["language"]
-        self.hash = self.data["pack_hash"]
-        self.grammar = set(self.data.get("grammar_tokens", []))
+        pack_path = Path(path)
+        self.path = str(pack_path)
+        base = json.loads(pack_path.read_text(encoding="utf-8"))
+        data = dict(base)
+        extension_path = pack_path.with_name(f"{pack_path.stem}.v1.json")
+        self.extension_path = str(extension_path) if extension_path.exists() else None
+        if extension_path.exists():
+            extension = json.loads(extension_path.read_text(encoding="utf-8"))
+            if extension.get("language") != base.get("language"):
+                raise ValueError("language extension does not match base pack")
+            for key, value in extension.items():
+                if key in {"language", "version", "pack_hash"}:
+                    continue
+                if key in self._LIST_KEYS:
+                    merged = list(data.get(key, []))
+                    if key.endswith("_examples"):
+                        by_ref = {item.get("example_ref"): item for item in merged}
+                        for item in value:
+                            by_ref[item.get("example_ref")] = item
+                        merged = list(by_ref.values())
+                    else:
+                        for item in value:
+                            if item not in merged:
+                                merged.append(item)
+                    data[key] = merged
+                else:
+                    data[key] = value
+            data["version"] = max(int(base.get("version", 0)), int(extension.get("version", 0)))
+        # The merged package is the actual pinned projection authority.
+        hash_material = {key: value for key, value in data.items() if key != "pack_hash"}
+        data["pack_hash"] = hashlib.sha256(canonical(hash_material).encode()).hexdigest()
+        self.data = data
+        self.language = data["language"]
+        self.base_hash = base.get("pack_hash")
+        self.hash = data["pack_hash"]
+        self.grammar = set(data.get("grammar_tokens", []))
+        self.function_forms = set(data.get("function_forms", []))
 
 
 class PointerRealizer:
-    def __init__(self, s: Store, pack: LanguagePack, cache=None):
-        self.s = s
+    def __init__(self, store, pack: LanguagePack, cache=None):
+        self.s = store
         self.pack = pack
         self.codec = SurfaceCodec.get(pack, cache)
 
-    def _render(self, semantic, ph_info):
+    def _render(self, semantic, placeholder_info):
         plan, trace = self.codec.realize(semantic)
-        used = sorted(set(x for x in toks(plan) if x.startswith("@A")))
-        unknown = [x for x in used if x not in ph_info]
+        used = sorted(set(token for token in toks(plan) if token.startswith("@A")))
+        unknown = [token for token in used if token not in placeholder_info]
         pointers = []
         rendered = plan
-        for p in used:
-            if p in ph_info:
-                ref, context = ph_info[p]
-                lex = self.s.preferred(ref, self.pack.language, context)
-                pointers.append(
-                    {
-                        "placeholder": p,
-                        "semantic_ref": ref,
-                        "context": context,
-                        "surface": lex,
-                    }
-                )
-                rendered = rendered.replace(p, lex)
-        grammar = [x.casefold() for x in toks(plan) if not x.startswith("@A")]
-        badgrammar = [x for x in grammar if x not in self.pack.grammar]
-        leaked = bool(
-            re.search(r"\b(?:atom|existential|app|fact):[0-9a-fA-F]+", rendered)
-        ) or any(x["surface"] == x["semantic_ref"] for x in pointers)
-        ok = (
+        for placeholder in used:
+            if placeholder not in placeholder_info:
+                continue
+            ref, context = placeholder_info[placeholder]
+            lexical = self.s.preferred(ref, self.pack.language, context)
+            pointers.append(
+                {
+                    "placeholder": placeholder,
+                    "semantic_ref": ref,
+                    "context": context,
+                    "surface": lexical,
+                }
+            )
+            rendered = rendered.replace(placeholder, lexical)
+        grammar = [token.casefold() for token in toks(plan) if not token.startswith("@A")]
+        bad_grammar = [token for token in grammar if token not in self.pack.grammar]
+        leaked = bool(re.search(r"\b(?:atom|existential|app|fact):[0-9a-fA-F]+", rendered)) or any(
+            item["surface"] == item["semantic_ref"] for item in pointers
+        )
+        verified = (
             trace.get("authorized_transform", False)
             and not unknown
-            and not badgrammar
+            and not bad_grammar
             and not leaked
             and bool(rendered.strip())
         )
         proof = {
             **trace,
-            "verified": ok,
+            "verified": verified,
             "verification_mode": "semantic_pointer_provenance",
             "roundtrip_used": False,
             "pointers": pointers,
             "unknown_pointers": unknown,
-            "unknown_grammar": badgrammar,
+            "unknown_grammar": bad_grammar,
             "internal_id_leak": leaked,
             "language_pack_hash": self.pack.hash,
         }
-        return surface(toks(rendered)) if ok else "", proof
+        return surface(toks(rendered)) if verified else "", proof
 
-    def fact(self, f):
-        sem, mp = pointerize_fact(f)
-        return self._render(sem, mp)
+    def fact(self, fact):
+        semantic, mapping = pointerize_fact(fact)
+        return self._render(semantic, mapping)
 
     def plan(self, plan):
-        sem, mp = pointerize_plan(plan)
-        return self._render(sem, mp)
+        semantic, mapping = pointerize_plan(plan)
+        return self._render(semantic, mapping)

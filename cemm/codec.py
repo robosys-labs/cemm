@@ -1,32 +1,19 @@
 """Open compositional semantic codec for CEMM v1.
 
-Ported from v4 MVP (reference/mvp_v4/structured_codec.py).
-
-No closed semantic-program classes are predicted.  The neural model predicts:
-- intent (assert/query/describe)
-- application-slot presence
-- operator per slot
-- role -> grounded-source bindings per slot
-
-A separate structured rule model predicts antecedent/consequent graph slots using
-variables/existentials/grounded anchors.  Exact semantic validation remains outside
-these models.
+The model predicts discourse force, application topology, operators, typed
+source pointers and query projection variables. Exact semantic validity remains
+outside the network.
 """
 from __future__ import annotations
 
 import itertools
 import math
+import re as _re
 from dataclasses import dataclass
 from typing import Any
 
 from cemm.config import Config
-
-# NOTE: v4's structured_codec.py uses its own TOK regex that handles @A1<entity>
-# style anchors, which differs from cemm.model.toks. We keep the codec's original
-# tokenizer to preserve training behavior.
-import re as _re
-_TOK = _re.compile(r"@[A-Z]\d+<[^>]+>|@[A-Z]\d+|<[A-Za-z0-9_:.=-]+>|[\wÀ-ÿ:/?.!'-]+|[^\s]", _re.UNICODE)
-def toks(s): return _TOK.findall(str(s))
+from cemm.model import isvar
 
 try:
     import torch
@@ -36,14 +23,21 @@ except Exception as exc:
 
 torch.set_num_threads(1)
 
+_TOK = _re.compile(r"@[A-Z]\d+<[^>]+>|@[A-Z]\d+|<[A-Za-z0-9_:.=-]+>|[\wÀ-ÿ:/?.!'-]+|[^\s]", _re.UNICODE)
+
+
+def toks(value):
+    return _TOK.findall(str(value))
+
+
 MAX_APPS = 3
 MAX_RULE_IF = 3
 MAX_RULE_THEN = 3
 CACHE: dict[tuple[str, str], tuple[Any, Any]] = {}
 
 
-def logp(x):
-    return math.log(max(1e-9, float(x)))
+def logp(value):
+    return math.log(max(1e-9, float(value)))
 
 
 class Encoder(nn.Module):
@@ -54,34 +48,36 @@ class Encoder(nn.Module):
         layer = nn.TransformerEncoderLayer(d, 4, 128, dropout=0, batch_first=True)
         self.enc = nn.TransformerEncoder(layer, 2)
 
-    def forward(self, x):
-        p = torch.arange(x.size(1), device=x.device)[None, :]
-        h = self.enc(self.emb(x) + self.pos(p), src_key_padding_mask=x.eq(0))
-        m = x.ne(0).float().unsqueeze(-1)
-        return (h * m).sum(1) / m.sum(1).clamp_min(1)
+    def forward(self, values):
+        positions = torch.arange(values.size(1), device=values.device)[None, :]
+        hidden = self.enc(self.emb(values) + self.pos(positions), src_key_padding_mask=values.eq(0))
+        mask = values.ne(0).float().unsqueeze(-1)
+        return (hidden * mask).sum(1) / mask.sum(1).clamp_min(1)
 
 
 class StructuredNet(nn.Module):
-    def __init__(self, vocab, nops, nroles, nsrc, d=64):
+    def __init__(self, vocab, nforces, nops, nroles, nsrc, d=64):
         super().__init__()
         self.enc = Encoder(vocab, d)
-        self.intent = nn.Linear(d, 3)
-        self.pres = nn.Linear(d, MAX_APPS * 2)
-        self.ops = nn.Linear(d, MAX_APPS * nops)
-        self.bind = nn.Linear(d, MAX_APPS * nroles * nsrc)
+        self.force = nn.Linear(d, nforces)
+        self.presence = nn.Linear(d, MAX_APPS * 2)
+        self.operators = nn.Linear(d, MAX_APPS * nops)
+        self.bindings = nn.Linear(d, MAX_APPS * nroles * nsrc)
         self.describe = nn.Linear(d, nsrc)
+        self.projection = nn.Linear(d, nsrc)
         self.nops = nops
         self.nroles = nroles
         self.nsrc = nsrc
 
-    def forward(self, x):
-        z = self.enc(x)
+    def forward(self, values):
+        encoded = self.enc(values)
         return (
-            self.intent(z),
-            self.pres(z).view(-1, MAX_APPS, 2),
-            self.ops(z).view(-1, MAX_APPS, self.nops),
-            self.bind(z).view(-1, MAX_APPS, self.nroles, self.nsrc),
-            self.describe(z),
+            self.force(encoded),
+            self.presence(encoded).view(-1, MAX_APPS, 2),
+            self.operators(encoded).view(-1, MAX_APPS, self.nops),
+            self.bindings(encoded).view(-1, MAX_APPS, self.nroles, self.nsrc),
+            self.describe(encoded),
+            self.projection(encoded),
         )
 
 
@@ -90,26 +86,26 @@ class RuleNet(nn.Module):
         super().__init__()
         self.enc = Encoder(vocab, d)
         self.kind = nn.Linear(d, 2)
-        self.ip = nn.Linear(d, MAX_RULE_IF * 2)
-        self.io = nn.Linear(d, MAX_RULE_IF * nops)
-        self.ib = nn.Linear(d, MAX_RULE_IF * nroles * nsrc)
-        self.tp = nn.Linear(d, MAX_RULE_THEN * 2)
-        self.to_head = nn.Linear(d, MAX_RULE_THEN * nops)
-        self.tb = nn.Linear(d, MAX_RULE_THEN * nroles * nsrc)
+        self.if_presence = nn.Linear(d, MAX_RULE_IF * 2)
+        self.if_operators = nn.Linear(d, MAX_RULE_IF * nops)
+        self.if_bindings = nn.Linear(d, MAX_RULE_IF * nroles * nsrc)
+        self.then_presence = nn.Linear(d, MAX_RULE_THEN * 2)
+        self.then_operators = nn.Linear(d, MAX_RULE_THEN * nops)
+        self.then_bindings = nn.Linear(d, MAX_RULE_THEN * nroles * nsrc)
         self.nops = nops
         self.nroles = nroles
         self.nsrc = nsrc
 
-    def forward(self, x):
-        z = self.enc(x)
+    def forward(self, values):
+        encoded = self.enc(values)
         return (
-            self.kind(z),
-            self.ip(z).view(-1, MAX_RULE_IF, 2),
-            self.io(z).view(-1, MAX_RULE_IF, self.nops),
-            self.ib(z).view(-1, MAX_RULE_IF, self.nroles, self.nsrc),
-            self.tp(z).view(-1, MAX_RULE_THEN, 2),
-            self.to_head(z).view(-1, MAX_RULE_THEN, self.nops),
-            self.tb(z).view(-1, MAX_RULE_THEN, self.nroles, self.nsrc),
+            self.kind(encoded),
+            self.if_presence(encoded).view(-1, MAX_RULE_IF, 2),
+            self.if_operators(encoded).view(-1, MAX_RULE_IF, self.nops),
+            self.if_bindings(encoded).view(-1, MAX_RULE_IF, self.nroles, self.nsrc),
+            self.then_presence(encoded).view(-1, MAX_RULE_THEN, 2),
+            self.then_operators(encoded).view(-1, MAX_RULE_THEN, self.nops),
+            self.then_bindings(encoded).view(-1, MAX_RULE_THEN, self.nroles, self.nsrc),
         )
 
 
@@ -121,408 +117,510 @@ class Candidate:
 
 
 class StructuredSemanticCodec:
-    INTENTS = ["assert", "query", "describe"]
+    LEGACY_FORCE = {
+        "assert": "claim",
+        "query": "query",
+        "describe": "description_request",
+    }
     RULE_KINDS = ["definition", "entailment"]
 
     def __init__(self, pack, config=None, epochs=260):
         self.config = config or Config()
         self.pack = pack
-        d = pack.data if hasattr(pack, "data") else pack
-        self.sources = d["source_classes"]
-        self.rsrc = d["rule_sources"]
-        self.ops = d["operators"]
-        self.roles = d["roles"]
-        self.si = {x: i for i, x in enumerate(self.sources)}
-        self.rsi = {x: i for i, x in enumerate(self.rsrc)}
-        self.oi = {x: i for i, x in enumerate(self.ops)}
-        self.ri = {x: i for i, x in enumerate(self.roles)}
-        texts = [x["input"] for x in d.get("structured_examples", [])] + [
-            x["input"] for x in d.get("rule_examples", [])
+        data = pack.data if hasattr(pack, "data") else pack
+        self.sources = list(data["source_classes"])
+        self.rule_sources = list(data["rule_sources"])
+        self.operators = list(data["operators"])
+        self.roles = list(data["roles"])
+        examples = list(data.get("structured_examples", []))
+        target_forces = {
+            target.get("force") or self.LEGACY_FORCE[target.get("intent", "assert")]
+            for target in (example["target"] for example in examples)
+        }
+        self.forces = list(data.get("forces", []))
+        for force in sorted(target_forces):
+            if force not in self.forces:
+                self.forces.append(force)
+        self.source_index = {value: index for index, value in enumerate(self.sources)}
+        self.rule_source_index = {value: index for index, value in enumerate(self.rule_sources)}
+        self.operator_index = {value: index for index, value in enumerate(self.operators)}
+        self.role_index = {value: index for index, value in enumerate(self.roles)}
+        self.force_index = {value: index for index, value in enumerate(self.forces)}
+        texts = [example["input"] for example in examples] + [
+            example["input"] for example in data.get("rule_examples", [])
         ]
-        vocab = ["<pad>", "<unk>"] + sorted(
-            {t.casefold() for x in texts for t in toks(x)}
+        vocabulary = ["<pad>", "<unk>"] + sorted(
+            {token.casefold() for text in texts for token in toks(text)}
         )
-        self.vi = {x: i for i, x in enumerate(vocab)}
-        key = (d["pack_hash"], "structured-v4")
+        self.vocabulary_index = {value: index for index, value in enumerate(vocabulary)}
+        key = (data["pack_hash"], "structured-v5-force-query")
         if key in CACHE:
-            self.net, self.rnet = CACHE[key]
+            self.net, self.rule_net = CACHE[key]
         else:
-            self.net = self._train_struct(d.get("structured_examples", []), epochs)
-            self.rnet = (
-                self._train_rules(d.get("rule_examples", []), max(epochs, 320))
-                if d.get("rule_examples")
+            self.net = self._train_struct(examples, epochs)
+            self.rule_net = (
+                self._train_rules(data.get("rule_examples", []), max(epochs, 320))
+                if data.get("rule_examples")
                 else None
             )
-            CACHE[key] = (self.net, self.rnet)
+            CACHE[key] = (self.net, self.rule_net)
 
     def _tensor(self, texts):
-        seqs = [
-            [self.vi.get(t.casefold(), 1) for t in toks(x)] or [1] for x in texts
+        sequences = [
+            [self.vocabulary_index.get(token.casefold(), 1) for token in toks(text)] or [1]
+            for text in texts
         ]
-        m = max(map(len, seqs))
-        return torch.tensor([s + [0] * (m - len(s)) for s in seqs])
+        maximum = max(map(len, sequences))
+        return torch.tensor([sequence + [0] * (maximum - len(sequence)) for sequence in sequences])
 
-    def _train_struct(self, ex, epochs):
+    def _target_force(self, target):
+        return target.get("force") or self.LEGACY_FORCE[target.get("intent", "assert")]
+
+    def _train_struct(self, examples, epochs):
         torch.manual_seed(self.config.structured_net_seed)
         net = StructuredNet(
-            len(self.vi), len(self.ops), len(self.roles), len(self.sources)
+            len(self.vocabulary_index),
+            len(self.forces),
+            len(self.operators),
+            len(self.roles),
+            len(self.sources),
         )
-        opt = torch.optim.AdamW(net.parameters(), lr=0.008, weight_decay=1e-4)
-        X = self._tensor([x["input"] for x in ex])
-        intents = []
-        pres = []
-        ops = []
-        bind = []
-        desc = []
-        for x in ex:
-            t = x["target"]
-            intents.append(self.INTENTS.index(t["intent"]))
-            ps = []
-            os = []
-            bs = []
-            for j in range(MAX_APPS):
-                a = t.get("apps", [])[j] if j < len(t.get("apps", [])) else None
-                ps.append(1 if a else 0)
-                os.append(self.oi.get(a["operator"], 0) if a else 0)
-                row = []
-                for r in self.roles:
-                    row.append(
-                        self.si.get(a.get("bindings", {}).get(r, "NONE"), 0)
-                        if a
+        optimizer = torch.optim.AdamW(net.parameters(), lr=0.008, weight_decay=1e-4)
+        values = self._tensor([example["input"] for example in examples])
+        forces = []
+        presence = []
+        operators = []
+        bindings = []
+        describes = []
+        projections = []
+        for example in examples:
+            target = example["target"]
+            forces.append(self.force_index[self._target_force(target)])
+            p_rows = []
+            o_rows = []
+            b_rows = []
+            for slot in range(MAX_APPS):
+                application = target.get("apps", [])[slot] if slot < len(target.get("apps", [])) else None
+                p_rows.append(1 if application else 0)
+                o_rows.append(self.operator_index.get(application["operator"], 0) if application else 0)
+                b_rows.append(
+                    [
+                        self.source_index.get(application.get("bindings", {}).get(role, "NONE"), 0)
+                        if application
                         else 0
-                    )
-                bs.append(row)
-            pres.append(ps)
-            ops.append(os)
-            bind.append(bs)
-            desc.append(self.si.get(t.get("describe_source", "NONE"), 0))
-        YI = torch.tensor(intents)
-        YP = torch.tensor(pres)
-        YO = torch.tensor(ops)
-        YB = torch.tensor(bind)
-        YD = torch.tensor(desc)
-        for _ in range(epochs):
-            opt.zero_grad()
-            i, p, o, b, d = net(X)
-            loss = (
-                nn.functional.cross_entropy(i, YI)
-                + 0.8 * nn.functional.cross_entropy(p.reshape(-1, 2), YP.reshape(-1))
-                + 0.7 * nn.functional.cross_entropy(d, YD)
-            )
-            mask = YP.reshape(-1).bool()
-            if mask.any():
-                loss += nn.functional.cross_entropy(
-                    o.reshape(-1, len(self.ops))[mask], YO.reshape(-1)[mask]
+                        for role in self.roles
+                    ]
                 )
-            # Role NONE is useful but should not dominate grounded-role supervision.
-            logits = b.reshape(-1, len(self.sources))
-            targets = YB.reshape(-1)
-            weights = torch.ones_like(targets, dtype=torch.float)
-            weights[targets == self.si["NONE"]] = 0.12
-            ce = nn.functional.cross_entropy(logits, targets, reduction="none")
-            loss += (ce * weights).sum() / weights.sum().clamp_min(1)
+            presence.append(p_rows)
+            operators.append(o_rows)
+            bindings.append(b_rows)
+            describes.append(self.source_index.get(target.get("describe_source", "NONE"), 0))
+            projected = torch.zeros(len(self.sources), dtype=torch.float)
+            for source in target.get("projection", []):
+                if source in self.source_index:
+                    projected[self.source_index[source]] = 1.0
+            projections.append(projected)
+        force_targets = torch.tensor(forces)
+        presence_targets = torch.tensor(presence)
+        operator_targets = torch.tensor(operators)
+        binding_targets = torch.tensor(bindings)
+        describe_targets = torch.tensor(describes)
+        projection_targets = torch.stack(projections)
+        for _ in range(epochs):
+            optimizer.zero_grad()
+            force_logits, p_logits, o_logits, b_logits, d_logits, q_logits = net(values)
+            loss = (
+                nn.functional.cross_entropy(force_logits, force_targets)
+                + 0.8 * nn.functional.cross_entropy(p_logits.reshape(-1, 2), presence_targets.reshape(-1))
+                + 0.7 * nn.functional.cross_entropy(d_logits, describe_targets)
+                + 0.35 * nn.functional.binary_cross_entropy_with_logits(q_logits, projection_targets)
+            )
+            active = presence_targets.reshape(-1).bool()
+            if active.any():
+                loss += nn.functional.cross_entropy(
+                    o_logits.reshape(-1, len(self.operators))[active],
+                    operator_targets.reshape(-1)[active],
+                )
+            flat_binding_logits = b_logits.reshape(-1, len(self.sources))
+            flat_binding_targets = binding_targets.reshape(-1)
+            weights = torch.ones_like(flat_binding_targets, dtype=torch.float)
+            weights[flat_binding_targets == self.source_index["NONE"]] = 0.12
+            cross_entropy = nn.functional.cross_entropy(
+                flat_binding_logits, flat_binding_targets, reduction="none"
+            )
+            loss += (cross_entropy * weights).sum() / weights.sum().clamp_min(1)
             loss.backward()
-            opt.step()
+            optimizer.step()
         net.eval()
         return net
 
-    def _train_rules(self, ex, epochs):
+    def _train_rules(self, examples, epochs):
         torch.manual_seed(self.config.rule_net_seed)
-        net = RuleNet(len(self.vi), len(self.ops), len(self.roles), len(self.rsrc))
-        opt = torch.optim.AdamW(net.parameters(), lr=0.008, weight_decay=1e-4)
-        X = self._tensor([x["input"] for x in ex])
+        net = RuleNet(
+            len(self.vocabulary_index),
+            len(self.operators),
+            len(self.roles),
+            len(self.rule_sources),
+        )
+        optimizer = torch.optim.AdamW(net.parameters(), lr=0.008, weight_decay=1e-4)
+        values = self._tensor([example["input"] for example in examples])
         kinds = []
-        ips = []
-        ios = []
-        ibs = []
-        tps = []
-        tos = []
-        tbs = []
-        for x in ex:
-            t = x["target"]
-            kinds.append(self.RULE_KINDS.index(t.get("rule_kind", "definition")))
+        if_presence = []
+        if_operators = []
+        if_bindings = []
+        then_presence = []
+        then_operators = []
+        then_bindings = []
+        for example in examples:
+            target = example["target"]
+            kinds.append(self.RULE_KINDS.index(target.get("rule_kind", "definition")))
 
-            def side(name, maxn):
-                ps = []
-                os = []
-                bs = []
-                for j in range(maxn):
-                    a = t.get(name, [])[j] if j < len(t.get(name, [])) else None
-                    ps.append(1 if a else 0)
-                    os.append(self.oi.get(a["operator"], 0) if a else 0)
-                    bs.append(
+            def side(name, maximum):
+                p_rows = []
+                o_rows = []
+                b_rows = []
+                for slot in range(maximum):
+                    application = target.get(name, [])[slot] if slot < len(target.get(name, [])) else None
+                    p_rows.append(1 if application else 0)
+                    o_rows.append(self.operator_index.get(application["operator"], 0) if application else 0)
+                    b_rows.append(
                         [
-                            self.rsi.get(a.get("bindings", {}).get(r, "NONE"), 0)
-                            if a
+                            self.rule_source_index.get(application.get("bindings", {}).get(role, "NONE"), 0)
+                            if application
                             else 0
-                            for r in self.roles
+                            for role in self.roles
                         ]
                     )
-                return ps, os, bs
+                return p_rows, o_rows, b_rows
 
             a, b, c = side("if", MAX_RULE_IF)
-            ips.append(a)
-            ios.append(b)
-            ibs.append(c)
+            if_presence.append(a)
+            if_operators.append(b)
+            if_bindings.append(c)
             a, b, c = side("then", MAX_RULE_THEN)
-            tps.append(a)
-            tos.append(b)
-            tbs.append(c)
-        YK = torch.tensor(kinds)
-        YIP = torch.tensor(ips)
-        YIO = torch.tensor(ios)
-        YIB = torch.tensor(ibs)
-        YTP = torch.tensor(tps)
-        YTO = torch.tensor(tos)
-        YTB = torch.tensor(tbs)
+            then_presence.append(a)
+            then_operators.append(b)
+            then_bindings.append(c)
+        targets = tuple(
+            torch.tensor(value)
+            for value in (
+                kinds,
+                if_presence,
+                if_operators,
+                if_bindings,
+                then_presence,
+                then_operators,
+                then_bindings,
+            )
+        )
         for _ in range(epochs):
-            opt.zero_grad()
-            k, ip, io, ib, tp, to, tb = net(X)
-            loss = nn.functional.cross_entropy(k, YK)
-            for p, o, b, yp, yo, yb in (
-                (ip, io, ib, YIP, YIO, YIB),
-                (tp, to, tb, YTP, YTO, YTB),
+            optimizer.zero_grad()
+            outputs = net(values)
+            loss = nn.functional.cross_entropy(outputs[0], targets[0])
+            for p_logits, o_logits, b_logits, p_target, o_target, b_target in (
+                (*outputs[1:4], *targets[1:4]),
+                (*outputs[4:7], *targets[4:7]),
             ):
-                loss += nn.functional.cross_entropy(p.reshape(-1, 2), yp.reshape(-1))
-                mask = yp.reshape(-1).bool()
-                if mask.any():
+                loss += nn.functional.cross_entropy(p_logits.reshape(-1, 2), p_target.reshape(-1))
+                active = p_target.reshape(-1).bool()
+                if active.any():
                     loss += nn.functional.cross_entropy(
-                        o.reshape(-1, len(self.ops))[mask], yo.reshape(-1)[mask]
+                        o_logits.reshape(-1, len(self.operators))[active],
+                        o_target.reshape(-1)[active],
                     )
-                logits = b.reshape(-1, len(self.rsrc))
-                targets = yb.reshape(-1)
-                w = torch.ones_like(targets, dtype=torch.float)
-                w[targets == self.rsi["NONE"]] = 0.1
+                flat_logits = b_logits.reshape(-1, len(self.rule_sources))
+                flat_targets = b_target.reshape(-1)
+                weights = torch.ones_like(flat_targets, dtype=torch.float)
+                weights[flat_targets == self.rule_source_index["NONE"]] = 0.1
                 loss += (
-                    nn.functional.cross_entropy(logits, targets, reduction="none") * w
-                ).sum() / w.sum().clamp_min(1)
+                    nn.functional.cross_entropy(flat_logits, flat_targets, reduction="none") * weights
+                ).sum() / weights.sum().clamp_min(1)
             loss.backward()
-            opt.step()
+            optimizer.step()
         net.eval()
         return net
 
     def _x(self, text):
         return self._tensor([text])
 
-    def _source_value(self, s, anchors, participant_frame=None):
-        if s == "NONE":
+    @staticmethod
+    def _source_value(source, anchors, participant_frame=None):
+        if source == "NONE":
             return None
-        # USER/SYSTEM remain accepted only as compatibility aliases for frozen
-        # v4-derived packs. Their runtime meaning is contextual, not lexical.
-        if s in {"FRAME_SPEAKER", "USER"}:
+        if source in {"FRAME_SPEAKER", "USER"}:
             return participant_frame.speaker_ref if participant_frame else "participant:user"
-        if s in {"FRAME_ADDRESSEE", "SYSTEM"}:
+        if source in {"FRAME_ADDRESSEE", "SYSTEM"}:
             return participant_frame.addressee_ref if participant_frame else "participant:system"
-        if s.startswith("A"):
-            return anchors.get("@" + s)
-        if s.startswith("NEW_ENTITY_"):
-            return {
-                "new": "@X_ENTITY_" + s.rsplit("_", 1)[-1],
-                "kind": "entity",
-            }
-        if s.startswith("NEW_EVENT_"):
-            return {"new": "@X_EVENT_" + s.rsplit("_", 1)[-1], "kind": "event"}
+        if source.startswith("Q") and source[1:].isdigit():
+            return f"?q{source[1:]}"
+        if source.startswith("A"):
+            return anchors.get("@" + source)
+        if source.startswith("NEW_ENTITY_"):
+            return {"new": "@X_ENTITY_" + source.rsplit("_", 1)[-1], "kind": "entity"}
+        if source.startswith("NEW_EVENT_"):
+            return {"new": "@X_EVENT_" + source.rsplit("_", 1)[-1], "kind": "event"}
         return None
 
-    def _kind_ok(self, store, role_spec, v):
-        if v is None:
+    @staticmethod
+    def _kind_ok(store, role_spec, value, *, allow_variable=False):
+        if value is None:
             return False
-        exp = role_spec["filler_kind"]
-        if exp == "state_value":
-            if isinstance(v, dict) and "new" in v:
+        if allow_variable and isinstance(value, str) and isvar(value):
+            return True
+        expected = role_spec["filler_kind"]
+        if expected == "state_value":
+            if isinstance(value, dict) and "new" in value:
                 return True
-            if isinstance(v, dict) and ("literal" in v or "app" in v):
+            if isinstance(value, dict) and ("literal" in value or "app" in value):
                 return True
-            return bool(isinstance(v, str) and store.atom(v))
-        if isinstance(v, dict) and "new" in v:
-            return exp in {None, "atom", v["kind"]} or (exp == "atom")
-        if isinstance(v, dict) and "literal" in v:
-            return bool(exp and exp.startswith("literal:"))
-        a = store.atom(v) if isinstance(v, str) else None
-        return bool(a and (not exp or exp == "atom" or a["kind"] == exp))
+            return bool(isinstance(value, str) and store.atom(value))
+        if isinstance(value, dict) and "new" in value:
+            return expected in {None, "atom", value["kind"]} or expected == "atom"
+        if isinstance(value, dict) and "literal" in value:
+            return bool(expected and expected.startswith("literal:"))
+        atom = store.atom(value) if isinstance(value, str) else None
+        return bool(atom and (not expected or expected == "atom" or atom["kind"] == expected))
 
-    def _choose_source(self, probs, store, spec, anchors, participant_frame=None, allow_none=True, alt=0):
-        vals = torch.argsort(probs, descending=True).tolist()
+    def _choose_source(
+        self,
+        probabilities,
+        store,
+        spec,
+        anchors,
+        participant_frame=None,
+        *,
+        allow_none=True,
+        allow_variable=False,
+        alternative=0,
+    ):
         valid = []
-        for ix in vals:
-            s = self.sources[ix]
-            if s == "NONE" and allow_none:
-                valid.append((s, float(probs[ix])))
+        for index in torch.argsort(probabilities, descending=True).tolist():
+            source = self.sources[index]
+            if source == "NONE" and allow_none:
+                valid.append((source, float(probabilities[index])))
                 continue
-            v = self._source_value(s, anchors, participant_frame)
-            if self._kind_ok(store, spec, v):
-                valid.append((s, float(probs[ix])))
-        return valid[min(alt, len(valid) - 1)] if valid else ("NONE", 0.0)
+            value = self._source_value(source, anchors, participant_frame)
+            if self._kind_ok(store, spec, value, allow_variable=allow_variable):
+                valid.append((source, float(probabilities[index])))
+        return valid[min(alternative, len(valid) - 1)] if valid else ("NONE", 0.0)
 
     def predict(self, text, anchors, store, top_k=8, participant_frame=None):
         with torch.no_grad():
-            ii, pp, oo, bb, dd = self.net(self._x(text))
-            ii = torch.softmax(ii[0], -1)
-            pp = torch.softmax(pp[0], -1)
-            oo = torch.softmax(oo[0], -1)
-            bb = torch.softmax(bb[0], -1)
-            dd = torch.softmax(dd[0], -1)
-        intent_ids = torch.topk(ii, min(2, len(ii))).indices.tolist()
-        cands = []
-        for iid in intent_ids:
-            intent = self.INTENTS[iid]
-            base = logp(ii[iid])
-            if intent == "describe":
-                for sx in torch.topk(dd, min(3, len(dd))).indices.tolist():
-                    s = self.sources[sx]
-                    v = self._source_value(s, anchors, participant_frame)
-                    if v and not isinstance(v, dict):
-                        cands.append(
+            force_logits, p_logits, o_logits, b_logits, d_logits, q_logits = self.net(self._x(text))
+            force_probabilities = torch.softmax(force_logits[0], -1)
+            presence_probabilities = torch.softmax(p_logits[0], -1)
+            operator_probabilities = torch.softmax(o_logits[0], -1)
+            binding_probabilities = torch.softmax(b_logits[0], -1)
+            describe_probabilities = torch.softmax(d_logits[0], -1)
+            projection_probabilities = torch.sigmoid(q_logits[0])
+        force_ids = torch.topk(force_probabilities, min(3, len(force_probabilities))).indices.tolist()
+        candidates = []
+        for force_id in force_ids:
+            force = self.forces[force_id]
+            base_score = logp(force_probabilities[force_id])
+            if force == "description_request":
+                for source_index in torch.topk(describe_probabilities, min(3, len(describe_probabilities))).indices.tolist():
+                    source = self.sources[source_index]
+                    value = self._source_value(source, anchors, participant_frame)
+                    if value and not isinstance(value, dict) and not isvar(value):
+                        candidates.append(
                             Candidate(
-                                {"apps": [], "query": None, "describe": v},
-                                base + logp(dd[sx]),
-                                {"intent": intent, "source": s},
+                                {"force": force, "apps": [], "query": None, "directive": None, "describe": value},
+                                base_score + logp(describe_probabilities[source_index]),
+                                {"force": force, "source": source},
                             )
                         )
                 continue
-            # Presence profile + one looser alternative gives N-best topology without program classes.
+
             profiles = []
             for threshold in (0.52, 0.30):
-                active = [j for j in range(MAX_APPS) if float(pp[j, 1]) >= threshold]
+                active = [slot for slot in range(MAX_APPS) if float(presence_probabilities[slot, 1]) >= threshold]
                 if not active:
                     active = [0]
                 profile = tuple(active)
                 if profile not in profiles:
                     profiles.append(profile)
             for active in profiles:
-                op_choices = [
-                    torch.topk(oo[j], min(2, len(self.ops))).indices.tolist()
-                    for j in active
+                operator_choices = [
+                    torch.topk(operator_probabilities[slot], min(2, len(self.operators))).indices.tolist()
+                    for slot in active
                 ]
-                for opids in itertools.product(*op_choices):
-                    apps = []
-                    score = base
-                    ok = True
-                    for j, oid in zip(active, opids):
-                        op = self.ops[oid]
-                        specs = store.roles(op)
+                for operator_ids in itertools.product(*operator_choices):
+                    applications = []
+                    score = base_score
+                    valid = True
+                    for slot, operator_id in zip(active, operator_ids):
+                        operator = self.operators[operator_id]
+                        specs = store.roles(operator)
                         args = {}
-                        score += logp(pp[j, 1]) + logp(oo[j, oid])
-                        for r, spec in specs.items():
-                            if r not in self.ri:
-                                if spec["required"] and not (
-                                    op == "op:state" and r == "role:dimension"
-                                ):
-                                    ok = False
+                        score += logp(presence_probabilities[slot, 1]) + logp(operator_probabilities[slot, operator_id])
+                        for role, spec in specs.items():
+                            if role not in self.role_index:
+                                if spec["required"]:
+                                    valid = False
                                 continue
-                            rp = bb[j, self.ri[r]]
-                            src, p = self._choose_source(
-                                rp,
+                            role_probabilities = binding_probabilities[slot, self.role_index[role]]
+                            source, probability = self._choose_source(
+                                role_probabilities,
                                 store,
                                 spec,
                                 anchors,
                                 participant_frame,
                                 allow_none=not bool(spec["required"]),
+                                allow_variable=force == "query",
                             )
-                            v = self._source_value(src, anchors, participant_frame)
-                            if src != "NONE" and v is not None:
-                                args[r] = v
-                                score += logp(p)
-                            elif spec["required"] and not (
-                                op == "op:state" and r == "role:dimension"
-                            ):
-                                ok = False
-                        if ok:
-                            apps.append(
-                                {"operator": op, "args": args, "stance": "support"}
-                            )
-                    if not ok:
+                            value = self._source_value(source, anchors, participant_frame)
+                            if source != "NONE" and value is not None:
+                                args[role] = value
+                                score += logp(probability)
+                            elif spec["required"]:
+                                # Grounded claims may still use exact unique value→dimension completion.
+                                if not (force != "query" and operator == "op:state" and role == "role:dimension"):
+                                    valid = False
+                        if valid:
+                            applications.append({"operator": operator, "args": args, "stance": "support"})
+                    if not valid or not applications:
                         continue
-                    pkt = {
-                        "apps": apps if intent == "assert" else [],
-                        "query": apps[0] if intent == "query" and apps else None,
-                        "describe": None,
+
+                    variable_sources = {
+                        source
+                        for application in applications
+                        for value in application.get("args", {}).values()
+                        for source in self.sources
+                        if self._source_value(source, anchors, participant_frame) == value
+                        and source.startswith("Q")
                     }
-                    cands.append(
+                    projected_sources = {
+                        source
+                        for source in variable_sources
+                        if float(projection_probabilities[self.source_index[source]]) >= 0.45
+                    } or variable_sources
+                    projection = sorted(
+                        self._source_value(source, anchors, participant_frame)
+                        for source in projected_sources
+                    )
+                    variables = []
+                    for application in applications:
+                        specs = store.roles(application["operator"])
+                        for role, value in application.get("args", {}).items():
+                            if isinstance(value, str) and isvar(value):
+                                variables.append(
+                                    {
+                                        "ref": value,
+                                        "filler_kind": specs[role]["filler_kind"] or "atom",
+                                        "role_ref": role,
+                                    }
+                                )
+                    if force == "query":
+                        packet = {
+                            "force": force,
+                            "apps": [],
+                            "query": {
+                                "restrictions": applications,
+                                "variables": variables,
+                                "projection": projection,
+                            },
+                            "directive": None,
+                            "describe": None,
+                        }
+                    elif force == "directive":
+                        packet = {
+                            "force": force,
+                            "apps": [],
+                            "query": None,
+                            "directive": {"content": applications},
+                            "describe": None,
+                        }
+                    else:
+                        packet = {
+                            "force": force,
+                            "apps": applications,
+                            "query": None,
+                            "directive": None,
+                            "describe": None,
+                        }
+                    candidates.append(
                         Candidate(
-                            pkt,
+                            packet,
                             score,
                             {
-                                "intent": intent,
+                                "force": force,
                                 "active_slots": active,
-                                "operators": [self.ops[x] for x in opids],
+                                "operators": [self.operators[index] for index in operator_ids],
+                                "projection_sources": sorted(projected_sources),
                             },
                         )
                     )
-        cands.sort(key=lambda c: c.score, reverse=True)
-        return cands[:top_k]
+        candidates.sort(key=lambda candidate: candidate.score, reverse=True)
+        return candidates[:top_k]
 
     def predict_rules(self, text, anchors, store, top_k=5):
-        if self.rnet is None:
+        if self.rule_net is None:
             return []
         with torch.no_grad():
-            k, ip, io, ib, tp, to, tb = self.rnet(self._x(text))
-            k = torch.softmax(k[0], -1)
-            ip = torch.softmax(ip[0], -1)
-            io = torch.softmax(io[0], -1)
-            ib = torch.softmax(ib[0], -1)
-            tp = torch.softmax(tp[0], -1)
-            to = torch.softmax(to[0], -1)
-            tb = torch.softmax(tb[0], -1)
+            kind, if_presence, if_operators, if_bindings, then_presence, then_operators, then_bindings = self.rule_net(self._x(text))
+            kind = torch.softmax(kind[0], -1)
+            if_presence = torch.softmax(if_presence[0], -1)
+            if_operators = torch.softmax(if_operators[0], -1)
+            if_bindings = torch.softmax(if_bindings[0], -1)
+            then_presence = torch.softmax(then_presence[0], -1)
+            then_operators = torch.softmax(then_operators[0], -1)
+            then_bindings = torch.softmax(then_bindings[0], -1)
 
-        def srcval(s):
-            if s.startswith("A"):
-                return anchors.get("@" + s)
-            if s.startswith("V"):
-                return "?v" + s[1:]
-            if s.startswith("E"):
-                return "!e" + s[1:]
+        def source_value(source):
+            if source.startswith("A"):
+                return anchors.get("@" + source)
+            if source.startswith("V"):
+                return "?v" + source[1:]
+            if source.startswith("E"):
+                return "!e" + source[1:]
             return None
 
-        out = []
-        for kid in torch.topk(k, min(2, len(k))).indices.tolist():
-            kind = self.RULE_KINDS[kid]
-            score = logp(k[kid])
+        output = []
+        for kind_id in torch.topk(kind, min(2, len(kind))).indices.tolist():
+            rule_kind = self.RULE_KINDS[kind_id]
+            score = logp(kind[kind_id])
             sides = []
             valid = True
-            for pres, ops, bind, maxn in (
-                (ip, io, ib, MAX_RULE_IF),
-                (tp, to, tb, MAX_RULE_THEN),
+            for presence, operators, bindings, maximum in (
+                (if_presence, if_operators, if_bindings, MAX_RULE_IF),
+                (then_presence, then_operators, then_bindings, MAX_RULE_THEN),
             ):
                 side = []
-                for j in range(maxn):
-                    if float(pres[j, 1]) < 0.45:
+                for slot in range(maximum):
+                    if float(presence[slot, 1]) < 0.45:
                         continue
-                    oid = int(torch.argmax(ops[j]))
-                    op = self.ops[oid]
-                    specs = store.roles(op)
+                    operator_id = int(torch.argmax(operators[slot]))
+                    operator = self.operators[operator_id]
+                    specs = store.roles(operator)
                     args = {}
-                    score += logp(pres[j, 1]) + logp(ops[j, oid])
-                    for r, spec in specs.items():
-                        if r not in self.ri:
+                    score += logp(presence[slot, 1]) + logp(operators[slot, operator_id])
+                    for role, spec in specs.items():
+                        if role not in self.role_index:
                             if spec["required"]:
                                 valid = False
                             continue
-                        rp = bind[j, self.ri[r]]
-                        picked = None
-                        for sx in torch.argsort(rp, descending=True).tolist():
-                            s = self.rsrc[sx]
-                            v = srcval(s)
-                            if s == "NONE" and not spec["required"]:
-                                picked = (None, float(rp[sx]))
+                        probabilities = bindings[slot, self.role_index[role]]
+                        selected = None
+                        for source_index in torch.argsort(probabilities, descending=True).tolist():
+                            source = self.rule_sources[source_index]
+                            value = source_value(source)
+                            if source == "NONE" and not spec["required"]:
+                                selected = (None, float(probabilities[source_index]))
                                 break
-                            if isinstance(v, str) and (
-                                v.startswith("?") or v.startswith("!")
-                            ):
-                                picked = (v, float(rp[sx]))
+                            if isinstance(value, str) and (isvar(value) or value.startswith("!")):
+                                selected = (value, float(probabilities[source_index]))
                                 break
-                            if v and self._kind_ok(store, spec, v):
-                                picked = (v, float(rp[sx]))
+                            if value and self._kind_ok(store, spec, value):
+                                selected = (value, float(probabilities[source_index]))
                                 break
-                        if picked and picked[0] is not None:
-                            args[r] = picked[0]
-                            score += logp(picked[1])
+                        if selected and selected[0] is not None:
+                            args[role] = selected[0]
+                            score += logp(selected[1])
                         elif spec["required"]:
                             valid = False
-                    side.append({"operator": op, "args": args})
+                    side.append({"operator": operator, "args": args})
                 sides.append(side)
             if valid and sides[0] and sides[1]:
-                out.append(
-                    {"rule_kind": kind, "if": sides[0], "then": sides[1], "score": score}
-                )
-        return sorted(out, key=lambda x: x["score"], reverse=True)[:top_k]
+                output.append({"rule_kind": rule_kind, "if": sides[0], "then": sides[1], "score": score})
+        return sorted(output, key=lambda item: item["score"], reverse=True)[:top_k]
