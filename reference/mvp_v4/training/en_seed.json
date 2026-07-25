@@ -447,6 +447,11 @@
           "surface": "active",
           "ref": "syn:active",
           "kind": "value"
+        },
+        {
+          "surface": "activity",
+          "ref": "syn:activity_status",
+          "kind": "state_dimension"
         }
       ],
       "semantic": {
@@ -455,6 +460,7 @@
             "operator": "op:state",
             "args": {
               "role:subject": "syn:server",
+              "role:dimension": "syn:activity_status",
               "role:value": "syn:active"
             }
           }
@@ -474,6 +480,11 @@
           "surface": "active",
           "ref": "syn:active",
           "kind": "value"
+        },
+        {
+          "surface": "activity",
+          "ref": "syn:activity_status",
+          "kind": "state_dimension"
         }
       ],
       "semantic": {
@@ -481,6 +492,7 @@
           "operator": "op:state",
           "args": {
             "role:subject": "syn:server",
+            "role:dimension": "syn:activity_status",
             "role:value": "syn:active"
           }
         }
