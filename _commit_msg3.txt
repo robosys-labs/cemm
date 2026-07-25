@@ -1,0 +1,19 @@
+fix: unify web demo surface and remove stale default data
+
+- cemm/web/index.html: remove the reviewed_teach option from the web
+  mode selector; only Normal and Read-only are exposed in the demo UI.
+  The old Ask/Learn/Teach tabs are already gone; this keeps the
+  surface aligned with the unified conversation model.
+
+- cemm/web_demo.py: stop defaulting to family_knowledge.json, which
+  contains pre-final atoms (rel:state_dimension, etc.) rejected by the
+  final schema. Default data is now canonical base.json only.
+
+Verification:
+- _verify_web.py: runtime boots, chat("How are you?") returns
+  "My response capability is at 100 percent." with report_capability.
+- python -m unittest discover -s tests: 43/43 PASS
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>

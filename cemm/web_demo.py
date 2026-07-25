@@ -123,10 +123,9 @@ def main():
     package = Path(__file__).parent
     _db_path = args.db
     _pack_path = args.pack or str(package / "language_packs" / "en.json")
-    _data_files = args.data or [
-        str(package / "data" / "base.json"),
-        str(package / "data" / "family_knowledge.json"),
-    ]
+    # Final v1 authority is canonical base.json; family_knowledge.json contains
+    # pre-final atoms (rel:state_dimension, etc.) that the final schema rejects.
+    _data_files = args.data or [str(package / "data" / "base.json")]
     import uvicorn
 
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
