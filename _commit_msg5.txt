@@ -1,0 +1,27 @@
+feat: redesign web demo with cleaner tab-based UI
+
+Replaced the stacked-panel layout with a polished, easier-to-use interface:
+
+- Tab navigation: Chat and Teach tabs instead of two stacked panels
+- Mode pills (Normal / Read-only / Reviewed teach) replace the dropdown
+- Quick example chips: hi, how are you?, what is evidence?, is Ada a doctor?
+- Inline "Teach this word" buttons appear on frontier responses so the
+  user can jump straight to admitting an unknown word without retyping it
+- Typing indicator (animated dots) while waiting for a response
+- Health status badge in the header showing authority generation + hash
+- Admitted words log on the Teach tab with surface, kind, and ref
+- Enter to send, Shift+Enter for newline
+- Color-coded status tags on message meta (frontier/answered/learned)
+- Refined dark theme with CSS variables, better spacing and typography
+- Responsive layout for mobile
+
+Verification:
+- /api/health, /api/chat, /api/acquire all respond correctly
+- "hi" -> "Hello." (greet), "what is your name?" -> frontier with
+  inline teach button, acquire("name") -> committed, then
+  "what is your name?" -> answered
+- python -m unittest discover -s tests: 43/43 PASS
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>
