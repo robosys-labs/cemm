@@ -8,7 +8,9 @@ The exact plane stores semantic atoms, five compositional operator shapes, appli
 
 ## v1 status
 
-The final v1 runtime implements the complete documented Stage 0–22 cognitive cycle:
+CEMM v1 currently implements an **exact Stage 0–22 runtime skeleton and several working semantic subsystems**, but it is not yet a complete realization of the cognitive goals in the architecture. The authority/state/query/transition/response boundaries below are implemented foundations; `CURRENT_RUNTIME_WEAKNESSES.md` records the unresolved multi-resolution grounding and property-query work.
+
+Implemented foundations include:
 
 - transport-grounded participant deixis;
 - pure observation and evidence encoding;
@@ -29,7 +31,7 @@ The final v1 runtime implements the complete documented Stage 0–22 cognitive c
 - structural training episodes with family-level holdouts and mandatory no-transition cases;
 - explicit reviewed lexical acquisition with no parser writes or default semantic kind.
 
-The bundled language packs and knowledge data remain small proof artifacts. Architectural completeness does **not** mean broad vocabulary, broad world knowledge, or production-scale model quality.
+The bundled language packs and knowledge data remain small proof artifacts. A complete stage trace proves ordering, not cognitive completeness. Current grounding still collapses some form/referent alternatives too early, state projections are not yet full settling factors, and general designation/property questions such as names need further architecture work.
 
 ## Five fixed operator shapes
 
@@ -218,6 +220,12 @@ Web demo:
 python -m cemm.web_demo --db cemm.sqlite
 ```
 
+## Authority bundle initialization
+
+All files passed with `--data` form one exact authority graph. Initialization links and validates the complete bundle before any durable write; file order cannot hide missing atoms or rules. Generic meta-relations and generic inference rules belong in `base.json`, not in domain/demo files.
+
+A database created by an older sequential importer should be rebuilt after the foundation migration.
+
 ## Main modules
 
 | Module | Responsibility |
@@ -249,5 +257,6 @@ See also:
 
 - `ARCHITECTURE.md`
 - `runtime-core-loop.md`
-- `v1-fixes.md`
+- `CURRENT_RUNTIME_WEAKNESSES.md`
+- `docs/archive/` — superseded phase plans and repair history
 - `V1_ACCEPTANCE.md`

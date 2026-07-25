@@ -39,17 +39,28 @@ def pack_hash(value):
 def load_knowledge(paths):
     kinds = {}
     value_dimensions = {}
+    spec_dimensions = {}
+    spec_values = {}
     for path in paths:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         for atom in data.get("atoms", []):
             kinds[atom["ref"]] = atom["kind"]
         for fact in data.get("facts", []):
             args = fact.get("args", {})
-            if (
-                fact.get("operator") == "op:relation"
-                and args.get("role:relation") == "rel:value_of_dimension"
-            ):
-                value_dimensions.setdefault(args.get("role:subject"), set()).add(args.get("role:object"))
+            if fact.get("operator") != "op:relation":
+                continue
+            relation = args.get("role:relation")
+            subject = args.get("role:subject")
+            obj = args.get("role:object")
+            if relation == "rel:value_of_dimension":
+                value_dimensions.setdefault(subject, set()).add(obj)
+            elif relation == "rel:state_dimension":
+                spec_dimensions.setdefault(subject, set()).add(obj)
+            elif relation == "rel:state_value":
+                spec_values.setdefault(subject, set()).add(obj)
+    for spec in set(spec_dimensions) & set(spec_values):
+        for value in spec_values[spec]:
+            value_dimensions.setdefault(value, set()).update(spec_dimensions[spec])
     kinds.setdefault("participant:user", "participant")
     kinds.setdefault("participant:system", "participant")
     return kinds, value_dimensions
@@ -102,7 +113,7 @@ def source_for(value, ref_to_placeholder, new_map, constant_map=None):
     return None
 
 
-def structured_target(semantic, ref_to_placeholder, value_dimensions, constant_map=None):
+def structured_target(semantic, ref_to_placeholder, value_dimensions, kind_map, constant_map=None):
     new_map = {}
     entity_count = event_count = 0
     for item in semantic.get("new", []):
@@ -129,6 +140,13 @@ def structured_target(semantic, ref_to_placeholder, value_dimensions, constant_m
     for application in applications[:MAX_APPS]:
         bindings = {}
         args = application.get("args", {})
+        if application.get("operator") == "op:type":
+            instance = args.get("role:instance")
+            class_ref = args.get("role:class")
+            if kind_map.get(instance) == "concept" and kind_map.get(class_ref) == "concept":
+                raise ValueError(
+                    "generic concept predication must use op:relation/rel:subtype_of, not op:type(concept, concept)"
+                )
         for role, value in args.items():
             source = source_for(value, ref_to_placeholder, new_map, constant_map)
             if source:
@@ -221,6 +239,7 @@ def realization_refs(example):
     else:
         for value in example["fact"].get("args", {}).values():
             add(value)
+    refs.sort()
     return {ref: f"@A{i}" for i, ref in enumerate(refs)}
 
 
@@ -300,7 +319,7 @@ def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
             {
                 "example_ref": example.get("example_ref", f"{language}:s:{index}"),
                 "input": input_text,
-                "target": structured_target(example["semantic"], refs, value_dimensions, constant_map),
+                "target": structured_target(example["semantic"], refs, value_dimensions, kinds, constant_map),
                 "weight": float(example.get("weight", 1)),
             }
         )

@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from cemm.constants import DDL, SCHEMA_VERSION
+from cemm.authority import load_documents, validate_documents
 from cemm.model import (
     AmbiguousReferent,
     Fact,
@@ -1031,75 +1032,151 @@ class Store:
         self.db.execute("UPDATE revision_state SET effect_revision=? WHERE singleton=1", (new_revision,))
         return {"effect_ref": effect_ref, "effect_revision": new_revision, "idempotent_replay": False}
 
-    def import_data(self, path):
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    def _existing_authority_manifest(self):
+        atoms = {
+            str(row["ref"]): {
+                "ref": str(row["ref"]),
+                "kind": str(row["kind"]),
+                "metadata": json.loads(row["metadata"]),
+            }
+            for row in self.db.execute(
+                "SELECT ref,kind,metadata FROM atoms WHERE authority_scope='authority'"
+            ).fetchall()
+        }
+        operator_roles = {
+            (str(row["operator_ref"]), str(row["role_ref"])): {
+                "operator_ref": str(row["operator_ref"]),
+                "role_ref": str(row["role_ref"]),
+                "required": bool(row["required"]),
+                "cardinality": str(row["cardinality"]),
+                "filler_kind": row["filler_kind"],
+            }
+            for row in self.db.execute("SELECT * FROM operator_roles").fetchall()
+        }
+        controls = {
+            str(row["role"]): str(row["semantic_ref"])
+            for row in self.db.execute("SELECT * FROM control_symbols").fetchall()
+        }
+        return atoms, operator_roles, controls
+
+    def import_bundle(self, paths):
+        """Link and atomically import one authority graph split across JSON files.
+
+        No file is imported before the complete bundle passes exact cross-file
+        validation.  Import order therefore cannot hide missing atoms, role
+        contracts, rule constants, or concept/subtype confusion.
+        """
+        documents = load_documents(paths)
+        existing_atoms, existing_roles, existing_controls = self._existing_authority_manifest()
+        empty_authority = not existing_atoms
+        report = validate_documents(
+            documents,
+            existing_atoms=existing_atoms,
+            existing_operator_roles=existing_roles,
+            existing_controls=existing_controls,
+            require_foundations=empty_authority,
+        )
         with self.db:
-            generation = self.begin(f"import:{Path(path).name}")
-            for atom in data.get("atoms", []):
-                self.exact(
-                    "atoms",
-                    ["ref", "kind", "metadata", "generation"],
-                    [atom["ref"], atom["kind"], canonical(atom.get("metadata", {})), generation],
-                    ["ref"],
-                    {"generation"},
-                )
-            for item in data.get("operator_roles", []):
-                if item.get("cardinality", "one") != "one":
-                    raise ValueError("MVP supports one filler per role; represent multiplicity with repeated applications")
-                self.exact(
-                    "operator_roles",
-                    ["operator_ref", "role_ref", "required", "cardinality", "filler_kind"],
-                    [item["operator_ref"], item["role_ref"], int(item.get("required", False)), "one", item.get("filler_kind")],
-                    ["operator_ref", "role_ref"],
-                )
-            for role, ref in data.get("control_symbols", {}).items():
-                self.exact("control_symbols", ["role", "semantic_ref"], [role, ref], ["role"])
-            for item in data.get("reference_forms", []):
-                self.exact(
-                    "reference_forms",
-                    ["language", "surface", "features", "bound_ref", "weight"],
-                    [item.get("language", "en"), item["surface"], canonical(item.get("features", {})), item.get("bound_ref"), float(item.get("weight", 1))],
-                    ["language", "surface", "bound_ref"],
-                )
-            for rule in data.get("rules", []):
-                self.validate_rule(rule)
-                kind = rule.get("rule_kind", "entailment")
-                antecedent = canonical(rule.get("if", []))
-                consequent = canonical(rule.get("then", []))
-                if self.db.execute(
-                    "SELECT 1 FROM rules WHERE rule_kind=? AND antecedent=? AND consequent=?",
-                    (kind, antecedent, consequent),
-                ).fetchone():
-                    continue
-                self.exact(
-                    "rules",
-                    ["rule_ref", "rule_kind", "antecedent", "consequent", "confidence", "authority_status", "generation"],
-                    [rule["rule_ref"], kind, antecedent, consequent, float(rule.get("confidence", 1)), rule.get("authority_status", "reviewed"), generation],
-                    ["rule_ref"],
-                    {"generation"},
-                )
-            for fact in data.get("facts", []):
-                observation = self.add_observation(
-                    fact.get("source_text", fact.get("fact_ref", fact["operator"])),
-                    fact,
-                    "und",
-                    fact.get("source_ref", "seed"),
-                    generation,
-                    float(fact.get("confidence", 1)),
-                )
-                self.insert_app(
-                    fact["operator"],
-                    fact.get("args", {}),
-                    generation,
-                    observation,
-                    fact.get("stance", "support"),
-                    fact.get("confidence", 1),
-                    fact.get("authority_status", "reviewed"),
-                )
+            generation = self.begin(
+                "import_bundle:" + hashlib.sha256(
+                    canonical((report.bundle_hash, [document.name for document in documents])).encode()
+                ).hexdigest()[:16]
+            )
+            # The graph is linked before this point.  Durable insertion is now
+            # deterministic and grouped by semantic dependency, not file order.
+            for document in sorted(documents, key=lambda item: str(item.path)):
+                for atom in sorted(document.data.get("atoms", ()), key=lambda item: item["ref"]):
+                    self.exact(
+                        "atoms",
+                        ["ref", "kind", "metadata", "generation", "authority_scope"],
+                        [atom["ref"], atom["kind"], canonical(atom.get("metadata", {})), generation, "authority"],
+                        ["ref"],
+                        {"generation"},
+                    )
+            for document in sorted(documents, key=lambda item: str(item.path)):
+                for item in sorted(
+                    document.data.get("operator_roles", ()),
+                    key=lambda value: (value["operator_ref"], value["role_ref"]),
+                ):
+                    self.exact(
+                        "operator_roles",
+                        ["operator_ref", "role_ref", "required", "cardinality", "filler_kind"],
+                        [item["operator_ref"], item["role_ref"], int(item.get("required", False)), "one", item.get("filler_kind")],
+                        ["operator_ref", "role_ref"],
+                    )
+                for role, ref in sorted(document.data.get("control_symbols", {}).items()):
+                    self.exact("control_symbols", ["role", "semantic_ref"], [role, ref], ["role"])
+                for item in sorted(
+                    document.data.get("reference_forms", ()),
+                    key=lambda value: (value.get("language", "en"), value["surface"], value.get("bound_ref") or ""),
+                ):
+                    self.exact(
+                        "reference_forms",
+                        ["language", "surface", "features", "bound_ref", "weight"],
+                        [item.get("language", "en"), item["surface"], canonical(item.get("features", {})), item.get("bound_ref"), float(item.get("weight", 1))],
+                        ["language", "surface", "bound_ref"],
+                    )
+            for document in sorted(documents, key=lambda item: str(item.path)):
+                for rule in sorted(document.data.get("rules", ()), key=lambda item: item["rule_ref"]):
+                    self.validate_rule(rule)
+                    kind = rule.get("rule_kind", "entailment")
+                    antecedent = canonical(rule.get("if", ()))
+                    consequent = canonical(rule.get("then", ()))
+                    if self.db.execute(
+                        "SELECT 1 FROM rules WHERE rule_kind=? AND antecedent=? AND consequent=?",
+                        (kind, antecedent, consequent),
+                    ).fetchone():
+                        continue
+                    self.exact(
+                        "rules",
+                        ["rule_ref", "rule_kind", "antecedent", "consequent", "confidence", "authority_status", "generation"],
+                        [rule["rule_ref"], kind, antecedent, consequent, float(rule.get("confidence", 1)), rule.get("authority_status", "reviewed"), generation],
+                        ["rule_ref"],
+                        {"generation"},
+                    )
+            fact_count = 0
+            for document in sorted(documents, key=lambda item: str(item.path)):
+                for fact in sorted(
+                    document.data.get("facts", ()),
+                    key=lambda item: canonical((item.get("operator"), item.get("stance", "support"), item.get("args", {}), item.get("fact_ref", ""))),
+                ):
+                    observation = self.add_observation(
+                        fact.get("source_text", fact.get("fact_ref", fact["operator"])),
+                        fact,
+                        "und",
+                        fact.get("source_ref", "seed"),
+                        generation,
+                        float(fact.get("confidence", 1)),
+                    )
+                    self.insert_app(
+                        fact["operator"],
+                        fact.get("args", {}),
+                        generation,
+                        observation,
+                        fact.get("stance", "support"),
+                        fact.get("confidence", 1),
+                        fact.get("authority_status", "reviewed"),
+                    )
+                    fact_count += 1
             self.rebuild_rule_index()
             self.rebuild_designations()
-            self.finish(generation, cycle_ref="import", stage=13, world_delta=True, observation_delta=True)
-        return generation
+            receipt = self.finish(
+                generation,
+                cycle_ref="authority-bundle-import",
+                stage=13,
+                world_delta=True,
+                observation_delta=True,
+                payload={"bundle": report.as_dict(), "facts": fact_count},
+            )
+        return {"generation": generation, "bundle": report.as_dict(), "receipt": receipt}
+
+    def import_data(self, path):
+        """Import one reviewed extension against already-linked authority.
+
+        Initial repository setup must use :meth:`import_bundle` so cross-file
+        references are validated before any write.
+        """
+        return self.import_bundle((path,))["generation"]
 
     def rebuild_designations(self):
         """Maintenance-only rebuild of the generic designation index."""

@@ -297,6 +297,14 @@
       }
     },
     {
+      "ref": "label:name",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "designation_family": "name"
+      }
+    },
+    {
       "ref": "label:name_alias",
       "kind": "label_type",
       "metadata": {
@@ -440,6 +448,24 @@
       }
     },
     {
+      "ref": "rel:implies_object_state",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false
+      }
+    },
+    {
+      "ref": "rel:implies_subject_state",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false
+      }
+    },
+    {
       "ref": "rel:mechanism_applies_to",
       "kind": "relation_type",
       "metadata": {
@@ -450,6 +476,44 @@
     },
     {
       "ref": "rel:requires_capability",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false
+      }
+    },
+    {
+      "ref": "rel:state_dimension",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false,
+        "state_spec_binding": true
+      }
+    },
+    {
+      "ref": "rel:state_value",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false,
+        "state_spec_binding": true
+      }
+    },
+    {
+      "ref": "rel:subject_type",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "operational": true,
+        "user_visible": false
+      }
+    },
+    {
+      "ref": "rel:subrelation_of",
       "kind": "relation_type",
       "metadata": {
         "foundational": true,
@@ -472,7 +536,8 @@
       "metadata": {
         "foundational": true,
         "operational": true,
-        "user_visible": false
+        "user_visible": false,
+        "derived_index": true
       }
     },
     {
@@ -1199,6 +1264,46 @@
           }
         }
       },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "foundation:name-label:en",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:name",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "name"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "source_ref": "seed",
       "authority_status": "reviewed"
     },
     {
@@ -1979,6 +2084,46 @@
           }
         }
       },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "foundation:name-label:es",
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:name",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "nombre"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "source_ref": "seed",
       "authority_status": "reviewed"
     },
     {
@@ -3124,6 +3269,36 @@
       "authority_status": "reviewed"
     },
     {
+      "fact_ref": "def:evidence-type",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:evidence",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:information"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "def:conflict-type",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:conflict",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:state"
+      },
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "def:meaning-type",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:meaning",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:structured_semantic_content"
+      },
+      "authority_status": "reviewed"
+    },
+    {
       "operator": "op:relation",
       "args": {
         "role:subject": "value:conflicting",
@@ -3264,6 +3439,28 @@
       "authority_status": "reviewed"
     },
     {
+      "fact_ref": "foundation:name-alias-family",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:name_alias",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:name"
+      },
+      "source_ref": "seed",
+      "authority_status": "reviewed"
+    },
+    {
+      "fact_ref": "foundation:name-full-family",
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:name_full",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:name"
+      },
+      "source_ref": "seed",
+      "authority_status": "reviewed"
+    },
+    {
       "operator": "op:relation",
       "args": {
         "role:subject": "cap:realize",
@@ -3351,32 +3548,206 @@
       },
       "source_ref": "seed",
       "authority_status": "reviewed"
-    },
+    }
+  ],
+  "rules": [
     {
-      "fact_ref": "def:evidence-type",
-      "operator": "op:type",
-      "args": {
-        "role:instance": "concept:evidence",
-        "role:class": "concept:information"
-      },
+      "rule_ref": "rule:relation-object-state",
+      "rule_kind": "entailment",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:implies_object_state",
+            "role:object": "?spec"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_dimension",
+            "role:object": "?dim"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_value",
+            "role:object": "?val"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "?y",
+            "role:dimension": "?dim",
+            "role:value": "?val"
+          }
+        }
+      ],
+      "confidence": 1.0,
       "authority_status": "reviewed"
     },
     {
-      "fact_ref": "def:conflict-type",
-      "operator": "op:type",
-      "args": {
-        "role:instance": "concept:conflict",
-        "role:class": "concept:state"
-      },
+      "rule_ref": "rule:relation-subject-state",
+      "rule_kind": "entailment",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:implies_subject_state",
+            "role:object": "?spec"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_dimension",
+            "role:object": "?dim"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?spec",
+            "role:relation": "rel:state_value",
+            "role:object": "?val"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:state",
+          "args": {
+            "role:subject": "?x",
+            "role:dimension": "?dim",
+            "role:value": "?val"
+          }
+        }
+      ],
+      "confidence": 1.0,
       "authority_status": "reviewed"
     },
     {
-      "fact_ref": "def:meaning-type",
-      "operator": "op:type",
-      "args": {
-        "role:instance": "concept:meaning",
-        "role:class": "concept:structured_semantic_content"
-      },
+      "rule_ref": "rule:relation-subject-type",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r",
+            "role:relation": "rel:subject_type",
+            "role:object": "?c"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?c"
+          }
+        }
+      ],
+      "confidence": 1.0,
+      "authority_status": "reviewed"
+    },
+    {
+      "rule_ref": "rule:subrelation-inheritance",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?r1",
+            "role:relation": "rel:subrelation_of",
+            "role:object": "?r2"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r1",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?x",
+            "role:relation": "?r2",
+            "role:object": "?y"
+          }
+        }
+      ],
+      "confidence": 1.0,
+      "authority_status": "reviewed"
+    },
+    {
+      "rule_ref": "rule:type-subtype-inheritance",
+      "rule_kind": "definition",
+      "if": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?a"
+          }
+        },
+        {
+          "operator": "op:relation",
+          "args": {
+            "role:subject": "?a",
+            "role:relation": "rel:subtype_of",
+            "role:object": "?b"
+          }
+        }
+      ],
+      "then": [
+        {
+          "operator": "op:type",
+          "args": {
+            "role:instance": "?x",
+            "role:class": "?b"
+          }
+        }
+      ],
+      "confidence": 1.0,
       "authority_status": "reviewed"
     }
   ]

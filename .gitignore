@@ -8,9 +8,11 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 *.sqlite3
+*.sqlite
 *.log
 
 # Documentation cutover rollback backups
+.cemm-v1-foundation-repair/
 .documentation-cutover-backups/
 .phase14_15_backup/
 .phase16_17_backup/

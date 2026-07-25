@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse, json, sys
 from cemm.model import canonical
+from cemm.authority import load_documents, validate_documents, validate_pack_constants
 from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
 
@@ -12,9 +13,17 @@ def cmd_init(args):
     store = Store(args.db)
     if store.db.execute("SELECT 1 FROM atoms LIMIT 1").fetchone():
         raise RuntimeError("database is already initialized; use explicit acquisition/import tooling")
-    for path in args.data:
-        store.import_data(path)
-    print(canonical(Runtime(store, args.pack).runtime_attestation))
+    documents = load_documents(args.data)
+    report = validate_documents(documents, require_foundations=True)
+    authority_refs = {
+        str(atom["ref"])
+        for document in documents
+        for atom in document.data.get("atoms", ())
+    }
+    validate_pack_constants((args.pack,), authority_refs)
+    imported = store.import_bundle(args.data)
+    attestation = Runtime(store, args.pack).runtime_attestation
+    print(canonical({"authority_bundle": report.as_dict(), "import": imported, "runtime": attestation}))
 
 def cmd_chat(args):
     rt=runtime(args)

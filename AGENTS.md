@@ -1,199 +1,206 @@
 # CEMM v1 — Governing Agent Instructions
 
-**Status:** highest-priority local implementation contract
-**Version target:** CEMM v1
-**Purpose:** keep every human or AI implementation pass aligned to one
-architecture, one semantic substrate, and honest public claims.
+**Status:** highest-priority local implementation contract  
+**Target:** one exact semantic cognition runtime; no compatibility brain, phrase router, or hidden fallback
 
-For architectural detail, operator catalogues, runtime contracts, and
-acceptance gates, see `ARCHITECTURE.md`. This document governs principles and
-prohibitions only.
+Read these active contracts before changing code:
+
+1. `AGENTS.md`
+2. `ARCHITECTURE.md`
+3. `runtime-core-loop.md`
+4. `CURRENT_RUNTIME_WEAKNESSES.md`
+5. `V1_ACCEPTANCE.md`
+6. `README.md`
+
+Documents under `docs/archive/` are historical evidence only. A historical test, plan, patch report, demo transcript, or frozen MVP cannot override the active contracts.
 
 ---
 
 ## 1. Core thesis
 
-CEMM is a modular semantic cognition kernel. Its engineering thesis:
-
 ```text
-meaning ≠ language
+meaning != language
+exact semantics are authority
+neural/dynamic computation proposes, ranks, composes and realizes
 ```
 
-Language is a symbolic/compositional interface for expressing, communicating,
-and manipulating meaning. It is **not** the ontology and must not become the
-kernel's primary semantic authority.
+There is one semantic brain. The exact plane and dynamic plane have different computational roles, but they converge on one semantic authority. Never preserve a legacy parser, phrase recognizer, sidecar pack, compatibility ontology, or alternate runtime as a second source of meaning.
 
-**One-brain rule.** There is one canonical semantic brain. Deterministic
-solvers, recurrent dynamics, neural models, language adapters, and migration
-compilers may perform distinct computational roles, but they must converge on
-one canonical semantic authority. There must never be competing brains
-(legacy + neural + multimodal) as parallel authorities.
-
-**Two inseparable computational planes:**
-
-- **Exact semantic plane** — defines what meaning *is*: content-addressed
-  semantic graphs, exact definitions, typed roles/bindings, state dimensions,
-  causal structure, evidence lineage, immutable authority generations.
-  Semantic identity is deterministic, versioned, replayable, content-addressed.
-- **Dynamic semantic plane** — defines how meaning becomes active, competes,
-  settles, predicts, and learns: sparse activation, recurrent message passing,
-  bottom-up evidence, top-down expectation, uncertainty, learned parameters.
-  Continuous representations may assist cognition; they never define semantic
-  identity by themselves.
+New domains normally extend atoms, designations, existing operator applications, dimensions, rules, mechanisms, profiles, evidence and learned parameters. They do not expand kernel branch count or database schema count.
 
 ---
 
-## 2. Meaning laws
+## 2. Mandatory root-cause workflow
 
-1. **Exact semantics are authority.** Exact semantic truth lives in the
-   meaning database / semantic graph. Neural models propose and rank; they do
-   not decide semantic truth.
-2. **Neural computation proposes, ranks, composes, realizes.** The neural
-   plane generates candidates, scores them, composes structures, and realizes
-   language. It never becomes the semantic authority.
-3. **Neural latent state never becomes a second semantic ontology.**
-   Embeddings, activations, and learned labels are not semantic identity.
-4. **New domain ≠ new Python class, ≠ new SQL schema, ≠ new semantic program
-   class.** New domains are expressed as atoms, designations, operator
-   applications, state dimensions, graph rules, and learned parameters — not
-   as new code branches or schemas.
-5. **Derived closure is not materialized by default.** Inferred facts are
-   computed on demand. Persisting closure merely because it was queried is
-   forbidden.
-6. **Five universal operator shapes remain fixed.** The kernel operator ABI
-   is frozen. New competence extends what operators are applied to, not how
-   many operator shapes exist.
+A failing phrase is a diagnostic probe, not a feature request.
 
-Additional standing laws (condensed):
+Before editing code:
 
-- Grammar is evidence about meaning, not ontology.
-- `subject` is not universally `agent`; `object` is not universally `affected`.
-- Referent identity is distinct from state continuity.
-- Defaults are expectations, not active facts.
-- Claims are not automatically world truth.
-- Prediction is not observation; simulation is not commit.
-- Correlation and co-occurrence are not causal authority.
-- Response meaning exists before wording; realization may choose wording but
-  may not invent semantic content.
-- Partial understanding is valid cognition and must remain explicit.
-- Unknown material must not erase already-grounded meaning.
+1. Reproduce the failure with a typed stage trace and exact authority generation.
+2. Locate the earliest stage where the expected artifact diverges.
+3. Identify the missing or malformed **general capability**: normalization, form evidence, reference candidates, identity grounding, state entitlement, CSIR expressiveness, inference, admission, transition, goal, Response CSIR, or realization.
+4. Review all existing foundational atoms, roles, relations, rules and stage contracts that could represent the capability.
+5. Decide whether the defect is data, authority linkage, retrieval, candidate generation, exact validation, settling, persistence ownership, or training supervision.
+6. Define a cross-domain and multilingual acceptance test before implementation.
+7. Change the earliest correct owning layer. Do not patch a later symptom.
+8. Run authority-link, no-hidden-write, multi-hypothesis, anti-bloat and regression gates.
+9. Update active documentation and archive superseded plans.
+
+A patch is rejected when its justification is merely “this makes the example pass.”
 
 ---
 
-## 3. Authority separation principle
+## 3. Absolute prohibition on stealth text cognition
 
-Keep **authority** and **world** distinct.
+Do not add regexes, token lists, substring checks, punctuation checks, exact transcript checks, special question-word branches, or phrase-specific conditions to infer semantic meaning inside the core loop.
 
-- **Authority** is the immutable semantic substrate: kernel operators, roles,
-  definitions, promoted rules, language/model artifacts, operational profiles,
-  causal mechanisms, authorizations. Authority changes only through explicit
-  generation-based promotion.
-- **World** is the mutable grounded layer: referents, claims, state timelines,
-  events, evidence, discourse, observations. World revision never silently
-  mutates authority.
-
-Authority is **generation-based**: each promotion creates a new immutable
-generation. A cycle pins one authority generation and never sees mid-cycle
-promotion. Newly promoted authority becomes visible only through **explicit
-reload** — it must not silently appear to pinned cycles.
-
-World occurrences must never contaminate authority hashes. Authority
-attestation is pinned to the authority cutoff so later world learning cannot
-alter it.
-
----
-
-## 4. Anti-bloat / forbidden shortcuts
-
-Before adding any new schema, code branch, or runtime path, ask:
+The only permitted surface-pattern machinery is inside an explicitly bounded **pre-core form-processing subsystem**. Its responsibility is reversible normalization and form evidence, not semantic authority. It may produce multiple candidates with provenance; it may not decide referent identity, discourse force, operator choice, world truth, state dimension, event effect, goal, or response meaning.
 
 ```text
-Can this be represented as:
-  an atom?
-  a designation?
-  an existing operator application?
-  a state dimension/value?
-  a graph rule over existing operators?
-  a causal mechanism over typed roles/state?
-  an operational profile?
-  a learned parameter artifact?
+raw signal/text
+→ reversible normalization alternatives
+→ morphology/token/span/construction evidence alternatives
+→ sentence/document resolution pass
+→ ResolvedFormLattice (N-best, provenance preserved)
+→ semantic Stage 1–22 core loop
 ```
 
-Only if the answer is demonstrably no should the kernel ABI be reconsidered.
-
-A patch is invalid if it introduces or preserves as public authority any of:
-
-```text
-one regex per phrase
-one Python class per concept
-one SQL table per domain
-one semantic program class per utterance topology
-response strings whose content is not grounded meaning
-neural latent labels treated as semantic truth
-inferred closure persisted merely because it was queried
-newly promoted authority silently visible to pinned cycles
-world occurrences contaminating authority hashes
-```
-
-Additional standing prohibitions:
-
-- Exact transcript/phrase matching as cognition.
-- Named concept/action/type branches in kernel cognition.
-- Confidence used as authority; embeddings used as semantic identity.
-- Defaults promoted directly to facts.
-- Observation frequency treated as truth.
-- Learning candidates self-promoting from frequency alone.
-- Response text constructed before response semantics.
-- Irreversible/external effects without the narrow authorization boundary.
-- Hidden legacy fallback; duplicate semantic brains.
-- Durable persistence for every transient cognitive intermediate.
-
-The system must generalize because semantic structure and computational laws
-generalize.
+Until that subsystem is implemented, do not scatter temporary text matching through `runtime.py`, `interpreter.py`, `goals.py`, `response.py`, or domain data loaders.
 
 ---
 
-## 5. Public claims discipline
+## 4. Multi-resolution law
 
-Do not publicly claim a capability merely because its code, schema, or data
-exists. Until the applicable acceptance gates pass, do not describe CEMM as:
+Ambiguity must remain parallel until sufficient semantic and contextual evidence settles it.
 
-- a completed general intelligence system;
-- a verified replacement for LLMs;
-- a literal or validated biological brain simulation;
-- a production-grade multimodal cognition engine;
-- broadly multilingual merely because multiple language packs are present;
-- a fully proven autonomous self-learning system.
-
-Preferred language while under verification:
+Forbidden:
 
 ```text
-"architecture/code exists"
-"implemented foundation"
-"under active verification"
-"target capability"
+surface → first label match → one referent → one meaning
+surface → punctuation/keyword → one force
+unknown token → concept
 ```
 
-Use stronger status language only when canonical acceptance evidence supports
-it.
+Required:
 
-The architectural thesis may be stated strongly:
+```text
+surface evidence
+→ candidate forms/spans/constructions
+→ candidate designations/reference requirements
+→ candidate referents/identities
+→ candidate CSIR graphs
+→ exact clamps + state/type/context factors
+→ recurrent bounded settling
+→ stable, partial, ambiguous, or unresolved result
+```
 
-> language is a symbolic/compositional interface for representing and
-> communicating meaning grounded in entities, states, relations, events,
-> transitions, causality, and possible operations.
-
-Do not turn that thesis into unsupported claims about neuroscience, biological
-brain equivalence, or proven evolutionary mechanisms.
+No stage may collapse N-best candidates merely for API convenience. A top candidate may be selected only with an explicit margin/convergence decision and retained alternatives/provenance.
 
 ---
 
-## 6. Reference
+## 5. Foundation and authority integrity
 
-For architecture detail, operator catalogues, runtime contracts, persistence
-boundaries, learning loops, and acceptance gates, see `ARCHITECTURE.md`.
+Authority JSON files are one graph split across files, not independent mini-ontologies.
 
-If a lower-authority document, test, bootstrap script, generated artifact, or
-implementation path conflicts with the principles above, fix or quarantine the
-lower authority. Do not invent a second runtime or semantic authority to
-preserve compatibility.
+Before any durable import:
+
+- link the complete authority bundle;
+- verify every atom, operator, role, control symbol, fact filler, rule constant and language-pack constant;
+- reject concept-as-instance hierarchy encoding;
+- reject state applications without `role:dimension`;
+- reject incomplete reified state specifications;
+- reject duplicate/conflicting atom kinds or role contracts;
+- validate language-pack hashes and authority constants;
+- write the bundle atomically only after all checks pass.
+
+Generic relations and generic rules belong in foundational authority, never in a family, vehicle, medical, security, or other demo/domain file.
+
+Do not create a new foundational atom until you have searched existing primitives and documented why composition of existing atoms/operators cannot represent the meaning. When a new foundational primitive is genuinely required, update architecture, bundle validation, multilingual data, tests and migration together.
+
+---
+
+## 6. Designation, label and name law
+
+Referent identity is opaque and distinct from every label.
+
+```text
+referent
+← op:designation(label_type, surface, language, context, provenance)
+```
+
+`name` is a designation family/property query, not an identity, state value, English keyword, or custom response branch. `label:name_full` and `label:name_alias` are subtypes of `label:name`.
+
+A query for a name must construct a designation restriction graph and project the appropriate surface literal/designation evidence. Never implement `if "name" in text` or a `NAME_QUERY` semantic program.
+
+---
+
+## 7. Fixed semantic laws
+
+- Exactly five compact operator shapes remain the v1 ABI: designation, type, relation, state and event.
+- `op:type(instance, class)` is instance membership. Concept hierarchy uses `rel:subtype_of`.
+- State always has subject, dimension and value.
+- State specifications may reify a dimension/value pair; their relations must be foundational and complete.
+- Defaults are expectations, not observations.
+- Claims are source-attributed before admission.
+- Prediction, simulation and desired state are not observed world state.
+- Subject/object positions never imply causal roles.
+- Response semantics precede words.
+- Partial meaning is valid cognition and must not be discarded.
+- Unknown material must not create semantic authority or poison unrelated self/world state.
+
+---
+
+## 8. Backward compatibility and tests
+
+Backward compatibility is not a goal when it preserves an invalid semantic contract.
+
+Old tests are evidence, not authority. Retire or rewrite tests that assert:
+
+- exact phrase responses;
+- Ask/Learn/Teach as different cognition;
+- global SessionSelf semantics;
+- omitted dimensions;
+- concept-as-instance hierarchy;
+- function words inferred from examples;
+- autonomous concept creation;
+- generic outcome response templates;
+- whole-store runtime scans.
+
+Never weaken a new exact gate merely to keep a historical test green.
+
+---
+
+## 9. Performance laws
+
+Normal cycles must use bounded indexed retrieval, generation/revision keyed caches, bounded recursive closure, bounded recurrent settling and bounded re-entry.
+
+Forbidden on ordinary turns:
+
+- whole-store hashes;
+- whole-graph/base-fact scans;
+- full closure materialization;
+- per-turn model retraining;
+- global designation rebuilds;
+- one regex evaluation per stored label;
+- persistence of transient candidates or query closure.
+
+Hard-required semantic/proof slots cannot be dropped by learned ranking, but they remain within explicit budgets.
+
+---
+
+## 10. Definition of a valid fix
+
+A fix is complete only when:
+
+- the root cause is stated;
+- the owning stage/module is identified;
+- the exact semantic representation is documented;
+- the solution generalizes beyond the triggering phrase/domain/language;
+- authority linkage and import are atomic;
+- N-best alternatives and partial meaning are preserved;
+- persistence ownership is unchanged or explicitly justified;
+- performance budgets are maintained;
+- active docs and acceptance tests agree;
+- superseded plans/tests are archived or retired.
+
+When uncertain, stop and deepen the architecture review. Do not add a clever fallback.

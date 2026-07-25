@@ -1,3 +1,8 @@
+> **ARCHIVED — historical evidence only.**
+> This file is not active implementation authority. See root `AGENTS.md`,
+> `ARCHITECTURE.md`, `runtime-core-loop.md`, `CURRENT_RUNTIME_WEAKNESSES.md`,
+> and `V1_ACCEPTANCE.md`.
+
 # CEMM v1 — Phases 10–16 Final Implementation
 
 ## Scope

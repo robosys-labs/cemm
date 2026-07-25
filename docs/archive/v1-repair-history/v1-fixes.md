@@ -1,3 +1,8 @@
+> **ARCHIVED — historical evidence only.**
+> This file is not active implementation authority. See root `AGENTS.md`,
+> `ARCHITECTURE.md`, `runtime-core-loop.md`, `CURRENT_RUNTIME_WEAKNESSES.md`,
+> and `V1_ACCEPTANCE.md`.
+
 # CEMM v1 Fix Plan — Final Completion Record
 
 This document is the dependency-ordered repair record for the frozen-MVP-derived v1. The final implementation removes compatibility paths rather than preserving behavior that conflicts with the architecture.

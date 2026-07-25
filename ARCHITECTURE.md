@@ -1,4 +1,7 @@
-# CEMM v1 Final Architecture
+# CEMM v1 Active Architecture
+
+
+> **Implementation status:** the exact substrate and Stage 0–22 ownership skeleton are implemented foundations. Multi-resolution form processing, parallel referent grounding, active state-conditioned settling, span-level partial CSIR, and general designation/property queries remain active work. A stage trace is not proof that these functions are complete.
 
 ## 1. Normative thesis
 
@@ -488,3 +491,47 @@ These are coverage and deployment limits, not hidden alternate semantic paths.
 ## Explicit implied dimensions
 
 A lexical value may explicitly select `DIM_OF_A*`; exact authority resolves `value → rel:value_of_dimension → dimension`. This is a declared semantic source, not compiler inference.
+
+## 18. Pre-core form processing and multi-resolution entry contract
+
+Surface processing is outside semantic authority. It may use language-specific normalization, tokenization, morphology and span algorithms only to create reversible evidence alternatives.
+
+```text
+raw text/signal
+→ NormalizationCandidate[]
+→ FormSpanCandidate[]
+→ SentenceDocumentCandidate[]
+→ ResolvedFormLattice
+→ Stage 1 semantic evidence
+```
+
+Every candidate preserves source offsets, transformations, language/script evidence, score and lineage. The front-end cannot create semantic atoms, bind a final referent, choose discourse force, infer a state dimension, or mutate world state.
+
+Stage 3 consumes candidate designations and reference requirements as a `GroundingCandidateSet`. Stage 5 constructs CSIR candidates across surviving grounding hypotheses. Exact role/kind/domain checks prune candidates; Stage 6–7 settles them with state/type/context factors. No top-1 label result is semantic authority before convergence.
+
+## 19. Authority bundle/linking contract
+
+Repository authority is one graph split across reviewable files. Before import, a linker validates the complete set of atoms, role contracts, control symbols, durable facts, rule constants, reference forms, state specifications and language-pack constants. The database write occurs atomically after validation.
+
+Generic relations and rules are foundational authority. A domain file may declare domain concepts, entities, dimensions, values, events and domain mechanisms, but it may not privately define a generic kernel relation required by other domains.
+
+Concept hierarchy uses `rel:subtype_of`; `op:type` is reserved for instance membership. Reified state specifications bind exactly one `rel:state_dimension` and one `rel:state_value`.
+
+## 20. Designation and property-query contract
+
+Identity is opaque. Names, aliases, titles, identifiers and localized labels are designation properties:
+
+```text
+op:designation(target, label_type, surface, language, script, context, provenance)
+```
+
+`label:name_full` and `label:name_alias` are subtypes of `label:name`. A name query is a normal QueryCSIR over designation restrictions and subtype closure, projecting literal surface evidence and proof. It is not a special English intent.
+
+The same mechanism must support title, alias, identifier and localized-label queries. Response CSIR must preserve literal-binding provenance and authorize realization without exposing internal IDs.
+
+## 21. Property paths and chained dimensions
+
+Properties are not all state dimensions. The runtime must preserve the distinction between designation properties, relations, intrinsic dimensions, component/resource state, derived capabilities and process/event-valued state. Chained access is represented as a bounded graph restriction/path over existing applications and dependencies, not dotted strings or per-type schemas.
+
+State projection may recursively follow type/facet entitlement and capability/resource dependencies. Future property-path projection must preserve each edge, context, time and proof so a derived answer remains explainable.
+

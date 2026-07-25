@@ -13,6 +13,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from cemm.authority import AuthorityBundleError, load_documents, validate_documents, validate_pack_constants
+
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
@@ -26,7 +29,7 @@ def check(repo: Path):
     errors: list[str] = []
     cemm = repo / "cemm"
     required = {
-        "capability.py", "cognition.py", "curriculum.py", "epistemics.py",
+        "authority.py", "capability.py", "cognition.py", "curriculum.py", "epistemics.py",
         "evidence.py", "goals.py", "retrieval.py", "stages.py", "transitions.py", "acquisition.py",
     }
     for name in sorted(required):
@@ -77,12 +80,22 @@ def check(repo: Path):
 
     base_path = cemm / "data/base.json"
     authority_refs: set[str] = set()
+    data_paths = sorted((cemm / "data").glob("*.json"))
     if not base_path.exists():
         fail(errors, "missing cemm/data/base.json")
     else:
+        try:
+            bundle_report = validate_documents(load_documents(data_paths), require_foundations=True)
+            authority_refs = {
+                str(atom["ref"])
+                for path in data_paths
+                for atom in json.loads(path.read_text(encoding="utf-8")).get("atoms", ())
+            }
+        except AuthorityBundleError as exc:
+            for issue in exc.issues:
+                fail(errors, "authority bundle: " + issue)
         base = json.loads(base_path.read_text(encoding="utf-8"))
         atoms = {item["ref"]: item for item in base.get("atoms", ())}
-        authority_refs = set(atoms)
         operators = sorted(ref for ref, item in atoms.items() if item.get("kind") == "operator")
         expected_ops = ["op:designation", "op:event", "op:relation", "op:state", "op:type"]
         if operators != expected_ops:
@@ -117,6 +130,41 @@ def check(repo: Path):
         missing_atoms = sorted(required_atoms - set(atoms))
         if missing_atoms:
             fail(errors, f"missing final operational-profile atoms: {missing_atoms}")
+
+    # Generic foundations must not be hidden in domain/demo authority.
+    generic_rules = {
+        "rule:subrelation-inheritance", "rule:relation-subject-type",
+        "rule:type-subtype-inheritance", "rule:relation-subject-state",
+        "rule:relation-object-state",
+    }
+    required_meta = {
+        "rel:state_dimension", "rel:state_value", "rel:value_of_dimension",
+        "rel:subtype_of", "rel:subrelation_of", "rel:subject_type",
+        "rel:implies_subject_state", "rel:implies_object_state",
+    }
+    if base_path.exists():
+        base_rule_refs = {str(item.get("rule_ref")) for item in base.get("rules", ())}
+        missing = sorted(generic_rules - base_rule_refs)
+        if missing:
+            fail(errors, f"generic foundation rules missing from base: {missing}")
+        missing = sorted(required_meta - set(atoms))
+        if missing:
+            fail(errors, f"foundational meta-relations missing from base: {missing}")
+        if "label:name" not in atoms:
+            fail(errors, "foundational designation family label:name is missing")
+    for path in data_paths:
+        if path == base_path:
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        leaked_rules = sorted(generic_rules & {str(item.get("rule_ref")) for item in data.get("rules", ())})
+        leaked_atoms = sorted(required_meta & {str(item.get("ref")) for item in data.get("atoms", ())})
+        if leaked_rules or leaked_atoms:
+            fail(errors, f"domain authority owns generic foundations {path.relative_to(repo)}: atoms={leaked_atoms}, rules={leaked_rules}")
+
+    trainer_text = (cemm / "trainer.py").read_text(encoding="utf-8")
+    realization_match = re.search(r"def realization_refs\(example\):(.*?)(?=\ndef )", trainer_text, re.S)
+    if not realization_match or ".sort()" not in realization_match.group(1):
+        fail(errors, "trainer realization_refs must sort semantic refs exactly like runtime pointerization")
 
     packs = sorted((cemm / "language_packs").glob("*.json"))
     if not packs:
@@ -173,6 +221,11 @@ def check(repo: Path):
                         fail(errors, f"unresolved reviewed constant source in {path.relative_to(repo)}:{example.get('example_ref')}:{source}")
         if data.get("language") == "es" and "estoy" not in set(data.get("function_forms", ())):
             fail(errors, "Spanish final pack is missing 'estoy'")
+    try:
+        validate_pack_constants(packs, authority_refs)
+    except AuthorityBundleError as exc:
+        for issue in exc.issues:
+            fail(errors, "language pack: " + issue)
 
     constants = (cemm / "constants.py").read_text(encoding="utf-8")
     if not re.search(r"SCHEMA_VERSION\s*=\s*[\"']2[\"']", constants):

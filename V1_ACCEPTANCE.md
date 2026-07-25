@@ -115,3 +115,34 @@
 - [ ] The runtime is explicitly re-pinned after reviewed authority publication.
 
 The final test suite must run against a freshly created schema-v2 store and canonical migrated authority.
+
+## N. Authority bundle and document integrity
+
+- [ ] All canonical data files are linked before the first durable import write.
+- [ ] A missing cross-file atom/rule constant fails with zero database delta.
+- [ ] Generic meta-relations and generic rules exist only in foundational authority.
+- [ ] `rel:state_dimension` and `rel:state_value` are declared foundational relation atoms.
+- [ ] Every implied state specification binds exactly one dimension and one value.
+- [ ] Concept hierarchy facts use `rel:subtype_of`, never concept-as-instance `op:type`.
+- [ ] Reviewed source corpora and compiled packs pass the same semantic integrity release gate.
+- [ ] Trainer and runtime use identical deterministic pointer ordering.
+
+## O. Multi-resolution form and grounding
+
+- [ ] Surface normalization is reversible and isolated outside semantic authority.
+- [ ] Multiple form/span/designation/referent candidates survive into semantic composition.
+- [ ] No core-loop regex, keyword, punctuation or exact phrase branch decides meaning.
+- [ ] Ambiguous labels do not silently merge identities or select a winner before settling.
+- [ ] State/type/context factors change candidate energy or clamp invalid candidates before Stage 10.
+- [ ] An unknown span preserves grounded structure inside the same clause.
+- [ ] Embedded/mixed discourse acts retain scope rather than being flattened.
+
+## P. Designation and chained-property competence
+
+- [ ] `label:name` is a foundational designation family.
+- [ ] Full names and aliases are subtypes of `label:name`.
+- [ ] A name query is represented as designation QueryCSIR and returns literal bindings with proof.
+- [ ] The same query machinery handles aliases, titles, identifiers and localized labels.
+- [ ] Chained property/dimension queries preserve every graph edge, context, time and proof.
+- [ ] No phrase-specific name/property handler exists.
+

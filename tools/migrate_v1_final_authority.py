@@ -5,8 +5,17 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from typing import Any
+from repair_v1_foundations import (
+    repair_authority_documents,
+    repair_training_corpora,
+)
+from cemm.authority import load_documents, validate_documents, validate_pack_constants
 
 
 def canonical(value):
@@ -438,18 +447,38 @@ def migrate_pack(path: Path, authority_refs: set[str]):
     }
 
 def main(repo: Path):
+    # Step 1 retires the old outcome/global-self authority in base.
     base_path = repo / "cemm/data/base.json"
     base_report = migrate_base(base_path)
+
+    # Step 2 links the complete repository authority, not base.json alone.
+    # Generic relations/rules are moved to base; all domain files and source
+    # corpora are repaired before packs are accepted.
+    foundation_report = repair_authority_documents(repo)
+    training_report = repair_training_corpora(repo)
+    data_paths = sorted((repo / "cemm/data").glob("*.json"))
+    linked = validate_documents(load_documents(data_paths), require_foundations=True)
     authority_refs = {
-        str(item["ref"])
-        for item in json.loads(base_path.read_text(encoding="utf-8")).get("atoms", ())
+        str(atom["ref"])
+        for path in data_paths
+        for atom in json.loads(path.read_text(encoding="utf-8")).get("atoms", ())
     }
-    report = {"base": base_report, "packs": []}
-    for path in (repo / "cemm/language_packs").glob("*.json"):
+
+    report = {
+        "base": base_report,
+        "foundations": foundation_report,
+        "training": training_report,
+        "linked_bundle": linked.as_dict(),
+        "packs": [],
+    }
+    pack_paths = []
+    for path in sorted((repo / "cemm/language_packs").glob("*.json")):
         if path.name.endswith(".v1.json"):
             path.unlink()
             continue
         report["packs"].append(migrate_pack(path, authority_refs))
+        pack_paths.append(path)
+    validate_pack_constants(pack_paths, authority_refs)
     return report
 
 

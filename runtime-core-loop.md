@@ -17,6 +17,24 @@ H RESPOND_FINALIZE       18–22
 
 `CycleWorkspace` owns transient artifacts. No stage may infer a durable write merely because a Python object exists.
 
+
+## Pre-core boundary — NORMALIZE_AND_RESOLVE_FORM_EVIDENCE
+
+This boundary precedes semantic Stage 0–22 and owns all permitted surface-pattern processing. It produces an immutable `ResolvedFormLattice`, not meaning.
+
+```text
+raw text
+→ reversible normalization alternatives
+→ token/subword/morphology alternatives
+→ span/construction alternatives
+→ sentence/document disambiguation alternatives
+→ ResolvedFormLattice
+```
+
+No candidate may be discarded solely because it is not the first lexical match. The artifact retains offsets, transformations, scores and provenance. It performs no semantic or world write and cannot decide identity, force, operator, state, event effect, goal or response.
+
+Until this subsystem exists, new regex/text branches are prohibited in the semantic runtime.
+
 ## 2. Stage table
 
 ### Stage 0 — ORIENT
@@ -45,7 +63,7 @@ Create form/modality evidence, delexicalized clauses, candidate reference requir
 
 ### Stage 3 — GROUND
 
-Resolve participant requirements, designations, and discourse references. Ambiguity remains an explicit candidate/frontier.
+Construct parallel designation, reference, referent and coreference hypotheses from the `ResolvedFormLattice`, ParticipantFrame and discourse state. Ambiguity remains a `GroundingCandidateSet`; a label lookup must not collapse it to one referent before semantic settling.
 
 ### Stage 4 — PROJECT_STATE
 
@@ -71,7 +89,7 @@ No bare query or value→dimension compatibility completion exists.
 
 ### Stage 6 — RECURRENT_DYNAMICS
 
-Competing exact candidates interact under fixed rounds and bounded N-best topology. State projections and context may affect candidate energy; they do not become textual prompt hacks.
+Competing exact candidates interact under fixed rounds and bounded N-best topology. Candidate axes include form/span, designation/sense, referent/coreference and CSIR structure. State entitlement, value-domain, time/context, current evidence and mechanism applicability are explicit factors. Exact violations are clamped; dynamic plausibility never becomes authority.
 
 ### Stage 7 — STABILIZE
 
@@ -271,3 +289,19 @@ A generic “evidence insufficient” response without a target is valid only wh
 ## Reviewed structural constants
 
 Pack-local `CONST*` sources resolve only to authority-scoped atoms visible to the pinned generation. They permit general structural relations such as `rel:subtype_of` without a flat arbitrary-ontology prediction head.
+
+## 11. Multi-resolution invariants
+
+- form resolution produces N-best evidence with lineage;
+- designation lookup returns candidate sets, not one semantic truth;
+- participant and coreference requirements remain separate from lexical identity;
+- CSIR candidates are composed across surviving grounding hypotheses;
+- state projection actively constrains/scales candidates before query execution;
+- convergence/margin gates own top-candidate selection;
+- partial graphs preserve grounded nodes and typed open variables;
+- no surface regex or keyword branch is permitted after the pre-core boundary.
+
+## 12. Designation/name query path
+
+A general name question enters the loop as designation-family evidence. Stage 5 constructs an open designation restriction, Stage 10 projects the surface literal and label subtype, and Stage 18 constructs a literal-bearing Response CSIR. This path must also handle aliases, titles and localized labels; no `name` token branch exists in the core.
+
