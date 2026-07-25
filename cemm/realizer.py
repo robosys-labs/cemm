@@ -18,8 +18,8 @@ class LanguagePack:
         pack_path = Path(path)
         self.path = str(pack_path)
         data = json.loads(pack_path.read_text(encoding="utf-8"))
-        hash_material = {key: value for key, value in data.items() if key != "pack_hash"}
-        computed = hashlib.sha256(canonical(hash_material).encode()).hexdigest()
+        material = {key: value for key, value in data.items() if key != "pack_hash"}
+        computed = hashlib.sha256(canonical(material).encode()).hexdigest()
         if data.get("pack_hash") != computed:
             raise ValueError(f"pack hash mismatch in {path}")
         self.data = data
@@ -36,29 +36,39 @@ class ResponseSurfaceCodec:
             self.meta = self.net = None
             self.allowed = {}
             return
-        key = (pack.hash, "response-surface-v1")
+        key = (pack.hash, "response-surface-v2-learning")
         cached = cache.get(key) if cache else None
         if cached is not None:
             self.meta, self.net, self.allowed = cached
             return
-        self.meta, self.net = train_classifier(examples, "semantic", "surface_plan", 29, 120)
+        self.meta, self.net = train_classifier(
+            examples, "semantic", "surface_plan", 29, 120
+        )
         self.allowed = {}
         for example in examples:
-            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(norm_text(example["surface_plan"]))
+            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(
+                norm_text(example["surface_plan"])
+            )
         if cache:
             cache.put(key, (self.meta, self.net, self.allowed))
 
     def realize(self, semantic):
         if self.net is None:
-            return "", {"authorized_transform": False, "reason": "no_response_examples"}
-        plan, confidence, margin, known = predict_classifier(self.meta, self.net, semantic)
+            return "", {
+                "authorized_transform": False,
+                "reason": "no_response_examples",
+            }
+        plan, confidence, margin, known = predict_classifier(
+            self.meta, self.net, semantic
+        )
         return plan, {
             "semantic": semantic,
             "surface_plan": plan,
             "confidence": confidence,
             "margin": margin,
             "known_token_ratio": known,
-            "authorized_transform": norm_text(plan) in self.allowed.get(norm_text(semantic), set()),
+            "authorized_transform": norm_text(plan)
+            in self.allowed.get(norm_text(semantic), set()),
         }
 
 
@@ -72,48 +82,74 @@ class PointerRealizer:
         self.response_codec = ResponseSurfaceCodec(pack, cache)
 
     def _verify_and_substitute(self, plan, trace, placeholder_info):
-        used = sorted(set(token for token in toks(plan) if token.startswith(("@A", "@E", "@N"))))
+        used = sorted(
+            set(
+                token
+                for token in toks(plan)
+                if token.startswith(("@A", "@E", "@N"))
+            )
+        )
         unknown = [token for token in used if token not in placeholder_info]
         rendered = plan
         pointers = []
         for placeholder in used:
-            info = placeholder_info.get(placeholder)
-            if not info:
+            raw_info = placeholder_info.get(placeholder)
+            if not raw_info:
                 continue
-            if isinstance(info, tuple):
-                info = {"kind": "atom", "value": info[0], "context": info[1]}
+            info = (
+                {"kind": "atom", "value": raw_info[0], "context": raw_info[1]}
+                if isinstance(raw_info, tuple)
+                else dict(raw_info)
+            )
             kind = info["kind"]
             value = info["value"]
             if kind == "atom":
-                lexical = self.s.preferred(value, self.pack.language, info.get("context"))
+                lexical = self.s.preferred(
+                    value, self.pack.language, info.get("context")
+                )
                 if lexical == value:
                     lexical = ""
-            elif kind == "evidence":
-                lexical = str(value)
-            elif kind == "number":
+            elif kind in {"evidence", "number"}:
                 lexical = str(value)
             else:
                 lexical = ""
-            pointers.append({
-                "placeholder": placeholder,
-                "kind": kind,
-                "semantic_ref": value if kind == "atom" else None,
-                "evidence_value": value if kind != "atom" else None,
-                "surface": lexical,
-            })
+            pointers.append(
+                {
+                    "placeholder": placeholder,
+                    "kind": kind,
+                    "semantic_ref": value if kind == "atom" else None,
+                    "evidence_value": value if kind != "atom" else None,
+                    "surface": lexical,
+                    "context": info.get("context"),
+                    "literal_type": info.get("literal_type"),
+                }
+            )
             rendered = rendered.replace(placeholder, lexical)
-        grammar = [token.casefold() for token in toks(plan) if not token.startswith(("@A", "@E", "@N"))]
+        grammar = [
+            token.casefold()
+            for token in toks(plan)
+            if not token.startswith(("@A", "@E", "@N"))
+        ]
         bad_grammar = []
         for token in grammar:
             if token in self.pack.grammar:
                 continue
             core = token.strip(".,!?;:")
-            punctuation = token[len(core):] if token.startswith(core) else ""
-            if core and core in self.pack.grammar and all(char in self.pack.grammar for char in punctuation):
+            punctuation = token[len(core) :] if token.startswith(core) else ""
+            if core and core in self.pack.grammar and all(
+                char in self.pack.grammar for char in punctuation
+            ):
                 continue
             bad_grammar.append(token)
-        leaked = bool(re.search(r"\b(?:atom|existential|app|fact|query|frontier|cycle):[0-9a-fA-F]{8,}\b", rendered))
-        leaked = leaked or any(item["kind"] == "atom" and not item["surface"] for item in pointers)
+        leaked = bool(
+            re.search(
+                r"\b(?:atom|existential|app|fact|query|frontier|cycle):[0-9a-fA-F]{8,}\b",
+                rendered,
+            )
+        )
+        leaked = leaked or any(
+            item["kind"] == "atom" and not item["surface"] for item in pointers
+        )
         verified = bool(
             trace.get("authorized_transform", False)
             and not unknown
@@ -136,10 +172,16 @@ class PointerRealizer:
 
     def _render(self, semantic, placeholder_info):
         plan, trace = self.codec.realize(semantic)
-        normalized = {
-            placeholder: {"kind": "atom", "value": value[0], "context": value[1]}
-            for placeholder, value in placeholder_info.items()
-        }
+        normalized = {}
+        for placeholder, value in placeholder_info.items():
+            if isinstance(value, tuple):
+                normalized[placeholder] = {
+                    "kind": "atom",
+                    "value": value[0],
+                    "context": value[1],
+                }
+            else:
+                normalized[placeholder] = dict(value)
         return self._verify_and_substitute(plan, trace, normalized)
 
     def fact(self, fact):
@@ -151,19 +193,26 @@ class PointerRealizer:
         return self._render(semantic, mapping)
 
     def response(self, response_csir):
-        # Proof-bearing facts are the most specific learned realization path.
+        semantic, mapping = pointerize_response(response_csir)
+        plan, trace = self.response_codec.realize(semantic)
+        response, proof = self._verify_and_substitute(plan, trace, mapping)
+        if response:
+            return response, proof
+
+        # Proof-bearing fact realization is a narrower fallback when no reviewed
+        # response transform exists. It never fabricates a generic surface.
         outputs, proofs = [], []
         for fact in response_csir.facts[:5]:
-            text, proof = self.fact(fact)
+            text, item_proof = self.fact(fact)
             if text:
-                outputs.append(text); proofs.append(proof)
-        if outputs and response_csir.action in {"answer_bindings"}:
+                outputs.append(text)
+                proofs.append(item_proof)
+        if outputs and response_csir.action == "answer_bindings":
             return " ".join(outputs), {
                 "verified": all(item.get("verified") for item in proofs),
                 "verification_mode": "response_fact_provenance",
                 "fact_proofs": proofs,
                 "language_pack_hash": self.pack.hash,
+                "failed_response_transform": proof,
             }
-        semantic, mapping = pointerize_response(response_csir)
-        plan, trace = self.response_codec.realize(semantic)
-        return self._verify_and_substitute(plan, trace, mapping)
+        return "", proof

@@ -1,4 +1,4 @@
-"""Target-aware Response CSIR, semantic planning and deterministic pointerization."""
+"""Target-aware Response CSIR and deterministic semantic pointerization."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -36,7 +36,7 @@ class ResponseCSIR:
                 }
                 for fact in self.facts
             ],
-            "bindings": [dict(x) for x in self.bindings],
+            "bindings": [dict(item) for item in self.bindings],
             "qualifiers": dict(self.qualifiers),
             "evidence_literals": list(self.evidence_literals),
             "reason": self.reason,
@@ -45,7 +45,43 @@ class ResponseCSIR:
 
 
 class ResponseBuilder:
-    """Construct response meaning from the actual target, never a global status."""
+    """Construct response meaning from exact results and scoped blockers."""
+
+    @staticmethod
+    def _frontier_priority(frontier) -> tuple[float, int, str]:
+        evidence = tuple(frontier.evidence)
+        priority = max((float(item.get("priority", 0.0)) for item in evidence), default=0.0)
+        grounded = max((len(item.get("known_bindings", ())) for item in evidence), default=0)
+        return priority, grounded, frontier.frontier_ref
+
+    @staticmethod
+    def _designation_answer_metadata(facts, bindings, frontiers):
+        qualifiers: dict[str, Any] = {}
+        literals: list[str] = []
+        for frontier in frontiers:
+            for item in frontier.evidence:
+                if item.get("learning_operation"):
+                    qualifiers["query_kind"] = (
+                        (item.get("probe_query") or {}).get("qualifiers", {}).get("query_kind")
+                        or "designation_learning"
+                    )
+                    qualifiers["learning_operation"] = item["learning_operation"]
+                    if item.get("surface"):
+                        literals.append(str(item["surface"]))
+        designation = next((fact for fact in facts if fact.operator == "op:designation"), None)
+        if designation:
+            label_type = designation.args.get("role:label_type")
+            if isinstance(label_type, str):
+                qualifiers.setdefault("property_ref", label_type)
+            qualifiers.setdefault("query_kind", "designation_property")
+        if not literals:
+            for binding in bindings:
+                for value in binding.values():
+                    if isinstance(value, dict) and "literal" in value:
+                        raw = value["literal"].get("value")
+                        if isinstance(raw, str):
+                            literals.append(raw)
+        return qualifiers, tuple(dict.fromkeys(literals))
 
     def build(
         self,
@@ -63,15 +99,14 @@ class ResponseBuilder:
         facts_by_ref = facts_by_ref or {}
         action = "remain_silent"
         target_ref = None
-        facts = []
-        bindings = []
-        qualifiers = {}
-        literals = []
+        facts: list[Fact] = []
+        bindings: list[dict[str, Any]] = []
+        qualifiers: dict[str, Any] = {}
+        literals: tuple[str, ...] = ()
         reason = goal_decision.reason if goal_decision else "no_goal"
         obligation_ref = goal.goal_ref if goal else None
 
         if goal and goal.kind == "answer_query" and query_result is not None:
-            target_ref = None
             bindings = [dict(item.values) for item in query_result.bindings]
             proof_refs = {ref for item in query_result.bindings for ref in item.proof_refs}
             facts = [facts_by_ref[ref] for ref in sorted(proof_refs) if ref in facts_by_ref]
@@ -91,41 +126,70 @@ class ResponseBuilder:
                 "coverage": query_result.coverage,
                 "unresolved_variables": list(query_result.unresolved_variables),
             }
+            metadata, literals = self._designation_answer_metadata(
+                facts, bindings, frontiers
+            )
+            qualifiers.update(metadata)
         elif goal and goal.kind == "clarify" and frontiers:
-            frontier = frontiers[0]
-            action = "request_targeted_clarification"
+            frontier = max(frontiers, key=self._frontier_priority)
+            evidence = max(
+                frontier.evidence,
+                key=lambda item: (
+                    float(item.get("priority", 0.0)),
+                    len(str(item.get("surface", ""))),
+                ),
+                default={},
+            )
+            learning_operation = evidence.get("learning_operation")
+            action = (
+                "request_learning_evidence"
+                if learning_operation
+                else "request_targeted_clarification"
+            )
             target_ref = frontier.target_ref
-            literals = tuple(
-                str(item.get("surface"))
-                for item in frontier.evidence
-                if item.get("surface")
-            )[:1]
+            if evidence.get("surface"):
+                literals = (str(evidence["surface"]),)
+            qualifiers = {
+                "frontier_kind": frontier.kind,
+                "expected_semantic_kinds": list(
+                    evidence.get("semantic_kind_candidates", ())
+                ),
+            }
+            if learning_operation:
+                qualifiers.update(
+                    {
+                        "learning_operation": str(learning_operation),
+                        "learning_query": evidence.get("probe_query"),
+                        "known_bindings": dict(evidence.get("known_bindings", {})),
+                    }
+                )
             reason = frontier.kind
         elif goal and goal.kind == "report_self_capability" and capability_assessments:
             preferred = set(goal.payload.get("preferred_capability_refs", ()))
             candidates = [
-                item for item in capability_assessments
+                item
+                for item in capability_assessments
                 if not preferred or item.capability_ref in preferred
             ] or list(capability_assessments)
-            # A broad operational answer reports the weakest top-level capability,
-            # avoiding a misleading healthy sub-capability when another root is degraded.
             best = min(candidates, key=lambda item: (item.score, item.capability_ref))
             action = "report_capability"
             target_ref = best.capability_ref
             qualifiers = best.as_dict()
         elif goal and goal.kind == "greet":
             action = "greet"
-            target_ref = None
         elif goal and goal.kind == "handle_directive":
-            if operation_result is not None and operation_result.status == "succeeded":
-                action = "report_operation_result"
-            else:
-                action = "decline_directive"
-            target_ref = None
-            qualifiers = operation_result.as_dict() if operation_result else {"reason": "no_authorized_operation"}
+            action = (
+                "report_operation_result"
+                if operation_result is not None and operation_result.status == "succeeded"
+                else "decline_directive"
+            )
+            qualifiers = (
+                operation_result.as_dict()
+                if operation_result
+                else {"reason": "no_authorized_operation"}
+            )
         elif goal and goal.kind in {"acknowledge_claim", "acknowledge"}:
             action = "acknowledge_claim"
-            target_ref = None
             if epistemic_placement is not None:
                 qualifiers = epistemic_placement.as_dict()
         elif capability_assessments:
@@ -134,7 +198,17 @@ class ResponseBuilder:
             target_ref = best.capability_ref
             qualifiers = best.as_dict()
 
-        payload = (action, audience_ref, target_ref, [x.ref for x in facts], bindings, qualifiers, literals, reason, obligation_ref)
+        payload = (
+            action,
+            audience_ref,
+            target_ref,
+            [item.ref for item in facts],
+            bindings,
+            qualifiers,
+            literals,
+            reason,
+            obligation_ref,
+        )
         return ResponseCSIR(
             stable("response-csir", payload),
             action,
@@ -149,76 +223,127 @@ class ResponseBuilder:
         )
 
 
+class _PointerTable:
+    def __init__(self):
+        self.atom_by_value: dict[str, str] = {}
+        self.literal_by_key: dict[str, str] = {}
+        self.number_by_key: dict[str, str] = {}
+        self.info: dict[str, dict[str, Any]] = {}
+
+    def atom(self, value: str, context: str | None = None) -> str:
+        if value not in self.atom_by_value:
+            placeholder = f"@A{len(self.atom_by_value)}"
+            self.atom_by_value[value] = placeholder
+            self.info[placeholder] = {
+                "kind": "atom",
+                "value": value,
+                "context": context,
+            }
+        elif context and not self.info[self.atom_by_value[value]].get("context"):
+            self.info[self.atom_by_value[value]]["context"] = context
+        return self.atom_by_value[value]
+
+    def literal(self, value: Mapping[str, Any], context: str | None = None) -> str:
+        literal = dict(value["literal"])
+        typ = str(literal.get("type", "text"))
+        raw = literal.get("value")
+        table = self.number_by_key if typ in {"int", "float", "number"} else self.literal_by_key
+        prefix = "@N" if table is self.number_by_key else "@E"
+        key = canonical((context, typ, raw))
+        if key not in table:
+            placeholder = f"{prefix}{len(table)}"
+            table[key] = placeholder
+            self.info[placeholder] = {
+                "kind": "number" if prefix == "@N" else "evidence",
+                "value": raw,
+                "literal_type": typ,
+                "context": context,
+            }
+        return table[key]
+
+    def encode(self, value: Any, context: str | None = None) -> str:
+        if isinstance(value, str) and ":" in value and not value.startswith("?"):
+            return self.atom(value, context)
+        if isinstance(value, dict) and "literal" in value:
+            return self.literal(value, context)
+        return canonical(value) if isinstance(value, (dict, list)) else str(value)
+
+
 def pointerize_fact(fact: Fact):
-    refs = sorted({value for value in fact.args.values() if isinstance(value, str) and ":" in value})
-    placeholders = {ref: f"@A{index}" for index, ref in enumerate(refs)}
-    contexts = {}
-    for role, value in fact.args.items():
-        if value in placeholders:
-            contexts.setdefault(value, role)
+    table = _PointerTable()
     parts = ["FACT", fact.stance, fact.operator]
     for role, value in sorted(fact.args.items()):
-        parts += [role, placeholders.get(value, canonical(value) if isinstance(value, dict) else str(value))]
-    return " ".join(parts), {placeholders[ref]: (ref, contexts.get(ref)) for ref in refs}
+        parts += [role, table.encode(value, role)]
+    return " ".join(parts), table.info
 
 
 def pointerize_plan(plan):
-    refs = set()
-    if plan.get("value") and isinstance(plan["value"], str):
-        refs.add(plan["value"])
-    for fact in plan.get("facts", ()):
-        refs.update(value for value in fact.args.values() if isinstance(value, str) and ":" in value)
-    refs = sorted(refs)
-    placeholders = {ref: f"@A{index}" for index, ref in enumerate(refs)}
-    contexts = {}
+    table = _PointerTable()
     parts = ["PLAN", plan["goal"]]
-    if plan.get("value"):
-        value = plan["value"]
-        parts += ["VALUE", placeholders.get(value, str(value))]
-        if value in placeholders:
-            contexts[value] = "response:value"
+    if plan.get("value") is not None:
+        parts += ["VALUE", table.encode(plan["value"], "response:value")]
     for fact in plan.get("facts", ()):
         parts += ["|", "FACT", fact.stance, fact.operator]
         for role, value in sorted(fact.args.items()):
-            parts += [role, placeholders.get(value, canonical(value) if isinstance(value, dict) else str(value))]
-            if value in placeholders:
-                contexts.setdefault(value, role)
-    return " ".join(parts), {placeholders[ref]: (ref, contexts.get(ref)) for ref in refs}
+            parts += [role, table.encode(value, role)]
+    return " ".join(parts), table.info
 
 
 def pointerize_response(response: ResponseCSIR):
-    atom_refs = set()
-    if response.target_ref and ":" in response.target_ref:
-        atom_refs.add(response.target_ref)
-    for fact in response.facts:
-        atom_refs.update(value for value in fact.args.values() if isinstance(value, str) and ":" in value)
-    for binding in response.bindings:
-        atom_refs.update(value for value in binding.values() if isinstance(value, str) and ":" in value)
-    atom_refs = sorted(atom_refs)
-    atom_map = {ref: f"@A{index}" for index, ref in enumerate(atom_refs)}
-    literal_map = {value: f"@E{index}" for index, value in enumerate(response.evidence_literals)}
+    table = _PointerTable()
     parts = ["RESPONSE", response.action]
     if response.target_ref:
-        parts += ["TARGET", atom_map.get(response.target_ref, response.target_ref)]
+        parts += ["TARGET", table.encode(response.target_ref, "response:target")]
+    query_kind = response.qualifiers.get("query_kind")
+    if query_kind:
+        parts += ["QUERY_KIND", str(query_kind)]
+    property_ref = response.qualifiers.get("property_ref")
+    if isinstance(property_ref, str):
+        parts += ["PROPERTY", table.encode(property_ref, "response:property")]
+    learning_operation = response.qualifiers.get("learning_operation")
+    if learning_operation:
+        parts += ["LEARNING", str(learning_operation)]
     for binding in response.bindings:
         parts.append("BINDING")
         for variable, value in sorted(binding.items()):
-            parts += [variable, atom_map.get(value, canonical(value) if isinstance(value, dict) else str(value))]
-    for fact in response.facts:
-        parts.append("|")
-        fact_semantic, _ = pointerize_fact(fact)
-        for ref, placeholder in atom_map.items():
-            fact_semantic = fact_semantic.replace(ref, placeholder)
-        parts.append(fact_semantic)
-    for literal in response.evidence_literals:
-        parts += ["EVIDENCE", literal_map[literal]]
-    number_map = {}
+            parts += [variable, table.encode(value, f"binding:{variable}")]
+    # Facts remain proof-bearing ResponseCSIR members. Binding responses use the
+    # compact query target above so learned realization does not depend on every
+    # optional proof role being present.
+    if response.action != "answer_bindings":
+        for fact in response.facts:
+            parts.append("|")
+            semantic, mapping = pointerize_fact(fact)
+            for placeholder, info in mapping.items():
+                replacement = table.encode(info["value"], info.get("context"))
+                semantic = semantic.replace(placeholder, replacement)
+            parts.append(semantic)
+    # For designation_property binding answers, the binding value is the
+    # evidence; the reviewed transform carries it via BINDING ?q0 @E0 and does
+    # not include a separate EVIDENCE slot.  Adding one would break the
+    # authorized-transform match and force a fallback realization.
+    query_kind = response.qualifiers.get("query_kind")
+    suppress_evidence = (
+        response.action == "answer_bindings"
+        and query_kind == "designation_property"
+        and response.bindings
+    )
+    if not suppress_evidence:
+        for literal in response.evidence_literals:
+            parts += [
+                "EVIDENCE",
+                table.literal(
+                    {"literal": {"type": "text", "value": literal}},
+                    "response:evidence",
+                ),
+            ]
     if response.action == "report_capability" and "score" in response.qualifiers:
         value = round(float(response.qualifiers["score"]) * 100)
-        number_map[value] = "@N0"
-        parts += ["SCORE", "@N0"]
-    semantic = " ".join(parts)
-    placeholders = {placeholder: {"kind": "atom", "value": ref} for ref, placeholder in atom_map.items()}
-    placeholders.update({placeholder: {"kind": "evidence", "value": literal} for literal, placeholder in literal_map.items()})
-    placeholders.update({placeholder: {"kind": "number", "value": value} for value, placeholder in number_map.items()})
-    return semantic, placeholders
+        parts += [
+            "SCORE",
+            table.literal(
+                {"literal": {"type": "int", "value": value}},
+                "response:score",
+            ),
+        ]
+    return " ".join(parts), table.info

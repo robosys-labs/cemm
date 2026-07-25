@@ -29,6 +29,15 @@ class Config:
     capability_dependency_max_depth: int = 12
     capability_unknown_score: float = 0.0
 
+    # Reversible pre-core form processing. Every bound is hard and traceable.
+    form_max_input_chars: int = 8192
+    form_max_normalizations: int = 8
+    form_max_grounding_hypotheses: int = 16
+    form_max_span_candidates: int = 128
+    form_max_construction_matches: int = 32
+    form_max_semantic_hypotheses: int = 8
+    form_max_semantic_candidates: int = 48
+
     # Active workspace and bounded re-entry.
     workspace_top_k: int = 32
     workspace_max_required: int = 48

@@ -5,375 +5,45 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CEMM v1</title>
   <style>
-    :root{
-      --bg:#090b10; --bg-soft:#0e1320; --bg-panel:#11192a; --bg-elev:#18213a;
-      --border:#26314c; --border-soft:#1a2238; --border-strong:#303d5e;
-      --text:#eef2ff; --text-dim:#9ba7c4; --text-faint:#6b7796;
-      --accent:#5968f2; --accent-soft:#3a4a8e; --accent-dim:#2a3654;
-      --ok:#4ade80; --warn:#fbbf24; --err:#f87171;
-      --radius:14px; --radius-sm:10px; --radius-lg:20px;
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;
-      color-scheme:dark;background:var(--bg);color:var(--text);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 18% -10%,var(--bg-elev) 0,transparent 45%),var(--bg)}
-    main{max-width:880px;margin:0 auto;padding:28px 20px 100px}
-    /* Header */
-    .head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:24px;flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:14px}
-    .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#7c8af5);display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:-.02em;flex-shrink:0}
-    h1{margin:0;font-size:22px;letter-spacing:-.03em;font-weight:700}
-    .sub{color:var(--text-dim);font-size:13px;margin-top:2px}
-    .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:var(--bg-soft)}
-    .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);transition:.2s}
-    .dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-    .dot.err{background:var(--err);box-shadow:0 0 8px var(--err)}
-    /* Tabs */
-    .tabs{display:flex;gap:4px;margin-bottom:16px;padding:4px;background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--radius);width:fit-content}
-    .tab{padding:8px 18px;border:0;background:transparent;color:var(--text-dim);font:inherit;font-weight:600;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;transition:.15s}
-    .tab:hover{color:var(--text)}
-    .tab.active{background:var(--accent);color:#fff}
-    /* Panel */
-    .panel{border:1px solid var(--border);background:var(--bg-soft);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 20px 60px #0006}
-    .panel.hidden{display:none}
-    /* Messages */
-    #messages{min-height:340px;max-height:58vh;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-    #messages::-webkit-scrollbar{width:6px}
-    #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-    .msg{max-width:80%;padding:12px 16px;border-radius:16px;line-height:1.5;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
-    .msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-    .msg.ai{align-self:flex-start;background:var(--bg-panel);border:1px solid var(--border-strong);border-bottom-left-radius:4px}
-    .msg.system{align-self:center;background:transparent;border:1px dashed var(--border);color:var(--text-dim);font-size:12px;max-width:90%}
-    .meta{font-size:11px;color:var(--text-faint);margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .meta .tag{padding:1px 7px;border-radius:4px;background:var(--accent-dim);color:var(--text-dim);font-weight:600;letter-spacing:.02em}
-    .meta .tag.frontier{background:rgba(251,191,36,.15);color:var(--warn)}
-    .meta .tag.answered{background:rgba(74,222,128,.15);color:var(--ok)}
-    .meta .tag.learned{background:rgba(89,104,242,.2);color:var(--accent)}
-    /* Inline teach button */
-    .teach-inline{margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap}
-    .teach-btn{padding:4px 10px;font-size:12px;border-radius:8px;border:1px solid var(--accent-soft);background:var(--accent-dim);color:var(--text);cursor:pointer;font:inherit;font-weight:600}
-    .teach-btn:hover{background:var(--accent-soft)}
-    /* Typing indicator */
-    .typing{align-self:flex-start;display:flex;gap:4px;padding:14px 16px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:16px;border-bottom-left-radius:4px}
-    .typing span{width:6px;height:6px;border-radius:50%;background:var(--text-faint);animation:blink 1.4s infinite both}
-    .typing span:nth-child(2){animation-delay:.2s}
-    .typing span:nth-child(3){animation-delay:.4s}
-    @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
-    /* Input form */
-    form.chat-form{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border-top:1px solid var(--border);background:var(--bg)}
-    textarea,input,select,button{font:inherit;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--bg-panel);color:var(--text)}
-    textarea{resize:none;min-height:48px;padding:12px 14px;font-size:14px;line-height:1.4}
-    textarea:focus,input:focus,select:focus{outline:2px solid var(--accent-soft);outline-offset:-1px}
-    button{padding:0 18px;background:var(--accent);border:0;font-weight:700;cursor:pointer;color:#fff;transition:.15s}
-    button:hover:not(:disabled){background:#6b78f5}
-    button:disabled{opacity:.5;cursor:wait}
-    button.secondary{background:var(--accent-dim);border:1px solid var(--border-strong)}
-    button.secondary:hover:not(:disabled){background:var(--accent-soft)}
-    /* Mode pills */
-    .modes{display:flex;gap:6px;padding:10px 14px 0;border-top:1px solid var(--border);background:var(--bg);flex-wrap:wrap;align-items:center}
-    .modes-label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-right:4px}
-    .pill{padding:4px 12px;font-size:12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--bg-panel);color:var(--text-dim);cursor:pointer;font:inherit;font-weight:600;transition:.15s}
-    .pill:hover{color:var(--text)}
-    .pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
-    /* Quick examples */
-    .examples{display:flex;gap:8px;padding:12px 14px;0;border-top:1px solid var(--border-soft);flex-wrap:wrap}
-    .examples-label{font-size:11px;color:var(--text-faint);align-self:center;margin-right:4px}
-    .chip{padding:5px 12px;font-size:12px;border-radius:999px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text-dim);cursor:pointer;font:inherit;transition:.15s}
-    .chip:hover{color:var(--text);border-color:var(--accent-soft);background:var(--bg-panel)}
-    /* Teach panel */
-    .teach-panel{padding:24px}
-    .teach-hint{color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:18px;max-width:560px}
-    .teach-hint code{background:var(--bg-panel);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent)}
-    .teach-form{display:grid;grid-template-columns:1fr 160px auto;gap:10px;max-width:560px;margin-bottom:18px}
-    .teach-form input,.teach-form select{padding:10px 14px;font-size:14px}
-    .teach-log{margin-top:18px;border-top:1px solid var(--border-soft);padding-top:16px}
-    .teach-log h3{font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px}
-    .teach-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px}
-    .teach-entry .word{font-weight:600}
-    .teach-entry .kind{color:var(--text-dim);font-size:12px;padding:2px 8px;background:var(--bg-soft);border-radius:4px}
-    .teach-entry .ref{color:var(--text-faint);font-size:11px;font-family:ui-monospace,monospace}
-    .teach-empty{color:var(--text-faint);font-size:13px;font-style:italic}
-    /* Trace */
-    details{margin-top:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-soft);overflow:hidden}
-    summary{padding:12px 16px;cursor:pointer;font-size:13px;color:var(--text-dim);font-weight:600;user-select:none}
-    summary:hover{color:var(--text)}
-    pre{overflow:auto;padding:14px 16px;background:var(--bg);border-top:1px solid var(--border);font-size:11px;line-height:1.5;max-height:50vh;scrollbar-width:thin}
-    /* Responsive */
-    @media(max-width:620px){
-      main{padding:18px 14px 80px}
-      .head{flex-direction:column;align-items:flex-start}
-      .msg{max-width:92%}
-      .teach-form{grid-template-columns:1fr;max-width:100%}
-      .modes{padding:10px 14px}
-    }
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;--bg:#080a10;--panel:#101521cc;--elev:#171e2e;--line:#283149;--text:#f1f4ff;--muted:#929db8;--accent:#6875f5;--ok:#4ade80;--warn:#fbbf24;--bad:#fb7185}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#273252 0,transparent 42%),var(--bg);color:var(--text)}
+    main{max-width:920px;margin:auto;padding:28px 18px 96px}.head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:13px}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#7d89ff,#4f5de1);font-weight:800;box-shadow:inset 0 1px #fff5,0 16px 40px #0008}.title{font-size:22px;font-weight:750;letter-spacing:-.03em}.sub{font-size:13px;color:var(--muted);margin-top:2px}.health{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;background:#0d111bcc;font-size:12px;color:var(--muted)}.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}.dot.ok{background:var(--ok);box-shadow:0 0 10px var(--ok)}.dot.bad{background:var(--bad)}
+    .tabs{display:flex;gap:4px;width:max-content;padding:4px;border:1px solid var(--line);background:#0d111b;border-radius:14px;margin-bottom:14px}.tab,.pill,.chip,.resolve{font:inherit;color:var(--muted);border:0;cursor:pointer}.tab{padding:8px 18px;border-radius:10px;background:transparent;font-size:13px;font-weight:650}.tab.active{background:var(--accent);color:white}.panel{overflow:hidden;border:1px solid var(--line);border-radius:21px;background:var(--panel);backdrop-filter:blur(24px);box-shadow:0 30px 90px #0008}.hidden{display:none!important}
+    #messages{min-height:360px;max-height:58vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px}.msg{max-width:82%;padding:12px 15px;border-radius:16px;line-height:1.48;white-space:pre-wrap;word-break:break-word;font-size:14px}.msg.user{align-self:flex-end;background:var(--accent);border-bottom-right-radius:5px}.msg.ai{align-self:flex-start;background:var(--elev);border:1px solid #303b58;border-bottom-left-radius:5px}.msg.system{align-self:center;max-width:92%;background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:12px}.meta{font-size:11px;color:var(--muted);margin-top:7px}.resolve-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.resolve{padding:5px 9px;border-radius:8px;background:#293350;border:1px solid #405079;color:var(--text);font-size:12px}.resolve:hover{background:#354365}
+    .modes,.examples{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:11px 14px;border-top:1px solid #20283b;background:#0b0e16}.label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6f7a98}.pill,.chip{padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#111725;font-size:12px}.pill.active{background:var(--accent);border-color:var(--accent);color:white}.chat-form{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border-top:1px solid var(--line);background:#080b12}textarea,input,select,button{font:inherit}textarea,input,select{border:1px solid #34415f;background:#111725;color:var(--text);border-radius:11px;padding:12px 13px}textarea{resize:none;min-height:50px}textarea:focus,input:focus,select:focus{outline:2px solid #5969d4;outline-offset:-1px}.send,.add{border:0;border-radius:11px;background:var(--accent);color:white;padding:0 18px;font-weight:700;cursor:pointer}.send:disabled,.add:disabled{opacity:.5}
+    .teach{padding:24px}.teach h2{font-size:18px;margin:0 0 7px}.teach p{margin:0 0 19px;max-width:670px;color:var(--muted);line-height:1.55;font-size:13px}.teach-form{display:grid;grid-template-columns:1fr 170px 170px auto;gap:9px}.log{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}.log h3{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}.entry{display:grid;grid-template-columns:1fr auto minmax(0,1fr);gap:10px;padding:8px 11px;border:1px solid #252e45;background:#101625;border-radius:10px;font-size:12px;margin-top:6px}.entry .ref{font-family:ui-monospace,monospace;color:#727e9d;overflow:hidden;text-overflow:ellipsis}.empty{font-size:13px;color:#68738e;font-style:italic}details{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0d111b}summary{padding:12px 15px;color:var(--muted);font-size:13px;cursor:pointer}pre{margin:0;padding:15px;max-height:48vh;overflow:auto;border-top:1px solid var(--line);background:#070910;font-size:11px;line-height:1.5}
+    .typing{align-self:flex-start;padding:14px 17px;border:1px solid #303b58;background:var(--elev);border-radius:16px;display:flex;gap:4px}.typing i{width:6px;height:6px;background:#7f8ba8;border-radius:50%;animation:b 1.3s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+    @media(max-width:700px){.teach-form{grid-template-columns:1fr}.msg{max-width:94%}.head{align-items:flex-start}.chat-form{grid-template-columns:1fr auto}.entry{grid-template-columns:1fr auto}.entry .ref{grid-column:1/-1}}
   </style>
 </head>
 <body>
 <main>
-  <div class="head">
-    <div class="brand">
-      <div class="logo">C</div>
-      <div>
-        <h1>CEMM v1</h1>
-        <div class="sub">Semantic runtime · observes, reasons, learns admissible claims</div>
-      </div>
-    </div>
-    <div class="status"><span class="dot" id="health-dot"></span><span id="health-text">connecting…</span></div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="chat">Chat</button>
-    <button class="tab" data-tab="teach">Teach</button>
-  </div>
-
-  <!-- Chat panel -->
-  <section class="panel" id="panel-chat">
-    <div id="messages">
-      <div class="msg system">CEMM runtime is ready. Try a greeting, a question, or teach it a new word from the Teach tab.</div>
-    </div>
-    <div class="modes">
-      <span class="modes-label">Mode</span>
-      <button class="pill active" data-mode="normal">Normal</button>
-      <button class="pill" data-mode="read_only">Read-only</button>
-      <button class="pill" data-mode="reviewed_teach">Reviewed teach</button>
-    </div>
-    <div class="examples">
-      <span class="examples-label">Try</span>
-      <button class="chip" data-example="hi">hi</button>
-      <button class="chip" data-example="how are you?">how are you?</button>
-      <button class="chip" data-example="what is evidence?">what is evidence?</button>
-      <button class="chip" data-example="is Ada a doctor?">is Ada a doctor?</button>
-    </div>
-    <form class="chat-form" id="chat">
-      <textarea id="text" placeholder="Type a message…  (Enter to send, Shift+Enter for newline)" required></textarea>
-      <button id="send">Send</button>
-    </form>
+  <header class="head"><div class="brand"><div class="logo">C</div><div><div class="title">CEMM v1</div><div class="sub">Exact semantic runtime · reversible form processing</div></div></div><div class="health"><span id="health-dot" class="dot"></span><span id="health-text">connecting…</span></div></header>
+  <nav class="tabs"><button class="tab active" data-tab="chat">Chat</button><button class="tab" data-tab="teach">Reviewed acquisition</button></nav>
+  <section id="panel-chat" class="panel">
+    <div id="messages"><div class="msg system">CEMM is ready. Try a greeting, a property question, or a meaning query.</div></div>
+    <div class="modes"><span class="label">Mode</span><button class="pill active" data-mode="normal">Normal</button><button class="pill" data-mode="read_only">Read-only</button><button class="pill" data-mode="reviewed_teach">Reviewed teach</button></div>
+    <div class="examples"><span class="label">Try</span><button class="chip" data-example="hi">hi</button><button class="chip" data-example="what's your name?">what's your name?</button><button class="chip" data-example="lol, what does that mean?">lol, what does that mean?</button><button class="chip" data-example="Well my name is Opata">Well my name is Opata</button></div>
+    <form id="chat" class="chat-form"><textarea id="text" required placeholder="Type a message…"></textarea><button id="send" class="send">Send</button></form>
   </section>
-
-  <!-- Teach panel -->
-  <section class="panel hidden" id="panel-teach">
-    <div class="teach-panel">
-      <div class="teach-hint">
-        Teach CEMM a new word via <strong>reviewed acquisition</strong>. Specify the surface form and its semantic kind.
-        The system admits it as authority, then you can use it in normal conversation.
-        <br><br>
-        Example: teach <code>name</code> as <code>concept</code>, then ask "what is your name?" in Chat.
-      </div>
-      <form id="acquire" class="teach-form">
-        <input id="acq-surface" placeholder="Word (e.g. name)" required>
-        <select id="acq-kind">
-          <option value="concept">concept</option>
-          <option value="entity">entity</option>
-          <option value="value">value</option>
-          <option value="event_type">event_type</option>
-          <option value="relation_type">relation_type</option>
-        </select>
-        <button type="submit" id="acq-send" class="secondary">Add word</button>
-      </form>
-      <div class="teach-log">
-        <h3>Admitted words</h3>
-        <div id="teach-log"><div class="teach-empty">No words taught yet.</div></div>
-      </div>
-    </div>
-  </section>
-
-  <details><summary>Last semantic trace</summary><pre id="trace">No cycle yet.</pre></details>
+  <section id="panel-teach" class="panel hidden"><div class="teach"><h2>Reviewed identity and designation</h2><p>A frontier never defaults an unknown form to a concept. Select the reviewed semantic kind and label family explicitly; normal conversation remains side-effect free until this workflow is submitted.</p><form id="acquire" class="teach-form"><input id="acq-surface" required placeholder="Surface form"><select id="acq-kind" required><option value="" selected disabled>Semantic kind…</option><option>concept</option><option>entity</option><option>value</option><option>event_type</option><option>relation_type</option><option>time</option><option>participant</option></select><select id="acq-label"><option value="label:lexical">lexical label</option><option value="label:name">name</option><option value="label:name_alias">name alias</option><option value="label:name_full">full name</option><option value="label:identifier">identifier</option><option value="label:abbreviation">abbreviation</option></select><button id="acq-send" class="add">Publish</button></form><div class="log"><h3>Admitted designations</h3><div id="teach-log" class="empty">No reviewed additions in this browser session.</div></div></div></section>
+  <details><summary>Last semantic trace</summary><pre id="trace">No request yet.</pre></details>
 </main>
-
 <script>
-const $ = s => document.querySelector(s);
-const messages = $('#messages'), text = $('#text'), trace = $('#trace'), send = $('#send');
-const acqForm = $('#acquire'), acqSurface = $('#acq-surface'), acqKind = $('#acq-kind'), acqSend = $('#acq-send');
-const teachLog = $('#teach-log');
-let currentMode = 'normal';
-const admittedWords = [];
-
-// ---- Health check ----
-async function checkHealth() {
-  try {
-    const res = await fetch('/api/health');
-    const data = await res.json();
-    $('#health-dot').className = 'dot ok';
-    $('#health-text').textContent = `gen ${data.authority_generation} · ${data.authority_hash}`;
-  } catch {
-    $('#health-dot').className = 'dot err';
-    $('#health-text').textContent = 'offline';
-  }
-}
-checkHealth();
-
-// ---- Tabs ----
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const target = tab.dataset.tab;
-    $('#panel-chat').classList.toggle('hidden', target !== 'chat');
-    $('#panel-teach').classList.toggle('hidden', target !== 'teach');
-    if (target === 'chat') text.focus();
-    else acqSurface.focus();
-  });
-});
-
-// ---- Mode pills ----
-document.querySelectorAll('.pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    currentMode = pill.dataset.mode;
-  });
-});
-
-// ---- Example chips ----
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    text.value = chip.dataset.example;
-    text.focus();
-  });
-});
-
-// ---- Bubble helper ----
-function bubble(content, kind, meta = '', teachTargets = []) {
-  const el = document.createElement('div');
-  el.className = `msg ${kind}`;
-  el.textContent = content || '[no authorized surface]';
-  if (meta) {
-    const m = document.createElement('div');
-    m.className = 'meta';
-    const parts = meta.split(' · ');
-    parts.forEach(part => {
-      const tag = document.createElement('span');
-      const lower = part.toLowerCase();
-      tag.className = 'tag ' + (['frontier', 'answered', 'learned'].find(s => lower.includes(s)) || '');
-      tag.textContent = part;
-      m.appendChild(tag);
-    });
-    el.appendChild(m);
-  }
-  if (teachTargets.length) {
-    const wrap = document.createElement('div');
-    wrap.className = 'teach-inline';
-    teachTargets.forEach(word => {
-      const btn = document.createElement('button');
-      btn.className = 'teach-btn';
-      btn.textContent = `Teach "${word}" as concept`;
-      btn.addEventListener('click', () => {
-        acqSurface.value = word;
-        document.querySelector('.tab[data-tab="teach"]').click();
-      });
-      wrap.appendChild(btn);
-    });
-    el.appendChild(wrap);
-  }
-  messages.appendChild(el);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-function showTyping() {
-  const el = document.createElement('div');
-  el.className = 'typing';
-  el.id = 'typing-indicator';
-  el.innerHTML = '<span></span><span></span><span></span>';
-  messages.appendChild(el);
-  messages.scrollTop = messages.scrollHeight;
-}
-function hideTyping() {
-  const el = $('#typing-indicator');
-  if (el) el.remove();
-}
-
-// Extract unknown words from frontier evidence for inline teach buttons
-function extractTeachTargets(data) {
-  if (!data.frontier_graph || !data.frontier_graph.frontiers) return [];
-  const targets = new Set();
-  for (const f of data.frontier_graph.frontiers) {
-    for (const e of (f.evidence || [])) {
-      if (e.surface && e.surface.length > 1) targets.add(e.surface);
-    }
-  }
-  return [...targets].slice(0, 3);
-}
-
-// ---- Chat ----
-text.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chat').requestSubmit(); }
-});
-
-$('#chat').addEventListener('submit', async e => {
-  e.preventDefault();
-  const value = text.value.trim();
-  if (!value) return;
-  bubble(value, 'user');
-  text.value = '';
-  send.disabled = true;
-  showTyping();
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST', headers: {'content-type': 'application/json'},
-      body: JSON.stringify({ text: value, mode: currentMode })
-    });
-    const data = await res.json();
-    hideTyping();
-    const action = data.response_csir?.action || 'no response action';
-    const status = data.status || 'unknown';
-    const teachTargets = extractTeachTargets(data);
-    bubble(data.response, 'ai', `${status} · ${action}`, teachTargets);
-    trace.textContent = JSON.stringify(data, null, 2);
-    checkHealth();
-  } catch (err) {
-    hideTyping();
-    bubble(String(err), 'ai', 'request error');
-  } finally {
-    send.disabled = false;
-    text.focus();
-  }
-});
-
-// ---- Teach ----
-function renderTeachLog() {
-  if (!admittedWords.length) {
-    teachLog.innerHTML = '<div class="teach-empty">No words taught yet.</div>';
-    return;
-  }
-  teachLog.innerHTML = '';
-  admittedWords.slice().reverse().forEach(w => {
-    const row = document.createElement('div');
-    row.className = 'teach-entry';
-    row.innerHTML = `<span class="word">${w.surface}</span><span class="kind">${w.kind}</span><span class="ref">${w.ref}</span>`;
-    teachLog.appendChild(row);
-  });
-}
-
-acqForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const surface = acqSurface.value.trim();
-  const kind = acqKind.value;
-  if (!surface) return;
-  acqSend.disabled = true;
-  try {
-    const res = await fetch('/api/acquire', {
-      method: 'POST', headers: {'content-type': 'application/json'},
-      body: JSON.stringify({ mentions: [{ surface, kind }] })
-    });
-    const data = await res.json();
-    if (data.status === 'reviewed_acquisition_committed') {
-      const ref = Object.values(data.created_or_resolved || {})[0] || 'admitted';
-      admittedWords.push({ surface, kind, ref });
-      renderTeachLog();
-      acqSurface.value = '';
-    } else {
-      alert(data.error || data.status || 'acquisition failed');
-    }
-    checkHealth();
-  } catch (err) {
-    alert(String(err));
-  } finally {
-    acqSend.disabled = false;
-    acqSurface.focus();
-  }
-});
-
-text.focus();
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const messages=$('#messages'), text=$('#text'), trace=$('#trace'), send=$('#send');
+const acqSurface=$('#acq-surface'), acqKind=$('#acq-kind'), acqLabel=$('#acq-label'), acqSend=$('#acq-send');
+let mode='normal', admitted=[];
+async function health(){try{const r=await fetch('/api/health');const d=await r.json();$('#health-dot').className='dot ok';$('#health-text').textContent=`gen ${d.authority_generation} · ${d.authority_hash}`;}catch(e){$('#health-dot').className='dot bad';$('#health-text').textContent='offline';}}
+function switchTab(name){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('#panel-chat').classList.toggle('hidden',name!=='chat');$('#panel-teach').classList.toggle('hidden',name!=='teach');}
+$$('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$$('.pill').forEach(b=>b.onclick=()=>{$$('.pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode;});$$('.chip').forEach(b=>b.onclick=()=>{text.value=b.dataset.example;text.focus();});
+function learningTargets(data){const out=[];for(const f of data.frontier_graph?.frontiers||[])for(const e of f.evidence||[])if(e.surface)out.push({surface:e.surface,kinds:e.semantic_kind_candidates||[]});return out.filter((x,i,a)=>a.findIndex(y=>y.surface===x.surface)===i).slice(0,3);}
+function bubble(value,who,meta='',targets=[]){const el=document.createElement('div');el.className=`msg ${who}`;el.textContent=value||'[no authorized surface]';if(meta){const m=document.createElement('div');m.className='meta';m.textContent=meta;el.appendChild(m);}if(targets.length){const row=document.createElement('div');row.className='resolve-row';for(const t of targets){const b=document.createElement('button');b.className='resolve';b.textContent=`Review “${t.surface}”`;b.onclick=()=>{acqSurface.value=t.surface;const permitted=t.kinds.find(k=>[...acqKind.options].some(o=>o.value===k));acqKind.value=permitted||'';switchTab('teach');};row.appendChild(b);}el.appendChild(row);}messages.appendChild(el);messages.scrollTop=messages.scrollHeight;}
+function typing(on){const old=$('#typing');if(old)old.remove();if(!on)return;const el=document.createElement('div');el.id='typing';el.className='typing';el.innerHTML='<i></i><i></i><i></i>';messages.appendChild(el);messages.scrollTop=messages.scrollHeight;}
+text.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#chat').requestSubmit();}});
+$('#chat').onsubmit=async e=>{e.preventDefault();const value=text.value.trim();if(!value)return;bubble(value,'user');text.value='';send.disabled=true;typing(true);try{const r=await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:value,mode})});const d=await r.json();typing(false);bubble(d.response,'ai',`${d.status} · ${d.response_csir?.action||'no action'}`,learningTargets(d));trace.textContent=JSON.stringify(d,null,2);health();}catch(err){typing(false);bubble(String(err),'ai','request error');}finally{send.disabled=false;text.focus();}};
+function renderLog(){const root=$('#teach-log');if(!admitted.length){root.className='empty';root.textContent='No reviewed additions in this browser session.';return;}root.className='';root.innerHTML='';for(const item of admitted.slice().reverse()){const el=document.createElement('div');el.className='entry';el.innerHTML=`<strong></strong><span></span><span class="ref"></span>`;el.children[0].textContent=item.surface;el.children[1].textContent=`${item.kind} · ${item.label}`;el.children[2].textContent=item.ref;root.appendChild(el);}}
+$('#acquire').onsubmit=async e=>{e.preventDefault();const surface=acqSurface.value.trim(),kind=acqKind.value,label=acqLabel.value;if(!surface||!kind)return;acqSend.disabled=true;try{const r=await fetch('/api/acquire',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mentions:[{surface,kind,label_type:label}]})});const d=await r.json();if(d.status!=='reviewed_acquisition_committed')throw new Error(d.error||d.status||'acquisition failed');const ref=Object.values(d.created_or_resolved||{})[0]||'admitted';admitted.push({surface,kind,label,ref});renderLog();acqSurface.value='';acqKind.value='';health();}catch(err){alert(String(err));}finally{acqSend.disabled=false;}};
+health();text.focus();
 </script>
-</body>
-</html>
+</body></html>

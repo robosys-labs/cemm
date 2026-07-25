@@ -1,22 +1,38 @@
-"""Surface realization codec, contextual delexer and pure interpreter."""
+"""Learned semantic interpretation over a bounded reversible form lattice.
+
+Surface normalization and span matching are isolated in :mod:`cemm.forms`.
+Those stages propose evidence and N-best grounding hypotheses only.  Reviewed
+construction records and the neural codec propose exact semantic packets;
+``ExactStructuredCompiler`` and ``SemanticSettler`` remain semantic authority.
+"""
 from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
-from cemm.codec import StructuredSemanticCodec
+from cemm.codec import Candidate, StructuredSemanticCodec
 from cemm.compiler import ExactStructuredCompiler
 from cemm.config import Config
 from cemm.context import ParticipantFrame
 from cemm.evidence import EvidenceEnvelope, EvidenceLattice
-from cemm.model import AmbiguousReferent, norm_text, toks
+from cemm.forms import (
+    ConstructionCandidateGenerator,
+    FormPack,
+    FormProcessor,
+    GroundingHypothesis,
+    ResolvedFormLattice,
+    generic_designation_learning_packet,
+)
+from cemm.model import AmbiguousReferent, norm_text, surface, toks
 from cemm.settler import SemanticSettler
 
 try:
     import torch
     from torch import nn
-except Exception as exc:
+except Exception as exc:  # pragma: no cover - import contract
     raise SystemExit("pip install torch") from exc
+
 
 torch.set_num_threads(1)
 MODEL_CACHE: dict[tuple[str, str], "SurfaceCodec"] = {}
@@ -33,7 +49,10 @@ class TransformerClassifier(nn.Module):
 
     def forward(self, values):
         positions = torch.arange(values.size(1), device=values.device)[None, :]
-        hidden = self.enc(self.emb(values) + self.pos(positions), src_key_padding_mask=values.eq(0))
+        hidden = self.enc(
+            self.emb(values) + self.pos(positions),
+            src_key_padding_mask=values.eq(0),
+        )
         mask = values.ne(0).float().unsqueeze(-1)
         return self.out((hidden * mask).sum(1) / mask.sum(1).clamp_min(1))
 
@@ -50,7 +69,9 @@ def train_classifier(examples, key, label_key, seed=11, epochs=120):
         for example in examples
     ]
     maximum = max(map(len, sequences))
-    values = torch.tensor([sequence + [0] * (maximum - len(sequence)) for sequence in sequences])
+    values = torch.tensor(
+        [sequence + [0] * (maximum - len(sequence)) for sequence in sequences]
+    )
     targets = torch.tensor([label_index[example[label_key]] for example in examples])
     torch.manual_seed(seed)
     net = TransformerClassifier(len(vocabulary), len(labels))
@@ -79,14 +100,18 @@ def predict_classifier(meta, net, text):
 class SurfaceCodec:
     def __init__(self, pack):
         examples = pack.data.get("realization_examples", [])
-        self.meta, self.net = train_classifier(examples, "semantic", "surface_plan", 23, 110)
+        self.meta, self.net = train_classifier(
+            examples, "semantic", "surface_plan", 23, 110
+        )
         self.allowed = {}
         for example in examples:
-            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(norm_text(example["surface_plan"]))
+            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(
+                norm_text(example["surface_plan"])
+            )
 
     @classmethod
     def get(cls, pack, cache=None):
-        key = (pack.hash, "surface-v5")
+        key = (pack.hash, "surface-v6-form-lattice")
         if cache is not None:
             existing = cache.get(key)
             if existing is not None:
@@ -99,143 +124,110 @@ class SurfaceCodec:
         return MODEL_CACHE[key]
 
     def realize(self, semantic):
-        plan, confidence, margin, known = predict_classifier(self.meta, self.net, semantic)
+        plan, confidence, margin, known = predict_classifier(
+            self.meta, self.net, semantic
+        )
         return plan, {
             "semantic": semantic,
             "surface_plan": plan,
             "confidence": confidence,
             "margin": margin,
             "known_token_ratio": known,
-            "authorized_transform": norm_text(plan) in self.allowed.get(norm_text(semantic), set()),
+            "authorized_transform": norm_text(plan)
+            in self.allowed.get(norm_text(semantic), set()),
         }
+
+
+def _default_form_pack_path(language: str) -> Path:
+    return Path(__file__).resolve().parent / "form_packs" / f"{language}.json"
 
 
 class Delexer:
-    def __init__(self, store, language, authority_generation=None):
+    """Compatibility facade over the new N-best form processor.
+
+    ``run`` returns the best diagnostic delexicalization for rule-learning and
+    older callers.  The ordinary runtime uses :meth:`resolve`, preserving all
+    bounded alternatives until semantic settling.
+    """
+
+    def __init__(
+        self,
+        store,
+        language,
+        authority_generation=None,
+        *,
+        form_pack: FormPack | None = None,
+        function_forms=(),
+        config: Config | None = None,
+    ):
         self.s = store
         self.lang = language
         self.authority_generation = authority_generation
-        current_turn = int(store.db.execute("SELECT coalesce(max(last_turn),0) FROM discourse_entities").fetchone()[0])
-        self.salience = {
-            row["atom_ref"]: float(row["salience"]) * (0.55 ** max(0, current_turn - int(row["last_turn"])))
-            for row in store.db.execute(
-                "SELECT * FROM discourse_entities ORDER BY last_turn DESC,salience DESC LIMIT 64"
-            )
-        }
+        self.config = config or Config()
+        self.form_pack = form_pack or FormPack(_default_form_pack_path(language))
+        self.processor = FormProcessor(
+            store,
+            language,
+            authority_generation,
+            self.form_pack,
+            semantic_function_forms=function_forms,
+            max_input_chars=getattr(self.config, "form_max_input_chars", 8192),
+            max_normalizations=getattr(self.config, "form_max_normalizations", 8),
+            max_grounding_hypotheses=getattr(
+                self.config, "form_max_grounding_hypotheses", 16
+            ),
+            max_span_candidates=getattr(
+                self.config, "form_max_span_candidates", 128
+            ),
+        )
 
-    def reference(self, surface, participant_frame: ParticipantFrame | None = None):
-        rows = [
-            row
-            for row in self.s.db.execute(
-                "SELECT * FROM reference_forms WHERE language IN (?, 'und') ORDER BY weight DESC",
-                (self.lang,),
-            ).fetchall()
-            if norm_text(row["surface"]) == norm_text(surface)
-        ]
-        for row in rows:
-            features = json.loads(row["features"])
-            if participant_frame:
-                resolved = participant_frame.resolve_requirement(features)
-                if resolved:
-                    return resolved
-            # Bound references remain supported only for non-deictic reviewed forms.
-            if row["bound_ref"] and not features.get("participant_role") and not features.get("person"):
-                return str(row["bound_ref"])
-            candidates = []
-            required_type = features.get("required_type")
-            typed = set()
-            if required_type:
-                typed = {
-                    fact.args.get("role:instance")
-                    for fact in self.s.matching_facts(
-                        ({"operator": "op:type", "args": {"role:class": required_type}, "stance": "support"},),
-                        limit=64,
-                    )
-                }
-            for ref, score in self.salience.items():
-                atom = self.s.atom(ref)
-                metadata = {
-                    key: value
-                    for key, value in features.items()
-                    if key not in {"kind", "required_type", "participant_role", "person", "possessive"}
-                }
-                if (
-                    atom
-                    and all(json.loads(atom["metadata"]).get(key) == value for key, value in metadata.items())
-                    and (not features.get("kind") or atom["kind"] == features["kind"])
-                    and (not required_type or ref in typed)
-                ):
-                    candidates.append((score, ref))
-            candidates.sort(reverse=True)
-            if candidates:
-                if len(candidates) > 1 and candidates[0][0] - candidates[1][0] < 0.25:
-                    raise AmbiguousReferent(
-                        surface,
-                        [{"ref": candidate[1], "score": candidate[0]} for candidate in candidates[:5]],
-                    )
-                return candidates[0][1]
-        return None
+    def resolve(self, text, participant_frame: ParticipantFrame | None = None):
+        return self.processor.resolve(text, participant_frame)
+
+    @staticmethod
+    def render_hypothesis(hypothesis: GroundingHypothesis):
+        ref_to_placeholder: dict[str, str] = {}
+        anchors: dict[str, str] = {}
+        uses: list[tuple[str, str]] = []
+        rendered: list[str] = []
+        for unit in hypothesis.units:
+            if unit.kind == "anchor" and unit.semantic_ref:
+                placeholder = ref_to_placeholder.setdefault(
+                    unit.semantic_ref, f"@A{len(ref_to_placeholder)}"
+                )
+                anchors[placeholder] = unit.semantic_ref
+                rendered.append(f"{placeholder}<{unit.atom_kind or 'atom'}>")
+                if unit.source_kind == "designation":
+                    uses.append((unit.surface, unit.semantic_ref))
+            else:
+                rendered.append(unit.surface)
+        return surface(rendered), anchors, uses
 
     def run(self, text, participant_frame: ParticipantFrame | None = None):
-        placeholder_map = {}
-        reverse = {}
-        uses = []
-        next_index = 0
-        output = []
+        lattice = self.resolve(text, participant_frame)
+        if not lattice.grounding_hypotheses:
+            return text, {}, []
+        return self.render_hypothesis(lattice.grounding_hypotheses[0])
 
-        def placeholder(ref):
-            nonlocal next_index
-            if ref not in reverse:
-                reverse[ref] = f"@A{next_index}"
-                placeholder_map[reverse[ref]] = ref
-                next_index += 1
-            return reverse[ref]
-
-        labels = self.s.db.execute(
-            "SELECT DISTINCT surface FROM designation_index WHERE language IN (?, 'und') "
-            "AND context_ref IS NULL ORDER BY length(surface) DESC",
-            (self.lang,),
-        ).fetchall()
-        references = self.s.db.execute(
-            "SELECT DISTINCT surface FROM reference_forms WHERE language IN (?, 'und') "
-            "ORDER BY length(surface) DESC",
-            (self.lang,),
-        ).fetchall()
-        for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
-            candidates = []
-            for kind, rows in (("ref", references), ("label", labels)):
-                for row in rows:
-                    phrase = str(row[0])
-                    for match in re.finditer(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", sentence, flags=re.I):
-                        candidates.append((match.start(), match.end(), kind, phrase))
-            chosen = []
-            for candidate in sorted(candidates, key=lambda item: (item[0], -(item[1] - item[0]), 0 if item[2] == "ref" else 1)):
-                if not any(candidate[0] < other[1] and candidate[1] > other[0] for other in chosen):
-                    chosen.append(candidate)
-            position = 0
-            pieces = []
-            mentioned = []
-            for start, end, kind, phrase in sorted(chosen):
-                pieces.append(sentence[position:start])
-                ref = (
-                    self.reference(phrase, participant_frame)
-                    if kind == "ref"
-                    else self.s.resolve_label(phrase, self.lang)
-                )
-                if ref:
-                    pieces.append(placeholder(ref))
-                    mentioned.append(ref)
-                    if kind == "label":
-                        uses.append((phrase, ref))
-                else:
-                    pieces.append(sentence[start:end])
-                position = end
-            pieces.append(sentence[position:])
-            output.append("".join(pieces))
-            self.salience = {key: value * 0.55 for key, value in self.salience.items()}
-            for ref in mentioned:
-                self.salience[ref] = min(3, self.salience.get(ref, 0) + 1)
-        return " ".join(output), placeholder_map, uses
+    def reference(self, surface_value, participant_frame=None):
+        lattice = self.resolve(str(surface_value), participant_frame)
+        candidates = []
+        for hypothesis in lattice.grounding_hypotheses:
+            if len(hypothesis.units) != 1:
+                continue
+            unit = hypothesis.units[0]
+            if unit.kind == "anchor" and unit.semantic_ref:
+                candidates.append((hypothesis.score, unit.semantic_ref))
+        unique = []
+        for score, ref in sorted(candidates, reverse=True):
+            if ref not in [item[1] for item in unique]:
+                unique.append((score, ref))
+        if len(unique) > 1 and unique[0][0] - unique[1][0] < 0.25:
+            raise AmbiguousReferent(
+                surface_value,
+                [{"ref": ref, "score": score} for score, ref in unique[:5]],
+            )
+        return unique[0][1] if unique else None
 
 
 class Interpreter:
@@ -249,65 +241,33 @@ class Interpreter:
         self.codec.authority_generation = authority_generation
         self.compiler = ExactStructuredCompiler(store)
         self.settler = SemanticSettler(store, self.compiler, self.config)
-        # Function-form authority is explicit language-package data, not an
-        # accidental consequence of whichever examples happen to be present.
-        self._function_words = {
-            norm_text(value)
-            for value in (pack.data.get("function_forms") or pack.data.get("grammar_tokens", []))
-        }
-
-    def _localize(self, clause, global_placeholders):
-        order = []
-        for placeholder in re.findall(r"@A\d+", clause):
-            if placeholder not in order:
-                order.append(placeholder)
-        global_to_local = {value: f"@A{i}" for i, value in enumerate(order)}
-        local = clause
-        for global_placeholder, local_placeholder in sorted(global_to_local.items(), key=lambda item: -len(item[0])):
-            local = local.replace(global_placeholder, local_placeholder)
-        anchors = {
-            local_placeholder: global_placeholders[global_placeholder]
-            for global_placeholder, local_placeholder in global_to_local.items()
-            if global_placeholder in global_placeholders
-        }
-        for placeholder, ref in anchors.items():
-            atom = self.s.atom(ref)
-            local = local.replace(placeholder, f"{placeholder}<{atom['kind'] if atom else 'atom'}>")
-        return local, anchors
-
-    def _known_surfaces(self):
-        known = {
-            norm_text(str(row[0]))
-            for row in self.s.db.execute(
-                "SELECT DISTINCT surface FROM designation_index WHERE language IN (?, 'und') AND context_ref IS NULL",
-                (self.lang,),
-            ).fetchall()
-        }
-        known.update(
-            norm_text(str(row[0]))
-            for row in self.s.db.execute(
-                "SELECT DISTINCT surface FROM reference_forms WHERE language IN (?, 'und')",
-                (self.lang,),
-            ).fetchall()
+        configured = pack.data.get("form_pack")
+        if configured:
+            path = Path(pack.path).parent / str(configured)
+        else:
+            path = _default_form_pack_path(self.lang)
+        self.form_pack = FormPack(path)
+        expected_form_hash = pack.data.get("form_pack_hash")
+        if expected_form_hash and str(expected_form_hash) != self.form_pack.hash:
+            raise ValueError(
+                f"language/form pack hash mismatch: {expected_form_hash} != {self.form_pack.hash}"
+            )
+        self.delexer = Delexer(
+            store,
+            self.lang,
+            authority_generation,
+            form_pack=self.form_pack,
+            function_forms=(
+                pack.data.get("function_forms")
+                or pack.data.get("grammar_tokens", [])
+            ),
+            config=self.config,
         )
-        return known
-
-    def _find_unknown_surfaces(self, delex):
-        known = self._known_surfaces()
-        unknown = []
-        seen = set()
-        for match in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", delex):
-            word = match.group()
-            if match.start() > 0 and delex[match.start() - 1] == "@":
-                continue
-            normalized = norm_text(word)
-            if normalized in seen:
-                continue
-            seen.add(normalized)
-            if normalized in known or normalized in self._function_words:
-                continue
-            unknown.append(word)
-        return unknown
+        self.constructions = ConstructionCandidateGenerator(
+            self.form_pack,
+            max_matches=getattr(self.config, "form_max_construction_matches", 32),
+        )
+        self._candidate_unknown_kinds_cache = self._candidate_unknown_kinds()
 
     def _candidate_unknown_kinds(self):
         kinds = set()
@@ -316,27 +276,44 @@ class Interpreter:
                 expected = spec["filler_kind"]
                 if expected == "state_value":
                     kinds.add("value")
-                elif expected and expected not in {"atom", "app"} and not str(expected).startswith("literal:"):
+                elif (
+                    expected
+                    and expected not in {"atom", "app"}
+                    and not str(expected).startswith("literal:")
+                ):
                     kinds.add(str(expected))
-        return sorted(kinds)
+        # Reviewed acquisition may create identities of these existing semantic
+        # kinds even when a particular language model does not currently emit
+        # the corresponding operator role.
+        kinds.update({"concept", "entity", "event_type", "relation_type", "time", "value"})
+        return tuple(sorted(kinds))
 
-    def _unknown_form_trace(self, delex):
-        candidates = self._candidate_unknown_kinds()
-        return [
+    def _unknown_evidence(self, hypothesis: GroundingHypothesis):
+        return tuple(
             {
-                "surface": surface,
-                "normalized": norm_text(surface),
-                "semantic_kind_candidates": candidates,
+                "surface": unit.surface,
+                "normalized": unit.normalized,
+                "char_start": unit.char_start,
+                "char_end": unit.char_end,
+                "unit_ref": unit.unit_ref,
+                "semantic_kind_candidates": list(
+                    self._candidate_unknown_kinds_cache
+                ),
             }
-            for surface in self._find_unknown_surfaces(delex)
-        ]
+            for unit in hypothesis.units
+            if unit.kind == "unknown"
+        )
 
     @staticmethod
-    def _clause_has_unknown(clause, unknown):
-        normalized = {item["normalized"] for item in unknown}
-        return any(
-            norm_text(match.group()) in normalized
-            for match in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", clause)
+    def _grounded_refs(hypothesis: GroundingHypothesis):
+        return tuple(
+            sorted(
+                {
+                    unit.semantic_ref
+                    for unit in hypothesis.units
+                    if unit.kind == "anchor" and unit.semantic_ref
+                }
+            )
         )
 
     def observe(self, text, participant_frame: ParticipantFrame):
@@ -345,128 +322,323 @@ class Interpreter:
             participant_frame.speaker_ref,
             language=self.lang,
             channel=participant_frame.channel,
+            permission_scope=None,
         )
-        delex, placeholders, uses = Delexer(
-            self.s, self.lang, self.authority_generation
-        ).run(text, participant_frame)
-        unknown = tuple(self._unknown_form_trace(delex))
+        resolved = self.delexer.resolve(text, participant_frame)
+        top = resolved.grounding_hypotheses[0] if resolved.grounding_hypotheses else None
+        if top:
+            delex, placeholders, uses = Delexer.render_hypothesis(top)
+            unknown = self._unknown_evidence(top)
+        else:
+            delex, placeholders, uses, unknown = text, {}, [], ()
         clauses = tuple(
             clause.strip()
             for clause in re.split(r"(?<=[.!?])\s+", delex.strip())
             if clause.strip()
         ) or (delex,)
-        lattice = EvidenceLattice(
+        return EvidenceLattice(
             (envelope,),
             {
                 "delexicalized": delex,
                 "grounded_anchors": dict(placeholders),
                 "clauses": list(clauses),
                 "uses": list(uses),
+                "form_lattice_ref": resolved.lattice_ref,
+                "form_hypothesis_count": len(resolved.grounding_hypotheses),
+                "normalization_count": len(resolved.normalization_candidates),
+                "form_bounds": dict(resolved.bounded),
+                "safety_flags": list(resolved.safety_flags),
             },
             unknown,
+            resolved,
         )
-        return lattice
 
-    def compose(self, lattice: EvidenceLattice, participant_frame: ParticipantFrame, state_projections=None):
-        form = lattice.form_evidence
-        delex = str(form["delexicalized"])
-        global_placeholders = dict(form.get("grounded_anchors", {}))
-        uses = [tuple(item) for item in form.get("uses", ())]
-        unknown = list(lattice.unknown_evidence)
-        clauses = list(form.get("clauses", ())) or [delex]
-        combined = {
-            "force": None,
-            "apps": [],
-            "query": None,
-            "directive": None,
-            "describe": None,
-            "qualifiers": {},
-            "modality": "actual",
+    def _construction_candidates(self, resolved, participant_frame):
+        by_ref = {
+            item.evidence_ref: item
+            for item in self.constructions.evidence(resolved, participant_frame)
         }
-        news = []
-        traces = []
-        skipped = []
-        for index, clause in enumerate(clauses):
-            if self._clause_has_unknown(clause, unknown):
-                skipped.append({"clause": clause, "reason": "unknown_form"})
-                continue
-            local, anchors = self._localize(clause, global_placeholders)
-            candidates = self.codec.predict(
-                local, anchors, self.s, top_k=self.config.settler_top_k, participant_frame=participant_frame
-            )
-            # State projections are semantic evidence for candidate dynamics; the
-            # exact compiler remains authority and no projection is flattened into text.
-            for candidate in candidates:
-                candidate.trace["state_projection_refs"] = sorted((state_projections or {}).keys())
-            settled, trace = self.settler.settle(candidates, f"C{index}")
-            trace["input"] = local
-            traces.append(trace)
-            if not settled:
-                skipped.append({"clause": clause, "reason": "semantic_graph_unsettled", "trace": trace})
-                continue
-            packet, new_items = settled
-            news += new_items
-            force = packet.get("force")
-            if combined["force"] and force != combined["force"]:
-                return None, [], uses, {
-                    "reason": "mixed_discourse_forces",
-                    "clauses": traces,
-                    "partial": bool(combined["apps"]),
-                }
-            combined["force"] = force
-            if packet.get("query") or packet.get("describe") or packet.get("directive"):
-                if len(clauses) > 1 or combined["apps"]:
-                    return None, [], uses, {"reason": "mixed_embedded_act", "clauses": traces}
-                combined.update(
-                    query=packet.get("query"),
-                    describe=packet.get("describe"),
-                    directive=packet.get("directive"),
-                    qualifiers=dict(packet.get("qualifiers", {})),
-                    modality=packet.get("modality", "actual"),
+        candidates = []
+        for evidence in by_ref.values():
+            try:
+                packet = self.constructions.instantiate(
+                    evidence, participant_frame, self.lang
                 )
-            else:
-                combined["apps"].extend(packet.get("apps", []))
+            except Exception:
+                continue
+            candidates.append(
+                Candidate(
+                    packet,
+                    evidence.score,
+                    {
+                        "source": "reviewed_construction",
+                        "construction_ref": evidence.construction_ref,
+                        "construction_evidence_ref": evidence.evidence_ref,
+                        "hypothesis_ref": evidence.hypothesis_ref,
+                        "captures": dict(evidence.captures),
+                        "remaining_unknowns": list(evidence.remaining_unknowns),
+                    },
+                )
+            )
+        return candidates, by_ref
 
-        stable = bool(combined["apps"] or combined["query"] or combined["describe"] or combined["directive"])
-        status = "partial" if stable and (unknown or skipped) else "resolved" if stable else "unresolved"
-        assessment = {
-            "status": status,
-            "grounded_refs": sorted(set(global_placeholders.values())),
-            "open_variables": sorted({
-                value for application in combined.get("apps", ())
-                for value in application.get("args", {}).values()
-                if isinstance(value, str) and value.startswith("?")
-            }),
-            "unresolved_evidence": unknown,
-            "blockers": sorted({item["reason"] for item in skipped}),
-        }
+    def _neural_candidates(self, resolved, participant_frame, state_projections):
+        candidates = []
+        hypothesis_budget = min(
+            len(resolved.grounding_hypotheses),
+            getattr(self.config, "form_max_semantic_hypotheses", 8),
+        )
+        for hypothesis in resolved.grounding_hypotheses[:hypothesis_budget]:
+            text, anchors, _uses = Delexer.render_hypothesis(hypothesis)
+            predicted = self.codec.predict(
+                text,
+                anchors,
+                self.s,
+                top_k=self.config.settler_top_k,
+                participant_frame=participant_frame,
+            )
+            for candidate in predicted:
+                candidate.score += hypothesis.score
+                candidate.trace["source"] = "neural_structured_codec"
+                candidate.trace["hypothesis_ref"] = hypothesis.hypothesis_ref
+                candidate.trace["input"] = text
+                candidate.trace["state_projection_refs"] = sorted(
+                    (state_projections or {}).keys()
+                )
+                candidates.append(candidate)
+        return candidates
+
+    @staticmethod
+    def _selected_neural_trace(settle_trace):
+        candidates = settle_trace.get("candidates", ()) if settle_trace else ()
+        return dict(candidates[0].get("neural", {})) if candidates else {}
+
+    def _learning_frontier_for_packet(self, packet, selected_trace):
+        qualifiers = dict(packet.get("qualifiers", {})) if packet else {}
+        operation = qualifiers.get("learning_operation")
+        if not operation:
+            return ()
+        captures = selected_trace.get("captures", {})
+        literal = captures.get("surface") or qualifiers.get("surface_evidence")
+        if isinstance(literal, dict) and "literal" in literal:
+            literal = literal["literal"].get("value")
+        if not literal:
+            return ()
+        query = packet.get("query")
+        return (
+            {
+                "surface": str(literal),
+                "normalized": norm_text(literal),
+                "semantic_kind_candidates": list(
+                    self._candidate_unknown_kinds_cache
+                ),
+                "learning_operation": str(operation),
+                "probe_query": dict(query) if query else None,
+                "blocks": ["knowledge_binding"],
+                "priority": 2.0,
+            },
+        )
+
+    @staticmethod
+    def _best_unknown(items):
+        # Structural information-gain proxy: prefer longer spans and later
+        # content-bearing positions.  Nonblocking discourse units have already
+        # been classified separately and are never included here.
+        if not items:
+            return None
+        return max(
+            items,
+            key=lambda item: (
+                len(str(item.get("surface", ""))),
+                int(item.get("char_start", 0)),
+                str(item.get("normalized", "")),
+            ),
+        )
+
+    def compose(
+        self,
+        lattice: EvidenceLattice,
+        participant_frame: ParticipantFrame,
+        state_projections=None,
+    ):
+        resolved: ResolvedFormLattice | None = lattice.resolved_form_lattice
+        if resolved is None:
+            resolved = self.delexer.resolve(
+                str(lattice.envelopes[0].payload.get("text", "")), participant_frame
+            )
+        construction_candidates, construction_by_ref = self._construction_candidates(
+            resolved, participant_frame
+        )
+        neural_candidates = self._neural_candidates(
+            resolved, participant_frame, state_projections
+        )
+        candidate_budget = max(
+            self.config.settler_top_k,
+            getattr(self.config, "form_max_semantic_candidates", 48),
+        )
+        candidates = sorted(
+            construction_candidates + neural_candidates,
+            key=lambda item: item.score,
+            reverse=True,
+        )[:candidate_budget]
+        settled, settle_trace = self.settler.settle(candidates, "F0")
+        selected_trace = self._selected_neural_trace(settle_trace)
+
+        top_hypothesis = (
+            resolved.grounding_hypotheses[0]
+            if resolved.grounding_hypotheses
+            else None
+        )
+        uses = []
+        grounded_refs = ()
+        top_unknown = ()
+        delex = str(lattice.form_evidence.get("delexicalized", ""))
+        if top_hypothesis:
+            delex, anchors, uses = Delexer.render_hypothesis(top_hypothesis)
+            grounded_refs = self._grounded_refs(top_hypothesis)
+            top_unknown = self._unknown_evidence(top_hypothesis)
+        else:
+            anchors = {}
+
+        if settled:
+            packet, news = settled
+            remaining_unknowns = tuple(selected_trace.get("remaining_unknowns", ()))
+            learning_frontier = self._learning_frontier_for_packet(
+                packet, selected_trace
+            )
+            unresolved = tuple(remaining_unknowns) + tuple(learning_frontier)
+            status = "partial" if unresolved else "resolved"
+            trace = {
+                "structured_prediction": True,
+                "clauses": [settle_trace],
+                "n_best": True,
+                "resolved_form_lattice": resolved.as_dict(),
+                "delexicalized": delex,
+                "grounded_anchors": anchors,
+                "unknown_form_evidence": list(unresolved),
+                "skipped_clauses": [],
+                "interpretation_assessment": {
+                    "status": status,
+                    "grounded_refs": list(grounded_refs),
+                    "open_variables": sorted(
+                        {
+                            value
+                            for application in (
+                                list(packet.get("apps", ()))
+                                + list((packet.get("query") or {}).get("restrictions", ()))
+                            )
+                            for value in application.get("args", {}).values()
+                            if isinstance(value, str) and value.startswith("?")
+                        }
+                    ),
+                    "unresolved_evidence": list(unresolved),
+                    "blockers": sorted(
+                        {
+                            "knowledge_binding"
+                            if item.get("learning_operation")
+                            else "unknown_form"
+                            for item in unresolved
+                        }
+                    ),
+                },
+                "state_projection_refs": sorted(
+                    (state_projections or {}).keys()
+                ),
+                "side_effect_free": True,
+                "selected_candidate": selected_trace,
+                "candidate_count": len(candidates),
+            }
+            return packet, news, uses, trace
+
+        # If no exact semantic candidate settled, turn the highest-value open
+        # form into an exact designation query.  Stage 10 searches learned data
+        # before Stage 15 is allowed to ask the user for evidence.
+        target = self._best_unknown(top_unknown)
+        if target:
+            packet = generic_designation_learning_packet(
+                str(target["surface"]), self.lang
+            )
+            direct = Candidate(
+                packet,
+                1.0,
+                {
+                    "source": "generic_learning_operation",
+                    "captures": {"surface": target["surface"]},
+                    "remaining_unknowns": [
+                        item for item in top_unknown if item is not target
+                    ],
+                },
+            )
+            fallback, fallback_trace = self.settler.settle([direct], "L0")
+            if fallback:
+                packet, news = fallback
+                evidence = {
+                    **dict(target),
+                    "learning_operation": "resolve_designation",
+                    "probe_query": dict(packet["query"]),
+                    "blocks": ["knowledge_binding"],
+                    "priority": 1.0,
+                }
+                trace = {
+                    "structured_prediction": True,
+                    "clauses": [settle_trace, fallback_trace],
+                    "n_best": True,
+                    "resolved_form_lattice": resolved.as_dict(),
+                    "delexicalized": delex,
+                    "grounded_anchors": anchors,
+                    "unknown_form_evidence": [evidence],
+                    "skipped_clauses": [],
+                    "interpretation_assessment": {
+                        "status": "partial",
+                        "grounded_refs": list(grounded_refs),
+                        "open_variables": ["?q0", "?q1"],
+                        "unresolved_evidence": [evidence],
+                        "blockers": ["knowledge_binding"],
+                    },
+                    "state_projection_refs": sorted(
+                        (state_projections or {}).keys()
+                    ),
+                    "side_effect_free": True,
+                    "selected_candidate": {
+                        "source": "generic_learning_operation",
+                        "surface": target["surface"],
+                    },
+                    "candidate_count": len(candidates) + 1,
+                }
+                return packet, news, uses, trace
+
         trace = {
-            "structured_prediction": stable,
-            "clauses": traces,
+            "reason": "semantic_graph_unsettled",
+            "structured_prediction": False,
+            "clauses": [settle_trace],
             "n_best": True,
+            "resolved_form_lattice": resolved.as_dict(),
             "delexicalized": delex,
-            "grounded_anchors": global_placeholders,
-            "unknown_form_evidence": unknown,
-            "skipped_clauses": skipped,
-            "interpretation_assessment": assessment,
+            "grounded_anchors": anchors,
+            "unknown_form_evidence": list(top_unknown),
+            "skipped_clauses": [],
+            "interpretation_assessment": {
+                "status": "unresolved",
+                "grounded_refs": list(grounded_refs),
+                "open_variables": [],
+                "unresolved_evidence": list(top_unknown),
+                "blockers": ["semantic_graph_unsettled"],
+            },
             "state_projection_refs": sorted((state_projections or {}).keys()),
             "side_effect_free": True,
+            "candidate_count": len(candidates),
         }
-        if not stable:
-            trace["reason"] = "unknown_form" if unknown else "semantic_graph_unsettled"
-            trace["learning_frontier"] = {"kind": trace["reason"], "items": unknown or skipped}
-            return None, [], uses, trace
-        return combined, news, uses, trace
+        return None, [], uses, trace
 
     def parse(self, text, participant_frame: ParticipantFrame | None = None):
-        """Pure diagnostic helper. Runtime uses observe() then compose() around Stage 4."""
+        """Pure diagnostic helper. Runtime uses observe then compose around Stage 4."""
         if participant_frame is None:
             raise ValueError("ParticipantFrame is required")
         lattice = self.observe(text, participant_frame)
         return self.compose(lattice, participant_frame, state_projections={})
 
     def delex_for_rule(self, text, participant_frame: ParticipantFrame | None = None):
-        delex, placeholders, uses = Delexer(self.s, self.lang, self.authority_generation).run(
-            text, participant_frame
-        )
-        return (*self._localize(delex, placeholders), uses)
+        delex, placeholders, uses = self.delexer.run(text, participant_frame)
+        # Rule induction expects local placeholders. The best hypothesis already
+        # uses first-occurrence local numbering.
+        return delex, placeholders, uses

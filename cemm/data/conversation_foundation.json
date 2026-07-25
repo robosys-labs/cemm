@@ -1,0 +1,8045 @@
+{
+  "atoms": [
+    {
+      "ref": "cap:clarify",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "cap:designate",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "cap:explain",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "cap:learn",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "cap:query",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "cap:remember",
+      "kind": "capability",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:abbreviation",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:acronym",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:agent",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:agreement",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:answer",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:apology",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:clarification",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:communication",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:construction",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:context",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:conversation",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:correction",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:definition",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:designation",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:disagreement",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:emotion",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:entity",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:gratitude",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:identifier",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:identity",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:knowledge",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:language",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:language_form",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:laughing_out_loud",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:learning",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:lexical_form",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:location",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:memory",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:necessity",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:object",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:operation",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:participant",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:person",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:place",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:possibility",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:preference",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:process",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:property",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:quantity",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:question",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:reference",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:resource",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:result",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:teaching",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "concept:time",
+      "kind": "concept",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "dim:availability",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:communication_status",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:confidence",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:emotional_state",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:learning_status",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:location",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:memory_status",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:preference",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "dim:quantity",
+      "kind": "state_dimension",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "exclusive": true,
+        "cardinality": "one",
+        "domain_type": "categorical"
+      }
+    },
+    {
+      "ref": "event:answer",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:apologize",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:ask",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:clarify",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:communicate",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:confirm",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:correct",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:define",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:deny",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:explain",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:forget",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:identify",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:learn",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:name",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:remember",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:retract",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:teach",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "event:thank",
+      "kind": "event_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:abbreviation",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:acronym",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:expansion",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:identifier",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:nickname",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:title",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:translation",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "label:username",
+      "kind": "label_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "rel:about",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:after",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:answers",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:antonym_of",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:asks",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:before",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:caused_by",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:clarifies",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:communicates_with",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:corrects",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:enables",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:equivalent_to",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:evidence_for",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:has_definition",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:has_identifier",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:has_property",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:knows",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:located_in",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:owns",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:part_of",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:prefers",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:refers_to",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:requires",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:source_of",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "rel:synonym_of",
+      "kind": "relation_type",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "user_visible": true
+      }
+    },
+    {
+      "ref": "resource:common_ground",
+      "kind": "resource",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "resource:designation_index",
+      "kind": "resource",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "resource:form_processor",
+      "kind": "resource",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "resource:inference_engine",
+      "kind": "resource",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "resource:semantic_store",
+      "kind": "resource",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:available",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:communicating",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:forgotten",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:idle",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:known",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:learned_confirmed",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:learning",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:necessary",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:neutral",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:positive",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:possible",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:remembered",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    },
+    {
+      "ref": "value:unavailable",
+      "kind": "value",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true
+      }
+    }
+  ],
+  "operator_roles": [],
+  "control_symbols": {},
+  "reference_forms": [],
+  "facts": [
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "participant:system",
+        "role:label_type": "label:acronym",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "CEMM"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.6
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:laughing_out_loud",
+        "role:label_type": "label:acronym",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "LOL"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.7
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:meaning",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "sense"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 0.8
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:designation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "label"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 0.9
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:abbreviation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "abbreviation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:abbreviation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "abbreviation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:about",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "about"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:acronym",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "acronym"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:acronym",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "acronym"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:after",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "after"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:agent",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "agent"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:agreement",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "agreement"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:answer",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "answer"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:answers",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "answers"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:antonym_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "antonym of"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:apologize",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "apologize"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:apology",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "apology"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:ask",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "ask"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:asks",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "asks"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:availability",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "availability"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:available",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "available"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:before",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "before"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:caused_by",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "caused by"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:clarifies",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "clarifies"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:clarify",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "clarify"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:clarify",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "clarify"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "resource:common_ground",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "common ground"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:communicate",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "communicate"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:communicates_with",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "communicates with"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:communicating",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "communicating"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:communication_status",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "communication status"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:communication",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "communication"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:confidence",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "confidence"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:confirm",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "confirm"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:construction",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "construction"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:correct",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "correct"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:corrects",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "corrects"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:define",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "define"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:deny",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "deny"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:designate",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "designate"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "resource:designation_index",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "designation index"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:disagreement",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "disagreement"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:emotion",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "emotion"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:emotional_state",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "emotional state"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:enables",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "enables"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:entity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "entity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:equivalent_to",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "equivalent to"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:evidence_for",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "evidence for"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:expansion",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "expansion"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:explain",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "explain"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:explain",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "explain"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:forget",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "forget"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:forgotten",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "forgotten"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "resource:form_processor",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "form processor"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:gratitude",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "gratitude"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:has_definition",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "has definition"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:has_identifier",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "has identifier"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:has_property",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "has property"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:identifier",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "identifier"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:identifier",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "identifier"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:identify",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "identify"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:idle",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "idle"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "resource:inference_engine",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "inference engine"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:known",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "known"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:knows",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "knows"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:language_form",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "language form"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:language",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "language"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:learn",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learn"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:learn",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learn"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:learned_confirmed",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learned confirmed"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:learning_status",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learning status"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:learning",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learning"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:lexical_form",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "lexical form"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:located_in",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "located in"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:location",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "location"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:memory_status",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "memory status"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:name",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "name"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:necessary",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "necessary"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:necessity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "necessity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:neutral",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "neutral"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:nickname",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "nickname"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:object",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "object"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:operation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "operation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:owns",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "owns"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:part_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "part of"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:participant",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "participant"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:person",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "person"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:place",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "place"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:positive",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "positive"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:possibility",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "possibility"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:possible",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "possible"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:preference",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "preference"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:prefers",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "prefers"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:process",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "process"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "dim:quantity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "quantity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:query",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "query"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:reference",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "reference"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:refers_to",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "refers to"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "cap:remember",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "remember"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:remember",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "remember"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:remembered",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "remembered"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:requires",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "requires"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:resource",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "resource"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:result",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "result"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:retract",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "retract"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "resource:semantic_store",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "semantic store"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:source_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "source of"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "rel:synonym_of",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "synonym of"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:teach",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "teach"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:teaching",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "teaching"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "event:thank",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "thank"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:time",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "time"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:title",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "title"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:translation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "translation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "value:unavailable",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "unavailable"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "label:username",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "username"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "participant:user",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "you"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:answer",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "answer"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:clarification",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "clarification"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:context",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "context"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:conversation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "conversation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:correction",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "correction"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:designation",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "designation"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:identity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "identity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:knowledge",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "knowledge"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:learning",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "learning"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:location",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "location"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:memory",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "memory"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:preference",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "preference"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:property",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "property"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:quantity",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "quantity"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:question",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "question"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.2
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:definition",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "definition"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.3
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:meaning",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "meaning"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.3
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:laughing_out_loud",
+        "role:label_type": "label:lexical",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "lol"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.6
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "participant:system",
+        "role:label_type": "label:name",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "CEMM"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 2.0
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "participant:system",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "Contextual Event Memory Model"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.8
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:laughing_out_loud",
+        "role:label_type": "label:name_full",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "laughing out loud"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.8
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "participant:user",
+        "role:label_type": "label:title",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "user"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "en"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 0.8
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": false
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:clarification",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "aclaración"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:learning",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "aprendizaje"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:knowledge",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "conocimiento"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:conversation",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "conversación"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:memory",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "memoria"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:question",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "pregunta"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:answer",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "respuesta"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:designation",
+      "args": {
+        "role:target": "concept:meaning",
+        "role:label_type": "label:translation",
+        "role:surface": {
+          "literal": {
+            "type": "text",
+            "value": "significado"
+          }
+        },
+        "role:language": {
+          "literal": {
+            "type": "text",
+            "value": "es"
+          }
+        },
+        "role:script": {
+          "literal": {
+            "type": "text",
+            "value": "Latn"
+          }
+        },
+        "role:prior": {
+          "literal": {
+            "type": "float",
+            "value": 1.1
+          }
+        },
+        "role:preferred": {
+          "literal": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:clarify"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:designate"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:explain"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:learn",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:interpret"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:query",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:interpret"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:learn"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:clarify",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:query"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:explain",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:query"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:query"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:clarify",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:realize"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:explain",
+        "role:relation": "rel:depends_on",
+        "role:object": "cap:realize"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_capability",
+        "role:object": "cap:remember"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:acronym",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:abbreviation"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:conversation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:communication"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:abbreviation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:designation"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:identifier",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:designation"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:agent",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:entity"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:object",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:entity"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:participant",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:entity"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:place",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:entity"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:definition",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:information"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:designation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:information"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:knowledge",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:information"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:language_form",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:information"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:construction",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:language_form"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:lexical_form",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:language_form"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:person",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:participant"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:learning",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:process"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:operation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:process"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:teaching",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:process"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:question",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:query"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:memory",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:resource"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:answer",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:response"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:clarification",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:response"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:correction",
+        "role:relation": "rel:subtype_of",
+        "role:object": "concept:response"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:available",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:availability"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:unavailable",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:availability"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:communicating",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:communication_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:idle",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:communication_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:contradicted",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:confidence"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:supported",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:confidence"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:uncertain",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:confidence"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:negative",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:emotional_state"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:neutral",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:emotional_state"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:positive",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:emotional_state"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:learned",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:learning_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:learned_confirmed",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:learning_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:learning",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:learning_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:unknown",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:learning_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:forgotten",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:memory_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:remembered",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:memory_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "value:unknown",
+        "role:relation": "rel:value_of_dimension",
+        "role:object": "dim:memory_status"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:availability",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:communication_status",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:confidence",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:emotional_state",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:learning_status",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "dim:memory_status",
+        "role:relation": "rel:dimension_domain",
+        "role:object": "domain:categorical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:acronym",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:abbreviation"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:username",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:identifier"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:abbreviation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:lexical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:expansion",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:lexical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:identifier",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:lexical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:title",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:lexical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:translation",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:lexical"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "label:nickname",
+        "role:relation": "rel:subtype_of",
+        "role:object": "label:name_alias"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:remember",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:common_ground"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_resource",
+        "role:object": "resource:common_ground"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:designate",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:designation_index"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:learn",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:designation_index"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_resource",
+        "role:object": "resource:designation_index"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_resource",
+        "role:object": "resource:form_processor"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:query",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:inference_engine"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_resource",
+        "role:object": "resource:inference_engine"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:learn",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:semantic_store"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "cap:remember",
+        "role:relation": "rel:depends_on",
+        "role:object": "resource:semantic_store"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "concept:digital_agent",
+        "role:relation": "rel:entitles_resource",
+        "role:object": "resource:semantic_store"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    }
+  ],
+  "rules": []
+}
