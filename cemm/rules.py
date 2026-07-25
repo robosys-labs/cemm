@@ -17,7 +17,7 @@ class RuleLearner:
             else self.config.rule_evidence_threshold
         )
 
-    def teach(self, text, participant_frame=None):
+    def teach(self, text, participant_frame, *, cycle_ref, expected_world_revision):
         local, anchors, _uses = self.i.delex_for_rule(text, participant_frame)
         candidates = self.i.codec.predict_rules(local, anchors, self.s, top_k=5)
         valid = []
@@ -45,7 +45,8 @@ class RuleLearner:
             }
         with self.s.db:
             generation = self.s.begin(
-                "rule_learning:" + hashlib.sha256(text.encode()).hexdigest()[:12]
+                "rule_learning:" + hashlib.sha256(text.encode()).hexdigest()[:12],
+                expected_world_revision=expected_world_revision,
             )
             observation = self.s.add_observation(
                 text,
@@ -61,7 +62,15 @@ class RuleLearner:
                 confidence=min(1, 0.75 + max(0, margin)),
                 min_evidence=self.min_evidence,
             )
-            self.s.finish(generation)
+            receipt = self.s.finish(
+                generation,
+                cycle_ref=cycle_ref,
+                stage=13,
+                expected_world_revision=expected_world_revision,
+                world_delta=bool(promoted),
+                observation_delta=True,
+                payload={"candidate_ref": ref, "promoted": promoted, "rule": rule},
+            )
         return {
             "status": "promoted_rule" if promoted else "provisional_rule",
             "candidate_ref": ref,
@@ -69,4 +78,5 @@ class RuleLearner:
             "generation": generation,
             "margin": margin,
             "observation_ref": observation,
+            "commit_receipt": receipt,
         }

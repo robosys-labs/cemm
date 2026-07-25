@@ -7,7 +7,7 @@ import math
 import sqlite3
 from pathlib import Path
 
-from cemm.constants import DDL
+from cemm.constants import DDL, SCHEMA_VERSION
 from cemm.model import (
     AmbiguousReferent,
     Fact,
@@ -41,7 +41,22 @@ class Store:
         self.path = str(path)
         self.db = sqlite3.connect(self.path)
         self.db.row_factory = sqlite3.Row
+        tables = {str(row[0]) for row in self.db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if tables and "schema_meta" not in tables:
+            populated = any(
+                self.db.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+                for table in ("atoms", "applications", "claims", "generations")
+                if table in tables
+            )
+            if populated:
+                self.db.close()
+                raise RuntimeError(
+                    "CEMM store schema is pre-v1-final and is intentionally unsupported; rebuild the store from authority/world evidence"
+                )
         self.db.executescript(DDL)
+        version = self.db.execute("SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()
+        if not version or str(version[0]) != SCHEMA_VERSION:
+            raise RuntimeError(f"unsupported CEMM schema version: {version[0] if version else None}")
         if not self.db.execute("SELECT 1 FROM generations").fetchone():
             self.db.execute(
                 "INSERT INTO generations VALUES(1,NULL,?,?,?)",
@@ -53,7 +68,11 @@ class Store:
     def generation(self):
         return int(self.db.execute("SELECT max(generation) FROM generations").fetchone()[0])
 
-    def begin(self, reason):
+    def begin(self, reason, *, expected_world_revision=None):
+        if expected_world_revision is not None:
+            current = self.revisions()["world_revision"]
+            if int(expected_world_revision) != current:
+                raise RuntimeError(f"world revision CAS failed: expected {expected_world_revision}, found {current}")
         generation = self.generation + 1
         self.db.execute(
             "INSERT INTO generations VALUES(?,?,?,?,?)",
@@ -61,13 +80,100 @@ class Store:
         )
         return generation
 
-    def finish(self, generation):
-        content_hash = self.snapshot_hash()
+    def finish(
+        self,
+        generation,
+        *,
+        cycle_ref="maintenance",
+        stage=13,
+        expected_world_revision=None,
+        world_delta=False,
+        observation_delta=False,
+        discourse_delta=False,
+        effect_delta=False,
+        payload=None,
+    ):
+        """Finish one generation using an incremental receipt, never a full-store scan."""
+        revisions = self.revisions()
+        if expected_world_revision is not None and int(expected_world_revision) != revisions["world_revision"]:
+            raise RuntimeError(
+                f"world revision CAS failed: expected {expected_world_revision}, found {revisions['world_revision']}"
+            )
+        parent = self.db.execute(
+            "SELECT content_hash FROM generations WHERE generation=?", (int(generation) - 1,)
+        ).fetchone()
+        material = payload if payload is not None else self._generation_material(int(generation))
+        payload_hash = hashlib.sha256(
+            canonical((str(parent[0]) if parent else "", int(generation), material)).encode()
+        ).hexdigest()
         self.db.execute(
             "UPDATE generations SET content_hash=? WHERE generation=?",
-            (content_hash, generation),
+            (payload_hash, int(generation)),
         )
-        return content_hash
+        next_revisions = dict(revisions)
+        for key, changed in (
+            ("world_revision", world_delta),
+            ("observation_revision", observation_delta),
+            ("discourse_revision", discourse_delta),
+            ("effect_revision", effect_delta),
+        ):
+            if changed:
+                next_revisions[key] += 1
+        self.db.execute(
+            "UPDATE revision_state SET world_revision=?,discourse_revision=?,observation_revision=?,effect_revision=? WHERE singleton=1",
+            (
+                next_revisions["world_revision"],
+                next_revisions["discourse_revision"],
+                next_revisions["observation_revision"],
+                next_revisions["effect_revision"],
+            ),
+        )
+        receipt_ref = stable("commit-receipt", cycle_ref, stage, generation, payload_hash, next_revisions)
+        self.db.execute(
+            "INSERT OR REPLACE INTO commit_receipts VALUES(?,?,?,?,?,?,?,?)",
+            (
+                receipt_ref,
+                cycle_ref,
+                int(stage),
+                expected_world_revision,
+                next_revisions["world_revision"],
+                int(generation),
+                payload_hash,
+                now(),
+            ),
+        )
+        return {
+            "receipt_ref": receipt_ref,
+            "generation": int(generation),
+            "payload_hash": payload_hash,
+            "revisions": next_revisions,
+            "stage": int(stage),
+        }
+
+    def revisions(self):
+        row = self.db.execute("SELECT * FROM revision_state WHERE singleton=1").fetchone()
+        return {
+            "world_revision": int(row["world_revision"]),
+            "discourse_revision": int(row["discourse_revision"]),
+            "observation_revision": int(row["observation_revision"]),
+            "effect_revision": int(row["effect_revision"]),
+        }
+
+    def _generation_material(self, generation):
+        material = []
+        for table in (
+            "atoms", "applications", "observations", "claims", "claim_occurrences",
+            "epistemic_placements", "rules", "rule_candidates", "frontiers"
+        ):
+            columns = [row[1] for row in self.db.execute(f"PRAGMA table_info({table})")]
+            if "generation" not in columns:
+                continue
+            rows = self.db.execute(
+                f"SELECT * FROM {table} WHERE generation=? ORDER BY 1", (generation,)
+            ).fetchall()
+            if rows:
+                material.append((table, [dict(row) for row in rows]))
+        return material
 
     def snapshot_hash(self):
         material = []
@@ -142,6 +248,14 @@ class Store:
 
     def atom(self, ref):
         return self.db.execute("SELECT * FROM atoms WHERE ref=?", (ref,)).fetchone()
+
+    def authority_atom(self, ref, *, upto_generation=None):
+        """Return an authority-scoped atom visible to the pinned generation."""
+        cutoff = self.generation if upto_generation is None else int(upto_generation)
+        return self.db.execute(
+            "SELECT * FROM atoms WHERE ref=? AND authority_scope='authority' AND generation<=?",
+            (ref, cutoff),
+        ).fetchone()
 
     def foundational(self, ref):
         atom = self.atom(ref)
@@ -294,6 +408,75 @@ class Store:
             (stable("proof", claim_ref), claim_ref, observation, "assert", "[]"),
         )
         self._supersede_state(app_ref, operator, args, stance, effective_from, observation)
+        try:
+            designation_operator = self.symbol("operator.designation")
+        except ValueError:
+            designation_operator = None
+        if operator == designation_operator:
+            self.index_designation_app(app_ref)
+        return app_ref
+
+    @staticmethod
+    def _literal_or_value(value, default=None):
+        if value is None:
+            return default
+        if isinstance(value, dict) and "literal" in value:
+            return value["literal"].get("value", default)
+        return value
+
+    def index_designation_app(self, app_ref):
+        """Refresh one designation index row from an active exact application.
+
+        This is the normal incremental path. Full index rebuild is reserved for
+        imports/audits and never runs for ordinary acquisition or conversation.
+        """
+        try:
+            operator = self.symbol("operator.designation")
+            roles = {
+                key: self.symbol(f"designation.{key}")
+                for key in ("target", "type", "surface", "language", "script", "prior", "preferred", "context")
+            }
+        except ValueError:
+            return None
+        application = self.db.execute(
+            "SELECT operator_ref FROM applications WHERE app_ref=?", (app_ref,)
+        ).fetchone()
+        if not application or str(application["operator_ref"]) != operator:
+            return None
+        active = self.db.execute(
+            "SELECT 1 FROM claims WHERE app_ref=? AND stance='support' AND valid_to IS NULL LIMIT 1",
+            (app_ref,),
+        ).fetchone()
+        if not active:
+            self.db.execute("DELETE FROM designation_index WHERE label_ref=?", (app_ref,))
+            return None
+        values = {}
+        for binding in self.db.execute(
+            "SELECT role_ref,filler_kind,filler_value FROM bindings WHERE app_ref=? ORDER BY ordinal",
+            (app_ref,),
+        ).fetchall():
+            values[str(binding["role_ref"])] = self.decode_value(
+                binding["filler_kind"], binding["filler_value"]
+            )
+        target = self._literal_or_value(values.get(roles["target"]))
+        surface = self._literal_or_value(values.get(roles["surface"]))
+        if not target or not surface:
+            self.db.execute("DELETE FROM designation_index WHERE label_ref=?", (app_ref,))
+            return None
+        row = (
+            app_ref,
+            str(target),
+            str(self._literal_or_value(values.get(roles["type"]), "label:default")),
+            str(surface),
+            str(self._literal_or_value(values.get(roles["language"]), "und")),
+            str(self._literal_or_value(values.get(roles["script"]), "Zyyy")),
+            float(self._literal_or_value(values.get(roles["prior"]), 1.0)),
+            int(bool(self._literal_or_value(values.get(roles["preferred"]), False))),
+            self._literal_or_value(values.get(roles["context"])),
+        )
+        self.db.execute(
+            "INSERT OR REPLACE INTO designation_index VALUES(?,?,?,?,?,?,?,?,?)", row
+        )
         return app_ref
 
     def _observation_context(self, observation_ref):
@@ -365,6 +548,24 @@ class Store:
             sql += " AND c.authority_status IN('reviewed','promoted') AND a.generation<=?"
             params.append(self.generation if upto_generation is None else int(upto_generation))
         return [str(row[0]) for row in self.db.execute(sql, params).fetchall()]
+
+    def dimensions_for_value(self, value_ref, *, authority_only=True, upto_generation=None):
+        """Return explicitly related state dimensions for a semantic value.
+
+        This is not compiler completion. Language candidates must explicitly
+        select a DIM_OF_A* source; this method only resolves that declared
+        semantic dependency against exact authority.
+        """
+        try:
+            relation = self.symbol("profile.value_dimension_relation")
+        except ValueError:
+            return ()
+        return tuple(sorted(set(self.relation_objects(
+            value_ref,
+            relation,
+            authority_only=authority_only,
+            upto_generation=upto_generation,
+        ))))
 
     def state_dimension_domain_type(self, dimension_ref):
         try:
@@ -462,48 +663,14 @@ class Store:
         return output
 
     def base_facts(self):
-        output = []
-        for application in self.db.execute("SELECT * FROM applications ORDER BY app_ref"):
-            args = {}
-            for binding in self.db.execute(
-                "SELECT * FROM bindings WHERE app_ref=? ORDER BY role_ref,ordinal",
-                (application["app_ref"],),
-            ):
-                args[binding["role_ref"]] = self.decode_value(
-                    binding["filler_kind"], binding["filler_value"]
-                )
-            rows = self.db.execute(
-                "SELECT stance,confidence FROM claims WHERE app_ref=? AND valid_to IS NULL",
-                (application["app_ref"],),
-            ).fetchall()
-            stances = {row["stance"] for row in rows}
-            if "support" in stances:
-                output.append(
-                    Fact(
-                        application["app_ref"],
-                        application["operator_ref"],
-                        args,
-                        "support",
-                        max(float(row["confidence"]) for row in rows if row["stance"] == "support"),
-                    )
-                )
-            if "deny" in stances:
-                output.append(
-                    Fact(
-                        application["app_ref"],
-                        application["operator_ref"],
-                        args,
-                        "deny",
-                        max(float(row["confidence"]) for row in rows if row["stance"] == "deny"),
-                    )
-                )
-        return output
+        """Explicit audit/debug full materialization. Runtime cognition must use matching_facts."""
+        return self.matching_facts((), limit=None)
 
-    def add_observation(self, surface, packet, language, source, generation, confidence=0.95, occurrence_ref=None):
-        ref = stable("obs", surface, language, source, packet, occurrence_ref or "dedup")
+    def add_observation(self, surface, packet, language, source, generation, confidence=0.95, occurrence_ref=None, *, modality="language"):
+        ref = stable("obs", surface, modality, language, source, packet, occurrence_ref or "dedup")
         self.db.execute(
             "INSERT OR IGNORE INTO observations VALUES(?,?,?,?,?,?,?,?,?)",
-            (ref, surface, "language", language, source, now(), canonical(packet), confidence, generation),
+            (ref, surface, modality, language, source, now(), canonical(packet), confidence, generation),
         )
         return ref
 
@@ -545,6 +712,26 @@ class Store:
             ),
         )
         return payload["placement_ref"]
+
+    def retract_claim_occurrence(self, occurrence_ref, speaker_ref, *, valid_to=None):
+        row = self.db.execute(
+            "SELECT observation_ref,speaker_ref FROM claim_occurrences WHERE occurrence_ref=?",
+            (occurrence_ref,),
+        ).fetchone()
+        if not row:
+            raise ValueError(f"unknown claim occurrence: {occurrence_ref}")
+        if str(row["speaker_ref"]) != str(speaker_ref):
+            raise PermissionError("a participant may retract only their own attributed claim occurrence")
+        closed_at = valid_to or now()
+        claims = self.db.execute(
+            "SELECT claim_ref,app_ref FROM claims WHERE observation_ref=? AND valid_to IS NULL",
+            (row["observation_ref"],),
+        ).fetchall()
+        for claim in claims:
+            self.db.execute("UPDATE claims SET valid_to=? WHERE claim_ref=?", (closed_at, claim["claim_ref"]))
+        for app_ref in sorted({str(claim["app_ref"]) for claim in claims}):
+            self.index_designation_app(app_ref)
+        return tuple(str(claim["claim_ref"]) for claim in claims)
 
     def claim_occurrence_records(self):
         return [
@@ -601,34 +788,15 @@ class Store:
                         raise ValueError(f"unbound consequent variable {value}")
                     continue
                 self._validate_filler(role, value, specs[role])
+            if operator == "op:state":
+                dimension = clause.get("args", {}).get("role:dimension")
+                state_value = clause.get("args", {}).get("role:value")
+                if dimension is not None and state_value is not None and not (isvar(dimension) or isvar(state_value) or isexist(state_value)):
+                    self.validate_state_value(str(dimension), state_value)
             if clause in consequent:
                 for role, spec in specs.items():
                     if spec["required"] and role not in clause.get("args", {}):
                         raise ValueError(f"rule consequent missing {operator}:{role}")
-
-    def infer_state_dimension(self, value_ref):
-        try:
-            value_relation = self.symbol("policy.state_value_relation")
-            dimension_relation = self.symbol("policy.state_dimension_relation")
-        except ValueError:
-            return None
-        specs = [
-            fact.args.get("role:subject")
-            for fact in self.base_facts()
-            if fact.operator == "op:relation"
-            and fact.stance == "support"
-            and fact.args.get("role:relation") == value_relation
-            and fact.args.get("role:object") == value_ref
-        ]
-        dimensions = {
-            fact.args.get("role:object")
-            for fact in self.base_facts()
-            if fact.operator == "op:relation"
-            and fact.stance == "support"
-            and fact.args.get("role:subject") in specs
-            and fact.args.get("role:relation") == dimension_relation
-        }
-        return next(iter(dimensions)) if len(dimensions) == 1 else None
 
     def upsert_rule_candidate(self, rule, generation, confidence=0.9, min_evidence=2):
         self.validate_rule(rule)
@@ -662,6 +830,7 @@ class Store:
             self.db.execute(
                 "UPDATE rule_candidates SET status='promoted' WHERE candidate_ref=?", (ref,)
             )
+            self.rebuild_rule_index(rule_ref)
             promoted = True
         return ref, promoted
 
@@ -680,6 +849,187 @@ class Store:
                 (ref, kind, antecedent, consequent, 1, "provisional", float(confidence), generation, generation),
             )
         return ref
+
+    @staticmethod
+    def decode_rule_side(raw):
+        return json.loads(raw) if isinstance(raw, str) else list(raw)
+
+    def _facts_from_app_refs(self, app_refs, limit=None):
+        """Hydrate a bounded application set in three indexed batch queries."""
+        app_refs = list(dict.fromkeys(str(item) for item in app_refs))
+        if not app_refs:
+            return []
+        if limit is not None:
+            app_refs = app_refs[: int(limit)]
+        placeholders = ",".join("?" for _ in app_refs)
+        applications = self.db.execute(
+            f"SELECT app_ref,operator_ref FROM applications WHERE app_ref IN ({placeholders}) ORDER BY app_ref",
+            app_refs,
+        ).fetchall()
+        bindings_by_app = {ref: {} for ref in app_refs}
+        for row in self.db.execute(
+            f"SELECT app_ref,role_ref,filler_kind,filler_value FROM bindings "
+            f"WHERE app_ref IN ({placeholders}) ORDER BY app_ref,role_ref,ordinal",
+            app_refs,
+        ).fetchall():
+            bindings_by_app.setdefault(str(row["app_ref"]), {})[str(row["role_ref"])] = self.decode_value(
+                row["filler_kind"], row["filler_value"]
+            )
+        claims_by_app = {ref: {"support": [], "deny": []} for ref in app_refs}
+        for row in self.db.execute(
+            f"SELECT app_ref,stance,confidence FROM claims WHERE app_ref IN ({placeholders}) "
+            "AND valid_to IS NULL ORDER BY app_ref,stance",
+            app_refs,
+        ).fetchall():
+            claims_by_app.setdefault(str(row["app_ref"]), {"support": [], "deny": []})[
+                str(row["stance"])
+            ].append(float(row["confidence"]))
+        output = []
+        for application in applications:
+            app_ref = str(application["app_ref"])
+            args = bindings_by_app.get(app_ref, {})
+            stances = claims_by_app.get(app_ref, {})
+            for stance in ("support", "deny"):
+                confidences = stances.get(stance, ())
+                if confidences:
+                    output.append(
+                        Fact(
+                            app_ref,
+                            str(application["operator_ref"]),
+                            args,
+                            stance,
+                            max(confidences),
+                        )
+                    )
+        return output
+
+    def matching_facts(self, patterns=(), limit=128):
+        patterns = tuple(patterns or ())
+        if not patterns:
+            sql = "SELECT app_ref FROM applications ORDER BY app_ref"
+            params = []
+            if limit is not None:
+                sql += " LIMIT ?"; params.append(int(limit))
+            refs = [str(row[0]) for row in self.db.execute(sql, params).fetchall()]
+            return self._facts_from_app_refs(refs, limit)
+        candidate_sets = []
+        for pattern in patterns:
+            joins = []
+            join_params = []
+            index = 0
+            for role, value in pattern.get("args", {}).items():
+                if isinstance(value, str) and isvar(value):
+                    continue
+                alias = f"b{index}"; index += 1
+                kind, encoded = self.encode_value(value)
+                joins.append(
+                    f"JOIN bindings {alias} ON {alias}.app_ref=a.app_ref "
+                    f"AND {alias}.role_ref=? AND {alias}.filler_kind=? AND {alias}.filler_value=?"
+                )
+                join_params.extend([role, kind, encoded])
+            joins.append("JOIN claims c ON c.app_ref=a.app_ref AND c.stance=? AND c.valid_to IS NULL")
+            join_params.append(pattern.get("stance", "support"))
+            sql = f"SELECT DISTINCT a.app_ref FROM applications a {' '.join(joins)} WHERE a.operator_ref=? ORDER BY a.app_ref"
+            params = join_params + [pattern["operator"]]
+            if limit is not None:
+                sql += " LIMIT ?"; params.append(int(limit))
+            candidate_sets.append({str(row[0]) for row in self.db.execute(sql, params).fetchall()})
+        refs = set.union(*candidate_sets) if candidate_sets else set()
+        return self._facts_from_app_refs(sorted(refs), limit)
+
+    def facts_mentioning(self, refs, limit=64):
+        refs = sorted(set(str(x) for x in refs))
+        if not refs or limit <= 0:
+            return []
+        placeholders = ",".join("?" for _ in refs)
+        rows = self.db.execute(
+            f"SELECT DISTINCT app_ref FROM bindings WHERE filler_kind='atom' AND filler_value IN ({placeholders}) ORDER BY app_ref LIMIT ?",
+            (*refs, int(limit)),
+        ).fetchall()
+        return self._facts_from_app_refs([str(row[0]) for row in rows], limit)
+
+    def rebuild_rule_index(self, rule_ref=None):
+        if rule_ref is None:
+            self.db.execute("DELETE FROM rule_index")
+            rows = self.db.execute("SELECT * FROM rules").fetchall()
+        else:
+            self.db.execute("DELETE FROM rule_index WHERE rule_ref=?", (rule_ref,))
+            rows = self.db.execute("SELECT * FROM rules WHERE rule_ref=?", (rule_ref,)).fetchall()
+        for row in rows:
+            for side, raw in (("antecedent", row["antecedent"]), ("consequent", row["consequent"])):
+                for clause in json.loads(raw):
+                    operator = str(clause.get("operator"))
+                    constants = {
+                        str(value) for value in clause.get("args", {}).values()
+                        if isinstance(value, str) and not isvar(value) and not isexist(value)
+                    } or {None}
+                    for semantic_ref in constants:
+                        self.db.execute(
+                            "INSERT OR IGNORE INTO rule_index VALUES(?,?,?,?)",
+                            (row["rule_ref"], side, operator, semantic_ref),
+                        )
+
+    def relevant_rules(self, *, rule_kinds=("definition","entailment"), consequent=True, operator_refs=(), semantic_refs=(), authority_generation=None, limit=64):
+        cutoff = self.generation if authority_generation is None else int(authority_generation)
+        kinds = tuple(rule_kinds)
+        side = "consequent" if consequent else "antecedent"
+        clauses = [f"r.rule_kind IN ({','.join('?' for _ in kinds)})", "r.authority_status IN('reviewed','promoted')", "r.generation<=?"]
+        params = list(kinds) + [cutoff]
+        filters = []
+        operator_refs = tuple(sorted(set(operator_refs)))
+        semantic_refs = tuple(sorted(set(semantic_refs)))
+        if operator_refs:
+            filters.append(f"ri.operator_ref IN ({','.join('?' for _ in operator_refs)})")
+            params.extend(operator_refs)
+        if semantic_refs:
+            filters.append(f"ri.semantic_ref IN ({','.join('?' for _ in semantic_refs)})")
+            params.extend(semantic_refs)
+        if filters:
+            clauses.append("(" + " OR ".join(filters) + ")")
+        sql = f"SELECT DISTINCT r.* FROM rules r JOIN rule_index ri ON ri.rule_ref=r.rule_ref AND ri.side=? WHERE {' AND '.join(clauses)} ORDER BY r.rule_ref LIMIT ?"
+        params = [side] + params + [int(limit)]
+        return [dict(row) for row in self.db.execute(sql, params).fetchall()]
+
+    def commit_common_ground(self, conversation_ref, act_ref, semantic_action, status="emitted", *, expected_discourse_revision=None):
+        revisions = self.revisions()
+        if expected_discourse_revision is not None and int(expected_discourse_revision) != revisions["discourse_revision"]:
+            raise RuntimeError(
+                f"discourse revision CAS failed: expected {expected_discourse_revision}, found {revisions['discourse_revision']}"
+            )
+        new_revision = revisions["discourse_revision"] + 1
+        entry_ref = stable("common-ground", conversation_ref, act_ref, semantic_action, status, new_revision)
+        self.db.execute(
+            "INSERT OR IGNORE INTO common_ground VALUES(?,?,?,?,?,?,?)",
+            (entry_ref, conversation_ref, act_ref, canonical(semantic_action), status, now(), new_revision),
+        )
+        self.db.execute("UPDATE revision_state SET discourse_revision=? WHERE singleton=1", (new_revision,))
+        return {"entry_ref": entry_ref, "discourse_revision": new_revision}
+
+    def journal_effect(self, plan, result=None):
+        payload = plan.as_dict() if hasattr(plan, "as_dict") else dict(plan)
+        existing = self.db.execute(
+            "SELECT * FROM effect_journal WHERE idempotency_key=?", (payload["idempotency_key"],)
+        ).fetchone()
+        if existing and existing["status"] in {"succeeded", "declined"}:
+            return {
+                "effect_ref": str(existing["effect_ref"]),
+                "effect_revision": int(existing["effect_revision"]),
+                "idempotent_replay": True,
+            }
+        revisions = self.revisions()
+        new_revision = revisions["effect_revision"] + 1
+        result_payload = result.as_dict() if result is not None and hasattr(result, "as_dict") else result
+        effect_ref = stable("effect", payload["idempotency_key"])
+        self.db.execute(
+            "INSERT INTO effect_journal VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(idempotency_key) DO UPDATE SET status=excluded.status,result=excluded.result,updated_at=excluded.updated_at,effect_revision=excluded.effect_revision",
+            (
+                effect_ref, payload["idempotency_key"], payload["goal_ref"], payload.get("adapter_ref"),
+                canonical(payload.get("request", {})), (result_payload or {}).get("status", "planned") if isinstance(result_payload, dict) else "planned",
+                canonical(result_payload) if result_payload is not None else None, now(), now(), new_revision,
+            ),
+        )
+        self.db.execute("UPDATE revision_state SET effect_revision=? WHERE singleton=1", (new_revision,))
+        return {"effect_ref": effect_ref, "effect_revision": new_revision, "idempotent_replay": False}
 
     def import_data(self, path):
         data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -746,75 +1096,54 @@ class Store:
                     fact.get("confidence", 1),
                     fact.get("authority_status", "reviewed"),
                 )
+            self.rebuild_rule_index()
             self.rebuild_designations()
-            self.finish(generation)
+            self.finish(generation, cycle_ref="import", stage=13, world_delta=True, observation_delta=True)
         return generation
 
     def rebuild_designations(self):
+        """Maintenance-only rebuild of the generic designation index."""
         self.db.execute("DELETE FROM designation_index")
         try:
             operator = self.symbol("operator.designation")
-            roles = {
-                key: self.symbol(f"designation.{key}")
-                for key in ("target", "type", "surface", "language", "script", "prior", "preferred", "context")
-            }
         except ValueError:
             return
-        for fact in self.base_facts():
-            if fact.operator != operator or fact.stance != "support":
-                continue
-
-            def value(key, default=None):
-                item = fact.args.get(roles[key], default)
-                return item.get("literal", {}).get("value") if isinstance(item, dict) and "literal" in item else item
-
-            if not value("target") or not value("surface"):
-                continue
-            self.db.execute(
-                "INSERT OR REPLACE INTO designation_index VALUES(?,?,?,?,?,?,?,?,?)",
-                (
-                    fact.ref,
-                    str(value("target")),
-                    str(value("type", "label:default")),
-                    str(value("surface")),
-                    str(value("language", "und")),
-                    str(value("script", "Zyyy")),
-                    float(value("prior", 1)),
-                    int(bool(value("preferred", False))),
-                    value("context"),
-                ),
-            )
+        app_refs = self.db.execute(
+            "SELECT app_ref FROM applications WHERE operator_ref=? ORDER BY app_ref",
+            (operator,),
+        ).fetchall()
+        for row in app_refs:
+            self.index_designation_app(str(row["app_ref"]))
 
     def label_candidates(self, surface, language, kind=None):
+        needle = norm_text(surface.strip())
         rows = self.db.execute(
-            """SELECT d.*,a.kind,coalesce(s.use_count,0) use_count,coalesce(e.salience,0) salience
+            """SELECT d.*,a.kind,coalesce(s.use_count,0) use_count,coalesce(e.salience,0) salience,
+                      coalesce(e.last_turn,0) last_turn
                FROM designation_index d JOIN atoms a ON a.ref=d.target_ref
                LEFT JOIN label_stats s ON s.label_ref=d.label_ref
                LEFT JOIN discourse_entities e ON e.atom_ref=d.target_ref
-               WHERE d.language IN (?, 'und')""",
-            (language,),
+               WHERE d.language IN (?, 'und') AND d.context_ref IS NULL
+                 AND lower(d.surface)=lower(?)""",
+            (language, surface.strip()),
         ).fetchall()
         by_target = {}
-        needle = norm_text(surface.strip())
+        current_turn = int(self.db.execute("SELECT coalesce(max(last_turn),0) FROM discourse_entities").fetchone()[0])
         for row in rows:
-            if row["context_ref"] is not None:
-                continue
             if norm_text(row["surface"]) != needle or (kind and row["kind"] != kind):
                 continue
+            effective_salience = float(row["salience"]) * (0.55 ** max(0, current_turn - int(row["last_turn"])))
             score = (
                 float(row["prior"])
                 + 0.25 * int(row["preferred"])
                 + 0.05 * math.log1p(int(row["use_count"]))
-                + 0.8 * float(row["salience"])
+                + 0.8 * effective_salience
                 + (0.08 if row["language"] == language else 0)
             )
             old = by_target.get(row["target_ref"])
             if not old or score > old[0]:
                 by_target[row["target_ref"]] = (score, row)
-        return sorted(
-            [(ref, *item) for ref, item in by_target.items()],
-            key=lambda item: (-item[1], item[0]),
-        )
+        return sorted([(ref, *item) for ref, item in by_target.items()], key=lambda item: (-item[1], item[0]))
 
     def resolve_label(self, surface, language, kind=None, margin=0.18):
         candidates = self.label_candidates(surface, language, kind)
@@ -865,40 +1194,43 @@ class Store:
         return str(max(rows, key=score)["surface"])
 
     def touch(self, refs):
-        self.db.execute("UPDATE discourse_entities SET salience=salience*.55")
-        turn = int(
-            self.db.execute(
-                "SELECT coalesce(max(last_turn),0)+1 FROM discourse_entities"
-            ).fetchone()[0]
-        )
+        """Lazy salience decay: update only mentioned referents."""
+        turn = int(self.db.execute("SELECT coalesce(max(last_turn),0)+1 FROM discourse_entities").fetchone()[0])
         for ref in set(refs):
             atom = self.atom(ref)
             if atom and atom["kind"] in {"entity", "participant", "resource", "source", "existential"}:
+                row = self.db.execute("SELECT salience,last_turn FROM discourse_entities WHERE atom_ref=?", (ref,)).fetchone()
+                old = float(row["salience"]) * (0.55 ** max(0, turn - int(row["last_turn"]))) if row else 0.0
                 self.db.execute(
-                    "INSERT INTO discourse_entities VALUES(?,1,?) ON CONFLICT(atom_ref) "
-                    "DO UPDATE SET salience=min(3,salience+1),last_turn=excluded.last_turn",
-                    (ref, turn),
+                    "INSERT INTO discourse_entities VALUES(?,?,?) ON CONFLICT(atom_ref) DO UPDATE SET salience=excluded.salience,last_turn=excluded.last_turn",
+                    (ref, min(3.0, old + 1.0), turn),
                 )
 
-    def frontier(self, surface, reason, details):
-        ref = stable("frontier", surface, reason, details, self.generation)
+    def frontier(self, surface, reason, details, generation):
+        """Accumulate one canonical unresolved target inside Stage 13."""
+        payload = dict(details or {})
+        payload.pop("frontier_ref", None)
+        identity = {
+            "target_ref": payload.get("target_ref"),
+            "evidence": payload.get("evidence", ()),
+            "blocks": payload.get("blocks", ()),
+        }
+        ref = stable("frontier", norm_text(surface), reason, identity)
         self.db.execute(
-            "INSERT OR IGNORE INTO frontiers VALUES(?,?,?,?,?)",
-            (ref, surface, reason, canonical(details), self.generation),
+            """INSERT INTO frontiers(
+                   frontier_ref,surface,reason,details,generation,last_generation,evidence_count,status
+               ) VALUES(?,?,?,?,?,?,1,'open')
+               ON CONFLICT(frontier_ref) DO UPDATE SET
+                 details=excluded.details,
+                 last_generation=excluded.last_generation,
+                 evidence_count=frontiers.evidence_count+1""",
+            (ref, surface, reason, canonical(payload), int(generation), int(generation)),
         )
-        self.db.commit()
         return ref
 
     def find_relation_object(self, subject, relation):
-        for fact in self.base_facts():
-            if (
-                fact.stance == "support"
-                and fact.operator == "op:relation"
-                and fact.args.get("role:subject") == subject
-                and fact.args.get("role:relation") == relation
-            ):
-                return fact.args.get("role:object")
-        return None
+        values = self.relation_objects(subject, relation)
+        return values[0] if len(values) == 1 else None
 
     def user_visible_fact(self, fact):
         if fact.operator == self.symbol("operator.designation"):

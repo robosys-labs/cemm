@@ -65,19 +65,6 @@ class ExactStructuredCompiler:
             if role in specs
         }
 
-        # Unique value→dimension completion is a grounded normalization only.
-        # It must never replace first-class query variables or ambiguous domains.
-        if (
-            operator == "op:state"
-            and "role:dimension" not in args
-            and "role:value" in args
-            and isinstance(args["role:value"], str)
-            and not isvar(args["role:value"])
-        ):
-            dimension = self.s.infer_state_dimension(args["role:value"])
-            if dimension:
-                args["role:dimension"] = dimension
-
         for role, spec in specs.items():
             if spec["required"] and role not in args:
                 raise ValueError(f"missing {operator}:{role}")
@@ -96,7 +83,7 @@ class ExactStructuredCompiler:
 
     def _query(self, raw: Mapping[str, Any], prefix: str, renames: dict[str, str]) -> dict[str, Any]:
         if raw.get("operator"):
-            raw = {"restrictions": [dict(raw)]}
+            raise ValueError("query must use QueryStructure.restrictions; bare application queries are unsupported")
         restrictions = [
             self._application(item, prefix, renames, allow_variables=True)
             for item in raw.get("restrictions", ())
@@ -138,9 +125,9 @@ class ExactStructuredCompiler:
         source = json.loads(canonical(packet))
         renames: dict[str, str] = {}
         news: list[dict[str, str]] = []
-        force = source.get("force") or (
-            "query" if source.get("query") else "description_request" if source.get("describe") else "claim"
-        )
+        if "force" not in source:
+            raise ValueError("semantic packet requires explicit discourse force")
+        force = str(source["force"])
         apps = [
             self._application(item, prefix, renames, allow_variables=False)
             for item in source.get("apps", ())
@@ -160,7 +147,7 @@ class ExactStructuredCompiler:
 
         searchable = list(source.get("apps", ()))
         if source.get("query"):
-            searchable += list(source["query"].get("restrictions", ())) if not source["query"].get("operator") else [source["query"]]
+            searchable += list(source["query"].get("restrictions", ()))
         if source.get("directive"):
             searchable += list(source["directive"].get("content", ()))
         for old, token in renames.items():

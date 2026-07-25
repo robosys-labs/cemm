@@ -113,9 +113,10 @@ class EpistemicPolicy:
                 else:
                     klass = AdmissionClass.SCOPED_USER_ASSERTED_FACT
                     reason = "scoped_user_assertion"
+        correction_target = bool(act.evidence.get("packet_qualifiers", {}).get("target_occurrence_ref"))
         admitted = klass in {
             AdmissionClass.SESSION_PARTICIPANT_FACT,
             AdmissionClass.SCOPED_USER_ASSERTED_FACT,
-        } and act.force == FORCE_CLAIM
+        } and (act.force == FORCE_CLAIM or (act.force == FORCE_CORRECTION and correction_target))
         payload = (act.act_ref, klass.value, admitted, reason, act.context_ref, refs)
         return EpistemicPlacement(stable("epistemic-placement", payload), klass, admitted, reason, act.context_ref, refs)

@@ -148,14 +148,18 @@ class StateProjector:
 
     def _entitlement_template(self, referent_ref: str) -> dict[str, Any]:
         direct, closure = self._type_closure(referent_ref)
-        key = (self.authority_generation, closure)
+        atom = self.s.atom(referent_ref)
+        # Concepts license operational profiles for their instances. They are
+        # not themselves instances of the state spaces they define.
+        profile_subject = bool(atom and atom["kind"] == "concept")
+        key = (self.authority_generation, closure, profile_subject)
         cached = self._entitlement_cache.get(key)
         if cached is not None:
             self._entitlement_cache.move_to_end(key)
             return {**cached, "direct_types": direct}
 
         # Entitlement belongs to type/facet authority, not per-referent schemas.
-        subjects = set(closure)
+        subjects = set() if profile_subject else set(closure)
         dimensions: set[str] = set()
         capabilities: set[str] = set()
         resources: set[str] = set()

@@ -115,13 +115,15 @@ class TemporalFrame:
 
 @dataclass(frozen=True)
 class SelfRuntimeView:
-    """Cycle-local operational view, not a vocabulary-dependent self label."""
+    """Cycle-local provider evidence, not a vocabulary-dependent self label."""
 
     self_ref: str
     authority_generation: int
-    read_generation: int
+    world_revision: int
+    discourse_revision: int
+    observation_revision: int
     process_available: bool = True
-    adapter_support: float = 1.0
+    language_realizer_support: float = 1.0
     semantic_runtime_support: float = 1.0
     critical_blockers: tuple[str, ...] = ()
 
@@ -129,9 +131,11 @@ class SelfRuntimeView:
         return {
             "self_ref": self.self_ref,
             "authority_generation": self.authority_generation,
-            "read_generation": self.read_generation,
+            "world_revision": self.world_revision,
+            "discourse_revision": self.discourse_revision,
+            "observation_revision": self.observation_revision,
             "process_available": self.process_available,
-            "adapter_support": self.adapter_support,
+            "language_realizer_support": self.language_realizer_support,
             "semantic_runtime_support": self.semantic_runtime_support,
             "critical_blockers": list(self.critical_blockers),
         }
@@ -158,7 +162,9 @@ class CycleState:
     cycle_ref: str
     pass_ref: str
     authority_generation: int
-    read_generation: int
+    world_revision: int
+    discourse_revision: int
+    observation_revision: int
     participant_frame: ParticipantFrame
     context_stack: ContextStack
     temporal_frame: TemporalFrame
@@ -170,7 +176,9 @@ class CycleState:
             "cycle_ref": self.cycle_ref,
             "pass_ref": self.pass_ref,
             "authority_generation": self.authority_generation,
-            "read_generation": self.read_generation,
+            "world_revision": self.world_revision,
+            "discourse_revision": self.discourse_revision,
+            "observation_revision": self.observation_revision,
             "participant_frame": self.participant_frame.as_dict(),
             "self_runtime_view": self.self_runtime_view.as_dict(),
         }

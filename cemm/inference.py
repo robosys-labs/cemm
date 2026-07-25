@@ -1,8 +1,8 @@
-"""Bounded exact inference and proof-bearing query execution for CEMM v1."""
+"""Bounded exact inference and proof-bearing query execution over sparse retrieval."""
 from __future__ import annotations
 
 import json
-import threading
+import time
 from typing import Any
 
 from cemm.cognition import QueryBinding, QueryResult, QueryStructure
@@ -23,46 +23,27 @@ class Inference:
         self._max_facts = max_facts
         self.incomplete = False
         self.incomplete_reason = None
-        self._timed_out = False
 
-    def closure(self, extra=(), max_rounds=None, max_facts=None):
+    def closure(self, *, seed_facts, rules, extra=(), max_rounds=None, max_facts=None):
+        """Derive a bounded closure from an explicit sparse seed set."""
         max_rounds = max_rounds or self._max_rounds or self.config.inference_max_rounds
         max_facts = max_facts or self._max_facts or self.config.inference_max_facts
-        self._timed_out = False
         self.incomplete = False
         self.incomplete_reason = None
-        timer = threading.Timer(self.config.inference_timeout_seconds, self._timeout)
-        timer.start()
-        try:
-            return self._closure_impl(extra, max_rounds, max_facts)
-        finally:
-            timer.cancel()
-
-    def _timeout(self):
-        self._timed_out = True
-
-    def _closure_impl(self, extra, max_rounds, max_facts):
-        store = self.store
-        facts = list(store.base_facts()) + list(extra)
+        deadline = time.monotonic() + float(self.config.inference_timeout_seconds)
+        facts = list(seed_facts) + list(extra)
         by_signature = {fact.signature(): fact for fact in facts}
         by_ref = {fact.ref: fact for fact in facts}
-        cutoff = self.authority_generation if self.authority_generation is not None else store.generation
-        rules = [
-            dict(row)
-            for row in store.db.execute(
-                "SELECT * FROM rules WHERE rule_kind IN('definition','entailment') "
-                "AND authority_status IN('reviewed','promoted') AND generation<=? ORDER BY rule_ref",
-                (cutoff,),
-            )
-        ]
-        for _ in range(max_rounds):
-            if self._timed_out:
+        decoded_rules = [dict(row) for row in rules]
+        for _round in range(int(max_rounds)):
+            if time.monotonic() >= deadline:
                 raise InferenceTimeoutError(f"inference exceeded {self.config.inference_timeout_seconds}s")
             added = 0
-            for rule in rules:
-                antecedent = json.loads(rule["antecedent"])
-                consequent = json.loads(rule["consequent"])
-                for environment, parents in self._matches(antecedent, list(by_signature.values())):
+            snapshot = list(by_signature.values())
+            for rule in decoded_rules:
+                antecedent = json.loads(rule["antecedent"]) if isinstance(rule["antecedent"], str) else list(rule["antecedent"])
+                consequent = json.loads(rule["consequent"]) if isinstance(rule["consequent"], str) else list(rule["consequent"])
+                for environment, parents in self._matches(antecedent, snapshot):
                     existentials: dict[str, str] = {}
                     parent_refs = tuple(sorted(item.ref for item in parents))
                     for clause in consequent:
@@ -85,16 +66,19 @@ class Inference:
                             by_signature[fact.signature()] = fact
                             by_ref[fact.ref] = fact
                             added += 1
-                        if len(by_signature) >= max_facts:
-                            self.incomplete = True
-                            self.incomplete_reason = "max_facts"
-                            return list(by_signature.values()), by_ref
+                            if len(by_signature) >= int(max_facts):
+                                self.incomplete = True
+                                self.incomplete_reason = "max_facts"
+                                return list(by_signature.values()), by_ref
             if not added:
                 break
         else:
             self.incomplete = True
             self.incomplete_reason = "max_rounds"
         return list(by_signature.values()), by_ref
+
+    def match_clauses(self, clauses, facts, initial=None):
+        return self._matches(clauses, facts, initial)
 
     def _matches(self, clauses, facts, initial=None):
         states = [(dict(initial or {}), [])]
@@ -111,9 +95,9 @@ class Inference:
         return states
 
     def _unify_clause(self, clause, fact, environment):
-        if clause.get("stance", "support") != fact.stance or not self._unify(
-            clause["operator"], fact.operator, environment
-        ):
+        if clause.get("stance", "support") != fact.stance:
+            return False
+        if not self._unify(clause["operator"], fact.operator, environment):
             return False
         return all(
             role in fact.args and self._unify(pattern, fact.args[role], environment)
@@ -132,6 +116,8 @@ class Inference:
     @staticmethod
     def _inst(value, environment, existentials, rule, parents):
         if isvar(value):
+            if value not in environment:
+                raise ValueError(f"unbound rule variable: {value}")
             return environment[value]
         if isexist(value):
             if value not in existentials:
@@ -140,34 +126,9 @@ class Inference:
         return value
 
     def match(self, pattern, facts):
-        return [
-            fact
-            for fact in facts
-            if self._unify_clause(
-                {
-                    "operator": pattern["operator"],
-                    "args": pattern.get("args", {}),
-                    "stance": pattern.get("stance", "support"),
-                },
-                fact,
-                {},
-            )
-        ]
+        return [fact for environment, parents in self._matches([pattern], facts) for fact in parents[-1:]]
 
-    def match_with_bindings(self, pattern, facts):
-        output = []
-        clause = {
-            "operator": pattern["operator"],
-            "args": pattern.get("args", {}),
-            "stance": pattern.get("stance", "support"),
-        }
-        for fact in facts:
-            environment: dict[str, Any] = {}
-            if self._unify_clause(clause, fact, environment):
-                output.append((environment, fact))
-        return output
-
-    def execute_query(self, raw_query, facts, by_ref=None):
+    def execute_query(self, raw_query, facts, by_ref=None, *, blocking_frontiers=()):
         query = raw_query if isinstance(raw_query, QueryStructure) else QueryStructure.from_dict(raw_query)
         support_matches = self._matches(list(query.restrictions), facts)
         opposition_matches = []
@@ -176,8 +137,8 @@ class Inference:
             denied["stance"] = "deny"
             opposition_matches = self._matches([denied], facts)
 
-        bindings: list[QueryBinding] = []
-        proofs: list[dict[str, Any]] = []
+        bindings = []
+        proofs = []
         seen = set()
         for environment, parents in support_matches:
             projected = {name: environment[name] for name in query.projection if name in environment}
@@ -195,36 +156,31 @@ class Inference:
         unresolved = tuple(sorted(projected_variables - bound_variables))
         if query.projection:
             coverage = len(bound_variables) / max(1, len(projected_variables))
-            if support_matches and opposition_matches:
-                status = "conflict"
-            elif support_matches and not unresolved:
-                status = "answered"
-            elif support_matches:
-                status = "partial"
-            elif opposition_matches:
-                status = "contradicted"
-            else:
-                status = "unknown"
+            status = (
+                "conflict" if support_matches and opposition_matches
+                else "answered" if support_matches and not unresolved
+                else "partial" if support_matches
+                else "contradicted" if opposition_matches
+                else "unknown"
+            )
         else:
             coverage = 1.0 if support_matches or opposition_matches else 0.0
             status = (
-                "conflict"
-                if support_matches and opposition_matches
-                else "supported"
-                if support_matches
-                else "contradicted"
-                if opposition_matches
+                "conflict" if support_matches and opposition_matches
+                else "supported" if support_matches
+                else "contradicted" if opposition_matches
                 else "unknown"
             )
         return QueryResult(
-            query_ref=query.query_ref,
-            status=status,
-            bindings=tuple(bindings),
-            coverage=coverage,
-            support_count=len(support_matches),
-            opposition_count=len(opposition_matches),
-            unresolved_variables=unresolved,
-            proofs=tuple(proofs),
+            query.query_ref,
+            status,
+            tuple(bindings),
+            coverage,
+            len(support_matches),
+            len(opposition_matches),
+            unresolved,
+            tuple(proofs),
+            tuple(blocking_frontiers),
         )
 
     def explain(self, fact, by_ref):
@@ -234,12 +190,26 @@ class Inference:
                 "source": "observed",
                 "operator": fact.operator,
                 "args": fact.args,
+                "stance": fact.stance,
+                "confidence": fact.confidence,
+            }
+        if not fact.proof or "rule_ref" not in fact.proof:
+            return {
+                "fact_ref": fact.ref,
+                "source": "runtime_provider" if fact.proof and fact.proof.get("runtime_provider") else "ephemeral",
+                "operator": fact.operator,
+                "args": fact.args,
+                "stance": fact.stance,
+                "confidence": fact.confidence,
+                "proof": dict(fact.proof or {}),
             }
         return {
             "fact_ref": fact.ref,
             "source": "derived",
             "operator": fact.operator,
             "args": fact.args,
+            "stance": fact.stance,
+            "confidence": fact.confidence,
             "rule_ref": fact.proof["rule_ref"],
             "parents": [
                 self.explain(by_ref[parent], by_ref)

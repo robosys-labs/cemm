@@ -117,11 +117,6 @@ class Candidate:
 
 
 class StructuredSemanticCodec:
-    LEGACY_FORCE = {
-        "assert": "claim",
-        "query": "query",
-        "describe": "description_request",
-    }
     RULE_KINDS = ["definition", "entailment"]
 
     def __init__(self, pack, config=None, epochs=260):
@@ -129,12 +124,19 @@ class StructuredSemanticCodec:
         self.pack = pack
         data = pack.data if hasattr(pack, "data") else pack
         self.sources = list(data["source_classes"])
+        self.constant_sources = {
+            str(source): str(ref)
+            for source, ref in data.get("constant_sources", {}).items()
+        }
+        undeclared_constants = set(self.constant_sources) - set(self.sources)
+        if undeclared_constants:
+            raise ValueError(f"constant source classes are undeclared: {sorted(undeclared_constants)}")
         self.rule_sources = list(data["rule_sources"])
         self.operators = list(data["operators"])
         self.roles = list(data["roles"])
         examples = list(data.get("structured_examples", []))
         target_forces = {
-            target.get("force") or self.LEGACY_FORCE[target.get("intent", "assert")]
+            str(target["force"])
             for target in (example["target"] for example in examples)
         }
         self.forces = list(data.get("forces", []))
@@ -173,8 +175,11 @@ class StructuredSemanticCodec:
         maximum = max(map(len, sequences))
         return torch.tensor([sequence + [0] * (maximum - len(sequence)) for sequence in sequences])
 
-    def _target_force(self, target):
-        return target.get("force") or self.LEGACY_FORCE[target.get("intent", "assert")]
+    @staticmethod
+    def _target_force(target):
+        if "force" not in target:
+            raise ValueError("compiled supervision requires explicit discourse force")
+        return str(target["force"])
 
     def _train_struct(self, examples, epochs):
         torch.manual_seed(self.config.structured_net_seed)
@@ -343,16 +348,37 @@ class StructuredSemanticCodec:
     def _x(self, text):
         return self._tensor([text])
 
-    @staticmethod
-    def _source_value(source, anchors, participant_frame=None):
+    def _source_value(self, source, anchors, participant_frame=None, store=None, authority_generation=None):
         if source == "NONE":
             return None
         if source == "FRAME_SPEAKER":
-            return participant_frame.speaker_ref if participant_frame else "participant:user"
+            if participant_frame is None:
+                raise ValueError("FRAME_SPEAKER requires ParticipantFrame")
+            return participant_frame.speaker_ref
         if source == "FRAME_ADDRESSEE":
-            return participant_frame.addressee_ref if participant_frame else "participant:system"
+            if participant_frame is None:
+                raise ValueError("FRAME_ADDRESSEE requires ParticipantFrame")
+            return participant_frame.addressee_ref
         if source.startswith("Q") and source[1:].isdigit():
             return f"?q{source[1:]}"
+        if source.startswith("DIM_OF_A") and source[len("DIM_OF_A"):].isdigit():
+            if store is None:
+                return None
+            anchor = anchors.get("@A" + source[len("DIM_OF_A"):])
+            if not isinstance(anchor, str):
+                return None
+            dimensions = store.dimensions_for_value(
+                anchor,
+                authority_only=True,
+                upto_generation=authority_generation,
+            )
+            return dimensions[0] if len(dimensions) == 1 else None
+        if source in self.constant_sources:
+            if store is None:
+                return None
+            ref = self.constant_sources[source]
+            atom = store.authority_atom(ref, upto_generation=authority_generation)
+            return ref if atom is not None else None
         if source.startswith("A"):
             return anchors.get("@" + source)
         if source.startswith("NEW_ENTITY_"):
@@ -399,7 +425,7 @@ class StructuredSemanticCodec:
             if source == "NONE" and allow_none:
                 valid.append((source, float(probabilities[index])))
                 continue
-            value = self._source_value(source, anchors, participant_frame)
+            value = self._source_value(source, anchors, participant_frame, store, getattr(self, "authority_generation", None))
             if self._kind_ok(store, spec, value, allow_variable=allow_variable):
                 valid.append((source, float(probabilities[index])))
         return valid[min(alternative, len(valid) - 1)] if valid else ("NONE", 0.0)
@@ -421,7 +447,7 @@ class StructuredSemanticCodec:
             if force == "description_request":
                 for source_index in torch.topk(describe_probabilities, min(3, len(describe_probabilities))).indices.tolist():
                     source = self.sources[source_index]
-                    value = self._source_value(source, anchors, participant_frame)
+                    value = self._source_value(source, anchors, participant_frame, store, getattr(self, "authority_generation", None))
                     if value and not isinstance(value, dict) and not isvar(value):
                         candidates.append(
                             Candidate(
@@ -469,7 +495,7 @@ class StructuredSemanticCodec:
                                 allow_none=not bool(spec["required"]),
                                 allow_variable=force == "query",
                             )
-                            value = self._source_value(source, anchors, participant_frame)
+                            value = self._source_value(source, anchors, participant_frame, store, getattr(self, "authority_generation", None))
                             if source != "NONE" and value is not None:
                                 args[role] = value
                                 score += logp(probability)
@@ -487,7 +513,7 @@ class StructuredSemanticCodec:
                         for application in applications
                         for value in application.get("args", {}).values()
                         for source in self.sources
-                        if self._source_value(source, anchors, participant_frame) == value
+                        if self._source_value(source, anchors, participant_frame, store, getattr(self, "authority_generation", None)) == value
                         and source.startswith("Q")
                     }
                     projected_sources = {
@@ -496,7 +522,7 @@ class StructuredSemanticCodec:
                         if float(projection_probabilities[self.source_index[source]]) >= 0.45
                     } or variable_sources
                     projection = sorted(
-                        self._source_value(source, anchors, participant_frame)
+                        self._source_value(source, anchors, participant_frame, store, getattr(self, "authority_generation", None))
                         for source in projected_sources
                     )
                     variables = []

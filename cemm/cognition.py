@@ -49,18 +49,21 @@ class QueryStructure:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "QueryStructure":
+        if value.get("operator"):
+            raise ValueError("bare application queries are unsupported")
         restrictions = tuple(dict(x) for x in value.get("restrictions", ()))
+        if not restrictions:
+            raise ValueError("query requires restrictions")
         raw_variables = list(value.get("variables", ()))
         projection = tuple(value.get("projection", ()))
-
         inferred: dict[str, SemanticVariable] = {}
         for item in raw_variables:
-            var = SemanticVariable(
+            variable = SemanticVariable(
                 ref=str(item["ref"]),
                 filler_kind=str(item.get("filler_kind", "atom")),
                 role_ref=item.get("role_ref"),
             )
-            inferred[var.ref] = var
+            inferred[variable.ref] = variable
         for restriction in restrictions:
             for role, filler in restriction.get("args", {}).items():
                 if isinstance(filler, str) and isvar(filler):
@@ -71,13 +74,7 @@ class QueryStructure:
         if unknown_projection:
             raise ValueError(f"query projects undeclared variables: {sorted(unknown_projection)}")
         ref = str(value.get("query_ref") or stable("query", restrictions, projection, value.get("qualifiers", {})))
-        return cls(
-            query_ref=ref,
-            restrictions=restrictions,
-            variables=tuple(inferred[k] for k in sorted(inferred)),
-            projection=projection,
-            qualifiers=dict(value.get("qualifiers", {})),
-        )
+        return cls(ref, restrictions, tuple(inferred[key] for key in sorted(inferred)), projection, dict(value.get("qualifiers", {})))
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -111,6 +108,7 @@ class QueryResult:
     opposition_count: int
     unresolved_variables: tuple[str, ...] = ()
     proofs: tuple[dict[str, Any], ...] = ()
+    blocking_frontiers: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -122,6 +120,7 @@ class QueryResult:
             "opposition_count": self.opposition_count,
             "unresolved_variables": list(self.unresolved_variables),
             "proofs": list(self.proofs),
+            "blocking_frontiers": list(self.blocking_frontiers),
         }
 
 
@@ -234,9 +233,9 @@ class DiscourseAct:
 
 
 def build_discourse_act(packet: Mapping[str, Any], participant_frame, trace: Mapping[str, Any] | None = None) -> DiscourseAct:
-    force = packet.get("force")
-    if not force:
-        force = FORCE_QUERY if packet.get("query") else FORCE_DESCRIPTION if packet.get("describe") else FORCE_CLAIM
+    if not packet.get("force"):
+        raise ValueError("compiled packet requires explicit discourse force")
+    force = str(packet["force"])
     query = QueryStructure.from_dict(packet["query"]) if packet.get("query") else None
     if force == FORCE_DIRECTIVE:
         content = tuple(dict(x) for x in packet.get("directive", {}).get("content", ()))
@@ -264,5 +263,5 @@ def build_discourse_act(packet: Mapping[str, Any], participant_frame, trace: Map
         describe_target=packet.get("describe"),
         context_ref=context_ref,
         modality=modality,
-        evidence=dict(trace or {}),
+        evidence={**dict(trace or {}), "packet_qualifiers": dict(packet.get("qualifiers", {}))},
     )

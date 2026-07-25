@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "language": "en",
   "forces": [
     "acknowledgment",
@@ -28,7 +28,16 @@
     "NEW_ENTITY_0",
     "NEW_ENTITY_1",
     "NEW_EVENT_0",
-    "NEW_EVENT_1"
+    "NEW_EVENT_1",
+    "DIM_OF_A0",
+    "DIM_OF_A1",
+    "DIM_OF_A2",
+    "DIM_OF_A3",
+    "DIM_OF_A4",
+    "DIM_OF_A5",
+    "DIM_OF_A6",
+    "DIM_OF_A7",
+    "CONST0"
   ],
   "rule_sources": [
     "NONE",
@@ -138,7 +147,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -263,7 +273,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -377,7 +388,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -397,7 +409,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -414,10 +427,11 @@
         "describe_source": "NONE",
         "apps": [
           {
-            "operator": "op:type",
+            "operator": "op:relation",
             "bindings": {
-              "role:instance": "A0",
-              "role:class": "A1"
+              "role:subject": "A0",
+              "role:relation": "CONST0",
+              "role:object": "A1"
             }
           }
         ],
@@ -507,7 +521,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -526,7 +541,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -546,7 +562,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -565,7 +582,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -584,7 +602,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -758,48 +777,6 @@
       "weight": 1.0
     },
     {
-      "example_ref": "en:r:yes",
-      "semantic": "PLAN goal:confirm VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:no",
-      "semantic": "PLAN goal:deny VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:unknown",
-      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 is @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:conflict",
-      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 is @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:learned",
-      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 is @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:frontier",
-      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 is @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "en:r:greet",
-      "semantic": "PLAN goal:greet VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
-    },
-    {
       "example_ref": "en:r:type-info",
       "semantic": "FACT support op:type role:class @A1 role:instance @A0",
       "surface_plan": "@A0 is @A1.",
@@ -808,50 +785,142 @@
   ],
   "grammar_tokens": [
     ".",
+    "?",
     "a",
+    "action",
+    "at",
+    "cannot",
+    "claim",
+    "complete",
+    "conflicts",
+    "do",
+    "does",
+    "enough",
+    "evidence",
+    "have",
+    "hello",
+    "here",
+    "i",
     "is",
-    "of"
+    "mean",
+    "my",
+    "no",
+    "not",
+    "of",
+    "operation",
+    "percent",
+    "perform",
+    "recorded",
+    "that",
+    "the",
+    "what",
+    "yes"
   ],
   "function_forms": [
     ".",
     "?",
     "a",
-    "an",
-    "the",
-    "is",
-    "are",
+    "about",
     "am",
+    "an",
+    "are",
+    "at",
     "be",
-    "being",
     "been",
-    "what",
-    "which",
-    "who",
-    "where",
-    "when",
-    "why",
-    "how",
+    "being",
+    "correction",
+    "did",
+    "dimension",
     "do",
     "does",
-    "did",
-    "of",
-    "in",
-    "on",
-    "at",
-    "to",
     "from",
-    "please",
+    "has",
+    "have",
+    "how",
+    "in",
+    "is",
     "make",
-    "tell",
-    "about",
-    "that",
     "not",
-    "correction",
+    "of",
+    "on",
+    "please",
     "retract",
     "state",
-    "dimension",
-    "has",
-    "have"
+    "tell",
+    "that",
+    "the",
+    "to",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "why"
   ],
-  "pack_hash": "cedd83364f07e567b4c5d86925b1d2a325f8e7fc71449f37d87ddcbe6a6dd4c7"
+  "constant_sources": {
+    "CONST0": "rel:subtype_of"
+  },
+  "response_examples": [
+    {
+      "example_ref": "en:response:confirm",
+      "semantic": "RESPONSE confirm",
+      "surface_plan": "Yes.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:deny",
+      "semantic": "RESPONSE deny",
+      "surface_plan": "No.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:conflict",
+      "semantic": "RESPONSE report_conflict",
+      "surface_plan": "The evidence conflicts.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:uncertain",
+      "semantic": "RESPONSE report_target_uncertainty",
+      "surface_plan": "I do not have enough evidence.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:clarify",
+      "semantic": "RESPONSE request_targeted_clarification EVIDENCE @E0",
+      "surface_plan": "What does @E0 mean here?",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:capability",
+      "semantic": "RESPONSE report_capability TARGET @A0 SCORE @N0",
+      "surface_plan": "My @A0 is at @N0 percent.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:acknowledge",
+      "semantic": "RESPONSE acknowledge_claim",
+      "surface_plan": "I recorded that claim.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:decline",
+      "semantic": "RESPONSE decline_directive",
+      "surface_plan": "I cannot perform that action.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:operation",
+      "semantic": "RESPONSE report_operation_result",
+      "surface_plan": "The operation is complete.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:greet",
+      "semantic": "RESPONSE greet",
+      "surface_plan": "Hello.",
+      "weight": 1.0
+    }
+  ],
+  "pack_hash": "90b31e1510aa28082badf15fc7e1c29295e65338a5cc45599c0c52f2e012937a"
 }

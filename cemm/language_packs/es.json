@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "language": "es",
   "forces": [
     "acknowledgment",
@@ -28,7 +28,15 @@
     "NEW_ENTITY_0",
     "NEW_ENTITY_1",
     "NEW_EVENT_0",
-    "NEW_EVENT_1"
+    "NEW_EVENT_1",
+    "DIM_OF_A0",
+    "DIM_OF_A1",
+    "DIM_OF_A2",
+    "DIM_OF_A3",
+    "DIM_OF_A4",
+    "DIM_OF_A5",
+    "DIM_OF_A6",
+    "DIM_OF_A7"
   ],
   "rule_sources": [
     "NONE",
@@ -105,7 +113,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "FRAME_SPEAKER",
-              "role:value": "A0"
+              "role:value": "A0",
+              "role:dimension": "DIM_OF_A0"
             }
           }
         ],
@@ -204,7 +213,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -223,7 +233,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ],
@@ -243,7 +254,8 @@
             "operator": "op:state",
             "bindings": {
               "role:subject": "A0",
-              "role:value": "A1"
+              "role:value": "A1",
+              "role:dimension": "DIM_OF_A1"
             }
           }
         ]
@@ -264,90 +276,137 @@
       "semantic": "FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
       "surface_plan": "@A0 está @A2.",
       "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:yes",
-      "semantic": "PLAN goal:confirm VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:no",
-      "semantic": "PLAN goal:deny VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:unknown",
-      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 está @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:conflict",
-      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 está @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:learned",
-      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 está @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:frontier",
-      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
-      "surface_plan": "@A0 está @A2.",
-      "weight": 1.0
-    },
-    {
-      "example_ref": "es:r:greet",
-      "semantic": "PLAN goal:greet VALUE @A0",
-      "surface_plan": "@A0.",
-      "weight": 1.0
     }
   ],
   "grammar_tokens": [
     ".",
+    "?",
+    "acción",
+    "afirmación",
+    "al",
+    "aquí",
+    "ciento",
+    "completa",
+    "contradictoria",
     "es",
-    "está"
+    "esa",
+    "está",
+    "evidencia",
+    "he",
+    "hola",
+    "la",
+    "mi",
+    "no",
+    "operación",
+    "por",
+    "puedo",
+    "qué",
+    "realizar",
+    "registrado",
+    "significa",
+    "suficiente",
+    "sí",
+    "tengo",
+    "¿"
   ],
   "function_forms": [
     ".",
-    "¿",
     "?",
-    "un",
-    "una",
-    "el",
-    "la",
-    "es",
-    "está",
-    "estoy",
-    "estar",
-    "qué",
+    "a",
+    "corrección",
     "cuál",
-    "quién",
-    "dónde",
     "cuándo",
-    "por",
     "cómo",
     "de",
-    "en",
-    "a",
     "desde",
-    "por favor",
-    "haz",
     "dime",
-    "sobre",
-    "que",
-    "no",
-    "corrección",
-    "retiro",
-    "estado",
     "dimensión",
+    "dónde",
+    "el",
+    "en",
+    "es",
+    "estado",
+    "estar",
+    "estoy",
+    "está",
+    "favor",
+    "haz",
+    "la",
+    "no",
+    "por",
+    "por favor",
+    "que",
+    "quién",
+    "qué",
+    "retiro",
+    "sobre",
     "tiene",
-    "favor"
+    "un",
+    "una",
+    "¿"
   ],
-  "pack_hash": "e0b0061ce15af09b8ae5fa2e7d13931ff1ac56158832f191fe5683f9bca5fd4f"
+  "constant_sources": {},
+  "response_examples": [
+    {
+      "example_ref": "es:response:confirm",
+      "semantic": "RESPONSE confirm",
+      "surface_plan": "Sí.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:deny",
+      "semantic": "RESPONSE deny",
+      "surface_plan": "No.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:conflict",
+      "semantic": "RESPONSE report_conflict",
+      "surface_plan": "La evidencia es contradictoria.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:uncertain",
+      "semantic": "RESPONSE report_target_uncertainty",
+      "surface_plan": "No tengo suficiente evidencia.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:clarify",
+      "semantic": "RESPONSE request_targeted_clarification EVIDENCE @E0",
+      "surface_plan": "¿Qué significa @E0 aquí?",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:capability",
+      "semantic": "RESPONSE report_capability TARGET @A0 SCORE @N0",
+      "surface_plan": "Mi @A0 está al @N0 por ciento.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:acknowledge",
+      "semantic": "RESPONSE acknowledge_claim",
+      "surface_plan": "He registrado esa afirmación.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:decline",
+      "semantic": "RESPONSE decline_directive",
+      "surface_plan": "No puedo realizar esa acción.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:operation",
+      "semantic": "RESPONSE report_operation_result",
+      "surface_plan": "La operación está completa.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:response:greet",
+      "semantic": "RESPONSE greet",
+      "surface_plan": "Hola.",
+      "weight": 1.0
+    }
+  ],
+  "pack_hash": "4a841255c9f25dd45af46d22bd5bb2616c3e3d1e32a6e4907663418b2d30cf01"
 }

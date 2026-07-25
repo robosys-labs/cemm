@@ -9,14 +9,16 @@ import re
 import unicodedata
 from pathlib import Path
 from typing import Any
+from cemm.curriculum import CurriculumManifest, SemanticEpisode
 
 MAX_ANCHORS = 8
 MAX_APPS = 3
 MAX_RULE_IF = 3
 MAX_RULE_THEN = 3
-SOURCE_CLASSES = (
+BASE_SOURCE_CLASSES = (
     ["NONE", "FRAME_SPEAKER", "FRAME_ADDRESSEE"]
     + [f"A{i}" for i in range(MAX_ANCHORS)]
+    + [f"DIM_OF_A{i}" for i in range(MAX_ANCHORS)]
     + ["Q0", "Q1", "Q2", "NEW_ENTITY_0", "NEW_ENTITY_1", "NEW_EVENT_0", "NEW_EVENT_1"]
 )
 RULE_SOURCES = ["NONE"] + [f"A{i}" for i in range(MAX_ANCHORS)] + ["V0", "V1", "V2", "E0", "E1"]
@@ -34,15 +36,23 @@ def pack_hash(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
 
 
-def load_kinds(paths):
-    output = {}
+def load_knowledge(paths):
+    kinds = {}
+    value_dimensions = {}
     for path in paths:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         for atom in data.get("atoms", []):
-            output[atom["ref"]] = atom["kind"]
-    output.setdefault("participant:user", "participant")
-    output.setdefault("participant:system", "participant")
-    return output
+            kinds[atom["ref"]] = atom["kind"]
+        for fact in data.get("facts", []):
+            args = fact.get("args", {})
+            if (
+                fact.get("operator") == "op:relation"
+                and args.get("role:relation") == "rel:value_of_dimension"
+            ):
+                value_dimensions.setdefault(args.get("role:subject"), set()).add(args.get("role:object"))
+    kinds.setdefault("participant:user", "participant")
+    kinds.setdefault("participant:system", "participant")
+    return kinds, value_dimensions
 
 
 def replace_mentions(surface: str, mentions: list[dict[str, Any]], kind_map: dict[str, str]):
@@ -74,7 +84,7 @@ def replace_mentions(surface: str, mentions: list[dict[str, Any]], kind_map: dic
     return "".join(output), ref_to_placeholder
 
 
-def source_for(value, ref_to_placeholder, new_map):
+def source_for(value, ref_to_placeholder, new_map, constant_map=None):
     if isinstance(value, str) and value in ref_to_placeholder:
         return ref_to_placeholder[value]
     if value == "participant:user":
@@ -85,12 +95,14 @@ def source_for(value, ref_to_placeholder, new_map):
         return f"Q{value[2:]}"
     if isinstance(value, str) and value in new_map:
         return new_map[value]
+    if isinstance(value, str) and constant_map and value in constant_map:
+        return constant_map[value]
     if isinstance(value, dict) and "literal" in value:
         return "NONE"
     return None
 
 
-def structured_target(semantic, ref_to_placeholder):
+def structured_target(semantic, ref_to_placeholder, value_dimensions, constant_map=None):
     new_map = {}
     entity_count = event_count = 0
     for item in semantic.get("new", []):
@@ -100,51 +112,67 @@ def structured_target(semantic, ref_to_placeholder):
         elif item["kind"] == "event":
             new_map[item["token"]] = f"NEW_EVENT_{event_count}"
             event_count += 1
-    force = semantic.get("force")
-    if not force:
-        force = "query" if semantic.get("query") else "description_request" if semantic.get("describe") else "claim"
+    if "force" not in semantic:
+        raise ValueError("interpretation supervision requires explicit discourse force")
+    force = str(semantic["force"])
     if semantic.get("describe"):
-        source = source_for(semantic["describe"], ref_to_placeholder, new_map)
+        source = source_for(semantic["describe"], ref_to_placeholder, new_map, constant_map)
         if not source:
             raise ValueError("describe target must be grounded")
         return {"force": force, "intent": "describe", "describe_source": source, "apps": []}
 
     raw_query = semantic.get("query")
     if raw_query and raw_query.get("operator"):
-        raw_query = {"restrictions": [raw_query]}
+        raise ValueError("query supervision requires QueryStructure.restrictions")
     applications = raw_query.get("restrictions", []) if raw_query else semantic.get("apps", [])
     output = []
     for application in applications[:MAX_APPS]:
         bindings = {}
-        for role, value in application.get("args", {}).items():
-            source = source_for(value, ref_to_placeholder, new_map)
+        args = application.get("args", {})
+        for role, value in args.items():
+            source = source_for(value, ref_to_placeholder, new_map, constant_map)
             if source:
                 bindings[role] = source
+        if application["operator"] == "op:state" and "role:dimension" not in bindings:
+            if "role:dimension" not in args:
+                raise ValueError("state supervision requires an explicit semantic dimension")
+            value_ref = args.get("role:value")
+            value_source = source_for(value_ref, ref_to_placeholder, new_map, constant_map)
+            dimension_ref = args.get("role:dimension")
+            known_dimensions = value_dimensions.get(value_ref, set()) if isinstance(value_ref, str) else set()
+            if value_source and value_source.startswith("A") and known_dimensions == {dimension_ref}:
+                bindings["role:dimension"] = "DIM_OF_" + value_source
+            else:
+                raise ValueError(
+                    f"unexpressed state dimension requires one reviewed value→dimension relation: {dimension_ref} <- {value_ref}"
+                )
         output.append({"operator": application["operator"], "bindings": bindings})
     projection = []
     for value in (raw_query or {}).get("projection", []):
-        source = source_for(value, ref_to_placeholder, new_map)
+        source = source_for(value, ref_to_placeholder, new_map, constant_map)
         if source:
             projection.append(source)
-    intent = "query" if force == "query" else "describe" if force == "description_request" else "assert"
+    legacy_intent = "query" if force == "query" else "describe" if force == "description_request" else "assert"
     return {
         "force": force,
-        "intent": intent,
+        "intent": legacy_intent,
         "describe_source": "NONE",
         "apps": output,
         "projection": projection,
     }
 
 
-def rule_value(value, ref_to_placeholder, variable_map):
+def rule_value(value, ref_to_placeholder, variable_map, constant_map=None):
     if isinstance(value, str) and value in ref_to_placeholder:
         return ref_to_placeholder[value]
     if isinstance(value, str) and value in variable_map:
         return variable_map[value]
+    if isinstance(value, str) and constant_map and value in constant_map:
+        return constant_map[value]
     return None
 
 
-def rule_target(rule, ref_to_placeholder):
+def rule_target(rule, ref_to_placeholder, constant_map=None):
     variables = []
     existentials = []
     for side in (rule.get("if", []), rule.get("then", [])):
@@ -162,7 +190,7 @@ def rule_target(rule, ref_to_placeholder):
         for application in items[:maximum]:
             bindings = {}
             for role, value in application.get("args", {}).items():
-                source = rule_value(value, ref_to_placeholder, variable_map)
+                source = rule_value(value, ref_to_placeholder, variable_map, constant_map)
                 if not source:
                     raise ValueError(f"rule constant must be mention-grounded or variable: {value}")
                 bindings[role] = source
@@ -193,7 +221,6 @@ def realization_refs(example):
     else:
         for value in example["fact"].get("args", {}).values():
             add(value)
-    refs.sort()
     return {ref: f"@A{i}" for i, ref in enumerate(refs)}
 
 
@@ -243,19 +270,27 @@ def serialize_plan(plan, refs):
 
 def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
     source = json.loads(corpus.read_text(encoding="utf-8"))
-    kinds = load_kinds(knowledge_paths)
+    kinds, value_dimensions = load_knowledge(knowledge_paths)
     language = source["language"]
+    constant_refs = tuple(sorted(set(str(ref) for ref in source.get("constant_refs", ()))))
+    unknown_constants = [ref for ref in constant_refs if ref not in kinds]
+    if unknown_constants:
+        raise ValueError(f"reviewed constant refs are absent from semantic authority: {unknown_constants}")
+    constant_sources = {f"CONST{i}": ref for i, ref in enumerate(constant_refs)}
+    constant_map = {ref: source_ref for source_ref, ref in constant_sources.items()}
     output = {
-        "version": 5,
+        "version": 6,
         "language": language,
         "forces": sorted(set(source.get("forces", ["claim", "query", "description_request", "directive", "correction", "retraction", "acknowledgment"]))),
-        "source_classes": SOURCE_CLASSES,
+        "source_classes": list(BASE_SOURCE_CLASSES) + list(constant_sources),
+        "constant_sources": constant_sources,
         "rule_sources": RULE_SOURCES,
         "operators": [],
         "roles": [],
         "structured_examples": [],
         "rule_examples": [],
         "realization_examples": [],
+        "response_examples": [],
         "grammar_tokens": [],
         "function_forms": sorted(set(item.casefold() for item in source.get("function_forms", []))),
     }
@@ -265,7 +300,7 @@ def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
             {
                 "example_ref": example.get("example_ref", f"{language}:s:{index}"),
                 "input": input_text,
-                "target": structured_target(example["semantic"], refs),
+                "target": structured_target(example["semantic"], refs, value_dimensions, constant_map),
                 "weight": float(example.get("weight", 1)),
             }
         )
@@ -275,7 +310,7 @@ def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
             {
                 "example_ref": example.get("example_ref", f"{language}:d:{index}"),
                 "input": input_text,
-                "target": rule_target(example["rule"], refs),
+                "target": rule_target(example["rule"], refs, constant_map),
                 "weight": float(example.get("weight", 1)),
             }
         )
@@ -296,6 +331,33 @@ def compile_corpus(corpus: Path, knowledge_paths: list[Path]):
             for token in re.findall(r"@[A-Z]\d+|[\wÀ-ÿ'’-]+|[^\w\s]", delex, re.UNICODE)
             if not token.startswith("@A")
         )
+    for index, example in enumerate(source.get("response_examples", [])):
+        semantic = str(example["semantic"])
+        surface_plan = str(example["surface_plan"])
+        output["response_examples"].append({
+            "example_ref": example.get("example_ref", f"{language}:response:{index}"),
+            "semantic": semantic,
+            "surface_plan": surface_plan,
+            "weight": float(example.get("weight", 1)),
+        })
+        output["grammar_tokens"].extend(
+            token for token in re.findall(r"@[A-Z]\d+|[\wÀ-ÿ'’-]+|[^\w\s]", surface_plan, re.UNICODE)
+            if not token.startswith(("@A", "@E", "@N"))
+        )
+    if source.get("semantic_episodes"):
+        episodes = tuple(SemanticEpisode.from_dict(item) for item in source["semantic_episodes"])
+        manifest = CurriculumManifest(
+            tuple(source.get("train_families", sorted({x.family for x in episodes}))),
+            tuple(source.get("holdout_families", ())),
+            episodes,
+            tuple(source.get("required_contrasts", (
+                "claim_query_directive", "deictic_frame_reversal", "state_dimension_value",
+                "transition_no_transition", "partial_meaning", "response_targeting",
+            ))),
+        )
+        manifest.validate()
+        output["curriculum_manifest"] = manifest.as_dict()
+
     operators = set()
     roles = set()
     for example in output["structured_examples"]:

@@ -1,177 +1,134 @@
-"""CEMM v1 Web Demo — FastAPI backend.
-
-Run: python -m cemm.web_demo --port 8765
-Open: http://127.0.0.1:8765
-"""
+"""CEMM v1 single-user development web surface."""
 from __future__ import annotations
 
 import argparse
-import json
-import os
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 
 from cemm.config import Config
-from cemm.runtime import Runtime
+from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
 
 _WEB_DIR = Path(__file__).parent / "web"
-
 app = FastAPI(title="CEMM v1 Web Demo", version="1.0.0")
-
-# ---------------------------------------------------------------------------
-# Global runtime state (single-user demo)
-# ---------------------------------------------------------------------------
 _runtime: Runtime | None = None
 _store: Store | None = None
 _config: Config | None = None
+_db_path = ":memory:"
+_pack_path = ""
+_data_files: list[str] = []
 
 
 def _ensure_runtime() -> Runtime:
     global _runtime, _store, _config
     if _runtime is None:
-        db_path = _db_path
-        _store = Store(db_path)
-        for d in _data_files:
-            _store.import_data(d)
+        _store = Store(_db_path)
+        # Bootstrap only a genuinely empty final-v1 store. Reopening a durable
+        # database must not append duplicate import generations.
+        empty = not _store.db.execute("SELECT 1 FROM atoms LIMIT 1").fetchone()
+        if empty:
+            for path in _data_files:
+                _store.import_data(path)
         _config = Config()
         _runtime = Runtime(_store, _pack_path, _config)
     return _runtime
 
 
-# Module-level config set in main()
-_db_path: str = ":memory:"
-_pack_path: str = ""
-_data_files: list[str] = []
-
-
-# ---------------------------------------------------------------------------
-# Request / response models
-# ---------------------------------------------------------------------------
 class ChatRequest(BaseModel):
     text: str
-    mode: str = "ask"  # ask | learn | teach
+    mode: str = Field(default=MODE_NORMAL, pattern="^(normal|read_only|reviewed_teach)$")
 
 
 class ChatResponse(BaseModel):
     status: str
     response: str
-    facts: list[dict[str, Any]] = []
-    workspace: dict[str, Any] | None = None
-    self_state: dict[str, Any] = {}
+    response_csir: dict[str, Any] | None = None
+    query_result: dict[str, Any] | None = None
+    frontier_graph: dict[str, Any] | None = None
+    capability_assessments: list[dict[str, Any]] = Field(default_factory=list)
+    stage_trace: dict[str, Any] | None = None
     realization_proof: dict[str, Any] | None = None
-    response_plan: dict[str, Any] | None = None
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
-async def index() -> HTMLResponse:
-    html_path = _WEB_DIR / "index.html"
-    return HTMLResponse(html_path.read_text(encoding="utf-8"))
+async def index():
+    return HTMLResponse((_WEB_DIR / "index.html").read_text(encoding="utf-8"))
 
 
 @app.get("/api/health")
-async def health() -> dict[str, Any]:
-    rt = _ensure_runtime()
+async def health():
+    runtime = _ensure_runtime()
     return {
         "ok": True,
         "version": "1.0.0",
-        "authority_generation": rt.s.generation,
-        "authority_hash": rt.s.authority_hash()[:16],
+        "authority_generation": runtime.runtime_attestation["authority_generation"],
+        "authority_hash": runtime.runtime_attestation["authority_generation_hash"][:16],
+        "revisions": runtime.s.revisions(),
     }
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest) -> ChatResponse:
-    rt = _ensure_runtime()
-    text = req.text.strip()
+async def chat(request: ChatRequest):
+    text = request.text.strip()
     if not text:
         return ChatResponse(status="error", response="Empty input.")
-    learn = req.mode == "learn"
-    teach = req.mode == "teach"
-    if req.mode == "ask":
-        learn = False
-        teach = False
-    result = rt.process(text, learn=learn, teach=teach)
+    result = _ensure_runtime().process(text, mode=request.mode)
     return ChatResponse(
-        status=result.get("status", "unknown"),
-        response=result.get("response", ""),
-        facts=result.get("facts", []),
-        workspace=result.get("workspace"),
-        self_state=result.get("self_state", {}),
+        status=result["status"],
+        response=result.get("response", "") or "",
+        response_csir=result.get("response_csir"),
+        query_result=result.get("query_result"),
+        frontier_graph=result.get("frontier_graph"),
+        capability_assessments=result.get("capability_assessments", []),
+        stage_trace=result.get("stage_trace"),
         realization_proof=result.get("realization_proof"),
-        response_plan=result.get("response_plan"),
     )
 
 
 @app.post("/api/reload")
-async def reload() -> dict[str, Any]:
-    rt = _ensure_runtime()
-    att = rt.reload_authority()
-    return {
-        "ok": True,
-        "authority_generation": att.get("authority_generation"),
-        "authority_hash": att.get("authority_generation_hash", "")[:16],
-    }
+async def reload():
+    return {"ok": True, **_ensure_runtime().reload_authority()}
 
 
 @app.get("/api/inspect")
-async def inspect() -> dict[str, Any]:
-    rt = _ensure_runtime()
-    s = rt.s
-    tables = [
-        "atoms", "operator_roles", "applications", "bindings",
-        "observations", "claims", "rules", "rule_candidates",
-        "reference_forms", "designation_index", "frontiers",
-    ]
-    counts = {}
-    for t in tables:
-        try:
-            counts[t] = s.db.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
-        except Exception:
-            counts[t] = -1
+async def inspect():
+    store = _ensure_runtime().s
+    tables = (
+        "atoms", "applications", "claims", "rules", "frontiers",
+        "commit_receipts", "common_ground", "effect_journal",
+    )
     return {
-        "generation": s.generation,
-        "authority_hash": s.authority_hash()[:16],
-        "table_counts": counts,
+        "generation": store.generation,
+        "revisions": store.revisions(),
+        "table_counts": {
+            table: store.db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+            for table in tables
+        },
     }
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 def main():
     global _db_path, _pack_path, _data_files
-    parser = argparse.ArgumentParser(description="CEMM v1 Web Demo")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--db", default=":memory:", help="SQLite path (default: in-memory)")
-    parser.add_argument("--pack", default=None, help="Language pack JSON path")
-    parser.add_argument("--data", action="append", default=[], help="Knowledge JSON paths")
+    parser.add_argument("--db", default=":memory:")
+    parser.add_argument("--pack")
+    parser.add_argument("--data", action="append", default=[])
     args = parser.parse_args()
-
+    package = Path(__file__).parent
     _db_path = args.db
-    # Default paths relative to package
-    pkg_dir = Path(__file__).parent
-    _pack_path = args.pack or str(pkg_dir / "language_packs" / "en.json")
+    _pack_path = args.pack or str(package / "language_packs" / "en.json")
     _data_files = args.data or [
-        str(pkg_dir / "data" / "base.json"),
-        str(pkg_dir / "data" / "family_knowledge.json"),
+        str(package / "data" / "base.json"),
+        str(package / "data" / "family_knowledge.json"),
     ]
-
     import uvicorn
 
-    print(f"CEMM v1 Web Demo")
-    print(f"  Language pack: {_pack_path}")
-    print(f"  Data files: {', '.join(_data_files)}")
-    print(f"  Database: {_db_path}")
-    print(f"  Listening: http://{args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
 
 

@@ -8,6 +8,7 @@ from cemm.codec import StructuredSemanticCodec
 from cemm.compiler import ExactStructuredCompiler
 from cemm.config import Config
 from cemm.context import ParticipantFrame
+from cemm.evidence import EvidenceEnvelope, EvidenceLattice
 from cemm.model import AmbiguousReferent, norm_text, toks
 from cemm.settler import SemanticSettler
 
@@ -114,9 +115,12 @@ class Delexer:
         self.s = store
         self.lang = language
         self.authority_generation = authority_generation
+        current_turn = int(store.db.execute("SELECT coalesce(max(last_turn),0) FROM discourse_entities").fetchone()[0])
         self.salience = {
-            row["atom_ref"]: float(row["salience"])
-            for row in store.db.execute("SELECT * FROM discourse_entities")
+            row["atom_ref"]: float(row["salience"]) * (0.55 ** max(0, current_turn - int(row["last_turn"])))
+            for row in store.db.execute(
+                "SELECT * FROM discourse_entities ORDER BY last_turn DESC,salience DESC LIMIT 64"
+            )
         }
 
     def reference(self, surface, participant_frame: ParticipantFrame | None = None):
@@ -141,17 +145,12 @@ class Delexer:
             required_type = features.get("required_type")
             typed = set()
             if required_type:
-                from cemm.inference import Inference
-
-                facts, _ = Inference(self.s, authority_generation=self.authority_generation).closure(
-                    max_rounds=8, max_facts=500
-                )
                 typed = {
                     fact.args.get("role:instance")
-                    for fact in facts
-                    if fact.operator == "op:type"
-                    and fact.stance == "support"
-                    and fact.args.get("role:class") == required_type
+                    for fact in self.s.matching_facts(
+                        ({"operator": "op:type", "args": {"role:class": required_type}, "stance": "support"},),
+                        limit=64,
+                    )
                 }
             for ref, score in self.salience.items():
                 atom = self.s.atom(ref)
@@ -247,6 +246,7 @@ class Interpreter:
         self.config = config or Config()
         self.lang = pack.language
         self.codec = StructuredSemanticCodec(pack, self.config)
+        self.codec.authority_generation = authority_generation
         self.compiler = ExactStructuredCompiler(store)
         self.settler = SemanticSettler(store, self.compiler, self.config)
         # Function-form authority is explicit language-package data, not an
@@ -339,22 +339,49 @@ class Interpreter:
             for match in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", clause)
         )
 
-    def parse(self, text, participant_frame: ParticipantFrame | None = None):
-        delex, global_placeholders, uses = Delexer(
+    def observe(self, text, participant_frame: ParticipantFrame):
+        envelope = EvidenceEnvelope.text(
+            text,
+            participant_frame.speaker_ref,
+            language=self.lang,
+            channel=participant_frame.channel,
+        )
+        delex, placeholders, uses = Delexer(
             self.s, self.lang, self.authority_generation
         ).run(text, participant_frame)
-        unknown = self._unknown_form_trace(delex)
-        clauses = [
+        unknown = tuple(self._unknown_form_trace(delex))
+        clauses = tuple(
             clause.strip()
             for clause in re.split(r"(?<=[.!?])\s+", delex.strip())
             if clause.strip()
-        ] or [delex]
+        ) or (delex,)
+        lattice = EvidenceLattice(
+            (envelope,),
+            {
+                "delexicalized": delex,
+                "grounded_anchors": dict(placeholders),
+                "clauses": list(clauses),
+                "uses": list(uses),
+            },
+            unknown,
+        )
+        return lattice
+
+    def compose(self, lattice: EvidenceLattice, participant_frame: ParticipantFrame, state_projections=None):
+        form = lattice.form_evidence
+        delex = str(form["delexicalized"])
+        global_placeholders = dict(form.get("grounded_anchors", {}))
+        uses = [tuple(item) for item in form.get("uses", ())]
+        unknown = list(lattice.unknown_evidence)
+        clauses = list(form.get("clauses", ())) or [delex]
         combined = {
             "force": None,
             "apps": [],
             "query": None,
             "directive": None,
             "describe": None,
+            "qualifiers": {},
+            "modality": "actual",
         }
         news = []
         traces = []
@@ -365,12 +392,12 @@ class Interpreter:
                 continue
             local, anchors = self._localize(clause, global_placeholders)
             candidates = self.codec.predict(
-                local,
-                anchors,
-                self.s,
-                top_k=10,
-                participant_frame=participant_frame,
+                local, anchors, self.s, top_k=self.config.settler_top_k, participant_frame=participant_frame
             )
+            # State projections are semantic evidence for candidate dynamics; the
+            # exact compiler remains authority and no projection is flattened into text.
+            for candidate in candidates:
+                candidate.trace["state_projection_refs"] = sorted((state_projections or {}).keys())
             settled, trace = self.settler.settle(candidates, f"C{index}")
             trace["input"] = local
             traces.append(trace)
@@ -389,13 +416,13 @@ class Interpreter:
             combined["force"] = force
             if packet.get("query") or packet.get("describe") or packet.get("directive"):
                 if len(clauses) > 1 or combined["apps"]:
-                    return None, [], uses, {"reason": "mixed_embedded_act_not_yet_supported", "clauses": traces}
+                    return None, [], uses, {"reason": "mixed_embedded_act", "clauses": traces}
                 combined.update(
-                    {
-                        "query": packet.get("query"),
-                        "describe": packet.get("describe"),
-                        "directive": packet.get("directive"),
-                    }
+                    query=packet.get("query"),
+                    describe=packet.get("describe"),
+                    directive=packet.get("directive"),
+                    qualifiers=dict(packet.get("qualifiers", {})),
+                    modality=packet.get("modality", "actual"),
                 )
             else:
                 combined["apps"].extend(packet.get("apps", []))
@@ -405,6 +432,11 @@ class Interpreter:
         assessment = {
             "status": status,
             "grounded_refs": sorted(set(global_placeholders.values())),
+            "open_variables": sorted({
+                value for application in combined.get("apps", ())
+                for value in application.get("args", {}).values()
+                if isinstance(value, str) and value.startswith("?")
+            }),
             "unresolved_evidence": unknown,
             "blockers": sorted({item["reason"] for item in skipped}),
         }
@@ -413,10 +445,11 @@ class Interpreter:
             "clauses": traces,
             "n_best": True,
             "delexicalized": delex,
-            "grounded_anchors": dict(global_placeholders),
+            "grounded_anchors": global_placeholders,
             "unknown_form_evidence": unknown,
             "skipped_clauses": skipped,
             "interpretation_assessment": assessment,
+            "state_projection_refs": sorted((state_projections or {}).keys()),
             "side_effect_free": True,
         }
         if not stable:
@@ -424,6 +457,13 @@ class Interpreter:
             trace["learning_frontier"] = {"kind": trace["reason"], "items": unknown or skipped}
             return None, [], uses, trace
         return combined, news, uses, trace
+
+    def parse(self, text, participant_frame: ParticipantFrame | None = None):
+        """Pure diagnostic helper. Runtime uses observe() then compose() around Stage 4."""
+        if participant_frame is None:
+            raise ValueError("ParticipantFrame is required")
+        lattice = self.observe(text, participant_frame)
+        return self.compose(lattice, participant_frame, state_projections={})
 
     def delex_for_rule(self, text, participant_frame: ParticipantFrame | None = None):
         delex, placeholders, uses = Delexer(self.s, self.lang, self.authority_generation).run(

@@ -1,187 +1,253 @@
-# CEMM v1 — Modular semantic cognition kernel
+# CEMM v1 — Exact Semantic Runtime with Learned Language Projection
 
-CEMM keeps one exact semantic substrate while using neural models for open
-compositional interpretation, semantic workspace dynamics, learnable
-definitions, and grounded language realization — without domain-schema or
-phrase-program explosion. v1 is built from the frozen v4 MVP kernel.
+CEMM is an experimental semantic-cognition runtime. Its governing thesis is:
 
-## Thesis
+> Language is evidence about meaning. It is not the meaning substrate itself.
+
+The exact plane stores semantic atoms, five compositional operator shapes, applications, bindings, evidence, claims, state timelines, causal rules, and proof links. Neural components propose and rank interpretations, workspace contents, and language realizations; they do not create a second ontology or override exact semantic validation.
+
+## v1 status
+
+The final v1 runtime implements the complete documented Stage 0–22 cognitive cycle:
+
+- transport-grounded participant deixis;
+- pure observation and evidence encoding;
+- referent grounding before semantic composition;
+- recursive type/facet state-space projection;
+- open compositional candidate generation and exact settling;
+- first-class claim, query, description, directive, correction, retraction, and acknowledgment acts;
+- proof-bearing query variables, restrictions, projections, and bindings;
+- scoped epistemic placement and claim admission;
+- generic causal transition previews from promoted graph rules;
+- reviewed pack-local constant pointers for structural relations, generation-pinned to exact authority;
+- generic concept predication compiled as subtype/definition structure rather than concept-as-instance typing;
+- recursive capability assessment over inherited dependency graphs;
+- goal arbitration and explicitly registered operation adapters;
+- target-aware Response CSIR, learned surface realization, and semantic-pointer verification;
+- revision-pinned Stage-13 commits and Stage-21 common-ground commits;
+- sparse indexed retrieval instead of whole-store runtime closure;
+- structural training episodes with family-level holdouts and mandatory no-transition cases;
+- explicit reviewed lexical acquisition with no parser writes or default semantic kind.
+
+The bundled language packs and knowledge data remain small proof artifacts. Architectural completeness does **not** mean broad vocabulary, broad world knowledge, or production-scale model quality.
+
+## Five fixed operator shapes
+
+The semantic ABI keeps five foundational application forms:
 
 ```text
-Exact semantics are authority.
-Neural computation proposes, ranks, composes and realizes semantics.
-Neural latent state never becomes a second semantic ontology.
+op:designation(target, label_type, surface, language, script, ...)
+op:type(instance, class)
+op:relation(subject, relation, object)
+op:state(subject, dimension, value)
+op:event(event, type, actor, object, time, ...)
 ```
 
-There is no closed semantic-program catalogue. Surface text plus grounded
-mention evidence flows through a shared Transformer to intent, application-slot
-presence, per-slot operators, role→grounded-source pointers, an N-best graph of
-candidates, exact compile/clamp, recurrent candidate settling, and finally a
-stable or unresolved CSIR-like graph.
+New domains are represented by new atoms, graph relations, learned designations, state dimensions, causal rules, and operational profiles. They do not require new Python classes, SQL tables, intent handlers, or phrase templates.
 
-## Architecture
+## State and recursive inheritance
+
+A referent does not receive a hard-coded schema. Its active operational profile is projected as:
 
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ IMMUTABLE SEMANTIC AUTHORITY                                         │
-│                                                                      │
-│ Kernel Semantic ABI · CSIR constructors · exact operators/roles      │
-│ semantic definitions · promoted rules · language/model artifacts     │
-│ operational profiles · causal mechanisms · authorizations            │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │ exact pins
-                                  ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│ MUTABLE GROUNDED WORLD / DISCOURSE                                   │
-│                                                                      │
-│ referents · claims · state timelines · events · evidence · discourse │
-│ world revision · discourse revision · observation revision           │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │ bounded indexed retrieval
-                                  ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│ CYCLE WORKSPACE / ACTIVE SEMANTIC WORKSPACE                          │
-│                                                                      │
-│ evidence lattice · referent candidates · CSIR candidates             │
-│ relevant exact/derived facts · self/world state · runtime view       │
-│ query restrictions · proof dependencies · frontiers · goals          │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-                                  ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│ NEURAL SEMANTIC DYNAMICS                                              │
-│                                                                      │
-│ structured graph prediction · relevance ranking · attention          │
-│ N-best candidate scoring · language realization-plan selection       │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │ exact compiler / hard constraints
-                                  ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│ EXACT SEMANTIC COGNITION                                              │
-│                                                                      │
-│ settle · query · infer · learn candidate · simulate · choose goal     │
-│ commit only at explicit boundaries                                   │
-└───────────────┬──────────────────────────────┬───────────────────────┘
-                │                              │
-                ▼                              ▼
-       RESPONSE SEMANTICS               LEARNING FRONTIERS
-                │                              │
-                ▼                              ▼
-       semantic-pointer NLG         provisional candidate authority
-                │                              │
-                ▼                              ▼
-       cheap proof verification       competence / evidence / review
-                │                              │
-                ▼                              ▼
-       authorized emission             new authority generation
-                │                              │
-                └───────────────► next-cycle activation ◄─────────────┘
+referent
+  → direct types and facets
+  → recursive subtype/facet closure
+  → entitled dimensions, capabilities, resources, mechanisms
+  → recursive dependency graph
+  → current evidence-backed state timeline
 ```
 
-## Quick start
+State values preserve their native domains: categorical, ordered, continuous, vector/manifold, relational, set-valued, process-valued, or probabilistic. Defaults remain expectations and never become active facts without evidence.
+
+Concepts and instances remain distinct. A concept such as `concept:cat` may license dimensions for cat instances; the concept itself is not assigned an animal's temperature, hunger, or location.
+
+## Self without the word “ready”
+
+The digital self is a grounded participant with a recursively inherited digital-agent profile. Runtime providers expose evidence for resources such as:
+
+```text
+resource:runtime_process
+resource:semantic_runtime
+resource:language_realizer
+resource:output_channel
+```
+
+Capabilities are derived through ordinary `rel:depends_on` chains. For example:
+
+```text
+cap:respond
+  depends_on cap:interpret
+  depends_on cap:realize
+  depends_on resource:output_channel
+```
+
+A language pack may realize a strong capability assessment as “ready,” “available,” or another expression. The semantic runtime does not require any of those words to know its operational condition.
+
+An unresolved word or clause creates a scoped interpretation assessment and learning frontier. It does not mutate the self into a global `confused` or `insufficient` state.
+
+## Claims, queries, and directives
+
+Related surface forms may share referents and content while producing different discourse structures:
+
+```text
+claim      → source-attributed proposition and admission candidate
+query      → information gap, restrictions, variables, projection, obligation
+directive  → desired event/state, capability and permission requirements
+```
+
+Punctuation is evidence available to the language model; it never deterministically rewrites one settled discourse force into another. Runtime mode also never changes force.
+
+A query performs no queried-world transition. A directive does not assert that its desired state is already true. Only an adapter connected to the requested semantic event/action by reviewed `rel:handled_by_adapter` authority, registered by the embedding runtime, and permitted by the active session scope can create an external effect.
+
+When a language construction uses a grounded state value without naming its dimension, the compiled candidate must explicitly bind a `DIM_OF_A*` source. The exact store resolves that declared dependency through reviewed `rel:value_of_dimension` authority. Missing or ambiguous mappings remain unresolved; the compiler never silently guesses a dimension.
+
+## Causal transition model
+
+Transitions are represented by promoted `rule_kind="causal"` graph rules:
+
+```text
+antecedent:
+  event-role clauses
+  state/domain preconditions
+
+consequent:
+  role-addressed state deltas
+  optional secondary events
+```
+
+Stage 12 produces a `TransitionPreview` with bindings, preconditions, deltas, uncertainty, and proof. A predicted delta is not committed as an observation. Operation or sensor evidence is compared against the preview to create prediction-error artifacts.
+
+No event-specific transition class or positional argument shortcut is used.
+
+## Runtime modes
+
+CEMM has one cognitive pipeline and three explicit effect policies:
+
+| Mode | Meaning |
+|---|---|
+| `normal` | Interpret normally; admit/persist only policy-authorized claims/frontiers; commit verified common ground. |
+| `read_only` | Run the same cognition with zero durable writes. |
+| `reviewed_teach` | Explicit reviewed rule-induction workflow; ordinary conversation never enters it implicitly. |
+
+The former Ask/Learn/Teach mode split is removed. Normal chat itself determines whether the utterance is a claim, query, directive, or another discourse act.
+
+## Stage 0–22 core loop
+
+```text
+0  orient and pin authority/world/discourse revisions
+1  capture EvidenceEnvelope
+2  build modality/form evidence lattice
+3  ground referents through ParticipantFrame and discourse context
+4  project recursively entitled state spaces
+5  compile semantic candidates
+6  run recurrent candidate dynamics
+7  stabilize exact or partial meaning
+8  build claim/query/directive structures
+9  place claims epistemically
+10 execute query bindings and proof paths
+11 classify prediction error and learning frontiers
+12 simulate role-addressed transitions
+13 commit admitted knowledge/frontiers with CAS receipt
+14 evaluate capability, impact, and operational condition
+15 arbitrate goals and discourse obligations
+16 plan, authorize, and execute registered adapters
+17 assimilate operation evidence with bounded re-entry
+18 build target-aware Response CSIR
+19 realize through the pinned language pack
+20 verify surface provenance and semantic authorization
+21 commit verified common ground
+22 finalize trace, budgets, receipts, and cache statistics
+```
+
+Stages 0–12 are transient. Stage 13 is the first ordinary world-write boundary. External effects belong to Stage 16, operation evidence to Stage 17, and discourse/common-ground writes to Stage 21.
+
+## Performance contract
+
+Normal turns must not:
+
+- compute a whole-store snapshot hash;
+- materialize every fact in the database;
+- execute unrestricted full closure;
+- retrain models because world facts changed;
+- scan all discourse rows to decay salience;
+- persist transient workspace tensors or candidate sets.
+
+The final runtime uses:
+
+- indexed fact lookup by operator, role, filler, stance, and active validity;
+- backward relevant-rule expansion with hard fact/rule/depth budgets;
+- generation-keyed entitlement caches;
+- lazy salience decay;
+- runtime-owned bounded model caches;
+- incremental generation receipts and world/discourse/effect revisions;
+- compare-and-swap checks at durable boundaries.
+
+`Store.snapshot_hash()` remains available only for explicit audits and maintenance.
+
+## Storage compatibility
+
+Final v1 intentionally rejects populated pre-final databases. Rebuild a database from canonical authority JSON and separately retained world evidence. Silent schema migration would preserve exactly the obsolete self-state, response-policy, and compatibility artifacts this version removes.
+
+## Running
 
 ```bash
-pip install -e .
-python -m cemm.cli init --db demo.sqlite \
+python -m cemm.cli init \
+  --db cemm.sqlite \
+  --pack cemm/language_packs/en.json \
   --data cemm/data/base.json \
-  --data cemm/data/family_knowledge.json \
+  --data cemm/data/family_knowledge.json
+
+python -m cemm.cli chat --db cemm.sqlite --pack cemm/language_packs/en.json
+
+python -m cemm.cli process "How are you?" \
+  --mode read_only \
+  --db cemm.sqlite \
   --pack cemm/language_packs/en.json
-python -m cemm.cli ask --db demo.sqlite \
-  --pack cemm/language_packs/en.json "What is evidence?"
+
+python -m cemm.cli acquire-reviewed \
+  --text "Friction is resistance." \
+  --mentions '[{"surface":"Friction","kind":"concept"},{"surface":"resistance","kind":"concept"}]' \
+  --db cemm.sqlite \
+  --pack cemm/language_packs/en.json
 ```
 
-## Concrete example
+Web demo:
 
-A short session showing ask, teach (provisional→promoted), reload, learn, and
-inference:
-
-```text
-$ python -m cemm.cli ask --db demo.sqlite --pack cemm/language_packs/en.json "What is evidence?"
-"Evidence is information."
-
-$ python -m cemm.cli teach --db demo.sqlite --pack cemm/language_packs/en.json "A mother in-law is the mother of a partner."
-→ provisional rule recorded (generation pending promotion)
-
-$ python -m cemm.cli teach --db demo.sqlite --pack cemm/language_packs/en.json "A mother in-law is the mother of a partner."
-→ rule promoted to authority
-
-$ python -m cemm.cli reload --db demo.sqlite --pack cemm/language_packs/en.json
-→ Authority reloaded to generation N.
-
-$ python -m cemm.cli learn --db demo.sqlite --pack cemm/language_packs/en.json "My mother in-law arrived today."
-→ grounded claim recorded (mother_in-law referent bound)
-
-$ python -m cemm.cli ask --db demo.sqlite --pack cemm/language_packs/en.json "Am I married?"
-"Yes."
+```bash
+python -m cemm.web_demo --db cemm.sqlite
 ```
 
-The final answer is derived by forward-chaining inference over the promoted
-rule (mother_in-law ⇒ mother of partner) plus the learned grounded claim
-(speaker has a mother in-law), yielding an inferred partner and therefore a
-married state.
+## Main modules
 
-## CLI commands
+| Module | Responsibility |
+|---|---|
+| `context.py` | Session, ParticipantFrame, revision-pinned cycle state, transient workspace. |
+| `evidence.py` | Evidence envelopes and modality/form lattice. |
+| `interpreter.py` | Split observe/ground and compose/settle language path. |
+| `codec.py` | Open compositional neural proposal over force, operators, roles, variables, and projections. |
+| `compiler.py` | Exact operator/role/domain validation; no compatibility query or dimension shims. |
+| `state.py` | Recursive entitlement and native-domain state projection. |
+| `retrieval.py` | Sparse indexed fact and relevant-rule retrieval. |
+| `inference.py` | Bounded exact closure, query bindings, and proof construction. |
+| `epistemics.py` | Claim occurrence and admission policy. |
+| `transitions.py` | Causal rules, transition previews, state deltas, prediction error. |
+| `capability.py` | Runtime evidence and recursive dependency assessment. |
+| `goals.py` | Goal arbitration, authorization, adapter registry, operation results. |
+| `response.py` | Response CSIR and deterministic pointerization. |
+| `realizer.py` | Learned fact/response projection and provenance verification. |
+| `stages.py` | Stage 0–22 ordering and side-effect ownership. |
+| `curriculum.py` | Structural episode and holdout validation. |
+| `acquisition.py` | Explicit reviewed identity/designation publication; never parser-driven acquisition. |
+| `store.py` | Exact authority/world store, indexes, revisions, receipts, common ground, effect journal. |
 
-| Command   | Purpose                                                        |
-|-----------|---------------------------------------------------------------|
-| `init`    | Create a database and import data + language pack.            |
-| `chat`    | Read lines from stdin, print responses.                       |
-| `learn`   | Process text in learn mode (record grounded claims).          |
-| `teach`   | Process text in teach mode (propose/promote rules).           |
-| `ask`     | Process text in ask mode (query, no side effects).            |
-| `inspect` | Print table counts and snapshot hash for a database.          |
-| `reload`  | Reload authority into the runtime (promote pending generation).|
-| `acquire` | Run explicit reviewed acquisition; ordinary unknown forms open typed learning frontiers without parser writes. |
+## Acceptance source of truth
 
-## Module structure
+The executable final-v1 tests and `V1_ACCEPTANCE.md` are the acceptance contract. The focused final suite contains 33 architecture tests. Frozen MVP references and pre-final tests are historical evidence, not runtime authority.
 
-| Module           | Responsibility                                                        |
-|------------------|-----------------------------------------------------------------------|
-| `constants.py`   | Database DDL, tokenizer regex, shared constants.                      |
-| `config.py`      | Configurable thresholds for the runtime.                              |
-| `cognition.py`   | Cycle-local interpretation, discourse, query, epistemic and frontier artifacts. |
-| `epistemics.py`  | Claim-occurrence placement and explicit admission policy.                    |
-| `model.py`       | Core model types and helper functions.                                |
-| `context.py`     | Session/cycle participant, temporal, and workspace grounding artifacts.|
-| `store.py`       | Semantic meaning database; authority/world atom separation.           |
-| `state.py`       | Recursive state entitlement and generic state-timeline projection.    |
-| `codec.py`       | Open compositional semantic codec (CSIR construction).                |
-| `compiler.py`    | Exact structured compiler (compile/clamp candidates).                 |
-| `settler.py`     | Semantic settler (recurrent candidate settling).                      |
-| `workspace.py`   | Bounded active semantic workspace.                                    |
-| `selfstate.py`   | Compatibility facade; runtime cognition no longer emits semantic self-state facts.                             |
-| `inference.py`   | Forward-chaining inference engine.                                    |
-| `rules.py`       | Rule learner (provisional→promoted lifecycle).                        |
-| `interpreter.py` | Interpreter, SurfaceCodec, and Delexer.                               |
-| `trainer.py`     | Language-pack trainer (train-at-startup proof models).                |
-| `realizer.py`    | Pointer realizer and language pack.                                   |
-| `response.py`    | Response planning and pointerization.                                 |
-| `acquisition.py` | Reviewed and autonomous vocabulary acquisition.                       |
-| `runtime.py`     | Runtime orchestrator (cycle coordination, authority reload).          |
-| `cli.py`         | Command-line interface (8 subcommands).                               |
+See also:
 
-## Current status
-
-Phase 5–9 foundation: scoped cognition/frontiers, first-class state dimensions, QueryCSIR bindings, discourse force, and explicit epistemic admission are implemented under active verification. Causal transitions, complete canonical orchestration, derived self-readiness and target-aware Response CSIR remain later phases.
-
-Architecture proof, under active verification. The executable test suite—not a
-hard-coded README pass count—is the acceptance source of truth. Bundled
-Transformers are tiny train-at-startup proof models, not performance
-benchmarks. The kernel demonstrates the core invariant — exact semantics as
-authority, neural computation as proposal — end to end across ask, teach,
-learn, reload, and acquire.
-
-## References
-
-- `ARCHITECTURE.md` — full v1 architecture and runtime contracts.
-- `v1-fixes.md` — dependency-ordered defect/fix plan and acceptance gates.
-- `runtime-core-loop.md` — concrete lean runtime/core-loop implementation contract.
-- `reference/mvp_v4/` — frozen MVP v4 demo (read-only permanent reference).
-  Run it with:
-  ```bash
-  cd reference/mvp_v4
-  PYTHONPATH=. python -m unittest -v tests.test_mvp
-  ```
-- `cemm/data/` — base and family-knowledge semantic data.
-- `cemm/language_packs/` — English (`en.json`) and Spanish (`es.json`) packs.
-- `cemm/training/` — seed corpora for language-pack training.
+- `ARCHITECTURE.md`
+- `runtime-core-loop.md`
+- `v1-fixes.md`
+- `V1_ACCEPTANCE.md`
