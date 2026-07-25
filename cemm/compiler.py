@@ -20,6 +20,12 @@ class ExactStructuredCompiler:
 
     def _kind_ok(self, spec, v):
         exp = spec["filler_kind"]
+        if exp == "state_value":
+            if isinstance(v, dict) and "new" in v:
+                return True
+            if isinstance(v, dict) and ("literal" in v or "app" in v):
+                return True
+            return bool(isinstance(v, str) and self.s.atom(v))
         if isinstance(v, dict) and "new" in v:
             return exp in {None, "atom", v.get("kind")}
         if isinstance(v, dict) and "literal" in v:
@@ -69,6 +75,12 @@ class ExactStructuredCompiler:
             for r, v in args.items():
                 if not self._kind_ok(specs[r], v):
                     raise ValueError(f"invalid filler {op}:{r}:{v}")
+            if op == "op:state" and "role:dimension" in args and "role:value" in args:
+                state_value = args["role:value"]
+                if not (isinstance(state_value, dict) and "new" in state_value):
+                    self.s.validate_state_value(
+                        str(args["role:dimension"]), state_value
+                    )
             return {"operator": op, "args": args, "stance": a.get("stance", "support")}
 
         apps = [one(x) for x in p.get("apps", [])]

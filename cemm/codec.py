@@ -304,13 +304,15 @@ class StructuredSemanticCodec:
     def _x(self, text):
         return self._tensor([text])
 
-    def _source_value(self, s, anchors):
+    def _source_value(self, s, anchors, participant_frame=None):
         if s == "NONE":
             return None
-        if s == "USER":
-            return "participant:user"
-        if s == "SYSTEM":
-            return "participant:system"
+        # USER/SYSTEM remain accepted only as compatibility aliases for frozen
+        # v4-derived packs. Their runtime meaning is contextual, not lexical.
+        if s in {"FRAME_SPEAKER", "USER"}:
+            return participant_frame.speaker_ref if participant_frame else "participant:user"
+        if s in {"FRAME_ADDRESSEE", "SYSTEM"}:
+            return participant_frame.addressee_ref if participant_frame else "participant:system"
         if s.startswith("A"):
             return anchors.get("@" + s)
         if s.startswith("NEW_ENTITY_"):
@@ -326,6 +328,12 @@ class StructuredSemanticCodec:
         if v is None:
             return False
         exp = role_spec["filler_kind"]
+        if exp == "state_value":
+            if isinstance(v, dict) and "new" in v:
+                return True
+            if isinstance(v, dict) and ("literal" in v or "app" in v):
+                return True
+            return bool(isinstance(v, str) and store.atom(v))
         if isinstance(v, dict) and "new" in v:
             return exp in {None, "atom", v["kind"]} or (exp == "atom")
         if isinstance(v, dict) and "literal" in v:
@@ -333,7 +341,7 @@ class StructuredSemanticCodec:
         a = store.atom(v) if isinstance(v, str) else None
         return bool(a and (not exp or exp == "atom" or a["kind"] == exp))
 
-    def _choose_source(self, probs, store, spec, anchors, allow_none=True, alt=0):
+    def _choose_source(self, probs, store, spec, anchors, participant_frame=None, allow_none=True, alt=0):
         vals = torch.argsort(probs, descending=True).tolist()
         valid = []
         for ix in vals:
@@ -341,12 +349,12 @@ class StructuredSemanticCodec:
             if s == "NONE" and allow_none:
                 valid.append((s, float(probs[ix])))
                 continue
-            v = self._source_value(s, anchors)
+            v = self._source_value(s, anchors, participant_frame)
             if self._kind_ok(store, spec, v):
                 valid.append((s, float(probs[ix])))
         return valid[min(alt, len(valid) - 1)] if valid else ("NONE", 0.0)
 
-    def predict(self, text, anchors, store, top_k=8):
+    def predict(self, text, anchors, store, top_k=8, participant_frame=None):
         with torch.no_grad():
             ii, pp, oo, bb, dd = self.net(self._x(text))
             ii = torch.softmax(ii[0], -1)
@@ -362,7 +370,7 @@ class StructuredSemanticCodec:
             if intent == "describe":
                 for sx in torch.topk(dd, min(3, len(dd))).indices.tolist():
                     s = self.sources[sx]
-                    v = self._source_value(s, anchors)
+                    v = self._source_value(s, anchors, participant_frame)
                     if v and not isinstance(v, dict):
                         cands.append(
                             Candidate(
@@ -408,9 +416,10 @@ class StructuredSemanticCodec:
                                 store,
                                 spec,
                                 anchors,
+                                participant_frame,
                                 allow_none=not bool(spec["required"]),
                             )
-                            v = self._source_value(src, anchors)
+                            v = self._source_value(src, anchors, participant_frame)
                             if src != "NONE" and v is not None:
                                 args[r] = v
                                 score += logp(p)

@@ -17,6 +17,7 @@ from cemm.store import Store
 from cemm.codec import StructuredSemanticCodec
 from cemm.compiler import ExactStructuredCompiler
 from cemm.settler import SemanticSettler
+from cemm.context import ParticipantFrame
 from cemm.model import toks, norm_text, stable, lit, isvar, isexist, canonical, AmbiguousReferent
 
 try:
@@ -130,7 +131,7 @@ class Delexer:
             for r in s.db.execute("SELECT * FROM discourse_entities")
         }
 
-    def reference(self, surf):
+    def reference(self, surf, participant_frame: ParticipantFrame | None = None):
         rows = [
             r
             for r in self.s.db.execute(
@@ -140,9 +141,13 @@ class Delexer:
             if norm_text(r["surface"]) == norm_text(surf)
         ]
         for r in rows:
+            f = json.loads(r["features"])
+            if participant_frame:
+                resolved = participant_frame.resolve_requirement(f)
+                if resolved:
+                    return resolved
             if r["bound_ref"]:
                 return str(r["bound_ref"])
-            f = json.loads(r["features"])
             cs = []
             required_type = f.get("required_type")
             typed = set()
@@ -177,7 +182,7 @@ class Delexer:
                 return cs[0][1]
         return None
 
-    def run(self, text):
+    def run(self, text, participant_frame: ParticipantFrame | None = None):
         phmap = {}
         rev = {}
         uses = []
@@ -220,7 +225,7 @@ class Delexer:
             mentioned = []
             for a, b, typ, q in sorted(chosen):
                 pieces.append(sent[pos:a])
-                ref = self.reference(q) if typ == "ref" else self.s.resolve_label(q, self.lang)
+                ref = self.reference(q, participant_frame) if typ == "ref" else self.s.resolve_label(q, self.lang)
                 if ref:
                     pieces.append(ph(ref))
                     mentioned.append(ref)
@@ -246,14 +251,6 @@ class Interpreter:
         self.codec = StructuredSemanticCodec(pack, self.config)
         self.compiler = ExactStructuredCompiler(s)
         self.settler = SemanticSettler(s, self.compiler, self.config)
-        # Autonomous acquisition (weakness #11 fix)
-        # Lazy import to avoid circular dependency: acquisition.py imports
-        # Runtime which imports Interpreter.
-        if self.config.autonomous_acquisition:
-            from cemm.acquisition import AutonomousAcquirer
-            self.acquirer = AutonomousAcquirer(s, self.config)
-        else:
-            self.acquirer = None
         # Build function-word set from training examples: words that appear in
         # training inputs as raw text (not placeholders) are syntactic markers,
         # not content words to be acquired.
@@ -306,7 +303,9 @@ class Interpreter:
         seen = set()
         for m in re.finditer(r"[\wÀ-ÿ]+(?:[\wÀ-ÿ'-]*[\wÀ-ÿ])?", delex):
             word = m.group()
-            if word.startswith("@"):
+            # Regex word matching starts after '@', so explicitly ignore
+            # placeholder bodies such as A0/A1.
+            if word.startswith("@") or (m.start() > 0 and delex[m.start() - 1] == "@"):
                 continue
             nw = norm_text(word)
             if nw in seen:
@@ -317,71 +316,41 @@ class Interpreter:
             unknown.append(word)
         return unknown
 
-    def _infer_kinds_from_candidates(self, cands, unknown_surfaces):
-        """Infer kinds for unknown surfaces from codec candidates' new-token roles.
+    def _candidate_unknown_kinds(self):
+        kinds = set()
+        for op in self.pack.data.get("operators", []):
+            for spec in self.s.roles(op).values():
+                exp = spec["filler_kind"]
+                if exp == "state_value":
+                    kinds.add("value")
+                elif exp and exp not in {"atom", "app"} and not str(exp).startswith("literal:"):
+                    kinds.add(str(exp))
+        return sorted(kinds)
 
-        Maps ``new`` tokens in the best candidate to unknown surfaces by order,
-        then uses ``KIND_INFERENCE`` to determine the semantic kind.
-        """
-        kinds = {}
-        if not cands or not unknown_surfaces:
-            return kinds
-        best = cands[0]
-        # Collect (operator, role) for each new token
-        new_token_roles = {}
-        for app in best.packet.get("apps", []):
-            op = app.get("operator")
-            for role, val in app.get("args", {}).items():
-                if isinstance(val, dict) and "new" in val:
-                    new_token_roles[val["new"]] = (op, role)
-        if not new_token_roles:
-            return kinds
-        # Sort new tokens by their numeric suffix
-        def _idx(t):
-            m = re.search(r"\d+", t)
-            return int(m.group()) if m else 0
-        sorted_tokens = sorted(new_token_roles.keys(), key=_idx)
-        for i, token in enumerate(sorted_tokens):
-            if i < len(unknown_surfaces):
-                op, role = new_token_roles[token]
-                kinds[unknown_surfaces[i]] = self.acquirer.infer_kind(op, role)
-        return kinds
-
-    def _autonomous_acquire(self, text, delex, ph):
-        """Acquire unknown surfaces and return updated delexer output.
-
-        Returns ``(delex, ph, uses, acquired)`` where ``acquired`` is True if
-        any surfaces were acquired (warranting a retry).
-        """
+    def _unknown_form_trace(self, delex):
+        """Return cycle-local unknown-form evidence; never mutate the store."""
         unknown = self._find_unknown_surfaces(delex)
-        if not unknown:
-            return delex, ph, [], False
-        # Try to infer kinds from codec candidates (best-effort)
-        clauses = [
-            x.strip() for x in re.split(r"(?<=[.!?])\s+", delex.strip()) if x.strip()
+        candidates = self._candidate_unknown_kinds()
+        return [
+            {
+                "surface": surf,
+                "normalized": norm_text(surf),
+                "semantic_kind_candidates": candidates,
+            }
+            for surf in unknown
         ]
-        kinds = {}
-        for clause in (clauses or [delex]):
-            local, anchors = self._localize(clause, ph)
-            cands = self.codec.predict(local, anchors, self.s, top_k=10)
-            kinds = self._infer_kinds_from_candidates(cands, unknown)
-            break
-        # Acquire each unknown surface with inferred or default kind
-        for surf in unknown:
-            kind = kinds.get(surf, "concept")
-            self.acquirer.acquire(surf, kind, self.lang)
-        # Re-run delexer with new designations
-        new_delex, new_ph, new_uses = Delexer(
-            self.s, self.lang, self.authority_generation
-        ).run(text)
-        return new_delex, new_ph, new_uses, True
 
-    def parse(self, text):
-        delex, ph, uses = Delexer(self.s, self.lang, self.authority_generation).run(text)
-        # Autonomous acquisition: if there are unknown surfaces, acquire them
-        # and re-run the delexer before proceeding with prediction.
-        if self.acquirer:
-            delex, ph, uses, acquired = self._autonomous_acquire(text, delex, ph)
+    def parse(self, text, participant_frame: ParticipantFrame | None = None):
+        delex, ph, uses = Delexer(self.s, self.lang, self.authority_generation).run(text, participant_frame)
+        unknown = self._unknown_form_trace(delex)
+        if unknown:
+            return None, [], uses, {
+                "reason": "unknown_form",
+                "unknown_form_evidence": unknown,
+                "semantic_kind_candidate_set": sorted({k for item in unknown for k in item["semantic_kind_candidates"]}),
+                "learning_frontier": {"kind": "unknown_form", "items": unknown},
+                "side_effect_free": True,
+            }
         clauses = [
             x.strip() for x in re.split(r"(?<=[.!?])\s+", delex.strip()) if x.strip()
         ]
@@ -390,7 +359,7 @@ class Interpreter:
         traces = []
         for i, clause in enumerate(clauses or [delex]):
             local, anchors = self._localize(clause, ph)
-            cands = self.codec.predict(local, anchors, self.s, top_k=10)
+            cands = self.codec.predict(local, anchors, self.s, top_k=10, participant_frame=participant_frame)
             settled, trace = self.settler.settle(cands, f"C{i}")
             trace["input"] = local
             traces.append(trace)
@@ -406,6 +375,7 @@ class Interpreter:
                 combined["apps"].extend(pkt.get("apps", []))
         return combined, news, uses, {"structured_prediction": True, "clauses": traces, "n_best": True}
 
-    def delex_for_rule(self, text):
-        delex, ph, uses = Delexer(self.s, self.lang, self.authority_generation).run(text)
+    def delex_for_rule(self, text, participant_frame: ParticipantFrame | None = None):
+        delex, ph, uses = Delexer(self.s, self.lang, self.authority_generation).run(text, participant_frame)
         return (*self._localize(delex, ph), uses)
+

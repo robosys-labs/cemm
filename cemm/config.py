@@ -29,6 +29,10 @@ class Config:
     inference_max_facts: int = 200
     inference_timeout_seconds: float = 30.0
 
+    # State projection / reconciliation
+    state_support_threshold: float = 0.67
+    state_projection_cache_limit: int = 256
+
     # Model cache (weakness #10 fix: bounded cache)
     model_cache_limit: int = 8
 
@@ -37,5 +41,7 @@ class Config:
     rule_net_seed: int = 73
     classifier_seed: int = 11
 
-    # Autonomous acquisition (weakness #11 fix)
+    # Explicit acquisition workflow only. Ordinary parsing must remain pure;
+    # this flag is retained for compatibility with acquisition tooling.
     autonomous_acquisition: bool = True
+

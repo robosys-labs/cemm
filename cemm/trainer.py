@@ -16,7 +16,7 @@ MAX_ANCHORS=8
 MAX_APPS=3
 MAX_RULE_IF=3
 MAX_RULE_THEN=3
-SOURCE_CLASSES=["NONE","USER","SYSTEM"]+[f"A{i}" for i in range(MAX_ANCHORS)]+["NEW_ENTITY_0","NEW_ENTITY_1","NEW_EVENT_0","NEW_EVENT_1"]
+SOURCE_CLASSES=["NONE","FRAME_SPEAKER","FRAME_ADDRESSEE"]+[f"A{i}" for i in range(MAX_ANCHORS)]+["NEW_ENTITY_0","NEW_ENTITY_1","NEW_EVENT_0","NEW_EVENT_1"]
 RULE_SOURCES=["NONE"]+[f"A{i}" for i in range(MAX_ANCHORS)]+["V0","V1","V2","E0","E1"]
 
 def canonical(x):return json.dumps(x,sort_keys=True,ensure_ascii=False,separators=(",",":"))
@@ -51,8 +51,10 @@ def replace_mentions(surface:str,mentions:list[dict[str,Any]],kind_map:dict[str,
 
 def source_for(v,ref_to_ph,new_map):
     if isinstance(v,str) and v in ref_to_ph:return ref_to_ph[v]
-    if v=="participant:user":return "USER"
-    if v=="participant:system":return "SYSTEM"
+    # Training corpora describe input turns. Participant identities are encoded
+    # as frame roles so the language artifact remains valid when speakers swap.
+    if v=="participant:user":return "FRAME_SPEAKER"
+    if v=="participant:system":return "FRAME_ADDRESSEE"
     if isinstance(v,str) and v in new_map:return new_map[v]
     if isinstance(v,dict) and "literal" in v:return "NONE"
     # Unanchored domain constants are intentionally not teachable through the language codec.

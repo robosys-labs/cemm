@@ -43,7 +43,7 @@ stable or unresolved CSIR-like graph.
 │ CYCLE WORKSPACE / ACTIVE SEMANTIC WORKSPACE                          │
 │                                                                      │
 │ evidence lattice · referent candidates · CSIR candidates             │
-│ relevant exact/derived facts · self state · recent transitions       │
+│ relevant exact/derived facts · self/world state · runtime view       │
 │ query restrictions · proof dependencies · frontiers · goals          │
 └─────────────────────────────────┬────────────────────────────────────┘
                                   │
@@ -131,7 +131,7 @@ married state.
 | `ask`     | Process text in ask mode (query, no side effects).            |
 | `inspect` | Print table counts and snapshot hash for a database.          |
 | `reload`  | Reload authority into the runtime (promote pending generation).|
-| `acquire` | Run reviewed/autonomous vocabulary acquisition on a document. |
+| `acquire` | Run explicit reviewed acquisition; ordinary unknown forms open typed learning frontiers without parser writes. |
 
 ## Module structure
 
@@ -140,7 +140,9 @@ married state.
 | `constants.py`   | Database DDL, tokenizer regex, shared constants.                      |
 | `config.py`      | Configurable thresholds for the runtime.                              |
 | `model.py`       | Core model types and helper functions.                                |
+| `context.py`     | Session/cycle participant, temporal, and workspace grounding artifacts.|
 | `store.py`       | Semantic meaning database; authority/world atom separation.           |
+| `state.py`       | Recursive state entitlement and generic state-timeline projection.    |
 | `codec.py`       | Open compositional semantic codec (CSIR construction).                |
 | `compiler.py`    | Exact structured compiler (compile/clamp candidates).                 |
 | `settler.py`     | Semantic settler (recurrent candidate settling).                      |
@@ -158,7 +160,8 @@ married state.
 
 ## Current status
 
-Architecture proof, under active verification. 59 tests pass. Bundled
+Architecture proof, under active verification. The executable test suite—not a
+hard-coded README pass count—is the acceptance source of truth. Bundled
 Transformers are tiny train-at-startup proof models, not performance
 benchmarks. The kernel demonstrates the core invariant — exact semantics as
 authority, neural computation as proposal — end to end across ask, teach,
@@ -167,6 +170,8 @@ learn, reload, and acquire.
 ## References
 
 - `ARCHITECTURE.md` — full v1 architecture and runtime contracts.
+- `v1-fixes.md` — dependency-ordered defect/fix plan and acceptance gates.
+- `runtime-core-loop.md` — concrete lean runtime/core-loop implementation contract.
 - `reference/mvp_v4/` — frozen MVP v4 demo (read-only permanent reference).
   Run it with:
   ```bash

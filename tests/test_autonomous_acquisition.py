@@ -1,8 +1,9 @@
-"""Tests for autonomous unknown-form discovery (weakness #11 fix).
+"""Tests for unknown-form handling after Phase 2 (pure parsing).
 
-v4 required a reviewer to supply mention-kind anchors for unknown vocabulary.
-v1 infers the semantic kind autonomously, eliminating the manual anchor
-requirement while preserving the exact semantic authority boundary.
+Phase 2 of the v1-fixes plan removed autonomous acquisition from the
+interpreter. Unknown forms now produce typed frontiers without durable
+side effects. Explicit acquisition remains available via the `acquire`
+command and reviewed workflow.
 """
 from __future__ import annotations
 import sys, tempfile
@@ -32,7 +33,7 @@ def make(config=None):
     return td, s, rt
 
 
-class AutonomousAcquisitionTests(unittest.TestCase):
+class UnknownFormTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         _codec.CACHE.clear()
@@ -44,34 +45,9 @@ class AutonomousAcquisitionTests(unittest.TestCase):
             s.db.close()
             td.cleanup()
 
-    def test_autonomous_acquisition_not_frontier(self):
-        """Unknown forms are acquired autonomously; result is not a frontier."""
+    def test_unknown_form_returns_frontier(self):
+        """Unknown forms produce a frontier, not a silent acquisition."""
         td, s, rt = make(Config(autonomous_acquisition=True))
-        try:
-            h0 = s.authority_hash(s.generation)
-            r = rt.process("Zorblax is energy.", learn=True)
-            self.assertNotEqual(r["status"], "frontier")
-            # Designation for Zorblax exists in the database
-            des = s.db.execute(
-                "SELECT 1 FROM designation_index "
-                "WHERE lower(surface) = lower('Zorblax') "
-                "AND language IN ('en', 'und') LIMIT 1"
-            ).fetchone()
-            self.assertIsNotNone(des)
-            # Acquired atom is world-scope (never authority)
-            ref = s.resolve_label("Zorblax", "en")
-            self.assertIsNotNone(ref)
-            atom = s.atom(ref)
-            self.assertEqual(atom["authority_scope"], "world")
-            # Authority hash did not change
-            self.assertEqual(h0, s.authority_hash(s.generation))
-        finally:
-            s.db.close()
-            td.cleanup()
-
-    def test_autonomous_disabled_returns_frontier(self):
-        """With autonomous acquisition disabled, unknown forms still frontier."""
-        td, s, rt = make(Config(autonomous_acquisition=False))
         try:
             r = rt.process("Zorblax is energy.", learn=True)
             self.assertEqual(r["status"], "frontier")
@@ -79,16 +55,37 @@ class AutonomousAcquisitionTests(unittest.TestCase):
             s.db.close()
             td.cleanup()
 
-    def test_autonomous_acquired_atom_kind_inferred(self):
-        """Acquired atoms get a kind via the KIND_INFERENCE table or default concept."""
+    def test_unknown_form_no_durable_side_effects(self):
+        """Parsing unknown forms must not create atoms, designations, or generations."""
         td, s, rt = make(Config(autonomous_acquisition=True))
         try:
+            h0 = s.authority_hash(s.generation)
+            g0 = s.generation
+            atom_count_before = s.db.execute("SELECT count(*) FROM atoms").fetchone()[0]
+            des_count_before = s.db.execute("SELECT count(*) FROM designation_index").fetchone()[0]
+
             rt.process("Zorblax is energy.", learn=True)
-            ref = s.resolve_label("Zorblax", "en")
-            self.assertIsNotNone(ref)
-            atom = s.atom(ref)
-            # Kind should be entity (inferred from op:type role:instance) or concept (default)
-            self.assertIn(atom["kind"], ("entity", "concept"))
+
+            atom_count_after = s.db.execute("SELECT count(*) FROM atoms").fetchone()[0]
+            des_count_after = s.db.execute("SELECT count(*) FROM designation_index").fetchone()[0]
+            self.assertEqual(atom_count_before, atom_count_after,
+                             "Unknown forms must not create atoms during parsing")
+            self.assertEqual(des_count_before, des_count_after,
+                             "Unknown forms must not create designations during parsing")
+            self.assertEqual(h0, s.authority_hash(s.generation),
+                             "Authority hash must not change from unknown form parsing")
+            self.assertEqual(g0, s.generation,
+                             "Generation must not advance from unknown form parsing")
+        finally:
+            s.db.close()
+            td.cleanup()
+
+    def test_disabled_autonomous_acquisition_also_frontiers(self):
+        """With autonomous acquisition disabled, unknown forms still frontier."""
+        td, s, rt = make(Config(autonomous_acquisition=False))
+        try:
+            r = rt.process("Zorblax is energy.", learn=True)
+            self.assertEqual(r["status"], "frontier")
         finally:
             s.db.close()
             td.cleanup()

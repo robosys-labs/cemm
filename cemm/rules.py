@@ -21,8 +21,8 @@ class RuleLearner:
             min_evidence if min_evidence is not None else self.config.rule_evidence_threshold
         )
 
-    def teach(self, text):
-        local, anchors, uses = self.i.delex_for_rule(text)
+    def teach(self, text, participant_frame=None):
+        local, anchors, uses = self.i.delex_for_rule(text, participant_frame)
         cands = self.i.codec.predict_rules(local, anchors, self.s, top_k=5)
         valid = []
         for r in cands:

@@ -85,6 +85,11 @@ class Store:
 
     def _validate_filler(self, role, v, spec):
         fk, fv = self.encode_value(v); exp = spec["filler_kind"]
+        if exp == "state_value":
+            if fk == "atom" and not self.atom(fv): raise ValueError(f"unknown state atom {role}:{fv}")
+            if fk == "app" and not self.db.execute("SELECT 1 FROM applications WHERE app_ref=?", (fv,)).fetchone(): raise ValueError(f"unknown state app {role}:{fv}")
+            if fk not in {"atom", "literal", "app"}: raise ValueError(f"state value class {role}")
+            return
         if exp and exp.startswith("literal:"):
             if fk != "literal" or json.loads(fv)["type"] != exp.split(":", 1)[1]: raise ValueError(f"literal kind {role}")
             return
@@ -103,6 +108,14 @@ class Store:
             self._validate_filler(role, v, specs[role])
         for role, s in specs.items():
             if s["required"] and role not in args: raise ValueError(f"missing {op}:{role}")
+        try:
+            state_op = self.symbol("operator.state"); dim_role = self.symbol("role.dimension"); val_role = self.symbol("role.value")
+        except ValueError:
+            state_op = dim_role = val_role = None
+        if op == state_op and dim_role in args:
+            d = self.atom(str(args[dim_role]))
+            if not d or d["kind"] != "state_dimension": raise ValueError(f"invalid state dimension:{args[dim_role]}")
+            if val_role in args: self.validate_state_value(str(args[dim_role]), args[val_role])
 
     def app_signature(self, op, args):
         return stable("app", op, sorted((r, *self.encode_value(v)) for r, v in args.items()))
@@ -111,19 +124,109 @@ class Store:
         self.validate_app(op, args); ar = self.app_signature(op, args); self.db.execute("INSERT OR IGNORE INTO applications VALUES(?,?,?)", (ar, op, g))
         for n, (role, v) in enumerate(sorted(args.items())):
             fk, fv = self.encode_value(v); br = stable("bind", ar, role, fk, fv, n); self.db.execute("INSERT OR IGNORE INTO bindings VALUES(?,?,?,?,?,?)", (br, ar, role, fk, fv, n))
-        cr = stable("claim", ar, obs, stance); self.db.execute("INSERT OR IGNORE INTO claims VALUES(?,?,?,?,?,?,?,?,?)", (cr, ar, obs, stance, float(confidence), authority, valid_from, None, g)); self.db.execute("INSERT OR IGNORE INTO proof_links VALUES(?,?,?,?,?)", (stable("proof", cr), cr, obs, "assert", "[]")); self._supersede_state(ar, op, args, stance); return ar
+        observed = self.db.execute("SELECT observed_at FROM observations WHERE observation_ref=?", (obs,)).fetchone()
+        effective_from = valid_from or (str(observed[0]) if observed else now())
+        cr = stable("claim", ar, obs, stance); self.db.execute("INSERT OR IGNORE INTO claims VALUES(?,?,?,?,?,?,?,?,?)", (cr, ar, obs, stance, float(confidence), authority, effective_from, None, g)); self.db.execute("INSERT OR IGNORE INTO proof_links VALUES(?,?,?,?,?)", (stable("proof", cr), cr, obs, "assert", "[]")); self._supersede_state(ar, op, args, stance, effective_from, obs); return ar
 
-    def _supersede_state(self, new_ref, op, args, stance):
+    def _observation_context(self, observation_ref):
+        row = self.db.execute("SELECT packet FROM observations WHERE observation_ref=?", (observation_ref,)).fetchone()
+        if not row: return None
+        try:
+            packet = json.loads(row[0]); return packet.get("context_ref") or packet.get("qualifiers", {}).get("context")
+        except Exception:
+            return None
+
+    def _supersede_state(self, new_ref, op, args, stance, effective_from, observation_ref):
         try:
             state_op = self.symbol("operator.state"); subj = self.symbol("role.subject"); dim = self.symbol("role.dimension"); val = self.symbol("role.value")
         except ValueError:
             return
         if stance != "support" or op != state_op or any(x not in args for x in (subj, dim, val)): return
         d = self.atom(str(args[dim])); meta = json.loads(d["metadata"]) if d else {}
-        if not meta.get("exclusive"): return
-        for f in self.base_facts():
-            if f.ref != new_ref and f.operator == op and f.stance == "support" and f.args.get(subj) == args[subj] and f.args.get(dim) == args[dim] and f.args.get(val) != args[val]:
-                self.db.execute("UPDATE claims SET valid_to=? WHERE app_ref=? AND stance='support' AND valid_to IS NULL", (now(), f.ref))
+        cardinality = meta.get("cardinality") or ("one" if meta.get("exclusive") else "many")
+        if cardinality != "one": return
+        new_context = self._observation_context(observation_ref)
+        for c in self.state_claim_records(args[subj], args[dim]):
+            if c["app_ref"] == new_ref or c["stance"] != "support" or c["valid_to"] is not None: continue
+            if canonical(c["value"]) == canonical(args[val]): continue
+            if c.get("context_ref") != new_context: continue
+            self.db.execute("UPDATE claims SET valid_to=? WHERE claim_ref=?", (effective_from, c["claim_ref"]))
+
+    def type_classes(self, referent_ref):
+        rows = self.db.execute("""SELECT DISTINCT bc.filler_value FROM applications a
+          JOIN bindings bi ON bi.app_ref=a.app_ref AND bi.role_ref='role:instance' AND bi.filler_kind='atom'
+          JOIN bindings bc ON bc.app_ref=a.app_ref AND bc.role_ref='role:class' AND bc.filler_kind='atom'
+          JOIN claims c ON c.app_ref=a.app_ref
+          WHERE a.operator_ref='op:type' AND bi.filler_value=? AND c.stance='support' AND c.valid_to IS NULL""", (referent_ref,)).fetchall()
+        return [str(r[0]) for r in rows]
+
+    def relation_objects(self, subject_ref, relation_ref, authority_only=False, upto_generation=None):
+        sql = """SELECT DISTINCT bo.filler_value FROM applications a
+          JOIN bindings bs ON bs.app_ref=a.app_ref AND bs.role_ref='role:subject' AND bs.filler_kind='atom'
+          JOIN bindings br ON br.app_ref=a.app_ref AND br.role_ref='role:relation' AND br.filler_kind='atom'
+          JOIN bindings bo ON bo.app_ref=a.app_ref AND bo.role_ref='role:object' AND bo.filler_kind='atom'
+          JOIN claims c ON c.app_ref=a.app_ref
+          WHERE a.operator_ref='op:relation' AND bs.filler_value=? AND br.filler_value=?
+            AND c.stance='support' AND c.valid_to IS NULL"""
+        params = [subject_ref, relation_ref]
+        if authority_only:
+            sql += " AND c.authority_status IN('reviewed','promoted') AND a.generation<=?"
+            params.append(self.generation if upto_generation is None else int(upto_generation))
+        return [str(r[0]) for r in self.db.execute(sql, params).fetchall()]
+
+    def state_dimension_domain_type(self, dimension_ref):
+        try: relation = self.symbol("profile.dimension_domain_relation")
+        except ValueError: return None
+        domains = self.relation_objects(dimension_ref, relation, authority_only=True)
+        if len(domains) != 1: return None
+        a = self.atom(domains[0])
+        return json.loads(a["metadata"]).get("domain_type") if a else None
+
+    def validate_state_value(self, dimension_ref, value):
+        d = self.atom(dimension_ref); meta = json.loads(d["metadata"]) if d else {}
+        fk, fv = self.encode_value(value); domain = self.state_dimension_domain_type(dimension_ref) or meta.get("domain_type")
+        allowed_fillers = set(meta.get("value_filler_kinds", []))
+        if allowed_fillers and fk not in allowed_fillers: raise ValueError(f"state value filler {dimension_ref}:{fk}")
+        if fk == "atom":
+            a = self.atom(fv); allowed_kinds = set(meta.get("value_atom_kinds", []))
+            if allowed_kinds and (not a or a["kind"] not in allowed_kinds): raise ValueError(f"state value atom kind {dimension_ref}:{fv}")
+            if domain == "categorical" and (not a or a["kind"] != "value"): raise ValueError(f"categorical state requires value atom:{dimension_ref}")
+        elif fk == "literal":
+            q = json.loads(fv); expected = meta.get("literal_type")
+            if expected and q.get("type") != expected: raise ValueError(f"state literal type {dimension_ref}:{q.get('type')}")
+            if domain == "categorical": raise ValueError(f"categorical state requires semantic value atom:{dimension_ref}")
+            if domain == "continuous" and q.get("type") not in {"int", "float"}: raise ValueError(f"continuous state requires numeric literal:{dimension_ref}")
+            x = q.get("value")
+            if isinstance(x, (int, float)):
+                if "min" in meta and x < meta["min"]: raise ValueError(f"state value below minimum:{dimension_ref}")
+                if "max" in meta and x > meta["max"]: raise ValueError(f"state value above maximum:{dimension_ref}")
+
+    def state_claim_records(self, subject_ref=None, dimension_ref=None):
+        state_op = self.symbol("operator.state"); subj = self.symbol("role.subject"); dim = self.symbol("role.dimension"); val = self.symbol("role.value")
+        sql = """SELECT a.app_ref,c.claim_ref,c.stance,c.confidence,c.authority_status,c.valid_from,c.valid_to,c.generation,
+          bs.filler_value subject_ref,bd.filler_value dimension_ref,o.observation_ref,o.source_ref,o.observed_at,o.packet,
+          bv.filler_kind value_kind,bv.filler_value value_data,p.parent_refs
+          FROM applications a
+          JOIN bindings bs ON bs.app_ref=a.app_ref AND bs.role_ref=? AND bs.filler_kind='atom'
+          JOIN bindings bd ON bd.app_ref=a.app_ref AND bd.role_ref=? AND bd.filler_kind='atom'
+          JOIN bindings bv ON bv.app_ref=a.app_ref AND bv.role_ref=?
+          JOIN claims c ON c.app_ref=a.app_ref JOIN observations o ON o.observation_ref=c.observation_ref
+          LEFT JOIN proof_links p ON p.subject_ref=c.claim_ref WHERE a.operator_ref=?"""
+        params = [subj, dim, val, state_op]
+        if subject_ref is not None: sql += " AND bs.filler_value=?"; params.append(subject_ref)
+        if dimension_ref is not None: sql += " AND bd.filler_value=?"; params.append(dimension_ref)
+        out = []
+        for r in self.db.execute(sql, params).fetchall():
+            try: packet = json.loads(r["packet"])
+            except Exception: packet = {}
+            out.append({
+                "app_ref": str(r["app_ref"]), "claim_ref": str(r["claim_ref"]), "subject_ref": str(r["subject_ref"]), "dimension_ref": str(r["dimension_ref"]),
+                "value": self.decode_value(r["value_kind"], r["value_data"]), "stance": str(r["stance"]), "confidence": float(r["confidence"]),
+                "authority_status": str(r["authority_status"]), "valid_from": r["valid_from"], "valid_to": r["valid_to"], "generation": int(r["generation"]),
+                "observation_ref": str(r["observation_ref"]), "source_ref": str(r["source_ref"]), "observed_at": str(r["observed_at"]),
+                "context_ref": packet.get("context_ref") or packet.get("qualifiers", {}).get("context"), "proof_parents": json.loads(r["parent_refs"] or "[]"),
+            })
+        return out
 
     def base_facts(self):
         out = []

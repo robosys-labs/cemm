@@ -24,6 +24,8 @@ from cemm.interpreter import Interpreter
 from cemm.inference import Inference
 from cemm.workspace import Workspace
 from cemm.selfstate import SessionSelf
+from cemm.context import SessionContext, CycleState, ContextStack, TemporalFrame, SelfRuntimeView
+from cemm.state import StateProjector
 from cemm.response import ResponsePlanner
 from cemm.realizer import PointerRealizer, LanguagePack
 from cemm.rules import RuleLearner
@@ -63,12 +65,14 @@ class BoundedModelCache:
 class Runtime:
     """Top-level orchestrator that ties all CEMM subsystems together."""
 
-    def __init__(self, s: Store, pack_path: str, config: Config | None = None):
+    def __init__(self, s: Store, pack_path: str, config: Config | None = None, session_context: SessionContext | None = None):
         self.s = s
         self.config = config or Config()
         self.pack = LanguagePack(pack_path)
         self.lang = self.pack.language
         self.cache = BoundedModelCache(self.config.model_cache_limit)
+        self.session = session_context or SessionContext.default(s.symbol("self.ref"))
+        self._cycle_counter = 0
         self.selfstate = SessionSelf(s)
         self.r = PointerRealizer(s, self.pack, self.cache)
         self.planner = ResponsePlanner(s)
@@ -86,6 +90,39 @@ class Runtime:
         self.rulelearner = RuleLearner(self.s, self.i, config=self.config)
         self.inf = Inference(self.s, self.config, authority_generation=g)
         self.ws = Workspace(self.s, self.selfstate, self.config, self.cache)
+        self.state_projector = StateProjector(self.s, self.config, authority_generation=g)
+
+    def _new_cycle(self, participant_frame=None, source="user", channel="text"):
+        self._cycle_counter += 1
+        frame = participant_frame or self.session.input_frame(source=source, channel=channel)
+        cycle_ref = stable("cycle", self.session.session_ref, self._cycle_counter, now())
+        return CycleState(
+            cycle_ref=cycle_ref,
+            pass_ref=stable("pass", cycle_ref, 0),
+            authority_generation=int(self.runtime_attestation["authority_generation"]),
+            read_generation=int(self.s.generation),
+            participant_frame=frame,
+            context_stack=ContextStack(),
+            temporal_frame=TemporalFrame(),
+            self_runtime_view=SelfRuntimeView(
+                self_ref=self.session.self_ref,
+                authority_generation=int(self.runtime_attestation["authority_generation"]),
+                read_generation=int(self.s.generation),
+            ),
+        )
+
+    def _project_referenced_state_spaces(self, packet, cycle):
+        refs = set()
+        apps = list(packet.get("apps", [])) + ([packet["query"]] if packet.get("query") else [])
+        for app in apps:
+            for role in ("role:subject", "role:instance", "role:actor", "role:object"):
+                v = app.get("args", {}).get(role)
+                atom = self.s.atom(v) if isinstance(v, str) else None
+                if atom and atom["kind"] in {"entity", "participant", "resource", "source", "existential"}:
+                    refs.add(v)
+        projections = {ref: self.state_projector.project(ref).as_dict() for ref in sorted(refs)}
+        cycle.workspace.put("state_space_projections", projections)
+        return projections
 
     def reload_authority(self):
         g = self.s.generation
@@ -201,8 +238,8 @@ class Runtime:
             "facts": [{"operator": f.operator, "args": f.args} for f in p.get("facts", [])],
         }
 
-    def _frontier(self, text, reason, details):
-        ref = self.s.frontier(text, reason, details)
+    def _frontier(self, text, reason, details, *, persist=False, cycle=None):
+        ref = self.s.frontier(text, reason, details) if persist else stable("frontier", getattr(cycle, "cycle_ref", "ephemeral"), text, reason, details)
         (out, p), plan = self._outcome("frontier", reason)
         return {
             "status": "frontier",
@@ -211,14 +248,16 @@ class Runtime:
             "response_plan": self._plan_json(plan),
             "realization_proof": p,
             "self_state": dict(self.selfstate.state),
+            "cycle": cycle.trace() if cycle else None,
         }
 
-    def process(self, text, learn=True, teach=False):
+    def process(self, text, learn=True, teach=False, participant_frame=None, source="user", channel="text"):
         self.runtime_attestation["read_generation"] = self.s.generation
+        cycle = self._new_cycle(participant_frame, source, channel)
         if teach:
-            rr = self.rulelearner.teach(text)
+            rr = self.rulelearner.teach(text, cycle.participant_frame)
             if rr.get("status") == "frontier":
-                return self._frontier(text, rr.get("reason", "rule_learning_frontier"), rr)
+                return self._frontier(text, rr.get("reason", "rule_learning_frontier"), rr, persist=True, cycle=cycle)
             (out, rp), plan = self._outcome("learned", "rule_learning")
             return {
                 **rr,
@@ -233,15 +272,15 @@ class Runtime:
             "new_observation",
         )
         try:
-            packet, news, uses, trace = self.i.parse(text)
+            packet, news, uses, trace = self.i.parse(text, cycle.participant_frame)
         except AmbiguousReferent as e:
             return self._frontier(
-                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}
+                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}, persist=bool(learn), cycle=cycle
             )
         except Exception as e:
-            return self._frontier(text, "interpretation_error", {"error": str(e)})
+            return self._frontier(text, "interpretation_error", {"error": str(e)}, cycle=cycle)
         if not packet:
-            return self._frontier(text, trace.get("reason", "no_candidate"), trace)
+            return self._frontier(text, trace.get("reason", "no_candidate"), trace, persist=bool(learn), cycle=cycle)
         # Pragmatic intent override: when learn=True and the input has no
         # question punctuation, the user is explicitly asserting a fact. If
         # the codec mispredicted query intent, convert the query packet to an
@@ -257,6 +296,7 @@ class Runtime:
                     "stance": q.get("stance", "support"),
                 }]
                 packet["query"] = None
+        trace["state_space_projections"] = self._project_referenced_state_spaces(packet, cycle)
         # Greeting is an ordinary event recognized through a pinned semantic ref.
         greet = (
             self.s.symbol("event.greeting")
@@ -281,7 +321,7 @@ class Runtime:
             facts, byref = self.inf.closure()
             if self.inf.incomplete:
                 return self._frontier(
-                    text, "inference_incomplete", {"reason": self.inf.incomplete_reason}
+                    text, "inference_incomplete", {"reason": self.inf.incomplete_reason}, persist=bool(learn), cycle=cycle
                 )
             if packet.get("describe"):
                 target = packet["describe"]
@@ -394,7 +434,8 @@ class Runtime:
             }
         except AmbiguousReferent as e:
             return self._frontier(
-                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}
+                text, "ambiguous_referent", {"surface": e.surface, "candidates": e.candidates}, persist=bool(learn), cycle=cycle
             )
         except Exception as e:
-            return self._frontier(text, "learning_rejected", {"error": str(e), "packet": packet})
+            return self._frontier(text, "learning_rejected", {"error": str(e), "packet": packet}, persist=bool(learn), cycle=cycle)
+

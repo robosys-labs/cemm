@@ -366,6 +366,54 @@
       }
     },
     {
+      "ref": "rel:subtype_of",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:facet_of",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:entitles_state_dimension",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:dimension_domain",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:entitles_capability",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:entitles_resource",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:mechanism_applies_to",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {
+      "ref": "rel:depends_on",
+      "kind": "relation_type",
+      "metadata": {"foundational": true, "operational": true, "user_visible": false}
+    },
+    {"ref": "domain:categorical", "kind": "concept", "metadata": {"foundational": true, "domain_type": "categorical"}},
+    {"ref": "domain:ordered_discrete", "kind": "concept", "metadata": {"foundational": true, "domain_type": "ordered_discrete"}},
+    {"ref": "domain:continuous", "kind": "concept", "metadata": {"foundational": true, "domain_type": "continuous"}},
+    {"ref": "domain:vector_or_manifold", "kind": "concept", "metadata": {"foundational": true, "domain_type": "vector_or_manifold"}},
+    {"ref": "domain:relational", "kind": "concept", "metadata": {"foundational": true, "domain_type": "relational"}},
+    {"ref": "domain:set_valued", "kind": "concept", "metadata": {"foundational": true, "domain_type": "set_valued"}},
+    {"ref": "domain:process_valued", "kind": "concept", "metadata": {"foundational": true, "domain_type": "process_valued"}},
+    {"ref": "domain:probabilistic", "kind": "concept", "metadata": {"foundational": true, "domain_type": "probabilistic"}},
+    {
       "ref": "dim:response_state",
       "kind": "state_dimension",
       "metadata": {
@@ -755,7 +803,7 @@
       "operator_ref": "op:state",
       "role_ref": "role:value",
       "required": true,
-      "filler_kind": "value"
+      "filler_kind": "state_value"
     },
     {
       "operator_ref": "op:event",
@@ -816,6 +864,14 @@
     "policy.response_state_spec_relation": "rel:response_state_spec",
     "policy.state_dimension_relation": "rel:state_dimension",
     "policy.state_value_relation": "rel:state_value",
+    "profile.subtype_relation": "rel:subtype_of",
+    "profile.facet_relation": "rel:facet_of",
+    "profile.entitles_dimension_relation": "rel:entitles_state_dimension",
+    "profile.dimension_domain_relation": "rel:dimension_domain",
+    "profile.entitles_capability_relation": "rel:entitles_capability",
+    "profile.entitles_resource_relation": "rel:entitles_resource",
+    "profile.mechanism_applies_relation": "rel:mechanism_applies_to",
+    "profile.depends_on_relation": "rel:depends_on",
     "result.supported": "value:supported",
     "result.contradicted": "value:contradicted",
     "result.unknown": "value:unknown",
@@ -830,27 +886,32 @@
     {
       "language": "en",
       "surface": "I",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "case": "subject"}
     },
     {
       "language": "en",
       "surface": "me",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "case": "object"}
     },
     {
       "language": "en",
       "surface": "my",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "possessive": true}
     },
     {
       "language": "en",
       "surface": "you",
-      "bound_ref": "participant:system"
+      "bound_ref": "",
+      "features": {"participant_role": "addressee", "person": "second"}
     },
     {
       "language": "en",
       "surface": "your",
-      "bound_ref": "participant:system"
+      "bound_ref": "",
+      "features": {"participant_role": "addressee", "person": "second", "possessive": true}
     },
     {
       "language": "en",
@@ -887,22 +948,26 @@
     {
       "language": "es",
       "surface": "yo",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "case": "subject"}
     },
     {
       "language": "es",
       "surface": "me",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "case": "object"}
     },
     {
       "language": "es",
       "surface": "mi",
-      "bound_ref": "participant:user"
+      "bound_ref": "",
+      "features": {"participant_role": "speaker", "person": "first", "possessive": true}
     },
     {
       "language": "es",
       "surface": "tú",
-      "bound_ref": "participant:system"
+      "bound_ref": "",
+      "features": {"participant_role": "addressee", "person": "second"}
     },
     {
       "language": "es",
@@ -923,10 +988,18 @@
     {
       "language": "es",
       "surface": "tu",
-      "bound_ref": "participant:system"
+      "bound_ref": "",
+      "features": {"participant_role": "addressee", "person": "second", "possessive": true}
     }
   ],
   "facts": [
+    {"fact_ref": "domain:response_state", "operator": "op:relation", "args": {"role:subject": "dim:response_state", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:interpretation_state", "operator": "op:relation", "args": {"role:subject": "dim:interpretation_state", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:epistemic_state", "operator": "op:relation", "args": {"role:subject": "dim:epistemic_state", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:consistency", "operator": "op:relation", "args": {"role:subject": "dim:consistency", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:sufficiency", "operator": "op:relation", "args": {"role:subject": "dim:sufficiency", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:resolution_state", "operator": "op:relation", "args": {"role:subject": "dim:resolution_state", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
+    {"fact_ref": "domain:storage_state", "operator": "op:relation", "args": {"role:subject": "dim:storage_state", "role:relation": "rel:dimension_domain", "role:object": "domain:categorical"}, "authority_status": "reviewed"},
     {
       "fact_ref": "def:evidence-type",
       "operator": "op:type",
