@@ -52,6 +52,7 @@ def base_payload():
     for ref in (
         "rel:subtype_of", "rel:facet_of", "rel:entitles_state_dimension", "rel:dimension_domain",
         "rel:entitles_capability", "rel:entitles_resource", "rel:mechanism_applies_to", "rel:depends_on", "rel:handled_by_adapter", "rel:requires_capability", "rel:value_of_dimension",
+        "rel:subrelation_of", "rel:subject_type", "rel:implies_subject_state", "rel:implies_object_state", "rel:state_dimension", "rel:state_value",
     ): atom(ref, "relation_type", foundational=True, operational=True, user_visible=False)
     for ref, domain in (
         ("domain:continuous", "continuous"), ("domain:categorical", "categorical"), ("domain:set_valued", "set_valued")
@@ -128,11 +129,57 @@ def base_payload():
             "role:target":target,"role:label_type":"label:lexical","role:surface":lit(surface),
             "role:language":lit("en"),"role:script":lit("Latn"),"role:prior":lit(1.0,"float"),"role:preferred":lit(True,"bool")
         })
-    rules = [{
-        "rule_ref":"rule:charge_actor_battery", "rule_kind":"causal", "authority_status":"reviewed", "confidence":0.95,
-        "if":[{"operator":"op:event","args":{"role:event":"?event","role:type":"event:charge","role:actor":"?actor"}}],
-        "then":[{"operator":"op:state","args":{"role:subject":"?actor","role:dimension":"dim:battery_support","role:value":lit(1.0,"float")}}],
-    }]
+    rules = [
+        {
+            "rule_ref":"rule:subrelation-inheritance", "rule_kind":"definition", "authority_status":"reviewed", "confidence":1.0,
+            "if":[
+                {"operator":"op:relation","args":{"role:subject":"?r1","role:relation":"rel:subrelation_of","role:object":"?r2"}},
+                {"operator":"op:relation","args":{"role:subject":"?x","role:relation":"?r1","role:object":"?y"}},
+            ],
+            "then":[{"operator":"op:relation","args":{"role:subject":"?x","role:relation":"?r2","role:object":"?y"}}],
+        },
+        {
+            "rule_ref":"rule:relation-subject-type", "rule_kind":"definition", "authority_status":"reviewed", "confidence":1.0,
+            "if":[
+                {"operator":"op:relation","args":{"role:subject":"?r","role:relation":"rel:subject_type","role:object":"?c"}},
+                {"operator":"op:relation","args":{"role:subject":"?x","role:relation":"?r","role:object":"?y"}},
+            ],
+            "then":[{"operator":"op:type","args":{"role:instance":"?x","role:class":"?c"}}],
+        },
+        {
+            "rule_ref":"rule:type-subtype-inheritance", "rule_kind":"definition", "authority_status":"reviewed", "confidence":1.0,
+            "if":[
+                {"operator":"op:type","args":{"role:instance":"?x","role:class":"?a"}},
+                {"operator":"op:relation","args":{"role:subject":"?a","role:relation":"rel:subtype_of","role:object":"?b"}},
+            ],
+            "then":[{"operator":"op:type","args":{"role:instance":"?x","role:class":"?b"}}],
+        },
+        {
+            "rule_ref":"rule:relation-subject-state", "rule_kind":"entailment", "authority_status":"reviewed", "confidence":1.0,
+            "if":[
+                {"operator":"op:relation","args":{"role:subject":"?r","role:relation":"rel:implies_subject_state","role:object":"?spec"}},
+                {"operator":"op:relation","args":{"role:subject":"?spec","role:relation":"rel:state_dimension","role:object":"?dim"}},
+                {"operator":"op:relation","args":{"role:subject":"?spec","role:relation":"rel:state_value","role:object":"?val"}},
+                {"operator":"op:relation","args":{"role:subject":"?x","role:relation":"?r","role:object":"?y"}},
+            ],
+            "then":[{"operator":"op:state","args":{"role:subject":"?x","role:dimension":"?dim","role:value":"?val"}}],
+        },
+        {
+            "rule_ref":"rule:relation-object-state", "rule_kind":"entailment", "authority_status":"reviewed", "confidence":1.0,
+            "if":[
+                {"operator":"op:relation","args":{"role:subject":"?r","role:relation":"rel:implies_object_state","role:object":"?spec"}},
+                {"operator":"op:relation","args":{"role:subject":"?spec","role:relation":"rel:state_dimension","role:object":"?dim"}},
+                {"operator":"op:relation","args":{"role:subject":"?spec","role:relation":"rel:state_value","role:object":"?val"}},
+                {"operator":"op:relation","args":{"role:subject":"?x","role:relation":"?r","role:object":"?y"}},
+            ],
+            "then":[{"operator":"op:state","args":{"role:subject":"?y","role:dimension":"?dim","role:value":"?val"}}],
+        },
+        {
+            "rule_ref":"rule:charge_actor_battery", "rule_kind":"causal", "authority_status":"reviewed", "confidence":0.95,
+            "if":[{"operator":"op:event","args":{"role:event":"?event","role:type":"event:charge","role:actor":"?actor"}}],
+            "then":[{"operator":"op:state","args":{"role:subject":"?actor","role:dimension":"dim:battery_support","role:value":lit(1.0,"float")}}],
+        },
+    ]
     return {"atoms":atoms,"operator_roles":operator_roles,"control_symbols":control,"reference_forms":refs,"facts":facts,"rules":rules}
 
 
