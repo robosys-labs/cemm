@@ -1,10 +1,19 @@
 {
-  "version": 4,
+  "version": 5,
   "language": "es",
+  "forces": [
+    "acknowledgment",
+    "claim",
+    "correction",
+    "description_request",
+    "directive",
+    "query",
+    "retraction"
+  ],
   "source_classes": [
     "NONE",
-    "USER",
-    "SYSTEM",
+    "FRAME_SPEAKER",
+    "FRAME_ADDRESSEE",
     "A0",
     "A1",
     "A2",
@@ -13,6 +22,9 @@
     "A5",
     "A6",
     "A7",
+    "Q0",
+    "Q1",
+    "Q2",
     "NEW_ENTITY_0",
     "NEW_ENTITY_1",
     "NEW_EVENT_0",
@@ -41,6 +53,7 @@
   ],
   "roles": [
     "role:actor",
+    "role:dimension",
     "role:event",
     "role:object",
     "role:relation",
@@ -54,6 +67,7 @@
       "example_ref": "es:mil-arrival:1",
       "input": "@A0<participant> @A1<relation_type> @A2<event_type> @A3<time>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -74,7 +88,8 @@
               "role:time": "A3"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -82,17 +97,19 @@
       "example_ref": "es:state-query:1",
       "input": "¿Estoy @A0<value>?",
       "target": {
+        "force": "query",
         "intent": "query",
         "describe_source": "NONE",
         "apps": [
           {
             "operator": "op:state",
             "bindings": {
-              "role:subject": "USER",
+              "role:subject": "FRAME_SPEAKER",
               "role:value": "A0"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -100,6 +117,7 @@
       "example_ref": "es:describe:1",
       "input": "¿Qué es @A0<concept>?",
       "target": {
+        "force": "description_request",
         "intent": "describe",
         "describe_source": "A0",
         "apps": []
@@ -110,6 +128,7 @@
       "example_ref": "es:greeting:1",
       "input": "@A0<event_type>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -118,7 +137,113 @@
             "bindings": {
               "role:event": "NEW_EVENT_0",
               "role:type": "A0",
-              "role:actor": "USER"
+              "role:actor": "FRAME_SPEAKER"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:v1:query-known-dimension",
+      "input": "¿Cuál es el @A0<state_dimension> de @A1<entity>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A1",
+              "role:dimension": "A0",
+              "role:value": "Q0"
+            }
+          }
+        ],
+        "projection": [
+          "Q0"
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:v1:query-open-state",
+      "input": "¿Qué estado tiene @A0<entity>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:dimension": "Q0",
+              "role:value": "Q1"
+            }
+          }
+        ],
+        "projection": [
+          "Q0",
+          "Q1"
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:v1:state-claim",
+      "input": "@A0<entity> está @A1<value>.",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:v1:state-probe",
+      "input": "¿Está @A0<entity> @A1<value>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "es:v1:state-directive",
+      "input": "Haz que @A0<entity> esté @A1<value>.",
+      "target": {
+        "force": "directive",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
             }
           }
         ]
@@ -130,14 +255,14 @@
   "realization_examples": [
     {
       "example_ref": "es:r:type",
-      "semantic": "FACT support op:type role:class @A0 role:instance @A1",
-      "surface_plan": "@A1 es @A0.",
+      "semantic": "FACT support op:type role:class @A1 role:instance @A0",
+      "surface_plan": "@A0 es @A1.",
       "weight": 1.0
     },
     {
       "example_ref": "es:r:state",
-      "semantic": "FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 está @A2.",
+      "semantic": "FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 está @A2.",
       "weight": 1.0
     },
     {
@@ -154,26 +279,26 @@
     },
     {
       "example_ref": "es:r:unknown",
-      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 está @A2.",
+      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 está @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "es:r:conflict",
-      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 está @A2.",
+      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 está @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "es:r:learned",
-      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 está @A2.",
+      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 está @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "es:r:frontier",
-      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 está @A2.",
+      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 está @A2.",
       "weight": 1.0
     },
     {
@@ -188,5 +313,41 @@
     "es",
     "está"
   ],
-  "pack_hash": "2cc57e17cd591c9c059622a14788d2a7da413b2294b405ff2104042cb022e6b8"
+  "function_forms": [
+    ".",
+    "¿",
+    "?",
+    "un",
+    "una",
+    "el",
+    "la",
+    "es",
+    "está",
+    "estoy",
+    "estar",
+    "qué",
+    "cuál",
+    "quién",
+    "dónde",
+    "cuándo",
+    "por",
+    "cómo",
+    "de",
+    "en",
+    "a",
+    "desde",
+    "por favor",
+    "haz",
+    "dime",
+    "sobre",
+    "que",
+    "no",
+    "corrección",
+    "retiro",
+    "estado",
+    "dimensión",
+    "tiene",
+    "favor"
+  ],
+  "pack_hash": "e0b0061ce15af09b8ae5fa2e7d13931ff1ac56158832f191fe5683f9bca5fd4f"
 }

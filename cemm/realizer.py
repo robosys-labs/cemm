@@ -12,60 +12,25 @@ from cemm.response import pointerize_fact, pointerize_plan
 
 
 class LanguagePack:
-    """Load a generated base pack plus an optional reviewed v1 extension.
+    """Load a compiled language pack.
 
-    Sidecar extensions keep architectural supervision reviewable without
-    hand-editing generated packs or branching on a language inside the kernel.
+    Packs are compiled by the trainer and contain all supervision data:
+    source classes, forces, function forms, structured/rule/realization
+    examples, operators, and roles. There is no runtime merging — the
+    pack file is the single source of truth.
     """
-
-    _LIST_KEYS = {
-        "source_classes",
-        "rule_sources",
-        "operators",
-        "roles",
-        "forces",
-        "structured_examples",
-        "rule_examples",
-        "realization_examples",
-        "grammar_tokens",
-        "function_forms",
-    }
 
     def __init__(self, path):
         pack_path = Path(path)
         self.path = str(pack_path)
-        base = json.loads(pack_path.read_text(encoding="utf-8"))
-        data = dict(base)
-        extension_path = pack_path.with_name(f"{pack_path.stem}.v1.json")
-        self.extension_path = str(extension_path) if extension_path.exists() else None
-        if extension_path.exists():
-            extension = json.loads(extension_path.read_text(encoding="utf-8"))
-            if extension.get("language") != base.get("language"):
-                raise ValueError("language extension does not match base pack")
-            for key, value in extension.items():
-                if key in {"language", "version", "pack_hash"}:
-                    continue
-                if key in self._LIST_KEYS:
-                    merged = list(data.get(key, []))
-                    if key.endswith("_examples"):
-                        by_ref = {item.get("example_ref"): item for item in merged}
-                        for item in value:
-                            by_ref[item.get("example_ref")] = item
-                        merged = list(by_ref.values())
-                    else:
-                        for item in value:
-                            if item not in merged:
-                                merged.append(item)
-                    data[key] = merged
-                else:
-                    data[key] = value
-            data["version"] = max(int(base.get("version", 0)), int(extension.get("version", 0)))
-        # The merged package is the actual pinned projection authority.
+        data = json.loads(pack_path.read_text(encoding="utf-8"))
+        # Verify pack hash integrity.
         hash_material = {key: value for key, value in data.items() if key != "pack_hash"}
-        data["pack_hash"] = hashlib.sha256(canonical(hash_material).encode()).hexdigest()
+        computed = hashlib.sha256(canonical(hash_material).encode()).hexdigest()
+        if "pack_hash" in data and data["pack_hash"] != computed:
+            raise ValueError(f"pack hash mismatch in {path}: stored={data['pack_hash']} computed={computed}")
         self.data = data
         self.language = data["language"]
-        self.base_hash = base.get("pack_hash")
         self.hash = data["pack_hash"]
         self.grammar = set(data.get("grammar_tokens", []))
         self.function_forms = set(data.get("function_forms", []))

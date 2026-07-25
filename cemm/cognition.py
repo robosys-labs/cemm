@@ -49,23 +49,9 @@ class QueryStructure:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "QueryStructure":
-        # Backward-compatible normalization for the old one-application query.
-        if value.get("operator"):
-            restrictions = (dict(value),)
-            raw_variables: list[dict[str, Any]] = []
-            projection: tuple[str, ...] = tuple(
-                sorted(
-                    {
-                        v
-                        for v in value.get("args", {}).values()
-                        if isinstance(v, str) and isvar(v)
-                    }
-                )
-            )
-        else:
-            restrictions = tuple(dict(x) for x in value.get("restrictions", ()))
-            raw_variables = list(value.get("variables", ()))
-            projection = tuple(value.get("projection", ()))
+        restrictions = tuple(dict(x) for x in value.get("restrictions", ()))
+        raw_variables = list(value.get("variables", ()))
+        projection = tuple(value.get("projection", ()))
 
         inferred: dict[str, SemanticVariable] = {}
         for item in raw_variables:

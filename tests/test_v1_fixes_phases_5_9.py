@@ -12,7 +12,6 @@ from cemm.inference import Inference
 from cemm.model import Fact, stable
 from cemm.realizer import LanguagePack
 from cemm.runtime import Runtime
-from cemm.selfstate import SessionSelf
 from cemm.store import Store
 from cemm.workspace import Workspace
 
@@ -36,25 +35,23 @@ class Phase5To9Tests(unittest.TestCase):
         path.write_text(json.dumps(payload), encoding="utf-8")
         store.import_data(path)
 
-    def test_global_session_self_no_longer_emits_semantic_self_facts(self):
+    def test_workspace_does_not_emit_synthetic_self_facts(self):
         td, store, _ = self.make()
         try:
-            compatibility = SessionSelf(store)
-            compatibility.set("runtime:interpretation", "partial", "test")
-            self.assertEqual(compatibility.slots(), [])
-            self.assertEqual(Workspace(store).build([])[0], [])
+            selected, trace = Workspace(store).build([])
+            self.assertEqual(selected, [])
         finally:
             store.db.close()
             td.cleanup()
 
-    def test_language_extension_supplies_explicit_force_dimension_and_function_forms(self):
+    def test_language_pack_has_explicit_force_dimension_and_function_forms(self):
         pack = LanguagePack(EN)
         self.assertIn("role:dimension", pack.data["roles"])
         self.assertIn("Q0", pack.data["source_classes"])
         self.assertIn("directive", pack.data["forces"])
         self.assertIn("how", pack.function_forms)
         self.assertNotIn("mother", pack.function_forms)
-        self.assertNotEqual(pack.hash, pack.base_hash)
+        self.assertTrue(pack.hash)
 
     def test_compiler_accepts_all_required_state_query_variable_shapes(self):
         td, store, _ = self.make()

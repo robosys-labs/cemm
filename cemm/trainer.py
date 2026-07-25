@@ -126,10 +126,10 @@ def structured_target(semantic, ref_to_placeholder):
         source = source_for(value, ref_to_placeholder, new_map)
         if source:
             projection.append(source)
-    legacy_intent = "query" if force == "query" else "describe" if force == "description_request" else "assert"
+    intent = "query" if force == "query" else "describe" if force == "description_request" else "assert"
     return {
         "force": force,
-        "intent": legacy_intent,
+        "intent": intent,
         "describe_source": "NONE",
         "apps": output,
         "projection": projection,
@@ -193,6 +193,7 @@ def realization_refs(example):
     else:
         for value in example["fact"].get("args", {}).values():
             add(value)
+    refs.sort()
     return {ref: f"@A{i}" for i, ref in enumerate(refs)}
 
 

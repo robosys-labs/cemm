@@ -39,7 +39,7 @@ class Tests(unittest.TestCase):
         td,s,rt=make();rt.process('What is evidence?');s.db.close();td.cleanup()
 
     def test_pack_has_structured_supervision_not_closed_program_classes(self):
-        d=json.loads(EN.read_text());self.assertEqual(d['version'],4);self.assertTrue(d['structured_examples']);self.assertNotIn('interpretation_examples',d)
+        d=json.loads(EN.read_text());self.assertEqual(d['version'],5);self.assertTrue(d['structured_examples']);self.assertNotIn('interpretation_examples',d)
         blob=json.dumps(d['structured_examples']);self.assertNotIn('"program"',blob);self.assertTrue(all('intent' in x['target'] and 'apps' in x['target'] for x in d['structured_examples']))
 
     def test_trainer_deterministic_and_language_generic(self):

@@ -347,9 +347,9 @@ class StructuredSemanticCodec:
     def _source_value(source, anchors, participant_frame=None):
         if source == "NONE":
             return None
-        if source in {"FRAME_SPEAKER", "USER"}:
+        if source == "FRAME_SPEAKER":
             return participant_frame.speaker_ref if participant_frame else "participant:user"
-        if source in {"FRAME_ADDRESSEE", "SYSTEM"}:
+        if source == "FRAME_ADDRESSEE":
             return participant_frame.addressee_ref if participant_frame else "participant:system"
         if source.startswith("Q") and source[1:].isdigit():
             return f"?q{source[1:]}"

@@ -52,10 +52,11 @@ class ResponsePlanner:
 def pointerize_fact(f: Fact):
     refs = []
     contexts = {}
-    for role, v in sorted(f.args.items()):
+    for role, v in f.args.items():
         if isinstance(v, str) and v not in refs:
             refs.append(v)
             contexts[v] = role
+    refs.sort()
     mp = {r: f"@A{i}" for i, r in enumerate(refs)}
     parts = ["FACT", f.stance, f.operator]
     for r, v in sorted(f.args.items()):
@@ -73,14 +74,15 @@ def pointerize_plan(plan):
     if plan.get("value"):
         add(plan["value"])
     for f in plan.get("facts", []):
-        for _, v in sorted(f.args.items()):
+        for v in f.args.values():
             add(v)
+    refs.sort()
     mp = {r: f"@A{i}" for i, r in enumerate(refs)}
     contexts = {}
     if plan.get("value"):
         contexts[plan["value"]] = "response:value"
     for f in plan.get("facts", []):
-        for role, v in sorted(f.args.items()):
+        for role, v in f.args.items():
             contexts.setdefault(v, role)
     parts = ["PLAN", plan["goal"]]
     if plan.get("value"):

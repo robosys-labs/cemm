@@ -269,15 +269,18 @@ class Runtime:
                         proofs.append(proof)
             if outputs:
                 return " ".join(outputs), {"verified": all(item.get("verified") for item in proofs), "fact_proofs": proofs}, None
-        legacy = {
+        # Query result statuses map to response plan names. "answered" means
+        # a projected query has bindings; the response plan is "supported".
+        # "partial" means incomplete bindings; the response plan is "unknown".
+        status_to_plan = {
             "answered": "supported",
             "partial": "unknown",
             "supported": "supported",
             "contradicted": "contradicted",
             "conflict": "conflict",
             "unknown": "unknown",
-        }[query_result.status]
-        (response, proof), plan = self._outcome(legacy)
+        }
+        (response, proof), plan = self._outcome(status_to_plan[query_result.status])
         return response, proof, plan
 
     def process(self, text, learn=True, teach=False, participant_frame=None, source="user", channel="text"):

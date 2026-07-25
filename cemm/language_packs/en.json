@@ -1,10 +1,19 @@
 {
-  "version": 4,
+  "version": 5,
   "language": "en",
+  "forces": [
+    "acknowledgment",
+    "claim",
+    "correction",
+    "description_request",
+    "directive",
+    "query",
+    "retraction"
+  ],
   "source_classes": [
     "NONE",
-    "USER",
-    "SYSTEM",
+    "FRAME_SPEAKER",
+    "FRAME_ADDRESSEE",
     "A0",
     "A1",
     "A2",
@@ -13,6 +22,9 @@
     "A5",
     "A6",
     "A7",
+    "Q0",
+    "Q1",
+    "Q2",
     "NEW_ENTITY_0",
     "NEW_ENTITY_1",
     "NEW_EVENT_0",
@@ -43,6 +55,7 @@
   "roles": [
     "role:actor",
     "role:class",
+    "role:dimension",
     "role:event",
     "role:instance",
     "role:object",
@@ -57,6 +70,7 @@
       "example_ref": "en:mil-arrival:1",
       "input": "@A0<participant> @A1<relation_type> @A2<event_type> @A3<time>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -77,7 +91,8 @@
               "role:time": "A3"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -85,6 +100,7 @@
       "example_ref": "en:mil-arrival:2",
       "input": "@A0<participant> @A1<relation_type> @A2<event_type> @A3<time>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -105,7 +121,8 @@
               "role:time": "A3"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -113,6 +130,7 @@
       "example_ref": "en:state-query:1",
       "input": "Am @A0<participant> @A1<value>?",
       "target": {
+        "force": "query",
         "intent": "query",
         "describe_source": "NONE",
         "apps": [
@@ -123,7 +141,8 @@
               "role:value": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -131,6 +150,7 @@
       "example_ref": "en:type-assert:1",
       "input": "@A0<entity> is a @A1<concept>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -141,7 +161,8 @@
               "role:class": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -149,6 +170,7 @@
       "example_ref": "en:type-query:1",
       "input": "Is @A0<entity> a @A1<concept>?",
       "target": {
+        "force": "query",
         "intent": "query",
         "describe_source": "NONE",
         "apps": [
@@ -159,7 +181,8 @@
               "role:class": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -167,6 +190,7 @@
       "example_ref": "en:describe-who:1",
       "input": "Who is @A0<entity>?",
       "target": {
+        "force": "description_request",
         "intent": "describe",
         "describe_source": "A0",
         "apps": []
@@ -177,6 +201,7 @@
       "example_ref": "en:describe-what:1",
       "input": "What is @A0<concept>?",
       "target": {
+        "force": "description_request",
         "intent": "describe",
         "describe_source": "A0",
         "apps": []
@@ -187,6 +212,7 @@
       "example_ref": "en:event:1",
       "input": "@A0<entity> @A1<event_type> @A2<time>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -199,7 +225,8 @@
               "role:time": "A2"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -207,6 +234,7 @@
       "example_ref": "en:greeting:1",
       "input": "@A0<event_type>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -215,10 +243,11 @@
             "bindings": {
               "role:event": "NEW_EVENT_0",
               "role:type": "A0",
-              "role:actor": "USER"
+              "role:actor": "FRAME_SPEAKER"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -226,6 +255,7 @@
       "example_ref": "en:state:conflict",
       "input": "@A0<concept> is @A1<value>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -236,7 +266,8 @@
               "role:value": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -244,6 +275,7 @@
       "example_ref": "en:synth:type2",
       "input": "@A0<entity> is a @A1<concept>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -254,7 +286,8 @@
               "role:class": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -262,6 +295,7 @@
       "example_ref": "en:synth:typeq2",
       "input": "Is @A0<entity> a @A1<concept>?",
       "target": {
+        "force": "query",
         "intent": "query",
         "describe_source": "NONE",
         "apps": [
@@ -272,7 +306,8 @@
               "role:class": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -280,6 +315,7 @@
       "example_ref": "en:synth:describe2",
       "input": "Who is @A0<entity>?",
       "target": {
+        "force": "description_request",
         "intent": "describe",
         "describe_source": "A0",
         "apps": []
@@ -290,6 +326,7 @@
       "example_ref": "en:synth:event2",
       "input": "@A0<entity> @A1<event_type> @A2<time>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -302,7 +339,8 @@
               "role:time": "A2"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -310,6 +348,7 @@
       "example_ref": "en:synth:rel1",
       "input": "@A0<entity> is a @A1<relation_type> of @A2<entity>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -321,7 +360,8 @@
               "role:object": "A2"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -329,6 +369,7 @@
       "example_ref": "en:synth:state1",
       "input": "The @A0<entity> is @A1<value>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -339,7 +380,8 @@
               "role:value": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -347,6 +389,7 @@
       "example_ref": "en:synth:stateq1",
       "input": "Is the @A0<entity> @A1<value>?",
       "target": {
+        "force": "query",
         "intent": "query",
         "describe_source": "NONE",
         "apps": [
@@ -357,7 +400,8 @@
               "role:value": "A1"
             }
           }
-        ]
+        ],
+        "projection": []
       },
       "weight": 1.0
     },
@@ -365,6 +409,7 @@
       "example_ref": "en:synth:conceptdef",
       "input": "@A0<concept> is @A1<concept>.",
       "target": {
+        "force": "claim",
         "intent": "assert",
         "describe_source": "NONE",
         "apps": [
@@ -373,6 +418,173 @@
             "bindings": {
               "role:instance": "A0",
               "role:class": "A1"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:query-known-dimension",
+      "input": "What is the @A0<state_dimension> of @A1<entity>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A1",
+              "role:dimension": "A0",
+              "role:value": "Q0"
+            }
+          }
+        ],
+        "projection": [
+          "Q0"
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:query-dimension-by-value",
+      "input": "Which state dimension of @A0<entity> has @A1<value>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:dimension": "Q0",
+              "role:value": "A1"
+            }
+          }
+        ],
+        "projection": [
+          "Q0"
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:query-open-state",
+      "input": "What state does @A0<entity> have?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:dimension": "Q0",
+              "role:value": "Q1"
+            }
+          }
+        ],
+        "projection": [
+          "Q0",
+          "Q1"
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:state-claim",
+      "input": "@A0<entity> is @A1<value>.",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:state-probe",
+      "input": "Is @A0<entity> @A1<value>?",
+      "target": {
+        "force": "query",
+        "intent": "query",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:state-directive",
+      "input": "Make @A0<entity> @A1<value>.",
+      "target": {
+        "force": "directive",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:state-correction",
+      "input": "Correction: @A0<entity> is @A1<value>.",
+      "target": {
+        "force": "correction",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
+            }
+          }
+        ]
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:v1:state-retraction",
+      "input": "I retract that @A0<entity> is @A1<value>.",
+      "target": {
+        "force": "retraction",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:state",
+            "bindings": {
+              "role:subject": "A0",
+              "role:value": "A1"
             }
           }
         ]
@@ -535,14 +747,14 @@
     },
     {
       "example_ref": "en:r:state",
-      "semantic": "FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 is @A2.",
+      "semantic": "FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 is @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "en:r:relation",
-      "semantic": "FACT support op:relation role:object @A0 role:relation @A1 role:subject @A2",
-      "surface_plan": "@A2 is a @A1 of @A0.",
+      "semantic": "FACT support op:relation role:object @A1 role:relation @A2 role:subject @A0",
+      "surface_plan": "@A0 is a @A2 of @A1.",
       "weight": 1.0
     },
     {
@@ -559,26 +771,26 @@
     },
     {
       "example_ref": "en:r:unknown",
-      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 is @A2.",
+      "semantic": "PLAN goal:report_uncertainty | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 is @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "en:r:conflict",
-      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 is @A2.",
+      "semantic": "PLAN goal:report_conflict | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 is @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "en:r:learned",
-      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 is @A2.",
+      "semantic": "PLAN goal:acknowledge_learning | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 is @A2.",
       "weight": 1.0
     },
     {
       "example_ref": "en:r:frontier",
-      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2",
-      "surface_plan": "@A1 is @A2.",
+      "semantic": "PLAN goal:request_clarification | FACT support op:state role:dimension @A1 role:subject @A0 role:value @A2",
+      "surface_plan": "@A0 is @A2.",
       "weight": 1.0
     },
     {
@@ -589,8 +801,8 @@
     },
     {
       "example_ref": "en:r:type-info",
-      "semantic": "FACT support op:type role:class @A0 role:instance @A1",
-      "surface_plan": "@A1 is @A0.",
+      "semantic": "FACT support op:type role:class @A1 role:instance @A0",
+      "surface_plan": "@A0 is @A1.",
       "weight": 1.0
     }
   ],
@@ -600,5 +812,46 @@
     "is",
     "of"
   ],
-  "pack_hash": "5d6578510fd4cc625076dbb6c9285cbf8b8cb27a5c6a86da918d7d6b2d4e840b"
+  "function_forms": [
+    ".",
+    "?",
+    "a",
+    "an",
+    "the",
+    "is",
+    "are",
+    "am",
+    "be",
+    "being",
+    "been",
+    "what",
+    "which",
+    "who",
+    "where",
+    "when",
+    "why",
+    "how",
+    "do",
+    "does",
+    "did",
+    "of",
+    "in",
+    "on",
+    "at",
+    "to",
+    "from",
+    "please",
+    "make",
+    "tell",
+    "about",
+    "that",
+    "not",
+    "correction",
+    "retract",
+    "state",
+    "dimension",
+    "has",
+    "have"
+  ],
+  "pack_hash": "cedd83364f07e567b4c5d86925b1d2a325f8e7fc71449f37d87ddcbe6a6dd4c7"
 }
