@@ -111,8 +111,39 @@
               "role:actor": "participant:user"
             }
           }
-        ]
+        ],
+        "force": "claim"
       }
+    },
+    {
+      "example_ref": "es:greeting:2",
+      "surface": "Hola",
+      "mentions": [
+        {
+          "surface": "Hola",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ],
+        "force": "claim"
+      },
+      "weight": 1.0
     }
   ],
   "realization_examples": [

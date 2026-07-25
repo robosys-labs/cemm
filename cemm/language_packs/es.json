@@ -261,6 +261,27 @@
         ]
       },
       "weight": 1.0
+    },
+    {
+      "example_ref": "es:greeting:2",
+      "input": "@A0<event_type>",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:event",
+            "bindings": {
+              "role:event": "NEW_EVENT_0",
+              "role:type": "A0",
+              "role:actor": "FRAME_SPEAKER"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
     }
   ],
   "rule_examples": [],
@@ -408,5 +429,5 @@
       "weight": 1.0
     }
   ],
-  "pack_hash": "4a841255c9f25dd45af46d22bd5bb2616c3e3d1e32a6e4907663418b2d30cf01"
+  "pack_hash": "f8bd268af5be283ddac615126ed8829b06505b12638d6336ad8aba8669e4d7d1"
 }

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from cemm.config import Config
 from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
+from cemm.acquisition import acquire_reviewed
 
 _WEB_DIR = Path(__file__).parent / "web"
 app = FastAPI(title="CEMM v1 Web Demo", version="1.0.0")
@@ -54,6 +55,19 @@ class ChatResponse(BaseModel):
     realization_proof: dict[str, Any] | None = None
 
 
+class AcquisitionMention(BaseModel):
+    surface: str
+    kind: str = "concept"
+    ref: str | None = None
+    preferred: bool = True
+
+
+class AcquisitionRequest(BaseModel):
+    mentions: list[AcquisitionMention]
+    text: str = ""
+    teach_rule: bool = False
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     return HTMLResponse((_WEB_DIR / "index.html").read_text(encoding="utf-8"))
@@ -92,6 +106,36 @@ async def chat(request: ChatRequest):
 @app.post("/api/reload")
 async def reload():
     return {"ok": True, **_ensure_runtime().reload_authority()}
+
+
+@app.post("/api/acquire")
+async def acquire(request: AcquisitionRequest):
+    """Reviewed lexical acquisition: admit new concepts with explicit kinds.
+
+    This is the architecturally correct way to teach the system new words.
+    Normal conversation intentionally cannot admit concepts (no concept
+    fallback). The reviewer must specify the semantic kind explicitly.
+    """
+    runtime = _ensure_runtime()
+    document = {
+        "document_ref": f"web-acquire:{request.mentions[0].surface}",
+        "mentions": [
+            {
+                "surface": m.surface,
+                "kind": m.kind,
+                "ref": m.ref,
+                "preferred": m.preferred,
+            }
+            for m in request.mentions
+        ],
+        "text": request.text,
+        "teach_rule": request.teach_rule,
+    }
+    try:
+        result = acquire_reviewed(runtime.s, runtime, document)
+        return result
+    except ValueError as exc:
+        return {"status": "error", "error": str(exc)}
 
 
 @app.get("/api/inspect")

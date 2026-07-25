@@ -609,6 +609,69 @@
         ]
       },
       "weight": 1.0
+    },
+    {
+      "example_ref": "en:greeting:2",
+      "input": "@A0<event_type>",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:event",
+            "bindings": {
+              "role:event": "NEW_EVENT_0",
+              "role:type": "A0",
+              "role:actor": "FRAME_SPEAKER"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:greeting:3",
+      "input": "@A0<event_type>",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:event",
+            "bindings": {
+              "role:event": "NEW_EVENT_0",
+              "role:type": "A0",
+              "role:actor": "FRAME_SPEAKER"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:greeting:4",
+      "input": "@A0<event_type>",
+      "target": {
+        "force": "claim",
+        "intent": "assert",
+        "describe_source": "NONE",
+        "apps": [
+          {
+            "operator": "op:event",
+            "bindings": {
+              "role:event": "NEW_EVENT_0",
+              "role:type": "A0",
+              "role:actor": "FRAME_SPEAKER"
+            }
+          }
+        ],
+        "projection": []
+      },
+      "weight": 1.0
     }
   ],
   "rule_examples": [
@@ -922,5 +985,5 @@
       "weight": 1.0
     }
   ],
-  "pack_hash": "90b31e1510aa28082badf15fc7e1c29295e65338a5cc45599c0c52f2e012937a"
+  "pack_hash": "34d42e8a9078cbe04586e1c6e7c0587e8f649181ed53dc31ddd3f0b045621659"
 }

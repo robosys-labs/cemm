@@ -9,25 +9,33 @@
     *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0,#18213a 0,transparent 38%),#090b10}
     main{max-width:900px;margin:auto;padding:32px 20px 120px}.head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:22px}
     h1{margin:0;font-size:clamp(28px,5vw,52px);letter-spacing:-.04em}.sub{color:#9ba7c4;max-width:620px;line-height:1.5}
-    .panel{border:1px solid #26314c;background:#0e1320cc;border-radius:18px;box-shadow:0 30px 80px #0008;overflow:hidden}
-    #messages{min-height:460px;max-height:65vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+    .panel{border:1px solid #26314c;background:#0e1320cc;border-radius:18px;box-shadow:0 30px 80px #0008;overflow:hidden;margin-bottom:18px}
+    #messages{min-height:380px;max-height:55vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
     .msg{max-width:82%;padding:13px 15px;border-radius:15px;white-space:pre-wrap;line-height:1.45}.user{align-self:flex-end;background:#4f5ee8}.ai{align-self:flex-start;background:#182136;border:1px solid #2a3654}.meta{font-size:12px;color:#8e9abc;margin-top:7px}
     form{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:14px;border-top:1px solid #26314c;background:#0a0f1b}
-    select,textarea,button{font:inherit;border-radius:12px;border:1px solid #303d5e;background:#11192a;color:#eef2ff}select,button{padding:0 14px}textarea{resize:none;min-height:52px;padding:14px}button{background:#5968f2;border:0;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}
+    select,textarea,button,input{font:inherit;border-radius:12px;border:1px solid #303d5e;background:#11192a;color:#eef2ff}select,button{padding:0 14px}textarea{resize:none;min-height:52px;padding:14px}input{padding:8px 12px}button{background:#5968f2;border:0;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}button.secondary{background:#2a3654}
     details{margin-top:18px;color:#aab5d1}pre{overflow:auto;padding:14px;border-radius:12px;background:#080b12;border:1px solid #202a42;font-size:12px}
-    @media(max-width:620px){form{grid-template-columns:1fr auto}select{grid-column:1/-1;height:42px}.msg{max-width:92%}}
+    .acquire-form{display:grid;grid-template-columns:1fr 140px auto;gap:10px;padding:14px;border-top:1px solid #26314c;background:#0a0f1b}
+    .acquire-hint{padding:0 14px;color:#8e9abc;font-size:13px;line-height:1.4}
+    @media(max-width:620px){form{grid-template-columns:1fr auto}select{grid-column:1/-1;height:42px}.acquire-form{grid-template-columns:1fr}.msg{max-width:92%}}
   </style>
 </head>
 <body><main>
-  <div class="head"><div><h1>CEMM v1</h1><div class="sub">One semantic runtime. Normal conversation observes, interprets, reasons, learns only admissible claims, and responds through verified Response CSIR.</div></div></div>
+  <div class="head"><div><h1>CEMM v1</h1><div class="sub">One semantic runtime. Normal conversation observes, interprets, reasons, learns only admissible claims, and responds through verified Response CSIR. Teach new words via reviewed acquisition.</div></div></div>
   <section class="panel">
     <div id="messages"><div class="msg ai">CEMM runtime is ready for a grounded cycle.<div class="meta">No lexical “ready” self-state was asserted.</div></div></div>
-    <form id="chat"><select id="mode" aria-label="Runtime mode"><option value="normal">Normal</option><option value="read_only">Read-only</option></select><textarea id="text" placeholder="Enter an observation, question, or directive" required></textarea><button id="send">Send</button></form>
+    <form id="chat"><select id="mode" aria-label="Runtime mode"><option value="normal">Normal</option><option value="read_only">Read-only</option><option value="reviewed_teach">Reviewed teach</option></select><textarea id="text" placeholder="Enter an observation, question, or directive" required></textarea><button id="send">Send</button></form>
+  </section>
+  <section class="panel">
+    <div class="acquire-hint">Teach a new word (reviewed acquisition). Specify the surface and its semantic kind. The system will admit it as authority, then you can use it in normal conversation.</div>
+    <form id="acquire" class="acquire-form"><input id="acq-surface" placeholder="Word (e.g. name)" required><select id="acq-kind"><option value="concept">concept</option><option value="entity">entity</option><option value="value">value</option><option value="event_type">event_type</option><option value="relation_type">relation_type</option></select><button id="acq-send" class="secondary">Add concept</button></form>
   </section>
   <details><summary>Last semantic trace</summary><pre id="trace">No cycle yet.</pre></details>
 </main>
 <script>
 const form=document.querySelector('#chat'), text=document.querySelector('#text'), mode=document.querySelector('#mode'), messages=document.querySelector('#messages'), trace=document.querySelector('#trace'), send=document.querySelector('#send');
+const acqForm=document.querySelector('#acquire'), acqSurface=document.querySelector('#acq-surface'), acqKind=document.querySelector('#acq-kind'), acqSend=document.querySelector('#acq-send');
 function bubble(content,kind,meta=''){const el=document.createElement('div');el.className=`msg ${kind}`;el.textContent=content||'[no authorized surface]';if(meta){const m=document.createElement('div');m.className='meta';m.textContent=meta;el.appendChild(m)}messages.appendChild(el);messages.scrollTop=messages.scrollHeight}
 form.addEventListener('submit',async e=>{e.preventDefault();const value=text.value.trim();if(!value)return;bubble(value,'user');text.value='';send.disabled=true;try{const res=await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:value,mode:mode.value})});const data=await res.json();bubble(data.response,'ai',`${data.status} · ${data.response_csir?.action||'no response action'}`);trace.textContent=JSON.stringify(data,null,2)}catch(err){bubble(String(err),'ai','request error')}finally{send.disabled=false;text.focus()}});
+acqForm.addEventListener('submit',async e=>{e.preventDefault();const surface=acqSurface.value.trim();if(!surface)return;acqSend.disabled=true;bubble(`[reviewed acquisition] "${surface}" as ${acqKind.value}`,'user');try{const res=await fetch('/api/acquire',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mentions:[{surface,kind:acqKind.value}]})});const data=await res.json();if(data.status==='reviewed_acquisition_committed'){const created=Object.keys(data.created_or_resolved||{}).map(k=>`${k} -> ${data.created_or_resolved[k]}`).join(', ');bubble(`Admitted: ${created||surface}`,'ai','reviewed_acquisition_committed')}else{bubble(data.error||data.status||'acquisition failed','ai','acquisition error')}}catch(err){bubble(String(err),'ai','request error')}finally{acqSend.disabled=false;acqSurface.value='';acqSurface.focus()}});
 </script></body></html>

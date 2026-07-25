@@ -516,7 +516,64 @@ class Runtime:
                 "budgets": budgets.__dict__,
             }
 
-        lattice = self.i.observe(text, cycle.participant_frame)
+        try:
+            lattice = self.i.observe(text, cycle.participant_frame)
+        except AmbiguousReferent as exc:
+            stages.add(Stage.OBSERVE, counts={"evidence": 0})
+            stages.add(Stage.ENCODE, counts={"clauses": 0, "unknown": 1})
+            stages.add(Stage.GROUND, counts={"grounded_referents": 0})
+            stages.add(Stage.PROJECT_STATE, counts={"projections": 0})
+            stages.add(Stage.COMPILE, counts={"applications": 0})
+            stages.add(Stage.RECURRENT_DYNAMICS, counts={"candidate_sets": 0})
+            frontiers = (LearningFrontier.create(
+                "ambiguous_referent",
+                ({"surface": exc.surface, "candidates": exc.candidates},),
+                blocks=("interpretation",),
+                cycle_ref=cycle.cycle_ref,
+            ),)
+            stages.add(Stage.STABILIZE, counts={"stable": 0, "frontiers": 1})
+            stages.add(Stage.BUILD_STRUCTURES, counts={"discourse_acts": 0, "queries": 0})
+            stages.add(Stage.EPISTEMIC_PLACEMENT, counts={"placements": 0, "admitted": 0})
+            stages.add(Stage.QUERY_EXPLAIN, counts={"facts": 0, "bindings": 0})
+            stages.add(Stage.PREDICTION_ERROR, counts={"errors": 0})
+            stages.add(Stage.TRANSITION_SIMULATION, counts={"previews": 0})
+            stages.add(Stage.COMMIT, counts={"applications": 0, "frontiers": 0})
+            stages.add(Stage.CAPABILITY_IMPACT, counts={"capabilities": 0})
+            stages.add(Stage.GOAL_ARBITRATION, counts={"candidates": 1, "selected": 1})
+            stages.add(Stage.PLAN_EXECUTE, counts={"operations": 0})
+            stages.add(Stage.ASSIMILATE_OPERATION, counts={"operation_evidence": 0})
+            clarify_goal = GoalCandidate(
+                stable("goal", "clarify-ambiguous", cycle.cycle_ref),
+                "clarify",
+                frontiers[0].frontier_ref,
+                1.0,
+                {"frontier": frontiers[0].as_dict()},
+            )
+            decision = self.goal_arbiter.decide((clarify_goal,))
+            response_csir = self.response_builder.build(
+                audience_ref=cycle.participant_frame.speaker_ref,
+                goal_decision=decision,
+                frontiers=frontiers,
+            )
+            stages.add(Stage.RESPONSE_CSIR, counts={"responses": 1}, refs=(response_csir.response_ref,))
+            response, realization_proof = self.realizer.response(response_csir)
+            stages.add(Stage.REALIZE, counts={"surfaces": int(bool(response))})
+            stages.add(Stage.VERIFY, counts={"verified": int(bool(realization_proof.get("verified")))})
+            stages.add(Stage.COMMON_GROUND, counts={"entries": 0})
+            stages.add(Stage.FINALIZE, counts={"model_cache": len(self.cache), "workspace_slots": 0})
+            return {
+                "status": "frontier",
+                "response": response,
+                "mode": mode,
+                "packet": None,
+                "interpretation": {"status": "unresolved", "blockers": ["ambiguous_referent"]},
+                "frontier_graph": FrontierGraph(frontiers).as_dict(),
+                "response_csir": response_csir.as_dict(),
+                "realization_proof": realization_proof,
+                "stage_trace": stages.as_dict(),
+                "budgets": budgets.__dict__,
+                "side_effect_free": mode == MODE_READ_ONLY,
+            }
         stages.add(Stage.OBSERVE, counts={"evidence": len(lattice.envelopes)}, refs=tuple(x.evidence_ref for x in lattice.envelopes))
         stages.add(Stage.ENCODE, counts={"clauses": len(lattice.form_evidence.get("clauses", ())), "unknown": len(lattice.unknown_evidence)})
         grounded_refs = set(lattice.form_evidence.get("grounded_anchors", {}).values())

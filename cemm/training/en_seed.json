@@ -266,7 +266,8 @@
               "role:actor": "participant:user"
             }
           }
-        ]
+        ],
+        "force": "claim"
       }
     },
     {
@@ -512,6 +513,96 @@
           }
         ]
       }
+    },
+    {
+      "example_ref": "en:greeting:2",
+      "surface": "Hi",
+      "mentions": [
+        {
+          "surface": "Hi",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ],
+        "force": "claim"
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:greeting:3",
+      "surface": "Hello",
+      "mentions": [
+        {
+          "surface": "Hello",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ],
+        "force": "claim"
+      },
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:greeting:4",
+      "surface": "Hey",
+      "mentions": [
+        {
+          "surface": "Hey",
+          "ref": "event:greeting"
+        }
+      ],
+      "semantic": {
+        "new": [
+          {
+            "token": "@X0",
+            "kind": "event"
+          }
+        ],
+        "apps": [
+          {
+            "operator": "op:event",
+            "args": {
+              "role:event": "@X0",
+              "role:type": "event:greeting",
+              "role:actor": "participant:user"
+            }
+          }
+        ],
+        "force": "claim"
+      },
+      "weight": 1.0
     }
   ],
   "realization_examples": [
