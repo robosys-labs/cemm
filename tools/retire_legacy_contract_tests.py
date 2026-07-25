@@ -22,6 +22,11 @@ PATTERNS = {
     r"\bvalue:(?:ready|processing|confused)\b": "removed global self outcome values",
     r"self\.(?:response|interpretation|epistemic)_state_dimension": "removed global self dimensions",
     r"packet\s*\[\s*[\"']query[\"']\s*\]\s*\[\s*[\"']operator[\"']": "removed bare query application contract",
+    r"\bautonomous_acquisition\b": "removed autonomous acquisition default/config",
+    r"family_knowledge\.json": "pre-final data file with stale authority atoms",
+    r"_run\(\s*[\"']acquire[\"']": "removed 'acquire' CLI command (now 'acquire-reviewed')",
+    r"\.closure\(\s*\)": "removed zero-argument Inference.closure() contract",
+    r"\btest_defaults_match_v4\b": "pre-final v4 default configuration contract",
 }
 
 

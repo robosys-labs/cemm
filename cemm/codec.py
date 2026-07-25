@@ -153,6 +153,8 @@ class StructuredSemanticCodec:
         ]
         vocabulary = ["<pad>", "<unk>"] + sorted(
             {token.casefold() for text in texts for token in toks(text)}
+            | {token.casefold() for token in data.get("function_forms", [])}
+            | {token.casefold() for token in data.get("grammar_tokens", [])}
         )
         self.vocabulary_index = {value: index for index, value in enumerate(vocabulary)}
         key = (data["pack_hash"], "structured-v5-force-query")

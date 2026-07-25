@@ -1,1 +1,25 @@
-[]
+[
+  {
+    "source": "tests\\test_cli.py",
+    "preserved_as": "tests\\legacy_contracts\\test_cli.py.legacy",
+    "reasons": [
+      "pre-final data file with stale authority atoms",
+      "removed 'acquire' CLI command (now 'acquire-reviewed')"
+    ]
+  },
+  {
+    "source": "tests\\test_config.py",
+    "preserved_as": "tests\\legacy_contracts\\test_config.py.legacy",
+    "reasons": [
+      "pre-final v4 default configuration contract",
+      "removed autonomous acquisition default/config"
+    ]
+  },
+  {
+    "source": "tests\\test_timeout.py",
+    "preserved_as": "tests\\legacy_contracts\\test_timeout.py.legacy",
+    "reasons": [
+      "removed zero-argument Inference.closure() contract"
+    ]
+  }
+]
