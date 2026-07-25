@@ -72,7 +72,7 @@ def base_payload():
         ("resource:runtime_process", "resource"), ("resource:semantic_runtime", "resource"),
         ("resource:language_realizer", "resource"), ("resource:output_channel", "resource"),
     ): atom(ref, kind, foundational=True)
-    for ref in ("label:lexical",): atom(ref, "label_type", foundational=True)
+    for ref in ("label:lexical", "label:name", "label:name_full", "label:name_alias"): atom(ref, "label_type", foundational=True)
 
     operator_roles = []
     def op_role(op, role, required, kind): operator_roles.append({"operator_ref": op, "role_ref": role, "required": required, "filler_kind": kind})
