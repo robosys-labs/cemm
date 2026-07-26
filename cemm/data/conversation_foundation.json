@@ -5848,47 +5848,6 @@
     {
       "operator": "op:designation",
       "args": {
-        "role:target": "participant:user",
-        "role:label_type": "label:lexical",
-        "role:surface": {
-          "literal": {
-            "type": "text",
-            "value": "you"
-          }
-        },
-        "role:language": {
-          "literal": {
-            "type": "text",
-            "value": "en"
-          }
-        },
-        "role:script": {
-          "literal": {
-            "type": "text",
-            "value": "Latn"
-          }
-        },
-        "role:prior": {
-          "literal": {
-            "type": "float",
-            "value": 1.1
-          }
-        },
-        "role:preferred": {
-          "literal": {
-            "type": "bool",
-            "value": true
-          }
-        }
-      },
-      "stance": "support",
-      "confidence": 1.0,
-      "authority_status": "reviewed",
-      "source_ref": "seed"
-    },
-    {
-      "operator": "op:designation",
-      "args": {
         "role:target": "concept:answer",
         "role:label_type": "label:lexical",
         "role:surface": {
@@ -8039,6 +7998,45 @@
       "confidence": 1.0,
       "authority_status": "reviewed",
       "source_ref": "seed"
+    },
+    {
+      "operator": "op:state",
+      "args": {
+        "role:subject": "participant:system",
+        "role:dimension": "dim:availability",
+        "role:value": "value:available"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed",
+      "fact_ref": "seed:system-state-availability"
+    },
+    {
+      "operator": "op:state",
+      "args": {
+        "role:subject": "participant:system",
+        "role:dimension": "dim:communication_status",
+        "role:value": "value:communicating"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed",
+      "fact_ref": "seed:system-state-communication"
+    },
+    {
+      "operator": "op:state",
+      "args": {
+        "role:subject": "participant:system",
+        "role:dimension": "dim:emotional_state",
+        "role:value": "value:positive"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed",
+      "fact_ref": "seed:system-state-emotion"
     }
   ],
   "rules": []

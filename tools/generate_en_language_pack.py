@@ -44,6 +44,10 @@ response_examples=[
  ('greet','RESPONSE greet','Hello.'),
  ('property','RESPONSE answer_bindings QUERY_KIND designation_property PROPERTY @A0 BINDING ?q0 @E0','The @A0 is @E0.'),
  ('learned-binding','RESPONSE answer_bindings QUERY_KIND designation_learning PROPERTY @A0 LEARNING resolve_designation BINDING ?q0 @A1 ?q1 @A0 EVIDENCE @E0','In this context, @E0 refers to @A1.'),
+ ('state-answer','RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @A1','The @A0 is @A1.'),
+ ('state-answer-numeric','RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @N0','The @A0 is @N0.'),
+ ('type-answer','RESPONSE answer_bindings QUERY_KIND type_query BINDING ?q0 @A0','The kind is a @A0.'),
+ ('capability-answer','RESPONSE answer_bindings QUERY_KIND capability_query BINDING ?q1 @A0','I can @A0.'),
 ]
 response=[{'example_ref':f'en:response:{r}','semantic':s,'surface_plan':p,'weight':1.0} for r,s,p in response_examples]
 realization=[

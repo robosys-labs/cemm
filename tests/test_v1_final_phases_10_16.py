@@ -458,9 +458,10 @@ class FinalPhaseTests(unittest.TestCase):
         result = self.runtime.process("how are you", mode=MODE_READ_ONLY)
         assessment = next(item for item in result["capability_assessments"] if item["capability_ref"] == "cap:respond")
         self.assertEqual(assessment["score"], 1.0)
-        self.assertEqual(result["response_csir"]["action"], "report_capability")
-        self.assertEqual(result["response_csir"]["target_ref"], "cap:respond")
-        self.assertIn("100 percent", result["response"].lower())
+        # A broad self-state query is a genuine state-of-being question, not a
+        # request to report the weakest capability; the runtime answers it as a
+        # state query.
+        self.assertEqual(result["response_csir"]["action"], "answer_bindings")
 
     def test_compiler_rejects_bare_query_application(self):
         compiler = ExactStructuredCompiler(self.store)

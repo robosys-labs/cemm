@@ -2,7 +2,7 @@
   "version": 6,
   "language": "en",
   "form_pack": "../form_packs/en.json",
-  "form_pack_hash": "3cad0bf3983fd47a684cc549759c116b64bbac15911de73d6e688ea607bdf1ba",
+  "form_pack_hash": "48f5817657c15488297a16db42a5ea0a74c388262fc683b2aa777d1cc8e5878d",
   "forces": [
     "acknowledgment",
     "claim",
@@ -481,6 +481,30 @@
       "semantic": "RESPONSE answer_bindings QUERY_KIND designation_learning PROPERTY @A0 LEARNING resolve_designation BINDING ?q0 @A1 ?q1 @A0 EVIDENCE @E0",
       "surface_plan": "In this context, @E0 refers to @A1.",
       "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:state-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @A1",
+      "surface_plan": "The @A0 is @A1.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:state-answer-numeric",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @N0",
+      "surface_plan": "The @A0 is @N0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:type-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND type_query BINDING ?q0 @A0",
+      "surface_plan": "The kind is a @A0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:capability-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND capability_query BINDING ?q1 @A0",
+      "surface_plan": "I can @A0.",
+      "weight": 1.0
     }
   ],
   "grammar_tokens": [
@@ -580,6 +604,7 @@
     "its",
     "itself",
     "just",
+    "kind",
     "knew",
     "know",
     "known",
@@ -903,5 +928,5 @@
     "yourself",
     "yourselves"
   ],
-  "pack_hash": "46a4375773e21f6e05711c6cbb28a902ff19d5ce0d1ed085f001be38f6ceabe2"
+  "pack_hash": "55626495fc7f35632ad553880f755ee4dbefeb8f019889a3b0c9e511479d0a20"
 }

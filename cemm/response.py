@@ -48,6 +48,36 @@ class ResponseBuilder:
     """Construct response meaning from exact results and scoped blockers."""
 
     @staticmethod
+    def _select_answer_binding(bindings, facts_by_ref=None):
+        """Select a single binding to verbalize for an answer_query.
+
+        Prefer bindings that resolved a variable to a semantic atom.  When all
+        bindings are empty (e.g. description_request fallback), prefer proof
+        facts in the order op:type, op:designation, op:state.
+        """
+        facts_by_ref = facts_by_ref or {}
+
+        def fact_kind(binding):
+            for ref in binding.proof_refs:
+                fact = facts_by_ref.get(ref)
+                if fact:
+                    return fact.operator
+            return ""
+
+        def score(item):
+            idx, binding = item
+            has_atom = any(
+                isinstance(v, str) and ":" in v and not v.startswith("?")
+                for v in binding.values.values()
+            )
+            kind = fact_kind(binding)
+            kind_priority = {"op:type": 2, "op:designation": 1, "op:state": 1}.get(kind, 0)
+            return (-int(has_atom), -kind_priority, idx)
+
+        ordered = sorted(enumerate(bindings), key=score)
+        return bindings[ordered[0][0]] if ordered else None
+
+    @staticmethod
     def _frontier_priority(frontier) -> tuple[float, int, str]:
         evidence = tuple(frontier.evidence)
         priority = max((float(item.get("priority", 0.0)) for item in evidence), default=0.0)
@@ -55,9 +85,10 @@ class ResponseBuilder:
         return priority, grounded, frontier.frontier_ref
 
     @staticmethod
-    def _designation_answer_metadata(facts, bindings, frontiers):
+    def _designation_answer_metadata(facts, bindings, frontiers, query_qualifiers=None):
         qualifiers: dict[str, Any] = {}
         literals: list[str] = []
+        query_qualifiers = query_qualifiers or {}
         for frontier in frontiers:
             for item in frontier.evidence:
                 if item.get("learning_operation"):
@@ -68,12 +99,46 @@ class ResponseBuilder:
                     qualifiers["learning_operation"] = item["learning_operation"]
                     if item.get("surface"):
                         literals.append(str(item["surface"]))
-        designation = next((fact for fact in facts if fact.operator == "op:designation"), None)
-        if designation:
+
+        # If the query packet already declared a query_kind (e.g. capability_query),
+        # trust that semantic intent.  Proof facts refine it but do not override.
+        if "query_kind" in query_qualifiers:
+            qualifiers["query_kind"] = query_qualifiers["query_kind"]
+        if "property_ref" in query_qualifiers:
+            qualifiers["property_ref"] = query_qualifiers["property_ref"]
+
+        # Classify proof facts so the response realizer can choose an authorized
+        # transform matching the kind of answer that was found.  Only fill in
+        # query_kind when the packet did not already specify one.
+        state_fact = None
+        type_fact = None
+        designation = None
+        for fact in facts:
+            if fact.operator == "op:state":
+                value = fact.args.get("role:value")
+                # Prefer categorical/atom-valued state facts (e.g. communication
+                # status) over continuous/literal runtime facts.
+                if state_fact is None or (
+                    not isinstance(state_fact.args.get("role:value"), str)
+                    and isinstance(value, str)
+                ):
+                    state_fact = fact
+            elif fact.operator == "op:type" and type_fact is None:
+                type_fact = fact
+            elif fact.operator == "op:designation" and designation is None:
+                designation = fact
+
+        if state_fact:
+            qualifiers.setdefault("query_kind", "state_query")
+            qualifiers.setdefault("property_ref", state_fact.args.get("role:dimension"))
+        elif type_fact:
+            qualifiers.setdefault("query_kind", "type_query")
+        elif designation:
             label_type = designation.args.get("role:label_type")
             if isinstance(label_type, str):
                 qualifiers.setdefault("property_ref", label_type)
             qualifiers.setdefault("query_kind", "designation_property")
+
         if not literals:
             for binding in bindings:
                 for value in binding.values():
@@ -107,14 +172,23 @@ class ResponseBuilder:
         obligation_ref = goal.goal_ref if goal else None
 
         if goal and goal.kind == "answer_query" and query_result is not None:
-            bindings = [dict(item.values) for item in query_result.bindings]
-            proof_refs = {ref for item in query_result.bindings for ref in item.proof_refs}
+            selected = (
+                self._select_answer_binding(query_result.bindings, facts_by_ref)
+                if query_result.bindings
+                else None
+            )
+            if selected is not None:
+                bindings = [dict(selected.values)]
+                proof_refs = set(selected.proof_refs)
+            else:
+                bindings = []
+                proof_refs = set()
             facts = [facts_by_ref[ref] for ref in sorted(proof_refs) if ref in facts_by_ref]
             action = (
                 "report_conflict"
                 if query_result.status == "conflict"
                 else "answer_bindings"
-                if query_result.bindings
+                if bindings
                 else "confirm"
                 if query_result.status == "supported"
                 else "deny"
@@ -127,7 +201,7 @@ class ResponseBuilder:
                 "unresolved_variables": list(query_result.unresolved_variables),
             }
             metadata, literals = self._designation_answer_metadata(
-                facts, bindings, frontiers
+                facts, bindings, frontiers, query_result.qualifiers
             )
             qualifiers.update(metadata)
         elif goal and goal.kind == "clarify" and frontiers:

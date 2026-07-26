@@ -1200,7 +1200,1264 @@
         "discourse"
       ],
       "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-state:am",
+      "pattern": [
+        {
+          "literal": "how"
+        },
+        {
+          "literal": "am"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": "$capture:target",
+                "role:dimension": "?q0",
+                "role:value": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "state_dimension",
+              "role_ref": "role:dimension"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "state_value",
+              "role_ref": "role:value"
+            }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "state_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_state_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.6,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:who:am",
+      "pattern": [
+        {
+          "literal": "who"
+        },
+        {
+          "literal": "am"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:whom:am",
+      "pattern": [
+        {
+          "literal": "whom"
+        },
+        {
+          "literal": "am"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-type:what:am",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "am"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_type_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-state:is",
+      "pattern": [
+        {
+          "literal": "how"
+        },
+        {
+          "literal": "is"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": "$capture:target",
+                "role:dimension": "?q0",
+                "role:value": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "state_dimension",
+              "role_ref": "role:dimension"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "state_value",
+              "role_ref": "role:value"
+            }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "state_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_state_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.6,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:who:is",
+      "pattern": [
+        {
+          "literal": "who"
+        },
+        {
+          "literal": "is"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:whom:is",
+      "pattern": [
+        {
+          "literal": "whom"
+        },
+        {
+          "literal": "is"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-type:what:is",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "is"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_type_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-state:are",
+      "pattern": [
+        {
+          "literal": "how"
+        },
+        {
+          "literal": "are"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": "$capture:target",
+                "role:dimension": "?q0",
+                "role:value": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "state_dimension",
+              "role_ref": "role:dimension"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "state_value",
+              "role_ref": "role:value"
+            }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "state_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_state_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.6,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:who:are",
+      "pattern": [
+        {
+          "literal": "who"
+        },
+        {
+          "literal": "are"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:whom:are",
+      "pattern": [
+        {
+          "literal": "whom"
+        },
+        {
+          "literal": "are"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-type:what:are",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "are"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_type_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-state:was",
+      "pattern": [
+        {
+          "literal": "how"
+        },
+        {
+          "literal": "was"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": "$capture:target",
+                "role:dimension": "?q0",
+                "role:value": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "state_dimension",
+              "role_ref": "role:dimension"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "state_value",
+              "role_ref": "role:value"
+            }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "state_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_state_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.6,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:who:was",
+      "pattern": [
+        {
+          "literal": "who"
+        },
+        {
+          "literal": "was"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:whom:was",
+      "pattern": [
+        {
+          "literal": "whom"
+        },
+        {
+          "literal": "was"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-type:what:was",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "was"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_type_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-state:were",
+      "pattern": [
+        {
+          "literal": "how"
+        },
+        {
+          "literal": "were"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": "$capture:target",
+                "role:dimension": "?q0",
+                "role:value": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "state_dimension",
+              "role_ref": "role:dimension"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "state_value",
+              "role_ref": "role:value"
+            }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "state_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_state_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.6,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:who:were",
+      "pattern": [
+        {
+          "literal": "who"
+        },
+        {
+          "literal": "were"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-identity:whom:were",
+      "pattern": [
+        {
+          "literal": "whom"
+        },
+        {
+          "literal": "were"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "$capture:target",
+                "role:label_type": "label:name",
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": "label:name"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_identity_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:copula-type:what:were",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "were"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "copula_type_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
+    },
+    {
+      "ref": "en:capability-query:what-can-do",
+      "pattern": [
+        {
+          "literal": "what"
+        },
+        {
+          "literal": "can"
+        },
+        {
+          "kind": "anchor",
+          "slot": "target"
+        },
+        {
+          "literal": "do"
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": "$capture:target",
+                "role:class": "?q0"
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:relation",
+              "args": {
+                "role:subject": "?q0",
+                "role:relation": "rel:entitles_capability",
+                "role:object": "?q1"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "atom",
+              "role_ref": "role:object"
+            }
+          ],
+          "projection": [
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "capability_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "capability_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.55,
+      "ignore_kinds": [
+        "discourse"
+      ],
+      "preserve_unknowns": true
     }
   ],
-  "pack_hash": "3cad0bf3983fd47a684cc549759c116b64bbac15911de73d6e688ea607bdf1ba"
+  "pack_hash": "48f5817657c15488297a16db42a5ea0a74c388262fc683b2aa777d1cc8e5878d"
 }

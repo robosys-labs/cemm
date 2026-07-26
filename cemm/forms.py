@@ -322,6 +322,18 @@ class SurfaceIndex:
         self.record_count += 1
 
     def _build(self) -> None:
+        # Surfaces that are contextual indexicals (pronouns) must never be
+        # resolved through the stable designation index. Collect them from the
+        # reference_forms table first so designation entries for the same
+        # surface are skipped.
+        pronoun_surfaces: set[str] = set()
+        for row in self.store.db.execute(
+            "SELECT surface,features FROM reference_forms WHERE language IN (?, 'und')",
+            (self.language,),
+        ).fetchall():
+            features = json.loads(row["features"])
+            if "participant_role" in features or "person" in features:
+                pronoun_surfaces.add(norm_text(str(row["surface"])))
         for row in self.store.db.execute(
             "SELECT language,surface,features,bound_ref,weight FROM reference_forms "
             "WHERE language IN (?, 'und') ORDER BY language,surface,weight DESC",
@@ -344,6 +356,8 @@ class SurfaceIndex:
             "ORDER BY language,surface,preferred DESC,prior DESC,target_ref",
             (self.language,),
         ).fetchall():
+            if norm_text(str(row["surface"])) in pronoun_surfaces:
+                continue
             self._insert(
                 str(row["surface"]),
                 {

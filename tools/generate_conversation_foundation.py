@@ -101,12 +101,20 @@ for dim,vals in value_dims.items():
  facts.append(rel(dim,'rel:dimension_domain','domain:categorical'))
  for value in vals: facts.append(rel(value,'rel:value_of_dimension',dim))
 # System identity and acronym expansion.
+# Note: "you" is a contextual indexical, not a stable lexical designation.
 facts += [
  designation('participant:system','CEMM','label:name','en',True,2.0),
  designation('participant:system','Contextual Event Memory Model','label:name_full','en',True,1.8),
  designation('participant:system','CEMM','label:acronym','en',True,1.6),
- designation('participant:user','you','label:lexical','en',True,1.1),
  designation('participant:user','user','label:title','en',False,0.8),
+]
+# Conversational state of the system, used to answer "how are you?" style queries.
+def state(subject,dimension,value,ref=None):
+ return fact('op:state',{'role:subject':subject,'role:dimension':dimension,'role:value':value},ref)
+facts += [
+ state('participant:system','dim:communication_status','value:communicating','seed:system-state-communication'),
+ state('participant:system','dim:availability','value:available','seed:system-state-availability'),
+ state('participant:system','dim:emotional_state','value:positive','seed:system-state-emotion'),
 ]
 # Reviewed common lexical designations. A form can resolve to existing meaning before any user probe.
 lexemes={

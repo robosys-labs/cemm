@@ -285,16 +285,6 @@ class Runtime:
         return output, mapping
 
     @staticmethod
-    def _broad_self_state_query(query, self_ref):
-        return any(
-            restriction.get("operator") == "op:state"
-            and restriction.get("args", {}).get("role:subject") == self_ref
-            and isinstance(restriction.get("args", {}).get("role:dimension"), str)
-            and restriction["args"]["role:dimension"].startswith("?")
-            for restriction in query.restrictions
-        )
-
-    @staticmethod
     def _directive_semantic_targets(act):
         if act is None or act.force != FORCE_DIRECTIVE:
             return ()
@@ -335,17 +325,6 @@ class Runtime:
     def _required_capabilities(self, act):
         """Resolve action-specific capability requirements from semantic authority."""
         return self._authority_targets(act, "policy.required_capability_relation")
-
-    @staticmethod
-    def _top_level_capability_refs(projection, assessments):
-        capabilities = {item.capability_ref for item in assessments}
-        depended_capabilities = {
-            edge.get("depends_on")
-            for edge in projection.get("dependency_edges", ())
-            if edge.get("subject") in capabilities and edge.get("depends_on") in capabilities
-        }
-        roots = tuple(sorted(capabilities - depended_capabilities))
-        return roots or tuple(sorted(capabilities))
 
     def _commit_stage13(self, *, text, packet, news, uses, trace, act, placement, frontiers, cycle):
         generation = self.s.begin(
@@ -651,6 +630,7 @@ class Runtime:
                 (),
                 tuple(self.inf.explain(fact, by_ref) for fact in direct),
                 tuple(x.frontier_ref for x in frontiers),
+                dict(getattr(act, "qualifiers", {})),
             )
             scoped_epistemic = ScopedEpistemicAssessment(query_result.query_ref, query_result.status, tuple(fact.ref for fact in direct), (), (), query_result.coverage)
         stages.add(Stage.QUERY_EXPLAIN, counts={"facts": len(facts), "bindings": len(query_result.bindings) if query_result else 0}, refs=(query_result.query_ref,) if query_result else ())
@@ -708,22 +688,9 @@ class Runtime:
             capability_assessments=capability_assessments,
             required_capability_refs=required_capability_refs,
         ))
-        if act and act.force == FORCE_QUERY and act.query and self._broad_self_state_query(act.query, self.session.self_ref):
-            candidates.append(
-                GoalCandidate(
-                    stable("goal", "self-capability", act.query.query_ref),
-                    "report_self_capability",
-                    act.query.query_ref,
-                    1.2,
-                    {
-                        "preferred_capability_refs": list(
-                            self._top_level_capability_refs(
-                                self_projection, capability_assessments
-                            )
-                        )
-                    },
-                )
-            )
+        # Note: a broad "how are you?" op:state query about the self is a genuine
+        # state-of-being question, not a request to report the weakest capability.
+        # Capability questions are handled through their own constructions/semantics.
         greeting = False
         if act:
             try:

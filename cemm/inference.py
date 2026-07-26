@@ -181,6 +181,7 @@ class Inference:
             unresolved,
             tuple(proofs),
             tuple(blocking_frontiers),
+            dict(getattr(query, "qualifiers", {})),
         )
 
     def explain(self, fact, by_ref):

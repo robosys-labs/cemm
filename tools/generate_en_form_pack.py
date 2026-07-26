@@ -105,6 +105,126 @@ def alias_claim(surface="surface", target="$capture:target"):
     return packet
 
 
+def state_query(target="$capture:target"):
+    return {
+        "force": "query",
+        "apps": [],
+        "query": {
+            "restrictions": [{
+                "operator": "op:state",
+                "args": {
+                    "role:subject": target,
+                    "role:dimension": "?q0",
+                    "role:value": "?q1",
+                },
+                "stance": "support",
+            }],
+            "variables": [
+                {"ref": "?q0", "filler_kind": "state_dimension", "role_ref": "role:dimension"},
+                {"ref": "?q1", "filler_kind": "state_value", "role_ref": "role:value"},
+            ],
+            "projection": ["?q0", "?q1"],
+            "qualifiers": {"query_kind": "state_query"},
+        },
+        "directive": None,
+        "describe": None,
+        "qualifiers": {"construction_family": "copula_state_query"},
+        "modality": "actual",
+    }
+
+
+def identity_query(target="$capture:target"):
+    return {
+        "force": "query",
+        "apps": [],
+        "query": {
+            "restrictions": [{
+                "operator": "op:designation",
+                "args": {
+                    "role:target": target,
+                    "role:label_type": "label:name",
+                    "role:surface": "?q0",
+                    "role:language": context("language_literal"),
+                },
+                "stance": "support",
+            }],
+            "variables": [
+                {"ref": "?q0", "filler_kind": "literal:text", "role_ref": "role:surface"},
+            ],
+            "projection": ["?q0"],
+            "qualifiers": {"query_kind": "designation_property", "property_ref": "label:name"},
+        },
+        "directive": None,
+        "describe": None,
+        "qualifiers": {"construction_family": "copula_identity_query"},
+        "modality": "actual",
+    }
+
+
+def type_query(target="$capture:target"):
+    return {
+        "force": "query",
+        "apps": [],
+        "query": {
+            "restrictions": [{
+                "operator": "op:type",
+                "args": {
+                    "role:instance": target,
+                    "role:class": "?q0",
+                },
+                "stance": "support",
+            }],
+            "variables": [
+                {"ref": "?q0", "filler_kind": "concept", "role_ref": "role:class"},
+            ],
+            "projection": ["?q0"],
+            "qualifiers": {"query_kind": "type_query"},
+        },
+        "directive": None,
+        "describe": None,
+        "qualifiers": {"construction_family": "copula_type_query"},
+        "modality": "actual",
+    }
+
+
+def capability_query(target="$capture:target"):
+    return {
+        "force": "query",
+        "apps": [],
+        "query": {
+            "restrictions": [
+                {
+                    "operator": "op:type",
+                    "args": {
+                        "role:instance": target,
+                        "role:class": "?q0",
+                    },
+                    "stance": "support",
+                },
+                {
+                    "operator": "op:relation",
+                    "args": {
+                        "role:subject": "?q0",
+                        "role:relation": "rel:entitles_capability",
+                        "role:object": "?q1",
+                    },
+                    "stance": "support",
+                },
+            ],
+            "variables": [
+                {"ref": "?q0", "filler_kind": "concept", "role_ref": "role:class"},
+                {"ref": "?q1", "filler_kind": "atom", "role_ref": "role:object"},
+            ],
+            "projection": ["?q1"],
+            "qualifiers": {"query_kind": "capability_query"},
+        },
+        "directive": None,
+        "describe": None,
+        "qualifiers": {"construction_family": "capability_query"},
+        "modality": "actual",
+    }
+
+
 def p(ref, pattern, packet, weight=1.0, ignore=("discourse",)):
     return {
         "ref": ref,
@@ -192,6 +312,29 @@ constructions = [
         {"kind": "anchor", "slot": "target"},
     ], alias_claim(), 1.2),
 ]
+
+# Copular wh-questions: how/who/what + copula + anchor.  These make the
+# copula an explicit operational port for state/type/identity questions.
+for copula in ("am", "is", "are", "was", "were"):
+    constructions.append(p(f"en:copula-state:{copula}", [
+        {"literal": "how"}, {"literal": copula},
+        {"kind": "anchor", "slot": "target"},
+    ], state_query(), 1.6))
+    for wh in ("who", "whom"):
+        constructions.append(p(f"en:copula-identity:{wh}:{copula}", [
+            {"literal": wh}, {"literal": copula},
+            {"kind": "anchor", "slot": "target"},
+        ], identity_query(), 1.55))
+    constructions.append(p(f"en:copula-type:what:{copula}", [
+        {"literal": "what"}, {"literal": copula},
+        {"kind": "anchor", "slot": "target"},
+    ], type_query(), 1.55))
+
+constructions.append(p("en:capability-query:what-can-do", [
+    {"literal": "what"}, {"literal": "can"},
+    {"kind": "anchor", "slot": "target"},
+    {"literal": "do"},
+], capability_query(), 1.55))
 
 pack = {
     "version": 1,

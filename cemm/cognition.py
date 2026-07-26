@@ -109,6 +109,7 @@ class QueryResult:
     unresolved_variables: tuple[str, ...] = ()
     proofs: tuple[dict[str, Any], ...] = ()
     blocking_frontiers: tuple[str, ...] = ()
+    qualifiers: Mapping[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -121,6 +122,7 @@ class QueryResult:
             "unresolved_variables": list(self.unresolved_variables),
             "proofs": list(self.proofs),
             "blocking_frontiers": list(self.blocking_frontiers),
+            "qualifiers": dict(self.qualifiers),
         }
 
 
