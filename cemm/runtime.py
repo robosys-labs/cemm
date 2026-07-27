@@ -351,12 +351,26 @@ class Runtime:
         output = []
         for item in trace.get("unknown_form_evidence", ()):
             residual_class = str(item.get("residual_class") or "unknown_form")
+            grounding_status = str(item.get("grounding_status") or "unknown")
+            semantic_ref = item.get("semantic_ref") or item.get("target_ref")
+            if grounding_status == "grounded" and semantic_ref:
+                frontier_kind = "grounded_composition_gap"
+                target_ref = str(semantic_ref)
+                blocks = ("interpretation", "answer")
+            elif residual_class == "unknown_form":
+                frontier_kind = "unknown_form"
+                target_ref = None
+                blocks = ("interpretation", "answer", "lexical_learning")
+            else:
+                frontier_kind = "known_form_composition_gap"
+                target_ref = str(semantic_ref) if semantic_ref else None
+                blocks = ("interpretation", "answer")
             output.append(
                 LearningFrontier.create(
-                    residual_class,
+                    frontier_kind,
                     (dict(item),),
-                    target_ref=item.get("target_ref"),
-                    blocks=("interpretation", "answer"),
+                    target_ref=target_ref,
+                    blocks=blocks,
                     cycle_ref=cycle_ref,
                 )
             )
@@ -805,10 +819,22 @@ class Runtime:
             }
         stages.add(Stage.OBSERVE, counts={"evidence": len(lattice.envelopes)}, refs=tuple(x.evidence_ref for x in lattice.envelopes))
         stages.add(Stage.ENCODE, counts={"clauses": len(lattice.form_evidence.get("clauses", ())), "unknown": len(lattice.unknown_evidence)})
-        grounded_refs = set(lattice.form_evidence.get("grounded_anchors", {}).values())
+        resolved_form = lattice.resolved_form_lattice
+        grounded_refs_by_hypothesis = {
+            hypothesis.hypothesis_ref: {
+                unit.semantic_ref
+                for unit in hypothesis.units
+                if unit.kind == "anchor" and unit.semantic_ref
+            }
+            for hypothesis in (
+                resolved_form.grounding_hypotheses if resolved_form else ()
+            )
+        }
+        grounded_refs = set().union(*grounded_refs_by_hypothesis.values()) if grounded_refs_by_hypothesis else set()
         stages.add(Stage.GROUND, counts={"grounded_referents": len(grounded_refs)}, refs=tuple(sorted(grounded_refs)))
         state_projections = self._project(grounded_refs | {self.session.self_ref})
         cycle.workspace.put("state_space_projections", state_projections)
+        cycle.workspace.put("grounded_refs_by_hypothesis", grounded_refs_by_hypothesis)
         stages.add(Stage.PROJECT_STATE, counts={"projections": len(state_projections)}, refs=tuple(sorted(state_projections)))
 
         try:
@@ -827,6 +853,10 @@ class Runtime:
         stages.add(Stage.COMPILE, counts={"applications": len(self._packet_applications(packet))})
         stages.add(Stage.RECURRENT_DYNAMICS, counts={"candidate_sets": len(trace.get("clauses", ()))})
         interpretation = self._interpretation(trace, packet)
+        # Retrieval and transition work must follow the selected interpretation,
+        # not whichever grounding hypothesis happened to rank first pre-compose.
+        if interpretation.grounded_refs:
+            grounded_refs = set(interpretation.grounded_refs)
         frontiers = self._frontiers(trace, cycle.cycle_ref)
         if packet is not None and interpretation.status != "resolved":
             raise RuntimeError(

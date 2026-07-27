@@ -1,21 +1,18 @@
-"""Atomic, feature-driven construction assembly for CEMM.
+"""Atomic semantic graph assembly for CEMM feature algebra v6.
 
-The active runtime never matches semantic constructions against language strings.
-Surface forms are converted to atomic feature evidence by the form pack; schemas
-are trained/compiled over those features.  The resulting matcher is bounded,
-N-best, language-pack data driven, and emits explicit span-coverage receipts.
+This is the sole Stage-5 construction authority.  It delegates bounded role
+assignment to :mod:`cemm.atomic_graph`, then creates fail-closed v6 coverage
+receipts.  No surface text, regex, or total slot order participates in semantic
+legality.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
+from cemm.atomic_graph import AtomicGraphMatcher as _GraphEngine
 from cemm.model import canonical, lit, norm_text, stable
-from cemm.semantic_coverage import (
-    CoverageIntegrityError,
-    CoveragePolicy,
-    InterpretationCoverage,
-)
+from cemm.semantic_coverage import CoveragePolicy, InterpretationCoverage
 
 
 class SchemaValidationError(ValueError):
@@ -25,24 +22,21 @@ class SchemaValidationError(ValueError):
 class TemplateResolutionError(SchemaValidationError):
     def __init__(self, unresolved_paths: Sequence[str]):
         self.unresolved_paths = tuple(map(str, unresolved_paths))
-        super().__init__(
-            "atomic schema packet contains unresolved template values: "
-            + ", ".join(self.unresolved_paths)
-        )
+        super().__init__("atomic graph packet has unresolved template values: " + ", ".join(self.unresolved_paths))
 
 
 _FORBIDDEN_MATCH_KEYS = frozenset({"literal", "surface", "regex", "pattern_text", "tokens", "phrase"})
-_ALLOWED_IGNORABLE_KINDS = frozenset({"discourse", "punctuation"})
+_ALLOWED_IGNORABLE_KINDS = frozenset({"discourse"})
 
 
-def _walk_mappings(value: Any, path: str = "root"):
+def _walk(value: Any, path: str = "root"):
     if isinstance(value, Mapping):
         yield path, value
         for key, item in value.items():
-            yield from _walk_mappings(item, f"{path}.{key}")
+            yield from _walk(item, f"{path}.{key}")
     elif isinstance(value, (list, tuple)):
         for index, item in enumerate(value):
-            yield from _walk_mappings(item, f"{path}[{index}]")
+            yield from _walk(item, f"{path}[{index}]")
 
 
 def _template_dependencies(value: Any) -> tuple[tuple[str, str], ...]:
@@ -71,6 +65,15 @@ def _template_dependencies(value: Any) -> tuple[tuple[str, str], ...]:
     return tuple(output)
 
 
+def feature_path(features: Mapping[str, Any], path: str, default=None):
+    value: Any = features
+    for part in str(path).split("."):
+        if not isinstance(value, Mapping) or part not in value:
+            return default
+        value = value[part]
+    return value
+
+
 def _value_matches(actual: Any, expected: Any) -> bool:
     if isinstance(expected, Mapping):
         if "any_of" in expected:
@@ -92,44 +95,21 @@ def _value_matches(actual: Any, expected: Any) -> bool:
     return actual == expected
 
 
-def feature_path(features: Mapping[str, Any], path: str, default=None):
-    value: Any = features
-    for part in str(path).split("."):
-        if not isinstance(value, Mapping) or part not in value:
-            return default
-        value = value[part]
-    return value
-
-
 def unit_matches(unit: Any, spec: Mapping[str, Any]) -> bool:
-    """Match a unit using kind/ref/feature constraints only.
-
-    ``literal`` and ``surface`` constraints are forbidden by contract.  The
-    lexical layer may map a surface to features, but semantic schemas cannot see
-    the original word identity.
-    """
     forbidden = _FORBIDDEN_MATCH_KEYS.intersection(spec)
     if forbidden:
-        raise SchemaValidationError(
-            f"surface constraint(s) forbidden in atomic schema: {sorted(forbidden)}"
-        )
+        raise SchemaValidationError(f"surface constraint(s) forbidden: {sorted(forbidden)}")
     kind = spec.get("kind")
     if kind and getattr(unit, "kind", None) != kind:
         return False
-    kinds = spec.get("kinds")
-    if kinds and getattr(unit, "kind", None) not in set(kinds):
+    kinds = set(spec.get("kinds", ()))
+    if kinds and getattr(unit, "kind", None) not in kinds:
         return False
     anchor_kind = spec.get("anchor_kind")
-    if anchor_kind and not (
-        getattr(unit, "kind", None) == "anchor"
-        and getattr(unit, "atom_kind", None) == anchor_kind
-    ):
+    if anchor_kind and not (getattr(unit, "kind", None) == "anchor" and getattr(unit, "atom_kind", None) == anchor_kind):
         return False
-    anchor_kinds = spec.get("anchor_kinds")
-    if anchor_kinds and not (
-        getattr(unit, "kind", None) == "anchor"
-        and getattr(unit, "atom_kind", None) in set(anchor_kinds)
-    ):
+    anchor_kinds = set(spec.get("anchor_kinds", ()))
+    if anchor_kinds and not (getattr(unit, "kind", None) == "anchor" and getattr(unit, "atom_kind", None) in anchor_kinds):
         return False
     anchor_ref = spec.get("anchor_ref")
     if anchor_ref and getattr(unit, "semantic_ref", None) != anchor_ref:
@@ -141,8 +121,7 @@ def unit_matches(unit: Any, spec: Mapping[str, Any]) -> bool:
     for path, expected in dict(spec.get("features", {})).items():
         if not _value_matches(feature_path(features, path), expected):
             return False
-    absent = tuple(spec.get("absent_features", ()))
-    if any(feature_path(features, path) not in (None, False, "", (), [], {}) for path in absent):
+    if any(feature_path(features, path) not in (None, False, "", (), [], {}) for path in spec.get("absent_features", ())):
         return False
     return True
 
@@ -152,6 +131,8 @@ def capture_value(units: Sequence[Any], mode: str):
         return getattr(units[0], "semantic_ref", None) if units else None
     if mode == "refs":
         return [getattr(item, "semantic_ref", None) for item in units]
+    if mode == "features":
+        return dict(getattr(units[0], "features", {}) or {}) if len(units) == 1 else [dict(getattr(item, "features", {}) or {}) for item in units]
     text = " ".join(str(getattr(item, "surface", "")) for item in units).strip()
     if mode == "literal:text":
         return lit(text)
@@ -159,8 +140,6 @@ def capture_value(units: Sequence[Any], mode: str):
         return text
     if mode == "units":
         return [item.as_dict() if hasattr(item, "as_dict") else vars(item) for item in units]
-    if mode == "features":
-        return [dict(getattr(item, "features", {}) or {}) for item in units]
     return text
 
 
@@ -179,6 +158,8 @@ class SchemaMatch:
     score: float
     coverage: InterpretationCoverage
     packet_template: Mapping[str, Any]
+    slot_unit_refs: Mapping[str, tuple[str, ...]]
+    projected_slots: Mapping[str, Mapping[str, Any]]
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -188,33 +169,27 @@ class SchemaMatch:
             "schema_family": self.schema_family,
             "hypothesis_ref": self.hypothesis_ref,
             "captures": dict(self.captures),
-            "slot_features": {
-                key: dict(value) for key, value in self.slot_features.items()
-            },
+            "slot_features": {key: dict(value) for key, value in self.slot_features.items()},
             "consumed_unit_refs": list(self.consumed_unit_refs),
             "role_by_unit_ref": dict(self.role_by_unit_ref),
             "required_semantic_roles": list(self.required_semantic_roles),
+            "slot_unit_refs": {key: list(value) for key, value in self.slot_unit_refs.items()},
+            "projected_slots": {key: dict(value) for key, value in self.projected_slots.items()},
             "score": self.score,
             "coverage": self.coverage.as_dict(),
         }
 
 
 class AtomicSchemaMatcher:
-    """Bounded matcher for trained atomic schemas.
-
-    Schema steps are feature constraints, not phrases.  Each step may consume a
-    single unit or a bounded span.  Optional steps are explicit and all skipped
-    observed units remain represented in the coverage receipt.
-    """
+    """Compatibility facade over the exclusive v6 graph engine."""
 
     def __init__(self, schemas: Iterable[Mapping[str, Any]], *, max_matches: int = 32):
         self.schemas = tuple(dict(item) for item in schemas)
         self.max_matches = int(max_matches)
-        refs = [str(item.get("ref") or "") for item in self.schemas]
-        if len(refs) != len(set(refs)):
-            raise SchemaValidationError("atomic schema refs must be unique")
+        self._schemas_by_ref = {str(item["ref"]): item for item in self.schemas}
         for schema in self.schemas:
             self.validate_schema(schema)
+        self._engine = _GraphEngine(self.schemas, max_matches=max_matches)
 
     @staticmethod
     def validate_schema(schema: Mapping[str, Any]) -> None:
@@ -222,288 +197,155 @@ class AtomicSchemaMatcher:
         family = str(schema.get("family") or "")
         steps = tuple(schema.get("steps", ()))
         packet = schema.get("packet")
-        if not ref or not family:
-            raise SchemaValidationError("schema requires ref and family")
-        if not steps:
-            raise SchemaValidationError(f"schema {ref} requires steps")
+        if not ref or not family or not steps or not isinstance(packet, Mapping):
+            raise SchemaValidationError("schema requires ref, family, steps, and packet")
         if len(steps) > 16:
-            raise SchemaValidationError(
-                f"schema {ref} exceeds the bounded 16-step matcher contract"
-            )
-        if not isinstance(packet, Mapping):
-            raise SchemaValidationError(f"schema {ref} requires packet")
-        if packet.get("force") not in {
-            "acknowledgment", "claim", "correction", "description_request",
-            "directive", "query", "retraction"
-        }:
-            raise SchemaValidationError(f"schema {ref} has invalid force")
-
-        slots: list[str] = []
-        semantic_roles: set[str] = set()
-        for index, raw_step in enumerate(steps):
-            if not isinstance(raw_step, Mapping):
-                raise SchemaValidationError(f"schema {ref} step {index} is not a mapping")
-            step = dict(raw_step)
+            raise SchemaValidationError("schema exceeds 16-slot bound")
+        slots: set[str] = set()
+        required_roles: set[str] = set()
+        required_slots: set[str] = set()
+        for index, raw in enumerate(steps):
+            step = dict(raw)
             forbidden = _FORBIDDEN_MATCH_KEYS.intersection(step)
             if forbidden:
-                raise SchemaValidationError(
-                    f"schema {ref} step {index} contains surface matcher keys {sorted(forbidden)}"
-                )
-            for nested_path, nested in _walk_mappings(step.get("features", {}), f"{ref}.steps[{index}].features"):
-                forbidden_nested = _FORBIDDEN_MATCH_KEYS.intersection(nested)
-                if forbidden_nested:
-                    raise SchemaValidationError(
-                        f"schema {ref} has forbidden nested matcher keys at {nested_path}: {sorted(forbidden_nested)}"
-                    )
+                raise SchemaValidationError(f"{ref}:{index} contains surface matcher keys {sorted(forbidden)}")
+            for path, nested in _walk(step.get("features", {}), f"{ref}.steps[{index}].features"):
+                nested_forbidden = _FORBIDDEN_MATCH_KEYS.intersection(nested)
+                if nested_forbidden:
+                    raise SchemaValidationError(f"{ref} forbidden nested matcher at {path}")
             slot = str(step.get("slot") or "")
             role = str(step.get("semantic_role") or "")
-            if not slot or slot in slots:
-                raise SchemaValidationError(f"schema {ref} has duplicate/empty slot {slot!r}")
-            if not role:
-                raise SchemaValidationError(f"schema {ref}:{slot} lacks semantic_role")
-            slots.append(slot)
+            if not slot or slot in slots or not role:
+                raise SchemaValidationError(f"{ref} has invalid slot/role")
+            slots.add(slot)
             if not step.get("optional") and role not in {"modifier", "discourse", "punctuation"}:
-                semantic_roles.add(role)
-            constrained = any(
-                key in step for key in ("kind", "kinds", "anchor_kind", "anchor_kinds", "features", "span")
-            )
-            if not constrained:
-                raise SchemaValidationError(f"schema {ref}:{slot} is unconstrained")
-            if step.get("span"):
-                minimum = int(step.get("min_units", 1))
-                maximum = int(step.get("max_units", 0))
-                if not 1 <= minimum <= maximum <= 12:
-                    raise SchemaValidationError(f"schema {ref}:{slot} has invalid span bounds")
-
+                required_roles.add(role)
+                required_slots.add(slot)
+            if not any(key in step for key in ("kind", "kinds", "anchor_kind", "anchor_kinds", "features", "span")):
+                raise SchemaValidationError(f"{ref}:{slot} is unconstrained")
+        contract = dict(schema.get("coverage_contract", {}))
+        contract_roles = set(map(str, contract.get("required_semantic_roles", ())))
+        contract_slots = set(map(str, contract.get("required_slots", ())))
+        if contract_roles != required_roles:
+            raise SchemaValidationError(f"{ref} role coverage contract mismatch: {contract_roles} != {required_roles}")
+        if contract_slots != required_slots:
+            raise SchemaValidationError(f"{ref} slot coverage contract mismatch: {contract_slots} != {required_slots}")
+        role_cardinality = {str(key): int(value) for key, value in dict(contract.get("role_cardinality", {})).items()}
+        observed_cardinality: dict[str, int] = {}
+        for step in steps:
+            if not step.get("optional") and step.get("semantic_role") not in {"modifier", "discourse", "punctuation"}:
+                role = str(step["semantic_role"])
+                observed_cardinality[role] = observed_cardinality.get(role, 0) + 1
+        if role_cardinality != observed_cardinality:
+            raise SchemaValidationError(f"{ref} role cardinality contract mismatch")
         ignorable = set(schema.get("ignorable_kinds", ()))
         if not ignorable.issubset(_ALLOWED_IGNORABLE_KINDS):
-            raise SchemaValidationError(
-                f"schema {ref} declares semantically unsafe ignorable kinds {sorted(ignorable - _ALLOWED_IGNORABLE_KINDS)}"
-            )
-        contract = dict(schema.get("coverage_contract", {}))
-        required_roles = tuple(sorted(set(map(str, contract.get("required_semantic_roles", ())))))
-        if not required_roles:
-            raise SchemaValidationError(f"schema {ref} lacks coverage_contract.required_semantic_roles")
-        absent_roles = set(required_roles) - semantic_roles
-        if absent_roles:
-            raise SchemaValidationError(
-                f"schema {ref} coverage contract references absent required roles {sorted(absent_roles)}"
-            )
-        if set(semantic_roles) - set(required_roles):
-            raise SchemaValidationError(
-                f"schema {ref} coverage contract omits nonoptional semantic roles {sorted(set(semantic_roles)-set(required_roles))}"
-            )
-        dependencies = _template_dependencies(packet)
-        for kind, key in dependencies:
+            raise SchemaValidationError(f"{ref} unsafe ignorable kinds: {sorted(ignorable)}")
+        for kind, key in _template_dependencies(packet):
             if kind in {"capture", "feature"} and key not in slots:
-                raise SchemaValidationError(
-                    f"schema {ref} packet depends on unknown {kind} slot {key!r}"
-                )
+                raise SchemaValidationError(f"{ref} packet references unknown slot {key!r}")
+        try:
+            _GraphEngine((schema,), max_matches=1)
+        except ValueError as exc:
+            raise SchemaValidationError(str(exc)) from exc
 
     @staticmethod
-    def _span_valid(selected: Sequence[Any], step: Mapping[str, Any]) -> bool:
-        if not selected:
-            return False
-        allowed_kinds = set(step.get("allowed_kinds", ()))
-        if allowed_kinds and any(getattr(item, "kind", None) not in allowed_kinds for item in selected):
-            return False
-        # An explicitly listed kind is itself permission.  The legacy
-        # ``allow_*`` flags remain additive for packs that use broad kind sets,
-        # but must not contradict ``allowed_kinds`` (a prior bug listed anchors
-        # as allowed and then rejected every grounded anchor anyway).
-        allow_anchors = bool(step.get("allow_anchors", "anchor" in allowed_kinds))
-        allow_punctuation = bool(
-            step.get("allow_punctuation", "punctuation" in allowed_kinds)
-        )
-        allow_function = bool(step.get("allow_function", "function" in allowed_kinds))
-        if not allow_anchors and any(getattr(item, "kind", None) == "anchor" for item in selected):
-            return False
-        if not allow_punctuation and any(getattr(item, "kind", None) == "punctuation" for item in selected):
-            return False
-        if not allow_function and any(getattr(item, "kind", None) == "function" for item in selected):
-            return False
-        unit_spec = dict(step.get("unit_constraints", {}))
-        if unit_spec and any(not unit_matches(item, unit_spec) for item in selected):
-            return False
-        return True
+    def _context(participant_frame: Any | None) -> dict[str, Any]:
+        if participant_frame is None:
+            return {}
+        return {
+            "speaker_ref": participant_frame.speaker_ref,
+            "addressee_ref": participant_frame.addressee_ref,
+            "self_ref": participant_frame.self_ref,
+            "conversation_ref": participant_frame.conversation_ref,
+            **dict(getattr(participant_frame, "dialogue_context", {}) or {}),
+        }
 
-    def _match_schema(self, hypothesis: Any, schema: Mapping[str, Any]) -> tuple[SchemaMatch, ...]:
-        units = tuple(getattr(hypothesis, "units", ()))
-        steps = tuple(schema.get("steps", ()))
-        results: list[tuple[dict[str, Any], dict[str, Mapping[str, Any]], tuple[str, ...], dict[str, str], float]] = []
-        ignorable = set(schema.get("ignorable_kinds", ()))
-        visited_states = 0
-        state_budget = max(1024, self.max_matches * 256)
-
-        def walk(
-            si: int,
-            ui: int,
-            captures: dict[str, Any],
-            slot_features: dict[str, Mapping[str, Any]],
-            consumed: tuple[str, ...],
-            roles: dict[str, str],
-            score: float,
-        ) -> None:
-            nonlocal visited_states
-            visited_states += 1
-            if visited_states > state_budget:
-                raise SchemaValidationError(
-                    f"schema {schema.get('ref')} exceeded bounded matcher search budget"
-                )
-            # Only schema-declared ignorable kinds may be traversed. They are not
-            # marked consumed and therefore remain visible in the coverage receipt.
-            while ui < len(units) and getattr(units[ui], "kind", None) in ignorable:
-                ui += 1
-            if si >= len(steps):
-                # Do not require end-of-input. Remaining material is classified by
-                # CoveragePolicy and may make this a partial, non-executable match.
-                results.append((dict(captures), dict(slot_features), consumed, dict(roles), score))
-                return
-            step = dict(steps[si])
-            if step.get("optional"):
-                skipped = dict(step)
-                skipped.pop("optional", None)
-                walk(si + 1, ui, captures, slot_features, consumed, roles, score - float(step.get("skip_penalty", 0.02)))
-                step = skipped
-            slot = str(step.get("slot") or f"slot_{si}")
-            semantic_role = str(step.get("semantic_role") or slot)
-            mode = str(step.get("capture", "ref"))
-            if step.get("span"):
-                minimum = max(1, int(step.get("min_units", 1)))
-                maximum = min(int(step.get("max_units", 12)), len(units) - ui)
-                for length in range(maximum, minimum - 1, -1):
-                    selected = units[ui : ui + length]
-                    if not self._span_valid(selected, step):
-                        continue
-                    next_captures = dict(captures)
-                    next_captures[slot] = capture_value(selected, mode)
-                    merged_features: dict[str, Any] = {}
-                    for item in selected:
-                        merged_features.update(dict(getattr(item, "features", {}) or {}))
-                    next_features = dict(slot_features)
-                    next_features[slot] = merged_features
-                    next_roles = dict(roles)
-                    for item in selected:
-                        next_roles[str(getattr(item, "unit_ref"))] = semantic_role
-                    walk(
-                        si + 1,
-                        ui + length,
-                        next_captures,
-                        next_features,
-                        consumed + tuple(str(getattr(item, "unit_ref")) for item in selected),
-                        next_roles,
-                        score - 0.01 * max(0, length - minimum),
-                    )
-                return
-            if ui >= len(units) or not unit_matches(units[ui], step):
-                return
-            unit = units[ui]
-            next_captures = dict(captures)
-            next_captures[slot] = capture_value((unit,), mode)
-            next_features = dict(slot_features)
-            next_features[slot] = dict(getattr(unit, "features", {}) or {})
-            next_roles = dict(roles)
-            next_roles[str(getattr(unit, "unit_ref"))] = semantic_role
-            walk(
-                si + 1,
-                ui + 1,
-                next_captures,
-                next_features,
-                consumed + (str(getattr(unit, "unit_ref")),),
-                next_roles,
-                score + float(step.get("weight", 0.0)),
-            )
-
-        walk(0, 0, {}, {}, (), {}, 0.0)
+    def matches(self, lattice: Any, participant_frame: Any | None = None) -> tuple[SchemaMatch, ...]:
+        graph_matches = self._engine.matches(lattice, context=self._context(participant_frame))
+        hypotheses = {
+            str(item.hypothesis_ref): item
+            for item in tuple(getattr(lattice, "grounding_hypotheses", ()))
+        }
         output: list[SchemaMatch] = []
-        for captures, slot_features, consumed, roles, score in results:
-            required_roles = tuple(
-                schema.get("coverage_contract", {}).get("required_semantic_roles", ())
-            )
-            hypothesis_ref = str(getattr(hypothesis, "hypothesis_ref", ""))
+        for graph in graph_matches:
+            schema = self._schemas_by_ref[graph.schema_ref]
+            hypothesis = hypotheses.get(graph.hypothesis_ref)
+            if hypothesis is None:
+                continue
+            step_by_slot = {str(item["slot"]): dict(item) for item in schema["steps"]}
+            slot_by_unit: dict[str, str] = {}
+            for slot, refs in graph.slot_unit_refs.items():
+                for ref in refs:
+                    slot_by_unit[str(ref)] = str(slot)
+            projected_slots = {
+                slot: {
+                    "capture": item.capture,
+                    "features": dict(item.features),
+                    "source": item.source,
+                    "reason": item.reason,
+                    "penalty": item.penalty,
+                    "ports_provided": list(item.ports_provided),
+                }
+                for slot, item in graph.projected.items()
+            }
+            projected_roles: dict[str, list[dict[str, Any]]] = {}
+            for slot, evidence in projected_slots.items():
+                role = str(step_by_slot[slot]["semantic_role"])
+                projected_roles.setdefault(role, []).append({"slot": slot, **evidence})
+            contract = dict(schema.get("coverage_contract", {}))
             match_seed_ref = stable(
-                "atomic-schema-match-seed",
-                str(schema["ref"]),
-                hypothesis_ref,
-                captures,
-                consumed,
+                "atomic-graph-schema-match-seed-v6",
+                graph.schema_ref,
+                graph.hypothesis_ref,
+                graph.captures,
+                graph.slot_unit_refs,
+                projected_slots,
             )
             coverage = CoveragePolicy.build(
-                units,
-                consumed,
-                role_by_unit_ref=roles,
-                required_semantic_roles=required_roles,
-                schema_ref=str(schema["ref"]),
-                hypothesis_ref=hypothesis_ref,
+                tuple(getattr(hypothesis, "units", ())),
+                graph.coverage.consumed_unit_refs,
+                role_by_unit_ref=graph.semantic_role_by_unit_ref,
+                slot_by_unit_ref=slot_by_unit,
+                required_semantic_roles=contract.get("required_semantic_roles", ()),
+                required_semantic_slots=contract.get("required_slots", ()),
+                projected_semantic_roles=projected_roles,
+                projected_slots=projected_slots,
+                schema_ref=graph.schema_ref,
+                hypothesis_ref=graph.hypothesis_ref,
                 match_seed_ref=match_seed_ref,
-                seed=(captures, consumed),
+                seed=(graph.captures, graph.slot_unit_refs, projected_slots),
             )
-            payload = (match_seed_ref, coverage.coverage_ref)
-            output.append(
-                SchemaMatch(
-                    stable("atomic-schema-match", payload),
-                    match_seed_ref,
-                    str(schema["ref"]),
-                    str(schema.get("family") or schema["ref"]),
-                    str(getattr(hypothesis, "hypothesis_ref", "")),
-                    captures,
-                    slot_features,
-                    consumed,
-                    roles,
-                    required_roles,
-                    float(getattr(hypothesis, "score", 0.0))
-                    + float(schema.get("weight", 1.0))
-                    + score
-                    + 0.5 * coverage.weighted_coverage,
-                    coverage,
-                    dict(schema["packet"]),
-                )
-            )
-        output.sort(
-            key=lambda item: (
-                not item.coverage.complete,
-                -item.coverage.weighted_coverage,
-                -item.score,
-                item.match_ref,
-            )
-        )
+            output.append(SchemaMatch(
+                match_ref=stable("atomic-graph-schema-match-v6", match_seed_ref, coverage.coverage_ref),
+                match_seed_ref=match_seed_ref,
+                schema_ref=graph.schema_ref,
+                schema_family=graph.schema_family,
+                hypothesis_ref=graph.hypothesis_ref,
+                captures=dict(graph.captures),
+                slot_features={key: dict(value) for key, value in graph.slot_features.items()},
+                consumed_unit_refs=tuple(graph.coverage.consumed_unit_refs),
+                role_by_unit_ref=dict(graph.semantic_role_by_unit_ref),
+                required_semantic_roles=tuple(map(str, contract.get("required_semantic_roles", ()))),
+                score=float(graph.score),
+                coverage=coverage,
+                packet_template=dict(graph.packet_template),
+                slot_unit_refs={key: tuple(value) for key, value in graph.slot_unit_refs.items()},
+                projected_slots=projected_slots,
+            ))
+        output.sort(key=lambda item: (
+            not item.coverage.executable,
+            len(item.coverage.missing_semantic_slots),
+            -item.coverage.weighted_coverage,
+            -item.score,
+            item.match_ref,
+        ))
         return tuple(output[: self.max_matches])
-
-    def matches(self, lattice: Any) -> tuple[SchemaMatch, ...]:
-        output: list[SchemaMatch] = []
-        # Scan the complete bounded hypothesis × schema product before ranking.
-        # An early raw-match cutoff can allow high-ranked partial hypotheses to
-        # starve a later executable hypothesis (notably contraction expansions
-        # and participant-grounded alternatives).  The product is already hard
-        # bounded by FormProcessor.max_grounding_hypotheses, schema count, and
-        # this matcher's per-schema max_matches; ranking/truncation happens only
-        # after all candidates have comparable coverage receipts.
-        for hypothesis in tuple(getattr(lattice, "grounding_hypotheses", ())):
-            for schema in self.schemas:
-                output.extend(self._match_schema(hypothesis, schema))
-        unique: dict[str, SchemaMatch] = {}
-        for item in output:
-            previous = unique.get(item.match_ref)
-            if previous is None or item.score > previous.score:
-                unique[item.match_ref] = item
-        ordered = sorted(
-            unique.values(),
-            key=lambda item: (
-                not item.coverage.complete,
-                -item.coverage.weighted_coverage,
-                -item.score,
-                item.match_ref,
-            ),
-        )
-        return tuple(ordered[: self.max_matches])
 
 
 class _UnresolvedTemplateValue:
     def __init__(self, source: str):
         self.source = source
-
-    def __repr__(self) -> str:
-        return f"<unresolved:{self.source}>"
 
 
 class PacketTemplateResolver:
@@ -512,17 +354,9 @@ class PacketTemplateResolver:
         return _UnresolvedTemplateValue(source) if value is None else value
 
     @staticmethod
-    def resolve(
-        value: Any,
-        captures: Mapping[str, Any],
-        slot_features: Mapping[str, Mapping[str, Any]],
-        context: Mapping[str, Any],
-    ) -> Any:
+    def resolve(value: Any, captures: Mapping[str, Any], slot_features: Mapping[str, Mapping[str, Any]], context: Mapping[str, Any]) -> Any:
         if isinstance(value, list):
-            return [
-                PacketTemplateResolver.resolve(item, captures, slot_features, context)
-                for item in value
-            ]
+            return [PacketTemplateResolver.resolve(item, captures, slot_features, context) for item in value]
         if isinstance(value, dict):
             if "$capture" in value:
                 key = str(value["$capture"])
@@ -533,8 +367,7 @@ class PacketTemplateResolver:
             if "$feature" in value:
                 raw = str(value["$feature"])
                 slot, _, path = raw.partition(".")
-                result = feature_path(slot_features.get(slot, {}), path)
-                return PacketTemplateResolver._required(result, f"feature:{raw}")
+                return PacketTemplateResolver._required(feature_path(slot_features.get(slot, {}), path), f"feature:{raw}")
             if "$literal_capture" in value:
                 key = str(value["$literal_capture"])
                 raw = captures.get(key)
@@ -550,10 +383,7 @@ class PacketTemplateResolver:
                 if raw is None:
                     return _UnresolvedTemplateValue(f"literal_feature:{raw_path}")
                 return lit(raw, str(value.get("type", "text")))
-            return {
-                key: PacketTemplateResolver.resolve(item, captures, slot_features, context)
-                for key, item in value.items()
-            }
+            return {key: PacketTemplateResolver.resolve(item, captures, slot_features, context) for key, item in value.items()}
         if isinstance(value, str) and value.startswith("$capture:"):
             key = value.split(":", 1)[1]
             return PacketTemplateResolver._required(captures.get(key), f"capture:{key}")
@@ -563,8 +393,7 @@ class PacketTemplateResolver:
         if isinstance(value, str) and value.startswith("$feature:"):
             raw = value.split(":", 1)[1]
             slot, _, path = raw.partition(".")
-            result = feature_path(slot_features.get(slot, {}), path)
-            return PacketTemplateResolver._required(result, f"feature:{raw}")
+            return PacketTemplateResolver._required(feature_path(slot_features.get(slot, {}), path), f"feature:{raw}")
         return value
 
     @staticmethod
@@ -582,25 +411,19 @@ class PacketTemplateResolver:
 
 
 class AtomicConstructionAssembler:
-    """Facade used by :mod:`cemm.forms` after the legacy matcher is removed."""
-
     def __init__(self, form_pack: Any, *, max_matches: int = 32):
         schemas = tuple(getattr(form_pack, "schemas", ()))
         if not schemas:
-            raise SchemaValidationError("form pack contains no atomic schemas")
+            raise SchemaValidationError("form pack contains no graph schemas")
         self.matcher = AtomicSchemaMatcher(schemas, max_matches=max_matches)
         self.max_matches = int(max_matches)
 
-    def evidence_records(self, lattice: Any) -> tuple[SchemaMatch, ...]:
-        return self.matcher.matches(lattice)
+    def evidence_records(self, lattice: Any, participant_frame: Any | None = None) -> tuple[SchemaMatch, ...]:
+        return self.matcher.matches(lattice, participant_frame)
 
     @staticmethod
-    def instantiate(match: SchemaMatch, participant_frame: Any, language: str) -> dict[str, Any]:
-        if not match.coverage.executable:
-            raise SchemaValidationError(
-                "cannot instantiate an atomic schema without verified complete coverage"
-            )
-        context = {
+    def _context(participant_frame: Any, language: str) -> dict[str, Any]:
+        return {
             "language_literal": lit(language),
             "script_literal": lit("Latn"),
             "true_literal": lit(True, "bool"),
@@ -611,53 +434,51 @@ class AtomicConstructionAssembler:
             "conversation_ref": participant_frame.conversation_ref,
             **dict(getattr(participant_frame, "dialogue_context", {}) or {}),
         }
+
+    @staticmethod
+    def instantiate(match: SchemaMatch, participant_frame: Any, language: str) -> dict[str, Any]:
+        if not match.coverage.executable:
+            raise SchemaValidationError("cannot instantiate graph without complete v6 coverage")
         packet = PacketTemplateResolver.resolve(
             match.packet_template,
             match.captures,
             match.slot_features,
-            context,
+            AtomicConstructionAssembler._context(participant_frame, language),
         )
         if not isinstance(packet, dict):
-            raise SchemaValidationError("atomic schema packet did not resolve to mapping")
+            raise SchemaValidationError("graph packet did not resolve to mapping")
         unresolved = PacketTemplateResolver.unresolved(packet)
         if unresolved:
             raise TemplateResolutionError(unresolved)
         qualifiers = dict(packet.get("qualifiers", {}))
-        qualifiers.update(
-            {
-                "construction_schema_ref": match.schema_ref,
-                "coverage_ref": match.coverage.coverage_ref,
-            }
-        )
+        qualifiers.update({
+            "construction_schema_ref": match.schema_ref,
+            "coverage_ref": match.coverage.coverage_ref,
+            "projected_slots": sorted(match.projected_slots),
+        })
         packet["qualifiers"] = qualifiers
         return packet
 
     @staticmethod
     def partial_structure(match: SchemaMatch, participant_frame: Any, language: str) -> dict[str, Any]:
-        """Preserve the matched semantic skeleton without authorizing execution."""
-        context = {
-            "language_literal": lit(language),
-            "script_literal": lit("Latn"),
-            "true_literal": lit(True, "bool"),
-            "one_float_literal": lit(1.0, "float"),
-            "speaker_ref": participant_frame.speaker_ref,
-            "addressee_ref": participant_frame.addressee_ref,
-            "self_ref": participant_frame.self_ref,
-            "conversation_ref": participant_frame.conversation_ref,
-            **dict(getattr(participant_frame, "dialogue_context", {}) or {}),
-        }
         resolved = PacketTemplateResolver.resolve(
-            match.packet_template, match.captures, match.slot_features, context
+            match.packet_template,
+            match.captures,
+            match.slot_features,
+            AtomicConstructionAssembler._context(participant_frame, language),
         )
         unresolved = PacketTemplateResolver.unresolved(resolved)
         return {
-            "partial_structure_ref": stable(
-                "partial-semantic-structure", match.match_ref, match.coverage.coverage_ref
-            ),
+            "partial_structure_ref": stable("partial-semantic-graph-v6", match.match_ref, match.coverage.coverage_ref),
             "schema_ref": match.schema_ref,
             "schema_family": match.schema_family,
             "force": resolved.get("force") if isinstance(resolved, Mapping) else None,
             "semantic_skeleton": resolved if not unresolved else None,
+            "captures": dict(match.captures),
+            "slot_features": {key: dict(value) for key, value in match.slot_features.items()},
+            "slot_unit_refs": {key: list(value) for key, value in match.slot_unit_refs.items()},
+            "projected_slots": {key: dict(value) for key, value in match.projected_slots.items()},
+            "missing_semantic_slots": list(match.coverage.missing_semantic_slots),
             "unresolved_template_paths": list(unresolved),
             "coverage": match.coverage.as_dict(),
             "open_residuals": [item.as_dict() for item in match.coverage.critical_residuals],
@@ -673,13 +494,9 @@ def lexeme_index(records: Iterable[Mapping[str, Any]]) -> dict[str, tuple[dict[s
             continue
         for form in record.get("forms", ()):
             key = norm_text(str(form))
-            if not key:
-                continue
-            output.setdefault(key, []).append(features)
-    return {
-        key: tuple(sorted(values, key=canonical))
-        for key, values in output.items()
-    }
+            if key:
+                output.setdefault(key, []).append(features)
+    return {key: tuple(sorted(values, key=canonical)) for key, values in output.items()}
 
 
 def merge_lexeme_features(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

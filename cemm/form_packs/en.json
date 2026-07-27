@@ -1,7 +1,7 @@
 {
-  "version": 5,
+  "version": 6,
   "language": "en",
-  "feature_algebra_version": 5,
+  "feature_algebra_version": 6,
   "lexemes": [
     {
       "forms": [
@@ -564,9 +564,22 @@
         "emphasis": true,
         "nonessential_modifier": true
       }
+    },
+    {
+      "forms": [
+        "?"
+      ],
+      "features": {
+        "category": "boundary",
+        "boundary_type": "interrogative",
+        "discourse_force": "query",
+        "force_evidence": "query",
+        "boundary_only": true
+      }
     }
   ],
   "function_forms": [
+    "?",
     "a",
     "about",
     "actually",
@@ -916,48 +929,45 @@
       "family": "attributed_open_predication_claim",
       "steps": [
         {
-          "slot": "evidential",
-          "semantic_role": "scope",
-          "capture": "features",
-          "features": {
-            "category": "evidential",
-            "epistemic_stance": "attributed_assessment",
-            "scope_operator": "appearance"
-          }
-        },
-        {
-          "slot": "subject",
-          "semantic_role": "subject",
-          "capture": "ref",
-          "kind": "anchor",
-          "features": {
-            "category": "reference",
-            "participant_role": "addressee",
-            "person": "second",
-            "possessive": false
-          }
-        },
-        {
           "slot": "copula",
-          "semantic_role": "predicate",
+          "semantic_role": "binder",
           "capture": "features",
+          "kind": "function",
           "features": {
             "category": "verb",
             "copular": true,
             "lemma": "be",
             "predicate": true,
             "semantic_port": "predication"
-          }
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "emphasis",
           "semantic_role": "modifier",
           "capture": "features",
           "optional": true,
+          "kind": "function",
           "features": {
             "category": "emphasis",
             "emphasis": true,
             "nonessential_modifier": true
+          }
+        },
+        {
+          "slot": "evidential",
+          "semantic_role": "scope",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "evidential",
+            "epistemic_stance": "attributed_assessment",
+            "scope_operator": "appearance"
           }
         },
         {
@@ -970,41 +980,143 @@
           "allowed_kinds": [
             "span",
             "unknown"
-          ],
-          "allow_function": true
+          ]
+        },
+        {
+          "slot": "subject",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "features": {
+            "category": "reference",
+            "participant_role": "addressee",
+            "person": "second",
+            "possessive": false
+          },
+          "ports_provided": [
+            "argument:subject"
+          ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "claim",
-        "modality": "actual",
+        "apps": [],
+        "query": null,
+        "directive": null,
+        "describe": null,
         "qualifiers": {
-          "claim_kind": "attributed_open_predication",
           "construction_family": "attributed_open_predication_claim",
-          "epistemic_stance": "user_attributed",
+          "claim_kind": "attributed_open_predication",
+          "subject_ref": {
+            "$capture": "subject"
+          },
           "predicate_surface": {
             "$capture": "predicate_surface"
           },
-          "subject_ref": {
-            "$capture": "subject"
-          }
+          "epistemic_stance": "user_attributed"
         },
-        "query": null
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
-          "predicate",
+          "binder",
           "predicate_content",
           "scope",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "copula",
+          "evidential",
+          "predicate_surface",
+          "subject"
+        ],
+        "role_cardinality": {
+          "binder": 1,
+          "predicate_content": 1,
+          "scope": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "copula",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "evidential",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "predicate_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "evidential",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "emphasis",
+            "after": "predicate_surface",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "evidential",
+            "after": "predicate_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "evidential",
+            "after": "subject",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "predicate_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "attributed_open_predication_claim:reviewed-graph-contract"
       },
       "weight": 1.85,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 3
     },
@@ -1012,6 +1124,16 @@
       "ref": "en:schema:contextual_meaning_query",
       "family": "contextual_meaning_query",
       "steps": [
+        {
+          "slot": "anaphor",
+          "semantic_role": "subject",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "anaphoric": true,
+            "demonstrative": true
+          }
+        },
         {
           "slot": "antecedent",
           "semantic_role": "object",
@@ -1026,19 +1148,10 @@
           ]
         },
         {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "open"
-          }
-        },
-        {
           "slot": "auxiliary",
           "semantic_role": "force",
           "capture": "features",
+          "kind": "function",
           "features": {
             "auxiliary": true,
             "category": "auxiliary",
@@ -1046,73 +1159,79 @@
           }
         },
         {
-          "slot": "anaphor",
-          "semantic_role": "subject",
-          "capture": "features",
-          "features": {
-            "anaphoric": true,
-            "demonstrative": true
-          }
-        },
-        {
           "slot": "predicate",
           "semantic_role": "predicate",
           "capture": "features",
+          "kind": "function",
           "features": {
             "category": "verb",
             "predicate": true,
             "semantic_port": "designation_query"
           }
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "construction_family": "contextual_meaning_query",
-          "learning_operation": "resolve_designation"
-        },
+        "apps": [],
         "query": {
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "anaphoric_bridge": true,
-            "query_kind": "designation_learning"
-          },
           "restrictions": [
             {
+              "operator": "op:designation",
               "args": {
+                "role:target": "?q0",
                 "role:label_type": "?q1",
-                "role:language": {
-                  "$context": "language_literal"
-                },
                 "role:surface": {
                   "$capture": "antecedent"
                 },
-                "role:target": "?q0"
+                "role:language": {
+                  "$context": "language_literal"
+                }
               },
-              "operator": "op:designation",
               "stance": "support"
             }
           ],
           "variables": [
             {
-              "filler_kind": "atom",
               "ref": "?q0",
+              "filler_kind": "atom",
               "role_ref": "role:target"
             },
             {
-              "filler_kind": "label_type",
               "ref": "?q1",
+              "filler_kind": "label_type",
               "role_ref": "role:label_type"
             }
-          ]
-        }
+          ],
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_learning",
+            "anaphoric_bridge": true
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "learning_operation": "resolve_designation",
+          "construction_family": "contextual_meaning_query"
+        },
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
@@ -1120,12 +1239,101 @@
           "object",
           "predicate",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "anaphor",
+          "antecedent",
+          "auxiliary",
+          "predicate",
+          "query"
+        ],
+        "role_cardinality": {
+          "force": 2,
+          "object": 1,
+          "predicate": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "antecedent",
+            "after": "anaphor",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "anaphor",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "anaphor",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "anaphor",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "antecedent",
+            "after": "auxiliary",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "antecedent",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "antecedent",
+            "after": "query",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "auxiliary",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "contextual_meaning_query:reviewed-graph-contract"
       },
       "weight": 1.72,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     },
@@ -1134,6 +1342,42 @@
       "family": "designation_claim",
       "steps": [
         {
+          "slot": "copula",
+          "semantic_role": "binder",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
+        },
+        {
+          "slot": "property",
+          "semantic_role": "predicate_head",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          },
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
           "slot": "target",
           "semantic_role": "subject",
           "capture": "ref",
@@ -1141,28 +1385,10 @@
           "features": {
             "category": "reference",
             "possessive": true
-          }
-        },
-        {
-          "slot": "property",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "property_marker",
-            "property_kind": "designation"
-          }
-        },
-        {
-          "slot": "copula",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "verb",
-            "copular": true,
-            "lemma": "be",
-            "predicate": true,
-            "semantic_port": "predication"
-          }
+          },
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "value",
@@ -1179,55 +1405,116 @@
         }
       ],
       "packet": {
+        "force": "claim",
         "apps": [
           {
+            "operator": "op:designation",
             "args": {
+              "role:target": {
+                "$capture": "target"
+              },
               "role:label_type": {
                 "$feature": "property.property_ref"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
               },
               "role:surface": {
                 "$capture": "value"
               },
-              "role:target": {
-                "$capture": "target"
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
               }
             },
-            "operator": "op:designation",
             "stance": "support"
           }
         ],
-        "describe": null,
+        "query": null,
         "directive": null,
-        "force": "claim",
-        "modality": "actual",
+        "describe": null,
         "qualifiers": {
           "construction_family": "designation_claim"
         },
-        "query": null
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
-          "predicate",
+          "binder",
+          "predicate_head",
           "subject",
           "value"
-        ]
+        ],
+        "required_slots": [
+          "copula",
+          "property",
+          "target",
+          "value"
+        ],
+        "role_cardinality": {
+          "binder": 1,
+          "predicate_head": 1,
+          "subject": 1,
+          "value": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "property",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "target",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "value",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "target",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "property",
+            "after": "value",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "target",
+            "after": "value",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "designation_claim:reviewed-graph-contract"
       },
       "weight": 1.7,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 3
     },
@@ -1239,6 +1526,7 @@
           "slot": "anaphor",
           "semantic_role": "argument",
           "capture": "features",
+          "kind": "function",
           "features": {
             "anaphoric": true,
             "category": "reference",
@@ -1247,15 +1535,39 @@
         },
         {
           "slot": "copula",
-          "semantic_role": "predicate",
+          "semantic_role": "binder",
           "capture": "features",
+          "kind": "function",
           "features": {
             "category": "verb",
             "copular": true,
             "lemma": "be",
             "predicate": true,
             "semantic_port": "predication"
-          }
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
+        },
+        {
+          "slot": "property",
+          "semantic_role": "predicate_head",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          },
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "target",
@@ -1267,52 +1579,46 @@
             "participant_role": "speaker",
             "person": "first",
             "possessive": true
-          }
-        },
-        {
-          "slot": "property",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "property_marker",
-            "property_kind": "designation"
-          }
+          },
+          "ports_provided": [
+            "argument:subject"
+          ]
         }
       ],
       "packet": {
+        "force": "claim",
         "apps": [
           {
+            "operator": "op:designation",
             "args": {
+              "role:target": {
+                "$capture": "target"
+              },
               "role:label_type": {
                 "$feature": "property.property_ref"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
               },
               "role:surface": {
                 "$context": "pending_learning_surface_literal"
               },
-              "role:target": {
-                "$capture": "target"
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
               }
             },
-            "operator": "op:designation",
             "stance": "support"
           }
         ],
-        "describe": null,
+        "query": null,
         "directive": null,
-        "force": "claim",
-        "modality": "actual",
+        "describe": null,
         "qualifiers": {
           "construction_family": "designation_confirmation",
           "consumes_pending_learning": true,
@@ -1320,19 +1626,80 @@
             "$context": "pending_learning_obligation_ref"
           }
         },
-        "query": null
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
           "argument",
-          "predicate",
+          "binder",
+          "predicate_head",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "anaphor",
+          "copula",
+          "property",
+          "target"
+        ],
+        "role_cardinality": {
+          "argument": 1,
+          "binder": 1,
+          "predicate_head": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "anaphor",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "anaphor",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "anaphor",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "target",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "designation_confirmation:reviewed-graph-contract"
       },
       "weight": 1.9,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     },
@@ -1341,26 +1708,68 @@
       "family": "designation_query",
       "steps": [
         {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "open"
-          }
-        },
-        {
           "slot": "copula",
-          "semantic_role": "predicate",
+          "semantic_role": "binder",
           "capture": "features",
+          "optional": true,
+          "kind": "function",
           "features": {
             "category": "verb",
             "copular": true,
             "lemma": "be",
             "predicate": true,
             "semantic_port": "predication"
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
+        },
+        {
+          "slot": "emphasis",
+          "semantic_role": "modifier",
+          "capture": "features",
+          "optional": true,
+          "kind": "function",
+          "features": {
+            "category": "emphasis",
+            "emphasis": true,
+            "focus_only": true
           }
+        },
+        {
+          "slot": "property",
+          "semantic_role": "predicate_head",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          },
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kinds": [
+            "function",
+            "punctuation"
+          ],
+          "features": {
+            "discourse_force": "query"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "target",
@@ -1370,112 +1779,250 @@
           "features": {
             "category": "reference",
             "possessive": true
-          }
-        },
-        {
-          "slot": "emphasis",
-          "semantic_role": "modifier",
-          "capture": "features",
-          "optional": true,
-          "features": {
-            "category": "emphasis",
-            "emphasis": true,
-            "focus_only": true
-          }
-        },
-        {
-          "slot": "property",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "property_marker",
-            "property_kind": "designation"
-          }
+          },
+          "ports_provided": [
+            "argument:subject"
+          ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "construction_family": "designation_query"
-        },
+        "apps": [],
         "query": {
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "property_ref": {
-              "$feature": "property.property_ref"
-            },
-            "query_kind": "designation_property"
-          },
           "restrictions": [
             {
+              "operator": "op:designation",
               "args": {
+                "role:target": {
+                  "$capture": "target"
+                },
                 "role:label_type": {
                   "$feature": "property.property_ref"
                 },
+                "role:surface": "?q0",
                 "role:language": {
                   "$context": "language_literal"
-                },
-                "role:surface": "?q0",
-                "role:target": {
-                  "$capture": "target"
                 }
               },
-              "operator": "op:designation",
               "stance": "support"
             }
           ],
           "variables": [
             {
-              "filler_kind": "literal:text",
               "ref": "?q0",
+              "filler_kind": "literal:text",
               "role_ref": "role:surface"
             }
-          ]
-        }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": {
+              "$feature": "property.property_ref"
+            }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "designation_query"
+        },
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
           "force",
-          "predicate",
+          "predicate_head",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "property",
+          "query",
+          "target"
+        ],
+        "role_cardinality": {
+          "force": 1,
+          "predicate_head": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "copula",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "property",
+            "weight": 0.073333,
+            "evidence_count": 6,
+            "strength": 0.666667
+          },
+          {
+            "before": "query",
+            "after": "copula",
+            "weight": 0.073333,
+            "evidence_count": 6,
+            "strength": 0.666667
+          },
+          {
+            "before": "copula",
+            "after": "target",
+            "weight": 0.073333,
+            "evidence_count": 6,
+            "strength": 0.666667
+          },
+          {
+            "before": "emphasis",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "target",
+            "after": "emphasis",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "property",
+            "weight": 0.054286,
+            "evidence_count": 7,
+            "strength": 0.428571
+          },
+          {
+            "before": "target",
+            "after": "property",
+            "weight": 0.1,
+            "evidence_count": 7,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "target",
+            "weight": 0.054286,
+            "evidence_count": 7,
+            "strength": 0.428571
+          }
+        ],
+        "hard_constraints": [
+          {
+            "kind": "max_distance",
+            "slots": [
+              "target",
+              "property"
+            ],
+            "max_distance": 4
+          }
+        ],
+        "projections": [
+          {
+            "slot": "copula",
+            "source": "constant",
+            "value": {
+              "implicit": true,
+              "copular": true,
+              "semantic_port": "predication"
+            },
+            "features": {
+              "implicit": true,
+              "copular": true,
+              "semantic_port": "predication"
+            },
+            "requires_slots": [
+              "query",
+              "target",
+              "property"
+            ],
+            "ports_provided": [
+              "binder:predication"
+            ],
+            "penalty": 0.16,
+            "reason": "implicit_copular_binding"
+          },
+          {
+            "slot": "target",
+            "source": "context",
+            "context_path": "addressee_ref",
+            "features": {
+              "projected": true,
+              "participant_role": "addressee",
+              "possessive": true
+            },
+            "requires_slots": [
+              "query",
+              "property"
+            ],
+            "ports_provided": [
+              "argument:subject"
+            ],
+            "penalty": 0.24,
+            "reason": "direct_dialogue_addressee_projection"
+          }
+        ],
+        "contract_ref": "en:graph-contract:designation-query:v1"
       },
       "weight": 1.75,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
-      "training_example_count": 5
+      "training_example_count": 7
     },
     {
       "ref": "en:schema:meaning_query",
       "family": "meaning_query",
       "steps": [
         {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "open"
-          }
-        },
-        {
           "slot": "auxiliary",
           "semantic_role": "force",
           "capture": "features",
+          "kind": "function",
           "features": {
             "auxiliary": true,
             "category": "auxiliary",
             "lemma": "do"
           }
+        },
+        {
+          "slot": "predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "verb",
+            "predicate": true,
+            "semantic_port": "designation_query"
+          }
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "surface",
@@ -1488,77 +2035,130 @@
             "anchor",
             "span",
             "unknown"
+          ],
+          "absent_features": [
+            "anaphoric",
+            "demonstrative"
           ]
-        },
-        {
-          "slot": "predicate",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "verb",
-            "predicate": true,
-            "semantic_port": "designation_query"
-          }
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "learning_operation": "resolve_designation"
-        },
+        "apps": [],
         "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "?q0",
+                "role:label_type": "?q1",
+                "role:surface": {
+                  "$capture": "surface"
+                },
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "atom",
+              "role_ref": "role:target"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "label_type",
+              "role_ref": "role:label_type"
+            }
+          ],
           "projection": [
             "?q0",
             "?q1"
           ],
           "qualifiers": {
             "query_kind": "designation_learning"
-          },
-          "restrictions": [
-            {
-              "args": {
-                "role:label_type": "?q1",
-                "role:language": {
-                  "$context": "language_literal"
-                },
-                "role:surface": {
-                  "$capture": "surface"
-                },
-                "role:target": "?q0"
-              },
-              "operator": "op:designation",
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "filler_kind": "atom",
-              "ref": "?q0",
-              "role_ref": "role:target"
-            },
-            {
-              "filler_kind": "label_type",
-              "ref": "?q1",
-              "role_ref": "role:label_type"
-            }
-          ]
-        }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "learning_operation": "resolve_designation"
+        },
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
           "force",
           "object",
           "predicate"
-        ]
+        ],
+        "required_slots": [
+          "auxiliary",
+          "predicate",
+          "query",
+          "surface"
+        ],
+        "role_cardinality": {
+          "force": 2,
+          "object": 1,
+          "predicate": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "auxiliary",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "auxiliary",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "surface",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "surface",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "surface",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "meaning_query:reviewed-graph-contract"
       },
       "weight": 1.7,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     },
@@ -1567,26 +2167,37 @@
       "family": "operational_condition_query",
       "steps": [
         {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "state_summary"
-          }
-        },
-        {
           "slot": "copula",
-          "semantic_role": "predicate",
+          "semantic_role": "binder",
           "capture": "features",
+          "kind": "function",
           "features": {
             "category": "verb",
             "copular": true,
             "lemma": "be",
             "predicate": true,
             "semantic_port": "predication"
-          }
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "state_summary"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "target",
@@ -1595,19 +2206,84 @@
           "kind": "anchor",
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "construction_family": "operational_condition_query"
-        },
+        "apps": [],
         "query": {
+          "restrictions": [
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:dimension": "dim:runtime_process_support",
+                "role:value": "?runtime"
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:dimension": "dim:semantic_runtime_support",
+                "role:value": "?semantic"
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:dimension": "dim:language_realizer_support",
+                "role:value": "?realizer"
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:state",
+              "args": {
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:dimension": "dim:critical_blocker_count",
+                "role:value": "?blockers"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?runtime",
+              "filler_kind": "literal:float",
+              "role_ref": "role:value"
+            },
+            {
+              "ref": "?semantic",
+              "filler_kind": "literal:float",
+              "role_ref": "role:value"
+            },
+            {
+              "ref": "?realizer",
+              "filler_kind": "literal:float",
+              "role_ref": "role:value"
+            },
+            {
+              "ref": "?blockers",
+              "filler_kind": "literal:int",
+              "role_ref": "role:value"
+            }
+          ],
           "projection": [
             "?runtime",
             "?semantic",
@@ -1615,96 +2291,71 @@
             "?blockers"
           ],
           "qualifiers": {
-            "assessment_source": "operational_snapshot",
             "query_kind": "operational_condition_query",
+            "assessment_source": "operational_snapshot",
             "support_dimensions": [
               "dim:runtime_process_support",
               "dim:semantic_runtime_support",
               "dim:language_realizer_support",
               "dim:critical_blocker_count"
             ]
-          },
-          "restrictions": [
-            {
-              "args": {
-                "role:dimension": "dim:runtime_process_support",
-                "role:subject": {
-                  "$capture": "target"
-                },
-                "role:value": "?runtime"
-              },
-              "operator": "op:state",
-              "stance": "support"
-            },
-            {
-              "args": {
-                "role:dimension": "dim:semantic_runtime_support",
-                "role:subject": {
-                  "$capture": "target"
-                },
-                "role:value": "?semantic"
-              },
-              "operator": "op:state",
-              "stance": "support"
-            },
-            {
-              "args": {
-                "role:dimension": "dim:language_realizer_support",
-                "role:subject": {
-                  "$capture": "target"
-                },
-                "role:value": "?realizer"
-              },
-              "operator": "op:state",
-              "stance": "support"
-            },
-            {
-              "args": {
-                "role:dimension": "dim:critical_blocker_count",
-                "role:subject": {
-                  "$capture": "target"
-                },
-                "role:value": "?blockers"
-              },
-              "operator": "op:state",
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "filler_kind": "literal:float",
-              "ref": "?runtime",
-              "role_ref": "role:value"
-            },
-            {
-              "filler_kind": "literal:float",
-              "ref": "?semantic",
-              "role_ref": "role:value"
-            },
-            {
-              "filler_kind": "literal:float",
-              "ref": "?realizer",
-              "role_ref": "role:value"
-            },
-            {
-              "filler_kind": "literal:int",
-              "ref": "?blockers",
-              "role_ref": "role:value"
-            }
-          ]
-        }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "operational_condition_query"
+        },
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
+          "binder",
           "force",
-          "predicate",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "copula",
+          "query",
+          "target"
+        ],
+        "role_cardinality": {
+          "binder": 1,
+          "force": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "query",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "operational_condition_query:reviewed-graph-contract"
       },
       "weight": 1.8,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     },
@@ -1716,29 +2367,11 @@
           "slot": "auxiliary",
           "semantic_role": "force",
           "capture": "features",
+          "kind": "function",
           "features": {
             "auxiliary": true,
             "category": "auxiliary",
             "lemma": "do"
-          }
-        },
-        {
-          "slot": "subject",
-          "semantic_role": "subject",
-          "capture": "ref",
-          "kind": "anchor",
-          "absent_features": [
-            "possessive"
-          ]
-        },
-        {
-          "slot": "predicate",
-          "semantic_role": "predicate",
-          "capture": "features",
-          "features": {
-            "category": "verb",
-            "predicate": true,
-            "semantic_port": "relation_query"
           }
         },
         {
@@ -1753,111 +2386,16 @@
             "span",
             "unknown"
           ]
-        }
-      ],
-      "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
-        "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "construction_family": "relation_query"
-        },
-        "query": {
-          "projection": [],
-          "qualifiers": {
-            "object_surface": {
-              "$capture": "object_surface"
-            },
-            "query_kind": "relation_query",
-            "relation_ref": {
-              "$feature": "predicate.relation_ref"
-            },
-            "subject_ref": {
-              "$capture": "subject"
-            }
-          },
-          "restrictions": [
-            {
-              "args": {
-                "role:label_type": "?q1",
-                "role:language": {
-                  "$context": "language_literal"
-                },
-                "role:surface": {
-                  "$capture": "object_surface"
-                },
-                "role:target": "?q0"
-              },
-              "operator": "op:designation",
-              "stance": "support"
-            },
-            {
-              "args": {
-                "role:object": "?q0",
-                "role:relation": {
-                  "$feature": "predicate.relation_ref"
-                },
-                "role:subject": {
-                  "$capture": "subject"
-                }
-              },
-              "operator": "op:relation",
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "filler_kind": "entity",
-              "ref": "?q0",
-              "role_ref": "role:object"
-            },
-            {
-              "filler_kind": "label_type",
-              "ref": "?q1",
-              "role_ref": "role:label_type"
-            }
-          ]
-        }
-      },
-      "coverage_contract": {
-        "required_semantic_roles": [
-          "force",
-          "object",
-          "predicate",
-          "subject"
-        ]
-      },
-      "weight": 1.8,
-      "ignorable_kinds": [
-        "discourse",
-        "punctuation"
-      ],
-      "training_example_count": 3
-    },
-    {
-      "ref": "en:schema:surface_choice_explanation_query",
-      "family": "surface_choice_explanation_query",
-      "steps": [
-        {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "reason"
-          }
         },
         {
-          "slot": "auxiliary",
-          "semantic_role": "force",
+          "slot": "predicate",
+          "semantic_role": "predicate",
           "capture": "features",
+          "kind": "function",
           "features": {
-            "auxiliary": true,
-            "category": "auxiliary",
-            "lemma": "do"
+            "category": "verb",
+            "predicate": true,
+            "semantic_port": "relation_query"
           }
         },
         {
@@ -1867,17 +2405,176 @@
           "kind": "anchor",
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": "?q0",
+                "role:label_type": "?q1",
+                "role:surface": {
+                  "$capture": "object_surface"
+                },
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:relation",
+              "args": {
+                "role:subject": {
+                  "$capture": "subject"
+                },
+                "role:relation": {
+                  "$feature": "predicate.relation_ref"
+                },
+                "role:object": "?q0"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "entity",
+              "role_ref": "role:object"
+            },
+            {
+              "ref": "?q1",
+              "filler_kind": "label_type",
+              "role_ref": "role:label_type"
+            }
+          ],
+          "projection": [],
+          "qualifiers": {
+            "query_kind": "relation_query",
+            "relation_ref": {
+              "$feature": "predicate.relation_ref"
+            },
+            "object_surface": {
+              "$capture": "object_surface"
+            },
+            "subject_ref": {
+              "$capture": "subject"
+            }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "relation_query"
+        },
+        "modality": "actual"
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "object",
+          "predicate",
+          "subject"
+        ],
+        "required_slots": [
+          "auxiliary",
+          "object_surface",
+          "predicate",
+          "subject"
+        ],
+        "role_cardinality": {
+          "force": 1,
+          "object": 1,
+          "predicate": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "auxiliary",
+            "after": "object_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "subject",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "predicate",
+            "after": "object_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "object_surface",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "predicate",
+            "weight": 0.1,
+            "evidence_count": 3,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "relation_surface_query:reviewed-graph-contract"
+      },
+      "weight": 1.8,
+      "ignorable_kinds": [
+        "discourse"
+      ],
+      "training_example_count": 3
+    },
+    {
+      "ref": "en:schema:surface_choice_explanation_query",
+      "family": "surface_choice_explanation_query",
+      "steps": [
+        {
+          "slot": "adposition",
+          "semantic_role": "scope",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "adposition",
+            "modifier": true
+          }
         },
         {
-          "slot": "speech_predicate",
-          "semantic_role": "predicate",
+          "slot": "auxiliary",
+          "semantic_role": "force",
           "capture": "features",
+          "kind": "function",
           "features": {
-            "category": "verb",
-            "lemma": "say",
-            "predicate": true,
-            "semantic_port": "speech"
+            "auxiliary": true,
+            "category": "auxiliary",
+            "lemma": "do"
           }
         },
         {
@@ -1898,24 +2595,6 @@
           }
         },
         {
-          "slot": "contrast",
-          "semantic_role": "scope",
-          "capture": "features",
-          "features": {
-            "category": "contrast",
-            "scope_operator": "contrast"
-          }
-        },
-        {
-          "slot": "adposition",
-          "semantic_role": "scope",
-          "capture": "features",
-          "features": {
-            "category": "adposition",
-            "modifier": true
-          }
-        },
-        {
           "slot": "choice_b",
           "semantic_role": "object_alternative",
           "capture": "literal:text",
@@ -1931,14 +2610,62 @@
               "span_type": "quoted"
             }
           }
+        },
+        {
+          "slot": "contrast",
+          "semantic_role": "scope",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "contrast",
+            "scope_operator": "contrast"
+          }
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "reason"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
+        },
+        {
+          "slot": "speech_predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "verb",
+            "lemma": "say",
+            "predicate": true,
+            "semantic_port": "speech"
+          }
+        },
+        {
+          "slot": "subject",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "absent_features": [
+            "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
+          ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "description_request",
-        "modality": "actual",
+        "apps": [],
+        "query": null,
+        "directive": null,
+        "describe": null,
         "qualifiers": {
           "construction_family": "surface_choice_explanation_query",
           "discourse_operation": "explain_surface_choice",
@@ -1952,7 +2679,7 @@
             "$context": "last_surface_decision_ref"
           }
         },
-        "query": null
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
@@ -1962,12 +2689,232 @@
           "predicate",
           "scope",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "adposition",
+          "auxiliary",
+          "choice_a",
+          "choice_b",
+          "contrast",
+          "query",
+          "speech_predicate",
+          "subject"
+        ],
+        "role_cardinality": {
+          "force": 2,
+          "object": 1,
+          "object_alternative": 1,
+          "predicate": 1,
+          "scope": 2,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "auxiliary",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "choice_a",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "adposition",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "contrast",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "speech_predicate",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "adposition",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "choice_a",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "contrast",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "auxiliary",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "speech_predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "auxiliary",
+            "after": "subject",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "choice_a",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "choice_a",
+            "after": "contrast",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "choice_a",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "speech_predicate",
+            "after": "choice_a",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "choice_a",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "contrast",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "speech_predicate",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "choice_b",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "contrast",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "speech_predicate",
+            "after": "contrast",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "contrast",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "speech_predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "subject",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "subject",
+            "after": "speech_predicate",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "surface_choice_explanation_query:reviewed-graph-contract"
       },
       "weight": 1.95,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     },
@@ -1976,26 +2923,37 @@
       "family": "type_query",
       "steps": [
         {
-          "slot": "query",
-          "semantic_role": "force",
-          "capture": "features",
-          "features": {
-            "category": "interrogative",
-            "discourse_force": "query",
-            "question_domain": "open"
-          }
-        },
-        {
           "slot": "copula",
-          "semantic_role": "predicate",
+          "semantic_role": "binder",
           "capture": "features",
+          "kind": "function",
           "features": {
             "category": "verb",
             "copular": true,
             "lemma": "be",
             "predicate": true,
             "semantic_port": "predication"
-          }
+          },
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "kind": "function",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "target",
@@ -2004,294 +2962,291 @@
           "kind": "anchor",
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
       "packet": {
-        "apps": [],
-        "describe": null,
-        "directive": null,
         "force": "query",
-        "modality": "actual",
-        "qualifiers": {
-          "construction_family": "type_query"
-        },
+        "apps": [],
         "query": {
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          },
           "restrictions": [
             {
+              "operator": "op:type",
               "args": {
-                "role:class": "?q0",
                 "role:instance": {
                   "$capture": "target"
-                }
+                },
+                "role:class": "?q0"
               },
-              "operator": "op:type",
               "stance": "support"
             }
           ],
           "variables": [
             {
-              "filler_kind": "concept",
               "ref": "?q0",
+              "filler_kind": "concept",
               "role_ref": "role:class"
             }
-          ]
-        }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "type_query"
+        },
+        "modality": "actual"
       },
       "coverage_contract": {
         "required_semantic_roles": [
+          "binder",
           "force",
-          "predicate",
           "subject"
-        ]
+        ],
+        "required_slots": [
+          "copula",
+          "query",
+          "target"
+        ],
+        "role_cardinality": {
+          "binder": 1,
+          "force": 1,
+          "subject": 1
+        }
+      },
+      "graph_contract": {
+        "order_preferences": [
+          {
+            "before": "query",
+            "after": "copula",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "copula",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          },
+          {
+            "before": "query",
+            "after": "target",
+            "weight": 0.1,
+            "evidence_count": 2,
+            "strength": 1.0
+          }
+        ],
+        "hard_constraints": [],
+        "projections": [],
+        "contract_ref": "type_query:reviewed-graph-contract"
       },
       "weight": 1.55,
       "ignorable_kinds": [
-        "discourse",
-        "punctuation"
+        "discourse"
       ],
       "training_example_count": 2
     }
   ],
   "training_receipt": {
-    "receipt_version": 5,
-    "feature_algebra_version": 5,
-    "source_sha256": "f45a5609ea6462aa71aaa2d2662925fedb718552a5746d3845dbb90ef1a970e3",
-    "generator_sha256": "7f7c94e8a2b0661d2ffe3bbfb5b9193d4401d91567813884f15189c355290e7d",
-    "example_count": 26,
+    "receipt_version": 6,
+    "feature_algebra_version": 6,
+    "source_sha256": "57d631302a6d21cb2c92a3d51d556f84495dfa935de2312393192d781a3fc494",
+    "generator_sha256": "42fe3753bd8e40ba24ba7d391a69fd8030e557f8e42498e7722387a593bbbc40",
+    "example_count": 28,
     "family_count": 10,
     "schema_hashes": {
-      "en:schema:attributed_open_predication_claim": "4e5bfca09d2d3607c782cf7b56bbacbacdcb40379c21807ea704ce5d75554e6a",
-      "en:schema:contextual_meaning_query": "2ce70061d9ea4ed304dc39a548adbf00cdfa1980678eb9432d0e0903e1091644",
-      "en:schema:designation_claim": "fe3e2f5e5abe90f73cbafd501910295a472084111898d80e30dbd72eb9219d96",
-      "en:schema:designation_confirmation": "58a7ec72bf1c4d57e1c846280efdd12b4bda94d075a80b56200e9af3d8cf5e3c",
-      "en:schema:designation_query": "14178bb7c3a14cd5915902c3dced7dc881d3765b17cde0c5f27440c5821efb9e",
-      "en:schema:meaning_query": "7c97f42d0d77a2d45b162228b5fecaa572891e1b33230de0bf0f70f32d165fbf",
-      "en:schema:operational_condition_query": "9e43b4fdcfeba6c455eb6908c3deeb6f6362432dd7ec91130b4de1d1afb59e51",
-      "en:schema:relation_surface_query": "270c37fdc690565ecfca4d28036b2c8ec565f8ab9520345bea6d3905f446a153",
-      "en:schema:surface_choice_explanation_query": "dfd403d650b1141f3b42b7ae7a9c01f04e24f343f641838564562ff3560e07a7",
-      "en:schema:type_query": "c3f4043815e7d0c6c575e301be087226be1d327d86308b7e5ad1835d5f29d160"
+      "en:schema:attributed_open_predication_claim": "c381a88fbcb88834575a825b403428cbed2ad1313500f3771f2c4b404a454485",
+      "en:schema:contextual_meaning_query": "8a08f72d77ff6b64ee1ce6204a33b5a89a426f87570bd57db69a36bed0b803d6",
+      "en:schema:designation_claim": "927f0c90281d4c4a061306dc922081c87e95a279388f37a840a8c7faea3dea2f",
+      "en:schema:designation_confirmation": "414121d7203469b7e3ce9a8248178a7af676a63362aeb22fa2084d1175157c70",
+      "en:schema:designation_query": "fe3347f904bfb87fe075c84940404dfb8133656a822b06fb87b60a38eb982d74",
+      "en:schema:meaning_query": "0d8028dd0ae712042668a2a1b32624f600d7e4349f1cfccc78fa1895dfc8c105",
+      "en:schema:operational_condition_query": "9205b17ab4a462dddbbf9e9f65a70538f8065462df03324d411153feeeaf189f",
+      "en:schema:relation_surface_query": "c53c1500310d901c2142c4ea4e986b4010b131252d80bc61f9b019cdbaf533df",
+      "en:schema:surface_choice_explanation_query": "ece34d5582102fca2752588f45764e01eab3b4752d3cda4d21b017d4e0e67d1c",
+      "en:schema:type_query": "993605ce33c57cf13527518b82e54c65951d5e28c8be3bc60a04e92bff146618"
     },
     "surface_matcher_key_count": 0,
     "regex_condition_count": 0,
-    "anti_unified_family_count": 10,
-    "required_span_providers": [
-      "named_entity_proposal",
-      "quoted_span"
-    ],
+    "graph_matcher": true,
+    "total_order_matcher": false,
     "positive_replay": [
       {
         "example_index": 0,
         "family": "designation_claim",
-        "unit_signature": "ccaa6d4c8acd35249f293b912bab499a9209484231bb650f0c00aeaa9dcb56f9",
-        "match_ref": "atomic-schema-match:9fa65cc13b3c83294a0d28a9",
-        "coverage_ref": "interpretation-coverage:633fa0cdc04c8cac836b3ac3",
+        "match_ref": "atomic-graph-match:0c93b8ed581839ec93f37d26",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 1,
         "family": "designation_claim",
-        "unit_signature": "6ab9eb1621d1dd5754d647ae6ad26ea8331f81d6bbf4429484f016244472bf32",
-        "match_ref": "atomic-schema-match:dc9ecae12dda22a2e40eb738",
-        "coverage_ref": "interpretation-coverage:128d11348cd81ab5717c6bbf",
+        "match_ref": "atomic-graph-match:6d3a86761ec11dd9b2841a3b",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 2,
         "family": "designation_query",
-        "unit_signature": "e5e43acbb632b806130b49dbdfbf719f003ef3c9ab77810f5a059c8b5b9c933b",
-        "match_ref": "atomic-schema-match:dcfdc5ae8eaf7f09734482dc",
-        "coverage_ref": "interpretation-coverage:50255e22f7c0645003a8fbd0",
+        "match_ref": "atomic-graph-match:65d55b4be978966421f5e216",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 3,
         "family": "designation_query",
-        "unit_signature": "5dc8115f4aa190a72a83528c1b88773b206b50ab422372df7f2b4ad6767f02ee",
-        "match_ref": "atomic-schema-match:e98f52be3b4410792c19c393",
-        "coverage_ref": "interpretation-coverage:71cb2073ba59ad29b02be3fe",
+        "match_ref": "atomic-graph-match:f8d8722451ad243988e49fba",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 4,
         "family": "operational_condition_query",
-        "unit_signature": "8f4f65e0804a5e2018c14eced8a2c04cc81f49234b4c73f159ff82d7b3ebc1ae",
-        "match_ref": "atomic-schema-match:a6c324d538a61aa48725d21b",
-        "coverage_ref": "interpretation-coverage:3086681ca677245e50ccc0a1",
+        "match_ref": "atomic-graph-match:3a6507a2dd07b7a7095ba68f",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 5,
         "family": "operational_condition_query",
-        "unit_signature": "435dc7a721371e5c89ef659bc332fb06da80266fc9e445a824fc0313678cdfc7",
-        "match_ref": "atomic-schema-match:5bd691be4cad7899fc48ceef",
-        "coverage_ref": "interpretation-coverage:35146c9ced74e175e1784adf",
+        "match_ref": "atomic-graph-match:3a6507a2dd07b7a7095ba68f",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 6,
         "family": "type_query",
-        "unit_signature": "4d22906992bae71e87e7ae57f661d9c19b48260817ed0a33cdb7ef133bcf73e9",
-        "match_ref": "atomic-schema-match:427a2dce4af52923ebf78213",
-        "coverage_ref": "interpretation-coverage:ee846b83d1fb60aa6ebf6a04",
+        "match_ref": "atomic-graph-match:7d5ffdda2f3418898c1ec61f",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 7,
         "family": "type_query",
-        "unit_signature": "5c5bc02696b7bf61b497abe9eea045ebea1e017ea724d7bbc2d13ac5bff104d0",
-        "match_ref": "atomic-schema-match:76c994e49a37aefec7e15b8e",
-        "coverage_ref": "interpretation-coverage:254ddcfc6d563f05d0e94bdb",
+        "match_ref": "atomic-graph-match:7d5ffdda2f3418898c1ec61f",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 8,
         "family": "relation_surface_query",
-        "unit_signature": "9265262310394db1422b3c7bde90696299a427b133edb7436055a665d3267baa",
-        "match_ref": "atomic-schema-match:d6b9b70c0ac4a10e960bce84",
-        "coverage_ref": "interpretation-coverage:234530f7805576edc2b0755b",
+        "match_ref": "atomic-graph-match:7b980e71fa9794d247a4f698",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 9,
         "family": "relation_surface_query",
-        "unit_signature": "417335f0f4ebc63876996262a2ce6a1b839df7833bd52af4082504e29c96fa49",
-        "match_ref": "atomic-schema-match:22c2c6da42f8ecd6a34c4f7d",
-        "coverage_ref": "interpretation-coverage:0f0ceeff481bba9740977a4a",
+        "match_ref": "atomic-graph-match:ef1412443923a6eb840419d1",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 10,
         "family": "meaning_query",
-        "unit_signature": "930c9c9d851130ef6da09b6a7f3e7d45b0fc8dc2a298fc215f273d730672764e",
-        "match_ref": "atomic-schema-match:c0907e10bef92463fd159c6c",
-        "coverage_ref": "interpretation-coverage:7b2bf2943aaf66a2fc503f07",
+        "match_ref": "atomic-graph-match:ae02ce04e36dbe477b5ac494",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 11,
         "family": "designation_confirmation",
-        "unit_signature": "5ecbeaebe8616d49dc775ff88d86e5e58646134533557845f644b4deb382c12c",
-        "match_ref": "atomic-schema-match:75471c1d81215ec0aa565e31",
-        "coverage_ref": "interpretation-coverage:7a68c928df52fcd171d0cae2",
+        "match_ref": "atomic-graph-match:03cb723a33c71d6e76bd3857",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 12,
         "family": "relation_surface_query",
-        "unit_signature": "7df0f3e61013fba9b3dc6b48ac4e75ced5690baf27c81cd41d98c9d6016437c4",
-        "match_ref": "atomic-schema-match:1ab3933e6b208adc50f04e3b",
-        "coverage_ref": "interpretation-coverage:1fba539fb9573974cbed4a31",
+        "match_ref": "atomic-graph-match:bd01a13f3a68fe6cbfe32716",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 13,
         "family": "meaning_query",
-        "unit_signature": "b5f6086daa52cd8615cbf0ff5979123345697db2273d331ac97f9ecef0442c2d",
-        "match_ref": "atomic-schema-match:9d6a884faf35e96e390ea25a",
-        "coverage_ref": "interpretation-coverage:64222c3ae9c51ed6f45ae052",
+        "match_ref": "atomic-graph-match:ae02ce04e36dbe477b5ac494",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 14,
         "family": "designation_claim",
-        "unit_signature": "386dba39540d4bc734d90fb1dce05600b016b0560fac5a7926ad8c4e916b9c98",
-        "match_ref": "atomic-schema-match:0272d24773e9654213ab0271",
-        "coverage_ref": "interpretation-coverage:2e748e94f025185fb491222f",
+        "match_ref": "atomic-graph-match:517d1fbdfefdcccfadcea55c",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 15,
         "family": "designation_query",
-        "unit_signature": "11edf96bf81777302c0d5f12b1def0538946a66a37a04751d56de4a8da5f2614",
-        "match_ref": "atomic-schema-match:f7c984291d301fa0ae27d3a6",
-        "coverage_ref": "interpretation-coverage:c663e6f5ec6d375f48dc1e8b",
+        "match_ref": "atomic-graph-match:65d55b4be978966421f5e216",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 16,
         "family": "designation_confirmation",
-        "unit_signature": "9bfd30c9cb01f7650b578bfac267b5cb714a6958b27126b69800e8e759d49158",
-        "match_ref": "atomic-schema-match:19678ae2eb04004c9071d9e9",
-        "coverage_ref": "interpretation-coverage:415d5c28801cd24b384a1dee",
+        "match_ref": "atomic-graph-match:03cb723a33c71d6e76bd3857",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "unit_signature": "c3ee84f3d41553a26911f72d8518d6e3c73d2b99ec2d86a550b97ede3e7b983e",
-        "match_ref": "atomic-schema-match:86565739dee70956e881d47b",
-        "coverage_ref": "interpretation-coverage:beb03161ea6aca254bc1d0fc",
+        "match_ref": "atomic-graph-match:107f3888543038c38bfbafff",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "unit_signature": "b2c64c239936b79f7a037ae3e6b4ea55f091aeb5a08c9878174e472f0984cb3d",
-        "match_ref": "atomic-schema-match:0c816ce8f5592b7a466761a3",
-        "coverage_ref": "interpretation-coverage:29d0c6be698efbac54d13c71",
+        "match_ref": "atomic-graph-match:e2a9cbaa681f3237c1824db4",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 19,
         "family": "attributed_open_predication_claim",
-        "unit_signature": "0db7118fa0a4236dcb516f8b58ff12c362dc512613df74cc1b8918f6d26356ba",
-        "match_ref": "atomic-schema-match:eeedaa46ca1ec6779e79e0ce",
-        "coverage_ref": "interpretation-coverage:03b5da0360ba3caa12df0064",
+        "match_ref": "atomic-graph-match:546baabcb055e2d47c0c9263",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 20,
         "family": "attributed_open_predication_claim",
-        "unit_signature": "b7e81ae233f43fde46f49bb1c67196d6a7152cd1f259272bf2137f30cded3275",
-        "match_ref": "atomic-schema-match:c9d99fe1e8f5c2c61eb88208",
-        "coverage_ref": "interpretation-coverage:5ec0a8eb9fc26433ff95a184",
+        "match_ref": "atomic-graph-match:65d2e4dfe5722d5fab886115",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 21,
         "family": "designation_query",
-        "unit_signature": "dce9581c31bef52733f808caf130de3b51ec649b6dcf104e62da6b1df6ef5a47",
-        "match_ref": "atomic-schema-match:b4e3c8b99c46b155af257dc1",
-        "coverage_ref": "interpretation-coverage:780087e16cb5ee189c79cc04",
+        "match_ref": "atomic-graph-match:f8d8722451ad243988e49fba",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 22,
         "family": "attributed_open_predication_claim",
-        "unit_signature": "d7bdfb2fc1382c2950d5908a9852574a3a37e695c12aed79a2b514f3de80abe0",
-        "match_ref": "atomic-schema-match:8c233b607ccb1879fc21f138",
-        "coverage_ref": "interpretation-coverage:d49eafb3813484dd88d21062",
+        "match_ref": "atomic-graph-match:36d58eb7b318f9d2852f8924",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 23,
         "family": "designation_query",
-        "unit_signature": "d8647af876392fa4770dca227e5c0367f92b329a7491c0035ec96937ab974be3",
-        "match_ref": "atomic-schema-match:85262faf48e42ab16fcaca8a",
-        "coverage_ref": "interpretation-coverage:3067b71e0da6fd8d6e1e804b",
+        "match_ref": "atomic-graph-match:65d55b4be978966421f5e216",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 24,
         "family": "contextual_meaning_query",
-        "unit_signature": "5fe1fc9747a8441b673a0521b6d2e02cb19423596a8c1c06c1721bd134f61901",
-        "match_ref": "atomic-schema-match:550fad24106ec2454c419d7a",
-        "coverage_ref": "interpretation-coverage:a81ee58f83a97dbf4429339a",
+        "match_ref": "atomic-graph-match:6d78b6ce687b8f119ba7cdfb",
         "weighted_coverage": 1.0
       },
       {
         "example_index": 25,
         "family": "contextual_meaning_query",
-        "unit_signature": "a2a015b0c7a0dc0a5885658e1e67e6ea9bbb8ccff4988cd17fb916b28902b7c2",
-        "match_ref": "atomic-schema-match:8b441081adcf993a050e6c5d",
-        "coverage_ref": "interpretation-coverage:f354c1e447ed196493e2c331",
+        "match_ref": "atomic-graph-match:111230a6a3abda259d1eba59",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 26,
+        "family": "designation_query",
+        "match_ref": "atomic-graph-match:7ff9db9ee44318516ff88caf",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 27,
+        "family": "designation_query",
+        "match_ref": "atomic-graph-match:75a14cb7fb6cf10fa4e60d74",
         "weighted_coverage": 1.0
       }
     ],
@@ -2301,870 +3256,873 @@
         "intended_family": "designation_claim",
         "executable_families": [
           "designation_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 1,
         "intended_family": "designation_claim",
         "executable_families": [
           "designation_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 2,
         "intended_family": "designation_query",
         "executable_families": [
           "designation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 3,
         "intended_family": "designation_query",
         "executable_families": [
           "designation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 4,
         "intended_family": "operational_condition_query",
         "executable_families": [
           "operational_condition_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 5,
         "intended_family": "operational_condition_query",
         "executable_families": [
           "operational_condition_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 6,
         "intended_family": "type_query",
         "executable_families": [
           "type_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 7,
         "intended_family": "type_query",
         "executable_families": [
           "type_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 8,
         "intended_family": "relation_surface_query",
         "executable_families": [
           "relation_surface_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 9,
         "intended_family": "relation_surface_query",
         "executable_families": [
           "relation_surface_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 10,
         "intended_family": "meaning_query",
         "executable_families": [
           "meaning_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 11,
         "intended_family": "designation_confirmation",
         "executable_families": [
           "designation_confirmation"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 12,
         "intended_family": "relation_surface_query",
         "executable_families": [
           "relation_surface_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 13,
         "intended_family": "meaning_query",
         "executable_families": [
           "meaning_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 14,
         "intended_family": "designation_claim",
         "executable_families": [
           "designation_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 15,
         "intended_family": "designation_query",
         "executable_families": [
           "designation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 16,
         "intended_family": "designation_confirmation",
         "executable_families": [
           "designation_confirmation"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 17,
         "intended_family": "surface_choice_explanation_query",
         "executable_families": [
           "surface_choice_explanation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 18,
         "intended_family": "surface_choice_explanation_query",
         "executable_families": [
           "surface_choice_explanation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 19,
         "intended_family": "attributed_open_predication_claim",
         "executable_families": [
           "attributed_open_predication_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 20,
         "intended_family": "attributed_open_predication_claim",
         "executable_families": [
           "attributed_open_predication_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 21,
         "intended_family": "designation_query",
         "executable_families": [
           "designation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 22,
         "intended_family": "attributed_open_predication_claim",
         "executable_families": [
           "attributed_open_predication_claim"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 23,
         "intended_family": "designation_query",
         "executable_families": [
           "designation_query"
-        ],
-        "executable_match_count": 1
+        ]
       },
       {
         "example_index": 24,
         "intended_family": "contextual_meaning_query",
         "executable_families": [
-          "contextual_meaning_query"
-        ],
-        "executable_match_count": 1
+          "contextual_meaning_query",
+          "meaning_query"
+        ]
       },
       {
         "example_index": 25,
         "intended_family": "contextual_meaning_query",
         "executable_families": [
-          "contextual_meaning_query"
-        ],
-        "executable_match_count": 1
+          "contextual_meaning_query",
+          "meaning_query"
+        ]
+      },
+      {
+        "example_index": 26,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ]
+      },
+      {
+        "example_index": 27,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ]
       }
     ],
     "critical_slot_mutations": [
       {
         "example_index": 0,
         "family": "designation_claim",
-        "semantic_role": "subject",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 0,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 0,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 0,
         "family": "designation_claim",
-        "semantic_role": "value",
+        "slot": "value",
         "blocked": true
       },
       {
         "example_index": 1,
         "family": "designation_claim",
-        "semantic_role": "subject",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 1,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 1,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 1,
         "family": "designation_claim",
-        "semantic_role": "value",
+        "slot": "value",
         "blocked": true
       },
       {
         "example_index": 2,
         "family": "designation_query",
-        "semantic_role": "force",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 2,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 2,
         "family": "designation_query",
-        "semantic_role": "subject",
-        "blocked": true
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
       },
       {
-        "example_index": 2,
+        "example_index": 3,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 3,
         "family": "designation_query",
-        "semantic_role": "force",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 3,
         "family": "designation_query",
-        "semantic_role": "predicate",
-        "blocked": true
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
       },
       {
-        "example_index": 3,
-        "family": "designation_query",
-        "semantic_role": "subject",
-        "blocked": true
-      },
-      {
-        "example_index": 3,
-        "family": "designation_query",
-        "semantic_role": "predicate",
+        "example_index": 4,
+        "family": "operational_condition_query",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 4,
         "family": "operational_condition_query",
-        "semantic_role": "force",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 4,
         "family": "operational_condition_query",
-        "semantic_role": "predicate",
-        "blocked": true
-      },
-      {
-        "example_index": 4,
-        "family": "operational_condition_query",
-        "semantic_role": "subject",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 5,
         "family": "operational_condition_query",
-        "semantic_role": "force",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 5,
         "family": "operational_condition_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 5,
         "family": "operational_condition_query",
-        "semantic_role": "subject",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 6,
         "family": "type_query",
-        "semantic_role": "force",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 6,
         "family": "type_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 6,
         "family": "type_query",
-        "semantic_role": "subject",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 7,
         "family": "type_query",
-        "semantic_role": "force",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 7,
         "family": "type_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 7,
         "family": "type_query",
-        "semantic_role": "subject",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 8,
         "family": "relation_surface_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 8,
         "family": "relation_surface_query",
-        "semantic_role": "subject",
+        "slot": "object_surface",
         "blocked": true
       },
       {
         "example_index": 8,
         "family": "relation_surface_query",
-        "semantic_role": "predicate",
+        "slot": "predicate",
         "blocked": true
       },
       {
         "example_index": 8,
         "family": "relation_surface_query",
-        "semantic_role": "object",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 9,
         "family": "relation_surface_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 9,
         "family": "relation_surface_query",
-        "semantic_role": "subject",
+        "slot": "object_surface",
         "blocked": true
       },
       {
         "example_index": 9,
         "family": "relation_surface_query",
-        "semantic_role": "predicate",
+        "slot": "predicate",
         "blocked": true
       },
       {
         "example_index": 9,
         "family": "relation_surface_query",
-        "semantic_role": "object",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 10,
         "family": "meaning_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 10,
         "family": "meaning_query",
-        "semantic_role": "force",
+        "slot": "predicate",
         "blocked": true
       },
       {
         "example_index": 10,
         "family": "meaning_query",
-        "semantic_role": "object",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 10,
         "family": "meaning_query",
-        "semantic_role": "predicate",
+        "slot": "surface",
         "blocked": true
       },
       {
         "example_index": 11,
         "family": "designation_confirmation",
-        "semantic_role": "argument",
+        "slot": "anaphor",
         "blocked": true
       },
       {
         "example_index": 11,
         "family": "designation_confirmation",
-        "semantic_role": "predicate",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 11,
         "family": "designation_confirmation",
-        "semantic_role": "subject",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 11,
         "family": "designation_confirmation",
-        "semantic_role": "predicate",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 12,
         "family": "relation_surface_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 12,
         "family": "relation_surface_query",
-        "semantic_role": "subject",
+        "slot": "object_surface",
         "blocked": true
       },
       {
         "example_index": 12,
         "family": "relation_surface_query",
-        "semantic_role": "predicate",
+        "slot": "predicate",
         "blocked": true
       },
       {
         "example_index": 12,
         "family": "relation_surface_query",
-        "semantic_role": "object",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 13,
         "family": "meaning_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 13,
         "family": "meaning_query",
-        "semantic_role": "force",
+        "slot": "predicate",
         "blocked": true
       },
       {
         "example_index": 13,
         "family": "meaning_query",
-        "semantic_role": "object",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 13,
         "family": "meaning_query",
-        "semantic_role": "predicate",
+        "slot": "surface",
         "blocked": true
       },
       {
         "example_index": 14,
         "family": "designation_claim",
-        "semantic_role": "subject",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 14,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 14,
         "family": "designation_claim",
-        "semantic_role": "predicate",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 14,
         "family": "designation_claim",
-        "semantic_role": "value",
+        "slot": "value",
         "blocked": true
       },
       {
         "example_index": 15,
         "family": "designation_query",
-        "semantic_role": "force",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 15,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 15,
         "family": "designation_query",
-        "semantic_role": "subject",
-        "blocked": true
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
       },
       {
-        "example_index": 15,
-        "family": "designation_query",
-        "semantic_role": "predicate",
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "slot": "anaphor",
         "blocked": true
       },
       {
         "example_index": 16,
         "family": "designation_confirmation",
-        "semantic_role": "argument",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 16,
         "family": "designation_confirmation",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 16,
         "family": "designation_confirmation",
-        "semantic_role": "subject",
-        "blocked": true
-      },
-      {
-        "example_index": 16,
-        "family": "designation_confirmation",
-        "semantic_role": "predicate",
+        "slot": "target",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "force",
+        "slot": "adposition",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "subject",
+        "slot": "choice_a",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "predicate",
+        "slot": "choice_b",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "object",
+        "slot": "contrast",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "scope",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "scope",
+        "slot": "speech_predicate",
         "blocked": true
       },
       {
         "example_index": 17,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "object_alternative",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "force",
+        "slot": "adposition",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "force",
+        "slot": "auxiliary",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "subject",
+        "slot": "choice_a",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "predicate",
+        "slot": "choice_b",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "object",
+        "slot": "contrast",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "scope",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "scope",
+        "slot": "speech_predicate",
         "blocked": true
       },
       {
         "example_index": 18,
         "family": "surface_choice_explanation_query",
-        "semantic_role": "object_alternative",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 19,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "scope",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 19,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "subject",
+        "slot": "evidential",
         "blocked": true
       },
       {
         "example_index": 19,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate",
+        "slot": "predicate_surface",
         "blocked": true
       },
       {
         "example_index": 19,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate_content",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 20,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "scope",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 20,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "subject",
+        "slot": "evidential",
         "blocked": true
       },
       {
         "example_index": 20,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate",
+        "slot": "predicate_surface",
         "blocked": true
       },
       {
         "example_index": 20,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate_content",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 21,
         "family": "designation_query",
-        "semantic_role": "force",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 21,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 21,
         "family": "designation_query",
-        "semantic_role": "subject",
-        "blocked": true
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
       },
       {
-        "example_index": 21,
-        "family": "designation_query",
-        "semantic_role": "predicate",
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "slot": "copula",
         "blocked": true
       },
       {
         "example_index": 22,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "scope",
+        "slot": "evidential",
         "blocked": true
       },
       {
         "example_index": 22,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "subject",
+        "slot": "predicate_surface",
         "blocked": true
       },
       {
         "example_index": 22,
         "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate",
-        "blocked": true
-      },
-      {
-        "example_index": 22,
-        "family": "attributed_open_predication_claim",
-        "semantic_role": "predicate_content",
+        "slot": "subject",
         "blocked": true
       },
       {
         "example_index": 23,
         "family": "designation_query",
-        "semantic_role": "force",
+        "slot": "property",
         "blocked": true
       },
       {
         "example_index": 23,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "query",
         "blocked": true
       },
       {
         "example_index": 23,
         "family": "designation_query",
-        "semantic_role": "subject",
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "slot": "anaphor",
         "blocked": true
       },
       {
-        "example_index": 23,
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "slot": "antecedent",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "slot": "auxiliary",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "slot": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "slot": "query",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "slot": "anaphor",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "slot": "antecedent",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "slot": "auxiliary",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "slot": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "slot": "query",
+        "blocked": true
+      },
+      {
+        "example_index": 26,
         "family": "designation_query",
-        "semantic_role": "predicate",
+        "slot": "property",
         "blocked": true
       },
       {
-        "example_index": 24,
-        "family": "contextual_meaning_query",
-        "semantic_role": "object",
+        "example_index": 26,
+        "family": "designation_query",
+        "slot": "query",
         "blocked": true
       },
       {
-        "example_index": 24,
-        "family": "contextual_meaning_query",
-        "semantic_role": "force",
+        "example_index": 26,
+        "family": "designation_query",
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
+      },
+      {
+        "example_index": 27,
+        "family": "designation_query",
+        "slot": "property",
         "blocked": true
       },
       {
-        "example_index": 24,
-        "family": "contextual_meaning_query",
-        "semantic_role": "force",
+        "example_index": 27,
+        "family": "designation_query",
+        "slot": "query",
         "blocked": true
       },
       {
-        "example_index": 24,
-        "family": "contextual_meaning_query",
-        "semantic_role": "subject",
-        "blocked": true
-      },
-      {
-        "example_index": 24,
-        "family": "contextual_meaning_query",
-        "semantic_role": "predicate",
-        "blocked": true
-      },
-      {
-        "example_index": 25,
-        "family": "contextual_meaning_query",
-        "semantic_role": "object",
-        "blocked": true
-      },
-      {
-        "example_index": 25,
-        "family": "contextual_meaning_query",
-        "semantic_role": "force",
-        "blocked": true
-      },
-      {
-        "example_index": 25,
-        "family": "contextual_meaning_query",
-        "semantic_role": "force",
-        "blocked": true
-      },
-      {
-        "example_index": 25,
-        "family": "contextual_meaning_query",
-        "semantic_role": "subject",
-        "blocked": true
-      },
-      {
-        "example_index": 25,
-        "family": "contextual_meaning_query",
-        "semantic_role": "predicate",
-        "blocked": true
+        "example_index": 27,
+        "family": "designation_query",
+        "slot": "target",
+        "blocked": true,
+        "via_prerequisite": "query"
       }
     ],
     "family_holdouts": [
@@ -3172,208 +4130,210 @@
         "family": "attributed_open_predication_claim",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:03b5da0360ba3caa12df0064",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "attributed_open_predication_claim",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:5ec0a8eb9fc26433ff95a184",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "attributed_open_predication_claim",
         "holdout_index": 2,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:d49eafb3813484dd88d21062",
         "executable_match_count": 1
       },
       {
         "family": "contextual_meaning_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:a81ee58f83a97dbf4429339a",
         "executable_match_count": 1
       },
       {
         "family": "contextual_meaning_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:f354c1e447ed196493e2c331",
         "executable_match_count": 1
       },
       {
         "family": "designation_claim",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:633fa0cdc04c8cac836b3ac3",
         "executable_match_count": 1
       },
       {
         "family": "designation_claim",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:128d11348cd81ab5717c6bbf",
         "executable_match_count": 1
       },
       {
         "family": "designation_claim",
         "holdout_index": 2,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:2e748e94f025185fb491222f",
         "executable_match_count": 1
       },
       {
         "family": "designation_confirmation",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:7a68c928df52fcd171d0cae2",
         "executable_match_count": 1
       },
       {
         "family": "designation_confirmation",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:415d5c28801cd24b384a1dee",
         "executable_match_count": 1
       },
       {
         "family": "designation_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:50255e22f7c0645003a8fbd0",
         "executable_match_count": 1
       },
       {
         "family": "designation_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:71cb2073ba59ad29b02be3fe",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "designation_query",
         "holdout_index": 2,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:c663e6f5ec6d375f48dc1e8b",
         "executable_match_count": 1
       },
       {
         "family": "designation_query",
         "holdout_index": 3,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:780087e16cb5ee189c79cc04",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "designation_query",
         "holdout_index": 4,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:3067b71e0da6fd8d6e1e804b",
         "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 5,
+        "mode": "leave_one_out",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 6,
+        "mode": "leave_one_out_partial",
+        "executable_match_count": 0,
+        "partial_match_count": 1
       },
       {
         "family": "meaning_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:7b2bf2943aaf66a2fc503f07",
         "executable_match_count": 1
       },
       {
         "family": "meaning_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:64222c3ae9c51ed6f45ae052",
         "executable_match_count": 1
       },
       {
         "family": "operational_condition_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:3086681ca677245e50ccc0a1",
         "executable_match_count": 1
       },
       {
         "family": "operational_condition_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:35146c9ced74e175e1784adf",
         "executable_match_count": 1
       },
       {
         "family": "relation_surface_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:234530f7805576edc2b0755b",
         "executable_match_count": 1
       },
       {
         "family": "relation_surface_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:0f0ceeff481bba9740977a4a",
         "executable_match_count": 1
       },
       {
         "family": "relation_surface_query",
         "holdout_index": 2,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:1fba539fb9573974cbed4a31",
         "executable_match_count": 1
       },
       {
         "family": "surface_choice_explanation_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:beb03161ea6aca254bc1d0fc",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "surface_choice_explanation_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:29d0c6be698efbac54d13c71",
-        "executable_match_count": 1
+        "executable_match_count": 2
       },
       {
         "family": "type_query",
         "holdout_index": 0,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:ee846b83d1fb60aa6ebf6a04",
         "executable_match_count": 1
       },
       {
         "family": "type_query",
         "holdout_index": 1,
         "mode": "leave_one_out",
-        "coverage_ref": "interpretation-coverage:254ddcfc6d563f05d0e94bdb",
         "executable_match_count": 1
       }
     ],
     "negative_probes": [
       {
         "probe_index": 0,
-        "reason": "missing relation object",
-        "blocked": true
+        "blocked": true,
+        "reason": "missing relation object"
       },
       {
         "probe_index": 1,
-        "reason": "missing designation property",
-        "blocked": true
+        "blocked": true,
+        "reason": "missing designation property"
       },
       {
         "probe_index": 2,
-        "reason": "missing operational subject",
-        "blocked": true
+        "blocked": true,
+        "reason": "missing operational subject"
       },
       {
         "probe_index": 3,
-        "reason": "missing attributed predicate content",
-        "blocked": true
+        "blocked": true,
+        "reason": "missing attributed predicate content"
+      },
+      {
+        "probe_index": 4,
+        "blocked": true,
+        "reason": "incomplete claim lacks force or value"
+      },
+      {
+        "probe_index": 5,
+        "blocked": true,
+        "reason": "nonpossessive target cannot fill designation possessor"
+      },
+      {
+        "probe_index": 6,
+        "blocked": true,
+        "reason": "type property must not collide with designation query"
       }
     ],
     "annotated_replay_coverage": 1.0
   },
-  "pack_hash": "a5d91b2b2ff56ad01e03dd14ba93fb0cca3b2136c7182eac0e03579467cca478"
+  "pack_hash": "ccc20c21dfbbd1044c4e71df117ee9ebcd207eaefab14a26aa9f77f4420a0a8e"
 }

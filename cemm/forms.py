@@ -483,10 +483,12 @@ class FormPack:
         if not isinstance(receipt, Mapping):
             raise ValueError("form pack lacks computed training receipt")
         algebra_version = int(data.get("feature_algebra_version", -1))
-        if algebra_version != 5 or int(receipt.get("feature_algebra_version", -1)) != algebra_version:
+        if algebra_version != 6 or int(receipt.get("feature_algebra_version", -1)) != algebra_version:
             raise ValueError("form pack feature-algebra ABI mismatch")
-        if int(receipt.get("receipt_version", -1)) != 5:
+        if int(receipt.get("receipt_version", -1)) != 6:
             raise ValueError("unsupported form-pack receipt version")
+        if not receipt.get("graph_matcher") or receipt.get("total_order_matcher") is not False:
+            raise ValueError("form pack was not verified by the v6 graph matcher")
         schemas = tuple(data.get("schemas", ()))
         if int(receipt.get("family_count", -1)) != len(schemas):
             raise ValueError("form-pack family count receipt mismatch")
@@ -503,7 +505,7 @@ class FormPack:
             raise ValueError("form-pack schema hash receipt mismatch")
         collision_rows = tuple(receipt.get("cross_family_collision_matrix", ()))
         if len(collision_rows) != int(receipt.get("example_count", -1)) or any(
-            tuple(row.get("executable_families", ())) != (row.get("intended_family"),)
+            row.get("intended_family") not in row.get("executable_families", ())
             for row in collision_rows
         ):
             raise ValueError("form-pack collision receipt is invalid")
@@ -1053,7 +1055,10 @@ class FormProcessor:
         normalized = token.normalized
         alternatives = self.pack.feature_alternatives_for(normalized)
         if token.category == "punctuation":
-            alternatives = ({},)
+            # Punctuation remains pre-core lexical evidence.  A language pack may
+            # mark an interrogative boundary as force evidence; the semantic graph
+            # matcher never sees the literal punctuation surface.
+            alternatives = alternatives or ({"boundary_only": True},)
             kind = "punctuation"
         elif normalized in self.pack.discourse_forms:
             alternatives = alternatives or ({},)
@@ -1127,7 +1132,26 @@ class FormProcessor:
                     complete.append((score, units, provenance))
                     continue
                 token = tokens[index]
+                participant_spans = []
+                for span in by_start.get(index, ()):
+                    if span.token_end != index + 1:
+                        continue
+                    for semantic in span.candidates:
+                        features = dict(semantic.features or {})
+                        if features.get("participant_role") and semantic.semantic_ref:
+                            participant_spans.append(semantic)
+                participant_refs = {item.semantic_ref for item in participant_spans}
+                deterministic_participant = len(participant_refs) == 1
+
                 for raw in self._unit_options_from_token(token):
+                    # A first/second-person participant-relative form resolved by
+                    # the active ParticipantFrame is not a genuine ambiguity.  Do
+                    # not retain a lexical-only unresolved twin of the same token.
+                    if (
+                        deterministic_participant
+                        and raw.features.get("participant_role")
+                    ):
+                        continue
                     raw_unit = FormUnit(
                         raw.unit_ref,
                         raw.kind,

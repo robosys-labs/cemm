@@ -306,7 +306,7 @@ class Interpreter:
         graph.  Invalid complete schema packets are pack-integrity errors and are
         deliberately not swallowed.
         """
-        records = self.constructions.evidence_records(resolved)
+        records = self.constructions.evidence_records(resolved, participant_frame)
         complete = []
         partial = []
         by_ref = {}
@@ -682,6 +682,9 @@ class Interpreter:
         # meaning-query construction is the only path that turns a surface into a
         # designation query.
 
+        # The graph matcher emits partial assignments, so this branch now means
+        # that no reviewed construction accepted even one compatible slot.  It
+        # must not be used to erase a grounded partial graph.
         unresolved_coverage = (
             CoveragePolicy.build(
                 top_hypothesis.units,

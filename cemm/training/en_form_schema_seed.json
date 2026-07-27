@@ -563,6 +563,18 @@
         "emphasis": true,
         "nonessential_modifier": true
       }
+    },
+    {
+      "forms": [
+        "?"
+      ],
+      "features": {
+        "category": "boundary",
+        "boundary_type": "interrogative",
+        "discourse_force": "query",
+        "force_evidence": "query",
+        "boundary_only": true
+      }
     }
   ],
   "contractions": [
@@ -748,6 +760,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -755,9 +770,15 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         },
         {
@@ -765,7 +786,14 @@
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "value",
@@ -842,6 +870,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -849,9 +880,15 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         },
         {
@@ -859,7 +896,14 @@
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "value",
@@ -931,14 +975,24 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -950,6 +1004,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -957,9 +1014,15 @@
           "start": 3,
           "end": 4,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -1026,14 +1089,24 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -1045,6 +1118,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -1059,9 +1135,15 @@
           "start": 4,
           "end": 5,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -1126,14 +1208,23 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "target",
@@ -1151,6 +1242,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
@@ -1265,14 +1359,23 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "target",
@@ -1290,6 +1393,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
@@ -1404,14 +1510,23 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "target",
@@ -1429,6 +1544,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
@@ -1484,14 +1602,23 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "target",
@@ -1509,6 +1636,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         }
       ],
@@ -1584,6 +1714,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -1712,6 +1845,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -1822,7 +1958,10 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -1843,7 +1982,11 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "absent_features": [
+            "anaphoric",
+            "demonstrative"
+          ]
         },
         {
           "slot": "predicate",
@@ -1926,7 +2069,14 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -1934,16 +2084,25 @@
           "end": 3,
           "kind": "anchor",
           "capture": "ref",
-          "semantic_role": "subject"
+          "semantic_role": "subject",
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "property",
           "start": 3,
           "end": 4,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -2025,6 +2184,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2135,7 +2297,10 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -2156,7 +2321,11 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "absent_features": [
+            "anaphoric",
+            "demonstrative"
+          ]
         },
         {
           "slot": "predicate",
@@ -2239,6 +2408,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2246,9 +2418,15 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         },
         {
@@ -2256,7 +2434,14 @@
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "value",
@@ -2328,14 +2513,24 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -2347,6 +2542,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2354,9 +2552,15 @@
           "start": 3,
           "end": 4,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -2429,7 +2633,14 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -2437,16 +2648,25 @@
           "end": 3,
           "kind": "anchor",
           "capture": "ref",
-          "semantic_role": "subject"
+          "semantic_role": "subject",
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "property",
           "start": 3,
           "end": 4,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -2513,7 +2733,10 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -2538,6 +2761,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2635,7 +2861,10 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -2660,6 +2889,9 @@
           ],
           "absent_features": [
             "possessive"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2766,14 +2998,23 @@
           "end": 2,
           "kind": "anchor",
           "capture": "ref",
-          "semantic_role": "subject"
+          "semantic_role": "subject",
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "copula",
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "emphasis",
@@ -2846,14 +3087,23 @@
           "end": 2,
           "kind": "anchor",
           "capture": "ref",
-          "semantic_role": "subject"
+          "semantic_role": "subject",
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "copula",
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "emphasis",
@@ -2914,14 +3164,24 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -2933,6 +3193,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -2947,9 +3210,15 @@
           "start": 4,
           "end": 5,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -3027,14 +3296,23 @@
           "end": 2,
           "kind": "anchor",
           "capture": "ref",
-          "semantic_role": "subject"
+          "semantic_role": "subject",
+          "ports_provided": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "copula",
           "start": 2,
           "end": 3,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
         },
         {
           "slot": "predicate_surface",
@@ -3086,14 +3364,24 @@
           "start": 0,
           "end": 1,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "copula",
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "predicate"
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
         },
         {
           "slot": "target",
@@ -3105,6 +3393,9 @@
           "drop_features": [
             "participant_role",
             "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
@@ -3112,9 +3403,15 @@
           "start": 3,
           "end": 4,
           "capture": "features",
-          "semantic_role": "predicate",
+          "semantic_role": "predicate_head",
           "drop_features": [
             "property_ref"
+          ],
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
           ]
         }
       ],
@@ -3195,7 +3492,10 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -3305,7 +3605,10 @@
           "start": 1,
           "end": 2,
           "capture": "features",
-          "semantic_role": "force"
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
         },
         {
           "slot": "auxiliary",
@@ -3385,6 +3688,213 @@
         "modality": "actual"
       },
       "weight": 1.72
+    },
+    {
+      "family": "designation_query",
+      "tokens": [
+        "your",
+        "name",
+        "is",
+        "?"
+      ],
+      "annotations": [
+        {
+          "slot": "target",
+          "start": 0,
+          "end": 1,
+          "kind": "anchor",
+          "capture": "ref",
+          "semantic_role": "subject",
+          "drop_features": [
+            "participant_role",
+            "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "property",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "predicate_head",
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "copula",
+          "start": 2,
+          "end": 3,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:designation"
+          ]
+        },
+        {
+          "slot": "query",
+          "start": 3,
+          "end": 4,
+          "kind": "punctuation",
+          "capture": "features",
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": {
+                  "$capture": "target"
+                },
+                "role:label_type": {
+                  "$feature": "property.property_ref"
+                },
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": {
+              "$feature": "property.property_ref"
+            }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "designation_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.75
+    },
+    {
+      "family": "designation_query",
+      "tokens": [
+        "your",
+        "name",
+        "?"
+      ],
+      "annotations": [
+        {
+          "slot": "target",
+          "start": 0,
+          "end": 1,
+          "kind": "anchor",
+          "capture": "ref",
+          "semantic_role": "subject",
+          "drop_features": [
+            "participant_role",
+            "person"
+          ],
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "property",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "predicate_head",
+          "ports_provided": [
+            "predicate:designation"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "query",
+          "start": 2,
+          "end": 3,
+          "kind": "punctuation",
+          "capture": "features",
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:designation",
+              "args": {
+                "role:target": {
+                  "$capture": "target"
+                },
+                "role:label_type": {
+                  "$feature": "property.property_ref"
+                },
+                "role:surface": "?q0",
+                "role:language": {
+                  "$context": "language_literal"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?q0",
+              "filler_kind": "literal:text",
+              "role_ref": "role:surface"
+            }
+          ],
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "designation_property",
+            "property_ref": {
+              "$feature": "property.property_ref"
+            }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "designation_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.65
     }
   ],
   "nonblocking_discourse_forms": [
@@ -3411,7 +3921,7 @@
     "oh",
     "wow"
   ],
-  "contract_version": 5,
+  "contract_version": 6,
   "singleton_family_justifications": {},
   "negative_probes": [
     {
@@ -3445,10 +3955,96 @@
         "just"
       ],
       "reason": "missing attributed predicate content"
+    },
+    {
+      "tokens": [
+        "your",
+        "name",
+        "is"
+      ],
+      "reason": "incomplete claim lacks force or value"
+    },
+    {
+      "tokens": [
+        "you",
+        "name",
+        "is",
+        "?"
+      ],
+      "reason": "nonpossessive target cannot fill designation possessor"
+    },
+    {
+      "tokens": [
+        "your",
+        "type",
+        "is",
+        "?"
+      ],
+      "reason": "type property must not collide with designation query"
     }
   ],
   "required_span_providers": [
     "quoted_span",
     "named_entity_proposal"
-  ]
+  ],
+  "family_graph_contracts": {
+    "designation_query": {
+      "contract_ref": "en:graph-contract:designation-query:v1",
+      "hard_constraints": [
+        {
+          "kind": "max_distance",
+          "slots": [
+            "target",
+            "property"
+          ],
+          "max_distance": 4
+        }
+      ],
+      "projections": [
+        {
+          "slot": "copula",
+          "source": "constant",
+          "value": {
+            "implicit": true,
+            "copular": true,
+            "semantic_port": "predication"
+          },
+          "features": {
+            "implicit": true,
+            "copular": true,
+            "semantic_port": "predication"
+          },
+          "requires_slots": [
+            "query",
+            "target",
+            "property"
+          ],
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "penalty": 0.16,
+          "reason": "implicit_copular_binding"
+        },
+        {
+          "slot": "target",
+          "source": "context",
+          "context_path": "addressee_ref",
+          "features": {
+            "projected": true,
+            "participant_role": "addressee",
+            "possessive": true
+          },
+          "requires_slots": [
+            "query",
+            "property"
+          ],
+          "ports_provided": [
+            "argument:subject"
+          ],
+          "penalty": 0.24,
+          "reason": "direct_dialogue_addressee_projection"
+        }
+      ]
+    }
+  }
 }

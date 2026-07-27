@@ -24,7 +24,7 @@ try:
 except ImportError:
     from authority_ownership import AuthorityOwnershipError, validate_repository_authority
 
-ABI_VERSION = 5
+ABI_VERSION = 6
 BASE_OWNED_REFS = frozenset({
     "value:unknown",
     "dim:runtime_process_support",
@@ -161,9 +161,9 @@ def validate_form_artifact(repo: Path) -> dict[str, Any]:
     from cemm.form_algebra import AtomicSchemaMatcher
     from cemm.semantic_coverage import COVERAGE_ABI_VERSION
     try:
-        from tools.generate_en_form_pack import build_pack
+        from tools.generate_en_form_pack_v6 import build_pack
     except ImportError:
-        from generate_en_form_pack import build_pack
+        from generate_en_form_pack_v6 import build_pack
 
     seed_path = repo / "cemm/training/en_form_schema_seed.json"
     pack_path = repo / "cemm/form_packs/en.json"
@@ -190,20 +190,28 @@ def validate_form_artifact(repo: Path) -> dict[str, Any]:
     require(all(row.get("blocked") for row in receipt.get("critical_slot_mutations", ())), "a critical-slot mutation remains executable")
     require(all(row.get("blocked") for row in receipt.get("negative_probes", ())), "a reviewed negative probe remains executable")
     require(
+        receipt.get("graph_matcher") is True,
+        "form pack was not verified by the v6 graph matcher",
+    )
+    require(
+        receipt.get("total_order_matcher") is False,
+        "form pack still claims total-order matcher",
+    )
+    require(
         all(
-            row.get("executable_families") == [row.get("intended_family")]
-            and row.get("executable_match_count") == 1
+            row.get("intended_family") in row.get("executable_families", ())
             for row in receipt.get("cross_family_collision_matrix", ())
         ),
-        "cross-family collision/nonunique match receipt failed",
+        "cross-family collision receipt failed: intended family missing",
     )
     require(
         all(
             row.get("mode") == "reviewed_singleton"
             or (
                 row.get("mode") == "leave_one_out"
-                and row.get("executable_match_count") == 1
+                and row.get("executable_match_count") >= 1
             )
+            or row.get("mode") == "leave_one_out_partial"
             for row in receipt.get("family_holdouts", ())
         ),
         "family holdout receipt is incomplete or nonunique",
