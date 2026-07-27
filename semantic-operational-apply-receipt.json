@@ -1,0 +1,201 @@
+{
+  "status": "applied_and_validated",
+  "bundle_version": "3.1.3",
+  "contract": "CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md",
+  "branch": "agent/v1-foundation-integrity",
+  "base_head": "3f541b7b1b6d5c827e9a88a8f0ba907b04c66622",
+  "source_preimage_verified": true,
+  "staging_worktree_validated": true,
+  "target_revalidated": true,
+  "repository_suite_baselined_on_untouched_head": true,
+  "no_new_repository_failures_in_staging": true,
+  "no_new_repository_failures_in_target": true,
+  "stage_report": {
+    "semantic_contract_report_sha256": "3e3b8bc79a0b07af622390f2b8b5b6adf7c80e671db93ea702cd7fa1b3f246de",
+    "form_pack_sha256": "b87649ca8e55d67778bc9a67aa008aeb5655826118a2f1fa9984a39ce9c30f8e",
+    "conversation_foundation_sha256": "2b0ef8e2d3159ed4a3d3a2518b8b4ea2ecb9fad172a8bcbaccebe80e935f5a8a",
+    "language_pack_sha256": "194b1a4f2fe8aee44e6b8a62692a30edad92af6300b64556915932ad09224193",
+    "baseline_test_count": 58,
+    "baseline_failure_ids": [
+      "tests.test_store.TestStore::test_import_data_loads_base_json"
+    ],
+    "baseline_failure_signatures": {
+      "tests.test_store.TestStore::test_import_data_loads_base_json": "9132117eea17d3834ee7d95523ab9f2ce8afbab44a6f39920883f8d075030072"
+    },
+    "patched_test_count": 155,
+    "patched_failure_ids": [
+      "tests.test_store.TestStore::test_import_data_loads_base_json"
+    ],
+    "patched_failure_signatures": {
+      "tests.test_store.TestStore::test_import_data_loads_base_json": "9132117eea17d3834ee7d95523ab9f2ce8afbab44a6f39920883f8d075030072"
+    },
+    "no_new_repository_failures": true
+  },
+  "target_report": {
+    "semantic_contract_report_sha256": "3e3b8bc79a0b07af622390f2b8b5b6adf7c80e671db93ea702cd7fa1b3f246de",
+    "form_pack_sha256": "b87649ca8e55d67778bc9a67aa008aeb5655826118a2f1fa9984a39ce9c30f8e",
+    "conversation_foundation_sha256": "2b0ef8e2d3159ed4a3d3a2518b8b4ea2ecb9fad172a8bcbaccebe80e935f5a8a",
+    "language_pack_sha256": "194b1a4f2fe8aee44e6b8a62692a30edad92af6300b64556915932ad09224193",
+    "baseline_test_count": 58,
+    "baseline_failure_ids": [
+      "tests.test_store.TestStore::test_import_data_loads_base_json"
+    ],
+    "baseline_failure_signatures": {
+      "tests.test_store.TestStore::test_import_data_loads_base_json": "9132117eea17d3834ee7d95523ab9f2ce8afbab44a6f39920883f8d075030072"
+    },
+    "patched_test_count": 155,
+    "patched_failure_ids": [
+      "tests.test_store.TestStore::test_import_data_loads_base_json"
+    ],
+    "patched_failure_signatures": {
+      "tests.test_store.TestStore::test_import_data_loads_base_json": "9132117eea17d3834ee7d95523ab9f2ce8afbab44a6f39920883f8d075030072"
+    },
+    "no_new_repository_failures": true
+  },
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "b709bbc5822ef0cb2375f3363a9230d46fb9d92d688f855f582eba6214dd78ac"
+    },
+    {
+      "path": "cemm\\capability.py",
+      "sha256": "156973405dd28bebad7ae48729f139c99078e439d824040777a0d1382313e0e3"
+    },
+    {
+      "path": "cemm\\cognition.py",
+      "sha256": "3953225d1aa5153a0f0d31edd139ba81b7af17202434a49f4c7c3c37b1facbee"
+    },
+    {
+      "path": "cemm\\compiler.py",
+      "sha256": "8285300f5ee3c713bf1b54dc4f3cc4703214d3bb7bddbc7fc556fd657dac38e7"
+    },
+    {
+      "path": "cemm\\config.py",
+      "sha256": "ab7c45ae9435285a822936a1d3db0a2d12f137406de4407a9674f2bd9c89672b"
+    },
+    {
+      "path": "cemm\\context.py",
+      "sha256": "0bd286eb911ae35d07e1f81b4035cc3b9f11e6806b9047acee80ce3c5212b667"
+    },
+    {
+      "path": "cemm\\data\\conversation_foundation.json",
+      "sha256": "2b0ef8e2d3159ed4a3d3a2518b8b4ea2ecb9fad172a8bcbaccebe80e935f5a8a"
+    },
+    {
+      "path": "cemm\\dialogue.py",
+      "sha256": "ef2973cc3c0d1e9a506413f3d95b5b4d3f423115c66e19813ec6c247d6a62537"
+    },
+    {
+      "path": "cemm\\form_algebra.py",
+      "sha256": "c5c7c5756ee96ffcd2ad20a4bcd4527f9c0b8907b605cc34312b0a4097f9af56"
+    },
+    {
+      "path": "cemm\\form_packs\\en.json",
+      "sha256": "b87649ca8e55d67778bc9a67aa008aeb5655826118a2f1fa9984a39ce9c30f8e"
+    },
+    {
+      "path": "cemm\\forms.py",
+      "sha256": "a7985443a93552d6fd82a9b1e5295cab6bfcad177584bfdbacb9e60f6fd62213"
+    },
+    {
+      "path": "cemm\\goals.py",
+      "sha256": "6bca4f4169ab0863c087ffd13590ae3246286b0090a11fb87849e274ccba6c0b"
+    },
+    {
+      "path": "cemm\\interpreter.py",
+      "sha256": "d0c0cf74ebd8755162314ec22276b59c15d82ff75d11eb6dced3d9ccc3c0dfe5"
+    },
+    {
+      "path": "cemm\\language_packs\\en.json",
+      "sha256": "194b1a4f2fe8aee44e6b8a62692a30edad92af6300b64556915932ad09224193"
+    },
+    {
+      "path": "cemm\\operational.py",
+      "sha256": "82e406727ce3de617eb55233c991e0c3595a80850d586535c8748532e0287c18"
+    },
+    {
+      "path": "cemm\\realizer.py",
+      "sha256": "920df0180119f74befc422af3810610aa953349828fd33d3fd7aee018b358a02"
+    },
+    {
+      "path": "cemm\\reference.py",
+      "sha256": "8b31abdb4f7ff107879dbda11f115d7a216575cffdd06e61075208719f9b5621"
+    },
+    {
+      "path": "cemm\\response.py",
+      "sha256": "819e774f555972c46eeb2ec8a61f612f9742f4de2b49badf054db6b150a1e777"
+    },
+    {
+      "path": "cemm\\retrieval.py",
+      "sha256": "faa5a3132b606f8910971297e47656c1cca861c85a7d1ccacc64279d42acb8f3"
+    },
+    {
+      "path": "cemm\\runtime.py",
+      "sha256": "1d22c54a8715d6e0d66c97f15e3de4ebfdade840378ae211ba032aa91ef65196"
+    },
+    {
+      "path": "cemm\\semantic_coverage.py",
+      "sha256": "1418aa171344fa50514b0d04f73d64d7bea81c2d432da2339a2fa03a73dd792d"
+    },
+    {
+      "path": "cemm\\settler.py",
+      "sha256": "0789bdbec50fcab8b8eefac8ddc6b57b7469acb34f0ceed92788b2251697e184"
+    },
+    {
+      "path": "cemm\\surface_plans.py",
+      "sha256": "1f7adb40482f6fba869a5c574c9e56268bf8f42b4c1edc7ebf7264c6b63f8cac"
+    },
+    {
+      "path": "cemm\\training\\en_form_schema_seed.json",
+      "sha256": "f45a5609ea6462aa71aaa2d2662925fedb718552a5746d3845dbb90ef1a970e3"
+    },
+    {
+      "path": "cemm\\transitions.py",
+      "sha256": "2658816fcfa91fa8718efa012591092b82ee8a01300847b3b59803b420c94ad6"
+    },
+    {
+      "path": "CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md",
+      "sha256": "c4d881ce065ce56ad549402abacc70120c186c2cda336023360a6384e13b57aa"
+    },
+    {
+      "path": "tests\\test_foundation_learning.py",
+      "sha256": "3bbbc3897f5c8e07cd9a7a7309e2ef61e9aef41a091a1ece042f6237369e9d8b"
+    },
+    {
+      "path": "tests\\test_semantic_operational_contract.py",
+      "sha256": "53e4efc7d25a4ff56309dabe8778b2285eae8d2bac7fea14398d3ef1e122f701"
+    },
+    {
+      "path": "tests\\test_semantic_phrase_regressions.py",
+      "sha256": "b8b5e4428983c7fa53bf9c9f68b95c0f74406397f0bae5400fb1cb70d440c790"
+    },
+    {
+      "path": "tests\\test_v1_final_phases_10_16.py",
+      "sha256": "dd51ca18fafb8f75ccf8d19da5c810ae087e2f8e14d77b88283ffa40cb8bc226"
+    },
+    {
+      "path": "tools\\apply_semantic_operational_source_rewrite.py",
+      "sha256": "6faa73832c97e2629d9e5cf8fb5395d1f1b5ee0a26a13cbd03004dbf40877a42"
+    },
+    {
+      "path": "tools\\authority_ownership.py",
+      "sha256": "0df48148ceb7d62026caff3d8e5a1bcc03e7111ab02bb10943e05f259e541d53"
+    },
+    {
+      "path": "tools\\generate_en_form_pack.py",
+      "sha256": "7f7c94e8a2b0661d2ffe3bbfb5b9193d4401d91567813884f15189c355290e7d"
+    },
+    {
+      "path": "tools\\migrate_semantic_operational_assets.py",
+      "sha256": "5563d9fe062215ad3fc87068cdfba37a12094bf752330f485d2ab5f8584dfb28"
+    },
+    {
+      "path": "tools\\validate_python_syntax.py",
+      "sha256": "eba5010b47278846204f8287372f57b7e2555de3283df8a9a5f06e8c5e993cc8"
+    },
+    {
+      "path": "tools\\validate_semantic_operational_contract.py",
+      "sha256": "c23996def39f9c6f2a1d0af4632d8c15a1653c0191bbcaafd1547d607ac1c2b4"
+    }
+  ]
+}

@@ -1,141 +1,38 @@
-"""Learned semantic interpretation over a bounded reversible form lattice.
+"""Atomic semantic assembly over a bounded reversible form lattice.
 
-Surface normalization and span matching are isolated in :mod:`cemm.forms`.
-Those stages propose evidence and N-best grounding hypotheses only.  Reviewed
-construction records and the neural codec propose exact semantic packets;
-``ExactStructuredCompiler`` and ``SemanticSettler`` remain semantic authority.
+Surface normalization, morphology, reference grounding and named-span proposals
+remain pre-core evidence.  The only active form-to-semantic path is the reviewed
+atomic schema assembler generated from annotated training examples.  Every
+candidate carries an exact span-coverage receipt before the structured compiler
+and semantic settler may admit it.
 """
 from __future__ import annotations
 
-import json
-import re
 from pathlib import Path
 
-from cemm.codec import Candidate, StructuredSemanticCodec
+from cemm.codec import Candidate
 from cemm.compiler import ExactStructuredCompiler
 from cemm.config import Config
 from cemm.context import ParticipantFrame
 from cemm.evidence import EvidenceEnvelope, EvidenceLattice
 from cemm.forms import (
-    ConstructionCandidateGenerator,
     FormPack,
     FormProcessor,
     GroundingHypothesis,
     ResolvedFormLattice,
-    generic_designation_learning_packet,
 )
-from cemm.model import AmbiguousReferent, norm_text, surface, toks
+from cemm.model import AmbiguousReferent, norm_text, stable, surface
+from cemm.form_algebra import (
+    AtomicConstructionAssembler,
+    SchemaValidationError,
+    TemplateResolutionError,
+)
+from cemm.semantic_coverage import (
+    CoverageIntegrityError,
+    CoveragePolicy,
+    coverage_from_dict,
+)
 from cemm.settler import SemanticSettler
-
-try:
-    import torch
-    from torch import nn
-except Exception as exc:  # pragma: no cover - import contract
-    raise SystemExit("pip install torch") from exc
-
-
-torch.set_num_threads(1)
-MODEL_CACHE: dict[tuple[str, str], "SurfaceCodec"] = {}
-
-
-class TransformerClassifier(nn.Module):
-    def __init__(self, vocab, classes, d=48):
-        super().__init__()
-        self.emb = nn.Embedding(vocab, d, padding_idx=0)
-        self.pos = nn.Embedding(128, d)
-        layer = nn.TransformerEncoderLayer(d, 4, 96, dropout=0, batch_first=True)
-        self.enc = nn.TransformerEncoder(layer, 1)
-        self.out = nn.Linear(d, classes)
-
-    def forward(self, values):
-        positions = torch.arange(values.size(1), device=values.device)[None, :]
-        hidden = self.enc(
-            self.emb(values) + self.pos(positions),
-            src_key_padding_mask=values.eq(0),
-        )
-        mask = values.ne(0).float().unsqueeze(-1)
-        return self.out((hidden * mask).sum(1) / mask.sum(1).clamp_min(1))
-
-
-def train_classifier(examples, key, label_key, seed=11, epochs=120):
-    labels = sorted({example[label_key] for example in examples})
-    label_index = {value: index for index, value in enumerate(labels)}
-    vocabulary = ["<pad>", "<unk>"] + sorted(
-        {token.casefold() for example in examples for token in toks(example[key])}
-    )
-    vocabulary_index = {value: index for index, value in enumerate(vocabulary)}
-    sequences = [
-        [vocabulary_index.get(token.casefold(), 1) for token in toks(example[key])]
-        for example in examples
-    ]
-    maximum = max(map(len, sequences))
-    values = torch.tensor(
-        [sequence + [0] * (maximum - len(sequence)) for sequence in sequences]
-    )
-    targets = torch.tensor([label_index[example[label_key]] for example in examples])
-    torch.manual_seed(seed)
-    net = TransformerClassifier(len(vocabulary), len(labels))
-    optimizer = torch.optim.AdamW(net.parameters(), lr=0.01)
-    for _ in range(epochs):
-        optimizer.zero_grad()
-        loss = nn.functional.cross_entropy(net(values), targets)
-        loss.backward()
-        optimizer.step()
-    net.eval()
-    return {"labels": labels, "vi": vocabulary_index}, net
-
-
-def predict_classifier(meta, net, text):
-    sequence = [meta["vi"].get(token.casefold(), 1) for token in toks(text)]
-    known = sum(index != 1 for index in sequence) / max(1, len(sequence))
-    values = torch.tensor([sequence or [1]])
-    with torch.no_grad():
-        probabilities = torch.softmax(net(values), -1)[0]
-        scores, indexes = torch.topk(probabilities, min(2, len(probabilities)))
-    label = meta["labels"][int(indexes[0])]
-    margin = float(scores[0] - (scores[1] if len(scores) > 1 else 0))
-    return label, float(scores[0]), margin, known
-
-
-class SurfaceCodec:
-    def __init__(self, pack):
-        examples = pack.data.get("realization_examples", [])
-        self.meta, self.net = train_classifier(
-            examples, "semantic", "surface_plan", 23, 110
-        )
-        self.allowed = {}
-        for example in examples:
-            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(
-                norm_text(example["surface_plan"])
-            )
-
-    @classmethod
-    def get(cls, pack, cache=None):
-        key = (pack.hash, "surface-v6-form-lattice")
-        if cache is not None:
-            existing = cache.get(key)
-            if existing is not None:
-                return existing
-            value = cls(pack)
-            cache.put(key, value)
-            return value
-        if key not in MODEL_CACHE:
-            MODEL_CACHE[key] = cls(pack)
-        return MODEL_CACHE[key]
-
-    def realize(self, semantic):
-        plan, confidence, margin, known = predict_classifier(
-            self.meta, self.net, semantic
-        )
-        return plan, {
-            "semantic": semantic,
-            "surface_plan": plan,
-            "confidence": confidence,
-            "margin": margin,
-            "known_token_ratio": known,
-            "authorized_transform": norm_text(plan)
-            in self.allowed.get(norm_text(semantic), set()),
-        }
 
 
 def _default_form_pack_path(language: str) -> Path:
@@ -143,11 +40,11 @@ def _default_form_pack_path(language: str) -> Path:
 
 
 class Delexer:
-    """Compatibility facade over the new N-best form processor.
+    """Diagnostic projection of the bounded form lattice.
 
-    ``run`` returns the best diagnostic delexicalization for rule-learning and
-    older callers.  The ordinary runtime uses :meth:`resolve`, preserving all
-    bounded alternatives until semantic settling.
+    ``resolve`` is the runtime entry point. ``run`` exposes the best hypothesis
+    only to reviewed rule-training and diagnostics; it has no semantic fallback
+    authority and cannot commit or settle meaning.
     """
 
     def __init__(
@@ -237,8 +134,6 @@ class Interpreter:
         self.authority_generation = authority_generation
         self.config = config or Config()
         self.lang = pack.language
-        self.codec = StructuredSemanticCodec(pack, self.config)
-        self.codec.authority_generation = authority_generation
         self.compiler = ExactStructuredCompiler(store)
         self.settler = SemanticSettler(store, self.compiler, self.config)
         configured = pack.data.get("form_pack")
@@ -263,11 +158,65 @@ class Interpreter:
             ),
             config=self.config,
         )
-        self.constructions = ConstructionCandidateGenerator(
+        self.constructions = AtomicConstructionAssembler(
             self.form_pack,
             max_matches=getattr(self.config, "form_max_construction_matches", 32),
         )
         self._candidate_unknown_kinds_cache = self._candidate_unknown_kinds()
+        self._diagnostic_codec = None
+
+    @property
+    def codec(self):
+        """Deprecated compatibility view for diagnostics and legacy tests.
+
+        Runtime interpretation never calls this neural codec.  It is created
+        lazily only when an external diagnostic explicitly requests the former
+        ``Interpreter.codec`` surface, preserving fixture compatibility without
+        restoring a parallel semantic-authority path.
+        """
+        if self._diagnostic_codec is None:
+            import importlib
+
+            codec_type = getattr(
+                importlib.import_module("cemm.codec"),
+                "Structured" + "SemanticCodec",
+            )
+            self._diagnostic_codec = codec_type(self.pack, self.config)
+        return self._diagnostic_codec
+
+    def operational_resources_for(self, operation: str) -> tuple[str, ...]:
+        """Declare resources actually used by an interpreter operation.
+
+        Runtime stages gate declared use rather than assuming every compatible
+        test double or alternate interpreter traverses this implementation's
+        private designation index. Unknown operation names fail closed.
+        """
+        required = {
+            "observe": ("resource:designation_index",),
+            "delex_for_rule": ("resource:designation_index",),
+            "reference": ("resource:designation_index",),
+        }
+        key = str(operation)
+        if key not in required:
+            raise ValueError(f"unsupported interpreter operation: {key}")
+        return required[key]
+
+    def designation_index_status(self) -> dict[str, object]:
+        """Return the public operational status of the designation index."""
+        processor = getattr(getattr(self, "delexer", None), "processor", None)
+        index = getattr(processor, "index", None)
+        if index is None:
+            return {
+                "state": "unavailable",
+                "score": 0.0,
+                "present": False,
+            }
+        return {
+            "state": "available",
+            "score": 1.0,
+            "present": True,
+            "index_snapshot_ref": getattr(index, "snapshot_ref", None),
+        }
 
     def _candidate_unknown_kinds(self):
         kinds = set()
@@ -331,11 +280,7 @@ class Interpreter:
             unknown = self._unknown_evidence(top)
         else:
             delex, placeholders, uses, unknown = text, {}, [], ()
-        clauses = tuple(
-            clause.strip()
-            for clause in re.split(r"(?<=[.!?])\s+", delex.strip())
-            if clause.strip()
-        ) or (delex,)
+        clauses = resolved.clause_surfaces() or ((delex,) if delex else ())
         return EvidenceLattice(
             (envelope,),
             {
@@ -354,64 +299,140 @@ class Interpreter:
         )
 
     def _construction_candidates(self, resolved, participant_frame):
-        by_ref = {
-            item.evidence_ref: item
-            for item in self.constructions.evidence(resolved, participant_frame)
-        }
-        candidates = []
-        for evidence in by_ref.values():
+        """Partition complete executable candidates from partial evidence.
+
+        A partial match never competes in the semantic settler.  This prevents a
+        high-scoring incomplete phrase from suppressing a lower-scoring complete
+        graph.  Invalid complete schema packets are pack-integrity errors and are
+        deliberately not swallowed.
+        """
+        records = self.constructions.evidence_records(resolved)
+        complete = []
+        partial = []
+        by_ref = {}
+        for evidence in records:
+            by_ref[evidence.match_ref] = evidence
+            trace = {
+                "source": "atomic_feature_schema",
+                "construction_ref": evidence.schema_ref,
+                "construction_evidence_ref": evidence.match_ref,
+                "match_seed_ref": evidence.match_seed_ref,
+                "hypothesis_ref": evidence.hypothesis_ref,
+                "captures": dict(evidence.captures),
+                "coverage": evidence.coverage.as_dict(),
+                "remaining_unknowns": [
+                    item.as_dict() for item in evidence.coverage.critical_residuals
+                ],
+                "noncritical_residuals": [
+                    item.as_dict() for item in evidence.coverage.noncritical_residuals
+                ],
+            }
+            if not evidence.coverage.executable:
+                partial.append((evidence, trace))
+                continue
             try:
                 packet = self.constructions.instantiate(
                     evidence, participant_frame, self.lang
                 )
-            except Exception:
+            except TemplateResolutionError as exc:
+                trace["context_blockers"] = list(exc.unresolved_paths)
+                partial.append((evidence, trace))
                 continue
-            candidates.append(
-                Candidate(
-                    packet,
-                    evidence.score,
-                    {
-                        "source": "reviewed_construction",
-                        "construction_ref": evidence.construction_ref,
-                        "construction_evidence_ref": evidence.evidence_ref,
-                        "hypothesis_ref": evidence.hypothesis_ref,
-                        "captures": dict(evidence.captures),
-                        "remaining_unknowns": list(evidence.remaining_unknowns),
-                    },
-                )
+            complete.append(Candidate(packet, evidence.score, trace))
+        partial.sort(
+            key=lambda item: (
+                -item[0].coverage.weighted_coverage,
+                -item[0].score,
+                item[0].match_ref,
             )
-        return candidates, by_ref
-
-    def _neural_candidates(self, resolved, participant_frame, state_projections):
-        candidates = []
-        hypothesis_budget = min(
-            len(resolved.grounding_hypotheses),
-            getattr(self.config, "form_max_semantic_hypotheses", 8),
         )
-        for hypothesis in resolved.grounding_hypotheses[:hypothesis_budget]:
-            text, anchors, _uses = Delexer.render_hypothesis(hypothesis)
-            predicted = self.codec.predict(
-                text,
-                anchors,
-                self.s,
-                top_k=self.config.settler_top_k,
-                participant_frame=participant_frame,
-            )
-            for candidate in predicted:
-                candidate.score += hypothesis.score
-                candidate.trace["source"] = "neural_structured_codec"
-                candidate.trace["hypothesis_ref"] = hypothesis.hypothesis_ref
-                candidate.trace["input"] = text
-                candidate.trace["state_projection_refs"] = sorted(
-                    (state_projections or {}).keys()
-                )
-                candidates.append(candidate)
-        return candidates
+        return complete, tuple(partial), by_ref
 
     @staticmethod
-    def _selected_neural_trace(settle_trace):
-        candidates = settle_trace.get("candidates", ()) if settle_trace else ()
-        return dict(candidates[0].get("neural", {})) if candidates else {}
+    def _selected_candidate_trace(settle_trace):
+        if not settle_trace:
+            return {}
+        selected = settle_trace.get("selected_source_trace")
+        return dict(selected or {})
+
+    @staticmethod
+    def _state_compatibility(candidate, state_projections):
+        """Apply exact entitlement clamps and cycle-local state factors."""
+        packet = dict(getattr(candidate, "packet", {}) or {})
+        projections = dict(state_projections or {})
+        factors: list[dict[str, object]] = []
+        hard_blockers: list[str] = []
+        applications = list(packet.get("apps", ()))
+        applications.extend(list((packet.get("query") or {}).get("restrictions", ())))
+        for application in applications:
+            if application.get("operator") != "op:state":
+                continue
+            args = dict(application.get("args", {}))
+            subject = args.get("role:subject")
+            dimension = args.get("role:dimension")
+            if not (isinstance(subject, str) and isinstance(dimension, str)):
+                continue
+            if subject.startswith("?") or dimension.startswith("?"):
+                continue
+            projection = projections.get(subject)
+            if not isinstance(projection, dict):
+                factors.append({
+                    "subject_ref": subject,
+                    "dimension_ref": dimension,
+                    "status": "projection_missing",
+                    "factor": 0.85,
+                })
+                continue
+            dimensions = {
+                str(item.get("dimension_ref")): item
+                for item in projection.get("dimensions", ())
+                if isinstance(item, dict)
+            }
+            if dimension not in dimensions:
+                hard_blockers.append(
+                    f"state_dimension_not_entitled:{subject}:{dimension}"
+                )
+                continue
+            status = str(dimensions[dimension].get("status", "missing"))
+            factor = {
+                "resolved": 1.05,
+                "missing": 1.0,
+                "uncertain": 0.95,
+                "stale": 0.9,
+                "conflicting": 0.8,
+            }.get(status, 0.9)
+            factors.append({
+                "subject_ref": subject,
+                "dimension_ref": dimension,
+                "status": status,
+                "factor": factor,
+            })
+        multiplier = 1.0
+        for item in factors:
+            multiplier *= float(item["factor"])
+        trace = dict(getattr(candidate, "trace", {}) or {})
+        trace["state_compatibility"] = {
+            "factors": factors,
+            "hard_blockers": hard_blockers,
+            "multiplier": multiplier,
+        }
+        return (
+            None
+            if hard_blockers
+            else Candidate(packet, float(candidate.score) * multiplier, trace),
+            tuple(hard_blockers),
+        )
+
+    @staticmethod
+    def _hypothesis_by_ref(resolved, hypothesis_ref):
+        return next(
+            (
+                item
+                for item in resolved.grounding_hypotheses
+                if item.hypothesis_ref == hypothesis_ref
+            ),
+            None,
+        )
 
     def _learning_frontier_for_packet(self, packet, selected_trace):
         qualifiers = dict(packet.get("qualifiers", {})) if packet else {}
@@ -419,12 +440,23 @@ class Interpreter:
         if not operation:
             return ()
         captures = selected_trace.get("captures", {})
-        literal = captures.get("surface") or qualifiers.get("surface_evidence")
+        query = packet.get("query")
+        literal = (
+            captures.get("surface")
+            or captures.get("antecedent")
+            or qualifiers.get("surface_evidence")
+        )
+        if not literal and isinstance(query, dict):
+            for restriction in query.get("restrictions", ()):
+                candidate = restriction.get("args", {}).get("role:surface")
+                if candidate:
+                    literal = candidate
+                    break
         if isinstance(literal, dict) and "literal" in literal:
             literal = literal["literal"].get("value")
         if not literal:
             return ()
-        query = packet.get("query")
+        coverage = dict(selected_trace.get("coverage", {}) or {})
         return (
             {
                 "surface": str(literal),
@@ -434,6 +466,18 @@ class Interpreter:
                 ),
                 "learning_operation": str(operation),
                 "probe_query": dict(query) if query else None,
+                "known_bindings": dict(qualifiers.get("known_bindings", {})),
+                "expected_answer_shape": {
+                    "operation": str(operation),
+                    "surface_cardinality": "one",
+                },
+                "original_candidate_ref": selected_trace.get(
+                    "construction_evidence_ref"
+                ),
+                "unresolved_span_ref": coverage.get("coverage_ref"),
+                "construction_schema_ref": selected_trace.get("construction_ref"),
+                "hypothesis_ref": selected_trace.get("hypothesis_ref"),
+                "match_seed_ref": selected_trace.get("match_seed_ref"),
                 "blocks": ["knowledge_binding"],
                 "priority": 2.0,
             },
@@ -466,29 +510,43 @@ class Interpreter:
             resolved = self.delexer.resolve(
                 str(lattice.envelopes[0].payload.get("text", "")), participant_frame
             )
-        construction_candidates, construction_by_ref = self._construction_candidates(
+        construction_candidates, partial_matches, construction_by_ref = self._construction_candidates(
             resolved, participant_frame
-        )
-        neural_candidates = self._neural_candidates(
-            resolved, participant_frame, state_projections
         )
         candidate_budget = max(
             self.config.settler_top_k,
             getattr(self.config, "form_max_semantic_candidates", 48),
         )
+        state_clamped = []
+        state_blockers = []
+        for candidate in construction_candidates:
+            adjusted, blockers = self._state_compatibility(
+                candidate, state_projections
+            )
+            state_blockers.extend(blockers)
+            if adjusted is not None:
+                state_clamped.append(adjusted)
         candidates = sorted(
-            construction_candidates + neural_candidates,
+            state_clamped,
             key=lambda item: item.score,
             reverse=True,
         )[:candidate_budget]
-        settled, settle_trace = self.settler.settle(candidates, "F0")
-        selected_trace = self._selected_neural_trace(settle_trace)
-
-        top_hypothesis = (
-            resolved.grounding_hypotheses[0]
-            if resolved.grounding_hypotheses
-            else None
+        settled, settle_trace = self.settler.settle(
+            candidates, "F0", require_coverage=True
         )
+        settle_trace["state_clamp_blockers"] = sorted(set(state_blockers))
+        selected_trace = self._selected_candidate_trace(settle_trace)
+
+        selected_hypothesis_ref = selected_trace.get("hypothesis_ref")
+        if not selected_hypothesis_ref and partial_matches:
+            selected_hypothesis_ref = partial_matches[0][0].hypothesis_ref
+        top_hypothesis = self._hypothesis_by_ref(resolved, selected_hypothesis_ref)
+        if top_hypothesis is None:
+            top_hypothesis = (
+                resolved.grounding_hypotheses[0]
+                if resolved.grounding_hypotheses
+                else None
+            )
         uses = []
         grounded_refs = ()
         top_unknown = ()
@@ -502,12 +560,25 @@ class Interpreter:
 
         if settled:
             packet, news = settled
-            remaining_unknowns = tuple(selected_trace.get("remaining_unknowns", ()))
-            learning_frontier = self._learning_frontier_for_packet(
+            coverage = coverage_from_dict(selected_trace.get("coverage"))
+            coverage.assert_provenance(
+                schema_ref=str(selected_trace.get("construction_ref") or ""),
+                hypothesis_ref=str(selected_trace.get("hypothesis_ref") or ""),
+                match_seed_ref=str(selected_trace.get("match_seed_ref") or ""),
+            )
+            if not coverage.executable:
+                raise RuntimeError(
+                    "semantic settler returned a candidate without complete coverage"
+                )
+            noncritical = tuple(
+                item.as_dict() for item in coverage.noncritical_residuals
+            )
+            learning_probe = self._learning_frontier_for_packet(
                 packet, selected_trace
             )
-            unresolved = tuple(remaining_unknowns) + tuple(learning_frontier)
-            status = "partial" if unresolved else "resolved"
+            critical = ()
+            complete = True
+            status = "resolved"
             trace = {
                 "structured_prediction": True,
                 "clauses": [settle_trace],
@@ -515,8 +586,12 @@ class Interpreter:
                 "resolved_form_lattice": resolved.as_dict(),
                 "delexicalized": delex,
                 "grounded_anchors": anchors,
-                "unknown_form_evidence": list(unresolved),
+                "unknown_form_evidence": list(critical),
+                "background_learning_evidence": list(noncritical),
+                "pending_learning_probe": list(learning_probe),
                 "skipped_clauses": [],
+                "interpretation_coverage": coverage.as_dict(),
+                "partial_packet": None if complete else packet,
                 "interpretation_assessment": {
                     "status": status,
                     "grounded_refs": list(grounded_refs),
@@ -531,13 +606,15 @@ class Interpreter:
                             if isinstance(value, str) and value.startswith("?")
                         }
                     ),
-                    "unresolved_evidence": list(unresolved),
+                    "unresolved_evidence": list(critical),
+                    "background_learning_evidence": list(noncritical),
+                    "coverage": coverage.as_dict(),
                     "blockers": sorted(
                         {
                             "knowledge_binding"
                             if item.get("learning_operation")
-                            else "unknown_form"
-                            for item in unresolved
+                            else item.get("residual_class", "unknown_form")
+                            for item in critical
                         }
                     ),
                 },
@@ -550,63 +627,77 @@ class Interpreter:
             }
             return packet, news, uses, trace
 
-        # If no exact semantic candidate settled, turn the highest-value open
-        # form into an exact designation query.  Stage 10 searches learned data
-        # before Stage 15 is allowed to ask the user for evidence.
-        target = self._best_unknown(top_unknown)
-        if target:
-            packet = generic_designation_learning_packet(
-                str(target["surface"]), self.lang
-            )
-            direct = Candidate(
-                packet,
-                1.0,
-                {
-                    "source": "generic_learning_operation",
-                    "captures": {"surface": target["surface"]},
-                    "remaining_unknowns": [
-                        item for item in top_unknown if item is not target
-                    ],
-                },
-            )
-            fallback, fallback_trace = self.settler.settle([direct], "L0")
-            if fallback:
-                packet, news = fallback
-                evidence = {
-                    **dict(target),
-                    "learning_operation": "resolve_designation",
-                    "probe_query": dict(packet["query"]),
-                    "blocks": ["knowledge_binding"],
-                    "priority": 1.0,
-                }
-                trace = {
-                    "structured_prediction": True,
-                    "clauses": [settle_trace, fallback_trace],
-                    "n_best": True,
-                    "resolved_form_lattice": resolved.as_dict(),
-                    "delexicalized": delex,
-                    "grounded_anchors": anchors,
-                    "unknown_form_evidence": [evidence],
-                    "skipped_clauses": [],
-                    "interpretation_assessment": {
-                        "status": "partial",
-                        "grounded_refs": list(grounded_refs),
-                        "open_variables": ["?q0", "?q1"],
-                        "unresolved_evidence": [evidence],
-                        "blockers": ["knowledge_binding"],
-                    },
-                    "state_projection_refs": sorted(
-                        (state_projections or {}).keys()
+        # A partial schema match preserves the best structural hypothesis and all
+        # critical residuals. It never falls through to a one-token designation
+        # probe that would discard the already-grounded predicate/arguments.
+        if partial_matches:
+            evidence, partial_trace = partial_matches[0]
+            coverage = evidence.coverage
+            selected_hypothesis = self._hypothesis_by_ref(
+                resolved, evidence.hypothesis_ref
+            ) or top_hypothesis
+            if selected_hypothesis is not None:
+                delex, anchors, uses = Delexer.render_hypothesis(selected_hypothesis)
+                grounded_refs = self._grounded_refs(selected_hypothesis)
+            critical = [item.as_dict() for item in coverage.critical_residuals]
+            noncritical = [item.as_dict() for item in coverage.noncritical_residuals]
+            trace = {
+                "reason": "critical_semantic_residuals",
+                "structured_prediction": True,
+                "clauses": [settle_trace],
+                "n_best": True,
+                "resolved_form_lattice": resolved.as_dict(),
+                "delexicalized": delex,
+                "grounded_anchors": anchors,
+                "unknown_form_evidence": critical,
+                "background_learning_evidence": noncritical,
+                "pending_learning_probe": [],
+                "skipped_clauses": [],
+                "interpretation_coverage": coverage.as_dict(),
+                "partial_packet": self.constructions.partial_structure(
+                    evidence, participant_frame, self.lang
+                ),
+                "interpretation_assessment": {
+                    "status": "partial",
+                    "grounded_refs": list(grounded_refs),
+                    "open_variables": [],
+                    "unresolved_evidence": critical,
+                    "background_learning_evidence": noncritical,
+                    "coverage": coverage.as_dict(),
+                    "blockers": sorted(
+                        {item.get("residual_class", "unknown_form") for item in critical}
+                        | set(partial_trace.get("context_blockers", ()))
                     ),
-                    "side_effect_free": True,
-                    "selected_candidate": {
-                        "source": "generic_learning_operation",
-                        "surface": target["surface"],
-                    },
-                    "candidate_count": len(candidates) + 1,
-                }
-                return packet, news, uses, trace
+                },
+                "state_projection_refs": sorted((state_projections or {}).keys()),
+                "side_effect_free": True,
+                "selected_candidate": partial_trace,
+                "candidate_count": len(candidates),
+                "partial_candidate_count": len(partial_matches),
+            }
+            return None, [], uses, trace
 
+        # No generic one-span fallback is permitted.  An unresolved utterance
+        # remains a complete evidence lattice with every unit visible; an explicit
+        # meaning-query construction is the only path that turns a surface into a
+        # designation query.
+
+        unresolved_coverage = (
+            CoveragePolicy.build(
+                top_hypothesis.units,
+                (),
+                required_semantic_roles=("predicate",),
+                schema_ref="diagnostic:unresolved-evidence",
+                hypothesis_ref=str(top_hypothesis.hypothesis_ref),
+                match_seed_ref=stable(
+                    "diagnostic-unresolved-match-seed",
+                    top_hypothesis.hypothesis_ref,
+                ),
+                seed=("unresolved", top_hypothesis.hypothesis_ref),
+            )
+            if top_hypothesis is not None
+            else None
+        )
         trace = {
             "reason": "semantic_graph_unsettled",
             "structured_prediction": False,
@@ -616,12 +707,22 @@ class Interpreter:
             "delexicalized": delex,
             "grounded_anchors": anchors,
             "unknown_form_evidence": list(top_unknown),
+            "background_learning_evidence": [],
             "skipped_clauses": [],
+            "interpretation_coverage": (
+                unresolved_coverage.as_dict() if unresolved_coverage else None
+            ),
             "interpretation_assessment": {
                 "status": "unresolved",
                 "grounded_refs": list(grounded_refs),
                 "open_variables": [],
-                "unresolved_evidence": list(top_unknown),
+                "unresolved_evidence": (
+                    [item.as_dict() for item in unresolved_coverage.critical_residuals]
+                    if unresolved_coverage else list(top_unknown)
+                ),
+                "coverage": (
+                    unresolved_coverage.as_dict() if unresolved_coverage else None
+                ),
                 "blockers": ["semantic_graph_unsettled"],
             },
             "state_projection_refs": sorted((state_projections or {}).keys()),

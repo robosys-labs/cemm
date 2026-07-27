@@ -55,7 +55,8 @@ class QueryStructure:
         if not restrictions:
             raise ValueError("query requires restrictions")
         raw_variables = list(value.get("variables", ()))
-        projection = tuple(value.get("projection", ()))
+        raw_projection = value.get("projection")
+        projection = tuple(raw_projection) if raw_projection is not None else ()
         inferred: dict[str, SemanticVariable] = {}
         for item in raw_variables:
             variable = SemanticVariable(
@@ -68,7 +69,7 @@ class QueryStructure:
             for role, filler in restriction.get("args", {}).items():
                 if isinstance(filler, str) and isvar(filler):
                     inferred.setdefault(filler, SemanticVariable(filler, "atom", role))
-        if not projection:
+        if raw_projection is None:
             projection = tuple(sorted(inferred))
         unknown_projection = set(projection) - set(inferred)
         if unknown_projection:
@@ -134,6 +135,8 @@ class InterpretationAssessment:
     open_variables: tuple[str, ...] = ()
     unresolved_evidence: tuple[dict[str, Any], ...] = ()
     blockers: tuple[str, ...] = ()
+    coverage: Mapping[str, Any] = field(default_factory=dict)
+    partial_structure: Mapping[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -143,6 +146,8 @@ class InterpretationAssessment:
             "open_variables": list(self.open_variables),
             "unresolved_evidence": list(self.unresolved_evidence),
             "blockers": list(self.blockers),
+            "coverage": dict(self.coverage),
+            "partial_structure": dict(self.partial_structure),
         }
 
 
@@ -267,3 +272,5 @@ def build_discourse_act(packet: Mapping[str, Any], participant_frame, trace: Map
         modality=modality,
         evidence={**dict(trace or {}), "packet_qualifiers": dict(packet.get("qualifiers", {}))},
     )
+
+# CEMM_SOURCE_REWRITE:cognition:v3.1.3

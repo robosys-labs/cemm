@@ -107,7 +107,12 @@ class ExactStructuredCompiler:
                         value,
                         SemanticVariable(value, str(specs[role]["filler_kind"] or "atom"), role),
                     )
-        projection = tuple(raw.get("projection", ())) or tuple(sorted(explicit))
+        raw_projection = raw.get("projection")
+        projection = (
+            tuple(raw_projection)
+            if raw_projection is not None
+            else tuple(sorted(explicit))
+        )
         if set(projection) - set(explicit):
             raise ValueError("query projection references undeclared variable")
         query = QueryStructure(
@@ -167,3 +172,5 @@ class ExactStructuredCompiler:
             "qualifiers": dict(source.get("qualifiers", {})),
             "modality": source.get("modality", "actual"),
         }, news
+
+# CEMM_SOURCE_REWRITE:compiler:v3.1.3

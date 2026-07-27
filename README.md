@@ -198,6 +198,7 @@ python -m cemm.cli init \
   --db cemm.sqlite \
   --pack cemm/language_packs/en.json \
   --data cemm/data/base.json \
+  --data cemm/data/conversation_foundation.json \
   --data cemm/data/family_knowledge.json
 
 python -m cemm.cli chat --db cemm.sqlite --pack cemm/language_packs/en.json
@@ -213,6 +214,12 @@ python -m cemm.cli acquire-reviewed \
   --db cemm.sqlite \
   --pack cemm/language_packs/en.json
 ```
+
+`conversation_foundation.json` is required for conversational competence
+(designation families, learning/query/clarification concepts, the system's
+reviewed name, and common lexical designations such as `lol`). Omitting it
+yields a runtime that initializes but cannot answer name queries, resolve
+common conversational designations, or open learning frontiers.
 
 Web demo:
 
@@ -232,6 +239,13 @@ A database created by an older sequential importer should be rebuilt after the f
 |---|---|
 | `context.py` | Session, ParticipantFrame, revision-pinned cycle state, transient workspace. |
 | `evidence.py` | Evidence envelopes and modality/form lattice. |
+| `forms.py` | Pre-core reversible form evidence, token-trie designation/reference matching, N-best grounding hypotheses. |
+| `form_algebra.py` | Atomic feature-driven construction assembly; bounded schema matcher over form-pack features, never string matching. |
+| `surface_plans.py` | Immutable semantic-signature surface-plan indexes; deterministic plan fingerprints from the pinned language artifact. |
+| `reference.py` | Perspective-aware reference planning and same-CSIR canonical realization. |
+| `semantic_coverage.py` | Fail-closed span-coverage receipts; every observed unit is consumed semantic evidence or a typed residual. |
+| `operational.py` | Cycle-local runtime evidence, usage receipts, and transition-state epistemics; sole operational truth boundary. |
+| `dialogue.py` | Bounded dialogue obligations and realization provenance; cycle/session context, not semantic authority. |
 | `interpreter.py` | Split observe/ground and compose/settle language path. |
 | `codec.py` | Open compositional neural proposal over force, operators, roles, variables, and projections. |
 | `compiler.py` | Exact operator/role/domain validation; no compatibility query or dimension shims. |
@@ -251,12 +265,13 @@ A database created by an older sequential importer should be rebuilt after the f
 
 ## Acceptance source of truth
 
-The executable final-v1 tests and `V1_ACCEPTANCE.md` are the acceptance contract. The focused final suite contains 33 architecture tests. Frozen MVP references and pre-final tests are historical evidence, not runtime authority.
+The executable final-v1 tests and `V1_ACCEPTANCE.md` are the acceptance contract. The focused final suite contains 154 architecture tests plus 97 semantic-operational contract and phrase regression tests. Frozen MVP references and pre-final tests are historical evidence, not runtime authority.
 
 See also:
 
 - `ARCHITECTURE.md`
 - `runtime-core-loop.md`
+- `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md` — sole normative implementation contract for the semantic-operational rewrite
 - `CURRENT_RUNTIME_WEAKNESSES.md`
 - `docs/archive/` — superseded phase plans and repair history
 - `V1_ACCEPTANCE.md`

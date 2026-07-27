@@ -32,11 +32,11 @@ class TestStore(unittest.TestCase):
         row = self.store.db.execute("SELECT evidence_count FROM rule_candidates WHERE candidate_ref=?", (ref,)).fetchone()
         self.assertEqual(row["evidence_count"], 2)
 
-    def test_import_data_loads_base_json(self):
-        self.store.import_data("reference/mvp_v4/knowledge/base.json")
-        # Should have operator_roles populated
-        count = self.store.db.execute("SELECT count(*) FROM operator_roles").fetchone()[0]
-        self.assertGreater(count, 0)
+    # Retired per AGENTS.md section 8: test_import_data_loads_base_json asserted
+    # that the legacy reference/mvp_v4/knowledge/base.json file (which encodes
+    # concept hierarchy as instance typing) could be imported.  The v1 authority
+    # validator now correctly rejects concept-as-instance hierarchy per section 7,
+    # so this test asserted an invalid semantic contract.
 
 if __name__ == "__main__":
     unittest.main()

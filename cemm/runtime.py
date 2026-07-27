@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from collections import OrderedDict
 from typing import Any, Mapping
 
@@ -28,12 +29,21 @@ from cemm.cognition import (
     build_discourse_act,
 )
 from cemm.config import Config
+from cemm.dialogue import DialogueState
 from cemm.context import ContextStack, CycleState, SelfRuntimeView, SessionContext, TemporalFrame
 from cemm.epistemics import EpistemicPolicy
 from cemm.goals import AdapterRegistry, GoalArbiter, GoalCandidate
 from cemm.inference import Inference, InferenceTimeoutError
 from cemm.interpreter import Interpreter
 from cemm.model import AmbiguousReferent, canonical, now, stable
+from cemm.operational import (
+    CANONICAL_RUNTIME_RESOURCES,
+    OperationalInvariantChecker,
+    OperationalProviderContractError,
+    OperationalUsageLedger,
+    RuntimeServiceRegistry,
+    declared_operation_resources,
+)
 from cemm.realizer import LanguagePack, PointerRealizer
 from cemm.response import ResponseBuilder
 from cemm.retrieval import SemanticRetriever
@@ -84,6 +94,7 @@ class Runtime:
         self.response_builder = ResponseBuilder()
         self.goal_arbiter = GoalArbiter()
         self.epistemic_policy = EpistemicPolicy(store)
+        self.dialogue_state = DialogueState()
         self.runtime_attestation = {
             "authority_generation": store.generation,
             "authority_generation_hash": store.authority_hash(store.generation),
@@ -104,11 +115,122 @@ class Runtime:
         self.capability_evaluator = CapabilityEvaluator(
             self.s,
             self.config.capability_dependency_max_depth,
-            self.config.capability_unknown_score,
         )
         self.rulelearner = RuleLearner(self.s, self.i, config=self.config)
         self.workspace = Workspace(self.s, self.config, self.cache)
         self.realizer = PointerRealizer(self.s, self.pack, self.cache)
+        def semantic_runtime_probe():
+            required = (
+                "i",
+                "inf",
+                "retriever",
+                "state_projector",
+                "transition_engine",
+                "capability_evaluator",
+                "workspace",
+            )
+            missing = [name for name in required if not hasattr(self, name)]
+            if missing:
+                raise OperationalProviderContractError(
+                    "semantic runtime registration is incomplete: " + ",".join(missing)
+                )
+            unavailable = [name for name in required if getattr(self, name) is None]
+            if unavailable:
+                return {
+                    "state": "unavailable",
+                    "score": 0.0,
+                    "unavailable_components": unavailable,
+                }
+            return {
+                "state": "available",
+                "score": 1.0,
+                "components": list(required),
+            }
+
+        def designation_index_probe():
+            interpreter = getattr(self, "i", None)
+            public_status = getattr(interpreter, "designation_index_status", None)
+            if callable(public_status):
+                status = public_status()
+                if not isinstance(status, Mapping):
+                    raise OperationalProviderContractError(
+                        "designation-index status must be a mapping"
+                    )
+                return dict(status)
+
+            # The resource is a semantic-store index, not a private interpreter
+            # implementation detail. Reduced interpreters may omit the optional
+            # diagnostic surface, so prove the persistent index directly from
+            # the store before falling back to unknown evidence.
+            db = getattr(self.s, "db", None)
+            if db is None:
+                return {
+                    "state": "unknown",
+                    "score": None,
+                    "reason": "designation_index_store_handle_unavailable",
+                }
+            try:
+                present = db.execute(
+                    "SELECT 1 FROM sqlite_master "
+                    "WHERE type='table' AND name='designation_index'"
+                ).fetchone()
+                if present is None:
+                    return {
+                        "state": "unavailable",
+                        "score": 0.0,
+                        "present": False,
+                        "reason": "designation_index_table_missing",
+                    }
+                count = int(
+                    db.execute("SELECT count(*) FROM designation_index").fetchone()[0]
+                )
+            except sqlite3.Error as exc:
+                return {
+                    "state": "unavailable",
+                    "score": 0.0,
+                    "present": False,
+                    "error_type": type(exc).__name__,
+                }
+            return {
+                "state": "available",
+                "score": 1.0,
+                "present": True,
+                "entry_count": count,
+                "evidence_source": "semantic_store_table",
+            }
+
+        def semantic_store_probe():
+            if not hasattr(self.s, "db"):
+                raise OperationalProviderContractError(
+                    "semantic store provider lacks database handle"
+                )
+            return (
+                self.s.db.execute("SELECT 1").fetchone() is not None,
+                {"database_open": True},
+            )
+
+        self.service_registry = RuntimeServiceRegistry()
+        self.service_registry.register("resource:runtime_process", lambda: True)
+        self.service_registry.register(
+            "resource:semantic_runtime", semantic_runtime_probe
+        )
+        self.service_registry.register_object(
+            "resource:language_realizer", self, "realizer"
+        )
+        self.service_registry.register("resource:output_channel", lambda: True)
+        self.service_registry.register_object(
+            "resource:inference_engine", self, "inf"
+        )
+        self.service_registry.register(
+            "resource:designation_index", designation_index_probe
+        )
+        self.service_registry.register(
+            "resource:semantic_store", semantic_store_probe
+        )
+        self.service_registry.register_object(
+            "resource:common_ground", self.s, "commit_common_ground"
+        )
+        self.service_registry.validate_resources()
 
     def reload_authority(self):
         generation = self.s.generation
@@ -120,18 +242,25 @@ class Runtime:
     def _new_cycle(self, participant_frame=None, source="user", channel="text"):
         self._cycle_counter += 1
         revisions = self.s.revisions()
-        frame = participant_frame or self.session.input_frame(source=source, channel=channel)
+        frame = participant_frame or self.session.input_frame(
+            source=source,
+            channel=channel,
+            dialogue_context=self.dialogue_state.context(self._cycle_counter),
+        )
         cycle_ref = stable("cycle", self.session.session_ref, self._cycle_counter, now())
+        snapshot = self.service_registry.capture(
+            self_ref=self.session.self_ref,
+            cycle_ref=cycle_ref,
+            authority_generation=int(self.runtime_attestation["authority_generation"]),
+            world_revision=revisions["world_revision"],
+        )
         view = SelfRuntimeView(
             self.session.self_ref,
             int(self.runtime_attestation["authority_generation"]),
             revisions["world_revision"],
             revisions["discourse_revision"],
             revisions["observation_revision"],
-            process_available=True,
-            language_realizer_support=1.0,
-            semantic_runtime_support=1.0,
-            critical_blockers=(),
+            snapshot,
         )
         cycle = CycleState(
             cycle_ref,
@@ -145,7 +274,31 @@ class Runtime:
             TemporalFrame(),
             view,
         )
+        cycle.workspace.put(
+            "operational_usage_ledger", OperationalUsageLedger(snapshot)
+        )
         return cycle
+
+    @staticmethod
+    def _require_resources(cycle, stage, resources, *, allow_degraded=False):
+        ledger = cycle.workspace.get("operational_usage_ledger")
+        if ledger is None:
+            raise RuntimeError("cycle lacks operational resource-use ledger")
+        return OperationalInvariantChecker.check_stage_usage(
+            cycle.self_runtime_view.operational_snapshot,
+            resources,
+            stage=int(stage),
+            ledger=ledger,
+            allow_degraded=allow_degraded,
+        )
+
+    def _interpreter_resources(self, operation):
+        return declared_operation_resources(
+            self.i,
+            str(operation),
+            baseline=("resource:semantic_runtime",),
+            allowed_resources=CANONICAL_RUNTIME_RESOURCES,
+        )
 
     @staticmethod
     def _packet_applications(packet):
@@ -189,31 +342,32 @@ class Runtime:
             tuple(raw.get("open_variables", ())),
             tuple(raw.get("unresolved_evidence", trace.get("unknown_form_evidence", ()))),
             tuple(raw.get("blockers", (trace.get("reason"),) if trace.get("reason") else ())),
+            dict(raw.get("coverage", trace.get("interpretation_coverage", {})) or {}),
+            dict(raw.get("partial_structure", trace.get("partial_packet", {})) or {}),
         )
 
     @staticmethod
     def _frontiers(trace, cycle_ref):
         output = []
-        unknown = trace.get("unknown_form_evidence", ())
-        if unknown:
-            for item in unknown:
-                output.append(
-                    LearningFrontier.create(
-                        "unknown_form",
-                        (item,),
-                        target_ref=None,
-                        blocks=("interpretation",),
-                        cycle_ref=cycle_ref,
-                    )
+        for item in trace.get("unknown_form_evidence", ()):
+            residual_class = str(item.get("residual_class") or "unknown_form")
+            output.append(
+                LearningFrontier.create(
+                    residual_class,
+                    (dict(item),),
+                    target_ref=item.get("target_ref"),
+                    blocks=("interpretation", "answer"),
+                    cycle_ref=cycle_ref,
                 )
+            )
         for skipped in trace.get("skipped_clauses", ()):
             if skipped.get("reason") == "unknown_form":
                 continue
             output.append(
                 LearningFrontier.create(
                     skipped.get("reason", "unresolved_clause"),
-                    (skipped,),
-                    blocks=("interpretation",),
+                    (dict(skipped),),
+                    blocks=("interpretation", "answer"),
                     cycle_ref=cycle_ref,
                 )
             )
@@ -221,8 +375,12 @@ class Runtime:
             output.append(
                 LearningFrontier.create(
                     trace["reason"],
-                    ({"reason": trace["reason"]},),
-                    blocks=("interpretation",),
+                    ({
+                        "reason": trace["reason"],
+                        "coverage": trace.get("interpretation_coverage"),
+                        "partial_structure": trace.get("partial_packet"),
+                    },),
+                    blocks=("interpretation", "answer"),
                     cycle_ref=cycle_ref,
                 )
             )
@@ -440,6 +598,14 @@ class Runtime:
             stages.add(Stage.QUERY_EXPLAIN, counts={})
             stages.add(Stage.PREDICTION_ERROR, counts={})
             stages.add(Stage.TRANSITION_SIMULATION, counts={})
+            self._require_resources(
+                cycle,
+                Stage.ENCODE,
+                self._interpreter_resources("delex_for_rule"),
+            )
+            self._require_resources(
+                cycle, Stage.COMMIT, ("resource:semantic_store",)
+            )
             result = self.rulelearner.teach(
                 text,
                 cycle.participant_frame,
@@ -470,16 +636,50 @@ class Runtime:
                 frontiers=teaching_frontiers,
             )
             stages.add(Stage.RESPONSE_CSIR, counts={"responses": 1}, refs=(response_csir.response_ref,))
-            response, realization_proof = self.realizer.response(response_csir)
+            self._require_resources(
+                cycle, Stage.REALIZE, ("resource:language_realizer",)
+            )
+            self._require_resources(
+                cycle, Stage.VERIFY, ("resource:output_channel",)
+            )
+            response, realization_proof = self.realizer.response(
+                response_csir,
+                self.session.output_frame(
+                    addressee_ref=cycle.participant_frame.speaker_ref,
+                    channel=cycle.participant_frame.channel,
+                    dialogue_context=self.dialogue_state.context(self._cycle_counter),
+                ),
+            )
             stages.add(Stage.REALIZE, counts={"surfaces": int(bool(response))})
             stages.add(Stage.VERIFY, counts={"verified": int(bool(realization_proof.get("verified")))})
             common_ground = None
             if response and realization_proof.get("verified"):
+                self._require_resources(
+                    cycle,
+                    Stage.COMMON_GROUND,
+                    ("resource:common_ground", "resource:semantic_store"),
+                )
                 with self.s.db:
                     common_ground = self.s.commit_common_ground(
-                        cycle.participant_frame.conversation_ref, response_csir.response_ref, response_csir.as_dict(),
+                        cycle.participant_frame.conversation_ref, response_csir.response_ref, {
+                        "response_csir": response_csir.as_dict(),
+                        "surface_decision": realization_proof.get("surface_decision"),
+                        "response_equivalence": realization_proof.get("response_equivalence"),
+                        "obligation_ref": response_csir.obligation_ref,
+                        "pending_learning": (
+                            self.dialogue_state.pending.as_dict()
+                            if self.dialogue_state.pending
+                            else None
+                        ),
+                    },
                         expected_discourse_revision=cycle.discourse_revision,
                     )
+                self.dialogue_state.observe_response(
+                    response_csir,
+                    realization_proof,
+                    cycle_ref=cycle.cycle_ref,
+                    turn_index=self._cycle_counter,
+                )
                 stages.add(Stage.COMMON_GROUND, counts={"entries": 1}, refs=(common_ground["entry_ref"],), durable_write=True)
             else:
                 stages.add(Stage.COMMON_GROUND, counts={"entries": 0})
@@ -496,6 +696,11 @@ class Runtime:
             }
 
         try:
+            self._require_resources(
+                cycle,
+                Stage.ENCODE,
+                self._interpreter_resources("observe"),
+            )
             lattice = self.i.observe(text, cycle.participant_frame)
         except AmbiguousReferent as exc:
             stages.add(Stage.OBSERVE, counts={"evidence": 0})
@@ -535,10 +740,52 @@ class Runtime:
                 frontiers=frontiers,
             )
             stages.add(Stage.RESPONSE_CSIR, counts={"responses": 1}, refs=(response_csir.response_ref,))
-            response, realization_proof = self.realizer.response(response_csir)
+            self._require_resources(
+                cycle, Stage.REALIZE, ("resource:language_realizer",)
+            )
+            self._require_resources(
+                cycle, Stage.VERIFY, ("resource:output_channel",)
+            )
+            response, realization_proof = self.realizer.response(
+                response_csir,
+                self.session.output_frame(
+                    addressee_ref=cycle.participant_frame.speaker_ref,
+                    channel=cycle.participant_frame.channel,
+                    dialogue_context=self.dialogue_state.context(self._cycle_counter),
+                ),
+            )
             stages.add(Stage.REALIZE, counts={"surfaces": int(bool(response))})
-            stages.add(Stage.VERIFY, counts={"verified": int(bool(realization_proof.get("verified")))})
-            stages.add(Stage.COMMON_GROUND, counts={"entries": 0})
+            verified = bool(response and realization_proof.get("verified"))
+            stages.add(Stage.VERIFY, counts={"verified": int(verified)})
+            common_ground = None
+            if mode == MODE_NORMAL and verified and self.config.persist_common_ground:
+                self._require_resources(
+                    cycle,
+                    Stage.COMMON_GROUND,
+                    ("resource:common_ground", "resource:semantic_store"),
+                )
+                with self.s.db:
+                    common_ground = self.s.commit_common_ground(
+                        cycle.participant_frame.conversation_ref,
+                        response_csir.response_ref,
+                        {
+                            "response_csir": response_csir.as_dict(),
+                            "surface_decision": realization_proof.get("surface_decision"),
+                            "response_equivalence": realization_proof.get("response_equivalence"),
+                            "obligation_ref": response_csir.obligation_ref,
+                            "pending_learning": None,
+                        },
+                        expected_discourse_revision=cycle.discourse_revision,
+                    )
+                self.dialogue_state.observe_response(
+                    response_csir,
+                    realization_proof,
+                    cycle_ref=cycle.cycle_ref,
+                    turn_index=self._cycle_counter,
+                )
+                stages.add(Stage.COMMON_GROUND, counts={"entries": 1}, refs=(common_ground["entry_ref"],), durable_write=True)
+            else:
+                stages.add(Stage.COMMON_GROUND, counts={"entries": 0})
             stages.add(Stage.FINALIZE, counts={"model_cache": len(self.cache), "workspace_slots": 0})
             return {
                 "status": "frontier",
@@ -549,6 +796,9 @@ class Runtime:
                 "frontier_graph": FrontierGraph(frontiers).as_dict(),
                 "response_csir": response_csir.as_dict(),
                 "realization_proof": realization_proof,
+                "common_ground": common_ground,
+                "dialogue_state": self.dialogue_state.context(self._cycle_counter),
+                "operational_usage": cycle.workspace.get("operational_usage_ledger").as_dict(),
                 "stage_trace": stages.as_dict(),
                 "budgets": budgets.__dict__,
                 "side_effect_free": mode == MODE_READ_ONLY,
@@ -565,17 +815,32 @@ class Runtime:
             packet, news, uses, trace = self.i.compose(lattice, cycle.participant_frame, state_projections)
         except AmbiguousReferent as exc:
             packet, news, uses = None, [], []
-            trace = {"reason": "ambiguous_referent", "candidates": exc.candidates, "unknown_form_evidence": ({"surface": exc.surface},)}
-        except Exception as exc:
-            packet, news, uses = None, [], []
-            trace = {"reason": "interpretation_error", "error": str(exc)}
+            trace = {
+                "reason": "ambiguous_referent",
+                "candidates": exc.candidates,
+                "unknown_form_evidence": ({
+                    "surface": exc.surface,
+                    "residual_class": "argument_critical",
+                    "semantic_kind_candidates": ["referent"],
+                },),
+            }
         stages.add(Stage.COMPILE, counts={"applications": len(self._packet_applications(packet))})
         stages.add(Stage.RECURRENT_DYNAMICS, counts={"candidate_sets": len(trace.get("clauses", ()))})
         interpretation = self._interpretation(trace, packet)
         frontiers = self._frontiers(trace, cycle.cycle_ref)
+        if packet is not None and interpretation.status != "resolved":
+            raise RuntimeError(
+                "partial interpretation attempted to cross the Stage-7 authority boundary"
+            )
         cycle.workspace.put("interpretation_assessment", interpretation)
         cycle.workspace.put("frontier_graph", FrontierGraph(frontiers))
-        stages.add(Stage.STABILIZE, counts={"stable": int(packet is not None), "frontiers": len(frontiers)})
+        stages.add(
+            Stage.STABILIZE,
+            counts={
+                "stable": int(packet is not None and interpretation.status == "resolved"),
+                "frontiers": len(frontiers),
+            },
+        )
 
         act = build_discourse_act(packet, cycle.participant_frame, trace) if packet else None
         cycle.workspace.put("discourse_act", act)
@@ -584,7 +849,7 @@ class Runtime:
         cycle.workspace.put("epistemic_placement", placement)
         stages.add(Stage.EPISTEMIC_PLACEMENT, counts={"placements": int(placement is not None), "admitted": int(bool(placement and placement.admitted))})
 
-        runtime_facts = RuntimeObservationProvider.semantic_facts(cycle.self_runtime_view)
+        runtime_facts = cycle.self_runtime_view.operational_snapshot.semantic_facts()
         query_result = None
         retrieval = None
         facts = list(runtime_facts)
@@ -592,6 +857,11 @@ class Runtime:
         workspace_trace = {"selected": [], "top_k": self.config.workspace_top_k}
         scoped_epistemic = None
         if act and act.force == FORCE_QUERY and act.query:
+            self._require_resources(
+                cycle,
+                Stage.QUERY_EXPLAIN,
+                ("resource:inference_engine", "resource:semantic_store"),
+            )
             retrieval = self.retriever.retrieve(act.query.restrictions, salient_refs=grounded_refs)
             facts, by_ref = self.inf.closure(seed_facts=retrieval.facts, rules=retrieval.rules, extra=runtime_facts)
             query_result = self.inf.execute_query(
@@ -656,6 +926,18 @@ class Runtime:
             frontiers or (act and act.force in {FORCE_CLAIM, FORCE_CORRECTION, FORCE_RETRACTION})
         )
         if should_commit:
+            packet_qualifiers = dict((packet or {}).get("qualifiers", {}))
+            if packet_qualifiers.get("consumes_pending_learning"):
+                self.dialogue_state.require(
+                    packet_qualifiers.get("pending_learning_obligation_ref")
+                )
+            commit_resources = {"resource:semantic_store"}
+            if any(
+                app.get("operator") == "op:designation"
+                for app in self._packet_applications(packet)
+            ):
+                commit_resources.add("resource:designation_index")
+            self._require_resources(cycle, Stage.COMMIT, commit_resources)
             with self.s.db:
                 commit = self._commit_stage13(
                     text=text,
@@ -670,6 +952,20 @@ class Runtime:
                 )
             if commit.get("act") is not None:
                 act = commit["act"]
+            committed_packet = commit.get("packet") or {}
+            committed_qualifiers = dict(committed_packet.get("qualifiers", {}))
+            if (
+                commit.get("committed_apps")
+                and committed_qualifiers.get("consumes_pending_learning")
+            ):
+                consumed_obligation = self.dialogue_state.consume_after_commit(
+                    committed_qualifiers.get("pending_learning_obligation_ref"),
+                    commit_receipt_ref=commit["receipt"]["receipt_ref"],
+                )
+                cycle.workspace.put(
+                    "consumed_learning_obligation",
+                    consumed_obligation.as_dict(),
+                )
             stages.add(Stage.COMMIT, counts={"applications": len(commit["committed_apps"]), "frontiers": len(commit["frontier_refs"])}, refs=(commit["receipt"]["receipt_ref"],), durable_write=True)
         else:
             stages.add(Stage.COMMIT, counts={"applications": 0, "frontiers": 0})
@@ -680,6 +976,31 @@ class Runtime:
         stages.add(Stage.CAPABILITY_IMPACT, counts={"capabilities": len(capability_assessments)}, refs=tuple(x.assessment_ref for x in capability_assessments))
 
         required_capability_refs = self._required_capabilities(act)
+        learning_probe = []
+        if query_result is not None and trace.get("pending_learning_probe"):
+            if act is None or act.query is None:
+                raise RuntimeError("learning probe survived without an exact query")
+            exact_query = act.query.as_dict()
+            exact_material = {
+                key: exact_query.get(key)
+                for key in ("restrictions", "variables", "projection", "qualifiers")
+            }
+            for raw_probe in trace.get("pending_learning_probe", ()):
+                probe = dict(raw_probe)
+                raw_query = dict(probe.get("probe_query") or {})
+                raw_material = {
+                    key: raw_query.get(key, [] if key != "qualifiers" else {})
+                    for key in ("restrictions", "variables", "projection", "qualifiers")
+                }
+                if canonical(raw_material) != canonical(exact_material):
+                    raise RuntimeError(
+                        "learning probe query differs from the executed QueryStructure"
+                    )
+                learning_probe.append({
+                    **probe,
+                    "query_ref": query_result.query_ref,
+                    "probe_query": exact_query,
+                })
         candidates = list(self.goal_arbiter.candidates(
             act=act,
             query_result=query_result,
@@ -687,6 +1008,7 @@ class Runtime:
             transition_previews=transition_previews,
             capability_assessments=capability_assessments,
             required_capability_refs=required_capability_refs,
+            learning_probe=tuple(learning_probe),
         ))
         # Note: a broad "how are you?" op:state query about the self is a genuine
         # state-of-being question, not a request to report the weakest capability.
@@ -711,6 +1033,9 @@ class Runtime:
                 candidate_adapter_refs=self._adapter_candidates(act),
             )
             if mode == MODE_NORMAL:
+                self._require_resources(
+                    cycle, Stage.PLAN_EXECUTE, ("resource:semantic_store",)
+                )
                 operation_result = self.adapters.execute(operation_plan)
                 with self.s.db:
                     effect_receipt = self.s.journal_effect(operation_plan, operation_result)
@@ -746,7 +1071,7 @@ class Runtime:
                 try:
                     self.s.validate_app(item["operator"], item.get("args", {}))
                     valid_observations.append(item)
-                except Exception:
+                except (KeyError, TypeError, ValueError):
                     continue
             operation_prediction_errors = self.transition_engine.prediction_errors(
                 transition_previews, valid_observations
@@ -762,6 +1087,9 @@ class Runtime:
             }
             if mode == MODE_NORMAL:
                 current_world = self.s.revisions()["world_revision"]
+                self._require_resources(
+                    cycle, Stage.ASSIMILATE_OPERATION, ("resource:semantic_store",)
+                )
                 with self.s.db:
                     generation = self.s.begin(
                         "operation_observation:" + operation_result.result_ref[-12:],
@@ -799,22 +1127,59 @@ class Runtime:
             capability_assessments=capability_assessments,
             operation_result=operation_result,
             epistemic_placement=placement,
+            operational_snapshot=cycle.self_runtime_view.operational_snapshot,
+            discourse_act=act,
+            dialogue_context=cycle.participant_frame.dialogue_context,
         )
         stages.add(Stage.RESPONSE_CSIR, counts={"responses": 1}, refs=(response_csir.response_ref,))
-        response, realization_proof = self.realizer.response(response_csir)
+        self._require_resources(
+            cycle, Stage.REALIZE, ("resource:language_realizer",)
+        )
+        self._require_resources(
+            cycle, Stage.VERIFY, ("resource:output_channel",)
+        )
+        response, realization_proof = self.realizer.response(
+            response_csir,
+            self.session.output_frame(
+                addressee_ref=cycle.participant_frame.speaker_ref,
+                channel=cycle.participant_frame.channel,
+                dialogue_context=self.dialogue_state.context(self._cycle_counter),
+            ),
+        )
         stages.add(Stage.REALIZE, counts={"surfaces": int(bool(response))})
         verified = bool(response and realization_proof.get("verified"))
         stages.add(Stage.VERIFY, counts={"verified": int(verified)}, refs=(response_csir.response_ref,))
 
         common_ground = None
         if mode == MODE_NORMAL and verified and self.config.persist_common_ground:
+            self._require_resources(
+                cycle,
+                Stage.COMMON_GROUND,
+                ("resource:common_ground", "resource:semantic_store"),
+            )
             with self.s.db:
                 common_ground = self.s.commit_common_ground(
                     cycle.participant_frame.conversation_ref,
                     getattr(act, "act_ref", response_csir.response_ref),
-                    response_csir.as_dict(),
+                    {
+                        "response_csir": response_csir.as_dict(),
+                        "surface_decision": realization_proof.get("surface_decision"),
+                        "response_equivalence": realization_proof.get("response_equivalence"),
+                        "obligation_ref": response_csir.obligation_ref,
+                        "pending_learning": (
+                            self.dialogue_state.pending.as_dict()
+                            if self.dialogue_state.pending
+                            else None
+                        ),
+                    },
                     expected_discourse_revision=cycle.discourse_revision,
                 )
+            self.dialogue_state.observe_response(
+                response_csir,
+                realization_proof,
+                cycle_ref=cycle.cycle_ref,
+                turn_index=self._cycle_counter,
+            )
             stages.add(Stage.COMMON_GROUND, counts={"entries": 1}, refs=(common_ground["entry_ref"],), durable_write=True)
         else:
             stages.add(Stage.COMMON_GROUND, counts={"entries": 0})
@@ -864,5 +1229,20 @@ class Runtime:
             "stage_trace": stages.as_dict(),
             "budgets": budgets.__dict__,
             "side_effect_free": mode == MODE_READ_ONLY,
+            "dialogue_state": self.dialogue_state.context(self._cycle_counter),
+            "operational_usage": cycle.workspace.get("operational_usage_ledger").as_dict(),
+            "runtime_invariants": {
+                "critical_residuals_block_execution": not (
+                    packet is not None and interpretation.status != "resolved"
+                ),
+                "operational_snapshot_ref": cycle.self_runtime_view.operational_snapshot.snapshot_ref,
+                "registered_resources": list(self.service_registry.resources()),
+                "response_equivalence_verified": bool(
+                    response and realization_proof.get("verified")
+                ),
+                "surface_absent": not bool(response),
+            },
         }
         return result
+
+# CEMM_SOURCE_REWRITE:runtime:v3.1.3

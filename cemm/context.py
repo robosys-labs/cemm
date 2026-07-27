@@ -1,7 +1,7 @@
 """Session and cycle-local grounding artifacts for CEMM v1.
 
-Transport/session facts orient cognition without becoming lexical identity or
-ordinary semantic self/world state.
+Transport/session facts and operational snapshots orient cognition without
+becoming lexical identity or timeless semantic self/world state.
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ class ParticipantFrame:
     conversation_ref: str = "conversation:default"
     source: str = "chat"
     channel: str = "text"
+    dialogue_context: Mapping[str, Any] = field(default_factory=dict)
 
     def resolve_requirement(self, features: Mapping[str, Any]) -> str | None:
         role = features.get("participant_role")
@@ -41,6 +42,7 @@ class ParticipantFrame:
             "conversation_ref": self.conversation_ref,
             "source": self.source,
             "channel": self.channel,
+            "dialogue_context": dict(self.dialogue_context),
         }
 
 
@@ -72,6 +74,7 @@ class SessionContext:
         audience_refs: tuple[str, ...] | None = None,
         source: str = "user",
         channel: str = "text",
+        dialogue_context: Mapping[str, Any] | None = None,
     ) -> ParticipantFrame:
         return ParticipantFrame(
             self_ref=self.self_ref,
@@ -81,6 +84,7 @@ class SessionContext:
             conversation_ref=self.conversation_ref,
             source=source,
             channel=channel,
+            dialogue_context=dict(dialogue_context or {}),
         )
 
     def output_frame(
@@ -90,6 +94,7 @@ class SessionContext:
         audience_refs: tuple[str, ...] | None = None,
         source: str = "system",
         channel: str = "text",
+        dialogue_context: Mapping[str, Any] | None = None,
     ) -> ParticipantFrame:
         return ParticipantFrame(
             self_ref=self.self_ref,
@@ -99,6 +104,7 @@ class SessionContext:
             conversation_ref=self.conversation_ref,
             source=source,
             channel=channel,
+            dialogue_context=dict(dialogue_context or {}),
         )
 
 
@@ -115,17 +121,47 @@ class TemporalFrame:
 
 @dataclass(frozen=True)
 class SelfRuntimeView:
-    """Cycle-local provider evidence, not a vocabulary-dependent self label."""
+    """Cycle-local operational evidence, never durable vocabulary state."""
 
     self_ref: str
     authority_generation: int
     world_revision: int
     discourse_revision: int
     observation_revision: int
-    process_available: bool = True
-    language_realizer_support: float = 1.0
-    semantic_runtime_support: float = 1.0
-    critical_blockers: tuple[str, ...] = ()
+    operational_snapshot: Any | None = None
+
+    @property
+    def process_available(self) -> bool | None:
+        score = (
+            self.operational_snapshot.score("resource:runtime_process")
+            if self.operational_snapshot
+            else None
+        )
+        return None if score is None else bool(score >= 0.8)
+
+    @property
+    def language_realizer_support(self) -> float | None:
+        return (
+            self.operational_snapshot.score("resource:language_realizer")
+            if self.operational_snapshot
+            else None
+        )
+
+    @property
+    def semantic_runtime_support(self) -> float | None:
+        return (
+            self.operational_snapshot.score("resource:semantic_runtime")
+            if self.operational_snapshot
+            else None
+        )
+
+    @property
+    def critical_blockers(self) -> tuple[str, ...]:
+        return (
+            tuple(self.operational_snapshot.critical_blockers)
+            if self.operational_snapshot
+            else ("resource:operational_snapshot",)
+        )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -138,6 +174,11 @@ class SelfRuntimeView:
             "language_realizer_support": self.language_realizer_support,
             "semantic_runtime_support": self.semantic_runtime_support,
             "critical_blockers": list(self.critical_blockers),
+            "operational_snapshot": (
+                self.operational_snapshot.as_dict()
+                if self.operational_snapshot is not None
+                else None
+            ),
         }
 
 

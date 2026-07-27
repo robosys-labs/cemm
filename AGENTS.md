@@ -204,3 +204,9 @@ A fix is complete only when:
 - superseded plans/tests are archived or retired.
 
 When uncertain, stop and deepen the architecture review. Do not add a clever fallback.
+
+## Canonical Runtime Implementation Contract
+
+For active runtime, form/training, operational-state, transition and response-realization implementation, follow `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md`. Do not duplicate or reinterpret that contract in this file or other architecture/phase documents.
+
+<!-- CEMM_SOURCE_REWRITE:AGENTS:v3.1.3 -->

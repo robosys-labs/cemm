@@ -1,98 +1,643 @@
 {
-  "version": 1,
+  "version": 5,
   "language": "en",
+  "feature_algebra_version": 5,
+  "lexemes": [
+    {
+      "forms": [
+        "how"
+      ],
+      "features": {
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "state_summary"
+      }
+    },
+    {
+      "forms": [
+        "who",
+        "whom"
+      ],
+      "features": {
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "identity"
+      }
+    },
+    {
+      "forms": [
+        "what"
+      ],
+      "features": {
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "open"
+      }
+    },
+    {
+      "forms": [
+        "why"
+      ],
+      "features": {
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "reason"
+      }
+    },
+    {
+      "forms": [
+        "am",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "being",
+        "been"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "be",
+        "predicate": true,
+        "copular": true,
+        "semantic_port": "predication"
+      }
+    },
+    {
+      "forms": [
+        "do",
+        "does",
+        "did",
+        "doing"
+      ],
+      "features": {
+        "category": "auxiliary",
+        "lemma": "do",
+        "auxiliary": true
+      }
+    },
+    {
+      "forms": [
+        "have",
+        "has",
+        "had",
+        "having"
+      ],
+      "features": {
+        "category": "auxiliary",
+        "lemma": "have",
+        "auxiliary": true
+      }
+    },
+    {
+      "forms": [
+        "can",
+        "could",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "should",
+        "will",
+        "would"
+      ],
+      "features": {
+        "category": "modal",
+        "modal": true,
+        "scope_operator": "modality"
+      }
+    },
+    {
+      "forms": [
+        "not",
+        "n't"
+      ],
+      "features": {
+        "category": "polarity",
+        "negation": true,
+        "polarity": "negative"
+      }
+    },
+    {
+      "forms": [
+        "name"
+      ],
+      "features": {
+        "category": "property_marker",
+        "property_ref": "label:name",
+        "property_kind": "designation"
+      }
+    },
+    {
+      "forms": [
+        "full name"
+      ],
+      "features": {
+        "category": "property_marker",
+        "property_ref": "label:full_name",
+        "property_kind": "designation"
+      }
+    },
+    {
+      "forms": [
+        "type",
+        "kind"
+      ],
+      "features": {
+        "category": "property_marker",
+        "property_ref": "label:type",
+        "property_kind": "type"
+      }
+    },
+    {
+      "forms": [
+        "know",
+        "knows",
+        "knew",
+        "known"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "know",
+        "predicate": true,
+        "semantic_port": "relation_query",
+        "relation_ref": "rel:knows"
+      }
+    },
+    {
+      "forms": [
+        "mean",
+        "means",
+        "meant"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "mean",
+        "predicate": true,
+        "semantic_port": "designation_query"
+      }
+    },
+    {
+      "forms": [
+        "say",
+        "says",
+        "said",
+        "saying"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "say",
+        "predicate": true,
+        "semantic_port": "speech"
+      }
+    },
+    {
+      "forms": [
+        "call",
+        "called",
+        "calling"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "call",
+        "predicate": true,
+        "semantic_port": "designation"
+      }
+    },
+    {
+      "forms": [
+        "learn",
+        "learned",
+        "learning"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "learn",
+        "predicate": true,
+        "semantic_port": "learning"
+      }
+    },
+    {
+      "forms": [
+        "remember",
+        "remembered",
+        "remembering"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "remember",
+        "predicate": true,
+        "semantic_port": "memory"
+      }
+    },
+    {
+      "forms": [
+        "my",
+        "mine"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker",
+        "person": "first",
+        "possessive": true
+      }
+    },
+    {
+      "forms": [
+        "i",
+        "me"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker",
+        "person": "first",
+        "possessive": false
+      }
+    },
+    {
+      "forms": [
+        "your",
+        "yours"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "addressee",
+        "person": "second",
+        "possessive": true
+      }
+    },
+    {
+      "forms": [
+        "you"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "addressee",
+        "person": "second",
+        "possessive": false
+      }
+    },
+    {
+      "forms": [
+        "our",
+        "ours"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker_group",
+        "person": "first",
+        "number": "plural",
+        "possessive": true
+      }
+    },
+    {
+      "forms": [
+        "we",
+        "us"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker_group",
+        "person": "first",
+        "number": "plural",
+        "possessive": false
+      }
+    },
+    {
+      "forms": [
+        "their",
+        "theirs"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "number": "plural",
+        "possessive": true
+      }
+    },
+    {
+      "forms": [
+        "they",
+        "them"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "number": "plural",
+        "possessive": false
+      }
+    },
+    {
+      "forms": [
+        "his",
+        "her",
+        "hers",
+        "its"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "possessive": true
+      }
+    },
+    {
+      "forms": [
+        "he",
+        "him",
+        "she",
+        "it"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "possessive": false
+      }
+    },
+    {
+      "forms": [
+        "own"
+      ],
+      "features": {
+        "category": "emphasis",
+        "emphasis": true,
+        "focus_only": true
+      }
+    },
+    {
+      "forms": [
+        "that",
+        "this",
+        "these",
+        "those"
+      ],
+      "features": {
+        "category": "reference",
+        "demonstrative": true,
+        "anaphoric": true
+      }
+    },
+    {
+      "forms": [
+        "the",
+        "a",
+        "an",
+        "some",
+        "any",
+        "all",
+        "every",
+        "each",
+        "no"
+      ],
+      "features": {
+        "category": "determiner",
+        "modifier": true
+      }
+    },
+    {
+      "forms": [
+        "instead"
+      ],
+      "features": {
+        "category": "contrast",
+        "scope_operator": "contrast"
+      }
+    },
+    {
+      "forms": [
+        "of",
+        "to",
+        "for",
+        "from",
+        "with",
+        "about",
+        "as",
+        "than",
+        "by",
+        "in",
+        "on",
+        "at"
+      ],
+      "features": {
+        "category": "adposition",
+        "modifier": true
+      }
+    },
+    {
+      "forms": [
+        "and",
+        "or",
+        "but",
+        "because",
+        "if",
+        "then",
+        "while",
+        "although",
+        "unless"
+      ],
+      "features": {
+        "category": "connective",
+        "scope_operator": "clause_link"
+      }
+    },
+    {
+      "forms": [
+        "hi",
+        "hello",
+        "hey"
+      ],
+      "features": {
+        "category": "discourse",
+        "discourse_marker": true,
+        "discourse_act": "greeting"
+      }
+    },
+    {
+      "forms": [
+        "well",
+        "okay",
+        "ok",
+        "alright",
+        "right",
+        "so",
+        "actually",
+        "basically",
+        "honestly",
+        "frankly",
+        "anyway",
+        "perhaps",
+        "maybe",
+        "please",
+        "hmm",
+        "um",
+        "uh",
+        "oh",
+        "wow"
+      ],
+      "features": {
+        "category": "discourse",
+        "discourse_marker": true
+      }
+    },
+    {
+      "forms": [
+        "seem",
+        "seems",
+        "seemed",
+        "seeming"
+      ],
+      "features": {
+        "category": "evidential",
+        "lemma": "seem",
+        "scope_operator": "appearance",
+        "epistemic_stance": "attributed_assessment"
+      }
+    },
+    {
+      "forms": [
+        "just"
+      ],
+      "features": {
+        "category": "emphasis",
+        "emphasis": true,
+        "nonessential_modifier": true
+      }
+    },
+    {
+      "forms": [
+        "prefer",
+        "prefers",
+        "preferred",
+        "preferring"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "prefer",
+        "predicate": true,
+        "semantic_port": "relation_query",
+        "relation_ref": "rel:prefers"
+      }
+    },
+    {
+      "forms": [
+        "signify",
+        "signifies",
+        "signified",
+        "signifying"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "signify",
+        "predicate": true,
+        "semantic_port": "designation_query"
+      }
+    },
+    {
+      "forms": [
+        "title"
+      ],
+      "features": {
+        "category": "property_marker",
+        "property_ref": "label:title",
+        "property_kind": "designation"
+      }
+    },
+    {
+      "forms": [
+        "appear",
+        "appears",
+        "appeared",
+        "appearing"
+      ],
+      "features": {
+        "category": "evidential",
+        "lemma": "appear",
+        "scope_operator": "appearance",
+        "epistemic_stance": "attributed_assessment"
+      }
+    },
+    {
+      "forms": [
+        "only"
+      ],
+      "features": {
+        "category": "emphasis",
+        "emphasis": true,
+        "nonessential_modifier": true
+      }
+    }
+  ],
   "function_forms": [
     "a",
     "about",
-    "above",
-    "after",
-    "again",
-    "against",
+    "actually",
     "all",
-    "already",
-    "also",
+    "alright",
     "although",
     "am",
-    "among",
     "an",
     "and",
-    "answer",
     "any",
-    "apart",
+    "anyway",
+    "appear",
+    "appeared",
+    "appearing",
+    "appears",
     "are",
-    "around",
     "as",
-    "ask",
     "at",
-    "away",
-    "back",
+    "basically",
     "be",
     "because",
     "been",
-    "before",
     "being",
-    "below",
-    "between",
-    "both",
     "but",
     "by",
     "call",
     "called",
+    "calling",
     "can",
-    "certainly",
     "could",
-    "define",
-    "defined",
-    "describe",
     "did",
     "do",
     "does",
     "doing",
-    "down",
-    "during",
     "each",
-    "either",
-    "else",
-    "even",
     "every",
-    "explain",
-    "few",
     "for",
-    "forget",
-    "forgot",
-    "forgotten",
+    "frankly",
     "from",
+    "full name",
     "had",
     "has",
     "have",
     "having",
     "he",
+    "hello",
     "her",
-    "here",
     "hers",
-    "herself",
+    "hey",
+    "hi",
     "him",
-    "himself",
     "his",
+    "hmm",
+    "honestly",
     "how",
     "i",
     "if",
     "in",
-    "into",
+    "instead",
     "is",
     "it",
     "its",
-    "itself",
     "just",
+    "kind",
     "knew",
     "know",
     "known",
+    "knows",
     "learn",
     "learned",
-    "least",
-    "less",
-    "let",
-    "many",
+    "learning",
     "may",
     "maybe",
     "me",
@@ -101,133 +646,219 @@
     "meant",
     "might",
     "mine",
-    "more",
-    "most",
-    "much",
     "must",
     "my",
-    "myself",
     "n't",
     "name",
-    "named",
-    "neither",
     "no",
-    "nor",
     "not",
-    "now",
     "of",
-    "off",
+    "oh",
+    "ok",
+    "okay",
     "on",
-    "once",
     "only",
-    "onto",
     "or",
     "our",
     "ours",
-    "ourselves",
-    "out",
-    "over",
+    "own",
     "perhaps",
     "please",
-    "probably",
-    "quite",
-    "really",
+    "prefer",
+    "preferred",
+    "preferring",
+    "prefers",
     "remember",
     "remembered",
+    "remembering",
+    "right",
+    "said",
     "say",
+    "saying",
+    "says",
+    "seem",
+    "seemed",
+    "seeming",
+    "seems",
     "shall",
     "she",
     "should",
-    "since",
+    "signified",
+    "signifies",
+    "signify",
+    "signifying",
     "so",
     "some",
-    "still",
-    "tell",
     "than",
     "that",
     "the",
     "their",
     "theirs",
     "them",
-    "themselves",
     "then",
-    "there",
     "these",
     "they",
     "this",
     "those",
-    "though",
-    "through",
+    "title",
     "to",
-    "today",
-    "together",
-    "tomorrow",
-    "tonight",
-    "toward",
-    "towards",
-    "twice",
-    "under",
+    "type",
+    "uh",
+    "um",
     "unless",
-    "until",
-    "up",
     "us",
-    "very",
     "was",
     "we",
+    "well",
     "were",
     "what",
-    "whatever",
-    "when",
-    "whenever",
-    "where",
-    "wherever",
-    "whether",
-    "which",
     "while",
     "who",
     "whom",
-    "whose",
     "why",
     "will",
     "with",
-    "without",
     "would",
-    "yesterday",
-    "yet",
+    "wow",
     "you",
     "your",
-    "yours",
-    "yourself",
-    "yourselves"
+    "yours"
   ],
   "nonblocking_discourse_forms": [
-    "actually",
-    "alright",
-    "anyhow",
-    "anyway",
-    "basically",
-    "frankly",
-    "hello",
-    "hey",
-    "hi",
-    "hmm",
-    "honestly",
-    "listen",
-    "look",
-    "maybe",
-    "oh",
-    "ok",
+    "well",
     "okay",
-    "perhaps",
-    "please",
+    "ok",
+    "alright",
     "right",
     "so",
-    "uh",
+    "actually",
+    "basically",
+    "honestly",
+    "frankly",
+    "anyway",
+    "perhaps",
+    "maybe",
+    "please",
+    "hey",
+    "hi",
+    "hello",
+    "hmm",
     "um",
-    "well",
+    "uh",
+    "oh",
     "wow"
   ],
   "contractions": [
+    {
+      "surface": "aren't",
+      "expansions": [
+        {
+          "tokens": [
+            "are",
+            "not"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "didn't",
+      "expansions": [
+        {
+          "tokens": [
+            "did",
+            "not"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "doesn't",
+      "expansions": [
+        {
+          "tokens": [
+            "does",
+            "not"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "don't",
+      "expansions": [
+        {
+          "tokens": [
+            "do",
+            "not"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "how's",
+      "expansions": [
+        {
+          "tokens": [
+            "how",
+            "is"
+          ],
+          "score": 0.0
+        },
+        {
+          "tokens": [
+            "how",
+            "has"
+          ],
+          "score": -0.18
+        }
+      ]
+    },
+    {
+      "surface": "i'm",
+      "expansions": [
+        {
+          "tokens": [
+            "i",
+            "am"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "isn't",
+      "expansions": [
+        {
+          "tokens": [
+            "is",
+            "not"
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "surface": "that's",
+      "expansions": [
+        {
+          "tokens": [
+            "that",
+            "is"
+          ],
+          "score": 0.0
+        },
+        {
+          "tokens": [
+            "that",
+            "has"
+          ],
+          "score": -0.18
+        }
+      ]
+    },
     {
       "surface": "what's",
       "expansions": [
@@ -267,75 +898,6 @@
       ]
     },
     {
-      "surface": "where's",
-      "expansions": [
-        {
-          "tokens": [
-            "where",
-            "is"
-          ],
-          "score": 0.0
-        },
-        {
-          "tokens": [
-            "where",
-            "has"
-          ],
-          "score": -0.18
-        }
-      ]
-    },
-    {
-      "surface": "how's",
-      "expansions": [
-        {
-          "tokens": [
-            "how",
-            "is"
-          ],
-          "score": 0.0
-        },
-        {
-          "tokens": [
-            "how",
-            "has"
-          ],
-          "score": -0.18
-        }
-      ]
-    },
-    {
-      "surface": "name's",
-      "expansions": [
-        {
-          "tokens": [
-            "name",
-            "is"
-          ],
-          "score": 0.0
-        },
-        {
-          "tokens": [
-            "name",
-            "has"
-          ],
-          "score": -0.2
-        }
-      ]
-    },
-    {
-      "surface": "i'm",
-      "expansions": [
-        {
-          "tokens": [
-            "i",
-            "am"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
       "surface": "you're",
       "expansions": [
         {
@@ -346,2118 +908,2472 @@
           "score": 0.0
         }
       ]
-    },
-    {
-      "surface": "we're",
-      "expansions": [
-        {
-          "tokens": [
-            "we",
-            "are"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "they're",
-      "expansions": [
-        {
-          "tokens": [
-            "they",
-            "are"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "can't",
-      "expansions": [
-        {
-          "tokens": [
-            "can",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "won't",
-      "expansions": [
-        {
-          "tokens": [
-            "will",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "don't",
-      "expansions": [
-        {
-          "tokens": [
-            "do",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "doesn't",
-      "expansions": [
-        {
-          "tokens": [
-            "does",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "didn't",
-      "expansions": [
-        {
-          "tokens": [
-            "did",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "isn't",
-      "expansions": [
-        {
-          "tokens": [
-            "is",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
-    },
-    {
-      "surface": "aren't",
-      "expansions": [
-        {
-          "tokens": [
-            "are",
-            "not"
-          ],
-          "score": 0.0
-        }
-      ]
     }
   ],
-  "constructions": [
+  "schemas": [
     {
-      "ref": "en:designation-claim:possessive",
-      "pattern": [
+      "ref": "en:schema:attributed_open_predication_claim",
+      "family": "attributed_open_predication_claim",
+      "steps": [
         {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "label_type",
-          "slot": "label"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
-        }
-      ],
-      "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "$capture:label",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
-            },
-            "stance": "support"
+          "slot": "evidential",
+          "semantic_role": "scope",
+          "capture": "features",
+          "features": {
+            "category": "evidential",
+            "epistemic_stance": "attributed_assessment",
+            "scope_operator": "appearance"
           }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "designation_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.45,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:designation-claim:reverse",
-      "pattern": [
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
         },
         {
-          "literal": "is"
-        },
-        {
+          "slot": "subject",
+          "semantic_role": "subject",
+          "capture": "ref",
           "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "label_type",
-          "slot": "label"
-        }
-      ],
-      "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "$capture:label",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
-            },
-            "stance": "support"
+          "features": {
+            "category": "reference",
+            "participant_role": "addressee",
+            "person": "second",
+            "possessive": false
           }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "designation_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.25,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:designation-query:what-is",
-      "pattern": [
-        {
-          "literal": "what"
         },
         {
-          "literal": "is"
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
         },
         {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
+          "slot": "emphasis",
+          "semantic_role": "modifier",
+          "capture": "features",
+          "optional": true,
+          "features": {
+            "category": "emphasis",
+            "emphasis": true,
+            "nonessential_modifier": true
+          }
         },
         {
-          "kind": "anchor",
-          "anchor_kind": "label_type",
-          "slot": "label"
+          "slot": "predicate_surface",
+          "semantic_role": "predicate_content",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 8,
+          "allowed_kinds": [
+            "span",
+            "unknown"
+          ],
+          "allow_function": true
         }
       ],
       "packet": {
-        "force": "query",
         "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "claim",
+        "modality": "actual",
+        "qualifiers": {
+          "claim_kind": "attributed_open_predication",
+          "construction_family": "attributed_open_predication_claim",
+          "epistemic_stance": "user_attributed",
+          "predicate_surface": {
+            "$capture": "predicate_surface"
+          },
+          "subject_ref": {
+            "$capture": "subject"
+          }
+        },
+        "query": null
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "predicate",
+          "predicate_content",
+          "scope",
+          "subject"
+        ]
+      },
+      "weight": 1.85,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 3
+    },
+    {
+      "ref": "en:schema:contextual_meaning_query",
+      "family": "contextual_meaning_query",
+      "steps": [
+        {
+          "slot": "antecedent",
+          "semantic_role": "object",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 8,
+          "allowed_kinds": [
+            "anchor",
+            "span",
+            "unknown"
+          ]
+        },
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          }
+        },
+        {
+          "slot": "auxiliary",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "auxiliary": true,
+            "category": "auxiliary",
+            "lemma": "do"
+          }
+        },
+        {
+          "slot": "anaphor",
+          "semantic_role": "subject",
+          "capture": "features",
+          "features": {
+            "anaphoric": true,
+            "demonstrative": true
+          }
+        },
+        {
+          "slot": "predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "predicate": true,
+            "semantic_port": "designation_query"
+          }
+        }
+      ],
+      "packet": {
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "contextual_meaning_query",
+          "learning_operation": "resolve_designation"
+        },
         "query": {
+          "projection": [
+            "?q0",
+            "?q1"
+          ],
+          "qualifiers": {
+            "anaphoric_bridge": true,
+            "query_kind": "designation_learning"
+          },
           "restrictions": [
             {
-              "operator": "op:designation",
               "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "$capture:label",
-                "role:surface": "?q0",
+                "role:label_type": "?q1",
                 "role:language": {
                   "$context": "language_literal"
-                }
+                },
+                "role:surface": {
+                  "$capture": "antecedent"
+                },
+                "role:target": "?q0"
               },
+              "operator": "op:designation",
               "stance": "support"
             }
           ],
           "variables": [
             {
+              "filler_kind": "atom",
               "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
+              "role_ref": "role:target"
+            },
+            {
+              "filler_kind": "label_type",
+              "ref": "?q1",
+              "role_ref": "role:label_type"
             }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property"
+          ]
+        }
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "object",
+          "predicate",
+          "subject"
+        ]
+      },
+      "weight": 1.72,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 2
+    },
+    {
+      "ref": "en:schema:designation_claim",
+      "family": "designation_claim",
+      "steps": [
+        {
+          "slot": "target",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "features": {
+            "category": "reference",
+            "possessive": true
           }
         },
-        "directive": null,
+        {
+          "slot": "property",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          }
+        },
+        {
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
+        },
+        {
+          "slot": "value",
+          "semantic_role": "value",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 8,
+          "allowed_kinds": [
+            "anchor",
+            "span",
+            "unknown"
+          ]
+        }
+      ],
+      "packet": {
+        "apps": [
+          {
+            "args": {
+              "role:label_type": {
+                "$feature": "property.property_ref"
+              },
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:surface": {
+                "$capture": "value"
+              },
+              "role:target": {
+                "$capture": "target"
+              }
+            },
+            "operator": "op:designation",
+            "stance": "support"
+          }
+        ],
         "describe": null,
+        "directive": null,
+        "force": "claim",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "designation_claim"
+        },
+        "query": null
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "predicate",
+          "subject",
+          "value"
+        ]
+      },
+      "weight": 1.7,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 3
+    },
+    {
+      "ref": "en:schema:designation_confirmation",
+      "family": "designation_confirmation",
+      "steps": [
+        {
+          "slot": "anaphor",
+          "semantic_role": "argument",
+          "capture": "features",
+          "features": {
+            "anaphoric": true,
+            "category": "reference",
+            "demonstrative": true
+          }
+        },
+        {
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
+        },
+        {
+          "slot": "target",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "features": {
+            "category": "reference",
+            "participant_role": "speaker",
+            "person": "first",
+            "possessive": true
+          }
+        },
+        {
+          "slot": "property",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          }
+        }
+      ],
+      "packet": {
+        "apps": [
+          {
+            "args": {
+              "role:label_type": {
+                "$feature": "property.property_ref"
+              },
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:surface": {
+                "$context": "pending_learning_surface_literal"
+              },
+              "role:target": {
+                "$capture": "target"
+              }
+            },
+            "operator": "op:designation",
+            "stance": "support"
+          }
+        ],
+        "describe": null,
+        "directive": null,
+        "force": "claim",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "designation_confirmation",
+          "consumes_pending_learning": true,
+          "pending_learning_obligation_ref": {
+            "$context": "pending_learning_obligation_ref"
+          }
+        },
+        "query": null
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "argument",
+          "predicate",
+          "subject"
+        ]
+      },
+      "weight": 1.9,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 2
+    },
+    {
+      "ref": "en:schema:designation_query",
+      "family": "designation_query",
+      "steps": [
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          }
+        },
+        {
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
+        },
+        {
+          "slot": "target",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "features": {
+            "category": "reference",
+            "possessive": true
+          }
+        },
+        {
+          "slot": "emphasis",
+          "semantic_role": "modifier",
+          "capture": "features",
+          "optional": true,
+          "features": {
+            "category": "emphasis",
+            "emphasis": true,
+            "focus_only": true
+          }
+        },
+        {
+          "slot": "property",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "property_marker",
+            "property_kind": "designation"
+          }
+        }
+      ],
+      "packet": {
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
         "qualifiers": {
           "construction_family": "designation_query"
         },
-        "modality": "actual"
-      },
-      "weight": 1.5,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:designation-query:tell-me",
-      "pattern": [
-        {
-          "literal": "tell"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "audience"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "label_type",
-          "slot": "label"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
         "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "$capture:label",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
           "projection": [
             "?q0"
           ],
           "qualifiers": {
+            "property_ref": {
+              "$feature": "property.property_ref"
+            },
             "query_kind": "designation_property"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "designation_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.15,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:name-claim:call-me",
-      "pattern": [
-        {
-          "literal": "call"
-        },
-        {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
-        },
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
-        }
-      ],
-      "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "label:name",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
-            },
-            "stance": "support"
-          }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "designation_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.35,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:name-claim:i-go-by",
-      "pattern": [
-        {
-          "kind": "anchor",
-          "anchor_kind": "participant",
-          "slot": "target"
-        },
-        {
-          "literal": "go"
-        },
-        {
-          "literal": "by"
-        },
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
-        }
-      ],
-      "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "label:name_alias",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
-            },
-            "stance": "support"
-          }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "designation_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.2,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:meaning-query:what-does",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "does"
-        },
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
-        },
-        {
-          "literal": "mean"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
+          },
           "restrictions": [
             {
-              "operator": "op:designation",
               "args": {
-                "role:target": "?q0",
-                "role:label_type": "?q1",
-                "role:surface": {
-                  "$capture": "surface"
+                "role:label_type": {
+                  "$feature": "property.property_ref"
                 },
                 "role:language": {
                   "$context": "language_literal"
+                },
+                "role:surface": "?q0",
+                "role:target": {
+                  "$capture": "target"
                 }
               },
+              "operator": "op:designation",
               "stance": "support"
             }
           ],
           "variables": [
             {
+              "filler_kind": "literal:text",
               "ref": "?q0",
-              "filler_kind": "atom",
-              "role_ref": "role:target"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "label_type",
-              "role_ref": "role:label_type"
+              "role_ref": "role:surface"
             }
-          ],
+          ]
+        }
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "predicate",
+          "subject"
+        ]
+      },
+      "weight": 1.75,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 5
+    },
+    {
+      "ref": "en:schema:meaning_query",
+      "family": "meaning_query",
+      "steps": [
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          }
+        },
+        {
+          "slot": "auxiliary",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "auxiliary": true,
+            "category": "auxiliary",
+            "lemma": "do"
+          }
+        },
+        {
+          "slot": "surface",
+          "semantic_role": "object",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 8,
+          "allowed_kinds": [
+            "anchor",
+            "span",
+            "unknown"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "predicate": true,
+            "semantic_port": "designation_query"
+          }
+        }
+      ],
+      "packet": {
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
+        "qualifiers": {
+          "learning_operation": "resolve_designation"
+        },
+        "query": {
           "projection": [
             "?q0",
             "?q1"
           ],
           "qualifiers": {
             "query_kind": "designation_learning"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "learning_operation": "resolve_designation"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.45,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:meaning-query:meaning-of",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "literal": "the",
-          "optional": true
-        },
-        {
-          "literal": "meaning"
-        },
-        {
-          "literal": "of"
-        },
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 8
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
+          },
           "restrictions": [
             {
-              "operator": "op:designation",
               "args": {
-                "role:target": "?q0",
                 "role:label_type": "?q1",
+                "role:language": {
+                  "$context": "language_literal"
+                },
                 "role:surface": {
                   "$capture": "surface"
                 },
-                "role:language": {
-                  "$context": "language_literal"
-                }
+                "role:target": "?q0"
               },
+              "operator": "op:designation",
               "stance": "support"
             }
           ],
           "variables": [
             {
-              "ref": "?q0",
               "filler_kind": "atom",
+              "ref": "?q0",
               "role_ref": "role:target"
             },
             {
-              "ref": "?q1",
               "filler_kind": "label_type",
+              "ref": "?q1",
               "role_ref": "role:label_type"
             }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_learning"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "learning_operation": "resolve_designation"
-        },
-        "modality": "actual"
+          ]
+        }
       },
-      "weight": 1.35,
-      "ignore_kinds": [
-        "discourse"
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "object",
+          "predicate"
+        ]
+      },
+      "weight": 1.7,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
       ],
-      "preserve_unknowns": true
+      "training_example_count": 2
     },
     {
-      "ref": "en:meaning-query:anaphoric-local",
-      "pattern": [
+      "ref": "en:schema:operational_condition_query",
+      "family": "operational_condition_query",
+      "steps": [
         {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 6,
-          "allow_anchors": true
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "state_summary"
+          }
         },
         {
-          "literal": ","
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
         },
         {
-          "literal": "what"
-        },
-        {
-          "literal": "does"
-        },
-        {
-          "literal": "that"
-        },
-        {
-          "literal": "mean"
+          "slot": "target",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "absent_features": [
+            "possessive"
+          ]
         }
       ],
       "packet": {
-        "force": "query",
         "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "operational_condition_query"
+        },
         "query": {
+          "projection": [
+            "?runtime",
+            "?semantic",
+            "?realizer",
+            "?blockers"
+          ],
+          "qualifiers": {
+            "assessment_source": "operational_snapshot",
+            "query_kind": "operational_condition_query",
+            "support_dimensions": [
+              "dim:runtime_process_support",
+              "dim:semantic_runtime_support",
+              "dim:language_realizer_support",
+              "dim:critical_blocker_count"
+            ]
+          },
           "restrictions": [
             {
-              "operator": "op:designation",
               "args": {
-                "role:target": "?q0",
-                "role:label_type": "?q1",
-                "role:surface": {
-                  "$capture": "surface"
+                "role:dimension": "dim:runtime_process_support",
+                "role:subject": {
+                  "$capture": "target"
                 },
-                "role:language": {
-                  "$context": "language_literal"
-                }
+                "role:value": "?runtime"
               },
+              "operator": "op:state",
+              "stance": "support"
+            },
+            {
+              "args": {
+                "role:dimension": "dim:semantic_runtime_support",
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:value": "?semantic"
+              },
+              "operator": "op:state",
+              "stance": "support"
+            },
+            {
+              "args": {
+                "role:dimension": "dim:language_realizer_support",
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:value": "?realizer"
+              },
+              "operator": "op:state",
+              "stance": "support"
+            },
+            {
+              "args": {
+                "role:dimension": "dim:critical_blocker_count",
+                "role:subject": {
+                  "$capture": "target"
+                },
+                "role:value": "?blockers"
+              },
+              "operator": "op:state",
               "stance": "support"
             }
           ],
           "variables": [
             {
-              "ref": "?q0",
-              "filler_kind": "atom",
-              "role_ref": "role:target"
+              "filler_kind": "literal:float",
+              "ref": "?runtime",
+              "role_ref": "role:value"
             },
             {
-              "ref": "?q1",
-              "filler_kind": "label_type",
-              "role_ref": "role:label_type"
+              "filler_kind": "literal:float",
+              "ref": "?semantic",
+              "role_ref": "role:value"
+            },
+            {
+              "filler_kind": "literal:float",
+              "ref": "?realizer",
+              "role_ref": "role:value"
+            },
+            {
+              "filler_kind": "literal:int",
+              "ref": "?blockers",
+              "role_ref": "role:value"
             }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_learning"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "learning_operation": "resolve_designation"
-        },
-        "modality": "actual"
+          ]
+        }
       },
-      "weight": 1.6,
-      "ignore_kinds": [],
-      "preserve_unknowns": true
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "predicate",
+          "subject"
+        ]
+      },
+      "weight": 1.8,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 2
     },
     {
-      "ref": "en:alias-claim:means",
-      "pattern": [
+      "ref": "en:schema:relation_surface_query",
+      "family": "relation_surface_query",
+      "steps": [
         {
-          "open_text": true,
-          "slot": "surface",
+          "slot": "auxiliary",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "auxiliary": true,
+            "category": "auxiliary",
+            "lemma": "do"
+          }
+        },
+        {
+          "slot": "subject",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "absent_features": [
+            "possessive"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "predicate": true,
+            "semantic_port": "relation_query"
+          }
+        },
+        {
+          "slot": "object_surface",
+          "semantic_role": "object",
           "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 6
-        },
-        {
-          "literal": "means"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
+          "span": true,
+          "min_units": 1,
+          "max_units": 8,
+          "allowed_kinds": [
+            "anchor",
+            "span",
+            "unknown"
+          ]
         }
       ],
       "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "label:lexical",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "relation_query"
+        },
+        "query": {
+          "projection": [],
+          "qualifiers": {
+            "object_surface": {
+              "$capture": "object_surface"
             },
-            "stance": "support"
-          }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "lexical_alias_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.25,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:alias-claim:is-word-for",
-      "pattern": [
-        {
-          "open_text": true,
-          "slot": "surface",
-          "capture": "literal:text",
-          "min_tokens": 1,
-          "max_tokens": 6
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "literal": "another",
-          "optional": true
-        },
-        {
-          "literal": "word"
-        },
-        {
-          "literal": "for"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "claim",
-        "apps": [
-          {
-            "operator": "op:designation",
-            "args": {
-              "role:target": "$capture:target",
-              "role:label_type": "label:lexical",
-              "role:surface": {
-                "$capture": "surface"
-              },
-              "role:language": {
-                "$context": "language_literal"
-              },
-              "role:script": {
-                "$context": "script_literal"
-              },
-              "role:prior": {
-                "$context": "one_float_literal"
-              },
-              "role:preferred": {
-                "$context": "true_literal"
-              }
+            "query_kind": "relation_query",
+            "relation_ref": {
+              "$feature": "predicate.relation_ref"
             },
-            "stance": "support"
-          }
-        ],
-        "query": null,
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "lexical_alias_claim"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.2,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-state:am",
-      "pattern": [
-        {
-          "literal": "how"
-        },
-        {
-          "literal": "am"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
+            "subject_ref": {
+              "$capture": "subject"
+            }
+          },
           "restrictions": [
             {
-              "operator": "op:state",
               "args": {
-                "role:subject": "$capture:target",
-                "role:dimension": "?q0",
-                "role:value": "?q1"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "state_dimension",
-              "role_ref": "role:dimension"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "state_value",
-              "role_ref": "role:value"
-            }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "state_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_state_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.6,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:who:am",
-      "pattern": [
-        {
-          "literal": "who"
-        },
-        {
-          "literal": "am"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
+                "role:label_type": "?q1",
                 "role:language": {
                   "$context": "language_literal"
-                }
+                },
+                "role:surface": {
+                  "$capture": "object_surface"
+                },
+                "role:target": "?q0"
               },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:whom:am",
-      "pattern": [
-        {
-          "literal": "whom"
-        },
-        {
-          "literal": "am"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
               "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-type:what:am",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "am"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_type_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-state:is",
-      "pattern": [
-        {
-          "literal": "how"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:state",
-              "args": {
-                "role:subject": "$capture:target",
-                "role:dimension": "?q0",
-                "role:value": "?q1"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "state_dimension",
-              "role_ref": "role:dimension"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "state_value",
-              "role_ref": "role:value"
-            }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "state_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_state_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.6,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:who:is",
-      "pattern": [
-        {
-          "literal": "who"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:whom:is",
-      "pattern": [
-        {
-          "literal": "whom"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-type:what:is",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "is"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_type_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-state:are",
-      "pattern": [
-        {
-          "literal": "how"
-        },
-        {
-          "literal": "are"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:state",
-              "args": {
-                "role:subject": "$capture:target",
-                "role:dimension": "?q0",
-                "role:value": "?q1"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "state_dimension",
-              "role_ref": "role:dimension"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "state_value",
-              "role_ref": "role:value"
-            }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "state_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_state_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.6,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:who:are",
-      "pattern": [
-        {
-          "literal": "who"
-        },
-        {
-          "literal": "are"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:whom:are",
-      "pattern": [
-        {
-          "literal": "whom"
-        },
-        {
-          "literal": "are"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-type:what:are",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "are"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_type_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-state:was",
-      "pattern": [
-        {
-          "literal": "how"
-        },
-        {
-          "literal": "was"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:state",
-              "args": {
-                "role:subject": "$capture:target",
-                "role:dimension": "?q0",
-                "role:value": "?q1"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "state_dimension",
-              "role_ref": "role:dimension"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "state_value",
-              "role_ref": "role:value"
-            }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "state_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_state_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.6,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:who:was",
-      "pattern": [
-        {
-          "literal": "who"
-        },
-        {
-          "literal": "was"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:whom:was",
-      "pattern": [
-        {
-          "literal": "whom"
-        },
-        {
-          "literal": "was"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-type:what:was",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "was"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_type_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-state:were",
-      "pattern": [
-        {
-          "literal": "how"
-        },
-        {
-          "literal": "were"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:state",
-              "args": {
-                "role:subject": "$capture:target",
-                "role:dimension": "?q0",
-                "role:value": "?q1"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "state_dimension",
-              "role_ref": "role:dimension"
-            },
-            {
-              "ref": "?q1",
-              "filler_kind": "state_value",
-              "role_ref": "role:value"
-            }
-          ],
-          "projection": [
-            "?q0",
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "state_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_state_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.6,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:who:were",
-      "pattern": [
-        {
-          "literal": "who"
-        },
-        {
-          "literal": "were"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-identity:whom:were",
-      "pattern": [
-        {
-          "literal": "whom"
-        },
-        {
-          "literal": "were"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:designation",
-              "args": {
-                "role:target": "$capture:target",
-                "role:label_type": "label:name",
-                "role:surface": "?q0",
-                "role:language": {
-                  "$context": "language_literal"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "literal:text",
-              "role_ref": "role:surface"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "designation_property",
-            "property_ref": "label:name"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_identity_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:copula-type:what:were",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "were"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
-            }
-          ],
-          "projection": [
-            "?q0"
-          ],
-          "qualifiers": {
-            "query_kind": "type_query"
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "copula_type_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
-      ],
-      "preserve_unknowns": true
-    },
-    {
-      "ref": "en:capability-query:what-can-do",
-      "pattern": [
-        {
-          "literal": "what"
-        },
-        {
-          "literal": "can"
-        },
-        {
-          "kind": "anchor",
-          "slot": "target"
-        },
-        {
-          "literal": "do"
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:type",
-              "args": {
-                "role:instance": "$capture:target",
-                "role:class": "?q0"
-              },
               "stance": "support"
             },
             {
+              "args": {
+                "role:object": "?q0",
+                "role:relation": {
+                  "$feature": "predicate.relation_ref"
+                },
+                "role:subject": {
+                  "$capture": "subject"
+                }
+              },
               "operator": "op:relation",
-              "args": {
-                "role:subject": "?q0",
-                "role:relation": "rel:entitles_capability",
-                "role:object": "?q1"
-              },
               "stance": "support"
             }
           ],
           "variables": [
             {
+              "filler_kind": "entity",
               "ref": "?q0",
-              "filler_kind": "concept",
-              "role_ref": "role:class"
+              "role_ref": "role:object"
             },
             {
+              "filler_kind": "label_type",
               "ref": "?q1",
-              "filler_kind": "atom",
-              "role_ref": "role:object"
+              "role_ref": "role:label_type"
             }
-          ],
-          "projection": [
-            "?q1"
-          ],
-          "qualifiers": {
-            "query_kind": "capability_query"
+          ]
+        }
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "object",
+          "predicate",
+          "subject"
+        ]
+      },
+      "weight": 1.8,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 3
+    },
+    {
+      "ref": "en:schema:surface_choice_explanation_query",
+      "family": "surface_choice_explanation_query",
+      "steps": [
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "reason"
           }
         },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "capability_query"
+        {
+          "slot": "auxiliary",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "auxiliary": true,
+            "category": "auxiliary",
+            "lemma": "do"
+          }
         },
-        "modality": "actual"
+        {
+          "slot": "subject",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "absent_features": [
+            "possessive"
+          ]
+        },
+        {
+          "slot": "speech_predicate",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "lemma": "say",
+            "predicate": true,
+            "semantic_port": "speech"
+          }
+        },
+        {
+          "slot": "choice_a",
+          "semantic_role": "object",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 1,
+          "allowed_kinds": [
+            "span"
+          ],
+          "unit_constraints": {
+            "features": {
+              "quoted": true,
+              "span_type": "quoted"
+            }
+          }
+        },
+        {
+          "slot": "contrast",
+          "semantic_role": "scope",
+          "capture": "features",
+          "features": {
+            "category": "contrast",
+            "scope_operator": "contrast"
+          }
+        },
+        {
+          "slot": "adposition",
+          "semantic_role": "scope",
+          "capture": "features",
+          "features": {
+            "category": "adposition",
+            "modifier": true
+          }
+        },
+        {
+          "slot": "choice_b",
+          "semantic_role": "object_alternative",
+          "capture": "literal:text",
+          "span": true,
+          "min_units": 1,
+          "max_units": 1,
+          "allowed_kinds": [
+            "span"
+          ],
+          "unit_constraints": {
+            "features": {
+              "quoted": true,
+              "span_type": "quoted"
+            }
+          }
+        }
+      ],
+      "packet": {
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "description_request",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "surface_choice_explanation_query",
+          "discourse_operation": "explain_surface_choice",
+          "surface_choice_a": {
+            "$capture": "choice_a"
+          },
+          "surface_choice_b": {
+            "$capture": "choice_b"
+          },
+          "surface_decision_ref": {
+            "$context": "last_surface_decision_ref"
+          }
+        },
+        "query": null
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "object",
+          "object_alternative",
+          "predicate",
+          "scope",
+          "subject"
+        ]
+      },
+      "weight": 1.95,
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
+      ],
+      "training_example_count": 2
+    },
+    {
+      "ref": "en:schema:type_query",
+      "family": "type_query",
+      "steps": [
+        {
+          "slot": "query",
+          "semantic_role": "force",
+          "capture": "features",
+          "features": {
+            "category": "interrogative",
+            "discourse_force": "query",
+            "question_domain": "open"
+          }
+        },
+        {
+          "slot": "copula",
+          "semantic_role": "predicate",
+          "capture": "features",
+          "features": {
+            "category": "verb",
+            "copular": true,
+            "lemma": "be",
+            "predicate": true,
+            "semantic_port": "predication"
+          }
+        },
+        {
+          "slot": "target",
+          "semantic_role": "subject",
+          "capture": "ref",
+          "kind": "anchor",
+          "absent_features": [
+            "possessive"
+          ]
+        }
+      ],
+      "packet": {
+        "apps": [],
+        "describe": null,
+        "directive": null,
+        "force": "query",
+        "modality": "actual",
+        "qualifiers": {
+          "construction_family": "type_query"
+        },
+        "query": {
+          "projection": [
+            "?q0"
+          ],
+          "qualifiers": {
+            "query_kind": "type_query"
+          },
+          "restrictions": [
+            {
+              "args": {
+                "role:class": "?q0",
+                "role:instance": {
+                  "$capture": "target"
+                }
+              },
+              "operator": "op:type",
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "filler_kind": "concept",
+              "ref": "?q0",
+              "role_ref": "role:class"
+            }
+          ]
+        }
+      },
+      "coverage_contract": {
+        "required_semantic_roles": [
+          "force",
+          "predicate",
+          "subject"
+        ]
       },
       "weight": 1.55,
-      "ignore_kinds": [
-        "discourse"
+      "ignorable_kinds": [
+        "discourse",
+        "punctuation"
       ],
-      "preserve_unknowns": true
+      "training_example_count": 2
     }
   ],
-  "pack_hash": "48f5817657c15488297a16db42a5ea0a74c388262fc683b2aa777d1cc8e5878d"
+  "training_receipt": {
+    "receipt_version": 5,
+    "feature_algebra_version": 5,
+    "source_sha256": "f45a5609ea6462aa71aaa2d2662925fedb718552a5746d3845dbb90ef1a970e3",
+    "generator_sha256": "7f7c94e8a2b0661d2ffe3bbfb5b9193d4401d91567813884f15189c355290e7d",
+    "example_count": 26,
+    "family_count": 10,
+    "schema_hashes": {
+      "en:schema:attributed_open_predication_claim": "4e5bfca09d2d3607c782cf7b56bbacbacdcb40379c21807ea704ce5d75554e6a",
+      "en:schema:contextual_meaning_query": "2ce70061d9ea4ed304dc39a548adbf00cdfa1980678eb9432d0e0903e1091644",
+      "en:schema:designation_claim": "fe3e2f5e5abe90f73cbafd501910295a472084111898d80e30dbd72eb9219d96",
+      "en:schema:designation_confirmation": "58a7ec72bf1c4d57e1c846280efdd12b4bda94d075a80b56200e9af3d8cf5e3c",
+      "en:schema:designation_query": "14178bb7c3a14cd5915902c3dced7dc881d3765b17cde0c5f27440c5821efb9e",
+      "en:schema:meaning_query": "7c97f42d0d77a2d45b162228b5fecaa572891e1b33230de0bf0f70f32d165fbf",
+      "en:schema:operational_condition_query": "9e43b4fdcfeba6c455eb6908c3deeb6f6362432dd7ec91130b4de1d1afb59e51",
+      "en:schema:relation_surface_query": "270c37fdc690565ecfca4d28036b2c8ec565f8ab9520345bea6d3905f446a153",
+      "en:schema:surface_choice_explanation_query": "dfd403d650b1141f3b42b7ae7a9c01f04e24f343f641838564562ff3560e07a7",
+      "en:schema:type_query": "c3f4043815e7d0c6c575e301be087226be1d327d86308b7e5ad1835d5f29d160"
+    },
+    "surface_matcher_key_count": 0,
+    "regex_condition_count": 0,
+    "anti_unified_family_count": 10,
+    "required_span_providers": [
+      "named_entity_proposal",
+      "quoted_span"
+    ],
+    "positive_replay": [
+      {
+        "example_index": 0,
+        "family": "designation_claim",
+        "unit_signature": "ccaa6d4c8acd35249f293b912bab499a9209484231bb650f0c00aeaa9dcb56f9",
+        "match_ref": "atomic-schema-match:9fa65cc13b3c83294a0d28a9",
+        "coverage_ref": "interpretation-coverage:633fa0cdc04c8cac836b3ac3",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 1,
+        "family": "designation_claim",
+        "unit_signature": "6ab9eb1621d1dd5754d647ae6ad26ea8331f81d6bbf4429484f016244472bf32",
+        "match_ref": "atomic-schema-match:dc9ecae12dda22a2e40eb738",
+        "coverage_ref": "interpretation-coverage:128d11348cd81ab5717c6bbf",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 2,
+        "family": "designation_query",
+        "unit_signature": "e5e43acbb632b806130b49dbdfbf719f003ef3c9ab77810f5a059c8b5b9c933b",
+        "match_ref": "atomic-schema-match:dcfdc5ae8eaf7f09734482dc",
+        "coverage_ref": "interpretation-coverage:50255e22f7c0645003a8fbd0",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 3,
+        "family": "designation_query",
+        "unit_signature": "5dc8115f4aa190a72a83528c1b88773b206b50ab422372df7f2b4ad6767f02ee",
+        "match_ref": "atomic-schema-match:e98f52be3b4410792c19c393",
+        "coverage_ref": "interpretation-coverage:71cb2073ba59ad29b02be3fe",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 4,
+        "family": "operational_condition_query",
+        "unit_signature": "8f4f65e0804a5e2018c14eced8a2c04cc81f49234b4c73f159ff82d7b3ebc1ae",
+        "match_ref": "atomic-schema-match:a6c324d538a61aa48725d21b",
+        "coverage_ref": "interpretation-coverage:3086681ca677245e50ccc0a1",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 5,
+        "family": "operational_condition_query",
+        "unit_signature": "435dc7a721371e5c89ef659bc332fb06da80266fc9e445a824fc0313678cdfc7",
+        "match_ref": "atomic-schema-match:5bd691be4cad7899fc48ceef",
+        "coverage_ref": "interpretation-coverage:35146c9ced74e175e1784adf",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 6,
+        "family": "type_query",
+        "unit_signature": "4d22906992bae71e87e7ae57f661d9c19b48260817ed0a33cdb7ef133bcf73e9",
+        "match_ref": "atomic-schema-match:427a2dce4af52923ebf78213",
+        "coverage_ref": "interpretation-coverage:ee846b83d1fb60aa6ebf6a04",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 7,
+        "family": "type_query",
+        "unit_signature": "5c5bc02696b7bf61b497abe9eea045ebea1e017ea724d7bbc2d13ac5bff104d0",
+        "match_ref": "atomic-schema-match:76c994e49a37aefec7e15b8e",
+        "coverage_ref": "interpretation-coverage:254ddcfc6d563f05d0e94bdb",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 8,
+        "family": "relation_surface_query",
+        "unit_signature": "9265262310394db1422b3c7bde90696299a427b133edb7436055a665d3267baa",
+        "match_ref": "atomic-schema-match:d6b9b70c0ac4a10e960bce84",
+        "coverage_ref": "interpretation-coverage:234530f7805576edc2b0755b",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 9,
+        "family": "relation_surface_query",
+        "unit_signature": "417335f0f4ebc63876996262a2ce6a1b839df7833bd52af4082504e29c96fa49",
+        "match_ref": "atomic-schema-match:22c2c6da42f8ecd6a34c4f7d",
+        "coverage_ref": "interpretation-coverage:0f0ceeff481bba9740977a4a",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 10,
+        "family": "meaning_query",
+        "unit_signature": "930c9c9d851130ef6da09b6a7f3e7d45b0fc8dc2a298fc215f273d730672764e",
+        "match_ref": "atomic-schema-match:c0907e10bef92463fd159c6c",
+        "coverage_ref": "interpretation-coverage:7b2bf2943aaf66a2fc503f07",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 11,
+        "family": "designation_confirmation",
+        "unit_signature": "5ecbeaebe8616d49dc775ff88d86e5e58646134533557845f644b4deb382c12c",
+        "match_ref": "atomic-schema-match:75471c1d81215ec0aa565e31",
+        "coverage_ref": "interpretation-coverage:7a68c928df52fcd171d0cae2",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 12,
+        "family": "relation_surface_query",
+        "unit_signature": "7df0f3e61013fba9b3dc6b48ac4e75ced5690baf27c81cd41d98c9d6016437c4",
+        "match_ref": "atomic-schema-match:1ab3933e6b208adc50f04e3b",
+        "coverage_ref": "interpretation-coverage:1fba539fb9573974cbed4a31",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 13,
+        "family": "meaning_query",
+        "unit_signature": "b5f6086daa52cd8615cbf0ff5979123345697db2273d331ac97f9ecef0442c2d",
+        "match_ref": "atomic-schema-match:9d6a884faf35e96e390ea25a",
+        "coverage_ref": "interpretation-coverage:64222c3ae9c51ed6f45ae052",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 14,
+        "family": "designation_claim",
+        "unit_signature": "386dba39540d4bc734d90fb1dce05600b016b0560fac5a7926ad8c4e916b9c98",
+        "match_ref": "atomic-schema-match:0272d24773e9654213ab0271",
+        "coverage_ref": "interpretation-coverage:2e748e94f025185fb491222f",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 15,
+        "family": "designation_query",
+        "unit_signature": "11edf96bf81777302c0d5f12b1def0538946a66a37a04751d56de4a8da5f2614",
+        "match_ref": "atomic-schema-match:f7c984291d301fa0ae27d3a6",
+        "coverage_ref": "interpretation-coverage:c663e6f5ec6d375f48dc1e8b",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "unit_signature": "9bfd30c9cb01f7650b578bfac267b5cb714a6958b27126b69800e8e759d49158",
+        "match_ref": "atomic-schema-match:19678ae2eb04004c9071d9e9",
+        "coverage_ref": "interpretation-coverage:415d5c28801cd24b384a1dee",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "unit_signature": "c3ee84f3d41553a26911f72d8518d6e3c73d2b99ec2d86a550b97ede3e7b983e",
+        "match_ref": "atomic-schema-match:86565739dee70956e881d47b",
+        "coverage_ref": "interpretation-coverage:beb03161ea6aca254bc1d0fc",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "unit_signature": "b2c64c239936b79f7a037ae3e6b4ea55f091aeb5a08c9878174e472f0984cb3d",
+        "match_ref": "atomic-schema-match:0c816ce8f5592b7a466761a3",
+        "coverage_ref": "interpretation-coverage:29d0c6be698efbac54d13c71",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 19,
+        "family": "attributed_open_predication_claim",
+        "unit_signature": "0db7118fa0a4236dcb516f8b58ff12c362dc512613df74cc1b8918f6d26356ba",
+        "match_ref": "atomic-schema-match:eeedaa46ca1ec6779e79e0ce",
+        "coverage_ref": "interpretation-coverage:03b5da0360ba3caa12df0064",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 20,
+        "family": "attributed_open_predication_claim",
+        "unit_signature": "b7e81ae233f43fde46f49bb1c67196d6a7152cd1f259272bf2137f30cded3275",
+        "match_ref": "atomic-schema-match:c9d99fe1e8f5c2c61eb88208",
+        "coverage_ref": "interpretation-coverage:5ec0a8eb9fc26433ff95a184",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 21,
+        "family": "designation_query",
+        "unit_signature": "dce9581c31bef52733f808caf130de3b51ec649b6dcf104e62da6b1df6ef5a47",
+        "match_ref": "atomic-schema-match:b4e3c8b99c46b155af257dc1",
+        "coverage_ref": "interpretation-coverage:780087e16cb5ee189c79cc04",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "unit_signature": "d7bdfb2fc1382c2950d5908a9852574a3a37e695c12aed79a2b514f3de80abe0",
+        "match_ref": "atomic-schema-match:8c233b607ccb1879fc21f138",
+        "coverage_ref": "interpretation-coverage:d49eafb3813484dd88d21062",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 23,
+        "family": "designation_query",
+        "unit_signature": "d8647af876392fa4770dca227e5c0367f92b329a7491c0035ec96937ab974be3",
+        "match_ref": "atomic-schema-match:85262faf48e42ab16fcaca8a",
+        "coverage_ref": "interpretation-coverage:3067b71e0da6fd8d6e1e804b",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "unit_signature": "5fe1fc9747a8441b673a0521b6d2e02cb19423596a8c1c06c1721bd134f61901",
+        "match_ref": "atomic-schema-match:550fad24106ec2454c419d7a",
+        "coverage_ref": "interpretation-coverage:a81ee58f83a97dbf4429339a",
+        "weighted_coverage": 1.0
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "unit_signature": "a2a015b0c7a0dc0a5885658e1e67e6ea9bbb8ccff4988cd17fb916b28902b7c2",
+        "match_ref": "atomic-schema-match:8b441081adcf993a050e6c5d",
+        "coverage_ref": "interpretation-coverage:f354c1e447ed196493e2c331",
+        "weighted_coverage": 1.0
+      }
+    ],
+    "cross_family_collision_matrix": [
+      {
+        "example_index": 0,
+        "intended_family": "designation_claim",
+        "executable_families": [
+          "designation_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 1,
+        "intended_family": "designation_claim",
+        "executable_families": [
+          "designation_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 2,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 3,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 4,
+        "intended_family": "operational_condition_query",
+        "executable_families": [
+          "operational_condition_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 5,
+        "intended_family": "operational_condition_query",
+        "executable_families": [
+          "operational_condition_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 6,
+        "intended_family": "type_query",
+        "executable_families": [
+          "type_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 7,
+        "intended_family": "type_query",
+        "executable_families": [
+          "type_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 8,
+        "intended_family": "relation_surface_query",
+        "executable_families": [
+          "relation_surface_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 9,
+        "intended_family": "relation_surface_query",
+        "executable_families": [
+          "relation_surface_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 10,
+        "intended_family": "meaning_query",
+        "executable_families": [
+          "meaning_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 11,
+        "intended_family": "designation_confirmation",
+        "executable_families": [
+          "designation_confirmation"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 12,
+        "intended_family": "relation_surface_query",
+        "executable_families": [
+          "relation_surface_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 13,
+        "intended_family": "meaning_query",
+        "executable_families": [
+          "meaning_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 14,
+        "intended_family": "designation_claim",
+        "executable_families": [
+          "designation_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 15,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 16,
+        "intended_family": "designation_confirmation",
+        "executable_families": [
+          "designation_confirmation"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 17,
+        "intended_family": "surface_choice_explanation_query",
+        "executable_families": [
+          "surface_choice_explanation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 18,
+        "intended_family": "surface_choice_explanation_query",
+        "executable_families": [
+          "surface_choice_explanation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 19,
+        "intended_family": "attributed_open_predication_claim",
+        "executable_families": [
+          "attributed_open_predication_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 20,
+        "intended_family": "attributed_open_predication_claim",
+        "executable_families": [
+          "attributed_open_predication_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 21,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 22,
+        "intended_family": "attributed_open_predication_claim",
+        "executable_families": [
+          "attributed_open_predication_claim"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 23,
+        "intended_family": "designation_query",
+        "executable_families": [
+          "designation_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 24,
+        "intended_family": "contextual_meaning_query",
+        "executable_families": [
+          "contextual_meaning_query"
+        ],
+        "executable_match_count": 1
+      },
+      {
+        "example_index": 25,
+        "intended_family": "contextual_meaning_query",
+        "executable_families": [
+          "contextual_meaning_query"
+        ],
+        "executable_match_count": 1
+      }
+    ],
+    "critical_slot_mutations": [
+      {
+        "example_index": 0,
+        "family": "designation_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 0,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 0,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 0,
+        "family": "designation_claim",
+        "semantic_role": "value",
+        "blocked": true
+      },
+      {
+        "example_index": 1,
+        "family": "designation_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 1,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 1,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 1,
+        "family": "designation_claim",
+        "semantic_role": "value",
+        "blocked": true
+      },
+      {
+        "example_index": 2,
+        "family": "designation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 2,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 2,
+        "family": "designation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 2,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 3,
+        "family": "designation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 3,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 3,
+        "family": "designation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 3,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 4,
+        "family": "operational_condition_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 4,
+        "family": "operational_condition_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 4,
+        "family": "operational_condition_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 5,
+        "family": "operational_condition_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 5,
+        "family": "operational_condition_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 5,
+        "family": "operational_condition_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 6,
+        "family": "type_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 6,
+        "family": "type_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 6,
+        "family": "type_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 7,
+        "family": "type_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 7,
+        "family": "type_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 7,
+        "family": "type_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 8,
+        "family": "relation_surface_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 8,
+        "family": "relation_surface_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 8,
+        "family": "relation_surface_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 8,
+        "family": "relation_surface_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 9,
+        "family": "relation_surface_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 9,
+        "family": "relation_surface_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 9,
+        "family": "relation_surface_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 9,
+        "family": "relation_surface_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 10,
+        "family": "meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 10,
+        "family": "meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 10,
+        "family": "meaning_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 10,
+        "family": "meaning_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 11,
+        "family": "designation_confirmation",
+        "semantic_role": "argument",
+        "blocked": true
+      },
+      {
+        "example_index": 11,
+        "family": "designation_confirmation",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 11,
+        "family": "designation_confirmation",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 11,
+        "family": "designation_confirmation",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 12,
+        "family": "relation_surface_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 12,
+        "family": "relation_surface_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 12,
+        "family": "relation_surface_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 12,
+        "family": "relation_surface_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 13,
+        "family": "meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 13,
+        "family": "meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 13,
+        "family": "meaning_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 13,
+        "family": "meaning_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 14,
+        "family": "designation_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 14,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 14,
+        "family": "designation_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 14,
+        "family": "designation_claim",
+        "semantic_role": "value",
+        "blocked": true
+      },
+      {
+        "example_index": 15,
+        "family": "designation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 15,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 15,
+        "family": "designation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 15,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "semantic_role": "argument",
+        "blocked": true
+      },
+      {
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 16,
+        "family": "designation_confirmation",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 17,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "object_alternative",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 18,
+        "family": "surface_choice_explanation_query",
+        "semantic_role": "object_alternative",
+        "blocked": true
+      },
+      {
+        "example_index": 19,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 19,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 19,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 19,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate_content",
+        "blocked": true
+      },
+      {
+        "example_index": 20,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 20,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 20,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 20,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate_content",
+        "blocked": true
+      },
+      {
+        "example_index": 21,
+        "family": "designation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 21,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 21,
+        "family": "designation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 21,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "scope",
+        "blocked": true
+      },
+      {
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 22,
+        "family": "attributed_open_predication_claim",
+        "semantic_role": "predicate_content",
+        "blocked": true
+      },
+      {
+        "example_index": 23,
+        "family": "designation_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 23,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 23,
+        "family": "designation_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 23,
+        "family": "designation_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 24,
+        "family": "contextual_meaning_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "semantic_role": "object",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "semantic_role": "force",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "semantic_role": "subject",
+        "blocked": true
+      },
+      {
+        "example_index": 25,
+        "family": "contextual_meaning_query",
+        "semantic_role": "predicate",
+        "blocked": true
+      }
+    ],
+    "family_holdouts": [
+      {
+        "family": "attributed_open_predication_claim",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:03b5da0360ba3caa12df0064",
+        "executable_match_count": 1
+      },
+      {
+        "family": "attributed_open_predication_claim",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:5ec0a8eb9fc26433ff95a184",
+        "executable_match_count": 1
+      },
+      {
+        "family": "attributed_open_predication_claim",
+        "holdout_index": 2,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:d49eafb3813484dd88d21062",
+        "executable_match_count": 1
+      },
+      {
+        "family": "contextual_meaning_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:a81ee58f83a97dbf4429339a",
+        "executable_match_count": 1
+      },
+      {
+        "family": "contextual_meaning_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:f354c1e447ed196493e2c331",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_claim",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:633fa0cdc04c8cac836b3ac3",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_claim",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:128d11348cd81ab5717c6bbf",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_claim",
+        "holdout_index": 2,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:2e748e94f025185fb491222f",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_confirmation",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:7a68c928df52fcd171d0cae2",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_confirmation",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:415d5c28801cd24b384a1dee",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:50255e22f7c0645003a8fbd0",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:71cb2073ba59ad29b02be3fe",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 2,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:c663e6f5ec6d375f48dc1e8b",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 3,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:780087e16cb5ee189c79cc04",
+        "executable_match_count": 1
+      },
+      {
+        "family": "designation_query",
+        "holdout_index": 4,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:3067b71e0da6fd8d6e1e804b",
+        "executable_match_count": 1
+      },
+      {
+        "family": "meaning_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:7b2bf2943aaf66a2fc503f07",
+        "executable_match_count": 1
+      },
+      {
+        "family": "meaning_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:64222c3ae9c51ed6f45ae052",
+        "executable_match_count": 1
+      },
+      {
+        "family": "operational_condition_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:3086681ca677245e50ccc0a1",
+        "executable_match_count": 1
+      },
+      {
+        "family": "operational_condition_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:35146c9ced74e175e1784adf",
+        "executable_match_count": 1
+      },
+      {
+        "family": "relation_surface_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:234530f7805576edc2b0755b",
+        "executable_match_count": 1
+      },
+      {
+        "family": "relation_surface_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:0f0ceeff481bba9740977a4a",
+        "executable_match_count": 1
+      },
+      {
+        "family": "relation_surface_query",
+        "holdout_index": 2,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:1fba539fb9573974cbed4a31",
+        "executable_match_count": 1
+      },
+      {
+        "family": "surface_choice_explanation_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:beb03161ea6aca254bc1d0fc",
+        "executable_match_count": 1
+      },
+      {
+        "family": "surface_choice_explanation_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:29d0c6be698efbac54d13c71",
+        "executable_match_count": 1
+      },
+      {
+        "family": "type_query",
+        "holdout_index": 0,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:ee846b83d1fb60aa6ebf6a04",
+        "executable_match_count": 1
+      },
+      {
+        "family": "type_query",
+        "holdout_index": 1,
+        "mode": "leave_one_out",
+        "coverage_ref": "interpretation-coverage:254ddcfc6d563f05d0e94bdb",
+        "executable_match_count": 1
+      }
+    ],
+    "negative_probes": [
+      {
+        "probe_index": 0,
+        "reason": "missing relation object",
+        "blocked": true
+      },
+      {
+        "probe_index": 1,
+        "reason": "missing designation property",
+        "blocked": true
+      },
+      {
+        "probe_index": 2,
+        "reason": "missing operational subject",
+        "blocked": true
+      },
+      {
+        "probe_index": 3,
+        "reason": "missing attributed predicate content",
+        "blocked": true
+      }
+    ],
+    "annotated_replay_coverage": 1.0
+  },
+  "pack_hash": "a5d91b2b2ff56ad01e03dd14ba93fb0cca3b2136c7182eac0e03579467cca478"
 }

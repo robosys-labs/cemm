@@ -7998,46 +7998,38 @@
       "confidence": 1.0,
       "authority_status": "reviewed",
       "source_ref": "seed"
-    },
-    {
-      "operator": "op:state",
-      "args": {
-        "role:subject": "participant:system",
-        "role:dimension": "dim:availability",
-        "role:value": "value:available"
-      },
-      "stance": "support",
-      "confidence": 1.0,
-      "authority_status": "reviewed",
-      "source_ref": "seed",
-      "fact_ref": "seed:system-state-availability"
-    },
-    {
-      "operator": "op:state",
-      "args": {
-        "role:subject": "participant:system",
-        "role:dimension": "dim:communication_status",
-        "role:value": "value:communicating"
-      },
-      "stance": "support",
-      "confidence": 1.0,
-      "authority_status": "reviewed",
-      "source_ref": "seed",
-      "fact_ref": "seed:system-state-communication"
-    },
-    {
-      "operator": "op:state",
-      "args": {
-        "role:subject": "participant:system",
-        "role:dimension": "dim:emotional_state",
-        "role:value": "value:positive"
-      },
-      "stance": "support",
-      "confidence": 1.0,
-      "authority_status": "reviewed",
-      "source_ref": "seed",
-      "fact_ref": "seed:system-state-emotion"
     }
   ],
-  "rules": []
+  "rules": [],
+  "semantic_operational_migration": {
+    "contract": "CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md",
+    "authority_change": "removal_only",
+    "added_atom_count": 0,
+    "modified_atom_count": 0,
+    "removed_rejected_bundle_atoms": [],
+    "removed_durable_transient_state_count": 3,
+    "removed_fact_refs": [
+      "seed:system-state-availability",
+      "seed:system-state-communication",
+      "seed:system-state-emotion"
+    ],
+    "base_owned_refs_not_defined_here": [
+      "dim:critical_blocker_count",
+      "dim:language_realizer_support",
+      "dim:runtime_process_support",
+      "dim:semantic_runtime_support",
+      "rel:subtype_of",
+      "rel:value_of_dimension",
+      "value:unknown"
+    ],
+    "operational_status_storage": "cycle_local_assessment_not_authority_atom",
+    "epistemic_modes": [
+      "observed",
+      "derived",
+      "predicted",
+      "simulated",
+      "desired",
+      "committed"
+    ]
+  }
 }

@@ -2,7 +2,9 @@
 
 ## Status
 
-This patch implements the first production-bounded form-resolution and semantic learning foundation required by `AGENTS.md`, `ARCHITECTURE.md`, `CURRENT_RUNTIME_WEAKNESSES.md`, and `V1_ACCEPTANCE.md`.
+This patch implemented the first production-bounded form-resolution and semantic learning foundation required by `AGENTS.md`, `ARCHITECTURE.md`, `CURRENT_RUNTIME_WEAKNESSES.md`, and `V1_ACCEPTANCE.md`.
+
+**Extended by:** the semantic-operational rewrite (v3.1.3) governed by `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md`. That rewrite adds atomic feature-driven construction assembly (`form_algebra.py`), perspective-aware reference planning (`reference.py`), fail-closed span-coverage receipts (`semantic_coverage.py`), cycle-local operational truth (`operational.py`), bounded dialogue obligations (`dialogue.py`), and immutable surface-plan indexes (`surface_plans.py`). Where this document and `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md` differ, the latter is normative.
 
 It does **not** claim that general multilingual grounding or open-ended language realization is complete. The remaining state-conditioned settling, broad morphology, embedded discourse, chained-property, and production concurrency work remains active.
 

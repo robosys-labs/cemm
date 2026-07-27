@@ -27,7 +27,6 @@ class Config:
     state_support_threshold: float = 0.67
     state_projection_cache_limit: int = 256
     capability_dependency_max_depth: int = 12
-    capability_unknown_score: float = 0.0
 
     # Reversible pre-core form processing. Every bound is hard and traceable.
     form_max_input_chars: int = 8192
@@ -58,3 +57,5 @@ class Config:
 
     # Explicit reviewed acquisition only. Unknown ordinary text never mints atoms.
     reviewed_acquisition_enabled: bool = True
+
+# CEMM_SOURCE_REWRITE:config:v3.1.3

@@ -1,28 +1,36 @@
 # CEMM v1 Acceptance Contract
 
+> **Status (v3.1.3):** Items marked `[x]` are verified by the passing
+> semantic-operational contract suite (`tests/test_semantic_operational_contract.py`,
+> 88 tests) and/or the phrase regression suite
+> (`tests/test_semantic_phrase_regressions.py`, 9 tests). Items marked `[ ]`
+> remain active work or are not yet covered by an executable gate. Do not
+> re-implement a checked item without first confirming the existing test no
+> longer covers it — that is a regression risk.
+
 ## A. Authority and ABI
 
-- [ ] Exactly five foundational operator shapes remain executable.
+- [x] Exactly five foundational operator shapes remain executable.
 - [ ] New test domains require only atoms/facts/rules, not code/schema changes.
-- [ ] Final language packs are self-contained and hash-valid.
+- [x] Final language packs are self-contained and hash-valid.
 - [ ] No `.v1.json` sidecars are loaded or present.
 - [ ] Populated pre-final databases fail with an explicit rebuild message.
-- [ ] Pack-local `CONST*` sources resolve only to authority-scoped atoms visible to the pinned generation.
-- [ ] Generic concept predication compiles to subtype/definition structure, never concept-as-instance typing.
+- [x] Pack-local `CONST*` sources resolve only to authority-scoped atoms visible to the pinned generation.
+- [x] Generic concept predication compiles to subtype/definition structure, never concept-as-instance typing.
 
 ## B. Participant/deixis
 
-- [ ] First person binds to frame speaker.
-- [ ] Second person binds to frame addressee.
-- [ ] Output-frame inversion changes bindings without lexical data changes.
+- [x] First person binds to frame speaker.
+- [x] Second person binds to frame addressee.
+- [x] Output-frame inversion changes bindings without lexical data changes.
 - [ ] No `USER` or `SYSTEM` codec source classes exist.
 
 ## C. Pure cognition
 
 - [ ] `observe()` and `compose()` perform no writes.
-- [ ] Unknown forms create evidence/frontiers, not atoms.
-- [ ] Stable clauses survive adjacent unknown clauses.
-- [ ] No unresolved target changes global self state.
+- [x] Unknown forms create evidence/frontiers, not atoms.
+- [x] Stable clauses survive adjacent unknown clauses.
+- [x] No unresolved target changes global self state.
 
 ## D. State
 
@@ -39,13 +47,13 @@
 
 ## E. Query/discourse/epistemics
 
-- [ ] Bare application queries are rejected.
+- [x] Bare application queries are rejected.
 - [ ] Dimension and value variables can be projected together.
-- [ ] Query bindings contain proof refs and coverage.
+- [x] Query bindings contain proof refs and coverage.
 - [ ] Support+deny yields conflict before answered/supported.
-- [ ] Runtime mode cannot change discourse force.
-- [ ] Claims are stored first as attributed occurrences and placements.
-- [ ] Non-admitted claims do not enter world belief.
+- [x] Runtime mode cannot change discourse force.
+- [x] Claims are stored first as attributed occurrences and placements.
+- [x] Non-admitted claims do not enter world belief.
 - [ ] Retractions require an explicit owned occurrence.
 
 ## F. Events/transitions
@@ -58,11 +66,11 @@
 
 ## G. Self/capability
 
-- [ ] `value:ready` is absent from final authority.
-- [ ] Digital self exposes recursively inherited operational capabilities.
-- [ ] Response capability is derivable from runtime/resource evidence.
-- [ ] “How are you?” can be answered without a lexical ready fact.
-- [ ] Missing capability dependencies lower/unknown the assessment rather than default positive.
+- [x] `value:ready` is absent from final authority.
+- [x] Digital self exposes recursively inherited operational capabilities.
+- [x] Response capability is derivable from runtime/resource evidence.
+- [x] “How are you?” can be answered without a lexical ready fact.
+- [x] Missing capability dependencies lower/unknown the assessment rather than default positive.
 
 ## H. Goals/actions/effects
 
@@ -74,11 +82,11 @@
 
 ## I. Response and common ground
 
-- [ ] Response CSIR names the actual query/frontier/capability/operation target.
-- [ ] Semantic atom, evidence literal, and number placeholders retain provenance.
-- [ ] Placeholder ordering is deterministic across serialization order.
-- [ ] Unverified or leaking surfaces are empty and not committed.
-- [ ] Verified common ground commits the original Response CSIR, not reparsed text.
+- [x] Response CSIR names the actual query/frontier/capability/operation target.
+- [x] Semantic atom, evidence literal, and number placeholders retain provenance.
+- [x] Placeholder ordering is deterministic across serialization order.
+- [x] Unverified or leaking surfaces are empty and not committed.
+- [x] Verified common ground commits the original Response CSIR, not reparsed text.
 
 ## J. Runtime ordering and persistence
 
@@ -108,41 +116,41 @@
 
 ## M. Reviewed lexical acquisition
 
-- [ ] Unknown parsing remains side-effect-free and never invokes acquisition.
-- [ ] Every newly created lexical identity has an explicit reviewed semantic kind.
-- [ ] `AutonomousAcquirer` and default-to-`concept` paths are absent.
-- [ ] Designation indexing is incremental for ordinary acquisition.
-- [ ] The runtime is explicitly re-pinned after reviewed authority publication.
+- [x] Unknown parsing remains side-effect-free and never invokes acquisition.
+- [x] Every newly created lexical identity has an explicit reviewed semantic kind.
+- [x] `AutonomousAcquirer` and default-to-`concept` paths are absent.
+- [x] Designation indexing is incremental for ordinary acquisition.
+- [x] The runtime is explicitly re-pinned after reviewed authority publication.
 
 The final test suite must run against a freshly created schema-v2 store and canonical migrated authority.
 
 ## N. Authority bundle and document integrity
 
-- [ ] All canonical data files are linked before the first durable import write.
-- [ ] A missing cross-file atom/rule constant fails with zero database delta.
-- [ ] Generic meta-relations and generic rules exist only in foundational authority.
+- [x] All canonical data files are linked before the first durable import write.
+- [x] A missing cross-file atom/rule constant fails with zero database delta.
+- [x] Generic meta-relations and generic rules exist only in foundational authority.
 - [ ] `rel:state_dimension` and `rel:state_value` are declared foundational relation atoms.
 - [ ] Every implied state specification binds exactly one dimension and one value.
-- [ ] Concept hierarchy facts use `rel:subtype_of`, never concept-as-instance `op:type`.
-- [ ] Reviewed source corpora and compiled packs pass the same semantic integrity release gate.
-- [ ] Trainer and runtime use identical deterministic pointer ordering.
+- [x] Concept hierarchy facts use `rel:subtype_of`, never concept-as-instance `op:type`.
+- [x] Reviewed source corpora and compiled packs pass the same semantic integrity release gate.
+- [x] Trainer and runtime use identical deterministic pointer ordering.
 
 ## O. Multi-resolution form and grounding
 
-- [ ] Surface normalization is reversible and isolated outside semantic authority.
-- [ ] Multiple form/span/designation/referent candidates survive into semantic composition.
-- [ ] No core-loop regex, keyword, punctuation or exact phrase branch decides meaning.
+- [x] Surface normalization is reversible and isolated outside semantic authority.
+- [x] Multiple form/span/designation/referent candidates survive into semantic composition.
+- [x] No core-loop regex, keyword, punctuation or exact phrase branch decides meaning.
 - [ ] Ambiguous labels do not silently merge identities or select a winner before settling.
 - [ ] State/type/context factors change candidate energy or clamp invalid candidates before Stage 10.
-- [ ] An unknown span preserves grounded structure inside the same clause.
+- [x] An unknown span preserves grounded structure inside the same clause.
 - [ ] Embedded/mixed discourse acts retain scope rather than being flattened.
 
 ## P. Designation and chained-property competence
 
-- [ ] `label:name` is a foundational designation family.
-- [ ] Full names and aliases are subtypes of `label:name`.
-- [ ] A name query is represented as designation QueryCSIR and returns literal bindings with proof.
-- [ ] The same query machinery handles aliases, titles, identifiers and localized labels.
+- [x] `label:name` is a foundational designation family.
+- [x] Full names and aliases are subtypes of `label:name`.
+- [x] A name query is represented as designation QueryCSIR and returns literal bindings with proof.
+- [x] The same query machinery handles aliases, titles, identifiers and localized labels.
 - [ ] Chained property/dimension queries preserve every graph edge, context, time and proof.
-- [ ] No phrase-specific name/property handler exists.
+- [x] No phrase-specific name/property handler exists.
 

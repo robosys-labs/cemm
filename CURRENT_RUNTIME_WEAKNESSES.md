@@ -5,6 +5,15 @@
 
 This document prevents a trace-complete skeleton or a passing phrase test from being mistaken for complete semantic cognition.
 
+> **Update (v3.1.3):** Sections 2, 3, 5, 6, 8, 10, and 12 have been
+> substantially addressed by the semantic-operational rewrite governed by
+> `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md`. The implemented coverage is
+> verified by `tests/test_semantic_operational_contract.py` (88 tests) and
+> `tests/test_semantic_phrase_regressions.py` (9 tests). Items not yet
+> covered by an executable gate remain active work; see `V1_ACCEPTANCE.md`
+> for the per-item status. Do not re-implement an addressed section without
+> first confirming the existing contract test no longer covers it.
+
 ## 1. Executive diagnosis
 
 The current runtime has a useful exact substrate, state projection, QueryCSIR, epistemic placement, transition, capability and Response CSIR skeleton. Its largest remaining ceiling occurs **before and during semantic stabilization**:

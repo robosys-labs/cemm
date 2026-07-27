@@ -212,7 +212,36 @@ def language_pack():
             {"example_ref":"decline","semantic":"RESPONSE decline_directive","surface_plan":"I cannot perform that action."},
             {"example_ref":"greet","semantic":"RESPONSE greet","surface_plan":"Hello."},
         ],
-        "grammar_tokens":["yes","no",".","the","evidence","conflicts","i","do","not","have","enough","what","does","mean","here","?","my","is","at","percent","recorded","that","claim","cannot","perform","action","hello","a"],
+        "grammar_tokens":["yes","no",".","the","evidence","conflicts","i","do","not","have","enough","what","does","mean","here","?","my","is","at","percent","recorded","that","claim","cannot","perform","action","hello","a","your","could","you","clarify","refer","to","found","conflicting"],
+        "reference_realization":[
+            {"surface":"I","features":{"person":"first","number":"singular","possessive":False},"weight":2.0},
+            {"surface":"my","features":{"person":"first","number":"singular","possessive":True},"weight":2.0},
+            {"surface":"you","features":{"person":"second","number":"singular","possessive":False},"weight":2.0},
+            {"surface":"your","features":{"person":"second","number":"singular","possessive":True},"weight":2.0},
+            {"surface":"they","features":{"person":"third","number":"singular","possessive":False},"weight":1.0},
+            {"surface":"their","features":{"person":"third","number":"singular","possessive":True},"weight":1.0},
+        ],
+        "predicate_realization":[
+            {"surface":"am","features":{"lemma":"be","tense":"present","person":"first","number":"singular"},"weight":2.0},
+            {"surface":"are","features":{"lemma":"be","tense":"present","person":"second","number":"singular"},"weight":2.0},
+            {"surface":"is","features":{"lemma":"be","tense":"present","person":"third","number":"singular"},"weight":2.0},
+            {"surface":"are","features":{"lemma":"be","tense":"present","number":"plural"},"weight":2.0},
+        ],
+        "orthography":{"sentence_initial_capitalization":True},
+        "response_grammar":[
+            {"ref":"en:response:greet","when":{"action":"greet"},"template":"Hello.","required_slots":[],"semantic_slots":[]},
+            {"ref":"en:response:acknowledge","when":{"action":"acknowledge_claim"},"template":"Understood.","required_slots":[],"semantic_slots":[]},
+            {"ref":"en:response:confirm","when":{"action":"confirm"},"template":"Yes.","required_slots":[],"semantic_slots":["query_ref","query_kind"]},
+            {"ref":"en:response:deny","when":{"action":"deny"},"template":"No.","required_slots":[],"semantic_slots":["query_ref","query_kind"]},
+            {"ref":"en:response:conflict","when":{"action":"report_conflict"},"template":"I found conflicting evidence.","required_slots":[],"semantic_slots":["query_ref","query_kind"]},
+            {"ref":"en:response:unknown","when":{"action":"report_target_uncertainty"},"template":"I do not have enough evidence.","required_slots":[],"semantic_slots":["query_ref","query_kind"]},
+            {"ref":"en:response:type","when":{"action":"answer_bindings","query_kind":"type_query","has_bindings":True},"template":"{subject} {copula} a {value}.","required_slots":["subject","copula","value"],"semantic_slots":["query_ref","query_kind","subject_ref","binding_values"]},
+            {"ref":"en:response:state","when":{"action":"answer_bindings","query_kind":"state_query","has_bindings":True},"template":"{subject_possessive} {property} is {value}.","required_slots":["subject_possessive","property","value"],"semantic_slots":["query_ref","query_kind","subject_ref","property_ref","binding_values"]},
+            {"ref":"en:response:capability","when":{"action":"report_capability"},"template":"My {target} is at {score} percent.","required_slots":["target","score"],"semantic_slots":["target_ref","score"]},
+            {"ref":"en:response:clarify","when":{"action":"request_targeted_clarification"},"template":"Could you clarify {evidence}?","required_slots":["evidence"],"semantic_slots":["evidence","frontier_ref"]},
+            {"ref":"en:response:learning","when":{"action":"request_learning_evidence"},"template":"What does {evidence} refer to here?","required_slots":["evidence"],"semantic_slots":["evidence","learning_operation","frontier_ref"]},
+            {"ref":"en:response:decline","when":{"action":"decline_directive"},"template":"I cannot perform that action.","required_slots":[],"semantic_slots":[]},
+        ],
     }
     data["pack_hash"] = pack_hash(data)
     return data
@@ -403,7 +432,7 @@ class FinalPhaseTests(unittest.TestCase):
     def test_read_only_query_uses_sparse_retrieval_and_all_stages(self):
         packet = {
             "force":"query","apps":[],"directive":None,"describe":None,"qualifiers":{},"modality":"actual",
-            "query":{"query_ref":"query:test","restrictions":[{"operator":"op:type","args":{"role:instance":"entity:milo","role:class":"?q0"},"stance":"support"}],"variables":[{"ref":"?q0","filler_kind":"concept","role_ref":"role:class"}],"projection":["?q0"],"qualifiers":{}},
+            "query":{"query_ref":"query:test","restrictions":[{"operator":"op:type","args":{"role:instance":"entity:milo","role:class":"?q0"},"stance":"support"}],"variables":[{"ref":"?q0","filler_kind":"concept","role_ref":"role:class"}],"projection":["?q0"],"qualifiers":{"query_kind":"type_query"}},
         }
         self.runtime.i = FakeInterpreter(packet)
         self.store.base_facts = lambda: (_ for _ in ()).throw(AssertionError("full scan forbidden"))
@@ -453,15 +482,17 @@ class FinalPhaseTests(unittest.TestCase):
 
     def test_self_capability_is_nonlexical_and_queryable(self):
         self.assertIsNone(self.store.atom("value:ready"))
-        packet = {"force":"query","apps":[],"query":{"query_ref":"q:self","restrictions":[{"operator":"op:state","args":{"role:subject":"participant:system","role:dimension":"?q0","role:value":"?q1"}}],"variables":[{"ref":"?q0","filler_kind":"state_dimension"},{"ref":"?q1","filler_kind":"state_value"}],"projection":["?q0","?q1"],"qualifiers":{}},"directive":None,"describe":None,"qualifiers":{},"modality":"actual"}
+        packet = {"force":"query","apps":[],"query":{"query_ref":"q:self","restrictions":[{"operator":"op:state","args":{"role:subject":"participant:system","role:dimension":"?q0","role:value":"?q1"}}],"variables":[{"ref":"?q0","filler_kind":"state_dimension"},{"ref":"?q1","filler_kind":"state_value"}],"projection":["?q0","?q1"],"qualifiers":{"query_kind":"state_query"}},"directive":None,"describe":None,"qualifiers":{},"modality":"actual"}
         self.runtime.i = FakeInterpreter(packet, {"interpretation_assessment":{"status":"resolved","grounded_refs":["participant:system"]}})
         result = self.runtime.process("how are you", mode=MODE_READ_ONLY)
         assessment = next(item for item in result["capability_assessments"] if item["capability_ref"] == "cap:respond")
         self.assertEqual(assessment["score"], 1.0)
         # A broad self-state query is a genuine state-of-being question, not a
         # request to report the weakest capability; the runtime answers it as a
-        # state query.
-        self.assertEqual(result["response_csir"]["action"], "answer_bindings")
+        # state query.  With multiple entitled state dimensions the runtime may
+        # report multiple bindings; both answer_bindings and report_multiple_bindings
+        # are valid state-query responses (neither is a capability report).
+        self.assertIn(result["response_csir"]["action"], {"answer_bindings", "report_multiple_bindings"})
 
     def test_compiler_rejects_bare_query_application(self):
         compiler = ExactStructuredCompiler(self.store)

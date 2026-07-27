@@ -5,12 +5,13 @@ input, proposes normalization/token/span alternatives, and builds bounded
 form/grounding hypotheses with provenance.  It never commits, creates semantic
 atoms, decides world truth, or directly selects a discourse act.
 
-Language-specific construction records may *propose* exact semantic packets at
-Stage 5 through :class:`ConstructionCandidateGenerator`; the exact compiler and
-settler remain authoritative.
+Language-specific atomic feature schemas may propose exact semantic packets at
+Stage 5. The schemas never inspect surface strings; the exact compiler, semantic
+coverage policy and settler remain authoritative.
 """
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import math
@@ -18,9 +19,10 @@ import re
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Protocol, Sequence
 
-from cemm.model import canonical, lit, norm_text, stable
+from cemm.model import canonical, lit, norm_text, stable, surface
+from cemm.form_algebra import AtomicConstructionAssembler, AtomicSchemaMatcher
 
 _WORD = re.compile(r"\w+(?:['\u2019-]\w+)*|[^\w\s]", re.UNICODE)
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
@@ -161,6 +163,175 @@ class GroundingSpan:
 
 
 @dataclass(frozen=True)
+class FormSpanProposal:
+    proposal_ref: str
+    token_start: int
+    token_end: int
+    char_start: int
+    char_end: int
+    surface: str
+    provider_ref: str
+    score: float
+    features: Mapping[str, Any] = field(default_factory=dict)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "proposal_ref": self.proposal_ref,
+            "token_start": self.token_start,
+            "token_end": self.token_end,
+            "char_start": self.char_start,
+            "char_end": self.char_end,
+            "surface": self.surface,
+            "provider_ref": self.provider_ref,
+            "score": self.score,
+            "features": dict(self.features),
+        }
+
+
+class SpanProposalProvider(Protocol):
+    provider_ref: str
+
+    def propose(
+        self, candidate: NormalizationCandidate, tokens: Sequence[TokenEvidence]
+    ) -> Sequence[FormSpanProposal]: ...
+
+
+class QuotedSpanProvider:
+    """Propose exact bounded literal spans enclosed by explicit quote tokens."""
+
+    provider_ref = "quoted_span"
+    _PAIRS = {
+        '"': '"', "'": "'", "“": "”", "‘": "’", "«": "»", "‹": "›"
+    }
+
+    def propose(
+        self, candidate: NormalizationCandidate, tokens: Sequence[TokenEvidence]
+    ) -> tuple[FormSpanProposal, ...]:
+        output: list[FormSpanProposal] = []
+        index = 0
+        while index < len(tokens):
+            opener = tokens[index].surface
+            closer = self._PAIRS.get(opener)
+            if closer is None:
+                index += 1
+                continue
+            end = index + 1
+            while end < len(tokens) and tokens[end].surface != closer:
+                end += 1
+            if end >= len(tokens) or end == index + 1:
+                index += 1
+                continue
+            content_start, content_end = index + 1, end
+            if content_end - content_start > 12:
+                index = end + 1
+                continue
+            surface_value = candidate.text[
+                tokens[content_start].start : tokens[content_end - 1].end
+            ]
+            output.append(
+                FormSpanProposal(
+                    stable(
+                        "form-span-proposal", self.provider_ref,
+                        candidate.candidate_ref, content_start, content_end, surface_value,
+                    ),
+                    content_start, content_end,
+                    tokens[content_start].start, tokens[content_end - 1].end,
+                    surface_value, self.provider_ref, 0.65,
+                    {
+                        "span_type": "quoted",
+                        "quoted": True,
+                        "literal_evidence": True,
+                        "proposal_only": True,
+                    },
+                )
+            )
+            index = end + 1
+        return tuple(output)
+
+
+class HeuristicProperNameProvider:
+    """Bounded fallback span proposal provider.
+
+    It proposes only token boundaries and coarse entity-type evidence. It never
+    creates a semantic atom or commits an identity. A production NER provider can
+    be injected through the same interface without changing the core loop.
+    """
+
+    provider_ref = "named_entity_proposal"
+
+    def __init__(
+        self,
+        max_tokens: int = 8,
+        *,
+        protected_forms: Iterable[str] = (),
+    ):
+        self.max_tokens = int(max_tokens)
+        # The proposal provider is downstream of reviewed lexical evidence.  A
+        # surface already licensed as a grammatical/reference form must not be
+        # reinterpreted as a proper-name proposal merely because it is
+        # sentence-initial or uppercase (for example, first-person "I").
+        self.protected_forms = frozenset(norm_text(value) for value in protected_forms)
+
+    def _name_like(self, token: TokenEvidence) -> bool:
+        value = token.surface
+        return bool(
+            token.category == "word"
+            and value
+            and token.normalized not in self.protected_forms
+            and (value[0].isupper() or (len(value) > 1 and value.isupper()))
+        )
+
+    def propose(
+        self, candidate: NormalizationCandidate, tokens: Sequence[TokenEvidence]
+    ) -> Sequence[FormSpanProposal]:
+        output: list[FormSpanProposal] = []
+        index = 0
+        while index < len(tokens):
+            if not self._name_like(tokens[index]):
+                index += 1
+                continue
+            end = index + 1
+            while (
+                end < len(tokens)
+                and end - index < self.max_tokens
+                and self._name_like(tokens[end])
+            ):
+                end += 1
+            # Structural lexical forms have already been excluded by
+            # ``protected_forms``.  A remaining single title-cased token is a
+            # valid bounded name proposal (for example, "Opata"); it is still
+            # proposal-only and becomes semantic only if an atomic schema and
+            # complete coverage independently license it.
+            surface_value = candidate.text[tokens[index].start : tokens[end - 1].end]
+            output.append(
+                FormSpanProposal(
+                    stable(
+                        "form-span-proposal",
+                        self.provider_ref,
+                        candidate.candidate_ref,
+                        index,
+                        end,
+                        surface_value,
+                    ),
+                    index,
+                    end,
+                    tokens[index].start,
+                    tokens[end - 1].end,
+                    surface_value,
+                    self.provider_ref,
+                    0.35 + 0.05 * min(4, end - index),
+                    {
+                        "span_type": "named_entity",
+                        "entity_type_candidates": ["person", "organization", "entity"],
+                        "proposal_only": True,
+                    },
+                )
+            )
+            index = end
+        return tuple(output)
+
+
+@dataclass(frozen=True)
 class FormUnit:
     unit_ref: str
     kind: str
@@ -224,6 +395,35 @@ class ResolvedFormLattice:
     safety_flags: tuple[str, ...] = ()
     bounded: Mapping[str, Any] = field(default_factory=dict)
 
+    def clause_surfaces(self) -> tuple[str, ...]:
+        """Return punctuation-bounded clause surfaces from token evidence.
+
+        Clause segmentation belongs to pre-core form processing. It uses token
+        categories and punctuation evidence, not a semantic phrase recognizer.
+        """
+        normalization_ref = (
+            self.grounding_hypotheses[0].normalization_ref
+            if self.grounding_hypotheses
+            else (self.normalization_candidates[0].candidate_ref if self.normalization_candidates else None)
+        )
+        tokens = tuple(self.tokens_by_normalization.get(normalization_ref, ()))
+        if not tokens:
+            text = self.raw_text.strip()
+            return (text,) if text else ()
+        clauses: list[str] = []
+        current: list[str] = []
+        for token in tokens:
+            current.append(token.surface)
+            if token.category == "punctuation" and token.surface in {".", "!", "?"}:
+                text = surface(current).strip()
+                if text:
+                    clauses.append(text)
+                current = []
+        text = surface(current).strip()
+        if text:
+            clauses.append(text)
+        return tuple(clauses)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "lattice_ref": self.lattice_ref,
@@ -253,7 +453,7 @@ class ConstructionEvidence:
     consumed_unit_refs: tuple[str, ...]
     score: float
     packet_template: Mapping[str, Any]
-    remaining_unknowns: tuple[dict[str, Any], ...] = ()
+    coverage: Mapping[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -263,12 +463,12 @@ class ConstructionEvidence:
             "captures": dict(self.captures),
             "consumed_unit_refs": list(self.consumed_unit_refs),
             "score": self.score,
-            "remaining_unknowns": list(self.remaining_unknowns),
+            "coverage": dict(self.coverage),
         }
 
 
 class FormPack:
-    """Immutable pre-core form/construction data, distinct from semantic authority."""
+    """Immutable pre-core lexical-feature and atomic-schema artifact."""
 
     def __init__(self, path: str | Path):
         self.path = str(path)
@@ -277,13 +477,114 @@ class FormPack:
         computed = hashlib.sha256(canonical(material).encode()).hexdigest()
         if data.get("pack_hash") != computed:
             raise ValueError(f"form pack hash mismatch in {path}")
+        if data.get("constructions"):
+            raise ValueError("legacy phrase constructions are forbidden by runtime contract")
+        receipt = data.get("training_receipt")
+        if not isinstance(receipt, Mapping):
+            raise ValueError("form pack lacks computed training receipt")
+        algebra_version = int(data.get("feature_algebra_version", -1))
+        if algebra_version != 5 or int(receipt.get("feature_algebra_version", -1)) != algebra_version:
+            raise ValueError("form pack feature-algebra ABI mismatch")
+        if int(receipt.get("receipt_version", -1)) != 5:
+            raise ValueError("unsupported form-pack receipt version")
+        schemas = tuple(data.get("schemas", ()))
+        if int(receipt.get("family_count", -1)) != len(schemas):
+            raise ValueError("form-pack family count receipt mismatch")
+        if float(receipt.get("annotated_replay_coverage", 0.0)) != 1.0:
+            raise ValueError("form-pack annotated replay is incomplete")
+        if int(receipt.get("surface_matcher_key_count", -1)) != 0 or int(receipt.get("regex_condition_count", -1)) != 0:
+            raise ValueError("form-pack contains forbidden matcher conditions")
+        schema_hashes = dict(receipt.get("schema_hashes", {}))
+        actual_hashes = {
+            str(schema.get("ref")): hashlib.sha256(canonical(schema).encode()).hexdigest()
+            for schema in schemas
+        }
+        if schema_hashes != actual_hashes:
+            raise ValueError("form-pack schema hash receipt mismatch")
+        collision_rows = tuple(receipt.get("cross_family_collision_matrix", ()))
+        if len(collision_rows) != int(receipt.get("example_count", -1)) or any(
+            tuple(row.get("executable_families", ())) != (row.get("intended_family"),)
+            for row in collision_rows
+        ):
+            raise ValueError("form-pack collision receipt is invalid")
+        if any(not item.get("blocked") for item in receipt.get("critical_slot_mutations", ())):
+            raise ValueError("form-pack critical-slot mutation receipt is invalid")
+        if any(not item.get("blocked") for item in receipt.get("negative_probes", ())):
+            raise ValueError("form-pack negative-probe receipt is invalid")
+        AtomicSchemaMatcher(schemas, max_matches=1)
         self.data = data
         self.hash = computed
         self.language = str(data["language"])
         self.function_forms = {norm_text(item) for item in data.get("function_forms", ())}
         self.discourse_forms = {norm_text(item) for item in data.get("nonblocking_discourse_forms", ())}
         self.contractions = tuple(data.get("contractions", ()))
-        self.constructions = tuple(data.get("constructions", ()))
+        self.schemas = schemas
+        self.training_receipt = dict(receipt)
+        if not self.schemas:
+            raise ValueError("form pack requires trained atomic schemas")
+        feature_index: dict[str, list[dict[str, Any]]] = {}
+        for record in data.get("lexemes", ()):
+            features = dict(record.get("features", {}))
+            for form in record.get("forms", ()):
+                feature_index.setdefault(norm_text(str(form)), []).append(features)
+        self._feature_index = {
+            key: tuple(values) for key, values in feature_index.items()
+        }
+        # Lexical forms carrying structural grammar/reference evidence are
+        # protected from heuristic named-entity proposals.  This is derived
+        # from feature types, not an English pronoun word list, so equivalent
+        # language packs receive the same precedence rule.
+        structural_keys = {
+            "participant_role",
+            "person",
+            "discourse_force",
+            "predicate",
+            "copular",
+            "auxiliary",
+            "property_ref",
+            "semantic_port",
+            "anaphoric",
+            "demonstrative",
+        }
+        structural_categories = {
+            "reference",
+            "interrogative",
+            "auxiliary",
+            "verb",
+            "property_marker",
+            "emphasis",
+            "contrast",
+            "adposition",
+        }
+        self.named_entity_blocked_forms = frozenset(
+            form
+            for form, alternatives in self._feature_index.items()
+            if any(
+                structural_keys.intersection(features)
+                or features.get("category") in structural_categories
+                for features in alternatives
+            )
+        )
+
+    def feature_alternatives_for(self, normalized: str) -> tuple[dict[str, Any], ...]:
+        records = self._feature_index.get(norm_text(normalized), ())
+        unique = {canonical(record): dict(record) for record in records}
+        return tuple(unique[key] for key in sorted(unique))
+
+    def features_for(self, normalized: str) -> dict[str, Any]:
+        """Diagnostic union only; runtime hypotheses use alternatives separately."""
+        merged: dict[str, Any] = {}
+        for record in self.feature_alternatives_for(normalized):
+            for key, value in record.items():
+                if key not in merged:
+                    merged[key] = value
+                elif canonical(merged[key]) != canonical(value):
+                    prior = merged[key]
+                    values = list(prior) if isinstance(prior, tuple) else [prior]
+                    if all(canonical(value) != canonical(item) for item in values):
+                        values.append(value)
+                    merged[key] = tuple(values)
+        return merged
 
 
 class _TrieNode(dict):
@@ -295,15 +596,26 @@ class _TrieNode(dict):
 
 
 class SurfaceIndex:
-    """Generation-pinned token trie.  No regex is evaluated per stored label."""
+    """World-revision-pinned token trie; no regex runs per stored label."""
 
-    def __init__(self, store, language: str, authority_generation: int | None = None):
+    def __init__(
+        self, store, language: str, authority_generation: int | None = None,
+        world_revision: int | None = None,
+    ):
         self.store = store
         self.language = language
         self.authority_generation = authority_generation
+        self.world_revision = int(
+            store.revisions()["world_revision"] if world_revision is None else world_revision
+        )
         self.root = _TrieNode()
         self.record_count = 0
+        self._record_signatures: list[str] = []
         self._build()
+        self.snapshot_ref = stable(
+            "surface-index", self.language, self.authority_generation,
+            self.world_revision, sorted(self._record_signatures),
+        )
 
     @staticmethod
     def _tokens(surface: str) -> tuple[str, ...]:
@@ -318,14 +630,14 @@ class SurfaceIndex:
             if token not in node:
                 node[token] = _TrieNode()
             node = node[token]
-        node.records.append(dict(record))
+        normalized_record = dict(record)
+        node.records.append(normalized_record)
+        self._record_signatures.append(canonical((tokens, normalized_record)))
         self.record_count += 1
 
     def _build(self) -> None:
-        # Surfaces that are contextual indexicals (pronouns) must never be
-        # resolved through the stable designation index. Collect them from the
-        # reference_forms table first so designation entries for the same
-        # surface are skipped.
+        # Contextual indexicals are grounded from the participant frame and must
+        # never be shadowed by stable designation entries for the same surface.
         pronoun_surfaces: set[str] = set()
         for row in self.store.db.execute(
             "SELECT surface,features FROM reference_forms WHERE language IN (?, 'und')",
@@ -350,12 +662,12 @@ class SurfaceIndex:
                     "weight": float(row["weight"]),
                 },
             )
-        for row in self.store.db.execute(
+        query = (
             "SELECT label_ref,target_ref,label_type_ref,surface,language,prior,preferred,context_ref "
             "FROM designation_index WHERE language IN (?, 'und') "
-            "ORDER BY language,surface,preferred DESC,prior DESC,target_ref",
-            (self.language,),
-        ).fetchall():
+            "ORDER BY language,surface,preferred DESC,prior DESC,target_ref"
+        )
+        for row in self.store.db.execute(query, (self.language,)).fetchall():
             if norm_text(str(row["surface"])) in pronoun_surfaces:
                 continue
             self._insert(
@@ -402,6 +714,7 @@ class FormProcessor:
         max_normalizations: int = 8,
         max_grounding_hypotheses: int = 16,
         max_span_candidates: int = 128,
+        span_providers: Sequence[SpanProposalProvider] | None = None,
     ):
         if form_pack.language != language:
             raise ValueError(f"form pack language mismatch: {form_pack.language} != {language}")
@@ -413,40 +726,68 @@ class FormProcessor:
         self.max_normalizations = int(max_normalizations)
         self.max_grounding_hypotheses = int(max_grounding_hypotheses)
         self.max_span_candidates = int(max_span_candidates)
+        self.span_providers = tuple(
+            span_providers
+            or (
+                QuotedSpanProvider(),
+                HeuristicProperNameProvider(
+                    protected_forms=form_pack.named_entity_blocked_forms
+                ),
+            )
+        )
+        required_providers = set(self.pack.training_receipt.get("required_span_providers", ()))
+        actual_providers = {
+            str(getattr(provider, "provider_ref", type(provider).__name__))
+            for provider in self.span_providers
+        }
+        missing_providers = required_providers - actual_providers
+        if missing_providers:
+            raise ValueError(
+                f"form processor lacks required span providers: {sorted(missing_providers)}"
+            )
         self.function_forms = set(form_pack.function_forms) | {
             norm_text(item) for item in semantic_function_forms
         }
-        self.index = SurfaceIndex(store, language, authority_generation)
-        try:
-            self._index_world_revision = int(store.revisions()["world_revision"])
-        except Exception:
-            self._index_world_revision = None
+        self._index_world_revision = int(store.revisions()["world_revision"])
+        self.index = SurfaceIndex(
+            store, language, authority_generation, self._index_world_revision
+        )
         self._salience = self._load_salience()
 
     def _load_salience(self) -> dict[str, float]:
-        try:
-            current_turn = int(
-                self.store.db.execute(
-                    "SELECT coalesce(max(last_turn),0) FROM discourse_entities"
-                ).fetchone()[0]
-            )
-            return {
-                str(row["atom_ref"]): float(row["salience"])
-                * (0.55 ** max(0, current_turn - int(row["last_turn"])))
-                for row in self.store.db.execute(
-                    "SELECT * FROM discourse_entities ORDER BY last_turn DESC,salience DESC LIMIT 64"
-                ).fetchall()
-            }
-        except Exception:
-            return {}
+        current_turn = int(
+            self.store.db.execute(
+                "SELECT coalesce(max(last_turn),0) FROM discourse_entities"
+            ).fetchone()[0]
+        )
+        return {
+            str(row["atom_ref"]): float(row["salience"])
+            * (0.55 ** max(0, current_turn - int(row["last_turn"])))
+            for row in self.store.db.execute(
+                "SELECT * FROM discourse_entities ORDER BY last_turn DESC,salience DESC LIMIT 64"
+            ).fetchall()
+        }
 
     @staticmethod
     def _identity_map(text: str) -> tuple[SourceSegment, ...]:
         return (SourceSegment(0, len(text), 0, len(text)),)
 
     @staticmethod
-    def _coarse_map(text: str, raw: str) -> tuple[SourceSegment, ...]:
-        return (SourceSegment(0, len(text), 0, len(raw)),)
+    def _aligned_map(text: str, raw: str) -> tuple[SourceSegment, ...]:
+        if text == raw:
+            return FormProcessor._identity_map(raw)
+        matcher = difflib.SequenceMatcher(a=raw, b=text, autojunk=False)
+        output: list[SourceSegment] = []
+        for tag, raw_start, raw_end, out_start, out_end in matcher.get_opcodes():
+            if out_start == out_end:
+                continue
+            if tag == "equal":
+                output.append(SourceSegment(out_start, out_end, raw_start, raw_end))
+            else:
+                # Replaced/inserted output retains provenance to the precise raw
+                # segment that caused it; no global length-ratio approximation.
+                output.append(SourceSegment(out_start, out_end, raw_start, raw_end))
+        return tuple(output) or (SourceSegment(0, len(text), 0, len(raw)),)
 
     def _base_normalizations(self, raw: str) -> list[NormalizationCandidate]:
         if len(raw) > self.max_input_chars:
@@ -482,7 +823,7 @@ class FormProcessor:
                     text,
                     score,
                     tuple(transforms),
-                    self._identity_map(raw) if text == raw else self._coarse_map(text, raw),
+                    self._aligned_map(text, raw),
                 )
             )
 
@@ -505,36 +846,52 @@ class FormProcessor:
         return candidates
 
     def _expand_contractions(self, candidate: NormalizationCandidate) -> list[NormalizationCandidate]:
-        output = [candidate]
-        lowered = norm_text(candidate.text)
-        for rule in self.pack.contractions:
-            surface = norm_text(rule.get("surface", ""))
-            if not surface or surface not in lowered:
-                continue
-            pattern = re.compile(r"(?<!\w)" + re.escape(str(rule["surface"])) + r"(?!\w)", re.I | re.UNICODE)
-            for index, expansion in enumerate(rule.get("expansions", ())):
-                replacement = " ".join(str(token) for token in expansion.get("tokens", ()))
-                text, count = pattern.subn(replacement, candidate.text)
-                if not count:
+        """Compose contraction alternatives with a bounded deterministic beam."""
+        best: dict[str, NormalizationCandidate] = {norm_text(candidate.text): candidate}
+        frontier = [candidate]
+        while frontier and len(best) < self.max_normalizations * 4:
+            current = frontier.pop(0)
+            for rule in self.pack.contractions:
+                surface_key = norm_text(rule.get("surface", ""))
+                if not surface_key or surface_key not in norm_text(current.text):
                     continue
-                transform = TextTransform(
-                    "contraction_expansion",
-                    candidate.text,
-                    text,
-                    0,
-                    len(candidate.raw_text),
+                pattern = re.compile(
+                    r"(?<!\w)" + re.escape(str(rule["surface"])) + r"(?!\w)",
+                    re.I | re.UNICODE,
                 )
-                output.append(
-                    NormalizationCandidate(
-                        stable("normalization", candidate.raw_text, text, rule.get("surface"), index),
-                        candidate.raw_text,
+                for index, expansion in enumerate(rule.get("expansions", ())):
+                    replacement = " ".join(str(token) for token in expansion.get("tokens", ()))
+                    text, count = pattern.subn(replacement, current.text, count=1)
+                    if not count:
+                        continue
+                    transform = TextTransform(
+                        "contraction_expansion",
+                        current.text,
                         text,
-                        candidate.score + float(expansion.get("score", -0.05)),
-                        candidate.transforms + (transform,),
-                        self._coarse_map(text, candidate.raw_text),
+                        0,
+                        len(current.raw_text),
                     )
-                )
-        return output
+                    item = NormalizationCandidate(
+                        stable(
+                            "normalization",
+                            current.raw_text,
+                            text,
+                            rule.get("surface"),
+                            index,
+                            [x.as_dict() for x in current.transforms],
+                        ),
+                        current.raw_text,
+                        text,
+                        current.score + float(expansion.get("score", -0.05)),
+                        current.transforms + (transform,),
+                        self._aligned_map(text, current.raw_text),
+                    )
+                    key = norm_text(text)
+                    previous = best.get(key)
+                    if previous is None or item.score > previous.score:
+                        best[key] = item
+                        frontier.append(item)
+        return list(best.values())
 
     def normalizations(self, raw: str) -> tuple[NormalizationCandidate, ...]:
         candidates: list[NormalizationCandidate] = []
@@ -553,14 +910,16 @@ class FormProcessor:
 
     @staticmethod
     def _raw_span(candidate: NormalizationCandidate, start: int, end: int) -> tuple[int, int]:
-        if candidate.text == candidate.raw_text:
-            return start, end
-        if not candidate.text:
+        overlapping = [
+            segment
+            for segment in candidate.source_map
+            if segment.output_end > start and segment.output_start < end
+        ]
+        if not overlapping:
             return 0, len(candidate.raw_text)
-        ratio = len(candidate.raw_text) / max(1, len(candidate.text))
         return (
-            max(0, min(len(candidate.raw_text), int(start * ratio))),
-            max(0, min(len(candidate.raw_text), int(math.ceil(end * ratio)))),
+            max(0, min(segment.raw_start for segment in overlapping)),
+            min(len(candidate.raw_text), max(segment.raw_end for segment in overlapping)),
         )
 
     def tokenize(self, candidate: NormalizationCandidate) -> tuple[TokenEvidence, ...]:
@@ -690,26 +1049,58 @@ class FormProcessor:
             )
         return tuple(sorted(output, key=lambda item: (item.token_start, -item.token_end, item.span_ref)))
 
-    def _unit_from_token(self, token: TokenEvidence) -> FormUnit:
+    def _unit_options_from_token(self, token: TokenEvidence) -> tuple[FormUnit, ...]:
         normalized = token.normalized
+        alternatives = self.pack.feature_alternatives_for(normalized)
         if token.category == "punctuation":
+            alternatives = ({},)
             kind = "punctuation"
         elif normalized in self.pack.discourse_forms:
+            alternatives = alternatives or ({},)
             kind = "discourse"
-        elif normalized in self.function_forms:
+        elif normalized in self.function_forms or alternatives:
+            alternatives = alternatives or ({},)
             kind = "function"
         else:
+            alternatives = ({},)
             kind = "unknown"
-        return FormUnit(
-            stable("form-unit", token.token_ref, kind),
-            kind,
-            token.surface,
-            normalized,
-            token_start=-1,
-            token_end=-1,
-            char_start=token.start,
-            char_end=token.end,
-            score=0.0,
+        output = []
+        for features in alternatives:
+            actual = dict(features)
+            if kind == "discourse":
+                actual["discourse_marker"] = True
+            output.append(
+                FormUnit(
+                    stable("form-unit", token.token_ref, kind, actual),
+                    kind,
+                    token.surface,
+                    normalized,
+                    token_start=-1,
+                    token_end=-1,
+                    char_start=token.start,
+                    char_end=token.end,
+                    score=0.0,
+                    features=actual,
+                )
+            )
+        return tuple(output)
+
+    def _span_proposals(
+        self, candidate: NormalizationCandidate, tokens: Sequence[TokenEvidence]
+    ) -> tuple[FormSpanProposal, ...]:
+        proposals: dict[str, FormSpanProposal] = {}
+        for provider in self.span_providers:
+            for item in provider.propose(candidate, tokens):
+                if not (0 <= item.token_start < item.token_end <= len(tokens)):
+                    continue
+                prior = proposals.get(item.proposal_ref)
+                if prior is None or item.score > prior.score:
+                    proposals[item.proposal_ref] = item
+        return tuple(
+            sorted(
+                proposals.values(),
+                key=lambda item: (item.token_start, -item.token_end, -item.score, item.proposal_ref),
+            )[: self.max_span_candidates]
         )
 
     def hypotheses(
@@ -717,10 +1108,14 @@ class FormProcessor:
         candidate: NormalizationCandidate,
         tokens: Sequence[TokenEvidence],
         spans: Sequence[GroundingSpan],
+        form_spans: Sequence[FormSpanProposal] = (),
     ) -> tuple[GroundingHypothesis, ...]:
         by_start: dict[int, list[GroundingSpan]] = {}
         for span in spans:
             by_start.setdefault(span.token_start, []).append(span)
+        form_by_start: dict[int, list[FormSpanProposal]] = {}
+        for span in form_spans:
+            form_by_start.setdefault(span.token_start, []).append(span)
 
         # (score, next_index, units, provenance)
         beam: list[tuple[float, int, tuple[FormUnit, ...], tuple[str, ...]]] = [(candidate.score, 0, (), (candidate.candidate_ref,))]
@@ -732,51 +1127,106 @@ class FormProcessor:
                     complete.append((score, units, provenance))
                     continue
                 token = tokens[index]
-                raw_unit = self._unit_from_token(token)
-                raw_unit = FormUnit(
-                    raw_unit.unit_ref,
-                    raw_unit.kind,
-                    raw_unit.surface,
-                    raw_unit.normalized,
-                    index,
-                    index + 1,
-                    raw_unit.char_start,
-                    raw_unit.char_end,
-                    score=raw_unit.score,
-                    features=raw_unit.features,
-                )
-                next_beam.append((score - (0.08 if raw_unit.kind == "unknown" else (0.04 if raw_unit.kind == "function" else 0.0)), index + 1, units + (raw_unit,), provenance))
+                for raw in self._unit_options_from_token(token):
+                    raw_unit = FormUnit(
+                        raw.unit_ref,
+                        raw.kind,
+                        raw.surface,
+                        raw.normalized,
+                        index,
+                        index + 1,
+                        raw.char_start,
+                        raw.char_end,
+                        score=raw.score,
+                        features=raw.features,
+                    )
+                    next_beam.append(
+                        (
+                            score - (0.08 if raw_unit.kind == "unknown" else 0.0),
+                            index + 1,
+                            units + (raw_unit,),
+                            provenance + (raw_unit.unit_ref,),
+                        )
+                    )
+                for proposal in form_by_start.get(index, ()):
+                    unit = FormUnit(
+                        stable("form-unit", proposal.proposal_ref),
+                        "span",
+                        proposal.surface,
+                        norm_text(proposal.surface),
+                        proposal.token_start,
+                        proposal.token_end,
+                        proposal.char_start,
+                        proposal.char_end,
+                        score=proposal.score,
+                        source_kind=proposal.provider_ref,
+                        features=dict(proposal.features),
+                    )
+                    next_beam.append(
+                        (
+                            score + proposal.score,
+                            proposal.token_end,
+                            units + (unit,),
+                            provenance + (proposal.proposal_ref,),
+                        )
+                    )
                 for span in by_start.get(index, ()):
                     for semantic in span.candidates:
-                        unit = FormUnit(
-                            stable("form-unit", span.span_ref, semantic.candidate_ref),
-                            "anchor",
-                            span.surface,
-                            norm_text(span.surface),
-                            span.token_start,
-                            span.token_end,
-                            span.char_start,
-                            span.char_end,
-                            semantic.semantic_ref,
-                            semantic.atom_kind,
-                            semantic.source_kind,
-                            semantic.weight,
-                            semantic.features,
-                        )
-                        next_beam.append(
-                            (
-                                score + math.log(max(1e-6, semantic.weight)),
+                        lexical_alternatives = self.pack.feature_alternatives_for(
+                            norm_text(span.surface)
+                        ) or ({},)
+                        for lexical_features in lexical_alternatives:
+                            combined = {**dict(lexical_features), **dict(semantic.features)}
+                            unit = FormUnit(
+                                stable(
+                                    "form-unit",
+                                    span.span_ref,
+                                    semantic.candidate_ref,
+                                    combined,
+                                ),
+                                "anchor",
+                                span.surface,
+                                norm_text(span.surface),
+                                span.token_start,
                                 span.token_end,
-                                units + (unit,),
-                                provenance + (span.span_ref, semantic.candidate_ref),
+                                span.char_start,
+                                span.char_end,
+                                semantic.semantic_ref,
+                                semantic.atom_kind,
+                                semantic.source_kind,
+                                semantic.weight,
+                                combined,
                             )
-                        )
+                            # A resolved participant/reference anchor is strictly
+                            # more informative than an otherwise identical lexical
+                            # feature-only unit.  Keep both hypotheses, but break
+                            # the former zero-score tie in favour of the grounded
+                            # referent.  Designation/content anchors do not receive
+                            # this bonus and continue to compete by their observed
+                            # evidence weight.
+                            grounding_bonus = (
+                                0.08
+                                if combined.get("category") == "reference"
+                                and combined.get("participant_role")
+                                and semantic.source_kind in {"reference", "reference_form"}
+                                else 0.0
+                            )
+                            next_beam.append(
+                                (
+                                    score
+                                    + math.log(max(1e-6, semantic.weight))
+                                    + grounding_bonus,
+                                    span.token_end,
+                                    units + (unit,),
+                                    provenance + (span.span_ref, semantic.candidate_ref),
+                                )
+                            )
             next_beam.sort(key=lambda item: (-item[0], canonical([unit.as_dict() for unit in item[2]])))
             beam = next_beam[: self.max_grounding_hypotheses]
             if complete and not beam:
                 break
         if not complete:
-            complete = [(candidate.score, (), (candidate.candidate_ref,))]
+            return ()
         output = []
         for score, units, provenance in sorted(complete, key=lambda item: -item[0])[: self.max_grounding_hypotheses]:
             output.append(
@@ -792,17 +1242,17 @@ class FormProcessor:
 
     def resolve(self, raw_text: str, participant_frame) -> ResolvedFormLattice:
         self._salience = self._load_salience()
-        try:
-            current_revision = int(self.store.revisions()["world_revision"])
-        except Exception:
-            current_revision = self._index_world_revision
+        current_revision = int(self.store.revisions()["world_revision"])
         if current_revision != self._index_world_revision:
-            self.index = SurfaceIndex(self.store, self.language, self.authority_generation)
+            self.index = SurfaceIndex(
+                self.store, self.language, self.authority_generation, current_revision
+            )
             self._index_world_revision = current_revision
         normalizations = self.normalizations(raw_text)
         tokens_by: dict[str, tuple[TokenEvidence, ...]] = {}
         spans_by: dict[str, tuple[GroundingSpan, ...]] = {}
         hypotheses: list[GroundingHypothesis] = []
+        hypotheses_by_normalization: dict[str, tuple[GroundingHypothesis, ...]] = {}
         flags = []
         if _CONTROL.search(raw_text):
             flags.append("control_characters")
@@ -813,12 +1263,102 @@ class FormProcessor:
         for candidate in normalizations:
             tokens = self.tokenize(candidate)
             spans = self.spans(candidate, tokens, participant_frame)
+            form_spans = self._span_proposals(candidate, tokens)
             tokens_by[candidate.candidate_ref] = tokens
             spans_by[candidate.candidate_ref] = spans
-            hypotheses.extend(self.hypotheses(candidate, tokens, spans))
-        hypotheses = sorted(hypotheses, key=lambda item: (-item.score, item.hypothesis_ref))[
-            : self.max_grounding_hypotheses
-        ]
+            candidate_hypotheses = self.hypotheses(candidate, tokens, spans, form_spans)
+            hypotheses_by_normalization[candidate.candidate_ref] = candidate_hypotheses
+            hypotheses.extend(candidate_hypotheses)
+
+        # Preserve both normalization diversity and a structural lexical
+        # backbone before global score truncation.  In a populated store, many
+        # designation candidates for words such as "name" can otherwise crowd
+        # out the hypothesis that retains its reviewed grammatical/property
+        # features.  For each reversible normalization we reserve:
+        #   1. the ordinary highest-evidence hypothesis; and
+        #   2. the best structurally compositional hypothesis, when distinct.
+        # This is evidence-class fairness, not phrase routing: ranking uses only
+        # unit kinds, reviewed features and grounding provenance.
+        def structural_rank(hypothesis: GroundingHypothesis):
+            participant_anchors = 0
+            structural_units = 0
+            unresolved_participant_refs = 0
+            designation_anchors = 0
+            proposal_spans = 0
+            unknowns = 0
+            for unit in hypothesis.units:
+                features = dict(unit.features or {})
+                if unit.kind == "anchor":
+                    if (
+                        features.get("category") == "reference"
+                        and features.get("participant_role")
+                        and unit.source_kind in {"reference", "reference_form"}
+                    ):
+                        participant_anchors += 1
+                    elif unit.source_kind == "designation":
+                        designation_anchors += 1
+                if unit.kind == "function" and features.get("category") in {
+                    "interrogative",
+                    "auxiliary",
+                    "verb",
+                    "reference",
+                    "property_marker",
+                    "emphasis",
+                    "relation_marker",
+                    "type_marker",
+                }:
+                    structural_units += 1
+                    if (
+                        features.get("category") == "reference"
+                        and features.get("participant_role")
+                    ):
+                        unresolved_participant_refs += 1
+                if unit.kind == "span" and features.get("proposal_only"):
+                    proposal_spans += 1
+                if unit.kind == "unknown":
+                    unknowns += 1
+            return (
+                participant_anchors,
+                structural_units,
+                proposal_spans,
+                -unresolved_participant_refs,
+                -designation_anchors,
+                -unknowns,
+                hypothesis.score,
+                hypothesis.hypothesis_ref,
+            )
+
+        representatives: list[GroundingHypothesis] = []
+        for candidate in normalizations:
+            values = hypotheses_by_normalization.get(candidate.candidate_ref, ())
+            if not values:
+                continue
+            top = values[0]
+            structural = max(values, key=structural_rank)
+            representatives.append(top)
+            if structural.hypothesis_ref != top.hypothesis_ref:
+                representatives.append(structural)
+
+        # Deduplicate while preserving deterministic normalization order, then
+        # fill any unused slots by global evidence rank.
+        reserved: list[GroundingHypothesis] = []
+        reserved_refs: set[str] = set()
+        for item in representatives:
+            if item.hypothesis_ref in reserved_refs:
+                continue
+            if len(reserved) >= self.max_grounding_hypotheses:
+                break
+            reserved.append(item)
+            reserved_refs.add(item.hypothesis_ref)
+        remaining = sorted(
+            (item for item in hypotheses if item.hypothesis_ref not in reserved_refs),
+            key=lambda item: (-item.score, item.hypothesis_ref),
+        )
+        hypotheses = sorted(
+            reserved
+            + remaining[: max(0, self.max_grounding_hypotheses - len(reserved))],
+            key=lambda item: (-item.score, item.hypothesis_ref),
+        )
         return ResolvedFormLattice(
             stable("resolved-form-lattice", raw_text, self.language, [item.hypothesis_ref for item in hypotheses]),
             raw_text,
@@ -834,237 +1374,23 @@ class FormProcessor:
                 "max_grounding_hypotheses": self.max_grounding_hypotheses,
                 "max_span_candidates": self.max_span_candidates,
                 "surface_index_records": self.index.record_count,
+                "surface_index_snapshot_ref": self.index.snapshot_ref,
+                "surface_index_world_revision": self.index.world_revision,
+                "surface_index_authority_generation": self.index.authority_generation,
                 "regex_per_stored_surface": False,
+                "span_providers": [
+                    str(getattr(provider, "provider_ref", type(provider).__name__))
+                    for provider in self.span_providers
+                ],
+                "lexical_feature_hypotheses": True,
+                "precise_source_alignment": True,
             },
         )
 
 
-class ConstructionCandidateGenerator:
-    """Stage-5 candidate proposal from reviewed language construction records."""
 
-    def __init__(self, form_pack: FormPack, *, max_matches: int = 32):
-        self.pack = form_pack
-        self.max_matches = int(max_matches)
-
-    @staticmethod
-    def _unit_matches(unit: FormUnit, spec: Mapping[str, Any]) -> bool:
-        if "literal" in spec:
-            return unit.normalized == norm_text(spec["literal"])
-        kind = spec.get("kind")
-        if kind and unit.kind != kind:
-            return False
-        if spec.get("anchor_kind") and not (
-            unit.kind == "anchor" and unit.atom_kind == spec["anchor_kind"]
-        ):
-            return False
-        if spec.get("anchor_kinds") and not (
-            unit.kind == "anchor" and unit.atom_kind in set(spec["anchor_kinds"])
-        ):
-            return False
-        if spec.get("anchor_ref") and unit.semantic_ref != spec["anchor_ref"]:
-            return False
-        if spec.get("source_kind") and unit.source_kind != spec["source_kind"]:
-            return False
-        return True
-
-    @staticmethod
-    def _capture_value(units: Sequence[FormUnit], mode: str) -> Any:
-        if mode == "ref":
-            return units[0].semantic_ref if units else None
-        text = " ".join(unit.surface for unit in units)
-        text = re.sub(r"\s+([,.;:!?])", r"\1", text).strip()
-        if mode == "literal:text":
-            return lit(text)
-        if mode == "text":
-            return text
-        if mode == "units":
-            return [unit.as_dict() for unit in units]
-        return text
-
-    def _match_pattern(
-        self,
-        units: Sequence[FormUnit],
-        pattern: Sequence[Mapping[str, Any]],
-        *,
-        ignore_kinds: set[str],
-        preserve_unknowns: bool = False,
-    ) -> list[tuple[dict[str, Any], tuple[str, ...], float]]:
-        results: list[tuple[dict[str, Any], tuple[str, ...], float]] = []
-
-        def walk(pi: int, ui: int, captures: dict[str, Any], consumed: tuple[str, ...], score: float) -> None:
-            if len(results) >= self.max_matches:
-                return
-            while ui < len(units) and units[ui].kind in ignore_kinds:
-                ui += 1
-            if pi >= len(pattern):
-                while ui < len(units) and (
-                    units[ui].kind in ignore_kinds | {"punctuation"}
-                    or (preserve_unknowns and units[ui].kind == "unknown")
-                ):
-                    ui += 1
-                if ui == len(units):
-                    results.append((dict(captures), consumed, score))
-                return
-            if preserve_unknowns and ui < len(units) and units[ui].kind == "unknown":
-                walk(pi, ui + 1, captures, consumed, score - 0.22)
-            if preserve_unknowns and ui < len(units) and units[ui].kind == "punctuation":
-                # Keep punctuation-sensitive matches, but also retain a bounded
-                # alternative in which punctuation separates an unresolved span
-                # from an otherwise grounded construction.
-                walk(pi, ui + 1, captures, consumed, score - 0.04)
-            spec = dict(pattern[pi])
-            if spec.get("optional"):
-                stripped = dict(spec)
-                stripped.pop("optional", None)
-                walk(pi + 1, ui, captures, consumed, score - 0.02)
-                spec = stripped
-            if spec.get("open_text"):
-                minimum = int(spec.get("min_tokens", 1))
-                maximum = min(int(spec.get("max_tokens", 12)), len(units) - ui)
-                slot = str(spec.get("slot") or "open")
-                mode = str(spec.get("capture", "literal:text"))
-                allow_function_forms = bool(spec.get("allow_function_forms"))
-                for length in range(maximum, minimum - 1, -1):
-                    selected = units[ui : ui + length]
-                    if not selected or any(unit.kind == "anchor" and not spec.get("allow_anchors") for unit in selected):
-                        continue
-                    if any(unit.kind == "punctuation" and not spec.get("allow_punctuation") for unit in selected):
-                        continue
-                    if not allow_function_forms and any(unit.kind == "function" for unit in selected):
-                        continue
-                    next_captures = dict(captures)
-                    next_captures[slot] = self._capture_value(selected, mode)
-                    walk(
-                        pi + 1,
-                        ui + length,
-                        next_captures,
-                        consumed + tuple(unit.unit_ref for unit in selected),
-                        score - 0.01 * max(0, length - 1),
-                    )
-                return
-            if ui >= len(units) or not self._unit_matches(units[ui], spec):
-                return
-            next_captures = dict(captures)
-            if spec.get("slot"):
-                next_captures[str(spec["slot"])] = self._capture_value(
-                    (units[ui],), str(spec.get("capture", "ref"))
-                )
-            walk(
-                pi + 1,
-                ui + 1,
-                next_captures,
-                consumed + (units[ui].unit_ref,),
-                score + float(spec.get("score", 0.0)),
-            )
-
-        walk(0, 0, {}, (), 0.0)
-        return results
-
-    @staticmethod
-    def _resolve_template(value: Any, captures: Mapping[str, Any], context: Mapping[str, Any]) -> Any:
-        if isinstance(value, list):
-            return [ConstructionCandidateGenerator._resolve_template(item, captures, context) for item in value]
-        if isinstance(value, dict):
-            if "$capture" in value:
-                return captures.get(str(value["$capture"]))
-            if "$context" in value:
-                return context.get(str(value["$context"]))
-            if "$literal" in value:
-                spec = value["$literal"]
-                if isinstance(spec, str) and spec.startswith("capture:"):
-                    raw = captures.get(spec.split(":", 1)[1])
-                    if isinstance(raw, dict) and "literal" in raw:
-                        return raw
-                    return lit(raw)
-                return lit(spec, str(value.get("type", "text")))
-            return {
-                key: ConstructionCandidateGenerator._resolve_template(item, captures, context)
-                for key, item in value.items()
-            }
-        if isinstance(value, str) and value.startswith("$capture:"):
-            return captures.get(value.split(":", 1)[1])
-        if isinstance(value, str) and value.startswith("$context:"):
-            return context.get(value.split(":", 1)[1])
-        return value
-
-    @staticmethod
-    def _unknowns(hypothesis: GroundingHypothesis, consumed: set[str]) -> tuple[dict[str, Any], ...]:
-        output = []
-        for unit in hypothesis.units:
-            if unit.unit_ref in consumed or unit.kind != "unknown":
-                continue
-            output.append(
-                {
-                    "surface": unit.surface,
-                    "normalized": unit.normalized,
-                    "char_start": unit.char_start,
-                    "char_end": unit.char_end,
-                    "unit_ref": unit.unit_ref,
-                    "blocking": True,
-                }
-            )
-        return tuple(output)
-
-    def evidence(self, lattice: ResolvedFormLattice, participant_frame) -> tuple[ConstructionEvidence, ...]:
-        output = []
-        context = {
-            "language_literal": lit(lattice.language),
-            "script_literal": lit("Latn"),
-            "true_literal": lit(True, "bool"),
-            "one_float_literal": lit(1.0, "float"),
-            "speaker_ref": participant_frame.speaker_ref,
-            "addressee_ref": participant_frame.addressee_ref,
-            "self_ref": participant_frame.self_ref,
-            "conversation_ref": participant_frame.conversation_ref,
-        }
-        for hypothesis in lattice.grounding_hypotheses:
-            for construction in self.pack.constructions:
-                ignore = set(construction.get("ignore_kinds", ("discourse",)))
-                matches = self._match_pattern(
-                    hypothesis.units,
-                    tuple(construction.get("pattern", ())),
-                    ignore_kinds=ignore,
-                    preserve_unknowns=bool(construction.get("preserve_unknowns", False)),
-                )
-                for captures, consumed, match_score in matches:
-                    remaining = self._unknowns(hypothesis, set(consumed))
-                    output.append(
-                        ConstructionEvidence(
-                            stable(
-                                "construction-evidence",
-                                construction["ref"],
-                                hypothesis.hypothesis_ref,
-                                captures,
-                                consumed,
-                            ),
-                            str(construction["ref"]),
-                            hypothesis.hypothesis_ref,
-                            captures,
-                            consumed,
-                            hypothesis.score + float(construction.get("weight", 1.0)) + match_score,
-                            dict(construction["packet"]),
-                            remaining,
-                        )
-                    )
-        output.sort(key=lambda item: (-item.score, item.evidence_ref))
-        return tuple(output[: self.max_matches])
-
-    def instantiate(self, evidence: ConstructionEvidence, participant_frame, language: str) -> dict[str, Any]:
-        context = {
-            "language_literal": lit(language),
-            "script_literal": lit("Latn"),
-            "true_literal": lit(True, "bool"),
-            "one_float_literal": lit(1.0, "float"),
-            "speaker_ref": participant_frame.speaker_ref,
-            "addressee_ref": participant_frame.addressee_ref,
-            "self_ref": participant_frame.self_ref,
-            "conversation_ref": participant_frame.conversation_ref,
-        }
-        packet = self._resolve_template(evidence.packet_template, evidence.captures, context)
-        if not isinstance(packet, dict):
-            raise ValueError("construction packet template did not produce a mapping")
-        return packet
-
+# Stage-5 construction assembly is implemented exclusively by
+# cemm.form_algebra.AtomicConstructionAssembler.
 
 def generic_designation_learning_packet(surface: str, language: str, *, label_type: str | None = None) -> dict[str, Any]:
     """Build a first-class exact query for an unresolved language form.

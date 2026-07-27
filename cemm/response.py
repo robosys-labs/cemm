@@ -1,10 +1,18 @@
-"""Target-aware Response CSIR and deterministic semantic pointerization."""
+"""Obligation-bound Response CSIR and deterministic semantic pointerization.
+
+Response construction consumes an exact discourse goal and its source artifact.
+It never substitutes a supporting fact for a failed response operation and never
+reconstructs query kind from proof shape or variable spelling.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Any, Mapping
 
 from cemm.model import Fact, canonical, stable
+
+_SEMANTIC_REF = re.compile(r"^[a-z][a-z0-9_]*:[A-Za-z0-9_.-]+$")
 
 
 @dataclass(frozen=True)
@@ -19,6 +27,34 @@ class ResponseCSIR:
     evidence_literals: tuple[str, ...] = ()
     reason: str | None = None
     obligation_ref: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.response_ref or not self.action or not self.audience_ref:
+            raise ValueError("Response CSIR requires ref, action and audience")
+        if self.action != "remain_silent" and not self.obligation_ref:
+            raise ValueError(f"response action {self.action} requires discourse obligation")
+        query_actions = {
+            "answer_bindings",
+            "report_multiple_bindings",
+            "confirm",
+            "deny",
+            "report_conflict",
+            "report_target_uncertainty",
+            "report_operational_condition",
+        }
+        if self.action in query_actions:
+            if not self.qualifiers.get("query_ref") or not self.qualifiers.get("query_kind"):
+                raise ValueError(f"query response {self.action} requires immutable query metadata")
+        if self.action == "report_operational_condition" and not self.target_ref:
+            raise ValueError("operational response requires exact target")
+        if self.action == "explain_surface_choice":
+            required = {"surface_decision_ref", "surface_choice_a", "surface_choice_b"}
+            if required - set(self.qualifiers):
+                raise ValueError("surface-choice explanation lacks prior decision provenance")
+        if self.action == "acknowledge_attributed_claim":
+            required = {"subject_ref", "predicate_surface", "claim_kind"}
+            if required - set(self.qualifiers):
+                raise ValueError("attributed-claim acknowledgment lacks preserved partial meaning")
 
     def as_dict(self):
         return {
@@ -43,39 +79,27 @@ class ResponseCSIR:
             "obligation_ref": self.obligation_ref,
         }
 
+    def semantic_signature(self) -> str:
+        return canonical(
+            {
+                "action": self.action,
+                "audience_ref": self.audience_ref,
+                "target_ref": self.target_ref,
+                "facts": [
+                    {"ref": x.ref, "operator": x.operator, "args": x.args, "stance": x.stance}
+                    for x in self.facts
+                ],
+                "bindings": [dict(x) for x in self.bindings],
+                "qualifiers": dict(self.qualifiers),
+                "evidence_literals": list(self.evidence_literals),
+                "reason": self.reason,
+                "obligation_ref": self.obligation_ref,
+            }
+        )
+
 
 class ResponseBuilder:
-    """Construct response meaning from exact results and scoped blockers."""
-
-    @staticmethod
-    def _select_answer_binding(bindings, facts_by_ref=None):
-        """Select a single binding to verbalize for an answer_query.
-
-        Prefer bindings that resolved a variable to a semantic atom.  When all
-        bindings are empty (e.g. description_request fallback), prefer proof
-        facts in the order op:type, op:designation, op:state.
-        """
-        facts_by_ref = facts_by_ref or {}
-
-        def fact_kind(binding):
-            for ref in binding.proof_refs:
-                fact = facts_by_ref.get(ref)
-                if fact:
-                    return fact.operator
-            return ""
-
-        def score(item):
-            idx, binding = item
-            has_atom = any(
-                isinstance(v, str) and ":" in v and not v.startswith("?")
-                for v in binding.values.values()
-            )
-            kind = fact_kind(binding)
-            kind_priority = {"op:type": 2, "op:designation": 1, "op:state": 1}.get(kind, 0)
-            return (-int(has_atom), -kind_priority, idx)
-
-        ordered = sorted(enumerate(bindings), key=score)
-        return bindings[ordered[0][0]] if ordered else None
+    """Construct exactly one response operation for the selected goal."""
 
     @staticmethod
     def _frontier_priority(frontier) -> tuple[float, int, str]:
@@ -85,68 +109,52 @@ class ResponseBuilder:
         return priority, grounded, frontier.frontier_ref
 
     @staticmethod
-    def _designation_answer_metadata(facts, bindings, frontiers, query_qualifiers=None):
-        qualifiers: dict[str, Any] = {}
+    def _canonical_bindings(bindings) -> tuple[dict[str, Any], ...]:
+        unique: dict[str, dict[str, Any]] = {}
+        for binding in bindings:
+            values = dict(binding.values if hasattr(binding, "values") else binding)
+            unique.setdefault(canonical(values), values)
+        return tuple(unique[key] for key in sorted(unique))
+
+    @staticmethod
+    def _proof_facts(bindings, facts_by_ref) -> tuple[Fact, ...]:
+        refs = {
+            ref
+            for binding in bindings
+            for ref in tuple(getattr(binding, "proof_refs", ()))
+        }
+        return tuple(facts_by_ref[ref] for ref in sorted(refs) if ref in facts_by_ref)
+
+    @staticmethod
+    def _answer_metadata(bindings, frontiers, query_qualifiers):
+        qualifiers = dict(query_qualifiers or {})
         literals: list[str] = []
-        query_qualifiers = query_qualifiers or {}
         for frontier in frontiers:
             for item in frontier.evidence:
                 if item.get("learning_operation"):
-                    qualifiers["query_kind"] = (
-                        (item.get("probe_query") or {}).get("qualifiers", {}).get("query_kind")
-                        or "designation_learning"
-                    )
-                    qualifiers["learning_operation"] = item["learning_operation"]
+                    qualifiers.setdefault("learning_operation", item["learning_operation"])
                     if item.get("surface"):
                         literals.append(str(item["surface"]))
-
-        # If the query packet already declared a query_kind (e.g. capability_query),
-        # trust that semantic intent.  Proof facts refine it but do not override.
-        if "query_kind" in query_qualifiers:
-            qualifiers["query_kind"] = query_qualifiers["query_kind"]
-        if "property_ref" in query_qualifiers:
-            qualifiers["property_ref"] = query_qualifiers["property_ref"]
-
-        # Classify proof facts so the response realizer can choose an authorized
-        # transform matching the kind of answer that was found.  Only fill in
-        # query_kind when the packet did not already specify one.
-        state_fact = None
-        type_fact = None
-        designation = None
-        for fact in facts:
-            if fact.operator == "op:state":
-                value = fact.args.get("role:value")
-                # Prefer categorical/atom-valued state facts (e.g. communication
-                # status) over continuous/literal runtime facts.
-                if state_fact is None or (
-                    not isinstance(state_fact.args.get("role:value"), str)
-                    and isinstance(value, str)
-                ):
-                    state_fact = fact
-            elif fact.operator == "op:type" and type_fact is None:
-                type_fact = fact
-            elif fact.operator == "op:designation" and designation is None:
-                designation = fact
-
-        if state_fact:
-            qualifiers.setdefault("query_kind", "state_query")
-            qualifiers.setdefault("property_ref", state_fact.args.get("role:dimension"))
-        elif type_fact:
-            qualifiers.setdefault("query_kind", "type_query")
-        elif designation:
-            label_type = designation.args.get("role:label_type")
-            if isinstance(label_type, str):
-                qualifiers.setdefault("property_ref", label_type)
-            qualifiers.setdefault("query_kind", "designation_property")
-
         if not literals:
             for binding in bindings:
-                for value in binding.values():
+                for value in dict(binding).values():
                     if isinstance(value, dict) and "literal" in value:
                         raw = value["literal"].get("value")
                         if isinstance(raw, str):
                             literals.append(raw)
+        object_surface = qualifiers.get("object_surface")
+        if isinstance(object_surface, dict) and "literal" in object_surface:
+            qualifiers["object_surface"] = object_surface["literal"].get("value")
         return qualifiers, tuple(dict.fromkeys(literals))
+
+    @staticmethod
+    def _decision_from_context(dialogue_context, expected_ref):
+        decision = dict((dialogue_context or {}).get("last_surface_decision", {}) or {})
+        if not decision or decision.get("decision_ref") != expected_ref:
+            raise ValueError("surface-choice explanation cannot resolve exact prior decision")
+        if not decision.get("response_equivalence", {}).get("equivalent"):
+            raise ValueError("prior surface decision lacks semantic-equivalence proof")
+        return decision
 
     def build(
         self,
@@ -159,75 +167,152 @@ class ResponseBuilder:
         capability_assessments=(),
         operation_result=None,
         epistemic_placement=None,
+        operational_snapshot=None,
+        discourse_act=None,
+        dialogue_context=None,
     ):
         goal = goal_decision.selected if goal_decision else None
         facts_by_ref = facts_by_ref or {}
         action = "remain_silent"
         target_ref = None
-        facts: list[Fact] = []
-        bindings: list[dict[str, Any]] = []
+        facts: tuple[Fact, ...] = ()
+        bindings: tuple[dict[str, Any], ...] = ()
         qualifiers: dict[str, Any] = {}
         literals: tuple[str, ...] = ()
         reason = goal_decision.reason if goal_decision else "no_goal"
         obligation_ref = goal.goal_ref if goal else None
 
-        if goal and goal.kind == "answer_query" and query_result is not None:
-            selected = (
-                self._select_answer_binding(query_result.bindings, facts_by_ref)
-                if query_result.bindings
-                else None
-            )
-            if selected is not None:
-                bindings = [dict(selected.values)]
-                proof_refs = set(selected.proof_refs)
-            else:
-                bindings = []
-                proof_refs = set()
-            facts = [facts_by_ref[ref] for ref in sorted(proof_refs) if ref in facts_by_ref]
-            action = (
-                "report_conflict"
-                if query_result.status == "conflict"
-                else "answer_bindings"
-                if bindings
-                else "confirm"
-                if query_result.status == "supported"
-                else "deny"
-                if query_result.status == "contradicted"
-                else "report_target_uncertainty"
-            )
+        if goal and goal.kind == "request_learning_evidence":
+            if query_result is None or goal.source_ref != query_result.query_ref:
+                raise ValueError("learning request goal is not bound to its exact QueryResult")
+            if query_result.bindings or query_result.status not in {"unknown", "partial"}:
+                raise ValueError("learning request requires an unanswered exact query")
+            payload = dict(goal.payload or {})
+            if payload.get("query_ref") != query_result.query_ref:
+                raise ValueError("learning request payload lost exact query provenance")
+            operation = str(payload.get("learning_operation") or "")
+            surface = str(payload.get("surface") or "").strip()
+            query_kind = str(dict(query_result.qualifiers or {}).get("query_kind") or "")
+            if not operation or not surface or not query_kind:
+                raise ValueError(
+                    "learning request requires one surface, operation, and immutable query kind"
+                )
+            if operation != "resolve_designation" or query_kind not in {
+                "designation_learning",
+                "meaning_query",
+                "designation_query",
+                "designation_property",
+            }:
+                raise ValueError(
+                    "learning request operation is not licensed by the executed query kind"
+                )
+            action = "request_learning_evidence"
+            target_ref = payload.get("target_ref")
+            literals = (surface,)
             qualifiers = {
+                "query_ref": query_result.query_ref,
+                "query_kind": query_kind,
+                "learning_operation": operation,
+                "learning_query": payload.get("probe_query"),
+                "expected_semantic_kinds": list(
+                    payload.get("semantic_kind_candidates", ())
+                ),
+                "known_bindings": dict(payload.get("known_bindings", {})),
+                "expected_answer_shape": dict(
+                    payload.get("expected_answer_shape", {})
+                    or {
+                        "operation": operation,
+                        "surface_cardinality": "one",
+                    }
+                ),
+                "original_candidate_ref": payload.get("original_candidate_ref"),
+                "unresolved_span_ref": payload.get("unresolved_span_ref"),
+            }
+            reason = "unanswered_learning_query"
+
+        elif goal and goal.kind == "answer_query":
+            if query_result is None or goal.source_ref != query_result.query_ref:
+                raise ValueError("answer goal is not bound to its exact QueryResult")
+            query_qualifiers = dict(query_result.qualifiers or {})
+            if not query_qualifiers.get("query_kind"):
+                raise ValueError("QueryResult lost immutable query_kind qualifier")
+            common = {
+                **query_qualifiers,
                 "query_status": query_result.status,
                 "coverage": query_result.coverage,
                 "unresolved_variables": list(query_result.unresolved_variables),
+                "query_ref": query_result.query_ref,
             }
-            metadata, literals = self._designation_answer_metadata(
-                facts, bindings, frontiers, query_result.qualifiers
-            )
-            qualifiers.update(metadata)
-        elif goal and goal.kind == "clarify" and frontiers:
+            if query_qualifiers.get("query_kind") == "operational_condition_query":
+                if operational_snapshot is None:
+                    raise ValueError("operational query requires current OperationalSnapshot")
+                assessment = operational_snapshot.assess()
+                action = "report_operational_condition"
+                target_ref = operational_snapshot.self_ref
+                qualifiers = {
+                    **common,
+                    "assessment_status": assessment.status,
+                    "assessment_score": assessment.score,
+                    "snapshot_ref": assessment.snapshot_ref,
+                    "assessment_ref": assessment.assessment_ref,
+                    "critical_blockers": list(assessment.critical_blockers),
+                    "degraded_resources": list(assessment.degraded_resources),
+                    "unknown_resources": list(assessment.unknown_resources),
+                }
+            else:
+                bindings = self._canonical_bindings(query_result.bindings)
+                facts = self._proof_facts(query_result.bindings, facts_by_ref)
+                boolean_answer = query_qualifiers.get("answer_mode") == "boolean"
+                if query_result.status == "conflict":
+                    action = "report_conflict"
+                elif boolean_answer and query_result.status in {"answered", "supported"}:
+                    action = "confirm"
+                elif boolean_answer and query_result.status == "contradicted":
+                    action = "deny"
+                elif bindings and query_result.status in {"answered", "partial"}:
+                    requested_cardinality = query_qualifiers.get("answer_cardinality")
+                    action = (
+                        "report_multiple_bindings"
+                        if len(bindings) > 1 and requested_cardinality != "many"
+                        else "answer_bindings"
+                    )
+                elif query_result.status == "supported":
+                    action = "confirm"
+                elif query_result.status == "contradicted":
+                    action = "deny"
+                else:
+                    action = "report_target_uncertainty"
+                metadata, literals = self._answer_metadata(bindings, frontiers, query_qualifiers)
+                qualifiers = {**common, **metadata, "binding_count": len(bindings)}
+
+        elif goal and goal.kind == "clarify":
+            if not frontiers:
+                raise ValueError("clarification goal requires a frontier")
             frontier = max(frontiers, key=self._frontier_priority)
+            if frontier.frontier_ref != goal.source_ref:
+                frontier = next((x for x in frontiers if x.frontier_ref == goal.source_ref), None)
+                if frontier is None:
+                    raise ValueError("clarification goal is not bound to an exact frontier")
             evidence = max(
                 frontier.evidence,
                 key=lambda item: (
                     float(item.get("priority", 0.0)),
                     len(str(item.get("surface", ""))),
+                    canonical(item),
                 ),
                 default={},
             )
             learning_operation = evidence.get("learning_operation")
-            action = (
-                "request_learning_evidence"
-                if learning_operation
-                else "request_targeted_clarification"
-            )
+            action = "request_learning_evidence" if learning_operation else "request_targeted_clarification"
             target_ref = frontier.target_ref
-            if evidence.get("surface"):
-                literals = (str(evidence["surface"]),)
+            surface = evidence.get("surface") or evidence.get("normalized")
+            literals = (str(surface),) if surface else ()
             qualifiers = {
+                "frontier_ref": frontier.frontier_ref,
                 "frontier_kind": frontier.kind,
-                "expected_semantic_kinds": list(
-                    evidence.get("semantic_kind_candidates", ())
-                ),
+                "expected_semantic_kinds": list(evidence.get("semantic_kind_candidates", ())),
+                "original_candidate_ref": evidence.get("candidate_ref"),
+                "unresolved_span_ref": evidence.get("span_ref"),
             }
             if learning_operation:
                 qualifiers.update(
@@ -235,42 +320,72 @@ class ResponseBuilder:
                         "learning_operation": str(learning_operation),
                         "learning_query": evidence.get("probe_query"),
                         "known_bindings": dict(evidence.get("known_bindings", {})),
+                        "expected_answer_shape": dict(
+                            evidence.get("expected_answer_shape", {})
+                            or {
+                                "operation": str(learning_operation),
+                                "surface_cardinality": "one",
+                            }
+                        ),
                     }
                 )
             reason = frontier.kind
-        elif goal and goal.kind == "report_self_capability" and capability_assessments:
+
+        elif goal and goal.kind == "explain_surface_choice":
+            decision_ref = goal.payload.get("surface_decision_ref")
+            decision = self._decision_from_context(dialogue_context, decision_ref)
+            action = "explain_surface_choice"
+            target_ref = decision.get("reference_plan", {}).get("speaker_ref")
+            qualifiers = {
+                "surface_decision_ref": decision_ref,
+                "prior_response_ref": decision.get("response_ref"),
+                "prior_response_action": decision.get("response_action"),
+                "prior_surface": decision.get("chosen_surface"),
+                "prior_reference_plan": decision.get("reference_plan"),
+                "surface_choice_a": goal.payload.get("surface_choice_a"),
+                "surface_choice_b": goal.payload.get("surface_choice_b"),
+                "explanation_kind": "speaker_perspective_reference_choice",
+            }
+
+        elif goal and goal.kind == "acknowledge_attributed_claim":
+            action = "acknowledge_attributed_claim"
+            target_ref = goal.payload.get("subject_ref")
+            predicate_surface = goal.payload.get("predicate_surface")
+            if isinstance(predicate_surface, dict) and "literal" in predicate_surface:
+                predicate_surface = predicate_surface["literal"].get("value")
+            qualifiers = {
+                "claim_kind": "attributed_open_predication",
+                "subject_ref": goal.payload.get("subject_ref"),
+                "predicate_surface": predicate_surface,
+                "epistemic_stance": goal.payload.get("epistemic_stance"),
+                "act_ref": goal.payload.get("act_ref"),
+            }
+
+        elif goal and goal.kind == "report_self_capability":
             preferred = set(goal.payload.get("preferred_capability_refs", ()))
             candidates = [
-                item
-                for item in capability_assessments
+                item for item in capability_assessments
                 if not preferred or item.capability_ref in preferred
-            ] or list(capability_assessments)
-            best = min(candidates, key=lambda item: (item.score, item.capability_ref))
+            ]
+            if not candidates:
+                raise ValueError("capability report goal has no matching assessment")
+            if preferred and {x.capability_ref for x in candidates} != preferred:
+                raise ValueError("capability report lacks requested assessment")
+            candidates.sort(key=lambda x: x.capability_ref)
+            best = candidates[0]
             action = "report_capability"
             target_ref = best.capability_ref
             qualifiers = best.as_dict()
+
         elif goal and goal.kind == "greet":
             action = "greet"
         elif goal and goal.kind == "handle_directive":
-            action = (
-                "report_operation_result"
-                if operation_result is not None and operation_result.status == "succeeded"
-                else "decline_directive"
-            )
-            qualifiers = (
-                operation_result.as_dict()
-                if operation_result
-                else {"reason": "no_authorized_operation"}
-            )
+            action = "report_operation_result" if operation_result is not None and operation_result.status == "succeeded" else "decline_directive"
+            qualifiers = operation_result.as_dict() if operation_result else {"reason": "no_authorized_operation"}
         elif goal and goal.kind in {"acknowledge_claim", "acknowledge"}:
             action = "acknowledge_claim"
             if epistemic_placement is not None:
                 qualifiers = epistemic_placement.as_dict()
-        elif capability_assessments:
-            best = max(capability_assessments, key=lambda item: item.score)
-            action = "report_capability"
-            target_ref = best.capability_ref
-            qualifiers = best.as_dict()
 
         payload = (
             action,
@@ -288,10 +403,10 @@ class ResponseBuilder:
             action,
             audience_ref,
             target_ref,
-            tuple(facts),
-            tuple(bindings),
+            facts,
+            bindings,
             qualifiers,
-            tuple(literals),
+            literals,
             reason,
             obligation_ref,
         )
@@ -308,11 +423,7 @@ class _PointerTable:
         if value not in self.atom_by_value:
             placeholder = f"@A{len(self.atom_by_value)}"
             self.atom_by_value[value] = placeholder
-            self.info[placeholder] = {
-                "kind": "atom",
-                "value": value,
-                "context": context,
-            }
+            self.info[placeholder] = {"kind": "atom", "value": value, "context": context}
         elif context and not self.info[self.atom_by_value[value]].get("context"):
             self.info[self.atom_by_value[value]]["context"] = context
         return self.atom_by_value[value]
@@ -336,7 +447,7 @@ class _PointerTable:
         return table[key]
 
     def encode(self, value: Any, context: str | None = None) -> str:
-        if isinstance(value, str) and ":" in value and not value.startswith("?"):
+        if isinstance(value, str) and _SEMANTIC_REF.fullmatch(value) and not value.startswith("?"):
             return self.atom(value, context)
         if isinstance(value, dict) and "literal" in value:
             return self.literal(value, context)
@@ -368,56 +479,58 @@ def pointerize_response(response: ResponseCSIR):
     parts = ["RESPONSE", response.action]
     if response.target_ref:
         parts += ["TARGET", table.encode(response.target_ref, "response:target")]
-    query_kind = response.qualifiers.get("query_kind")
-    if query_kind:
-        parts += ["QUERY_KIND", str(query_kind)]
-    property_ref = response.qualifiers.get("property_ref")
-    if isinstance(property_ref, str):
-        parts += ["PROPERTY", table.encode(property_ref, "response:property")]
+    for key, label in (
+        ("query_kind", "QUERY_KIND"),
+        ("property_ref", "PROPERTY"),
+        ("relation_ref", "RELATION"),
+        ("subject_ref", "SUBJECT"),
+        ("surface_decision_ref", "SURFACE_DECISION"),
+    ):
+        value = response.qualifiers.get(key)
+        if value is not None:
+            parts += [label, table.encode(value, f"response:{key}")]
     learning_operation = response.qualifiers.get("learning_operation")
     if learning_operation:
         parts += ["LEARNING", str(learning_operation)]
+    for key, label in (
+        ("object_surface", "OBJECT_SURFACE"),
+        ("predicate_surface", "PREDICATE_SURFACE"),
+        ("surface_choice_a", "CHOICE_A"),
+        ("surface_choice_b", "CHOICE_B"),
+        ("prior_surface", "PRIOR_SURFACE"),
+    ):
+        value = response.qualifiers.get(key)
+        if isinstance(value, dict) and "literal" in value:
+            value = value["literal"].get("value")
+        if value is not None:
+            parts += [label, table.literal({"literal": {"type": "text", "value": str(value)}}, f"response:{key}")]
     for binding in response.bindings:
         parts.append("BINDING")
         for variable, value in sorted(binding.items()):
             parts += [variable, table.encode(value, f"binding:{variable}")]
-    # Facts remain proof-bearing ResponseCSIR members. Binding responses use the
-    # compact query target above so learned realization does not depend on every
-    # optional proof role being present.
-    if response.action != "answer_bindings":
+    if response.action not in {"answer_bindings", "report_multiple_bindings"}:
         for fact in response.facts:
             parts.append("|")
             semantic, mapping = pointerize_fact(fact)
-            for placeholder, info in mapping.items():
+            for placeholder in sorted(mapping, key=lambda item: (-len(item), item)):
+                info = mapping[placeholder]
                 replacement = table.encode(info["value"], info.get("context"))
-                semantic = semantic.replace(placeholder, replacement)
+                semantic = re.sub(
+                    rf"(?<![A-Za-z0-9_]){re.escape(placeholder)}(?!\d)",
+                    lambda _match, value=replacement: value,
+                    semantic,
+                )
             parts.append(semantic)
-    # For designation_property binding answers, the binding value is the
-    # evidence; the reviewed transform carries it via BINDING ?q0 @E0 and does
-    # not include a separate EVIDENCE slot.  Adding one would break the
-    # authorized-transform match and force a fallback realization.
-    query_kind = response.qualifiers.get("query_kind")
-    suppress_evidence = (
-        response.action == "answer_bindings"
-        and query_kind == "designation_property"
-        and response.bindings
-    )
-    if not suppress_evidence:
-        for literal in response.evidence_literals:
-            parts += [
-                "EVIDENCE",
-                table.literal(
-                    {"literal": {"type": "text", "value": literal}},
-                    "response:evidence",
-                ),
-            ]
-    if response.action == "report_capability" and "score" in response.qualifiers:
-        value = round(float(response.qualifiers["score"]) * 100)
+    for literal in response.evidence_literals:
+        parts += [
+            "EVIDENCE",
+            table.literal({"literal": {"type": "text", "value": literal}}, "response:evidence"),
+        ]
+    capability_score = response.qualifiers.get("score")
+    if response.action == "report_capability" and capability_score is not None:
+        value = round(float(capability_score) * 100)
         parts += [
             "SCORE",
-            table.literal(
-                {"literal": {"type": "int", "value": value}},
-                "response:score",
-            ),
+            table.literal({"literal": {"type": "int", "value": value}}, "response:score"),
         ]
     return " ".join(parts), table.info

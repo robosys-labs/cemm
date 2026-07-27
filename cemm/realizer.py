@@ -6,9 +6,13 @@ import json
 import re
 from pathlib import Path
 
-from cemm.interpreter import SurfaceCodec, predict_classifier, train_classifier
 from cemm.model import canonical, norm_text, surface, toks
 from cemm.response import pointerize_fact, pointerize_plan, pointerize_response
+from cemm.reference import CanonicalResponseRealizer
+from cemm.surface_plans import ExactSurfacePlanIndex
+
+_POINTER = re.compile(r"@(?:A|E|N)\d+")
+_PLAN_INTERNAL_REF = re.compile(r"(?<![A-Za-z0-9_])(?:atom|app|fact|query|frontier|cycle|existential):[A-Za-z0-9_.:-]+")
 
 
 class LanguagePack:
@@ -29,66 +33,18 @@ class LanguagePack:
         self.function_forms = set(data.get("function_forms", []))
 
 
-class ResponseSurfaceCodec:
-    def __init__(self, pack, cache):
-        examples = list(pack.data.get("response_examples", ()))
-        if not examples:
-            self.meta = self.net = None
-            self.allowed = {}
-            return
-        key = (pack.hash, "response-surface-v2-learning")
-        cached = cache.get(key) if cache else None
-        if cached is not None:
-            self.meta, self.net, self.allowed = cached
-            return
-        self.meta, self.net = train_classifier(
-            examples, "semantic", "surface_plan", 29, 120
-        )
-        self.allowed = {}
-        for example in examples:
-            self.allowed.setdefault(norm_text(example["semantic"]), set()).add(
-                norm_text(example["surface_plan"])
-            )
-        if cache:
-            cache.put(key, (self.meta, self.net, self.allowed))
-
-    def realize(self, semantic):
-        if self.net is None:
-            return "", {
-                "authorized_transform": False,
-                "reason": "no_response_examples",
-            }
-        plan, confidence, margin, known = predict_classifier(
-            self.meta, self.net, semantic
-        )
-        return plan, {
-            "semantic": semantic,
-            "surface_plan": plan,
-            "confidence": confidence,
-            "margin": margin,
-            "known_token_ratio": known,
-            "authorized_transform": norm_text(plan)
-            in self.allowed.get(norm_text(semantic), set()),
-        }
-
-
 class PointerRealizer:
     def __init__(self, store, pack: LanguagePack, cache=None):
         if cache is None:
             raise ValueError("PointerRealizer requires Runtime-owned bounded cache")
         self.s = store
         self.pack = pack
-        self.codec = SurfaceCodec.get(pack, cache)
-        self.response_codec = ResponseSurfaceCodec(pack, cache)
+        self.codec = ExactSurfacePlanIndex(pack, "realization_examples")
+        self.response_codec = ExactSurfacePlanIndex(pack, "response_examples")
+        self.canonical_response = CanonicalResponseRealizer(store, pack)
 
     def _verify_and_substitute(self, plan, trace, placeholder_info):
-        used = sorted(
-            set(
-                token
-                for token in toks(plan)
-                if token.startswith(("@A", "@E", "@N"))
-            )
-        )
+        used = sorted(set(_POINTER.findall(plan)), key=lambda item: (-len(item), item))
         unknown = [token for token in used if token not in placeholder_info]
         rendered = plan
         pointers = []
@@ -124,7 +80,11 @@ class PointerRealizer:
                     "literal_type": info.get("literal_type"),
                 }
             )
-            rendered = rendered.replace(placeholder, lexical)
+            rendered = re.sub(
+                rf"(?<![A-Za-z0-9_]){re.escape(placeholder)}(?!\d)",
+                lambda _match, value=lexical: value,
+                rendered,
+            )
         grammar = [
             token.casefold()
             for token in toks(plan)
@@ -141,12 +101,9 @@ class PointerRealizer:
             ):
                 continue
             bad_grammar.append(token)
-        leaked = bool(
-            re.search(
-                r"\b(?:atom|existential|app|fact|query|frontier|cycle):[0-9a-fA-F]{8,}\b",
-                rendered,
-            )
-        )
+        # Only reviewed plan text is inspected for raw internal refs. Substituted
+        # evidence may legitimately contain colons (URLs, times, identifiers).
+        leaked = bool(_PLAN_INTERNAL_REF.search(plan))
         leaked = leaked or any(
             item["kind"] == "atom" and not item["surface"] for item in pointers
         )
@@ -192,27 +149,63 @@ class PointerRealizer:
         semantic, mapping = pointerize_plan(plan)
         return self._render(semantic, mapping)
 
-    def response(self, response_csir):
-        semantic, mapping = pointerize_response(response_csir)
-        plan, trace = self.response_codec.realize(semantic)
-        response, proof = self._verify_and_substitute(plan, trace, mapping)
-        if response:
-            return response, proof
+    def response(self, response_csir, output_frame=None):
+        """Realize one Response CSIR without permitting semantic downgrade.
 
-        # Proof-bearing fact realization is a narrower fallback when no reviewed
-        # response transform exists. It never fabricates a generic surface.
-        outputs, proofs = [], []
-        for fact in response_csir.facts[:5]:
-            text, item_proof = self.fact(fact)
-            if text:
-                outputs.append(text)
-                proofs.append(item_proof)
-        if outputs and response_csir.action == "answer_bindings":
-            return " ".join(outputs), {
-                "verified": all(item.get("verified") for item in proofs),
-                "verification_mode": "response_fact_provenance",
-                "fact_proofs": proofs,
-                "language_pack_hash": self.pack.hash,
-                "failed_response_transform": proof,
+        The grammar realization is the semantic authority because it emits an
+        explicit ResponseEquivalenceReceipt for the exact CSIR.  An exact learned
+        surface plan may be selected only when it independently verifies and is
+        byte-for-byte the same normalized surface as that equivalent grammar
+        realization.  A learned plan therefore cannot replace a query answer with
+        a supporting fact or otherwise change action, target, obligation, query
+        kind, polarity, modality, or payload.
+        """
+        if output_frame is None:
+            return "", {
+                "verified": False,
+                "verification_mode": "no_semantic_equivalent_response",
+                "reason": "output_participant_frame_required",
+                "response_ref": response_csir.response_ref,
             }
-        return "", proof
+
+        canonical_surface, canonical_proof = self.canonical_response.realize(
+            response_csir, output_frame
+        )
+        if not canonical_surface or not canonical_proof.get("verified"):
+            return "", {
+                **canonical_proof,
+                "verified": False,
+                "verification_mode": "no_semantic_equivalent_response",
+                "response_ref": response_csir.response_ref,
+            }
+
+        semantic, mapping = pointerize_response(response_csir)
+        plan, learned_trace = self.response_codec.realize(semantic)
+        learned_surface, learned_proof = self._verify_and_substitute(
+            plan, learned_trace, mapping
+        )
+        learned_matches_authority = bool(
+            learned_surface
+            and learned_proof.get("verified")
+            and learned_surface == canonical_surface
+        )
+        if learned_matches_authority:
+            return learned_surface, {
+                **canonical_proof,
+                "verified": True,
+                "verification_mode": "exact_learned_surface_confirmed_by_same_csir_grammar",
+                "response_ref": response_csir.response_ref,
+                "learned_transform": learned_proof,
+                "canonical_surface": canonical_surface,
+            }
+
+        return canonical_surface, {
+            **canonical_proof,
+            "verified": True,
+            "verification_mode": "same_response_csir_grammar",
+            "response_ref": response_csir.response_ref,
+            "rejected_learned_transform": {
+                **learned_proof,
+                "surface_equal_to_canonical": learned_surface == canonical_surface,
+            },
+        }

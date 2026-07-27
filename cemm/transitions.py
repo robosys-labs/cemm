@@ -191,6 +191,7 @@ class TransitionEngine:
                             "rule_ref": row["rule_ref"],
                             "parents": list(parent_refs),
                             "causal_not_factual": True,
+                            "epistemic_mode": "simulated",
                             "committed": False,
                         },
                     )
@@ -231,3 +232,5 @@ class TransitionEngine:
                     )
                 )
         return tuple(output)
+
+# CEMM_SOURCE_REWRITE:transitions:v3.1.3
