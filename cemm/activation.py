@@ -9,13 +9,17 @@ import sys
 
 from cemm import atomic_graph, form_algebra, semantic_coverage
 from cemm import semantic_contributions, learning_plans, propositions
+from cemm import composition, semantic_description, proof
 from cemm.model import stable
 
-EXPECTED_COVERAGE_ABI = 6
-EXPECTED_FEATURE_ALGEBRA = 6
+EXPECTED_COVERAGE_ABI = 7
+EXPECTED_FEATURE_ALGEBRA = 7
 EXPECTED_CONTRIBUTION_ABI = 1
 EXPECTED_LEARNING_PLAN_ABI = 1
-EXPECTED_PROPOSITION_ABI = 1
+EXPECTED_PROPOSITION_ABI = 2
+EXPECTED_ATOMIC_COMPOSITION_ABI = 1
+EXPECTED_DESCRIPTION_ABI = 1
+EXPECTED_PROOF_ABI = 1
 
 
 def _sha256(path: Path) -> str:
@@ -51,6 +55,9 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
         semantic_contributions,
         learning_plans,
         propositions,
+        composition,
+        semantic_description,
+        proof,
     )
     records = tuple(_record(item, package_root) for item in modules)
     data = dict(getattr(form_pack, "data", {}) or {})
@@ -61,6 +68,9 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
     contribution_abi = int(getattr(semantic_contributions, "SEMANTIC_CONTRIBUTION_ABI", -1))
     learning_plan_abi = int(getattr(learning_plans, "LEARNING_PLAN_ABI", -1))
     proposition_abi = int(getattr(propositions, "PROPOSITION_GRAPH_ABI", -1))
+    atomic_composition_abi = int(getattr(propositions, "ATOMIC_COMPOSITION_ABI", -1))
+    description_abi = int(getattr(semantic_description, "DESCRIPTION_ABI", -1))
+    proof_abi = int(getattr(proof, "PROOF_BUNDLE_ABI", -1))
 
     errors: list[str] = []
     expected = {
@@ -70,6 +80,9 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
         "semantic_contribution_abi": (contribution_abi, EXPECTED_CONTRIBUTION_ABI),
         "learning_plan_abi": (learning_plan_abi, EXPECTED_LEARNING_PLAN_ABI),
         "proposition_graph_abi": (proposition_abi, EXPECTED_PROPOSITION_ABI),
+        "atomic_composition_abi": (atomic_composition_abi, EXPECTED_ATOMIC_COMPOSITION_ABI),
+        "description_abi": (description_abi, EXPECTED_DESCRIPTION_ABI),
+        "proof_bundle_abi": (proof_abi, EXPECTED_PROOF_ABI),
     }
     for label, (actual, required) in expected.items():
         if actual != required:
@@ -126,6 +139,10 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
             "rel:licenses_learning_contract": "relation_type",
             "event:learn": "event_type",
             "frame:event-learn": "semantic_frame",
+            "event:know": "event_type",
+            "frame:event-know": "semantic_frame",
+            "event:greeting": "event_type",
+            "frame:event-greeting-discourse": "semantic_frame",
             "contract:designation_learning": "concept",
             "contract:designation_target_answer": "concept",
             "goal:acquire_designation": "goal",
@@ -154,6 +171,25 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
             ).profiles_for("event:learn")
             if not any(item.profile_ref == "frame:event-learn" for item in profiles):
                 errors.append("learning_frame_not_active")
+            know_profiles = semantic_contributions.SemanticAffordanceIndex(
+                store, getattr(store, "generation", None), max_profiles_per_target=4
+            ).profiles_for("event:know")
+            if not any(
+                item.profile_ref == "frame:event-know"
+                and item.metadata.get("proposition_taking")
+                and any("app" in role.filler_kinds for role in item.roles)
+                for item in know_profiles
+            ):
+                errors.append("knowledge_proposition_frame_not_active")
+            greeting_profiles = semantic_contributions.SemanticAffordanceIndex(
+                store, getattr(store, "generation", None), max_profiles_per_target=4
+            ).profiles_for("event:greeting")
+            if not any(
+                item.profile_ref == "frame:event-greeting-discourse"
+                and item.metadata.get("standalone_licensed")
+                for item in greeting_profiles
+            ):
+                errors.append("standalone_greeting_frame_not_active")
         except Exception as exc:
             errors.append(f"learning_frame_invalid:{type(exc).__name__}:{exc}")
 
@@ -164,6 +200,9 @@ def activation_attestation(form_pack: Any, store: Any | None = None) -> dict[str
         "semantic_contribution_abi": contribution_abi,
         "learning_plan_abi": learning_plan_abi,
         "proposition_graph_abi": proposition_abi,
+        "atomic_composition_abi": atomic_composition_abi,
+        "description_abi": description_abi,
+        "proof_bundle_abi": proof_abi,
         "form_pack_hash": str(getattr(form_pack, "hash", "")),
         "modules": list(records),
         "authority": authority,
@@ -187,6 +226,3 @@ def assert_native_semantic_activation(form_pack: Any, store: Any | None = None) 
         raise RuntimeError("native semantic activation failed: " + ", ".join(attestation["errors"]))
     return attestation
 
-
-# Backward name used by the web-demo follow-up patch.
-assert_atomic_graph_activation = assert_native_semantic_activation

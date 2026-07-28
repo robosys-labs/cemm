@@ -1,6 +1,6 @@
-"""Fail-closed semantic coverage ABI v6.
+"""Fail-closed semantic coverage ABI v7.
 
-V6 preserves grounding provenance and distinguishes observed-unit assignments
+V7 preserves grounding provenance and distinguishes observed-unit assignments
 from reviewed virtual projections.  A projected slot can satisfy a semantic
 role, but it never masquerades as an observed or consumed form unit.
 """
@@ -23,7 +23,7 @@ except Exception:  # standalone verification
         return f"{namespace}:" + hashlib.sha256(canonical(parts).encode()).hexdigest()[:24]
 
 
-COVERAGE_ABI_VERSION = 6
+COVERAGE_ABI_VERSION = 7
 
 CRITICAL_CLASSES = frozenset({
     "force_critical",
@@ -106,7 +106,7 @@ class ResidualSpan:
             raise CoverageIntegrityError("invalid residual character bounds")
         if self.grounding_status == "grounded" and not self.semantic_ref:
             raise CoverageIntegrityError("grounded residual lacks semantic_ref")
-        expected = stable("residual-span-v6", self.identity_body())
+        expected = stable("residual-span-v7", self.identity_body())
         if self.span_ref != expected:
             raise CoverageIntegrityError(f"residual span_ref mismatch: {self.span_ref} != {expected}")
 
@@ -171,7 +171,7 @@ class InterpretationCoverage:
             required_semantic_slots=("coverage_receipt",),
             schema_ref=schema_ref,
             hypothesis_ref=hypothesis_ref,
-            match_seed_ref=match_seed_ref or stable("coverage-diagnostic-match-seed-v6", schema_ref, hypothesis_ref, seed),
+            match_seed_ref=match_seed_ref or stable("coverage-diagnostic-match-seed-v7", schema_ref, hypothesis_ref, seed),
             diagnostic_only=True,
             seed=seed,
         )
@@ -339,8 +339,8 @@ class CoveragePolicy:
         projected_slot_map = {str(slot): dict(value) for slot, value in dict(projected_slots or {}).items()}
         hints = dict(schema_hints_by_unit_ref or {})
         schema = str(schema_ref or ("diagnostic:coverage" if diagnostic_only else "coverage:standalone"))
-        hypothesis = str(hypothesis_ref or stable("coverage-hypothesis-v6", expected, consumed))
-        match_seed = str(match_seed_ref or stable("coverage-match-seed-v6", schema, hypothesis, expected, consumed, roles, slots, projected_roles, projected_slot_map))
+        hypothesis = str(hypothesis_ref or stable("coverage-hypothesis-v7", expected, consumed))
+        match_seed = str(match_seed_ref or stable("coverage-match-seed-v7", schema, hypothesis, expected, consumed, roles, slots, projected_roles, projected_slot_map))
         if diagnostic_only and expected:
             raise CoverageIntegrityError("diagnostic coverage cannot contain observed units")
         if not diagnostic_only and not expected:
@@ -384,7 +384,7 @@ class CoveragePolicy:
                 "grounding_proof_refs": list(proof_refs),
             }
             residuals.append(ResidualSpan(
-                span_ref=stable("residual-span-v6", body),
+                span_ref=stable("residual-span-v7", body),
                 unit_refs=(ref,),
                 surface=body["surface"],
                 normalized=body["normalized"],
@@ -432,10 +432,10 @@ class CoveragePolicy:
             unit_weights=unit_weights,
             **derived["body_fields"],
         )
-        seed_hash = _sha256(("coverage-seed-v6", schema, hypothesis, match_seed, seed))
+        seed_hash = _sha256(("coverage-seed-v7", schema, hypothesis, match_seed, seed))
         body_hash = _sha256(body)
         return InterpretationCoverage(
-            coverage_ref=stable("interpretation-coverage-v6", seed_hash, body_hash),
+            coverage_ref=stable("interpretation-coverage-v7", seed_hash, body_hash),
             seed_hash=seed_hash,
             body_hash=body_hash,
             schema_ref=schema,
@@ -588,7 +588,7 @@ def _residual_from_mapping(item: Mapping[str, Any]) -> ResidualSpan:
         "grounding_status": str(item.get("grounding_status", "unknown")),
         "grounding_proof_refs": list(map(str, item.get("grounding_proof_refs", ()))),
     }
-    expected = stable("residual-span-v6", body)
+    expected = stable("residual-span-v7", body)
     supplied = str(item.get("span_ref") or "")
     if supplied != expected:
         raise CoverageIntegrityError("residual span_ref mismatch")
@@ -672,7 +672,7 @@ def coverage_from_dict(value: Mapping[str, Any] | None) -> InterpretationCoverag
     )
     if str(value.get("body_hash") or "") != _sha256(body):
         raise CoverageIntegrityError("coverage body hash mismatch")
-    expected_ref = stable("interpretation-coverage-v6", str(value.get("seed_hash") or ""), str(value.get("body_hash") or ""))
+    expected_ref = stable("interpretation-coverage-v7", str(value.get("seed_hash") or ""), str(value.get("body_hash") or ""))
     if str(value.get("coverage_ref") or "") != expected_ref:
         raise CoverageIntegrityError("coverage_ref mismatch")
     return InterpretationCoverage(

@@ -24,7 +24,7 @@ try:
 except ImportError:
     from authority_ownership import AuthorityOwnershipError, validate_repository_authority
 
-ABI_VERSION = 6
+ABI_VERSION = 7
 BASE_OWNED_REFS = frozenset({
     "value:unknown",
     "dim:runtime_process_support",
@@ -84,7 +84,6 @@ REQUIRED_FAMILIES = frozenset({
     "capability_inventory_query",
     "definition_designation_claim",
     "designation_learning_answer",
-    "desire_knowledge_designation_query",
     "generic_state_value_predication",
     "generic_type_predication",
     "semantic_discourse_reaction",
@@ -168,9 +167,9 @@ def validate_form_artifact(repo: Path) -> dict[str, Any]:
     from cemm.form_algebra import AtomicSchemaMatcher
     from cemm.semantic_coverage import COVERAGE_ABI_VERSION
     try:
-        from tools.generate_en_form_pack_v6 import build_pack
+        from tools.generate_en_form_pack_v7 import build_pack
     except ImportError:
-        from generate_en_form_pack_v6 import build_pack
+        from generate_en_form_pack_v7 import build_pack
 
     seed_path = repo / "cemm/training/en_form_schema_seed.json"
     pack_path = repo / "cemm/form_packs/en.json"
@@ -198,7 +197,7 @@ def validate_form_artifact(repo: Path) -> dict[str, Any]:
     require(all(row.get("blocked") for row in receipt.get("negative_probes", ())), "a reviewed negative probe remains executable")
     require(
         receipt.get("graph_matcher") is True,
-        "form pack was not verified by the v6 graph matcher",
+        "form pack was not verified by the v7 recursive graph matcher",
     )
     require(
         receipt.get("total_order_matcher") is False,

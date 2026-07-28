@@ -1,4 +1,4 @@
-# CEMM Data Architecture — Native Semantic Spine
+# CEMM Data Architecture — Recursive Native Semantic Composition
 
 ## 1. One linked authority graph
 
@@ -201,7 +201,7 @@ The release migration changes sources of truth together:
 3. regenerate `conversation_foundation.json` as the single owner;
 4. migrate English seed annotations from lexical semantic fields to semantic anchors;
 5. add generic capability, proposition, definition, predication and reaction families;
-6. update the v6 form generator replay and `function_forms` rule;
+6. update the v7 form generator replay and `function_forms` rule;
 7. regenerate the form pack twice;
 8. regenerate/migrate the language pack and grammar twice;
 9. link and validate base plus conversation authority;
@@ -229,3 +229,9 @@ A future materialized affordance index is permitted only if profiling demonstrat
 ## Realization vocabulary isolation
 
 Realization grammar tokens are output-only and must never be fed back into pre-core form classification. A language pack may retain realization grammar for output, but that vocabulary is not an input-side lexical authority and is never imported into the designation or form indexes.
+
+## 11. Recursive semantic artifacts
+
+`PropositionGraph`, composition chart cells, `DescriptionRequest`, `DescriptionResult`, `ProofBundle` and `VerifiedSemanticFocus` are transient or session-local typed artifacts. They add no database tables. Persistent nested content uses the existing `applications` and `bindings` tables with `filler_kind='app'`, but only after exact reviewed-frame validation and child-first materialization.
+
+Form/Coverage ABI 7 removes the sentence-shaped `desire_knowledge_designation_query` family. Generic event/frame authority and the recursive chart own embedded proposition behavior.

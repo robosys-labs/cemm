@@ -66,6 +66,8 @@ class FrameRoleSpec:
     filler_kinds: tuple[str, ...] = ()
     ports_required: tuple[str, ...] = ()
     cardinality: str = "one"
+    default_source: str | None = None
+    semantic_port: str | None = None
 
     def __post_init__(self) -> None:
         if not _PORT.fullmatch(self.role_ref):
@@ -77,6 +79,10 @@ class FrameRoleSpec:
         if any(not item for item in self.filler_kinds):
             raise ValueError("semantic frame filler kinds must be non-empty")
         _bounded_refs(self.ports_required, label=f"role {self.role_ref} required ports")
+        if self.default_source not in {None, "speaker", "addressee", "self"}:
+            raise ValueError(f"unsupported frame-role default source: {self.default_source}")
+        if self.semantic_port is not None and not _PORT.fullmatch(self.semantic_port):
+            raise ValueError(f"malformed frame-role semantic port: {self.semantic_port}")
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "FrameRoleSpec":
@@ -86,6 +92,8 @@ class FrameRoleSpec:
             filler_kinds=tuple(sorted({str(item) for item in value.get("filler_kinds", ()) if str(item)})),
             ports_required=_bounded_refs(value.get("ports_required", ()), label="role ports_required"),
             cardinality=str(value.get("cardinality", "one")),
+            default_source=(str(value["default_source"]) if value.get("default_source") else None),
+            semantic_port=(str(value["semantic_port"]) if value.get("semantic_port") else None),
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -95,6 +103,8 @@ class FrameRoleSpec:
             "filler_kinds": list(self.filler_kinds),
             "ports_required": list(self.ports_required),
             "cardinality": self.cardinality,
+            "default_source": self.default_source,
+            "semantic_port": self.semantic_port,
         }
 
 
@@ -358,6 +368,24 @@ class SemanticAffordanceIndex:
                 raise ValueError(
                     f"affordance role {role.role_ref} is not permitted by {operator}"
                 )
+            if "app" in set(role.filler_kinds) and not profile.metadata.get("proposition_taking"):
+                raise ValueError(
+                    f"app-valued frame role requires proposition_taking: {profile.profile_ref}:{role.role_ref}"
+                )
+        if profile.metadata.get("proposition_taking") and not any(
+            "app" in set(role.filler_kinds) for role in profile.roles
+        ):
+            raise ValueError(
+                f"proposition-taking frame has no app-valued role: {profile.profile_ref}"
+            )
+        if profile.metadata.get("standalone_licensed"):
+            if operator != "op:event":
+                raise ValueError("only reviewed event frames may license standalone discourse")
+            if profile.metadata.get("default_force") not in {
+                "claim", "query", "directive", "description", "correction",
+                "retraction", "acknowledgment",
+            }:
+                raise ValueError("standalone frame has invalid default force")
 
     def _dimensions_for_value(self, value_ref: str) -> tuple[str, ...]:
         method = getattr(self.store, "dimensions_for_value", None)

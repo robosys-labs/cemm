@@ -1,4 +1,4 @@
-# CEMM Active Architecture — Native Semantic Spine
+# CEMM Active Architecture — Recursive Native Semantic Composition
 
 ## 1. Thesis
 
@@ -272,3 +272,11 @@ Startup fails if:
 
 
 Realization grammar tokens are output-only and must never be fed back into pre-core form classification.
+
+## 16. Recursive composition cutover
+
+Stage 5 now uses one bounded bottom-up chart. Atomic schema results and reviewed semantic-frame applications become transient PropositionGraph ABI 2 candidates. Embedded content is linked with candidate-local application references, validated against reviewed frame roles, resolved to exact application signatures and persisted child-first only after Stage-13 admission. No proposition graph is a sixth operator or persistent ontology.
+
+Stage 10 owns both bounded semantic description and epistemic proof. Description reads indexed applications and active claims; proof returns exact evidence identities and becomes stale when authority generation or world revision changes. Stage 21 records only verified semantic focus after realization equivalence.
+
+Activation requires Contribution 1, Learning Plan 1, Proposition 2, Composition 1, Coverage 7, Feature Algebra 7, Description 1 and Proof 1.

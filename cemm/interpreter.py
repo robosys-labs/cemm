@@ -27,6 +27,7 @@ from cemm.form_algebra import (
     SchemaValidationError,
     TemplateResolutionError,
 )
+from cemm.composition import RecursiveCompositionChart
 from cemm.semantic_coverage import (
     CoverageIntegrityError,
     CoveragePolicy,
@@ -161,6 +162,8 @@ class Interpreter:
             self.form_pack,
             max_matches=getattr(self.config, "form_max_construction_matches", 32),
         )
+        self.composition = RecursiveCompositionChart(self.constructions, self.config)
+        self._last_composition_result = None
         self._candidate_unknown_kinds_cache = self._candidate_unknown_kinds()
         self._diagnostic_codec = None
 
@@ -298,54 +301,10 @@ class Interpreter:
         )
 
     def _construction_candidates(self, resolved, participant_frame):
-        """Partition complete executable candidates from partial evidence.
-
-        A partial match never competes in the semantic settler.  This prevents a
-        high-scoring incomplete phrase from suppressing a lower-scoring complete
-        graph.  Invalid complete schema packets are pack-integrity errors and are
-        deliberately not swallowed.
-        """
-        records = self.constructions.evidence_records(resolved, participant_frame)
-        complete = []
-        partial = []
-        by_ref = {}
-        for evidence in records:
-            by_ref[evidence.match_ref] = evidence
-            trace = {
-                "source": "atomic_feature_schema",
-                "construction_ref": evidence.schema_ref,
-                "construction_evidence_ref": evidence.match_ref,
-                "match_seed_ref": evidence.match_seed_ref,
-                "hypothesis_ref": evidence.hypothesis_ref,
-                "captures": dict(evidence.captures),
-                "coverage": evidence.coverage.as_dict(),
-                "remaining_unknowns": [
-                    item.as_dict() for item in evidence.coverage.critical_residuals
-                ],
-                "noncritical_residuals": [
-                    item.as_dict() for item in evidence.coverage.noncritical_residuals
-                ],
-            }
-            if not evidence.coverage.executable:
-                partial.append((evidence, trace))
-                continue
-            try:
-                packet = self.constructions.instantiate(
-                    evidence, participant_frame, self.lang
-                )
-            except TemplateResolutionError as exc:
-                trace["context_blockers"] = list(exc.unresolved_paths)
-                partial.append((evidence, trace))
-                continue
-            complete.append(Candidate(packet, evidence.score, trace))
-        partial.sort(
-            key=lambda item: (
-                -item[0].coverage.weighted_coverage,
-                -item[0].score,
-                item[0].match_ref,
-            )
-        )
-        return complete, tuple(partial), by_ref
+        """Produce only complete candidates through the one recursive chart."""
+        result = self.composition.compose(resolved, participant_frame, self.lang)
+        self._last_composition_result = result
+        return list(result.candidates), (), {}
 
     @staticmethod
     def _selected_candidate_trace(settle_trace):
@@ -464,6 +423,7 @@ class Interpreter:
                     self._candidate_unknown_kinds_cache
                 ),
                 "learning_contract_ref": str(contract_ref),
+                "query_kind": str(dict(query.get("qualifiers", {}) if isinstance(query, dict) else {}).get("query_kind") or ""),
                 "probe_query": dict(query) if query else None,
                 "known_bindings": dict(qualifiers.get("known_bindings", {})),
                 "expected_answer_shape": {
@@ -512,6 +472,7 @@ class Interpreter:
         construction_candidates, partial_matches, construction_by_ref = self._construction_candidates(
             resolved, participant_frame
         )
+        composition_result = self._last_composition_result
         candidate_budget = max(
             self.config.settler_top_k,
             getattr(self.config, "form_max_semantic_candidates", 48),
@@ -623,8 +584,59 @@ class Interpreter:
                 "side_effect_free": True,
                 "selected_candidate": selected_trace,
                 "candidate_count": len(candidates),
+                "composition": dict(composition_result.diagnostics) if composition_result else {},
             }
             return packet, news, uses, trace
+
+        if composition_result is not None and composition_result.gaps and not candidates:
+            gap_evidence = []
+            for gap in composition_result.gaps:
+                item = gap.as_dict()
+                coverage = dict(item.get("evidence", {}).get("coverage", {}) or {})
+                residuals = list(coverage.get("critical_residuals", ()))
+                residual = residuals[0] if residuals else {}
+                unknown = bool(item.get("unknown_unit_refs")) and not item.get("known_unit_refs")
+                gap_evidence.append({
+                    "surface": residual.get("surface", ""),
+                    "normalized": residual.get("normalized", ""),
+                    "unit_refs": list(item.get("source_unit_refs", ())),
+                    "residual_class": "unknown_form" if unknown else "known_form_unassigned",
+                    "grounding_status": "unknown" if unknown else "lexically_known",
+                    "semantic_ref": residual.get("semantic_ref"),
+                    "role_hypotheses": list(item.get("candidate_roles", ())),
+                    "composition_gap": item,
+                    "priority": 2.0 if item.get("gap_kind") == "missing_proposition_link" else 1.0,
+                })
+            trace = {
+                "reason": "recursive_semantic_graph_unsettled",
+                "structured_prediction": True,
+                "clauses": [settle_trace],
+                "n_best": True,
+                "resolved_form_lattice": resolved.as_dict(),
+                "delexicalized": delex,
+                "grounded_anchors": anchors,
+                "unknown_form_evidence": gap_evidence,
+                "background_learning_evidence": [],
+                "pending_learning_probe": [],
+                "skipped_clauses": [],
+                "interpretation_coverage": None,
+                "partial_packet": None,
+                "interpretation_assessment": {
+                    "status": "partial",
+                    "grounded_refs": list(grounded_refs),
+                    "open_variables": [],
+                    "unresolved_evidence": gap_evidence,
+                    "background_learning_evidence": [],
+                    "coverage": {},
+                    "blockers": sorted({item["composition_gap"]["gap_kind"] for item in gap_evidence}),
+                },
+                "composition": dict(composition_result.diagnostics),
+                "composition_gaps": [gap.as_dict() for gap in composition_result.gaps],
+                "state_projection_refs": sorted((state_projections or {}).keys()),
+                "side_effect_free": True,
+                "candidate_count": len(candidates),
+            }
+            return None, [], uses, trace
 
         # A partial schema match preserves the best structural hypothesis and all
         # critical residuals. It never falls through to a one-token designation

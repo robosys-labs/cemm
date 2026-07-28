@@ -172,6 +172,28 @@ def validate_native_semantic_authority(
                         if expected not in {None, "atom", "state_value"} and value not in {str(expected), "atom"}:
                             issues.append(f"{label} filler kind {value} conflicts with {operator_ref}:{role_ref}={expected}")
                 _ref_list(raw_role.get("ports_required", ()), label=f"{label}.ports_required", issues=issues, limit=_MAX_PORTS)
+                default_source = raw_role.get("default_source")
+                if default_source not in {None, "speaker", "addressee", "self"}:
+                    issues.append(f"{label} has unsupported default_source {default_source!r}")
+                semantic_port = raw_role.get("semantic_port")
+                if semantic_port is not None and not _PORT.fullmatch(str(semantic_port)):
+                    issues.append(f"{label} has malformed semantic_port {semantic_port!r}")
+                if isinstance(filler_kinds, list) and "app" in set(map(str, filler_kinds)) and not frame.get("proposition_taking"):
+                    issues.append(f"{label} licenses app without proposition_taking")
+            proposition_taking = bool(frame.get("proposition_taking", False))
+            if proposition_taking and not any(
+                isinstance(item, Mapping) and "app" in set(map(str, item.get("filler_kinds", ())))
+                for item in roles
+            ):
+                issues.append(f"semantic frame {ref} is proposition_taking without an app-valued role")
+            if frame.get("standalone_licensed"):
+                if operator_ref != "op:event":
+                    issues.append(f"semantic frame {ref} licenses standalone use outside op:event")
+                if frame.get("default_force") not in {
+                    "claim", "query", "directive", "description", "correction",
+                    "retraction", "acknowledgment",
+                }:
+                    issues.append(f"semantic frame {ref} has invalid standalone default_force")
         elif frame is not None:
             issues.append(f"non-frame atom {ref} carries semantic_frame metadata")
 

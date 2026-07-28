@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "language": "en",
   "lexemes": [
     {
@@ -4220,191 +4220,6 @@
       "weight": 1.85
     },
     {
-      "family": "desire_knowledge_designation_query",
-      "tokens": [
-        "do",
-        "you",
-        "want",
-        "to",
-        "know",
-        "my",
-        "name",
-        "?"
-      ],
-      "annotations": [
-        {
-          "slot": "auxiliary",
-          "start": 0,
-          "end": 1,
-          "capture": "features",
-          "semantic_role": "force"
-        },
-        {
-          "slot": "experiencer",
-          "start": 1,
-          "end": 2,
-          "capture": "ref",
-          "semantic_role": "subject",
-          "kind": "anchor",
-          "semantic_ref": "participant:system",
-          "atom_kind": "participant",
-          "ports_provided": [
-            "argument:experiencer",
-            "argument:subject"
-          ]
-        },
-        {
-          "slot": "desire_predicate",
-          "start": 2,
-          "end": 3,
-          "capture": "ref",
-          "semantic_role": "predicate_head",
-          "kind": "anchor",
-          "semantic_ref": "event:want",
-          "atom_kind": "event_type",
-          "required_features": {
-            "semantic_contribution_abi": 1,
-            "contribution_kind": "predicate",
-            "semantic_kind": "event_type"
-          },
-          "ports_provided": [
-            "predicate:event"
-          ]
-        },
-        {
-          "slot": "complement",
-          "start": 3,
-          "end": 4,
-          "capture": "features",
-          "semantic_role": "modifier"
-        },
-        {
-          "slot": "knowledge_predicate",
-          "start": 4,
-          "end": 5,
-          "capture": "ref",
-          "semantic_role": "predicate_head",
-          "kind": "anchor",
-          "semantic_ref": "rel:knows",
-          "atom_kind": "relation_type",
-          "required_features": {
-            "semantic_contribution_abi": 1,
-            "contribution_kind": "predicate",
-            "semantic_kind": "relation_type"
-          },
-          "ports_provided": [
-            "predicate:event"
-          ]
-        },
-        {
-          "slot": "designation_target",
-          "start": 5,
-          "end": 6,
-          "capture": "ref",
-          "semantic_role": "target",
-          "kind": "anchor",
-          "semantic_ref": "participant:user",
-          "atom_kind": "participant",
-          "ports_provided": [
-            "argument:target"
-          ]
-        },
-        {
-          "slot": "property",
-          "start": 6,
-          "end": 7,
-          "capture": "ref",
-          "semantic_role": "object",
-          "kind": "anchor",
-          "semantic_ref": "label:name",
-          "atom_kind": "label_type",
-          "required_features": {
-            "semantic_contribution_abi": 1,
-            "contribution_kind": "predicate",
-            "semantic_kind": "label_type",
-            "property_kind": "designation"
-          },
-          "ports_provided": [
-            "argument:content",
-            "argument:object"
-          ]
-        },
-        {
-          "slot": "boundary",
-          "start": 7,
-          "end": 8,
-          "capture": "features",
-          "semantic_role": "force_boundary",
-          "kind": "punctuation",
-          "required_features": {
-            "discourse_force": "query"
-          },
-          "ports_provided": [
-            "force:query"
-          ]
-        }
-      ],
-      "packet": {
-        "force": "query",
-        "apps": [],
-        "query": {
-          "restrictions": [
-            {
-              "operator": "op:event",
-              "args": {
-                "role:event": "?want_event",
-                "role:type": {
-                  "$capture": "desire_predicate"
-                },
-                "role:actor": {
-                  "$capture": "experiencer"
-                },
-                "role:object": {
-                  "$capture": "designation_target"
-                }
-              },
-              "stance": "support"
-            },
-            {
-              "operator": "op:relation",
-              "args": {
-                "role:subject": {
-                  "$capture": "experiencer"
-                },
-                "role:relation": {
-                  "$capture": "knowledge_predicate"
-                },
-                "role:object": {
-                  "$capture": "designation_target"
-                }
-              },
-              "stance": "support"
-            }
-          ],
-          "variables": [
-            {
-              "ref": "?want_event",
-              "filler_kind": "event",
-              "role_ref": "role:event"
-            }
-          ],
-          "projection": [],
-          "qualifiers": {
-            "query_kind": "embedded_proposition_query",
-            "answer_mode": "boolean",
-            "proposition_depth": 2
-          }
-        },
-        "directive": null,
-        "describe": null,
-        "qualifiers": {
-          "construction_family": "desire_knowledge_designation_query"
-        },
-        "modality": "actual"
-      },
-      "weight": 1.9
-    },
-    {
       "family": "designation_learning_answer",
       "tokens": [
         "it",
@@ -5016,6 +4831,182 @@
         "modality": "actual"
       },
       "weight": 1.25
+    },
+    {
+      "family": "generic_state_value_predication",
+      "tokens": [
+        "CEMM",
+        "is",
+        "available"
+      ],
+      "annotations": [
+        {
+          "slot": "subject",
+          "start": 0,
+          "end": 1,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:system",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "binder",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:state_value"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "value:available",
+          "atom_kind": "value",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "value",
+            "state_dimension_ref": "dim:availability"
+          },
+          "ports_provided": [
+            "predicate:state_value",
+            "argument:value"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": {
+                "$capture": "subject"
+              },
+              "role:dimension": {
+                "$feature": "predicate.state_dimension_ref"
+              },
+              "role:value": {
+                "$capture": "predicate"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "generic_state_value_predication"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.7
+    },
+    {
+      "family": "generic_state_value_predication",
+      "tokens": [
+        "I",
+        "is",
+        "remembered"
+      ],
+      "annotations": [
+        {
+          "slot": "subject",
+          "start": 0,
+          "end": 1,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:user",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "binder",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:state_value"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:remember",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type",
+            "state_dimension_ref": "dim:memory_status"
+          },
+          "ports_provided": [
+            "predicate:state_value",
+            "argument:value"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": {
+                "$capture": "subject"
+              },
+              "role:dimension": {
+                "$feature": "predicate.state_dimension_ref"
+              },
+              "role:value": {
+                "$capture": "predicate"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "generic_state_value_predication"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.7
     }
   ],
   "nonblocking_discourse_forms": [
@@ -5042,10 +5033,9 @@
     "oh",
     "wow"
   ],
-  "contract_version": 6,
+  "contract_version": 7,
   "singleton_family_justifications": {
     "capability_inventory_query": "Reviewed generic capability projection over participant type and entitlement authority; not a phrase-specific response branch.",
-    "desire_knowledge_designation_query": "Reviewed two-event complement graph proving bounded proposition embedding over ordinary event applications.",
     "definition_designation_claim": "Reviewed generic surface-to-target designation assertion used for direct lexical definition teaching.",
     "generic_type_predication": "Reviewed semantic-kind-driven type lowering; the lexical predicate is supplied by designation affordance authority.",
     "semantic_discourse_reaction": "Reviewed discourse-affordance composition that creates acknowledgment force without world-state assertion."

@@ -291,6 +291,14 @@ def _capture(units: Sequence[UnitView], mode: str) -> Any:
         return units[0].semantic_ref if units else None
     if mode == "refs":
         return [item.semantic_ref for item in units]
+    if mode == "proposition_ref":
+        return feature_path(units[0].features, "proposition_ref") if units else None
+    if mode == "root_application_ref":
+        return feature_path(units[0].features, "root_application_ref") if units else None
+    if mode == "proposition_graph":
+        return feature_path(units[0].features, "proposition_graph") if units else None
+    if mode == "expanded_source_refs":
+        return list(feature_path(units[0].features, "expanded_source_unit_refs", ())) if units else []
     if mode == "features":
         if len(units) == 1:
             return dict(units[0].features)
@@ -324,6 +332,19 @@ def _unit_matches(unit: UnitView, spec: Mapping[str, Any]) -> bool:
     source_kind = spec.get("source_kind")
     if source_kind and unit.source_kind != source_kind:
         return False
+    proposition_force = spec.get("proposition_force")
+    if proposition_force and feature_path(unit.features, "embedded_force") != proposition_force:
+        return False
+    root_operator_ref = spec.get("root_operator_ref")
+    if root_operator_ref and feature_path(unit.features, "root_operator_ref") != root_operator_ref:
+        return False
+    proposition_depth = spec.get("proposition_depth")
+    if proposition_depth is not None and int(feature_path(unit.features, "depth", -1)) != int(proposition_depth):
+        return False
+    if spec.get("projects_variables") is not None:
+        projected = bool(feature_path(unit.features, "projected_variables", ()))
+        if projected is not bool(spec.get("projects_variables")):
+            return False
     for path, expected in dict(spec.get("features", {})).items():
         if not value_matches(feature_path(unit.features, path), expected):
             return False
@@ -341,7 +362,10 @@ def _residual_for(unit: UnitView, role_hypotheses: Iterable[str] = ()) -> Ground
         or features.get("property_ref")
         or features.get("contribution_kind") == "predicate"
     )
-    if grounded:
+    if unit.kind == "proposition":
+        residual_class = "grounded_argument_unassigned"
+        grounding_status = "grounded"
+    elif grounded:
         residual_class = (
             "grounded_predicate_unassigned"
             if predicate_like
@@ -429,6 +453,8 @@ class AtomicGraphMatcher:
                 for key in (
                     "kind", "kinds", "anchor_kind", "anchor_kinds", "anchor_ref",
                     "source_kind", "features", "absent_features",
+                    "proposition_force", "root_operator_ref",
+                    "proposition_depth", "projects_variables",
                 )
                 if key in step
             }

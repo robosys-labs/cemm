@@ -139,14 +139,15 @@ class SemanticSettler:
             }
 
         maximum = max(item["base"] for item in values)
+        temperature = float(self.config.settler_score_temperature)
         for item in values:
-            item["energy"] = item["base"] - maximum + 0.35
+            item["energy"] = (item["base"] - maximum) / temperature + 0.35
         for _ in range(self.config.settler_rounds):
             normalizer = sum(math.exp(item["energy"]) for item in values)
             probabilities = [math.exp(item["energy"]) / normalizer for item in values]
             for index, item in enumerate(values):
                 item["energy"] = (
-                    item["base"] - maximum + 0.35
+                    (item["base"] - maximum) / temperature + 0.35
                 ) - 0.28 * (1 - probabilities[index])
         normalizer = sum(math.exp(item["energy"]) for item in values)
         for item in values:
@@ -158,14 +159,19 @@ class SemanticSettler:
         margin = top["posterior"] - (
             values[1]["posterior"] if len(values) > 1 else 0.0
         )
+        score_margin = top["base"] - (
+            values[1]["base"] if len(values) > 1 else 0.0
+        )
         settled = len(values) == 1 or (
             top["posterior"] >= self.config.settler_posterior_threshold
             and margin >= self.config.settler_margin_threshold
+            and score_margin >= self.config.settler_score_margin_threshold
         )
         trace = {
             "status": "settled" if settled else "ambiguous",
             "posterior": top["posterior"],
             "margin": margin,
+            "score_margin": score_margin,
             "selected_candidate_ref": top["candidate_ref"] if settled else None,
             "selected_source_trace": dict(top["source_trace"]) if settled else None,
             "candidates": [

@@ -5,10 +5,12 @@ may be pending. It may be consumed only after its exact Stage-13 semantic commit
 """
 from __future__ import annotations
 
+from collections import deque
 from typing import Any, Mapping
 
 from cemm.learning_plans import LearningPlan, PendingLearningObligationV2
 from cemm.model import canonical, lit, stable
+from cemm.proof import VerifiedSemanticFocus
 
 
 PendingLearningObligation = PendingLearningObligationV2
@@ -17,13 +19,17 @@ PendingLearningObligation = PendingLearningObligationV2
 class DialogueState:
     """Session-local state with one exact typed learning continuation."""
 
-    def __init__(self, max_pending: int = 1, expiry_turns: int = 4):
+    def __init__(self, max_pending: int = 1, expiry_turns: int = 4, max_verified_focus: int = 8):
         if int(max_pending) != 1:
             raise ValueError("canonical dialogue ABI permits exactly one pending obligation")
         if expiry_turns < 1:
             raise ValueError("dialogue expiry bound must be positive")
         self._pending: PendingLearningObligation | None = None
         self._last_surface_decision: Mapping[str, Any] | None = None
+        if not 1 <= int(max_verified_focus) <= 32:
+            raise ValueError("verified semantic focus bound must be in 1..32")
+        self._verified_focus: deque[VerifiedSemanticFocus] = deque(maxlen=int(max_verified_focus))
+        self._proof_bundles: dict[str, Any] = {}
         self.expiry_turns = int(expiry_turns)
 
     def expire(self, current_turn: int) -> None:
@@ -39,6 +45,8 @@ class DialogueState:
         """
         item = self._pending
         self._pending = None
+        self._verified_focus.clear()
+        self._proof_bundles.clear()
         return item
 
     @property
@@ -52,6 +60,36 @@ class DialogueState:
     @property
     def last_surface_decision(self) -> Mapping[str, Any] | None:
         return dict(self._last_surface_decision) if self._last_surface_decision else None
+
+    @property
+    def verified_focus(self) -> tuple[VerifiedSemanticFocus, ...]:
+        return tuple(self._verified_focus)
+
+    def latest_focus(self, expected_kinds=()) -> VerifiedSemanticFocus | None:
+        kinds = set(map(str, expected_kinds))
+        for item in reversed(self._verified_focus):
+            if not kinds or item.focus_kind in kinds:
+                return item
+        return None
+
+    def proof_bundle(self, proof_ref: str | None):
+        return self._proof_bundles.get(str(proof_ref)) if proof_ref else None
+
+    def record_verified_focus(self, focus: VerifiedSemanticFocus, proof_bundle=None) -> None:
+        if not isinstance(focus, VerifiedSemanticFocus):
+            raise TypeError("dialogue focus must be VerifiedSemanticFocus")
+        duplicate = bool(
+            self._verified_focus and self._verified_focus[-1].focus_ref == focus.focus_ref
+        )
+        if not duplicate:
+            self._verified_focus.append(focus)
+        if proof_bundle is not None:
+            proof_ref = getattr(proof_bundle, "proof_ref", None)
+            if proof_ref != focus.proof_ref:
+                raise ValueError("semantic focus proof ref mismatch")
+            self._proof_bundles[str(proof_ref)] = proof_bundle
+        live = {item.proof_ref for item in self._verified_focus if item.proof_ref}
+        self._proof_bundles = {key: value for key, value in self._proof_bundles.items() if key in live}
 
     def context(self, current_turn: int | None = None) -> dict[str, Any]:
         if current_turn is not None:
@@ -76,6 +114,10 @@ class DialogueState:
             "last_surface_decision": decision,
             "last_surface_decision_ref": decision.get("decision_ref"),
             "last_surface_response_ref": decision.get("response_ref"),
+            "verified_semantic_focus": (
+                self._verified_focus[-1].as_dict() if self._verified_focus else None
+            ),
+            "verified_semantic_focuses": [item.as_dict() for item in self._verified_focus],
         }
 
     @staticmethod

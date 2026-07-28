@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-TARGET_CONTRACT_VERSION = 6
+TARGET_CONTRACT_VERSION = 7
 DESIGNATION_CONTRACT = "contract:designation_learning"
 
 
@@ -250,39 +250,6 @@ def _migrate_open_class_annotations(seed: dict[str, Any]) -> int:
             changed += int(canonical(annotation) != before)
         changed += replace_template(example.get("packet", {}), slot_targets)
 
-    # Strip semantic_port from all remaining lexeme features (closed-class
-    # verbs like ``is``, ``know``, ``mean`` etc.) and from family graph
-    # contract projections.  The native semantic spine replaces
-    # semantic_port with typed semantic contributions and affordance-derived
-    # ports, so any surviving instance is legacy.
-    for record in seed.get("lexemes", ()):
-        features = dict(record.get("features", {}))
-        if "semantic_port" in features:
-            features.pop("semantic_port")
-            record["features"] = features
-            changed += 1
-        # Reference pronouns (he/him/she/it/they) must carry anaphoric=true
-        # so the designation_learning_answer anaphor slot can match them.
-        if features.get("category") == "reference" and not features.get("anaphoric"):
-            features["anaphoric"] = True
-            record["features"] = features
-            changed += 1
-    for _fam, contract in seed.get("family_graph_contracts", {}).items():
-        for proj in contract.get("projections", ()):
-            value = dict(proj.get("value", {}) or {})
-            features = dict(proj.get("features", {}) or {})
-            modified = False
-            if "semantic_port" in value:
-                value.pop("semantic_port")
-                proj["value"] = value
-                modified = True
-            if "semantic_port" in features:
-                features.pop("semantic_port")
-                proj["features"] = features
-                modified = True
-            if modified:
-                changed += 1
-
     forbidden = []
     def scan(value: Any, path: str = "root") -> None:
         if isinstance(value, dict):
@@ -460,85 +427,6 @@ def _capability_inventory_example() -> dict[str, Any]:
             "modality": "capability",
         },
         "weight": 1.85,
-    }
-
-
-def _desire_knowledge_example() -> dict[str, Any]:
-    return {
-        "family": "desire_knowledge_designation_query",
-        "tokens": ["do", "you", "want", "to", "know", "my", "name", "?"],
-        "annotations": [
-            _annotation("auxiliary", 0, 1, "force", capture="features"),
-            _annotation(
-                "experiencer", 1, 2, "subject", kind="anchor", capture="ref",
-                semantic_ref="participant:system", atom_kind="participant",
-                ports_provided=("argument:experiencer",),
-            ),
-            _predicate_annotation("desire_predicate", 2, "event:want", "event_type"),
-            _annotation("complement", 3, 4, "modifier", capture="features"),
-            _predicate_annotation("knowledge_predicate", 4, "event:know", "event_type"),
-            _annotation(
-                "designation_target", 5, 6, "target", kind="anchor", capture="ref",
-                semantic_ref="participant:user", atom_kind="participant",
-                ports_provided=("argument:target",),
-            ),
-            _annotation(
-                "property", 6, 7, "object", kind="anchor", capture="ref",
-                semantic_ref="label:name", atom_kind="label_type",
-                required_features={
-                    "semantic_contribution_abi": 1,
-                    "contribution_kind": "predicate",
-                    "semantic_kind": "label_type",
-                    "property_kind": "designation",
-                },
-                ports_provided=("argument:content",),
-            ),
-            _annotation(
-                "boundary", 7, 8, "force_boundary", kind="punctuation", capture="features",
-                required_features={"discourse_force": "query"}, ports_provided=("force:query",),
-            ),
-        ],
-        "packet": {
-            "force": "query",
-            "apps": [],
-            "query": {
-                "restrictions": [
-                    {
-                        "operator": "op:event",
-                        "args": {
-                            "role:event": "?want_event",
-                            "role:type": {"$capture": "desire_predicate"},
-                            "role:actor": {"$capture": "experiencer"},
-                            "role:object": {"$capture": "designation_target"},
-                        },
-                        "stance": "support",
-                    },
-                    {
-                        "operator": "op:relation",
-                        "args": {
-                            "role:subject": {"$capture": "experiencer"},
-                            "role:relation": {"$capture": "knowledge_predicate"},
-                            "role:object": {"$capture": "designation_target"},
-                        },
-                        "stance": "support",
-                    },
-                ],
-                "variables": [
-                    {"ref": "?want_event", "filler_kind": "event", "role_ref": "role:event"},
-                ],
-                "projection": [],
-                "qualifiers": {
-                    "query_kind": "embedded_proposition_query",
-                    "answer_mode": "boolean",
-                    "proposition_depth": 2,
-                },
-            },
-            "directive": None,
-            "describe": None,
-            "qualifiers": {"construction_family": "desire_knowledge_designation_query"},
-            "modality": "actual",
-        },
-        "weight": 1.9,
     }
 
 
@@ -729,6 +617,7 @@ def _generic_state_value_predication_example(
                     "semantic_contribution_abi": 1,
                     "contribution_kind": "predicate",
                     "semantic_kind": "value",
+                    "state_dimension_ref": dimension_ref,
                 },
                 ports_provided=("predicate:state_value", "argument:value"),
                 ports_required=("argument:subject",),
@@ -789,60 +678,6 @@ def _reaction_example() -> dict[str, Any]:
     }
 
 
-def _fix_desire_knowledge_packets(seed: dict[str, Any]) -> int:
-    """Replace legacy op:event packets for knowledge_predicate with op:relation.
-
-    The knowledge_predicate slot captures rel:knows (a relation_type), so the
-    second restriction must use op:relation, not op:event.  Older seed examples
-    used op:event with role:type, which the exact compiler rejects because
-    rel:knows is not an event_type.  Also fix dangling ?know_event references
-    in the first restriction's role:object.
-    """
-    changed = 0
-    for example in seed.get("examples", ()):
-        if example.get("family") != "desire_knowledge_designation_query":
-            continue
-        query = example.get("packet", {}).get("query", {})
-        restrictions = query.get("restrictions", [])
-        new_restrictions = []
-        modified = False
-        for restriction in restrictions:
-            if (
-                restriction.get("operator") == "op:event"
-                and isinstance(restriction.get("args", {}).get("role:type"), dict)
-                and restriction["args"]["role:type"].get("$capture") == "knowledge_predicate"
-            ):
-                new_restrictions.append({
-                    "operator": "op:relation",
-                    "args": {
-                        "role:subject": {"$capture": "experiencer"},
-                        "role:relation": {"$capture": "knowledge_predicate"},
-                        "role:object": {"$capture": "designation_target"},
-                    },
-                    "stance": restriction.get("stance", "support"),
-                })
-                modified = True
-            else:
-                new_restrictions.append(restriction)
-        # Fix dangling ?know_event references in op:event restrictions
-        for restriction in new_restrictions:
-            if (
-                restriction.get("operator") == "op:event"
-                and restriction.get("args", {}).get("role:object") == "?know_event"
-            ):
-                restriction["args"]["role:object"] = {"$capture": "designation_target"}
-                modified = True
-        if modified:
-            query["restrictions"] = new_restrictions
-            # Remove the ?know_event variable since op:relation doesn't use it
-            variables = query.get("variables", [])
-            new_variables = [v for v in variables if v.get("ref") != "?know_event"]
-            if len(new_variables) != len(variables):
-                query["variables"] = new_variables
-            changed += 1
-    return changed
-
-
 def migrate_seed(seed: dict[str, Any]) -> dict[str, int]:
     changed = 0
     seed["version"] = TARGET_CONTRACT_VERSION
@@ -850,13 +685,24 @@ def migrate_seed(seed: dict[str, Any]) -> dict[str, int]:
     changed += _clean_open_class_lexemes(seed)
     changed += _migrate_open_class_annotations(seed)
     changed += _rewrite_legacy_learning(seed)
+    # Remove the sentence-shaped embedded proposition program. Recursive
+    # graphlets and reviewed proposition-taking frames are the sole owner.
+    examples_before = list(seed.get("examples", ()))
+    seed["examples"] = [
+        item for item in examples_before
+        if item.get("family") != "desire_knowledge_designation_query"
+    ]
+    changed += len(examples_before) - len(seed["examples"])
+    justifications = dict(seed.get("singleton_family_justifications", {}))
+    changed += int("desire_knowledge_designation_query" in justifications)
+    justifications.pop("desire_knowledge_designation_query", None)
+    seed["singleton_family_justifications"] = justifications
+
     # Normalize the complete pre-existing source before computing signatures.
     changed += _ensure_argument_ports(seed)
-    changed += _fix_desire_knowledge_packets(seed)
 
     additions = [
         _capability_inventory_example(),
-        _desire_knowledge_example(),
         *_learning_answer_examples(),
         _definition_claim_example(),
         _generic_type_predication_example(),
@@ -893,7 +739,6 @@ def migrate_seed(seed: dict[str, Any]) -> dict[str, int]:
     justifications = dict(seed.setdefault("singleton_family_justifications", {}))
     for family, text in {
         "capability_inventory_query": "Reviewed generic capability projection over participant type and entitlement authority; not a phrase-specific response branch.",
-        "desire_knowledge_designation_query": "Reviewed two-event complement graph proving bounded proposition embedding over ordinary event applications.",
         "definition_designation_claim": "Reviewed generic surface-to-target designation assertion used for direct lexical definition teaching.",
         "generic_type_predication": "Reviewed semantic-kind-driven type lowering; the lexical predicate is supplied by designation affordance authority.",
         "semantic_discourse_reaction": "Reviewed discourse-affordance composition that creates acknowledgment force without world-state assertion.",
@@ -905,6 +750,9 @@ def migrate_seed(seed: dict[str, Any]) -> dict[str, int]:
 
 
 def migrate_generator_text(text: str) -> str:
+    text = text.replace("feature-algebra v6", "feature-algebra v7")
+    text = text.replace("FEATURE_ALGEBRA_VERSION = 6", "FEATURE_ALGEBRA_VERSION = 7")
+    text = text.replace('"receipt_version": 6', '"receipt_version": 7')
     old = '''        if annotation.get("kind") == "anchor":\n            kind = "anchor"\n            semantic_ref = f"replay:anchor:{annotation['slot']}"\n            atom_kind = "participant"\n            source_kind = "replay"\n'''
     new = '''        if annotation.get("kind") == "anchor":\n            kind = "anchor"\n            semantic_ref = str(\n                annotation.get("semantic_ref")\n                or features.get("semantic_ref")\n                or f"replay:anchor:{annotation['slot']}"\n            )\n            atom_kind = str(\n                annotation.get("atom_kind")\n                or features.get("semantic_kind")\n                or "participant"\n            )\n            source_kind = "replay"\n'''
     count = text.count(old)
@@ -916,22 +764,10 @@ def migrate_generator_text(text: str) -> str:
     new = '''        "function_forms": sorted({\n            form\n            for record in seed.get("lexemes", ())\n            if not bool(dict(record.get("features", {})).get("open_class"))\n            for form in record.get("forms", ())\n        }),\n'''
     count = text.count(old)
     if count == 1:
-        text = text.replace(old, new, 1)
-    elif new not in text:
-        raise ValueError(f"generator function_forms anchor expected once, found {count}")
-    # Patch leave-one-out holdout: when the leave-one-out induced schema fails
-    # to match the held-out example (because instance-specific lexicon features
-    # become constraints when only one example is in the training set), fall
-    # back to the full induced schema (from all examples).  If the full schema
-    # matches, the holdout passes with mode "leave_one_out_full_schema".
-    old = '''            if not partial:\n                raise ValueError(\n                    f"leave-one-out holdout failed: {family}:{holdout_index}: no match"\n                )\n            holdouts.append({\n                "family": family,\n                "holdout_index": holdout_index,\n                "mode": "leave_one_out_partial",\n                "executable_match_count": 0,\n                "partial_match_count": len(partial),\n            })\n'''
-    new = '''            if not partial:\n                # Fall back to the full induced schema (all examples).  When\n                # the leave-one-out schema is too specific because\n                # instance-specific lexicon features become constraints,\n                # the full schema (which intersects across all examples)\n                # generalises correctly.\n                full_induced = induce_family(family, family_examples, lexicon, {})\n                full_matches = executable((full_induced,), holdout_replay)\n                if full_matches:\n                    holdouts.append({\n                        "family": family,\n                        "holdout_index": holdout_index,\n                        "mode": "leave_one_out_full_schema",\n                        "executable_match_count": len(full_matches),\n                    })\n                    continue\n                raise ValueError(\n                    f"leave-one-out holdout failed: {family}:{holdout_index}: no match"\n                )\n            holdouts.append({\n                "family": family,\n                "holdout_index": holdout_index,\n                "mode": "leave_one_out_partial",\n                "executable_match_count": 0,\n                "partial_match_count": len(partial),\n            })\n'''
-    count = text.count(old)
-    if count == 1:
-        text = text.replace(old, new, 1)
-    elif new not in text:
-        raise ValueError(f"generator leave-one-out fallback patch expected once, found {count}")
-    return text
+        return text.replace(old, new, 1)
+    if new in text:
+        return text
+    raise ValueError(f"generator function_forms anchor expected once, found {count}")
 
 
 def main() -> None:
@@ -942,20 +778,27 @@ def main() -> None:
     repo = args.repo.resolve()
     base_path = repo / "cemm" / "data" / "base.json"
     seed_path = repo / "cemm" / "training" / "en_form_schema_seed.json"
-    generator_path = repo / "tools" / "generate_en_form_pack_v6.py"
+    legacy_generator_path = repo / "tools" / "generate_en_form_pack_v6.py"
+    generator_path = repo / "tools" / "generate_en_form_pack_v7.py"
+    source_generator_path = generator_path if generator_path.exists() else legacy_generator_path
 
-    before = {str(path.relative_to(repo)): digest(path) for path in (base_path, seed_path, generator_path)}
+    before = {
+        str(path.relative_to(repo)): digest(path)
+        for path in (base_path, seed_path, source_generator_path)
+    }
     base = json.loads(base_path.read_text(encoding="utf-8"))
     seed = json.loads(seed_path.read_text(encoding="utf-8"))
     base_changed = int(add_operator_role(base, "role:object")) + int(add_operator_role(base, "role:target"))
     seed_result = migrate_seed(seed)
-    generator_before = generator_path.read_text(encoding="utf-8")
+    generator_before = source_generator_path.read_text(encoding="utf-8")
     generator_after = migrate_generator_text(generator_before)
 
     if not args.check:
         write_json(base_path, base)
         write_json(seed_path, seed)
         generator_path.write_text(generator_after, encoding="utf-8")
+        if legacy_generator_path.exists() and legacy_generator_path != generator_path:
+            legacy_generator_path.unlink()
     result = {
         "base_changes": base_changed,
         **seed_result,

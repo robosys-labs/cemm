@@ -776,11 +776,12 @@
               "filler_kinds": [
                 "atom"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "default_source": "speaker"
             },
             {
               "role_ref": "role:target",
-              "required": true,
+              "required": false,
               "filler_kinds": [
                 "atom"
               ],
@@ -790,15 +791,63 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
           "replace_defaults": true,
           "kernel_operator_ref": "op:event",
-          "designation_effect": true
+          "designation_effect": true,
+          "proposition_taking": true,
+          "evaluation_kind": "semantic_description"
+        }
+      }
+    },
+    {
+      "ref": "frame:event-explain",
+      "kind": "semantic_frame",
+      "metadata": {
+        "foundational": true,
+        "conversation_foundation": true,
+        "semantic_frame": {
+          "contribution_kind": "predicate",
+          "predicate": true,
+          "ports_provided": [
+            "predicate:event"
+          ],
+          "ports_required": [
+            "argument:object"
+          ],
+          "roles": [
+            {
+              "role_ref": "role:actor",
+              "required": false,
+              "filler_kinds": [
+                "atom"
+              ],
+              "cardinality": "one",
+              "default_source": "speaker"
+            },
+            {
+              "role_ref": "role:object",
+              "required": true,
+              "filler_kinds": [
+                "atom",
+                "app"
+              ],
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
+            }
+          ],
+          "score": 0.2,
+          "replace_defaults": true,
+          "kernel_operator_ref": "op:event",
+          "proposition_taking": true,
+          "evaluation_kind": "semantic_description"
         }
       }
     },
@@ -831,9 +880,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -850,16 +901,41 @@
         "foundational": true,
         "conversation_foundation": true,
         "semantic_frame": {
-          "contribution_kind": "discourse",
-          "predicate": false,
+          "contribution_kind": "predicate",
+          "predicate": true,
           "ports_provided": [
+            "predicate:event",
             "discourse:greeting"
           ],
           "ports_required": [],
-          "roles": [],
+          "roles": [
+            {
+              "role_ref": "role:actor",
+              "required": false,
+              "filler_kinds": [
+                "atom"
+              ],
+              "cardinality": "one",
+              "default_source": "speaker"
+            },
+            {
+              "role_ref": "role:target",
+              "required": false,
+              "filler_kinds": [
+                "atom"
+              ],
+              "cardinality": "one",
+              "default_source": "addressee"
+            }
+          ],
           "score": 0.35,
-          "replace_defaults": false,
-          "discourse_act": "greeting"
+          "replace_defaults": true,
+          "kernel_operator_ref": "op:event",
+          "standalone_licensed": true,
+          "default_actor_source": "speaker",
+          "default_addressee_source": "addressee",
+          "default_force": "acknowledgment",
+          "response_expectation": "greeting"
         }
       }
     },
@@ -892,9 +968,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -933,16 +1011,21 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
           "replace_defaults": true,
           "kernel_operator_ref": "op:event",
           "proposition_taking": true,
-          "scope_kind": "intention"
+          "scope_kind": "intention",
+          "controlled_role_bindings": {
+            "role:actor": "role:actor"
+          }
         }
       }
     },
@@ -967,7 +1050,7 @@
               "role_ref": "role:actor",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "participant"
               ],
               "cardinality": "one"
             },
@@ -975,7 +1058,7 @@
               "role_ref": "role:target",
               "required": false,
               "filler_kinds": [
-                "atom"
+                "participant"
               ],
               "cardinality": "one"
             },
@@ -983,16 +1066,19 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
           "replace_defaults": true,
           "kernel_operator_ref": "op:event",
           "proposition_taking": true,
-          "epistemic_event": true
+          "epistemic_event": true,
+          "evaluation_kind": "answerability"
         }
       }
     },
@@ -1017,7 +1103,7 @@
               "role_ref": "role:actor",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "participant"
               ],
               "cardinality": "one"
             },
@@ -1025,9 +1111,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -1066,9 +1154,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -1115,9 +1205,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -1165,9 +1257,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -1206,9 +1300,11 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
@@ -1247,16 +1343,21 @@
               "role_ref": "role:object",
               "required": true,
               "filler_kinds": [
-                "atom"
+                "atom",
+                "app"
               ],
-              "cardinality": "one"
+              "cardinality": "one",
+              "semantic_port": "argument:proposition"
             }
           ],
           "score": 0.2,
           "replace_defaults": true,
           "kernel_operator_ref": "op:event",
           "proposition_taking": true,
-          "scope_kind": "desire"
+          "scope_kind": "desire",
+          "controlled_role_bindings": {
+            "role:actor": "role:actor"
+          }
         }
       }
     },
@@ -9491,6 +9592,18 @@
         "role:subject": "event:define",
         "role:relation": "rel:has_semantic_frame",
         "role:object": "frame:event-define"
+      },
+      "stance": "support",
+      "confidence": 1.0,
+      "authority_status": "reviewed",
+      "source_ref": "seed"
+    },
+    {
+      "operator": "op:relation",
+      "args": {
+        "role:subject": "event:explain",
+        "role:relation": "rel:has_semantic_frame",
+        "role:object": "frame:event-explain"
       },
       "stance": "support",
       "confidence": 1.0,

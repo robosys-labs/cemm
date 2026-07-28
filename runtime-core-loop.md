@@ -328,3 +328,22 @@ obligation only when Stage 13 validates and commits the exact licensed
 Proposition embedding uses bounded graphs of ordinary five-operator
 applications. Shared event refs and explicit roles encode event complements; no
 new proposition or intent operator is permitted.
+
+## Recursive Atomic Semantic Composition ABI
+
+Stage 5 owns one bounded bottom-up composition chart. Form units may become
+transient PropositionGraph ABI 2 units and compose into larger graphs. Graphlets
+are never persisted and never create a sixth operator. Candidate-local app-valued
+roles are admitted only by reviewed proposition-taking frames and are flattened
+child-first before Stage 13.
+
+Semantic description and epistemic explanation extend the exact Stage-10 query
+path. Descriptions contain only indexed stored facts. Proof explanations contain
+only exact application, claim, occurrence, source, inference, commit or runtime
+snapshot refs. Stage 21 records bounded verified semantic focus after realization
+verification; surface wording is never semantic authority.
+
+Activation requires Coverage/Form ABI 7, Atomic Composition ABI 1,
+PropositionGraph ABI 2, Description ABI 1 and Proof Bundle ABI 1. The obsolete
+sentence-shaped embedded proposition family and one-pass Stage-5 fallback are
+forbidden.

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from cemm.constants import DDL, SCHEMA_VERSION
 from cemm.authority import load_documents, validate_documents
+from cemm.semantic_contributions import SemanticAffordanceIndex
 from cemm.model import (
     AmbiguousReferent,
     Fact,
@@ -330,6 +331,31 @@ class Store:
             if not atom or atom["kind"] != expected:
                 raise ValueError(f"filler kind {role}: expected {expected}")
 
+    @staticmethod
+    def _application_predicate_ref(operator, args):
+        role = {
+            "op:event": "role:type",
+            "op:relation": "role:relation",
+            "op:state": "role:dimension",
+            "op:type": "role:class",
+        }.get(str(operator))
+        value = args.get(role) if role else None
+        return value if isinstance(value, str) and not value.startswith(("?", "!")) else None
+
+    def _frame_allows_app(self, operator, role_ref, args):
+        predicate = self._application_predicate_ref(operator, args)
+        if not predicate:
+            return False
+        profiles = SemanticAffordanceIndex(
+            self, self.generation, max_profiles_per_target=4
+        ).profiles_for(predicate)
+        return any(
+            profile.metadata.get("kernel_operator_ref") == operator
+            and profile.metadata.get("proposition_taking")
+            and any(role.role_ref == role_ref and "app" in role.filler_kinds for role in profile.roles)
+            for profile in profiles
+        )
+
     def validate_app(self, operator, args):
         if not self.atom(operator):
             raise ValueError(f"unknown operator {operator}")
@@ -337,7 +363,18 @@ class Store:
         for role, value in args.items():
             if role not in specs:
                 raise ValueError(f"{operator} disallows {role}")
-            self._validate_filler(role, value, specs[role])
+            try:
+                self._validate_filler(role, value, specs[role])
+            except ValueError:
+                if not (
+                    isinstance(value, dict)
+                    and set(value) == {"app"}
+                    and self._frame_allows_app(operator, role, args)
+                    and self.db.execute(
+                        "SELECT 1 FROM applications WHERE app_ref=?", (str(value["app"]),)
+                    ).fetchone()
+                ):
+                    raise
         for role, spec in specs.items():
             if spec["required"] and role not in args:
                 raise ValueError(f"missing {operator}:{role}")

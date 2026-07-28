@@ -42,6 +42,8 @@ class ResponseCSIR:
             "report_conflict",
             "report_target_uncertainty",
             "report_operational_condition",
+            "describe_semantic_target",
+            "explain_evidence_provenance",
         }
         if self.action in query_actions:
             if not self.qualifiers.get("query_ref") or not self.qualifiers.get("query_kind"):
@@ -255,7 +257,59 @@ class ResponseBuilder:
             }
             if query_qualifiers.get("query_kind") == "capability_inventory_query":
                 target_ref = query_qualifiers.get("target_ref")
-            if query_qualifiers.get("query_kind") == "operational_condition_query":
+            if query_qualifiers.get("query_kind") == "semantic_description":
+                result = dict(query_qualifiers.get("description_result", {}) or {})
+                action = "describe_semantic_target"
+                target_ref = result.get("target_ref") or query_qualifiers.get("target_ref")
+                facts = tuple(
+                    facts_by_ref[ref]
+                    for ref in sorted({item.get("ref") for item in result.get("facts", ()) if item.get("ref")})
+                    if ref in facts_by_ref
+                )
+                facet_names = [key for key, refs in dict(result.get("fact_facets", {})).items() if refs]
+                qualifiers = {
+                    **common,
+                    "description_result_ref": result.get("result_ref"),
+                    "description_completeness": result.get("completeness"),
+                    "target_kind": result.get("target_kind"),
+                    "preferred_surface": result.get("preferred_surface"),
+                    "description_summary": ", ".join(facet_names),
+                    "description_fact_refs": [item.get("ref") for item in result.get("facts", ()) if item.get("ref")],
+                    "description_source_refs": list(result.get("source_refs", ())),
+                    "missing_facets": list(result.get("missing_facets", ())),
+                }
+                reason = "semantic_target_description"
+            elif query_qualifiers.get("query_kind") == "epistemic_provenance":
+                proof = dict(query_qualifiers.get("proof_bundle", {}) or {})
+                action = "explain_evidence_provenance"
+                target_ref = None
+                sources = list(proof.get("source_refs", ()))
+                authority = list(dict(proof.get("provenance", {})).get("authority_statuses", ()))
+                if audience_ref in sources:
+                    basis = "user_report"
+                elif proof.get("operational_snapshot_refs"):
+                    basis = "operational_observation"
+                elif proof.get("inference_receipt_refs"):
+                    basis = "inference"
+                elif "reviewed" in authority or "promoted" in authority or "seed" in sources:
+                    basis = "reviewed_authority"
+                elif proof.get("fact_refs") or proof.get("claim_refs"):
+                    basis = "stored_evidence"
+                else:
+                    basis = "unsupported"
+                qualifiers = {
+                    **common,
+                    "proof_ref": proof.get("proof_ref"),
+                    "proof_basis": basis,
+                    "proof_completeness": proof.get("completeness"),
+                    "proof_fact_refs": list(proof.get("fact_refs", ())),
+                    "proof_claim_refs": list(proof.get("claim_refs", ())),
+                    "proof_source_refs": sources,
+                    "proof_inference_refs": list(proof.get("inference_receipt_refs", ())),
+                    "proof_snapshot_refs": list(proof.get("operational_snapshot_refs", ())),
+                }
+                reason = "epistemic_provenance_explanation"
+            elif query_qualifiers.get("query_kind") == "operational_condition_query":
                 if operational_snapshot is None:
                     raise ValueError("operational query requires current OperationalSnapshot")
                 assessment = operational_snapshot.assess()
@@ -318,6 +372,8 @@ class ResponseBuilder:
             surface = evidence.get("surface") or evidence.get("normalized")
             if isinstance(raw_learning_plan, Mapping):
                 action = "request_learning_evidence"
+            elif evidence.get("composition_gap"):
+                action = "report_structural_composition_gap"
             elif surface or frontier.target_ref:
                 action = "request_targeted_clarification"
             else:
@@ -326,6 +382,8 @@ class ResponseBuilder:
             literals = (str(surface),) if surface else ()
             qualifiers = {
                 "frontier_ref": frontier.frontier_ref,
+                "composition_gap": dict(evidence.get("composition_gap", {}) or {}),
+                "gap_kind": dict(evidence.get("composition_gap", {}) or {}).get("gap_kind"),
                 "frontier_kind": frontier.kind,
                 "expected_semantic_kinds": list(evidence.get("semantic_kind_candidates", ())),
                 "original_candidate_ref": evidence.get("candidate_ref"),

@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from cemm.acquisition import acquire_reviewed
-from cemm.activation import activation_attestation, assert_atomic_graph_activation
+from cemm.activation import activation_attestation, assert_native_semantic_activation
 from cemm.config import Config
 from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
@@ -38,8 +38,8 @@ def _ensure_runtime() -> Runtime:
         _config = Config()
         _runtime = Runtime(_store, _pack_path, _config)
         # Fail before serving chat when an old installed package, stale process,
-        # or mismatched form pack is shadowing the checked-out v6 source.
-        _activation = assert_atomic_graph_activation(_runtime.i.form_pack, _runtime.s)
+        # or mismatched form pack is shadowing the checked-out recursive semantic source.
+        _activation = assert_native_semantic_activation(_runtime.i.form_pack, _runtime.s)
     return _runtime
 
 
@@ -129,7 +129,7 @@ async def reload():
     global _activation
     runtime = _ensure_runtime()
     receipt = runtime.reload_authority()
-    _activation = assert_atomic_graph_activation(runtime.i.form_pack, runtime.s)
+    _activation = assert_native_semantic_activation(runtime.i.form_pack, runtime.s)
     return {
         "ok": True,
         "reload_scope": "authority_only",

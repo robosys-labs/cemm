@@ -611,6 +611,13 @@ provide morphology and closed-class structure but do not own open-class semantic
 identity. A learned designation must become compositionally usable without form
 pack regeneration.
 
+A grounded designation is also a valid semantic-description target. Definition
+or meaning-query evidence may select that target through reviewed contribution
+metadata and issue a bounded `DescriptionRequest`; it must not be replaced by a
+surface-specific dictionary branch or by an unrelated generic event reading.
+After a successful semantic commit, the next cycle must bind the new authority
+generation before resolving designations, affordances or descriptions.
+
 Runtime learning continuation is represented by `LearningPlan` ABI 1. It is
 bound to one executed QueryStructure/QueryResult, one pinned authority generation,
 one reviewed contract, one capability, one five-operator commit effect, one answer
@@ -624,3 +631,22 @@ phrase-intent kernel is introduced.
 Activation must attest Coverage/Form ABI 6, Semantic Contribution ABI 1,
 LearningPlan ABI 1, PropositionGraph ABI 1, module provenance, generated pack
 receipts and the linked frame/contract authority graph before serving input.
+
+## Recursive Atomic Semantic Composition ABI
+
+Stage 5 owns one bounded bottom-up composition chart. Form units may become
+transient PropositionGraph ABI 2 units and compose into larger graphs. Graphlets
+are never persisted and never create a sixth operator. Candidate-local app-valued
+roles are admitted only by reviewed proposition-taking frames and are flattened
+child-first before Stage 13.
+
+Semantic description and epistemic explanation extend the exact Stage-10 query
+path. Descriptions contain only indexed stored facts. Proof explanations contain
+only exact application, claim, occurrence, source, inference, commit or runtime
+snapshot refs. Stage 21 records bounded verified semantic focus after realization
+verification; surface wording is never semantic authority.
+
+Activation requires Coverage/Form ABI 7, Atomic Composition ABI 1,
+PropositionGraph ABI 2, Description ABI 1 and Proof Bundle ABI 1. The obsolete
+sentence-shaped embedded proposition family and one-pass Stage-5 fallback are
+forbidden.

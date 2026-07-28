@@ -209,7 +209,19 @@ class CanonicalResponseRealizer:
                 continue
             required_qualifiers = dict(when.get("qualifiers", {}) or {})
             actual_qualifiers = dict(getattr(response, "qualifiers", {}) or {})
-            if any(actual_qualifiers.get(key) != value for key, value in required_qualifiers.items()):
+            semantic_conditions = {
+                key: value for key, value in when.items()
+                if key not in {"action", "query_kind", "has_bindings", "has_facts", "qualifiers"}
+            }
+            def condition_matches(actual, expected):
+                if isinstance(expected, Mapping) and "any_of" in expected:
+                    return actual in set(expected["any_of"])
+                if isinstance(expected, Mapping) and "not" in expected:
+                    return actual != expected["not"]
+                return actual == expected
+            if any(not condition_matches(actual_qualifiers.get(key), value) for key, value in required_qualifiers.items()):
+                continue
+            if any(not condition_matches(actual_qualifiers.get(key), value) for key, value in semantic_conditions.items()):
                 continue
             specificity = sum(value is not None for key, value in when.items() if key != "qualifiers") + len(required_qualifiers)
             candidates.append((specificity, str(rule.get("ref", "")), rule))
@@ -402,6 +414,26 @@ class CanonicalResponseRealizer:
             return frozenset(base | {"binding_values", "target_ref"})
         if action == "report_target_uncertainty" and query_kind == "capability_inventory_query":
             return frozenset(base | {"target_ref"})
+        if action == "describe_semantic_target":
+            base = {
+                "query_ref", "query_kind", "description_result_ref",
+                "description_completeness",
+            }
+            completeness = qualifiers.get("description_completeness")
+            if completeness == "identity_only":
+                base.add("target_kind")
+            elif completeness in {"partial_structure", "sufficient_structure"}:
+                base.update({"target_kind", "description_summary"})
+            elif completeness == "conflicting_structure":
+                base.add("target_ref")
+            return frozenset(base)
+        if action == "explain_evidence_provenance":
+            return frozenset({
+                "query_ref", "query_kind", "proof_ref", "proof_basis",
+                "proof_completeness",
+            })
+        if action == "report_structural_composition_gap":
+            return frozenset({"frontier_ref", "gap_kind"})
         if action == "explain_surface_choice":
             return frozenset({"surface_decision_ref", "surface_choice_a", "surface_choice_b", "prior_response_ref", "prior_surface"})
         if action == "acknowledge_attributed_claim":

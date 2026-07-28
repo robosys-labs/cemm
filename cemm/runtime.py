@@ -36,6 +36,8 @@ from cemm.goals import AdapterRegistry, GoalArbiter, GoalCandidate
 from cemm.inference import Inference, InferenceTimeoutError
 from cemm.interpreter import Interpreter
 from cemm.model import AmbiguousReferent, canonical, now, stable
+from cemm.semantic_description import SemanticDescriptionEngine
+from cemm.proof import ProofEngine, VerifiedSemanticFocus
 from cemm.learning_plans import (
     LearningContractRegistry,
     LearningPlan,
@@ -99,7 +101,7 @@ class Runtime:
         self.response_builder = ResponseBuilder()
         self.goal_arbiter = GoalArbiter()
         self.epistemic_policy = EpistemicPolicy(store)
-        self.dialogue_state = DialogueState()
+        self.dialogue_state = DialogueState(max_verified_focus=self.config.dialogue_max_verified_focus)
         self.runtime_attestation = {
             "authority_generation": store.generation,
             "authority_generation_hash": store.authority_hash(store.generation),
@@ -116,6 +118,12 @@ class Runtime:
         self.learning_contracts = LearningContractRegistry(self.s, generation)
         self.inf = Inference(self.s, self.config, authority_generation=generation)
         self.retriever = SemanticRetriever(self.s, self.config, generation)
+        self.description_engine = SemanticDescriptionEngine(
+            self.s, self.config, int(self.runtime_attestation["authority_generation"])
+        )
+        self.proof_engine = ProofEngine(
+            self.s, self.config, int(self.runtime_attestation["authority_generation"])
+        )
         self.state_projector = StateProjector(self.s, self.config, authority_generation=generation)
         self.transition_engine = TransitionEngine(self.s, self.inf, generation)
         self.capability_evaluator = CapabilityEvaluator(
@@ -361,56 +369,118 @@ class Runtime:
     @staticmethod
     def _frontiers(trace, cycle_ref):
         output = []
+        seen_gaps = set()
         for item in trace.get("unknown_form_evidence", ()):
+            gap = item.get("composition_gap") if isinstance(item, dict) else None
+            if isinstance(gap, dict):
+                gap_ref = str(gap.get("gap_ref") or "")
+                if gap_ref in seen_gaps:
+                    continue
+                seen_gaps.add(gap_ref)
+                kind = str(gap.get("gap_kind") or "known_form_composition_gap")
+                unknown_only = bool(gap.get("unknown_unit_refs")) and not gap.get("known_unit_refs")
+                blocks = ("interpretation", "answer", "lexical_learning") if unknown_only else ("interpretation", "answer")
+                output.append(LearningFrontier.create(
+                    "unknown_form" if unknown_only else kind,
+                    ({**dict(item), "composition_gap": dict(gap)},),
+                    target_ref=item.get("semantic_ref"),
+                    blocks=blocks,
+                    cycle_ref=cycle_ref,
+                ))
+                continue
             residual_class = str(item.get("residual_class") or "unknown_form")
             grounding_status = str(item.get("grounding_status") or "unknown")
             semantic_ref = item.get("semantic_ref") or item.get("target_ref")
-            if grounding_status == "grounded" and semantic_ref:
-                frontier_kind = "grounded_composition_gap"
-                target_ref = str(semantic_ref)
-                blocks = ("interpretation", "answer")
-            elif residual_class == "unknown_form":
-                frontier_kind = "unknown_form"
-                target_ref = None
-                blocks = ("interpretation", "answer", "lexical_learning")
+            if residual_class == "unknown_form":
+                kind, blocks = "unknown_form", ("interpretation", "answer", "lexical_learning")
+            elif grounding_status == "grounded" and semantic_ref:
+                kind, blocks = "grounded_composition_gap", ("interpretation", "answer")
             else:
-                frontier_kind = "known_form_composition_gap"
-                target_ref = str(semantic_ref) if semantic_ref else None
-                blocks = ("interpretation", "answer")
-            output.append(
-                LearningFrontier.create(
-                    frontier_kind,
-                    (dict(item),),
-                    target_ref=target_ref,
-                    blocks=blocks,
-                    cycle_ref=cycle_ref,
-                )
-            )
+                kind, blocks = "known_form_composition_gap", ("interpretation", "answer")
+            output.append(LearningFrontier.create(
+                kind, (dict(item),), target_ref=str(semantic_ref) if semantic_ref else None,
+                blocks=blocks, cycle_ref=cycle_ref,
+            ))
         for skipped in trace.get("skipped_clauses", ()):
-            if skipped.get("reason") == "unknown_form":
-                continue
-            output.append(
-                LearningFrontier.create(
-                    skipped.get("reason", "unresolved_clause"),
-                    (dict(skipped),),
-                    blocks=("interpretation", "answer"),
-                    cycle_ref=cycle_ref,
-                )
-            )
+            if skipped.get("reason") != "unknown_form":
+                output.append(LearningFrontier.create(
+                    skipped.get("reason", "unresolved_clause"), (dict(skipped),),
+                    blocks=("interpretation", "answer"), cycle_ref=cycle_ref,
+                ))
         if not output and trace.get("reason"):
-            output.append(
-                LearningFrontier.create(
-                    trace["reason"],
-                    ({
-                        "reason": trace["reason"],
-                        "coverage": trace.get("interpretation_coverage"),
-                        "partial_structure": trace.get("partial_packet"),
-                    },),
-                    blocks=("interpretation", "answer"),
-                    cycle_ref=cycle_ref,
-                )
-            )
+            output.append(LearningFrontier.create(
+                trace["reason"], ({"reason": trace["reason"], "coverage": trace.get("interpretation_coverage"),
+                                   "partial_structure": trace.get("partial_packet")},),
+                blocks=("interpretation", "answer"), cycle_ref=cycle_ref,
+            ))
         return tuple(output)
+
+    def _resolve_candidate_application_refs(self, packet):
+        applications = self._packet_applications(packet)
+        if not applications:
+            return packet
+        by_local = {
+            str(item.get("application_ref")): item
+            for item in applications if item.get("application_ref")
+        }
+        if not by_local:
+            return packet
+        if len(by_local) != sum(1 for item in applications if item.get("application_ref")):
+            raise ValueError("duplicate candidate-local application refs")
+        resolved = {}
+        pending = set(by_local)
+        while pending:
+            progressed = False
+            for local_ref in tuple(sorted(pending)):
+                application = by_local[local_ref]
+                args = {}
+                blocked = False
+                for role, value in application.get("args", {}).items():
+                    if isinstance(value, dict) and set(value) == {"app"}:
+                        child = str(value["app"])
+                        if child in by_local and child not in resolved:
+                            blocked = True
+                            break
+                        args[role] = {"app": resolved.get(child, child)}
+                    else:
+                        args[role] = value
+                if blocked:
+                    continue
+                resolved[local_ref] = self.s.app_signature(application["operator"], args)
+                application["args"] = args
+                application["application_ref"] = resolved[local_ref]
+                pending.remove(local_ref)
+                progressed = True
+            if not progressed:
+                raise ValueError("candidate-local application graph is cyclic or incomplete")
+        # Parent app bindings now reference exact child app signatures. Child-first
+        # order is required so store validation cannot observe a dangling app ref.
+        ordered = []
+        remaining = list(applications)
+        inserted = set()
+        while remaining:
+            progress = False
+            for item in tuple(remaining):
+                children = {
+                    str(value["app"]) for value in item.get("args", {}).values()
+                    if isinstance(value, dict) and set(value) == {"app"}
+                }
+                local_children = {child for child in children if child in set(resolved.values())}
+                external_children = children - local_children
+                if all(self.s.db.execute(
+                    "SELECT 1 FROM applications WHERE app_ref=?", (child,)
+                ).fetchone() for child in external_children) and local_children.issubset(inserted):
+                    ordered.append(item); inserted.add(str(item.get("application_ref")))
+                    remaining.remove(item); progress = True
+            if not progress:
+                raise ValueError("materialized application graph is cyclic")
+        if packet.get("query"):
+            packet["query"]["restrictions"] = ordered
+        elif packet.get("directive"):
+            packet["directive"]["content"] = ordered
+        else:
+            packet["apps"] = ordered
+        return packet
 
     def _materialize(self, packet, news, generation, seed):
         mapping = {}
@@ -456,6 +526,7 @@ class Runtime:
 
         for application in self._packet_applications(output):
             application["args"] = {role: convert(value) for role, value in application["args"].items()}
+        output = self._resolve_candidate_application_refs(output)
         for item in news:
             ref = mapping[item["token"]]
             if not self.s.atom(ref):
@@ -894,57 +965,136 @@ class Runtime:
         runtime_facts = cycle.self_runtime_view.operational_snapshot.semantic_facts()
         query_result = None
         retrieval = None
+        description_result = None
+        proof_bundle = None
         facts = list(runtime_facts)
         by_ref = {fact.ref: fact for fact in facts}
         workspace_trace = {"selected": [], "top_k": self.config.workspace_top_k}
         scoped_epistemic = None
+        describe_request = getattr(act, "describe_target", None) if act else None
         if act and act.force == FORCE_QUERY and act.query:
+            query_kind = str(dict(act.query.qualifiers or {}).get("query_kind") or "")
+            if (
+                isinstance(describe_request, dict)
+                or query_kind == "embedded_proposition_query"
+            ):
+                self._require_resources(
+                    cycle, Stage.QUERY_EXPLAIN, ("resource:semantic_store",)
+                )
+            if isinstance(describe_request, dict) and describe_request.get("description_kind") == "semantic_target":
+                request = self.description_engine.request(
+                    str(describe_request["target_ref"]),
+                    facets=tuple(describe_request.get("requested_facets", ())) or (),
+                    provenance={"query_ref": act.query.query_ref, "act_ref": act.act_ref},
+                )
+                description_result = self.description_engine.describe(request)
+                facts = list(description_result.facts) + list(runtime_facts)
+                by_ref = {fact.ref: fact for fact in facts}
+                binding = QueryBinding(
+                    {"?description_target": request.target_ref},
+                    tuple(fact.ref for fact in description_result.facts),
+                )
+                query_result = QueryResult(
+                    act.query.query_ref,
+                    "answered" if description_result.target_kind != "unknown" else "unknown",
+                    (binding,) if description_result.target_kind != "unknown" else (),
+                    1.0 if description_result.target_kind != "unknown" else 0.0,
+                    len(description_result.facts), 0, (), (),
+                    tuple(x.frontier_ref for x in frontiers),
+                    {
+                        **dict(act.query.qualifiers or {}),
+                        "query_kind": "semantic_description",
+                        "target_ref": request.target_ref,
+                        "description_result": description_result.as_dict(),
+                    },
+                )
+            elif isinstance(describe_request, dict) and describe_request.get("description_kind") == "epistemic_provenance":
+                raw_focus = cycle.participant_frame.dialogue_context.get("verified_semantic_focus")
+                focus = VerifiedSemanticFocus.from_dict(raw_focus) if isinstance(raw_focus, dict) else None
+                if focus is not None:
+                    proof_bundle = self.proof_engine.explain_focus(
+                        focus,
+                        proof_lookup={focus.proof_ref: self.dialogue_state.proof_bundle(focus.proof_ref)},
+                    )
+                else:
+                    proof_bundle = self.proof_engine.explain_focus(VerifiedSemanticFocus.create(
+                        focus_kind="unresolved", response_ref="response:none",
+                        authority_generation=int(self.runtime_attestation["authority_generation"]),
+                        world_revision=self.s.revisions()["world_revision"],
+                    ))
+                query_result = QueryResult(
+                    act.query.query_ref,
+                    "answered" if proof_bundle.completeness not in {"unsupported", "stale"} else "unknown",
+                    (), 1.0 if proof_bundle.completeness not in {"unsupported", "stale"} else 0.0,
+                    proof_bundle.support_count, proof_bundle.opposition_count, (), (),
+                    tuple(x.frontier_ref for x in frontiers),
+                    {
+                        **dict(act.query.qualifiers or {}),
+                        "query_kind": "epistemic_provenance",
+                        "proof_bundle": proof_bundle.as_dict(),
+                    },
+                )
+            elif query_kind == "embedded_proposition_query" and dict(act.query.qualifiers or {}).get("evaluation_kind") == "answerability":
+                embedded = tuple(dict(act.query.qualifiers or {}).get("embedded_proposition_graphs", ()))
+                descriptions = []
+                for graph in embedded:
+                    request_data = dict(graph.get("provenance", {}).get("describe_request", {}) or {})
+                    if request_data.get("target_ref"):
+                        req = self.description_engine.request(str(request_data["target_ref"]), provenance={"outer_query_ref": act.query.query_ref})
+                        descriptions.append(self.description_engine.describe(req))
+                answerable = bool(descriptions) and all(item.target_kind != "unknown" for item in descriptions)
+                description_result = descriptions[0] if len(descriptions) == 1 else None
+                proof_refs = tuple(fact.ref for item in descriptions for fact in item.facts)
+                query_result = QueryResult(
+                    act.query.query_ref, "supported" if answerable else "contradicted",
+                    (), 1.0, int(answerable), int(not answerable), (), (),
+                    tuple(x.frontier_ref for x in frontiers),
+                    {**dict(act.query.qualifiers or {}), "answer_mode": "boolean"},
+                )
+                facts = [fact for item in descriptions for fact in item.facts] + list(runtime_facts)
+                by_ref = {fact.ref: fact for fact in facts}
+            else:
+                self._require_resources(
+                    cycle, Stage.QUERY_EXPLAIN,
+                    ("resource:inference_engine", "resource:semantic_store"),
+                )
+                retrieval = self.retriever.retrieve(act.query.restrictions, salient_refs=grounded_refs)
+                facts, by_ref = self.inf.closure(seed_facts=retrieval.facts, rules=retrieval.rules, extra=runtime_facts)
+                query_result = self.inf.execute_query(
+                    act.query, facts, by_ref,
+                    blocking_frontiers=tuple(x.frontier_ref for x in frontiers),
+                )
+                proof_refs = sorted({ref for binding in query_result.bindings for ref in binding.proof_refs})
+                _, workspace_trace = self.workspace.build(
+                    facts, act.query.as_dict(), proof_refs, cycle_turn=self._cycle_counter,
+                )
+                scoped_epistemic = ScopedEpistemicAssessment(
+                    query_result.query_ref, query_result.status, tuple(proof_refs), (),
+                    query_result.unresolved_variables, query_result.coverage,
+                )
+        elif act and act.force == FORCE_DESCRIPTION and act.describe_target:
             self._require_resources(
-                cycle,
-                Stage.QUERY_EXPLAIN,
-                ("resource:inference_engine", "resource:semantic_store"),
+                cycle, Stage.QUERY_EXPLAIN, ("resource:semantic_store",)
             )
-            retrieval = self.retriever.retrieve(act.query.restrictions, salient_refs=grounded_refs)
-            facts, by_ref = self.inf.closure(seed_facts=retrieval.facts, rules=retrieval.rules, extra=runtime_facts)
-            query_result = self.inf.execute_query(
-                act.query,
-                facts,
-                by_ref,
-                blocking_frontiers=tuple(x.frontier_ref for x in frontiers),
-            )
-            proof_refs = sorted({ref for binding in query_result.bindings for ref in binding.proof_refs})
-            _, workspace_trace = self.workspace.build(
-                facts,
-                act.query.as_dict(),
-                proof_refs,
-                cycle_turn=self._cycle_counter,
+            target = act.describe_target.get("target_ref") if isinstance(act.describe_target, dict) else act.describe_target
+            request = self.description_engine.request(str(target), provenance={"act_ref": act.act_ref})
+            description_result = self.description_engine.describe(request)
+            facts = list(description_result.facts) + list(runtime_facts)
+            by_ref = {fact.ref: fact for fact in facts}
+            binding = QueryBinding({"?description_target": request.target_ref}, tuple(fact.ref for fact in description_result.facts))
+            query_result = QueryResult(
+                stable("description-query", request.target_ref),
+                "answered" if description_result.target_kind != "unknown" else "unknown",
+                (binding,) if description_result.target_kind != "unknown" else (),
+                1.0 if description_result.target_kind != "unknown" else 0.0,
+                len(description_result.facts), 0, (), (), tuple(x.frontier_ref for x in frontiers),
+                {"query_kind": "semantic_description", "target_ref": request.target_ref,
+                 "description_result": description_result.as_dict()},
             )
             scoped_epistemic = ScopedEpistemicAssessment(
-                query_result.query_ref,
-                query_result.status,
-                tuple(proof_refs),
-                (),
-                query_result.unresolved_variables,
-                query_result.coverage,
+                query_result.query_ref, query_result.status,
+                tuple(fact.ref for fact in description_result.facts), (), (), query_result.coverage,
             )
-        elif act and act.force == FORCE_DESCRIPTION and act.describe_target:
-            direct = tuple(self.s.facts_mentioning((act.describe_target,), limit=self.config.retrieval_max_seed_facts))
-            facts = list(direct) + list(runtime_facts)
-            by_ref = {fact.ref: fact for fact in facts}
-            bindings = tuple(QueryBinding({}, (fact.ref,)) for fact in direct if self.s.user_visible_fact(fact))
-            query_result = QueryResult(
-                stable("description-query", act.describe_target),
-                "answered" if bindings else "unknown",
-                bindings,
-                1.0 if bindings else 0.0,
-                len(bindings),
-                0,
-                (),
-                tuple(self.inf.explain(fact, by_ref) for fact in direct),
-                tuple(x.frontier_ref for x in frontiers),
-                dict(getattr(act, "qualifiers", {})),
-            )
-            scoped_epistemic = ScopedEpistemicAssessment(query_result.query_ref, query_result.status, tuple(fact.ref for fact in direct), (), (), query_result.coverage)
         stages.add(Stage.QUERY_EXPLAIN, counts={"facts": len(facts), "bindings": len(query_result.bindings) if query_result else 0}, refs=(query_result.query_ref,) if query_result else ())
 
         trigger_apps = tuple(act.content if act and act.force in {FORCE_CLAIM, FORCE_DIRECTIVE} else ())
@@ -1016,6 +1166,16 @@ class Runtime:
                     "consumed_learning_obligation",
                     consumed_obligation.as_dict(),
                 )
+            if (
+                commit.get("committed_apps")
+                and int(commit["generation"])
+                != int(self.runtime_attestation["authority_generation"])
+            ):
+                # Newly admitted semantic authority must become visible to the
+                # next cycle through the same generation-pinned designation,
+                # affordance and description indexes.  This refreshes runtime
+                # bindings only; it never regenerates a language form pack.
+                self.reload_authority()
             stages.add(Stage.COMMIT, counts={"applications": len(commit["committed_apps"]), "frontiers": len(commit["frontier_refs"])}, refs=(commit["receipt"]["receipt_ref"],), durable_write=True)
         else:
             stages.add(Stage.COMMIT, counts={"applications": 0, "frontiers": 0})
@@ -1047,7 +1207,7 @@ class Runtime:
                         "learning probe query differs from the executed QueryStructure"
                     )
                 contract_ref = str(probe.get("learning_contract_ref") or "")
-                query_kind = str(dict(query_result.qualifiers or {}).get("query_kind") or "")
+                query_kind = str(probe.get("query_kind") or dict(raw_query.get("qualifiers", {}) or {}).get("query_kind") or "")
                 contract = self.learning_contracts.license_query(contract_ref, query_kind)
                 candidate_target_kinds = tuple(sorted(
                     set(map(str, probe.get("semantic_kind_candidates", ())))
@@ -1235,6 +1395,38 @@ class Runtime:
         verified = bool(response and realization_proof.get("verified"))
         stages.add(Stage.VERIFY, counts={"verified": int(verified)}, refs=(response_csir.response_ref,))
 
+        if verified and query_result is not None:
+            if proof_bundle is None:
+                proof_bundle = self.proof_engine.for_query_result(
+                    query_result,
+                    operational_snapshot_ref=(
+                        cycle.self_runtime_view.operational_snapshot.snapshot_ref
+                        if dict(query_result.qualifiers or {}).get("query_kind") == "operational_condition_query"
+                        else None
+                    ),
+                )
+            focus_targets = {
+                str(value) for binding in query_result.bindings
+                for value in binding.values.values()
+                if isinstance(value, str) and not value.startswith(("?", "!"))
+            }
+            focus_targets.update(str(ref) for ref in grounded_refs)
+            verified_focus = VerifiedSemanticFocus.create(
+                focus_kind="query_result",
+                proposition_ref=dict((packet or {}).get("qualifiers", {})).get("proposition_ref"),
+                query_ref=query_result.query_ref,
+                response_ref=response_csir.response_ref,
+                target_refs=tuple(sorted(focus_targets)),
+                bindings=(binding.values for binding in query_result.bindings),
+                proof_ref=proof_bundle.proof_ref,
+                recorded_turn=self._cycle_counter,
+                authority_generation=int(self.runtime_attestation["authority_generation"]),
+                world_revision=self.s.revisions()["world_revision"],
+            )
+            self.dialogue_state.record_verified_focus(verified_focus, proof_bundle)
+        else:
+            verified_focus = None
+
         common_ground = None
         if mode == MODE_NORMAL and verified and self.config.persist_common_ground:
             self._require_resources(
@@ -1251,6 +1443,8 @@ class Runtime:
                         "surface_decision": realization_proof.get("surface_decision"),
                         "response_equivalence": realization_proof.get("response_equivalence"),
                         "obligation_ref": response_csir.obligation_ref,
+                        "verified_semantic_focus": verified_focus.as_dict() if verified_focus else None,
+                        "proof_bundle": proof_bundle.as_dict() if proof_bundle else None,
                         "pending_learning": (
                             self.dialogue_state.pending.as_dict()
                             if self.dialogue_state.pending
@@ -1289,6 +1483,9 @@ class Runtime:
             "discourse_act": act.as_dict() if act else None,
             "epistemic_placement": placement.as_dict() if placement else None,
             "query_result": query_result.as_dict() if query_result else None,
+            "description_result": description_result.as_dict() if description_result else None,
+            "proof_bundle": proof_bundle.as_dict() if proof_bundle else None,
+            "verified_semantic_focus": verified_focus.as_dict() if verified_focus else None,
             "epistemic_assessment": scoped_epistemic.as_dict() if scoped_epistemic else None,
             "frontier_graph": FrontierGraph(frontiers).as_dict(),
             "state_space_projections": state_projections,

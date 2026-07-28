@@ -302,20 +302,28 @@ def semantic_frame(
     )
 
 
-def frame_role(role_ref: str, *, required: bool, filler_kinds: list[str]) -> dict[str, Any]:
-    return {
+def frame_role(
+    role_ref: str, *, required: bool, filler_kinds: list[str],
+    default_source: str | None = None, semantic_port: str | None = None,
+) -> dict[str, Any]:
+    output = {
         "role_ref": role_ref,
         "required": required,
         "filler_kinds": filler_kinds,
         "cardinality": "one",
     }
+    if default_source:
+        output["default_source"] = default_source
+    if semantic_port:
+        output["semantic_port"] = semantic_port
+    return output
 
 
 FRAME_SPECS: dict[str, tuple[str, list[dict[str, Any]], list[str], dict[str, Any]]] = {
     "event:learn": (
         "frame:event-learn",
-        [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+        [frame_role("role:actor", required=True, filler_kinds=["participant"]),
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
@@ -323,73 +331,88 @@ FRAME_SPECS: dict[str, tuple[str, list[dict[str, Any]], list[str], dict[str, Any
         "frame:event-teach",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
          frame_role("role:target", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:target", "argument:object"],
         {"proposition_taking": True},
     ),
     "event:remember": (
         "frame:event-remember",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
     "event:forget": (
         "frame:event-forget",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
     "event:define": (
         "frame:event-define",
-        [frame_role("role:actor", required=False, filler_kinds=["atom"]),
-         frame_role("role:target", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+        [frame_role("role:actor", required=False, filler_kinds=["atom"], default_source="speaker"),
+         frame_role("role:target", required=False, filler_kinds=["atom"]),
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:object"],
-        {"designation_effect": True},
+        {"designation_effect": True, "proposition_taking": True, "evaluation_kind": "semantic_description"},
     ),
     "event:want": (
         "frame:event-want",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
-        {"proposition_taking": True, "scope_kind": "desire"},
+        {
+            "proposition_taking": True,
+            "scope_kind": "desire",
+            "controlled_role_bindings": {"role:actor": "role:actor"},
+        },
     ),
     "event:intend": (
         "frame:event-intend",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
-        {"proposition_taking": True, "scope_kind": "intention"},
+        {
+            "proposition_taking": True,
+            "scope_kind": "intention",
+            "controlled_role_bindings": {"role:actor": "role:actor"},
+        },
     ),
     "event:know": (
         "frame:event-know",
-        [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:target", required=False, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+        [frame_role("role:actor", required=True, filler_kinds=["participant"]),
+         frame_role("role:target", required=False, filler_kinds=["participant"]),
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
-        {"proposition_taking": True, "epistemic_event": True},
+        {"proposition_taking": True, "epistemic_event": True, "evaluation_kind": "answerability"},
+    ),
+    "event:explain": (
+        "frame:event-explain",
+        [frame_role("role:actor", required=False, filler_kinds=["atom"], default_source="speaker"),
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
+        ["argument:object"],
+        {"proposition_taking": True, "evaluation_kind": "semantic_description"},
     ),
     "event:say": (
         "frame:event-say",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
          frame_role("role:target", required=False, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
     "event:translate": (
         "frame:event-translate",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
     "event:infer": (
         "frame:event-infer",
         [frame_role("role:actor", required=True, filler_kinds=["atom"]),
-         frame_role("role:object", required=True, filler_kinds=["atom"])],
+         frame_role("role:object", required=True, filler_kinds=["atom", "app"], semantic_port="argument:proposition")],
         ["argument:subject", "argument:object"],
         {"proposition_taking": True},
     ),
@@ -497,22 +520,23 @@ def build() -> dict[str, Any]:
     for target_ref, (frame_ref, _roles, _required_ports, _metadata) in FRAME_SPECS.items():
         facts.append(rel(target_ref, FRAME_RELATION, frame_ref))
 
-    # Greeting is owned by base authority; this foundation may only reference it.
+    # Standalone discourse events are licensed by reviewed semantic frames.
+    # Any learned designation of event:greeting inherits this behaviour.
     greeting_frame_ref = "frame:event-greeting-discourse"
-    atoms.append(atom(
+    atoms.append(semantic_frame(
         greeting_frame_ref,
-        "semantic_frame",
-        conversation_foundation=True,
-        semantic_frame={
-            "contribution_kind": "discourse",
-            "predicate": False,
-            "ports_provided": ["discourse:greeting"],
-            "ports_required": [],
-            "roles": [],
-            "score": 0.35,
-            "replace_defaults": False,
-            "discourse_act": "greeting",
-        },
+        ports_provided=["predicate:event", "discourse:greeting"],
+        roles=[
+            frame_role("role:actor", required=False, filler_kinds=["atom"], default_source="speaker"),
+            frame_role("role:target", required=False, filler_kinds=["atom"], default_source="addressee"),
+        ],
+        score=0.35,
+        replace_defaults=True,
+        standalone_licensed=True,
+        default_actor_source="speaker",
+        default_addressee_source="addressee",
+        default_force="acknowledgment",
+        response_expectation="greeting",
     ))
     facts.append(rel("event:greeting", FRAME_RELATION, greeting_frame_ref))
     facts.append(rel("concept:laughing_out_loud", FRAME_RELATION, "frame:reaction-amusement"))

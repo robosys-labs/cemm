@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate CEMM feature-algebra v6 graph schemas.
+"""Generate CEMM feature-algebra v7 graph schemas.
 
 Unlike the v5 compiler, this generator does not collapse each construction
 family to one total surface-slot order.  It learns slot constraints, typed
@@ -24,7 +24,7 @@ from cemm.atomic_graph import AtomicGraphMatcher, UnitView  # noqa: E402
 
 SEED = ROOT / "cemm" / "training" / "en_form_schema_seed.json"
 OUT = ROOT / "cemm" / "form_packs" / "en.json"
-FEATURE_ALGEBRA_VERSION = 6
+FEATURE_ALGEBRA_VERSION = 7
 MAX_SCHEMA_FAMILIES = 48
 MAX_SPAN_UNITS = 12
 
@@ -599,7 +599,7 @@ def build_pack(seed_path: Path = SEED) -> dict[str, Any]:
     )
     schema_hashes = {schema["ref"]: sha256(canonical(schema).encode()) for schema in schemas}
     receipt = {
-        "receipt_version": 6,
+        "receipt_version": 7,
         "feature_algebra_version": FEATURE_ALGEBRA_VERSION,
         "source_sha256": sha256(source),
         "generator_sha256": sha256(Path(__file__).read_bytes()),

@@ -1,7 +1,7 @@
-"""Atomic semantic graph assembly for CEMM feature algebra v6.
+"""Atomic semantic graph assembly for CEMM feature algebra v7.
 
 This is the sole Stage-5 construction authority.  It delegates bounded role
-assignment to :mod:`cemm.atomic_graph`, then creates fail-closed v6 coverage
+assignment to :mod:`cemm.atomic_graph`, then creates fail-closed v7 coverage
 receipts.  No surface text, regex, or total slot order participates in semantic
 legality.
 """
@@ -382,7 +382,7 @@ class SchemaMatch:
 
 
 class AtomicSchemaMatcher:
-    """Compatibility facade over the exclusive v6 graph engine."""
+    """Compatibility facade over the exclusive v7 recursive graph engine."""
 
     def __init__(self, schemas: Iterable[Mapping[str, Any]], *, max_matches: int = 32):
         self.schemas = tuple(_schema_with_core_context_projections(item) for item in schemas)
@@ -502,7 +502,7 @@ class AtomicSchemaMatcher:
                 projected_roles.setdefault(role, []).append({"slot": slot, **evidence})
             contract = dict(schema.get("coverage_contract", {}))
             match_seed_ref = stable(
-                "atomic-graph-schema-match-seed-v6",
+                "atomic-graph-schema-match-seed-v7",
                 graph.schema_ref,
                 graph.hypothesis_ref,
                 graph.captures,
@@ -524,7 +524,7 @@ class AtomicSchemaMatcher:
                 seed=(graph.captures, graph.slot_unit_refs, projected_slots),
             )
             output.append(SchemaMatch(
-                match_ref=stable("atomic-graph-schema-match-v6", match_seed_ref, coverage.coverage_ref),
+                match_ref=stable("atomic-graph-schema-match-v7", match_seed_ref, coverage.coverage_ref),
                 match_seed_ref=match_seed_ref,
                 schema_ref=graph.schema_ref,
                 schema_family=graph.schema_family,
@@ -676,7 +676,7 @@ class AtomicConstructionAssembler:
         )
         unresolved = PacketTemplateResolver.unresolved(resolved)
         return {
-            "partial_structure_ref": stable("partial-semantic-graph-v6", match.match_ref, match.coverage.coverage_ref),
+            "partial_structure_ref": stable("partial-semantic-graph-v7", match.match_ref, match.coverage.coverage_ref),
             "schema_ref": match.schema_ref,
             "schema_family": match.schema_family,
             "force": resolved.get("force") if isinstance(resolved, Mapping) else None,

@@ -1,4 +1,4 @@
-# CEMM Governing Agent Instructions — Native Semantic Spine
+# CEMM Governing Agent Instructions — Recursive Native Semantic Composition
 
 **Status:** highest-priority implementation contract  
 **Target:** one exact, atomic, language-agnostic semantic cognition runtime  
@@ -299,3 +299,13 @@ A passing phrase alone is not acceptance.
 A change is complete only when code, authority data, deterministic generators, migrations, active docs, activation validation and executable tests agree. Partial implementation must remain explicitly disabled rather than hidden behind permissive fallback behaviour.
 
 <!-- CEMM_SOURCE_REWRITE:AGENTS:v3.1.3 -->
+
+## 19. Recursive release contract
+
+- PropositionGraph ABI 2 and Atomic Composition ABI 1 are transient Stage-5 structures only.
+- Coverage/Form ABI 7 is the active form contract.
+- Candidate-local app references are legal only through reviewed proposition-taking frame roles.
+- Description ABI 1 and Proof Bundle ABI 1 extend Stage 10 without a parallel query engine.
+- Verified semantic focus is recorded only after exact Response CSIR realization equivalence.
+- The obsolete sentence-shaped embedded proposition family is forbidden.
+- Historical tests may be replaced when they require a retired semantic path; exact gates must never be weakened for compatibility.

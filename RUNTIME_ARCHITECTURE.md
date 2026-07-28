@@ -187,3 +187,9 @@ Do not expose internal semantic refs in user-facing surface output.
 ## Input/output vocabulary isolation
 
 Realization grammar tokens are output-only and must never be fed back into pre-core form classification. The Interpreter supplies no language-pack `grammar_tokens` or legacy `function_forms` to the `FormProcessor`; only the generated form pack owns pre-core form classification.
+
+## 13. Recursive Stage-5 and Stage-10 ownership
+
+The Stage-5 chart preserves N-best alternatives under explicit state, scope, graphlet and depth budgets. Every final graph expands to the original form units and receives an ordinary fail-closed Coverage ABI 7 receipt before exact settling. Structural gaps remain typed frontiers and cannot trigger lexical learning unless their residual evidence is genuinely unknown.
+
+Stage 10 executes semantic-description and provenance requests through the existing semantic store/query owner. Both paths declare operational resource use, remain read-only and emit exact typed results for Response CSIR.

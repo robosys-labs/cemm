@@ -2,7 +2,7 @@
   "version": 6,
   "language": "en",
   "form_pack": "../form_packs/en.json",
-  "form_pack_hash": "4c7d66ca4dddbf0d17c45c00a519568f9363a376096fa3d6a63ff835549703c6",
+  "form_pack_hash": "9b0cefdb80374867abb59c14b6115560cf52cc6aa08399df51a120737a0a6203",
   "forces": [
     "acknowledgment",
     "claim",
@@ -439,12 +439,6 @@
     {
       "semantic": "RESPONSE greet",
       "surface_plan": "Hello."
-    },
-    {
-      "example_ref": "en:response:learning-evidence",
-      "semantic": "RESPONSE request_learning_evidence QUERY_KIND designation_learning LEARNING_PLAN @E0 EVIDENCE @E1",
-      "surface_plan": "What does @E1 refer to here?",
-      "weight": 1.0
     }
   ],
   "grammar_tokens": [
@@ -505,6 +499,7 @@
     "evidence",
     "for",
     "found",
+    "foundational",
     "frankly",
     "from",
     "full",
@@ -528,6 +523,8 @@
     "i",
     "if",
     "in",
+    "incomplete",
+    "inferred",
     "instead",
     "is",
     "it",
@@ -554,6 +551,7 @@
     "normally",
     "not",
     "now",
+    "observation",
     "of",
     "oh",
     "ok",
@@ -570,23 +568,29 @@
     "perform",
     "perhaps",
     "please",
+    "previous",
     "recorded",
     "refer",
     "referring",
     "refers",
     "resources",
     "respond",
+    "reviewed",
     "right",
     "runtime",
     "seem",
     "seemed",
     "seeming",
     "seems",
+    "semantic",
     "shall",
     "she",
     "should",
     "so",
     "some",
+    "stored",
+    "structure",
+    "supporting",
     "than",
     "that",
     "the",
@@ -763,7 +767,7 @@
     "your",
     "yours"
   ],
-  "pack_hash": "78d28af59808a99de0ab9ebc884a5964df3bf32ef0c01af4fbe850d9955c0689",
+  "pack_hash": "14273d1112004848ca475c2cc07cf8eddfef75fdcb15196b5847322b47023112",
   "reference_realization": [
     {
       "surface": "I",
@@ -1062,6 +1066,95 @@
       ]
     },
     {
+      "ref": "en:response:description-conflict",
+      "when": {
+        "action": "describe_semantic_target",
+        "query_kind": "semantic_description",
+        "description_completeness": "conflicting_structure"
+      },
+      "template": "I have conflicting stored semantic structure for {target}, so I cannot give one settled explanation.",
+      "required_slots": [
+        "target"
+      ],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "target_ref",
+        "description_result_ref",
+        "description_completeness",
+        "target_kind",
+        "description_summary"
+      ]
+    },
+    {
+      "ref": "en:response:description-identity",
+      "when": {
+        "action": "describe_semantic_target",
+        "query_kind": "semantic_description",
+        "description_completeness": "identity_only"
+      },
+      "template": "I know {target} as a {target_kind}, but I do not have enough stored defining structure to explain it further.",
+      "required_slots": [
+        "target",
+        "target_kind"
+      ],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "target_ref",
+        "description_result_ref",
+        "description_completeness",
+        "target_kind",
+        "description_summary"
+      ]
+    },
+    {
+      "ref": "en:response:description-partial",
+      "when": {
+        "action": "describe_semantic_target",
+        "query_kind": "semantic_description",
+        "description_completeness": "partial_structure"
+      },
+      "template": "{target} is a {target_kind}. Its stored semantic links include {description_summary}, but the description is incomplete.",
+      "required_slots": [
+        "target",
+        "target_kind",
+        "description_summary"
+      ],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "target_ref",
+        "description_result_ref",
+        "description_completeness",
+        "target_kind",
+        "description_summary"
+      ]
+    },
+    {
+      "ref": "en:response:description-sufficient",
+      "when": {
+        "action": "describe_semantic_target",
+        "query_kind": "semantic_description",
+        "description_completeness": "sufficient_structure"
+      },
+      "template": "{target} is a {target_kind}. Its stored semantic links include {description_summary}.",
+      "required_slots": [
+        "target",
+        "target_kind",
+        "description_summary"
+      ],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "target_ref",
+        "description_result_ref",
+        "description_completeness",
+        "target_kind",
+        "description_summary"
+      ]
+    },
+    {
       "ref": "en:response:designation",
       "when": {
         "action": "answer_bindings",
@@ -1169,22 +1262,6 @@
       ]
     },
     {
-      "ref": "en:response:learning-evidence",
-      "when": {
-        "action": "request_learning_evidence"
-      },
-      "template": "What does {evidence} refer to here?",
-      "required_slots": [
-        "evidence"
-      ],
-      "semantic_slots": [
-        "evidence",
-        "learning_plan_ref",
-        "query_kind",
-        "query_ref"
-      ]
-    },
-    {
       "ref": "en:response:operation-succeeded",
       "when": {
         "action": "report_operation_result"
@@ -1265,6 +1342,108 @@
         "query_ref",
         "snapshot_ref",
         "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:proof-authority",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "reviewed_authority"
+      },
+      "template": "I know that from reviewed foundational authority in my semantic store.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
+      ]
+    },
+    {
+      "ref": "en:response:proof-inference",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "inference"
+      },
+      "template": "I inferred that from stored supporting facts through an exact inference proof.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
+      ]
+    },
+    {
+      "ref": "en:response:proof-operation",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "operational_observation"
+      },
+      "template": "I know that from the verified current runtime observation used for the answer.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
+      ]
+    },
+    {
+      "ref": "en:response:proof-stored",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "stored_evidence"
+      },
+      "template": "I know that from stored evidence linked to the previous answer.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
+      ]
+    },
+    {
+      "ref": "en:response:proof-unsupported",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "unsupported"
+      },
+      "template": "I do not have a complete supporting proof for that previous answer.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
+      ]
+    },
+    {
+      "ref": "en:response:proof-user",
+      "when": {
+        "action": "explain_evidence_provenance",
+        "query_kind": "epistemic_provenance",
+        "proof_basis": "user_report"
+      },
+      "template": "I know that from information you provided earlier and the exact record created from it.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "proof_ref",
+        "proof_basis",
+        "proof_completeness"
       ]
     },
     {
@@ -1380,6 +1559,18 @@
       ]
     },
     {
+      "ref": "en:response:structural-gap",
+      "when": {
+        "action": "report_structural_composition_gap"
+      },
+      "template": "I understood the known pieces, but their semantic connection is still unresolved.",
+      "required_slots": [],
+      "semantic_slots": [
+        "frontier_ref",
+        "gap_kind"
+      ]
+    },
+    {
       "ref": "en:response:surface-choice",
       "when": {
         "action": "explain_surface_choice"
@@ -1460,6 +1651,6 @@
     "form_schema_algebra": "atomic-feature-v5",
     "operational_status": "cycle_local_structured_assessment",
     "authority_atom_additions": 0,
-    "migration_source_pack_hash": "d4c0b5e4b54f1e1b23269775dfe0bcc10a197cc4a03e5d02b83f06191baf3752"
+    "migration_source_pack_hash": "9dc6ab9019f5b8d89437fa6cca57e085ed966d0c0e86b9272698e3bdcbbf0a3d"
   }
 }
