@@ -28,6 +28,8 @@ compiled form/language packs     deterministic generated artifacts
 - rules/mechanisms;
 - dimensions/domains/value links;
 - explicit reference forms.
+- reviewed atomic definition graphs, their persisted application refs and their
+  generation-bound inference projections.
 
 ### Mutable persistent state
 
@@ -173,6 +175,16 @@ A newly learned synonym normally adds one reviewed/admitted designation fact. It
 - a duplicate event/capability word entry.
 
 On the next world-revision refresh, the designation index returns the target and the affordance index derives safe profiles from the target kind. Explicit frames remain generation-pinned reviewed authority.
+
+### 7.1 Composite learned definitions
+
+An independently addressable composite target is not decomposed from its label
+or internal ref. A reviewer publishes an explicit definition graph assembled
+from already-grounded atoms, roles and variables. The graph's applications are
+persisted in the existing application/binding substrate and the reviewed
+definition receipt links the target, graph applications and derived projection
+refs. The projection is rebuildable execution data; it has no semantic meaning
+without its definition graph source.
 
 ## 8. Validation laws
 

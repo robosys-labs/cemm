@@ -17,6 +17,7 @@
 - [ ] Populated pre-final databases fail with an explicit rebuild message.
 - [x] Pack-local `CONST*` sources resolve only to authority-scoped atoms visible to the pinned generation.
 - [x] Generic concept predication compiles to subtype/definition structure, never concept-as-instance typing.
+- [x] A reviewed composite definition persists atomic applications and any executable projection retains exact definition provenance.
 
 ## B. Participant/deixis
 
@@ -121,8 +122,9 @@
 - [x] `AutonomousAcquirer` and default-to-`concept` paths are absent.
 - [x] Designation indexing is incremental for ordinary acquisition.
 - [x] The runtime is explicitly re-pinned after reviewed authority publication.
+- [x] An unseen acquired relation alias inherits its reviewed atomic definition and affordances without form-pack regeneration.
 
-The final test suite must run against a freshly created schema-v2 store and canonical migrated authority.
+The final test suite must run against a freshly created schema-v3 store and canonical migrated authority.
 
 ## N. Authority bundle and document integrity
 
@@ -153,4 +155,3 @@ The final test suite must run against a freshly created schema-v2 store and cano
 - [x] The same query machinery handles aliases, titles, identifiers and localized labels.
 - [ ] Chained property/dimension queries preserve every graph edge, context, time and proof.
 - [x] No phrase-specific name/property handler exists.
-

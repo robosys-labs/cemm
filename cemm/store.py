@@ -57,6 +57,20 @@ class Store:
                 )
         self.db.executescript(DDL)
         version = self.db.execute("SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()
+        if version and str(version[0]) == "2" and SCHEMA_VERSION == "3":
+            columns = {
+                str(row[1]) for row in self.db.execute("PRAGMA table_info(rules)")
+            }
+            if "definition_ref" not in columns:
+                self.db.execute("ALTER TABLE rules ADD COLUMN definition_ref TEXT")
+            self.db.execute(
+                "UPDATE schema_meta SET value=? WHERE key='schema_version'",
+                (SCHEMA_VERSION,),
+            )
+            self.db.commit()
+            version = self.db.execute(
+                "SELECT value FROM schema_meta WHERE key='schema_version'"
+            ).fetchone()
         if not version or str(version[0]) != SCHEMA_VERSION:
             raise RuntimeError(f"unsupported CEMM schema version: {version[0] if version else None}")
         if not self.db.execute("SELECT 1 FROM generations").fetchone():
@@ -228,6 +242,13 @@ class Store:
             (cutoff,),
         ).fetchall()
         material.append(("seed_semantics", [dict(row) for row in rows]))
+        definitions = self.db.execute(
+            "SELECT observation_ref,surface,packet,generation FROM observations "
+            "WHERE source_ref='reviewed_definition' AND generation<=? "
+            "ORDER BY observation_ref",
+            (cutoff,),
+        ).fetchall()
+        material.append(("reviewed_definition_graphs", [dict(row) for row in definitions]))
         return hashlib.sha256(canonical(material).encode()).hexdigest()
 
     def exact(self, table, columns, values, keys, ignore=()):
@@ -836,6 +857,162 @@ class Store:
                     if spec["required"] and role not in clause.get("args", {}):
                         raise ValueError(f"rule consequent missing {operator}:{role}")
 
+    def publish_definition_graph(
+        self,
+        *,
+        target_ref: str,
+        antecedent,
+        consequent,
+        confidence: float = 1.0,
+        source_ref: str = "reviewed_definition",
+    ) -> dict:
+        """Publish one reviewed atomic definition and its derived rule index.
+
+        The canonical definition graph is persisted in the reviewed observation
+        packet. The `rules` row is a deterministic execution projection that
+        names its source graph through `definition_ref`; it has no independent
+        semantic authority.
+        """
+        target = self.authority_atom(str(target_ref))
+        if target is None:
+            raise ValueError(f"definition target is not reviewed authority:{target_ref}")
+        rule = {
+            "rule_kind": "definition",
+            "if": [dict(item) for item in antecedent],
+            "then": [dict(item) for item in consequent],
+            "confidence": float(confidence),
+        }
+        self.validate_rule(rule)
+        clauses = tuple(rule["if"]) + tuple(rule["then"])
+        if not any(
+            str(target_ref) in {
+                str(value)
+                for value in dict(clause.get("args", {})).values()
+                if isinstance(value, str)
+            }
+            for clause in clauses
+        ):
+            raise ValueError("definition graph must explicitly contain its target")
+        definition_ref = stable(
+            "reviewed-definition-graph-v1", str(target_ref),
+            canonical(rule["if"]), canonical(rule["then"]), float(confidence),
+        )
+        existing = self.definition_graph(definition_ref)
+        if existing is not None:
+            return existing
+        projection_rule_ref = stable(
+            "definition-rule-projection-v1", definition_ref,
+            canonical(rule["if"]), canonical(rule["then"]),
+        )
+        definition_application_refs = []
+        for side, clauses_for_side in (
+            ("antecedent", rule["if"]),
+            ("consequent", rule["then"]),
+        ):
+            for index, clause in enumerate(clauses_for_side):
+                operator = str(clause["operator"])
+                args = dict(clause.get("args", {}))
+                specs = self.roles(operator)
+                for role, spec in specs.items():
+                    if spec["required"] and role not in args:
+                        raise ValueError(f"definition application missing {operator}:{role}")
+                app_ref = stable(
+                    "definition-application-v1", definition_ref, side, index,
+                    operator, canonical(args),
+                )
+                definition_application_refs.append(app_ref)
+        packet = {
+            "definition_graph": {
+                "definition_ref": definition_ref,
+                "target_ref": str(target_ref),
+                "antecedent": rule["if"],
+                "consequent": rule["then"],
+                "confidence": float(confidence),
+                "projection_rule_refs": [projection_rule_ref],
+                "application_refs": definition_application_refs,
+            }
+        }
+        with self.db:
+            generation = self.begin("publish_definition_graph:" + definition_ref[-16:])
+            observation_ref = self.add_observation(
+                definition_ref, packet, "und", source_ref, generation,
+                float(confidence), modality="semantic_definition",
+            )
+            for app_ref, clause in zip(
+                definition_application_refs,
+                tuple(rule["if"]) + tuple(rule["then"]),
+            ):
+                operator = str(clause["operator"])
+                args = dict(clause.get("args", {}))
+                self.db.execute(
+                    "INSERT INTO applications(app_ref,operator_ref,generation) VALUES(?,?,?)",
+                    (app_ref, operator, generation),
+                )
+                for ordinal, (role, value) in enumerate(sorted(args.items())):
+                    specs = self.roles(operator)
+                    if role not in specs:
+                        raise ValueError(f"definition application disallows {operator}:{role}")
+                    if not (isinstance(value, str) and (isvar(value) or isexist(value))):
+                        self._validate_filler(role, value, specs[role])
+                    filler_kind, filler_value = self.encode_value(value)
+                    self.db.execute(
+                        "INSERT INTO bindings(binding_ref,app_ref,role_ref,filler_kind,filler_value,ordinal) VALUES(?,?,?,?,?,?)",
+                        (
+                            stable(
+                                "definition-binding-v1", app_ref, role,
+                                filler_kind, filler_value, ordinal,
+                            ),
+                            app_ref, role, filler_kind, filler_value, ordinal,
+                        ),
+                    )
+            self.db.execute(
+                "INSERT INTO rules(rule_ref,rule_kind,antecedent,consequent,confidence,authority_status,generation,definition_ref) VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    projection_rule_ref, "definition", canonical(rule["if"]),
+                    canonical(rule["then"]), float(confidence), "reviewed",
+                    generation, definition_ref,
+                ),
+            )
+            self.rebuild_rule_index(projection_rule_ref)
+            receipt = self.finish(
+                generation,
+                cycle_ref="reviewed-definition-publication",
+                stage=13,
+                world_delta=True,
+                observation_delta=True,
+                payload={"definition_ref": definition_ref, "target_ref": target_ref},
+            )
+        return {
+            "definition_ref": definition_ref,
+            "target_ref": str(target_ref),
+            "antecedent": rule["if"],
+            "consequent": rule["then"],
+            "projection_rule_refs": [projection_rule_ref],
+            "application_refs": definition_application_refs,
+            "observation_ref": observation_ref,
+            "generation": generation,
+            "receipt": receipt,
+        }
+
+    def definition_graph(self, definition_ref: str) -> dict | None:
+        row = self.db.execute(
+            "SELECT packet,observation_ref,generation FROM observations "
+            "WHERE source_ref='reviewed_definition' AND surface=? "
+            "ORDER BY generation DESC LIMIT 1",
+            (str(definition_ref),),
+        ).fetchone()
+        if row is None:
+            return None
+        packet = json.loads(row["packet"])
+        graph = dict(packet.get("definition_graph") or {})
+        if str(graph.get("definition_ref") or "") != str(definition_ref):
+            raise ValueError("definition observation identity mismatch")
+        return {
+            **graph,
+            "observation_ref": str(row["observation_ref"]),
+            "generation": int(row["generation"]),
+        }
+
     def upsert_rule_candidate(self, rule, generation, confidence=0.9, min_evidence=2):
         self.validate_rule(rule)
         antecedent = canonical(rule["if"])
@@ -862,8 +1039,8 @@ class Store:
         if int(row["evidence_count"]) >= int(min_evidence) and row["status"] != "promoted":
             rule_ref = stable("rule", kind, antecedent, consequent)
             self.db.execute(
-                "INSERT OR IGNORE INTO rules VALUES(?,?,?,?,?,?,?)",
-                (rule_ref, kind, antecedent, consequent, float(row["confidence"]), "promoted", generation),
+                "INSERT OR IGNORE INTO rules(rule_ref,rule_kind,antecedent,consequent,confidence,authority_status,generation,definition_ref) VALUES(?,?,?,?,?,?,?,?)",
+                (rule_ref, kind, antecedent, consequent, float(row["confidence"]), "promoted", generation, None),
             )
             self.db.execute(
                 "UPDATE rule_candidates SET status='promoted' WHERE candidate_ref=?", (ref,)
@@ -1166,8 +1343,8 @@ class Store:
                         continue
                     self.exact(
                         "rules",
-                        ["rule_ref", "rule_kind", "antecedent", "consequent", "confidence", "authority_status", "generation"],
-                        [rule["rule_ref"], kind, antecedent, consequent, float(rule.get("confidence", 1)), rule.get("authority_status", "reviewed"), generation],
+                        ["rule_ref", "rule_kind", "antecedent", "consequent", "confidence", "authority_status", "generation", "definition_ref"],
+                        [rule["rule_ref"], kind, antecedent, consequent, float(rule.get("confidence", 1)), rule.get("authority_status", "reviewed"), generation, rule.get("definition_ref")],
                         ["rule_ref"],
                         {"generation"},
                     )

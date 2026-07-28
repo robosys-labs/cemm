@@ -628,6 +628,24 @@ Nested propositions remain rooted graphs of the five fixed operators. Event
 complements use explicit event refs in reviewed roles; no proposition operator or
 phrase-intent kernel is introduced.
 
+### 21.1 Reviewed atomic definition graphs
+
+A reviewed composite meaning is an ordered, bounded graph of ordinary
+five-operator applications with typed variables, existential witnesses and
+ports. Its target is explicit and its applications are persisted through the
+existing application/binding substrate. The reviewed definition receipt names
+those application refs; it is the semantic authority.
+
+An executable rule projection may be generated only from that graph. It carries
+the exact `definition_ref`, cannot outlive the definition generation, and every
+derived proof must retain that ref. A projection is an indexed execution view,
+not a second rule-authority language and never a lexical or target-ref dispatch.
+
+Possessive relational evidence binds a participant-facing relation port and may
+introduce one bounded transient entity referent. A compatible event graph may
+reuse that same referent in an event role. This is generic port composition;
+surface spelling and semantic-ref fragments are forbidden as selectors.
+
 Activation must attest Coverage/Form ABI 6, Semantic Contribution ABI 1,
 LearningPlan ABI 1, PropositionGraph ABI 1, module provenance, generated pack
 receipts and the linked frame/contract authority graph before serving input.

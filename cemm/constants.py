@@ -5,7 +5,7 @@ common ground, and effects. It does not add tables per domain or referent type.
 """
 import re
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 DDL = rf"""
 PRAGMA foreign_keys=ON;
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS claims(claim_ref TEXT PRIMARY KEY,app_ref TEXT NOT NU
 CREATE TABLE IF NOT EXISTS claim_occurrences(occurrence_ref TEXT PRIMARY KEY,observation_ref TEXT NOT NULL,act_ref TEXT NOT NULL,force TEXT NOT NULL,speaker_ref TEXT NOT NULL,addressee_ref TEXT NOT NULL,content TEXT NOT NULL,context_ref TEXT,modality TEXT NOT NULL,created_at TEXT NOT NULL,generation INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS epistemic_placements(placement_ref TEXT PRIMARY KEY,occurrence_ref TEXT NOT NULL,admission_class TEXT NOT NULL,admitted INTEGER NOT NULL,reason TEXT NOT NULL,context_ref TEXT,target_refs TEXT NOT NULL,created_at TEXT NOT NULL,generation INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS proof_links(proof_ref TEXT PRIMARY KEY,subject_ref TEXT NOT NULL,observation_ref TEXT NOT NULL,operation TEXT NOT NULL,parent_refs TEXT NOT NULL DEFAULT '[]');
-CREATE TABLE IF NOT EXISTS rules(rule_ref TEXT PRIMARY KEY,rule_kind TEXT NOT NULL CHECK(rule_kind IN('definition','entailment','causal','default')),antecedent TEXT NOT NULL,consequent TEXT NOT NULL,confidence REAL NOT NULL DEFAULT 1,authority_status TEXT NOT NULL DEFAULT 'reviewed',generation INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS rules(rule_ref TEXT PRIMARY KEY,rule_kind TEXT NOT NULL CHECK(rule_kind IN('definition','entailment','causal','default')),antecedent TEXT NOT NULL,consequent TEXT NOT NULL,confidence REAL NOT NULL DEFAULT 1,authority_status TEXT NOT NULL DEFAULT 'reviewed',generation INTEGER NOT NULL,definition_ref TEXT);
 CREATE TABLE IF NOT EXISTS rule_candidates(candidate_ref TEXT PRIMARY KEY,rule_kind TEXT NOT NULL,antecedent TEXT NOT NULL,consequent TEXT NOT NULL,evidence_count INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'provisional',confidence REAL NOT NULL DEFAULT 0,first_generation INTEGER NOT NULL,last_generation INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS rule_index(rule_ref TEXT NOT NULL,side TEXT NOT NULL,operator_ref TEXT NOT NULL,semantic_ref TEXT,PRIMARY KEY(rule_ref,side,operator_ref,semantic_ref));
 CREATE TABLE IF NOT EXISTS reference_forms(language TEXT NOT NULL,surface TEXT NOT NULL,features TEXT NOT NULL DEFAULT '{{}}',bound_ref TEXT,weight REAL NOT NULL DEFAULT 1,PRIMARY KEY(language,surface,bound_ref));

@@ -318,6 +318,7 @@ class Interpreter:
         """Apply exact entitlement clamps and cycle-local state factors."""
         packet = dict(getattr(candidate, "packet", {}) or {})
         projections = dict(state_projections or {})
+        state_query = bool(packet.get("query"))
         factors: list[dict[str, object]] = []
         hard_blockers: list[str] = []
         applications = list(packet.get("apps", ()))
@@ -347,6 +348,19 @@ class Interpreter:
                 if isinstance(item, dict)
             }
             if dimension not in dimensions:
+                # The compiler already proved that this is an authoritative
+                # state dimension. A boolean query over an unobserved
+                # participant state is therefore meaningful and must reach
+                # Stage 10, where it can return unknown. Entitlement clamps
+                # still reject unsupported state assertions and mutations.
+                if state_query:
+                    factors.append({
+                        "subject_ref": subject,
+                        "dimension_ref": dimension,
+                        "status": "unobserved",
+                        "factor": 1.0,
+                    })
+                    continue
                 hard_blockers.append(
                     f"state_dimension_not_entitled:{subject}:{dimension}"
                 )

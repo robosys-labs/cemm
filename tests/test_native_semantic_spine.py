@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from cemm.activation import assert_native_semantic_activation
+from cemm.acquisition import acquire_reviewed
 from cemm.learning_plans import (
     DESIGNATION_LEARNING_CONTRACT,
     LearningContractRegistry,
@@ -19,6 +20,7 @@ from cemm.runtime import Runtime
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "cemm" / "data" / "base.json"
 FOUNDATION = ROOT / "cemm" / "data" / "conversation_foundation.json"
+FAMILY = ROOT / "cemm" / "data" / "family_knowledge.json"
 FORM = ROOT / "cemm" / "form_packs" / "en.json"
 LANGUAGE = ROOT / "cemm" / "language_packs" / "en.json"
 
@@ -26,6 +28,12 @@ LANGUAGE = ROOT / "cemm" / "language_packs" / "en.json"
 def build_runtime(tmp_path: Path) -> Runtime:
     store = Store(tmp_path / "cemm.sqlite")
     store.import_bundle((BASE, FOUNDATION))
+    return Runtime(store, LANGUAGE)
+
+
+def build_family_runtime(tmp_path: Path) -> Runtime:
+    store = Store(tmp_path / "cemm-family.sqlite")
+    store.import_bundle((BASE, FOUNDATION, FAMILY))
     return Runtime(store, LANGUAGE)
 
 
@@ -275,3 +283,209 @@ def test_cli_entrypoint_requires_native_activation():
     source = (ROOT / "cemm" / "cli.py").read_text(encoding="utf-8")
     assert "assert_native_semantic_activation" in source
     assert "instance.i.form_pack" in source
+
+
+def test_grounded_state_value_question_survives_missing_participant_projection(tmp_path):
+    runtime = build_family_runtime(tmp_path)
+
+    result = runtime.process("Am I married?", mode="read_only")
+
+    assert result["interpretation"]["status"] == "resolved"
+    restriction = result["packet"]["query"]["restrictions"][0]
+    assert restriction["operator"] == "op:state"
+    assert restriction["args"] == {
+        "role:subject": "participant:user",
+        "role:dimension": "dim:marital_status",
+        "role:value": "value:married",
+    }
+    assert restriction["stance"] == "support"
+    assert result["query_result"]["status"] == "unknown"
+
+
+def test_possessive_grounded_relation_composes_with_event_without_name_dispatch(tmp_path):
+    runtime = build_family_runtime(tmp_path)
+
+    result = runtime.process("My mother in-law arrived today.", mode="read_only")
+
+    assert result["interpretation"]["status"] == "resolved"
+    applications = result["packet"]["apps"]
+    relation = next(item for item in applications if item["operator"] == "op:relation")
+    event = next(item for item in applications if item["operator"] == "op:event")
+    assert relation["args"]["role:relation"] == "rel:mother_in_law"
+    assert relation["args"]["role:object"] == "participant:user"
+    assert event["args"]["role:type"] == "event:arrive"
+    assert event["args"]["role:actor"] == relation["args"]["role:subject"]
+    assert event["args"]["role:time"] == "time:today"
+
+
+def test_reviewed_definition_graph_is_authority_for_its_rule_projection(tmp_path):
+    runtime = build_family_runtime(tmp_path)
+    definition = runtime.s.publish_definition_graph(
+        target_ref="rel:mother_in_law",
+        antecedent=[
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "?mother",
+                    "role:relation": "rel:mother_in_law",
+                    "role:object": "?person",
+                },
+            }
+        ],
+        consequent=[
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "?mother",
+                    "role:relation": "rel:mother_of",
+                    "role:object": "!partner",
+                },
+            },
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "!partner",
+                    "role:relation": "rel:partner",
+                    "role:object": "?person",
+                },
+            },
+        ],
+    )
+
+    assert definition["target_ref"] == "rel:mother_in_law"
+    persisted = runtime.s.definition_graph(definition["definition_ref"])
+    assert persisted["definition_ref"] == definition["definition_ref"]
+    assert persisted["projection_rule_refs"] == definition["projection_rule_refs"]
+    assert persisted["application_refs"] == definition["application_refs"]
+    assert all(
+        runtime.s.db.execute(
+            "SELECT 1 FROM applications WHERE app_ref=?", (app_ref,)
+        ).fetchone()
+        for app_ref in definition["application_refs"]
+    )
+    rules = runtime.s.relevant_rules(
+        semantic_refs=("rel:mother_in_law",),
+        consequent=False,
+        authority_generation=runtime.s.generation,
+    )
+    assert rules[0]["definition_ref"] == definition["definition_ref"]
+
+
+def test_possessive_definition_graph_derives_marital_answer_with_lineage(tmp_path):
+    runtime = build_family_runtime(tmp_path)
+    definition = runtime.s.publish_definition_graph(
+        target_ref="rel:mother_in_law",
+        antecedent=[
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "?mother",
+                    "role:relation": "rel:mother_in_law",
+                    "role:object": "?person",
+                },
+            }
+        ],
+        consequent=[
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "?mother",
+                    "role:relation": "rel:mother_of",
+                    "role:object": "!partner",
+                },
+            },
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "!partner",
+                    "role:relation": "rel:partner",
+                    "role:object": "?person",
+                },
+            },
+            {
+                "operator": "op:state",
+                "args": {
+                    "role:subject": "?person",
+                    "role:dimension": "dim:marital_status",
+                    "role:value": "value:married",
+                },
+            },
+        ],
+    )
+    runtime.reload_authority()
+    runtime.process("My mother in-law arrived today.")
+
+    result = runtime.process("Am I married?", mode="read_only")
+
+    assert result["query_result"]["status"] == "supported"
+    assert any(
+        proof.get("definition_ref") == definition["definition_ref"]
+        for proof in result["query_result"]["proofs"]
+    )
+
+
+def test_unseen_relation_alias_inherits_atomic_definition_without_pack_regeneration(tmp_path):
+    runtime = build_family_runtime(tmp_path)
+    definition = runtime.s.publish_definition_graph(
+        target_ref="rel:mother_in_law",
+        antecedent=[
+            {
+                "operator": "op:relation",
+                "args": {
+                    "role:subject": "?relative",
+                    "role:relation": "rel:mother_in_law",
+                    "role:object": "?person",
+                },
+            }
+        ],
+        consequent=[
+            {
+                "operator": "op:state",
+                "args": {
+                    "role:subject": "?person",
+                    "role:dimension": "dim:marital_status",
+                    "role:value": "value:married",
+                },
+            }
+        ],
+    )
+    pack_hash = runtime.i.form_pack.hash
+    acquire_reviewed(
+        runtime.s,
+        runtime,
+        {
+            "document_ref": "test:kinbridge-alias",
+            "mentions": [
+                {
+                    "surface": "kinbridge",
+                    "ref": "rel:mother_in_law",
+                    "kind": "relation_type",
+                }
+            ],
+        },
+    )
+
+    interpretation = runtime.process("My kinbridge arrived today.")
+    answer = runtime.process("Am I married?", mode="read_only")
+
+    assert runtime.i.form_pack.hash == pack_hash
+    assert interpretation["interpretation"]["status"] == "resolved"
+    assert answer["query_result"]["status"] == "supported"
+    assert any(
+        proof.get("definition_ref") == definition["definition_ref"]
+        for proof in answer["query_result"]["proofs"]
+    )
+
+
+def test_atomic_definition_path_has_no_family_or_alias_literal_dispatch():
+    production = "\n".join(
+        (ROOT / path).read_text(encoding="utf-8")
+        for path in (
+            "cemm/composition.py",
+            "cemm/interpreter.py",
+            "cemm/inference.py",
+            "cemm/retrieval.py",
+        )
+    )
+    assert "mother_in_law" not in production
+    assert "kinbridge" not in production

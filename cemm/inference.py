@@ -60,7 +60,11 @@ class Inference:
                             stance,
                             min([item.confidence for item in parents] + [1.0]) * float(rule["confidence"]),
                             True,
-                            {"rule_ref": rule["rule_ref"], "parents": parent_refs},
+                            {
+                                "rule_ref": rule["rule_ref"],
+                                "definition_ref": rule.get("definition_ref"),
+                                "parents": parent_refs,
+                            },
                         )
                         if fact.signature() not in by_signature:
                             by_signature[fact.signature()] = fact
@@ -212,6 +216,7 @@ class Inference:
             "stance": fact.stance,
             "confidence": fact.confidence,
             "rule_ref": fact.proof["rule_ref"],
+            "definition_ref": fact.proof.get("definition_ref"),
             "parents": [
                 self.explain(by_ref[parent], by_ref)
                 for parent in fact.proof["parents"]

@@ -258,6 +258,33 @@ class RecursiveCompositionChart:
                 continue
             try:
                 packet = self.assembler.instantiate(evidence, participant_frame, language)
+                # A state-value predication is one semantic graph. Clause force
+                # determines whether that graph is asserted or queried; it is
+                # never a property of a particular state word. The reviewed
+                # schema remains the authority for subject/dimension/value
+                # ports, while interrogative evidence supplies the boolean
+                # query wrapper.
+                if (
+                    any(self._is_force(item) for item in units)
+                    and packet.get("force") == "claim"
+                    and len(packet.get("apps", ())) == 1
+                    and packet["apps"][0].get("operator") == "op:state"
+                ):
+                    state_application = dict(packet["apps"][0])
+                    packet = {
+                        **packet,
+                        "force": "query",
+                        "apps": [],
+                        "query": {
+                            "restrictions": [state_application],
+                            "variables": [],
+                            "projection": [],
+                            "qualifiers": {
+                                "query_kind": "state_value_query",
+                                "answer_mode": "boolean",
+                            },
+                        },
+                    }
                 coverage = PropositionCoverage.create(
                     hypothesis.hypothesis_ref,
                     direct_unit_refs=evidence.consumed_unit_refs,
@@ -486,6 +513,128 @@ class RecursiveCompositionChart:
                 output.append(
                     ChartGraphlet(graph, unit, unit.score, "definition_semantic_description")
                 )
+        return output
+
+    def _possessive_relation_event_graphlets(
+        self, hypothesis: Any, units: Sequence[Any]
+    ) -> list[ChartGraphlet]:
+        """Compose a possessive relational nominal with an event predicate.
+
+        The construction is selected exclusively from contribution kinds,
+        kernel operators, participant-reference features and typed operator
+        roles. It therefore applies to a newly designated relational target
+        without requiring a language-pack regeneration or a domain dispatch.
+        The introduced relative and event are candidate-local referents that
+        the compiler materializes only if the enclosing claim is admitted.
+        """
+        possessives = [
+            item for item in units
+            if self._is_anchor(item)
+            and self._features(item).get("possessive")
+            and getattr(item, "semantic_ref", None)
+        ]
+        relations = [
+            item for item in units
+            if self._is_predicate(item)
+            and self._features(item).get("kernel_operator_ref") == "op:relation"
+            and getattr(item, "semantic_ref", None)
+        ]
+        events = [
+            item for item in units
+            if self._is_predicate(item)
+            and self._features(item).get("kernel_operator_ref") == "op:event"
+            and getattr(item, "semantic_ref", None)
+        ]
+        times = [
+            item for item in units
+            if self._is_anchor(item) and getattr(item, "atom_kind", None) == "time"
+        ]
+        if not possessives or not relations or not events:
+            return []
+
+        output: list[ChartGraphlet] = []
+        for possessive in possessives[:4]:
+            for relation in relations[:4]:
+                if relation.token_start < possessive.token_end:
+                    continue
+                for event in events[:4]:
+                    if event.token_start < relation.token_end:
+                        continue
+                    for time in (*times[:2], None):
+                        selected = self._unique_units(
+                            tuple(
+                                item for item in (possessive, relation, event, time)
+                                if item is not None
+                            )
+                        )
+                        relative_token = "@Xrelative_" + stable(
+                            "possessive-relative", hypothesis.hypothesis_ref,
+                            possessive.unit_ref, relation.unit_ref,
+                        )[-10:]
+                        event_token = "@Xevent_" + stable(
+                            "possessive-event", hypothesis.hypothesis_ref,
+                            event.unit_ref, relative_token,
+                        )[-10:]
+                        relative = {"new": relative_token, "kind": "entity"}
+                        relation_app = PropositionApplication.create(
+                            "op:relation",
+                            {
+                                "role:subject": relative,
+                                "role:relation": relation.semantic_ref,
+                                "role:object": possessive.semantic_ref,
+                            },
+                        )
+                        event_args: dict[str, Any] = {
+                            "role:event": {"new": event_token, "kind": "event"},
+                            "role:type": event.semantic_ref,
+                            "role:actor": relative,
+                        }
+                        if time is not None:
+                            event_args["role:time"] = time.semantic_ref
+                        event_app = PropositionApplication.create("op:event", event_args)
+                        role_map = {
+                            possessive.unit_ref: "possessive_reference",
+                            relation.unit_ref: "relation_predicate",
+                            event.unit_ref: "event_predicate",
+                        }
+                        if time is not None:
+                            role_map[time.unit_ref] = "time"
+                        coverage = PropositionCoverage.create(
+                            hypothesis.hypothesis_ref,
+                            direct_unit_refs=(item.unit_ref for item in selected),
+                            role_by_source_unit_ref=role_map,
+                        )
+                        graph = PropositionGraph.create(
+                            (relation_app, event_app),
+                            root_application_ref=event_app.application_ref,
+                            force="claim",
+                            coverage=coverage,
+                            provenance={
+                                "source": "possessive_relation_event",
+                                "relation_ref": relation.semantic_ref,
+                                "event_type_ref": event.semantic_ref,
+                                "participant_ref": possessive.semantic_ref,
+                            },
+                        )
+                        unit = PropositionUnit.create(
+                            graph,
+                            token_start=min(item.token_start for item in selected),
+                            token_end=max(item.token_end for item in selected),
+                            char_start=min(item.char_start for item in selected),
+                            char_end=max(item.char_end for item in selected),
+                            score=sum(float(item.score) for item in selected) + 0.7,
+                            surface=" ".join(
+                                item.surface for item in sorted(
+                                    selected, key=lambda item: item.token_start
+                                )
+                            ),
+                        )
+                        output.append(
+                            ChartGraphlet(
+                                graph, unit, unit.score,
+                                "possessive_relation_event",
+                            )
+                        )
         return output
 
     def _provenance_graphlets(
@@ -1012,6 +1161,9 @@ class RecursiveCompositionChart:
                     native = self._description_graphlets(hypothesis, scope)
                     native.extend(
                         self._definition_description_graphlets(hypothesis, scope)
+                    )
+                    native.extend(
+                        self._possessive_relation_event_graphlets(hypothesis, scope)
                     )
                     native.extend(
                         self._provenance_graphlets(hypothesis, scope, participant_frame)

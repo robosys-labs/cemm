@@ -97,7 +97,22 @@ The runtime should converge toward a small set of families:
 9. learning/definition query;
 10. learning answer/teaching claim.
 
+Possessive relational nominal evidence is a generic instance of
+reference/nominal composition: it binds the participant-facing relation port,
+introduces one candidate-local entity referent and permits a compatible event
+frame to consume that referent. State-value predication uses the same graph for
+claims and boolean queries; an unobserved but semantically valid dimension is
+answerable as unknown, not rejected before query execution.
+
 Language-specific examples supervise how form evidence fills these graphs. They do not define new semantics per phrase.
+
+## 7.1 Reviewed definition graphs and projections
+
+Composite meaning authority is a reviewed graph of five-operator applications.
+Its deterministic rule projection supports sparse bounded retrieval but retains
+the graph's `definition_ref` and source application refs in every derivation.
+The runtime never selects a definition, port or conclusion from a surface word,
+regex, target-ref spelling or domain-specific branch.
 
 ## 8. Typed learning flow
 
