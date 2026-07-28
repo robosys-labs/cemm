@@ -152,10 +152,9 @@ class Interpreter:
             self.lang,
             authority_generation,
             form_pack=self.form_pack,
-            function_forms=(
-                pack.data.get("function_forms")
-                or pack.data.get("grammar_tokens", [])
-            ),
+            # Realization grammar is output authority only. Pre-core form
+            # classification is owned exclusively by the generated form pack.
+            function_forms=(),
             config=self.config,
         )
         self.constructions = AtomicConstructionAssembler(
@@ -436,8 +435,8 @@ class Interpreter:
 
     def _learning_frontier_for_packet(self, packet, selected_trace):
         qualifiers = dict(packet.get("qualifiers", {})) if packet else {}
-        operation = qualifiers.get("learning_operation")
-        if not operation:
+        contract_ref = qualifiers.get("learning_contract_ref")
+        if not contract_ref:
             return ()
         captures = selected_trace.get("captures", {})
         query = packet.get("query")
@@ -464,11 +463,11 @@ class Interpreter:
                 "semantic_kind_candidates": list(
                     self._candidate_unknown_kinds_cache
                 ),
-                "learning_operation": str(operation),
+                "learning_contract_ref": str(contract_ref),
                 "probe_query": dict(query) if query else None,
                 "known_bindings": dict(qualifiers.get("known_bindings", {})),
                 "expected_answer_shape": {
-                    "operation": str(operation),
+                    "learning_contract_ref": str(contract_ref),
                     "surface_cardinality": "one",
                 },
                 "original_candidate_ref": selected_trace.get(
@@ -612,7 +611,7 @@ class Interpreter:
                     "blockers": sorted(
                         {
                             "knowledge_binding"
-                            if item.get("learning_operation")
+                            if item.get("learning_contract_ref")
                             else item.get("residual_class", "unknown_form")
                             for item in critical
                         }

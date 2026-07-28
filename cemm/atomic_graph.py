@@ -11,6 +11,11 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
 import hashlib
 import json
+import re
+
+
+_SEMANTIC_PORT_REF = re.compile(r"^[a-z][a-z0-9_.-]*:[A-Za-z0-9_.-]+$")
+_MAX_DYNAMIC_PORTS = 16
 
 
 def _canonical(value: Any) -> str:
@@ -331,10 +336,15 @@ def _unit_matches(unit: UnitView, spec: Mapping[str, Any]) -> bool:
 def _residual_for(unit: UnitView, role_hypotheses: Iterable[str] = ()) -> GroundingResidual:
     features = dict(unit.features)
     grounded = bool(unit.kind == "anchor" and unit.semantic_ref)
+    predicate_like = bool(
+        features.get("predicate")
+        or features.get("property_ref")
+        or features.get("contribution_kind") == "predicate"
+    )
     if grounded:
         residual_class = (
             "grounded_predicate_unassigned"
-            if features.get("predicate") or features.get("property_ref")
+            if predicate_like
             else "grounded_argument_unassigned"
         )
         grounding_status = "grounded"
@@ -557,10 +567,22 @@ class AtomicGraphMatcher:
                     capture = rule.value
                 if capture is None:
                     continue
+                # Context projections may carry a typed semantic facet mapping.
+                # Merge those facets into the projected slot so packet templates
+                # can resolve dynamic feature paths (for example a salient
+                # designation property) without inventing a surface token.
+                projection_features = dict(rule.features)
+                if isinstance(capture, Mapping):
+                    dynamic_features = capture.get("features", capture)
+                    if isinstance(dynamic_features, Mapping):
+                        projection_features.update(dict(dynamic_features))
+                    capture_value = capture.get("capture", capture)
+                else:
+                    capture_value = capture
                 projected[rule.slot] = ProjectedSlot(
                     slot=rule.slot,
-                    capture=capture,
-                    features=dict(rule.features),
+                    capture=capture_value,
+                    features=projection_features,
                     source=rule.source,
                     reason=rule.reason,
                     penalty=rule.penalty,
@@ -618,6 +640,30 @@ class AtomicGraphMatcher:
             spec = specs[slot]
             provided.update(spec.ports_provided)
             required.update(spec.ports_required)
+        for candidate in assigned.values():
+            dynamic_provided = candidate.features.get("ports_provided", ())
+            dynamic_required = candidate.features.get("ports_required", ())
+            for label, values in (
+                ("ports_provided", dynamic_provided),
+                ("ports_required", dynamic_required),
+            ):
+                if not isinstance(values, (list, tuple, set, frozenset)):
+                    raise ValueError(
+                        f"semantic contribution {label} must be bounded sequence"
+                    )
+                if len(values) > _MAX_DYNAMIC_PORTS:
+                    raise ValueError(
+                        f"semantic contribution {label} exceeds {_MAX_DYNAMIC_PORTS}"
+                    )
+                refs = tuple(map(str, values))
+                if any(not _SEMANTIC_PORT_REF.fullmatch(ref) for ref in refs):
+                    raise ValueError(
+                        f"semantic contribution {label} contains malformed ref"
+                    )
+                if label == "ports_provided":
+                    provided.update(refs)
+                else:
+                    required.update(refs)
         for item in projected.values():
             provided.update(item.ports_provided)
         return provided, required
@@ -686,6 +732,7 @@ class AtomicGraphMatcher:
                 if item.kind == "anchor"
                 or item.features.get("predicate")
                 or item.features.get("property_ref")
+                or item.features.get("contribution_kind") == "predicate"
                 or item.features.get("discourse_force")
                 else 0.5
             )

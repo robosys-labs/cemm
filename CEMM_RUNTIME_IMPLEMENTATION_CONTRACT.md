@@ -1,7 +1,7 @@
 # CEMM Semantic–Operational Runtime Contract
 
 **Contract version:** 3.1.3  
-**Coverage/Form ABI:** 5  
+**Coverage/Form ABI:** 6  
 **Target runtime:** CEMM v1 Stage 0–22  
 **Status:** sole normative implementation contract for this rewrite
 
@@ -602,3 +602,25 @@ The following invariants are normative additions and clarifications:
 18. `designation_learning` is an immutable query kind licensed only for the
     existing exact `resolve_designation` learning operation.
 
+## 21. Native semantic spine ABI 1
+
+A designation resolves possible semantic identity. A generation-pinned semantic
+affordance index derives bounded compositional candidates from the target's
+semantic kind and reviewed `rel:has_semantic_frame` links. Language packs may
+provide morphology and closed-class structure but do not own open-class semantic
+identity. A learned designation must become compositionally usable without form
+pack regeneration.
+
+Runtime learning continuation is represented by `LearningPlan` ABI 1. It is
+bound to one executed QueryStructure/QueryResult, one pinned authority generation,
+one reviewed contract, one capability, one five-operator commit effect, one answer
+contract and one pending dialogue obligation. `learning_operation` strings are forbidden in active source,
+training authority, generated packs and Response CSIR.
+
+Nested propositions remain rooted graphs of the five fixed operators. Event
+complements use explicit event refs in reviewed roles; no proposition operator or
+phrase-intent kernel is introduced.
+
+Activation must attest Coverage/Form ABI 6, Semantic Contribution ABI 1,
+LearningPlan ABI 1, PropositionGraph ABI 1, module provenance, generated pack
+receipts and the linked frame/contract authority graph before serving input.

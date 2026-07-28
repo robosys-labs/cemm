@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse, json, sys
 from cemm.model import canonical
 from cemm.authority import load_documents, validate_documents, validate_pack_constants
+from cemm.activation import assert_native_semantic_activation
 from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
 
 
-def runtime(args): return Runtime(Store(args.db), args.pack)
+def runtime(args):
+    instance = Runtime(Store(args.db), args.pack)
+    assert_native_semantic_activation(instance.i.form_pack, instance.s)
+    return instance
 
 def cmd_init(args):
     store = Store(args.db)

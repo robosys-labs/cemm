@@ -1,399 +1,237 @@
-# CEMM v1 Active Architecture
+# CEMM Active Architecture — Native Semantic Spine
 
+## 1. Thesis
 
-> **Implementation status:** the exact substrate and Stage 0–22 ownership skeleton are implemented foundations. Multi-resolution form processing, parallel referent grounding, active state-conditioned settling, span-level partial CSIR, and general designation/property queries remain active work. A stage trace is not proof that these functions are complete.
+CEMM models a semantic cognition substrate rather than a language-first response engine. Signals provide evidence; evidence proposes semantic candidates; exact graphs settle into meaning; epistemic policy controls admission; goals and operations act on settled semantics; realization projects response semantics back into language.
 
-## 1. Normative thesis
-
-CEMM represents meaning in one exact semantic substrate. Language, sensors, operation results, and other modalities provide evidence from which candidate semantic structures are proposed. Neural computation may encode, rank, settle, attend, and realize those structures. It may not become a second source of semantic authority.
-
-The architecture therefore separates:
-
-1. **evidence** — what was observed and where it came from;
-2. **candidate cognition** — transient alternatives and recurrent dynamics;
-3. **exact semantic structures** — validated operators, roles, variables, qualifiers, and proof links;
-4. **epistemic placement** — whether a claim is merely attributed, admitted, disputed, or hypothetical;
-5. **world belief and state timelines** — admitted evidence-backed claims;
-6. **operations** — authorized effects and their returned evidence;
-7. **language projection** — verified realization of Response CSIR.
-
-## 2. Kernel boundary
-
-### 2.1 Fixed operator ABI
-
-CEMM v1 keeps five irreducible application shapes:
+The core distinction introduced by this revision is:
 
 ```text
-DESIGNATION target ↔ surface evidence
+semantic identity != semantic contribution
+```
+
+Knowing that `hii` denotes `event:greeting` is identity grounding. Knowing that `event:greeting` may participate as a greeting discourse act or an event predicate is compositional affordance. Both are necessary for learned language to become usable.
+
+## 2. Fixed semantic kernel
+
+The kernel retains five operators:
+
+```text
+DESIGNATION target ↔ surface/language/label evidence
 TYPE        instance → class
 RELATION    subject → relation → object
 STATE       subject → dimension → value
-EVENT       event → type and participant roles
+EVENT       event → event type + roles
 ```
 
-These shapes are fixed. Domain expansion occurs through atoms, role fillers, graph relations, state dimensions, causal rules, and learned designation/realization artifacts.
+Everything else is represented through semantic atoms, typed roles, frame contracts, state profiles, capabilities, goals, rules and evidence.
 
-### 2.2 What is not a kernel primitive
+## 3. Architectural planes
 
-The following remain ordinary semantic data or runtime artifacts, not new operator classes:
+### 3.1 Evidence plane
 
-- cat, server, person, battery, emotion, company, vehicle;
-- a domain-specific state schema;
-- a phrase intent such as `HOW_ARE_YOU`;
-- an event-specific transition executor;
-- a capability-specific Python subclass;
-- a response string template embedded in runtime code.
+Contains immutable observations and reversible form evidence. It may preserve multiple normalizations, spans, morphology analyses, quotations, entity proposals, references and designations.
 
-### 2.3 Core semantic objects
+### 3.2 Semantic authority plane
 
-The exact store contains:
+Contains atoms, five-operator applications, semantic frames, capabilities, dimensions, rules, designations, learning contracts and proof-bearing admitted knowledge.
 
-- atoms and their semantic kinds;
-- operator-role contracts;
-- applications and bindings;
-- observations and EvidenceEnvelope lineage;
-- claim occurrences and epistemic placements;
-- active/closed world claims;
-- rules and rule indexes;
-- proof links;
-- reference forms and designations;
-- revisions, commit receipts, common ground, and effect journal records.
+### 3.3 Candidate cognition plane
 
-Transient structures such as candidate tensors, query bindings, transition previews, goals, and Response CSIR live in the cycle workspace unless their owning stage explicitly commits a compact artifact.
+Contains transient grounding hypotheses, semantic contributions, atomic matches, partial graphs, state factors and recurrent settling state.
 
-## 3. Participant grounding and deixis
+### 3.4 Epistemic/world plane
 
-Participant identity is supplied by transport/session setup:
+Contains attributed claims, admission decisions, active world claims, state timelines and revisioned commit receipts.
+
+### 3.5 Operation plane
+
+Contains goals, authorized plans, adapters, idempotency/effect receipts and returned operation evidence.
+
+### 3.6 Response plane
+
+Contains exact Response CSIR, reference planning, language realization and semantic-equivalence verification.
+
+## 4. Semantic Contribution ABI
+
+A `SemanticContribution` is a transient proposal that connects one observed form unit to one way a semantic target can participate in a graph.
 
 ```text
-ParticipantFrame
-  self_ref
-  speaker_ref
-  addressee_ref
-  audience_refs
-  conversation_ref
-  source/channel
+SemanticContribution
+  contribution_ref
+  source unit/span refs
+  semantic_ref
+  semantic_kind
+  contribution_kind
+  affordance/frame ref
+  ports provided
+  ports required
+  role contract
+  score
+  provenance
 ```
 
-A language form contributes a requirement such as first person, second person, speaker, addressee, or possessive. Stage 3 resolves that requirement against the active frame.
-
-Input and output frames are perspective-dependent:
+Closed contribution kinds:
 
 ```text
-input:  speaker=user, addressee=self
-output: speaker=self, addressee=user
+ANCHOR
+PREDICATE
+BINDER
+REFERENCE
+SCOPE
+DISCOURSE
+CONNECTOR
+QUALIFIER
+LITERAL
+OPEN_VARIABLE
 ```
 
-No lexical entry permanently means `participant:user` or `participant:system`.
+This ABI is not persisted as world truth. It is regenerated from the pinned form lattice and semantic authority each cycle.
 
-## 4. Evidence and interpretation
+## 5. Semantic affordance architecture
 
-### 4.1 Evidence first
+### 5.1 Defaults by semantic kind
 
-Every turn begins as an `EvidenceEnvelope`. A linguistic envelope records surface text, language, source participant, channel, observation time, confidence, permission scope, and lineage.
+The runtime derives a small default profile set from the target atom kind. It never examines the word surface or parses the semantic ref name.
 
-An observation is not automatically a proposition. Stage 2 builds an evidence lattice containing:
+### 5.2 Sparse explicit frames
 
-- form evidence;
-- grounded anchor evidence;
-- unknown-form evidence;
-- modality/context evidence;
-- source and temporal evidence.
-
-### 4.2 Split interpretation API
-
-The runtime uses two interpreter boundaries:
+A target may link to reviewed frame atoms:
 
 ```text
-observe(text, ParticipantFrame)
-  → EvidenceLattice + grounded anchor candidates
-
-compose(EvidenceLattice, ParticipantFrame, StateSpaceProjection)
-  → settled/partial semantic packet + InterpretationAssessment
+target
+  -- rel:has_semantic_frame -->
+semantic_frame
 ```
 
-This ensures Stage 4 state projection occurs before final semantic stabilization. The old all-in-one parser is diagnostic only and requires an explicit ParticipantFrame.
+Frame metadata defines contribution kind, ports, role expectations, kernel lowering hint, proposition-taking behaviour, discourse behaviour and bounded score adjustment.
 
-### 4.3 Partial meaning
+Explicit frames may augment defaults. They may replace defaults only when `replace_defaults=true` is reviewed and validation proves at least one usable profile remains.
 
-Unknown evidence does not erase grounded meaning. A multi-clause input may produce:
+### 5.3 Event-capability separation
+
+Action/event identity is not the same as capability identity.
 
 ```text
-stable semantic content
-+ unresolved evidence
-+ LearningFrontier
-+ exact blockers
+can + event:learn
+→ capability modality over learning event
+→ assess cap:learn through semantic dependency
 ```
 
-Frontiers are scoped to the affected form, variable, clause, or target. They are not global self states.
+The surface `learn` should not be permanently designated with equal priority to both `event:learn` and `cap:learn` merely to answer capability questions.
 
-## 5. State-space architecture
-
-### 5.1 Universal state assignment algebra
-
-The universal structure is not a universal list of dimensions. It is:
+## 6. Form and semantic grounding
 
 ```text
-subject
-+ dimension
-+ value/distribution
-+ valid time
-+ context
-+ stance
-+ evidence/provenance
-+ epistemic status
+raw text
+→ reversible normalization
+→ token/morphology/span alternatives
+→ reference and designation candidates
+→ target affordance expansion
+→ grounding hypotheses containing semantic contributions
+→ atomic graph candidates
 ```
 
-A transition extends it with:
+A newly committed designation becomes available after authority reload. No language-pack rebuild is required for ordinary synonym acquisition.
+
+Closed-class forms remain language-pack features. Open-class meaning is primarily designation-driven.
+
+## 7. Composition
+
+Atomic graph schemas express semantic-role and port compatibility, not phrase templates.
+
+A candidate is executable only when:
+
+- all required roles are satisfied;
+- all required contribution ports are provided;
+- operator and filler kinds validate;
+- state/domain constraints pass;
+- every input unit is consumed or typed as residual;
+- no critical residual remains;
+- coverage and provenance receipts verify.
+
+Dynamic ports from semantic contributions are merged with schema-declared ports.
+
+## 8. Predication
+
+Copular forms provide a binder, not a fixed operator.
 
 ```text
-pre-state
-+ trigger/event
-+ mechanism/warrant
-+ post-state delta
-+ uncertainty
-+ proof
+subject + binder + concept predicate      → TYPE
+subject + binder + state value/dimension  → STATE
+subject + binder + label property/value   → DESIGNATION
+subject + binder + relation phrase        → RELATION
+subject + binder + event/process phrase   → EVENT/process state where licensed
 ```
 
-### 5.2 Recursive entitlement
+The binder never chooses among these alone.
 
-For referent `r`:
+## 9. Polysemy and settling
+
+One surface can expand across:
+
+- multiple designation targets;
+- multiple explicit/default affordances per target;
+- multiple reference/coreference hypotheses;
+- multiple graph structures;
+- multiple discourse scopes.
+
+Exact kind and role incompatibility clamp candidates. State, context, discourse and usage evidence adjust bounded scores. A top candidate is selected only through an explicit convergence/margin rule.
+
+## 10. Native learning architecture
+
+Learning is a semantic capability and goal-directed operation, not a hidden parser mode.
+
+A `LearningPlan` binds:
 
 ```text
-Types(r) = direct TYPE claims
-Closure(r) = recursive subtype/facet closure
-Profile(r) = union of entitlements over Closure(r)
+learning contract
+source QueryResult and exact QueryStructure
+pinned authority generation
+semantic goal
+required capability
+commit operator
+unresolved surface
+expected target kinds
+answer contract
+provenance and expiry
 ```
 
-Entitlements include:
-
-- state dimensions;
-- capabilities;
-- resources;
-- mechanisms;
-- recursive dependency edges.
-
-No dimension becomes meaningful for every referent merely because it exists in authority.
-
-### 5.3 State-domain families
-
-The generic state engine supports:
-
-- categorical;
-- ordered discrete;
-- continuous;
-- vector/manifold;
-- relational;
-- set-valued;
-- process-valued;
-- probabilistic.
-
-Native domains are preserved. Continuous values are not converted into arbitrary categories, and categorical identity is not converted into a percentage.
-
-### 5.4 State projection outcomes
-
-For each entitled dimension, projection may be:
+Designation resolution uses:
 
 ```text
-missing
-resolved
-uncertain
-stale
-conflicting
+contract: contract:designation_learning
+goal:     goal:acquire_designation
+capability: cap:learn
+commit:   op:designation
 ```
 
-Defaults remain prototype expectations. They never appear in `values` without admitted evidence.
+The plan does not execute merely because a word equivalent to “mean” or “learn” was observed. Exact query/claim/directive structure determines the operation.
 
-## 6. Identity, type, relation, state, and concept level
+## 11. Dialogue continuation
 
-Identity continuity, TYPE membership, RELATION structure, and mutable STATE are distinct.
+One session may contain at most one bounded pending learning obligation. It is created only after an exact unanswered query and a verified learning-request response. The plan identity includes the authority generation that licensed its contract and frame graph. A later answer must resolve the same obligation, generation and expected answer contract. Authority reload invalidates the obligation; consumption occurs only after a successful Stage-13 commit receipt.
 
-A class-level generic such as “a cat is an animal” is represented as a subtype relation or a quantified/definition rule—not as though the concept atom `cat` were an individual animal instance. Compiled language artifacts may expose reviewed pack-local constant pointers such as `CONST0`, but each pointer resolves through an immutable `constant_sources` map and is accepted only when its target is authority-scoped and visible to the cycle’s pinned generation. The model therefore predicts a small reviewed structural pointer, not an arbitrary ontology identifier.
+## 12. Proposition architecture
 
-Meta-discourse about a concept is also distinct from world state of its instances.
+Proposition-taking frames can bind an embedded graph or, where decomposition is unavailable, a typed literal/open proposition.
 
-## 7. Query architecture
-
-A query is not one ordinary application with a flag. `QueryStructure` contains:
+Examples:
 
 ```text
-query_ref
-restriction graph
-semantic variable declarations
-answer projection
-qualifiers/context/time restrictions
+want(actor=self, proposition=know(...))
+know(subject=self, object=designation(...))
+say(actor=user, content=claim(...), addressee=self)
+learn(actor=self, content=designation(...))
 ```
 
-Execution returns `QueryResult`:
+Embedding uses the same five-operator substrate and application references. It does not introduce opaque intent payloads.
 
-```text
-status
-bindings
-coverage
-support/opposition counts
-unresolved variables
-proof paths
-blocking frontiers
-```
+## 13. Data and persistence
 
-Boolean queries are the zero-projection special case. Projection queries may bind dimensions, values, entities, classes, relations, event roles, or other exact fillers.
+Persistent authority includes frame and learning-contract atoms, but not cycle-local contribution instances. Designations remain ordinary facts. Internal refs never automatically become language designations.
 
-Queries do not mutate the queried world.
-
-## 8. Discourse force and epistemics
-
-Stage 8 constructs explicit acts:
-
-- claim;
-- query;
-- description request;
-- directive;
-- correction;
-- retraction;
-- acknowledgment.
-
-Language cues, punctuation, construction evidence, and discourse context may influence candidate ranking. No runtime mode or punctuation branch may overwrite stabilized force.
-
-For claim-like acts:
-
-```text
-observation
-→ claim occurrence attributed to speaker
-→ EpistemicPlacement
-→ optional admitted world claim
-```
-
-Admission classes include attributed-only, session participant fact, scoped user assertion, corroboration required, high-risk no-auto-admission, and hypothetical-only.
-
-Corrections/retractions require an explicit target claim occurrence. A participant may retract only their own attributed occurrence. A correction may admit replacement content under the ordinary epistemic policy.
-
-## 9. Causal mechanisms and transitions
-
-### 9.1 Mechanism representation
-
-A mechanism is a promoted causal rule:
-
-```text
-IF
-  event clauses with named roles
-  state/domain preconditions
-THEN
-  state deltas addressed through bound roles
-  optional secondary events
-```
-
-The mechanism is graph data. The runtime does not contain code for “charging,” “moving,” “heating,” or other particular events.
-
-### 9.2 Stage-12 preview
-
-A `TransitionPreview` contains:
-
-- mechanism ref;
-- trigger refs;
-- role bindings;
-- precondition/proof refs;
-- before values;
-- proposed after values;
-- secondary events;
-- confidence and unresolved constraints.
-
-Previewed deltas are predictions, not observations, and are never committed merely because the mechanism fired in simulation.
-
-### 9.3 Prediction error
-
-Observed state after an event or operation is compared with the preview:
-
-- prediction confirmed;
-- prediction mismatch;
-- prediction unobserved;
-- explicit no-transition cases in training.
-
-This creates learning evidence without rewriting authority automatically.
-
-## 10. Capability and operational self
-
-Capabilities, resources, dimensions, and dependency edges are all ordinary semantic refs. The evaluator recursively computes support from dependency leaves while preserving native state values.
-
-The final authority seeds a digital-agent profile:
-
-```text
-cap:respond
-  → cap:interpret
-      → runtime process
-      → semantic runtime
-  → cap:realize
-      → language realizer
-  → output channel
-```
-
-Runtime providers emit cycle-local evidence scores for these resources. The self can answer operational-condition queries even when no language pack contains a word equivalent to “ready.”
-
-A lexical item never controls whether the capability exists.
-
-## 11. Goals, actions, and effects
-
-Stage 15 ranks semantic obligations and goals such as:
-
-- answer the actual query;
-- clarify the exact blocker;
-- report a capability assessment;
-- handle a directive;
-- acknowledge an admitted claim;
-- fulfill a greeting obligation.
-
-Stage 16 resolves candidate adapters through ordinary reviewed authority: `event/action type → rel:handled_by_adapter → adapter`. `AdapterRegistry` then requires that candidate to be registered by the embedding application and permitted by the active session scope. There is no surface-text routing, dummy adapter, or default “successful” execution.
-
-Every operation receives an idempotency key and an effect-journal record. Returned output becomes operation evidence at Stage 17. Semantic observations inside adapter output are validated and compared with predictions, but are not automatically admitted into world belief.
-
-## 12. Response CSIR and realization
-
-Stage 18 constructs target-aware `ResponseCSIR` from:
-
-- QueryResult and proofs;
-- InterpretationAssessment;
-- scoped epistemics;
-- FrontierGraph;
-- capability and directive decisions;
-- operation results;
-- discourse obligations.
-
-The response action is semantic, for example:
-
-```text
-answer_bindings
-confirm
-deny
-report_conflict
-report_target_uncertainty
-request_targeted_clarification
-report_capability
-acknowledge_claim
-decline_directive
-report_operation_result
-greet
-```
-
-Stage 19 uses reviewed language-pack examples to project this structure into surface form. Atom placeholders are resolved through designation evidence; unknown-form evidence and numeric values use typed evidence/number placeholders.
-
-Stage 20 verifies:
-
-- the transform was authorized by the pinned pack;
-- every placeholder has provenance;
-- grammar tokens are pack-authorized;
-- internal refs do not leak;
-- the surface is non-empty.
-
-No unverified surface is committed to common ground.
-
-## 13. Reviewed lexical acquisition
-
-Unknown-form detection belongs to pure cognition and never writes. When a reviewer or training system determines that a form denotes a genuinely new semantic identity, `acquire_reviewed` publishes an explicit identity kind and designation through the same five-operator substrate. It never defaults an unknown form to `concept`, never runs from the parser, and cannot create ABI/state-space kinds such as operators, roles, or state dimensions.
-
-The designation is indexed incrementally, receives a Stage-13 commit receipt, and becomes usable only after the runtime explicitly reloads the newer authority generation. Any meaning asserted by the source document is then interpreted by the ordinary normal or reviewed-teaching cycle; acquisition has no private semantic parser.
-
-## 14. Persistence and revisions
-
-The store tracks independent revisions:
+Revisions remain separated:
 
 ```text
 world_revision
@@ -402,136 +240,35 @@ discourse_revision
 effect_revision
 ```
 
-Cycle orientation pins them. Stage 13 uses compare-and-swap against the pinned world revision. A generation receives an incremental payload hash and commit receipt; it does not scan and hash the whole database.
+## 14. Runtime bounds
 
-Stage ownership:
-
-| Stages | Durable effect |
-|---|---|
-| 0–12 | none |
-| 13 | admitted claims, claim occurrences, epistemic placements, frontiers |
-| 16 | authorized effect-journal update |
-| 17 | operation observation receipt |
-| 21 | verified common ground |
-| 22 | final compact bookkeeping only |
-
-`read_only` runs all stages but suppresses every durable boundary.
-
-## 15. Retrieval and inference performance
-
-Runtime reasoning begins from restrictions, grounded refs, active state dimensions, and causal triggers. Indexed lookup retrieves only matching active facts. Relevant rules are expanded backward from consequent operators/constants under fixed fact/rule/depth budgets.
-
-The runtime does not call full `base_facts()` or unrestricted closure. Full fact materialization and snapshot hashes are explicit audit tools only.
-
-Other performance invariants:
-
-- entitlement cache keys include authority generation and type/facet closure;
-- model caches are bounded and runtime-owned;
-- salience decay is computed lazily for touched/retrieved entities;
-- hard workspace requirements are bounded separately from optional slots;
-- operation re-entry is capped;
-- language models are pinned to pack hash and do not retrain on world writes.
-
-## 16. Training architecture
-
-A structural training episode contains:
+Recommended initial bounds:
 
 ```text
-PRE
-  participant frame
-  context/time
-  relevant pre-state projection
-  discourse/common-ground state
-
-INPUT
-  one or more evidence envelopes
-
-TARGET
-  stable/partial CSIR
-  discourse act
-  query projection/result shape
-  epistemic placement
-  transition preview or NO_TRANSITION
-  world/cognitive/discourse deltas
-  Response CSIR
+designation candidates per span       8
+affordance profiles per target        4
+grounding hypotheses                 16
+atomic matches                       32
+semantic candidates                  48
+proposition nesting depth             6
+pending learning obligations          1
+operation re-entry                     1
 ```
 
-Curricula must include family-level holdouts rather than random paraphrase splits. Required contrast families include deixis reversal, claim/query/directive minimal pairs, explicit dimension/value variables, generic/subtype meaning, partial meaning, transitions versus no-transition, and response targeting.
+Bounds are configuration and receipt data, not silent truncation.
 
-System output is supervised from Response CSIR and its original participant frame. It is not reparsed as independent world truth.
+## 15. Activation invariants
 
-## 17. Schema and compatibility policy
+Startup fails if:
 
-Final v1 intentionally rejects populated pre-final databases. The exact schema version is part of runtime attestation. Rebuild from canonical JSON and retained evidence.
+- ABI versions disagree;
+- a frame link targets a missing/malformed frame;
+- a frame has an unsupported contribution kind;
+- dynamic ports are not bounded sequences;
+- a learning contract references a missing operator/capability/goal/answer contract;
+- a designation target has no valid bounded affordance;
+- internal refs were auto-published as user-visible designations;
+- generated authority or packs differ from checked-in artifacts.
 
-Removed compatibility artifacts include:
 
-- SessionSelf and self `ready/processing/confused` dimensions;
-- `USER`/`SYSTEM` lexical source aliases;
-- bare-application query normalization;
-- value→dimension completion;
-- runtime language-pack sidecars;
-- Ask/Learn/Teach semantic mode switching;
-- old outcome→response policy graph;
-- generated patch/report artifacts as repository source.
-
-## 18. Honest limitations
-
-The architecture supports the complete v1 cycle, but bundled proof data remains limited:
-
-- language coverage depends on reviewed pack examples;
-- world knowledge depends on imported/learned evidence;
-- adapters must be registered by an embedding application;
-- causal competence depends on promoted causal rules;
-- neural components are small proof models, not production-scale encoders;
-- distributed multi-writer deployment would require a transactional backend with equivalent revision/CAS semantics.
-
-These are coverage and deployment limits, not hidden alternate semantic paths.
-
-## Explicit implied dimensions
-
-A lexical value may explicitly select `DIM_OF_A*`; exact authority resolves `value → rel:value_of_dimension → dimension`. This is a declared semantic source, not compiler inference.
-
-## 18. Pre-core form processing and multi-resolution entry contract
-
-Surface processing is outside semantic authority. It may use language-specific normalization, tokenization, morphology and span algorithms only to create reversible evidence alternatives.
-
-```text
-raw text/signal
-→ NormalizationCandidate[]
-→ FormSpanCandidate[]
-→ SentenceDocumentCandidate[]
-→ ResolvedFormLattice
-→ Stage 1 semantic evidence
-```
-
-Every candidate preserves source offsets, transformations, language/script evidence, score and lineage. The front-end cannot create semantic atoms, bind a final referent, choose discourse force, infer a state dimension, or mutate world state.
-
-Stage 3 consumes candidate designations and reference requirements as a `GroundingCandidateSet`. Stage 5 constructs CSIR candidates across surviving grounding hypotheses. Exact role/kind/domain checks prune candidates; Stage 6–7 settles them with state/type/context factors. No top-1 label result is semantic authority before convergence.
-
-## 19. Authority bundle/linking contract
-
-Repository authority is one graph split across reviewable files. Before import, a linker validates the complete set of atoms, role contracts, control symbols, durable facts, rule constants, reference forms, state specifications and language-pack constants. The database write occurs atomically after validation.
-
-Generic relations and rules are foundational authority. A domain file may declare domain concepts, entities, dimensions, values, events and domain mechanisms, but it may not privately define a generic kernel relation required by other domains.
-
-Concept hierarchy uses `rel:subtype_of`; `op:type` is reserved for instance membership. Reified state specifications bind exactly one `rel:state_dimension` and one `rel:state_value`.
-
-## 20. Designation and property-query contract
-
-Identity is opaque. Names, aliases, titles, identifiers and localized labels are designation properties:
-
-```text
-op:designation(target, label_type, surface, language, script, context, provenance)
-```
-
-`label:name_full` and `label:name_alias` are subtypes of `label:name`. A name query is a normal QueryCSIR over designation restrictions and subtype closure, projecting literal surface evidence and proof. It is not a special English intent.
-
-The same mechanism must support title, alias, identifier and localized-label queries. Response CSIR must preserve literal-binding provenance and authorize realization without exposing internal IDs.
-
-## 21. Property paths and chained dimensions
-
-Properties are not all state dimensions. The runtime must preserve the distinction between designation properties, relations, intrinsic dimensions, component/resource state, derived capabilities and process/event-valued state. Chained access is represented as a bounded graph restriction/path over existing applications and dependencies, not dotted strings or per-type schemas.
-
-State projection may recursively follow type/facet entitlement and capability/resource dependencies. Future property-path projection must preserve each edge, context, time and proof so a derived answer remains explainable.
-
+Realization grammar tokens are output-only and must never be fed back into pre-core form classification.

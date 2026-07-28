@@ -803,8 +803,8 @@
   "operator_roles": [
     {
       "operator_ref": "op:designation",
-      "role_ref": "role:target",
-      "required": true,
+      "role_ref": "role:context",
+      "required": false,
       "filler_kind": "atom"
     },
     {
@@ -815,27 +815,9 @@
     },
     {
       "operator_ref": "op:designation",
-      "role_ref": "role:surface",
-      "required": true,
-      "filler_kind": "literal:text"
-    },
-    {
-      "operator_ref": "op:designation",
       "role_ref": "role:language",
       "required": false,
       "filler_kind": "literal:text"
-    },
-    {
-      "operator_ref": "op:designation",
-      "role_ref": "role:script",
-      "required": false,
-      "filler_kind": "literal:text"
-    },
-    {
-      "operator_ref": "op:designation",
-      "role_ref": "role:prior",
-      "required": false,
-      "filler_kind": "literal:float"
     },
     {
       "operator_ref": "op:designation",
@@ -845,25 +827,67 @@
     },
     {
       "operator_ref": "op:designation",
-      "role_ref": "role:context",
+      "role_ref": "role:prior",
+      "required": false,
+      "filler_kind": "literal:float"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:script",
+      "required": false,
+      "filler_kind": "literal:text"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:surface",
+      "required": true,
+      "filler_kind": "literal:text"
+    },
+    {
+      "operator_ref": "op:designation",
+      "role_ref": "role:target",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:actor",
       "required": false,
       "filler_kind": "atom"
     },
     {
-      "operator_ref": "op:type",
-      "role_ref": "role:instance",
+      "operator_ref": "op:event",
+      "role_ref": "role:event",
       "required": true,
+      "filler_kind": "event"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:object",
+      "required": false,
       "filler_kind": "atom"
     },
     {
-      "operator_ref": "op:type",
-      "role_ref": "role:class",
+      "operator_ref": "op:event",
+      "role_ref": "role:target",
+      "required": false,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:time",
+      "required": false,
+      "filler_kind": "time"
+    },
+    {
+      "operator_ref": "op:event",
+      "role_ref": "role:type",
       "required": true,
-      "filler_kind": "concept"
+      "filler_kind": "event_type"
     },
     {
       "operator_ref": "op:relation",
-      "role_ref": "role:subject",
+      "role_ref": "role:object",
       "required": true,
       "filler_kind": "atom"
     },
@@ -875,12 +899,6 @@
     },
     {
       "operator_ref": "op:relation",
-      "role_ref": "role:object",
-      "required": true,
-      "filler_kind": "atom"
-    },
-    {
-      "operator_ref": "op:state",
       "role_ref": "role:subject",
       "required": true,
       "filler_kind": "atom"
@@ -893,33 +911,27 @@
     },
     {
       "operator_ref": "op:state",
+      "role_ref": "role:subject",
+      "required": true,
+      "filler_kind": "atom"
+    },
+    {
+      "operator_ref": "op:state",
       "role_ref": "role:value",
       "required": true,
       "filler_kind": "state_value"
     },
     {
-      "operator_ref": "op:event",
-      "role_ref": "role:event",
+      "operator_ref": "op:type",
+      "role_ref": "role:class",
       "required": true,
-      "filler_kind": "event"
+      "filler_kind": "concept"
     },
     {
-      "operator_ref": "op:event",
-      "role_ref": "role:type",
+      "operator_ref": "op:type",
+      "role_ref": "role:instance",
       "required": true,
-      "filler_kind": "event_type"
-    },
-    {
-      "operator_ref": "op:event",
-      "role_ref": "role:actor",
-      "required": false,
       "filler_kind": "atom"
-    },
-    {
-      "operator_ref": "op:event",
-      "role_ref": "role:time",
-      "required": false,
-      "filler_kind": "time"
     }
   ],
   "control_symbols": {

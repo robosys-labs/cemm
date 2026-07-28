@@ -23,6 +23,7 @@ from typing import Any, Iterable, Mapping, Protocol, Sequence
 
 from cemm.model import canonical, lit, norm_text, stable, surface
 from cemm.form_algebra import AtomicConstructionAssembler, AtomicSchemaMatcher
+from cemm.semantic_contributions import SemanticAffordanceIndex
 
 _WORD = re.compile(r"\w+(?:['\u2019-]\w+)*|[^\w\s]", re.UNICODE)
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
@@ -724,6 +725,9 @@ class FormProcessor:
         self.language = language
         self.authority_generation = authority_generation
         self.pack = form_pack
+        self.affordances = SemanticAffordanceIndex(
+            store, authority_generation, max_profiles_per_target=4
+        )
         self.max_input_chars = int(max_input_chars)
         self.max_normalizations = int(max_normalizations)
         self.max_grounding_hypotheses = int(max_grounding_hypotheses)
@@ -1008,12 +1012,18 @@ class FormProcessor:
                 context_ref = record.get("context_ref")
                 if context_ref and participant_frame and context_ref != participant_frame.conversation_ref:
                     continue
+                semantic_ref = str(record["semantic_ref"])
+                base_features = {
+                    "label_type": record.get("label_type"),
+                    "label_ref": record.get("label_ref"),
+                }
                 semantic_candidates = [
                     (
-                        str(record["semantic_ref"]),
-                        float(record.get("weight", 1.0)),
-                        {"label_type": record.get("label_type"), "label_ref": record.get("label_ref")},
+                        semantic_ref,
+                        float(record.get("weight", 1.0)) + float(profile.score),
+                        {**base_features, **profile.as_features()},
                     )
+                    for profile in self.affordances.profiles_for(semantic_ref)
                 ]
             else:
                 semantic_candidates = self._reference_candidates(record, participant_frame)
@@ -1063,6 +1073,13 @@ class FormProcessor:
         elif normalized in self.pack.discourse_forms:
             alternatives = alternatives or ({},)
             kind = "discourse"
+        elif alternatives and all(
+            bool(dict(item).get("open_class")) for item in alternatives
+        ):
+            # Morphology without a designation is evidence, not semantic identity.
+            # Keep the unit open/critical until a designation target contributes
+            # one or more semantic affordance profiles.
+            kind = "unknown"
         elif normalized in self.function_forms or alternatives:
             alternatives = alternatives or ({},)
             kind = "function"
@@ -1271,6 +1288,9 @@ class FormProcessor:
             self.index = SurfaceIndex(
                 self.store, self.language, self.authority_generation, current_revision
             )
+            self.affordances = SemanticAffordanceIndex(
+                self.store, self.authority_generation, max_profiles_per_target=4
+            )
             self._index_world_revision = current_revision
         normalizations = self.normalizations(raw_text)
         tokens_by: dict[str, tuple[TokenEvidence, ...]] = {}
@@ -1463,7 +1483,7 @@ def generic_designation_learning_packet(surface: str, language: str, *, label_ty
         "directive": None,
         "describe": None,
         "qualifiers": {
-            "learning_operation": "resolve_designation",
+            "learning_contract_ref": "contract:designation_learning",
             "surface_evidence": surface,
         },
         "modality": "actual",

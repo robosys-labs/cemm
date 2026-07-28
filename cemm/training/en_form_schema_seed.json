@@ -1,91 +1,34 @@
 {
-  "version": 5,
+  "version": 6,
   "language": "en",
   "lexemes": [
     {
       "forms": [
-        "how"
+        "?"
       ],
       "features": {
-        "category": "interrogative",
+        "category": "boundary",
+        "boundary_type": "interrogative",
         "discourse_force": "query",
-        "question_domain": "state_summary"
+        "force_evidence": "query",
+        "boundary_only": true
       }
     },
     {
       "forms": [
-        "who",
-        "whom"
+        "and",
+        "or",
+        "but",
+        "because",
+        "if",
+        "then",
+        "while",
+        "although",
+        "unless"
       ],
       "features": {
-        "category": "interrogative",
-        "discourse_force": "query",
-        "question_domain": "identity"
-      }
-    },
-    {
-      "forms": [
-        "what"
-      ],
-      "features": {
-        "category": "interrogative",
-        "discourse_force": "query",
-        "question_domain": "open"
-      }
-    },
-    {
-      "forms": [
-        "why"
-      ],
-      "features": {
-        "category": "interrogative",
-        "discourse_force": "query",
-        "question_domain": "reason"
-      }
-    },
-    {
-      "forms": [
-        "am",
-        "is",
-        "are",
-        "was",
-        "were",
-        "be",
-        "being",
-        "been"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "be",
-        "predicate": true,
-        "copular": true,
-        "semantic_port": "predication"
-      }
-    },
-    {
-      "forms": [
-        "do",
-        "does",
-        "did",
-        "doing"
-      ],
-      "features": {
-        "category": "auxiliary",
-        "lemma": "do",
-        "auxiliary": true
-      }
-    },
-    {
-      "forms": [
-        "have",
-        "has",
-        "had",
-        "having"
-      ],
-      "features": {
-        "category": "auxiliary",
-        "lemma": "have",
-        "auxiliary": true
+        "category": "connective",
+        "scope_operator": "clause_link"
       }
     },
     {
@@ -108,13 +51,107 @@
     },
     {
       "forms": [
-        "not",
-        "n't"
+        "full name"
       ],
       "features": {
-        "category": "polarity",
-        "negation": true,
-        "polarity": "negative"
+        "category": "property_marker",
+        "property_ref": "label:name_full",
+        "property_kind": "designation"
+      }
+    },
+    {
+      "forms": [
+        "he",
+        "him",
+        "she",
+        "it"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "possessive": false,
+        "anaphoric": true
+      }
+    },
+    {
+      "forms": [
+        "hi",
+        "hello",
+        "hey"
+      ],
+      "features": {
+        "category": "discourse",
+        "discourse_marker": true,
+        "discourse_act": "greeting"
+      }
+    },
+    {
+      "forms": [
+        "his",
+        "her",
+        "hers",
+        "its"
+      ],
+      "features": {
+        "category": "reference",
+        "person": "third",
+        "possessive": true,
+        "anaphoric": true
+      }
+    },
+    {
+      "forms": [
+        "how"
+      ],
+      "features": {
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "state_summary"
+      }
+    },
+    {
+      "forms": [
+        "i",
+        "me"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker",
+        "person": "first",
+        "possessive": false,
+        "anaphoric": true
+      }
+    },
+    {
+      "forms": [
+        "instead"
+      ],
+      "features": {
+        "category": "contrast",
+        "scope_operator": "contrast"
+      }
+    },
+    {
+      "forms": [
+        "just"
+      ],
+      "features": {
+        "category": "emphasis",
+        "emphasis": true,
+        "nonessential_modifier": true
+      }
+    },
+    {
+      "forms": [
+        "my",
+        "mine"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker",
+        "person": "first",
+        "possessive": true,
+        "anaphoric": true
       }
     },
     {
@@ -129,151 +166,43 @@
     },
     {
       "forms": [
-        "full name"
+        "not",
+        "n't"
       ],
       "features": {
-        "category": "property_marker",
-        "property_ref": "label:full_name",
-        "property_kind": "designation"
+        "category": "polarity",
+        "negation": true,
+        "polarity": "negative"
       }
     },
     {
       "forms": [
-        "type",
-        "kind"
+        "of",
+        "to",
+        "for",
+        "from",
+        "with",
+        "about",
+        "as",
+        "than",
+        "by",
+        "in",
+        "on",
+        "at"
       ],
       "features": {
-        "category": "property_marker",
-        "property_ref": "label:type",
-        "property_kind": "type"
+        "category": "adposition",
+        "modifier": true
       }
     },
     {
       "forms": [
-        "know",
-        "knows",
-        "knew",
-        "known"
+        "only"
       ],
       "features": {
-        "category": "verb",
-        "lemma": "know",
-        "predicate": true,
-        "semantic_port": "relation_query",
-        "relation_ref": "rel:knows"
-      }
-    },
-    {
-      "forms": [
-        "mean",
-        "means",
-        "meant"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "mean",
-        "predicate": true,
-        "semantic_port": "designation_query"
-      }
-    },
-    {
-      "forms": [
-        "say",
-        "says",
-        "said",
-        "saying"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "say",
-        "predicate": true,
-        "semantic_port": "speech"
-      }
-    },
-    {
-      "forms": [
-        "call",
-        "called",
-        "calling"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "call",
-        "predicate": true,
-        "semantic_port": "designation"
-      }
-    },
-    {
-      "forms": [
-        "learn",
-        "learned",
-        "learning"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "learn",
-        "predicate": true,
-        "semantic_port": "learning"
-      }
-    },
-    {
-      "forms": [
-        "remember",
-        "remembered",
-        "remembering"
-      ],
-      "features": {
-        "category": "verb",
-        "lemma": "remember",
-        "predicate": true,
-        "semantic_port": "memory"
-      }
-    },
-    {
-      "forms": [
-        "my",
-        "mine"
-      ],
-      "features": {
-        "category": "reference",
-        "participant_role": "speaker",
-        "person": "first",
-        "possessive": true
-      }
-    },
-    {
-      "forms": [
-        "i",
-        "me"
-      ],
-      "features": {
-        "category": "reference",
-        "participant_role": "speaker",
-        "person": "first",
-        "possessive": false
-      }
-    },
-    {
-      "forms": [
-        "your",
-        "yours"
-      ],
-      "features": {
-        "category": "reference",
-        "participant_role": "addressee",
-        "person": "second",
-        "possessive": true
-      }
-    },
-    {
-      "forms": [
-        "you"
-      ],
-      "features": {
-        "category": "reference",
-        "participant_role": "addressee",
-        "person": "second",
-        "possessive": false
+        "category": "emphasis",
+        "emphasis": true,
+        "nonessential_modifier": true
       }
     },
     {
@@ -286,70 +215,8 @@
         "participant_role": "speaker_group",
         "person": "first",
         "number": "plural",
-        "possessive": true
-      }
-    },
-    {
-      "forms": [
-        "we",
-        "us"
-      ],
-      "features": {
-        "category": "reference",
-        "participant_role": "speaker_group",
-        "person": "first",
-        "number": "plural",
-        "possessive": false
-      }
-    },
-    {
-      "forms": [
-        "their",
-        "theirs"
-      ],
-      "features": {
-        "category": "reference",
-        "person": "third",
-        "number": "plural",
-        "possessive": true
-      }
-    },
-    {
-      "forms": [
-        "they",
-        "them"
-      ],
-      "features": {
-        "category": "reference",
-        "person": "third",
-        "number": "plural",
-        "possessive": false
-      }
-    },
-    {
-      "forms": [
-        "his",
-        "her",
-        "hers",
-        "its"
-      ],
-      "features": {
-        "category": "reference",
-        "person": "third",
-        "possessive": true
-      }
-    },
-    {
-      "forms": [
-        "he",
-        "him",
-        "she",
-        "it"
-      ],
-      "features": {
-        "category": "reference",
-        "person": "third",
-        "possessive": false
+        "possessive": true,
+        "anaphoric": true
       }
     },
     {
@@ -394,60 +261,63 @@
     },
     {
       "forms": [
-        "instead"
+        "their",
+        "theirs"
       ],
       "features": {
-        "category": "contrast",
-        "scope_operator": "contrast"
+        "category": "reference",
+        "person": "third",
+        "number": "plural",
+        "possessive": true,
+        "anaphoric": true
       }
     },
     {
       "forms": [
-        "of",
-        "to",
-        "for",
-        "from",
-        "with",
-        "about",
-        "as",
-        "than",
-        "by",
-        "in",
-        "on",
-        "at"
+        "they",
+        "them"
       ],
       "features": {
-        "category": "adposition",
-        "modifier": true
+        "category": "reference",
+        "person": "third",
+        "number": "plural",
+        "possessive": false,
+        "anaphoric": true
       }
     },
     {
       "forms": [
-        "and",
-        "or",
-        "but",
-        "because",
-        "if",
-        "then",
-        "while",
-        "although",
-        "unless"
+        "title"
       ],
       "features": {
-        "category": "connective",
-        "scope_operator": "clause_link"
+        "category": "property_marker",
+        "property_ref": "label:title",
+        "property_kind": "designation"
       }
     },
     {
       "forms": [
-        "hi",
-        "hello",
-        "hey"
+        "type",
+        "kind"
       ],
       "features": {
-        "category": "discourse",
-        "discourse_marker": true,
-        "discourse_act": "greeting"
+        "category": "property_marker",
+        "property_ref": "label:type",
+        "property_kind": "type"
+      }
+    },
+    {
+      "forms": [
+        "we",
+        "us"
+      ],
+      "features": {
+        "category": "reference",
+        "participant_role": "speaker_group",
+        "person": "first",
+        "number": "plural",
+        "possessive": false,
+        "anaphoric": true
       }
     },
     {
@@ -479,65 +349,58 @@
     },
     {
       "forms": [
-        "seem",
-        "seems",
-        "seemed",
-        "seeming"
+        "what"
       ],
       "features": {
-        "category": "evidential",
-        "lemma": "seem",
-        "scope_operator": "appearance",
-        "epistemic_stance": "attributed_assessment"
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "open"
       }
     },
     {
       "forms": [
-        "just"
+        "who",
+        "whom"
       ],
       "features": {
-        "category": "emphasis",
-        "emphasis": true,
-        "nonessential_modifier": true
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "identity"
       }
     },
     {
       "forms": [
-        "prefer",
-        "prefers",
-        "preferred",
-        "preferring"
+        "why"
       ],
       "features": {
-        "category": "verb",
-        "lemma": "prefer",
-        "predicate": true,
-        "semantic_port": "relation_query",
-        "relation_ref": "rel:prefers"
+        "category": "interrogative",
+        "discourse_force": "query",
+        "question_domain": "reason"
       }
     },
     {
       "forms": [
-        "signify",
-        "signifies",
-        "signified",
-        "signifying"
+        "you"
       ],
       "features": {
-        "category": "verb",
-        "lemma": "signify",
-        "predicate": true,
-        "semantic_port": "designation_query"
+        "category": "reference",
+        "participant_role": "addressee",
+        "person": "second",
+        "possessive": false,
+        "anaphoric": true
       }
     },
     {
       "forms": [
-        "title"
+        "your",
+        "yours"
       ],
       "features": {
-        "category": "property_marker",
-        "property_ref": "label:title",
-        "property_kind": "designation"
+        "category": "reference",
+        "participant_role": "addressee",
+        "person": "second",
+        "possessive": true,
+        "anaphoric": true
       }
     },
     {
@@ -556,24 +419,252 @@
     },
     {
       "forms": [
-        "only"
+        "am",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "being",
+        "been"
       ],
       "features": {
-        "category": "emphasis",
-        "emphasis": true,
-        "nonessential_modifier": true
+        "category": "verb",
+        "lemma": "be",
+        "predicate": true,
+        "copular": true
       }
     },
     {
       "forms": [
-        "?"
+        "call",
+        "called",
+        "calling"
       ],
       "features": {
-        "category": "boundary",
-        "boundary_type": "interrogative",
-        "discourse_force": "query",
-        "force_evidence": "query",
-        "boundary_only": true
+        "category": "verb",
+        "lemma": "call",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "define",
+        "defines",
+        "defined",
+        "defining"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "define",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "do",
+        "does",
+        "did",
+        "doing"
+      ],
+      "features": {
+        "category": "auxiliary",
+        "lemma": "do",
+        "auxiliary": true
+      }
+    },
+    {
+      "forms": [
+        "forget",
+        "forgets",
+        "forgot",
+        "forgotten",
+        "forgetting"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "forget",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "have",
+        "has",
+        "had",
+        "having"
+      ],
+      "features": {
+        "category": "auxiliary",
+        "lemma": "have",
+        "auxiliary": true
+      }
+    },
+    {
+      "forms": [
+        "infer",
+        "infers",
+        "inferred",
+        "inferring"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "infer",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "intend",
+        "intends",
+        "intended",
+        "intending"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "intend",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "know",
+        "knows",
+        "knew",
+        "known"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "know",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "learn",
+        "learned",
+        "learning"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "learn",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "mean",
+        "means",
+        "meant"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "mean",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "prefer",
+        "prefers",
+        "preferred",
+        "preferring"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "prefer",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "remember",
+        "remembered",
+        "remembering"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "remember",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "say",
+        "says",
+        "said",
+        "saying"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "say",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "seem",
+        "seems",
+        "seemed",
+        "seeming"
+      ],
+      "features": {
+        "category": "evidential",
+        "lemma": "seem",
+        "scope_operator": "appearance",
+        "epistemic_stance": "attributed_assessment"
+      }
+    },
+    {
+      "forms": [
+        "signify",
+        "signifies",
+        "signified",
+        "signifying"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "signify",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "teach",
+        "teaches",
+        "taught",
+        "teaching"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "teach",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "translate",
+        "translates",
+        "translated",
+        "translating"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "translate",
+        "open_class": true
+      }
+    },
+    {
+      "forms": [
+        "want",
+        "wants",
+        "wanted",
+        "wanting"
+      ],
+      "features": {
+        "category": "verb",
+        "lemma": "want",
+        "open_class": true
       }
     }
   ],
@@ -807,7 +898,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:value"
+          ]
         }
       ],
       "packet": {
@@ -917,7 +1011,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:value"
+          ]
         }
       ],
       "packet": {
@@ -1723,12 +1820,19 @@
           "slot": "predicate",
           "start": 2,
           "end": 3,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
-            "lemma",
-            "relation_ref"
-          ]
+            "lemma"
+          ],
+          "kind": "anchor",
+          "semantic_ref": "rel:knows",
+          "atom_kind": "relation_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "relation_type"
+          }
         },
         {
           "slot": "object_surface",
@@ -1742,7 +1846,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:object"
+          ]
         }
       ],
       "packet": {
@@ -1771,7 +1878,7 @@
                   "$capture": "subject"
                 },
                 "role:relation": {
-                  "$feature": "predicate.relation_ref"
+                  "$capture": "predicate"
                 },
                 "role:object": "?q0"
               },
@@ -1794,7 +1901,7 @@
           "qualifiers": {
             "query_kind": "relation_query",
             "relation_ref": {
-              "$feature": "predicate.relation_ref"
+              "$capture": "predicate"
             },
             "object_surface": {
               "$capture": "object_surface"
@@ -1854,12 +1961,19 @@
           "slot": "predicate",
           "start": 2,
           "end": 3,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
-            "lemma",
-            "relation_ref"
-          ]
+            "lemma"
+          ],
+          "kind": "anchor",
+          "semantic_ref": "rel:knows",
+          "atom_kind": "relation_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "relation_type"
+          }
         },
         {
           "slot": "object_surface",
@@ -1873,7 +1987,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:object"
+          ]
         }
       ],
       "packet": {
@@ -1902,7 +2019,7 @@
                   "$capture": "subject"
                 },
                 "role:relation": {
-                  "$feature": "predicate.relation_ref"
+                  "$capture": "predicate"
                 },
                 "role:object": "?q0"
               },
@@ -1925,7 +2042,7 @@
           "qualifiers": {
             "query_kind": "relation_query",
             "relation_ref": {
-              "$feature": "predicate.relation_ref"
+              "$capture": "predicate"
             },
             "object_surface": {
               "$capture": "object_surface"
@@ -1986,17 +2103,28 @@
           "absent_features": [
             "anaphoric",
             "demonstrative"
+          ],
+          "ports_provided": [
+            "argument:object"
           ]
         },
         {
           "slot": "predicate",
           "start": 3,
           "end": 4,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
             "lemma"
-          ]
+          ],
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         }
       ],
       "packet": {
@@ -2042,7 +2170,7 @@
         "directive": null,
         "describe": null,
         "qualifiers": {
-          "learning_operation": "resolve_designation"
+          "learning_contract_ref": "contract:designation_learning"
         },
         "modality": "actual"
       },
@@ -2193,12 +2321,19 @@
           "slot": "predicate",
           "start": 2,
           "end": 3,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
-            "lemma",
-            "relation_ref"
-          ]
+            "lemma"
+          ],
+          "kind": "anchor",
+          "semantic_ref": "rel:prefers",
+          "atom_kind": "relation_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "relation_type"
+          }
         },
         {
           "slot": "object_surface",
@@ -2212,7 +2347,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:object"
+          ]
         }
       ],
       "packet": {
@@ -2241,7 +2379,7 @@
                   "$capture": "subject"
                 },
                 "role:relation": {
-                  "$feature": "predicate.relation_ref"
+                  "$capture": "predicate"
                 },
                 "role:object": "?q0"
               },
@@ -2264,7 +2402,7 @@
           "qualifiers": {
             "query_kind": "relation_query",
             "relation_ref": {
-              "$feature": "predicate.relation_ref"
+              "$capture": "predicate"
             },
             "object_surface": {
               "$capture": "object_surface"
@@ -2325,17 +2463,28 @@
           "absent_features": [
             "anaphoric",
             "demonstrative"
+          ],
+          "ports_provided": [
+            "argument:object"
           ]
         },
         {
           "slot": "predicate",
           "start": 3,
           "end": 4,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
             "lemma"
-          ]
+          ],
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         }
       ],
       "packet": {
@@ -2381,7 +2530,7 @@
         "directive": null,
         "describe": null,
         "qualifiers": {
-          "learning_operation": "resolve_designation"
+          "learning_contract_ref": "contract:designation_learning"
         },
         "modality": "actual"
       },
@@ -2455,7 +2604,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:value"
+          ]
         }
       ],
       "packet": {
@@ -2770,8 +2922,16 @@
           "slot": "speech_predicate",
           "start": 3,
           "end": 4,
-          "capture": "features",
-          "semantic_role": "predicate"
+          "capture": "ref",
+          "semantic_role": "predicate",
+          "kind": "anchor",
+          "semantic_ref": "event:say",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         },
         {
           "slot": "choice_a",
@@ -2787,7 +2947,10 @@
           "required_features": {
             "quoted": true,
             "span_type": "quoted"
-          }
+          },
+          "ports_provided": [
+            "argument:object"
+          ]
         },
         {
           "slot": "contrast",
@@ -2898,8 +3061,16 @@
           "slot": "speech_predicate",
           "start": 3,
           "end": 4,
-          "capture": "features",
-          "semantic_role": "predicate"
+          "capture": "ref",
+          "semantic_role": "predicate",
+          "kind": "anchor",
+          "semantic_ref": "event:say",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         },
         {
           "slot": "choice_a",
@@ -2915,7 +3086,10 @@
           "required_features": {
             "quoted": true,
             "span_type": "quoted"
-          }
+          },
+          "ports_provided": [
+            "argument:object"
+          ]
         },
         {
           "slot": "contrast",
@@ -3485,7 +3659,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:object"
+          ]
         },
         {
           "slot": "query",
@@ -3512,17 +3689,28 @@
           "semantic_role": "subject",
           "drop_features": [
             "category"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
           "slot": "predicate",
           "start": 4,
           "end": 5,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
             "lemma"
-          ]
+          ],
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         }
       ],
       "packet": {
@@ -3569,8 +3757,8 @@
         "directive": null,
         "describe": null,
         "qualifiers": {
-          "learning_operation": "resolve_designation",
-          "construction_family": "contextual_meaning_query"
+          "construction_family": "contextual_meaning_query",
+          "learning_contract_ref": "contract:designation_learning"
         },
         "modality": "actual"
       },
@@ -3598,7 +3786,10 @@
             "span",
             "unknown"
           ],
-          "max_units": 8
+          "max_units": 8,
+          "ports_provided": [
+            "argument:object"
+          ]
         },
         {
           "slot": "query",
@@ -3625,17 +3816,28 @@
           "semantic_role": "subject",
           "drop_features": [
             "category"
+          ],
+          "ports_provided": [
+            "argument:subject"
           ]
         },
         {
           "slot": "predicate",
           "start": 4,
           "end": 5,
-          "capture": "features",
+          "capture": "ref",
           "semantic_role": "predicate",
           "drop_features": [
             "lemma"
-          ]
+          ],
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          }
         }
       ],
       "packet": {
@@ -3682,8 +3884,8 @@
         "directive": null,
         "describe": null,
         "qualifiers": {
-          "learning_operation": "resolve_designation",
-          "construction_family": "contextual_meaning_query"
+          "construction_family": "contextual_meaning_query",
+          "learning_contract_ref": "contract:designation_learning"
         },
         "modality": "actual"
       },
@@ -3895,6 +4097,925 @@
         "modality": "actual"
       },
       "weight": 1.65
+    },
+    {
+      "family": "capability_inventory_query",
+      "tokens": [
+        "what",
+        "can",
+        "you",
+        "do",
+        "?"
+      ],
+      "annotations": [
+        {
+          "slot": "query",
+          "start": 0,
+          "end": 1,
+          "capture": "features",
+          "semantic_role": "force",
+          "ports_provided": [
+            "force:query"
+          ]
+        },
+        {
+          "slot": "modal",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "scope",
+          "ports_provided": [
+            "scope:capability"
+          ]
+        },
+        {
+          "slot": "target",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:system",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "action",
+          "start": 3,
+          "end": 4,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_required": [
+            "scope:capability",
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "boundary",
+          "start": 4,
+          "end": 5,
+          "capture": "features",
+          "semantic_role": "punctuation",
+          "kind": "punctuation",
+          "optional": true
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:type",
+              "args": {
+                "role:instance": {
+                  "$capture": "target"
+                },
+                "role:class": "?agent_class"
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:relation",
+              "args": {
+                "role:subject": "?agent_class",
+                "role:relation": "rel:entitles_capability",
+                "role:object": "?capability"
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?agent_class",
+              "filler_kind": "concept",
+              "role_ref": "role:class"
+            },
+            {
+              "ref": "?capability",
+              "filler_kind": "atom",
+              "role_ref": "role:object"
+            }
+          ],
+          "projection": [
+            "?capability"
+          ],
+          "qualifiers": {
+            "query_kind": "capability_inventory_query",
+            "answer_cardinality": "many",
+            "target_ref": {
+              "$capture": "target"
+            }
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "capability_inventory_query"
+        },
+        "modality": "capability"
+      },
+      "weight": 1.85
+    },
+    {
+      "family": "desire_knowledge_designation_query",
+      "tokens": [
+        "do",
+        "you",
+        "want",
+        "to",
+        "know",
+        "my",
+        "name",
+        "?"
+      ],
+      "annotations": [
+        {
+          "slot": "auxiliary",
+          "start": 0,
+          "end": 1,
+          "capture": "features",
+          "semantic_role": "force"
+        },
+        {
+          "slot": "experiencer",
+          "start": 1,
+          "end": 2,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:system",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:experiencer",
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "desire_predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:want",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          },
+          "ports_provided": [
+            "predicate:event"
+          ]
+        },
+        {
+          "slot": "complement",
+          "start": 3,
+          "end": 4,
+          "capture": "features",
+          "semantic_role": "modifier"
+        },
+        {
+          "slot": "knowledge_predicate",
+          "start": 4,
+          "end": 5,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "rel:knows",
+          "atom_kind": "relation_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "relation_type"
+          },
+          "ports_provided": [
+            "predicate:event"
+          ]
+        },
+        {
+          "slot": "designation_target",
+          "start": 5,
+          "end": 6,
+          "capture": "ref",
+          "semantic_role": "target",
+          "kind": "anchor",
+          "semantic_ref": "participant:user",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:target"
+          ]
+        },
+        {
+          "slot": "property",
+          "start": 6,
+          "end": 7,
+          "capture": "ref",
+          "semantic_role": "object",
+          "kind": "anchor",
+          "semantic_ref": "label:name",
+          "atom_kind": "label_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "label_type",
+            "property_kind": "designation"
+          },
+          "ports_provided": [
+            "argument:content",
+            "argument:object"
+          ]
+        },
+        {
+          "slot": "boundary",
+          "start": 7,
+          "end": 8,
+          "capture": "features",
+          "semantic_role": "force_boundary",
+          "kind": "punctuation",
+          "required_features": {
+            "discourse_force": "query"
+          },
+          "ports_provided": [
+            "force:query"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "query",
+        "apps": [],
+        "query": {
+          "restrictions": [
+            {
+              "operator": "op:event",
+              "args": {
+                "role:event": "?want_event",
+                "role:type": {
+                  "$capture": "desire_predicate"
+                },
+                "role:actor": {
+                  "$capture": "experiencer"
+                },
+                "role:object": {
+                  "$capture": "designation_target"
+                }
+              },
+              "stance": "support"
+            },
+            {
+              "operator": "op:relation",
+              "args": {
+                "role:subject": {
+                  "$capture": "experiencer"
+                },
+                "role:relation": {
+                  "$capture": "knowledge_predicate"
+                },
+                "role:object": {
+                  "$capture": "designation_target"
+                }
+              },
+              "stance": "support"
+            }
+          ],
+          "variables": [
+            {
+              "ref": "?want_event",
+              "filler_kind": "event",
+              "role_ref": "role:event"
+            }
+          ],
+          "projection": [],
+          "qualifiers": {
+            "query_kind": "embedded_proposition_query",
+            "answer_mode": "boolean",
+            "proposition_depth": 2
+          }
+        },
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "desire_knowledge_designation_query"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.9
+    },
+    {
+      "family": "designation_learning_answer",
+      "tokens": [
+        "it",
+        "just",
+        "means",
+        "hi"
+      ],
+      "annotations": [
+        {
+          "slot": "anaphor",
+          "start": 0,
+          "end": 1,
+          "capture": "features",
+          "semantic_role": "reference",
+          "kind": "function",
+          "required_features": {
+            "anaphoric": true
+          },
+          "ports_provided": [
+            "reference:pending_learning"
+          ]
+        },
+        {
+          "slot": "modifier",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "modifier",
+          "optional": true
+        },
+        {
+          "slot": "definition_predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          },
+          "ports_provided": [
+            "predicate:event"
+          ]
+        },
+        {
+          "slot": "meaning_target",
+          "start": 3,
+          "end": 4,
+          "capture": "ref",
+          "semantic_role": "object",
+          "kind": "anchor",
+          "semantic_ref": "event:greeting",
+          "atom_kind": "event_type",
+          "ports_provided": [
+            "argument:definition",
+            "argument:object"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:designation",
+            "args": {
+              "role:target": {
+                "$capture": "meaning_target"
+              },
+              "role:label_type": "label:lexical",
+              "role:surface": {
+                "$context": "pending_learning_surface_literal"
+              },
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "designation_learning_answer",
+          "consumes_pending_learning": true,
+          "pending_learning_obligation_ref": {
+            "$context": "pending_learning_obligation_ref"
+          },
+          "learning_plan_ref": {
+            "$context": "pending_learning_plan_ref"
+          }
+        },
+        "modality": "actual"
+      },
+      "weight": 2.0
+    },
+    {
+      "family": "designation_learning_answer",
+      "tokens": [
+        "it",
+        "means",
+        "hi"
+      ],
+      "annotations": [
+        {
+          "slot": "anaphor",
+          "start": 0,
+          "end": 1,
+          "capture": "features",
+          "semantic_role": "reference",
+          "kind": "function",
+          "required_features": {
+            "anaphoric": true
+          },
+          "ports_provided": [
+            "reference:pending_learning"
+          ]
+        },
+        {
+          "slot": "definition_predicate",
+          "start": 1,
+          "end": 2,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          },
+          "ports_provided": [
+            "predicate:event"
+          ]
+        },
+        {
+          "slot": "meaning_target",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "object",
+          "kind": "anchor",
+          "semantic_ref": "event:greeting",
+          "atom_kind": "event_type",
+          "ports_provided": [
+            "argument:definition",
+            "argument:object"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:designation",
+            "args": {
+              "role:target": {
+                "$capture": "meaning_target"
+              },
+              "role:label_type": "label:lexical",
+              "role:surface": {
+                "$context": "pending_learning_surface_literal"
+              },
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "designation_learning_answer",
+          "consumes_pending_learning": true,
+          "pending_learning_obligation_ref": {
+            "$context": "pending_learning_obligation_ref"
+          },
+          "learning_plan_ref": {
+            "$context": "pending_learning_plan_ref"
+          }
+        },
+        "modality": "actual"
+      },
+      "weight": 2.0
+    },
+    {
+      "family": "definition_designation_claim",
+      "tokens": [
+        "glorp",
+        "means",
+        "hi"
+      ],
+      "annotations": [
+        {
+          "slot": "surface",
+          "start": 0,
+          "end": 1,
+          "span": true,
+          "capture": "literal:text",
+          "semantic_role": "subject_surface",
+          "allowed_kinds": [
+            "anchor",
+            "span",
+            "unknown"
+          ],
+          "max_units": 4,
+          "ports_provided": [
+            "argument:surface"
+          ]
+        },
+        {
+          "slot": "definition_predicate",
+          "start": 1,
+          "end": 2,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:define",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          },
+          "ports_provided": [
+            "predicate:event"
+          ]
+        },
+        {
+          "slot": "meaning_target",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "object",
+          "kind": "anchor",
+          "semantic_ref": "event:greeting",
+          "atom_kind": "event_type",
+          "ports_provided": [
+            "argument:definition",
+            "argument:object"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:designation",
+            "args": {
+              "role:target": {
+                "$capture": "meaning_target"
+              },
+              "role:label_type": "label:lexical",
+              "role:surface": {
+                "$capture": "surface"
+              },
+              "role:language": {
+                "$context": "language_literal"
+              },
+              "role:script": {
+                "$context": "script_literal"
+              },
+              "role:prior": {
+                "$context": "one_float_literal"
+              },
+              "role:preferred": {
+                "$context": "true_literal"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "definition_designation_claim"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.95
+    },
+    {
+      "family": "generic_type_predication",
+      "tokens": [
+        "CEMM",
+        "is",
+        "agent"
+      ],
+      "annotations": [
+        {
+          "slot": "subject",
+          "start": 0,
+          "end": 1,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:system",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "binder",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:type"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "concept:agent",
+          "atom_kind": "concept",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "concept"
+          },
+          "ports_provided": [
+            "predicate:type"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:type",
+            "args": {
+              "role:instance": {
+                "$capture": "subject"
+              },
+              "role:class": {
+                "$capture": "predicate"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "generic_type_predication"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.7
+    },
+    {
+      "family": "generic_state_value_predication",
+      "tokens": [
+        "CEMM",
+        "is",
+        "available"
+      ],
+      "annotations": [
+        {
+          "slot": "subject",
+          "start": 0,
+          "end": 1,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:system",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "binder",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:state_value"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "value:available",
+          "atom_kind": "value",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "value"
+          },
+          "ports_provided": [
+            "predicate:state_value",
+            "argument:value"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": {
+                "$capture": "subject"
+              },
+              "role:dimension": {
+                "$feature": "predicate.state_dimension_ref"
+              },
+              "role:value": {
+                "$capture": "predicate"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "generic_state_value_predication"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.7
+    },
+    {
+      "family": "generic_state_value_predication",
+      "tokens": [
+        "I",
+        "is",
+        "remembered"
+      ],
+      "annotations": [
+        {
+          "slot": "subject",
+          "start": 0,
+          "end": 1,
+          "capture": "ref",
+          "semantic_role": "subject",
+          "kind": "anchor",
+          "semantic_ref": "participant:user",
+          "atom_kind": "participant",
+          "ports_provided": [
+            "argument:subject"
+          ]
+        },
+        {
+          "slot": "binder",
+          "start": 1,
+          "end": 2,
+          "capture": "features",
+          "semantic_role": "binder",
+          "ports_provided": [
+            "binder:predication"
+          ],
+          "ports_required": [
+            "argument:subject",
+            "predicate:state_value"
+          ]
+        },
+        {
+          "slot": "predicate",
+          "start": 2,
+          "end": 3,
+          "capture": "ref",
+          "semantic_role": "predicate_head",
+          "kind": "anchor",
+          "semantic_ref": "event:remember",
+          "atom_kind": "event_type",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "predicate",
+            "semantic_kind": "event_type"
+          },
+          "ports_provided": [
+            "predicate:state_value",
+            "argument:value"
+          ],
+          "ports_required": [
+            "argument:subject"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "claim",
+        "apps": [
+          {
+            "operator": "op:state",
+            "args": {
+              "role:subject": {
+                "$capture": "subject"
+              },
+              "role:dimension": {
+                "$feature": "predicate.state_dimension_ref"
+              },
+              "role:value": {
+                "$capture": "predicate"
+              }
+            },
+            "stance": "support"
+          }
+        ],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "generic_state_value_predication"
+        },
+        "modality": "actual"
+      },
+      "weight": 1.7
+    },
+    {
+      "family": "semantic_discourse_reaction",
+      "tokens": [
+        "wow",
+        "lol"
+      ],
+      "nonblocking_token_indices": [
+        0
+      ],
+      "annotations": [
+        {
+          "slot": "reaction",
+          "start": 1,
+          "end": 2,
+          "capture": "ref",
+          "semantic_role": "discourse",
+          "kind": "anchor",
+          "semantic_ref": "concept:laughing_out_loud",
+          "atom_kind": "concept",
+          "required_features": {
+            "semantic_contribution_abi": 1,
+            "contribution_kind": "discourse",
+            "reaction_kind": "amusement"
+          },
+          "ports_provided": [
+            "discourse:reaction"
+          ]
+        }
+      ],
+      "packet": {
+        "force": "acknowledgment",
+        "apps": [],
+        "query": null,
+        "directive": null,
+        "describe": null,
+        "qualifiers": {
+          "construction_family": "semantic_discourse_reaction",
+          "reaction_ref": {
+            "$capture": "reaction"
+          },
+          "reaction_kind": {
+            "$feature": "reaction.reaction_kind"
+          }
+        },
+        "modality": "actual"
+      },
+      "weight": 1.25
     }
   ],
   "nonblocking_discourse_forms": [
@@ -3922,7 +5043,13 @@
     "wow"
   ],
   "contract_version": 6,
-  "singleton_family_justifications": {},
+  "singleton_family_justifications": {
+    "capability_inventory_query": "Reviewed generic capability projection over participant type and entitlement authority; not a phrase-specific response branch.",
+    "desire_knowledge_designation_query": "Reviewed two-event complement graph proving bounded proposition embedding over ordinary event applications.",
+    "definition_designation_claim": "Reviewed generic surface-to-target designation assertion used for direct lexical definition teaching.",
+    "generic_type_predication": "Reviewed semantic-kind-driven type lowering; the lexical predicate is supplied by designation affordance authority.",
+    "semantic_discourse_reaction": "Reviewed discourse-affordance composition that creates acknowledgment force without world-state assertion."
+  },
   "negative_probes": [
     {
       "tokens": [
@@ -4006,13 +5133,11 @@
           "source": "constant",
           "value": {
             "implicit": true,
-            "copular": true,
-            "semantic_port": "predication"
+            "copular": true
           },
           "features": {
             "implicit": true,
-            "copular": true,
-            "semantic_port": "predication"
+            "copular": true
           },
           "requires_slots": [
             "query",

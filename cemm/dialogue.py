@@ -1,74 +1,21 @@
 """Bounded dialogue obligations and realization provenance.
 
-Dialogue state is cycle/session context, not semantic authority.  One pending
-learning obligation may be resumed, and it may be consumed only after the
-corresponding semantic commit succeeds.
+Dialogue state is session context, not semantic authority. One typed learning plan
+may be pending. It may be consumed only after its exact Stage-13 semantic commit.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from cemm.model import lit, stable
+from cemm.learning_plans import LearningPlan, PendingLearningObligationV2
+from cemm.model import canonical, lit, stable
 
 
-@dataclass(frozen=True)
-class PendingLearningObligation:
-    obligation_ref: str
-    source_response_ref: str
-    source_goal_ref: str
-    surface: str
-    learning_operation: str
-    query: Mapping[str, Any] | None
-    expected_answer_shape: Mapping[str, Any]
-    expected_semantic_kinds: tuple[str, ...] = ()
-    known_bindings: Mapping[str, Any] = field(default_factory=dict)
-    original_cycle_ref: str | None = None
-    original_candidate_ref: str | None = None
-    unresolved_span_ref: str | None = None
-    created_turn: int = 0
-    expires_after_turn: int = 4
-    resumable: bool = True
-
-    def __post_init__(self) -> None:
-        if not self.obligation_ref or not self.source_response_ref or not self.source_goal_ref:
-            raise ValueError("pending learning obligation requires response and goal provenance")
-        if not self.surface.strip():
-            raise ValueError("pending learning obligation requires non-empty surface")
-        if not self.learning_operation:
-            raise ValueError("pending learning obligation requires an operation")
-        if not self.expected_answer_shape:
-            raise ValueError("pending learning obligation requires expected answer shape")
-        if self.created_turn < 0 or self.expires_after_turn < 1:
-            raise ValueError("pending learning obligation carries invalid turn bounds")
-        if not self.resumable:
-            raise ValueError("non-resumable items must not enter pending dialogue state")
-
-    def expired(self, current_turn: int) -> bool:
-        return int(current_turn) > self.created_turn + self.expires_after_turn
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "obligation_ref": self.obligation_ref,
-            "source_response_ref": self.source_response_ref,
-            "source_goal_ref": self.source_goal_ref,
-            "surface": self.surface,
-            "learning_operation": self.learning_operation,
-            "query": dict(self.query) if self.query else None,
-            "expected_answer_shape": dict(self.expected_answer_shape),
-            "expected_semantic_kinds": list(self.expected_semantic_kinds),
-            "known_bindings": dict(self.known_bindings),
-            "original_cycle_ref": self.original_cycle_ref,
-            "original_candidate_ref": self.original_candidate_ref,
-            "unresolved_span_ref": self.unresolved_span_ref,
-            "created_turn": self.created_turn,
-            "expires_after_turn": self.expires_after_turn,
-            "resumable": self.resumable,
-        }
+PendingLearningObligation = PendingLearningObligationV2
 
 
 class DialogueState:
-    """Session-local state with one exact pending learning continuation."""
+    """Session-local state with one exact typed learning continuation."""
 
     def __init__(self, max_pending: int = 1, expiry_turns: int = 4):
         if int(max_pending) != 1:
@@ -82,6 +29,17 @@ class DialogueState:
     def expire(self, current_turn: int) -> None:
         if self._pending and self._pending.expired(int(current_turn)):
             self._pending = None
+
+    def invalidate_pending_on_authority_reload(self) -> PendingLearningObligation | None:
+        """Clear plans bound to the previous authority generation.
+
+        A pending plan licenses one exact query/contract against one pinned
+        authority generation. Reusing it after authority reload would bypass
+        the new generation's contract and target-kind validation.
+        """
+        item = self._pending
+        self._pending = None
+        return item
 
     @property
     def pending(self) -> PendingLearningObligation | None:
@@ -100,13 +58,20 @@ class DialogueState:
             self.expire(int(current_turn))
         pending = self._pending
         decision = dict(self._last_surface_decision or {})
+        plan = pending.plan if pending else None
         return {
             "pending_learning_obligation_ref": pending.obligation_ref if pending else None,
-            "pending_learning_surface_literal": lit(pending.surface) if pending else None,
-            "pending_learning_surface": pending.surface if pending else None,
-            "pending_learning_operation": pending.learning_operation if pending else None,
-            "pending_learning_original_candidate_ref": pending.original_candidate_ref if pending else None,
-            "pending_learning_unresolved_span_ref": pending.unresolved_span_ref if pending else None,
+            "pending_learning_plan": plan.as_dict() if plan else None,
+            "pending_learning_plan_ref": plan.plan_ref if plan else None,
+            "pending_learning_label_type_ref": plan.label_type_ref if plan else None,
+            "pending_learning_surface_literal": lit(plan.surface_literal) if plan else None,
+            "pending_learning_surface": plan.surface_literal if plan else None,
+            "pending_learning_contract_ref": plan.contract_ref if plan else None,
+            "pending_learning_authority_generation": (
+                plan.authority_generation if plan else None
+            ),
+            "pending_learning_original_candidate_ref": plan.original_candidate_ref if plan else None,
+            "pending_learning_unresolved_span_ref": plan.unresolved_span_ref if plan else None,
             "pending_learning_obligations": [pending.as_dict()] if pending else [],
             "last_surface_decision": decision,
             "last_surface_decision_ref": decision.get("decision_ref"),
@@ -160,59 +125,37 @@ class DialogueState:
         if not source_goal_ref:
             raise ValueError("learning request requires exact source goal obligation")
         qualifiers = dict(getattr(response, "qualifiers", {}) or {})
-        operation = str(qualifiers.get("learning_operation") or "")
-        if not operation:
-            raise ValueError("learning request lacks structured learning operation")
-        expected_shape = dict(
-            qualifiers.get("expected_answer_shape")
-            or {
-                "operation": operation,
-                "surface_cardinality": "one",
-                "semantic_kind_candidates": list(qualifiers.get("expected_semantic_kinds", ())),
-            }
+        raw_plan = qualifiers.get("learning_plan")
+        if not isinstance(raw_plan, Mapping):
+            raise ValueError("learning request lacks typed learning plan")
+        plan = LearningPlan.from_dict(raw_plan)
+        if plan.surface_literal != str(literals[0]):
+            raise ValueError("learning plan surface differs from realized evidence literal")
+        if plan.source_query_ref != qualifiers.get("query_ref"):
+            raise ValueError("learning plan lost exact source query")
+        if plan.source_query_kind != qualifiers.get("query_kind"):
+            raise ValueError("learning plan lost exact query kind")
+        learning_query = qualifiers.get("learning_query")
+        if not isinstance(learning_query, Mapping):
+            raise ValueError("learning request lacks exact source query structure")
+        if canonical(plan.source_query) != canonical(dict(learning_query)):
+            raise ValueError("learning plan source query differs from realized response query")
+        plan = plan.bind_response(
+            response_ref=getattr(response, "response_ref"),
+            goal_ref=source_goal_ref,
         )
-        surface = str(literals[0])
         existing = self._pending
         if existing is not None:
-            same_request = (
-                existing.source_response_ref == response.response_ref
-                and existing.source_goal_ref == source_goal_ref
-                and existing.surface == surface
-                and existing.learning_operation == operation
-            )
-            if same_request:
+            if existing.plan.semantic_signature() == plan.semantic_signature():
                 return
-            raise ValueError(
-                "a live pending learning obligation cannot be silently replaced"
-            )
-        payload = (
-            response.response_ref,
-            source_goal_ref,
-            surface,
-            operation,
-            qualifiers.get("learning_query"),
-            expected_shape,
-            qualifiers.get("original_candidate_ref"),
-            qualifiers.get("unresolved_span_ref"),
-            int(turn_index),
-        )
-        self._pending = PendingLearningObligation(
-            stable("pending-learning-obligation", payload),
-            response.response_ref,
-            source_goal_ref,
-            surface,
-            operation,
-            qualifiers.get("learning_query"),
-            expected_shape,
-            tuple(qualifiers.get("expected_semantic_kinds", ())),
-            dict(qualifiers.get("known_bindings", {})),
+            raise ValueError("a live pending learning obligation cannot be silently replaced")
+        obligation_ref = stable(
+            "pending-learning-obligation",
             cycle_ref,
-            qualifiers.get("original_candidate_ref"),
-            qualifiers.get("unresolved_span_ref"),
+            plan.as_dict(),
             int(turn_index),
-            self.expiry_turns,
-            True,
         )
+        self._pending = PendingLearningObligation(obligation_ref, plan)
 
     def require(self, obligation_ref: str | None) -> PendingLearningObligation:
         if not obligation_ref:
@@ -235,7 +178,6 @@ class DialogueState:
         return item
 
     def consume(self, obligation_ref: str | None) -> PendingLearningObligation:
-        """Compatibility-free guard: direct consumption is intentionally forbidden."""
         raise ValueError(
             "pending learning obligations must be consumed with consume_after_commit"
         )

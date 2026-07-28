@@ -391,9 +391,17 @@ class CanonicalResponseRealizer:
         if action == "report_target_uncertainty" and query_kind in {"designation_property", "state_query"}:
             return frozenset(base | {"subject_ref", "property_ref"})
         if action == "request_learning_evidence":
-            return frozenset({"evidence", "learning_operation", "frontier_ref"})
+            return frozenset({
+                "evidence", "learning_plan_ref", "query_ref", "query_kind"
+            })
         if action == "request_targeted_clarification":
             return frozenset({"evidence", "frontier_ref"})
+        if action == "request_generic_clarification":
+            return frozenset({"frontier_ref"})
+        if action in {"answer_bindings", "report_multiple_bindings"} and query_kind == "capability_inventory_query":
+            return frozenset(base | {"binding_values", "target_ref"})
+        if action == "report_target_uncertainty" and query_kind == "capability_inventory_query":
+            return frozenset(base | {"target_ref"})
         if action == "explain_surface_choice":
             return frozenset({"surface_decision_ref", "surface_choice_a", "surface_choice_b", "prior_response_ref", "prior_surface"})
         if action == "acknowledge_attributed_claim":

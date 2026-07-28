@@ -136,7 +136,7 @@ class GoalArbiter:
                     item
                     for item in probes
                     if item.get("query_ref") == query_result.query_ref
-                    and item.get("learning_operation")
+                    and isinstance(item.get("learning_plan"), Mapping)
                     and str(item.get("surface") or "").strip()
                 ]
                 if len(exact) != 1:
@@ -151,7 +151,7 @@ class GoalArbiter:
                             "request-learning-evidence",
                             query_result.query_ref,
                             probe.get("surface"),
-                            probe.get("learning_operation"),
+                            dict(probe.get("learning_plan", {})).get("plan_ref"),
                         ),
                         "request_learning_evidence",
                         query_result.query_ref,

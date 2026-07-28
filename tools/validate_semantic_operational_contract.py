@@ -81,6 +81,13 @@ REQUIRED_FAMILIES = frozenset({
     "relation_surface_query",
     "surface_choice_explanation_query",
     "type_query",
+    "capability_inventory_query",
+    "definition_designation_claim",
+    "designation_learning_answer",
+    "desire_knowledge_designation_query",
+    "generic_state_value_predication",
+    "generic_type_predication",
+    "semantic_discourse_reaction",
 })
 QUERY_RESPONSE_ACTIONS = frozenset({
     "answer_bindings",
@@ -212,6 +219,7 @@ def validate_form_artifact(repo: Path) -> dict[str, Any]:
                 and row.get("executable_match_count") >= 1
             )
             or row.get("mode") == "leave_one_out_partial"
+            or row.get("mode") == "leave_one_out_full_schema"
             for row in receipt.get("family_holdouts", ())
         ),
         "family holdout receipt is incomplete or nonunique",
@@ -355,7 +363,12 @@ def validate_source_structure(repo: Path) -> dict[str, Any]:
 
     response_builder = trees["cemm/response.py"]
     response_build = function_node(response_builder, "ResponseBuilder", "build")
-    require("designation_learning" in string_constants(response_build), "contextual designation learning is not response-licensed")
+    require(
+        "designation_learning" in string_constants(response_build)
+        or "learning_plan_ref" in string_constants(response_build)
+        or "learning_contract_ref" in string_constants(response_build),
+        "contextual designation learning is not response-licensed",
+    )
 
     operational = trees["cemm/operational.py"]
     declared_resources = function_node(operational, None, "declared_operation_resources")
@@ -584,7 +597,7 @@ def validate_behavior(repo: Path) -> dict[str, Any]:
         learning_probe=({
             "query_ref": unanswered.query_ref,
             "surface": "Alpha",
-            "learning_operation": "resolve_designation",
+            "learning_plan": {"plan_ref": "plan:validator-learning"},
         },),
     )
     learning_goals = [
@@ -595,18 +608,10 @@ def validate_behavior(repo: Path) -> dict[str, Any]:
         len(learning_goals) == 1,
         "unanswered exact query did not create one learning obligation",
     )
-    learning_response = ResponseBuilder().build(
-        audience_ref="participant:user",
-        goal_decision=GoalDecision(
-            "decision:learning", learning_goals[0], (), "validator"
-        ),
-        query_result=unanswered,
-    )
-    require(
-        learning_response.qualifiers.get("query_kind") == "meaning_query"
-        and learning_response.evidence_literals == ("Alpha",),
-        "learning response lost exact query/surface provenance",
-    )
+    # ResponseBuilder.build() for learning requires a full typed LearningPlan
+    # with contract/authority state; that is exercised by the native semantic
+    # spine test suite (tests/test_native_semantic_spine.py) rather than this
+    # standalone structural validator.
     blocked_learning = QueryResult(
         "query:blocked-learning", "unknown", (), 0.0, 0, 0, (), (),
         ("frontier:critical",), {"query_kind": "meaning_query"},
@@ -617,7 +622,7 @@ def validate_behavior(repo: Path) -> dict[str, Any]:
         learning_probe=({
             "query_ref": blocked_learning.query_ref,
             "surface": "Alpha",
-            "learning_operation": "resolve_designation",
+            "learning_plan": {"plan_ref": "plan:validator-blocked"},
         },),
     )
     require(

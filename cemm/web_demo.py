@@ -10,22 +10,24 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from cemm.acquisition import acquire_reviewed
+from cemm.activation import activation_attestation, assert_atomic_graph_activation
 from cemm.config import Config
 from cemm.runtime import MODE_NORMAL, MODE_READ_ONLY, MODE_REVIEWED_TEACH, Runtime
 from cemm.store import Store
 
 _WEB_DIR = Path(__file__).parent / "web"
-app = FastAPI(title="CEMM v1 Web Demo", version="1.1.0")
+app = FastAPI(title="CEMM v1 Web Demo", version="1.2.0")
 _runtime: Runtime | None = None
 _store: Store | None = None
 _config: Config | None = None
+_activation: dict[str, Any] | None = None
 _db_path = ":memory:"
 _pack_path = ""
 _data_files: list[str] = []
 
 
 def _ensure_runtime() -> Runtime:
-    global _runtime, _store, _config
+    global _runtime, _store, _config, _activation
     if _runtime is None:
         _store = Store(_db_path)
         empty = not _store.db.execute("SELECT 1 FROM atoms LIMIT 1").fetchone()
@@ -35,6 +37,9 @@ def _ensure_runtime() -> Runtime:
             _store.import_bundle(_data_files)
         _config = Config()
         _runtime = Runtime(_store, _pack_path, _config)
+        # Fail before serving chat when an old installed package, stale process,
+        # or mismatched form pack is shadowing the checked-out v6 source.
+        _activation = assert_atomic_graph_activation(_runtime.i.form_pack, _runtime.s)
     return _runtime
 
 
@@ -54,6 +59,7 @@ class ChatResponse(BaseModel):
     capability_assessments: list[dict[str, Any]] = Field(default_factory=list)
     stage_trace: dict[str, Any] | None = None
     realization_proof: dict[str, Any] | None = None
+    activation_ref: str | None = None
 
 
 class AcquisitionMention(BaseModel):
@@ -80,12 +86,17 @@ async def index():
 @app.get("/api/health")
 async def health():
     runtime = _ensure_runtime()
+    attestation = dict(_activation or activation_attestation(runtime.i.form_pack, runtime.s))
     return {
-        "ok": True,
-        "version": "1.1.0",
+        "ok": bool(attestation.get("ok")),
+        "version": "1.2.0",
         "authority_generation": runtime.runtime_attestation["authority_generation"],
         "authority_hash": runtime.runtime_attestation["authority_generation_hash"][:16],
         "form_pack_hash": runtime.i.form_pack.hash,
+        "coverage_abi": attestation["coverage_abi"],
+        "feature_algebra_version": attestation["feature_algebra_version"],
+        "activation_ref": attestation["activation_ref"],
+        "activation": attestation,
         "revisions": runtime.s.revisions(),
     }
 
@@ -105,12 +116,29 @@ async def chat(request: ChatRequest):
         capability_assessments=result.get("capability_assessments", []),
         stage_trace=result.get("stage_trace"),
         realization_proof=result.get("realization_proof"),
+        activation_ref=(_activation or {}).get("activation_ref"),
     )
 
 
 @app.post("/api/reload")
 async def reload():
-    return {"ok": True, **_ensure_runtime().reload_authority()}
+    # This endpoint intentionally reloads semantic authority only. Python source
+    # changes require terminating and restarting the web-demo process. Any
+    # pending learning plan is invalidated because it was licensed against the
+    # previous authority generation.
+    global _activation
+    runtime = _ensure_runtime()
+    receipt = runtime.reload_authority()
+    _activation = assert_atomic_graph_activation(runtime.i.form_pack, runtime.s)
+    return {
+        "ok": True,
+        "reload_scope": "authority_only",
+        "python_source_reloaded": False,
+        "process_restart_required_for_source_changes": True,
+        "activation_ref": _activation["activation_ref"],
+        "activation": dict(_activation),
+        **receipt,
+    }
 
 
 @app.post("/api/acquire")
@@ -159,6 +187,7 @@ async def inspect():
     return {
         "generation": store.generation,
         "revisions": store.revisions(),
+        "activation": dict(_activation or {}),
         "table_counts": {
             table: store.db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
             for table in tables

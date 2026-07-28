@@ -36,18 +36,17 @@ response_examples=[
  ('conflict','RESPONSE report_conflict','The evidence conflicts.'),
  ('uncertain','RESPONSE report_target_uncertainty','I do not have enough evidence.'),
  ('clarify','RESPONSE request_targeted_clarification EVIDENCE @E0','Could you clarify @E0?'),
- ('learn','RESPONSE request_learning_evidence LEARNING resolve_designation EVIDENCE @E0','What does @E0 refer to here?'),
  ('capability','RESPONSE report_capability TARGET @A0 SCORE @N0','My @A0 is at @N0 percent.'),
  ('ack','RESPONSE acknowledge_claim','I recorded that claim.'),
  ('decline','RESPONSE decline_directive','I cannot perform that action.'),
  ('operation','RESPONSE report_operation_result','The operation is complete.'),
  ('greet','RESPONSE greet','Hello.'),
  ('property','RESPONSE answer_bindings QUERY_KIND designation_property PROPERTY @A0 BINDING ?q0 @E0','The @A0 is @E0.'),
- ('learned-binding','RESPONSE answer_bindings QUERY_KIND designation_learning PROPERTY @A0 LEARNING resolve_designation BINDING ?q0 @A1 ?q1 @A0 EVIDENCE @E0','In this context, @E0 refers to @A1.'),
+ ('learned-binding','RESPONSE answer_bindings QUERY_KIND designation_learning PROPERTY @A0 BINDING ?q0 @A1 ?q1 @A0 EVIDENCE @E0','In this context, @E0 refers to @A1.'),
  ('state-answer','RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @A1','The @A0 is @A1.'),
  ('state-answer-numeric','RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @N0','The @A0 is @N0.'),
  ('type-answer','RESPONSE answer_bindings QUERY_KIND type_query BINDING ?q0 @A0','The kind is a @A0.'),
- ('capability-answer','RESPONSE answer_bindings QUERY_KIND capability_query BINDING ?q1 @A0','I can @A0.'),
+ ('capability-answer','RESPONSE answer_bindings QUERY_KIND capability_inventory_query BINDING ?capability @A0','I can use @A0.'),
 ]
 response=[{'example_ref':f'en:response:{r}','semantic':s,'surface_plan':p,'weight':1.0} for r,s,p in response_examples]
 realization=[

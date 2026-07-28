@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from cemm.native_semantic_validation import validate_native_semantic_authority
+
 
 def canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
@@ -351,6 +353,12 @@ def validate_documents(
                         allow_variables=True,
                         issues=issues,
                     )
+
+    issues.extend(validate_native_semantic_authority(
+        atom_defs=atom_defs,
+        role_defs=role_defs,
+        facts=facts,
+    ))
 
     if require_foundations:
         missing_relations = sorted(ref for ref in FOUNDATIONAL_META_RELATIONS if atom_kinds.get(ref) != "relation_type")

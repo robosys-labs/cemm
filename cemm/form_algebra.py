@@ -7,7 +7,9 @@ legality.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass, replace
+import json
+from types import SimpleNamespace
 from typing import Any, Iterable, Mapping, Sequence
 
 from cemm.atomic_graph import AtomicGraphMatcher as _GraphEngine
@@ -27,6 +29,205 @@ class TemplateResolutionError(SchemaValidationError):
 
 _FORBIDDEN_MATCH_KEYS = frozenset({"literal", "surface", "regex", "pattern_text", "tokens", "phrase"})
 _ALLOWED_IGNORABLE_KINDS = frozenset({"discourse"})
+
+
+def _verified_salient_property(dialogue_context: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    """Recover a verified semantic property focus from dialogue context.
+
+    DialogueState stores the last verified surface decision, including the exact
+    canonical Response CSIR semantic signature.  Reading the property from that
+    signature preserves semantic provenance and avoids treating the previous
+    surface wording as authority.
+    """
+    direct = dialogue_context.get("salient_property")
+    if isinstance(direct, Mapping) and direct.get("property_ref"):
+        return dict(direct)
+    direct_ref = dialogue_context.get("salient_property_ref")
+    if isinstance(direct_ref, str) and direct_ref:
+        return {
+            "property_ref": direct_ref,
+            "property_kind": "designation",
+            "projected": True,
+            "projection_source": "dialogue_semantic_focus",
+        }
+    decision = dialogue_context.get("last_surface_decision")
+    if not isinstance(decision, Mapping):
+        return None
+    signature = decision.get("semantic_signature")
+    if not isinstance(signature, str) or not signature:
+        return None
+    try:
+        semantic = json.loads(signature)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    qualifiers = semantic.get("qualifiers") if isinstance(semantic, Mapping) else None
+    if not isinstance(qualifiers, Mapping):
+        return None
+    property_ref = qualifiers.get("property_ref")
+    if not isinstance(property_ref, str) or not property_ref:
+        return None
+    return {
+        "property_ref": property_ref,
+        "property_kind": "designation",
+        "projected": True,
+        "projection_source": "verified_response_semantic_signature",
+        "source_response_ref": decision.get("response_ref"),
+    }
+
+
+def _schema_with_core_context_projections(schema: Mapping[str, Any]) -> dict[str, Any]:
+    """Install language-agnostic core projections over semantic operators.
+
+    The language pack still defines lexical evidence and the graph slots.  This
+    helper only adds a typed dialogue projection when a semantic designation
+    query already contains a predicate-head slot and the context supplies one
+    exact salient property.
+    """
+    output = dict(schema)
+    packet = dict(output.get("packet", {}) or {})
+    query = dict(packet.get("query", {}) or {})
+    restrictions = tuple(query.get("restrictions", ()))
+    if not any(
+        isinstance(item, Mapping) and item.get("operator") == "op:designation"
+        for item in restrictions
+    ):
+        return output
+    steps = [dict(item) for item in output.get("steps", ())]
+    predicate_slots = [
+        str(item.get("slot"))
+        for item in steps
+        if item.get("semantic_role") == "predicate_head"
+        and "predicate:designation" in set(map(str, item.get("ports_provided", ())))
+    ]
+    if len(predicate_slots) != 1:
+        return output
+    slot = predicate_slots[0]
+    graph_contract = dict(output.get("graph_contract", {}) or {})
+    projections = [dict(item) for item in graph_contract.get("projections", ())]
+    if not any(str(item.get("slot")) == slot for item in projections):
+        projections.append({
+            "slot": slot,
+            "source": "context",
+            "context_path": "salient_property",
+            "features": {
+                "projected": True,
+                "projection_source": "dialogue_semantic_focus",
+            },
+            "requires_slots": [
+                str(item.get("slot"))
+                for item in steps
+                if item.get("semantic_role") in {"force", "subject"}
+                and not item.get("optional")
+            ],
+            "ports_provided": ["predicate:designation"],
+            "penalty": 0.28,
+            "reason": "verified_dialogue_property_projection",
+        })
+        graph_contract["projections"] = projections
+        output["graph_contract"] = graph_contract
+    return output
+
+
+def _clone_unit_as_attachment(unit: Any, reason: str) -> Any:
+    features = dict(getattr(unit, "features", {}) or {})
+    features.update({
+        "turn_attachment": True,
+        "attachment_role": "preamble",
+        "attachment_reason": reason,
+        "original_unit_kind": str(getattr(unit, "kind", "")),
+    })
+    if is_dataclass(unit):
+        return replace(unit, kind="discourse", features=features)
+    values = dict(vars(unit))
+    values.update({"kind": "discourse", "features": features})
+    return SimpleNamespace(**values)
+
+
+def _clone_hypothesis(hypothesis: Any, units: Sequence[Any], reason: str) -> Any:
+    hypothesis_ref = stable(
+        "turn-grounding-hypothesis-v1",
+        getattr(hypothesis, "hypothesis_ref", ""),
+        reason,
+        [getattr(item, "unit_ref", "") for item in units],
+        [dict(getattr(item, "features", {}) or {}) for item in units],
+    )
+    if is_dataclass(hypothesis):
+        return replace(hypothesis, hypothesis_ref=hypothesis_ref, units=tuple(units))
+    values = dict(vars(hypothesis))
+    values.update({"hypothesis_ref": hypothesis_ref, "units": tuple(units)})
+    return SimpleNamespace(**values)
+
+
+def _attachment_prefix_allowed(prefix: Sequence[Any]) -> bool:
+    content = [item for item in prefix if getattr(item, "kind", None) != "punctuation"]
+    if not content or len(content) > 4:
+        return False
+    for unit in content:
+        features = dict(getattr(unit, "features", {}) or {})
+        if getattr(unit, "kind", None) == "discourse":
+            continue
+        if features.get("predicate") or features.get("property_ref") or features.get("copular"):
+            return False
+        if features.get("auxiliary") or features.get("modal") or features.get("scope_operator"):
+            return False
+        if features.get("participant_role") and not features.get("anaphoric"):
+            return False
+        if getattr(unit, "kind", None) not in {"anchor", "unknown", "function"}:
+            return False
+    return True
+
+
+def _turn_hypothesis_variants(hypothesis: Any) -> tuple[Any, ...]:
+    """Create bounded N-best turn readings without deleting observed units.
+
+    The original hypothesis always survives.  Additional readings reinterpret a
+    short preamble as attached discourse only when a later explicit force-bearing
+    unit starts the primary clause and the prefix is separated by punctuation.
+    Every prefix unit remains in coverage with its original semantic provenance.
+    """
+    units = tuple(getattr(hypothesis, "units", ()))
+    output = [hypothesis]
+    if len(units) < 2:
+        return tuple(output)
+    force_starts = [
+        index
+        for index, unit in enumerate(units)
+        if index > 0
+        and (
+            dict(getattr(unit, "features", {}) or {}).get("discourse_force")
+            or dict(getattr(unit, "features", {}) or {}).get("force_evidence")
+        )
+    ]
+    for start in force_starts[:4]:
+        prefix = units[:start]
+        separated = any(
+            getattr(item, "kind", None) == "punctuation"
+            for item in prefix
+        )
+        if not separated or not _attachment_prefix_allowed(prefix):
+            continue
+        reason = "force_bearing_suffix_after_preamble"
+        transformed = tuple(_clone_unit_as_attachment(item, reason) for item in prefix) + units[start:]
+        output.append(_clone_hypothesis(hypothesis, transformed, reason))
+    unique: dict[str, Any] = {}
+    for item in output:
+        unique.setdefault(str(getattr(item, "hypothesis_ref", "")), item)
+    return tuple(unique.values())
+
+
+def _expanded_turn_lattice(lattice: Any) -> Any:
+    hypotheses = tuple(
+        variant
+        for hypothesis in tuple(getattr(lattice, "grounding_hypotheses", ()))
+        for variant in _turn_hypothesis_variants(hypothesis)
+    )
+    if hypotheses == tuple(getattr(lattice, "grounding_hypotheses", ())):
+        return lattice
+    if is_dataclass(lattice):
+        return replace(lattice, grounding_hypotheses=hypotheses)
+    values = dict(vars(lattice))
+    values["grounding_hypotheses"] = hypotheses
+    return SimpleNamespace(**values)
 
 
 def _walk(value: Any, path: str = "root"):
@@ -184,7 +385,7 @@ class AtomicSchemaMatcher:
     """Compatibility facade over the exclusive v6 graph engine."""
 
     def __init__(self, schemas: Iterable[Mapping[str, Any]], *, max_matches: int = 32):
-        self.schemas = tuple(dict(item) for item in schemas)
+        self.schemas = tuple(_schema_with_core_context_projections(item) for item in schemas)
         self.max_matches = int(max_matches)
         self._schemas_by_ref = {str(item["ref"]): item for item in self.schemas}
         for schema in self.schemas:
@@ -253,19 +454,25 @@ class AtomicSchemaMatcher:
     def _context(participant_frame: Any | None) -> dict[str, Any]:
         if participant_frame is None:
             return {}
+        dialogue = dict(getattr(participant_frame, "dialogue_context", {}) or {})
+        salient_property = _verified_salient_property(dialogue)
         return {
             "speaker_ref": participant_frame.speaker_ref,
             "addressee_ref": participant_frame.addressee_ref,
             "self_ref": participant_frame.self_ref,
             "conversation_ref": participant_frame.conversation_ref,
-            **dict(getattr(participant_frame, "dialogue_context", {}) or {}),
+            **dialogue,
+            "salient_property": salient_property,
         }
 
     def matches(self, lattice: Any, participant_frame: Any | None = None) -> tuple[SchemaMatch, ...]:
-        graph_matches = self._engine.matches(lattice, context=self._context(participant_frame))
+        expanded_lattice = _expanded_turn_lattice(lattice)
+        graph_matches = self._engine.matches(
+            expanded_lattice, context=self._context(participant_frame)
+        )
         hypotheses = {
             str(item.hypothesis_ref): item
-            for item in tuple(getattr(lattice, "grounding_hypotheses", ()))
+            for item in tuple(getattr(expanded_lattice, "grounding_hypotheses", ()))
         }
         output: list[SchemaMatch] = []
         for graph in graph_matches:

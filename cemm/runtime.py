@@ -36,6 +36,11 @@ from cemm.goals import AdapterRegistry, GoalArbiter, GoalCandidate
 from cemm.inference import Inference, InferenceTimeoutError
 from cemm.interpreter import Interpreter
 from cemm.model import AmbiguousReferent, canonical, now, stable
+from cemm.learning_plans import (
+    LearningContractRegistry,
+    LearningPlan,
+    validate_learning_commit_packet,
+)
 from cemm.operational import (
     CANONICAL_RUNTIME_RESOURCES,
     OperationalInvariantChecker,
@@ -108,6 +113,7 @@ class Runtime:
     def _bind_authority(self):
         generation = int(self.runtime_attestation["authority_generation"])
         self.i = Interpreter(self.s, self.pack, generation, self.config)
+        self.learning_contracts = LearningContractRegistry(self.s, generation)
         self.inf = Inference(self.s, self.config, authority_generation=generation)
         self.retriever = SemanticRetriever(self.s, self.config, generation)
         self.state_projector = StateProjector(self.s, self.config, authority_generation=generation)
@@ -233,11 +239,17 @@ class Runtime:
         self.service_registry.validate_resources()
 
     def reload_authority(self):
+        invalidated = self.dialogue_state.invalidate_pending_on_authority_reload()
         generation = self.s.generation
         self.runtime_attestation["authority_generation"] = generation
         self.runtime_attestation["authority_generation_hash"] = self.s.authority_hash(generation)
         self._bind_authority()
-        return dict(self.runtime_attestation)
+        return {
+            **dict(self.runtime_attestation),
+            "invalidated_pending_learning_plan_ref": (
+                invalidated.plan.plan_ref if invalidated is not None else None
+            ),
+        }
 
     def _new_cycle(self, participant_frame=None, source="user", channel="text"):
         self._cycle_counter += 1
@@ -958,8 +970,16 @@ class Runtime:
         if should_commit:
             packet_qualifiers = dict((packet or {}).get("qualifiers", {}))
             if packet_qualifiers.get("consumes_pending_learning"):
-                self.dialogue_state.require(
+                pending_learning = self.dialogue_state.require(
                     packet_qualifiers.get("pending_learning_obligation_ref")
+                )
+                validate_learning_commit_packet(
+                    packet,
+                    pending_learning,
+                    self.s,
+                    authority_generation=int(
+                        self.runtime_attestation["authority_generation"]
+                    ),
                 )
             commit_resources = {"resource:semantic_store"}
             if any(
@@ -1026,10 +1046,45 @@ class Runtime:
                     raise RuntimeError(
                         "learning probe query differs from the executed QueryStructure"
                     )
+                contract_ref = str(probe.get("learning_contract_ref") or "")
+                query_kind = str(dict(query_result.qualifiers or {}).get("query_kind") or "")
+                contract = self.learning_contracts.license_query(contract_ref, query_kind)
+                candidate_target_kinds = tuple(sorted(
+                    set(map(str, probe.get("semantic_kind_candidates", ())))
+                    & set(contract.expected_target_kinds)
+                ))
+                if not candidate_target_kinds:
+                    raise RuntimeError(
+                        "learning probe has no target kind licensed by its contract"
+                    )
+                plan = LearningPlan.create(
+                    contract=contract,
+                    source_query_ref=query_result.query_ref,
+                    source_query_kind=query_kind,
+                    source_query=exact_query,
+                    authority_generation=int(
+                        self.runtime_attestation["authority_generation"]
+                    ),
+                    surface_literal=str(probe.get("surface") or ""),
+                    language=self.lang,
+                    expected_target_kinds=candidate_target_kinds,
+                    known_bindings=dict(probe.get("known_bindings", {})),
+                    target_ref=probe.get("target_ref"),
+                    original_candidate_ref=probe.get("original_candidate_ref"),
+                    unresolved_span_ref=probe.get("unresolved_span_ref"),
+                    created_turn=self._cycle_counter,
+                    expires_after_turn=self.dialogue_state.expiry_turns,
+                )
+                plan.validate_authority(
+                    self.s, authority_generation=int(
+                        self.runtime_attestation["authority_generation"]
+                    )
+                )
                 learning_probe.append({
                     **probe,
                     "query_ref": query_result.query_ref,
                     "probe_query": exact_query,
+                    "learning_plan": plan.as_dict(),
                 })
         candidates = list(self.goal_arbiter.candidates(
             act=act,

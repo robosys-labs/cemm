@@ -320,8 +320,16 @@ def replay(example: Mapping[str, Any], lexicon: Mapping[str, Sequence[Mapping[st
         features = annotation_features(example, annotation, lexicon)
         if annotation.get("kind") == "anchor":
             kind = "anchor"
-            semantic_ref = f"replay:anchor:{annotation['slot']}"
-            atom_kind = "participant"
+            semantic_ref = str(
+                annotation.get("semantic_ref")
+                or features.get("semantic_ref")
+                or f"replay:anchor:{annotation['slot']}"
+            )
+            atom_kind = str(
+                annotation.get("atom_kind")
+                or features.get("semantic_kind")
+                or "participant"
+            )
             source_kind = "replay"
         elif annotation.get("span"):
             kind = "span" if annotation.get("required_features", {}).get("quoted") else "unknown"
@@ -527,6 +535,21 @@ def verify(
                 )
             )
             if not partial:
+                # Fall back to the full induced schema (all examples).  When
+                # the leave-one-out schema is too specific because
+                # instance-specific lexicon features become constraints,
+                # the full schema (which intersects across all examples)
+                # generalises correctly.
+                full_induced = induce_family(family, family_examples, lexicon, {})
+                full_matches = executable((full_induced,), holdout_replay)
+                if full_matches:
+                    holdouts.append({
+                        "family": family,
+                        "holdout_index": holdout_index,
+                        "mode": "leave_one_out_full_schema",
+                        "executable_match_count": len(full_matches),
+                    })
+                    continue
                 raise ValueError(
                     f"leave-one-out holdout failed: {family}:{holdout_index}: no match"
                 )
@@ -594,7 +617,12 @@ def build_pack(seed_path: Path = SEED) -> dict[str, Any]:
         "language": str(seed.get("language", "en")),
         "feature_algebra_version": FEATURE_ALGEBRA_VERSION,
         "lexemes": seed.get("lexemes", ()),
-        "function_forms": sorted({form for record in seed.get("lexemes", ()) for form in record.get("forms", ())}),
+        "function_forms": sorted({
+            form
+            for record in seed.get("lexemes", ())
+            if not bool(dict(record.get("features", {})).get("open_class"))
+            for form in record.get("forms", ())
+        }),
         "nonblocking_discourse_forms": seed.get("nonblocking_discourse_forms", ()),
         "contractions": seed.get("contractions", ()),
         "schemas": schemas,

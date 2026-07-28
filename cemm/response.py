@@ -11,6 +11,7 @@ import re
 from typing import Any, Mapping
 
 from cemm.model import Fact, canonical, stable
+from cemm.learning_plans import LearningPlan
 
 _SEMANTIC_REF = re.compile(r"^[a-z][a-z0-9_]*:[A-Za-z0-9_.-]+$")
 
@@ -131,8 +132,8 @@ class ResponseBuilder:
         literals: list[str] = []
         for frontier in frontiers:
             for item in frontier.evidence:
-                if item.get("learning_operation"):
-                    qualifiers.setdefault("learning_operation", item["learning_operation"])
+                if item.get("learning_plan_ref"):
+                    qualifiers.setdefault("learning_plan_ref", item["learning_plan_ref"])
                     if item.get("surface"):
                         literals.append(str(item["surface"]))
         if not literals:
@@ -181,6 +182,7 @@ class ResponseBuilder:
         literals: tuple[str, ...] = ()
         reason = goal_decision.reason if goal_decision else "no_goal"
         obligation_ref = goal.goal_ref if goal else None
+        precomputed_response_ref = None
 
         if goal and goal.kind == "request_learning_evidence":
             if query_result is None or goal.source_ref != query_result.query_ref:
@@ -190,44 +192,52 @@ class ResponseBuilder:
             payload = dict(goal.payload or {})
             if payload.get("query_ref") != query_result.query_ref:
                 raise ValueError("learning request payload lost exact query provenance")
-            operation = str(payload.get("learning_operation") or "")
+            raw_plan = payload.get("learning_plan")
+            if not isinstance(raw_plan, Mapping):
+                raise ValueError("learning request requires typed learning plan")
+            plan = LearningPlan.from_dict(raw_plan)
             surface = str(payload.get("surface") or "").strip()
             query_kind = str(dict(query_result.qualifiers or {}).get("query_kind") or "")
-            if not operation or not surface or not query_kind:
-                raise ValueError(
-                    "learning request requires one surface, operation, and immutable query kind"
-                )
-            if operation != "resolve_designation" or query_kind not in {
-                "designation_learning",
-                "meaning_query",
-                "designation_query",
-                "designation_property",
-            }:
-                raise ValueError(
-                    "learning request operation is not licensed by the executed query kind"
-                )
+            if not surface or not query_kind:
+                raise ValueError("learning request requires surface and query kind")
+            if plan.source_query_ref != query_result.query_ref:
+                raise ValueError("learning plan is not bound to executed query")
+            if plan.source_query_kind != query_kind:
+                raise ValueError("learning plan query kind differs from QueryResult")
+            probe_query = payload.get("probe_query")
+            if not isinstance(probe_query, Mapping):
+                raise ValueError("learning request lacks exact probe query")
+            if canonical(plan.source_query) != canonical(dict(probe_query)):
+                raise ValueError("learning plan source query differs from goal probe query")
+            if plan.surface_literal != surface:
+                raise ValueError("learning plan surface differs from probe")
             action = "request_learning_evidence"
-            target_ref = payload.get("target_ref")
+            target_ref = plan.target_ref
             literals = (surface,)
             qualifiers = {
                 "query_ref": query_result.query_ref,
                 "query_kind": query_kind,
-                "learning_operation": operation,
                 "learning_query": payload.get("probe_query"),
-                "expected_semantic_kinds": list(
-                    payload.get("semantic_kind_candidates", ())
-                ),
-                "known_bindings": dict(payload.get("known_bindings", {})),
-                "expected_answer_shape": dict(
-                    payload.get("expected_answer_shape", {})
-                    or {
-                        "operation": operation,
-                        "surface_cardinality": "one",
-                    }
-                ),
-                "original_candidate_ref": payload.get("original_candidate_ref"),
-                "unresolved_span_ref": payload.get("unresolved_span_ref"),
+                "expected_semantic_kinds": list(plan.expected_target_kinds),
+                "known_bindings": dict(plan.known_bindings),
+                "expected_answer_shape": {
+                    "answer_contract_ref": plan.answer_contract_ref,
+                    "surface_cardinality": "one",
+                },
+                "original_candidate_ref": plan.original_candidate_ref,
+                "unresolved_span_ref": plan.unresolved_span_ref,
             }
+            precomputed_response_ref = stable("response-csir", (
+                action, audience_ref, target_ref, [], (), qualifiers,
+                literals, "unanswered_learning_query", obligation_ref,
+            ))
+            plan = plan.bind_response(
+                response_ref=precomputed_response_ref,
+                goal_ref=obligation_ref,
+            )
+            qualifiers["learning_plan"] = plan.as_dict()
+            qualifiers["learning_plan_ref"] = plan.plan_ref
+            qualifiers["learning_contract_ref"] = plan.contract_ref
             reason = "unanswered_learning_query"
 
         elif goal and goal.kind == "answer_query":
@@ -243,6 +253,8 @@ class ResponseBuilder:
                 "unresolved_variables": list(query_result.unresolved_variables),
                 "query_ref": query_result.query_ref,
             }
+            if query_qualifiers.get("query_kind") == "capability_inventory_query":
+                target_ref = query_qualifiers.get("target_ref")
             if query_qualifiers.get("query_kind") == "operational_condition_query":
                 if operational_snapshot is None:
                     raise ValueError("operational query requires current OperationalSnapshot")
@@ -302,10 +314,15 @@ class ResponseBuilder:
                 ),
                 default={},
             )
-            learning_operation = evidence.get("learning_operation")
-            action = "request_learning_evidence" if learning_operation else "request_targeted_clarification"
-            target_ref = frontier.target_ref
+            raw_learning_plan = evidence.get("learning_plan")
             surface = evidence.get("surface") or evidence.get("normalized")
+            if isinstance(raw_learning_plan, Mapping):
+                action = "request_learning_evidence"
+            elif surface or frontier.target_ref:
+                action = "request_targeted_clarification"
+            else:
+                action = "request_generic_clarification"
+            target_ref = frontier.target_ref
             literals = (str(surface),) if surface else ()
             qualifiers = {
                 "frontier_ref": frontier.frontier_ref,
@@ -314,19 +331,21 @@ class ResponseBuilder:
                 "original_candidate_ref": evidence.get("candidate_ref"),
                 "unresolved_span_ref": evidence.get("span_ref"),
             }
-            if learning_operation:
+            if isinstance(raw_learning_plan, Mapping):
+                plan = LearningPlan.from_dict(raw_learning_plan)
                 qualifiers.update(
                     {
-                        "learning_operation": str(learning_operation),
+                        "learning_plan": plan.as_dict(),
+                        "learning_plan_ref": plan.plan_ref,
+                        "learning_contract_ref": plan.contract_ref,
+                        "query_ref": plan.source_query_ref,
+                        "query_kind": plan.source_query_kind,
                         "learning_query": evidence.get("probe_query"),
-                        "known_bindings": dict(evidence.get("known_bindings", {})),
-                        "expected_answer_shape": dict(
-                            evidence.get("expected_answer_shape", {})
-                            or {
-                                "operation": str(learning_operation),
-                                "surface_cardinality": "one",
-                            }
-                        ),
+                        "known_bindings": dict(plan.known_bindings),
+                        "expected_answer_shape": {
+                            "answer_contract_ref": plan.answer_contract_ref,
+                            "surface_cardinality": "one",
+                        },
                     }
                 )
             reason = frontier.kind
@@ -399,7 +418,7 @@ class ResponseBuilder:
             obligation_ref,
         )
         return ResponseCSIR(
-            stable("response-csir", payload),
+            precomputed_response_ref or stable("response-csir", payload),
             action,
             audience_ref,
             target_ref,
@@ -489,9 +508,15 @@ def pointerize_response(response: ResponseCSIR):
         value = response.qualifiers.get(key)
         if value is not None:
             parts += [label, table.encode(value, f"response:{key}")]
-    learning_operation = response.qualifiers.get("learning_operation")
-    if learning_operation:
-        parts += ["LEARNING", str(learning_operation)]
+    learning_plan_ref = response.qualifiers.get("learning_plan_ref")
+    if learning_plan_ref:
+        parts += [
+            "LEARNING_PLAN",
+            table.literal(
+                {"literal": {"type": "text", "value": str(learning_plan_ref)}},
+                "response:learning_plan_ref",
+            ),
+        ]
     for key, label in (
         ("object_surface", "OBJECT_SURFACE"),
         ("predicate_surface", "PREDICATE_SURFACE"),

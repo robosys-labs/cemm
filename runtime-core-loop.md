@@ -305,3 +305,26 @@ Pack-local `CONST*` sources resolve only to authority-scoped atoms visible to th
 
 A general name question enters the loop as designation-family evidence. Stage 5 constructs an open designation restriction, Stage 10 projects the surface literal and label subtype, and Stage 18 constructs a literal-bearing Response CSIR. This path must also handle aliases, titles and localized labels; no `name` token branch exists in the core.
 
+## 13. Native semantic contribution and learning handoff
+
+Between Stage 3 grounding and Stage 5 compilation, every designation candidate
+is expanded through a generation-pinned `SemanticAffordanceIndex`. The resulting
+transient contribution carries semantic identity, contribution kind, typed ports,
+frame roles and provenance. This does not create or commit an atom.
+
+Stage 5 consumes schema-declared and contribution-provided ports together. A
+grounded predicate contribution left unassigned is critical. A morphology-only
+open-class form with no designation remains a typed unknown and cannot cross the
+Stage-7 executable boundary.
+
+For unanswered exact designation/meaning queries, Stage 15 may receive one
+`LearningPlan` only after Stage 10 has produced the matching QueryResult. The plan
+identity includes the exact QueryStructure and pinned authority generation. Stage
+18 preserves that plan in Response CSIR; Stage 21 may open one pending
+obligation only after verified realization. A continuation can consume the
+obligation only when Stage 13 validates and commits the exact licensed
+`op:designation` effect and produces its receipt.
+
+Proposition embedding uses bounded graphs of ordinary five-operator
+applications. Shared event refs and explicit roles encode event complements; no
+new proposition or intent operator is permitted.

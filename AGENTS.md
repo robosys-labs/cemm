@@ -1,212 +1,301 @@
-# CEMM v1 — Governing Agent Instructions
+# CEMM Governing Agent Instructions — Native Semantic Spine
 
-**Status:** highest-priority local implementation contract  
-**Target:** one exact semantic cognition runtime; no compatibility brain, phrase router, or hidden fallback
+**Status:** highest-priority implementation contract  
+**Target:** one exact, atomic, language-agnostic semantic cognition runtime  
+**Semantic Contribution ABI:** 1  
+**Form/Coverage ABI:** 6
 
-Read these active contracts before changing code:
+## 1. Canonical documents
+
+Read and obey these files together:
 
 1. `AGENTS.md`
 2. `ARCHITECTURE.md`
-3. `runtime-core-loop.md`
-4. `CURRENT_RUNTIME_WEAKNESSES.md`
-5. `V1_ACCEPTANCE.md`
-6. `README.md`
+3. `RUNTIME_ARCHITECTURE.md`
+4. `DATA_ARCHITECTURE.md`
+5. `runtime-core-loop.md`
+6. `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md`
+7. `NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_PLAN.md`
+8. `NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_STATUS.md`
+9. `V1_ACCEPTANCE.md`
 
-Documents under `docs/archive/` are historical evidence only. A historical test, plan, patch report, demo transcript, or frozen MVP cannot override the active contracts.
+Historical documents, demo transcripts and archived tests are evidence only. They cannot override these contracts.
 
----
-
-## 1. Core thesis
+## 2. Unchanging thesis
 
 ```text
 meaning != language
-exact semantics are authority
-neural/dynamic computation proposes, ranks, composes and realizes
+surface evidence != semantic identity
+semantic identity != compositional role
+compositional candidate != settled meaning
+settled meaning != admitted world truth
+admitted truth != executable external operation
+response meaning precedes surface realization
 ```
 
-There is one semantic brain. The exact plane and dynamic plane have different computational roles, but they converge on one semantic authority. Never preserve a legacy parser, phrase recognizer, sidecar pack, compatibility ontology, or alternate runtime as a second source of meaning.
+CEMM has one semantic brain. Language, sensors, dialogue and operation output supply evidence. The exact semantic plane owns identities, operators, roles, facts, state, rules, frames and proof. Dynamic computation proposes and ranks candidates but cannot invent semantic authority.
 
-New domains normally extend atoms, designations, existing operator applications, dimensions, rules, mechanisms, profiles, evidence and learned parameters. They do not expand kernel branch count or database schema count.
+## 3. Fixed kernel
 
----
-
-## 2. Mandatory root-cause workflow
-
-A failing phrase is a diagnostic probe, not a feature request.
-
-Before editing code:
-
-1. Reproduce the failure with a typed stage trace and exact authority generation.
-2. Locate the earliest stage where the expected artifact diverges.
-3. Identify the missing or malformed **general capability**: normalization, form evidence, reference candidates, identity grounding, state entitlement, CSIR expressiveness, inference, admission, transition, goal, Response CSIR, or realization.
-4. Review all existing foundational atoms, roles, relations, rules and stage contracts that could represent the capability.
-5. Decide whether the defect is data, authority linkage, retrieval, candidate generation, exact validation, settling, persistence ownership, or training supervision.
-6. Define a cross-domain and multilingual acceptance test before implementation.
-7. Change the earliest correct owning layer. Do not patch a later symptom.
-8. Run authority-link, no-hidden-write, multi-hypothesis, anti-bloat and regression gates.
-9. Update active documentation and archive superseded plans.
-
-A patch is rejected when its justification is merely “this makes the example pass.”
-
----
-
-## 3. Absolute prohibition on stealth text cognition
-
-Do not add regexes, token lists, substring checks, punctuation checks, exact transcript checks, special question-word branches, or phrase-specific conditions to infer semantic meaning inside the core loop.
-
-The only permitted surface-pattern machinery is inside an explicitly bounded **pre-core form-processing subsystem**. Its responsibility is reversible normalization and form evidence, not semantic authority. It may produce multiple candidates with provenance; it may not decide referent identity, discourse force, operator choice, world truth, state dimension, event effect, goal, or response meaning.
+Exactly five semantic application shapes remain irreducible:
 
 ```text
-raw signal/text
-→ reversible normalization alternatives
-→ morphology/token/span/construction evidence alternatives
-→ sentence/document resolution pass
-→ ResolvedFormLattice (N-best, provenance preserved)
-→ semantic Stage 1–22 core loop
+op:designation
+op:type
+op:relation
+op:state
+op:event
 ```
 
-Until that subsystem is implemented, do not scatter temporary text matching through `runtime.py`, `interpreter.py`, `goals.py`, `response.py`, or domain data loaders.
+Do not add `op:learn`, `op:want`, `op:remember`, `op:name`, phrase intents or domain-specific kernel operators. Learning, desire, memory, naming and communication are represented by semantic refs, frames, capabilities, goals and ordinary five-operator applications.
 
----
+## 4. Native semantic grounding law
 
-## 4. Multi-resolution law
+Every seeded or learned **meaning-bearing form** must yield at least one bounded typed semantic contribution candidate or one typed unresolved contribution.
 
-Ambiguity must remain parallel until sufficient semantic and contextual evidence settles it.
+A form contribution belongs to the closed transient ABI:
+
+```text
+anchor
+predicate
+binder
+reference
+scope
+discourse
+connector
+qualifier
+literal
+open_variable
+```
+
+Not every word maps directly to an operation:
+
+- `learn` may denote `event:learn` and inherit an event-frame affordance;
+- `is` supplies a predication binder;
+- `you` supplies a participant-relative reference requirement;
+- `can` supplies capability modality scope;
+- `not` supplies polarity scope;
+- `because` links proposition graphs;
+- a learned noun may supply an anchor and, when its target is a concept, a type-predicate candidate.
+
+The final operator and role structure is selected only by atomic graph composition and exact settling.
+
+## 5. Designation versus affordance
+
+A designation answers:
+
+> Which semantic identity may this surface denote?
+
+An affordance profile answers:
+
+> How may that semantic identity participate in a candidate graph?
+
+Never encode both concerns as one language-pack dictionary entry.
+
+Required path:
+
+```text
+surface span
+→ designation candidates
+→ target semantic kinds and reviewed frame links
+→ bounded affordance profiles
+→ semantic contribution candidates
+→ atomic graph composition
+```
+
+A newly learned synonym must inherit the target's affordances without regenerating the language pack.
+
+## 6. Language-pack boundary
+
+Language packs own reversible form evidence:
+
+- tokenisation and morphology;
+- closed-class features;
+- reference/deixis requirements;
+- polarity, modality, tense, aspect and scope evidence;
+- bounded construction annotations;
+- discourse-form evidence;
+- language-specific realization.
+
+Language packs must not be expanding semantic dictionaries. Open-class meaning normally enters through exact designations and semantic affordances.
+
+Do not place a new learned verb in `function_forms` merely to make it compositionally usable.
+
+Realization grammar tokens are output-only and must never be fed back into pre-core form classification.
+
+## 7. Semantic affordance rules
+
+Default affordances may be derived only from semantic kind, never from surface text or ref-name spelling.
+
+Examples:
+
+- `event_type` → event-predicate and event-type-anchor candidates;
+- `relation_type` → relation-predicate and relation-type-anchor candidates;
+- `state_dimension` → state-property predicate and dimension anchor;
+- `value` → value anchor and bounded state-value predicate candidate;
+- `label_type` → designation-property predicate and label anchor;
+- `concept` → nominal anchor and type-predicate candidate;
+- entity-like kinds → referent anchor;
+- `capability` → capability target/predicate candidates.
+
+Sparse reviewed frame atoms may refine or replace defaults. Frame metadata must be generation-pinned, bounded and validated at activation.
+
+## 8. No ref-name lexicalization
+
+Internal refs are not language.
 
 Forbidden:
 
 ```text
-surface → first label match → one referent → one meaning
-surface → punctuation/keyword → one force
-unknown token → concept
+resource:semantic_store → automatically create “semantic store”
+frame:event-learn → automatically create “event learn”
+contract:designation_learning → automatically expose “designation learning”
+```
+
+User-visible designations must be explicit reviewed facts. Developer display labels, if needed, are separate metadata and never enter the designation index.
+
+## 9. Polysemy law
+
+One surface may produce multiple semantic targets and multiple affordance profiles. Preserve alternatives until exact constraints and bounded settling produce a sufficient margin.
+
+Do not collapse:
+
+```text
+mean → one universal learning operation
+learn → equal-priority event and capability identities
+is → one operator
+```
+
+`mean` may contribute definition/designation, implication, correction or significance candidates. `learn` normally denotes a learning event; capability interpretation is composed from modality plus the event-to-capability dependency.
+
+## 10. Typed learning plans
+
+Runtime procedure strings are not semantic authority.
+
+Forbidden:
+
+```text
+learning_operation = "resolve_designation"
+if query_kind in {...}: execute learning branch
 ```
 
 Required:
 
 ```text
-surface evidence
-→ candidate forms/spans/constructions
-→ candidate designations/reference requirements
-→ candidate referents/identities
-→ candidate CSIR graphs
-→ exact clamps + state/type/context factors
-→ recurrent bounded settling
-→ stable, partial, ambiguous, or unresolved result
+LearningPlan
+  contract_ref
+  source_query_ref
+  goal_ref
+  capability_ref
+  commit_operator_ref
+  surface_literal
+  expected target kinds
+  answer contract
+  provenance
+  expiry
 ```
 
-No stage may collapse N-best candidates merely for API convenience. A top candidate may be selected only with an explicit margin/convergence decision and retained alternatives/provenance.
+The designation-learning contract must lower to `op:designation`, require `cap:learn`, remain bound to one exact QueryResult, and be consumed only after a successful Stage-13 commit receipt.
 
----
+## 11. Learning distinctions
 
-## 5. Foundation and authority integrity
+Keep these meanings separate:
 
-Authority JSON files are one graph split across files, not independent mini-ontologies.
+- **lookup:** “What does X mean?” executes a query and does not mutate world state;
+- **teaching claim:** “X means Y” creates a source-attributed semantic claim;
+- **learning directive:** “Learn that X means Y” creates a directive over an embedded proposition;
+- **learning event claim:** “I learned X” is an attributed event claim about the speaker;
+- **reviewed acquisition:** an explicit reviewer publishes a new identity/designation under acquisition policy.
 
-Before any durable import:
+No lexical token directly authorizes a write.
 
-- link the complete authority bundle;
-- verify every atom, operator, role, control symbol, fact filler, rule constant and language-pack constant;
-- reject concept-as-instance hierarchy encoding;
-- reject state applications without `role:dimension`;
-- reject incomplete reified state specifications;
-- reject duplicate/conflicting atom kinds or role contracts;
-- validate language-pack hashes and authority constants;
-- write the bundle atomically only after all checks pass.
+## 12. Atomic graph requirements
 
-Generic relations and generic rules belong in foundational authority, never in a family, vehicle, medical, security, or other demo/domain file.
+Every observed unit must be:
 
-Do not create a new foundational atom until you have searched existing primitives and documented why composition of existing atoms/operators cannot represent the meaning. When a new foundational primitive is genuinely required, update architecture, bundle validation, multilingual data, tests and migration together.
+1. consumed into exactly one semantic role; or
+2. retained as exactly one typed residual.
 
----
+Dynamic contribution ports from grounded semantic targets participate in port validation alongside schema-declared ports. Critical residuals block execution. Noncritical discourse/modifier evidence may survive as background evidence.
 
-## 6. Designation, label and name law
+A schema may match contribution features and semantic kinds. It must not match literal words, regexes, raw phrases or internal ref spelling.
 
-Referent identity is opaque and distinct from every label.
+## 13. Proposition and scope architecture
 
-```text
-referent
-← op:designation(label_type, surface, language, context, provenance)
-```
+Embedded content is represented as nested or linked semantic graphs, never opaque text when structure is available.
 
-`name` is a designation family/property query, not an identity, state value, English keyword, or custom response branch. `label:name_full` and `label:name_alias` are subtypes of `label:name`.
+Required generic competencies include:
 
-A query for a name must construct a designation restriction graph and project the appropriate surface literal/designation evidence. Never implement `if "name" in text` or a `NAME_QUERY` semantic program.
+- modal scope over an event or relation;
+- desire/intention over a proposition;
+- knowledge/memory over an entity or proposition;
+- speech over content and optional addressee;
+- condition, cause, contrast and coordination links;
+- quoted/literal content when semantic decomposition is unavailable.
 
----
+Do not add one intent or schema family per English sentence.
 
-## 7. Fixed semantic laws
+## 14. Authority and data ownership
 
-- Exactly five compact operator shapes remain the v1 ABI: designation, type, relation, state and event.
-- `op:type(instance, class)` is instance membership. Concept hierarchy uses `rel:subtype_of`.
-- State always has subject, dimension and value.
-- State specifications may reify a dimension/value pair; their relations must be foundational and complete.
-- Defaults are expectations, not observations.
-- Claims are source-attributed before admission.
-- Prediction, simulation and desired state are not observed world state.
-- Subject/object positions never imply causal roles.
-- Response semantics precede words.
-- Partial meaning is valid cognition and must not be discarded.
-- Unknown material must not create semantic authority or poison unrelated self/world state.
+Authority files form one linked graph. Every atom has one owner. Supplemental files may reference but not redefine it.
 
----
+Before import:
 
-## 8. Backward compatibility and tests
+- link the complete bundle;
+- validate all atom refs and kinds;
+- validate frame links and frame metadata;
+- validate learning contracts;
+- validate operator lowering compatibility;
+- reject automatic internal lexicalization;
+- reject missing capabilities, goals or answer contracts;
+- validate pack hashes and ABI versions;
+- perform one atomic import.
 
-Backward compatibility is not a goal when it preserves an invalid semantic contract.
+## 15. Performance bounds
 
-Old tests are evidence, not authority. Retire or rewrite tests that assert:
+Normal cycles must remain bounded:
 
-- exact phrase responses;
-- Ask/Learn/Teach as different cognition;
-- global SessionSelf semantics;
-- omitted dimensions;
-- concept-as-instance hierarchy;
-- function words inferred from examples;
-- autonomous concept creation;
-- generic outcome response templates;
-- whole-store runtime scans.
+- maximum designation candidates per span;
+- maximum affordance profiles per target;
+- maximum grounding hypotheses;
+- maximum atomic matches and search states;
+- bounded proposition depth;
+- bounded retrieval and inference closure;
+- one pending learning obligation;
+- bounded operation re-entry.
 
-Never weaken a new exact gate merely to keep a historical test green.
+No normal cycle may scan every atom to derive affordances. Use generation/revision-keyed caches and indexed relation lookup.
 
----
+## 16. Required anti-bloat tests
 
-## 9. Performance laws
+A release fails if:
 
-Normal cycles must use bounded indexed retrieval, generation/revision keyed caches, bounded recursive closure, bounded recurrent settling and bounded re-entry.
+- an unseen learned synonym requires form-pack regeneration;
+- a new atom automatically becomes a user-visible word;
+- an open-class lexeme is added to `function_forms` without closed-class justification;
+- a runtime branch checks a surface string to select meaning;
+- one semantic frame is duplicated per inflection or language;
+- a capability and event are duplicated lexically when modality can compose them;
+- a semantic contribution set exceeds its configured bound;
+- a learned unknown defaults to `concept`;
+- an invalid frame silently falls back to an opaque predicate.
 
-Forbidden on ordinary turns:
+## 17. Root-cause workflow
 
-- whole-store hashes;
-- whole-graph/base-fact scans;
-- full closure materialization;
-- per-turn model retraining;
-- global designation rebuilds;
-- one regex evaluation per stored label;
-- persistence of transient candidates or query closure.
+For every failure:
 
-Hard-required semantic/proof slots cannot be dropped by learned ranking, but they remain within explicit budgets.
+1. reproduce with exact activation and stage trace;
+2. identify the earliest divergent artifact;
+3. determine whether the defect belongs to form evidence, designation, affordance, graph assembly, settling, query, admission, goal, operation or realization;
+4. define multilingual and unseen-synonym acceptance tests;
+5. modify the earliest owner;
+6. regenerate deterministic artifacts;
+7. run authority, ABI, anti-bloat and full regression gates.
 
----
+A passing phrase alone is not acceptance.
 
-## 10. Definition of a valid fix
+## 18. Definition of completion
 
-A fix is complete only when:
-
-- the root cause is stated;
-- the owning stage/module is identified;
-- the exact semantic representation is documented;
-- the solution generalizes beyond the triggering phrase/domain/language;
-- authority linkage and import are atomic;
-- N-best alternatives and partial meaning are preserved;
-- persistence ownership is unchanged or explicitly justified;
-- performance budgets are maintained;
-- active docs and acceptance tests agree;
-- superseded plans/tests are archived or retired.
-
-When uncertain, stop and deepen the architecture review. Do not add a clever fallback.
-
-## Canonical Runtime Implementation Contract
-
-For active runtime, form/training, operational-state, transition and response-realization implementation, follow `CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md`. Do not duplicate or reinterpret that contract in this file or other architecture/phase documents.
+A change is complete only when code, authority data, deterministic generators, migrations, active docs, activation validation and executable tests agree. Partial implementation must remain explicitly disabled rather than hidden behind permissive fallback behaviour.
 
 <!-- CEMM_SOURCE_REWRITE:AGENTS:v3.1.3 -->
