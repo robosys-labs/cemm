@@ -17,6 +17,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cemm.authority import AuthorityBundleError, load_documents, validate_documents, validate_pack_constants
 
 
+ACTIVE_SCHEMA_VERSION = 3
+ACTIVE_FORM_PACK_VERSION = 7
+ACTIVE_FEATURE_ALGEBRA_VERSION = 7
+
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
@@ -175,8 +180,8 @@ def check(repo: Path):
         expected = hashlib.sha256(canonical(material).encode()).hexdigest()
         if data.get("pack_hash") != expected:
             fail(errors, f"language pack hash mismatch: {path.relative_to(repo)}")
-        if int(data.get("version", 0)) != 6:
-            fail(errors, f"language pack is not final v6: {path.relative_to(repo)}")
+        if int(data.get("version", 0)) != ACTIVE_FORM_PACK_VERSION:
+            fail(errors, f"language pack is not ABI-7 current: {path.relative_to(repo)}")
         sources = set(data.get("source_classes", ()))
         if {"USER", "SYSTEM"} & sources:
             fail(errors, f"lexically fixed participant sources remain: {path.relative_to(repo)}")
@@ -228,12 +233,24 @@ def check(repo: Path):
             fail(errors, "language pack: " + issue)
 
     constants = (cemm / "constants.py").read_text(encoding="utf-8")
-    if not re.search(r"SCHEMA_VERSION\s*=\s*[\"']2[\"']", constants):
-        fail(errors, "final schema version 2 is not declared")
+    if not re.search(
+        rf"SCHEMA_VERSION\s*=\s*[\"']{ACTIVE_SCHEMA_VERSION}[\"']", constants
+    ):
+        fail(errors, f"active schema version {ACTIVE_SCHEMA_VERSION} is not declared")
     if "rule_index" not in constants or "commit_receipts" not in constants:
         fail(errors, "final indexed-rule/incremental-commit tables are missing")
     if "evidence_count" not in constants or "last_generation" not in constants:
         fail(errors, "canonical accumulating frontier schema is missing")
+
+    form_packs = sorted((cemm / "form_packs").glob("*.json"))
+    if not form_packs:
+        fail(errors, "no generated form packs found")
+    for path in form_packs:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if int(data.get("version", 0)) != ACTIVE_FORM_PACK_VERSION:
+            fail(errors, f"form pack is not ABI-7 current: {path.relative_to(repo)}")
+        if int(data.get("feature_algebra_version", 0)) != ACTIVE_FEATURE_ALGEBRA_VERSION:
+            fail(errors, f"form pack feature algebra is not ABI 7: {path.relative_to(repo)}")
 
     patch_artifacts = sorted(
         path for path in repo.iterdir()

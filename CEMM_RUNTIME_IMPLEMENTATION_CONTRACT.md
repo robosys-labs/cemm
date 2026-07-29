@@ -1,7 +1,7 @@
 # CEMM Semantic–Operational Runtime Contract
 
 **Contract version:** 3.1.3  
-**Coverage/Form ABI:** 6  
+**Coverage/Form ABI:** 7
 **Target runtime:** CEMM v1 Stage 0–22  
 **Status:** sole normative implementation contract for this rewrite
 
@@ -646,7 +646,7 @@ introduce one bounded transient entity referent. A compatible event graph may
 reuse that same referent in an event role. This is generic port composition;
 surface spelling and semantic-ref fragments are forbidden as selectors.
 
-Activation must attest Coverage/Form ABI 6, Semantic Contribution ABI 1,
+Activation must attest Coverage/Form ABI 7, Semantic Contribution ABI 1,
 LearningPlan ABI 1, PropositionGraph ABI 1, module provenance, generated pack
 receipts and the linked frame/contract authority graph before serving input.
 

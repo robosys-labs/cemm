@@ -3,7 +3,7 @@
 **Status:** highest-priority implementation contract  
 **Target:** one exact, atomic, language-agnostic semantic cognition runtime  
 **Semantic Contribution ABI:** 1  
-**Form/Coverage ABI:** 6
+**Form/Coverage ABI:** 7
 
 ## 1. Canonical documents
 

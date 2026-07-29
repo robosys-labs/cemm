@@ -575,7 +575,7 @@ def build_pack(seed_path: Path = SEED) -> dict[str, Any]:
     source = seed_path.read_bytes()
     seed = json.loads(source)
     if int(seed.get("contract_version", -1)) != FEATURE_ALGEBRA_VERSION:
-        raise ValueError("seed must be migrated to feature algebra v6")
+        raise ValueError("seed must be migrated to feature algebra v7")
     lexicon = build_lexeme_index(seed.get("lexemes", ()))
     examples = list(seed.get("examples", ()))
     for example in examples:
@@ -613,7 +613,7 @@ def build_pack(seed_path: Path = SEED) -> dict[str, Any]:
         **verification,
     }
     pack = {
-        "version": 6,
+        "version": 7,
         "language": str(seed.get("language", "en")),
         "feature_algebra_version": FEATURE_ALGEBRA_VERSION,
         "lexemes": seed.get("lexemes", ()),

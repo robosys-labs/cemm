@@ -661,7 +661,7 @@ def validate_language(repo: Path) -> dict[str, Any]:
     require(language.get("pack_hash") == hashlib.sha256(canonical(material).encode()).hexdigest(), "language-pack hash mismatch")
     require(language.get("form_pack_hash") == form.get("pack_hash"), "language pack does not pin form pack")
     contract = dict(language.get("semantic_operational_contract", {}) or {})
-    require(contract.get("form_schema_algebra") == "atomic-feature-v5", "language pack pins the wrong form algebra")
+    require(contract.get("form_schema_algebra") == "atomic-feature-v7", "language pack pins the wrong form algebra")
     require(contract.get("response_fallback") == "same_response_csir_only", "language pack allows semantic fallback")
     require(contract.get("authority_atom_additions") == 0, "language migration claims authority additions")
     rules = tuple(language.get("response_grammar", ()))

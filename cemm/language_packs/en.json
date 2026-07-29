@@ -1,8 +1,8 @@
 {
-  "version": 6,
+  "version": 7,
   "language": "en",
   "form_pack": "../form_packs/en.json",
-  "form_pack_hash": "9b0cefdb80374867abb59c14b6115560cf52cc6aa08399df51a120737a0a6203",
+  "form_pack_hash": "6d559ae741e62b5574f023923a12849c1a4fa8d1660eabf0af7d735421bee666",
   "forces": [
     "acknowledgment",
     "claim",
@@ -405,24 +405,46 @@
   ],
   "response_examples": [
     {
+      "example_ref": "en:response:confirm",
       "semantic": "RESPONSE confirm",
-      "surface_plan": "Yes."
+      "surface_plan": "Yes.",
+      "weight": 1.0
     },
     {
+      "example_ref": "en:response:deny",
       "semantic": "RESPONSE deny",
-      "surface_plan": "No."
+      "surface_plan": "No.",
+      "weight": 1.0
     },
     {
+      "example_ref": "en:response:conflict",
       "semantic": "RESPONSE report_conflict",
-      "surface_plan": "I found conflicting evidence."
+      "surface_plan": "The evidence conflicts.",
+      "weight": 1.0
     },
     {
+      "example_ref": "en:response:uncertain",
       "semantic": "RESPONSE report_target_uncertainty",
-      "surface_plan": "I do not have enough evidence."
+      "surface_plan": "I do not have enough evidence.",
+      "weight": 1.0
     },
     {
+      "example_ref": "en:response:clarify",
+      "semantic": "RESPONSE request_targeted_clarification EVIDENCE @E0",
+      "surface_plan": "Could you clarify @E0?",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:capability",
+      "semantic": "RESPONSE report_capability TARGET @A0 SCORE @N0",
+      "surface_plan": "My @A0 is at @N0 percent.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:ack",
       "semantic": "RESPONSE acknowledge_claim",
-      "surface_plan": "Understood."
+      "surface_plan": "I recorded that claim.",
+      "weight": 1.0
     },
     {
       "example_ref": "en:response:decline",
@@ -437,18 +459,248 @@
       "weight": 1.0
     },
     {
+      "example_ref": "en:response:greet",
       "semantic": "RESPONSE greet",
-      "surface_plan": "Hello."
+      "surface_plan": "Hello.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:property",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND designation_property PROPERTY @A0 BINDING ?q0 @E0",
+      "surface_plan": "The @A0 is @E0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:learned-binding",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND designation_learning PROPERTY @A0 BINDING ?q0 @A1 ?q1 @A0 EVIDENCE @E0",
+      "surface_plan": "In this context, @E0 refers to @A1.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:state-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @A1",
+      "surface_plan": "The @A0 is @A1.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:state-answer-numeric",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND state_query PROPERTY @A0 BINDING ?q0 @A0 BINDING ?q1 @N0",
+      "surface_plan": "The @A0 is @N0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:type-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND type_query BINDING ?q0 @A0",
+      "surface_plan": "The kind is a @A0.",
+      "weight": 1.0
+    },
+    {
+      "example_ref": "en:response:capability-answer",
+      "semantic": "RESPONSE answer_bindings QUERY_KIND capability_inventory_query BINDING ?capability @A0",
+      "surface_plan": "I can use @A0.",
+      "weight": 1.0
     }
   ],
+  "response_grammar": [
+    {
+      "ref": "en:response:learning",
+      "when": {
+        "action": "request_learning_evidence"
+      },
+      "template": "What does {evidence} refer to here?",
+      "required_slots": [
+        "evidence"
+      ],
+      "semantic_slots": [
+        "evidence",
+        "learning_plan_ref",
+        "query_kind",
+        "query_ref"
+      ]
+    },
+    {
+      "ref": "en:response:attributed-claim",
+      "when": {
+        "action": "acknowledge_attributed_claim"
+      },
+      "template": "I understand that you think {subject} {copula} {predicate_surface}.",
+      "required_slots": [
+        "subject",
+        "copula",
+        "predicate_surface"
+      ],
+      "semantic_slots": [
+        "subject_ref",
+        "predicate_surface",
+        "claim_kind"
+      ]
+    },
+    {
+      "ref": "en:response:designation",
+      "when": {
+        "action": "answer_bindings",
+        "query_kind": "designation_property",
+        "has_bindings": true
+      },
+      "template": "{subject_possessive} {property} is {value}.",
+      "required_slots": [
+        "subject_possessive",
+        "property",
+        "value"
+      ],
+      "semantic_slots": [
+        "binding_values",
+        "property_ref",
+        "query_kind",
+        "query_ref",
+        "subject_ref"
+      ]
+    },
+    {
+      "ref": "en:response:operational-degraded",
+      "when": {
+        "action": "report_operational_condition",
+        "qualifiers": {
+          "assessment_status": "degraded"
+        }
+      },
+      "template": "I am operating, but some runtime resources are degraded.",
+      "required_slots": [],
+      "semantic_slots": [
+        "assessment_status",
+        "query_kind",
+        "query_ref",
+        "snapshot_ref",
+        "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:operational-normal",
+      "when": {
+        "action": "report_operational_condition",
+        "qualifiers": {
+          "assessment_status": "operating_normally"
+        }
+      },
+      "template": "I am operating normally and able to respond.",
+      "required_slots": [],
+      "semantic_slots": [
+        "assessment_status",
+        "query_kind",
+        "query_ref",
+        "snapshot_ref",
+        "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:operational-unavailable",
+      "when": {
+        "action": "report_operational_condition",
+        "qualifiers": {
+          "assessment_status": "unavailable"
+        }
+      },
+      "template": "I have runtime blockers that limit what I can do right now.",
+      "required_slots": [],
+      "semantic_slots": [
+        "assessment_status",
+        "query_kind",
+        "query_ref",
+        "snapshot_ref",
+        "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:operational-unknown",
+      "when": {
+        "action": "report_operational_condition",
+        "qualifiers": {
+          "assessment_status": "unknown"
+        }
+      },
+      "template": "I cannot verify my full runtime condition right now.",
+      "required_slots": [],
+      "semantic_slots": [
+        "assessment_status",
+        "query_kind",
+        "query_ref",
+        "snapshot_ref",
+        "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:relation-unknown",
+      "when": {
+        "action": "report_target_uncertainty",
+        "query_kind": "relation_query"
+      },
+      "template": "I do not have evidence that {subject} {relation} {object_surface}.",
+      "required_slots": [
+        "subject",
+        "relation",
+        "object_surface"
+      ],
+      "semantic_slots": [
+        "object_surface",
+        "query_kind",
+        "query_ref",
+        "relation_ref",
+        "subject_ref"
+      ]
+    },
+    {
+      "ref": "en:response:surface-choice",
+      "when": {
+        "action": "explain_surface_choice"
+      },
+      "template": "{surface_choice_b} would have been more natural than {surface_choice_a} because I was referring to myself.",
+      "required_slots": [
+        "surface_choice_a",
+        "surface_choice_b"
+      ],
+      "semantic_slots": [
+        "surface_decision_ref",
+        "surface_choice_a",
+        "surface_choice_b",
+        "prior_response_ref",
+        "prior_surface"
+      ]
+    },
+    {
+      "ref": "en:response:type",
+      "when": {
+        "action": "answer_bindings",
+        "query_kind": "type_query",
+        "has_bindings": true
+      },
+      "template": "{subject} {copula} a {value}.",
+      "required_slots": [
+        "subject",
+        "copula",
+        "value"
+      ],
+      "semantic_slots": [
+        "binding_values",
+        "query_kind",
+        "query_ref",
+        "subject_ref"
+      ]
+    }
+  ],
+  "semantic_operational_contract": {
+    "contract": "CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md",
+    "response_fallback": "same_response_csir_only",
+    "perspective": "output_participant_frame",
+    "form_schema_algebra": "atomic-feature-v7",
+    "operational_status": "cycle_local_structured_assessment",
+    "authority_atom_additions": 0
+  },
   "grammar_tokens": [
     "!",
     ",",
     ".",
-    ":",
     "?",
     "a",
-    "able",
     "about",
     "action",
     "actually",
@@ -467,28 +719,21 @@
     "are",
     "as",
     "at",
-    "available",
     "basically",
     "be",
     "because",
     "been",
     "being",
-    "blockers",
     "but",
     "by",
     "can",
     "cannot",
-    "capability",
     "claim",
     "clarify",
     "complete",
-    "completed",
-    "condition",
-    "conflicting",
     "conflicts",
     "context",
     "could",
-    "degraded",
     "did",
     "do",
     "does",
@@ -498,11 +743,8 @@
     "every",
     "evidence",
     "for",
-    "found",
-    "foundational",
     "frankly",
     "from",
-    "full",
     "full name",
     "had",
     "has",
@@ -511,7 +753,6 @@
     "he",
     "hello",
     "her",
-    "here",
     "hers",
     "hey",
     "hi",
@@ -523,42 +764,29 @@
     "i",
     "if",
     "in",
-    "incomplete",
-    "inferred",
     "instead",
     "is",
     "it",
     "its",
     "just",
     "kind",
-    "limit",
-    "match",
-    "matching",
     "may",
     "maybe",
     "me",
     "might",
     "mine",
-    "more",
-    "multiple",
     "must",
     "my",
-    "myself",
     "n't",
     "name",
-    "natural",
     "no",
-    "normally",
     "not",
-    "now",
-    "observation",
     "of",
     "oh",
     "ok",
     "okay",
     "on",
     "only",
-    "operating",
     "operation",
     "or",
     "our",
@@ -568,29 +796,18 @@
     "perform",
     "perhaps",
     "please",
-    "previous",
     "recorded",
-    "refer",
-    "referring",
     "refers",
-    "resources",
-    "respond",
-    "reviewed",
     "right",
-    "runtime",
     "seem",
     "seemed",
     "seeming",
     "seems",
-    "semantic",
     "shall",
     "she",
     "should",
     "so",
     "some",
-    "stored",
-    "structure",
-    "supporting",
     "than",
     "that",
     "the",
@@ -600,24 +817,17 @@
     "then",
     "these",
     "they",
-    "think",
     "this",
     "those",
     "title",
     "to",
     "type",
-    "types",
     "uh",
     "um",
-    "unavailable",
-    "understand",
-    "understood",
     "unless",
     "us",
     "use",
     "value",
-    "values",
-    "verify",
     "was",
     "we",
     "well",
@@ -767,890 +977,5 @@
     "your",
     "yours"
   ],
-  "pack_hash": "14273d1112004848ca475c2cc07cf8eddfef75fdcb15196b5847322b47023112",
-  "reference_realization": [
-    {
-      "surface": "I",
-      "features": {
-        "person": "first",
-        "number": "singular",
-        "possessive": false
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "my",
-      "features": {
-        "person": "first",
-        "number": "singular",
-        "possessive": true
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "myself",
-      "features": {
-        "person": "first",
-        "number": "singular",
-        "possessive": false,
-        "reflexive": true
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "you",
-      "features": {
-        "person": "second",
-        "number": "singular",
-        "possessive": false
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "your",
-      "features": {
-        "person": "second",
-        "number": "singular",
-        "possessive": true
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "they",
-      "features": {
-        "person": "third",
-        "number": "singular",
-        "possessive": false
-      },
-      "weight": 1.0
-    },
-    {
-      "surface": "their",
-      "features": {
-        "person": "third",
-        "number": "singular",
-        "possessive": true
-      },
-      "weight": 1.0
-    }
-  ],
-  "orthography": {
-    "sentence_initial_capitalization": true
-  },
-  "predicate_realization": [
-    {
-      "surface": "am",
-      "features": {
-        "lemma": "be",
-        "tense": "present",
-        "person": "first",
-        "number": "singular"
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "are",
-      "features": {
-        "lemma": "be",
-        "tense": "present",
-        "person": "second",
-        "number": "singular"
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "is",
-      "features": {
-        "lemma": "be",
-        "tense": "present",
-        "person": "third",
-        "number": "singular"
-      },
-      "weight": 2.0
-    },
-    {
-      "surface": "are",
-      "features": {
-        "lemma": "be",
-        "tense": "present",
-        "number": "plural"
-      },
-      "weight": 2.0
-    }
-  ],
-  "response_grammar": [
-    {
-      "ref": "en:response:acknowledge",
-      "when": {
-        "action": "acknowledge_claim"
-      },
-      "template": "Understood.",
-      "required_slots": [],
-      "semantic_slots": []
-    },
-    {
-      "ref": "en:response:attributed-claim",
-      "when": {
-        "action": "acknowledge_attributed_claim"
-      },
-      "template": "I understand that you think {subject} {copula} {predicate_surface}.",
-      "required_slots": [
-        "subject",
-        "copula",
-        "predicate_surface"
-      ],
-      "semantic_slots": [
-        "subject_ref",
-        "predicate_surface",
-        "claim_kind"
-      ]
-    },
-    {
-      "ref": "en:response:capability-available",
-      "when": {
-        "action": "report_capability",
-        "qualifiers": {
-          "status": "available"
-        }
-      },
-      "template": "This capability is available.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref",
-        "status"
-      ]
-    },
-    {
-      "ref": "en:response:capability-degraded",
-      "when": {
-        "action": "report_capability",
-        "qualifiers": {
-          "status": "degraded"
-        }
-      },
-      "template": "This capability is degraded.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref",
-        "status"
-      ]
-    },
-    {
-      "ref": "en:response:capability-inventory",
-      "when": {
-        "action": "answer_bindings",
-        "query_kind": "capability_inventory_query",
-        "has_bindings": true
-      },
-      "template": "I can use {value}.",
-      "required_slots": [
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "query_kind",
-        "query_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:capability-inventory-multiple",
-      "when": {
-        "action": "report_multiple_bindings",
-        "query_kind": "capability_inventory_query",
-        "has_bindings": true
-      },
-      "template": "I can use {value}.",
-      "required_slots": [
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "query_kind",
-        "query_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:capability-inventory-unknown",
-      "when": {
-        "action": "report_target_uncertainty",
-        "query_kind": "capability_inventory_query"
-      },
-      "template": "I cannot verify an available capability.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_kind",
-        "query_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:capability-unavailable",
-      "when": {
-        "action": "report_capability",
-        "qualifiers": {
-          "status": "unavailable"
-        }
-      },
-      "template": "This capability is unavailable.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref",
-        "status"
-      ]
-    },
-    {
-      "ref": "en:response:capability-unknown",
-      "when": {
-        "action": "report_capability",
-        "qualifiers": {
-          "status": "unknown"
-        }
-      },
-      "template": "I cannot verify this capability right now.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref",
-        "status"
-      ]
-    },
-    {
-      "ref": "en:response:clarify",
-      "when": {
-        "action": "request_targeted_clarification"
-      },
-      "template": "Could you clarify {evidence}?",
-      "required_slots": [
-        "evidence"
-      ],
-      "semantic_slots": [
-        "evidence",
-        "frontier_ref"
-      ]
-    },
-    {
-      "ref": "en:response:confirm",
-      "when": {
-        "action": "confirm"
-      },
-      "template": "Yes.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_kind",
-        "query_ref"
-      ]
-    },
-    {
-      "ref": "en:response:conflict",
-      "when": {
-        "action": "report_conflict"
-      },
-      "template": "I found conflicting evidence.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_kind",
-        "query_ref"
-      ]
-    },
-    {
-      "ref": "en:response:deny",
-      "when": {
-        "action": "deny"
-      },
-      "template": "No.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_kind",
-        "query_ref"
-      ]
-    },
-    {
-      "ref": "en:response:description-conflict",
-      "when": {
-        "action": "describe_semantic_target",
-        "query_kind": "semantic_description",
-        "description_completeness": "conflicting_structure"
-      },
-      "template": "I have conflicting stored semantic structure for {target}, so I cannot give one settled explanation.",
-      "required_slots": [
-        "target"
-      ],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "target_ref",
-        "description_result_ref",
-        "description_completeness",
-        "target_kind",
-        "description_summary"
-      ]
-    },
-    {
-      "ref": "en:response:description-identity",
-      "when": {
-        "action": "describe_semantic_target",
-        "query_kind": "semantic_description",
-        "description_completeness": "identity_only"
-      },
-      "template": "I know {target} as a {target_kind}, but I do not have enough stored defining structure to explain it further.",
-      "required_slots": [
-        "target",
-        "target_kind"
-      ],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "target_ref",
-        "description_result_ref",
-        "description_completeness",
-        "target_kind",
-        "description_summary"
-      ]
-    },
-    {
-      "ref": "en:response:description-partial",
-      "when": {
-        "action": "describe_semantic_target",
-        "query_kind": "semantic_description",
-        "description_completeness": "partial_structure"
-      },
-      "template": "{target} is a {target_kind}. Its stored semantic links include {description_summary}, but the description is incomplete.",
-      "required_slots": [
-        "target",
-        "target_kind",
-        "description_summary"
-      ],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "target_ref",
-        "description_result_ref",
-        "description_completeness",
-        "target_kind",
-        "description_summary"
-      ]
-    },
-    {
-      "ref": "en:response:description-sufficient",
-      "when": {
-        "action": "describe_semantic_target",
-        "query_kind": "semantic_description",
-        "description_completeness": "sufficient_structure"
-      },
-      "template": "{target} is a {target_kind}. Its stored semantic links include {description_summary}.",
-      "required_slots": [
-        "target",
-        "target_kind",
-        "description_summary"
-      ],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "target_ref",
-        "description_result_ref",
-        "description_completeness",
-        "target_kind",
-        "description_summary"
-      ]
-    },
-    {
-      "ref": "en:response:designation",
-      "when": {
-        "action": "answer_bindings",
-        "query_kind": "designation_property",
-        "has_bindings": true
-      },
-      "template": "{subject_possessive} {property} is {value}.",
-      "required_slots": [
-        "subject_possessive",
-        "property",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:designation-multiple",
-      "when": {
-        "action": "report_multiple_bindings",
-        "query_kind": "designation_property",
-        "has_bindings": true
-      },
-      "template": "{subject_possessive} {property} has multiple matching values: {value}.",
-      "required_slots": [
-        "subject_possessive",
-        "property",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:designation-unknown",
-      "when": {
-        "action": "report_target_uncertainty",
-        "query_kind": "designation_property"
-      },
-      "template": "I do not have enough evidence about {subject_possessive} {property}.",
-      "required_slots": [
-        "subject_possessive",
-        "property"
-      ],
-      "semantic_slots": [
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:directive-declined",
-      "when": {
-        "action": "decline_directive"
-      },
-      "template": "I could not perform that operation.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:generic-clarify",
-      "when": {
-        "action": "request_generic_clarification"
-      },
-      "template": "Could you clarify?",
-      "required_slots": [],
-      "semantic_slots": [
-        "frontier_ref"
-      ]
-    },
-    {
-      "ref": "en:response:greet",
-      "when": {
-        "action": "greet"
-      },
-      "template": "Hello.",
-      "required_slots": [],
-      "semantic_slots": []
-    },
-    {
-      "ref": "en:response:learning",
-      "when": {
-        "action": "request_learning_evidence"
-      },
-      "template": "What does {evidence} refer to here?",
-      "required_slots": [
-        "evidence"
-      ],
-      "semantic_slots": [
-        "evidence",
-        "learning_plan_ref",
-        "query_kind",
-        "query_ref"
-      ]
-    },
-    {
-      "ref": "en:response:operation-succeeded",
-      "when": {
-        "action": "report_operation_result"
-      },
-      "template": "The operation completed.",
-      "required_slots": [],
-      "semantic_slots": [
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:operational-degraded",
-      "when": {
-        "action": "report_operational_condition",
-        "qualifiers": {
-          "assessment_status": "degraded"
-        }
-      },
-      "template": "I am operating, but some runtime resources are degraded.",
-      "required_slots": [],
-      "semantic_slots": [
-        "assessment_status",
-        "query_kind",
-        "query_ref",
-        "snapshot_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:operational-normal",
-      "when": {
-        "action": "report_operational_condition",
-        "qualifiers": {
-          "assessment_status": "operating_normally"
-        }
-      },
-      "template": "I am operating normally and able to respond.",
-      "required_slots": [],
-      "semantic_slots": [
-        "assessment_status",
-        "query_kind",
-        "query_ref",
-        "snapshot_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:operational-unavailable",
-      "when": {
-        "action": "report_operational_condition",
-        "qualifiers": {
-          "assessment_status": "unavailable"
-        }
-      },
-      "template": "I have runtime blockers that limit what I can do right now.",
-      "required_slots": [],
-      "semantic_slots": [
-        "assessment_status",
-        "query_kind",
-        "query_ref",
-        "snapshot_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:operational-unknown",
-      "when": {
-        "action": "report_operational_condition",
-        "qualifiers": {
-          "assessment_status": "unknown"
-        }
-      },
-      "template": "I cannot verify my full runtime condition right now.",
-      "required_slots": [],
-      "semantic_slots": [
-        "assessment_status",
-        "query_kind",
-        "query_ref",
-        "snapshot_ref",
-        "target_ref"
-      ]
-    },
-    {
-      "ref": "en:response:proof-authority",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "reviewed_authority"
-      },
-      "template": "I know that from reviewed foundational authority in my semantic store.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:proof-inference",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "inference"
-      },
-      "template": "I inferred that from stored supporting facts through an exact inference proof.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:proof-operation",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "operational_observation"
-      },
-      "template": "I know that from the verified current runtime observation used for the answer.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:proof-stored",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "stored_evidence"
-      },
-      "template": "I know that from stored evidence linked to the previous answer.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:proof-unsupported",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "unsupported"
-      },
-      "template": "I do not have a complete supporting proof for that previous answer.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:proof-user",
-      "when": {
-        "action": "explain_evidence_provenance",
-        "query_kind": "epistemic_provenance",
-        "proof_basis": "user_report"
-      },
-      "template": "I know that from information you provided earlier and the exact record created from it.",
-      "required_slots": [],
-      "semantic_slots": [
-        "query_ref",
-        "query_kind",
-        "proof_ref",
-        "proof_basis",
-        "proof_completeness"
-      ]
-    },
-    {
-      "ref": "en:response:relation-denied",
-      "when": {
-        "action": "deny",
-        "query_kind": "relation_query"
-      },
-      "template": "No.",
-      "required_slots": [],
-      "semantic_slots": [
-        "object_surface",
-        "query_kind",
-        "query_ref",
-        "relation_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:relation-supported",
-      "when": {
-        "action": "confirm",
-        "query_kind": "relation_query"
-      },
-      "template": "Yes.",
-      "required_slots": [],
-      "semantic_slots": [
-        "object_surface",
-        "query_kind",
-        "query_ref",
-        "relation_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:relation-unknown",
-      "when": {
-        "action": "report_target_uncertainty",
-        "query_kind": "relation_query"
-      },
-      "template": "I do not have evidence that {subject} {relation} {object_surface}.",
-      "required_slots": [
-        "subject",
-        "relation",
-        "object_surface"
-      ],
-      "semantic_slots": [
-        "object_surface",
-        "query_kind",
-        "query_ref",
-        "relation_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:state",
-      "when": {
-        "action": "answer_bindings",
-        "query_kind": "state_query",
-        "has_bindings": true
-      },
-      "template": "{subject_possessive} {property} is {value}.",
-      "required_slots": [
-        "subject_possessive",
-        "property",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:state-multiple",
-      "when": {
-        "action": "report_multiple_bindings",
-        "query_kind": "state_query",
-        "has_bindings": true
-      },
-      "template": "{subject_possessive} {property} has multiple matching values: {value}.",
-      "required_slots": [
-        "subject_possessive",
-        "property",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:state-unknown",
-      "when": {
-        "action": "report_target_uncertainty",
-        "query_kind": "state_query"
-      },
-      "template": "I do not have enough evidence about {subject_possessive} {property}.",
-      "required_slots": [
-        "subject_possessive",
-        "property"
-      ],
-      "semantic_slots": [
-        "property_ref",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:structural-gap",
-      "when": {
-        "action": "report_structural_composition_gap"
-      },
-      "template": "I understood the known pieces, but their semantic connection is still unresolved.",
-      "required_slots": [],
-      "semantic_slots": [
-        "frontier_ref",
-        "gap_kind"
-      ]
-    },
-    {
-      "ref": "en:response:surface-choice",
-      "when": {
-        "action": "explain_surface_choice"
-      },
-      "template": "{surface_choice_b} would have been more natural than {surface_choice_a} because I was referring to myself.",
-      "required_slots": [
-        "surface_choice_a",
-        "surface_choice_b"
-      ],
-      "semantic_slots": [
-        "surface_decision_ref",
-        "surface_choice_a",
-        "surface_choice_b",
-        "prior_response_ref",
-        "prior_surface"
-      ]
-    },
-    {
-      "ref": "en:response:type",
-      "when": {
-        "action": "answer_bindings",
-        "query_kind": "type_query",
-        "has_bindings": true
-      },
-      "template": "{subject} {copula} a {value}.",
-      "required_slots": [
-        "subject",
-        "copula",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:type-multiple",
-      "when": {
-        "action": "report_multiple_bindings",
-        "query_kind": "type_query",
-        "has_bindings": true
-      },
-      "template": "{subject} may match multiple types: {value}.",
-      "required_slots": [
-        "subject",
-        "value"
-      ],
-      "semantic_slots": [
-        "binding_values",
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    },
-    {
-      "ref": "en:response:type-unknown",
-      "when": {
-        "action": "report_target_uncertainty",
-        "query_kind": "type_query"
-      },
-      "template": "I do not have enough evidence about {subject}.",
-      "required_slots": [
-        "subject"
-      ],
-      "semantic_slots": [
-        "query_kind",
-        "query_ref",
-        "subject_ref"
-      ]
-    }
-  ],
-  "semantic_operational_contract": {
-    "contract": "CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md",
-    "response_fallback": "same_response_csir_only",
-    "perspective": "output_participant_frame",
-    "form_schema_algebra": "atomic-feature-v5",
-    "operational_status": "cycle_local_structured_assessment",
-    "authority_atom_additions": 0,
-    "migration_source_pack_hash": "9dc6ab9019f5b8d89437fa6cca57e085ed966d0c0e86b9272698e3bdcbbf0a3d"
-  }
+  "pack_hash": "a234a77ee3be6ff710900f4df50c43615aea6461c7b689a6e2791681988f0942"
 }

@@ -49,6 +49,18 @@ response_examples=[
  ('capability-answer','RESPONSE answer_bindings QUERY_KIND capability_inventory_query BINDING ?capability @A0','I can use @A0.'),
 ]
 response=[{'example_ref':f'en:response:{r}','semantic':s,'surface_plan':p,'weight':1.0} for r,s,p in response_examples]
+response_grammar=[
+ {'ref':'en:response:learning','when':{'action':'request_learning_evidence'},'template':'What does {evidence} refer to here?','required_slots':['evidence'],'semantic_slots':['evidence','learning_plan_ref','query_kind','query_ref']},
+ {'ref':'en:response:attributed-claim','when':{'action':'acknowledge_attributed_claim'},'template':'I understand that you think {subject} {copula} {predicate_surface}.','required_slots':['subject','copula','predicate_surface'],'semantic_slots':['subject_ref','predicate_surface','claim_kind']},
+ {'ref':'en:response:designation','when':{'action':'answer_bindings','query_kind':'designation_property','has_bindings':True},'template':'{subject_possessive} {property} is {value}.','required_slots':['subject_possessive','property','value'],'semantic_slots':['binding_values','property_ref','query_kind','query_ref','subject_ref']},
+ {'ref':'en:response:operational-degraded','when':{'action':'report_operational_condition','qualifiers':{'assessment_status':'degraded'}},'template':'I am operating, but some runtime resources are degraded.','required_slots':[],'semantic_slots':['assessment_status','query_kind','query_ref','snapshot_ref','target_ref']},
+ {'ref':'en:response:operational-normal','when':{'action':'report_operational_condition','qualifiers':{'assessment_status':'operating_normally'}},'template':'I am operating normally and able to respond.','required_slots':[],'semantic_slots':['assessment_status','query_kind','query_ref','snapshot_ref','target_ref']},
+ {'ref':'en:response:operational-unavailable','when':{'action':'report_operational_condition','qualifiers':{'assessment_status':'unavailable'}},'template':'I have runtime blockers that limit what I can do right now.','required_slots':[],'semantic_slots':['assessment_status','query_kind','query_ref','snapshot_ref','target_ref']},
+ {'ref':'en:response:operational-unknown','when':{'action':'report_operational_condition','qualifiers':{'assessment_status':'unknown'}},'template':'I cannot verify my full runtime condition right now.','required_slots':[],'semantic_slots':['assessment_status','query_kind','query_ref','snapshot_ref','target_ref']},
+ {'ref':'en:response:relation-unknown','when':{'action':'report_target_uncertainty','query_kind':'relation_query'},'template':'I do not have evidence that {subject} {relation} {object_surface}.','required_slots':['subject','relation','object_surface'],'semantic_slots':['object_surface','query_kind','query_ref','relation_ref','subject_ref']},
+ {'ref':'en:response:surface-choice','when':{'action':'explain_surface_choice'},'template':'{surface_choice_b} would have been more natural than {surface_choice_a} because I was referring to myself.','required_slots':['surface_choice_a','surface_choice_b'],'semantic_slots':['surface_decision_ref','surface_choice_a','surface_choice_b','prior_response_ref','prior_surface']},
+ {'ref':'en:response:type','when':{'action':'answer_bindings','query_kind':'type_query','has_bindings':True},'template':'{subject} {copula} a {value}.','required_slots':['subject','copula','value'],'semantic_slots':['binding_values','query_kind','query_ref','subject_ref']},
+]
 realization=[
  {'example_ref':'en:realize:type','semantic':'FACT support op:type role:class @A0 role:instance @A1','surface_plan':'@A1 is a @A0.','weight':1.0},
  {'example_ref':'en:realize:state','semantic':'FACT support op:state role:dimension @A0 role:subject @A1 role:value @A2','surface_plan':'The @A0 of @A1 is @A2.','weight':1.0},
@@ -65,7 +77,7 @@ grammar.update(FORM['function_forms'])
 grammar.update(['.',',','?','!','context','refers','value','percent','recorded','claim','evidence','conflicts','operation','complete','cannot','perform','action','hello','clarify'])
 
 data={
- 'version':6,'language':'en','form_pack':'../form_packs/en.json','form_pack_hash':FORM['pack_hash'],
+ 'version':7,'language':'en','form_pack':'../form_packs/en.json','form_pack_hash':FORM['pack_hash'],
  'forces':['acknowledgment','claim','correction','description_request','directive','query','retraction'],
  'source_classes':['NONE','FRAME_SPEAKER','FRAME_ADDRESSEE']+[f'A{i}' for i in range(8)]+[f'Q{i}' for i in range(3)]+['NEW_ENTITY_0','NEW_ENTITY_1','NEW_EVENT_0','NEW_EVENT_1']+[f'DIM_OF_A{i}' for i in range(8)]+['CONST0'],
  'constant_sources':{'CONST0':'rel:subtype_of'},
@@ -73,6 +85,15 @@ data={
  'operators':['op:designation','op:event','op:relation','op:state','op:type'],
  'roles':['role:actor','role:class','role:context','role:dimension','role:event','role:instance','role:label_type','role:language','role:object','role:preferred','role:prior','role:relation','role:script','role:subject','role:surface','role:target','role:time','role:type','role:value'],
  'structured_examples':structured,'rule_examples':[],'realization_examples':realization,'response_examples':response,
+ 'response_grammar':response_grammar,
+ 'semantic_operational_contract':{
+  'contract':'CEMM_RUNTIME_IMPLEMENTATION_CONTRACT.md',
+  'response_fallback':'same_response_csir_only',
+  'perspective':'output_participant_frame',
+  'form_schema_algebra':'atomic-feature-v7',
+  'operational_status':'cycle_local_structured_assessment',
+  'authority_atom_additions':0,
+ },
  'grammar_tokens':sorted(grammar),'function_forms':FORM['function_forms'],
 }
 data['pack_hash']=h(data)

@@ -93,6 +93,7 @@ async def health():
         "authority_generation": runtime.runtime_attestation["authority_generation"],
         "authority_hash": runtime.runtime_attestation["authority_generation_hash"][:16],
         "form_pack_hash": runtime.i.form_pack.hash,
+        "form_pack_version": int(runtime.i.form_pack.data["version"]),
         "coverage_abi": attestation["coverage_abi"],
         "feature_algebra_version": attestation["feature_algebra_version"],
         "activation_ref": attestation["activation_ref"],
