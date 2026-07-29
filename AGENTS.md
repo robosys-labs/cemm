@@ -309,3 +309,42 @@ A change is complete only when code, authority data, deterministic generators, m
 - Verified semantic focus is recorded only after exact Response CSIR realization equivalence.
 - The obsolete sentence-shaped embedded proposition family is forbidden.
 - Historical tests may be replaced when they require a retired semantic path; exact gates must never be weakened for compatibility.
+
+## 20. Generated-artifact and realization preservation gate
+
+An ABI, generator, pack, migration, or installer change must never silently
+remove a previously authorized response surface. The relevant invariant is not
+merely that the generated JSON parses or has a new hash; it is that every
+reachable typed `ResponseCSIR` still has one semantically equivalent,
+provenance-verified realization unless its behavior has been explicitly retired
+by a reviewed contract change.
+
+Before replacing a generated form or language artifact:
+
+1. identify the current generator and every generated field it owns, including
+   response grammar, response examples, reference realization, predicate
+   realization, orthography, semantic-operational contract metadata and pack
+   hashes;
+2. compare the old and candidate artifacts structurally and fail on an
+   unreviewed removal of a response rule, realization record, contract field,
+   or required semantic slot;
+3. replay a checked-in behavioral realization matrix through the real runtime
+   and web API, covering every reachable response action plus participant
+   perspective, learning continuation, capability, query, frontier and
+   operation responses;
+4. require every matrix case to produce a verified authorized surface, never
+   `""`, `None`, or a UI placeholder such as `[no authorized surface]`;
+5. run the generator twice and require byte-identical artifacts, then run the
+   complete authority, activation, semantic-operational, web, and regression
+   gates.
+
+If an artifact loses a surface, the earliest owner is normally the generator or
+its reviewed source data. Restore or migrate that owner and regenerate the
+artifact; do not hide the defect with a UI fallback, broaden a realizer match,
+or weaken a validator. A new generator may replace a prior generator only after
+it reproduces the active realization contract or an explicit reviewed migration
+updates the matrix and all dependent authority together.
+
+No ABI upgrade is eligible for activation, packaging, or commit while this gate
+fails. This makes realization regressions release-blocking rather than
+user-visible failures.
