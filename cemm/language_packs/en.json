@@ -519,6 +519,79 @@
       ]
     },
     {
+      "ref": "en:response:acknowledge",
+      "when": {
+        "action": "acknowledge_claim"
+      },
+      "template": "Understood.",
+      "required_slots": [],
+      "semantic_slots": []
+    },
+    {
+      "ref": "en:response:capability-inventory",
+      "when": {
+        "action": "answer_bindings",
+        "query_kind": "capability_inventory_query",
+        "has_bindings": true
+      },
+      "template": "I can use {value}.",
+      "required_slots": [
+        "value"
+      ],
+      "semantic_slots": [
+        "binding_values",
+        "query_kind",
+        "query_ref",
+        "target_ref"
+      ]
+    },
+    {
+      "ref": "en:response:clarify",
+      "when": {
+        "action": "request_targeted_clarification"
+      },
+      "template": "Could you clarify {evidence}?",
+      "required_slots": [
+        "evidence"
+      ],
+      "semantic_slots": [
+        "evidence",
+        "frontier_ref"
+      ]
+    },
+    {
+      "ref": "en:response:generic-clarify",
+      "when": {
+        "action": "request_generic_clarification"
+      },
+      "template": "Could you clarify?",
+      "required_slots": [],
+      "semantic_slots": [
+        "frontier_ref"
+      ]
+    },
+    {
+      "ref": "en:response:greet",
+      "when": {
+        "action": "greet"
+      },
+      "template": "Hello.",
+      "required_slots": [],
+      "semantic_slots": []
+    },
+    {
+      "ref": "en:response:structural-gap",
+      "when": {
+        "action": "report_structural_composition_gap"
+      },
+      "template": "I understood the known pieces, but their semantic connection is still unresolved.",
+      "required_slots": [],
+      "semantic_slots": [
+        "frontier_ref",
+        "gap_kind"
+      ]
+    },
+    {
       "ref": "en:response:attributed-claim",
       "when": {
         "action": "acknowledge_attributed_claim"
@@ -695,6 +768,116 @@
     "operational_status": "cycle_local_structured_assessment",
     "authority_atom_additions": 0
   },
+  "orthography": {
+    "sentence_initial_capitalization": true
+  },
+  "predicate_realization": [
+    {
+      "surface": "am",
+      "features": {
+        "lemma": "be",
+        "tense": "present",
+        "person": "first",
+        "number": "singular"
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "are",
+      "features": {
+        "lemma": "be",
+        "tense": "present",
+        "person": "second",
+        "number": "singular"
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "is",
+      "features": {
+        "lemma": "be",
+        "tense": "present",
+        "person": "third",
+        "number": "singular"
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "are",
+      "features": {
+        "lemma": "be",
+        "tense": "present",
+        "number": "plural"
+      },
+      "weight": 2.0
+    }
+  ],
+  "reference_realization": [
+    {
+      "surface": "I",
+      "features": {
+        "person": "first",
+        "number": "singular",
+        "possessive": false
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "my",
+      "features": {
+        "person": "first",
+        "number": "singular",
+        "possessive": true
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "myself",
+      "features": {
+        "person": "first",
+        "number": "singular",
+        "possessive": false,
+        "reflexive": true
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "you",
+      "features": {
+        "person": "second",
+        "number": "singular",
+        "possessive": false
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "your",
+      "features": {
+        "person": "second",
+        "number": "singular",
+        "possessive": true
+      },
+      "weight": 2.0
+    },
+    {
+      "surface": "they",
+      "features": {
+        "person": "third",
+        "number": "singular",
+        "possessive": false
+      },
+      "weight": 1.0
+    },
+    {
+      "surface": "their",
+      "features": {
+        "person": "third",
+        "number": "singular",
+        "possessive": true
+      },
+      "weight": 1.0
+    }
+  ],
   "grammar_tokens": [
     "!",
     ",",
@@ -977,5 +1160,5 @@
     "your",
     "yours"
   ],
-  "pack_hash": "a234a77ee3be6ff710900f4df50c43615aea6461c7b689a6e2791681988f0942"
+  "pack_hash": "b9989a41d4f91c6a31deb752105e2b4baf7621a454fc5f0042fd80a765509d5a"
 }

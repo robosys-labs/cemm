@@ -51,6 +51,12 @@ response_examples=[
 response=[{'example_ref':f'en:response:{r}','semantic':s,'surface_plan':p,'weight':1.0} for r,s,p in response_examples]
 response_grammar=[
  {'ref':'en:response:learning','when':{'action':'request_learning_evidence'},'template':'What does {evidence} refer to here?','required_slots':['evidence'],'semantic_slots':['evidence','learning_plan_ref','query_kind','query_ref']},
+ {'ref':'en:response:acknowledge','when':{'action':'acknowledge_claim'},'template':'Understood.','required_slots':[],'semantic_slots':[]},
+ {'ref':'en:response:capability-inventory','when':{'action':'answer_bindings','query_kind':'capability_inventory_query','has_bindings':True},'template':'I can use {value}.','required_slots':['value'],'semantic_slots':['binding_values','query_kind','query_ref','target_ref']},
+ {'ref':'en:response:clarify','when':{'action':'request_targeted_clarification'},'template':'Could you clarify {evidence}?','required_slots':['evidence'],'semantic_slots':['evidence','frontier_ref']},
+ {'ref':'en:response:generic-clarify','when':{'action':'request_generic_clarification'},'template':'Could you clarify?','required_slots':[],'semantic_slots':['frontier_ref']},
+ {'ref':'en:response:greet','when':{'action':'greet'},'template':'Hello.','required_slots':[],'semantic_slots':[]},
+ {'ref':'en:response:structural-gap','when':{'action':'report_structural_composition_gap'},'template':'I understood the known pieces, but their semantic connection is still unresolved.','required_slots':[],'semantic_slots':['frontier_ref','gap_kind']},
  {'ref':'en:response:attributed-claim','when':{'action':'acknowledge_attributed_claim'},'template':'I understand that you think {subject} {copula} {predicate_surface}.','required_slots':['subject','copula','predicate_surface'],'semantic_slots':['subject_ref','predicate_surface','claim_kind']},
  {'ref':'en:response:designation','when':{'action':'answer_bindings','query_kind':'designation_property','has_bindings':True},'template':'{subject_possessive} {property} is {value}.','required_slots':['subject_possessive','property','value'],'semantic_slots':['binding_values','property_ref','query_kind','query_ref','subject_ref']},
  {'ref':'en:response:operational-degraded','when':{'action':'report_operational_condition','qualifiers':{'assessment_status':'degraded'}},'template':'I am operating, but some runtime resources are degraded.','required_slots':[],'semantic_slots':['assessment_status','query_kind','query_ref','snapshot_ref','target_ref']},
@@ -94,6 +100,22 @@ data={
   'operational_status':'cycle_local_structured_assessment',
   'authority_atom_additions':0,
  },
+ 'orthography':{'sentence_initial_capitalization':True},
+ 'predicate_realization':[
+  {'surface':'am','features':{'lemma':'be','tense':'present','person':'first','number':'singular'},'weight':2.0},
+  {'surface':'are','features':{'lemma':'be','tense':'present','person':'second','number':'singular'},'weight':2.0},
+  {'surface':'is','features':{'lemma':'be','tense':'present','person':'third','number':'singular'},'weight':2.0},
+  {'surface':'are','features':{'lemma':'be','tense':'present','number':'plural'},'weight':2.0},
+ ],
+ 'reference_realization':[
+  {'surface':'I','features':{'person':'first','number':'singular','possessive':False},'weight':2.0},
+  {'surface':'my','features':{'person':'first','number':'singular','possessive':True},'weight':2.0},
+  {'surface':'myself','features':{'person':'first','number':'singular','possessive':False,'reflexive':True},'weight':2.0},
+  {'surface':'you','features':{'person':'second','number':'singular','possessive':False},'weight':2.0},
+  {'surface':'your','features':{'person':'second','number':'singular','possessive':True},'weight':2.0},
+  {'surface':'they','features':{'person':'third','number':'singular','possessive':False},'weight':1.0},
+  {'surface':'their','features':{'person':'third','number':'singular','possessive':True},'weight':1.0},
+ ],
  'grammar_tokens':sorted(grammar),'function_forms':FORM['function_forms'],
 }
 data['pack_hash']=h(data)
