@@ -1,0 +1,40 @@
+{
+  "contract_ref": "contract:generic_definition_acquisition",
+  "abi_version": 1,
+  "kind": "generic_definition_acquisition",
+  "description": "Typed acquisition plan for publishing new generic definition rules from verified semantic programs. Accepts already-verified programs under an independently configured reviewer policy, invokes the side-effect-free lowerer, links the complete candidate bundle, and atomically publishes a new authority generation.",
+  "required_capability": "cap:learn",
+  "acquisition_kinds": [
+    "identity",
+    "frame",
+    "rule",
+    "dimension",
+    "transition"
+  ],
+  "default_acquisition_kind": "rule",
+  "requires": {
+    "typed_plan": true,
+    "reviewer_authorization": true,
+    "verified_programs": true,
+    "reviewer_policy_ref": true,
+    "authority_parent_generation": true,
+    "provenance_refs": true
+  },
+  "lowering": {
+    "side_effect_free": true,
+    "operator": "GenericDefinitionLowerer",
+    "atomic_bundle_link": true,
+    "one_invalid_rejects_entire_acquisition": true
+  },
+  "publication": {
+    "publishes_one_linked_generation": true,
+    "authority_compatibility_hash_preserved": true,
+    "no_production_install_method": true,
+    "no_mutable_authority_shortcut": true
+  },
+  "constraints": {
+    "conversational_wording_cannot_select_reviewer_policy": true,
+    "no_public_install_rules": true,
+    "no_public_add_rule": true
+  }
+}

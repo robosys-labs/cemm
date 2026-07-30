@@ -1,0 +1,36 @@
+{
+  "schema_ref": "schema:generic_definition",
+  "abi_version": 1,
+  "kind": "generic_definition",
+  "description": "Lowers verified generic-definition propositions into named-role inference rules. The root application of each proposition graph becomes the rule consequent; non-root applications become antecedent conditions.",
+  "operator_scope": [
+    "op:designation",
+    "op:type",
+    "op:relation",
+    "op:state",
+    "op:event"
+  ],
+  "lowering_rules": {
+    "antecedent_source": "non_root_applications",
+    "consequent_source": "root_application",
+    "variable_handling": "variables_preserved_as_rule_variables",
+    "existential_handling": "existentials_remain_proof_local",
+    "stance_preserved": true,
+    "confidence": 1.0,
+    "reviewed": true
+  },
+  "constraints": {
+    "side_effect_free": true,
+    "no_production_install": true,
+    "no_family_specific_branch": true,
+    "no_preseeded_rules": true,
+    "no_phrase_intent": true,
+    "unseen_synonym_support": true
+  },
+  "validation": {
+    "requires_verified_program": true,
+    "requires_proposition_graph": true,
+    "min_applications": 2,
+    "rule_ref_namespace": "rule:lowered"
+  }
+}

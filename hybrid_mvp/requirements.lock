@@ -1,0 +1,11 @@
+# CEMM Authoritative Hybrid MVP — aggregate dependency lock.
+# Includes the model pins (unchanged) plus test/surface dependencies. Clean
+# install: python -m pip install --require-hashes -r requirements.lock
+# The model lock (requirements-model.lock) must be preserved verbatim inside
+# this aggregate lock; validation rejects any drift in a model pin.
+torch==2.6.0
+safetensors==0.5.3
+pytest==8.4.0
+hypothesis==6.163.0
+fastapi==0.115.0
+httpx==0.27.0

@@ -1,0 +1,36 @@
+{
+  "contract_ref": "contract:designation_learning",
+  "abi_version": 1,
+  "kind": "designation_learning",
+  "description": "Typed learning plan for acquiring a new surface designation bound to an existing reviewed semantic identity. Requires cap:learn, lowers to op:designation, and is consumed only after a successful reviewed commit receipt.",
+  "required_capability": "cap:learn",
+  "commit_operator": "op:designation",
+  "requires": {
+    "typed_plan": true,
+    "reviewer_authorization": true,
+    "existing_target_identity": true,
+    "non_conflict": true,
+    "source_query_binding": true,
+    "provenance_refs": true,
+    "expiry": true
+  },
+  "answer_contract": {
+    "kind": "designation_answer",
+    "requires_target_kinds": true,
+    "requires_non_conflict": true,
+    "consumed_on_commit": true
+  },
+  "constraints": {
+    "one_pending_obligation": true,
+    "conversational_wording_cannot_select_reviewer_policy": true,
+    "no_public_install_rules": true,
+    "no_public_add_rule": true,
+    "no_mutable_authority_shortcut": true,
+    "surface_is_not_semantic_authority": true
+  },
+  "expiry": {
+    "turns": 1,
+    "consumed_on_success": true,
+    "expired_plans_cannot_commit": true
+  }
+}

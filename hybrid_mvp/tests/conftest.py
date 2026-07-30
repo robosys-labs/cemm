@@ -1,0 +1,1092 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from cemm_authoritative_hybrid.persistence import (
+    open_stores,
+    memory_stores,
+    SemanticStores,
+    Fact,
+)
+from cemm_authoritative_hybrid.canonical import stable
+
+ROOT = Path(__file__).parents[1]
+
+AUTHORITY_GENERATION = "authority:generation-1"
+
+
+# ---------------------------------------------------------------------------
+# Persistence fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def store_path(tmp_path):
+    """A tmp_path-based directory for SQLite store files."""
+    p = tmp_path / "stores"
+    p.mkdir()
+    return p
+
+
+@pytest.fixture
+def stores_factory():
+    """Callable that takes a path and returns a SQLite ``SemanticStores``."""
+    def _factory(path, *, authority_generation=AUTHORITY_GENERATION, model_identity=None):
+        return open_stores(
+            path,
+            authority_generation=authority_generation,
+            model_identity=model_identity,
+        )
+    return _factory
+
+
+@pytest.fixture
+def sqlite_stores(store_path):
+    """An opened SQLite ``SemanticStores`` instance (closed after test)."""
+    stores = open_stores(store_path, authority_generation=AUTHORITY_GENERATION)
+    yield stores
+    stores.close()
+
+
+@pytest.fixture
+def memory_stores_fixture():
+    """A test-only in-memory ``SemanticStores`` instance."""
+    stores = memory_stores(authority_generation=AUTHORITY_GENERATION)
+    yield stores
+    stores.close()
+
+
+@pytest.fixture
+def fact_factory():
+    """Callable that takes a key string and returns a ``Fact``."""
+    def _factory(key, *, operator="op:relation", stance="support", confidence=1.0, derived=False, proof=None):
+        return Fact(
+            fact_ref=f"fact:{key}",
+            operator=operator,
+            args={"role:target": f"entity:{key}", "role:label": f"literal:{key}"},
+            stance=stance,
+            confidence=confidence,
+            derived=derived,
+            proof=proof or {"source": "test"},
+        )
+    return _factory
+
+
+@pytest.fixture
+def effect_factory():
+    """Callable that takes a key string and returns an effect record dict."""
+    def _factory(key, *, payload=None):
+        return {
+            "effect_key": f"effect:{key}",
+            "payload": payload or {"action": "noop", "key": key},
+        }
+    return _factory
+
+
+# ---------------------------------------------------------------------------
+# Parametrization: run applicable tests against both backends
+# ---------------------------------------------------------------------------
+
+BACKENDS = ["sqlite", "memory"]
+
+
+@pytest.fixture(params=BACKENDS)
+def any_stores(request, store_path):
+    """Parametrized fixture yielding both SQLite and in-memory stores."""
+    if request.param == "sqlite":
+        stores = open_stores(store_path, authority_generation=AUTHORITY_GENERATION)
+    else:
+        stores = memory_stores(authority_generation=AUTHORITY_GENERATION)
+    yield stores
+    stores.close()
+
+
+# ---------------------------------------------------------------------------
+# Authority linker fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def authority_factory(tmp_path):
+    """Callable that creates test AuthorityBundle instances with configurable errors.
+
+    Parameters:
+        designation_target: if set, adds a designation targeting a non-existent atom.
+        duplicate_atom: if set, adds the atom to both kernel and conversation owners.
+        corrupt_hash: if True, writes a wrong sha256 in the manifest.
+    """
+    from cemm_authoritative_hybrid.authority import AuthorityBundle, AuthorityStore
+    from cemm_authoritative_hybrid.canonical import sha256_file
+
+    def _factory(
+        *,
+        designation_target=None,
+        duplicate_atom=None,
+        corrupt_hash=False,
+    ):
+        store = AuthorityStore()
+
+        kernel = {
+            "owner": "kernel",
+            "atoms": [
+                {"ref": "participant:user", "kind": "participant", "reviewed": True},
+                {"ref": "participant:system", "kind": "participant", "reviewed": True},
+                {"ref": "concept:person", "kind": "concept", "reviewed": True},
+            ],
+            "designations": [],
+            "event_signatures": [],
+            "rules": [],
+            "capabilities": {},
+            "permissions": [],
+            "adapters": [],
+            "operator_roles": {
+                "op:designation": ["role:target", "role:label_type", "role:surface"],
+                "op:type": ["role:instance", "role:class"],
+                "op:relation": ["role:subject", "role:relation", "role:object"],
+                "op:state": ["role:subject", "role:dimension", "role:value"],
+                "op:event": ["role:event", "role:type"],
+            },
+            "value_dimensions": {},
+            "transitions": [],
+            "source": {"origin": "test"},
+        }
+
+        conversation = {
+            "owner": "conversation",
+            "atoms": [
+                {"ref": "event:greeting", "kind": "event_type", "reviewed": True},
+            ],
+            "designations": [
+                {"surface": "hello", "target": "event:greeting", "language": "en"},
+            ],
+            "event_signatures": [],
+            "rules": [],
+            "capabilities": {},
+            "permissions": [],
+            "adapters": [],
+            "operator_roles": {},
+            "value_dimensions": {},
+            "transitions": [],
+            "source": {"origin": "test"},
+        }
+
+        if designation_target:
+            kernel["designations"].append(
+                {"surface": "missing_thing", "target": designation_target, "language": "en"}
+            )
+
+        if duplicate_atom:
+            kernel["atoms"].append(
+                {"ref": duplicate_atom, "kind": "event_type", "reviewed": True}
+            )
+
+        auth_dir = tmp_path / "authority"
+        auth_dir.mkdir()
+
+        owners = []
+        for name, data in [("kernel", kernel), ("conversation", conversation)]:
+            p = auth_dir / f"{name}.json"
+            p.write_text(
+                json.dumps(data, sort_keys=True, indent=2), encoding="utf-8"
+            )
+            sha = sha256_file(p)
+            if corrupt_hash and name == "kernel":
+                sha = "0" * 64
+            owners.append({"name": name, "path": str(p), "sha256": sha})
+
+        manifest_data = {
+            "generation": "authority-test-v1",
+            "abi_version": 1,
+            "owners": owners,
+        }
+
+        return AuthorityBundle(manifest_data, store)
+
+    return _factory
+
+
+@pytest.fixture
+def linked_authority():
+    """A successfully linked LinkedAuthority from the real data/authority/manifest.json."""
+    from cemm_authoritative_hybrid.authority import AuthorityLinker
+
+    return AuthorityLinker().link_path(ROOT / "data" / "authority" / "manifest.json")
+
+
+# ---------------------------------------------------------------------------
+# Form lattice and grounding fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def form_pack():
+    """The English forms.json language pack as a mapping."""
+    with open(ROOT / "data" / "languages" / "en" / "forms.json", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+@pytest.fixture
+def form_pack_hash():
+    """The SHA-256 of the canonical forms.json content."""
+    from cemm_authoritative_hybrid.canonical import canonical_bytes
+    import hashlib
+
+    with open(ROOT / "data" / "languages" / "en" / "forms.json", "rb") as fh:
+        content = fh.read()
+    data = json.loads(content)
+    digest = hashlib.sha256(canonical_bytes(data)).hexdigest()
+    return f"sha256:{digest}"
+
+
+@pytest.fixture
+def form_resolver(form_pack):
+    """A FormResolver configured with the English forms.json pack."""
+    from cemm_authoritative_hybrid.forms import FormResolver
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    return FormResolver(form_pack, RuntimeConfig.release())
+
+
+@pytest.fixture
+def designation_store():
+    """A test-only mutable designation store with commit_reviewed.
+
+    Designations committed here are visible to the grounder via the authority's
+    DesignationIndex.  This simulates reviewed designation learning without
+    regenerating the language pack.
+    """
+    from cemm_authoritative_hybrid.authority import DesignationIndex
+
+    class _DesignationStore:
+        def __init__(self) -> None:
+            self._by_surface: dict[tuple[str, str], list[str]] = {}
+            self._by_target: dict[tuple[str, str], list[str]] = {}
+
+        def commit_reviewed(self, surface: str, target: str, language: str = "en") -> None:
+            key = (surface, language)
+            self._by_surface.setdefault(key, []).append(target)
+            self._by_target.setdefault((target, language), []).append(surface)
+
+        def build_index(self) -> DesignationIndex:
+            return DesignationIndex(
+                {k: tuple(v) for k, v in self._by_surface.items()},
+                {k: tuple(v) for k, v in self._by_target.items()},
+            )
+
+    return _DesignationStore()
+
+
+@pytest.fixture
+def grounder(linked_authority, form_pack, form_pack_hash, designation_store):
+    """A Grounder with the linked authority and test designation store."""
+    from cemm_authoritative_hybrid.grounding import Grounder
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    return Grounder(
+        authority=linked_authority,
+        config=RuntimeConfig.release(),
+        form_pack=form_pack,
+        form_pack_hash=form_pack_hash,
+        designation_store=designation_store,
+    )
+
+
+@pytest.fixture
+def door_sensor_evidence():
+    """An EvidenceItem from a sensor adapter pinning entity:door."""
+    from cemm_authoritative_hybrid.forms import EvidenceItem
+
+    return EvidenceItem(
+        source="sensor",
+        content={"target_ref": "entity:door", "adapter_ref": "adapter:door_sensor"},
+        source_ref="sensor:door-0",
+        provenance_refs=("receipt:door-0",),
+        adapter_receipt_ref="receipt:door-0",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase receipt and gap receipt fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def cycle_fixture():
+    """A minimal cycle runner that produces a six-phase KernelCycleResult.
+
+    This is a test fixture only; it does not run the full semantic runtime. It
+    produces a deterministic ``KernelCycleResult`` with all six named phases in
+    the trace (when ``trace=True``), status ``resolved`` and a valid
+    ``RevisionPin`` sourced from an in-memory store.
+    """
+    from cemm_authoritative_hybrid.cycle import _FixtureCycleRunner
+
+    return _FixtureCycleRunner()
+
+
+@pytest.fixture
+def gap_classifier():
+    """A ``GapClassifier`` instance for typed exception classification."""
+    from cemm_authoritative_hybrid.gaps import GapClassifier
+
+    return GapClassifier()
+
+
+# ---------------------------------------------------------------------------
+# Six-phase runtime fixtures
+# ---------------------------------------------------------------------------
+
+SIX_PHASES = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "REALIZE")
+
+
+@pytest.fixture
+def verified_observation_program():
+    """A minimal SemanticSwitchProgram fixture for the development profile.
+
+    This is a typed observation program that the fixture proposal owner returns
+    unchanged. It uses a single ``op:event`` application in OBSERVE mode.
+    """
+    from cemm_authoritative_hybrid.propositions import (
+        Application,
+        PropositionGraph,
+        SemanticSwitchProgram,
+    )
+
+    app = Application.create(
+        "op:event",
+        {
+            "role:event": "event-instance:test-1",
+            "role:type": "event:observation",
+            "role:actor": "participant:user",
+        },
+    )
+    graph = PropositionGraph.create([app], app.application_ref)
+    return SemanticSwitchProgram.create("OBSERVE", "event:context:test", graph)
+
+
+@pytest.fixture
+def runtime_factory(memory_stores_fixture, linked_authority):
+    """Callable that takes ``proposal_fixture=...`` and returns a HybridRuntime.
+
+    The runtime is configured with fixture owners for the development profile.
+    The proposal owner returns the injected program; verification always passes;
+    evaluation always resolves; effects and realization are no-ops.
+    """
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+    from cemm_authoritative_hybrid.runtime import (
+        FixtureEffectOwner,
+        FixtureEvaluationOwner,
+        FixtureProposalOwner,
+        FixtureRealizationOwner,
+        FixtureVerificationOwner,
+        HybridRuntime,
+    )
+
+    def _factory(*, proposal_fixture=None):
+        if proposal_fixture is None:
+            from cemm_authoritative_hybrid.propositions import (
+                Application,
+                PropositionGraph,
+                SemanticSwitchProgram,
+            )
+
+            app = Application.create(
+                "op:event",
+                {
+                    "role:event": "event-instance:default",
+                    "role:type": "event:observation",
+                    "role:actor": "participant:user",
+                },
+            )
+            graph = PropositionGraph.create([app], app.application_ref)
+            proposal_fixture = SemanticSwitchProgram.create(
+                "OBSERVE", "event:context:default", graph
+            )
+
+        owners = {
+            "proposal": FixtureProposalOwner(proposal_fixture),
+            "verification": FixtureVerificationOwner(),
+            "evaluation": FixtureEvaluationOwner(),
+            "effect": FixtureEffectOwner(memory_stores_fixture),
+            "realization": FixtureRealizationOwner(),
+        }
+        return HybridRuntime(
+            config=RuntimeConfig.release(),
+            authority=linked_authority,
+            stores=memory_stores_fixture,
+            owners=owners,
+            profile="development",
+        )
+
+    return _factory
+
+
+# ---------------------------------------------------------------------------
+# Affordance index and orientation projection fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def affordance_index(linked_authority):
+    """A SemanticAffordanceIndex with the linked authority."""
+    from cemm_authoritative_hybrid.affordances import SemanticAffordanceIndex
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    return SemanticAffordanceIndex(linked_authority, RuntimeConfig.release())
+
+
+@pytest.fixture
+def runtime(linked_authority, memory_stores_fixture):
+    """A HybridRuntime with the development profile and an orient method."""
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+    from cemm_authoritative_hybrid.runtime import (
+        FixtureEffectOwner,
+        FixtureEvaluationOwner,
+        FixtureProposalOwner,
+        FixtureRealizationOwner,
+        FixtureVerificationOwner,
+        HybridRuntime,
+    )
+    from cemm_authoritative_hybrid.propositions import (
+        Application,
+        PropositionGraph,
+        SemanticSwitchProgram,
+    )
+
+    app = Application.create(
+        "op:event",
+        {
+            "role:event": "event-instance:default",
+            "role:type": "event:observation",
+            "role:actor": "participant:user",
+        },
+    )
+    graph = PropositionGraph.create([app], app.application_ref)
+    proposal_fixture = SemanticSwitchProgram.create(
+        "OBSERVE", "event:context:default", graph
+    )
+
+    owners = {
+        "proposal": FixtureProposalOwner(proposal_fixture),
+        "verification": FixtureVerificationOwner(),
+        "evaluation": FixtureEvaluationOwner(),
+        "effect": FixtureEffectOwner(memory_stores_fixture),
+        "realization": FixtureRealizationOwner(),
+    }
+    return HybridRuntime(
+        config=RuntimeConfig.release(),
+        authority=linked_authority,
+        stores=memory_stores_fixture,
+        owners=owners,
+        profile="development",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Recursive Semantic Switch Program and coverage fixtures
+# ---------------------------------------------------------------------------
+
+
+def _default_revision_pin(authority_generation="authority:generation-1"):
+    from cemm_authoritative_hybrid.persistence import RevisionPin
+
+    return RevisionPin(
+        authority_generation=authority_generation,
+        world_revision=0,
+        session_revision=0,
+        episode_revision=0,
+        effect_revision=0,
+        model_identity=None,
+    )
+
+
+def _is_punctuation_unit(unit) -> bool:
+    """A unit is punctuation/discourse if it is whitespace or has no
+    normalized surface form (e.g. a bare punctuation mark)."""
+    return not unit.source_text.strip() or not unit.normalized_forms
+
+
+def _build_program_from_lattice(lattice, *, negate=False, revision_pin=None):
+    """Build a minimal valid :class:`SemanticSwitchProgram` for ``lattice``.
+
+    Every source unit receives exactly one :class:`SourceAssignment`.  Content
+    units are consumed into a ``role`` assignment; punctuation/whitespace units
+    become noncritical ``residual`` assignments of kind ``discourse``.  When
+    ``negate`` is true, the first content unit is instead retained as a
+    critical ``scope`` residual (negation), which must reject execution.
+
+    The program uses ``op:designation`` with the three required roles
+    ``role:target``, ``role:label_type``, and ``role:surface``.  The first
+    three content units are bound to these roles; any extra content units
+    become noncritical ``qualifier`` residuals.  The ``select_designation``
+    target is ``participant:user`` (a reviewed authority atom).
+    """
+    from cemm_authoritative_hybrid.programs import (
+        ProgramAction,
+        SourceAssignment,
+        SemanticSwitchProgram,
+    )
+
+    unit_refs = tuple(u.unit_ref for u in lattice.units)
+    assignments: list[SourceAssignment] = []
+    actions: list[ProgramAction] = [
+        ProgramAction(
+            action_ref="action:select_context",
+            action_type="select_context",
+            arguments=("context:turn",),
+            source_unit_refs=(),
+        ),
+        ProgramAction(
+            action_ref="action:select_mode",
+            action_type="select_mode",
+            arguments=("OBSERVE",),
+            source_unit_refs=(),
+        ),
+        ProgramAction(
+            action_ref="action:select_designation",
+            action_type="select_designation",
+            arguments=("designation:0", "participant:user"),
+            source_unit_refs=(),
+        ),
+        ProgramAction(
+            action_ref="action:instantiate_operator",
+            action_type="instantiate_operator",
+            arguments=("op:designation", "designation:0"),
+            source_unit_refs=(),
+        ),
+    ]
+
+    # Required roles for op:designation (from authority operator_roles).
+    required_roles = ["role:target", "role:label_type", "role:surface"]
+    role_index = 0
+    consumed_first_content = False
+    for unit in lattice.units:
+        if _is_punctuation_unit(unit):
+            assignments.append(
+                SourceAssignment(
+                    assignment_ref=f"assignment:{unit.unit_ref}",
+                    source_unit_ref=unit.unit_ref,
+                    contribution_ref=f"contribution:{unit.unit_ref}",
+                    assignment_kind="residual",
+                    target_ref=None,
+                    residual_kind="discourse",
+                    critical=False,
+                )
+            )
+            continue
+        if negate and not consumed_first_content:
+            # Retain the first content unit as a critical scope residual.
+            assignments.append(
+                SourceAssignment(
+                    assignment_ref=f"assignment:{unit.unit_ref}",
+                    source_unit_ref=unit.unit_ref,
+                    contribution_ref=f"contribution:{unit.unit_ref}",
+                    assignment_kind="residual",
+                    target_ref=None,
+                    residual_kind="scope",
+                    critical=True,
+                )
+            )
+            consumed_first_content = True
+            continue
+        if role_index < len(required_roles):
+            role_name = required_roles[role_index]
+            assignments.append(
+                SourceAssignment(
+                    assignment_ref=f"assignment:{unit.unit_ref}",
+                    source_unit_ref=unit.unit_ref,
+                    contribution_ref=f"contribution:{unit.unit_ref}",
+                    assignment_kind="role",
+                    target_ref=f"target:{role_index}",
+                    residual_kind=None,
+                    critical=False,
+                )
+            )
+            actions.append(
+                ProgramAction(
+                    action_ref=f"action:bind_role:{unit.unit_ref}",
+                    action_type="bind_role",
+                    arguments=(role_name, unit.unit_ref),
+                    source_unit_refs=(unit.unit_ref,),
+                )
+            )
+            role_index += 1
+        else:
+            # Extra content units become noncritical qualifier residuals.
+            assignments.append(
+                SourceAssignment(
+                    assignment_ref=f"assignment:{unit.unit_ref}",
+                    source_unit_ref=unit.unit_ref,
+                    contribution_ref=f"contribution:{unit.unit_ref}",
+                    assignment_kind="residual",
+                    target_ref=None,
+                    residual_kind="qualifier",
+                    critical=False,
+                )
+            )
+
+    actions.append(
+        ProgramAction(
+            action_ref="action:complete_program",
+            action_type="complete_program",
+            arguments=(),
+            source_unit_refs=(),
+        )
+    )
+
+    program = SemanticSwitchProgram(
+        program_ref="program:test",
+        orientation_ref="orientation:0",
+        actions=tuple(actions),
+        root_graph_refs=("application:0",),
+        mode_ref="mode:OBSERVE",
+        goal_refs=(),
+        source_unit_refs=unit_refs,
+        source_assignments=tuple(assignments),
+        revision_pin=revision_pin or _default_revision_pin(),
+    )
+    return program
+
+
+@pytest.fixture
+def program_factory(form_resolver):
+    """Callable that takes a text string and returns a minimal valid program."""
+
+    def _factory(text):
+        lattice = form_resolver.resolve(text)
+        return _build_program_from_lattice(lattice)
+
+    return _factory
+
+
+@pytest.fixture
+def valid_program(form_resolver, linked_authority):
+    """A well-formed SemanticSwitchProgram with valid source assignments.
+
+    The revision_pin matches the linked authority's generation so that the
+    exact verifier's revision check passes.
+    """
+    lattice = form_resolver.resolve("what is your name?")
+    pin = _default_revision_pin(
+        authority_generation=linked_authority.generation
+    )
+    return _build_program_from_lattice(lattice, revision_pin=pin)
+
+
+@pytest.fixture
+def valid_lattice(form_resolver):
+    """A FormLattice for the valid program text."""
+    return form_resolver.resolve("what is your name?")
+
+
+@pytest.fixture
+def coverage_verifier():
+    """A CoverageVerifier instance bounded by the release config."""
+    from cemm_authoritative_hybrid.coverage import CoverageVerifier
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    return CoverageVerifier(RuntimeConfig.release())
+
+
+@pytest.fixture
+def exact_verifier(linked_authority, coverage_verifier):
+    """An ExactProgramVerifier with the linked authority and coverage verifier."""
+    from cemm_authoritative_hybrid.verifier import ExactProgramVerifier
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    return ExactProgramVerifier(
+        authority=linked_authority,
+        config=RuntimeConfig.release(),
+        coverage_verifier=coverage_verifier,
+    )
+
+
+@pytest.fixture
+def verifier(exact_verifier):
+    """An ExactProgramVerifier with the linked authority."""
+    return exact_verifier
+
+
+@pytest.fixture
+def masker(verifier):
+    """An ActionMasker sharing the same LegalActionIndex as the verifier."""
+    from cemm_authoritative_hybrid.verifier import ActionMasker
+
+    return ActionMasker(verifier.legal_index)
+
+
+@pytest.fixture
+def prefix(valid_program):
+    """A tuple of ProgramAction representing a partial program prefix."""
+    # Return the first two actions (select_context, select_mode).
+    return valid_program.actions[:2]
+
+
+@pytest.fixture
+def mutate():
+    """Return a callable that applies a named mutation to a program.
+
+    Each mutation produces a program that fails the corresponding verifier
+    check with a specific error code.
+
+    Mutations:
+        unknown_ref: replace a target_ref with a non-existent ref
+        wrong_kind: use an atom with wrong kind for its role
+        missing_role: remove a required role binding
+        duplicate_role: add a duplicate role binding
+        scope_cycle: create a scope cycle in nested applications
+        stale_revision: use an old revision_pin
+        excess_depth: exceed max_graph_depth
+        uncovered_unit: leave a source unit unassigned
+    """
+    from dataclasses import replace as _replace
+    from cemm_authoritative_hybrid.programs import ProgramAction
+
+    def _mutate(program, mutation):
+        if mutation == "stale_revision":
+            old_pin = _replace(
+                program.revision_pin,
+                authority_generation="authority:stale-generation",
+            )
+            return _replace(program, revision_pin=old_pin)
+
+        if mutation == "unknown_ref":
+            # Replace select_designation target with a non-existent ref.
+            new_actions = []
+            for action in program.actions:
+                if action.action_type == "select_designation":
+                    new_actions.append(
+                        _replace(
+                            action,
+                            arguments=("designation:0", "entity:nonexistent"),
+                        )
+                    )
+                else:
+                    new_actions.append(action)
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "wrong_kind":
+            # Use an atom that exists but has the wrong kind for designation.
+            # label:name has kind "label_type", not designatable.
+            new_actions = []
+            for action in program.actions:
+                if action.action_type == "select_designation":
+                    new_actions.append(
+                        _replace(
+                            action,
+                            arguments=("designation:0", "label:name"),
+                        )
+                    )
+                else:
+                    new_actions.append(action)
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "missing_role":
+            # Remove a required role binding (the first bind_role action).
+            new_actions = [
+                a
+                for a in program.actions
+                if not (
+                    a.action_type == "bind_role"
+                    and a.arguments
+                    and a.arguments[0] == "role:target"
+                )
+            ]
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "duplicate_role":
+            # Duplicate the first bind_role action with a new action_ref.
+            first_bind = None
+            for a in program.actions:
+                if a.action_type == "bind_role":
+                    first_bind = a
+                    break
+            if first_bind is None:
+                return program
+            dup = _replace(
+                first_bind,
+                action_ref="action:bind_role:dup",
+            )
+            # Insert the duplicate after the original.
+            new_actions = []
+            for a in program.actions:
+                new_actions.append(a)
+                if a.action_ref == first_bind.action_ref:
+                    new_actions.append(dup)
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "scope_cycle":
+            # Add bind_nested_application actions that create a cycle.
+            # Two nested applications that reference each other form a cycle.
+            extra_actions = []
+            extra_actions.append(
+                ProgramAction(
+                    action_ref="action:nest_a_to_b",
+                    action_type="bind_nested_application",
+                    arguments=("action:nest_b_to_a",),
+                    source_unit_refs=(),
+                )
+            )
+            extra_actions.append(
+                ProgramAction(
+                    action_ref="action:nest_b_to_a",
+                    action_type="bind_nested_application",
+                    arguments=("action:nest_a_to_b",),
+                    source_unit_refs=(),
+                )
+            )
+            # Insert before complete_program.
+            new_actions = []
+            for a in program.actions:
+                if a.action_type == "complete_program":
+                    new_actions.extend(extra_actions)
+                new_actions.append(a)
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "excess_depth":
+            # Add enough actions to exceed max_applications (24).
+            extra = []
+            for i in range(30):
+                extra.append(
+                    ProgramAction(
+                        action_ref=f"action:extra:{i}",
+                        action_type="project_variable",
+                        arguments=(f"var:extra:{i}",),
+                        source_unit_refs=(),
+                    )
+                )
+            # Insert before complete_program.
+            new_actions = []
+            for a in program.actions:
+                if a.action_type == "complete_program":
+                    new_actions.extend(extra)
+                new_actions.append(a)
+            return _replace(program, actions=tuple(new_actions))
+
+        if mutation == "uncovered_unit":
+            # Remove one source assignment so a unit is unassigned.
+            if not program.source_assignments:
+                return program
+            return _replace(
+                program,
+                source_assignments=program.source_assignments[:-1],
+            )
+
+        raise ValueError(f"unknown mutation: {mutation}")
+
+    return _mutate
+
+
+@pytest.fixture
+def case(valid_lattice, valid_program):
+    """A (lattice, program) pair with complete coverage."""
+    from collections import namedtuple
+
+    Case = namedtuple("Case", ["lattice", "program"])
+    return Case(lattice=valid_lattice, program=valid_program)
+
+
+@pytest.fixture
+def negated_effect_case(form_resolver):
+    """A (lattice, program) pair where the program has a critical scope residual."""
+    lattice = form_resolver.resolve("do not open the door")
+    program = _build_program_from_lattice(lattice, negate=True)
+    return (lattice, program)
+
+
+@pytest.fixture
+def canonical_round_trip(tmp_path):
+    """Callable that serializes an object to canonical JSON and restores it."""
+    from cemm_authoritative_hybrid.canonical import (
+        read_canonical_json,
+        write_canonical_json,
+    )
+
+    counter = {"i": 0}
+
+    def _round_trip(obj, cls):
+        i = counter["i"]
+        counter["i"] += 1
+        p = tmp_path / f"round_trip_{i}.json"
+        write_canonical_json(p, obj.as_dict())
+        loaded = read_canonical_json(p)
+        return cls.from_dict(loaded)
+
+    return _round_trip
+
+
+# ---------------------------------------------------------------------------
+# Bootstrap proposer and orientation fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def orient(linked_authority, memory_stores_fixture):
+    """Callable that takes a text string and returns an Orientation.
+
+    Uses the :class:`OrientationProjector` to build the orientation, then sets
+    ``source_text`` so the :class:`BootstrapProposer` can resolve the form
+    lattice.
+    """
+    from dataclasses import replace
+    from cemm_authoritative_hybrid.cycle import (
+        OrientationProjector,
+        SemanticMode,
+    )
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+
+    stores = memory_stores(
+        authority_generation=linked_authority.generation,
+    )
+    projector = OrientationProjector(
+        authority=linked_authority,
+        stores=stores,
+        config=RuntimeConfig.release(),
+    )
+
+    def _orient(text, mode=SemanticMode.QUERY):
+        orientation = projector.project("session:bootstrap", text, mode=mode)
+        orientation = replace(orientation, source_text=text)
+        return orientation
+
+    return _orient
+
+
+@pytest.fixture
+def bootstrap_proposer(
+    linked_authority,
+    form_resolver,
+    grounder,
+    affordance_index,
+    exact_verifier,
+    coverage_verifier,
+):
+    """A :class:`BootstrapProposer` with all components wired."""
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+    from cemm_authoritative_hybrid.contributions import ContributionExpander
+    from cemm_authoritative_hybrid.proposal import BootstrapProposer
+    from cemm_authoritative_hybrid.verifier import LegalActionIndex
+
+    config = RuntimeConfig.release()
+    contribution_expander = ContributionExpander(affordance_index, config)
+    legal_action_index = LegalActionIndex(linked_authority, config)
+
+    return BootstrapProposer(
+        authority=linked_authority,
+        config=config,
+        form_resolver=form_resolver,
+        grounder=grounder,
+        affordance_index=affordance_index,
+        contribution_expander=contribution_expander,
+        verifier=exact_verifier,
+        coverage_verifier=coverage_verifier,
+        legal_action_index=legal_action_index,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Neural switch proposer fixtures (M2 Task 6)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def release_factory():
+    """Callable that returns a HybridRuntime with the neural profile.
+
+    Loads the trained safetensors artifact from ``artifacts/proposal_dev/``.
+    """
+    from cemm_authoritative_hybrid.bootstrap import load_runtime
+
+    def _factory():
+        return load_runtime(ROOT, profile="neural")
+
+    return _factory
+
+
+@pytest.fixture
+def trained_proposer(release_factory):
+    """A NeuralSwitchProposer loaded from the artifact."""
+    runtime = release_factory()
+    return runtime.proposal_model
+
+
+@pytest.fixture
+def orientations(linked_authority, form_resolver):
+    """A list of orientations for testing the neural proposer."""
+    from dataclasses import replace
+    from cemm_authoritative_hybrid.cycle import (
+        OrientationProjector,
+        SemanticMode,
+    )
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+    from cemm_authoritative_hybrid.persistence import memory_stores
+
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    projector = OrientationProjector(
+        authority=linked_authority,
+        stores=stores,
+        config=RuntimeConfig.release(),
+    )
+    texts = [
+        "what is your name?",
+        "your name is what?",
+        "what are you called?",
+        "and you are called what?",
+        "is the server online?",
+        "not online",
+        "can I call you CEMM?",
+        "I can call you CEMM, right?",
+        "you said what?",
+        "yoz means hello",
+    ]
+    orientations = []
+    for text in texts:
+        orientation = projector.project("session:bootstrap", text, mode=SemanticMode.QUERY)
+        orientation = replace(orientation, source_text=text)
+        orientations.append(orientation)
+    stores.close()
+    return orientations
+
+
+@pytest.fixture
+def alpha_equivalent_orientations(linked_authority, form_resolver):
+    """A pair of orientations that are structurally identical but have different ref names.
+
+    Both orientations use the same surface text structure but different
+    participant refs, ensuring the structural features are identical while
+    the ref names differ.
+    """
+    from dataclasses import replace
+    from cemm_authoritative_hybrid.cycle import (
+        OrientationProjector,
+        SemanticMode,
+    )
+    from cemm_authoritative_hybrid.config import RuntimeConfig
+    from cemm_authoritative_hybrid.persistence import memory_stores
+
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    projector = OrientationProjector(
+        authority=linked_authority,
+        stores=stores,
+        config=RuntimeConfig.release(),
+    )
+    text = "what is your name?"
+    orientation1 = projector.project("session:bootstrap", text, mode=SemanticMode.QUERY)
+    orientation1 = replace(orientation1, source_text=text)
+
+    # Create an alpha-equivalent orientation with different session ref
+    # but the SAME surface text — structural features depend only on form
+    # evidence, not session/turn ref names.
+    orientation2 = projector.project("session:alt", text, mode=SemanticMode.QUERY)
+    orientation2 = replace(orientation2, source_text=text)
+
+    stores.close()
+    return (orientation1, orientation2)
+
+
+@pytest.fixture
+def structural_holdout(orientations):
+    """A set of test surfaces for ablation testing."""
+    return orientations
+

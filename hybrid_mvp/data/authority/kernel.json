@@ -1,0 +1,178 @@
+{
+  "adapters": [
+    "adapter:memory"
+  ],
+  "atoms": [
+    {
+      "kind": "participant",
+      "ref": "participant:user",
+      "reviewed": true
+    },
+    {
+      "kind": "participant",
+      "ref": "participant:system",
+      "reviewed": true
+    },
+    {
+      "kind": "concept",
+      "ref": "concept:person",
+      "reviewed": true
+    },
+    {
+      "kind": "concept",
+      "ref": "concept:digital_agent",
+      "reviewed": true
+    },
+    {
+      "kind": "concept",
+      "ref": "concept:job_role",
+      "reviewed": true
+    },
+    {
+      "kind": "label_type",
+      "ref": "label:name",
+      "reviewed": true
+    },
+    {
+      "kind": "label_type",
+      "ref": "label:lexical",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:has_capability",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:has_role",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:likes",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:owns",
+      "reviewed": true
+    },
+    {
+      "kind": "capability",
+      "ref": "cap:query",
+      "reviewed": true
+    },
+    {
+      "kind": "capability",
+      "ref": "cap:respond",
+      "reviewed": true
+    },
+    {
+      "kind": "adapter",
+      "ref": "adapter:memory",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:book",
+      "reviewed": true
+    }
+  ],
+  "capabilities": {
+    "participant:system": [
+      "cap:query",
+      "cap:respond",
+      "cap:learn_alias",
+      "cap:set_state"
+    ]
+  },
+  "designations": [
+    {
+      "language": "en",
+      "surface": "book",
+      "target": "entity:book"
+    },
+    {
+      "language": "en",
+      "surface": "likes",
+      "target": "rel:likes"
+    },
+    {
+      "language": "en",
+      "surface": "owns",
+      "target": "rel:owns"
+    },
+    {
+      "language": "en",
+      "surface": "CEMM",
+      "target": "participant:system"
+    },
+    {
+      "language": "en",
+      "surface": "job role",
+      "target": "concept:job_role"
+    },
+    {
+      "language": "en",
+      "surface": "job",
+      "target": "concept:job_role"
+    },
+    {
+      "language": "en",
+      "surface": "role",
+      "target": "concept:job_role"
+    },
+    {
+      "language": "en",
+      "surface": "occupation",
+      "target": "concept:job_role"
+    }
+  ],
+  "event_signatures": [],
+  "operator_roles": {
+    "op:designation": [
+      "role:target",
+      "role:label_type",
+      "role:surface"
+    ],
+    "op:event": [
+      "role:event",
+      "role:type"
+    ],
+    "op:relation": [
+      "role:subject",
+      "role:relation",
+      "role:object"
+    ],
+    "op:state": [
+      "role:subject",
+      "role:dimension",
+      "role:value"
+    ],
+    "op:type": [
+      "role:instance",
+      "role:class"
+    ]
+  },
+  "owner": "kernel",
+  "permissions": [
+    [
+      "participant:system",
+      "permission:write_alias",
+      "event:learn_alias"
+    ],
+    [
+      "participant:system",
+      "permission:set_state",
+      "event:set_state"
+    ]
+  ],
+  "rules": [],
+  "source": {
+    "origin": "legacy-authority-json",
+    "reviewed": true
+  },
+  "transitions": [],
+  "value_dimensions": {}
+}

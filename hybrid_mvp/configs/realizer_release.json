@@ -1,0 +1,14 @@
+{
+  "hidden": 64,
+  "layers": 2,
+  "epochs": 60,
+  "learning_rate": 0.003,
+  "seed": 3502,
+  "device": "cpu",
+  "feature_dim": 32,
+  "vocab_size": 16,
+  "target_encoding": "dynamic_pointer_slots",
+  "internal_ref_vocabulary": [],
+  "episodes_path": "data/partitions/train.jsonl",
+  "artifact_dir": "artifacts/realizer_release"
+}

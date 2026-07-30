@@ -1,0 +1,20 @@
+integrate: import CEMM Authoritative Hybrid MVP worktree into hybrid_mvp/
+
+Imports the full CEMM Authoritative Hybrid MVP worktree as a top-level
+hybrid_mvp/ subdirectory on a new hybrid-mvp/integration branch. This
+preserves the complete M1-M4 work (source, tests, data, artifacts, docs,
+scripts) as a single reference point before evidence-gated corrective replay.
+
+Milestones M1-M3 are complete. M4 Tasks 1-4 are implemented but do not pass
+release thresholds. Investigation found the root cause is upstream
+contract/data/runtime drift in M1-M3 (weak M1 validation receipt, dual ABI
+in M2, isolated fixture-owner M3 modules), not insufficient training. The
+100-epoch retrain reduced exact accuracy from 61/78 to 59/78.
+
+All artifacts including model weights, training data, and the regenerated
+CEMM_EVALUATION.json are preserved as-is for the corrective replay. See
+hybrid_mvp/INTEGRATION.md for the full status summary and next steps.
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>

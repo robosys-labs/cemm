@@ -1,0 +1,46 @@
+{
+  "policy_ref": "policy:acquisition",
+  "abi_version": 1,
+  "kind": "acquisition_policy",
+  "description": "Reviewer policy for trusted semantic acquisition. Defines reviewer requirements, validation rules, and the authorization type that gates all acquisition commits. Conversational wording cannot select this policy.",
+  "reviewer_requirements": {
+    "typed_authorization": true,
+    "authorization_fields": [
+      "reviewer_ref",
+      "policy_ref",
+      "plan_ref",
+      "decision",
+      "nonce",
+      "expires_at"
+    ],
+    "decision_must_be_approve": true,
+    "nonce_must_be_unique": true,
+    "authorization_must_not_be_expired": true,
+    "plan_ref_must_match": true
+  },
+  "validation_rules": {
+    "designation_learning": {
+      "requires_cap_learn": true,
+      "requires_existing_target_identity": true,
+      "requires_non_conflict": true,
+      "requires_source_query_binding": true,
+      "consumed_on_successful_commit": true
+    },
+    "generic_definition_acquisition": {
+      "requires_verified_programs": true,
+      "requires_side_effect_free_lowering": true,
+      "one_invalid_rejects_entire_acquisition": true,
+      "publishes_one_linked_generation": true,
+      "authority_compatibility_hash_preserved": true
+    }
+  },
+  "constraints": {
+    "conversational_wording_cannot_select_policy": true,
+    "one_pending_learning_obligation": true,
+    "no_lexical_token_authorizes_write": true,
+    "replay_rejected": true,
+    "cross_session_answer_rejected": true,
+    "internal_ref_lexicalization_rejected": true,
+    "trust_me_escalation_rejected": true
+  }
+}

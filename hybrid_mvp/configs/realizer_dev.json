@@ -1,0 +1,10 @@
+{
+  "hidden": 64,
+  "layers": 2,
+  "epochs": 60,
+  "learning_rate": 0.003,
+  "seed": 3502,
+  "device": "cpu",
+  "episodes_path": "data/bootstrap/realization_episodes.jsonl",
+  "artifact_dir": "artifacts/realizer_dev"
+}

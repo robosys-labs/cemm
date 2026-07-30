@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cemm.example/schemas/semantic_episode.schema.json",
+  "title": "SemanticEpisode",
+  "description": "A complete semantic episode serializing all six-phase inputs/outputs of the semantic kernel.",
+  "type": "object",
+  "required": [
+    "episode_ref",
+    "abi_version",
+    "scenario_ref",
+    "orientation",
+    "legal_proposals",
+    "rejected_proposals",
+    "selected_program",
+    "coverage",
+    "evaluation",
+    "effect_or_no_effect",
+    "response_meaning",
+    "realization_receipt",
+    "authority_hash",
+    "action_encoding_hash",
+    "generator_lineage",
+    "review_provenance"
+  ],
+  "properties": {
+    "episode_ref": {
+      "type": "string",
+      "pattern": "^episode:[0-9a-f]{24}$"
+    },
+    "abi_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "scenario_ref": {
+      "type": "string",
+      "pattern": "^scenario:"
+    },
+    "orientation": {
+      "type": "object",
+      "required": [
+        "session_ref",
+        "turn_ref",
+        "mode",
+        "participant_frame",
+        "temporal_frame",
+        "authority_generation",
+        "focus_refs",
+        "capability_summary"
+      ]
+    },
+    "legal_proposals": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "rejected_proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["program_ref", "rejection_codes"]
+      }
+    },
+    "selected_program": { "type": "object" },
+    "coverage": { "type": "object" },
+    "evaluation": {
+      "type": "object",
+      "required": ["status"]
+    },
+    "effect_or_no_effect": {
+      "type": "object",
+      "required": ["status"],
+      "description": "The no-effect marker. Always present: either an effect receipt or {status: no_effect}."
+    },
+    "response_meaning": { "type": "object" },
+    "realization_receipt": { "type": "object" },
+    "authority_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_encoding_hash": {
+      "type": "string"
+    },
+    "generator_lineage": {
+      "type": "object",
+      "required": ["seed", "authority_generation"]
+    },
+    "review_provenance": {
+      "type": "object",
+      "required": ["review_status", "scenario_ref"]
+    },
+    "gap_receipt": {
+      "type": ["object", "null"]
+    },
+    "revisions": { "type": "object" },
+    "training_source": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,59 @@
+{
+  "generation": "authority-v1-2026-07-29",
+  "frames": [
+    {
+      "frame_ref": "frame:event:greeting",
+      "target_kind": "event_type",
+      "target_ref": "event:greeting",
+      "contribution_kinds": ["predicate", "anchor"],
+      "input_ports": ["role:actor", "role:addressee"],
+      "output_ports": ["role:event"],
+      "role_candidates": ["role:actor", "role:addressee"]
+    },
+    {
+      "frame_ref": "frame:event:say",
+      "target_kind": "event_type",
+      "target_ref": "event:say",
+      "contribution_kinds": ["predicate", "anchor"],
+      "input_ports": ["role:actor", "role:content"],
+      "output_ports": ["role:event"],
+      "role_candidates": ["role:actor", "role:content"]
+    },
+    {
+      "frame_ref": "frame:event:learn_alias",
+      "target_kind": "event_type",
+      "target_ref": "event:learn_alias",
+      "contribution_kinds": ["predicate", "anchor", "reference"],
+      "input_ports": ["role:actor", "role:target", "role:surface"],
+      "output_ports": ["role:event"],
+      "role_candidates": ["role:actor", "role:target", "role:surface"]
+    },
+    {
+      "frame_ref": "frame:event:set_state",
+      "target_kind": "event_type",
+      "target_ref": "event:set_state",
+      "contribution_kinds": ["predicate", "anchor", "reference"],
+      "input_ports": ["role:actor", "role:target", "role:dimension", "role:value"],
+      "output_ports": ["role:event"],
+      "role_candidates": ["role:actor", "role:target", "role:dimension", "role:value"]
+    },
+    {
+      "frame_ref": "frame:rel:mother_in_law",
+      "target_kind": "relation_type",
+      "target_ref": "rel:mother_in_law",
+      "contribution_kinds": ["predicate", "anchor"],
+      "input_ports": ["role:subject", "role:object"],
+      "output_ports": ["role:relation"],
+      "role_candidates": ["role:subject", "role:object"]
+    },
+    {
+      "frame_ref": "frame:rel:has_partner",
+      "target_kind": "relation_type",
+      "target_ref": "rel:has_partner",
+      "contribution_kinds": ["predicate", "anchor"],
+      "input_ports": ["role:subject", "role:object"],
+      "output_ports": ["role:relation"],
+      "role_candidates": ["role:subject", "role:object"]
+    }
+  ]
+}

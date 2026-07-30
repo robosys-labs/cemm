@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cemm-authoritative-hybrid-mvp"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["torch>=2.0"]
+
+[project.scripts]
+cemm-authoritative-hybrid = "cemm_authoritative_hybrid.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+xfail_strict = true
