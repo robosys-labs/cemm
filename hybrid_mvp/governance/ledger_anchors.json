@@ -1,0 +1,22 @@
+{
+  "ledgers": {
+    "governance/receipt_invalidations.jsonl": {
+      "genesis_ref": "governance_record:2d78595728e2784b240ef4cd",
+      "initial_bytes_sha256": "d7104af3cfdb901d9cbb4e73f481a729a63c1529dd84d15864d817588df68779",
+      "initial_bytes_size": 3045,
+      "initial_count": 6,
+      "initial_head_ref": "governance_record:3198e61af22da6dd11ce4822",
+      "record_schema": "cemm-receipt-invalidation-record-v1"
+    },
+    "governance/replay_status.jsonl": {
+      "genesis_ref": "governance_record:86da34ff78a4ac85681c9a0b",
+      "initial_bytes_sha256": "5a3b928e800e02debdeb184a2fcc914a6fbd7be497beecaf858c20abf245e191",
+      "initial_bytes_size": 3673,
+      "initial_count": 9,
+      "initial_head_ref": "governance_record:a3029ee240f464ca1660467e",
+      "record_schema": "cemm-replay-status-record-v1"
+    }
+  },
+  "schema": "cemm-governance-ledger-anchors-v1",
+  "source_base": "b30eef9dac2b0791d7f14319ecae5634b347aa21"
+}

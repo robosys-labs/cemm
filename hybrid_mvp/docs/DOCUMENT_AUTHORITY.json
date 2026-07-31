@@ -29,6 +29,10 @@
     "docs/WORKTREE_INTEGRATION.md",
     "artifacts/"
   ],
+  "governance_ledger_anchors": {
+    "path": "governance/ledger_anchors.json",
+    "sha256": "5db61efe193b6b4fb21ef5cf3ab14ef1d4ae71379497a8a2405b9402733dd893"
+  },
   "generated_artifacts_are_authority": false,
   "root_adoption_requires_separate_review": true
 }

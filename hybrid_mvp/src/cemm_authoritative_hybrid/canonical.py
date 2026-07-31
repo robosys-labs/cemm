@@ -11,11 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass, fields, is_dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 import hashlib
 import json
 
-import torch
+if TYPE_CHECKING:
+    from torch import Tensor as TensorLike
+else:
+    TensorLike = Any
 
 
 __all__ = [
@@ -179,7 +182,7 @@ def stable_ref(namespace: str, payload: Any) -> str:
     return f"{namespace}:{digest[:24]}"
 
 
-def tensor_identity(tensors: Mapping[str, torch.Tensor]) -> str:
+def tensor_identity(tensors: Mapping[str, TensorLike]) -> str:
     """Hash sorted name, dtype, shape and every contiguous CPU byte.
 
     The hash is order-independent with respect to the mapping key order and is

@@ -216,23 +216,20 @@ def read_hash_chain(path: Path) -> tuple[dict[str, object], ...]:
     anchor = load_ledger_anchor(path)  # verifies the DOCUMENT_AUTHORITY pin
     records = _verify_anchored_bytes(raw, anchor)
     root = _find_git_root(path.resolve().parent)
-    head_ref = _git_head(root)
-    suffix_bases = tuple(
-        str(record["source_base"])
-        for record in records[anchor.initial_count:]
+    prefixes = _prefix_witnesses(raw, records, anchor)
+    _head_ref, committed_blobs = _load_git_witnesses(
+        root, path, anchor.source_base, prefixes
     )
-    revisions = (anchor.source_base, *suffix_bases, head_ref)
-    commit_kinds = _git_batch_commit_kinds(root, revisions)
-    committed_blobs = _git_batch_blobs(root, path, suffix_bases) if suffix_bases else {}
-    _verify_git_witnesses(
-        raw, records, anchor,
-        committed_blobs=committed_blobs,
-        commit_kinds=commit_kinds,
-        head_ref=head_ref,
-        is_ancestor=lambda ancestor, descendant: _git_is_ancestor(
-            root, ancestor, descendant
-        ),
-    )
+    for witness in prefixes:
+        committed = committed_blobs.get(witness.revision)
+        if (
+            committed is None
+            or len(committed) != witness.expected_size
+            or committed != raw[:witness.expected_size]
+        ):
+            raise GovernanceError(
+                "source_base does not bind its exact committed prefix"
+            )
     return records
 ```
 
@@ -252,6 +249,25 @@ For every later append, load the ledger bytes from the record's `source_base`
 Git commit and require them to equal the bytes before that record, not merely be
 a prefix of the current file. Each source base must be a commit, a monotonic
 ancestor of the next source base and an ancestor of current HEAD.
+`_prefix_witnesses` derives each revision and exact expected prefix size in
+memory from the already bounded ledger. For any nonempty post-anchor suffix,
+`_load_git_witnesses` uses exactly three Git subprocesses, independent of row
+count:
+
+1. one bounded combined `cat-file --batch-check` over HEAD, every source
+   revision and every `<revision>:<ledger-path>` expression, validating commit
+   types plus each blob OID, type and exact expected size before loading bytes;
+2. one bounded `rev-list --parents --topo-order --ancestry-path` commit DAG,
+   followed by local monotonic-ancestry verification; and
+3. one bounded `cat-file --batch` that receives only the already checked blob
+   OIDs and loads exactly their checked sizes.
+
+There is no per-record Git subprocess. Ledger bytes and records are capped by
+`MAX_LEDGER_BYTES` and `MAX_LEDGER_RECORDS`; metadata, commit-graph bytes and
+commit-graph records are capped by `MAX_GIT_METADATA_BYTES`,
+`MAX_COMMIT_GRAPH_BYTES` and `MAX_COMMIT_GRAPH_RECORDS`; and the aggregate blob
+load is bounded from the checked sizes. Extra, oversized or truncated Git output
+fails closed.
 `read_hash_chain(path)` always discovers and verifies that Git witness itself;
 it has no public prior-bytes, prior-head-receipt or callback bypass. If Git is
 unavailable for a post-anchor suffix, verification fails closed. A future

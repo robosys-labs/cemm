@@ -1,1 +1,3 @@
 *.lock text eol=lf
+governance/*.json text eol=lf
+governance/*.jsonl text eol=lf
