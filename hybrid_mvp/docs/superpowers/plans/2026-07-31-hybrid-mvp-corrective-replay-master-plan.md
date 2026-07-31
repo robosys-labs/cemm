@@ -72,12 +72,19 @@ The replay has exactly three execution tiers:
 | Tier | When it runs | Contents | Freshness |
 |---|---|---|---|
 | `owner` | Every red/green implementation loop | The affected owner's focused tests, corruption tests, static import/source checks | Always fresh; target under 60 seconds |
-| `phase` | After a task is green and reviewed | Fresh cross-owner integration tests selected from the dependency manifest; owner tests are not repeated | Always fresh |
-| `admission` | Once per G0/R1/.../R8 candidate | Complete declared active suite, deterministic regeneration, clean activation/reload; training/corpus work only where that phase owns it | Always fresh; cached results never admit |
+| `phase` | Once after reviewed work changes a declared cross-owner boundary and has integration nodes | Fresh cross-owner integration nodes selected from the dependency manifest; owner nodes are excluded | Always fresh |
+| `admission` | Once per G0/R1/.../R8 candidate | One execution of the complete declared active suite, deterministic regeneration and clean activation/reload; training/corpus work only where that phase owns it | Always fresh; cached results never admit |
 
-These are runner modes, not three independent validators. A test is invoked at
-most once in a tier. Later tiers consume the same structured result schema
-rather than re-parsing or re-running an earlier tier for ceremony.
+These are runner modes, not three independent validators. The runner resolves
+the immutable inventory and literal metadata to exact pytest node IDs before
+execution. DAG
+prerequisites and pytest nodes execute at most once within a tier, and owner and
+phase diagnostic node sets are disjoint. A task with no changed cross-owner
+boundary and no integration nodes runs no empty phase tier. Admission does not
+nest owner or phase steps or trust their receipts: it deliberately executes the
+complete active set once fresh. That single admission re-execution is the only
+intended cross-tier repeat. Status and receipt verification never launches a
+runner.
 
 The external gate runner records:
 
@@ -87,8 +94,22 @@ The external gate runner records:
 - wall time, peak working set when available, and slowest cases;
 - whether the result was fresh or diagnostic-only.
 
+The only public admission loader is
+`load_verified_admission_receipt(root, *, phase, expected_status, run_ref=None) -> tuple[GateReceipt, tuple[str, ...]]`. It strictly reconstructs one existing
+receipt and every nested identity without executing a gate. The second value is
+the sorted canonical repository-relative paths of the exact dirty evidence
+files authenticated by that receipt's path/hash material; directory, glob,
+working-tree and unauthenticated-path inference is forbidden. An explicit
+`run_ref` selects that run; omitting it is legal only when exactly one eligible
+current run exists. Time, mtime and a "latest" pointer never choose authority.
+Both green and `externally_blocked` updater transitions call this loader with
+`expected_status="passed"` and bind `admission_gate_result_ref` plus the exact
+`admission_run_ref`.
+
 No gate runner, corpus scan, trace serializer, model training operation, or
 performance sampler is called from the normal `HybridRuntime.process()` path.
+Governance, status and receipt-loader control paths remain lightweight and do
+not import runtime, model or training libraries.
 
 ### Cost and invalidation policy
 
@@ -104,8 +125,26 @@ performance sampler is called from the normal `HybridRuntime.process()` path.
 - Clean-checkout activation runs once per phase admission candidate.
 - G0-R1 does not cache test results. Later R4-R5 plans may reuse content-matched
   expensive artifact diagnostics, but never for admission.
+- One runner invocation hashes each canonical input and parses each governance
+  artifact once. Owner/phase modes collect only exact selected nodes; admission
+  performs one fresh active-set collection and execution in one pytest process.
 - Performance budgets start as observed baselines. A material unexplained
   regression is investigated; budgets are not relaxed to hide semantic bloat.
+
+### History-preserving admission evidence
+
+Every post-anchor status `source_base` is part of the release proof. Referenced
+commits must form a monotonic ancestry chain and remain ancestors of the release
+HEAD. Once a status row is appended, integration uses only fast-forward or a
+history-preserving merge commit. Squash merge, rebase, cherry-pick-only
+integration, history filtering and force-push are forbidden when they would
+orphan a referenced commit. Production `read_hash_chain(path)` authenticates
+post-anchor history from Git and exposes no prior-bytes or prior-receipt bypass.
+A future Git-less release verifier may be separately reviewed as a
+manifest-pinned verify-only path, but `read_hash_chain` does not accept it and
+it is not current admission authority. Root adoption that cannot preserve this
+history requires a separately reviewed ledger-closing and new-genesis
+migration.
 
 ## Detailed plan sequence
 
@@ -153,8 +192,11 @@ Required evidence:
 - a Hybrid MVP document authority/supersession map;
 - truthful append-only replay status with G0 pending/green and R1-R8 red;
 - quarantined prior receipts/checkpoints without deletion;
-- every predecessor test classified as retained, rewritten, or historical;
-  retained tests also declare their earliest activation phase;
+- immutable `governance/test_inventory.json`, freezing exactly 59 predecessor
+  test files, 634 source-test refs and 743 exact case node IDs with reviewed
+  classification/assertion/activation metadata;
+- literal per-node `__cemm_test_inventory__` metadata in every later test,
+  parsed once by AST without filename/default or live-Git inference;
 - collection failures, skips, xfails and unexpected deselections represented as
   structured failures;
 - the three-tier external gate runner and content dependency manifest;
@@ -241,20 +283,43 @@ Required evidence:
 
 ## Test lifecycle
 
-Every predecessor test has one approved classification:
+`governance/test_inventory.json` is the single immutable predecessor
+inventory. It freezes exactly 59 reviewed test files, 634 source-test refs and
+743 exact collected-case node IDs, plus the classification, assertion,
+activation and content refs needed to select them without consulting live Git.
+`DOCUMENT_AUTHORITY.json` pins its exact path and SHA-256. Its identity and
+counts are recomputed directly from the file in routine and bundle verification;
+later replay tasks never mutate it.
+
+Every test introduced after the frozen inventory carries a module-level literal
+`__cemm_test_inventory__` mapping with one record per exact pytest node ID,
+including parameterized cases. Later parameterized tests declare literal case
+IDs; dynamic/generated parameter IDs are forbidden. Each literal record
+declares its assertion ref, earliest activation phase, diagnostic role, owner
+when applicable, and introducing task. The checker parses every current test
+module once with `ast`
+and rejects computed metadata, a missing or duplicate node, overlap with the
+frozen inventory, and every filename or file-level default inference. No
+secondary mutable registry or live-Git lookup participates in routine or bundle
+verification.
+
+Every frozen predecessor source test has one approved classification:
 
 - `retained`: its assertion remains valid and declares the earliest replay phase
   whose admitted owners can execute it;
-- `rewritten`: a named active successor preserves the assertion under the
+- `rewritten`: a named exact successor node preserves the assertion under the
   hard-cut ABI;
 - `historical`: the assertion depended on a retired semantic path and remains
   evidence with a reviewed reason.
 
-There is no `future` classification. At each admission, all predecessor source
-tests are inventory-checked, while the complete retained suite whose activation
-phase is at or before the candidate phase is collected and executed. Admission
-requires zero unclassified tests, collection errors, skips, xfails or xpasses.
-R8 requires every retained test to be active.
+There is no `future` classification. Owner and phase tiers receive disjoint
+exact node selectors and each executing tier starts exactly one pytest process.
+Admission independently supplies the complete eligible union of frozen case
+nodes and later literal-metadata nodes to one fresh pytest process. Mixed-phase
+files may be import-checked but are never selected or classified as whole
+files. Admission requires zero unclassified or duplicate nodes, collection
+errors, skips, xfails or xpasses. R8 requires every retained frozen case and
+every active later case to be active.
 
 ## Commit and review discipline
 
@@ -267,7 +332,8 @@ For every implementation task:
 5. address review findings and rerun;
 6. request code-quality/performance review;
 7. address findings and rerun;
-8. run the applicable coalesced phase tier;
+8. if the task changed a declared cross-owner boundary, run its coalesced phase
+   tier exactly once; otherwise record that no phase tier applies;
 9. commit one coherent task.
 
 Do not combine unrelated phase work, copy donor files wholesale, or weaken a
@@ -283,6 +349,7 @@ Stop implementation and record a red or externally blocked receipt when:
 - a proposed compatibility path would create a second runtime/ABI;
 - a performance optimization would weaken independent verification;
 - corpus/test access cannot prove separation;
-- a programming exception is being converted into a semantic gap.
+- a programming exception is being converted into a semantic gap;
+- integration would detach, rewrite or discard a ledger-referenced commit.
 
 A red receipt is useful evidence. It is never promoted by changing a label.

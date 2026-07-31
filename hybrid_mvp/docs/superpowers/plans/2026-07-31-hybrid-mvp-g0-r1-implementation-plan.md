@@ -21,9 +21,12 @@
 - Never run/copy the donor installer or overlay.
 - Do not modify root-runtime code/authority or relabel/move/delete inherited artifacts.
 - Do not weaken release expectations, convert programming errors into gaps, or retain adapters, signature inspection, fixture release owners, or alternate composition roots.
-- Red/green loops run only the focused owner tier. Run the coalesced phase tier after review and one fresh admission tier per phase candidate.
+- Red/green loops run only the focused owner tier. Run one coalesced phase tier only when reviewed work changes a declared cross-owner boundary and has integration nodes. Run one fresh admission tier per phase candidate.
+- Owner and phase selectors are disjoint after expansion to exact collected node IDs. Admission executes the complete active node set once fresh and never nests owner or phase test steps.
+- Test governance uses immutable `governance/test_inventory.json` for the frozen 59-file/634-source/743-case predecessor set. Every later test carries literal per-node `__cemm_test_inventory__` metadata in its own module. The AST checker parses each module once. No secondary mutable registry exists; test-inventory routine/bundle verification neither infers metadata from filenames/defaults nor queries live Git.
 - G0/R1 never run corpus generation, training, or reproduction.
-- Validation/performance code is not imported by the normal runtime path.
+- Validation/performance code is not imported by the normal runtime path. Governance, status and receipt-loader tools remain lightweight and do not import runtime/model/training libraries.
+- Once a post-anchor status row is appended, preserve every referenced `source_base` through fast-forward or a merge commit; do not rebase, squash, cherry-pick-only integrate or force-push away that history.
 - Preserve unrelated user changes.
 
 ## Baseline evidence at `58345240e67bf003e6ac7d5c68752e2e5eee4a7d`
@@ -160,20 +163,26 @@ Request contract review and document-consistency review before commit.
 
 ```python
 from cemm_authoritative_hybrid.governance import (
-    effective_replay_status, read_hash_chain, verify_file_invalidation,
+    effective_replay_status, load_ledger_anchor, read_hash_chain,
+    verify_file_invalidation,
 )
 
 
 def test_initial_replay_status_is_truthful() -> None:
-    records = read_hash_chain(ROOT / "governance/replay_status.jsonl")
-    assert effective_replay_status(records) == {
+    path = ROOT / "governance/replay_status.jsonl"
+    records = read_hash_chain(path)
+    anchor = load_ledger_anchor(path)
+    assert effective_replay_status(records[:anchor.initial_count]) == {
         "G0": "pending", "R1": "red", "R2": "red", "R3": "red",
         "R4": "red", "R5": "red", "R6": "red", "R7": "red", "R8": "red",
     }
 
 
 def test_invalidations_bind_unchanged_historical_files() -> None:
-    records = read_hash_chain(ROOT / "governance/receipt_invalidations.jsonl")
+    path = ROOT / "governance/receipt_invalidations.jsonl"
+    all_records = read_hash_chain(path)
+    anchor = load_ledger_anchor(path)
+    records = all_records[:anchor.initial_count]
     expected = {
         "artifacts/validation/MILESTONE_RECEIPT.json":
             "f6df34c05b9cbbdd5b5864ad5fb11bfc7c530105753117e05e80a2da642b6aa7",
@@ -202,36 +211,61 @@ def expected_record_ref(record: Mapping[str, object]) -> str:
     return stable_ref("governance_record", material)
 
 
-def read_hash_chain(
-    path: Path,
-    anchor: LedgerAnchor,
-    *,
-    prior_committed_bytes: bytes | None,
-) -> tuple[dict[str, object], ...]:
+def read_hash_chain(path: Path) -> tuple[dict[str, object], ...]:
     raw = path.read_bytes()
-    if prior_committed_bytes is not None and not raw.startswith(prior_committed_bytes):
-        raise GovernanceError("ledger is not an append-only extension")
-    records = parse_and_validate_records(raw)
-    if len(records) < anchor.initial_count:
-        raise GovernanceError("ledger truncated below governed anchor")
-    if records[0]["record_ref"] != anchor.genesis_ref:
-        raise GovernanceError("governance genesis mismatch")
-    if records[anchor.initial_count - 1]["record_ref"] != anchor.initial_head_ref:
-        raise GovernanceError("governed initial prefix changed")
+    anchor = load_ledger_anchor(path)  # verifies the DOCUMENT_AUTHORITY pin
+    records = _verify_anchored_bytes(raw, anchor)
+    root = _find_git_root(path.resolve().parent)
+    head_ref = _git_head(root)
+    suffix_bases = tuple(
+        str(record["source_base"])
+        for record in records[anchor.initial_count:]
+    )
+    revisions = (anchor.source_base, *suffix_bases, head_ref)
+    commit_kinds = _git_batch_commit_kinds(root, revisions)
+    committed_blobs = _git_batch_blobs(root, path, suffix_bases) if suffix_bases else {}
+    _verify_git_witnesses(
+        raw, records, anchor,
+        committed_blobs=committed_blobs,
+        commit_kinds=commit_kinds,
+        head_ref=head_ref,
+        is_ancestor=lambda ancestor, descendant: _git_is_ancestor(
+            root, ancestor, descendant
+        ),
+    )
     return records
 ```
 
 `parse_and_validate_records` performs the exact sequence, predecessor, schema,
-type and content-ref checks shown by Task 2's RED tests. `ledger_anchors.json`
-pins each ledger's genesis, initial head and initial count; DOCUMENT_AUTHORITY
-pins that anchor file. For every later append, load the ledger bytes from the
-record's `source_base` Git object and require the current bytes to have that
-exact prefix. A clean bundle without Git must carry the prior-head receipt.
+type and content-ref checks shown by Task 2's RED tests. Status records bind both
+`admission_gate_result_ref` and the exact fresh `admission_run_ref`; both are
+null for initial red/pending records. Green and `externally_blocked` transitions
+both reconstruct one passed admission with `expected_status="passed"` before
+binding those refs. The updater never forwards the ledger values `green` or
+`externally_blocked` as a receipt-status expectation. `ledger_anchors.json`
+pins each ledger's genesis, initial head, initial byte length/hash and initial
+count; DOCUMENT_AUTHORITY pins
+that anchor file by exact SHA-256. Tests of the truthful initial state inspect
+only the governed anchored prefix so later appends do not invalidate them.
+
+For every later append, load the ledger bytes from the record's `source_base`
+Git commit and require them to equal the bytes before that record, not merely be
+a prefix of the current file. Each source base must be a commit, a monotonic
+ancestor of the next source base and an ancestor of current HEAD.
+`read_hash_chain(path)` always discovers and verifies that Git witness itself;
+it has no public prior-bytes, prior-head-receipt or callback bypass. If Git is
+unavailable for a post-anchor suffix, verification fails closed. A future
+Git-less release bundle may define a separately reviewed, manifest-pinned,
+verify-only path, but that path is not accepted by `read_hash_chain` and is not
+current admission authority.
 
 Populate `G0=pending` and `R1-R8=red` plus the six exact invalidations. Preserve
 historical files byte-for-byte. Add tests for changed fields, broken predecessor,
-missing/extra fields, truncation and a fully rehashed rewrite that does not
-preserve the prior committed prefix.
+missing/extra fields, truncation, ancestor changes invalidating descendants,
+`externally_blocked`, passed-receipt enforcement for both green and
+`externally_blocked`, Git-unavailable suffix verification, and a fully rehashed
+rewrite that does not preserve the prior committed prefix. A status update
+validates existing receipts only and never launches a validation tier.
 
 ### Step 3: Verify, review, commit
 
@@ -242,46 +276,97 @@ git commit -m "governance: invalidate inherited claims append-only"
 ```
 
 
-## Task 3: Review and bind the predecessor test inventory
+## Task 3: Freeze predecessor cases and require literal metadata for later tests
 
 **Files:**
 
-- Create: `hybrid_mvp/governance/predecessor_test_inventory.json`
+- Create: `hybrid_mvp/governance/test_inventory.json`
 - Create: `hybrid_mvp/scripts/check_test_inventory.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/governance.py`
+- Modify: `hybrid_mvp/docs/DOCUMENT_AUTHORITY.json`
 - Modify: `hybrid_mvp/tests/test_replay_governance.py`
 - Generate in Task 5: `hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json`
 
-### Step 1: Add failing inventory tests
+### Step 1: Add failing immutable-inventory tests
 
-The reviewed inventory has one explicit record per predecessor source test.
-Assertions may be shared through a reviewed registry, but classification and
-activation are per test:
+`governance/test_inventory.json` is the only predecessor inventory. Build it
+from the reviewed baseline audit and then make it immutable. It freezes exactly
+59 test files, 634 source-test refs and 743 exact collected-case node IDs,
+including every parameterized case. It also binds each file's reviewed baseline
+blob ref, every source test's assertion/classification/activation metadata and a
+recomputable `inventory_ref`:
 
 ```json
 {
-  "assertions": {
-    "assertion:program-abi": "The switch vocabulary, five operators, source assignments and program identity remain exact."
-  },
-  "tests": [
+  "schema": "cemm-hybrid-test-inventory-v1",
+  "inventory_ref": "test_inventory:<content-ref>",
+  "baseline_source_ref": "58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
+  "file_count": 59,
+  "source_test_count": 634,
+  "case_count": 743,
+  "files": [
     {
-      "test_ref": "tests/test_program_abi.py::test_program_uses_only_five_persistent_operators",
+      "path": "tests/test_program_abi.py",
+      "baseline_blob_ref": "sha256:<digest>"
+    }
+  ],
+  "source_tests": [
+    {
+      "source_test_ref": "tests/test_program_abi.py::test_program_uses_only_five_persistent_operators",
       "classification": "retained",
       "activation_phase": "R1",
       "assertion_ref": "assertion:program-abi",
-      "successor_refs": []
+      "case_node_ids": [
+        "tests/test_program_abi.py::test_program_uses_only_five_persistent_operators"
+      ],
+      "successor_node_ids": []
     }
   ]
 }
 ```
 
-Parse every tracked `tests/test_*.py` with `ast` and require exactly one reviewed
-record for each function or class method whose name starts `test_`. Require a
-non-empty referenced assertion, allowed `retained|rewritten|historical`
-classification, activation phase for retained tests, successor refs for
-rewritten tests, and no duplicate/orphan record. Parameterized collected node
-IDs map to their exact source `test_ref`. A file-level default is forbidden.
-Do not derive assertions or classifications from test names.
+The full artifact, not this abbreviated example, contains all 59/634/743
+records. `DOCUMENT_AUTHORITY.json` pins its exact path and SHA-256. Verify that
+authority pin first, then recompute `inventory_ref` over every field except
+itself; require exact counts, unique normalized repository-relative
+file/source/case refs, every case owned by exactly one source test, a non-empty
+assertion ref, an activation phase
+for retained tests and exact successor node IDs for rewritten tests. A
+`historical` record needs a reviewed reason. There is no `future`
+classification.
+
+Every test node introduced after the frozen set is self-describing. Its module
+contains one literal mapping named `__cemm_test_inventory__`:
+
+```python
+__cemm_test_inventory__ = {
+    "tests/test_replay_governance.py::test_initial_replay_status_is_truthful": {
+        "assertion_ref": "assertion:truthful-replay-status",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-2",
+    },
+}
+```
+
+Keys are exact pytest node IDs. A parameterized later test has one literal entry
+for every exact case node ID and declares literal `ids=` values so the AST
+checker can derive those IDs without pytest collection. Dynamic/generated
+parameter IDs are forbidden. `diagnostic_role` is exactly
+`owner|phase|admission_only`; `owner_ref` is required only for `owner`.
+Metadata values and keys must be AST literals. Computed dictionaries, decorators
+that infer governance, file-level defaults, filename conventions and imported
+metadata are forbidden.
+
+`check_test_inventory.py` parses `test_inventory.json` and every current test
+module exactly once with `ast`; it does not import test modules or query Git. It
+rejects a bad inventory identity/count, a later test lacking literal per-node
+metadata, metadata for a frozen or nonexistent node, duplicate node ownership,
+unsafe paths and an unrecognized field/value. The one-time Task 3 review
+compares the frozen file to the supplied baseline audit before commit. Routine
+and release-bundle verification thereafter recompute the immutable file and AST
+metadata directly and never require a live Git checkout.
 
 Run and observe RED:
 
@@ -289,9 +374,10 @@ Run and observe RED:
 python -m pytest tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
 ```
 
-### Step 2: Curate all 59 predecessor files
+### Step 2: Curate the complete frozen set and annotate current later tests
 
-Curate all 634 predecessor source-test records by earliest truthful owner:
+Curate all and only the frozen 59 files, 634 source tests and 743 exact cases by
+earliest truthful activation:
 
 - G0: governance/validator.
 - R1: canonical serialization, persistence/recovery, ABI, receipts, runtime-path
@@ -303,21 +389,36 @@ Curate all 634 predecessor source-test records by earliest truthful owner:
 - R4: scenarios/episodes, negatives, leakage and training isolation.
 - R5: neural proposer/realizer, calibration, weight use and reproduction.
 - R6-R7: production cutover, end-to-end evaluation and release thresholds.
-- Rewritten only when a concrete active successor preserves the assertion.
-- Historical only when the assertion itself depended on a retired semantic path.
+- `rewritten` only when exact named successor case nodes preserve the assertion.
+- `historical` only when the assertion itself depended on a retired path.
 
-`tests/test_release_thresholds.py` stays retained with `activation_phase=R7`; preserve its current red
-result. The structured collector in Task 4 expands parameterized node IDs and
-binds every collected node to exactly one reviewed source rule.
+`tests/test_release_thresholds.py` remains retained with
+`activation_phase=R7` and its known-red result is preserved. Do not edit
+`test_inventory.json` after this review. Add literal metadata for every test
+introduced by Tasks 1-3 to the module that owns it. Every later implementation
+task adds literal metadata in the same source change as each new node.
+
+The checker emits an in-memory exact-node index from the immutable inventory and
+literal AST metadata. Owner and phase selectors use exact node IDs from that
+index and are disjoint. Admission sends the complete eligible exact-node union
+to one fresh pytest process. Mixed-phase modules can be import-checked but never
+selected as whole files.
+
+`TEST_INVENTORY_RECEIPT.json` binds the document-authority pin, immutable
+`inventory_ref`, aggregate content ref of all literal
+`__cemm_test_inventory__` mappings and the exact
+active-node-set ref. This proof is part of the existing coalesced
+governance/admission DAG, not a fourth tier or another pytest process.
 
 ### Step 3: Verify, review, commit
 
 ```powershell
-python scripts\check_test_inventory.py --source-only
+python scripts\check_test_inventory.py --verify
 python -m pytest tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
-git add hybrid_mvp/governance/predecessor_test_inventory.json hybrid_mvp/scripts/check_test_inventory.py hybrid_mvp/src/cemm_authoritative_hybrid/governance.py hybrid_mvp/tests/test_replay_governance.py
-git commit -m "governance: inventory predecessor semantic tests"
+git add hybrid_mvp/governance/test_inventory.json hybrid_mvp/scripts/check_test_inventory.py hybrid_mvp/src/cemm_authoritative_hybrid/governance.py hybrid_mvp/docs/DOCUMENT_AUTHORITY.json hybrid_mvp/tests/test_replay_governance.py
+git commit -m "governance: freeze predecessor tests and require literal metadata"
 ```
+
 
 ## Task 4: Replace the profile-label validator with one structured DAG runner
 
@@ -326,9 +427,11 @@ git commit -m "governance: inventory predecessor semantic tests"
 - Create: `hybrid_mvp/scripts/validation_gate.py`
 - Create: `hybrid_mvp/scripts/pytest_gate_runner.py`
 - Rewrite: `hybrid_mvp/scripts/validate_mvp.py`
+- Modify: `hybrid_mvp/scripts/update_replay_status.py`
 - Create: `hybrid_mvp/configs/validation_gates.json`
 - Create: `hybrid_mvp/tests/test_validation_gate.py`
 - Create: `hybrid_mvp/tests/test_g0_integration.py`
+- Modify: `hybrid_mvp/tests/test_replay_governance.py`
 - Modify: `hybrid_mvp/pyproject.toml` only for strict declared markers, if used
 
 ### Step 1: Specify behavior with RED tests
@@ -451,7 +554,35 @@ def test_runtime_has_no_validation_import(project_root: Path) -> None:
     )
     assert "validation_gate" not in runtime
     assert "pytest_gate_runner" not in runtime
+
+
+def test_owner_and_phase_nodes_are_disjoint(project_root: Path) -> None:
+    graph = load_gate_graph(project_root / "configs/validation_gates.json")
+    owner = set(graph.resolve_pytest_nodes("G0", "owner"))
+    phase = set(graph.resolve_pytest_nodes("G0", "phase"))
+    assert owner.isdisjoint(phase)
+
+
+def test_every_raw_file_selector_is_rejected(raw_file_graph) -> None:
+    with pytest.raises(GateConfigError, match="exact node selectors required"):
+        raw_file_graph.validate()
+
+
+def test_each_executing_tier_has_one_pytest_process(project_root: Path) -> None:
+    graph = load_gate_graph(project_root / "configs/validation_gates.json")
+    assert graph.pytest_process_count("G0", "owner", owner="governance") == 1
+    assert graph.pytest_process_count("G0", "phase") == 1
+    assert graph.pytest_process_count("G0", "admission") == 1
 ```
+
+Add a literal `__cemm_test_inventory__` entry for every new Task 4 exact node in
+the module that owns it, including its assertion, G0 activation, diagnostic role
+and owner. Config validation accepts exact pytest node selectors only, rejects
+filename/file-default inference and duplicate nodes inside a tier, and requires
+admission to contain exactly one active-suite pytest process rather than nested
+owner/phase pytest steps. Governance, anchor, invalidation, status, immutable
+inventory and AST-metadata checks are one coalesced prerequisite, not separate
+gate processes.
 
 ### Step 2: Implement immutable results
 
@@ -470,6 +601,12 @@ class StepResult:
 
 
 @dataclass(frozen=True)
+class EvidenceFile:
+    path: str  # normalized repository-relative path
+    sha256: str
+
+
+@dataclass(frozen=True)
 class GateReceipt:
     gate_result_ref: str
     run_ref: str
@@ -478,17 +615,57 @@ class GateReceipt:
     fresh: bool
     source_ref: str
     environment_ref: str
+    evidence_files: tuple[EvidenceFile, ...]
     started_at_utc: str
     run_nonce: str
     step_results: tuple[StepResult, ...]
 ```
 
 `StepResult.step_ref` excludes `wall_ns` and `peak_rss_bytes`. `gate_result_ref`
-covers semantic inputs/dispositions/report/error refs but excludes all clocks,
-nonces and performance observations. `run_ref` covers the complete serialized
-receipt, including start time, nonce, wall time and peak RSS, permitting multiple
-fresh observations. Deserializers recompute both identity layers and reject
-mismatch.
+covers semantic inputs/dispositions/report/error refs and ordered evidence-file
+path/hash material but excludes all clocks, nonces and performance observations.
+`run_ref` covers the complete serialized receipt, including start time, nonce,
+wall time and peak RSS, permitting multiple fresh observations. Overall gate
+status is derived from the immutable step
+results rather than trusted as a mutable label. Deserializers recompute both
+identity layers and reject mismatch.
+
+Implement the only public receipt seam with this exact signature:
+
+```python
+def load_verified_admission_receipt(
+    root: Path,
+    *,
+    phase: str,
+    expected_status: str,
+    run_ref: str | None = None,
+) -> tuple[GateReceipt, tuple[str, ...]]:
+    ...
+```
+
+It reads only existing run artifacts and never invokes the runner. It strictly
+recomputes every step, `gate_result_ref` and `run_ref`; requires the filename and
+serialized run identity to agree; requires the requested phase,
+`tier="admission"`, `fresh=True`, derived `expected_status`, the exact declared
+step set and current source/environment/input identities. It returns the
+receipt plus a sorted tuple of canonical repository-relative paths identifying
+the exact currently dirty evidence files whose path/hash material the receipt
+authenticated. It rejects directories, globs, inferred working-tree paths,
+non-dirty substitutions and any path/hash mismatch. With an explicit `run_ref`
+it loads exactly that run. With `None` it succeeds only when exactly one
+eligible current run exists; it never chooses by mtime, timestamp or a "latest"
+pointer. Raise a typed receipt-validation error for invalid evidence and let
+unexpected programming exceptions propagate.
+
+Add RED tests for exact-run loading, ambiguous `run_ref=None`, wrong
+phase/status/tier, stale/non-fresh receipts, mismatched file/run/gate/step refs,
+changed current inputs, path traversal, reordered/extra/missing/non-dirty
+unauthenticated evidence paths, and proof that loading a receipt does not invoke
+pytest or any gate step. Add updater tests proving that both green and
+`externally_blocked` call the loader with `expected_status="passed"`. The
+validation CLI emits the completed receipt identity,
+including `run_ref`, in a stable JSON result so Tasks 5 and 10 can select it
+without scanning for a latest file.
 
 ### Step 3: Implement direct pytest JSON hooks
 
@@ -512,19 +689,27 @@ platform sampler and permit sampler injection in unit tests.
 
 ### Step 4: Implement only three coalesced tiers
 
-`validation_gates.json` owns `owner`, `phase` and `admission`. Use this concrete
-shape; `pytest_active` derives exact selectors from retained inventory entries
-whose `activation_phase` is no later than the candidate phase:
+`validation_gates.json` owns `owner`, `phase` and `admission`. Use this
+structural shape; the displayed node arrays are representative, while the real
+file enumerates every selected exact node ID. `pytest_active` constructs the
+complete eligible exact-node union from immutable `test_inventory.json` and
+literal `__cemm_test_inventory__` metadata whose `activation_phase` is no later
+than the candidate phase. Pytest steps accept `exact_nodes` only. Raw file
+selectors, filename/default inference and implicit parameterized expansion are
+forbidden:
 
 ```json
 {
   "schema": "cemm-hybrid-validation-gates-v1",
   "steps": {
     "governance": {
-      "kind": "command",
+      "kind": "governance",
       "depends_on": [],
-      "argv": ["scripts/check_test_inventory.py", "--source-only"],
-      "inputs": ["docs/DOCUMENT_AUTHORITY.json", "governance/"]
+      "test_inventory": "governance/test_inventory.json",
+      "metadata_symbol": "__cemm_test_inventory__",
+      "status_ledger": "governance/replay_status.jsonl",
+      "invalidation_ledger": "governance/receipt_invalidations.jsonl",
+      "inputs": ["docs/DOCUMENT_AUTHORITY.json", "governance/ledger_anchors.json", "governance/replay_status.jsonl", "governance/receipt_invalidations.jsonl", "governance/test_inventory.json", "tests/"]
     },
     "source_compile": {
       "kind": "compile",
@@ -535,20 +720,27 @@ whose `activation_phase` is no later than the candidate phase:
     "g0_owner_tests": {
       "kind": "pytest",
       "depends_on": ["source_compile"],
-      "selectors": ["tests/test_replay_governance.py"],
-      "inputs": ["tests/test_replay_governance.py", "docs/", "governance/"]
+      "exact_nodes": [
+        "tests/test_replay_governance.py::test_initial_replay_status_is_truthful",
+        "tests/test_validation_gate.py::test_dag_deduplicates_shared_dependencies"
+      ],
+      "inputs": ["tests/test_replay_governance.py", "tests/test_validation_gate.py", "docs/", "governance/"]
     },
     "g0_phase_tests": {
       "kind": "pytest",
       "depends_on": ["source_compile"],
-      "selectors": ["tests/test_g0_integration.py"],
+      "exact_nodes": [
+        "tests/test_g0_integration.py::test_g0_admission_plan_is_coalesced_and_bounded",
+        "tests/test_g0_integration.py::test_owner_and_phase_nodes_are_disjoint"
+      ],
       "inputs": ["tests/test_g0_integration.py", "scripts/", "configs/validation_gates.json"]
     },
     "pytest_active": {
       "kind": "pytest_inventory",
       "depends_on": ["source_compile"],
-      "inventory": "governance/predecessor_test_inventory.json",
-      "inputs": ["tests/", "src/", "governance/predecessor_test_inventory.json"]
+      "test_inventory": "governance/test_inventory.json",
+      "metadata_symbol": "__cemm_test_inventory__",
+      "inputs": ["tests/", "src/", "governance/test_inventory.json"]
     },
     "authority_link": {
       "kind": "authority_link",
@@ -571,15 +763,29 @@ whose `activation_phase` is no later than the candidate phase:
 }
 ```
 
-The config validator rejects unknown step
-kinds/paths, cycles, duplicate resolved steps and an admission plan containing
-training/corpus/reproduction. Input refs hash the listed paths and environment
-identity; the runner resolves dependencies once.
+The config validator rejects unknown step kinds/paths, cycles, duplicate
+resolved steps or node IDs, owner/phase node overlap, every raw file selector
+and an admission plan containing training/corpus/reproduction or nested
+owner/phase pytest steps. The coalesced `governance` handler validates
+document/anchor pins, both ledgers, every invalidated historical file, every
+green or `externally_blocked` admission receipt through
+`load_verified_admission_receipt` with `expected_status="passed"`, and immutable
+inventory plus literal AST
+metadata in one process. Each test module is parsed once, each canonical path is
+hashed once, each governance artifact is loaded once, and resolved
+dependencies are memoized for that invocation. Input refs hash the listed paths
+and environment identity.
 
-G0-R1 never caches test results: owner runs focused tests, phase runs only fresh
-cross-owner integration tests, and admission runs the complete currently active
-suite once. Later R4-R5 plans may reuse content-matched diagnostics for expensive
-artifact steps, never tests or admission.
+G0-R1 never caches test results: owner runs focused exact nodes, an applicable
+phase runs only fresh disjoint cross-owner exact nodes, and admission performs
+one fresh active-set collection and execution. Every executing tier launches
+exactly one pytest process; owner and phase do not first collect the complete
+tree. Task 7's one complete-tree collection is an explicit
+ABI-migration import-safety check, not a recurring tier prerequisite. Later
+R4-R5 plans may reuse
+content-matched diagnostics for expensive artifact steps, never tests or
+admission. Governance, status, receipt loading and the pytest hook control plane
+remain lightweight and must not import runtime/model/training libraries.
 
 ### Step 5: Verify, review, commit
 
@@ -587,7 +793,7 @@ artifact steps, never tests or admission.
 python -m pytest tests\test_validation_gate.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-validator
 python scripts\validate_mvp.py --tier phase --phase G0
 python scripts\validate_mvp.py --help
-git add hybrid_mvp/scripts/validation_gate.py hybrid_mvp/scripts/pytest_gate_runner.py hybrid_mvp/scripts/validate_mvp.py hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests/test_validation_gate.py hybrid_mvp/tests/test_g0_integration.py hybrid_mvp/pyproject.toml
+git add hybrid_mvp/scripts/validation_gate.py hybrid_mvp/scripts/pytest_gate_runner.py hybrid_mvp/scripts/validate_mvp.py hybrid_mvp/scripts/update_replay_status.py hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests/test_validation_gate.py hybrid_mvp/tests/test_g0_integration.py hybrid_mvp/tests/test_replay_governance.py hybrid_mvp/pyproject.toml
 git commit -m "build: add structured dependency-aware replay validation"
 ```
 
@@ -614,26 +820,43 @@ Task 1-4 red/green work already ran owner and phase tiers. Do not rerun them
 ceremonially before admission.
 
 ```powershell
-python scripts\validate_mvp.py --tier admission --phase G0
+$g0Admission = (python scripts\validate_mvp.py --tier admission --phase G0 | ConvertFrom-Json)
+$g0RunRef = $g0Admission.run_ref
 ```
 
 The fresh admission has zero G0-active skip/xfail/xpass, binds every downstream
-retained node to the inventory, and runs no corpus/model work. Inspect and
-cryptographically verify that one receipt before any status transition.
+frozen predecessor case or later literal-metadata case to one exact node, and
+runs no corpus/model work. Inspect and
+cryptographically verify the exact run file named by `$g0RunRef` before any
+status transition. Do not discover a receipt through a latest pointer or file
+mtime.
 
 ### Step 3: Validate, then append G0 green
 
-`update_replay_status.py --dry-run` builds the exact candidate transition against
-the verified, unique, unconsumed G0 admission receipt without writing. Only if
-that validates, append it once. Effective state becomes `G0=green, R1-R8=red`.
+`update_replay_status.py --dry-run` loads the exact run through
+`load_verified_admission_receipt(root, phase="G0", expected_status="passed",
+run_ref=$g0RunRef)` and receives `(receipt, dirty_evidence_paths)`. That tuple
+contains only sorted canonical paths whose current dirty bytes were
+cryptographically authenticated by the receipt; the updater rejects every
+other dirty governed path. Dry-run emits the complete candidate without
+writing. Preserve that candidate's `record_ref`. Append must name the same run
+and expected record; it reloads the receipt and recomputes the row while holding
+the ledger write lock. Any input, evidence path/bytes, receipt, ledger-head or
+record-ref change writes nothing. Effective state becomes
+`G0=green, R1-R8=red`.
 
 ```powershell
-python scripts\update_replay_status.py --phase G0 --status green --admit-latest --dry-run
-python scripts\update_replay_status.py --phase G0 --status green --admit-latest --append
+$g0Candidate = (python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --dry-run | ConvertFrom-Json)
+python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --expect-record-ref $g0Candidate.record_ref --append
 python scripts\update_replay_status.py --verify-chain
 git add hybrid_mvp/artifacts/validation/BASELINE_REPLAY_FINDINGS.json hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json hybrid_mvp/artifacts/validation/runs hybrid_mvp/governance/replay_status.jsonl hybrid_mvp/tests/test_replay_governance.py
 git commit -m "chore: admit corrective replay governance"
 ```
+
+Receipt loading, candidate dry-run and final chain verification inspect the one
+fresh admission; they are not additional gate executions. This status/receipt
+commit and every referenced `source_base` must be integrated by fast-forward or
+history-preserving merge commit, never squash/cherry-pick-only history rewriting.
 
 
 ## Task 6: Make revision and governed-source identity portable
@@ -669,7 +892,9 @@ def test_governed_text_hash_is_eol_portable(tmp_path: Path) -> None:
 ```
 
 Also reject unknown/missing fields, wrong scalar types and any nested ref
-tampering. Run and observe RED.
+tampering. Add literal per-node `__cemm_test_inventory__` metadata with R1
+activation and the content-identity owner before running each new test. Run and
+observe RED.
 
 ### Step 2: Implement canonical owners
 
@@ -706,6 +931,7 @@ git commit -m "refactor: make R1 revision and authority identity exact"
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/propositions.py`
 - Modify active callers in `bootstrap.py`, `coverage.py`, `training.py` and `evaluation.py`
 - Modify affected R1 fixtures/tests
+- Modify: `hybrid_mvp/configs/validation_gates.json`
 - Create: `hybrid_mvp/tests/test_r1_verification_batch.py`
 - Create: `hybrid_mvp/tests/test_r1_no_alternate_public_paths.py`
 
@@ -836,10 +1062,28 @@ before deleting the duplicate class.
 
 ### Step 6: Verify, review, commit
 
+Add literal `__cemm_test_inventory__` metadata for every new Task 7 exact node.
+Add one `r1_program_verifier_owner_tests` step whose `exact_nodes` enumerate only
+those eligible R1 nodes plus exact retained frozen predecessor cases affected by
+this owner. Parameterized cases are listed individually. The runner rejects any
+historical or R2+ node. Do not select
+`test_program_abi.py`, `test_bootstrap_proposer.py`, `test_neural_proposer.py`,
+`test_exact_verifier.py`, `test_adversarial_programs.py` or another mixed-phase
+file as a whole.
+
+Run that owner step once. This program/proposal/verifier ABI is one declared R1
+owner group; it has no separate phase tier before the public composition exists
+in Task 9. Separately collect the complete current tree once through the
+structured hook before deleting the legacy class; collection proves
+importability, preserves the frozen 743-case set and accounts for every later
+literal-metadata node without executing a later-phase test. This explicit
+migration-only collection is not part of the owner tier and does not cause that
+tier to launch a second pytest process.
+
 ```powershell
-python -m pytest tests\test_r1_content_identity.py tests\test_r1_verification_batch.py tests\test_program_abi.py tests\test_bootstrap_proposer.py tests\test_neural_proposer.py tests\test_exact_verifier.py tests\test_adversarial_programs.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-r1-abi
+python scripts\validate_mvp.py --tier owner --phase R1 --owner program-verifier
 python scripts\pytest_gate_runner.py --report C:\tmp\cemm-r1-all-collect.json -- --collect-only -q
-git add hybrid_mvp/src/cemm_authoritative_hybrid hybrid_mvp/tests
+git add hybrid_mvp/src/cemm_authoritative_hybrid hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests
 git commit -m "refactor: hard-cut canonical R1 proposal and verification ABIs"
 ```
 
@@ -854,6 +1098,7 @@ git commit -m "refactor: hard-cut canonical R1 proposal and verification ABIs"
 - Modify: `hybrid_mvp/tests/test_phase_receipts.py`
 - Modify: `hybrid_mvp/tests/test_cognitive_loop_e2e.py`
 - Modify: `hybrid_mvp/tests/conftest.py`
+- Modify: `hybrid_mvp/configs/validation_gates.json`
 - Extend: `hybrid_mvp/tests/test_r1_content_identity.py`
 
 ### Step 1: Add RED result identity tests
@@ -882,9 +1127,19 @@ the same canonical `CycleResult`. Use typed artifact fields; later fields can be
 
 ### Step 4: Verify, review, commit
 
+Add literal `__cemm_test_inventory__` metadata for every new Task 8 exact node.
+Add one `r1_cycle_owner_tests` step whose `exact_nodes` enumerate those new
+identity cases plus only eligible retained frozen R1 cycle/receipt cases.
+Parameterized cases are listed individually. Do not execute `test_phase_receipts.py`,
+`test_cognitive_loop_e2e.py`, `test_restart_e2e.py` or another mixed-phase file
+as a whole. The config validator must prove that this owner node set is disjoint
+from Task 7 and from the later R1 phase-integration set. This result-identity
+owner has no separate phase tier until Task 9 creates the one public composition
+integration boundary.
+
 ```powershell
-python -m pytest tests\test_r1_content_identity.py tests\test_phase_receipts.py tests\test_cognitive_loop_e2e.py tests\test_restart_e2e.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-r1-cycle
-git add hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py hybrid_mvp/src/cemm_authoritative_hybrid/__init__.py hybrid_mvp/tests
+python scripts\validate_mvp.py --tier owner --phase R1 --owner cycle-result
+git add hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py hybrid_mvp/src/cemm_authoritative_hybrid/__init__.py hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests
 git commit -m "refactor: finalize canonical R1 phase and cycle receipts"
 ```
 
@@ -978,50 +1233,65 @@ with adapters.
 
 ### Step 5: Add the now-existing R1 gate selectors
 
-After the R1 test files exist, extend `validation_gates.json` with:
+Retain the exact-node Task 7 `r1_program_verifier_owner_tests` and Task 8
+`r1_cycle_owner_tests` steps. Add literal per-node
+`__cemm_test_inventory__` metadata for every new Task 9 case, then add:
 
-```json
-{
-  "r1_owner_tests": {
-    "kind": "pytest",
-    "depends_on": ["source_compile"],
-    "selectors": ["tests/test_r1_content_identity.py", "tests/test_r1_verification_batch.py", "tests/test_r1_runtime_path.py", "tests/test_r1_no_alternate_public_paths.py"],
-    "inputs": ["tests/test_r1_content_identity.py", "tests/test_r1_verification_batch.py", "tests/test_r1_runtime_path.py", "tests/test_r1_no_alternate_public_paths.py", "src/cemm_authoritative_hybrid/"]
-  },
-  "r1_phase_tests": {
-    "kind": "pytest",
-    "depends_on": ["source_compile"],
-    "selectors": ["tests/test_r1_phase_integration.py", "tests/test_program_abi.py", "tests/test_exact_verifier.py", "tests/test_phase_receipts.py", "tests/test_six_phase_runtime.py"],
-    "inputs": ["tests/test_r1_phase_integration.py", "tests/test_program_abi.py", "tests/test_exact_verifier.py", "tests/test_phase_receipts.py", "tests/test_six_phase_runtime.py", "src/cemm_authoritative_hybrid/"]
-  },
-  "R1": {
-    "owners": {"runtime-abi": ["r1_owner_tests"]},
-    "phase": ["r1_phase_tests"],
-    "admission": ["sqlite_activation", "pytest_active"]
-  }
-}
-```
+- `r1_runtime_owner_tests`, whose `exact_nodes` enumerate the new runtime-path
+  cases and eligible retained frozen R1 predecessor cases;
+- `r1_phase_tests`, whose `exact_nodes` enumerate only cross-owner integration
+  cases that did not run in an owner tier;
+- `r1_structure`, a source-scan step that proves one surviving canonical class
+  owner and rejects signature inspection, compatibility result views, alternate
+  public paths and fixture release owners.
 
-The first two objects are merged into `steps` and `R1` into `phases`. Config
-validation now requires every selector to exist. Add this phase-integration test:
+Do not use a whole-file selector for `test_program_abi.py`,
+`test_exact_verifier.py`, `test_phase_receipts.py`, `test_six_phase_runtime.py`
+or any other mixed-phase file. The `R1` phase configuration has three named
+owners (`program-verifier`, `cycle-result`, `runtime-path`), one
+`r1_phase_tests` integration step and admission roots
+`["r1_structure", "sqlite_activation", "pytest_active"]`. `r1_structure` runs
+inside the one admission DAG; it is not a standalone pre-admission gate.
+
+Config validation requires every explicit node ID to resolve exactly once from
+the immutable frozen inventory or literal AST metadata, rejects nodes activated
+after R1, rejects duplicate nodes and proves the union of all R1 owner nodes is
+disjoint from R1 phase nodes. No filename, file-default or live-Git inference is
+allowed. Add these integration assertions:
 
 ```python
 def test_r1_phase_does_not_repeat_owner_tests(project_root: Path) -> None:
     graph = load_gate_graph(project_root / "configs/validation_gates.json")
     resolved = graph.resolve_phase("R1", "phase")
     assert resolved == ("governance", "source_compile", "r1_phase_tests")
-    assert "r1_owner_tests" not in resolved
-    assert len(resolved) == len(set(resolved))
+    owner_nodes = set(graph.resolve_all_owner_pytest_nodes("R1"))
+    phase_nodes = set(graph.resolve_pytest_nodes("R1", "phase"))
+    assert owner_nodes.isdisjoint(phase_nodes)
+    assert all(graph.is_active_by(node, "R1") for node in phase_nodes)
+    assert len(phase_nodes) == len(set(phase_nodes))
+
+
+def test_r1_admission_has_one_active_suite_execution(project_root: Path) -> None:
+    graph = load_gate_graph(project_root / "configs/validation_gates.json")
+    resolved = graph.resolve_phase("R1", "admission")
+    assert "r1_structure" in resolved
+    assert "pytest_active" in resolved
+    assert not {"r1_program_verifier_owner_tests", "r1_cycle_owner_tests",
+                "r1_runtime_owner_tests", "r1_phase_tests"} & set(resolved)
 ```
 
 ### Step 6: Verify, review, commit
 
 ```powershell
-python -m pytest tests\test_r1_runtime_path.py tests\test_r1_no_alternate_public_paths.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-r1-runtime
+python scripts\validate_mvp.py --tier owner --phase R1 --owner runtime-path
 python scripts\validate_mvp.py --tier phase --phase R1
 git add hybrid_mvp/src/cemm_authoritative_hybrid hybrid_mvp/scripts hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests
 git commit -m "refactor: leave one canonical hybrid runtime path"
 ```
+
+This is the one applicable R1 phase integration run and launches one pytest
+process. It executes no Task 7, Task 8 or Task 9 owner node and does not pre-run
+the later admission active suite.
 
 ## Task 10: Fresh R1 admission and truthful status
 
@@ -1031,14 +1301,12 @@ git commit -m "refactor: leave one canonical hybrid runtime path"
 - Generate: `hybrid_mvp/artifacts/validation/R1_ADMISSION_RECEIPT.json`
 - Append: `hybrid_mvp/governance/replay_status.jsonl`
 
-### Step 1: Run structural owner proof
+### Step 1: Keep structural proof inside admission
 
-```powershell
-rg -n "class (SemanticSwitchProgram|ProposalResult|VerificationResult|CycleResult|KernelCycleResult|ProcessResult)" src\cemm_authoritative_hybrid
-rg -n "inspect\.signature|def process_evidence|def propose_and_verify|def build_release_runtime|proposal\.program|\.kernel\b" src\cemm_authoritative_hybrid
-```
-
-First scan must show one canonical owner per surviving type; second is empty.
+Do not run standalone pre-admission `rg` gates. Task 9's `r1_structure` step owns
+the canonical-owner and forbidden-path scans and is already a dependency of the
+single R1 admission DAG. The controller inspects that step's structured result
+from the admission receipt.
 
 ### Step 2: Run exactly one fresh R1 admission
 
@@ -1046,24 +1314,41 @@ Task 6-9 red/green work already ran owner and phase tiers. Do not rerun them
 immediately before admission.
 
 ```powershell
-python scripts\validate_mvp.py --tier admission --phase R1
+$r1Admission = (python scripts\validate_mvp.py --tier admission --phase R1 | ConvertFrom-Json)
+$r1RunRef = $r1Admission.run_ref
 ```
 
-That one run performs portable authority linking, fresh SQLite activation,
-complete G0-R1 active tests, source compile and corruption checks. It excludes
-corpus/training/reproduction and accounts for every later retained node.
+That one run performs the coalesced structural proof, portable authority
+linking, fresh SQLite activation, complete G0-R1 active tests, source compile and
+corruption checks. Its test step launches one pytest process with the complete
+eligible exact-node union from the immutable inventory and literal metadata. It
+excludes corpus/training/reproduction and accounts for every later governed
+node. `$r1RunRef` identifies the exact run; do not discover
+one through a latest pointer or file mtime.
 
 ### Step 3: Inspect, validate, then append R1 green
 
-Controller inspects the same receipt's structured counts, wall time, peak RSS
-and slowest cases and verifies its content refs. Then validate the status
-transition without writing, append once, and verify the chain:
+Controller inspects the exact `$r1RunRef` receipt's structural result, counts,
+wall time, peak RSS and slowest cases and verifies every nested identity. Dry-run
+loads it through
+`load_verified_admission_receipt(root, phase="R1", expected_status="passed",
+run_ref=$r1RunRef)` and receives `(receipt, dirty_evidence_paths)`. The updater
+accepts only the sorted canonical dirty paths whose bytes the receipt
+cryptographically authenticated and rejects every other dirty governed path.
+It then emits the candidate row. Preserve that row's `record_ref`; append must
+reload the same run and match that exact record while holding the ledger write
+lock:
 
 ```powershell
-python scripts\update_replay_status.py --phase R1 --status green --admit-latest --dry-run
-python scripts\update_replay_status.py --phase R1 --status green --admit-latest --append
+$r1Candidate = (python scripts\update_replay_status.py --phase R1 --status green --run-ref $r1RunRef --dry-run | ConvertFrom-Json)
+python scripts\update_replay_status.py --phase R1 --status green --run-ref $r1RunRef --expect-record-ref $r1Candidate.record_ref --append
 python scripts\update_replay_status.py --verify-chain
 ```
+
+Receipt loading, dry-run and chain verification inspect the one admission and do
+not execute additional validation tiers. Any changed governed input invalidates
+that receipt and requires one new admission rather than a relabel or partial
+rerun.
 
 Leave R2-R8 red. ABI_REGISTRY and INTEGRATION already point to the status ledger; do not change governing inputs after admission.
 Investigate unexplained cost growth; never weaken semantic bounds/coverage.
@@ -1073,11 +1358,17 @@ git add hybrid_mvp/artifacts/validation hybrid_mvp/governance/replay_status.json
 git commit -m "chore: admit canonical hybrid replay R1"
 ```
 
+This admission commit and all prior ledger `source_base` commits are durable
+release evidence. Integrate the branch only by fast-forward or
+history-preserving merge commit; do not squash, rebase, cherry-pick-only
+integrate, filter or force-push away the referenced ancestry.
+
 Request full-plan contract review then code-quality/performance review.
 
 ## R1 handoff
 
-R1 is complete only with a verified fresh receipt and effective status
-`G0=green, R1=green, R2-R8=red`. Then write the detailed R2 plan from observed
-R1 APIs/receipts. Do not begin R2 from donor assumptions or retain a temporary
-R1 adapter.
+R1 is complete only with a verified fresh receipt, effective status
+`G0=green, R1=green, R2-R8=red` and an intact monotonic `source_base` ancestry
+through current HEAD. Then write the detailed R2 plan from observed R1
+APIs/receipts. Do not begin R2 from donor assumptions, retain a temporary R1
+adapter or rewrite the admitted history.

@@ -98,7 +98,21 @@ G0 creates a Hybrid MVP document authority and supersession map. It states:
 Status is append-only and dependency-pinned. A phase receipt names its direct
 source, authority, ABI, configuration, store, test and predecessor identities.
 Changing an ancestor invalidates every descendant without deleting historical
-evidence.
+evidence. Green and `externally_blocked` updater transitions both require a
+verified passed admission and bind `admission_gate_result_ref` plus the exact
+`admission_run_ref`; red and initial pending records bind neither.
+
+Every post-anchor ledger `source_base` is durable release evidence. Once such a
+record exists, its commit must remain a monotonic ancestor of the next
+`source_base` and of the final release commit. Integration therefore uses a
+fast-forward or history-preserving merge commit. Rebase, squash merge,
+cherry-pick-only integration, history filtering and force-push are forbidden
+when they would detach or remove a referenced commit. The production
+`read_hash_chain(path)` path requires Git to authenticate every post-anchor
+suffix and accepts no caller-supplied prior bytes or receipt bypass. A future
+Git-less release verifier may be designed as a separate, manifest-pinned,
+verify-only path; it is not accepted by `read_hash_chain`, is not current
+admission authority and cannot authorize source-history rewriting.
 
 ## 5. Runtime architecture
 
@@ -285,37 +299,90 @@ extra `PYTHONPATH`, skip flags or parser assumptions about quiet pytest output.
 It establishes a writable isolated temp/cache directory and reports structured
 test results rather than parsing human progress text.
 
-Each phase uses four layers:
+Each phase requires four evidence categories:
 
 1. focused red/green behavioral tests;
 2. corruption and anti-bypass tests;
 3. complete active-suite collection and execution;
 4. clean-checkout activation/reload with deterministic artifact regeneration.
 
-These are evidence categories, not four separately repeated commands. One
-external runner coalesces them into owner, phase and admission tiers, deduplicates
-shared prerequisites, and invokes each test or artifact step at most once per
-tier.
+These are evidence categories inside exactly three runner modes, never four
+gate invocations. One external runner coalesces them into owner, phase and
+admission tiers and deduplicates shared prerequisites. After selector expansion,
+each pytest node and artifact step runs at most once within a tier. Owner mode
+runs only affected-owner and corruption nodes. Phase mode runs only declared
+cross-owner integration nodes, and its pytest node set is disjoint from the
+owner node set. A task with no changed cross-owner boundary and no integration
+nodes does not run an empty ceremonial phase tier.
 
-The layers are dependency-aware rather than redundantly serial. Local red/green
-work runs only the affected owner tests and static checks. Phase integration runs
-after an owner task is green. Corpus rebuild, model training, reproduction and
-full clean-checkout gates run only when one of their content-addressed ancestors
-changes, and always run fresh for phase admission and release. An unchanged
-cached receipt can accelerate development diagnostics, but cannot satisfy a
-fresh admission or release gate.
+Admission is one independent fresh execution of the complete active node set.
+Its deliberate re-execution of earlier diagnostic nodes is the only intended
+cross-tier repeat: admission never nests or invokes owner or phase test steps as
+separate prerequisites, and it never treats their receipts as admission
+authority. One admission invocation performs active-suite collection and
+execution once. Status and receipt verification validate existing bytes and
+identities only; they never launch pytest, artifact generation or another gate.
+
+The categories are dependency-aware rather than redundantly serial. Local
+red/green work runs only the affected owner tests and static checks. Applicable
+phase integration runs once after its owners are green and reviewed. Corpus
+rebuild, model training, reproduction and full clean-checkout gates run only
+when one of their content-addressed ancestors changes, and always run fresh for
+phase admission and release. An unchanged cached receipt can accelerate
+development diagnostics, but cannot satisfy a fresh admission or release gate.
+
+Admission receipts have one strict external verification seam:
+`load_verified_admission_receipt(root, *, phase, expected_status, run_ref=None) -> tuple[GateReceipt, tuple[str, ...]]`. It deserializes and recomputes every
+step, gate and run identity; verifies the phase, admission tier, freshness,
+derived status and current source/environment/input identities; and performs no
+gate work. The returned path tuple is sorted canonical repository-relative
+paths for the exact dirty evidence files authenticated by the receipt's
+path/hash material. The loader never substitutes a directory, glob, working-tree
+scan or unauthenticated path. An explicit `run_ref` selects exactly that run.
+Without one, verification succeeds only when exactly one eligible current run
+exists; clocks, modification times and a "latest" pointer never select
+authority. Receipt-validation failures are typed, while unexpected programming
+exceptions propagate. The status updater passes `expected_status="passed"` for
+both green and `externally_blocked` transitions.
 
 Gate execution records wall time, peak memory and the slowest test/artifact
 steps. A gate whose cost grows without a declared semantic-data increase is a
 performance regression to investigate. Validation instrumentation uses bounded
 counters and optional receipts; it does not add authority scans, serialized
 traces or synchronous training work to the normal `HybridRuntime.process()`
-path.
+path. Governance, status and receipt-loader control paths remain lightweight
+and do not import runtime, model or training libraries. Within one runner
+invocation, canonical paths are hashed once, manifests and ledgers are parsed
+once, and resolved dependencies are memoized in memory. Owner and phase tiers
+collect only their exact selected nodes. Admission performs one fresh active-set
+collection and execution in the same pytest invocation; it does not pre-run a
+second full collection gate.
 
-The active-test inventory classifies every predecessor test as retained,
-rewritten or historical with its preserved semantic assertion. Curated tests
-cannot hide collection failures in the declared active suite. There are zero
-active skips, xfails or xpasses at an admission or release gate.
+Test governance has two governed evidence sources, validated inside the
+existing coalesced governance step rather than by another gate.
+`governance/test_inventory.json` freezes the reviewed predecessor sets: exactly
+59 test files, 634 source-test refs and 743 exact collected-case node IDs,
+together with classifications, activation phases, semantic assertion refs and
+its recomputable inventory ref. `DOCUMENT_AUTHORITY.json` pins its exact path
+and SHA-256. It is reviewed once and never mutated by later replay tasks.
+
+Every test introduced after that frozen set carries a module-level literal
+`__cemm_test_inventory__` mapping with one metadata record per exact pytest node
+ID, including every parameterized case. Later parameterized tests declare
+literal case IDs; dynamic/generated parameter IDs are forbidden. Each record
+states its assertion ref, activation phase, diagnostic role, owner when
+applicable, and introducing replay task. The AST checker parses each current
+test module once, without importing
+it, and rejects computed metadata, filename/default inference, duplicate or
+missing nodes and overlap with the frozen case set. Routine and bundle
+verification load the immutable inventory and literal AST metadata directly;
+they do not query live Git or maintain a secondary mutable registry.
+
+All executing tiers pass exact node selectors to one pytest process. Owner and
+phase sets are disjoint; admission independently executes the complete eligible
+union of frozen cases and later literal-metadata cases once. Mixed-phase files
+may be import-checked, but are never selected or classified as whole files.
+There are zero active skips, xfails or xpasses at an admission or release gate.
 
 ## 11. Execution and review discipline
 
@@ -328,8 +395,8 @@ red/green/refactor and receives two independent reviews:
 
 No two implementation agents edit the same owner concurrently. Read-only
 audits and independent review may run in parallel. The controller reruns each
-task's focused proof and the applicable aggregate gate instead of trusting an
-agent report.
+task's focused proof and, only when the task changes a declared cross-owner
+boundary, the applicable phase gate instead of trusting an agent report.
 
 ## 12. Admission outcomes
 
