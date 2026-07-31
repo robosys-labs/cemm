@@ -1,6 +1,6 @@
 # Hybrid MVP Corrective Replay Admission Design
 
-**Status:** proposed for user review
+**Status:** approved for implementation
 **Date:** 2026-07-31
 **Scope:** `hybrid_mvp/` only
 **Reviewed base:** `5f8688b8bf4591563692a8d133097a14feeff8ff`
@@ -291,6 +291,26 @@ Each phase uses four layers:
 2. corruption and anti-bypass tests;
 3. complete active-suite collection and execution;
 4. clean-checkout activation/reload with deterministic artifact regeneration.
+
+These are evidence categories, not four separately repeated commands. One
+external runner coalesces them into owner, phase and admission tiers, deduplicates
+shared prerequisites, and invokes each test or artifact step at most once per
+tier.
+
+The layers are dependency-aware rather than redundantly serial. Local red/green
+work runs only the affected owner tests and static checks. Phase integration runs
+after an owner task is green. Corpus rebuild, model training, reproduction and
+full clean-checkout gates run only when one of their content-addressed ancestors
+changes, and always run fresh for phase admission and release. An unchanged
+cached receipt can accelerate development diagnostics, but cannot satisfy a
+fresh admission or release gate.
+
+Gate execution records wall time, peak memory and the slowest test/artifact
+steps. A gate whose cost grows without a declared semantic-data increase is a
+performance regression to investigate. Validation instrumentation uses bounded
+counters and optional receipts; it does not add authority scans, serialized
+traces or synchronous training work to the normal `HybridRuntime.process()`
+path.
 
 The active-test inventory classifies every predecessor test as retained,
 rewritten or historical with its preserved semantic assertion. Curated tests
