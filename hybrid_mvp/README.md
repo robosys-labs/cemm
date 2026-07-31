@@ -97,9 +97,12 @@ pip install -e '.[test]'
 
 ## Run tests
 
-```bash
-pytest
-```
+During corrective replay, a plain `pytest` invocation is diagnostic only; it is
+not an admission receipt. Use the focused owner command specified by the active
+task in the [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
+The external validation runner and its non-duplicative owner, phase and
+admission tiers are introduced by G0 Task 4. Until that runner is admitted, no
+test command may advance replay status.
 
 No active release test may use skip or xfail markers. Final release gates
 contain zero skips, xfails, xpasses, fallback paths, compatibility adapters or
@@ -107,7 +110,10 @@ unverified surfaces.
 
 ## Documentation
 
-- [`AGENTS.md`](AGENTS.md) — project-level constitution and hard-cutover contract.
-- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — active ABI owner files, validators and activation gates.
-- [`docs/superpowers/specs/2026-07-29-authoritative-mvp-completion-design.md`](docs/superpowers/specs/2026-07-29-authoritative-mvp-completion-design.md) — approved architecture-completion specification.
-- [`docs/superpowers/plans/2026-07-29-authoritative-mvp-master-roadmap.md`](docs/superpowers/plans/2026-07-29-authoritative-mvp-master-roadmap.md) — authoritative master roadmap and milestone-plan index.
+- [`AGENTS.md`](AGENTS.md) — Hybrid MVP constitution and hard-cutover contract.
+- [`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) — machine-readable document precedence and scope.
+- [`docs/REPLAY_GOVERNANCE.md`](docs/REPLAY_GOVERNANCE.md) — precedence, evidence and status-ownership boundaries.
+- [`docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md) — approved corrective-replay design.
+- [`docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md) — governing replay sequence and admission boundaries.
+- [`docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md) — executable G0-R1 tasks and focused checks.
+- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — landed ABI candidates whose activation requires admitted R1 status.

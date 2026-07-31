@@ -1,6 +1,11 @@
 # Production Evolution Plan
 
-> **Planning status:** This original high-level outline is retained as historical context. The approved authoritative MVP completion design and executable roadmap now live at [`docs/superpowers/specs/2026-07-29-authoritative-mvp-completion-design.md`](superpowers/specs/2026-07-29-authoritative-mvp-completion-design.md) and [`docs/superpowers/plans/2026-07-29-authoritative-mvp-master-roadmap.md`](superpowers/plans/2026-07-29-authoritative-mvp-master-roadmap.md). Those documents govern completion work.
+> **Planning status:** This original high-level outline is retained as historical
+> context and does not carry execution or admission authority. Current work is
+> governed by the [approved 2026-07-31 corrective-replay design](superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
+> [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
+> [G0-R1 implementation plan](superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md),
+> and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
 
 ## Phase 1 — Evaluation expansion
 

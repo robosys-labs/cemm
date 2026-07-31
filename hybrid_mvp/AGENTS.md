@@ -1,15 +1,25 @@
 # CEMM Authoritative Hybrid MVP — Governing Agent Instructions
 
-**Status:** highest-priority implementation contract for this worktree
+**Status:** highest-priority implementation contract within `hybrid_mvp/` only
 **Runtime cutover: hard**
 
-This is the project-level constitution for the CEMM Authoritative Hybrid MVP
-worktree. It is a hard cutover from the legacy stage-bound runtime. It carries
+This is the subtree-level constitution for the CEMM Authoritative Hybrid MVP.
+It does not override repository-root authority. It is a hard cutover from the legacy stage-bound runtime. It carries
 no backward-compatible runtime, ABI adapter, legacy candidate family, checkpoint
 loader, migration branch, or legacy behavioral test whose only purpose is
 preserving the superseded architecture. Useful semantic data and independently
 valid safety assertions may be regenerated under the new contracts; obsolete
 structure is deleted.
+
+## Authority and scope
+
+This contract governs only `hybrid_mvp/`. The repository-root `../AGENTS.md`
+continues to govern the root runtime, and Hybrid MVP adoption at root requires a
+separate reviewed decision. Document precedence within this subtree is owned by
+`docs/DOCUMENT_AUTHORITY.json`: the approved 2026-07-31 corrective-replay design
+and plans supersede conflicting execution or completion claims in the July 29
+and July 30 documents. Generated artifacts and inherited receipts are evidence,
+not authority. The append-only replay status ledger is introduced by G0 Task 2.
 
 ## 1. Unchanging thesis
 
@@ -70,9 +80,10 @@ architecture is superseded; no code path may branch on a legacy stage number.
 - **REALIZE** constructs `ResponseMeaning` from the exact decision, proof,
   blockers, effects and obligation, then verifies the realized surface.
 
-## 4. Active ABIs
+## 4. Candidate ABIs
 
-The following ABIs are active for this MVP:
+The following ABIs are landed candidates for this MVP. They are not active
+corrective-replay contracts until R1 admission succeeds:
 
 ```text
 Semantic Contribution ABI: 1
@@ -85,8 +96,8 @@ Response Meaning ABI: 1
 Realization Receipt ABI: 1
 ```
 
-Owner file, serialized/transient status, validator and activation gate for each
-ABI are recorded in `docs/ABI_REGISTRY.md`.
+Owner file, serialized/transient status, validator and intended activation gate for
+each candidate ABI are recorded in `docs/ABI_REGISTRY.md`.
 
 ## 5. Forbidden behaviors
 

@@ -21,9 +21,13 @@ hybrid_mvp/
 
 ## Status
 
-Milestones M1–M3 are complete. M4 Tasks 1–4 are implemented but **not passing
-release thresholds**. Investigation found the root cause is upstream
-contract/data/runtime drift in M1–M3, not insufficient training:
+Inherited milestone receipts and generated artifacts are historical evidence,
+not current admission authority. Effective replay status is owned only by the
+append-only ledger specified in G0 Task 2. If that ledger is absent or fails
+validation, no prose summary or inherited receipt can promote a replay phase.
+
+The corrective investigation found upstream contract, data and runtime drift,
+not insufficient training:
 
 - M1's validation receipt is too weak (`--profile` mostly changes the label).
 - M2 introduced two incompatible `SemanticSwitchProgram`/`ProposalResult`
@@ -35,18 +39,15 @@ contract/data/runtime drift in M1–M3, not insufficient training:
   assertions; hard negatives are mostly unchanged clones; calibration is not
   based on model inference; evaluation bypasses the authentic six-phase loop.
 
-The 100-epoch retrain reduced exact accuracy from 61/78 to 59/78, confirming
-that more epochs cannot repair the system.
+The inherited 100-epoch experiment reduced exact accuracy from 61/78 to 59/78.
+That result is diagnostic evidence against further training on the current
+pipeline, not a release or replay receipt.
 
 ## Next steps
 
-An evidence-gated corrective replay is planned:
-
-1. Revalidate M1 (verify advertised owner graph and neural runtime).
-2. Repair M2's single ABI/composer/model path.
-3. Integrate M3 through the real runtime (no fixture owners).
-4. Regenerate episodes and partitions, then retrain with validation-based
-   model selection.
-5. Rewrite Task 4 evaluation around actual six-phase receipts.
-
-See `hybrid_mvp/docs/superpowers/plans/` for the original milestone plans.
+Proceed under the [approved design](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
+[master replay plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md)
+and [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
+Those owners define replay order, performance-bounded validation tiers and
+admission commands; this integration note intentionally does not duplicate
+them.
