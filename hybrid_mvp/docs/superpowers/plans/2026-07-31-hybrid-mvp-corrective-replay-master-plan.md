@@ -97,19 +97,39 @@ The external gate runner records:
 The only public admission loader is
 `load_verified_admission_receipt(root, *, phase, expected_status, run_ref=None) -> tuple[GateReceipt, tuple[str, ...]]`. It strictly reconstructs one existing
 receipt and every nested identity without executing a gate. The second value is
-the sorted canonical repository-relative paths of the exact dirty evidence
-files authenticated by that receipt's path/hash material; directory, glob,
-working-tree and unauthenticated-path inference is forbidden. An explicit
+the sorted canonical repository-relative paths of every exact external evidence
+file authenticated by that receipt's path/hash material; directory, glob,
+working-tree and unauthenticated-path inference is forbidden. Dry-run and governance verification take one dirty-path snapshot.
+Append takes
+one pre-append snapshot under the exclusive lock and one post-write snapshot
+before success, rolling back on mismatch. These bounded counts are independent
+of receipt count. Each check intersects dirty paths with the authenticated set
+and rejects every dirty governed path outside it. The loader never queries Git
+status. An explicit
 `run_ref` selects that run; omitting it is legal only when exactly one eligible
 current run exists. Time, mtime and a "latest" pointer never choose authority.
 Both green and `externally_blocked` updater transitions call this loader with
 `expected_status="passed"` and bind `admission_gate_result_ref` plus the exact
 `admission_run_ref`.
 
+Each admission binds the exact clean candidate commit and a
+`pre_admission_status_head_ref`. The receipt loader is ledger-agnostic and
+validates only canonical receipt
+bytes, nested identities and authenticated external evidence; it never rereads
+the status chain, invokes Git history authentication or recursively loads a
+receipt. The status updater and coalesced governance handler instead perform
+consumption checks in one pass over the chain they already authenticated.
+Before append they require clean current HEAD/source and current
+head/pre-admission-head equality with no prior consumer. After append and during
+historical verification they require exactly one row whose
+predecessor/source_base/gate/run fields consume the receipt.
+
 No gate runner, corpus scan, trace serializer, model training operation, or
 performance sampler is called from the normal `HybridRuntime.process()` path.
 Governance, status and receipt-loader control paths remain lightweight and do
-not import runtime, model or training libraries.
+not import runtime, model, training or Torch libraries. The stdlib-only test
+inventory owner is loaded from its reviewed exact file path, not through the
+runtime package initializer.
 
 ### Cost and invalidation policy
 
@@ -132,6 +152,11 @@ not import runtime, model or training libraries.
   regression is investigated; budgets are not relaxed to hide semantic bloat.
 
 ### History-preserving admission evidence
+
+Every admission executes against an exact committed, clean candidate source.
+Deterministic admission inputs are committed first; the unique run artifact,
+phase pointer and consuming status row are committed afterward as evidence.
+Receipts never describe an older HEAD plus an open-ended dirty source set.
 
 Every post-anchor status `source_base` is part of the release proof. Referenced
 commits must form a monotonic ancestry chain and remain ancestors of the release
@@ -307,10 +332,21 @@ Every frozen predecessor source test has one approved classification:
 
 - `retained`: its assertion remains valid and declares the earliest replay phase
   whose admitted owners can execute it;
-- `rewritten`: a named exact successor node preserves the assertion under the
-  hard-cut ABI;
+- `rewritten`: one reviewed obligation maps each predecessor case to a non-empty
+  conjunctive set of exact successor nodes that together preserve the assertion
+  under the hard-cut ABI;
 - `historical`: the assertion depended on a retired semantic path and remains
   evidence with a reviewed reason.
+
+The completed baseline audit yields exactly 611 retained, 10 rewritten and 13
+historical source tests. A frozen per-source-test AST digest, not the whole-file
+blob hash, is the edit boundary. A valid retained assertion may move to a new
+exact node ID only through unique, acyclic, assertion-preserving and
+phase-monotonic literal supersession metadata; a same-ID body edit fails.
+Rewritten originals never execute. Their typed replacement obligations are
+deferred before the reviewed replacement phase and must have complete exact-case
+successors before pytest starts once due. Deferred is not a fourth
+classification.
 
 There is no `future` classification. Owner and phase tiers receive disjoint
 exact node selectors and each executing tier starts exactly one pytest process.

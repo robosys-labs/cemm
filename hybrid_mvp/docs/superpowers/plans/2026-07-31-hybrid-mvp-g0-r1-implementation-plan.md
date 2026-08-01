@@ -297,9 +297,11 @@ git commit -m "governance: invalidate inherited claims append-only"
 **Files:**
 
 - Create: `hybrid_mvp/governance/test_inventory.json`
+- Create: `hybrid_mvp/scripts/test_inventory_core.py`
 - Create: `hybrid_mvp/scripts/check_test_inventory.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/governance.py`
 - Modify: `hybrid_mvp/docs/DOCUMENT_AUTHORITY.json`
+- Create: `hybrid_mvp/tests/test_test_inventory.py`
 - Modify: `hybrid_mvp/tests/test_replay_governance.py`
 - Generate in Task 5: `hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json`
 
@@ -308,9 +310,12 @@ git commit -m "governance: invalidate inherited claims append-only"
 `governance/test_inventory.json` is the only predecessor inventory. Build it
 from the reviewed baseline audit and then make it immutable. It freezes exactly
 59 test files, 634 source-test refs and 743 exact collected-case node IDs,
-including every parameterized case. It also binds each file's reviewed baseline
-blob ref, every source test's assertion/classification/activation metadata and a
-recomputable `inventory_ref`:
+including every parameterized case. The completed manual contract audit yields
+611 retained, 10 rewritten and 13 historical source tests. Those are reviewed
+results, not quotas to satisfy by relabelling. The artifact binds each file's
+reviewed baseline blob ref, every source test's own canonical AST digest,
+assertion/classification/activation metadata and a recomputable
+`inventory_ref`:
 
 ```json
 {
@@ -320,6 +325,11 @@ recomputable `inventory_ref`:
   "file_count": 59,
   "source_test_count": 634,
   "case_count": 743,
+  "classification_counts": {
+    "retained": 611,
+    "rewritten": 10,
+    "historical": 13
+  },
   "files": [
     {
       "path": "tests/test_program_abi.py",
@@ -332,6 +342,7 @@ recomputable `inventory_ref`:
       "classification": "retained",
       "activation_phase": "R1",
       "assertion_ref": "assertion:program-abi",
+      "source_ast_sha256": "<digest>",
       "case_node_ids": [
         "tests/test_program_abi.py::test_program_uses_only_five_persistent_operators"
       ],
@@ -346,10 +357,18 @@ records. `DOCUMENT_AUTHORITY.json` pins its exact path and SHA-256. Verify that
 authority pin first, then recompute `inventory_ref` over every field except
 itself; require exact counts, unique normalized repository-relative
 file/source/case refs, every case owned by exactly one source test, a non-empty
-assertion ref, an activation phase
-for retained tests and exact successor node IDs for rewritten tests. A
-`historical` record needs a reviewed reason. There is no `future`
-classification.
+assertion ref and exact classification totals. A retained test declares its
+earliest activation phase. A rewritten test declares a content-addressed
+rewrite obligation, replacement phase and complete predecessor-case mapping to
+exact existing or reserved successor node IDs. A historical record declares a
+reviewed reason and no activation. There is no `future` classification.
+
+The full-file baseline hash is provenance only. The canonical digest of each
+source test's decorators, literal parameter IDs, signature and body is the
+mutation boundary. Adding unrelated imports/helpers/metadata/tests is legal;
+changing a frozen body under the same node ID fails. A retained assertion may
+move only to a new exact node ID through unique, acyclic,
+assertion-preserving, phase-monotonic literal supersession metadata.
 
 Every test node introduced after the frozen set is self-describing. Its module
 contains one literal mapping named `__cemm_test_inventory__`:
@@ -371,12 +390,25 @@ for every exact case node ID and declares literal `ids=` values so the AST
 checker can derive those IDs without pytest collection. Dynamic/generated
 parameter IDs are forbidden. `diagnostic_role` is exactly
 `owner|phase|admission_only`; `owner_ref` is required only for `owner`.
+A retained replacement record uses literal supersedes_node_id and exactly the
+same assertion ref. A node participating in a conjunctive rewrite set uses a
+literal contributes_to_rewrite_refs field; the reviewed obligation set, not any
+one partial member, is the assertion-preservation authority.
+Every predecessor parameter case occurs in exactly one obligation mapping. That
+mapping contains a non-empty conjunctive required_successor_node_ids set: once
+due, every member must exist, be active and resolve through any retained
+supersession chain to one executable leaf. Multiple predecessors may share a
+successor only when its literal contribution refs name each reviewed obligation.
 Metadata values and keys must be AST literals. Computed dictionaries, decorators
 that infer governance, file-level defaults, filename conventions and imported
 metadata are forbidden.
 
-`check_test_inventory.py` parses `test_inventory.json` and every current test
-module exactly once with `ast`; it does not import test modules or query Git. It
+`scripts/test_inventory_core.py` is stdlib-only and is loaded by reviewed exact
+file path; importing it must not execute `cemm_authoritative_hybrid.__init__`
+or load runtime, model, training or Torch. `check_test_inventory.py` is a thin
+CLI over that owner. Source-only verification requires an explicit phase,
+parses `test_inventory.json` and every current test module exactly once with
+`ast`, and invokes neither Git nor pytest. It
 rejects a bad inventory identity/count, a later test lacking literal per-node
 metadata, metadata for a frozen or nonexistent node, duplicate node ownership,
 unsafe paths and an unrecognized field/value. The one-time Task 3 review
@@ -384,10 +416,27 @@ compares the frozen file to the supplied baseline audit before commit. Routine
 and release-bundle verification thereafter recompute the immutable file and AST
 metadata directly and never require a live Git checkout.
 
+A rewritten original is evidence-only and never executable. Its replacement
+obligation is computed as deferred before `replacement_phase`; at or after that
+phase every exact predecessor case must have a valid successor or verification
+fails before pytest. Historical nodes never execute. Deferred is not a fourth
+classification. Owner and phase execution each use exactly one pytest process
+for their exact selected leaf nodes; admission uses one process for the complete
+eligible leaf union.
+
+Mandatory focused tests prove: exact 59/634/743 and 611/10/13 totals; G0
+succeeds with all ten rewrite obligations deferred; a due missing successor
+fails before pytest; rewritten and historical originals never enter a selector;
+duplicate/unknown/wrong-assertion/phase-regressing/cyclic/incomplete mappings
+fail; same-ID mutation fails while unrelated additions pass; a valid new-ID
+supersession leaves exactly one executable lineage leaf; and source-only
+instrumentation observes one AST parse per module, zero Git/pytest calls and no
+runtime/model/training/Torch imports.
+
 Run and observe RED:
 
 ```powershell
-python -m pytest tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
+python -m pytest tests\test_test_inventory.py tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
 ```
 
 ### Step 2: Curate the complete frozen set and annotate current later tests
@@ -405,8 +454,82 @@ earliest truthful activation:
 - R4: scenarios/episodes, negatives, leakage and training isolation.
 - R5: neural proposer/realizer, calibration, weight use and reproduction.
 - R6-R7: production cutover, end-to-end evaluation and release thresholds.
-- `rewritten` only when exact named successor case nodes preserve the assertion.
+- `rewritten` only when exact successor obligations preserve every quantified
+  part of the assertion.
 - `historical` only when the assertion itself depended on a retired path.
+
+The reviewed classification is 611 retained / 10 rewritten / 13 historical.
+Each rewritten predecessor case owns one conjunctive required successor set.
+All listed members are required once the obligation is due; an existing retained
+successor is followed to its current supersession leaf.
+
+1. tests/test_bootstrap_episode_generation.py::test_episodes_file_exists
+   (R4) requires
+   tests/test_semantic_episode.py::test_generated_episodes_match_committed_file.
+2. tests/test_bootstrap_episode_generation.py::test_each_episode_has_required_fields
+   (R4) requires
+   tests/test_semantic_episode.py::test_episode_contains_every_phase_and_revision,
+   tests/test_semantic_episode.py::test_generated_episodes_match_committed_file,
+   and tests/test_r4_authentic_episodes.py::test_every_emitted_episode_contains_complete_six_phase_artifacts.
+3. tests/test_bootstrap_episode_generation.py::test_accepted_episodes_have_coverage_receipt
+   (R4) requires
+   tests/test_semantic_episode.py::test_episode_contains_every_phase_and_revision,
+   tests/test_semantic_episode.py::test_generated_episodes_match_committed_file,
+   and tests/test_r4_authentic_episodes.py::test_every_accepted_episode_binds_coverage_program_and_action_identity.
+4. tests/test_bootstrap_episode_generation.py::test_episodes_have_authority_hash
+   (R4) requires
+   tests/test_semantic_episode.py::test_episode_contains_every_phase_and_revision,
+   tests/test_semantic_episode.py::test_generated_episodes_match_committed_file,
+   and tests/test_r4_authentic_episodes.py::test_every_episode_binds_exact_authority_and_revision_identity.
+5. tests/test_bootstrap_episode_generation.py::test_two_runs_produce_identical_output
+   (R4) requires
+   tests/test_semantic_episode.py::test_episode_generation_is_byte_deterministic.
+6. tests/test_bootstrap_episode_generation.py::test_generated_output_matches_committed_file
+   (R4) requires
+   tests/test_semantic_episode.py::test_generated_episodes_match_committed_file.
+7. tests/test_bootstrap_proposer.py::test_release_only_raises
+   (R5) requires
+   tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer,
+   tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap,
+   and tests/test_r5_public_runtime_selection.py::test_selected_release_runtime_never_invokes_bootstrap_proposer.
+8. tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates
+   (R2) requires
+   tests/test_grounding.py::test_unknown_surface_is_typed_not_manufactured,
+   tests/test_grounding.py::test_unknown_surface_produces_reference_requirement,
+   and tests/test_r2_unknown_frontier.py::test_unknown_surface_abstains_or_emits_typed_unresolved_candidate.
+9. tests/test_cognitive_loop_e2e.py::TestSimulation::test_simulation_does_not_commit
+   (R3) requires
+   tests/test_transition_simulation.py::TestSimulatedTransitionDoesNotCommit::test_preview_does_not_mutate_revision,
+   tests/test_transition_simulation.py::TestSimulatedTransitionDoesNotCommit::test_preview_sequence_does_not_mutate_revision,
+   and tests/test_r3_public_cycle.py::test_simulate_cycle_emits_no_effect_and_preserves_world_revision.
+10. tests/test_cognitive_loop_e2e.py::TestUnknownSurface::test_unknown_surface_produces_cycle
+    (R3) requires
+    tests/test_grounding.py::test_unknown_surface_is_typed_not_manufactured,
+    tests/test_coverage.py::test_critical_residual_rejects_execution,
+    and tests/test_r3_public_cycle.py::test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation.
+
+These exact sets replace the earlier incomplete one-successor mappings.
+Rewrite obligations are deferred before
+their listed phase and hard-fail before pytest once due.
+
+The thirteen historical source tests are exactly:
+
+- `tests/test_bootstrap_episode_generation.py::{test_episodes_file_is_valid_jsonl,test_episodes_cover_all_seed_categories}`;
+- `tests/test_cognitive_loop_e2e.py::TestCycleResultArtifacts::test_cycle_result_kernel_view`;
+- `tests/test_phase_receipts.py::test_cycle_result_is_kernel_cycle_result_or_wraps_it`;
+- `tests/test_scenario_coverage.py::{test_scenarios_file_is_valid_jsonl,test_210_unique_reviewed_cases}`;
+- `tests/test_semantic_episode.py::{test_scenario_source_has_210_unique_reviewed_cases,test_generated_episodes_count_matches_scenarios}`;
+- `tests/test_calibration.py::test_calibration_uses_validation_only`;
+- `tests/test_evaluation_metrics.py::test_evaluator_loads_test_episodes`;
+- `tests/test_cognitive_loop_e2e.py::TestNoHiddenFallback::test_implementation_error_is_not_clarification`;
+- `tests/test_gap_receipts.py::test_unknown_exception_is_implementation_gap`;
+- `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_with_zeroed_weights_preserves_model_identity`.
+
+These retire, respectively, compatibility result views, fixed 210/78 corpus
+counts, one-scenario/one-episode generation, calibration-on-selection data,
+swallowed programming errors and same identity for changed weights. Valid JSONL,
+manifest-bound set size, exception propagation and derived ablation identity
+receive new assertions; they do not inherit the retired assertions.
 
 `tests/test_release_thresholds.py` remains retained with
 `activation_phase=R7` and its known-red result is preserved. Do not edit
@@ -429,9 +552,9 @@ governance/admission DAG, not a fourth tier or another pytest process.
 ### Step 3: Verify, review, commit
 
 ```powershell
-python scripts\check_test_inventory.py --verify
-python -m pytest tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
-git add hybrid_mvp/governance/test_inventory.json hybrid_mvp/scripts/check_test_inventory.py hybrid_mvp/src/cemm_authoritative_hybrid/governance.py hybrid_mvp/docs/DOCUMENT_AUTHORITY.json hybrid_mvp/tests/test_replay_governance.py
+python scripts\check_test_inventory.py --phase G0 --source-only
+python -m pytest tests\test_test_inventory.py tests\test_replay_governance.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-inventory
+git add hybrid_mvp/governance/test_inventory.json hybrid_mvp/scripts/test_inventory_core.py hybrid_mvp/scripts/check_test_inventory.py hybrid_mvp/src/cemm_authoritative_hybrid/governance.py hybrid_mvp/docs/DOCUMENT_AUTHORITY.json hybrid_mvp/tests/test_test_inventory.py hybrid_mvp/tests/test_replay_governance.py
 git commit -m "governance: freeze predecessor tests and require literal metadata"
 ```
 
@@ -448,6 +571,8 @@ git commit -m "governance: freeze predecessor tests and require literal metadata
 - Create: `hybrid_mvp/tests/test_validation_gate.py`
 - Create: `hybrid_mvp/tests/test_g0_integration.py`
 - Modify: `hybrid_mvp/tests/test_replay_governance.py`
+- Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/__init__.py` to preserve
+  public exports through lazy loading
 - Modify: `hybrid_mvp/pyproject.toml` only for strict declared markers, if used
 
 ### Step 1: Specify behavior with RED tests
@@ -634,9 +759,12 @@ class GateReceipt:
     evidence_files: tuple[EvidenceFile, ...]
     started_at_utc: str
     run_nonce: str
+    pre_admission_status_head_ref: str
     step_results: tuple[StepResult, ...]
 ```
 
+`pre_admission_status_head_ref` binds the exact authenticated status prefix at
+execution time; the mutable whole ledger is not a fixed receipt input.
 `StepResult.step_ref` excludes `wall_ns` and `peak_rss_bytes`. `gate_result_ref`
 covers semantic inputs/dispositions/report/error refs and ordered evidence-file
 path/hash material but excludes all clocks, nonces and performance observations.
@@ -661,23 +789,52 @@ def load_verified_admission_receipt(
 
 It reads only existing run artifacts and never invokes the runner. It strictly
 recomputes every step, `gate_result_ref` and `run_ref`; requires the filename and
-serialized run identity to agree; requires the requested phase,
-`tier="admission"`, `fresh=True`, derived `expected_status`, the exact declared
-step set and current source/environment/input identities. It returns the
-receipt plus a sorted tuple of canonical repository-relative paths identifying
-the exact currently dirty evidence files whose path/hash material the receipt
+serialized run identity to agree; and requires the requested phase,
+`tier="admission"`, `fresh=True`, derived `expected_status` and exact declared
+step set. The loader is ledger-agnostic. It validates canonical receipt
+bytes, every
+nested ref, stored source/environment/input identities and authenticated
+external evidence, but never reads replay_status.jsonl, invokes Git history
+authentication or loads another receipt.
+
+Task 2's updater owns consumption semantics over the records it already loaded
+and authenticated. Before append it requires a clean current HEAD equal to
+source_ref, records[-1].record_ref equal to pre_admission_status_head_ref and no
+prior row naming the run. Post-write and historical verification perform one
+linear pass requiring exactly one row whose predecessor_ref equals the
+pre-admission head, whose source_base equals source_ref and whose phase/gate/run
+fields consume this receipt. The Task 4 governance handler applies the same
+relation to its one cached ledger parse. Neither path rereads the chain per
+receipt.
+
+The loader returns the receipt plus a sorted tuple of every canonical
+repository-relative external evidence path whose path/hash material the receipt
 authenticated. It rejects directories, globs, inferred working-tree paths,
-non-dirty substitutions and any path/hash mismatch. With an explicit `run_ref`
-it loads exactly that run. With `None` it succeeds only when exactly one
-eligible current run exists; it never chooses by mtime, timestamp or a "latest"
-pointer. Raise a typed receipt-validation error for invalid evidence and let
-unexpected programming exceptions propagate.
+unauthenticated substitutions and every path/hash mismatch, but never queries
+Git status. Dry-run and governance verification take one dirty-path snapshot.
+Append takes
+one pre-append snapshot under the exclusive lock and one post-write snapshot
+before success, rolling back on mismatch. Counts are independent of receipt
+count. Each check intersects dirty paths with the returned authenticated set and
+rejects every dirty governed path outside it. With an explicit `run_ref` it loads exactly that run.
+With `None` it succeeds only when exactly one eligible current run exists; it
+never chooses by mtime, timestamp or a "latest" pointer. Raise a typed
+receipt-validation error for invalid evidence and let unexpected programming
+exceptions propagate.
 
 Add RED tests for exact-run loading, ambiguous `run_ref=None`, wrong
 phase/status/tier, stale/non-fresh receipts, mismatched file/run/gate/step refs,
-changed current inputs, path traversal, reordered/extra/missing/non-dirty
-unauthenticated evidence paths, and proof that loading a receipt does not invoke
-pytest or any gate step. Add updater tests proving that both green and
+tampered stored input identities, path traversal and
+reordered/extra/missing/unauthenticated evidence paths. Prove loading
+a receipt invokes no pytest/gate step, does not read the status ledger or Git
+history and never recursively loads another receipt. Add updater/governance
+tests for pre-consumption exact-head/source validation, post-consumption
+acceptance of one exact consuming row, rejection of zero/duplicate/mismatched
+consumers, historical reconstruction after later phase changes and one ledger parse independent of receipt count; one dirty snapshot
+for
+dry-run/governance verification; and exactly two for append (pre-append under
+the lock and post-write before success/rollback). Add updater
+tests proving that both green and
 `externally_blocked` call the loader with `expected_status="passed"`. The
 validation CLI emits the completed receipt identity,
 including `run_ref`, in a stable JSON result so Tasks 5 and 10 can select it
@@ -698,10 +855,16 @@ Never parse human output. Classify structurally:
 - setup/teardown failure -> error;
 - call failure -> failure.
 
-Missing/malformed reports fail closed. Launch argv with `shell=False`. Put `TMP`,
-`TEMP`, `TMPDIR`, `PYTHONPYCACHEPREFIX`, `--basetemp` and `cache_dir` inside one
-run root. Do not require external `PYTHONPATH`. Measure child peak RSS via a
-platform sampler and permit sampler injection in unit tests.
+Missing/malformed reports fail closed. Launch argv with `shell=False`. Write
+the exact selected node IDs to a content-addressed selector manifest inside the
+run root, then pass that manifest to the child; do not place hundreds of node
+IDs on the Windows command line. The child still calls `pytest.main()` exactly
+once with those exact IDs and requires collected IDs to equal requested IDs.
+Redirect stdout/stderr to bounded files rather than unread pipes while sampling,
+so large output cannot deadlock on Windows. Put `TMP`, `TEMP`, `TMPDIR`,
+`PYTHONPYCACHEPREFIX`, `--basetemp` and `cache_dir` inside one run root. Do
+not require external `PYTHONPATH`. Measure child peak RSS via a platform sampler
+and permit sampler injection in unit tests.
 
 ### Step 4: Implement only three coalesced tiers
 
@@ -782,9 +945,10 @@ forbidden:
 The config validator rejects unknown step kinds/paths, cycles, duplicate
 resolved steps or node IDs, owner/phase node overlap, every raw file selector
 and an admission plan containing training/corpus/reproduction or nested
-owner/phase pytest steps. The coalesced `governance` handler validates
-document/anchor pins, both ledgers, every invalidated historical file, every
-green or `externally_blocked` admission receipt through
+owner/phase pytest steps. The coalesced `governance` handler loads Task 3's stdlib-only inventory core
+from its reviewed exact file path; it never imports it through the eager runtime
+package. It validates document/anchor pins, both ledgers, every invalidated
+historical file, every green or `externally_blocked` admission receipt through
 `load_verified_admission_receipt` with `expected_status="passed"`, and immutable
 inventory plus literal AST
 metadata in one process. Each test module is parsed once, each canonical path is
@@ -800,8 +964,11 @@ tree. Task 7's one complete-tree collection is an explicit
 ABI-migration import-safety check, not a recurring tier prerequisite. Later
 R4-R5 plans may reuse
 content-matched diagnostics for expensive artifact steps, never tests or
-admission. Governance, status, receipt loading and the pytest hook control plane
-remain lightweight and must not import runtime/model/training libraries.
+admission. Governance, status, receipt loading and the pytest hook control plane remain
+lightweight and must not import runtime, model, training or Torch libraries.
+Make `cemm_authoritative_hybrid.__init__` lazy while preserving its public
+exports, and add subprocess import tests for `validation_gate.py`,
+`test_inventory_core.py` and `update_replay_status.py`.
 
 ### Step 5: Verify, review, commit
 
@@ -809,7 +976,7 @@ remain lightweight and must not import runtime/model/training libraries.
 python -m pytest tests\test_validation_gate.py -q -p no:cacheprovider --basetemp C:\tmp\cemm-g0-validator
 python scripts\validate_mvp.py --tier phase --phase G0
 python scripts\validate_mvp.py --help
-git add hybrid_mvp/scripts/validation_gate.py hybrid_mvp/scripts/pytest_gate_runner.py hybrid_mvp/scripts/validate_mvp.py hybrid_mvp/scripts/update_replay_status.py hybrid_mvp/configs/validation_gates.json hybrid_mvp/tests/test_validation_gate.py hybrid_mvp/tests/test_g0_integration.py hybrid_mvp/tests/test_replay_governance.py hybrid_mvp/pyproject.toml
+git add hybrid_mvp/scripts/validation_gate.py hybrid_mvp/scripts/pytest_gate_runner.py hybrid_mvp/scripts/validate_mvp.py hybrid_mvp/scripts/update_replay_status.py hybrid_mvp/configs/validation_gates.json hybrid_mvp/src/cemm_authoritative_hybrid/__init__.py hybrid_mvp/tests/test_validation_gate.py hybrid_mvp/tests/test_g0_integration.py hybrid_mvp/tests/test_replay_governance.py hybrid_mvp/pyproject.toml
 git commit -m "build: add structured dependency-aware replay validation"
 ```
 
@@ -829,11 +996,24 @@ Bind commands, environment/source ref, 743-node collection, both threshold
 failures, proposal/runtime divergence, and authority EOL failure. State
 `runtime_admitted: false` and `model_artifacts_admitted: false`. G0 validates
 that forensic evidence; it does not require downstream R1/R7 behavior to pass.
+Generate `TEST_INVENTORY_RECEIPT.json` from the verified immutable inventory
+and literal metadata without launching pytest.
+
+Commit these deterministic G0 inputs before admission and require a clean
+worktree. The admission receipt's `source_ref` is this exact candidate commit;
+it must never point at a prior commit plus an open-ended dirty source set.
+
+```powershell
+git add hybrid_mvp/artifacts/validation/BASELINE_REPLAY_FINDINGS.json hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json
+git commit -m "chore: stage deterministic G0 admission inputs"
+git status --short
+```
 
 ### Step 2: Run exactly one fresh G0 admission
 
 Task 1-4 red/green work already ran owner and phase tiers. Do not rerun them
-ceremonially before admission.
+ceremonially before admission. Refuse to start unless the candidate source
+worktree is clean.
 
 ```powershell
 $g0Admission = (python scripts\validate_mvp.py --tier admission --phase G0 | ConvertFrom-Json)
@@ -851,10 +1031,14 @@ mtime.
 
 `update_replay_status.py --dry-run` loads the exact run through
 `load_verified_admission_receipt(root, phase="G0", expected_status="passed",
-run_ref=$g0RunRef)` and receives `(receipt, dirty_evidence_paths)`. That tuple
-contains only sorted canonical paths whose current dirty bytes were
-cryptographically authenticated by the receipt; the updater rejects every
-other dirty governed path. Dry-run emits the complete candidate without
+run_ref=$g0RunRef)` and receives (receipt, authenticated_evidence_paths). The
+loader returns every exact authenticated external path without querying Git
+status. Dry-run takes one dirty-path snapshot. Locked append takes one
+pre-append and
+one post-write snapshot, each independent of receipt count; every check permits
+only the intersection with that set and rejects every other dirty governed
+path. Dry-run emits the
+complete candidate without
 writing. Preserve that candidate's `record_ref`. Append must name the same run
 and expected record; it reloads the receipt and recomputes the row while holding
 the ledger write lock. Any input, evidence path/bytes, receipt, ledger-head or
@@ -865,13 +1049,18 @@ record-ref change writes nothing. Effective state becomes
 $g0Candidate = (python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --dry-run | ConvertFrom-Json)
 python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --expect-record-ref $g0Candidate.record_ref --append
 python scripts\update_replay_status.py --verify-chain
-git add hybrid_mvp/artifacts/validation/BASELINE_REPLAY_FINDINGS.json hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json hybrid_mvp/artifacts/validation/runs hybrid_mvp/governance/replay_status.jsonl hybrid_mvp/tests/test_replay_governance.py
+git add hybrid_mvp/artifacts/validation/runs hybrid_mvp/artifacts/validation/G0_ADMISSION_RECEIPT.json hybrid_mvp/governance/replay_status.jsonl hybrid_mvp/tests/test_replay_governance.py
 git commit -m "chore: admit corrective replay governance"
 ```
 
 Receipt loading, candidate dry-run and final chain verification inspect the one
-fresh admission; they are not additional gate executions. This status/receipt
-commit and every referenced `source_base` must be integrated by fast-forward or
+fresh admission; they are not additional gate executions. Before the status
+append, the updater requires the current status head to equal
+pre_admission_status_head_ref and current clean HEAD to equal source_ref. After
+append, updater/governance verification accepts only the unique authenticated
+consuming row in the already-loaded chain; it does not ask the receipt loader to
+reread history or compare an old receipt to newer R1 working-tree bytes. This status/receipt commit and every referenced
+`source_base` must be integrated by fast-forward or
 history-preserving merge commit, never squash/cherry-pick-only history rewriting.
 
 
@@ -1072,9 +1261,24 @@ including `test_epistemic_admission.py`, `test_inference_bounds.py`,
 `test_recursive_inference.py`, `test_restart_e2e.py`,
 `test_synonym_acquisition.py` and `tests/conftest.py`. Retained tests activated
 after R1 may still require later behavioral rewrites, but their modules must
-import and collect now. Run structured collection across the entire predecessor
-tree and require no collection errors and no loss of the 743 baseline nodes
-before deleting the duplicate class.
+import and collect now.
+
+Frozen source-test bodies are immutable. Imports, fixtures and non-test helpers
+may change, but changing a frozen test requires a new exact node ID with literal
+metadata that supersedes the predecessor, preserves its assertion ref and does
+not regress activation phase. Task 7 must supersede these nine R1 nodes rather
+than edit them in place: the six test_program_abi.py nodes covering unknown
+action type, all confirmed action types, empty/extracted persistent operators,
+action-encoding structural sensitivity and frozen ProgramAction; plus the three
+test_adversarial_programs.py nodes covering fabricated bind references, unknown
+action type and unknown operator. Their successors must construct valid
+content-addressed actions/programs so a test cannot pass early for an unrelated
+ref mismatch.
+
+Run structured collection across the entire predecessor tree and require no
+collection errors and no loss of the 743 baseline cases before deleting the
+duplicate class. Collection retention is provenance; the R1 selector resolves
+only the transitive supersession leaf.
 
 ### Step 6: Verify, review, commit
 
@@ -1140,6 +1344,14 @@ Delete `KernelCycleResult`, `CycleResult.kernel`, `ProcessResult` and the
 production `_FixtureCycleRunner`. Test fixtures live under `tests/` and return
 the same canonical `CycleResult`. Use typed artifact fields; later fields can be
 `None` only when status/gap proves the phase was not reached.
+
+Do not edit frozen test bodies under their old IDs. Task 8 adds literal
+superseding nodes for the PhaseReceipt frozen-dataclass test; the five retained
+CycleResult artifact tests for orientation, proposal, verification, evaluation
+and response meaning; and the four retained restart tests for pin fields,
+consecutive-cycle pins, stale-orient restart and complete post-restart
+artifacts. The new proposal/verification assertions use candidate/batch
+semantics and direct CycleResult fields, never compatibility properties.
 
 ### Step 4: Verify, review, commit
 
@@ -1247,6 +1459,14 @@ Only after `rg` shows zero callers, delete `process_evidence`,
 `build_release_runtime`. Future R3/R5 tests remain inventoried, not made green
 with adapters.
 
+Task 9 must add new-ID, assertion-preserving successors for all five retained
+test_six_phase_runtime.py nodes and
+test_production_proposer_cutover.py::test_development_profile_still_works.
+Those successors use canonical process(); they never edit the frozen body or
+retain the shortcut. R1 admission resolves each supersession chain to exactly
+one leaf and fails before pytest if any of these 25 Task 7-9 obligations remains
+unsatisfied.
+
 ### Step 5: Add the now-existing R1 gate selectors
 
 Retain the exact-node Task 7 `r1_program_verifier_owner_tests` and Task 8
@@ -1327,9 +1547,11 @@ from the admission receipt.
 ### Step 2: Run exactly one fresh R1 admission
 
 Task 6-9 red/green work already ran owner and phase tiers. Do not rerun them
-immediately before admission.
+immediately before admission. Task 9's commit is the exact clean R1 candidate
+source; refuse admission if the worktree has any uncommitted governed source.
 
 ```powershell
+git status --short
 $r1Admission = (python scripts\validate_mvp.py --tier admission --phase R1 | ConvertFrom-Json)
 $r1RunRef = $r1Admission.run_ref
 ```
@@ -1348,9 +1570,13 @@ Controller inspects the exact `$r1RunRef` receipt's structural result, counts,
 wall time, peak RSS and slowest cases and verifies every nested identity. Dry-run
 loads it through
 `load_verified_admission_receipt(root, phase="R1", expected_status="passed",
-run_ref=$r1RunRef)` and receives `(receipt, dirty_evidence_paths)`. The updater
-accepts only the sorted canonical dirty paths whose bytes the receipt
-cryptographically authenticated and rejects every other dirty governed path.
+run_ref=$r1RunRef)` and receives (receipt, authenticated_evidence_paths). The
+loader returns every exact authenticated external path without querying Git
+status. Dry-run takes one dirty-path snapshot. Locked append takes one
+pre-append and
+one post-write snapshot, each independent of receipt count; every check permits
+only the intersection with that set and rejects every other dirty governed
+path.
 It then emits the candidate row. Preserve that row's `record_ref`; append must
 reload the same run and match that exact record while holding the ledger write
 lock:

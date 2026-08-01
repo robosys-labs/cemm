@@ -102,6 +102,11 @@ evidence. Green and `externally_blocked` updater transitions both require a
 verified passed admission and bind `admission_gate_result_ref` plus the exact
 `admission_run_ref`; red and initial pending records bind neither.
 
+Each admission executes against an exact committed, clean candidate source.
+Deterministic admission inputs are committed first; the unique run, phase
+pointer and consuming status row are committed afterward. A receipt never
+describes an older HEAD plus an open-ended dirty source set.
+
 Every post-anchor ledger `source_base` is durable release evidence. Once such a
 record exists, its commit must remain a monotonic ancestor of the next
 `source_base` and of the final release commit. Integration therefore uses a
@@ -334,11 +339,29 @@ development diagnostics, but cannot satisfy a fresh admission or release gate.
 Admission receipts have one strict external verification seam:
 `load_verified_admission_receipt(root, *, phase, expected_status, run_ref=None) -> tuple[GateReceipt, tuple[str, ...]]`. It deserializes and recomputes every
 step, gate and run identity; verifies the phase, admission tier, freshness,
-derived status and current source/environment/input identities; and performs no
-gate work. The returned path tuple is sorted canonical repository-relative
-paths for the exact dirty evidence files authenticated by the receipt's
-path/hash material. The loader never substitutes a directory, glob, working-tree
-scan or unauthenticated path. An explicit `run_ref` selects exactly that run.
+derived status and the applicable source/environment/input identities; and
+performs no gate work. The loader is deliberately ledger-agnostic: it never
+reads replay_status.jsonl, invokes Git history authentication or recursively
+loads another receipt. It verifies the receipt's canonical bytes, nested refs,
+stored source/environment/input identities and external evidence only.
+
+The lifecycle coordinator performs consumption checks over the one status chain
+it has already authenticated. Before append, the updater requires a clean
+current HEAD equal to source_ref, a current status head equal to
+pre_admission_status_head_ref and no prior consumer. After append and during
+historical verification, one pass over the authenticated records requires
+exactly one consuming row whose predecessor/source_base/gate/run fields equal
+the receipt. The coalesced governance handler uses the same one-pass relation.
+
+The returned path tuple is every sorted canonical repository-relative external
+evidence path authenticated by the receipt's path/hash material. The loader
+never queries Git status or substitutes a directory, glob, working-tree scan or
+unauthenticated path. Dry-run and governance verification take one dirty-path snapshot.
+Append takes
+one pre-append snapshot under the exclusive lock and one post-write snapshot
+before success, rolling back on mismatch. These bounded counts are independent
+of receipt count. Each check intersects dirty paths with the authenticated set
+and rejects every dirty governed path outside it. An explicit `run_ref` selects exactly that run.
 Without one, verification succeeds only when exactly one eligible current run
 exists; clocks, modification times and a "latest" pointer never select
 authority. Receipt-validation failures are typed, while unexpected programming
@@ -351,7 +374,9 @@ performance regression to investigate. Validation instrumentation uses bounded
 counters and optional receipts; it does not add authority scans, serialized
 traces or synchronous training work to the normal `HybridRuntime.process()`
 path. Governance, status and receipt-loader control paths remain lightweight
-and do not import runtime, model or training libraries. Within one runner
+and do not import runtime, model, training or Torch libraries. They load the
+stdlib-only inventory owner by its reviewed exact file path rather than through
+the runtime package initializer. Within one runner
 invocation, canonical paths are hashed once, manifests and ledgers are parsed
 once, and resolved dependencies are memoized in memory. Owner and phase tiers
 collect only their exact selected nodes. Admission performs one fresh active-set
@@ -365,6 +390,22 @@ existing coalesced governance step rather than by another gate.
 together with classifications, activation phases, semantic assertion refs and
 its recomputable inventory ref. `DOCUMENT_AUTHORITY.json` pins its exact path
 and SHA-256. It is reviewed once and never mutated by later replay tasks.
+The reviewed classification is 611 retained, 10 rewritten and 13 historical;
+those counts are audit results, not targets obtained by relabelling cases.
+
+Every frozen source test also binds a canonical digest of its own decorators,
+literal parameter IDs, signature and body. A whole-file blob ref is provenance,
+not the edit boundary. Unrelated imports, helpers, metadata and new tests may
+change without mutating a frozen node. A frozen assertion that remains valid
+may move only to a new exact node ID with literal, assertion-preserving,
+phase-monotonic supersession metadata. Same-ID body mutation, ambiguous or
+cyclic supersession and incomplete parameter-case coverage fail closed.
+
+A rewritten predecessor is evidence-only and is never executable. Its typed
+replacement obligation is deferred before its reviewed replacement phase and
+must be completely satisfied by exact successor cases at or after that phase,
+before pytest starts. `historical` predecessors are never executable. Deferred
+is a computed lifecycle state, not a fourth classification.
 
 Every test introduced after that frozen set carries a module-level literal
 `__cemm_test_inventory__` mapping with one metadata record per exact pytest node
