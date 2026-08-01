@@ -4,7 +4,9 @@
 **Date:** 2026-07-31
 **Scope:** `hybrid_mvp/` only
 **Reviewed base:** `5f8688b8bf4591563692a8d133097a14feeff8ff`
-**Donor evidence:** `cemm_hybrid_mvp_r1_r5_consolidated_replay_patch`
+**Donor evidence:** \`cemm_hybrid_mvp_r1_r5_consolidated_replay_patch\`;
+\`cemm_hybrid_mvp_g0_r6_selective_admission_patch\` (later supplemental
+evidence)
 
 ## 1. Decision
 
@@ -82,6 +84,24 @@ The following donor operations are forbidden:
 - using skip-validation, force-base, force-branch or dirty-tree overrides;
 - activating donor-generated corpus, checkpoints or receipts;
 - copying donor authority, forms, runtime or ABI files unchanged.
+
+### 3.3 G0-R6 selective-admission donor
+
+The later G0-R6 package is also evidence-only. Its archive manifest is
+internally consistent and some algorithms are useful review inputs, but its
+admission inventory selects one 18-test file instead of the frozen 743-case
+set, many checks inspect source strings or self-attested status, and it
+overwrites this approved design with an older proposed draft. Its emitted R4
+coverage matrix fails its own schema and its partitions leak semantic targets
+and topology across the general split. Its R1 identity shapes, R2 authority
+linkage, R3 canaries, R5 public-path proof and R6 error/surface behavior also do
+not satisfy this contract.
+
+Do not apply that package's installer, governance documents, status files,
+inventory, delete list, authority/data artifacts or generated receipts.
+Individual code or data ideas may be reimplemented only under the same
+test-first, earliest-owner and per-phase admission rules as the earlier donor.
+
 
 ## 4. Authority and status model
 
@@ -308,7 +328,7 @@ Each phase requires four evidence categories:
 
 1. focused red/green behavioral tests;
 2. corruption and anti-bypass tests;
-3. complete active-suite collection and execution;
+3. complete governed-suite collection, active-set selection and execution;
 4. clean-checkout activation/reload with deterministic artifact regeneration.
 
 These are evidence categories inside exactly three runner modes, never four
@@ -324,9 +344,12 @@ Admission is one independent fresh execution of the complete active node set.
 Its deliberate re-execution of earlier diagnostic nodes is the only intended
 cross-tier repeat: admission never nests or invokes owner or phase test steps as
 separate prerequisites, and it never treats their receipts as admission
-authority. One admission invocation performs active-suite collection and
-execution once. Status and receipt verification validate existing bytes and
-identities only; they never launch pytest, artifact generation or another gate.
+authority. One admission invocation starts pytest once on the pinned test root,
+requires the complete collected node set to equal the governed
+`collectable_node_ids`, deselects governed inactive nodes, and executes the
+active union. Extra, missing or duplicate collected nodes fail before any test
+call. Status and receipt verification validate existing bytes and identities
+only; they never launch pytest, artifact generation or another gate.
 
 The categories are dependency-aware rather than redundantly serial. Local
 red/green work runs only the affected owner tests and static checks. Applicable
@@ -379,19 +402,28 @@ stdlib-only inventory owner by its reviewed exact file path rather than through
 the runtime package initializer. Within one runner
 invocation, canonical paths are hashed once, manifests and ledgers are parsed
 once, and resolved dependencies are memoized in memory. Owner and phase tiers
-collect only their exact selected nodes. Admission performs one fresh active-set
-collection and execution in the same pytest invocation; it does not pre-run a
-second full collection gate.
+collect only their exact selected nodes. Admission performs one full governed
+collection, active-set deselection and execution in the same pytest invocation;
+it does not pre-run a second collection gate or spawn a collection subprocess.
 
 Test governance has two governed evidence sources, validated inside the
 existing coalesced governance step rather than by another gate.
 `governance/test_inventory.json` freezes the reviewed predecessor sets: exactly
-59 test files, 634 source-test refs and 743 exact collected-case node IDs,
+59 test files, 632 source-test refs and 743 exact collected-case node IDs,
 together with classifications, activation phases, semantic assertion refs and
 its recomputable inventory ref. `DOCUMENT_AUTHORITY.json` pins its exact path
 and SHA-256. It is reviewed once and never mutated by later replay tasks.
-The reviewed classification is 611 retained, 10 rewritten and 13 historical;
+The reviewed classification is 609 retained, 10 rewritten and 13 historical;
 those counts are audit results, not targets obtained by relabelling cases.
+
+Two baseline functions named `test_authority_factory` are
+`@pytest.fixture` providers, not collected tests; they own no case node IDs
+and are excluded from the 632 source-test set. `pyproject.toml` pins collection
+to `test_*.py|*_test.py`, `test*` functions and `Test*` classes. The source
+checker recognizes only statically resolved `pytest`/`pytest_asyncio` fixture
+imports, rejects rebinding of those fixture identities, and rejects callable
+function/class aliases that could create an ungoverned collected node. It never
+imports pytest.
 
 Every frozen source test also binds a canonical digest of its own decorators,
 literal parameter IDs, signature and body. A whole-file blob ref is provenance,
@@ -404,26 +436,35 @@ cyclic supersession and incomplete parameter-case coverage fail closed.
 A rewritten predecessor is evidence-only and is never executable. Its typed
 replacement obligation is deferred before its reviewed replacement phase and
 must be completely satisfied by exact successor cases at or after that phase,
-before pytest starts. `historical` predecessors are never executable. Deferred
-is a computed lifecycle state, not a fourth classification.
+before pytest starts. A later successor declares every contribution in its
+literal metadata; for a frozen retained successor, membership in the immutable
+reviewed obligation is itself the contribution declaration because frozen nodes
+cannot carry later metadata. `historical` predecessors are never executable.
+Deferred is a computed lifecycle state, not a fourth classification.
 
 Every test introduced after that frozen set carries a module-level literal
 `__cemm_test_inventory__` mapping with one metadata record per exact pytest node
-ID, including every parameterized case. Later parameterized tests declare
-literal case IDs; dynamic/generated parameter IDs are forbidden. Each record
+ID, including every parameterized case. Later parameterized tests declare one
+literal argvalue sequence and a same-cardinality list of unique safe-ASCII case
+IDs; dynamic/generated parameter IDs are forbidden. Each record
 states its assertion ref, activation phase, diagnostic role, owner when
 applicable, and introducing replay task. The AST checker parses each current
 test module once, without importing
 it, and rejects computed metadata, filename/default inference, duplicate or
-missing nodes and overlap with the frozen case set. Routine and bundle
+missing nodes and overlap with the frozen case set. The result exposes both the
+phase-active node union and every currently collectable governed node, including
+present rewritten/historical originals that admission must collect but never
+execute. Routine and bundle
 verification load the immutable inventory and literal AST metadata directly;
 they do not query live Git or maintain a secondary mutable registry.
 
-All executing tiers pass exact node selectors to one pytest process. Owner and
-phase sets are disjoint; admission independently executes the complete eligible
-union of frozen cases and later literal-metadata cases once. Mixed-phase files
-may be import-checked, but are never selected or classified as whole files.
-There are zero active skips, xfails or xpasses at an admission or release gate.
+Owner and phase tiers pass exact node selectors to one pytest process and remain
+disjoint. Admission passes the pinned test root plus content-addressed expected
+collectable and active-node manifests to one pytest process. Its plugin compares
+the full collection before deselecting inactive nodes and independently executes
+the complete eligible union of frozen cases and later literal-metadata cases
+once. There are zero active skips, xfails or xpasses at an admission or release
+gate.
 
 ## 11. Execution and review discipline
 

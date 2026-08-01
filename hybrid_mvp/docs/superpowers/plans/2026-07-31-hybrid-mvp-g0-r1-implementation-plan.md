@@ -18,12 +18,12 @@
 
 ## Execution rules
 
-- Never run/copy the donor installer or overlay.
+- Never run/copy either donor installer or overlay.
 - Do not modify root-runtime code/authority or relabel/move/delete inherited artifacts.
 - Do not weaken release expectations, convert programming errors into gaps, or retain adapters, signature inspection, fixture release owners, or alternate composition roots.
 - Red/green loops run only the focused owner tier. Run one coalesced phase tier only when reviewed work changes a declared cross-owner boundary and has integration nodes. Run one fresh admission tier per phase candidate.
-- Owner and phase selectors are disjoint after expansion to exact collected node IDs. Admission executes the complete active node set once fresh and never nests owner or phase test steps.
-- Test governance uses immutable `governance/test_inventory.json` for the frozen 59-file/634-source/743-case predecessor set. Every later test carries literal per-node `__cemm_test_inventory__` metadata in its own module. The AST checker parses each module once. No secondary mutable registry exists; test-inventory routine/bundle verification neither infers metadata from filenames/defaults nor queries live Git.
+- Owner and phase selectors are disjoint after expansion to exact collected node IDs. Admission performs one full governed collection, deselects inactive nodes, executes the active set once fresh and never nests owner or phase test steps.
+- Test governance uses immutable `governance/test_inventory.json` for the frozen 59-file/632-source/743-case predecessor set. Every later test carries literal per-node `__cemm_test_inventory__` metadata in its own module. The AST checker parses each module once. No secondary mutable registry exists; test-inventory routine/bundle verification neither infers metadata from filenames/defaults nor queries live Git.
 - G0/R1 never run corpus generation, training, or reproduction.
 - Validation/performance code is not imported by the normal runtime path. Governance, status and receipt-loader tools remain lightweight and do not import runtime/model/training libraries.
 - Once a post-anchor status row is appended, preserve every referenced `source_base` through fast-forward or a merge commit; do not rebase, squash, cherry-pick-only integrate or force-push away that history.
@@ -303,19 +303,28 @@ git commit -m "governance: invalidate inherited claims append-only"
 - Modify: `hybrid_mvp/docs/DOCUMENT_AUTHORITY.json`
 - Create: `hybrid_mvp/tests/test_test_inventory.py`
 - Modify: `hybrid_mvp/tests/test_replay_governance.py`
+- Modify: `hybrid_mvp/pyproject.toml` to pin pytest collection
 - Generate in Task 5: `hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json`
 
 ### Step 1: Add failing immutable-inventory tests
 
 `governance/test_inventory.json` is the only predecessor inventory. Build it
 from the reviewed baseline audit and then make it immutable. It freezes exactly
-59 test files, 634 source-test refs and 743 exact collected-case node IDs,
+59 test files, 632 source-test refs and 743 exact collected-case node IDs,
 including every parameterized case. The completed manual contract audit yields
-611 retained, 10 rewritten and 13 historical source tests. Those are reviewed
+609 retained, 10 rewritten and 13 historical source tests. Those are reviewed
 results, not quotas to satisfy by relabelling. The artifact binds each file's
-reviewed baseline blob ref, every source test's own canonical AST digest,
-assertion/classification/activation metadata and a recomputable
-`inventory_ref`:
+reviewed baseline blob ref and every source test's canonical AST digest,
+assertion, classification, activation and recomputable inventory identity.
+
+The AST audit also finds two functions named `test_authority_factory`; both
+are `@pytest.fixture` providers and collect no cases, so they are not source
+tests. The checker excludes only statically resolved `pytest`/`pytest_asyncio`
+fixture providers, rejects fixture-identity rebinding and callable test aliases,
+and requires the remaining 632 source refs to own all 743 exact cases without
+importing pytest. `pyproject.toml` pins collection to `test_*.py|*_test.py`,
+`test*` functions and `Test*` classes; the checker verifies that contract.
+The frozen artifact has this structural shape:
 
 ```json
 {
@@ -323,10 +332,10 @@ assertion/classification/activation metadata and a recomputable
   "inventory_ref": "test_inventory:<content-ref>",
   "baseline_source_ref": "58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
   "file_count": 59,
-  "source_test_count": 634,
+  "source_test_count": 632,
   "case_count": 743,
   "classification_counts": {
-    "retained": 611,
+    "retained": 609,
     "rewritten": 10,
     "historical": 13
   },
@@ -352,7 +361,7 @@ assertion/classification/activation metadata and a recomputable
 }
 ```
 
-The full artifact, not this abbreviated example, contains all 59/634/743
+The full artifact, not this abbreviated example, contains all 59/632/743
 records. `DOCUMENT_AUTHORITY.json` pins its exact path and SHA-256. Verify that
 authority pin first, then recompute `inventory_ref` over every field except
 itself; require exact counts, unique normalized repository-relative
@@ -386,9 +395,10 @@ __cemm_test_inventory__ = {
 ```
 
 Keys are exact pytest node IDs. A parameterized later test has one literal entry
-for every exact case node ID and declares literal `ids=` values so the AST
-checker can derive those IDs without pytest collection. Dynamic/generated
-parameter IDs are forbidden. `diagnostic_role` is exactly
+for every exact case node ID, one literal argvalue sequence and a
+same-cardinality list of unique safe-ASCII `ids=` values so the AST checker can
+derive those IDs without pytest collection. Dynamic/generated parameter IDs
+are forbidden. `diagnostic_role` is exactly
 `owner|phase|admission_only`; `owner_ref` is required only for `owner`.
 A retained replacement record uses literal supersedes_node_id and exactly the
 same assertion ref. A node participating in a conjunctive rewrite set uses a
@@ -398,7 +408,9 @@ Every predecessor parameter case occurs in exactly one obligation mapping. That
 mapping contains a non-empty conjunctive required_successor_node_ids set: once
 due, every member must exist, be active and resolve through any retained
 supersession chain to one executable leaf. Multiple predecessors may share a
-successor only when its literal contribution refs name each reviewed obligation.
+successor. A later successor's literal contribution refs must name each reviewed
+obligation; for a frozen retained successor, membership in each immutable reviewed obligation is itself the
+contribution declaration because frozen nodes cannot carry later metadata.
 Metadata values and keys must be AST literals. Computed dictionaries, decorators
 that infer governance, file-level defaults, filename conventions and imported
 metadata are forbidden.
@@ -408,7 +420,9 @@ file path; importing it must not execute `cemm_authoritative_hybrid.__init__`
 or load runtime, model, training or Torch. `check_test_inventory.py` is a thin
 CLI over that owner. Source-only verification requires an explicit phase,
 parses `test_inventory.json` and every current test module exactly once with
-`ast`, and invokes neither Git nor pytest. It
+`ast`, and invokes neither Git nor pytest. It returns the phase-active union and
+the complete currently collectable governed set; the latter includes present
+rewritten/historical originals for Task 4's collect-but-never-execute check. It
 rejects a bad inventory identity/count, a later test lacking literal per-node
 metadata, metadata for a frozen or nonexistent node, duplicate node ownership,
 unsafe paths and an unrecognized field/value. The one-time Task 3 review
@@ -421,10 +435,11 @@ obligation is computed as deferred before `replacement_phase`; at or after that
 phase every exact predecessor case must have a valid successor or verification
 fails before pytest. Historical nodes never execute. Deferred is not a fourth
 classification. Owner and phase execution each use exactly one pytest process
-for their exact selected leaf nodes; admission uses one process for the complete
-eligible leaf union.
+for their exact selected leaf nodes. Admission uses one process to collect the
+complete governed current set, deselect inactive nodes and execute the eligible
+leaf union.
 
-Mandatory focused tests prove: exact 59/634/743 and 611/10/13 totals; G0
+Mandatory focused tests prove: exact 59/632/743 and 609/10/13 totals; G0
 succeeds with all ten rewrite obligations deferred; a due missing successor
 fails before pytest; rewritten and historical originals never enter a selector;
 duplicate/unknown/wrong-assertion/phase-regressing/cyclic/incomplete mappings
@@ -441,7 +456,7 @@ python -m pytest tests\test_test_inventory.py tests\test_replay_governance.py -q
 
 ### Step 2: Curate the complete frozen set and annotate current later tests
 
-Curate all and only the frozen 59 files, 634 source tests and 743 exact cases by
+Curate all and only the frozen 59 files, 632 source tests and 743 exact cases by
 earliest truthful activation:
 
 - G0: governance/validator.
@@ -458,7 +473,7 @@ earliest truthful activation:
   part of the assertion.
 - `historical` only when the assertion itself depended on a retired path.
 
-The reviewed classification is 611 retained / 10 rewritten / 13 historical.
+The reviewed classification is 609 retained / 10 rewritten / 13 historical.
 Each rewritten predecessor case owns one conjunctive required successor set.
 All listed members are required once the obligation is due; an existing retained
 successor is followed to its current supersession leaf.
@@ -539,13 +554,14 @@ task adds literal metadata in the same source change as each new node.
 
 The checker emits an in-memory exact-node index from the immutable inventory and
 literal AST metadata. Owner and phase selectors use exact node IDs from that
-index and are disjoint. Admission sends the complete eligible exact-node union
-to one fresh pytest process. Mixed-phase modules can be import-checked but never
-selected as whole files.
+index and are disjoint. Admission sends the pinned test root plus exact
+collectable-node and active-node manifests to one fresh pytest process. The
+plugin compares the full collection, deselects governed inactive nodes and then
+executes the active union in the same invocation.
 
 `TEST_INVENTORY_RECEIPT.json` binds the document-authority pin, immutable
 `inventory_ref`, aggregate content ref of all literal
-`__cemm_test_inventory__` mappings and the exact
+`__cemm_test_inventory__` mappings, exact collectable-node-set ref and exact
 active-node-set ref. This proof is part of the existing coalesced
 governance/admission DAG, not a fourth tier or another pytest process.
 
@@ -660,20 +676,14 @@ def test_runner_records_injected_peak_rss() -> None:
     assert observation.peak_rss_bytes == 12345
 
 
-def test_collection_error_still_writes_structured_report(
-    tmp_path: Path, project_root: Path
-) -> None:
-    broken = tmp_path / "test_broken.py"
-    report = tmp_path / "report.json"
-    broken.write_text("import module_that_does_not_exist\n", encoding="utf-8")
-    completed = subprocess.run(
-        [sys.executable, "scripts/pytest_gate_runner.py", "--report", str(report),
-         "--", str(broken), "-q"],
-        cwd=project_root, text=True, capture_output=True, check=False,
+def test_collection_error_is_structured_without_nested_pytest() -> None:
+    plugin = StructuredReportPlugin.for_unit_test()
+    plugin.pytest_collectreport(
+        FakeCollectReport(nodeid="tests/test_broken.py", outcome="failed")
     )
-    payload = json.loads(report.read_text(encoding="utf-8"))
-    assert completed.returncode != 0
+    payload = plugin.finalize(exitstatus=2)
     assert payload["counts"]["error"] == 1
+    assert payload["disposition"] == "error"
 ```
 
 In `test_g0_integration.py` add:
@@ -715,6 +725,11 @@ def test_each_executing_tier_has_one_pytest_process(project_root: Path) -> None:
     assert graph.pytest_process_count("G0", "phase") == 1
     assert graph.pytest_process_count("G0", "admission") == 1
 ```
+
+The collection-error unit test drives plugin hooks directly; it must not launch
+`pytest_gate_runner.py` from inside a pytest tier, which would create a hidden
+second pytest process. The real owner/phase/admission invocation is the single
+end-to-end child-runner test.
 
 Add a literal `__cemm_test_inventory__` entry for every new Task 4 exact node in
 the module that owns it, including its assertion, G0 activation, diagnostic role
@@ -855,12 +870,17 @@ Never parse human output. Classify structurally:
 - setup/teardown failure -> error;
 - call failure -> failure.
 
-Missing/malformed reports fail closed. Launch argv with `shell=False`. Write
-the exact selected node IDs to a content-addressed selector manifest inside the
-run root, then pass that manifest to the child; do not place hundreds of node
-IDs on the Windows command line. The child still calls `pytest.main()` exactly
-once with those exact IDs and requires collected IDs to equal requested IDs.
-Redirect stdout/stderr to bounded files rather than unread pipes while sampling,
+Missing/malformed reports fail closed. Launch argv with `shell=False`. Write a
+content-addressed selector manifest inside the run root; do not place hundreds
+of node IDs on the Windows command line. Owner/phase manifests contain exact
+requested IDs, and the child requires collection equality. An admission manifest
+contains the pinned test root, the complete governed `collectable_node_ids` and
+the phase-active IDs. The child calls `pytest.main()` exactly once on the test
+root, compares the full collected set before calls, deselects governed inactive
+nodes in `pytest_collection_modifyitems`, and executes the active union. An
+extra, missing or duplicate collected node is a structured error and no test
+call may run. Redirect stdout/stderr to bounded files rather than unread pipes
+while sampling,
 so large output cannot deadlock on Windows. Put `TMP`, `TEMP`, `TMPDIR`,
 `PYTHONPYCACHEPREFIX`, `--basetemp` and `cache_dir` inside one run root. Do
 not require external `PYTHONPATH`. Measure child peak RSS via a platform sampler
@@ -869,13 +889,14 @@ and permit sampler injection in unit tests.
 ### Step 4: Implement only three coalesced tiers
 
 `validation_gates.json` owns `owner`, `phase` and `admission`. Use this
-structural shape; the displayed node arrays are representative, while the real
-file enumerates every selected exact node ID. `pytest_active` constructs the
-complete eligible exact-node union from immutable `test_inventory.json` and
-literal `__cemm_test_inventory__` metadata whose `activation_phase` is no later
-than the candidate phase. Pytest steps accept `exact_nodes` only. Raw file
-selectors, filename/default inference and implicit parameterized expansion are
-forbidden:
+structural shape; the displayed owner/phase node arrays are representative,
+while the real file enumerates every selected exact diagnostic node ID.
+`pytest_active` derives both the complete currently collectable set and the
+eligible active union from immutable `test_inventory.json` plus literal
+`__cemm_test_inventory__` metadata. Owner/phase pytest steps accept
+`exact_nodes` only. The admission inventory step accepts only the reviewed test
+root and those two content-addressed derived sets. Other raw file selectors,
+filename/default inference and implicit parameterized expansion are forbidden:
 
 ```json
 {
@@ -888,7 +909,7 @@ forbidden:
       "metadata_symbol": "__cemm_test_inventory__",
       "status_ledger": "governance/replay_status.jsonl",
       "invalidation_ledger": "governance/receipt_invalidations.jsonl",
-      "inputs": ["docs/DOCUMENT_AUTHORITY.json", "governance/ledger_anchors.json", "governance/replay_status.jsonl", "governance/receipt_invalidations.jsonl", "governance/test_inventory.json", "tests/"]
+      "inputs": ["docs/DOCUMENT_AUTHORITY.json", "governance/ledger_anchors.json", "governance/replay_status.jsonl", "governance/receipt_invalidations.jsonl", "governance/test_inventory.json", "pyproject.toml", "tests/"]
     },
     "source_compile": {
       "kind": "compile",
@@ -919,7 +940,7 @@ forbidden:
       "depends_on": ["source_compile"],
       "test_inventory": "governance/test_inventory.json",
       "metadata_symbol": "__cemm_test_inventory__",
-      "inputs": ["tests/", "src/", "governance/test_inventory.json"]
+      "inputs": ["tests/", "src/", "governance/test_inventory.json", "pyproject.toml"]
     },
     "authority_link": {
       "kind": "authority_link",
@@ -958,10 +979,12 @@ and environment identity.
 
 G0-R1 never caches test results: owner runs focused exact nodes, an applicable
 phase runs only fresh disjoint cross-owner exact nodes, and admission performs
-one fresh active-set collection and execution. Every executing tier launches
-exactly one pytest process; owner and phase do not first collect the complete
-tree. Task 7's one complete-tree collection is an explicit
-ABI-migration import-safety check, not a recurring tier prerequisite. Later
+one full governed collection, inactive-node deselection and active execution in
+the same invocation. Every executing tier launches exactly one pytest process;
+owner and phase do not collect the complete tree. Admission's full collection is
+its authoritative anti-bypass check, not a separate prerequisite or process.
+Task 7 may reuse that admitted collection evidence for its ABI import-safety
+claim rather than launching another complete-tree collection. Later
 R4-R5 plans may reuse
 content-matched diagnostics for expensive artifact steps, never tests or
 admission. Governance, status, receipt loading and the pytest hook control plane remain
@@ -992,8 +1015,9 @@ git commit -m "build: add structured dependency-aware replay validation"
 
 ### Step 1: Capture exact baseline findings
 
-Bind commands, environment/source ref, 743-node collection, both threshold
-failures, proposal/runtime divergence, and authority EOL failure. State
+Bind commands, environment/source ref, the reviewed 743-node predecessor
+collection, the current collectable/active set refs, both threshold failures,
+proposal/runtime divergence, and authority EOL failure. State
 `runtime_admitted: false` and `model_artifacts_admitted: false`. G0 validates
 that forensic evidence; it does not require downstream R1/R7 behavior to pass.
 Generate `TEST_INVENTORY_RECEIPT.json` from the verified immutable inventory

@@ -1,0 +1,1244 @@
+from __future__ import annotations
+
+import ast
+import builtins
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any, Callable
+
+import pytest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CORE_PATH = ROOT / "scripts" / "test_inventory_core.py"
+BASELINE_SOURCE_REF = "58345240e67bf003e6ac7d5c68752e2e5eee4a7d"
+PHASES = ("G0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8")
+
+
+def _load_core() -> Any:
+    spec = importlib.util.spec_from_file_location(
+        "_cemm_test_inventory_core_for_tests",
+        CORE_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load inventory core from {CORE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_MODULES_BEFORE_CORE = frozenset(sys.modules)
+CORE = _load_core()
+_CORE_IMPORT_DELTA = frozenset(sys.modules) - _MODULES_BEFORE_CORE
+
+
+def _canonical_bytes(value: object) -> bytes:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def _content_ref(kind: str, value: object) -> str:
+    digest = hashlib.sha256(_canonical_bytes(value)).hexdigest()
+    return f"{kind}:{digest[:24]}"
+
+
+def _source_ast_sha256(source: str, function_name: str) -> str:
+    tree = ast.parse(source)
+    matches = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name == function_name
+    ]
+    assert len(matches) == 1
+    material = ast.dump(
+        matches[0],
+        annotate_fields=True,
+        include_attributes=False,
+    ).encode("utf-8")
+    return hashlib.sha256(material).hexdigest()
+
+
+def _source_ref(relative_path: str, function_name: str) -> str:
+    return f"{relative_path}::{function_name}"
+
+
+def _retained_record(
+    relative_path: str,
+    source: str,
+    function_name: str,
+    *,
+    assertion_ref: str,
+    activation_phase: str,
+) -> dict[str, object]:
+    node_id = _source_ref(relative_path, function_name)
+    return {
+        "source_test_ref": node_id,
+        "classification": "retained",
+        "activation_phase": activation_phase,
+        "assertion_ref": assertion_ref,
+        "source_ast_sha256": _source_ast_sha256(source, function_name),
+        "case_node_ids": [node_id],
+        "successor_node_ids": [],
+    }
+
+
+def _historical_record(
+    relative_path: str,
+    source: str,
+    function_name: str,
+    *,
+    assertion_ref: str,
+) -> dict[str, object]:
+    node_id = _source_ref(relative_path, function_name)
+    return {
+        "source_test_ref": node_id,
+        "classification": "historical",
+        "activation_phase": None,
+        "assertion_ref": assertion_ref,
+        "source_ast_sha256": _source_ast_sha256(source, function_name),
+        "case_node_ids": [node_id],
+        "successor_node_ids": [],
+        "historical_reason": "reviewed retired-path assertion",
+    }
+
+
+
+def _rewritten_record(
+    relative_path: str,
+    source: str,
+    function_name: str,
+    *,
+    assertion_ref: str,
+    replacement_phase: str,
+    required_successor_node_ids: list[str],
+) -> tuple[dict[str, object], str]:
+    node_id = _source_ref(relative_path, function_name)
+    required = sorted(required_successor_node_ids)
+    obligation_material = {
+        "predecessor_case_node_id": node_id,
+        "required_successor_node_ids": required,
+    }
+    obligation_ref = _content_ref("rewrite_obligation", obligation_material)
+    return (
+        {
+            "source_test_ref": node_id,
+            "classification": "rewritten",
+            "activation_phase": None,
+            "assertion_ref": assertion_ref,
+            "source_ast_sha256": _source_ast_sha256(source, function_name),
+            "case_node_ids": [node_id],
+            "successor_node_ids": required,
+            "replacement_phase": replacement_phase,
+            "rewrite_obligations": [
+                {
+                    "rewrite_ref": obligation_ref,
+                    **obligation_material,
+                }
+            ],
+        },
+        obligation_ref,
+    )
+
+
+def _classification_counts(
+    records: list[dict[str, object]],
+) -> dict[str, int]:
+    return {
+        classification: sum(
+            record["classification"] == classification for record in records
+        )
+        for classification in ("retained", "rewritten", "historical")
+    }
+
+
+def _inventory_payload(
+    root: Path,
+    records: list[dict[str, object]],
+) -> dict[str, object]:
+    records = sorted(records, key=lambda record: str(record["source_test_ref"]))
+    source_paths = sorted(
+        {str(record["source_test_ref"]).split("::", 1)[0] for record in records}
+    )
+    files = []
+    for relative_path in source_paths:
+        raw = (root / relative_path).read_bytes()
+        files.append(
+            {
+                "path": relative_path,
+                "baseline_blob_ref": f"sha256:{hashlib.sha256(raw).hexdigest()}",
+            }
+        )
+    cases = sorted(
+        case
+        for record in records
+        for case in record["case_node_ids"]  # type: ignore[index]
+    )
+    payload: dict[str, object] = {
+        "schema": "cemm-hybrid-test-inventory-v1",
+        "baseline_source_ref": BASELINE_SOURCE_REF,
+        "file_count": len(files),
+        "source_test_count": len(records),
+        "case_count": len(cases),
+        "classification_counts": _classification_counts(records),
+        "files": files,
+        "source_tests": records,
+        "source_set_ref": _content_ref("source_set", records),
+        "case_set_ref": _content_ref("case_set", cases),
+    }
+    payload["inventory_ref"] = _content_ref("test_inventory", payload)
+    return payload
+
+
+def _set_inventory_ref(payload: dict[str, object]) -> None:
+    payload.pop("inventory_ref", None)
+    payload["inventory_ref"] = _content_ref("test_inventory", payload)
+
+
+def _write_inventory(root: Path, payload: dict[str, object]) -> Path:
+    path = root / "governance" / "test_inventory.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(_canonical_bytes(payload) + b"\n")
+    return path
+
+
+def _write_frozen_module(
+    root: Path,
+    source: str,
+    *,
+    relative_path: str = "tests/test_frozen.py",
+) -> Path:
+    path = root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(source, encoding="utf-8", newline="\n")
+    return path
+
+
+def _write_pytest_collection_contract(root: Path) -> None:
+    (root / "pyproject.toml").write_text(
+        """\
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test*"]
+python_classes = ["Test*"]
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+def _new_project(
+    tmp_path: Path,
+    source: str,
+    record_factory: Callable[[str], list[dict[str, object]]],
+    *,
+    name: str = "project",
+) -> tuple[Path, Path, dict[str, object]]:
+    root = tmp_path / name
+    root.mkdir(parents=True, exist_ok=True)
+    _write_pytest_collection_contract(root)
+    _write_frozen_module(root, source)
+    records = record_factory(source)
+    payload = _inventory_payload(root, records)
+    return root, _write_inventory(root, payload), payload
+
+
+def _later_metadata(
+    *,
+    assertion_ref: str,
+    activation_phase: str,
+    supersedes_node_id: str | None = None,
+    contributes_to_rewrite_refs: list[str] | None = None,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "assertion_ref": assertion_ref,
+        "activation_phase": activation_phase,
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+    }
+    if supersedes_node_id is not None:
+        metadata["supersedes_node_id"] = supersedes_node_id
+    if contributes_to_rewrite_refs is not None:
+        metadata["contributes_to_rewrite_refs"] = contributes_to_rewrite_refs
+    return metadata
+
+
+def _write_later_module(
+    root: Path,
+    entries: list[tuple[str, dict[str, object]]],
+    *,
+    relative_path: str = "tests/test_later.py",
+) -> Path:
+    functions = "\n\n".join(
+        f"def {function_name}() -> None:\n    assert True"
+        for function_name, _metadata in entries
+    )
+    node_metadata: dict[str, dict[str, object]] = {}
+    for function_name, metadata in entries:
+        node_id = _source_ref(relative_path, function_name)
+        complete = dict(metadata)
+        complete["source_ast_sha256"] = _source_ast_sha256(
+            functions,
+            function_name,
+        )
+        node_metadata[node_id] = complete
+    lines = [functions, "", "", "__cemm_test_inventory__ = {"]
+    for node_id, metadata in node_metadata.items():
+        lines.append(f"    {node_id!r}: {metadata!r},")
+    lines.append("}")
+    path = root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    return path
+
+
+def _verify(
+    root: Path,
+    inventory_path: Path,
+    *,
+    phase: str,
+    parse_source: Callable[..., ast.AST] = ast.parse,
+) -> Any:
+    assert phase in PHASES
+    return CORE.load_and_verify(
+        root,
+        inventory_path,
+        phase=phase,
+        enforce_reviewed_counts=False,
+        parse_source=parse_source,
+    )
+
+
+def _one_retained_project(
+    tmp_path: Path,
+    *,
+    activation_phase: str = "G0",
+    name: str = "project",
+) -> tuple[Path, Path, dict[str, object]]:
+    source = "def test_frozen() -> None:\n    assert True\n"
+
+    def records(text: str) -> list[dict[str, object]]:
+        return [
+            _retained_record(
+                "tests/test_frozen.py",
+                text,
+                "test_frozen",
+                assertion_ref="assertion:frozen",
+                activation_phase=activation_phase,
+            )
+        ]
+
+    return _new_project(tmp_path, source, records, name=name)
+
+
+def test_reviewed_inventory_has_exact_predecessor_totals_and_g0_lifecycle() -> None:
+    verified = CORE.load_and_verify(
+        ROOT,
+        ROOT / "governance" / "test_inventory.json",
+        phase="G0",
+        enforce_reviewed_counts=True,
+    )
+
+    classifications = [
+        record.classification for record in verified.source_tests.values()
+    ]
+    assert verified.baseline_source_ref == BASELINE_SOURCE_REF
+    assert len(classifications) == 632
+    assert classifications.count("retained") == 609
+    assert classifications.count("rewritten") == 10
+    assert classifications.count("historical") == 13
+    assert len(verified.deferred_rewrite_refs) == 10
+    assert verified.due_rewrite_refs == ()
+
+    non_executable_originals = {
+        case_node_id
+        for record in verified.source_tests.values()
+        if record.classification in {"rewritten", "historical"}
+        for case_node_id in record.case_node_ids
+    }
+    assert non_executable_originals.isdisjoint(verified.active_node_ids)
+
+
+
+def test_literal_metadata_rejects_duplicate_node_keys(tmp_path: Path) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    path = _write_later_module(
+        root,
+        [
+            (
+                "test_later",
+                _later_metadata(
+                    assertion_ref="assertion:later",
+                    activation_phase="G0",
+                ),
+            )
+        ],
+    )
+    text = path.read_text(encoding="utf-8")
+    metadata_line = next(
+        line for line in text.splitlines() if "tests/test_later.py::test_later" in line
+    )
+    path.write_text(
+        text.replace(metadata_line, metadata_line + "\n" + metadata_line),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(CORE.InventoryError, match="duplicate literal metadata"):
+        _verify(root, inventory_path, phase="G0")
+
+def test_strict_json_rejects_duplicate_object_keys(tmp_path: Path) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    raw = inventory_path.read_text(encoding="utf-8")
+    inventory_path.write_text(
+        raw.replace(
+            '"schema":',
+            '"schema":"duplicate","schema":',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CORE.InventoryError, match="duplicate"):
+        _verify(root, inventory_path, phase="G0")
+
+
+def test_strict_json_rejects_non_finite_numbers(tmp_path: Path) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    raw = inventory_path.read_text(encoding="utf-8")
+    inventory_path.write_text(
+        raw.replace('"file_count":1', '"file_count":NaN', 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CORE.InventoryError, match="finite|NaN"):
+        _verify(root, inventory_path, phase="G0")
+
+
+def test_inventory_recomputes_identity_sets_and_declared_counts(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, payload = _one_retained_project(tmp_path)
+
+    bad_count = copy.deepcopy(payload)
+    bad_count["source_test_count"] = 2
+    _set_inventory_ref(bad_count)
+    _write_inventory(root, bad_count)
+    with pytest.raises(CORE.InventoryError, match="source.*count|count"):
+        _verify(root, inventory_path, phase="G0")
+
+    bad_source_set = copy.deepcopy(payload)
+    bad_source_set["source_set_ref"] = "source_set:" + "0" * 64
+    _set_inventory_ref(bad_source_set)
+    _write_inventory(root, bad_source_set)
+    with pytest.raises(CORE.InventoryError, match="source.set|source_set"):
+        _verify(root, inventory_path, phase="G0")
+
+    bad_inventory_identity = copy.deepcopy(payload)
+    bad_inventory_identity["baseline_source_ref"] = "0" * 40
+    _write_inventory(root, bad_inventory_identity)
+    with pytest.raises(CORE.InventoryError, match="inventory.*ref|identity"):
+        _verify(root, inventory_path, phase="G0")
+
+    _write_inventory(root, payload)
+    with pytest.raises(CORE.InventoryError, match="authority pin|SHA-256"):
+        CORE.load_and_verify(
+            root,
+            inventory_path,
+            phase="G0",
+            expected_sha256="0" * 64,
+        )
+
+
+
+def test_inventory_rejects_paths_that_escape_the_project_root(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, payload = _one_retained_project(tmp_path)
+    unsafe = copy.deepcopy(payload)
+    unsafe["files"][0]["path"] = "../test_frozen.py"  # type: ignore[index]
+    _set_inventory_ref(unsafe)
+    _write_inventory(root, unsafe)
+
+    with pytest.raises(CORE.InventoryError, match="path|relative"):
+        _verify(root, inventory_path, phase="G0")
+
+
+def test_frozen_ast_rejects_same_id_mutation_but_allows_unrelated_edits(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    frozen_path = root / "tests" / "test_frozen.py"
+
+    frozen_path.write_text(
+        "def test_frozen() -> None:\n    assert False\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    with pytest.raises(CORE.InventoryError, match="AST|digest|mutat"):
+        _verify(root, inventory_path, phase="G0")
+
+    frozen_path.write_text(
+        "import math\n\nUNRELATED_HELPER = math.pi\n\n"
+        "def test_frozen() -> None:\n    assert True\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    verified = _verify(root, inventory_path, phase="G0")
+    assert verified.active_node_ids == ("tests/test_frozen.py::test_frozen",)
+
+
+def test_g0_defers_rewrites_and_excludes_non_executable_originals(
+    tmp_path: Path,
+) -> None:
+    source = (
+        "def test_retained() -> None:\n    assert True\n\n"
+        "def test_rewritten() -> None:\n    assert True\n\n"
+        "def test_historical() -> None:\n    assert True\n"
+    )
+    future = "tests/test_future.py::test_replacement"
+    obligation: dict[str, str] = {}
+
+    def records(text: str) -> list[dict[str, object]]:
+        rewritten, obligation_ref = _rewritten_record(
+            "tests/test_frozen.py",
+            text,
+            "test_rewritten",
+            assertion_ref="assertion:rewritten",
+            replacement_phase="R2",
+            required_successor_node_ids=[future],
+        )
+        obligation["ref"] = obligation_ref
+        return [
+            _retained_record(
+                "tests/test_frozen.py",
+                text,
+                "test_retained",
+                assertion_ref="assertion:retained",
+                activation_phase="G0",
+            ),
+            rewritten,
+            _historical_record(
+                "tests/test_frozen.py",
+                text,
+                "test_historical",
+                assertion_ref="assertion:historical",
+            ),
+        ]
+
+    root, inventory_path, _payload = _new_project(tmp_path, source, records)
+    verified = _verify(root, inventory_path, phase="G0")
+
+    assert verified.active_node_ids == ("tests/test_frozen.py::test_retained",)
+    assert verified.collectable_node_ids == (
+        "tests/test_frozen.py::test_historical",
+        "tests/test_frozen.py::test_retained",
+        "tests/test_frozen.py::test_rewritten",
+    )
+    assert verified.collectable_node_set_ref == _content_ref(
+        "collectable_test_nodes",
+        list(verified.collectable_node_ids),
+    )
+    assert verified.deferred_rewrite_refs == (obligation["ref"],)
+    assert "tests/test_frozen.py::test_rewritten" not in verified.active_node_ids
+    assert "tests/test_frozen.py::test_historical" not in verified.active_node_ids
+
+    with pytest.raises(CORE.InventoryError, match="successor|rewrite"):
+        _verify(root, inventory_path, phase="R2")
+
+
+def test_due_rewrite_requires_every_conjunctive_contributing_successor(
+    tmp_path: Path,
+) -> None:
+    source = "def test_rewritten() -> None:\n    assert True\n"
+    part_a = "tests/test_later.py::test_part_a"
+    part_b = "tests/test_later.py::test_part_b"
+    obligation: dict[str, str] = {}
+
+    def records(text: str) -> list[dict[str, object]]:
+        rewritten, obligation_ref = _rewritten_record(
+            "tests/test_frozen.py",
+            text,
+            "test_rewritten",
+            assertion_ref="assertion:conjunctive-rewrite",
+            replacement_phase="R2",
+            required_successor_node_ids=[part_a, part_b],
+        )
+        obligation["ref"] = obligation_ref
+        return [rewritten]
+
+    root, inventory_path, _payload = _new_project(tmp_path, source, records)
+    contribution = [obligation["ref"]]
+    _write_later_module(
+        root,
+        [
+            (
+                "test_part_a",
+                _later_metadata(
+                    assertion_ref="assertion:part-a",
+                    activation_phase="R2",
+                    contributes_to_rewrite_refs=contribution,
+                ),
+            )
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="test_part_b|successor"):
+        _verify(root, inventory_path, phase="R2")
+
+    _write_later_module(
+        root,
+        [
+            (
+                "test_part_a",
+                _later_metadata(
+                    assertion_ref="assertion:part-a",
+                    activation_phase="R2",
+                    contributes_to_rewrite_refs=contribution,
+                ),
+            ),
+            (
+                "test_part_b",
+                _later_metadata(
+                    assertion_ref="assertion:part-b",
+                    activation_phase="R2",
+                ),
+            ),
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="contribut|rewrite"):
+        _verify(root, inventory_path, phase="R2")
+
+    _write_later_module(
+        root,
+        [
+            (
+                "test_part_a",
+                _later_metadata(
+                    assertion_ref="assertion:part-a",
+                    activation_phase="R2",
+                    contributes_to_rewrite_refs=contribution,
+                ),
+            ),
+            (
+                "test_part_b",
+                _later_metadata(
+                    assertion_ref="assertion:part-b",
+                    activation_phase="R2",
+                    contributes_to_rewrite_refs=contribution,
+                ),
+            ),
+        ],
+    )
+    verified = _verify(root, inventory_path, phase="R2")
+    assert verified.active_node_ids == (part_a, part_b)
+    assert "tests/test_frozen.py::test_rewritten" not in verified.active_node_ids
+
+
+def test_valid_new_id_supersession_selects_exactly_one_lineage_leaf(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R1",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    successor = "tests/test_later.py::test_replacement"
+    _write_later_module(
+        root,
+        [
+            (
+                "test_replacement",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R1",
+                    supersedes_node_id=predecessor,
+                ),
+            )
+        ],
+    )
+
+    verified = _verify(root, inventory_path, phase="R1")
+    assert verified.active_node_ids == (successor,)
+    assert predecessor not in verified.active_node_ids
+
+
+def test_supersession_rejects_duplicate_leaves_and_cycles(tmp_path: Path) -> None:
+    duplicate_root, duplicate_inventory, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R1",
+        name="duplicate",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    _write_later_module(
+        duplicate_root,
+        [
+            (
+                "test_replacement_a",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R1",
+                    supersedes_node_id=predecessor,
+                ),
+            ),
+            (
+                "test_replacement_b",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R1",
+                    supersedes_node_id=predecessor,
+                ),
+            ),
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="branch|duplicate|multiple|leaf"):
+        _verify(duplicate_root, duplicate_inventory, phase="R1")
+
+    cycle_root, cycle_inventory, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R1",
+        name="cycle",
+    )
+    node_a = "tests/test_later.py::test_cycle_a"
+    node_b = "tests/test_later.py::test_cycle_b"
+    _write_later_module(
+        cycle_root,
+        [
+            (
+                "test_cycle_a",
+                _later_metadata(
+                    assertion_ref="assertion:cycle",
+                    activation_phase="R1",
+                    supersedes_node_id=node_b,
+                ),
+            ),
+            (
+                "test_cycle_b",
+                _later_metadata(
+                    assertion_ref="assertion:cycle",
+                    activation_phase="R1",
+                    supersedes_node_id=node_a,
+                ),
+            ),
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="cycle|acyclic"):
+        _verify(cycle_root, cycle_inventory, phase="R1")
+
+
+def test_supersession_preserves_assertion_and_cannot_regress_phase(
+    tmp_path: Path,
+) -> None:
+    assertion_root, assertion_inventory, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R1",
+        name="assertion",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    _write_later_module(
+        assertion_root,
+        [
+            (
+                "test_replacement",
+                _later_metadata(
+                    assertion_ref="assertion:different",
+                    activation_phase="R1",
+                    supersedes_node_id=predecessor,
+                ),
+            )
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="assertion"):
+        _verify(assertion_root, assertion_inventory, phase="R1")
+
+    phase_root, phase_inventory, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R2",
+        name="phase",
+    )
+    _write_later_module(
+        phase_root,
+        [
+            (
+                "test_replacement",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R1",
+                    supersedes_node_id=predecessor,
+                ),
+            )
+        ],
+    )
+    with pytest.raises(CORE.InventoryError, match="phase|regress"):
+        _verify(phase_root, phase_inventory, phase="R2")
+
+
+def test_custom_fixture_named_decorator_cannot_hide_later_test(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    relative_path = "tests/test_later.py"
+    node_id = f"{relative_path}::test_visible"
+    function_source = """\
+class Passthrough:
+    @staticmethod
+    def fixture(function):
+        return function
+
+marker = Passthrough()
+
+@marker.fixture
+def test_visible() -> None:
+    assert True
+"""
+    metadata = _later_metadata(
+        assertion_ref="assertion:custom-fixture-name-is-not-pytest",
+        activation_phase="G0",
+    )
+    metadata["source_ast_sha256"] = _source_ast_sha256(
+        function_source,
+        "test_visible",
+    )
+    source = (
+        function_source
+        + "\n__cemm_test_inventory__ = {\n"
+        + f"    {node_id!r}: {metadata!r},\n"
+        + "}\n"
+    )
+    _write_frozen_module(root, source, relative_path=relative_path)
+
+    verified = _verify(root, inventory_path, phase="G0")
+
+    assert node_id in verified.active_node_ids
+
+
+def test_rebound_pytest_fixture_alias_cannot_hide_later_test(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    relative_path = "tests/test_later.py"
+    node_id = f"{relative_path}::test_visible"
+    function_source = """\
+import pytest as p
+
+def identity(function):
+    return function
+
+p.fixture = identity
+
+@p.fixture
+def test_visible() -> None:
+    assert True
+"""
+    metadata = _later_metadata(
+        assertion_ref="assertion:rebound-pytest-fixture-is-not-authority",
+        activation_phase="G0",
+    )
+    metadata["source_ast_sha256"] = _source_ast_sha256(
+        function_source,
+        "test_visible",
+    )
+    source = (
+        function_source
+        + "\n__cemm_test_inventory__ = {\n"
+        + f"    {node_id!r}: {metadata!r},\n"
+        + "}\n"
+    )
+    _write_frozen_module(root, source, relative_path=relative_path)
+
+    verified = _verify(root, inventory_path, phase="G0")
+
+    assert node_id in verified.active_node_ids
+
+def test_later_parametrize_requires_literal_matching_safe_ids(
+    tmp_path: Path,
+) -> None:
+    variants = (
+        ("mismatch", "[1, 2]", "['one']", "ids count"),
+        ("dynamic", "VALUES", "['one']", "literal argvalues"),
+        ("unicode", "[1]", "['é']", "safe ASCII"),
+    )
+    for name, argvalues, ids, error in variants:
+        root, inventory_path, _payload = _one_retained_project(
+            tmp_path,
+            name=name,
+        )
+        source = f"""\
+import pytest
+
+VALUES = [1]
+
+@pytest.mark.parametrize("value", {argvalues}, ids={ids})
+def test_later(value: int) -> None:
+    assert value
+
+__cemm_test_inventory__ = {{}}
+"""
+        _write_frozen_module(
+            root,
+            source,
+            relative_path="tests/test_later.py",
+        )
+
+        with pytest.raises(CORE.InventoryError, match=error):
+            _verify(root, inventory_path, phase="G0")
+
+def test_dynamic_test_classes_are_rejected_before_static_enumeration(
+    tmp_path: Path,
+) -> None:
+    variants = (
+        "class Base:\n    def test_inherited(self):\n        assert True\n\nclass TestChild(Base):\n    pass\n",
+        "def decorate(cls):\n    return cls\n\n@decorate\nclass TestDecorated:\n    pass\n",
+        "class Meta(type):\n    pass\n\nclass TestMeta(metaclass=Meta):\n    pass\n",
+    )
+    for index, body in enumerate(variants):
+        root, inventory_path, _payload = _one_retained_project(
+            tmp_path,
+            name=f"dynamic-class-{index}",
+        )
+        _write_frozen_module(
+            root,
+            body + "\n__cemm_test_inventory__ = {}\n",
+            relative_path="tests/test_later.py",
+        )
+
+        with pytest.raises(CORE.InventoryError, match="dynamic test class"):
+            _verify(root, inventory_path, phase="G0")
+
+def test_callable_test_alias_cannot_evade_literal_metadata(tmp_path: Path) -> None:
+    variants = (
+        (
+            "function-alias",
+            """\
+def helper() -> None:
+    assert True
+
+test_hidden = helper
+""",
+        ),
+        (
+            "class-alias",
+            """\
+class Helper:
+    def test_method(self) -> None:
+        assert True
+
+TestHidden = Helper
+""",
+        ),
+    )
+    for name, body in variants:
+        root, inventory_path, _payload = _one_retained_project(
+            tmp_path,
+            name=name,
+        )
+        _write_frozen_module(
+            root,
+            body + "\n__cemm_test_inventory__ = {}\n",
+            relative_path="tests/test_later.py",
+        )
+
+        with pytest.raises(CORE.InventoryError, match="ambiguous test binding"):
+            _verify(root, inventory_path, phase="G0")
+
+def test_source_scan_requires_pinned_pytest_collection_contract(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    config = root / "pyproject.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace("test_*.py", "test*.py"),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(CORE.InventoryError, match="pytest collection contract"):
+        _verify(root, inventory_path, phase="G0")
+
+def test_source_scan_covers_default_pytest_file_and_function_patterns(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    node_id = "tests/later_test.py::testvisible"
+    _write_later_module(
+        root,
+        [
+            (
+                "testvisible",
+                _later_metadata(
+                    assertion_ref="assertion:default-pytest-patterns",
+                    activation_phase="G0",
+                ),
+            )
+        ],
+        relative_path="tests/later_test.py",
+    )
+    _write_frozen_module(
+        root,
+        "def testhelper() -> None:\n    assert True\n",
+        relative_path="tests/testhelpers.py",
+    )
+
+    verified = _verify(root, inventory_path, phase="G0")
+
+    assert node_id in verified.active_node_ids
+    assert verified.parsed_module_count == 2
+
+def test_source_only_verification_parses_each_module_once_without_heavy_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(tmp_path)
+    _write_later_module(
+        root,
+        [
+            (
+                "test_later",
+                _later_metadata(
+                    assertion_ref="assertion:later",
+                    activation_phase="G0",
+                ),
+            )
+        ],
+    )
+    later_path = root / "tests" / "test_later.py"
+    later_path.write_text(
+        later_path.read_text(encoding="utf-8")
+        + "\n\nimport pytest\n\n@pytest.fixture\ndef test_authority_factory():\n    return object()\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    parsed: list[str] = []
+
+    def counting_parse(
+        source: str | bytes,
+        filename: str = "<unknown>",
+        mode: str = "exec",
+        **kwargs: object,
+    ) -> ast.AST:
+        parsed.append(Path(filename).as_posix())
+        return ast.parse(source, filename=filename, mode=mode, **kwargs)
+
+    def forbidden_call(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("source-only inventory verification invoked a process/test runner")
+
+    blocked_roots = {
+        "cemm_authoritative_hybrid",
+        "model",
+        "pytest",
+        "torch",
+        "training",
+    }
+    real_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals: dict[str, object] | None = None,
+        locals: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        if name.split(".", 1)[0] in blocked_roots:
+            raise AssertionError(f"forbidden source-only import: {name}")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(subprocess, "run", forbidden_call)
+    monkeypatch.setattr(subprocess, "Popen", forbidden_call)
+    monkeypatch.setattr(pytest, "main", forbidden_call)
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    before_verify = frozenset(sys.modules)
+    verified = _verify(
+        root,
+        inventory_path,
+        phase="G0",
+        parse_source=counting_parse,
+    )
+    import_delta = _CORE_IMPORT_DELTA | (frozenset(sys.modules) - before_verify)
+
+    expected_paths = ["tests/test_frozen.py", "tests/test_later.py"]
+    assert sorted(parsed) == expected_paths
+    assert len(parsed) == len(set(parsed)) == 2
+    assert not {
+        module_name
+        for module_name in import_delta
+        if module_name.split(".", 1)[0] in blocked_roots
+    }
+    assert verified.active_node_ids == (
+        "tests/test_frozen.py::test_frozen",
+        "tests/test_later.py::test_later",
+    )
+
+
+__cemm_test_inventory__ = {
+    "tests/test_test_inventory.py::test_strict_json_rejects_duplicate_object_keys": {
+        "assertion_ref": "assertion:test-inventory-strict-duplicate-json",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "73dd45f3778b7667729d66b3b2fc5051115f1d33c07400f73fe748d3379df2a5",
+    },
+    "tests/test_test_inventory.py::test_strict_json_rejects_non_finite_numbers": {
+        "assertion_ref": "assertion:test-inventory-strict-nonfinite-json",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "65bf3180a293cef2d4e7031af253ce110758df241baad80a9e018fe9acf100c9",
+    },
+    "tests/test_test_inventory.py::test_inventory_recomputes_identity_sets_and_declared_counts": {
+        "assertion_ref": "assertion:test-inventory-content-identities-and-counts",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "4d07ee096ee59b9c3b89ddbb47674f90be5a1696271499e19cdc2c42a26c8144",
+    },
+    "tests/test_test_inventory.py::test_inventory_rejects_paths_that_escape_the_project_root": {
+        "assertion_ref": "assertion:test-inventory-safe-repository-paths",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "893a9324dac4f437f7d245ca6bb4b1247f3832874835272fa43295adc8e0d397",
+    },
+    "tests/test_test_inventory.py::test_frozen_ast_rejects_same_id_mutation_but_allows_unrelated_edits": {
+        "assertion_ref": "assertion:test-inventory-frozen-source-ast-boundary",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "8edafd8776afcdd9597afb7b332e140ca5c5d65814ab3760346d3a0c94de5502",
+    },
+    "tests/test_test_inventory.py::test_g0_defers_rewrites_and_excludes_non_executable_originals": {
+        "assertion_ref": "assertion:test-inventory-g0-deferred-rewrites",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "9daff4466467714b7a70566da4b5411e719f8a38fd41a414e1969720d82e9da8",
+    },
+    "tests/test_test_inventory.py::test_due_rewrite_requires_every_conjunctive_contributing_successor": {
+        "assertion_ref": "assertion:test-inventory-conjunctive-rewrite-obligations",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "ce8c8807b5eedd47cb224891c5f39d061f83618717f5c86249ee4968964541fc",
+    },
+    "tests/test_test_inventory.py::test_valid_new_id_supersession_selects_exactly_one_lineage_leaf": {
+        "assertion_ref": "assertion:test-inventory-one-supersession-leaf",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "6b23877021fc55b6a6296f6575fa3272a2d3ff38c10b7a3b3ddcbda67d9fbf0d",
+    },
+    "tests/test_test_inventory.py::test_supersession_rejects_duplicate_leaves_and_cycles": {
+        "assertion_ref": "assertion:test-inventory-supersession-uniqueness-acyclicity",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "dd83829af56b0998b89416ff39da463c49dac2862bb3260cb3ea0e0589bd93f8",
+    },
+    "tests/test_test_inventory.py::test_supersession_preserves_assertion_and_cannot_regress_phase": {
+        "assertion_ref": "assertion:test-inventory-supersession-assertion-phase",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "71e0846f8eeab32ecee6881a85c7b068e459d16d66c14e625f12b12619955aa9",
+    },
+    "tests/test_test_inventory.py::test_source_only_verification_parses_each_module_once_without_heavy_paths": {
+        "assertion_ref": "assertion:test-inventory-one-ast-pass-lightweight",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "7470c148754fa217809f774f8eab1c4e1c2324871713ca749531d896756863ec",
+    },
+    "tests/test_test_inventory.py::test_reviewed_inventory_has_exact_predecessor_totals_and_g0_lifecycle": {
+        "assertion_ref": "assertion:test-inventory-reviewed-predecessor-totals",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "1a0f32c0f76c80b71415450d6ef49d6e76e63fa69c3fe81f399ab79773110690",
+    },
+    "tests/test_test_inventory.py::test_literal_metadata_rejects_duplicate_node_keys": {
+        "assertion_ref": "assertion:test-inventory-duplicate-literal-metadata",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "2c5106bda27e7205a997eba880a1f01eb43be65bc643b1339a27ec9e7d0b84b9",
+    },
+    "tests/test_test_inventory.py::test_custom_fixture_named_decorator_cannot_hide_later_test": {
+        "assertion_ref": "assertion:test-inventory-resolved-fixture-identity",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "c00550d3d7da70acb65efb064f20776149c3d5a31577c557b02f16417b2d3c88",
+    },
+    "tests/test_test_inventory.py::test_later_parametrize_requires_literal_matching_safe_ids": {
+        "assertion_ref": "assertion:test-inventory-exact-literal-parameter-cases",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "7aa9eaf9871e8f2989e7f57b8fa5b2d07e1840ce2aec932d11b47d92f4d947fd",
+    },
+    "tests/test_test_inventory.py::test_source_scan_covers_default_pytest_file_and_function_patterns": {
+        "assertion_ref": "assertion:test-inventory-default-pytest-patterns",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "c10a6b36d6c2ae8ba0c60b81674e5d41a0265eeb2df5a034eb15bb69913362e5",
+    },
+    "tests/test_test_inventory.py::test_rebound_pytest_fixture_alias_cannot_hide_later_test": {
+        "assertion_ref": "assertion:test-inventory-rebound-fixture-alias",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "d8e16fb9c10b51c8a1e3eb0baab977105a34eca38429ab233ee888f03363ecae",
+    },
+    "tests/test_test_inventory.py::test_callable_test_alias_cannot_evade_literal_metadata": {
+        "assertion_ref": "assertion:test-inventory-rejects-callable-test-aliases",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "a178fc70684d3d0b616d1fc201cb662a670a0d8086a4585e5f303c5579a871fe",
+    },
+    "tests/test_test_inventory.py::test_source_scan_requires_pinned_pytest_collection_contract": {
+        "assertion_ref": "assertion:test-inventory-pinned-pytest-collection",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "72971915cedab87349b0e4de32733a5675a6b653fae0a0e3a6476d3885d2b5c9",
+    },
+    "tests/test_test_inventory.py::test_dynamic_test_classes_are_rejected_before_static_enumeration": {
+        "assertion_ref": "assertion:test-inventory-rejects-dynamic-test-classes",
+        "activation_phase": "G0",
+        "diagnostic_role": "owner",
+        "owner_ref": "governance",
+        "introduced_by_task": "G0-Task-3",
+        "source_ast_sha256": "fe181d0c6da01fcf4e1a9a761c0633598b8323d082fce55cca76d02a312227a9",
+    },
+}

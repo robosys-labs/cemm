@@ -28,9 +28,13 @@ claims in:
 - current M1-M4 receipts, checkpoints, calibration and evaluation artifacts.
 
 Those files remain historical evidence until explicitly reclassified. The
-R1-R5 donor bundle is an evidence source only; its installer, delete list,
-authority bundle, runtime, corpus, checkpoints and receipts must not be
-activated or copied wholesale.
+R1-R5 donor bundle and the later G0-R6 selective-admission package are evidence
+sources only; their installers, delete lists, governing documents, inventories,
+authority bundles, runtimes, corpora, checkpoints and receipts must not be
+activated or copied wholesale. The later package's internally consistent
+archive and algorithms may inform owner work, but its 18-test selector, invalid
+coverage matrix, leaky partitions and self-attested phase claims do not satisfy
+this plan.
 
 ## Dependency graph
 
@@ -73,24 +77,24 @@ The replay has exactly three execution tiers:
 |---|---|---|---|
 | `owner` | Every red/green implementation loop | The affected owner's focused tests, corruption tests, static import/source checks | Always fresh; target under 60 seconds |
 | `phase` | Once after reviewed work changes a declared cross-owner boundary and has integration nodes | Fresh cross-owner integration nodes selected from the dependency manifest; owner nodes are excluded | Always fresh |
-| `admission` | Once per G0/R1/.../R8 candidate | One execution of the complete declared active suite, deterministic regeneration and clean activation/reload; training/corpus work only where that phase owns it | Always fresh; cached results never admit |
+| `admission` | Once per G0/R1/.../R8 candidate | One full governed collection, exact active-set execution, deterministic regeneration and clean activation/reload; training/corpus work only where that phase owns it | Always fresh; cached results never admit |
 
 These are runner modes, not three independent validators. The runner resolves
-the immutable inventory and literal metadata to exact pytest node IDs before
-execution. DAG
-prerequisites and pytest nodes execute at most once within a tier, and owner and
-phase diagnostic node sets are disjoint. A task with no changed cross-owner
-boundary and no integration nodes runs no empty phase tier. Admission does not
-nest owner or phase steps or trust their receipts: it deliberately executes the
-complete active set once fresh. That single admission re-execution is the only
-intended cross-tier repeat. Status and receipt verification never launches a
-runner.
+the immutable inventory and literal metadata before execution. DAG prerequisites
+and pytest nodes execute at most once within a tier, and owner and phase
+diagnostic node sets are disjoint. A task with no changed cross-owner boundary
+and no integration nodes runs no empty phase tier. Admission does not nest owner
+or phase steps or trust their receipts: one pytest invocation collects the
+pinned test root, requires exact equality with the governed collectable set,
+deselects inactive nodes and executes the complete active set once fresh. That
+single admission re-execution is the only intended cross-tier repeat. Status and
+receipt verification never launches a runner.
 
 The external gate runner records:
 
 - command and exact source/input identities;
 - predecessor and authority identities;
-- exit status plus structured pytest/JUnit counts;
+- exit status plus direct structured pytest counts;
 - wall time, peak working set when available, and slowest cases;
 - whether the result was fresh or diagnostic-only.
 
@@ -147,7 +151,8 @@ runtime package initializer.
   expensive artifact diagnostics, but never for admission.
 - One runner invocation hashes each canonical input and parses each governance
   artifact once. Owner/phase modes collect only exact selected nodes; admission
-  performs one fresh active-set collection and execution in one pytest process.
+  performs one full governed collection, equality check, inactive deselection
+  and active execution in one pytest process.
 - Performance budgets start as observed baselines. A material unexplained
   regression is investigated; budgets are not relaxed to hide semantic bloat.
 
@@ -218,7 +223,7 @@ Required evidence:
 - truthful append-only replay status with G0 pending/green and R1-R8 red;
 - quarantined prior receipts/checkpoints without deletion;
 - immutable `governance/test_inventory.json`, freezing exactly 59 predecessor
-  test files, 634 source-test refs and 743 exact case node IDs with reviewed
+  test files, 632 source-test refs and 743 exact case node IDs with reviewed
   classification/assertion/activation metadata;
 - literal per-node `__cemm_test_inventory__` metadata in every later test,
   parsed once by AST without filename/default or live-Git inference;
@@ -309,12 +314,17 @@ Required evidence:
 ## Test lifecycle
 
 `governance/test_inventory.json` is the single immutable predecessor
-inventory. It freezes exactly 59 reviewed test files, 634 source-test refs and
+inventory. It freezes exactly 59 reviewed test files, 632 source-test refs and
 743 exact collected-case node IDs, plus the classification, assertion,
 activation and content refs needed to select them without consulting live Git.
 `DOCUMENT_AUTHORITY.json` pins its exact path and SHA-256. Its identity and
 counts are recomputed directly from the file in routine and bundle verification;
 later replay tasks never mutate it.
+
+The 632 count excludes two `test_authority_factory` functions that are
+`@pytest.fixture` providers and therefore own no collected case IDs. This
+distinction is checked structurally without importing pytest; every included
+source ref owns at least one of the 743 exact cases.
 
 Every test introduced after the frozen inventory carries a module-level literal
 `__cemm_test_inventory__` mapping with one record per exact pytest node ID,
@@ -338,7 +348,7 @@ Every frozen predecessor source test has one approved classification:
 - `historical`: the assertion depended on a retired semantic path and remains
   evidence with a reviewed reason.
 
-The completed baseline audit yields exactly 611 retained, 10 rewritten and 13
+The completed baseline audit yields exactly 609 retained, 10 rewritten and 13
 historical source tests. A frozen per-source-test AST digest, not the whole-file
 blob hash, is the edit boundary. A valid retained assertion may move to a new
 exact node ID only through unique, acyclic, assertion-preserving and
@@ -350,12 +360,12 @@ classification.
 
 There is no `future` classification. Owner and phase tiers receive disjoint
 exact node selectors and each executing tier starts exactly one pytest process.
-Admission independently supplies the complete eligible union of frozen case
-nodes and later literal-metadata nodes to one fresh pytest process. Mixed-phase
-files may be import-checked but are never selected or classified as whole
-files. Admission requires zero unclassified or duplicate nodes, collection
-errors, skips, xfails or xpasses. R8 requires every retained frozen case and
-every active later case to be active.
+Admission supplies the pinned test root plus governed collectable and active
+manifests to one fresh pytest process. The plugin rejects any extra, missing or
+duplicate collected node before deselecting inactive nodes and executing the
+complete eligible union. Admission requires zero collection errors, active
+skips, xfails or xpasses. R8 requires every retained frozen case and every
+active later case to be active.
 
 ## Commit and review discipline
 

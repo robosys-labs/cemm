@@ -22,3 +22,6 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 xfail_strict = true
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test*"]
+python_classes = ["Test*"]

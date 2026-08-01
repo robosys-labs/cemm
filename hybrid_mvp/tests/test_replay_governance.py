@@ -66,6 +66,498 @@ ACTIVE_POINTERS = (
 )
 
 
+__cemm_test_inventory__ = {
+    "tests/test_replay_governance.py::test_admission_binding_stores_gate_and_exact_run_refs": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:admission-binding-stores-gate-and-exact-run-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "cd85c5d6af670fd72f5260bd3ba077845c405a918d77c928535edfbc2411e541"
+    },
+    "tests/test_replay_governance.py::test_admission_refs_require_exact_gate_and_run_namespaces": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:admission-refs-require-exact-gate-and-run-namespaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "f14b0c9a3323d6d990bdcece576c0b738ffec5df5911bdc2f57b8e929a01e66d"
+    },
+    "tests/test_replay_governance.py::test_admission_requires_passed_technical_steps_and_passes_passed_to_task4[externally-blocked]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:admission-requires-passed-technical-steps-and-passes-passed-to-task4",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "cabe0c6ce12e0dc44ebac1c5b68e83a4ad50610959317e643dfa89d536391974"
+    },
+    "tests/test_replay_governance.py::test_admission_requires_passed_technical_steps_and_passes_passed_to_task4[green]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:admission-requires-passed-technical-steps-and-passes-passed-to-task4",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "cabe0c6ce12e0dc44ebac1c5b68e83a4ad50610959317e643dfa89d536391974"
+    },
+    "tests/test_replay_governance.py::test_anchor_byte_tamper_is_rejected_by_document_authority": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:anchor-byte-tamper-is-rejected-by-document-authority",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "064100d12c37aa392a01a4259520d580f176afa929f89b082b7b956e12cfb3f1"
+    },
+    "tests/test_replay_governance.py::test_append_lock_is_exclusive": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:append-lock-is-exclusive",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c86f343750cd04f28449456f111b2d49a8789f4465ffef5d2f30c10c1853d1ad"
+    },
+    "tests/test_replay_governance.py::test_append_requires_reviewed_candidate_ref": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:append-requires-reviewed-candidate-ref",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "dd41dbc8a881af061a228523e9a20b961466c855e3c8867a9ed34b3f6565614c"
+    },
+    "tests/test_replay_governance.py::test_blob_size_is_checked_before_git_load": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:blob-size-is-checked-before-git-load",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "00abfbdeee92030f4d72b62dd462f6b27fc5b1d7576285b9f277a5ad0073e961"
+    },
+    "tests/test_replay_governance.py::test_bounded_git_io_cannot_deadlock_on_alternating_large_input_output": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:bounded-git-io-cannot-deadlock-on-alternating-large-input-output",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "4802fb7d254334591a13c640e68ac8cc89e953231508db5ec8e56065409b1004"
+    },
+    "tests/test_replay_governance.py::test_bounded_git_io_rejects_oversized_input_before_process_start": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:bounded-git-io-rejects-oversized-input-before-process-start",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "57e41e8fdebcb93f45cc5e0df3e921cf63ecc8a6c1849339c036ca545e10f72b"
+    },
+    "tests/test_replay_governance.py::test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-preflight-allows-exact-run-phase-and-fixed-evidence",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "36b140517beb09b1ddb99d63e167afe912652bf93f606711d4e35abb78019ecf"
+    },
+    "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[green]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-reconstructs-prior-admissions-before-any-transition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "cd7c145d7eac22419e44ffbc71542f6abdcf6eb0516dd2a97a991a2c2001b14d"
+    },
+    "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[red]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-reconstructs-prior-admissions-before-any-transition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "cd7c145d7eac22419e44ffbc71542f6abdcf6eb0516dd2a97a991a2c2001b14d"
+    },
+    "tests/test_replay_governance.py::test_cli_requires_exact_run_ref_and_exposes_no_latest_selector": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:cli-requires-exact-run-ref-and-exposes-no-latest-selector",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "0eeef2fa42d9f710939ed9047e1f9af9011275054015ff73a44499cbfcfe698e"
+    },
+    "tests/test_replay_governance.py::test_commit_graph_enforces_record_bound_and_follows_merge_parents": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:commit-graph-enforces-record-bound-and-follows-merge-parents",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d57b5c3354e2bf905ee8e966bb02ccb4ab40da685dd703e6d222e892024d0a49"
+    },
+    "tests/test_replay_governance.py::test_commit_graph_load_is_single_and_bounded": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:commit-graph-load-is-single-and-bounded",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "6c5964d290a8a667eb0bdbaac7506d5f032ddea0d2d08ee34d0bd3bf3fa0baa4"
+    },
+    "tests/test_replay_governance.py::test_dirty_governed_inputs_allow_only_validated_evidence_paths": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:dirty-governed-inputs-allow-only-validated-evidence-paths",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b06c03b9d68dc8349868551c5fbc583730167715d6e701659a8180fc94b8166f"
+    },
+    "tests/test_replay_governance.py::test_document_authority_cryptographically_pins_ledger_anchors": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:document-authority-cryptographically-pins-governance-inputs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "8c85531117e8d0d3d3c624b5b0f9c91ea13679e9ecf22be51c3e06a79714cd83"
+    },
+    "tests/test_replay_governance.py::test_document_authority_is_lf_normalized": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:document-authority-is-lf-normalized",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "da426f07ee077c9d8ca79e40877449419dc9ab7230cedac10697a1e9ac5d71ee"
+    },
+    "tests/test_replay_governance.py::test_document_authority_is_scoped_and_classifications_are_exact": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:document-authority-is-scoped-and-classifications-are-exact",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "3e7eae63222daa6bf989f558d4fa98ae0ed3059f4e530788e24cc728caa6db21"
+    },
+    "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:every-suffix-record-binds-commit-ancestor-monotonic-exact-prefix",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c111dfd33b301af9a9badd35c3380ce4c8641e770df9abc901aaf341273f70c4"
+    },
+    "tests/test_replay_governance.py::test_external_status_requires_green_predecessors_and_unique_dual_refs": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:external-status-requires-green-predecessors-and-unique-dual-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "f0f792279b35250664d46f52763566bcd9b82a172b60ea768adda811b7768cec"
+    },
+    "tests/test_replay_governance.py::test_git_witness_process_count_is_constant_for_multiple_suffixes": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:git-witness-process-count-is-constant-for-multiple-suffixes",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "8cca689635ba8e49abf72e3addc781a46d7a773d733e46c3217c397b0f7654bf"
+    },
+    "tests/test_replay_governance.py::test_governance_import_does_not_load_torch": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-import-does-not-load-torch",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "4e19b9b7d2fcc894b6f8c5f9c42594b7c38d58e65627fb16b64f09c85163fcb9"
+    },
+    "tests/test_replay_governance.py::test_governance_ledgers_are_lf_normalized_without_live_git_dependency": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-ledgers-are-lf-normalized-without-live-git-dependency",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "282162884a2f97c9ab08908da9942bf3de5d8131638cfcb71b39f91101a68cce"
+    },
+    "tests/test_replay_governance.py::test_governing_pointers_make_no_old_admission_claim": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governing-pointers-make-no-old-admission-claim",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "623bcd127d0331bb99237f2860e9f81d1c3505b0f08fb8ec13644a62616d30bf"
+    },
+    "tests/test_replay_governance.py::test_hash_chain_has_small_external_bounds": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:hash-chain-has-small-external-bounds",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "5c231d897e6d33f0745efc7380fce046fb505864c86f96a46242fc261d26bb65"
+    },
+    "tests/test_replay_governance.py::test_hash_chain_rejects_broken_predecessor_and_truncation": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:hash-chain-rejects-broken-predecessor-and-truncation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "772bd01c1e18f2d05bd0697efaddcfdcc7add8505dcb6954accda0c97f2c9b96"
+    },
+    "tests/test_replay_governance.py::test_hash_chain_rejects_duplicate_blank_noncanonical_and_nonfinite_rows": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:hash-chain-rejects-duplicate-blank-noncanonical-and-nonfinite-rows",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "93a67abc15dd8c0eb8c604b997de3bc9acffcacf30d8e281e0b51590e8425e57"
+    },
+    "tests/test_replay_governance.py::test_initial_replay_status_is_truthful_and_receipt_free": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:initial-replay-status-is-truthful-and-receipt-free",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "9e66aaba5b510b74fd7b8c9d00a31a78bae30453bb4fe4b34a0f3e6279e3d890"
+    },
+    "tests/test_replay_governance.py::test_invalidation_rejects_traversal_even_with_rehashed_record": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:invalidation-rejects-traversal-even-with-rehashed-record",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "3a2c79df61c07bf130fa17ae6ef7ee4fd500931089942c1e7c90f96b1023142e"
+    },
+    "tests/test_replay_governance.py::test_invalidations_bind_six_unchanged_historical_files": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:invalidations-bind-six-unchanged-historical-files",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "445b4c8f10a5dea1dc8458b3f0d8718224594f79f5422fe6b972108b9f46641e"
+    },
+    "tests/test_replay_governance.py::test_ledger_anchor_record_schema_must_be_a_strict_string": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:ledger-anchor-record-schema-must-be-a-strict-string",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "6adea71f802838734843b69d81ccb4ab51586ee9d83d5edc221fa984f9d3a6ce"
+    },
+    "tests/test_replay_governance.py::test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:multi-admission-verify-aggregates-exact-paths-before-dirty-narrowing",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "0b8d07913a9f47204b1ecbe80f6ab9b5c5cd4d87f0b7a303823ef89999d5fa49"
+    },
+    "tests/test_replay_governance.py::test_only_typed_admission_errors_are_wrapped": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:only-typed-admission-errors-are-wrapped",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c6a7fcb14cd6440c70fe66a671403f17575c56fa60f20d96ee8a88e7d8c88ef7"
+    },
+    "tests/test_replay_governance.py::test_owner_import_preflight_rejects_dirty_code_before_loading": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:owner-import-preflight-rejects-dirty-code-before-loading",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "3992215d672410b07ebb5dfc4a08b8856a8ca8094e1f2231df730c8c53c8d3b1"
+    },
+    "tests/test_replay_governance.py::test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:owner-loads-exact-reviewed-file-and-rejects-broad-error-alias",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "09a63d7b66581f6bb52fb5b6ce58a6975ba915f99800a915743e6fef7407e290"
+    },
+    "tests/test_replay_governance.py::test_post_write_callback_cannot_mutate_ledger_before_structural_verification": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:post-write-callback-cannot-mutate-ledger-before-structural-verification",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c3516cef45c5b8ea8706c68fcd0afeacc90473aaf9360e9d1b9d3c357db962c3"
+    },
+    "tests/test_replay_governance.py::test_post_write_failure_rolls_back_exact_prior_bytes": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:post-write-failure-rolls-back-exact-prior-bytes",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "387ef02fa4253c1212917fa37b98228e528d6c9fb70c31d92d838df0909e5a90"
+    },
+    "tests/test_replay_governance.py::test_post_write_reconstructs_all_admitted_rows_and_preserves_path_union": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:post-write-reconstructs-all-admitted-rows-and-preserves-path-union",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "a13b37bd08d812350de85278d7dbbaae9a5608e11bfca2bcac123a98ffc90c89"
+    },
+    "tests/test_replay_governance.py::test_receipt_mutation_between_candidate_and_write_rolls_back_exact_bytes": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:receipt-mutation-between-candidate-and-write-rolls-back-exact-bytes",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "56157ba0a6172229f6854e68f39ccb6534d672d0840f2e7352546d7e635620b1"
+    },
+    "tests/test_replay_governance.py::test_red_candidate_without_prior_admissions_scans_dirty_status_once": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:red-candidate-without-prior-admissions-scans-dirty-status-once",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "e2bfa1b07db6ba3824de7d89907a0bb4a70b324fb8a967dac6bf05593ede0414"
+    },
+    "tests/test_replay_governance.py::test_red_suffix_resets_green_descendants": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:red-suffix-resets-green-descendants",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "420b2879fa979bf69e7da69ac63aa047e61d8d764894ea48dec819b57d3d1c92"
+    },
+    "tests/test_replay_governance.py::test_status_cli_derives_current_effective_status": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-cli-derives-current-effective-status",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "70d00e5ae3f84e421aa3b7c2a2db59c6b292fe2357faca3cb4d29c4ca65b892c"
+    },
+    "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[gate-ref-type]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-enum-and-ref-types-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b370750a915be882c4404627a1629ab876afd64247105fdd6e8d35b8840f23b2"
+    },
+    "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[phase-type]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-enum-and-ref-types-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b370750a915be882c4404627a1629ab876afd64247105fdd6e8d35b8840f23b2"
+    },
+    "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[run-ref-type]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-enum-and-ref-types-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b370750a915be882c4404627a1629ab876afd64247105fdd6e8d35b8840f23b2"
+    },
+    "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[status-type]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-enum-and-ref-types-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b370750a915be882c4404627a1629ab876afd64247105fdd6e8d35b8840f23b2"
+    },
+    "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[content]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-records-require-exact-typed-content-addressed-fields",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "763f3aa622180cf906c10d8e1baa3ffa4cab53e3056c3e5336350a3d4645d427"
+    },
+    "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[extra]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-records-require-exact-typed-content-addressed-fields",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "763f3aa622180cf906c10d8e1baa3ffa4cab53e3056c3e5336350a3d4645d427"
+    },
+    "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[missing]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-records-require-exact-typed-content-addressed-fields",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "763f3aa622180cf906c10d8e1baa3ffa4cab53e3056c3e5336350a3d4645d427"
+    },
+    "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[wrong-type]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:status-records-require-exact-typed-content-addressed-fields",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "763f3aa622180cf906c10d8e1baa3ffa4cab53e3056c3e5336350a3d4645d427"
+    },
+    "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[non-commit]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:suffix-git-witness-defects-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d459759007d3393d8fe04c8c090a4dbcd8b56bda908ed40f99d91bf82c4736d6"
+    },
+    "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[non-monotonic]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:suffix-git-witness-defects-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d459759007d3393d8fe04c8c090a4dbcd8b56bda908ed40f99d91bf82c4736d6"
+    },
+    "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[not-ancestor]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:suffix-git-witness-defects-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d459759007d3393d8fe04c8c090a4dbcd8b56bda908ed40f99d91bf82c4736d6"
+    },
+    "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[wrong-prefix]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:suffix-git-witness-defects-fail-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d459759007d3393d8fe04c8c090a4dbcd8b56bda908ed40f99d91bf82c4736d6"
+    },
+    "tests/test_replay_governance.py::test_suffix_transitions_reset_descendants_before_applying": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:suffix-transitions-reset-descendants-before-applying",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "39df192f049680a88a065f77a573e3df3a0acc0cd4e3be3ef72db286148cfea0"
+    },
+    "tests/test_replay_governance.py::test_tensor_type_hints_resolve_without_loading_torch": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:tensor-type-hints-resolve-without-loading-torch",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "13b4bd380bea496dc2505ca3bc02320a2b513bc5d617cdce48878b9f3d8a064b"
+    },
+    "tests/test_replay_governance.py::test_unavailable_admission_owner_is_injected_not_filesystem_dependent": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:unavailable-admission-owner-is-injected-not-filesystem-dependent",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "1651cac117d0b5f7e1ea36a572f8be0076cb0270df5302a8e2945d958054023f"
+    },
+    "tests/test_replay_governance.py::test_updater_rejects_swapped_gate_and_run_ref_namespaces": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:updater-rejects-swapped-gate-and-run-ref-namespaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "8632b86b48b44aef2856e59b3220418ad689a06981fdad3a521373d485acdf2a"
+    },
+    "tests/test_replay_governance.py::test_verify_chain_reconstructs_each_admitted_run": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:verify-chain-reconstructs-each-admitted-run",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "29bd42a9baf306e6fea32ad4ae8b63a4eabf88197af78ab304893aca69c00937"
+    }
+}
+
+
 def _authority() -> dict[str, object]:
     return json.loads(
         (ROOT / "docs/DOCUMENT_AUTHORITY.json").read_text(encoding="utf-8")
@@ -316,6 +808,15 @@ def test_document_authority_cryptographically_pins_ledger_anchors() -> None:
     anchor_path = ROOT / pin["path"]
     assert hashlib.sha256(anchor_path.read_bytes()).hexdigest() == pin["sha256"]
 
+    inventory_pin = _authority()["test_inventory"]
+    assert inventory_pin["path"] == "governance/test_inventory.json"
+    inventory_path = ROOT / inventory_pin["path"]
+    assert (
+        hashlib.sha256(inventory_path.read_bytes()).hexdigest()
+        == inventory_pin["sha256"]
+    )
+
+
 
 def test_document_authority_is_lf_normalized() -> None:
     assert b"\r\n" not in (ROOT / "docs" / "DOCUMENT_AUTHORITY.json").read_bytes()
@@ -329,7 +830,11 @@ def test_ledger_anchor_record_schema_must_be_a_strict_string() -> None:
         LedgerAnchor(**values)
 
 
-@pytest.mark.parametrize("mutation", ["missing", "extra", "wrong_type", "content"])
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing", "extra", "wrong_type", "content"],
+    ids=["missing", "extra", "wrong-type", "content"],
+)
 def test_status_records_require_exact_typed_content_addressed_fields(
     tmp_path: Path, mutation: str
 ) -> None:
@@ -358,6 +863,7 @@ def test_status_records_require_exact_typed_content_addressed_fields(
         ("admission_gate_result_ref", True),
         ("admission_run_ref", 7),
     ],
+    ids=["phase-type", "status-type", "gate-ref-type", "run-ref-type"],
 )
 def test_status_enum_and_ref_types_fail_closed(
     tmp_path: Path, field: str, value: object
@@ -484,7 +990,11 @@ def test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix(
     ) == tuple(records)
 
 
-@pytest.mark.parametrize("defect", ["non_commit", "not_ancestor", "non_monotonic", "wrong_prefix"])
+@pytest.mark.parametrize(
+    "defect",
+    ["non_commit", "not_ancestor", "non_monotonic", "wrong_prefix"],
+    ids=["non-commit", "not-ancestor", "non-monotonic", "wrong-prefix"],
+)
 def test_suffix_git_witness_defects_fail_closed(tmp_path: Path, defect: str) -> None:
     initial = _initial_status_records()
     initial_raw = _canonical_jsonl(initial)
@@ -684,7 +1194,11 @@ def test_only_typed_admission_errors_are_wrapped() -> None:
         script._validated_admission("G0", "green", run_ref=run_ref, owner=owner)
 
 
-@pytest.mark.parametrize("ledger_status", ["green", "externally_blocked"])
+@pytest.mark.parametrize(
+    "ledger_status",
+    ["green", "externally_blocked"],
+    ids=["green", "externally-blocked"],
+)
 def test_admission_requires_passed_technical_steps_and_passes_passed_to_task4(
     ledger_status: str,
 ) -> None:
@@ -863,7 +1377,11 @@ def test_post_write_reconstructs_all_admitted_rows_and_preserves_path_union() ->
     assert calls == [g_run, r_run]
 
 
-@pytest.mark.parametrize("candidate_status", ["red", "green"])
+@pytest.mark.parametrize(
+    "candidate_status",
+    ["red", "green"],
+    ids=["red", "green"],
+)
 def test_candidate_reconstructs_prior_admissions_before_any_transition(
     monkeypatch: pytest.MonkeyPatch,
     candidate_status: str,
