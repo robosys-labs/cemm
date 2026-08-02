@@ -8,6 +8,11 @@
 \`cemm_hybrid_mvp_g0_r6_selective_admission_patch\` (later supplemental
 evidence)
 
+> **2026-08-02 semantic-algebra amendment:** The active target separates ordered
+> `SemanticSwitchProgram` derivations from canonical `SemanticExpression` and
+> `VerifiedMeaning`. Conflicting program-as-meaning language is superseded by
+> the authoritative amendment and corrected in place here.
+
 ## 1. Decision
 
 Repair the Hybrid MVP through a selective, evidence-gated hard-cut replay on the
@@ -159,10 +164,13 @@ ORIENT → PROPOSE → VERIFY → EVALUATE → EFFECT → REALIZE
   retrieval.
 - PROPOSE consumes one immutable proposal context and emits a content-addressed
   candidate batch or abstention.
-- VERIFY requires that exact context and independently recomputes legality,
-  source coverage, graph structure and revisions. It never repairs.
-- EVALUATE consumes one selected verified program and emits one closed typed
-  decision.
+- VERIFY requires that exact context, independently validates complete ordered
+  program identity and source coverage, exactly compiles each legal derivation
+  into canonical `SemanticExpression`, proves the mapping and selects over
+  expression alternatives. It never repairs.
+- EVALUATE consumes one `VerifiedMeaning` plus independently verified
+  `SituationContext` and emits one closed typed decision. A raw program is
+  invalid input.
 - EFFECT always emits a content-addressed effect or no-effect receipt and is the
   only mutation/adapter owner.
 - REALIZE builds exact response meaning and accepts a surface only after
@@ -175,9 +183,11 @@ earliest owner.
 ### 5.3 Complete content identity
 
 Evidence, orientation, proposal context, actions, candidates, candidate batch,
-program, verification, decision, effect/no-effect, response, realization,
-phase receipts and cycle results derive identity from their complete semantic
-content. Constructors and deserializers reject mismatched identities.
+ordered program derivation, canonical expression, verified meaning, situation,
+verification, decision, effect/no-effect, response, realization, phase receipts
+and cycle results derive identity from their complete owned content. Program,
+expression and verified-meaning identities remain separate. Constructors and
+deserializers reject mismatched identities.
 
 Cycle identity is finalized from the completed result rather than allocated
 from the input alone. Every phase receipt binds exact input/output refs,
@@ -188,10 +198,15 @@ revision pins, disposition, rejection codes and budget use.
 ### 6.1 R1 admission
 
 R1 removes duplicate public ABI classes and alternate paths only after a caller
-inventory and migration tests exist. It adds complete `RevisionPin`
-serialization, content-addressed phase/cycle identity, deterministic standard
-validation and a full active-test inventory. No deletion may create an import or
-collection failure.
+inventory and migration tests exist. It introduces Program ABI 2, Semantic
+Expression ABI 1, complete order-sensitive program identity, deterministic
+expression canonicalization, the total `SemanticExpressionCompiler`,
+Verification Batch ABI 2 and Verified Meaning ABI 1 together. It also adds
+complete `RevisionPin` serialization, content-addressed phase/cycle identity,
+deterministic standard validation and a full active-test inventory. No deletion
+may create an import or collection failure. Until R3 cognition is admitted, the
+single runtime path stops at a typed later-owner gap rather than pass a raw
+program to EVALUATE.
 
 ### 6.2 R2 admission
 
@@ -212,15 +227,20 @@ Composition is bounded but genuinely recursive. It must positively construct:
 
 Literal values and exact source pointers survive every transformation. Legal
 action identities include their dynamic pointer/root identity. VERIFY requires
-the exact context and reconstructs residual criticality, assignments, state
-dimension/value compatibility, roots, reachability, parent cardinality,
-acyclicity and depth independently.
+the exact context, reconstructs residual criticality, assignments, state
+dimension/value compatibility and independently proves the exact action-to-expression
+mapping. Roots, reachability, parent cardinality, acyclicity and depth are
+validated on the compiled expression forest. Derivational duplicates merge by
+`expression_ref` before ambiguity scoring.
 
 ### 6.3 R3 admission
 
-R3 implements typed decisions without lexical dispatch. Read-only, denied,
-pending, failed and committed outcomes remain distinct. Every cycle has an
-explicit no-effect/effect receipt.
+R3 implements typed decisions without lexical dispatch. Query, epistemic,
+state, transition, learning and response owners consume
+`VerifiedMeaning.expression` plus `SituationContext`, never program structure.
+Read-only, denied, pending, failed and committed outcomes remain distinct. Every
+cycle has an explicit no-effect/effect receipt; effect lineage binds decision,
+expression/situated meaning, verified meaning and program derivation refs.
 
 The learning plan contains the exact contract, source query, goal, capability,
 commit operator, literal, expected target kinds, answer contract, provenance,
@@ -247,8 +267,11 @@ reviewed semantic assertions
 ```
 
 The compiler never invokes PROPOSE and has no default-to-designation rule.
-Unsupported assertion kinds fail. Expected contracts and observed runtime
-outputs remain separate fields.
+Unsupported assertion kinds fail. Reviewed expected contracts name canonical
+semantic expressions plus required situated decision/effect/response
+qualifiers. Canonical derivations, when supplied, are separate training labels;
+bootstrap output cannot author semantic gold. Expected contracts and observed
+runtime outputs remain separate fields.
 
 The coverage gate enforces every configured minimum and maximum, including
 operator share, modes, actions, scopes, topology/depth/root counts,
@@ -291,9 +314,11 @@ Dataset access is process-separated:
    receipt exists;
 5. access logs and ancestor hashes are part of the run receipt.
 
-Evaluation reports every holdout axis and required slice. Runtime integration is
-mandatory: the selected proposer checkpoint must execute through the public
-composition root.
+Evaluation reports every holdout axis and required slice, separating exact
+derivation, compiled-expression, situated decision and expression-based E2E
+accuracy. Equivalent derivations receive semantic credit and pointer-distinct
+meanings cannot collapse. Runtime integration is mandatory: the selected
+proposer checkpoint must execute through the public composition root.
 
 The production realizer decodes from exact ResponseMeaning under reviewed
 language constraints and typed literal pointers. A development response-surface

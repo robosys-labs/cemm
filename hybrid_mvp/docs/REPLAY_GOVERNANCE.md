@@ -9,6 +9,10 @@ requires a separate reviewed decision.
 
 The ordered `governing_documents` list identifies the current Hybrid MVP
 contract, approved design, executable plans, architecture and ABI inventory.
+The 2026-08-02 semantic-algebra amendment has precedence over the July-31
+design and plans where they previously treated a `SemanticSwitchProgram` as
+canonical meaning. It amends those active documents in place; it does not
+reactivate any superseded July-29 or July-30 execution claim.
 Files listed under `superseded_execution_claims` remain useful evidence, but
 their milestone-completion and admission claims cannot authorize current work.
 The `historical_evidence` entries likewise cannot promote generated artifacts

@@ -35,9 +35,10 @@ not insufficient training:
   still expects the old fixture ABI.
 - M3's cognition modules exist largely as isolated components with fixture
   owners injected in tests.
-- M4 trained on bootstrap-selected labels instead of reviewed semantic
-  assertions; hard negatives are mostly unchanged clones; calibration is not
-  based on model inference; evaluation bypasses the authentic six-phase loop.
+- M4 trained on bootstrap-selected program derivations instead of reviewed
+  canonical semantic expressions; hard negatives are mostly unchanged clones;
+  calibration is not based on model inference; evaluation can collapse
+  pointer-distinct meanings and bypasses the authentic six-phase loop.
 
 The inherited 100-epoch experiment reduced exact accuracy from 61/78 to 59/78.
 That result is diagnostic evidence against further training on the current
@@ -45,7 +46,7 @@ pipeline, not a release or replay receipt.
 
 ## Next steps
 
-Proceed under the [approved design](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
+Proceed under the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), [approved design](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
 [master replay plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md)
 and [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
 Those owners define replay order, performance-bounded validation tiers and

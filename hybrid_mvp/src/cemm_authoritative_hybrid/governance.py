@@ -10,13 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
-import tempfile
-import subprocess
 from typing import Callable, Mapping, NoReturn, Sequence
 
 from .canonical import stable_ref
+from .process_control import ProcessControlError, capture_bounded_process
 
 
 STATUS_SCHEMA = "cemm-replay-status-record-v1"
@@ -31,6 +31,9 @@ MAX_LEDGER_RECORDS = 128
 MAX_COMMIT_GRAPH_BYTES = 16 * 1024 * 1024
 MAX_COMMIT_GRAPH_RECORDS = 65_536
 MAX_GIT_METADATA_BYTES = 256 * 1024
+MAX_GIT_STDERR_BYTES = 64 * 1024
+GIT_TIMEOUT_SECONDS = 60
+MAX_GOVERNED_JSON_BYTES = 1024 * 1024
 INITIAL_STATUS = {
     "G0": "pending",
     "R1": "red",
@@ -250,9 +253,12 @@ def _reject_nonfinite(value: str) -> NoReturn:
 
 
 def _canonical_json_bytes(value: object) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, separators=(",", ":"), sort_keys=True
-    ).encode("utf-8")
+    try:
+        return json.dumps(
+            value, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+        ).encode("utf-8")
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise GovernanceError("governed value is not canonical JSON") from exc
 
 
 def canonical_jsonl_row(record: Mapping[str, object]) -> bytes:
@@ -287,7 +293,7 @@ def parse_and_validate_records(raw: bytes) -> tuple[dict[str, object], ...]:
             )
         except GovernanceError:
             raise
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
             raise GovernanceError(f"record {sequence} is not canonical JSON") from exc
         if type(record) is not dict:
             raise GovernanceError(f"record {sequence} must be a JSON object")
@@ -309,24 +315,74 @@ def parse_and_validate_records(raw: bytes) -> tuple[dict[str, object], ...]:
     return tuple(records)
 
 
-def _load_json(path: Path) -> dict[str, object]:
+def _read_governed_bytes(
+    path: Path,
+    *,
+    maximum: int,
+    source_reader: Callable[[Path], bytes] | None,
+    context: str,
+) -> bytes:
     try:
+        if source_reader is None:
+            with path.open("rb") as stream:
+                raw = stream.read(maximum + 1)
+        else:
+            raw = source_reader(path)
+    except GovernanceError:
+        raise
+    except (OSError, ValueError, KeyError) as exc:
+        raise GovernanceError(f"cannot read {context}: {path}") from exc
+    if type(raw) is not bytes:
+        raise GovernanceError(f"{context} reader did not return exact bytes: {path}")
+    if not raw or len(raw) > maximum:
+        raise GovernanceError(f"{context} exceeds its byte bound: {path}")
+    return raw
+
+
+def _decode_governed_json(raw: bytes, *, path: Path) -> dict[str, object]:
+    try:
+        text = raw.decode("utf-8")
         value = json.loads(
-            path.read_text(encoding="utf-8"),
+            text,
             object_pairs_hook=_reject_duplicate_keys,
             parse_constant=_reject_nonfinite,
         )
     except GovernanceError:
         raise
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (
+        UnicodeDecodeError, json.JSONDecodeError, ValueError, RecursionError,
+    ) as exc:
         raise GovernanceError(f"cannot read governed JSON: {path}") from exc
     if type(value) is not dict:
         raise GovernanceError(f"governed JSON must be an object: {path}")
     return value
 
 
-def _verify_anchor_pin(root: Path, anchors_path: Path) -> None:
-    authority = _load_json(root / "docs" / "DOCUMENT_AUTHORITY.json")
+def _load_json(
+    path: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> dict[str, object]:
+    raw = _read_governed_bytes(
+        path,
+        maximum=MAX_GOVERNED_JSON_BYTES,
+        source_reader=source_reader,
+        context="governed JSON",
+    )
+    return _decode_governed_json(raw, path=path)
+
+
+def _verify_anchor_pin(
+    root: Path,
+    anchors_path: Path,
+    anchors_raw: bytes,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> None:
+    authority = _load_json(
+        root / "docs" / "DOCUMENT_AUTHORITY.json",
+        source_reader=source_reader,
+    )
     pin = authority.get("governance_ledger_anchors")
     if type(pin) is not dict or set(pin) != {"path", "sha256"}:
         raise GovernanceError("document authority lacks an exact ledger-anchor pin")
@@ -342,16 +398,31 @@ def _verify_anchor_pin(root: Path, anchors_path: Path) -> None:
         raise GovernanceError("ledger-anchor pin escapes the hybrid root") from exc
     if pinned != anchors_path.resolve():
         raise GovernanceError("ledger-anchor pin resolves to the wrong file")
-    if hashlib.sha256(anchors_path.read_bytes()).hexdigest() != digest:
+    if hashlib.sha256(anchors_raw).hexdigest() != digest:
         raise GovernanceError("ledger anchors do not match document authority")
 
 
-def load_ledger_anchor(path: Path) -> LedgerAnchor:
+def load_ledger_anchor(
+    path: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> LedgerAnchor:
     ledger_path = path.resolve()
     root = ledger_path.parent.parent
     anchors_path = ledger_path.parent / "ledger_anchors.json"
-    _verify_anchor_pin(root, anchors_path)
-    payload = _load_json(anchors_path)
+    anchors_raw = _read_governed_bytes(
+        anchors_path,
+        maximum=MAX_GOVERNED_JSON_BYTES,
+        source_reader=source_reader,
+        context="governed JSON",
+    )
+    _verify_anchor_pin(
+        root,
+        anchors_path,
+        anchors_raw,
+        source_reader=source_reader,
+    )
+    payload = _decode_governed_json(anchors_raw, path=anchors_path)
     if set(payload) != {"schema", "source_base", "ledgers"}:
         raise GovernanceError("ledger anchor document has non-exact fields")
     if payload["schema"] != ANCHOR_SCHEMA:
@@ -439,82 +510,48 @@ def _prefix_witnesses(
     return tuple(witnesses)
 
 
+def _sanitized_git_environment() -> dict[str, str]:
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.upper().startswith("GIT_")
+    }
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    environment["LANG"] = "C"
+    environment["LC_ALL"] = "C"
+    return environment
+
+
 def _run_bounded_git_stdout(
     command: Sequence[str],
     *,
     max_bytes: int,
     input_bytes: bytes | None = None,
+    timeout_seconds: int = GIT_TIMEOUT_SECONDS,
 ) -> bytes:
     if type(max_bytes) is not int or max_bytes <= 0:
         raise TypeError("Git output byte bound must be positive")
+    if type(timeout_seconds) is not int or timeout_seconds <= 0:
+        raise TypeError("Git timeout must be positive")
     if input_bytes is not None and type(input_bytes) is not bytes:
         raise TypeError("Git input must be exact bytes")
     if input_bytes is not None and len(input_bytes) > MAX_GIT_INPUT_BYTES:
         raise GovernanceError("Git witness input exceeds its byte bound")
-
-    temporary_input = None
-    input_stream = subprocess.DEVNULL
-    if input_bytes is not None:
-        try:
-            temporary_input = tempfile.TemporaryFile()
-            temporary_input.write(input_bytes)
-            temporary_input.flush()
-            temporary_input.seek(0)
-        except OSError as exc:
-            if temporary_input is not None:
-                temporary_input.close()
-            raise GovernanceError("cannot stage bounded Git witness input") from exc
-        input_stream = temporary_input
-
     try:
-        try:
-            process = subprocess.Popen(
-                list(command),
-                stdin=input_stream,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-            )
-        except OSError as exc:
-            raise GovernanceError("cannot start bounded Git witness command") from exc
-        try:
-            if process.stdout is None:
-                raise GovernanceError("bounded Git command has no stdout")
-            chunks: list[bytes] = []
-            total = 0
-            while True:
-                chunk = process.stdout.read(min(65_536, max_bytes + 1 - total))
-                if not chunk:
-                    break
-                chunks.append(chunk)
-                total += len(chunk)
-                if total > max_bytes:
-                    process.kill()
-                    process.wait(timeout=5)
-                    raise GovernanceError("Git witness output exceeds its byte bound")
-            return_code = process.wait(timeout=5)
-            if return_code != 0:
-                raise GovernanceError("bounded Git witness command failed")
-            return b"".join(chunks)
-        except subprocess.TimeoutExpired as exc:
-            if process.poll() is None:
-                process.kill()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                pass
-            raise GovernanceError("bounded Git witness command did not terminate") from exc
-        except BaseException:
-            if process.poll() is None:
-                process.kill()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    pass
-            raise
-    finally:
-        if temporary_input is not None:
-            temporary_input.close()
-
+        result = capture_bounded_process(
+            command,
+            max_stdout_bytes=max_bytes,
+            max_stderr_bytes=MAX_GIT_STDERR_BYTES,
+            max_combined_output_bytes=max_bytes + MAX_GIT_STDERR_BYTES,
+            timeout_seconds=timeout_seconds,
+            input_bytes=input_bytes,
+            env=_sanitized_git_environment(),
+        )
+    except (ProcessControlError, OSError, ValueError) as exc:
+        raise GovernanceError("bounded Git witness command failed closed") from exc
+    if result.returncode != 0 or result.stderr:
+        raise GovernanceError("bounded Git witness command failed")
+    return result.stdout
 
 def _git_batch_check_witnesses(
     root: Path,
@@ -618,28 +655,49 @@ def _parse_commit_graph(
     return _CommitGraph(boundary, head_ref, parents)
 
 
+_MAX_COMMIT_GRAPH_CACHE_ENTRIES = 8
+_COMMIT_GRAPH_CACHE: dict[tuple[str, str, str | None], _CommitGraph] = {}
+
+
+def _reset_commit_graph_cache() -> None:
+    _COMMIT_GRAPH_CACHE.clear()
+
+
 def _git_load_commit_graph(
     root: Path,
     head_ref: str,
     boundary_ref: str | None = None,
 ) -> _CommitGraph:
+    try:
+        root_identity = str(root.resolve(strict=True))
+    except OSError as exc:
+        raise GovernanceError("Git root is unavailable") from exc
+    cache_key = (root_identity, head_ref, boundary_ref)
+    cached = _COMMIT_GRAPH_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
     if boundary_ref == head_ref:
-        return _CommitGraph(str(boundary_ref), head_ref, {})
-    revision = head_ref if boundary_ref is None else f"{boundary_ref}..{head_ref}"
-    command = (
-        "git",
-        "--no-replace-objects",
-        "-C",
-        str(root),
-        "rev-list",
-        "--parents",
-        "--topo-order",
-        "--ancestry-path",
-        f"--max-count={MAX_COMMIT_GRAPH_RECORDS + 1}",
-        revision,
-    )
-    raw = _run_bounded_git_stdout(command, max_bytes=MAX_COMMIT_GRAPH_BYTES)
-    return _parse_commit_graph(raw, head_ref, boundary_ref)
+        graph = _CommitGraph(str(boundary_ref), head_ref, {})
+    else:
+        revision = head_ref if boundary_ref is None else f"{boundary_ref}..{head_ref}"
+        command = (
+            "git",
+            "--no-replace-objects",
+            "-C",
+            str(root),
+            "rev-list",
+            "--parents",
+            "--topo-order",
+            "--ancestry-path",
+            f"--max-count={MAX_COMMIT_GRAPH_RECORDS + 1}",
+            revision,
+        )
+        raw = _run_bounded_git_stdout(command, max_bytes=MAX_COMMIT_GRAPH_BYTES)
+        graph = _parse_commit_graph(raw, head_ref, boundary_ref)
+    if len(_COMMIT_GRAPH_CACHE) >= _MAX_COMMIT_GRAPH_CACHE_ENTRIES:
+        _COMMIT_GRAPH_CACHE.pop(next(iter(_COMMIT_GRAPH_CACHE)))
+    _COMMIT_GRAPH_CACHE[cache_key] = graph
+    return graph
 
 
 def _graph_is_ancestor(
@@ -825,14 +883,20 @@ def _read_hash_chain_for_test(
     return records
 
 
-def read_hash_chain(path: Path) -> tuple[dict[str, object], ...]:
+def read_hash_chain(
+    path: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> tuple[dict[str, object], ...]:
     """Verify one governed ledger; suffix verification always requires Git."""
 
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        raise GovernanceError(f"cannot read ledger: {path}") from exc
-    anchor = load_ledger_anchor(path)
+    raw = _read_governed_bytes(
+        path,
+        maximum=MAX_LEDGER_BYTES,
+        source_reader=source_reader,
+        context="ledger",
+    )
+    anchor = load_ledger_anchor(path, source_reader=source_reader)
     records = _verify_anchored_bytes(raw, anchor)
     root = _find_git_root(path.resolve().parent)
     prefixes = _prefix_witnesses(raw, records, anchor)
@@ -909,7 +973,12 @@ def effective_replay_status(
     return status
 
 
-def verify_file_invalidation(root: Path, record: Mapping[str, object]) -> None:
+def verify_file_invalidation(
+    root: Path,
+    record: Mapping[str, object],
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> None:
     sequence = record.get("sequence")
     if type(sequence) is not int:
         raise GovernanceError("invalidation sequence must be an integer")
@@ -922,9 +991,20 @@ def verify_file_invalidation(root: Path, record: Mapping[str, object]) -> None:
         subject.relative_to(root_resolved)
     except ValueError as exc:
         raise GovernanceError("invalidation subject escapes the hybrid root") from exc
-    if not subject.is_file():
-        raise GovernanceError("invalidation subject is not a file")
-    if hashlib.sha256(subject.read_bytes()).hexdigest() != record["subject_sha256"]:
+    try:
+        if source_reader is None:
+            if not subject.is_file():
+                raise GovernanceError("invalidation subject is not a file")
+            raw = subject.read_bytes()
+        else:
+            raw = source_reader(subject)
+    except GovernanceError:
+        raise
+    except (OSError, ValueError, KeyError) as exc:
+        raise GovernanceError("cannot read invalidation subject bytes") from exc
+    if type(raw) is not bytes:
+        raise GovernanceError("invalidation subject reader did not return exact bytes")
+    if hashlib.sha256(raw).hexdigest() != record["subject_sha256"]:
         raise GovernanceError("invalidation subject bytes changed")
 
 

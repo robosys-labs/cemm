@@ -12,17 +12,32 @@ The runtime pipeline is:
 
 ```text
 closed-class form evidence + reviewed/world designations
-→ exact semantic retrieval
-→ bounded graph-action candidate construction
-→ trainable text↔graph-action ranking
-→ exact recursive graph compiler
-→ exact verifier
-→ query / admission / effect engine
-→ obligation-driven response meaning
-→ deterministic verified realization
+→ bounded revision-pinned ProposalContext
+→ ranked ordered SemanticSwitchProgram derivations
+→ exact program validation and SemanticExpression compilation
+→ VerificationBatch[VerifiedMeaning]
+→ expression-based query / admission / effect decisions
+→ exact ResponseMeaning
+→ constrained learned surfaces
+→ round-trip canonical-expression equivalence
 ```
 
-## Governance boundary
+## Semantic algebra and ownership boundary
+
+A `SemanticSwitchProgram` is an ordered construction procedure. It is not the
+canonical meaning graph. `SemanticExpressionCompiler` compiles a complete
+Program ABI 2 derivation into a canonical multi-root `SemanticExpression` whose
+applications use only the five persistent operators. Scopes, expression links,
+variable binders and proposition-valued fillers are recursive expression
+structure rather than additional persistent operators.
+
+Program hashes include ordered actions, dynamic pointers, roles, roots, source
+assignments and revision pins. Expression hashes are derivation-independent and
+normalize only bijectively alpha-renamable local IDs plus explicitly reviewed
+commutative links. `VerifiedMeaning` binds expression to grounding, coverage,
+compilation proof, verification receipt, revision and program lineage.
+EVALUATE also receives an explicit verified `SituationContext`; program lineage
+is never substituted for semantic identity.
 
 The ranker receives only action programs built from retrieved reviewed authority and literal spans. It cannot create semantic atoms, event signatures, state dimensions, relation types, capabilities, permissions, or adapters.
 
@@ -68,4 +83,4 @@ A PyTorch Transformer independently encodes:
 - normalized input plus closed-class/semantic features;
 - candidate graph-action token sequence.
 
-A learned cross-encoder-style scorer ranks candidate programs. The model owns ranking only. Compilation, legality, truth, effects, and realization remain exact.
+A learned cross-encoder-style scorer ranks candidate programs. The model owns ranking only. Exact owners validate and compile programs, group derivational duplicates by expression, and retain truth, effects and semantic realization-equivalence authority. Normal surface choice may be learned but remains constrained and round-trip verified.

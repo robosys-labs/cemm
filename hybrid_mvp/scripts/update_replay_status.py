@@ -7,6 +7,8 @@ Task 4 owns ``AdmissionValidationError`` and this stable seam::
         root, *, phase, expected_status, run_ref
     ) -> tuple[GateReceipt, tuple[str, ...]]
 
+    verify_current_source_config(root, receipt) -> None
+
 The public seam may support ambiguity-safe discovery with ``run_ref=None``.
 This CLI always supplies an exact run ref for candidate review and append.
 The returned paths are the exact current run/admission/baseline/inventory files
@@ -18,30 +20,139 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from dataclasses import dataclass
-import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
 import re
-import subprocess
 import sys
+from types import ModuleType
 from typing import Callable, Iterator, NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = ROOT.parent
 SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
+_MAX_BOOTSTRAP_SOURCE_BYTES = 4 * 1024 * 1024
 
-from cemm_authoritative_hybrid.governance import (  # noqa: E402
-    GovernanceError,
-    canonical_jsonl_row,
-    effective_replay_status,
-    make_status_record,
-    read_hash_chain,
-    verify_file_invalidation,
+
+def _is_link_or_reparse(path: Path) -> bool:
+    try:
+        if path.is_symlink():
+            return True
+        junction = getattr(path, "is_junction", None)
+        if callable(junction) and junction():
+            return True
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    except OSError as exc:
+        raise RuntimeError(f"cannot inspect reviewed source: {path.name}") from exc
+    return bool(attributes & 0x400)
+
+
+def _resolve_reviewed_source_path(path: Path) -> Path:
+    root = ROOT.resolve(strict=True)
+    candidate = path if path.is_absolute() else ROOT / path
+    try:
+        relative = candidate.relative_to(ROOT)
+    except ValueError as exc:
+        raise RuntimeError("reviewed source escapes the Hybrid MVP root") from exc
+    current = root
+    if _is_link_or_reparse(ROOT):
+        raise RuntimeError("Hybrid MVP root is a redirected path")
+    for part in relative.parts:
+        current = current / part
+        if _is_link_or_reparse(current):
+            raise RuntimeError(f"reviewed source path is redirected: {path.name}")
+        resolved = current.resolve(strict=True)
+        try:
+            resolved.relative_to(root)
+        except ValueError as exc:
+            raise RuntimeError("reviewed source escapes the Hybrid MVP root") from exc
+        if resolved != current:
+            raise RuntimeError(f"reviewed source path is redirected: {path.name}")
+    return current
+
+def _load_reviewed_source(
+    path: Path,
+    name: str,
+    *,
+    package: str = "",
+) -> ModuleType:
+    resolved = _resolve_reviewed_source_path(path)
+    if not resolved.is_file():
+        raise RuntimeError(f"reviewed source is unavailable: {path.name}")
+    with resolved.open("rb") as stream:
+        raw = stream.read(_MAX_BOOTSTRAP_SOURCE_BYTES + 1)
+    if not raw or len(raw) > _MAX_BOOTSTRAP_SOURCE_BYTES:
+        raise RuntimeError(f"reviewed source is invalid: {path.name}")
+    code = compile(raw, str(resolved), "exec", dont_inherit=True, optimize=0)
+    module = ModuleType(name)
+    module.__file__ = str(resolved)
+    module.__package__ = package
+    module.__cached__ = None
+    module.__loader__ = None
+    sys.modules[name] = module
+    try:
+        exec(code, module.__dict__)
+    except BaseException:
+        if sys.modules.get(name) is module:
+            del sys.modules[name]
+        raise
+    return module
+
+
+_process_control_source = (
+    SRC / "cemm_authoritative_hybrid" / "process_control.py"
 )
+_process_control = _load_reviewed_source(
+    _process_control_source, "process_control"
+)
+ProcessControlError = _process_control.ProcessControlError
+capture_bounded_process = _process_control.capture_bounded_process
 
+_governance_package_name = "_cemm_reviewed_governance_owner"
+_governance_package = ModuleType(_governance_package_name)
+_governance_package.__package__ = _governance_package_name
+_governance_package.__path__ = ()
+_governance_package.__loader__ = None
+sys.modules[_governance_package_name] = _governance_package
+_load_reviewed_source(
+    _process_control_source,
+    f"{_governance_package_name}.process_control",
+    package=_governance_package_name,
+)
+_load_reviewed_source(
+    SRC / "cemm_authoritative_hybrid" / "canonical.py",
+    f"{_governance_package_name}.canonical",
+    package=_governance_package_name,
+)
+_governance_source = SRC / "cemm_authoritative_hybrid" / "governance.py"
+_existing_governance = sys.modules.get("cemm_authoritative_hybrid.governance")
+_existing_governance_error = getattr(
+    _existing_governance, "GovernanceError", None
+)
+_governance = _load_reviewed_source(
+    _governance_source,
+    f"{_governance_package_name}.governance",
+    package=_governance_package_name,
+)
+if (
+    isinstance(_existing_governance, ModuleType)
+    and Path(getattr(_existing_governance, "__file__", "")).resolve()
+    == _governance_source.resolve()
+    and type(_existing_governance_error) is type
+    and _existing_governance_error.__name__ == "GovernanceError"
+    and _existing_governance_error.__module__
+    == "cemm_authoritative_hybrid.governance"
+    and issubclass(_existing_governance_error, ValueError)
+):
+    # Preserve exception identity for an already authenticated in-process owner;
+    # all behavior still comes from the source-executed module above.
+    _governance.GovernanceError = _existing_governance_error
+GovernanceError = _governance.GovernanceError
+canonical_jsonl_row = _governance.canonical_jsonl_row
+effective_replay_status = _governance.effective_replay_status
+make_status_record = _governance.make_status_record
+read_hash_chain = _governance.read_hash_chain
+verify_file_invalidation = _governance.verify_file_invalidation
 
 STATUS_LEDGER = ROOT / "governance" / "replay_status.jsonl"
 INVALIDATION_LEDGER = ROOT / "governance" / "receipt_invalidations.jsonl"
@@ -52,24 +163,34 @@ _CONTENT_REF_RE = re.compile(
 _GATE_RESULT_REF_RE = re.compile(r"gate_result:[0-9a-f]{24}\Z")
 _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _ADMISSION_PATH_RE = re.compile(
-    r"artifacts/validation/(?:runs/[^/]+\.json|(?:G0|R[1-8])_ADMISSION_RECEIPT\.json)\Z"
+    r"artifacts/validation/runs/[0-9a-f]{24}\.json\Z"
 )
 _FIXED_EVIDENCE_PATHS = {
     "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
     "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
 }
+_GIT_PROBE_TIMEOUT_SECONDS = 60
+_MAX_GIT_PROBE_OUTPUT_BYTES = 4 * 1024 * 1024
+
+
+def _noop_cache_reset() -> None:
+    return None
 
 
 @dataclass(frozen=True)
 class AdmissionOwner:
     validation_error_type: type[Exception]
     loader: Callable[..., tuple[object, tuple[str, ...]]]
+    current_source_config_verifier: Callable[[Path, object], None]
+    cache_reset: Callable[[], None] = _noop_cache_reset
 
     def __post_init__(self) -> None:
         if (
             type(self.validation_error_type) is not type
             or not issubclass(self.validation_error_type, Exception)
             or not callable(self.loader)
+            or not callable(self.current_source_config_verifier)
+            or not callable(self.cache_reset)
         ):
             raise TypeError("Task 4 exported an invalid admission owner")
 
@@ -107,7 +228,6 @@ def _static_evidence_candidates(
         {
             *_FIXED_EVIDENCE_PATHS,
             f"artifacts/validation/runs/{digest}.json",
-            f"artifacts/validation/{phase}_ADMISSION_RECEIPT.json",
         }
     )
 
@@ -155,24 +275,14 @@ def _load_admission_owner(
     if not gate_path.is_file() or gate_path.is_symlink():
         raise GovernanceError("validated admission receipt owner is unavailable")
     module_name = "_cemm_reviewed_validation_gate"
-    spec = importlib.util.spec_from_file_location(module_name, gate_path)
-    if spec is None or spec.loader is None:
-        raise TypeError("cannot create the reviewed Task 4 module identity")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    prior_bytecode_setting = sys.dont_write_bytecode
-    sys.dont_write_bytecode = True
-    try:
-        spec.loader.exec_module(module)
-    except BaseException:
-        if sys.modules.get(module_name) is module:
-            del sys.modules[module_name]
-        raise
-    finally:
-        sys.dont_write_bytecode = prior_bytecode_setting
+    module = _load_reviewed_source(gate_path, module_name)
 
     error_type = vars(module).get("AdmissionValidationError")
     loader = vars(module).get("load_verified_admission_receipt")
+    current_source_config_verifier = vars(module).get(
+        "verify_current_source_config"
+    )
+    cache_reset = vars(module).get("reset_admission_verification_cache")
     if (
         type(error_type) is not type
         or error_type.__name__ != "AdmissionValidationError"
@@ -186,7 +296,24 @@ def _load_admission_owner(
         or getattr(loader, "__module__", None) != module_name
     ):
         raise TypeError("Task 4 must define its exact admission receipt loader")
-    return AdmissionOwner(error_type, loader)
+    if (
+        not callable(current_source_config_verifier)
+        or getattr(current_source_config_verifier, "__name__", None)
+        != "verify_current_source_config"
+        or getattr(current_source_config_verifier, "__module__", None)
+        != module_name
+    ):
+        raise TypeError("Task 4 must define its exact current source config verifier")
+    if (
+        not callable(cache_reset)
+        or getattr(cache_reset, "__name__", None)
+        != "reset_admission_verification_cache"
+        or getattr(cache_reset, "__module__", None) != module_name
+    ):
+        raise TypeError("Task 4 must define its exact verification-cache reset")
+    return AdmissionOwner(
+        error_type, loader, current_source_config_verifier, cache_reset
+    )
 
 
 def _validated_admission(
@@ -247,6 +374,35 @@ def _validated_admission(
     return receipt, evidence_paths
 
 
+def _verify_receipt_ledger_binding(
+    receipt: object,
+    *,
+    predecessor_ref: object,
+    source_base: object,
+) -> None:
+    if (
+        getattr(receipt, "pre_admission_status_head_ref", None)
+        != predecessor_ref
+    ):
+        raise GovernanceError("admission receipt predecessor binding mismatch")
+    if getattr(receipt, "source_ref", None) != source_base:
+        raise GovernanceError("admission receipt source binding mismatch")
+
+
+def _verify_new_admission_current_source_config(
+    owner: AdmissionOwner,
+    receipt: object,
+) -> None:
+    try:
+        result = owner.current_source_config_verifier(ROOT, receipt)
+    except owner.validation_error_type as exc:
+        raise GovernanceError(
+            "admission receipt current source config was rejected"
+        ) from exc
+    if result is not None:
+        raise TypeError("Task 4 current source config verifier must return None")
+
+
 def _verify_admitted_runs(
     records: tuple[dict[str, object], ...] | list[dict[str, object]],
     *,
@@ -269,6 +425,8 @@ def _verify_admitted_runs(
         )
 
     exact_paths: set[str] = set()
+    if selected is not None:
+        selected.cache_reset()
     for record in admitted:
         receipt, paths = _validated_admission(
             str(record["phase"]),
@@ -280,6 +438,11 @@ def _verify_admitted_runs(
             raise GovernanceError("admitted gate_result_ref reconstruction mismatch")
         if getattr(receipt, "run_ref", None) != record["admission_run_ref"]:
             raise GovernanceError("admitted run_ref reconstruction mismatch")
+        _verify_receipt_ledger_binding(
+            receipt,
+            predecessor_ref=record["predecessor_ref"],
+            source_base=record["source_base"],
+        )
         normalized = _normalize_allowed_evidence_paths(
             paths, require_files=require_evidence_files
         )
@@ -296,29 +459,64 @@ def _verify_admitted_runs(
     return allowed
 
 
+def _sanitized_git_environment() -> dict[str, str]:
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.upper().startswith("GIT_")
+    }
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    environment["LANG"] = "C"
+    environment["LC_ALL"] = "C"
+    return environment
+
+
+def _run_git_probe(
+    command: list[str],
+    *,
+    label: str,
+    failure_message: str,
+) -> bytes:
+    if command[:2] != ["git", "--no-replace-objects"]:
+        _fail(f"Git {label} probe lacks replacement-ref isolation")
+    try:
+        completed = capture_bounded_process(
+            command,
+            max_stdout_bytes=_MAX_GIT_PROBE_OUTPUT_BYTES,
+            max_stderr_bytes=_MAX_GIT_PROBE_OUTPUT_BYTES,
+            timeout_seconds=_GIT_PROBE_TIMEOUT_SECONDS,
+            env=_sanitized_git_environment(),
+        )
+    except ProcessControlError as exc:
+        raise GovernanceError(f"Git {label} probe failed closed") from exc
+    if completed.stderr:
+        _fail(f"Git {label} probe emitted stderr")
+    if completed.returncode != 0:
+        _fail(failure_message)
+    return completed.stdout
+
 def _git_head() -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(REPOSITORY_ROOT), "rev-parse", "HEAD"],
-        text=True,
-        capture_output=True,
-        check=False,
+    output = _run_git_probe(
+        ["git", "--no-replace-objects", "-C", str(REPOSITORY_ROOT), "rev-parse", "--verify", "HEAD^{commit}"],
+        label="source_base",
+        failure_message="cannot resolve the full source_base commit",
     )
-    value = completed.stdout.strip()
-    if completed.returncode != 0 or len(value) not in {40, 64}:
+    try:
+        value = output.decode("ascii").strip()
+    except UnicodeDecodeError:
+        _fail("cannot resolve the full source_base commit")
+    if len(value) not in {40, 64}:
         _fail("cannot resolve the full source_base commit")
     return value
 
 
 def _committed_status_bytes(source_base: str) -> bytes:
     relative = STATUS_LEDGER.relative_to(REPOSITORY_ROOT).as_posix()
-    completed = subprocess.run(
-        ["git", "-C", str(REPOSITORY_ROOT), "show", f"{source_base}:{relative}"],
-        capture_output=True,
-        check=False,
+    return _run_git_probe(
+        ["git", "--no-replace-objects", "-C", str(REPOSITORY_ROOT), "show", f"{source_base}:{relative}"],
+        label="committed prior-head",
+        failure_message="the replay status ledger has no committed prior-head bytes",
     )
-    if completed.returncode != 0:
-        _fail("the replay status ledger has no committed prior-head bytes")
-    return completed.stdout
 
 
 def _require_committed_current_prefix() -> tuple[str, bytes]:
@@ -364,9 +562,10 @@ def _normalize_allowed_evidence_paths(
 
 
 def _dirty_hybrid_paths() -> frozenset[str]:
-    completed = subprocess.run(
+    output = _run_git_probe(
         [
             "git",
+            "--no-replace-objects",
             "-C",
             str(REPOSITORY_ROOT),
             "status",
@@ -376,12 +575,10 @@ def _dirty_hybrid_paths() -> frozenset[str]:
             "--",
             "hybrid_mvp/",
         ],
-        capture_output=True,
-        check=False,
+        label="cleanliness",
+        failure_message="cannot inspect governed checkout cleanliness",
     )
-    if completed.returncode != 0:
-        _fail("cannot inspect governed checkout cleanliness")
-    entries = completed.stdout.split(b"\0")
+    entries = output.split(b"\0")
     dirty: set[str] = set()
     index = 0
     while index < len(entries):
@@ -556,8 +753,17 @@ def _candidate(
         allowed.update(new_allowed)
 
     if needs_owner:
-        _reject_dirty_governed_inputs(_dirty_hybrid_paths(), allowed)
+        _reject_dirty_governed_inputs(initial_dirty, allowed)
     source_base, prior_bytes = _require_committed_current_prefix()
+    if receipt is not None:
+        _verify_receipt_ledger_binding(
+            receipt,
+            predecessor_ref=records[-1]["record_ref"],
+            source_base=source_base,
+        )
+        if owner is None:
+            raise TypeError("new admission lacks its exact Task 4 owner")
+        _verify_new_admission_current_source_config(owner, receipt)
     gate_ref = getattr(receipt, "gate_result_ref", None)
     run_ref = getattr(receipt, "run_ref", None)
     rationale = (

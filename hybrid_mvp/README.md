@@ -21,9 +21,11 @@ ORIENT → PROPOSE → VERIFY → EVALUATE → EFFECT → REALIZE
 - **ORIENT** captures only the context required for the current cycle.
 - **PROPOSE** produces bounded `SemanticSwitchProgram` candidates from evidence
   and orientation.
-- **VERIFY** independently recomputes structural, reference, scope, capability
-  and transition legality; invalid candidates receive typed rejection codes.
-- **EVALUATE** consumes one verified program and produces one typed `Decision`.
+- **VERIFY** independently validates and exactly compiles ordered program
+  derivations into canonical `SemanticExpression` values, then selects by
+  expression identity.
+- **EVALUATE** consumes `VerifiedMeaning` plus verified situation context and
+  produces one typed `Decision`; it never consumes a raw program.
 - **EFFECT** is the only owner of world mutation and external operation
   invocation; it accepts verified decisions and returns idempotent receipts.
 - **REALIZE** constructs `ResponseMeaning` from the exact decision, proof,
@@ -31,6 +33,13 @@ ORIENT → PROPOSE → VERIFY → EVALUATE → EFFECT → REALIZE
 
 Stage 0–22 ordering is not an activation invariant. The legacy stage-bound
 architecture is superseded.
+
+`SemanticSwitchProgram` is a construction procedure, not canonical meaning.
+Program identity is ordered and includes every dynamic pointer and binding.
+`SemanticExpression` is the derivation-independent semantic identity compiled
+from that procedure. `VerifiedMeaning` carries expression, grounding, coverage,
+proof, revision and derivation lineage. Distinct derivations may express one
+meaning; pointer-distinct meanings must not collapse.
 
 ## Five persistent operators
 
@@ -64,8 +73,9 @@ kernel operators or phrase intents.
 - Capability, permission and adapter dependencies are checked independently.
 - Queries and simulations cannot mutate world memory.
 - Attributed content is not automatically admitted as world truth.
-- Deterministic realization emits a semantic verification receipt and does not
-  expose internal refs.
+- Normal realization is constrained and learned; emission is authorized only
+  after round-trip canonical-expression equivalence plus situated qualifiers.
+  Static text is limited to closed critical-failure semantics.
 
 ## Frozen configuration
 
@@ -112,8 +122,9 @@ unverified surfaces.
 
 - [`AGENTS.md`](AGENTS.md) — Hybrid MVP constitution and hard-cutover contract.
 - [`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) — machine-readable document precedence and scope.
+- [`docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md`](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md) — active Program→Expression corrective amendment.
 - [`docs/REPLAY_GOVERNANCE.md`](docs/REPLAY_GOVERNANCE.md) — precedence, evidence and status-ownership boundaries.
 - [`docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md) — approved corrective-replay design.
 - [`docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md) — governing replay sequence and admission boundaries.
 - [`docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md) — executable G0-R1 tasks and focused checks.
-- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — landed ABI candidates whose activation requires admitted R1 status.
+- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — active target ABIs; implementation and descendant artifacts remain red until their replay admissions.

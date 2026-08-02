@@ -21,6 +21,8 @@ from typing import Callable, Mapping, NoReturn
 
 INVENTORY_SCHEMA = "cemm-hybrid-test-inventory-v1"
 PHASES = ("G0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8")
+MAX_JSON_BYTES = 64 * 1024 * 1024
+
 PYTEST_COLLECTION_CONTRACT = MappingProxyType(
     {
         "python_files": ("test_*.py", "*_test.py"),
@@ -204,15 +206,18 @@ def _load_strict_json_bytes(raw: bytes, *, path: Path) -> object:
         )
     except InventoryError:
         raise
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, ValueError, RecursionError) as exc:
         raise InventoryError(f"invalid JSON in {path}: {exc}") from exc
 
 
 def load_strict_json(path: Path) -> object:
     try:
-        raw = path.read_bytes()
+        with path.open("rb") as stream:
+            raw = stream.read(MAX_JSON_BYTES + 1)
     except OSError as exc:
         raise InventoryError(f"cannot read JSON {path}: {exc}") from exc
+    if not raw or len(raw) > MAX_JSON_BYTES:
+        raise InventoryError(f"JSON file exceeds its byte bound: {path}")
     return _load_strict_json_bytes(raw, path=path)
 
 
@@ -927,11 +932,18 @@ def _literal_metadata(
     return MappingProxyType(result)
 
 
-def _verify_pytest_collection_contract(root: Path) -> None:
+def _verify_pytest_collection_contract(
+    root: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> None:
     path = root / "pyproject.toml"
     try:
-        source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
+        raw = path.read_bytes() if source_reader is None else source_reader(path)
+        if type(raw) is not bytes:
+            raise TypeError("source reader returned non-bytes")
+        source = raw.decode("utf-8")
+    except (OSError, UnicodeDecodeError, TypeError) as exc:
         raise InventoryError(f"cannot read pytest collection contract {path}: {exc}") from exc
     try:
         document = tomllib.loads(source)
@@ -959,6 +971,7 @@ def _read_and_parse_modules(
     *,
     frozen_source_refs: frozenset[str],
     parse_source: Callable[..., ast.AST],
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> tuple[Mapping[str, _ParsedModule], int]:
     tests_root = root / "tests"
     if not tests_root.is_dir():
@@ -976,8 +989,11 @@ def _read_and_parse_modules(
         relative = path.relative_to(root).as_posix()
         _safe_test_path(relative, context="current test module")
         try:
-            source = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError) as exc:
+            raw = path.read_bytes() if source_reader is None else source_reader(path)
+            if type(raw) is not bytes:
+                raise TypeError("source reader returned non-bytes")
+            source = raw.decode("utf-8")
+        except (OSError, UnicodeDecodeError, TypeError) as exc:
             raise InventoryError(f"cannot read test module {relative}: {exc}") from exc
         try:
             tree = parse_source(source, filename=relative)
@@ -1424,14 +1440,26 @@ def _normalized_later_metadata(
 
 
 def verify_document_authority_pin(
-    root: str | Path, inventory_path: str | Path
+    root: str | Path,
+    inventory_path: str | Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> str:
     """Verify the exact inventory bytes pinned by DOCUMENT_AUTHORITY.json."""
 
     root_path = Path(root).resolve()
     target = _resolve_inside_root(root_path, inventory_path)
     authority_path = root_path / "docs" / "DOCUMENT_AUTHORITY.json"
-    authority = load_strict_json(authority_path)
+    if source_reader is None:
+        authority = load_strict_json(authority_path)
+    else:
+        try:
+            authority_raw = source_reader(authority_path)
+        except OSError as exc:
+            raise InventoryError("cannot read DOCUMENT_AUTHORITY.json") from exc
+        if type(authority_raw) is not bytes:
+            raise InventoryError("source reader returned non-bytes")
+        authority = _load_strict_json_bytes(authority_raw, path=authority_path)
     if type(authority) is not dict:
         raise InventoryError("DOCUMENT_AUTHORITY.json must be an object")
     pin = authority.get("test_inventory")
@@ -1443,7 +1471,13 @@ def verify_document_authority_pin(
     expected_digest = _text(pin["sha256"], context="test_inventory.sha256")
     if re.fullmatch(r"[0-9a-f]{64}", expected_digest) is None:
         raise InventoryError("document-authority test inventory digest is invalid")
-    actual_digest = hashlib.sha256(target.read_bytes()).hexdigest()
+    try:
+        target_raw = target.read_bytes() if source_reader is None else source_reader(target)
+    except OSError as exc:
+        raise InventoryError("cannot read the pinned test inventory") from exc
+    if type(target_raw) is not bytes:
+        raise InventoryError("source reader returned non-bytes")
+    actual_digest = hashlib.sha256(target_raw).hexdigest()
     if actual_digest != expected_digest:
         raise InventoryError("document-authority test inventory digest mismatch")
     return actual_digest
@@ -1471,17 +1505,24 @@ def load_and_verify(
     enforce_reviewed_counts: bool = False,
     expected_sha256: str | None = None,
     parse_source: Callable[..., ast.AST] = ast.parse,
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> InventoryResult:
     """Load the immutable inventory and verify current source in one AST pass."""
 
     checked_phase = _phase(phase, context="requested phase")
     assert checked_phase is not None
     root_path = Path(root).resolve()
-    _verify_pytest_collection_contract(root_path)
+    _verify_pytest_collection_contract(
+        root_path, source_reader=source_reader
+    )
     target = _resolve_inside_root(root_path, inventory_path)
     try:
-        inventory_bytes = target.read_bytes()
-    except OSError as exc:
+        inventory_bytes = (
+            target.read_bytes() if source_reader is None else source_reader(target)
+        )
+        if type(inventory_bytes) is not bytes:
+            raise TypeError("source reader returned non-bytes")
+    except (OSError, TypeError) as exc:
         raise InventoryError(f"cannot read inventory {target}: {exc}") from exc
     if expected_sha256 is not None:
         if (
@@ -1499,6 +1540,7 @@ def load_and_verify(
         root_path,
         frozen_source_refs=frozenset(source_records),
         parse_source=parse_source,
+        source_reader=source_reader,
     )
     (
         later_records,

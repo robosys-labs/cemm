@@ -4,7 +4,7 @@
 
 **Goal:** Admit G0 and R1: truthful executable governance, inherited-claim quarantine, one dependency-aware validator, and a hard cut from duplicate runtime ABIs/paths to canonical content-addressed R1 boundaries.
 
-**Architecture:** Governance is append-only evidence outside semantic authority. Validation is one external DAG runner with three coalesced tiers. R1 owns immutable identities in their earliest modules, one candidate-batch/verifier boundary, one final `CycleResult`, and `HybridRuntime.process()` as the only public path. R2/R3 functionality remains explicitly unavailable rather than simulated.
+**Architecture:** Governance is append-only evidence outside semantic authority. Validation is one external DAG runner with three coalesced tiers. Under the 2026-08-02 amendment, R1 owns Program ABI 2, Semantic Expression ABI 1, the total compiler, Verified Meaning ABI 1, immutable identities in their earliest modules, one candidate-batch/verifier boundary, one final `CycleResult`, and `HybridRuntime.process()` as the only public path. Later-owner R2/R3 behavior remains an explicit typed gap rather than evaluating a raw program.
 
 **Tech Stack:** Python 3.11+, pytest, PyTorch, JSON/JSONL, SHA-256 refs, SQLite activation checks.
 
@@ -1018,6 +1018,8 @@ git commit -m "build: add structured dependency-aware replay validation"
 Bind commands, environment/source ref, the reviewed 743-node predecessor
 collection, the current collectable/active set refs, both threshold failures,
 proposal/runtime divergence, and authority EOL failure. State
+The findings also record that Program ABI 1 derivations are incorrectly used as settled meaning, bootstrap-influenced programs author current gold, entity/source anonymization can collapse pointer-distinct meanings, and marker checks substitute for round-trip expression equivalence. Every Program ABI 1 corpus, episode, checkpoint, calibration and evaluation descendant remains quarantined historical evidence.
+
 `runtime_admitted: false` and `model_artifacts_admitted: false`. G0 validates
 that forensic evidence; it does not require downstream R1/R7 behavior to pass.
 Generate `TEST_INVENTORY_RECEIPT.json` from the verified immutable inventory
@@ -1073,7 +1075,7 @@ record-ref change writes nothing. Effective state becomes
 $g0Candidate = (python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --dry-run | ConvertFrom-Json)
 python scripts\update_replay_status.py --phase G0 --status green --run-ref $g0RunRef --expect-record-ref $g0Candidate.record_ref --append
 python scripts\update_replay_status.py --verify-chain
-git add hybrid_mvp/artifacts/validation/runs hybrid_mvp/artifacts/validation/G0_ADMISSION_RECEIPT.json hybrid_mvp/governance/replay_status.jsonl hybrid_mvp/tests/test_replay_governance.py
+git add hybrid_mvp/artifacts/validation/runs hybrid_mvp/governance/replay_status.jsonl
 git commit -m "chore: admit corrective replay governance"
 ```
 
@@ -1149,7 +1151,7 @@ git add .gitattributes hybrid_mvp/src/cemm_authoritative_hybrid/canonical.py hyb
 git commit -m "refactor: make R1 revision and authority identity exact"
 ```
 
-## Task 7: Hard-cut one program/proposal/verifier ABI
+## Task 7: Hard-cut Program ABI 2 and compile canonical Semantic Expression ABI 1
 
 **Files:**
 
@@ -1157,8 +1159,11 @@ git commit -m "refactor: make R1 revision and authority identity exact"
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/proposal.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/model.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/verifier.py`
-- Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/propositions.py`
-- Modify active callers in `bootstrap.py`, `coverage.py`, `training.py` and `evaluation.py`
+- Create: `hybrid_mvp/src/cemm_authoritative_hybrid/expressions.py`
+- Create: `hybrid_mvp/src/cemm_authoritative_hybrid/situation.py`
+- Delete after caller migration: `hybrid_mvp/src/cemm_authoritative_hybrid/propositions.py`
+- Modify active callers in `runtime.py`, `bootstrap.py`, `coverage.py`, `query.py`,
+  `epistemics.py`, `episodes.py`, `training.py` and `evaluation.py`
 - Modify affected R1 fixtures/tests
 - Modify: `hybrid_mvp/configs/validation_gates.json`
 - Create: `hybrid_mvp/tests/test_r1_verification_batch.py`
@@ -1169,8 +1174,10 @@ git commit -m "refactor: make R1 revision and authority identity exact"
 ```python
 def test_cross_phase_types_have_one_owner() -> None:
     assert class_owners("SemanticSwitchProgram") == {"programs.py"}
+    assert class_owners("SemanticExpression") == {"expressions.py"}
+    assert class_owners("VerifiedMeaning") == {"expressions.py"}
     assert class_owners("ProposalResult") == {"proposal.py"}
-    assert class_owners("VerificationResult") == {"verifier.py"}
+    assert class_owners("VerificationBatch") == {"verifier.py"}
 
 
 def test_proposal_phase_output_binds_the_complete_batch(proposal_result) -> None:
@@ -1235,58 +1242,82 @@ Critically, PROPOSE must not invoke `ExactProgramVerifier`. Remove current
 verifier calls in `proposal.py` and `model.py`. Proposal may enforce decoder
 action masks, but exact independent acceptance occurs only in VERIFY.
 
-### Step 4: Add independent batch verification
+### Step 4: Compile and verify canonical meaning
 
-Keep canonical `VerificationResult` semantics, but complete serialization/hash
-coverage includes error code/detail/action and full coverage receipt. Add:
+Create Program ABI 2 with a complete order-sensitive `program_ref`; retain
+`action_abi_hash` only as the closed model-vocabulary identity. Implement
+`SemanticExpressionCompiler` as a total exact compiler from one complete
+program plus its exact proposal context into either one canonical multi-root
+expression forest and compilation proof or one typed failure. The compiler may
+never invent omitted roles, fillers, roots, scopes or links.
+
+`SemanticExpression` owns applications, explicit root refs, typed role/filler
+bindings, scope operators, ordered or reviewed-commutative expression links,
+variable binders and typed unresolved fillers. Canonicalization alpha-renames
+only local IDs through a proven bijection. Grounded identity, role, polarity,
+modality, attribution, temporal qualifiers and persistent operators survive.
+Source geometry stays in coverage unless attribution/source is meaning.
+
+`ExactProgramVerifier` independently validates ordered program identity,
+dynamic-pointer origin, coverage and legality, invokes the compiler, and proves
+that every action/source assignment translated exactly once. It then validates
+roots, reachability, parent rules, acyclicity and depth on the expression.
+VERIFY never repairs.
 
 ```python
 @dataclass(frozen=True)
 class CandidateVerificationReceipt:
     receipt_ref: str
     candidate_index: int
-    program: SemanticSwitchProgram
-    result: VerificationResult
+    program_ref: str
+    expression: SemanticExpression | None
+    compilation_proof_ref: str | None
+    verification_errors: tuple[VerificationError, ...]
 
 
 @dataclass(frozen=True)
-class VerificationBatchResult:
+class VerificationBatch:
     batch_ref: str
     proposal_ref: str
     candidate_receipts: tuple[CandidateVerificationReceipt, ...]
     status: Literal["selected", "rejected", "abstained", "ambiguous"]
-    selected_program_ref: str | None
-    ambiguity_program_refs: tuple[str, ...]
+    selected_meaning: VerifiedMeaning | None
+    ambiguity_expression_refs: tuple[str, ...]
 ```
 
-`verify_candidates(proposal)` emits exactly one receipt per candidate. Receipt
-indices are contiguous and preserve proposal order; each embedded program ref,
-result program ref and proposal candidate ref must agree. Selected and ambiguous
-refs must identify accepted receipts. Rejected/abstained/ambiguous batches carry
-no selected ref; selected batches carry exactly one. Exactly one accepted
-candidate is selected, zero is rejected, explicit abstention stays abstained,
-and multiple accepted alternatives are ambiguous until R2 settling. Constructors
-and deserializers enforce every cross-field rule. Verifier programming
-exceptions propagate.
+There is exactly one receipt per proposal candidate. Accepted derivations with
+the same `expression_ref` form one semantic alternative before margin/ambiguity
+selection. Distinct accepted expressions inside the margin remain ambiguous.
+`VerifiedMeaning` binds selected expression, grounding, coverage, compilation
+proof, verification receipt, revision and program lineage. Its ref may include
+lineage; expression plus situated qualifiers is the semantic comparison key.
+Constructors/deserializers enforce every cross-field identity and verifier
+programming exceptions propagate.
 
-### Step 5: Remove the legacy program wrapper safely
+Required canaries include two derivations compiling to one expression; swapped
+dynamic pointers compiling differently; multiple applications and at least
+three roots as real nodes; nested proposition-valued fillers; scope,
+attribution and binders; and rejection when any action is omitted, duplicated or
+mistranslated by compilation.
 
-Keep `Application`/`PropositionGraph` as graph structures for later owner work,
-but remove `propositions.SemanticSwitchProgram` only after every import-bearing
-module can collect without it. Migrate production imports in `runtime.py`,
-`bootstrap.py` and `episodes.py` to the canonical program. Refactor `query.py`
-to accept `PropositionGraph` directly and `epistemics.py` to accept its graph and
-evidence inputs explicitly; never add `.graph/.mode/.evidence` compatibility
-properties.
+### Step 5: Remove legacy wrappers and stop at the R1 boundary
 
+Delete `propositions.py` only after every caller imports the canonical Program
+ABI 2 / Expression ABI 1 owners. Move any still-valid graph structures into
+`expressions.py`; do not retain a legacy program or graph wrapper. Refactor
+`query.py` and `epistemics.py` toward `VerifiedMeaning.expression` plus explicit
+`SituationContext`. Until R3 owners are implemented, `HybridRuntime.process()`
+returns a typed later-owner gap after VERIFY and never passes a raw program to
+EVALUATE.
+
+Migrate production imports in runtime, bootstrap, episodes, corpus and
+evaluation paths. Remove signature inspection, result-shape adaptation,
+`propose_and_verify()` and all program-as-meaning compatibility properties.
 Update import-bearing predecessor tests and shared fixtures before deletion,
 including `test_epistemic_admission.py`, `test_inference_bounds.py`,
 `test_learning_distinctions.py`, `test_query_engine.py`,
 `test_recursive_inference.py`, `test_restart_e2e.py`,
-`test_synonym_acquisition.py` and `tests/conftest.py`. Retained tests activated
-after R1 may still require later behavioral rewrites, but their modules must
-import and collect now.
-
+`test_synonym_acquisition.py` and `tests/conftest.py`.
 Frozen source-test bodies are immutable. Imports, fixtures and non-test helpers
 may change, but changing a frozen test requires a new exact node ID with literal
 metadata that supersedes the predecessor, preserves its assertion ref and does
@@ -1558,7 +1589,6 @@ the later admission active suite.
 **Files:**
 
 - Generate: `hybrid_mvp/artifacts/validation/runs/<run_ref>.json`
-- Generate: `hybrid_mvp/artifacts/validation/R1_ADMISSION_RECEIPT.json`
 - Append: `hybrid_mvp/governance/replay_status.jsonl`
 
 ### Step 1: Keep structural proof inside admission

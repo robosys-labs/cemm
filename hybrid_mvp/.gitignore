@@ -1,5 +1,7 @@
 __pycache__/
 .pytest_cache/
+.test-tmp/
+.pytest-runtime/
 *.pyc
 *.pt
 build/

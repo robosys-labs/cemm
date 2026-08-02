@@ -1,0 +1,309 @@
+{
+  "limits": {
+    "max_output_bytes": 2097152,
+    "max_pytest_processes_per_tier": 1,
+    "max_report_bytes": 33554432,
+    "max_slowest_rows": 10,
+    "max_steps_per_tier": 4,
+    "pytest_timeout_seconds": 600,
+    "rss_poll_interval_ms": 25
+  },
+  "phases": {
+    "G0": {
+      "admission": [
+        "pytest_active"
+      ],
+      "owners": {
+        "governance": [
+          "g0_governance_tests"
+        ],
+        "validation-runner": [
+          "g0_validation_runner_tests"
+        ]
+      },
+      "phase": [
+        "g0_phase_tests"
+      ]
+    }
+  },
+  "schema": "cemm-hybrid-validation-gates-v1",
+  "steps": {
+    "g0_governance_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_replay_governance.py::test_admission_binding_stores_gate_and_exact_run_refs",
+        "tests/test_replay_governance.py::test_admission_git_identity_probes_reject_successful_stderr[head]",
+        "tests/test_replay_governance.py::test_admission_git_identity_probes_reject_successful_stderr[show]",
+        "tests/test_replay_governance.py::test_admission_git_probe_output_is_byte_bounded[stderr]",
+        "tests/test_replay_governance.py::test_admission_git_probe_output_is_byte_bounded[stdout]",
+        "tests/test_replay_governance.py::test_admission_git_probe_timeout_fails_closed",
+        "tests/test_replay_governance.py::test_admission_refs_require_exact_gate_and_run_namespaces",
+        "tests/test_replay_governance.py::test_admission_requires_passed_technical_steps_and_passes_passed_to_task4[externally-blocked]",
+        "tests/test_replay_governance.py::test_admission_requires_passed_technical_steps_and_passes_passed_to_task4[green]",
+        "tests/test_replay_governance.py::test_anchor_byte_tamper_is_rejected_by_document_authority",
+        "tests/test_replay_governance.py::test_append_lock_is_exclusive",
+        "tests/test_replay_governance.py::test_append_requires_reviewed_candidate_ref",
+        "tests/test_replay_governance.py::test_blob_size_is_checked_before_git_load",
+        "tests/test_replay_governance.py::test_bounded_git_io_cannot_deadlock_on_alternating_large_input_output",
+        "tests/test_replay_governance.py::test_bounded_git_io_rejects_oversized_input_before_process_start",
+        "tests/test_replay_governance.py::test_candidate_accepts_receipt_bound_to_current_source_and_status_head",
+        "tests/test_replay_governance.py::test_candidate_current_source_acceptance_invokes_verifier_once",
+        "tests/test_replay_governance.py::test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence",
+        "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[green]",
+        "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[red]",
+        "tests/test_replay_governance.py::test_candidate_rejects_alternate_embedded_config_after_exact_binding",
+        "tests/test_replay_governance.py::test_candidate_rejects_receipt_not_bound_to_current_ledger[predecessor]",
+        "tests/test_replay_governance.py::test_candidate_rejects_receipt_not_bound_to_current_ledger[source]",
+        "tests/test_replay_governance.py::test_cli_requires_exact_run_ref_and_exposes_no_latest_selector",
+        "tests/test_replay_governance.py::test_commit_graph_enforces_record_bound_and_follows_merge_parents",
+        "tests/test_replay_governance.py::test_commit_graph_load_is_single_and_bounded",
+        "tests/test_replay_governance.py::test_dirty_governed_inputs_allow_only_validated_evidence_paths",
+        "tests/test_replay_governance.py::test_dirty_hybrid_paths_rejects_successful_git_warning_stderr",
+        "tests/test_replay_governance.py::test_document_authority_cryptographically_pins_ledger_anchors",
+        "tests/test_replay_governance.py::test_document_authority_is_lf_normalized",
+        "tests/test_replay_governance.py::test_document_authority_is_scoped_and_classifications_are_exact",
+        "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix",
+        "tests/test_replay_governance.py::test_external_status_requires_green_predecessors_and_unique_dual_refs",
+        "tests/test_replay_governance.py::test_git_witness_process_count_is_constant_for_multiple_suffixes",
+        "tests/test_replay_governance.py::test_governance_import_does_not_load_torch",
+        "tests/test_replay_governance.py::test_governance_ledgers_are_lf_normalized_without_live_git_dependency",
+        "tests/test_replay_governance.py::test_governing_pointers_make_no_old_admission_claim",
+        "tests/test_replay_governance.py::test_hash_chain_has_small_external_bounds",
+        "tests/test_replay_governance.py::test_hash_chain_rejects_broken_predecessor_and_truncation",
+        "tests/test_replay_governance.py::test_hash_chain_rejects_duplicate_blank_noncanonical_and_nonfinite_rows",
+        "tests/test_replay_governance.py::test_hash_chain_uses_one_supplied_snapshot_for_all_governed_bytes",
+        "tests/test_replay_governance.py::test_historical_reconstruction_does_not_verify_current_source_config",
+        "tests/test_replay_governance.py::test_initial_replay_status_is_truthful_and_receipt_free",
+        "tests/test_replay_governance.py::test_invalidation_rejects_traversal_even_with_rehashed_record",
+        "tests/test_replay_governance.py::test_invalidation_subject_can_be_verified_from_supplied_snapshot",
+        "tests/test_replay_governance.py::test_invalidations_bind_six_unchanged_historical_files",
+        "tests/test_replay_governance.py::test_ledger_anchor_record_schema_must_be_a_strict_string",
+        "tests/test_replay_governance.py::test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing",
+        "tests/test_replay_governance.py::test_only_typed_admission_errors_are_wrapped",
+        "tests/test_replay_governance.py::test_owner_import_preflight_rejects_dirty_code_before_loading",
+        "tests/test_replay_governance.py::test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias",
+        "tests/test_replay_governance.py::test_post_write_callback_cannot_mutate_ledger_before_structural_verification",
+        "tests/test_replay_governance.py::test_post_write_failure_rolls_back_exact_prior_bytes",
+        "tests/test_replay_governance.py::test_post_write_reconstructs_all_admitted_rows_and_preserves_path_union",
+        "tests/test_replay_governance.py::test_receipt_mutation_between_candidate_and_write_rolls_back_exact_bytes",
+        "tests/test_replay_governance.py::test_red_candidate_without_prior_admissions_scans_dirty_status_once",
+        "tests/test_replay_governance.py::test_red_suffix_resets_green_descendants",
+        "tests/test_replay_governance.py::test_status_cli_derives_current_effective_status",
+        "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[gate-ref-type]",
+        "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[phase-type]",
+        "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[run-ref-type]",
+        "tests/test_replay_governance.py::test_status_enum_and_ref_types_fail_closed[status-type]",
+        "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[content]",
+        "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[extra]",
+        "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[missing]",
+        "tests/test_replay_governance.py::test_status_records_require_exact_typed_content_addressed_fields[wrong-type]",
+        "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[non-commit]",
+        "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[non-monotonic]",
+        "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[not-ancestor]",
+        "tests/test_replay_governance.py::test_suffix_git_witness_defects_fail_closed[wrong-prefix]",
+        "tests/test_replay_governance.py::test_suffix_transitions_reset_descendants_before_applying",
+        "tests/test_replay_governance.py::test_tensor_type_hints_resolve_without_loading_torch",
+        "tests/test_replay_governance.py::test_unavailable_admission_owner_is_injected_not_filesystem_dependent",
+        "tests/test_replay_governance.py::test_updater_rejects_swapped_gate_and_run_ref_namespaces",
+        "tests/test_replay_governance.py::test_verify_admitted_runs_rejects_receipt_ledger_binding_mismatch[predecessor]",
+        "tests/test_replay_governance.py::test_verify_admitted_runs_rejects_receipt_ledger_binding_mismatch[source]",
+        "tests/test_replay_governance.py::test_verify_chain_reconstructs_each_admitted_run",
+        "tests/test_test_inventory.py::test_callable_test_alias_cannot_evade_literal_metadata",
+        "tests/test_test_inventory.py::test_custom_fixture_named_decorator_cannot_hide_later_test",
+        "tests/test_test_inventory.py::test_due_rewrite_requires_every_conjunctive_contributing_successor",
+        "tests/test_test_inventory.py::test_dynamic_test_classes_are_rejected_before_static_enumeration",
+        "tests/test_test_inventory.py::test_frozen_ast_rejects_same_id_mutation_but_allows_unrelated_edits",
+        "tests/test_test_inventory.py::test_g0_defers_rewrites_and_excludes_non_executable_originals",
+        "tests/test_test_inventory.py::test_inventory_recomputes_identity_sets_and_declared_counts",
+        "tests/test_test_inventory.py::test_inventory_rejects_paths_that_escape_the_project_root",
+        "tests/test_test_inventory.py::test_later_parametrize_requires_literal_matching_safe_ids",
+        "tests/test_test_inventory.py::test_literal_metadata_rejects_duplicate_node_keys",
+        "tests/test_test_inventory.py::test_rebound_pytest_fixture_alias_cannot_hide_later_test",
+        "tests/test_test_inventory.py::test_reviewed_inventory_has_exact_predecessor_totals_and_g0_lifecycle",
+        "tests/test_test_inventory.py::test_source_only_verification_parses_each_module_once_without_heavy_paths",
+        "tests/test_test_inventory.py::test_source_scan_covers_default_pytest_file_and_function_patterns",
+        "tests/test_test_inventory.py::test_source_scan_requires_pinned_pytest_collection_contract",
+        "tests/test_test_inventory.py::test_strict_json_rejects_duplicate_object_keys",
+        "tests/test_test_inventory.py::test_strict_json_rejects_non_finite_numbers",
+        "tests/test_test_inventory.py::test_supersession_preserves_assertion_and_cannot_regress_phase",
+        "tests/test_test_inventory.py::test_supersession_rejects_duplicate_leaves_and_cycles",
+        "tests/test_test_inventory.py::test_valid_new_id_supersession_selects_exactly_one_lineage_leaf"
+      ],
+      "inputs": [
+        "docs/",
+        "governance/",
+        "scripts/update_replay_status.py",
+        "src/cemm_authoritative_hybrid/governance.py",
+        "tests/test_replay_governance.py",
+        "tests/test_test_inventory.py"
+      ],
+      "kind": "pytest"
+    },
+    "g0_phase_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_g0_integration.py::test_configured_selectors_equal_literal_inventory_roles",
+        "tests/test_g0_integration.py::test_each_executing_tier_has_one_pytest_process",
+        "tests/test_g0_integration.py::test_g0_admission_excludes_expensive_or_runtime_activation_steps",
+        "tests/test_g0_integration.py::test_g0_admission_plan_is_coalesced_and_bounded",
+        "tests/test_g0_integration.py::test_owner_and_phase_nodes_are_disjoint",
+        "tests/test_g0_integration.py::test_runtime_has_no_validation_import",
+        "tests/test_g0_integration.py::test_source_compile_avoids_duplicate_test_tree_parse",
+        "tests/test_g0_integration.py::test_validation_control_plane_import_leaves_runtime_and_torch_unloaded"
+      ],
+      "inputs": [
+        "configs/validation_gates.json",
+        "scripts/",
+        "src/cemm_authoritative_hybrid/__init__.py",
+        "src/cemm_authoritative_hybrid/runtime.py",
+        "tests/test_g0_integration.py"
+      ],
+      "kind": "pytest"
+    },
+    "g0_validation_runner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_lazy_package_imports.py::test_bare_package_import_and_dir_remain_lightweight",
+        "tests/test_lazy_package_imports.py::test_lazy_export_resolution_loads_only_its_owner_and_caches_value",
+        "tests/test_lazy_package_imports.py::test_package_preserves_exact_public_exports_and_resolves_each_one",
+        "tests/test_lazy_package_imports.py::test_unknown_package_attribute_fails_without_loading_exports",
+        "tests/test_pytest_gate_runner.py::test_admission_manifest_requires_active_subset_and_pinned_root",
+        "tests/test_pytest_gate_runner.py::test_admission_plugin_compares_full_collection_then_deselects_inactive",
+        "tests/test_pytest_gate_runner.py::test_bounded_text_contains_hostile_stringification_and_long_text",
+        "tests/test_pytest_gate_runner.py::test_collection_error_is_structured_without_nested_pytest",
+        "tests/test_pytest_gate_runner.py::test_collection_not_finished_has_bounded_diagnostic_row",
+        "tests/test_pytest_gate_runner.py::test_exact_manifest_is_strict_and_content_addressed",
+        "tests/test_pytest_gate_runner.py::test_exact_plugin_rejects_collection_mismatch_before_calls",
+        "tests/test_pytest_gate_runner.py::test_extreme_finite_duration_is_structured_infrastructure_error",
+        "tests/test_pytest_gate_runner.py::test_finalize_rejects_coercible_non_integer_exitstatus",
+        "tests/test_pytest_gate_runner.py::test_main_calls_pytest_once_with_manifest_targets_and_isolated_paths",
+        "tests/test_pytest_gate_runner.py::test_main_contains_arithmetic_failure_during_report_retry",
+        "tests/test_pytest_gate_runner.py::test_main_records_pytest_exception_as_infrastructure_error",
+        "tests/test_pytest_gate_runner.py::test_manifest_reader_caps_read_before_rejecting_oversize",
+        "tests/test_pytest_gate_runner.py::test_manifest_reader_rejects_empty_file",
+        "tests/test_pytest_gate_runner.py::test_manifest_rejects_noncanonical_shapes[duplicate-key]",
+        "tests/test_pytest_gate_runner.py::test_manifest_rejects_noncanonical_shapes[non-finite]",
+        "tests/test_pytest_gate_runner.py::test_manifest_rejects_noncanonical_shapes[unknown-field]",
+        "tests/test_pytest_gate_runner.py::test_manifest_rejects_noncanonical_shapes[unsafe-node]",
+        "tests/test_pytest_gate_runner.py::test_manifest_rejects_noncanonical_shapes[unsorted]",
+        "tests/test_pytest_gate_runner.py::test_report_classification_is_structural_and_bounded",
+        "tests/test_pytest_gate_runner.py::test_report_write_is_exclusive_and_content_addressed",
+        "tests/test_pytest_gate_runner.py::test_runner_import_boundary_is_stdlib_plus_pytest",
+        "tests/test_pytest_gate_runner.py::test_selected_skip_fails_governed_report",
+        "tests/test_pytest_gate_runner.py::test_selected_xfail_fails_governed_report",
+        "tests/test_validation_gate.py::test_bounded_process_capture_cleans_up_when_thread_start_fails",
+        "tests/test_validation_gate.py::test_bounded_process_capture_kills_descendants_after_parent_exit",
+        "tests/test_validation_gate.py::test_bounded_process_capture_preserves_fast_output",
+        "tests/test_validation_gate.py::test_bounded_process_capture_rejects_overflow_and_timeout",
+        "tests/test_validation_gate.py::test_canonical_json_rejects_nonfinite_values",
+        "tests/test_validation_gate.py::test_cli_rejects_legacy_profile",
+        "tests/test_validation_gate.py::test_committed_tree_parser_rejects_ambiguous_or_unsafe_records",
+        "tests/test_validation_gate.py::test_config_rejects_raw_selectors_and_owner_phase_overlap",
+        "tests/test_validation_gate.py::test_current_source_config_rejects_alternate_receipt_plan",
+        "tests/test_validation_gate.py::test_current_source_config_rejects_incomplete_input_manifest",
+        "tests/test_validation_gate.py::test_current_source_verifier_rejects_forged_admission_subset",
+        "tests/test_validation_gate.py::test_dag_deduplicates_shared_dependencies",
+        "tests/test_validation_gate.py::test_dag_rejects_cycles_and_unknown_dependencies",
+        "tests/test_validation_gate.py::test_every_test_tier_is_fresh_and_single_process",
+        "tests/test_validation_gate.py::test_g0_receipt_requires_exact_external_evidence_set",
+        "tests/test_validation_gate.py::test_git_snapshot_rejects_success_with_warning_stderr",
+        "tests/test_validation_gate.py::test_governance_step_uses_one_manifest_snapshot_for_all_governed_reads",
+        "tests/test_validation_gate.py::test_governance_step_validates_effective_status_semantics",
+        "tests/test_validation_gate.py::test_input_manifest_rejects_file_absent_from_source_commit",
+        "tests/test_validation_gate.py::test_isolated_environment_disables_external_pytest_plugins",
+        "tests/test_validation_gate.py::test_isolated_environment_owns_all_writable_paths",
+        "tests/test_validation_gate.py::test_missing_and_malformed_structured_reports_fail_closed",
+        "tests/test_validation_gate.py::test_observer_cleans_tree_when_instrumentation_raises",
+        "tests/test_validation_gate.py::test_observer_rechecks_output_after_parent_exit",
+        "tests/test_validation_gate.py::test_pytest_nonexecution_outcomes_are_nonpassing",
+        "tests/test_validation_gate.py::test_pytest_report_binds_selector_and_requires_canonical_bytes",
+        "tests/test_validation_gate.py::test_pytest_report_reconstructs_duration_aggregation_error",
+        "tests/test_validation_gate.py::test_pytest_report_rejects_self_inconsistent_facts_counts_and_collection",
+        "tests/test_validation_gate.py::test_pytest_report_requires_exact_reconstructible_producer_schema",
+        "tests/test_validation_gate.py::test_receipt_identity_and_exclusive_write",
+        "tests/test_validation_gate.py::test_receipt_verification_caches_fixed_evidence_per_pass",
+        "tests/test_validation_gate.py::test_receipt_writer_enforces_loader_size_bound",
+        "tests/test_validation_gate.py::test_runner_records_injected_peak_rss",
+        "tests/test_validation_gate.py::test_slowest_rows_are_bounded_and_sorted",
+        "tests/test_validation_gate.py::test_step_identity_excludes_observational_timing",
+        "tests/test_validation_gate.py::test_step_result_binds_pytest_report_to_observation_projection",
+        "tests/test_validation_gate.py::test_step_result_rejects_foreign_schema_or_unbound_selector",
+        "tests/test_validation_gate.py::test_step_result_rejects_unbound_or_downgraded_observations",
+        "tests/test_validation_gate.py::test_step_result_requires_exact_child_exit_for_observed_pytest_error",
+        "tests/test_validation_gate.py::test_strict_json_rejects_duplicate_keys_and_nonfinite",
+        "tests/test_validation_gate.py::test_timeout_requires_confirmed_process_tree_termination",
+        "tests/test_validation_gate.py::test_validation_run_root_cleanup_fails_closed",
+        "tests/test_validation_gate.py::test_validation_temp_parent_rejects_link_or_reparse_boundary",
+        "tests/test_validation_gate.py::test_verified_loader_rejects_ambiguous_or_misnamed_runs",
+        "tests/test_validation_gate.py::test_verified_loader_selects_exact_run_and_authenticates_evidence"
+      ],
+      "inputs": [
+        "configs/validation_gates.json",
+        "scripts/pytest_gate_runner.py",
+        "scripts/validation_gate.py",
+        "src/cemm_authoritative_hybrid/__init__.py",
+        "src/cemm_authoritative_hybrid/process_control.py",
+        "tests/test_lazy_package_imports.py",
+        "tests/test_pytest_gate_runner.py",
+        "tests/test_validation_gate.py"
+      ],
+      "kind": "pytest"
+    },
+    "governance": {
+      "depends_on": [],
+      "inputs": [
+        "docs/DOCUMENT_AUTHORITY.json",
+        "governance/ledger_anchors.json",
+        "governance/receipt_invalidations.jsonl",
+        "governance/replay_status.jsonl",
+        "governance/test_inventory.json",
+        "pyproject.toml",
+        "scripts/test_inventory_core.py",
+        "src/cemm_authoritative_hybrid/governance.py",
+        "tests/"
+      ],
+      "invalidation_ledger": "governance/receipt_invalidations.jsonl",
+      "kind": "governance",
+      "metadata_symbol": "__cemm_test_inventory__",
+      "status_ledger": "governance/replay_status.jsonl",
+      "test_inventory": "governance/test_inventory.json"
+    },
+    "pytest_active": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "inputs": [
+        "governance/test_inventory.json",
+        "pyproject.toml",
+        "scripts/pytest_gate_runner.py",
+        "scripts/test_inventory_core.py",
+        "src/",
+        "tests/"
+      ],
+      "kind": "pytest_inventory",
+      "metadata_symbol": "__cemm_test_inventory__",
+      "test_inventory": "governance/test_inventory.json",
+      "test_root": "tests"
+    },
+    "source_compile": {
+      "depends_on": [
+        "governance"
+      ],
+      "inputs": [
+        "scripts/",
+        "src/"
+      ],
+      "kind": "compile",
+      "roots": [
+        "scripts/",
+        "src/"
+      ]
+    }
+  }
+}

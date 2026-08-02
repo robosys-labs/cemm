@@ -1,39 +1,46 @@
-"""CEMM Authoritative Hybrid MVP — public API.
+"""CEMM Authoritative Hybrid MVP — lazily resolved public API.
 
-Exports the six-phase semantic kernel runtime, configuration, and supporting
-types.
+The package boundary stays lightweight so governance and validation tooling can
+import package metadata without initializing the semantic runtime. Public
+objects retain the same import locations and are cached after first access.
 """
 
-from .config import ABIRegistry, RuntimeConfig
-from .cycle import (
-    CycleResult,
-    CycleStatus,
-    KernelCycleResult,
-    Orientation,
-    PhaseReceipt,
-    SemanticMode,
-    SemanticPhase,
-)
-from .gaps import GapClassifier, GapReceipt, MissingOwner
-from .persistence import RevisionPin, SemanticStores, open_stores
-from .runtime import (
-    EffectOwner,
-    EffectResult,
-    EvaluationOwner,
-    EvaluationResult,
-    FixtureEffectOwner,
-    FixtureEvaluationOwner,
-    FixtureProposalOwner,
-    FixtureRealizationOwner,
-    FixtureVerificationOwner,
-    HybridRuntime,
-    ProposalOwner,
-    ProposalResult,
-    RealizationOwner,
-    RealizationResult,
-    VerificationOwner,
-    VerificationResult,
-)
+from importlib import import_module
+
+
+_EXPORTS = {
+    "ABIRegistry": (".config", "ABIRegistry"),
+    "CycleResult": (".cycle", "CycleResult"),
+    "CycleStatus": (".cycle", "CycleStatus"),
+    "EffectOwner": (".runtime", "EffectOwner"),
+    "EffectResult": (".runtime", "EffectResult"),
+    "EvaluationOwner": (".runtime", "EvaluationOwner"),
+    "EvaluationResult": (".runtime", "EvaluationResult"),
+    "FixtureEffectOwner": (".runtime", "FixtureEffectOwner"),
+    "FixtureEvaluationOwner": (".runtime", "FixtureEvaluationOwner"),
+    "FixtureProposalOwner": (".runtime", "FixtureProposalOwner"),
+    "FixtureRealizationOwner": (".runtime", "FixtureRealizationOwner"),
+    "FixtureVerificationOwner": (".runtime", "FixtureVerificationOwner"),
+    "GapClassifier": (".gaps", "GapClassifier"),
+    "GapReceipt": (".gaps", "GapReceipt"),
+    "HybridRuntime": (".runtime", "HybridRuntime"),
+    "KernelCycleResult": (".cycle", "KernelCycleResult"),
+    "MissingOwner": (".gaps", "MissingOwner"),
+    "Orientation": (".cycle", "Orientation"),
+    "PhaseReceipt": (".cycle", "PhaseReceipt"),
+    "ProposalOwner": (".runtime", "ProposalOwner"),
+    "ProposalResult": (".runtime", "ProposalResult"),
+    "RealizationOwner": (".runtime", "RealizationOwner"),
+    "RealizationResult": (".runtime", "RealizationResult"),
+    "RevisionPin": (".persistence", "RevisionPin"),
+    "RuntimeConfig": (".config", "RuntimeConfig"),
+    "SemanticMode": (".cycle", "SemanticMode"),
+    "SemanticPhase": (".cycle", "SemanticPhase"),
+    "SemanticStores": (".persistence", "SemanticStores"),
+    "VerificationOwner": (".runtime", "VerificationOwner"),
+    "VerificationResult": (".runtime", "VerificationResult"),
+    "open_stores": (".persistence", "open_stores"),
+}
 
 __all__ = [
     "ABIRegistry",
@@ -68,3 +75,24 @@ __all__ = [
     "VerificationResult",
     "open_stores",
 ]
+
+
+def __getattr__(name: str) -> object:
+    """Resolve and cache one declared public export on first access."""
+
+    try:
+        module_name, attribute_name = _EXPORTS[name]
+    except KeyError:
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r}"
+        ) from None
+
+    value = getattr(import_module(module_name, __name__), attribute_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Expose declared lazy exports without resolving them."""
+
+    return sorted(set(globals()) | set(__all__))

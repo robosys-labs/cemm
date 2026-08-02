@@ -17,10 +17,12 @@
 ## Governing decision
 
 The approved design is
-`hybrid_mvp/docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`.
+`hybrid_mvp/docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`,
+as amended by the higher-priority
+`hybrid_mvp/docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md`.
 
-It and the detailed replay plans supersede conflicting execution and status
-claims in:
+The amendment, design and detailed replay plans supersede conflicting execution
+and status claims in:
 
 - `hybrid_mvp/docs/superpowers/plans/2026-07-29-authoritative-mvp-master-roadmap.md`;
 - the July 29 M1-M5 plans;
@@ -42,10 +44,10 @@ this plan.
 G0 governance + forensic inventory + executable validation
  |
  v
-R1 canonical identities + receipts + one ABI/path
+R1 Program ABI 2 + Semantic Expression ABI 1 + compiler + one path
  |
  v
-R2 reversible evidence + bounded ProposalContext + recursive composition
+R2 reversible evidence + bounded ProposalContext + authentic recursive composition
  |
  v
 R3 exact decision + proof + effect + learning + response + activation
@@ -182,12 +184,15 @@ migration.
    - G0 document/status authority, artifact quarantine, test inventory and the
      dependency-aware gate runner.
    - R1 canonical revision/program/proposal/verification/phase/cycle identities,
-     one public runtime path, one composition root and R1 activation proof.
+     Program ABI 2, Semantic Expression ABI 1, total compiler, Verified Meaning
+     ABI 1, one public runtime path and R1 activation proof. Later-owner behavior
+     remains a typed gap rather than evaluating a raw program.
 
 2. `2026-08-01-hybrid-mvp-r2-composition-verification-plan.md`
    - Written only after G0-R1 admission evidence exists.
    - One source-span coordinate system, bounded immutable ProposalContext,
-     recursive action construction and independent exact reconstruction.
+     recursive multi-root action construction, independent program-to-expression
+     proof and expression-grouped ambiguity.
 
 3. `2026-08-02-hybrid-mvp-r3-cognition-activation-plan.md`
    - Written only after R2 admission.

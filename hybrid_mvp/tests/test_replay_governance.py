@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
+    "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
     "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
     "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
@@ -73,7 +74,47 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "cd85c5d6af670fd72f5260bd3ba077845c405a918d77c928535edfbc2411e541"
+        "source_ast_sha256": "9425ee7aa3fef60bf053bf870203aa24cfbe9fa9f9edf6095ccd48c027eae806"
+    },
+    "tests/test_replay_governance.py::test_admission_git_identity_probes_reject_successful_stderr[head]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-admission-git-probes-reject-stderr-head",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d9fa8acc0d7434fcd64ccbe1583f61fa0719a56d7f62379d604bd935c56dc931"
+    },
+    "tests/test_replay_governance.py::test_admission_git_identity_probes_reject_successful_stderr[show]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-admission-git-probes-reject-stderr-show",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d9fa8acc0d7434fcd64ccbe1583f61fa0719a56d7f62379d604bd935c56dc931"
+    },
+    "tests/test_replay_governance.py::test_admission_git_probe_output_is_byte_bounded[stderr]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-admission-git-output-bounded-stderr",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "4c2b0bee0034a3ea8a11191e4d39339bef3c1c2fd67b58efd71bac04dda0ddf9"
+    },
+    "tests/test_replay_governance.py::test_admission_git_probe_output_is_byte_bounded[stdout]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-admission-git-output-bounded-stdout",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "4c2b0bee0034a3ea8a11191e4d39339bef3c1c2fd67b58efd71bac04dda0ddf9"
+    },
+    "tests/test_replay_governance.py::test_admission_git_probe_timeout_fails_closed": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-admission-git-timeout-fails-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "15a1f4b3e91784c7f1fc1d767238ce0e3f4ca3cce2bfed0d9a6e4eec3c8e4c72"
     },
     "tests/test_replay_governance.py::test_admission_refs_require_exact_gate_and_run_namespaces": {
         "activation_phase": "G0",
@@ -89,7 +130,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "cabe0c6ce12e0dc44ebac1c5b68e83a4ad50610959317e643dfa89d536391974"
+        "source_ast_sha256": "2cc48bd02b292139e778f51cecbdffa35b4309bff093d78ae7c6340fadf1a70f"
     },
     "tests/test_replay_governance.py::test_admission_requires_passed_technical_steps_and_passes_passed_to_task4[green]": {
         "activation_phase": "G0",
@@ -97,7 +138,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "cabe0c6ce12e0dc44ebac1c5b68e83a4ad50610959317e643dfa89d536391974"
+        "source_ast_sha256": "2cc48bd02b292139e778f51cecbdffa35b4309bff093d78ae7c6340fadf1a70f"
     },
     "tests/test_replay_governance.py::test_anchor_byte_tamper_is_rejected_by_document_authority": {
         "activation_phase": "G0",
@@ -137,7 +178,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "4802fb7d254334591a13c640e68ac8cc89e953231508db5ec8e56065409b1004"
+        "source_ast_sha256": "84e5c09d339e6b506ebbb6f24564c6a5d8678ed75ccd3262c55d2872dd46fed5"
     },
     "tests/test_replay_governance.py::test_bounded_git_io_rejects_oversized_input_before_process_start": {
         "activation_phase": "G0",
@@ -145,7 +186,23 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "57e41e8fdebcb93f45cc5e0df3e921cf63ecc8a6c1849339c036ca545e10f72b"
+        "source_ast_sha256": "aae866dacae42693f182ffa694eead442bfb3d88ce0d675e05446b204a810d5f"
+    },
+    "tests/test_replay_governance.py::test_candidate_accepts_receipt_bound_to_current_source_and_status_head": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-accepts-receipt-bound-to-current-source-and-status-head",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "406366f815bfc7a6568cd30d00511ca621221cc91a69d3aa8da45da01c3e3eeb"
+    },
+    "tests/test_replay_governance.py::test_candidate_current_source_acceptance_invokes_verifier_once": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-current-source-acceptance-invokes-verifier-once",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c35d0e7a6904533fdf7f733217d33e5fa68c974a845b681016ab5e7e01bbd60f"
     },
     "tests/test_replay_governance.py::test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence": {
         "activation_phase": "G0",
@@ -153,7 +210,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "36b140517beb09b1ddb99d63e167afe912652bf93f606711d4e35abb78019ecf"
+        "source_ast_sha256": "2339dfa89ac4231e90089984be2669fd615e04bb45486eaf2c147d8590353e8d"
     },
     "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[green]": {
         "activation_phase": "G0",
@@ -161,7 +218,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "cd7c145d7eac22419e44ffbc71542f6abdcf6eb0516dd2a97a991a2c2001b14d"
+        "source_ast_sha256": "787f91971c2e3340915885efd6963f14e00fd891934cc16f1c2a1d8ff65e2d4d"
     },
     "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[red]": {
         "activation_phase": "G0",
@@ -169,7 +226,31 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "cd7c145d7eac22419e44ffbc71542f6abdcf6eb0516dd2a97a991a2c2001b14d"
+        "source_ast_sha256": "787f91971c2e3340915885efd6963f14e00fd891934cc16f1c2a1d8ff65e2d4d"
+    },
+    "tests/test_replay_governance.py::test_candidate_rejects_alternate_embedded_config_after_exact_binding": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-rejects-alternate-embedded-config-after-exact-binding",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "8a28e06a6a9b04ef2839eb9b6275e8710b3a35fc928de0c96130acfe0dfdfafb"
+    },
+    "tests/test_replay_governance.py::test_candidate_rejects_receipt_not_bound_to_current_ledger[predecessor]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-rejects-receipt-not-bound-to-current-ledger",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c0d6f213a47876fb753a28307d654e505867d5a84531bdad0592c7e3c8e0cdd6"
+    },
+    "tests/test_replay_governance.py::test_candidate_rejects_receipt_not_bound_to_current_ledger[source]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:candidate-rejects-receipt-not-bound-to-current-ledger",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c0d6f213a47876fb753a28307d654e505867d5a84531bdad0592c7e3c8e0cdd6"
     },
     "tests/test_replay_governance.py::test_cli_requires_exact_run_ref_and_exposes_no_latest_selector": {
         "activation_phase": "G0",
@@ -193,7 +274,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "6c5964d290a8a667eb0bdbaac7506d5f032ddea0d2d08ee34d0bd3bf3fa0baa4"
+        "source_ast_sha256": "73b8a5cd22fa81b7be2f70dcf54f83981cbb8becc106f3e145cf6a298db57903"
     },
     "tests/test_replay_governance.py::test_dirty_governed_inputs_allow_only_validated_evidence_paths": {
         "activation_phase": "G0",
@@ -201,7 +282,15 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "b06c03b9d68dc8349868551c5fbc583730167715d6e701659a8180fc94b8166f"
+        "source_ast_sha256": "00c22500bd127c3f02114e4eeaaca0d5f004bfca4b53dd7917334aa4013deb12"
+    },
+    "tests/test_replay_governance.py::test_dirty_hybrid_paths_rejects_successful_git_warning_stderr": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governance-dirty-paths-reject-git-warning",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "89618c3b5c022c5b589de5f89c71220d4e8dfec3b956bccf42eae284ce1f6d95"
     },
     "tests/test_replay_governance.py::test_document_authority_cryptographically_pins_ledger_anchors": {
         "activation_phase": "G0",
@@ -225,7 +314,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "3e7eae63222daa6bf989f558d4fa98ae0ed3059f4e530788e24cc728caa6db21"
+        "source_ast_sha256": "3b123c5d608b9e17d3c0c51d720edc8a5ee3de42e07b47d2dcfd4143c642b9a6"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -299,6 +388,22 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "93a67abc15dd8c0eb8c604b997de3bc9acffcacf30d8e281e0b51590e8425e57"
     },
+    "tests/test_replay_governance.py::test_hash_chain_uses_one_supplied_snapshot_for_all_governed_bytes": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:hash-chain-uses-supplied-governed-snapshot",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c9b97c7b430f6b0e59ca33abcef7e266eb911752706c7a766968ce6fb9b999d9"
+    },
+    "tests/test_replay_governance.py::test_historical_reconstruction_does_not_verify_current_source_config": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:historical-reconstruction-does-not-verify-current-source-config",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "47d2ad33dd9407c0b3b6151bd4fd14bc0adca0b7f36cea0af843584d38086f3e"
+    },
     "tests/test_replay_governance.py::test_initial_replay_status_is_truthful_and_receipt_free": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:initial-replay-status-is-truthful-and-receipt-free",
@@ -314,6 +419,14 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
         "source_ast_sha256": "3a2c79df61c07bf130fa17ae6ef7ee4fd500931089942c1e7c90f96b1023142e"
+    },
+    "tests/test_replay_governance.py::test_invalidation_subject_can_be_verified_from_supplied_snapshot": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:invalidation-verifies-subject-from-snapshot",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "37a42931cd4203f1259290bd9222ef5f4d53c3ece04f4af6c113f5011fa28a78"
     },
     "tests/test_replay_governance.py::test_invalidations_bind_six_unchanged_historical_files": {
         "activation_phase": "G0",
@@ -337,7 +450,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "0b8d07913a9f47204b1ecbe80f6ab9b5c5cd4d87f0b7a303823ef89999d5fa49"
+        "source_ast_sha256": "80e36b18e15787bedb6e663f76d53514ee7290c79bab1949042ea0d748439f6e"
     },
     "tests/test_replay_governance.py::test_only_typed_admission_errors_are_wrapped": {
         "activation_phase": "G0",
@@ -345,7 +458,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "c6a7fcb14cd6440c70fe66a671403f17575c56fa60f20d96ee8a88e7d8c88ef7"
+        "source_ast_sha256": "0ae67dbaddfa991d5b9bbb83e4577f0d0662f8d9e806f383ffc2a0cc959793bd"
     },
     "tests/test_replay_governance.py::test_owner_import_preflight_rejects_dirty_code_before_loading": {
         "activation_phase": "G0",
@@ -361,7 +474,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "09a63d7b66581f6bb52fb5b6ce58a6975ba915f99800a915743e6fef7407e290"
+        "source_ast_sha256": "ccf7436dce416a01295caa8f762a0fccb861767e41b48119b290609ec7852baf"
     },
     "tests/test_replay_governance.py::test_post_write_callback_cannot_mutate_ledger_before_structural_verification": {
         "activation_phase": "G0",
@@ -385,7 +498,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "a13b37bd08d812350de85278d7dbbaae9a5608e11bfca2bcac123a98ffc90c89"
+        "source_ast_sha256": "6a03bab99dc8f184c595f516da68974dac7037eb544d2810b5ee9b3d04995a36"
     },
     "tests/test_replay_governance.py::test_receipt_mutation_between_candidate_and_write_rolls_back_exact_bytes": {
         "activation_phase": "G0",
@@ -393,7 +506,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "56157ba0a6172229f6854e68f39ccb6534d672d0840f2e7352546d7e635620b1"
+        "source_ast_sha256": "fb7309e4eb1a59e8540ea67f1c3fe9c1a61474777e391b3e54ae409493e55078"
     },
     "tests/test_replay_governance.py::test_red_candidate_without_prior_admissions_scans_dirty_status_once": {
         "activation_phase": "G0",
@@ -545,7 +658,23 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "8632b86b48b44aef2856e59b3220418ad689a06981fdad3a521373d485acdf2a"
+        "source_ast_sha256": "caaa50a48247163abda98fcfe2c6dc419ed5ae1b1581ca913aee469752f3c401"
+    },
+    "tests/test_replay_governance.py::test_verify_admitted_runs_rejects_receipt_ledger_binding_mismatch[predecessor]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:verify-admitted-runs-rejects-receipt-ledger-binding-mismatch",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "ade72a29a461a56b5206eb7b08862736c6c5e8450871976824c800874d50d25e"
+    },
+    "tests/test_replay_governance.py::test_verify_admitted_runs_rejects_receipt_ledger_binding_mismatch[source]": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:verify-admitted-runs-rejects-receipt-ledger-binding-mismatch",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "G0-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "ade72a29a461a56b5206eb7b08862736c6c5e8450871976824c800874d50d25e"
     },
     "tests/test_replay_governance.py::test_verify_chain_reconstructs_each_admitted_run": {
         "activation_phase": "G0",
@@ -553,10 +682,9 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "29bd42a9baf306e6fea32ad4ae8b63a4eabf88197af78ab304893aca69c00937"
+        "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
     }
 }
-
 
 def _authority() -> dict[str, object]:
     return json.loads(
@@ -578,6 +706,13 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert authority["historical_evidence"] == list(HISTORICAL_EVIDENCE)
     assert authority["generated_artifacts_are_authority"] is False
     assert authority["root_adoption_requires_separate_review"] is True
+
+    amendment = (ROOT / GOVERNING_DOCUMENTS[1]).read_text(encoding="utf-8")
+    assert "SemanticSwitchProgram" in amendment
+    assert "SemanticExpression" in amendment
+    assert "VerifiedMeaning" in amendment
+    assert "does not reactivate superseded July-29" in amendment
+    assert "root adoption" in amendment.casefold()
 
     classifications = (
         set(GOVERNING_DOCUMENTS),
@@ -768,15 +903,44 @@ def _receipt(
     phase: str,
     gate_ref: str,
     run_ref: str,
+    prehead_ref: str | None = None,
+    source_ref: str = "a" * 40,
 ) -> SimpleNamespace:
+    if prehead_ref is None:
+        prehead_ref = str(
+            load_ledger_anchor(_ledger("replay_status.jsonl")).initial_head_ref
+        )
     return SimpleNamespace(
         gate_result_ref=gate_ref,
         run_ref=run_ref,
         phase=phase,
         tier="admission",
         fresh=True,
+        source_ref=source_ref,
+        pre_admission_status_head_ref=prehead_ref,
         step_results=(SimpleNamespace(disposition="passed"),),
     )
+
+
+def _receipt_for_admitted_run(
+    records: list[dict[str, object]], run_ref: str
+) -> SimpleNamespace:
+    matching = tuple(
+        record for record in records if record["admission_run_ref"] == run_ref
+    )
+    assert len(matching) == 1
+    record = matching[0]
+    return _receipt(
+        phase=str(record["phase"]),
+        gate_ref=str(record["admission_gate_result_ref"]),
+        run_ref=run_ref,
+        prehead_ref=str(record["predecessor_ref"]),
+        source_ref=str(record["source_base"]),
+    )
+
+
+def _accept_current_source_config(_root: Path, _receipt: object) -> None:
+    return None
 
 
 def test_initial_replay_status_is_truthful_and_receipt_free() -> None:
@@ -943,6 +1107,72 @@ def test_anchor_byte_tamper_is_rejected_by_document_authority(tmp_path: Path) ->
         load_ledger_anchor(root / "governance" / "replay_status.jsonl")
 
 
+def test_hash_chain_uses_one_supplied_snapshot_for_all_governed_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ledger_path = _ledger("replay_status.jsonl")
+    anchor_path = _ledger("ledger_anchors.json")
+    authority_path = ROOT / "docs" / "DOCUMENT_AUTHORITY.json"
+    expected_anchor = load_ledger_anchor(ledger_path)
+    snapshot = {
+        path.resolve(): path.read_bytes()
+        for path in (ledger_path, anchor_path, authority_path)
+    }
+    calls: list[Path] = []
+
+    def source_reader(path: Path) -> bytes:
+        resolved = path.resolve()
+        calls.append(resolved)
+        return snapshot[resolved]
+
+    original_read_bytes = Path.read_bytes
+
+    def reject_live_governed_read(path: Path) -> bytes:
+        if path.resolve() in snapshot:
+            raise AssertionError("governed bytes must come from the supplied snapshot")
+        return original_read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", reject_live_governed_read)
+    monkeypatch.setattr(
+        governance,
+        "_load_git_witnesses",
+        lambda _root, _path, _anchor_ref, _prefixes: (
+            expected_anchor.source_base,
+            {},
+        ),
+    )
+
+    records = read_hash_chain(ledger_path, source_reader=source_reader)
+
+    assert len(records) == expected_anchor.initial_count
+    assert calls == [
+        ledger_path.resolve(),
+        anchor_path.resolve(),
+        authority_path.resolve(),
+    ]
+
+
+def test_invalidation_subject_can_be_verified_from_supplied_snapshot(
+    tmp_path: Path,
+) -> None:
+    raw = b"authenticated historical receipt\n"
+    relative = "artifacts/validation/deleted-historical-receipt.json"
+    record = dict(read_hash_chain(_ledger("receipt_invalidations.jsonl"))[0])
+    record["subject"] = relative
+    record["subject_sha256"] = hashlib.sha256(raw).hexdigest()
+    record["record_ref"] = expected_record_ref(record)
+    requested: list[Path] = []
+
+    def source_reader(path: Path) -> bytes:
+        requested.append(path.resolve())
+        return raw
+
+    verify_file_invalidation(tmp_path, record, source_reader=source_reader)
+
+    assert requested == [(tmp_path / relative).resolve()]
+    assert not (tmp_path / relative).exists()
+
+
 def test_invalidation_rejects_traversal_even_with_rehashed_record() -> None:
     record = dict(read_hash_chain(_ledger("receipt_invalidations.jsonl"))[0])
     record["subject"] = "artifacts/../docs/DOCUMENT_AUTHORITY.json"
@@ -1091,6 +1321,121 @@ def test_status_cli_derives_current_effective_status() -> None:
         assert f"{phase}={status}" in completed.stdout
 
 
+def test_dirty_hybrid_paths_rejects_successful_git_warning_stderr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def capture(command, **kwargs):
+        calls.append((command, kwargs))
+        return SimpleNamespace(
+            returncode=0,
+            stdout=b"",
+            stderr=(
+                b"warning: could not open directory "
+                b"'hybrid_mvp/.pytest-runtime/': Permission denied\n"
+            ),
+        )
+
+    monkeypatch.setattr(script, "capture_bounded_process", capture)
+
+    with pytest.raises(GovernanceError, match="cleanliness.*stderr"):
+        script._dirty_hybrid_paths()
+
+    assert len(calls) == 1
+    command, kwargs = calls[0]
+    assert command[:2] == ["git", "--no-replace-objects"]
+    assert kwargs["max_stdout_bytes"] == 4 * 1024 * 1024
+    assert kwargs["max_stderr_bytes"] == 4 * 1024 * 1024
+    assert kwargs["timeout_seconds"] == 60
+
+
+@pytest.mark.parametrize(
+    ("probe", "stdout", "message"),
+    (
+        ("head", b"a" * 40 + b"\n", "source_base.*stderr"),
+        ("show", b"prior\n", "committed prior-head.*stderr"),
+    ),
+    ids=("head", "show"),
+)
+def test_admission_git_identity_probes_reject_successful_stderr(
+    monkeypatch: pytest.MonkeyPatch,
+    probe: str,
+    stdout: bytes,
+    message: str,
+) -> None:
+    script = _load_update_script()
+    calls: list[list[str]] = []
+
+    def capture(command, **_kwargs):
+        calls.append(command)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=stdout,
+            stderr=b"warning: incomplete Git object access\n",
+        )
+
+    monkeypatch.setattr(script, "capture_bounded_process", capture)
+
+    with pytest.raises(GovernanceError, match=message):
+        if probe == "head":
+            script._git_head()
+        else:
+            script._committed_status_bytes("a" * 40)
+
+    assert len(calls) == 1
+    assert calls[0][:2] == ["git", "--no-replace-objects"]
+
+
+@pytest.mark.parametrize(
+    "stream",
+    ("stdout", "stderr"),
+    ids=("stdout", "stderr"),
+)
+def test_admission_git_probe_output_is_byte_bounded(
+    monkeypatch: pytest.MonkeyPatch,
+    stream: str,
+) -> None:
+    script = _load_update_script()
+    error = script.ProcessControlError(
+        script._process_control.ProcessErrorReason.OUTPUT_LIMIT,
+        "bounded subprocess failed: output_limit",
+        stream=(
+            script._process_control.StreamName.STDOUT
+            if stream == "stdout"
+            else script._process_control.StreamName.STDERR
+        ),
+        termination_confirmed=True,
+    )
+    monkeypatch.setattr(
+        script,
+        "capture_bounded_process",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(error),
+    )
+
+    with pytest.raises(GovernanceError, match="Git cleanliness probe failed closed"):
+        script._dirty_hybrid_paths()
+
+
+def test_admission_git_probe_timeout_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    error = script.ProcessControlError(
+        script._process_control.ProcessErrorReason.TIMEOUT,
+        "bounded subprocess failed: timeout",
+        termination_confirmed=True,
+    )
+    monkeypatch.setattr(
+        script,
+        "capture_bounded_process",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(error),
+    )
+
+    with pytest.raises(GovernanceError, match="Git cleanliness probe failed closed"):
+        script._dirty_hybrid_paths()
+
 def test_unavailable_admission_owner_is_injected_not_filesystem_dependent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1122,16 +1467,25 @@ def test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence(
 ) -> None:
     script = _load_update_script()
     run_ref = "run:" + "1" * 24
+    exact_run = "artifacts/validation/runs/" + "1" * 24 + ".json"
     dirty = frozenset(
         {
-            "artifacts/validation/runs/" + "1" * 24 + ".json",
-            "artifacts/validation/G0_ADMISSION_RECEIPT.json",
+            exact_run,
             "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
             "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
         }
     )
     monkeypatch.setattr(script, "_dirty_hybrid_paths", lambda: dirty)
     script._preflight_owner_import("G0", run_ref)
+
+    dirty_with_projection = dirty | {
+        "artifacts/validation/G0_ADMISSION_RECEIPT.json"
+    }
+    monkeypatch.setattr(
+        script, "_dirty_hybrid_paths", lambda: dirty_with_projection
+    )
+    with pytest.raises(GovernanceError, match="dirty governed input"):
+        script._preflight_owner_import("G0", run_ref)
 
 
 def test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias(
@@ -1146,7 +1500,11 @@ def test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias(
         "class AdmissionValidationError(Exception):\n"
         "    pass\n"
         "def load_verified_admission_receipt(**kwargs):\n"
-        "    return kwargs\n",
+        "    return kwargs\n"
+        "def verify_current_source_config(root, receipt):\n"
+        "    return None\n"
+        "def reset_admission_verification_cache():\n"
+        "    return None\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(script, "ROOT", tmp_path)
@@ -1154,16 +1512,25 @@ def test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias(
     monkeypatch.setitem(sys.modules, "validation_gate", SimpleNamespace(
         AdmissionValidationError=Exception,
         load_verified_admission_receipt=lambda **_kwargs: None,
+        verify_current_source_config=lambda _root, _receipt: None,
     ))
     owner = script._load_admission_owner(
         phase="G0", run_ref="run:" + "1" * 24
     )
     assert Path(owner.loader.__code__.co_filename).resolve() == gate_path.resolve()
+    assert (
+        Path(owner.current_source_config_verifier.__code__.co_filename).resolve()
+        == gate_path.resolve()
+    )
 
     gate_path.write_text(
         "AdmissionValidationError = ValueError\n"
         "def load_verified_admission_receipt(**kwargs):\n"
-        "    return kwargs\n",
+        "    return kwargs\n"
+        "def verify_current_source_config(root, receipt):\n"
+        "    return None\n"
+        "def reset_admission_verification_cache():\n"
+        "    return None\n",
         encoding="utf-8",
     )
     with pytest.raises(TypeError, match="AdmissionValidationError"):
@@ -1182,14 +1549,18 @@ def test_only_typed_admission_errors_are_wrapped() -> None:
     def typed_failure(**_kwargs):
         raise AdmissionValidationError("bad receipt")
 
-    owner = script.AdmissionOwner(AdmissionValidationError, typed_failure)
+    owner = script.AdmissionOwner(
+        AdmissionValidationError, typed_failure, _accept_current_source_config
+    )
     with pytest.raises(GovernanceError, match="admission receipt was rejected"):
         script._validated_admission("G0", "green", run_ref=run_ref, owner=owner)
 
     def programming_failure(**_kwargs):
         raise RuntimeError("implementation defect")
 
-    owner = script.AdmissionOwner(AdmissionValidationError, programming_failure)
+    owner = script.AdmissionOwner(
+        AdmissionValidationError, programming_failure, _accept_current_source_config
+    )
     with pytest.raises(RuntimeError, match="implementation defect"):
         script._validated_admission("G0", "green", run_ref=run_ref, owner=owner)
 
@@ -1212,7 +1583,7 @@ def test_admission_requires_passed_technical_steps_and_passes_passed_to_task4(
         expected_statuses.append(kwargs["expected_status"])
         return receipt, ()
 
-    owner = script.AdmissionOwner(ValueError, loader)
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
     with pytest.raises(GovernanceError, match="non-passed"):
         script._validated_admission(
             "G0", ledger_status, run_ref=run_ref, owner=owner
@@ -1227,7 +1598,11 @@ def test_updater_rejects_swapped_gate_and_run_ref_namespaces() -> None:
         gate_ref="run:" + "b" * 24,
         run_ref="gate_result:" + "b" * 24,
     )
-    owner = script.AdmissionOwner(ValueError, lambda **_kwargs: (receipt, ()))
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        _accept_current_source_config,
+    )
     with pytest.raises(TypeError, match="gate_result_ref"):
         script._validated_admission(
             "G0", "green", run_ref="run:" + "b" * 24, owner=owner
@@ -1240,11 +1615,12 @@ def test_admission_binding_stores_gate_and_exact_run_refs() -> None:
     receipt = _receipt(phase="G0", gate_ref=gate_ref, run_ref=run_ref)
     owner = script.AdmissionOwner(
         ValueError,
-        lambda **_kwargs: (receipt, ("artifacts/validation/runs/current.json",)),
+        lambda **_kwargs: (receipt, ("artifacts/validation/runs/cccccccccccccccccccccccc.json",)),
+        _accept_current_source_config,
     )
     validated, paths = script._validated_admission("G0", "green", run_ref=run_ref, owner=owner)
     assert validated is receipt
-    assert paths == ("artifacts/validation/runs/current.json",)
+    assert paths == ("artifacts/validation/runs/cccccccccccccccccccccccc.json",)
     record = governance.make_status_record(
         _initial_status_records(),
         source_base="a" * 40,
@@ -1269,12 +1645,302 @@ def test_verify_chain_reconstructs_each_admitted_run() -> None:
         calls.append(kwargs["run_ref"])
         return (_receipt(phase="G0", gate_ref=gate_ref, run_ref=run_ref), ())
 
-    owner = script.AdmissionOwner(ValueError, loader)
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
     script._verify_admitted_runs(records, owner=owner)
     assert calls == [run_ref]
 
 
+def test_historical_reconstruction_does_not_verify_current_source_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    gate_ref, run_ref = "gate_result:" + "4" * 24, "run:" + "4" * 24
+    _append_status(
+        records,
+        phase="G0",
+        status="green",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+    )
+    receipt = _receipt_for_admitted_run(records, run_ref)
+    verifier_calls = 0
 
+    def forbidden_current_config_check(_root: Path, _receipt: object) -> None:
+        nonlocal verifier_calls
+        verifier_calls += 1
+        raise AssertionError("historical reconstruction used current source config")
+
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        forbidden_current_config_check,
+    )
+
+    script._verify_admitted_runs(records, owner=owner)
+    monkeypatch.setattr(
+        script,
+        "read_hash_chain",
+        lambda path: records if path == script.STATUS_LEDGER else [],
+    )
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", frozenset)
+    status, invalidation_count = script.verify_chains(owner=owner)
+    callback = script._make_post_write_validator(
+        records=records,
+        evidence_paths=(),
+        source_base="a" * 40,
+        prior_bytes=b"prior\n",
+        owner=owner,
+        dirty_loader=lambda: frozenset({"governance/replay_status.jsonl"}),
+        head_loader=lambda: "a" * 40,
+        committed_loader=lambda _source_base: b"prior\n",
+        require_evidence_files=False,
+    )
+    callback()
+
+    assert status["G0"] == "green"
+    assert invalidation_count == 0
+    assert verifier_calls == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "mismatch", "message"),
+    (
+        (
+            "pre_admission_status_head_ref",
+            "governance_record:" + "e" * 24,
+            "predecessor binding mismatch",
+        ),
+        ("source_ref", "b" * 40, "source binding mismatch"),
+    ),
+    ids=("predecessor", "source"),
+)
+def test_verify_admitted_runs_rejects_receipt_ledger_binding_mismatch(
+    field: str,
+    mismatch: str,
+    message: str,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    gate_ref, run_ref = "gate_result:" + "8" * 24, "run:" + "8" * 24
+    record = _append_status(
+        records,
+        phase="G0",
+        status="green",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+    )
+    receipt = _receipt(
+        phase="G0",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+        prehead_ref=str(record["predecessor_ref"]),
+        source_ref=str(record["source_base"]),
+    )
+    setattr(receipt, field, mismatch)
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        _accept_current_source_config,
+    )
+
+    with pytest.raises(GovernanceError, match=message):
+        script._verify_admitted_runs(records, owner=owner)
+
+
+@pytest.mark.parametrize(
+    ("field", "mismatch", "message"),
+    (
+        (
+            "pre_admission_status_head_ref",
+            "governance_record:" + "f" * 24,
+            "predecessor binding mismatch",
+        ),
+        ("source_ref", "8" * 40, "source binding mismatch"),
+    ),
+    ids=("predecessor", "source"),
+)
+def test_candidate_rejects_receipt_not_bound_to_current_ledger(
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    mismatch: str,
+    message: str,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    source_base = "9" * 40
+    gate_ref, run_ref = "gate_result:" + "9" * 24, "run:" + "9" * 24
+    receipt = _receipt(
+        phase="G0",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+        prehead_ref=str(records[-1]["record_ref"]),
+        source_ref=source_base,
+    )
+    setattr(receipt, field, mismatch)
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        _accept_current_source_config,
+    )
+    monkeypatch.setattr(script, "read_hash_chain", lambda _path: records)
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", frozenset)
+    monkeypatch.setattr(script, "_load_admission_owner", lambda **_kwargs: owner)
+    monkeypatch.setattr(
+        script,
+        "_require_committed_current_prefix",
+        lambda: (source_base, b"prior\n"),
+    )
+
+    with pytest.raises(GovernanceError, match=message):
+        script._candidate(
+            SimpleNamespace(phase="G0", status="green", run_ref=run_ref)
+        )
+
+
+def test_candidate_accepts_receipt_bound_to_current_source_and_status_head(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    source_base = "7" * 40
+    gate_ref, run_ref = "gate_result:" + "7" * 24, "run:" + "7" * 24
+    receipt = _receipt(
+        phase="G0",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+        prehead_ref=str(records[-1]["record_ref"]),
+        source_ref=source_base,
+    )
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        _accept_current_source_config,
+    )
+    monkeypatch.setattr(script, "read_hash_chain", lambda _path: records)
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", frozenset)
+    monkeypatch.setattr(script, "_load_admission_owner", lambda **_kwargs: owner)
+    monkeypatch.setattr(
+        script,
+        "_require_committed_current_prefix",
+        lambda: (source_base, b"prior\n"),
+    )
+
+    record, prior_bytes, _post_write_validate = script._candidate(
+        SimpleNamespace(phase="G0", status="green", run_ref=run_ref)
+    )
+
+    assert prior_bytes == b"prior\n"
+    assert record["predecessor_ref"] == receipt.pre_admission_status_head_ref
+    assert record["source_base"] == receipt.source_ref
+    assert record["admission_gate_result_ref"] == gate_ref
+    assert record["admission_run_ref"] == run_ref
+    script._verify_admitted_runs(
+        (*records, record),
+        owner=owner,
+        require_evidence_files=False,
+    )
+
+
+def test_candidate_rejects_alternate_embedded_config_after_exact_binding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    source_base = "6" * 40
+    gate_ref, run_ref = "gate_result:" + "6" * 24, "run:" + "6" * 24
+    receipt = _receipt(
+        phase="G0",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+        prehead_ref=str(records[-1]["record_ref"]),
+        source_ref=source_base,
+    )
+    receipt.config_ref = "gate_config:" + "f" * 24
+    verification_calls: list[tuple[Path, object]] = []
+    dirty_scans = 0
+
+    class AdmissionValidationError(Exception):
+        pass
+
+    def reject_alternate_config(root: Path, candidate: object) -> None:
+        verification_calls.append((root, candidate))
+        raise AdmissionValidationError("receipt embeds an alternate config")
+
+    def dirty_paths() -> frozenset[str]:
+        nonlocal dirty_scans
+        dirty_scans += 1
+        return frozenset()
+
+    owner = script.AdmissionOwner(
+        AdmissionValidationError,
+        lambda **_kwargs: (receipt, ()),
+        reject_alternate_config,
+    )
+    monkeypatch.setattr(script, "read_hash_chain", lambda _path: records)
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", dirty_paths)
+    monkeypatch.setattr(script, "_load_admission_owner", lambda **_kwargs: owner)
+    monkeypatch.setattr(
+        script,
+        "_require_committed_current_prefix",
+        lambda: (source_base, b"prior\n"),
+    )
+
+    with pytest.raises(GovernanceError, match="source config was rejected"):
+        script._candidate(
+            SimpleNamespace(phase="G0", status="green", run_ref=run_ref)
+        )
+
+    assert verification_calls == [(script.ROOT, receipt)]
+    assert dirty_scans == 1
+
+
+def test_candidate_current_source_acceptance_invokes_verifier_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    source_base = "5" * 40
+    gate_ref, run_ref = "gate_result:" + "5" * 24, "run:" + "5" * 24
+    receipt = _receipt(
+        phase="G0",
+        gate_ref=gate_ref,
+        run_ref=run_ref,
+        prehead_ref=str(records[-1]["record_ref"]),
+        source_ref=source_base,
+    )
+    verification_calls: list[tuple[Path, object]] = []
+    dirty_scans = 0
+
+    def verify_current(root: Path, candidate: object) -> None:
+        verification_calls.append((root, candidate))
+
+    def dirty_paths() -> frozenset[str]:
+        nonlocal dirty_scans
+        dirty_scans += 1
+        return frozenset()
+
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, ()),
+        verify_current,
+    )
+    monkeypatch.setattr(script, "read_hash_chain", lambda _path: records)
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", dirty_paths)
+    monkeypatch.setattr(script, "_load_admission_owner", lambda **_kwargs: owner)
+    monkeypatch.setattr(
+        script,
+        "_require_committed_current_prefix",
+        lambda: (source_base, b"prior\n"),
+    )
+
+    record, _prior_bytes, _post_write_validate = script._candidate(
+        SimpleNamespace(phase="G0", status="green", run_ref=run_ref)
+    )
+
+    assert record["source_base"] == source_base
+    assert verification_calls == [(script.ROOT, receipt)]
+    assert dirty_scans == 1
 
 def test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing(
     monkeypatch: pytest.MonkeyPatch,
@@ -1297,22 +1963,18 @@ def test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing(
     paths_by_phase = {
         "G0": (
             "artifacts/validation/runs/" + "2" * 24 + ".json",
-            "artifacts/validation/G0_ADMISSION_RECEIPT.json",
         ),
         "R1": (
             "artifacts/validation/runs/" + "3" * 24 + ".json",
-            "artifacts/validation/R1_ADMISSION_RECEIPT.json",
         ),
     }
 
     def loader(**kwargs):
         phase = kwargs["phase"]
-        gate_ref, run_ref = (
-            (g_gate, g_run) if phase == "G0" else (r_gate, r_run)
-        )
-        return _receipt(phase=phase, gate_ref=gate_ref, run_ref=run_ref), paths_by_phase[phase]
+        run_ref = g_run if phase == "G0" else r_run
+        return _receipt_for_admitted_run(records, run_ref), paths_by_phase[phase]
 
-    owner = script.AdmissionOwner(ValueError, loader)
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
     dirty = frozenset(
         {
             *paths_by_phase["G0"],
@@ -1356,10 +2018,9 @@ def test_post_write_reconstructs_all_admitted_rows_and_preserves_path_union() ->
     def loader(**kwargs):
         run_ref = kwargs["run_ref"]
         calls.append(run_ref)
-        phase, gate_ref = ("G0", g_gate) if run_ref == g_run else ("R1", r_gate)
-        return _receipt(phase=phase, gate_ref=gate_ref, run_ref=run_ref), paths_by_run[run_ref]
+        return _receipt_for_admitted_run(records, run_ref), paths_by_run[run_ref]
 
-    owner = script.AdmissionOwner(ValueError, loader)
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
     allowed = tuple(sorted((*paths_by_run[g_run], *paths_by_run[r_run])))
     callback = script._make_post_write_validator(
         records=records,
@@ -1409,7 +2070,9 @@ def test_candidate_reconstructs_prior_admissions_before_any_transition(
                 raise ValueError("prior receipt is no longer valid")
             raise AssertionError("new receipt must not be read after prior rejection")
 
-        return script.AdmissionOwner(ValueError, reject_prior)
+        return script.AdmissionOwner(
+            ValueError, reject_prior, _accept_current_source_config
+        )
 
     monkeypatch.setattr(script, "read_hash_chain", lambda _path: records)
     monkeypatch.setattr(script, "_dirty_hybrid_paths", frozenset)
@@ -1482,12 +2145,12 @@ def test_append_requires_reviewed_candidate_ref() -> None:
 def test_dirty_governed_inputs_allow_only_validated_evidence_paths(tmp_path: Path) -> None:
     script = _load_update_script()
     allowed = script._normalize_allowed_evidence_paths(
-        ("artifacts/validation/runs/current.json",),
+        ("artifacts/validation/runs/cccccccccccccccccccccccc.json",),
         root=tmp_path,
         require_files=False,
     )
     script._reject_dirty_governed_inputs(
-        {"artifacts/validation/runs/current.json"}, allowed
+        {"artifacts/validation/runs/cccccccccccccccccccccccc.json"}, allowed
     )
     with pytest.raises(GovernanceError, match="dirty governed input"):
         script._reject_dirty_governed_inputs({"src/runtime.py"}, allowed)
@@ -1563,7 +2226,11 @@ def test_receipt_mutation_between_candidate_and_write_rolls_back_exact_bytes(
     gate_ref, run_ref = "gate_result:" + "f" * 24, "run:" + "f" * 24
     receipt = _receipt(phase="G0", gate_ref=gate_ref, run_ref=run_ref)
     evidence_paths = ("artifacts/validation/runs/" + "f" * 24 + ".json",)
-    owner = script.AdmissionOwner(ValueError, lambda **_kwargs: (receipt, evidence_paths))
+    owner = script.AdmissionOwner(
+        ValueError,
+        lambda **_kwargs: (receipt, evidence_paths),
+        _accept_current_source_config,
+    )
     records = _initial_status_records()
     _append_status(
         records,
@@ -1619,6 +2286,12 @@ def test_bounded_git_io_cannot_deadlock_on_alternating_large_input_output() -> N
         input_bytes=payload,
     )
     assert output == payload
+    with pytest.raises(GovernanceError, match="failed closed"):
+        governance._run_bounded_git_stdout(
+            (sys.executable, "-c", "import time;time.sleep(10)"),
+            max_bytes=32,
+            timeout_seconds=1,
+        )
 
 
 def test_bounded_git_io_rejects_oversized_input_before_process_start(
@@ -1626,12 +2299,12 @@ def test_bounded_git_io_rejects_oversized_input_before_process_start(
 ) -> None:
     started = False
 
-    def popen(*_args, **_kwargs):
+    def capture(*_args, **_kwargs):
         nonlocal started
         started = True
         raise AssertionError("oversized input must be rejected before process start")
 
-    monkeypatch.setattr(governance.subprocess, "Popen", popen)
+    monkeypatch.setattr(governance, "capture_bounded_process", capture)
     with pytest.raises(GovernanceError, match="input exceeds its byte bound"):
         governance._run_bounded_git_stdout(
             ("git", "cat-file", "--batch-check"),
@@ -1672,8 +2345,11 @@ def test_commit_graph_load_is_single_and_bounded(monkeypatch: pytest.MonkeyPatch
         calls.append((tuple(command), max_bytes))
         return f"{head} {parent}\n{parent} {root}\n{root}\n".encode("ascii")
 
+    governance._reset_commit_graph_cache()
     monkeypatch.setattr(governance, "_run_bounded_git_stdout", bounded)
     graph = governance._git_load_commit_graph(ROOT.parent, head)
+    cached = governance._git_load_commit_graph(ROOT.parent, head)
+    assert cached is graph
     assert len(calls) == 1
     assert "rev-list" in calls[0][0]
     assert calls[0][1] == governance.MAX_COMMIT_GRAPH_BYTES
@@ -1682,6 +2358,12 @@ def test_commit_graph_load_is_single_and_bounded(monkeypatch: pytest.MonkeyPatch
     oversized = b"a" * (governance.MAX_COMMIT_GRAPH_BYTES + 1)
     with pytest.raises(GovernanceError, match="byte bound"):
         governance._parse_commit_graph(oversized, head)
+
+    governance._reset_commit_graph_cache()
+    for index in range(governance._MAX_COMMIT_GRAPH_CACHE_ENTRIES + 1):
+        identity = f"{index + 1:040x}"
+        governance._git_load_commit_graph(ROOT.parent, identity, identity)
+    assert len(governance._COMMIT_GRAPH_CACHE) == governance._MAX_COMMIT_GRAPH_CACHE_ENTRIES
 
 
 def test_commit_graph_enforces_record_bound_and_follows_merge_parents() -> None:
