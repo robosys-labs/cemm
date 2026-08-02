@@ -240,6 +240,364 @@ def _text(value: object, context: str) -> str:
     return value
 
 
+_G0_BASELINE_SOURCE_REF = "58345240e67bf003e6ac7d5c68752e2e5eee4a7d"
+_G0_EVALUATION_PATH = "artifacts/evaluation/CEMM_EVALUATION.json"
+_G0_BASELINE_FIELDS = frozenset(
+    {
+        "baseline_source_ref", "commands", "environment", "evaluation_artifact",
+        "findings_ref", "model_artifacts_admitted", "predecessor_collection",
+        "quarantine", "runtime_admitted", "schema", "structural_findings",
+        "threshold_failures", "unadmitted_m4_probe",
+    }
+)
+_G0_FINDING_OWNERS = MappingProxyType(
+    {
+        "authority_eol_hash_divergence": "artifact_identity",
+        "bootstrap_programs_author_gold": "corpus_gold",
+        "marker_only_realization_equivalence": "realization_equivalence",
+        "pointer_source_anonymization_collapses_meaning": "evaluation_identity",
+        "program_as_meaning": "semantic_object_model",
+        "proposal_runtime_abi_divergence": "runtime_protocol",
+    }
+)
+_G0_REQUIRED_FINDINGS = frozenset(_G0_FINDING_OWNERS)
+_G0_QUARANTINED_DESCENDANTS = (
+    "calibration", "checkpoints", "corpus", "episodes", "evaluation",
+    "model_metadata", "partitions",
+)
+
+
+def _with_content_ref(kind: str, field: str, payload: Mapping[str, object]) -> dict[str, object]:
+    material = dict(payload)
+    material[field] = content_ref(kind, payload)
+    return material
+
+
+def _validate_g0_baseline_findings(
+    value: object, *, baseline_source_ref: str
+) -> None:
+    item = _exact_fields(value, _G0_BASELINE_FIELDS, "G0 baseline findings")
+    if item["schema"] != "cemm-hybrid-baseline-replay-findings-v1":
+        raise GateConfigError("G0 baseline findings schema is invalid")
+    identity = dict(item)
+    findings_ref = identity.pop("findings_ref")
+    if findings_ref != content_ref("baseline_replay_findings", identity):
+        raise GateConfigError("G0 baseline findings identity is invalid")
+    if (
+        baseline_source_ref != _G0_BASELINE_SOURCE_REF
+        or item["baseline_source_ref"] != _G0_BASELINE_SOURCE_REF
+    ):
+        raise GateConfigError("G0 baseline findings source differs from inventory")
+    if item["runtime_admitted"] is not False or item["model_artifacts_admitted"] is not False:
+        raise GateConfigError("G0 baseline evidence must not admit runtime or model artifacts")
+
+    environment = _exact_fields(
+        item["environment"],
+        frozenset({"python", "pytest_current", "pytest_inherited_lock"}),
+        "G0 baseline environment",
+    )
+    if environment != {
+        "python": "3.13.4",
+        "pytest_current": "9.0.2",
+        "pytest_inherited_lock": "8.4.0",
+    }:
+        raise GateConfigError("G0 baseline environment differs from reviewed evidence")
+    evaluation_artifact = _exact_fields(
+        item["evaluation_artifact"],
+        frozenset({"path", "sha256"}),
+        "G0 evaluation artifact",
+    )
+    if (
+        evaluation_artifact["path"] != _G0_EVALUATION_PATH
+        or type(evaluation_artifact["sha256"]) is not str
+        or _SHA256_RE.fullmatch(evaluation_artifact["sha256"]) is None
+    ):
+        raise GateConfigError("G0 evaluation artifact binding is invalid")
+    collection = _exact_fields(
+        item["predecessor_collection"],
+        frozenset({"case_count", "file_count", "source_test_count"}),
+        "G0 predecessor collection",
+    )
+    if collection != {"case_count": 743, "file_count": 59, "source_test_count": 632}:
+        raise GateConfigError("G0 predecessor collection differs from reviewed evidence")
+
+    commands = item["commands"]
+    if type(commands) is not list or len(commands) != 2:
+        raise GateConfigError("G0 baseline commands must contain the two exact reproductions")
+    normalized_commands: list[dict[str, object]] = []
+    for index, command in enumerate(commands):
+        row = _exact_fields(
+            command,
+            frozenset({"argv", "cwd", "observation_kind", "source_ref"}),
+            f"G0 baseline command {index}",
+        )
+        argv = row["argv"]
+        if type(argv) is not list or not argv:
+            raise GateConfigError("G0 baseline command argv must be non-empty")
+        normalized_commands.append(
+            {
+                "argv": [_text(value, f"G0 baseline command {index} argv") for value in argv],
+                "cwd": _text(row["cwd"], f"G0 baseline command {index} cwd"),
+                "observation_kind": row["observation_kind"],
+                "source_ref": row["source_ref"],
+            }
+        )
+    expected_commands = [
+        {
+            "argv": ["python", "-m", "pytest", "tests\\test_release_thresholds.py", "-q"],
+            "cwd": ".",
+            "observation_kind": "committed",
+            "source_ref": _G0_BASELINE_SOURCE_REF,
+        },
+        {
+            "argv": ["python", "_test_eval2.py"],
+            "cwd": "C:\\Users\\Son\\Downloads\\cemm_authoritative_hybrid_mvp_implementation",
+            "observation_kind": "operator_reported",
+            "source_ref": None,
+        },
+    ]
+    if normalized_commands != expected_commands:
+        raise GateConfigError("G0 baseline commands differ from reviewed reproductions")
+
+    failures = _exact_fields(
+        item["threshold_failures"],
+        frozenset({"exact_program_accuracy", "report_status"}),
+        "G0 threshold failures",
+    )
+    exact = _exact_fields(
+        failures["exact_program_accuracy"],
+        frozenset({"actual", "required_min", "source_path"}),
+        "G0 exact-program threshold",
+    )
+    status = _exact_fields(
+        failures["report_status"],
+        frozenset({"actual", "required", "source_path"}),
+        "G0 report-status threshold",
+    )
+    if (
+        exact["actual"] != 0.75641
+        or exact["required_min"] != 0.9
+        or status["actual"] != "failed"
+        or status["required"] != "passed"
+        or exact["source_path"] != "artifacts/evaluation/CEMM_EVALUATION.json"
+        or status["source_path"] != "artifacts/evaluation/CEMM_EVALUATION.json"
+    ):
+        raise GateConfigError("G0 threshold findings differ from reviewed evidence")
+
+    findings = _exact_fields(
+        item["structural_findings"], _G0_REQUIRED_FINDINGS, "G0 structural findings"
+    )
+    for finding_id, finding in findings.items():
+        row = _exact_fields(
+            finding,
+            frozenset({"earliest_owner", "status", "summary"}),
+            f"G0 structural finding {finding_id}",
+        )
+        summary = _text(row["summary"], f"G0 structural finding {finding_id} summary")
+        if (
+            row["earliest_owner"] != _G0_FINDING_OWNERS[finding_id]
+            or row["status"] != "confirmed"
+            or len(summary) > 2048
+        ):
+            raise GateConfigError(f"G0 structural finding {finding_id} is invalid")
+
+    probe = _exact_fields(
+        item["unadmitted_m4_probe"],
+        frozenset(
+            {
+                "abstention", "accepted", "classification", "e2e", "exact_match",
+                "expression_accuracy_claimed", "operator_match",
+                "operator_mismatch_count", "source", "type_set_match",
+            }
+        ),
+        "G0 unadmitted M4 probe",
+    )
+    expected_probe = {
+        "abstention": {
+            "correct": 6, "expected": 6, "false_abstain": 5,
+            "precision_denominator": 11,
+        },
+        "accepted": {"correct": 67, "total": 78},
+        "classification": "derivation_diagnostic_only",
+        "e2e": {"correct": 68, "total": 78},
+        "exact_match": {"correct": 61, "total": 78},
+        "expression_accuracy_claimed": False,
+        "operator_match": {"correct": 67, "total": 78},
+        "operator_mismatch_count": 11,
+        "source": "operator_reported_2026-07-30",
+        "type_set_match": {"correct": 73, "total": 78},
+    }
+    if probe != expected_probe:
+        raise GateConfigError("G0 unadmitted M4 probe differs from reviewed evidence")
+
+    quarantine = _exact_fields(
+        item["quarantine"],
+        frozenset(
+            {
+                "descendants", "historical_evidence_only", "program_abi",
+                "program_abi_1_descendants_quarantined", "release_eligible",
+            }
+        ),
+        "G0 Program ABI 1 quarantine",
+    )
+    descendants = _sorted_unique_strings(quarantine["descendants"], "G0 quarantined descendants")
+    if (
+        quarantine["program_abi"] != 1
+        or quarantine["program_abi_1_descendants_quarantined"] is not True
+        or quarantine["historical_evidence_only"] is not True
+        or quarantine["release_eligible"] is not False
+        or descendants != _G0_QUARANTINED_DESCENDANTS
+    ):
+        raise GateConfigError("G0 Program ABI 1 quarantine is incomplete")
+
+
+def _load_canonical_g0_evidence(raw: bytes, *, path: Path) -> object:
+    value = _load_strict_json_bytes(raw, path=path)
+    if canonical_json_bytes(value) != raw:
+        raise GateConfigError(f"G0 evidence bytes are not canonical JSON: {path}")
+    return value
+
+
+def _validate_g0_inventory_receipt_intrinsic(value: object) -> None:
+    fields = frozenset(
+        {
+            "active_node_count", "active_node_set_ref", "baseline_source_ref",
+            "collectable_node_count", "collectable_node_set_ref", "command",
+            "deferred_rewrite_count", "document_authority_path",
+            "document_authority_sha256", "due_rewrite_count", "inventory_path",
+            "inventory_ref", "inventory_sha256", "literal_metadata_ref",
+            "parsed_module_count", "phase", "receipt_ref", "schema", "source_only",
+        }
+    )
+    item = _exact_fields(value, fields, "G0 test-inventory receipt")
+    if item["schema"] != "cemm-hybrid-test-inventory-receipt-v1":
+        raise GateConfigError("G0 test-inventory receipt schema is invalid")
+    identity = dict(item)
+    receipt_ref = identity.pop("receipt_ref")
+    if receipt_ref != content_ref("test_inventory_receipt", identity):
+        raise GateConfigError("G0 test-inventory receipt identity is invalid")
+    if (
+        item["baseline_source_ref"] != _G0_BASELINE_SOURCE_REF
+        or item["phase"] != "G0"
+        or item["source_only"] is not True
+        or item["command"]
+        != "python scripts\\check_test_inventory.py --phase G0 --source-only"
+        or item["document_authority_path"] != "docs/DOCUMENT_AUTHORITY.json"
+        or item["inventory_path"] != "governance/test_inventory.json"
+    ):
+        raise GateConfigError("G0 test-inventory receipt contract is invalid")
+    for field in ("document_authority_sha256", "inventory_sha256"):
+        if type(item[field]) is not str or _SHA256_RE.fullmatch(item[field]) is None:
+            raise GateConfigError(f"G0 test-inventory receipt {field} is invalid")
+    for field in (
+        "active_node_set_ref", "collectable_node_set_ref", "inventory_ref",
+        "literal_metadata_ref",
+    ):
+        if type(item[field]) is not str or _CONTENT_REF_RE.fullmatch(item[field]) is None:
+            raise GateConfigError(f"G0 test-inventory receipt {field} is invalid")
+    for field in (
+        "active_node_count", "collectable_node_count", "deferred_rewrite_count",
+        "due_rewrite_count", "parsed_module_count",
+    ):
+        if type(item[field]) is not int or item[field] < 0:
+            raise GateConfigError(f"G0 test-inventory receipt {field} is invalid")
+    if item["active_node_count"] > item["collectable_node_count"]:
+        raise GateConfigError("G0 active-node count exceeds collectable-node count")
+
+def _expected_g0_inventory_receipt(
+    *,
+    authority_sha256: str,
+    inventory_sha256: str,
+    inventory: object,
+    selector: InventorySelector,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "active_node_count": len(selector.active_node_ids),
+        "active_node_set_ref": selector.active_node_set_ref,
+        "baseline_source_ref": str(inventory.baseline_source_ref),
+        "collectable_node_count": len(selector.collectable_node_ids),
+        "collectable_node_set_ref": selector.collectable_node_set_ref,
+        "command": "python scripts\\check_test_inventory.py --phase G0 --source-only",
+        "deferred_rewrite_count": len(inventory.deferred_rewrite_refs),
+        "document_authority_path": "docs/DOCUMENT_AUTHORITY.json",
+        "document_authority_sha256": authority_sha256,
+        "due_rewrite_count": len(inventory.due_rewrite_refs),
+        "inventory_path": "governance/test_inventory.json",
+        "inventory_ref": selector.inventory_ref,
+        "inventory_sha256": inventory_sha256,
+        "literal_metadata_ref": selector.literal_metadata_ref,
+        "parsed_module_count": int(inventory.parsed_module_count),
+        "phase": "G0",
+        "schema": "cemm-hybrid-test-inventory-receipt-v1",
+        "source_only": True,
+    }
+    return _with_content_ref("test_inventory_receipt", "receipt_ref", payload)
+
+
+def _validate_g0_evidence_material(
+    *,
+    authority_raw: bytes,
+    baseline_raw: bytes,
+    evaluation_raw: bytes,
+    inventory_receipt_raw: bytes,
+    inventory_sha256: str,
+    inventory: object,
+    selector: InventorySelector,
+) -> None:
+    baseline = _load_canonical_g0_evidence(
+        baseline_raw, path=Path("artifacts/validation/BASELINE_REPLAY_FINDINGS.json")
+    )
+    receipt = _load_canonical_g0_evidence(
+        inventory_receipt_raw,
+        path=Path("artifacts/validation/TEST_INVENTORY_RECEIPT.json"),
+    )
+    _validate_g0_baseline_findings(
+        baseline, baseline_source_ref=str(inventory.baseline_source_ref)
+    )
+    _validate_g0_inventory_receipt_intrinsic(receipt)
+
+    source_records = tuple(inventory.source_tests.values())
+    derived_collection = {
+        "case_count": sum(len(record.case_node_ids) for record in source_records),
+        "file_count": len(
+            {record.source_test_ref.split("::", 1)[0] for record in source_records}
+        ),
+        "source_test_count": len(source_records),
+    }
+    if baseline["predecessor_collection"] != derived_collection:
+        raise GateConfigError(
+            "G0 predecessor collection differs from inventory reconstruction"
+        )
+
+    evaluation_binding = baseline["evaluation_artifact"]
+    evaluation_sha256 = hashlib.sha256(evaluation_raw).hexdigest()
+    if evaluation_binding != {
+        "path": _G0_EVALUATION_PATH,
+        "sha256": evaluation_sha256,
+    }:
+        raise GateConfigError("G0 evaluation artifact hash differs from committed source")
+    evaluation = _load_strict_json_bytes(
+        evaluation_raw, path=Path(_G0_EVALUATION_PATH)
+    )
+    if (
+        type(evaluation) is not dict
+        or evaluation.get("exact_program_accuracy") != 0.75641
+        or evaluation.get("end_to_end_accuracy") != 0.75641
+        or evaluation.get("num_episodes") != 78
+        or evaluation.get("status") != "failed"
+    ):
+        raise GateConfigError("G0 threshold claims differ from evaluation artifact")
+
+    expected = _expected_g0_inventory_receipt(
+        authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+        inventory_sha256=inventory_sha256,
+        inventory=inventory,
+        selector=selector,
+    )
+    if receipt != expected:
+        raise GateConfigError(
+            "G0 test-inventory receipt differs from authoritative reconstruction"
+        )
 def _sorted_unique_strings(
     value: object, context: str, *, allow_empty: bool = False
 ) -> tuple[str, ...]:
@@ -2406,6 +2764,26 @@ def _verify_current_source_config(root: Path, receipt: GateReceipt) -> None:
     if governance_report.get("status_record_count", 0) < len(PHASES):
         raise AdmissionValidationError("governance status record count is impossible")
 
+    try:
+        authority_path = root_path / "docs" / "DOCUMENT_AUTHORITY.json"
+        _validate_g0_evidence_material(
+            authority_raw=source_bytes(authority_path),
+            baseline_raw=source_bytes(
+                root_path / "artifacts" / "validation" / "BASELINE_REPLAY_FINDINGS.json"
+            ),
+            evaluation_raw=source_bytes(root_path / _G0_EVALUATION_PATH),
+            inventory_receipt_raw=source_bytes(
+                root_path / "artifacts" / "validation" / "TEST_INVENTORY_RECEIPT.json"
+            ),
+            inventory_sha256=inventory_sha,
+            inventory=inventory,
+            selector=inventory_selector,
+        )
+    except (ValueError, OSError) as exc:
+        raise AdmissionValidationError(
+            f"cannot reconstruct G0 forensic evidence: {exc}"
+        ) from exc
+
 def verify_current_source_config(root: Path, receipt: GateReceipt) -> None:
     """Typed public boundary for one newly consumed admission candidate."""
     try:
@@ -2502,6 +2880,47 @@ def _verify_receipt_evidence(root: Path, receipt: GateReceipt) -> tuple[str, ...
         paths.append(evidence.path)
     if tuple(paths) != tuple(sorted(paths)) or len(paths) != len(set(paths)):
         raise AdmissionValidationError("receipt evidence paths are not sorted and unique")
+    if receipt.phase == "G0":
+        evidence_by_path = {item.path: item for item in receipt.evidence_files}
+        try:
+            baseline_path = _resolve_existing_lexical_path(
+                root,
+                "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
+                require_file=True,
+            )
+            inventory_path = _resolve_existing_lexical_path(
+                root,
+                "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
+                require_file=True,
+            )
+            baseline_raw = _read_bounded_file(
+                baseline_path, maximum=_MAX_AUTHENTICATED_FILE_BYTES
+            )
+            inventory_raw = _read_bounded_file(
+                inventory_path, maximum=_MAX_AUTHENTICATED_FILE_BYTES
+            )
+            for relative, raw in (
+                ("artifacts/validation/BASELINE_REPLAY_FINDINGS.json", baseline_raw),
+                ("artifacts/validation/TEST_INVENTORY_RECEIPT.json", inventory_raw),
+            ):
+                if hashlib.sha256(raw).hexdigest() != evidence_by_path[relative].sha256:
+                    raise AdmissionValidationError(
+                        f"evidence changed during intrinsic validation: {relative}"
+                    )
+            baseline = _load_canonical_g0_evidence(
+                baseline_raw, path=baseline_path
+            )
+            inventory_receipt = _load_canonical_g0_evidence(
+                inventory_raw, path=inventory_path
+            )
+            _validate_g0_baseline_findings(
+                baseline, baseline_source_ref=_G0_BASELINE_SOURCE_REF
+            )
+            _validate_g0_inventory_receipt_intrinsic(inventory_receipt)
+        except GateConfigError as exc:
+            raise AdmissionValidationError(
+                f"G0 intrinsic evidence validation failed: {exc}"
+            ) from exc
     return tuple(paths)
 
 
@@ -3703,12 +4122,24 @@ class _RunContext:
             if receipt.source_ref != record["source_base"]:
                 raise GateConfigError("historical admission source binding mismatch")
         authority_path = self.root / "docs" / "DOCUMENT_AUTHORITY.json"
-        authority = _load_strict_json_bytes(
-            self._read_bytes(authority_path),
-            path=authority_path,
-        )
+        authority_raw = self._read_bytes(authority_path)
+        authority = _load_strict_json_bytes(authority_raw, path=authority_path)
         if type(authority) is not dict or authority.get("scope") != "hybrid_mvp/":
             raise GateConfigError("hybrid document authority scope mismatch")
+        if self.tier == "admission":
+            _validate_g0_evidence_material(
+                authority_raw=authority_raw,
+                baseline_raw=self._read_bytes(
+                    self.root / "artifacts" / "validation" / "BASELINE_REPLAY_FINDINGS.json"
+                ),
+                evaluation_raw=self._read_bytes(self.root / _G0_EVALUATION_PATH),
+                inventory_receipt_raw=self._read_bytes(
+                    self.root / "artifacts" / "validation" / "TEST_INVENTORY_RECEIPT.json"
+                ),
+                inventory_sha256=inventory_sha,
+                inventory=inventory,
+                selector=selector,
+            )
         report = {
             "active_node_count": len(selector.active_node_ids),
             "active_node_set_ref": selector.active_node_set_ref,

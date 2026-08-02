@@ -166,12 +166,10 @@ def _receipt(root: Path) -> GateReceipt:
     _materialize_fixture_inputs(root)
     evidence_root = root / "artifacts" / "validation"
     evidence_root.mkdir(parents=True, exist_ok=True)
-    (evidence_root / "BASELINE_REPLAY_FINDINGS.json").write_bytes(
-        canonical_json_bytes({"schema": "baseline-v1"})
-    )
-    (evidence_root / "TEST_INVENTORY_RECEIPT.json").write_bytes(
-        canonical_json_bytes({"schema": "inventory-receipt-v1"})
-    )
+    for name in ("BASELINE_REPLAY_FINDINGS.json", "TEST_INVENTORY_RECEIPT.json"):
+        (evidence_root / name).write_bytes(
+            (ROOT / "artifacts" / "validation" / name).read_bytes()
+        )
     config = _graph_payload()
     environment = current_environment_material(root)
     config_ref = content_ref("gate_config", config)
@@ -996,6 +994,44 @@ def test_verified_loader_selects_exact_run_and_authenticates_evidence(
     )
 
     evidence = tmp_path / "artifacts" / "validation" / "BASELINE_REPLAY_FINDINGS.json"
+    original_evidence = evidence.read_bytes()
+    invalid = json.loads(original_evidence)
+    invalid["structural_findings"].pop("bootstrap_programs_author_gold")
+    invalid_identity = dict(invalid)
+    invalid_identity.pop("findings_ref")
+    invalid["findings_ref"] = content_ref(
+        "baseline_replay_findings", invalid_identity
+    )
+    evidence.write_bytes(canonical_json_bytes(invalid))
+    invalid_receipt = GateReceipt.create(
+        config=receipt.config,
+        environment=receipt.environment,
+        evidence_files=tuple(
+            EvidenceFile.from_path(tmp_path, item.path)
+            for item in receipt.evidence_files
+        ),
+        fresh=True,
+        phase="G0",
+        pre_admission_status_head_ref=receipt.pre_admission_status_head_ref,
+        run_nonce="semantically-invalid-evidence",
+        source_ref=receipt.source_ref,
+        started_at_utc=receipt.started_at_utc,
+        step_results=receipt.step_results,
+        tier="admission",
+    )
+    invalid_target = run_dir / (
+        invalid_receipt.run_ref.removeprefix("run:") + ".json"
+    )
+    write_receipt_exclusive(invalid_target, invalid_receipt)
+    with pytest.raises(AdmissionValidationError, match="intrinsic evidence"):
+        load_verified_admission_receipt(
+            tmp_path,
+            phase="G0",
+            expected_status="passed",
+            run_ref=invalid_receipt.run_ref,
+        )
+
+    evidence.write_bytes(original_evidence)
     evidence.write_text('{"tampered":true}', encoding="utf-8")
     with pytest.raises(AdmissionValidationError, match="evidence hash mismatch"):
         load_verified_admission_receipt(
@@ -1057,6 +1093,31 @@ def test_g0_receipt_requires_exact_external_evidence_set(tmp_path: Path) -> None
         GateReceipt.create(
             **common,
             evidence_files=tuple(sorted((*receipt.evidence_files, extra))),
+        )
+
+    baseline = json.loads(
+        (ROOT / "artifacts/validation/BASELINE_REPLAY_FINDINGS.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    validation_gate_module._validate_g0_baseline_findings(
+        baseline,
+        baseline_source_ref="58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
+    )
+    noncanonical = json.dumps(baseline, indent=2).encode("utf-8")
+    with pytest.raises(GateConfigError, match="not canonical JSON"):
+        validation_gate_module._load_canonical_g0_evidence(
+            noncanonical, path=Path("BASELINE_REPLAY_FINDINGS.json")
+        )
+    tampered = json.loads(json.dumps(baseline))
+    tampered["quarantine"]["program_abi_1_descendants_quarantined"] = False
+    identity = dict(tampered)
+    identity.pop("findings_ref")
+    tampered["findings_ref"] = content_ref("baseline_replay_findings", identity)
+    with pytest.raises(GateConfigError, match="quarantine is incomplete"):
+        validation_gate_module._validate_g0_baseline_findings(
+            tampered,
+            baseline_source_ref="58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
         )
 
 
@@ -1282,6 +1343,34 @@ def test_governance_step_uses_one_manifest_snapshot_for_all_governed_reads(
         validation_gate_module,
         "validate_inventory_contract",
         lambda _graph, _inventory, *, phase: selector,
+    )
+    for relative in (
+        "artifacts/evaluation/CEMM_EVALUATION.json",
+        "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
+        "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
+    ):
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / relative).read_bytes())
+
+    def validate_evidence(**material) -> None:
+        assert material["authority_raw"] == canonical_json_bytes(
+            {"scope": "hybrid_mvp/"}
+        )
+        assert material["baseline_raw"] == (
+            ROOT / "artifacts/validation/BASELINE_REPLAY_FINDINGS.json"
+        ).read_bytes()
+        assert material["evaluation_raw"] == (
+            ROOT / "artifacts/evaluation/CEMM_EVALUATION.json"
+        ).read_bytes()
+        assert material["inventory_receipt_raw"] == (
+            ROOT / "artifacts/validation/TEST_INVENTORY_RECEIPT.json"
+        ).read_bytes()
+
+    monkeypatch.setattr(
+        validation_gate_module,
+        "_validate_g0_evidence_material",
+        validate_evidence,
     )
     context = validation_gate_module._RunContext(
         tmp_path,
@@ -1797,7 +1886,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "17de708c96ec52457bc7ecbf6c392814d58a5def3d3ac109919ca35137e69ce2"
+        "source_ast_sha256": "4bc006fb3673a2be9c90e34dc12537a36558f83f319ef5af98eda509cb2951cd"
     },
     "tests/test_validation_gate.py::test_git_snapshot_rejects_success_with_warning_stderr": {
         "activation_phase": "G0",
@@ -1813,7 +1902,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "ebe54bcf824d528c2041c2df73ccdf68aa838e6a3390606e4b774fe8c5ae4464"
+        "source_ast_sha256": "d91a684944da801206b2196caea09f5c9839c7e20fdd72daae03a8304ed0d434"
     },
     "tests/test_validation_gate.py::test_governance_step_validates_effective_status_semantics": {
         "activation_phase": "G0",
@@ -2037,6 +2126,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "4e70f33b30e564c3f459e95c4fa6b4328ef68a24cb869555992f9c06e7b47bec"
+        "source_ast_sha256": "895cdb1f0d6cb2f55e87be235bead9b390e1ac5b36b218d4ab89d7de8b14082a"
     }
 }
