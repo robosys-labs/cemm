@@ -154,7 +154,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
-        "source_ast_sha256": "c86f343750cd04f28449456f111b2d49a8789f4465ffef5d2f30c10c1853d1ad"
+        "source_ast_sha256": "02a4b78240749cb2f3076f5ed88887871ac272ee230348d5f30526ebf44e04b0"
     },
     "tests/test_replay_governance.py::test_append_requires_reviewed_candidate_ref": {
         "activation_phase": "G0",
@@ -2160,6 +2160,8 @@ def test_dirty_governed_inputs_allow_only_validated_evidence_paths(tmp_path: Pat
 
 def test_append_lock_is_exclusive(tmp_path: Path) -> None:
     script = _load_update_script()
+    assert script.APPEND_LOCK.parent == script.ROOT.parent
+    assert not script.APPEND_LOCK.is_relative_to(script.ROOT)
     lock = tmp_path / "status.lock"
     lock.write_text("held", encoding="utf-8")
     with pytest.raises(GovernanceError, match="another status update"):

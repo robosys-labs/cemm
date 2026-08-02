@@ -156,7 +156,7 @@ verify_file_invalidation = _governance.verify_file_invalidation
 
 STATUS_LEDGER = ROOT / "governance" / "replay_status.jsonl"
 INVALIDATION_LEDGER = ROOT / "governance" / "receipt_invalidations.jsonl"
-APPEND_LOCK = ROOT / "governance" / "replay_status.lock"
+APPEND_LOCK = ROOT.parent / ".cemm-hybrid-replay-status.lock"
 _CONTENT_REF_RE = re.compile(
     r"[a-z][a-z0-9_-]*(?::[a-z0-9_-]+)*:[0-9a-f]{24}\Z"
 )
@@ -604,8 +604,7 @@ def _dirty_hybrid_paths() -> frozenset[str]:
             if not repository_relative.startswith(prefix):
                 _fail("Git returned a path outside hybrid_mvp")
             hybrid_relative = repository_relative[len(prefix) :]
-            if hybrid_relative != "governance/replay_status.lock":
-                dirty.add(hybrid_relative)
+            dirty.add(hybrid_relative)
     return frozenset(dirty)
 
 
