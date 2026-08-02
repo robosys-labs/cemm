@@ -88,6 +88,17 @@ def test_configured_selectors_equal_literal_inventory_roles() -> None:
     assert selector.active_node_ids == inventory.active_node_ids
     assert selector.collectable_node_ids == inventory.collectable_node_ids
 
+    marker = ROOT / "tests" / "__init__.py"
+    assert marker.is_file()
+    for module_name in (
+        "tests.test_query_engine",
+        "tests.test_inference_bounds",
+        "tests.test_recursive_inference",
+    ):
+        spec = importlib.util.find_spec(module_name)
+        assert spec is not None and spec.origin is not None
+        assert Path(spec.origin).resolve().is_relative_to(ROOT / "tests")
+
 
 def test_each_executing_tier_has_one_pytest_process() -> None:
     graph = load_gate_graph(ROOT / "configs" / "validation_gates.json")
@@ -145,7 +156,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:g0-config-selectors-equal-literal-inventory-roles",
         "diagnostic_role": "phase",
         "introduced_by_task": "G0-Task-4",
-        "source_ast_sha256": "24a9749684848adb6f36be42d0db4c3ee332bf6d92c31f7cdb6bcdf5160a568a",
+        "source_ast_sha256": "9c9a328b03d0eb30f2b9c4b9e96eb083b55511366ff24958dbd39ba0882da2e1",
     },
     "tests/test_g0_integration.py::test_each_executing_tier_has_one_pytest_process": {
         "activation_phase": "G0",
