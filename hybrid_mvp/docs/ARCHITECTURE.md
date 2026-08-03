@@ -31,13 +31,22 @@ applications use only the five persistent operators. Scopes, expression links,
 variable binders and proposition-valued fillers are recursive expression
 structure rather than additional persistent operators.
 
-Program hashes include ordered actions, dynamic pointers, roles, roots, source
-assignments and revision pins. Expression hashes are derivation-independent and
+Program hashes include the exact proposal-context ref, ordered indexed actions,
+dynamic pointers, roles, roots, source assignments and revision pins.
+Expression hashes are derivation-independent and
 normalize only bijectively alpha-renamable local IDs plus explicitly reviewed
 commutative links. `VerifiedMeaning` binds expression to grounding, coverage,
 compilation proof, verification receipt, revision and program lineage.
 EVALUATE also receives an explicit verified `SituationContext`; program lineage
 is never substituted for semantic identity.
+
+ORIENT builds one bounded `ProposalContext` with current designation,
+contribution, mode, application-frame, reference, scope, expression-link,
+variable, transition and residual slots plus exact source geometry. PROPOSE and
+VERIFY reuse that same object and its prebuilt bounded lookup indexes. VERIFY
+retains a `CompilationProof` that accounts exactly once for every program action,
+source assignment and root; compilation remains internal to VERIFY rather than a
+new runtime phase.
 
 The ranker receives only action programs built from retrieved reviewed authority and literal spans. It cannot create semantic atoms, event signatures, state dimensions, relation types, capabilities, permissions, or adapters.
 

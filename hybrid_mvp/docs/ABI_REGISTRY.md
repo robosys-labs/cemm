@@ -14,11 +14,12 @@ checkpoint, calibration, evaluation, activation and release artifact.
 |---|---:|---|---|---|---|
 | Evidence ABI | 1 | `src/cemm_authoritative_hybrid/forms.py` | Transient / episode-serializable | `FormResolver` | Exact reversible source geometry; one immutable evidence packet; no downstream retokenization authority. |
 | Semantic Contribution ABI | 1 | `src/cemm_authoritative_hybrid/contributions.py` | Transient | `ContributionExpander` | Every source unit yields bounded typed contributions or one typed unresolved contribution. |
-| Proposal Context ABI | 1 | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Contains only current grounded candidates, reviewed frames, bounded references/scopes/binders/transitions/residuals and exact revision pin. |
-| Semantic Switch Program ABI | **2** | `src/cemm_authoritative_hybrid/programs.py` | Episode-serializable | `SemanticExpressionCompiler` and `ExactProgramVerifier` | Exactly one class owner; complete ordered full-content program hash including dynamic pointers, roots, bindings, assignments and revisions; no sorted action identity. |
+| Proposal Context ABI | 1 | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Contains only current grounded designation/contribution/mode/application/reference/scope/link/variable/transition/residual slots, exact source spans and revision pin; builds bounded lookup indexes once. |
+| Semantic Switch Program ABI | **2** | `src/cemm_authoritative_hybrid/programs.py` | Episode-serializable | `SemanticExpressionCompiler` and `ExactProgramVerifier` | Exactly one class owner; frozen per-action slot schemas; complete ordered full-content program hash including ABI, context ref, indexed actions, pointers, roots, assignments and revisions; no resolved expression and no sorted action identity. |
 | Semantic Expression ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Episode/world/reference serializable as permitted | `SemanticExpressionCompiler` | Canonical recursive five-operator expression forest/root set with applications, scope operators, expression links, binders and typed unresolved fillers. |
-| Source Coverage ABI | 2 | `src/cemm_authoritative_hybrid/coverage.py` | Episode-serializable | `CoverageVerifier` | Each critical source unit has one exact structural assignment or one typed residual. Coverage does not manufacture semantic expression structure. |
-| Proposal Result ABI | 2 | `src/cemm_authoritative_hybrid/proposal.py` | Episode-serializable | candidate-batch validator | Ranked candidates preserve order, scores, provenance, model identity and exact context ref; abstention is explicit. |
+| Compilation Proof ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Episode-serializable | `ExactProgramVerifier` | Binds program/context/expression/revision and proves every action, source assignment and declared root translated exactly once; proof rows are retained, not only hashed. |
+| Source Coverage ABI | 2 | `src/cemm_authoritative_hybrid/coverage.py` | Episode-serializable | `CoverageVerifier` | Reconstructs context-owned criticality and validates exact source/contribution/action/role assignments, no missing/extra/duplicate units and typed residuals; coverage never manufactures expression structure. |
+| Proposal Result ABI | 2 | `src/cemm_authoritative_hybrid/proposal.py` | Episode-serializable | candidate-batch validator | Content-addressed ranked envelopes preserve contiguous rank, fixed-point score, provenance, model/revision identity and exact context ref; truncation fails closed and abstention is explicit. |
 | Verification Batch ABI | **2** | `src/cemm_authoritative_hybrid/verifier.py` | Episode-serializable | `ExactProgramVerifier` | One receipt per candidate; accepted receipts carry `expression_ref` and compilation proof; disposition is selected/ambiguous/rejected/abstained. |
 | Verified Meaning ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Transient / episode-serializable | `VerifiedMeaningValidator` | Binds program lineage, canonical expression, grounding, coverage, compilation proof, verification receipt and revision pin. |
 | Situation Context ABI | 1 | `src/cemm_authoritative_hybrid/situation.py` | Transient / episode-serializable | `SituationContextValidator` | Independently binds force/mode, participants, temporal/source/epistemic and session context; never inferred from program identity. |
@@ -36,8 +37,9 @@ The Program ABI v2 hash includes the complete ordered payload:
 
 ```text
 abi_version
-orientation_ref / proposal_context_ref
+orientation_ref + proposal_context_ref
 ordered actions {
+    action_index
     action_ref
     action_type
     dynamic arguments and pointers
@@ -56,8 +58,38 @@ The following are ABI violations:
 - excluding roots, roles, assignments or revisions;
 - treating a model-vocabulary/action-encoding hash as a program-instance hash.
 
-`action_abi_hash` identifies the closed model vocabulary. `program_hash`
-identifies one concrete derivation instance. They are different fields.
+`action_abi_hash` identifies the closed action types and exact slot schemas. It is
+independent of a candidate's order and pointer values. `program_ref` identifies one
+concrete derivation instance. They are different fields; `action_encoding_hash`
+is retired by the Program ABI 2 hard cut.
+
+### 2.1 Frozen action slot schemas
+
+```text
+select_context(context_slot_ref)
+select_mode(mode_slot_ref)
+select_designation(designation_slot_ref)
+instantiate_operator(application_local_ref, application_frame_ref)
+bind_role(application_local_ref, role_ref, contribution_slot_ref)
+bind_reference(application_local_ref, role_ref, reference_slot_ref)
+bind_nested_application("role", parent_application_ref, role_ref, child_node_ref)
+bind_nested_application("link", link_local_ref, expression_link_slot_ref,
+                        operand_node_ref, operand_node_ref, ...)
+attach_scope(scope_local_ref, scope_slot_ref, operand_node_ref)
+project_variable(binder_local_ref, variable_slot_ref, body_node_ref)
+propose_transition(transition_slot_ref, source_application_ref)
+complete_program()
+abstain()
+```
+
+Every action has one contiguous non-negative `action_index`. Local node refs are
+derivation-local handles and never become grounded identities. The expression
+link variant is licensed only by an exact context link slot that fixes link type,
+arity and ordered/commutative behavior. Transition proposals are verified
+lineage/decision hints and do not manufacture semantic applications.
+
+Program ABI 2 never contains resolved applications, expression nodes or another
+semantic graph. Those values exist only after exact compilation.
 
 ## 3. Canonical semantic-expression identity
 

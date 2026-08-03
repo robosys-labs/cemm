@@ -1155,10 +1155,13 @@ git commit -m "refactor: make R1 revision and authority identity exact"
 
 **Files:**
 
+- Create: `hybrid_mvp/src/cemm_authoritative_hybrid/proposal_context.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/programs.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/proposal.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/model.py`
 - Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/verifier.py`
+- Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/coverage.py`
+- Modify: `hybrid_mvp/src/cemm_authoritative_hybrid/gaps.py`
 - Create: `hybrid_mvp/src/cemm_authoritative_hybrid/expressions.py`
 - Create: `hybrid_mvp/src/cemm_authoritative_hybrid/situation.py`
 - Delete after caller migration: `hybrid_mvp/src/cemm_authoritative_hybrid/propositions.py`
@@ -1168,6 +1171,184 @@ git commit -m "refactor: make R1 revision and authority identity exact"
 - Modify: `hybrid_mvp/configs/validation_gates.json`
 - Create: `hybrid_mvp/tests/test_r1_verification_batch.py`
 - Create: `hybrid_mvp/tests/test_r1_no_alternate_public_paths.py`
+
+### Step 0: Freeze the implementable R1 seam before coding
+
+The 2026-08-02 semantic-algebra package makes the program-to-expression
+separation authoritative, but its abbreviated replacement snippets do not fully
+specify an executable R1 seam. The following clarification is normative for
+Tasks 7-9 and supersedes narrower dataclass snippets below.
+
+#### Proposal Context ABI 1
+
+Create one immutable, content-addressed `ProposalContext` in ORIENT and pass that
+same object through PROPOSE and VERIFY. It contains only bounded, current-cycle
+slots for designations, contributions, modes, application frames, references,
+scopes, expression links, variables, transitions, residual evidence, source
+spans and the exact revision pin. It owns a `context_ref`; both
+`SemanticSwitchProgram` and `ProposalResult` bind that ref.
+
+Scores stored in exact artifacts are fixed-point integers (`score_q`), never
+unrestricted floats. Build immutable lookup maps once in `ProposalContext`
+construction and exclude those derived caches from serialization/identity.
+Normal cycles may not linearly rescan slot tuples for every action and may not
+open an authority-wide target inventory after ORIENT.
+
+The useful typed slot records in the G0-R6 selective package may be ported, but
+its Context ABI 2 number, float identities, repeated `next(...)` lookups and
+Program ABI 4 `resolved_applications` field are rejected. Resolved semantic
+structure belongs only to `SemanticExpression`.
+
+#### Program ABI 2 action-slot grammar
+
+`ProgramAction.arguments` is not an untyped convention. Program ABI 2 freezes
+these exact schemas; R2 may activate additional legal combinations but may not
+redefine their slots:
+
+```text
+select_context(context_slot_ref)
+select_mode(mode_slot_ref)
+select_designation(designation_slot_ref)
+instantiate_operator(application_local_ref, application_frame_ref)
+bind_role(application_local_ref, role_ref, contribution_slot_ref)
+bind_reference(application_local_ref, role_ref, reference_slot_ref)
+bind_nested_application("role", parent_application_ref, role_ref, child_node_ref)
+bind_nested_application("link", link_local_ref, expression_link_slot_ref,
+                        operand_node_ref, operand_node_ref, ...)
+attach_scope(scope_local_ref, scope_slot_ref, operand_node_ref)
+project_variable(binder_local_ref, variable_slot_ref, body_node_ref)
+propose_transition(transition_slot_ref, source_application_ref)
+complete_program()
+abstain()
+```
+
+The `link` variant is the reviewed way to construct coordination, condition,
+cause, contrast and sequence without a thirteenth switch action. Its context
+slot fixes link type, ordered-versus-commutative behavior, arity and source
+origin. `propose_transition` is a verified decision hint: it maps exactly once
+to the compilation proof and is validated against the source event application,
+but it does not manufacture an extra semantic application or alter expression
+identity. EVALUATE later derives any authorized effect from the verified
+expression, situation and reviewed transition contract.
+
+Every action carries a non-negative contiguous `action_index`; `action_ref`
+covers ABI, index, type, complete arguments and source refs. Every cross-action
+reference targets a declared local node or exact context slot. Direct
+construction, deserialization with defaults, unknown fields, boolean-for-int
+coercion and forged refs are rejected.
+
+`ACTION_ABI_SCHEMAS` is one frozen vocabulary/schema value.
+`action_abi_hash` hashes only that complete closed vocabulary and never changes
+with candidate pointers or action order. `program_ref` hashes ABI version,
+orientation ref, proposal-context ref, the complete ordered action sequence,
+roots, mode, goals, exact assignments and revision pin. It contains no resolved
+application/expression graph.
+
+#### Ranked Proposal Result ABI 2
+
+```python
+@dataclass(frozen=True)
+class RankedProgramCandidate:
+    candidate_ref: str
+    rank: int
+    score_q: int
+    program: SemanticSwitchProgram
+    provenance_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ProposalResult:
+    proposal_ref: str
+    orientation_ref: str
+    proposal_context_ref: str
+    candidates: tuple[RankedProgramCandidate, ...]
+    status: Literal["candidates", "abstained"]
+    abstention_code: str | None
+    explored_states: int
+    truncated: bool
+    model_identity: str
+    revision_pin: RevisionPin
+```
+
+Ranks are contiguous in preserved proposer order. Candidate, program, context,
+orientation, model and revision identities must agree. Sorting by `program_ref`
+is forbidden. A truncated proposal cannot yield a unique selected meaning; it
+fails closed to the existing typed budget/frontier route. PROPOSE never calls
+the exact verifier.
+
+#### Coverage ABI 2 and compilation proof
+
+Coverage validation receives the exact context. It rejects missing or extra
+source units, unknown contribution slots, assignments whose source geometry or
+target action/role is incompatible, duplicate consumption and a program's false
+criticality claim. Criticality is independently reconstructed from context
+contribution kind and reviewed construction metadata. The coverage receipt hash
+includes every source, contribution, assignment target, disposition and error.
+
+```python
+@dataclass(frozen=True)
+class TranslationRow:
+    source_ref: str
+    disposition: str
+    target_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CompilationProof:
+    proof_ref: str
+    program_ref: str
+    proposal_context_ref: str
+    expression_ref: str
+    action_translations: tuple[TranslationRow, ...]
+    assignment_translations: tuple[TranslationRow, ...]
+    root_translations: tuple[TranslationRow, ...]
+    grounding_refs: tuple[str, ...]
+    revision_pin: RevisionPin
+```
+
+Every program action, source assignment and declared root occurs exactly once in
+its proof domain. A candidate receipt retains the actual `CompilationProof` and
+Coverage ABI 2 receipt, not only their refs, so it can be reconstructed and
+audited without hidden compiler state.
+
+`SemanticExpressionCompiler.compile(program, context)` is total and returns a
+typed success or typed compilation failure. Programming exceptions propagate.
+`ExactProgramVerifier.verify_candidates(proposal, context)` checks exact
+proposal/context binding, replays legal action transitions independently,
+validates coverage, invokes compilation and independently checks proof and
+expression topology. It never repairs.
+
+Accepted candidates are grouped in O(candidate-count) by `expression_ref`.
+Each group's score/rank is its best derivation; duplicate derivation scores are
+never summed. The selected lineage is the best candidate in the winning
+expression group. Distinct expression groups inside the constructor-pinned
+integer margin remain ambiguous.
+
+#### R1/R2 boundary and atomic hard cut
+
+R1 freezes the complete action grammar, Proposal Context ABI 1, Program ABI 2,
+Proposal Result ABI 2, Coverage ABI 2, full expression representation,
+compilation proof, Verification Batch ABI 2 and the one public runtime path.
+The R1 compiler must support a bounded single-application subset sufficient to
+prove derivation-independent expression identity, pointer-direction
+sensitivity, complete translation and typed failure. A syntactically registered
+but R2-only action shape returns `action_shape_not_admitted`; it never falls back
+or invents structure.
+
+Direct R1 expression tests cover multi-root, nested, scope, link and binder
+canonical topology. Authentic generation/compilation canaries for all twelve
+actions, multiple applications, three roots, every scope/link family, variables
+and transitions remain R2 admission work. This preserves the replay allocation
+without leaving an ambiguous ABI for R2 to redefine.
+
+Tasks 7-9 are one atomic hard cut. Do not claim an intermediate green Task 7
+while duplicate runtime results, `propositions.py`, `propose_and_verify`, shape
+adapters or raw-program EVALUATE remain. New owner tests receive literal
+inventory metadata as they land, but the R1 phase/owner selectors are activated
+only once the complete Tasks 7-9 supersession set is present. The final R1 DAG
+still uses the already planned owner groups and one phase integration tier; this
+clarification adds no validation tier, no seventh runtime phase and no normal
+cycle gate.
 
 ### Step 1: Add RED owner/content tests
 
@@ -1185,7 +1366,7 @@ def test_proposal_phase_output_binds_the_complete_batch(proposal_result) -> None
     assert not hasattr(proposal_result, "program")
     assert proposal_result.output_refs == (proposal_result.proposal_ref,)
     first = proposal_result.candidates[0]
-    assert proposal_result.candidate_by_ref(first.program_ref) is first
+    assert proposal_result.candidate_by_ref(first.candidate_ref) is first
 ```
 
 Add tests that every semantic field affects its ref and every deserializer
@@ -1193,26 +1374,39 @@ rejects a stored/nested ref mismatch.
 
 ### Step 2: Make leaf/container refs strict
 
-`ProgramAction` and `SourceAssignment` get
-`create(...)` constructors deriving refs from all semantic fields. `from_dict`
-reconstructs then compares the serialized ref. `SemanticSwitchProgram.create`
-derives `program_ref` from orientation, ordered actions, roots, mode, goals,
-source set, assignments and revision pin.
+`ProgramAction`, `SourceAssignment` and `SemanticSwitchProgram` expose only strict
+content-addressed constructors. `from_dict` rejects unknown/missing fields, wrong
+scalar types, nested ref mismatches and non-canonical tuple/order encodings.
+`SemanticSwitchProgram.create` derives `program_ref` from ABI version,
+orientation, proposal context, ordered indexed actions, roots, mode, goals,
+source assignments and revision pin.
 
-`ScopeFrame` and `TransitionProposal` remain R2-owned and are not hardened or activated in R1.
+Legacy `ScopeFrame` and `TransitionProposal` program-side semantic wrappers are removed.
+Their bounded selectable evidence is owned by Proposal Context ABI 1; expression
+scope is owned by Semantic Expression ABI 1 and transition hints remain proof/envelope data.
 
 Do not put observational scores/clocks in program identity. Do include literal
-and dynamic-pointer values and order; `action_encoding_hash` is not complete
-identity.
+and dynamic-pointer values and order; `action_abi_hash` is vocabulary/schema
+identity and is never a program or meaning identity.
 
 ### Step 3: Define the exact proposal batch
 
 ```python
 @dataclass(frozen=True)
+class RankedProgramCandidate:
+    candidate_ref: str
+    rank: int
+    score_q: int
+    program: SemanticSwitchProgram
+    provenance_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ProposalResult:
     proposal_ref: str
     orientation_ref: str
-    candidates: tuple[SemanticSwitchProgram, ...]
+    proposal_context_ref: str
+    candidates: tuple[RankedProgramCandidate, ...]
     status: Literal["candidates", "abstained"]
     abstention_code: str | None
     explored_states: int
@@ -1224,19 +1418,20 @@ class ProposalResult:
     def output_refs(self) -> tuple[str, ...]:
         return (self.proposal_ref,)
 
-    def candidate_by_ref(self, program_ref: str) -> SemanticSwitchProgram:
-        matches = tuple(c for c in self.candidates if c.program_ref == program_ref)
+    def candidate_by_ref(self, candidate_ref: str) -> RankedProgramCandidate:
+        matches = tuple(c for c in self.candidates if c.candidate_ref == candidate_ref)
         if len(matches) != 1:
-            raise KeyError(program_ref)
+            raise KeyError(candidate_ref)
         return matches[0]
 ```
 
-Create/deserialization derives/checks `proposal_ref` from every field. Candidate
-refs are unique and ordered; each candidate must match the proposal orientation
-and revision pin. `status="abstained"` requires zero candidates and a non-empty
-typed code; `status="candidates"` requires candidates and no abstention code.
-`candidate_by_ref` requires exactly one match. There is no `program` compatibility
-property.
+Create/deserialization derives/checks every nested ref. Candidate refs are unique;
+ranks are contiguous in preserved proposer order; scores are exact integers; and
+each candidate program matches proposal orientation, context and revision.
+`status="abstained"` requires zero candidates and a non-empty typed code;
+`status="candidates"` requires candidates and no abstention code.
+`candidate_by_ref` requires exactly one envelope match. There is no `program`
+compatibility property and no program-ref sort.
 
 Critically, PROPOSE must not invoke `ExactProgramVerifier`. Remove current
 verifier calls in `proposal.py` and `model.py`. Proposal may enforce decoder
@@ -1268,10 +1463,12 @@ VERIFY never repairs.
 @dataclass(frozen=True)
 class CandidateVerificationReceipt:
     receipt_ref: str
+    candidate_ref: str
     candidate_index: int
     program_ref: str
     expression: SemanticExpression | None
-    compilation_proof_ref: str | None
+    compilation_proof: CompilationProof | None
+    coverage_receipt: CoverageReceipt
     verification_errors: tuple[VerificationError, ...]
 
 
@@ -1279,8 +1476,10 @@ class CandidateVerificationReceipt:
 class VerificationBatch:
     batch_ref: str
     proposal_ref: str
+    proposal_context_ref: str
     candidate_receipts: tuple[CandidateVerificationReceipt, ...]
     status: Literal["selected", "rejected", "abstained", "ambiguous"]
+    selected_candidate_ref: str | None
     selected_meaning: VerifiedMeaning | None
     ambiguity_expression_refs: tuple[str, ...]
 ```
@@ -1294,11 +1493,12 @@ lineage; expression plus situated qualifiers is the semantic comparison key.
 Constructors/deserializers enforce every cross-field identity and verifier
 programming exceptions propagate.
 
-Required canaries include two derivations compiling to one expression; swapped
-dynamic pointers compiling differently; multiple applications and at least
-three roots as real nodes; nested proposition-valued fillers; scope,
-attribution and binders; and rejection when any action is omitted, duplicated or
-mistranslated by compilation.
+R1 compiler canaries cover two derivations compiling to one expression, swapped
+dynamic pointers compiling differently, complete single-application translation,
+and rejection when any supported action/assignment/root is omitted, duplicated or
+mistranslated. Direct expression tests cover multiple roots, nested fillers,
+ordered/commutative links, scope, attribution and binders. Authentic generated
+program canaries across every structural family remain R2 admission work.
 
 ### Step 5: Remove legacy wrappers and stop at the R1 boundary
 
@@ -1458,26 +1658,46 @@ Require:
 
 ```python
 class ProposalOwner(Protocol):
-    def propose(self, orientation: Orientation) -> ProposalResult: raise NotImplementedError
+    def propose(self, context: ProposalContext) -> ProposalResult: raise NotImplementedError
 
 
 class VerificationOwner(Protocol):
-    def verify_candidates(self, proposal: ProposalResult) -> VerificationBatchResult: raise NotImplementedError
+    def verify_candidates(
+        self, proposal: ProposalResult, context: ProposalContext
+    ) -> VerificationBatch: raise NotImplementedError
 
 
 def process(self, session_ref: str, text: str, *, trace: bool = True) -> CycleResult:
-    orientation = self.orient(session_ref, text)
-    proposal = self._proposal_owner.propose(orientation)
-    verification = self._verification_owner.verify_candidates(proposal)
+    orientation, context = self.orient(session_ref, text)
+    proposal = self._proposal_owner.propose(context)
+    verification = self._verification_owner.verify_candidates(proposal, context)
     if verification.status in {"rejected", "abstained"}:
-        return self._finalize_verification_gap(orientation, proposal, verification)
+        return self._finalize_verification_gap(
+            orientation, context, proposal, verification, trace=trace
+        )
     if verification.status == "ambiguous":
-        return self._finalize_ambiguity(orientation, proposal, verification)
-    program = proposal.candidate_by_ref(verification.selected_program_ref)
+        return self._finalize_ambiguity(
+            orientation, context, proposal, verification, trace=trace
+        )
+    verified_meaning = verification.selected_meaning
+    if verified_meaning is None:
+        raise AssertionError("selected verification has no VerifiedMeaning")
     return self._continue_or_report_disabled_owner(
-        orientation, proposal, verification, program, trace=trace
+        orientation, context, proposal, verification, verified_meaning, trace=trace
     )
 ```
+
+ORIENT builds `ProposalContext` once. PROPOSE and VERIFY receive that exact bounded
+object; neither retokenizes surface text nor rescans authority. The continuation
+boundary accepts `VerifiedMeaning` only. A caller may resolve
+`verified_meaning.program_ref` against the proposal batch for derivation-lineage
+diagnostics, but the resolved program is never the semantic phase input.
+
+At the R1 boundary `_continue_or_report_disabled_owner` emits the exact
+`LaterOwnerNotAdmitted` implementation gap bound to the verified-meaning ref and
+`contract:r3:evaluate`. It does not invoke or fabricate EVALUATE, EFFECT or
+REALIZE and emits no surface. The admitted-through-VERIFY branch is fixed once
+at activation, so normal execution pays one constant branch and no extra gate.
 
 No broad exception catch is allowed. Expected semantic failures become typed
 results at their owner; implementation errors propagate.

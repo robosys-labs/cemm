@@ -106,8 +106,10 @@ is not implemented or activated until its owning replay admission succeeds:
 
 ```text
 Semantic Contribution ABI: 1
+Proposal Context ABI: 1
 Semantic Switch Program ABI: 2
 Semantic Expression ABI: 1
+Compilation Proof ABI: 1
 Source Coverage ABI: 2
 Proposal Result ABI: 2
 Verification Batch ABI: 2
