@@ -364,7 +364,7 @@ class PhaseReceipt:
             "phase": self.phase,
             "input_refs": list(self.input_refs),
             "output_refs": list(self.output_refs),
-            "revision_pin": _revision_pin_as_dict(self.revision_pin),
+            "revision_pin": self.revision_pin.as_dict(),
             "budget_use": dict(self.budget_use),
             "status": self.status,
             "rejection_codes": list(self.rejection_codes),
@@ -406,7 +406,7 @@ class KernelCycleResult:
             },
             "gap_receipt": self.gap_receipt.as_dict() if self.gap_receipt is not None else None,
             "trace": [receipt.as_dict() for receipt in self.trace],
-            "final_revision_pin": _revision_pin_as_dict(self.final_revision_pin),
+            "final_revision_pin": self.final_revision_pin.as_dict(),
             "effect_receipt": _effect_receipt_as_dict(self.effect_receipt),
         }
 
@@ -478,7 +478,7 @@ class CycleResult:
             },
             "gap_receipt": self.gap_receipt.as_dict() if self.gap_receipt is not None else None,
             "trace": [receipt.as_dict() for receipt in self.trace],
-            "final_revision_pin": _revision_pin_as_dict(self.final_revision_pin),
+            "final_revision_pin": self.final_revision_pin.as_dict(),
             "effect_receipt": _effect_receipt_as_dict(self.effect_receipt),
         }
 
@@ -487,16 +487,6 @@ class CycleResult:
 # Serialization helpers
 # ---------------------------------------------------------------------------
 
-
-def _revision_pin_as_dict(pin: RevisionPin) -> dict[str, Any]:
-    return {
-        "authority_generation": pin.authority_generation,
-        "world_revision": pin.world_revision,
-        "session_revision": pin.session_revision,
-        "episode_revision": pin.episode_revision,
-        "effect_revision": pin.effect_revision,
-        "model_identity": pin.model_identity,
-    }
 
 
 def _effect_receipt_as_dict(receipt: "EffectReceipt | None") -> dict[str, Any] | None:

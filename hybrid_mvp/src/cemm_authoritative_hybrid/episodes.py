@@ -528,17 +528,6 @@ def _serialize_effect_receipt(receipt: Any) -> dict[str, Any]:
     }
 
 
-def _serialize_revision_pin(pin: Any) -> dict[str, Any]:
-    """Serialize a RevisionPin to a JSON-compatible dict."""
-    return {
-        "authority_generation": pin.authority_generation,
-        "world_revision": pin.world_revision,
-        "session_revision": pin.session_revision,
-        "episode_revision": pin.episode_revision,
-        "effect_revision": pin.effect_revision,
-        "model_identity": pin.model_identity,
-    }
-
 
 def _serialize_gap_receipt(receipt: Any) -> dict[str, Any] | None:
     """Serialize a GapReceipt to a JSON-compatible dict."""
@@ -760,9 +749,7 @@ class EpisodeBuilder:
                 process_result.gap_receipt
             )
 
-            revisions = _serialize_revision_pin(
-                process_result.final_revision_pin
-            )
+            revisions = process_result.final_revision_pin.as_dict()
 
             action_encoding_hash = accepted_program.action_encoding_hash
         else:
@@ -797,9 +784,7 @@ class EpisodeBuilder:
                 "recommended_owner": "training",
                 "safe_response_action": "request_designation",
             }
-            revisions = _serialize_revision_pin(
-                self._stores.revision_pin()
-            )
+            revisions = self._stores.revision_pin().as_dict()
             action_encoding_hash = ""
 
         # Compute authority hash.

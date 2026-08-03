@@ -113,6 +113,66 @@ class RevisionPin:
     effect_revision: int
     model_identity: str | None
 
+    _FIELDS = frozenset(
+        {
+            "authority_generation",
+            "world_revision",
+            "session_revision",
+            "episode_revision",
+            "effect_revision",
+            "model_identity",
+        }
+    )
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.authority_generation, str):
+            raise TypeError("authority_generation must be str")
+        for name in (
+            "world_revision",
+            "session_revision",
+            "episode_revision",
+            "effect_revision",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TypeError(f"{name} must be int")
+        if self.model_identity is not None and not isinstance(self.model_identity, str):
+            raise TypeError("model_identity must be str or None")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "authority_generation": self.authority_generation,
+            "world_revision": self.world_revision,
+            "session_revision": self.session_revision,
+            "episode_revision": self.episode_revision,
+            "effect_revision": self.effect_revision,
+            "model_identity": self.model_identity,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "RevisionPin":
+        if not isinstance(value, Mapping):
+            raise TypeError("revision pin payload must be a mapping")
+        keys = frozenset(value)
+        if keys != cls._FIELDS:
+            missing = sorted(cls._FIELDS - keys)
+            unknown = sorted(keys - cls._FIELDS)
+            raise ValueError(
+                f"revision pin fields mismatch: missing={missing}, unknown={unknown}"
+            )
+        return cls(
+            authority_generation=value["authority_generation"],
+            world_revision=value["world_revision"],
+            session_revision=value["session_revision"],
+            episode_revision=value["episode_revision"],
+            effect_revision=value["effect_revision"],
+            model_identity=value["model_identity"],
+        )
+
+    @property
+    def revision_ref(self) -> str:
+        return stable_ref("revision_pin", self.as_dict())
+
 
 # ---------------------------------------------------------------------------
 # Exceptions

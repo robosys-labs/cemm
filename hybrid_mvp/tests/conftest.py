@@ -117,7 +117,7 @@ def authority_factory(tmp_path):
         corrupt_hash: if True, writes a wrong sha256 in the manifest.
     """
     from cemm_authoritative_hybrid.authority import AuthorityBundle, AuthorityStore
-    from cemm_authoritative_hybrid.canonical import sha256_file
+    from cemm_authoritative_hybrid.canonical import sha256_governed_text
 
     def _factory(
         *,
@@ -190,7 +190,7 @@ def authority_factory(tmp_path):
             p.write_text(
                 json.dumps(data, sort_keys=True, indent=2), encoding="utf-8"
             )
-            sha = sha256_file(p)
+            sha = sha256_governed_text(p)
             if corrupt_hash and name == "kernel":
                 sha = "0" * 64
             owners.append({"name": name, "path": str(p), "sha256": sha})

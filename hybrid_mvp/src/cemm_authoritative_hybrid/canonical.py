@@ -26,6 +26,7 @@ __all__ = [
     "stable_ref",
     "tensor_identity",
     "sha256_file",
+    "sha256_governed_text",
     "read_canonical_json",
     "write_canonical_json",
     "canonical_json",
@@ -207,6 +208,21 @@ def sha256_file(path: str | Path) -> str:
         for chunk in iter(lambda: fh.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def sha256_governed_text(path: str | Path) -> str:
+    """Hash reviewed UTF-8 text after portable BOM/EOL normalization.
+
+    This owner is intentionally limited to governed text and JSON. Binary and
+    model artifacts must continue to use :func:`sha256_file` so byte identity is
+    never weakened.
+    """
+    raw = Path(path).read_bytes()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raw = raw[3:]
+    text = raw.decode("utf-8", errors="strict")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def write_canonical_json(path: str | Path, obj: Any) -> None:

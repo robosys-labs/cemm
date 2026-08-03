@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
-from .canonical import sha256_file, stable_ref
+from .canonical import sha256_governed_text, stable_ref
 
 __all__ = [
     "AuthorityLinkError",
@@ -310,7 +310,7 @@ class AuthorityLinker:
         path = path.resolve()
         if not path.exists():
             raise AuthorityLinkError(f"manifest not found: {path}")
-        manifest_data = json.loads(path.read_text(encoding="utf-8"))
+        manifest_data = json.loads(path.read_text(encoding="utf-8-sig"))
         return self._link_manifest(manifest_data, base_dir=path.parent, store=None)
 
     def _link_from_dict(self, manifest_dict: Mapping[str, Any]) -> LinkedAuthority:
@@ -355,13 +355,13 @@ class AuthorityLinker:
                 owner_path = base_dir / owner_path
 
             # Verify file hash
-            actual_hash = sha256_file(owner_path)
+            actual_hash = sha256_governed_text(owner_path)
             if actual_hash != owner_meta["sha256"]:
                 raise AuthorityLinkError(
                     f"owner {owner_name} hash mismatch"
                 )
 
-            owner_data = json.loads(owner_path.read_text(encoding="utf-8"))
+            owner_data = json.loads(owner_path.read_text(encoding="utf-8-sig"))
 
             # Validate and collect atoms
             for atom_data in owner_data.get("atoms", []):
