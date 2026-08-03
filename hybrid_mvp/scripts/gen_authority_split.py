@@ -7,7 +7,7 @@ correct SHA-256 hashes. Run once to produce the data split.
 import json
 from pathlib import Path
 
-from cemm_authoritative_hybrid.canonical import sha256_file
+from cemm_authoritative_hybrid.canonical import sha256_governed_text
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTH_DIR = ROOT / "data" / "authority"
@@ -141,7 +141,7 @@ for name, data in [
 ]:
     p = AUTH_DIR / f"{name}.json"
     p.write_text(json.dumps(data, sort_keys=True, indent=2), encoding="utf-8")
-    sha = sha256_file(p)
+    sha = sha256_governed_text(p)
     owners_meta.append({"name": name, "path": f"{name}.json", "sha256": sha})
 
 manifest = {
