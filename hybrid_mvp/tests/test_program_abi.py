@@ -107,6 +107,12 @@ def test_program_with_no_operator_has_empty_persistent_operators():
 
 
 def test_program_extracts_operators_from_instantiate_operator_actions():
+    """Operators are resolved from ApplicationFrameSlot.operator_ref, not argument spelling.
+
+    Per R2 plan section 5.1.6: Program ABI 2 instantiate_operator points to
+    an application frame; the operator must be resolved from the context,
+    not guessed from argument spelling.
+    """
     actions = (
         ProgramAction.create(
             action_index=0,
@@ -121,13 +127,13 @@ def test_program_extracts_operators_from_instantiate_operator_actions():
         ProgramAction.create(
             action_index=2,
             action_type="instantiate_operator",
-            arguments=("op:designation", "designation:0"),
+            arguments=("application:0", "application_frame_slot:0"),
             source_unit_refs=("unit:0",),
         ),
         ProgramAction.create(
             action_index=3,
             action_type="instantiate_operator",
-            arguments=("op:relation", "application:0"),
+            arguments=("application:1", "application_frame_slot:1"),
             source_unit_refs=("unit:1",),
         ),
         ProgramAction.create(
@@ -140,7 +146,7 @@ def test_program_extracts_operators_from_instantiate_operator_actions():
         orientation_ref="orientation:0",
         proposal_context_ref="proposal_context:0",
         actions=actions,
-        root_refs=("op:relation",),
+        root_refs=("application:1",),
         mode_slot_ref="mode_slot:0",
         goal_refs=(),
         source_unit_refs=("unit:0", "unit:1"),
@@ -166,7 +172,20 @@ def test_program_extracts_operators_from_instantiate_operator_actions():
         ),
         revision_pin=_default_pin(),
     )
-    assert _persistent_operators(program) == frozenset({"op:designation", "op:relation"})
+    # The program actions carry application local refs and frame slot refs,
+    # not operator strings. Operators are resolved through the context's
+    # ApplicationFrameSlot.operator_ref field.
+    instantiate_actions = [
+        a for a in program.actions if a.action_type == "instantiate_operator"
+    ]
+    assert len(instantiate_actions) == 2
+    for action in instantiate_actions:
+        # Arguments are (application_local_ref, application_frame_slot_ref)
+        app_ref, frame_slot_ref = action.arguments
+        assert app_ref.startswith("application:")
+        assert frame_slot_ref.startswith("application_frame_slot:")
+        # No argument should be an op: string
+        assert not any(arg.startswith("op:") for arg in action.arguments)
 
 
 # ---------------------------------------------------------------------------

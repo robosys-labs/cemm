@@ -69,6 +69,72 @@ def _candidate_actions(context, action_index: int) -> tuple[ProgramAction, ...]:
                 arguments=("application:main", "role:subject", contrib.slot_ref),
             )
         )
+    # bind_reference — one candidate per reference slot.
+    for ref in context.reference_slots:
+        candidates.append(
+            ProgramAction.create(
+                action_index=action_index,
+                action_type="bind_reference",
+                arguments=("application:main", "role:subject", ref.slot_ref),
+            )
+        )
+    # bind_nested_application (role variant) — one per proposition role.
+    for frame in context.application_frames:
+        for prop_role in frame.proposition_roles:
+            candidates.append(
+                ProgramAction.create(
+                    action_index=action_index,
+                    action_type="bind_nested_application",
+                    arguments=(
+                        "role",
+                        "application:main",
+                        prop_role,
+                        "application:nested",
+                    ),
+                )
+            )
+    # bind_nested_application (link variant) — one per expression link slot.
+    for link in context.expression_link_slots:
+        candidates.append(
+            ProgramAction.create(
+                action_index=action_index,
+                action_type="bind_nested_application",
+                arguments=(
+                    "link",
+                    "link:0",
+                    link.slot_ref,
+                    "application:main",
+                    "application:nested",
+                ),
+            )
+        )
+    # attach_scope — one candidate per scope slot.
+    for scope in context.scope_slots:
+        candidates.append(
+            ProgramAction.create(
+                action_index=action_index,
+                action_type="attach_scope",
+                arguments=("scope:0", scope.slot_ref, "application:main"),
+            )
+        )
+    # project_variable — one candidate per variable slot.
+    for var in context.variable_slots:
+        candidates.append(
+            ProgramAction.create(
+                action_index=action_index,
+                action_type="project_variable",
+                arguments=("binder:0", var.slot_ref, "application:main"),
+            )
+        )
+    # propose_transition — one candidate per transition slot.
+    for trans in context.transition_slots:
+        candidates.append(
+            ProgramAction.create(
+                action_index=action_index,
+                action_type="propose_transition",
+                arguments=(trans.slot_ref, "application:main"),
+            )
+        )
     # complete_program — terminal action with no arguments.
     candidates.append(
         ProgramAction.create(

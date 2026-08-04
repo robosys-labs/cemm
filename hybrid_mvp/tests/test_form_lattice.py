@@ -221,14 +221,14 @@ def test_unit_refs_unique_hypothesis(form_resolver, text):
 
 def test_evidence_packet_from_text(form_resolver):
     lattice = form_resolver.resolve("hello world")
-    item = EvidenceItem(
+    item = EvidenceItem.create(
         source="text",
         content="hello world",
         source_ref="text:0",
         provenance_refs=(),
         adapter_receipt_ref=None,
     )
-    packet = EvidencePacket(
+    packet = EvidencePacket.create(
         items=(item,),
         source_text="hello world",
         form_pack_hash="sha256:abc",
@@ -238,7 +238,7 @@ def test_evidence_packet_from_text(form_resolver):
 
 
 def test_evidence_item_is_frozen():
-    item = EvidenceItem(
+    item = EvidenceItem.create(
         source="text",
         content="hi",
         source_ref="text:0",

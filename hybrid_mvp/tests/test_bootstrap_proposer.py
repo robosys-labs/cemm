@@ -56,20 +56,40 @@ def _proposal(program, context):
     ],
 )
 def test_paraphrases_compile_without_phrase_families(
-    bootstrap_proposer, exact_verifier, proposal_context, surface
+    bootstrap_proposer,
+    exact_verifier,
+    form_resolver,
+    linked_authority,
+    surface,
 ):
     """Each paraphrase produces at least one accepted program.
 
     No candidate has a ``.family`` attribute — the bootstrap proposer has no
     phrase inventory and no word/regex branch.
     """
-    result = bootstrap_proposer.propose(proposal_context)
+    from cemm_authoritative_hybrid.proposal import BootstrapProposer
+    from tests.conftest import _build_context_and_program_from_lattice, _default_revision_pin
+
+    lattice = form_resolver.resolve(surface)
+    pin = _default_revision_pin(authority_generation=linked_authority.generation)
+    pin = type(pin)(
+        authority_generation=pin.authority_generation,
+        world_revision=pin.world_revision,
+        session_revision=pin.session_revision,
+        episode_revision=pin.episode_revision,
+        effect_revision=pin.effect_revision,
+        model_identity=BootstrapProposer.model_identity,
+    )
+    context, _program = _build_context_and_program_from_lattice(
+        lattice, revision_pin=pin
+    )
+    result = bootstrap_proposer.propose(context)
     assert isinstance(result, ProposalResult)
     assert any(
         any(
             r.accepted
             for r in exact_verifier.verify_candidates(
-                _proposal(p.program, proposal_context), proposal_context
+                _proposal(p.program, context), context
             ).candidate_receipts
         )
         for p in result.candidates
@@ -112,10 +132,19 @@ def test_deterministic_same_input_same_output(bootstrap_proposer, proposal_conte
         assert p1.candidate_ref == p2.candidate_ref
 
 
-def test_candidates_sorted_by_program_ref(bootstrap_proposer, proposal_context):
+def test_candidates_preserve_proposer_rank_order(bootstrap_proposer, proposal_context):
+    """Candidates must preserve proposer rank/order, not be sorted by ref.
+
+    Per R2 plan section 10.6: preserve proposer rank/order; do not sort
+    candidates by program ref. Expression grouping occurs in VERIFY.
+    """
     result = bootstrap_proposer.propose(proposal_context)
-    refs = [p.candidate_ref for p in result.candidates]
-    assert refs == sorted(refs)
+    ranks = [p.rank for p in result.candidates]
+    # Ranks must be contiguous starting from 0
+    assert ranks == list(range(len(ranks)))
+    # Scores must be non-increasing (proposer rank order)
+    scores = [p.score_q for p in result.candidates]
+    assert all(scores[i] >= scores[i + 1] for i in range(len(scores) - 1))
 
 
 # ---------------------------------------------------------------------------
@@ -167,8 +196,16 @@ def test_release_only_raises(bootstrap_proposer, proposal_context):
 
 
 def test_typed_gap_surface_produces_candidates(bootstrap_proposer, proposal_context):
-    """An unknown surface still produces candidates (abstain or complete)."""
+    """An unknown surface still produces a typed proposal result.
+
+    The proposer must either produce at least one candidate or explicitly
+    abstain with a typed abstention code. A vacuous bound is not accepted.
+    """
     result = bootstrap_proposer.propose(proposal_context)
     assert isinstance(result, ProposalResult)
-    # The proposer should still produce some candidates (at least abstain).
-    assert len(result.candidates) >= 0
+    # The proposer must either produce candidates or abstain with a code.
+    if result.status == "abstained":
+        assert result.abstention_code is not None
+        assert len(result.candidates) == 0
+    else:
+        assert len(result.candidates) >= 1
