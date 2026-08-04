@@ -325,26 +325,83 @@ def test_application_bound_enforced(masker):
 
 def test_node_bound_enforced_for_attach_scope(masker):
     """attach_scope is illegal when node bound is reached."""
-    from cemm_authoritative_hybrid.proposal_context import ScopeSlot
+    from cemm_authoritative_hybrid.proposal_context import (
+        ApplicationFrameSlot,
+        ContributionSlot,
+        DesignationSlot,
+        ModeSlot,
+        ProposalContext,
+        ScopeSlot,
+    )
+    from cemm_authoritative_hybrid.persistence import RevisionPin
+    from cemm_authoritative_hybrid.proposal import BootstrapProposer
 
-    context = masker.legal_index.context
-    # If the shared context has no scope slots, create one and add it
-    if context.scope_slots:
-        scope = context.scope_slots[0]
-        legal = LegalActionIndex(context, max_nodes=1)
-    else:
-        # Build a context with a scope slot by creating one and using
-        # the legal index directly with the existing context plus a
-        # synthetic scope slot reference
-        scope = ScopeSlot.create(
-            operator_type="scope:polarity",
-            value_ref="polarity:negative",
-            source_unit_refs=(),
-            construction_ref=None,
-        )
-        legal = LegalActionIndex(context, max_nodes=1)
-    designation = context.designation_slots[0]
-    frame = context.application_frames[0]
+    # Build a context with a scope slot so the test exercises the node
+    # bound rather than unknown_scope_slot.
+    pin = RevisionPin("authority:bootstrap", 1, 2, 3, 4, BootstrapProposer.model_identity)
+    mode = ModeSlot.create(
+        mode="OBSERVE", source_unit_refs=(), construction_ref=None,
+        requested_effect="admission",
+    )
+    designation = DesignationSlot.create(
+        source_unit_refs=("unit:predicate",),
+        target_ref="event:test-0", target_kind="event_type",
+        score_q=900_000, designation_fact_ref="designation:test-0",
+        provenance_refs=("designation:test-0",),
+    )
+    predicate = ContributionSlot.create(
+        contribution_ref="contribution:predicate-0", kind="predicate",
+        source_unit_refs=("unit:predicate",),
+        target_ref="event:test-0", target_kind="event_type",
+        input_ports=("role:subject",), output_ports=("role:event",),
+        constraints=(), provenance_refs=("designation:test-0",),
+    )
+    subject = ContributionSlot.create(
+        contribution_ref="contribution:subject", kind="anchor",
+        source_unit_refs=("unit:subject",),
+        target_ref="entity:test", target_kind="entity",
+        input_ports=(), output_ports=("role:subject",),
+        constraints=(), provenance_refs=("designation:subject",),
+    )
+    frame = ApplicationFrameSlot.create(
+        designation_slot_ref=designation.slot_ref,
+        predicate_target_ref=designation.target_ref,
+        predicate_kind=designation.target_kind,
+        operator_ref="op:event", structural_role_ref="role:event",
+        required_roles=("role:subject",), optional_roles=(),
+        proposition_roles=(),
+        source_unit_refs=("unit:predicate",),
+        derived_role_targets=(),
+        affordance_frame_ref="frame:test-0",
+        provenance_refs=(designation.slot_ref, "frame:test-0"),
+    )
+    scope = ScopeSlot.create(
+        operator_type="scope:polarity",
+        value_ref="polarity:negative",
+        source_unit_refs=(),
+        construction_ref=None,
+    )
+    context = ProposalContext.create(
+        orientation_ref="orientation:bootstrap",
+        evidence_packet_ref="evidence:bootstrap",
+        form_lattice_ref="lattice:bootstrap",
+        grounding_ref="grounding:bootstrap",
+        designation_slots=(designation,),
+        contribution_slots=(predicate, subject),
+        mode_slots=(mode,),
+        application_frames=(frame,),
+        reference_slots=(),
+        scope_slots=(scope,),
+        expression_link_slots=(),
+        variable_slots=(),
+        transition_slots=(),
+        residual_evidence=(),
+        context_refs=("turn:bootstrap",),
+        source_unit_refs=("unit:predicate", "unit:subject"),
+        source_unit_spans=(("unit:predicate", 0, 4), ("unit:subject", 4, 8)),
+        revision_pin=pin,
+    )
+    legal = LegalActionIndex(context, max_nodes=1)
     prefix = (
         ProgramAction.create(
             action_index=0,

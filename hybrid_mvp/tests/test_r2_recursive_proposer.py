@@ -343,29 +343,76 @@ def test_multi_app_candidate_has_multiple_roots():
 
 
 def test_no_mode_abstains():
-    """No mode slots produces typed abstention.
+    """No mode slots is rejected by ProposalContext.create validation.
 
-    ProposalContext.create requires at least one mode slot, so this
-    abstention path is guarded by context construction validation.
-    The existing R1 tests in test_bootstrap_proposer_abi2.py cover
-    the critical_residual abstention path.
+    The proposer never receives an empty-mode context because context
+    construction fails first.  This test verifies the guard.
     """
-    # This path is covered by ProposalContext.create's validation guard.
-    # A valid ProposalContext cannot be constructed without a mode slot,
-    # so the proposer never receives an empty-mode context.
-    pass
+    import pytest as _pytest
+    pin = _pin()
+    with _pytest.raises(ValueError, match="at least one mode slot"):
+        ProposalContext.create(
+            orientation_ref="orientation:bootstrap",
+            evidence_packet_ref="evidence:bootstrap",
+            form_lattice_ref="lattice:bootstrap",
+            grounding_ref="grounding:bootstrap",
+            designation_slots=(),
+            contribution_slots=(),
+            mode_slots=(),
+            application_frames=(),
+            reference_slots=(),
+            scope_slots=(),
+            expression_link_slots=(),
+            variable_slots=(),
+            transition_slots=(),
+            residual_evidence=(),
+            context_refs=("turn:bootstrap",),
+            source_unit_refs=("unit:dummy",),
+            source_unit_spans=(("unit:dummy", 0, 4),),
+            revision_pin=pin,
+        )
 
 
 def test_no_designation_abstains():
-    """No designation slots produces typed abstention.
+    """No designation slots produces typed abstention from the proposer."""
+    from cemm_authoritative_hybrid.proposal_context import ResidualEvidence
 
-    ProposalContext.create requires at least one designation slot, so
-    this abstention path is guarded by context construction validation.
-    """
-    # This path is covered by ProposalContext.create's validation guard.
-    # A valid ProposalContext cannot be constructed without a designation slot,
-    # so the proposer never receives an empty-designation context.
-    pass
+    pin = _pin()
+    mode = ModeSlot.create(
+        mode="OBSERVE",
+        source_unit_refs=(),
+        construction_ref=None,
+        requested_effect="admission",
+    )
+    residual = ResidualEvidence.create(
+        source_unit_ref="unit:dummy",
+        contribution_kind="qualifier",
+        critical=False,
+        reason="no designation available",
+    )
+    context = ProposalContext.create(
+        orientation_ref="orientation:bootstrap",
+        evidence_packet_ref="evidence:bootstrap",
+        form_lattice_ref="lattice:bootstrap",
+        grounding_ref="grounding:bootstrap",
+        designation_slots=(),
+        contribution_slots=(),
+        mode_slots=(mode,),
+        application_frames=(),
+        reference_slots=(),
+        scope_slots=(),
+        expression_link_slots=(),
+        variable_slots=(),
+        transition_slots=(),
+        residual_evidence=(residual,),
+        context_refs=("turn:bootstrap",),
+        source_unit_refs=("unit:dummy",),
+        source_unit_spans=(("unit:dummy", 0, 4),),
+        revision_pin=pin,
+    )
+    proposer = BootstrapProposer(RuntimeConfig.release())
+    result = proposer.propose(context)
+    assert result.status == "abstained"
 
 
 # ---------------------------------------------------------------------------

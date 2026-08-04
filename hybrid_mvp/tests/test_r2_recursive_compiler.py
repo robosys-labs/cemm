@@ -403,17 +403,31 @@ def test_r2_actions_are_admitted_not_rejected():
 
 
 def test_zero_applications_fails():
-    """Program with no applications fails.
+    """Program with no instantiate_operator actions cannot be created.
 
-    The program validation itself catches invalid root refs before the
-    compiler can check for missing applications.  This test verifies the
-    compiler's guard clause is present.
+    SemanticSwitchProgram.create validates that completed programs have
+    non-empty root_refs referencing declared application nodes.  Without
+    instantiate_operator actions, no nodes are declared, so no valid
+    root set exists.  This test verifies the program-level guard.
     """
-    # Program validation prevents creating a program with root refs that
-    # don't reference any application.  The compiler's guard is tested
-    # implicitly by the R1 tests that verify single-application compilation.
-    # The guard clause at compile_recursive line 326 checks this invariant.
-    pass
+    context = _context()
+    actions = [
+        ProgramAction.create(action_index=0, action_type="select_context", arguments=(context.context_ref,)),
+        ProgramAction.create(action_index=1, action_type="select_mode", arguments=("mode_slot:observe",)),
+        ProgramAction.create(action_index=2, action_type="complete_program", arguments=()),
+    ]
+    with pytest.raises(ValueError, match="unknown or empty root set"):
+        SemanticSwitchProgram.create(
+            proposal_context_ref=context.context_ref,
+            orientation_ref=context.orientation_ref,
+            mode_slot_ref="mode_slot:observe",
+            actions=tuple(actions),
+            root_refs=("application:0",),
+            goal_refs=(),
+            source_unit_refs=(),
+            source_assignments=(),
+            revision_pin=context.revision_pin,
+        )
 
 
 def test_context_mismatch_fails_before_compilation():

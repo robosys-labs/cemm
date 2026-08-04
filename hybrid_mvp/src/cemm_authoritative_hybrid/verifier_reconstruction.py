@@ -131,7 +131,10 @@ def reconstruct_expected_expression(
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
             elif slot.literal_value is not None:
-                literal_kind = getattr(slot, "literal_kind", None) or "string"
+                literal_kind = next(
+                    (value for key, value in slot.constraints if key == "literal_kind"),
+                    "string",
+                )
                 filler = LiteralValue(literal_kind, slot.literal_value)
             else:
                 return None
