@@ -35,6 +35,7 @@ from .programs import (
     SemanticSwitchProgram,
 )
 from .proposal_context import ProposalContext
+from .verifier_reconstruction import reconstruct_expected_expression as _reconstruct_r2_expression
 
 if TYPE_CHECKING:
     from .proposal import ProposalResult, RankedProgramCandidate
@@ -1443,6 +1444,17 @@ def _reconstruct_expected_r1_expression(
     )
 
 
+def _reconstruct_expected_expression(
+    program: SemanticSwitchProgram,
+    context: ProposalContext,
+) -> SemanticExpression | None:
+    """Reconstruct the expected expression, trying R1 first then R2."""
+    expected = _reconstruct_expected_r1_expression(program, context)
+    if expected is not None:
+        return expected
+    return _reconstruct_r2_expression(program, context)
+
+
 def _proof_errors(
     program: SemanticSwitchProgram,
     context: ProposalContext,
@@ -1460,7 +1472,7 @@ def _proof_errors(
             report("expression_identity_mismatch")
     except (TypeError, ValueError):
         report("expression_identity_mismatch")
-    expected_expression = _reconstruct_expected_r1_expression(program, context)
+    expected_expression = _reconstruct_expected_expression(program, context)
     if expected_expression is None or expression != expected_expression:
         report("expression_semantics_mismatch")
     try:
