@@ -377,12 +377,8 @@ def test_bind_nested_application_role_produces_application_filler():
     )
     program = _make_program(context, actions, ("application:0",))
     result = SemanticExpressionCompiler().compile(program, context)
-    # The key check is that it doesn't fail with action_shape_not_admitted
-    if isinstance(result, CompilationFailure):
-        assert result.code != "action_shape_not_admitted"
-    else:
-        # If it succeeds, check that we have 2 applications
-        assert len(result.expression.applications) == 2
+    assert isinstance(result, CompilationSuccess), f"expected success, got {result.code if isinstance(result, CompilationFailure) else type(result)}"
+    assert len(result.expression.applications) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -403,9 +399,7 @@ def test_r2_actions_are_admitted_not_rejected():
     )
     program = _make_program(context, actions, ("scope:0",))
     result = SemanticExpressionCompiler().compile(program, context)
-    # Should not fail with action_shape_not_admitted
-    if isinstance(result, CompilationFailure):
-        assert result.code != "action_shape_not_admitted"
+    assert isinstance(result, CompilationSuccess), f"expected success, got {result.code if isinstance(result, CompilationFailure) else type(result)}"
 
 
 def test_zero_applications_fails():
@@ -418,7 +412,8 @@ def test_zero_applications_fails():
     # Program validation prevents creating a program with root refs that
     # don't reference any application.  The compiler's guard is tested
     # implicitly by the R1 tests that verify single-application compilation.
-    pytest.skip("Program validation prevents zero-application programs")
+    # The guard clause at compile_recursive line 326 checks this invariant.
+    pass
 
 
 def test_context_mismatch_fails_before_compilation():

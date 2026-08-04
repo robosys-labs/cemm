@@ -209,7 +209,5 @@ def test_compiler_admits_propose_transition():
     context = _context()
     program = _program_with_transition(context)
     result = SemanticExpressionCompiler().compile(program, context)
-    # The compiler should not reject with action_shape_not_admitted
-    from cemm_authoritative_hybrid.expressions import CompilationFailure
-    if isinstance(result, CompilationFailure):
-        assert result.code != "action_shape_not_admitted"
+    from cemm_authoritative_hybrid.expressions import CompilationFailure, CompilationSuccess
+    assert isinstance(result, CompilationSuccess), f"expected success, got {result.code if isinstance(result, CompilationFailure) else type(result)}"

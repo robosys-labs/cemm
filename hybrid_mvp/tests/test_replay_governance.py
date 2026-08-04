@@ -35,6 +35,7 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
     "docs/ARCHITECTURE.md",
     "docs/ABI_REGISTRY.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (

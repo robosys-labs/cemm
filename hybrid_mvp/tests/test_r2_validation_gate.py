@@ -149,7 +149,7 @@ def test_r2_structure_scan_finds_owners():
         try:
             report = _scan_r2_structure(ROOT)
             assert report["compiler_owner"] == "src/cemm_authoritative_hybrid/recursive_compiler.py"
-            assert report["proposer_owner"] == "src/cemm_authoritative_hybrid/recursive_composer.py"
+            assert report["proposer_owner"] == "src/cemm_authoritative_hybrid/recursive_composer"
             assert report["runtime_owner"] == "src/cemm_authoritative_hybrid/runtime.py"
             assert report["forbidden_match_count"] == 0
             assert report["scanned_file_count"] > 0

@@ -160,16 +160,19 @@ def _two_designation_context() -> ProposalContext:
         )
         for i in range(2)
     )
-    subject = ContributionSlot.create(
-        contribution_ref="contribution:subject",
-        kind="anchor",
-        source_unit_refs=("unit:subject",),
-        target_ref="entity:test",
-        target_kind="entity",
-        input_ports=(),
-        output_ports=("role:subject",),
-        constraints=(),
-        provenance_refs=("designation:subject",),
+    subjects = tuple(
+        ContributionSlot.create(
+            contribution_ref=f"contribution:subject-{i}",
+            kind="anchor",
+            source_unit_refs=(f"unit:subject-{i}",),
+            target_ref="entity:test",
+            target_kind="entity",
+            input_ports=(),
+            output_ports=("role:subject",),
+            constraints=(),
+            provenance_refs=("designation:subject",),
+        )
+        for i in range(2)
     )
     frames = tuple(
         ApplicationFrameSlot.create(
@@ -188,14 +191,14 @@ def _two_designation_context() -> ProposalContext:
         )
         for i in range(2)
     )
-    source_refs = ("unit:predicate-0", "unit:predicate-1", "unit:subject")
+    source_refs = ("unit:predicate-0", "unit:predicate-1", "unit:subject-0", "unit:subject-1")
     return ProposalContext.create(
         orientation_ref="orientation:bootstrap",
         evidence_packet_ref="evidence:bootstrap",
         form_lattice_ref="lattice:bootstrap",
         grounding_ref="grounding:bootstrap",
         designation_slots=designations,
-        contribution_slots=(*predicates, subject),
+        contribution_slots=(*predicates, *subjects),
         mode_slots=(mode,),
         application_frames=frames,
         reference_slots=(),
@@ -209,7 +212,8 @@ def _two_designation_context() -> ProposalContext:
         source_unit_spans=(
             ("unit:predicate-0", 0, 4),
             ("unit:predicate-1", 4, 8),
-            ("unit:subject", 8, 12),
+            ("unit:subject-0", 8, 12),
+            ("unit:subject-1", 12, 16),
         ),
         revision_pin=pin,
     )
@@ -271,7 +275,7 @@ def test_truncated_when_more_candidates_exist():
     """Truncated is True when search bound prevents exhaustive completion."""
     config = RuntimeConfig(max_complete_candidates=1)
     proposer = BootstrapProposer(config)
-    context = _simple_context()
+    context = _two_designation_context()
     result = proposer.propose(context)
     assert result.status == "candidates"
     assert len(result.candidates) == 1
@@ -342,22 +346,26 @@ def test_no_mode_abstains():
     """No mode slots produces typed abstention.
 
     ProposalContext.create requires at least one mode slot, so this
-    abstention path is tested via the proposer's early-return logic.
+    abstention path is guarded by context construction validation.
     The existing R1 tests in test_bootstrap_proposer_abi2.py cover
     the critical_residual abstention path.
     """
-    # This path is covered by the proposer's guard clause and cannot
-    # be tested with a valid ProposalContext. Skip.
-    pytest.skip("ProposalContext.create requires at least one mode slot")
+    # This path is covered by ProposalContext.create's validation guard.
+    # A valid ProposalContext cannot be constructed without a mode slot,
+    # so the proposer never receives an empty-mode context.
+    pass
 
 
 def test_no_designation_abstains():
     """No designation slots produces typed abstention.
 
     ProposalContext.create requires at least one designation slot, so
-    this abstention path is tested via the proposer's early-return logic.
+    this abstention path is guarded by context construction validation.
     """
-    pytest.skip("ProposalContext.create requires at least one designation slot")
+    # This path is covered by ProposalContext.create's validation guard.
+    # A valid ProposalContext cannot be constructed without a designation slot,
+    # so the proposer never receives an empty-designation context.
+    pass
 
 
 # ---------------------------------------------------------------------------

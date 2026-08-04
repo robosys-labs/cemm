@@ -12,6 +12,7 @@ from typing import Any
 
 from .expressions import (
     ApplicationFiller,
+    BoundVariable,
     ExpressionBounds,
     ExpressionLink,
     GroundedReference,
@@ -130,7 +131,8 @@ def reconstruct_expected_expression(
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
             elif slot.literal_value is not None:
-                filler = LiteralValue("string", slot.literal_value)
+                literal_kind = getattr(slot, "literal_kind", None) or "string"
+                filler = LiteralValue(literal_kind, slot.literal_value)
             else:
                 return None
             st.grounding.update(slot.provenance_refs)
@@ -193,6 +195,14 @@ def reconstruct_expected_expression(
         st.var_counter += 1
         st.binders.append(VariableBinder(binder_ref, var_ref, target_ref))
         st.node_map.add(binder_ref)
+        # Fill the target application's role with a BoundVariable
+        role_ref = getattr(slot, "role_ref", None)
+        if role_ref is not None:
+            if target_ref in st.role_bindings and role_ref in st.role_bindings[target_ref]:
+                return None
+            if target_ref not in st.role_bindings:
+                st.role_bindings[target_ref] = {}
+            st.role_bindings[target_ref][role_ref] = RoleBinding(role_ref, BoundVariable(var_ref))
 
     # Build applications
     applications: list[SemanticApplication] = []
@@ -205,7 +215,9 @@ def reconstruct_expected_expression(
         if any(r not in bindings for r in frame.required_roles):
             return None
         prop_roles = set(frame.proposition_roles)
-        roles = tuple(bindings[r] for r in sorted(bindings) if r not in prop_roles)
+        # Include ALL role bindings, including proposition-valued roles
+        # which carry ApplicationFiller fillers.
+        roles = tuple(bindings[r] for r in sorted(bindings))
         if not roles:
             return None
         applications.append(SemanticApplication(app_ref, frame.operator_ref, frame.predicate_target_ref, roles))

@@ -12,6 +12,7 @@ from typing import Any
 
 from .expressions import (
     ApplicationFiller,
+    BoundVariable,
     CompilationFailure,
     CompilationProof,
     CompilationSuccess,
@@ -196,7 +197,8 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
             elif slot.literal_value is not None:
-                filler = LiteralValue("string", slot.literal_value)
+                literal_kind = getattr(slot, "literal_kind", None) or "string"
+                filler = LiteralValue(literal_kind, slot.literal_value)
             else:
                 return _fail("unresolved_contribution", "contribution has no resolved filler", a.action_ref)
             st.grounding.update(slot.provenance_refs)
@@ -281,6 +283,15 @@ def _collect_binders(program: Any, context: Any, st: _State) -> CompilationFailu
         st.binders.append(VariableBinder(binder_ref, var_ref, target_ref))
         st.node_map[binder_ref] = binder_ref
         st.action_targets[a.action_ref] = (binder_ref,)
+        # Fill the target application's role with a BoundVariable so the
+        # variable actually occurs in the semantic expression.
+        role_ref = getattr(slot, "role_ref", None)
+        if role_ref is not None:
+            if target_ref in st.role_bindings and role_ref in st.role_bindings[target_ref]:
+                return _fail("duplicate_role_binding", "variable target role is already bound", a.action_ref)
+            if target_ref not in st.role_bindings:
+                st.role_bindings[target_ref] = {}
+            st.role_bindings[target_ref][role_ref] = RoleBinding(role_ref, BoundVariable(var_ref))
     return None
 
 
@@ -300,11 +311,12 @@ def _build_applications(
         if missing:
             return _fail("missing_required_role", f"missing required roles: {', '.join(missing)}", a.action_ref)
         prop_roles = set(frame.proposition_roles)
-        # Include all non-proposition role bindings (derived + bind_role +
-        # bind_reference) in roles, matching R1 reconstruction semantics.
-        roles = tuple(bindings[r] for r in sorted(bindings) if r not in prop_roles)
+        # Include ALL role bindings (derived + bind_role + bind_reference +
+        # nested proposition roles) in roles.  Proposition-valued roles
+        # carry ApplicationFiller fillers and must be preserved.
+        roles = tuple(bindings[r] for r in sorted(bindings))
         if not roles:
-            return _fail("missing_required_role", "application has no non-proposition roles", a.action_ref)
+            return _fail("missing_required_role", "application has no bound roles", a.action_ref)
         applications.append(SemanticApplication(app_ref, frame.operator_ref, frame.predicate_target_ref, roles))
     return applications
 

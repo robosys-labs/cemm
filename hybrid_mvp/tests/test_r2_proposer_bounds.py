@@ -61,16 +61,19 @@ def _context(frame_count: int = 1) -> ProposalContext:
         )
         for i in range(frame_count)
     )
-    subject = ContributionSlot.create(
-        contribution_ref="contribution:subject",
-        kind="anchor",
-        source_unit_refs=("unit:subject",),
-        target_ref="entity:test",
-        target_kind="entity",
-        input_ports=(),
-        output_ports=("role:subject",),
-        constraints=(),
-        provenance_refs=("designation:subject",),
+    subjects = tuple(
+        ContributionSlot.create(
+            contribution_ref=f"contribution:subject-{i}",
+            kind="anchor",
+            source_unit_refs=(f"unit:subject-{i}",),
+            target_ref="entity:test",
+            target_kind="entity",
+            input_ports=(),
+            output_ports=("role:subject",),
+            constraints=(),
+            provenance_refs=("designation:subject",),
+        )
+        for i in range(frame_count)
     )
     frames = tuple(
         ApplicationFrameSlot.create(
@@ -89,16 +92,17 @@ def _context(frame_count: int = 1) -> ProposalContext:
         )
         for i in range(frame_count)
     )
-    source_refs = tuple(f"unit:predicate-{i}" for i in range(frame_count)) + ("unit:subject",)
+    source_refs = tuple(f"unit:predicate-{i}" for i in range(frame_count)) + tuple(f"unit:subject-{i}" for i in range(frame_count))
     spans = tuple((f"unit:predicate-{i}", i * 4, i * 4 + 4) for i in range(frame_count))
-    spans += (("unit:subject", frame_count * 4, frame_count * 4 + 4),)
+    for i in range(frame_count):
+        spans += ((f"unit:subject-{i}", (frame_count + i) * 4, (frame_count + i) * 4 + 4),)
     return ProposalContext.create(
         orientation_ref="orientation:bootstrap",
         evidence_packet_ref="evidence:bootstrap",
         form_lattice_ref="lattice:bootstrap",
         grounding_ref="grounding:bootstrap",
         designation_slots=designations,
-        contribution_slots=(*predicates, subject),
+        contribution_slots=(*predicates, *subjects),
         mode_slots=(mode,),
         application_frames=frames,
         reference_slots=(),

@@ -364,9 +364,8 @@ def test_transition_slot_rejects_empty_modes():
         )
 
 
-def test_transition_slot_rejects_empty_capabilities():
-    """Transition slot required_capabilities must be non-empty string tuple."""
-    # Empty capabilities is allowed (some transitions may not need caps)
+def test_transition_slot_allows_empty_capabilities():
+    """Transition slot allows empty required_capabilities (some transitions need no caps)."""
     slot = TransitionSlot.create(
         application_frame_ref="application_frame_slot:0",
         event_type_ref="event:greeting",
@@ -378,6 +377,7 @@ def test_transition_slot_rejects_empty_capabilities():
         source_unit_refs=("unit:0",),
     )
     assert slot.event_type_ref == "event:greeting"
+    assert slot.required_capabilities == ()
 
 
 # ---------------------------------------------------------------------------

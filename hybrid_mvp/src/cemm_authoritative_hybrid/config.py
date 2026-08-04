@@ -12,16 +12,20 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class ABIRegistry:
-    """Active ABI versions for the six-phase semantic kernel."""
+    """Active ABI versions for the six-phase semantic kernel.
+
+    Aligned with docs/ABI_REGISTRY.md and the hybrid MVP AGENTS.md
+    candidate ABI declarations.
+    """
 
     contribution: int = 1
-    switch_program: int = 1
-    coverage: int = 1
-    phase_receipt: int = 1
+    switch_program: int = 2
+    coverage: int = 2
+    phase_receipt: int = 2
     gap_receipt: int = 1
-    learning_plan: int = 1
-    response_meaning: int = 1
-    realization_receipt: int = 1
+    learning_plan: int = 2
+    response_meaning: int = 2
+    realization_receipt: int = 2
 
 
 @dataclass(frozen=True)

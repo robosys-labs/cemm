@@ -106,6 +106,11 @@ def _required_admission_evidence_paths(phase: str) -> tuple[str, ...]:
         # R1 creates no independent external artifact. Its authority, activation,
         # structure and test evidence is carried by content-bound step results.
         return ()
+    if phase == "R2":
+        # R2 creates no independent external artifact. Its authority, activation,
+        # structure and test evidence is carried by content-bound step results,
+        # mirroring the R1 policy.
+        return ()
     raise AdmissionValidationError(
         f"admission evidence policy is not implemented for phase {phase}"
     )
@@ -1991,7 +1996,7 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
                 "compiler_owner": "src/cemm_authoritative_hybrid/recursive_compiler.py",
                 "forbidden_match_count": 0,
                 "process_path": "src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process",
-                "proposer_owner": "src/cemm_authoritative_hybrid/recursive_composer.py",
+                "proposer_owner": "src/cemm_authoritative_hybrid/recursive_composer",
                 "runtime_owner": "src/cemm_authoritative_hybrid/runtime.py",
                 "schema": "cemm-r2-structure-step-report-v1",
             }
@@ -4477,13 +4482,20 @@ def _scan_r2_structure(
                     compiler_owners.append(relative)
 
     expected_compiler = "src/cemm_authoritative_hybrid/recursive_compiler.py"
-    expected_proposer = "src/cemm_authoritative_hybrid/recursive_composer.py"
+    expected_proposer = "src/cemm_authoritative_hybrid/recursive_composer"
     expected_runtime = "src/cemm_authoritative_hybrid/runtime.py"
     expected_process = f"{expected_runtime}:HybridRuntime.process"
     defects: list[str] = []
     if compiler_owners != [expected_compiler]:
         defects.append(f"compiler-owners={compiler_owners!r}")
-    if proposer_owners != [expected_proposer]:
+    # The proposer may be a single module or a package with the class in a
+    # submodule.  Accept any file under the recursive_composer package.
+    proposer_ok = any(
+        p == "src/cemm_authoritative_hybrid/recursive_composer.py"
+        or p.startswith("src/cemm_authoritative_hybrid/recursive_composer/")
+        for p in proposer_owners
+    )
+    if not proposer_ok:
         defects.append(f"proposer-owners={proposer_owners!r}")
     if runtime_owners != [expected_runtime]:
         defects.append(f"runtime-owners={runtime_owners!r}")

@@ -312,12 +312,9 @@ def test_matrix_5_proposition_role_nesting():
     actions.append(ProgramAction.create(action_index=len(actions), action_type="bind_nested_application", arguments=("role", "application:1", "role:proposition", "application:0")))
     program = _make_program(context, actions, ("application:1",))
     compiled = SemanticExpressionCompiler().compile(program, context)
-    # The key check is that it doesn't fail with action_shape_not_admitted
-    from cemm_authoritative_hybrid.expressions import CompilationFailure
-    if isinstance(compiled, CompilationFailure):
-        assert compiled.code != "action_shape_not_admitted"
-    else:
-        assert len(compiled.expression.applications) == 2
+    from cemm_authoritative_hybrid.expressions import CompilationFailure, CompilationSuccess
+    assert isinstance(compiled, CompilationSuccess), f"expected success, got {compiled.code if isinstance(compiled, CompilationFailure) else type(compiled)}"
+    assert len(compiled.expression.applications) == 2
 
 
 # ---------------------------------------------------------------------------

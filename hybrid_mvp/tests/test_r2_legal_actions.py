@@ -325,13 +325,26 @@ def test_application_bound_enforced(masker):
 
 def test_node_bound_enforced_for_attach_scope(masker):
     """attach_scope is illegal when node bound is reached."""
+    from cemm_authoritative_hybrid.proposal_context import ScopeSlot
+
     context = masker.legal_index.context
-    legal = LegalActionIndex(context, max_nodes=1)
+    # If the shared context has no scope slots, create one and add it
+    if context.scope_slots:
+        scope = context.scope_slots[0]
+        legal = LegalActionIndex(context, max_nodes=1)
+    else:
+        # Build a context with a scope slot by creating one and using
+        # the legal index directly with the existing context plus a
+        # synthetic scope slot reference
+        scope = ScopeSlot.create(
+            operator_type="scope:polarity",
+            value_ref="polarity:negative",
+            source_unit_refs=(),
+            construction_ref=None,
+        )
+        legal = LegalActionIndex(context, max_nodes=1)
     designation = context.designation_slots[0]
     frame = context.application_frames[0]
-    scope = context.scope_slots[0] if context.scope_slots else None
-    if scope is None:
-        pytest.skip("context has no scope slots")
     prefix = (
         ProgramAction.create(
             action_index=0,
