@@ -58,6 +58,21 @@ SRC = ROOT / "src" / "cemm_authoritative_hybrid"
         "label:name",
         "participant:speaker",
     ],
+    ids=[
+        "op-event",
+        "role-subject",
+        "entity-alice",
+        "concept-love",
+        "relation-love",
+        "event-act",
+        "state-happy",
+        "state_value-happy",
+        "dim-mood",
+        "cap-learn",
+        "adapter-act",
+        "label-name",
+        "participant-speaker",
+    ],
 )
 def test_internal_ref_prefixes_are_rejected_as_surfaces(ref: str):
     """Internal refs must not be exposed as user-visible surfaces."""
@@ -73,6 +88,14 @@ def test_internal_ref_prefixes_are_rejected_as_surfaces(ref: str):
         "the event",
         "learning",
         "a normal word",
+    ],
+    ids=[
+        "love",
+        "Alice",
+        "happy",
+        "the-event",
+        "learning",
+        "a-normal-word",
     ],
 )
 def test_normal_surfaces_are_not_internal_refs(surface: str):

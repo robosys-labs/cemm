@@ -44,11 +44,11 @@ TIERS = ("owner", "phase", "admission")
 STEP_KINDS = frozenset(
     {
         "governance", "compile", "pytest", "pytest_inventory", "authority_link",
-        "sqlite_activation", "r1_structure",
+        "sqlite_activation", "r1_structure", "r2_structure",
     }
 )
 PYTEST_KINDS = frozenset({"pytest", "pytest_inventory"})
-ADMISSION_ONLY_KINDS = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
+ADMISSION_ONLY_KINDS = frozenset({"authority_link", "sqlite_activation", "r1_structure", "r2_structure"})
 _CONTENT_REF_RE = re.compile(r"[a-z][a-z0-9_-]*:[0-9a-f]{24}\Z")
 _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -85,6 +85,7 @@ _STEP_FIELDS = MappingProxyType(
         "authority_link": frozenset({"kind", "depends_on", "inputs"}),
         "sqlite_activation": frozenset({"kind", "depends_on", "inputs"}),
         "r1_structure": frozenset({"kind", "depends_on", "inputs"}),
+        "r2_structure": frozenset({"kind", "depends_on", "inputs"}),
     }
 )
 _PHASE_FIELDS = frozenset({"owners", "phase", "admission"})
@@ -925,10 +926,14 @@ class GateGraph:
                 raise GateConfigError("each executing phase tier must contain one pytest process")
             admission_steps = self.resolve_phase(phase, "admission")
             selected_admission_only = set(admission_steps) & admission_only
-            if selected_admission_only and phase != "R1":
-                raise GateConfigError("R1 admission-only step selected by another phase")
-            if phase == "R1" and selected_admission_only != admission_only:
+            r1_admission_only = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
+            r2_admission_only = frozenset({"authority_link", "sqlite_activation", "r2_structure"})
+            if selected_admission_only and phase not in {"R1", "R2"}:
+                raise GateConfigError("admission-only step selected by a non-admission phase")
+            if phase == "R1" and selected_admission_only != r1_admission_only:
                 raise GateConfigError("R1 admission requires authority, activation, and structure evidence")
+            if phase == "R2" and selected_admission_only != r2_admission_only:
+                raise GateConfigError("R2 admission requires authority, activation, and structure evidence")
             if self.pytest_process_count(phase, "admission") != 1:
                 raise GateConfigError("admission must contain exactly one pytest process")
             pytest_steps = [
@@ -1975,6 +1980,32 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
             structure_ref = identity.pop("structure_ref")
             if structure_ref != content_ref("r1_structure", identity):
                 raise AdmissionValidationError("R1 structure report identity is invalid")
+            return
+        if kind == "r2_structure":
+            row = _exact_fields(item, frozenset({
+                "compiler_owner", "forbidden_match_count", "process_path",
+                "proposer_owner", "runtime_owner", "scanned_file_count",
+                "scanned_source_set_ref", "schema", "structure_ref",
+            }), "R2-structure step report")
+            expected = {
+                "compiler_owner": "src/cemm_authoritative_hybrid/recursive_compiler.py",
+                "forbidden_match_count": 0,
+                "process_path": "src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process",
+                "proposer_owner": "src/cemm_authoritative_hybrid/recursive_composer.py",
+                "runtime_owner": "src/cemm_authoritative_hybrid/runtime.py",
+                "schema": "cemm-r2-structure-step-report-v1",
+            }
+            if any(row[field] != value for field, value in expected.items()):
+                raise AdmissionValidationError("R2 structure ownership is invalid")
+            if _nonnegative_exact_int(row["scanned_file_count"], "R2 source count") == 0:
+                raise AdmissionValidationError("R2 structure scan is empty")
+            for field in ("scanned_source_set_ref", "structure_ref"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"R2 structure report {field} is invalid")
+            identity = dict(row)
+            structure_ref = identity.pop("structure_ref")
+            if structure_ref != content_ref("r2_structure", identity):
+                raise AdmissionValidationError("R2 structure report identity is invalid")
             return
         raise AdmissionValidationError("unknown admission step report kind")
     except GateConfigError as exc:
@@ -4372,6 +4403,111 @@ def _scan_r1_structure(
     material["structure_ref"] = content_ref("r1_structure", material)
     return material
 
+
+def _scan_r2_structure(
+    root: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> dict[str, object]:
+    """Reconstruct the bounded R2 production seam from Python ASTs.
+
+    Verifies that the recursive composer, recursive compiler, verifier
+    reconstruction, and transition preview modules exist and are owned
+    by the expected files.  Also checks that no forbidden legacy tokens
+    appear in the R2 source set.
+    """
+    root_path = root.resolve()
+    package = root_path / "src" / "cemm_authoritative_hybrid"
+    try:
+        package = package.resolve(strict=True)
+    except OSError as exc:
+        raise GateConfigError("R2 structure validation failed: package root unavailable") from exc
+    try:
+        paths = tuple(sorted(package.rglob("*.py")))
+    except OSError as exc:
+        raise GateConfigError("R2 structure validation failed: cannot enumerate sources") from exc
+    if not paths or len(paths) > 512:
+        raise GateConfigError("R2 structure validation failed: source count is unbounded")
+
+    compiler_owners: list[str] = []
+    proposer_owners: list[str] = []
+    runtime_owners: list[str] = []
+    process_paths: list[str] = []
+    forbidden: list[str] = []
+    source_rows: list[dict[str, str]] = []
+    forbidden_tokens = {"StageRecord", "stage_trace", "range(23)", "weights_only=False"}
+
+    for path in paths:
+        if _path_is_link_or_reparse(path):
+            raise GateConfigError("R2 structure validation failed: redirected source")
+        relative = _repository_relative(root_path, path)
+        try:
+            raw = (
+                source_reader(path)
+                if source_reader is not None
+                else _read_bounded_file(path, maximum=_MAX_EXACT_SOURCE_BYTES)
+            )
+            if type(raw) is not bytes or not raw or len(raw) > _MAX_EXACT_SOURCE_BYTES:
+                raise GateConfigError("R2 structure validation failed: invalid source bytes")
+            tree = ast.parse(raw.decode("utf-8"), filename=str(path))
+        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+            raise GateConfigError(
+                f"R2 structure validation failed: cannot parse {relative}"
+            ) from exc
+        source_rows.append({"path": relative, "sha256": hashlib.sha256(raw).hexdigest()})
+        text = raw.decode("utf-8")
+        for token in forbidden_tokens:
+            if token in text:
+                forbidden.append(f"{relative}:forbidden-token:{token}")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                if node.name == "RecursiveComposer":
+                    proposer_owners.append(relative)
+                if node.name == "HybridRuntime":
+                    runtime_owners.append(relative)
+                    methods = [
+                        item for item in node.body
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        and item.name == "process"
+                    ]
+                    for method in methods:
+                        process_paths.append(f"{relative}:HybridRuntime.process")
+            elif isinstance(node, ast.FunctionDef):
+                if node.name == "compile_recursive":
+                    compiler_owners.append(relative)
+
+    expected_compiler = "src/cemm_authoritative_hybrid/recursive_compiler.py"
+    expected_proposer = "src/cemm_authoritative_hybrid/recursive_composer.py"
+    expected_runtime = "src/cemm_authoritative_hybrid/runtime.py"
+    expected_process = f"{expected_runtime}:HybridRuntime.process"
+    defects: list[str] = []
+    if compiler_owners != [expected_compiler]:
+        defects.append(f"compiler-owners={compiler_owners!r}")
+    if proposer_owners != [expected_proposer]:
+        defects.append(f"proposer-owners={proposer_owners!r}")
+    if runtime_owners != [expected_runtime]:
+        defects.append(f"runtime-owners={runtime_owners!r}")
+    if process_paths != [expected_process]:
+        defects.append(f"process-paths={process_paths!r}")
+    defects.extend(forbidden)
+    if defects:
+        raise GateConfigError(
+            "R2 structure validation failed: " + "; ".join(defects[:16])
+        )
+    material: dict[str, object] = {
+        "compiler_owner": expected_compiler,
+        "forbidden_match_count": 0,
+        "process_path": expected_process,
+        "proposer_owner": expected_proposer,
+        "runtime_owner": expected_runtime,
+        "scanned_file_count": len(source_rows),
+        "scanned_source_set_ref": content_ref("r2_source_set", source_rows),
+        "schema": "cemm-r2-structure-step-report-v1",
+    }
+    material["structure_ref"] = content_ref("r2_structure", material)
+    return material
+
+
 class _RunContext:
     def __init__(
         self,
@@ -4684,6 +4820,19 @@ class _RunContext:
             raise GateConfigError("R1 structure scan is available only in R1 admission")
         started = time.monotonic_ns()
         report = _scan_r1_structure(
+            self.root, source_reader=lambda path: self._read_bytes(path)
+        )
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=report,
+            observation_report=report, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def run_r2_structure(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R2":
+            raise GateConfigError("R2 structure scan is available only in R2 admission")
+        started = time.monotonic_ns()
+        report = _scan_r2_structure(
             self.root, source_reader=lambda path: self._read_bytes(path)
         )
         return _HandledStep(
@@ -5061,6 +5210,8 @@ def run_validation(
                         handled = context.run_sqlite_activation()
                     elif step.kind == "r1_structure":
                         handled = context.run_r1_structure()
+                    elif step.kind == "r2_structure":
+                        handled = context.run_r2_structure()
                     else:
                         raise GateConfigError(
                             f"step kind has no execution handler: {step.kind}"

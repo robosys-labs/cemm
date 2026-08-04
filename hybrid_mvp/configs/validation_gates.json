@@ -45,6 +45,33 @@
       "phase": [
         "r1_phase_tests"
       ]
+    },
+    "R2": {
+      "admission": [
+        "pytest_active",
+        "r2_structure",
+        "sqlite_activation"
+      ],
+      "owners": {
+        "form-context": [
+          "r2_form_context_owner_tests"
+        ],
+        "recursive-composer": [
+          "r2_recursive_composer_owner_tests"
+        ],
+        "expression-compiler": [
+          "r2_expression_compiler_owner_tests"
+        ],
+        "exact-verifier": [
+          "r2_exact_verifier_owner_tests"
+        ],
+        "runtime-boundary": [
+          "r2_runtime_boundary_owner_tests"
+        ]
+      },
+      "phase": [
+        "r2_phase_tests"
+      ]
     }
   },
   "schema": "cemm-hybrid-validation-gates-v1",
@@ -878,6 +905,218 @@
         "src/cemm_authoritative_hybrid/persistence.py"
       ],
       "kind": "sqlite_activation"
+    },
+    "r2_form_context_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_structural_slots.py::test_application_frame_slot_has_proposition_roles_field",
+        "tests/test_r2_structural_slots.py::test_application_frame_slot_rejects_undeclared_proposition_role",
+        "tests/test_r2_structural_slots.py::test_conjunction_connector_produces_link_slot",
+        "tests/test_r2_structural_slots.py::test_contribution_slot_literal_value_validation",
+        "tests/test_r2_structural_slots.py::test_detect_literal_boolean",
+        "tests/test_r2_structural_slots.py::test_detect_literal_integer",
+        "tests/test_r2_structural_slots.py::test_detect_literal_rejects_non_literal",
+        "tests/test_r2_structural_slots.py::test_detect_literal_string",
+        "tests/test_r2_structural_slots.py::test_form_pack_link_schemas_have_valid_link_types",
+        "tests/test_r2_structural_slots.py::test_form_pack_scope_values_are_reviewed_refs",
+        "tests/test_r2_structural_slots.py::test_language_packs_share_reviewed_link_types",
+        "tests/test_r2_structural_slots.py::test_language_packs_share_reviewed_scope_value_refs",
+        "tests/test_r2_structural_slots.py::test_link_schemas_defined_in_form_pack",
+        "tests/test_r2_structural_slots.py::test_link_types_cover_all_eight",
+        "tests/test_r2_structural_slots.py::test_literal_contribution_preserves_value",
+        "tests/test_r2_structural_slots.py::test_purpose_connector_produces_link_slot",
+        "tests/test_r2_structural_slots.py::test_scope_negation_normalized_to_polarity",
+        "tests/test_r2_structural_slots.py::test_scope_operator_types_are_reviewed",
+        "tests/test_r2_structural_slots.py::test_scope_slots_cover_polarity_and_modality",
+        "tests/test_r2_structural_slots.py::test_scope_slots_use_reviewed_value_refs",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_detects_conjunction",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_detects_polarity",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_exists",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_has_link_schemas",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_has_same_abi_version",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_has_scope_values",
+        "tests/test_r2_structural_slots.py::test_second_language_pack_tokenizes",
+        "tests/test_r2_structural_slots.py::test_transition_slot_binds_reviewed_fields",
+        "tests/test_r2_structural_slots.py::test_transition_slot_rejects_empty_capabilities",
+        "tests/test_r2_structural_slots.py::test_transition_slot_rejects_empty_modes",
+        "tests/test_r2_structural_slots.py::test_transition_slot_rejects_invalid_mode",
+        "tests/test_r2_structural_slots.py::test_variable_slot_binds_to_frame_role",
+        "tests/test_r2_structural_slots.py::test_variable_slot_rejects_non_role_prefix",
+        "tests/test_r2_structural_slots.py::test_variable_slot_required_kinds_nonempty"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_recursive_composer_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_legal_actions.py::test_abstain_illegal_after_terminal",
+        "tests/test_r2_legal_actions.py::test_application_bound_enforced",
+        "tests/test_r2_legal_actions.py::test_complete_program_illegal_without_required_roles",
+        "tests/test_r2_legal_actions.py::test_instantiate_operator_illegal_without_designation",
+        "tests/test_r2_legal_actions.py::test_instantiate_operator_legal_after_designation",
+        "tests/test_r2_legal_actions.py::test_is_legal_is_pure_predicate",
+        "tests/test_r2_legal_actions.py::test_masker_matches_legal_index",
+        "tests/test_r2_legal_actions.py::test_node_bound_enforced_for_attach_scope",
+        "tests/test_r2_legal_actions.py::test_prefix_budget_empty",
+        "tests/test_r2_legal_actions.py::test_prefix_budget_tracks_applications",
+        "tests/test_r2_legal_actions.py::test_select_context_illegal_with_wrong_ref",
+        "tests/test_r2_legal_actions.py::test_select_context_legal_on_empty_prefix",
+        "tests/test_r2_legal_actions.py::test_select_designation_illegal_duplicate",
+        "tests/test_r2_legal_actions.py::test_select_designation_legal_after_mode",
+        "tests/test_r2_legal_actions.py::test_select_mode_illegal_on_empty_prefix",
+        "tests/test_r2_legal_actions.py::test_select_mode_legal_after_select_context",
+        "tests/test_r2_proposer_bounds.py::test_all_candidates_have_complete_program_terminal",
+        "tests/test_r2_proposer_bounds.py::test_all_candidates_have_non_empty_roots",
+        "tests/test_r2_proposer_bounds.py::test_all_candidates_have_valid_action_indices",
+        "tests/test_r2_proposer_bounds.py::test_candidate_count_never_exceeds_max",
+        "tests/test_r2_proposer_bounds.py::test_explored_states_bounded_by_max_explored",
+        "tests/test_r2_proposer_bounds.py::test_no_candidate_exceeds_application_bound",
+        "tests/test_r2_proposer_bounds.py::test_truncated_implies_more_candidates_exist",
+        "tests/test_r2_proposer_determinism.py::test_byte_identical_output_same_context",
+        "tests/test_r2_proposer_determinism.py::test_byte_identical_output_serialized",
+        "tests/test_r2_proposer_determinism.py::test_deterministic_candidate_order",
+        "tests/test_r2_proposer_determinism.py::test_deterministic_explored_and_truncated",
+        "tests/test_r2_proposer_determinism.py::test_different_config_produces_different_output",
+        "tests/test_r2_recursive_proposer.py::test_candidates_are_canonical_program_abi2",
+        "tests/test_r2_recursive_proposer.py::test_explored_states_is_bounded",
+        "tests/test_r2_recursive_proposer.py::test_multi_app_candidate_has_multiple_roots",
+        "tests/test_r2_recursive_proposer.py::test_no_designation_abstains",
+        "tests/test_r2_recursive_proposer.py::test_no_mode_abstains",
+        "tests/test_r2_recursive_proposer.py::test_propose_does_not_invoke_verify",
+        "tests/test_r2_recursive_proposer.py::test_proposer_rank_order_preserved",
+        "tests/test_r2_recursive_proposer.py::test_same_context_produces_byte_identical_output",
+        "tests/test_r2_recursive_proposer.py::test_search_stays_within_candidate_bound",
+        "tests/test_r2_recursive_proposer.py::test_single_application_program_has_one_root",
+        "tests/test_r2_recursive_proposer.py::test_truncated_when_more_candidates_exist",
+        "tests/test_r2_recursive_proposer.py::test_two_designations_produce_multi_app_candidates"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_expression_compiler_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_recursive_compiler.py::test_attach_scope_produces_scope_operator",
+        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_link_produces_expression_link",
+        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_role_produces_application_filler",
+        "tests/test_r2_recursive_compiler.py::test_context_mismatch_fails_before_compilation",
+        "tests/test_r2_recursive_compiler.py::test_r2_actions_are_admitted_not_rejected",
+        "tests/test_r2_recursive_compiler.py::test_single_application_compiles_correctly",
+        "tests/test_r2_recursive_compiler.py::test_two_applications_compile_with_multiple_roots",
+        "tests/test_r2_recursive_compiler.py::test_two_derivations_compile_to_same_expression",
+        "tests/test_r2_recursive_compiler.py::test_zero_applications_fails"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_exact_verifier_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_transition_preview.py::test_compiler_admits_propose_transition",
+        "tests/test_r2_transition_preview.py::test_invalid_transition_slot_produces_no_preview",
+        "tests/test_r2_transition_preview.py::test_no_transition_produces_empty_previews",
+        "tests/test_r2_transition_preview.py::test_propose_transition_produces_preview",
+        "tests/test_r2_transition_preview.py::test_transition_preview_has_no_executed_effects",
+        "tests/test_r2_transition_preview.py::test_transition_preview_round_trips",
+        "tests/test_r2_verifier_reconstruction.py::test_link_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_multi_app_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_r1_program_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_reconstruction_returns_none_for_empty_program",
+        "tests/test_r2_verifier_reconstruction.py::test_scope_reconstruction_matches_compiler"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_runtime_boundary_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[adapter-act]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[cap-learn]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[concept-love]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[dim-mood]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[entity-alice]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[event-act]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[label-name]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[op-event]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[participant-speaker]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[relation-love]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[role-subject]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[state-happy]",
+        "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[state_value-happy]",
+        "tests/test_r2_runtime_boundary.py::test_no_legacy_runtime_branches_in_source",
+        "tests/test_r2_runtime_boundary.py::test_no_legacy_stage_numbers_in_source",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[Alice]",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[a-normal-word]",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[happy]",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[learning]",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[love]",
+        "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[the-event]",
+        "tests/test_r2_runtime_boundary.py::test_program_compiles_to_expression_not_meaning",
+        "tests/test_r2_runtime_boundary.py::test_program_ref_differs_from_expression_ref",
+        "tests/test_r2_runtime_boundary.py::test_runtime_does_not_branch_on_stage_numbers",
+        "tests/test_r2_runtime_boundary.py::test_six_phases_are_named_not_numbered",
+        "tests/test_r2_runtime_boundary.py::test_transition_preview_has_no_effect_execution"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_phase_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_acceptance_matrix.py::test_matrix_10_no_internal_refs_in_expression_refs",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_1_single_application_r1_compatible",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_2_multi_application_multiple_roots",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_3_scope_operators",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_4_expression_links",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_5_proposition_role_nesting",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_6_transition_preview",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_7_variable_binder",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_8_determinism",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_9_compiler_reconstruction_independence"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py",
+        "tests/test_r2_acceptance_matrix.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_structure": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/"
+      ],
+      "kind": "r2_structure"
     }
   }
 }
