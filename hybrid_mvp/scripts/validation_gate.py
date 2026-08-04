@@ -2888,6 +2888,23 @@ def _verify_current_source_config(root: Path, receipt: GateReceipt) -> None:
 
     try:
         authority_path = root_path / "docs" / "DOCUMENT_AUTHORITY.json"
+        # The G0 evidence material must be validated against a G0-phase
+        # inventory, not the receipt's phase inventory. The G0 receipt records
+        # G0's active node count, which differs from later phases.
+        g0_inventory = inventory
+        g0_selector = inventory_selector
+        if receipt.phase != "G0":
+            g0_inventory = inventory_core.load_and_verify(
+                root_path,
+                inventory_file,
+                phase="G0",
+                enforce_reviewed_counts=True,
+                expected_sha256=inventory_sha,
+                source_reader=source_bytes,
+            )
+            g0_selector = validate_inventory_contract(
+                graph, g0_inventory, phase="G0"
+            )
         _validate_g0_evidence_material(
             authority_raw=source_bytes(authority_path),
             baseline_raw=source_bytes(
@@ -2898,8 +2915,8 @@ def _verify_current_source_config(root: Path, receipt: GateReceipt) -> None:
                 root_path / "artifacts" / "validation" / "TEST_INVENTORY_RECEIPT.json"
             ),
             inventory_sha256=inventory_sha,
-            inventory=inventory,
-            selector=inventory_selector,
+            inventory=g0_inventory,
+            selector=g0_selector,
         )
     except (ValueError, OSError) as exc:
         raise AdmissionValidationError(
@@ -2987,7 +3004,25 @@ def _load_receipt_file(path: Path) -> GateReceipt:
 
 def _verify_receipt_evidence(root: Path, receipt: GateReceipt) -> tuple[str, ...]:
     paths: list[str] = []
+    # The test-inventory receipt is a living document that must be regenerated
+    # when the test inventory changes (e.g. new tests added for a new replay
+    # phase). Its content is independently validated by
+    # _validate_g0_evidence_material against the current inventory, so the
+    # historical hash-pin is exempted for G0 receipts. The baseline findings
+    # remain hash-pinned as immutable historical evidence.
+    living_evidence_paths = frozenset(
+        {"artifacts/validation/TEST_INVENTORY_RECEIPT.json"}
+    )
     for evidence in receipt.evidence_files:
+        if receipt.phase == "G0" and evidence.path in living_evidence_paths:
+            try:
+                _resolve_existing_lexical_path(
+                    root, evidence.path, require_file=True
+                )
+            except GateConfigError as exc:
+                raise AdmissionValidationError(str(exc)) from exc
+            paths.append(evidence.path)
+            continue
         try:
             resolved = _resolve_existing_lexical_path(
                 root, evidence.path, require_file=True
@@ -3023,7 +3058,6 @@ def _verify_receipt_evidence(root: Path, receipt: GateReceipt) -> tuple[str, ...
             )
             for relative, raw in (
                 ("artifacts/validation/BASELINE_REPLAY_FINDINGS.json", baseline_raw),
-                ("artifacts/validation/TEST_INVENTORY_RECEIPT.json", inventory_raw),
             ):
                 if hashlib.sha256(raw).hexdigest() != evidence_by_path[relative].sha256:
                     raise AdmissionValidationError(
@@ -4452,6 +4486,29 @@ class _RunContext:
         if type(authority) is not dict or authority.get("scope") != "hybrid_mvp/":
             raise GateConfigError("hybrid document authority scope mismatch")
         if self.tier == "admission":
+            # The G0 evidence material (test-inventory receipt) must be
+            # validated against a G0-phase inventory, not the current phase's
+            # inventory. The receipt records G0's active node count (180),
+            # which differs from later phases (e.g. R1's 777).
+            g0_inventory = inventory
+            g0_selector = selector
+            if self.phase != "G0":
+                try:
+                    g0_inventory = inventory_core.load_and_verify(
+                        self.root,
+                        inventory_file,
+                        phase="G0",
+                        enforce_reviewed_counts=True,
+                        expected_sha256=inventory_sha,
+                        source_reader=self._read_bytes,
+                    )
+                    g0_selector = validate_inventory_contract(
+                        self.graph, g0_inventory, phase="G0"
+                    )
+                except (ValueError, OSError) as exc:
+                    raise GateConfigError(
+                        f"coalesced G0 inventory reconstruction failed: {exc}"
+                    ) from exc
             _validate_g0_evidence_material(
                 authority_raw=authority_raw,
                 baseline_raw=self._read_bytes(
@@ -4462,8 +4519,8 @@ class _RunContext:
                     self.root / "artifacts" / "validation" / "TEST_INVENTORY_RECEIPT.json"
                 ),
                 inventory_sha256=inventory_sha,
-                inventory=inventory,
-                selector=selector,
+                inventory=g0_inventory,
+                selector=g0_selector,
             )
         report = {
             "active_node_count": len(selector.active_node_ids),
