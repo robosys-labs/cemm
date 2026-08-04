@@ -278,3 +278,312 @@ def test_form_pack_link_schemas_have_valid_link_types(form_pack):
         assert link_type in _LINK_TYPES, (
             f"Link schema {name} has invalid link_type {link_type}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Task 2c: Proposition frame derivation
+# ---------------------------------------------------------------------------
+
+
+def test_application_frame_slot_has_proposition_roles_field():
+    """ApplicationFrameSlot has a proposition_roles field for reviewed metadata."""
+    from cemm_authoritative_hybrid.proposal_context import ApplicationFrameSlot
+
+    slot = ApplicationFrameSlot.create(
+        designation_slot_ref="designation_slot:0",
+        predicate_target_ref="event:say",
+        predicate_kind="event_type",
+        operator_ref="op:event",
+        structural_role_ref="role:event",
+        required_roles=("role:actor", "role:content"),
+        optional_roles=(),
+        proposition_roles=("role:content",),
+        source_unit_refs=("unit:0",),
+        derived_role_targets=(),
+        affordance_frame_ref="frame:event:say",
+        provenance_refs=("designation_slot:0", "frame:event:say"),
+    )
+    assert slot.proposition_roles == ("role:content",)
+
+
+def test_application_frame_slot_rejects_undeclared_proposition_role():
+    """Proposition roles must be declared in required or optional roles."""
+    from cemm_authoritative_hybrid.proposal_context import ApplicationFrameSlot
+
+    with pytest.raises(ValueError, match="proposition roles must be declared roles"):
+        ApplicationFrameSlot.create(
+            designation_slot_ref="designation_slot:0",
+            predicate_target_ref="event:say",
+            predicate_kind="event_type",
+            operator_ref="op:event",
+            structural_role_ref="role:event",
+            required_roles=("role:actor",),
+            optional_roles=(),
+            proposition_roles=("role:content",),
+            source_unit_refs=("unit:0",),
+            derived_role_targets=(),
+            affordance_frame_ref="frame:event:say",
+            provenance_refs=("designation_slot:0",),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Task 2d: Variable slots with exact frame role binding
+# ---------------------------------------------------------------------------
+
+
+def test_variable_slot_required_kinds_nonempty():
+    """Variable slot required_kinds must be non-empty."""
+    with pytest.raises(ValueError, match="required_kinds must be non-empty"):
+        VariableSlot.create(
+            application_frame_ref="application_frame_slot:0",
+            role_ref="role:subject",
+            required_kinds=(),
+            source_unit_refs=("unit:0",),
+            construction_ref=None,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Task 2e: Transition slot ownership from reviewed signatures
+# ---------------------------------------------------------------------------
+
+
+def test_transition_slot_rejects_empty_modes():
+    """Transition slot compatible_modes must be non-empty."""
+    with pytest.raises(ValueError, match="compatible_modes must be non-empty"):
+        TransitionSlot.create(
+            application_frame_ref="application_frame_slot:0",
+            event_type_ref="event:set_state",
+            compatible_modes=(),
+            required_roles=(),
+            required_capabilities=(),
+            required_permissions=(),
+            adapter_ref=None,
+            source_unit_refs=("unit:0",),
+        )
+
+
+def test_transition_slot_rejects_empty_capabilities():
+    """Transition slot required_capabilities must be non-empty string tuple."""
+    # Empty capabilities is allowed (some transitions may not need caps)
+    slot = TransitionSlot.create(
+        application_frame_ref="application_frame_slot:0",
+        event_type_ref="event:greeting",
+        compatible_modes=("REQUEST",),
+        required_roles=("role:actor",),
+        required_capabilities=(),
+        required_permissions=(),
+        adapter_ref=None,
+        source_unit_refs=("unit:0",),
+    )
+    assert slot.event_type_ref == "event:greeting"
+
+
+# ---------------------------------------------------------------------------
+# Task 2f: Typed literal preservation
+# ---------------------------------------------------------------------------
+
+
+def test_detect_literal_integer():
+    """Integer literals are detected from source text."""
+    from cemm_authoritative_hybrid.contributions import _detect_literal
+
+    result = _detect_literal("42")
+    assert result == ("integer", "42")
+
+    result = _detect_literal("-7")
+    assert result == ("integer", "-7")
+
+    result = _detect_literal("+100")
+    assert result == ("integer", "+100")
+
+
+def test_detect_literal_boolean():
+    """Boolean literals are detected from source text."""
+    from cemm_authoritative_hybrid.contributions import _detect_literal
+
+    result = _detect_literal("true")
+    assert result == ("boolean", "true")
+
+    result = _detect_literal("False")
+    assert result == ("boolean", "false")
+
+
+def test_detect_literal_string():
+    """Quoted string literals preserve inner content."""
+    from cemm_authoritative_hybrid.contributions import _detect_literal
+
+    result = _detect_literal('"hello"')
+    assert result == ("string", "hello")
+
+    result = _detect_literal("'world'")
+    assert result == ("string", "world")
+
+
+def test_detect_literal_rejects_non_literal():
+    """Non-literal text returns None."""
+    from cemm_authoritative_hybrid.contributions import _detect_literal
+
+    assert _detect_literal("alice") is None
+    assert _detect_literal("") is None
+    assert _detect_literal("  ") is None
+    assert _detect_literal("not") is None
+
+
+def test_literal_contribution_preserves_value():
+    """Literal contributions preserve exact source value and type tag."""
+    from cemm_authoritative_hybrid.contributions import ContributionExpander
+
+    contribution = ContributionExpander._make_literal_contribution(
+        source_unit_ref="unit:0",
+        literal_kind="integer",
+        literal_value="42",
+    )
+    assert contribution.kind == "literal"
+    assert contribution.target_ref is None
+    constraints = dict(contribution.constraints)
+    assert constraints["literal"] == "42"
+    assert constraints["literal_kind"] == "integer"
+
+
+def test_contribution_slot_literal_value_validation():
+    """ContributionSlot validates literal_value field correctly."""
+    from cemm_authoritative_hybrid.proposal_context import ContributionSlot
+
+    # Literal kind requires literal_value
+    with pytest.raises(ValueError, match="literal contribution requires literal_value"):
+        ContributionSlot.create(
+            contribution_ref="contribution:0",
+            kind="literal",
+            source_unit_refs=("unit:0",),
+            target_ref=None,
+            target_kind=None,
+            input_ports=(),
+            output_ports=("role:literal",),
+            constraints=(("literal", "42"),),
+            provenance_refs=(),
+            literal_value=None,
+        )
+
+    # Non-literal kind must not have literal_value
+    with pytest.raises(ValueError, match="only literal contributions may carry"):
+        ContributionSlot.create(
+            contribution_ref="contribution:0",
+            kind="anchor",
+            source_unit_refs=("unit:0",),
+            target_ref="entity:book",
+            target_kind="entity",
+            input_ports=(),
+            output_ports=("role:anchor",),
+            constraints=(),
+            provenance_refs=(),
+            literal_value="42",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Task 2g: Second reviewed language pack + multilingual canaries
+# ---------------------------------------------------------------------------
+
+ES_FORMS_PATH = ROOT / "languages" / "es" / "forms.json"
+
+
+@pytest.fixture
+def es_form_pack() -> dict:
+    with open(ES_FORMS_PATH) as f:
+        return json.load(f)
+
+
+@pytest.fixture
+def es_form_resolver(es_form_pack) -> FormResolver:
+    return FormResolver(es_form_pack, RuntimeConfig.release())
+
+
+def test_second_language_pack_exists():
+    """A second reviewed language pack exists at data/languages/es/forms.json."""
+    assert ES_FORMS_PATH.exists(), "Second language pack (es) must exist"
+
+
+def test_second_language_pack_has_same_abi_version(es_form_pack):
+    """The second language pack uses the same ABI version as English."""
+    assert es_form_pack["abi_version"] == 7
+    assert es_form_pack["language"] == "es"
+
+
+def test_second_language_pack_has_scope_values(es_form_pack):
+    """The second language pack has reviewed scope_values mapping."""
+    scope_values = es_form_pack.get("scope_values", {})
+    assert "polarity" in scope_values
+    assert "modality" in scope_values
+    for category, values in scope_values.items():
+        for feature_value, ref in values.items():
+            assert ref.startswith("scope_value:"), (
+                f"ES scope value {ref} for {category}/{feature_value} "
+                f"is not a reviewed scope_value ref"
+            )
+
+
+def test_second_language_pack_has_link_schemas(es_form_pack):
+    """The second language pack has reviewed link_schemas mapping."""
+    schemas = es_form_pack.get("link_schemas", {})
+    assert len(schemas) >= 8
+    for name, schema in schemas.items():
+        assert "link_type" in schema
+        assert "commutative" in schema
+        assert "min_arity" in schema
+        assert "max_arity" in schema
+
+
+def test_second_language_pack_tokenizes(es_form_resolver):
+    """The second language pack tokenizes Spanish text correctly."""
+    lattice = es_form_resolver.resolve("hola")
+    assert len(lattice.units) >= 1
+    # Joining source_text must reproduce input
+    assert "".join(u.source_text for u in lattice.units) == "hola"
+
+
+def test_second_language_pack_detects_polarity(es_form_resolver, es_form_pack):
+    """The second language pack detects Spanish negation."""
+    lattice = es_form_resolver.resolve("no")
+    config = RuntimeConfig.release()
+    scope_values = es_form_pack.get("scope_values", {})
+    from cemm_authoritative_hybrid.proposal_context import _scope_slots
+
+    slots = _scope_slots(lattice, config, scope_values)
+    assert len(slots) >= 1
+    assert slots[0].operator_type == "scope:polarity"
+    assert slots[0].value_ref == "scope_value:polarity:negative"
+
+
+def test_second_language_pack_detects_conjunction(es_form_resolver, es_form_pack):
+    """The second language pack detects Spanish conjunction ('y')."""
+    lattice = es_form_resolver.resolve("alice y bob")
+    config = RuntimeConfig.release()
+    link_schemas = es_form_pack.get("link_schemas", {})
+    from cemm_authoritative_hybrid.proposal_context import _expression_link_slots
+
+    slots = _expression_link_slots(lattice, config, link_schemas)
+    link_types = {slot.link_type for slot in slots}
+    assert "link:conjunction" in link_types
+
+
+def test_language_packs_share_reviewed_scope_value_refs(form_pack, es_form_pack):
+    """Both language packs map to the same reviewed scope_value refs.
+
+    Per R2 plan section 2.7: meaning != language. The same semantic
+    scope value ref is reached regardless of input language.
+    """
+    en_polarity = form_pack["scope_values"]["polarity"]["negation"]
+    es_polarity = es_form_pack["scope_values"]["polarity"]["negation"]
+    assert en_polarity == es_polarity, (
+        "Scope value refs must be language-invariant: "
+        f"en={en_polarity}, es={es_polarity}"
+    )
+
+
+def test_language_packs_share_reviewed_link_types(form_pack, es_form_pack):
+    """Both language packs map to the same reviewed link types."""
+    en_conjunction = form_pack["link_schemas"]["conjunction"]["link_type"]
+    es_conjunction = es_form_pack["link_schemas"]["conjunction"]["link_type"]
+    assert en_conjunction == es_conjunction == "link:conjunction"

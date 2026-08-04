@@ -125,6 +125,7 @@ class ContributionExpander:
 
         # Build a unit_ref → source_text lookup from the form lattice.
         unit_texts: dict[str, str] = {}
+        consumed_unit_refs: set[str] = set()
         if form_lattice is not None:
             for unit in getattr(form_lattice, "units", ()):
                 unit_texts[unit.unit_ref] = unit.source_text
@@ -132,6 +133,7 @@ class ContributionExpander:
         for desig in getattr(grounding_result, "designations", ()):
             target_ref = desig.target_ref
             unit_refs = desig.unit_refs
+            consumed_unit_refs.update(unit_refs)
             profiles = self._index.for_target(target_ref)
 
             for profile in profiles[: self._max_per_unit]:
@@ -150,6 +152,24 @@ class ContributionExpander:
                 getattr(grounding_result, "designations", ())
             ):
                 break
+
+        # Detect typed literal evidence from unconsumed form units.
+        # Per R2 plan section 2.6: preserve exact source value for
+        # string, integer, and boolean literals.
+        if form_lattice is not None:
+            for unit in getattr(form_lattice, "units", ()):
+                if unit.unit_ref in consumed_unit_refs:
+                    continue
+                literal_info = _detect_literal(unit.source_text)
+                if literal_info is not None:
+                    literal_kind, literal_value = literal_info
+                    contribution = self._make_literal_contribution(
+                        source_unit_ref=unit.unit_ref,
+                        literal_kind=literal_kind,
+                        literal_value=literal_value,
+                    )
+                    contributions.append(contribution)
+                    consumed_unit_refs.add(unit.unit_ref)
 
         return tuple(contributions)
 
@@ -185,3 +205,66 @@ class ContributionExpander:
             output_ports=output_ports,
             constraints=constraints,
         )
+
+    @staticmethod
+    def _make_literal_contribution(
+        *,
+        source_unit_ref: str,
+        literal_kind: str,
+        literal_value: str,
+    ) -> SemanticContribution:
+        """Create a typed literal contribution preserving exact source value.
+
+        Per R2 plan section 2.6: typed literal preservation for string,
+        integer, and boolean. The literal_value preserves the exact source
+        text; the literal_kind records the reviewed type tag.
+        """
+        constraints = (
+            ("literal", literal_value),
+            ("literal_kind", literal_kind),
+        )
+        return SemanticContribution(
+            contribution_ref=stable_ref(
+                "contribution",
+                {
+                    "kind": "literal",
+                    "literal_kind": literal_kind,
+                    "literal_value": literal_value,
+                    "units": [source_unit_ref],
+                },
+            ),
+            kind="literal",
+            source_unit_refs=(source_unit_ref,),
+            target_ref=None,
+            input_ports=(),
+            output_ports=("role:literal",),
+            constraints=constraints,
+        )
+
+
+def _detect_literal(source_text: str) -> tuple[str, str] | None:
+    """Detect typed literal evidence from a form unit's source text.
+
+    Returns (literal_kind, literal_value) or None.
+
+    Per R2 plan section 2.6: preserve exact source value for string,
+    integer, and boolean. Quoted strings preserve the inner content.
+    """
+    text = source_text.strip()
+    if not text:
+        return None
+    # Boolean literals (reviewed English surface forms).
+    if text.lower() in {"true", "false"}:
+        return ("boolean", text.lower())
+    # Integer literals (optionally signed digits).
+    signed = text
+    if signed.startswith(("+", "-")) and len(signed) > 1 and signed[1:].isdigit():
+        return ("integer", text)
+    if text.isdigit():
+        return ("integer", text)
+    # Quoted string literals — preserve inner content exactly.
+    if len(text) >= 2 and text[0] == '"' and text[-1] == '"':
+        return ("string", text[1:-1])
+    if len(text) >= 2 and text[0] == "'" and text[-1] == "'":
+        return ("string", text[1:-1])
+    return None

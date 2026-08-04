@@ -1,0 +1,193 @@
+{
+  "language": "es",
+  "abi_version": 7,
+  "tokenization": {
+    "lowercase": true,
+    "split_whitespace": true,
+    "split_punctuation": true,
+    "split_contractions": true,
+    "contractions": ["del", "al", "dels", "als"],
+    "punctuation": [".", ",", "!", "¡", "?", "¿", ";", ":", "'", "\"", "(", ")"]
+  },
+  "morphology": {
+    "plural_suffixes": ["s", "es"],
+    "past_tense_suffixes": ["ó", "ar", "er", "ir"],
+    "participle_suffixes": ["ado", "ido", "ando", "iendo"],
+    "comparative_suffixes": ["más", "menos"]
+  },
+  "participant_deixis": {
+    "yo": {"kind": "reference_user"},
+    "me": {"kind": "reference_user"},
+    "mi": {"kind": "possessive_user"},
+    "mío": {"kind": "possessive_user"},
+    "tú": {"kind": "reference_system"},
+    "tu": {"kind": "possessive_system"},
+    "tuyo": {"kind": "possessive_system"},
+    "nosotros": {"kind": "reference_group"},
+    "nos": {"kind": "reference_group"},
+    "nuestro": {"kind": "possessive_group"},
+    "ellos": {"kind": "reference_other"},
+    "los": {"kind": "reference_other"},
+    "su": {"kind": "possessive_other"},
+    "esto": {"kind": "proximal"},
+    "eso": {"kind": "distal"},
+    "estos": {"kind": "proximal"},
+    "esos": {"kind": "distal"}
+  },
+  "binders": {
+    "es": {"kind": "copula"},
+    "son": {"kind": "copula"},
+    "fue": {"kind": "copula"},
+    "fueron": {"kind": "copula"},
+    "soy": {"kind": "copula"},
+    "ser": {"kind": "copula"},
+    "estado": {"kind": "copula"},
+    "siendo": {"kind": "copula"}
+  },
+  "query_projection": {
+    "qué": {"kind": "query"},
+    "quién": {"kind": "query"},
+    "dónde": {"kind": "query"},
+    "cuándo": {"kind": "query"},
+    "por qué": {"kind": "query"},
+    "cuál": {"kind": "query"},
+    "cómo": {"kind": "query"},
+    "hace": {"kind": "query_auxiliary"},
+    "ha": {"kind": "query_auxiliary"},
+    "han": {"kind": "query_auxiliary"},
+    "lista": {"kind": "query"},
+    "dime": {"kind": "query"},
+    "reporta": {"kind": "query"}
+  },
+  "polarity": {
+    "no": {"kind": "negation"},
+    "nunca": {"kind": "negation"},
+    "jamás": {"kind": "negation"},
+    "nada": {"kind": "negation"},
+    "ninguno": {"kind": "negation"},
+    "nadie": {"kind": "negation"}
+  },
+  "modality": {
+    "puede": {"kind": "capability"},
+    "podría": {"kind": "capability"},
+    "puede que": {"kind": "permission"},
+    "podría ser": {"kind": "possibility"},
+    "debe": {"kind": "obligation"},
+    "debería": {"kind": "obligation"},
+    "podría": {"kind": "conditional"},
+    "deberá": {"kind": "obligation"},
+    "irá": {"kind": "future"},
+    "capaz": {"kind": "capability"},
+    "posible": {"kind": "possibility"}
+  },
+  "tense_aspect": {
+    "irá": {"kind": "future"},
+    "ha": {"kind": "perfect"},
+    "han": {"kind": "perfect"},
+    "había": {"kind": "pluperfect"},
+    "actualmente": {"kind": "temporal_qualifier"},
+    "ahora": {"kind": "temporal_qualifier"},
+    "entonces": {"kind": "temporal_qualifier"},
+    "ya": {"kind": "temporal_qualifier"},
+    "todavía": {"kind": "temporal_qualifier"},
+    "aún": {"kind": "temporal_qualifier"}
+  },
+  "connectors": {
+    "porque": {"kind": "causal"},
+    "así": {"kind": "causal"},
+    "por lo tanto": {"kind": "causal"},
+    "pero": {"kind": "contrast"},
+    "sin embargo": {"kind": "contrast"},
+    "aunque": {"kind": "contrast"},
+    "y": {"kind": "conjunction"},
+    "o": {"kind": "disjunction"},
+    "ni": {"kind": "disjunction"},
+    "si": {"kind": "conditional"},
+    "a menos que": {"kind": "conditional"},
+    "supón": {"kind": "hypothetical"},
+    "imagina": {"kind": "hypothetical"},
+    "para": {"kind": "purpose"},
+    "para que": {"kind": "purpose"},
+    "con el fin de": {"kind": "purpose"},
+    "luego": {"kind": "sequence"},
+    "después": {"kind": "sequence"},
+    "entonces": {"kind": "sequence"},
+    "posteriormente": {"kind": "sequence"}
+  },
+  "correction": {
+    "no": {"kind": "correction"},
+    "actualmente": {"kind": "correction"},
+    "más bien": {"kind": "correction"},
+    "en su lugar": {"kind": "correction"},
+    "perdón": {"kind": "correction"}
+  },
+  "discourse": {
+    "dijo": {"kind": "report"},
+    "contó": {"kind": "report"},
+    "preguntó": {"kind": "report"},
+    "dice": {"kind": "report"},
+    "significa": {"kind": "definition_marker"},
+    "significa que": {"kind": "definition_marker"},
+    "allí": {"kind": "discourse_particle"}
+  },
+  "determiners": {
+    "el": {"kind": "determiner"},
+    "la": {"kind": "determiner"},
+    "los": {"kind": "determiner"},
+    "las": {"kind": "determiner"},
+    "un": {"kind": "determiner"},
+    "una": {"kind": "determiner"},
+    "unos": {"kind": "determiner"},
+    "unas": {"kind": "determiner"},
+    "algunos": {"kind": "determiner"},
+    "todo": {"kind": "determiner"},
+    "cada": {"kind": "determiner"}
+  },
+  "linkers": {
+    "a": {"kind": "linker"},
+    "de": {"kind": "linker"},
+    "como": {"kind": "linker"},
+    "para": {"kind": "linker"},
+    "que": {"kind": "content_linker"},
+    "sobre": {"kind": "linker"}
+  },
+  "scope_values": {
+    "polarity": {
+      "negation": "scope_value:polarity:negative"
+    },
+    "modality": {
+      "capability": "scope_value:modality:capability",
+      "permission": "scope_value:modality:permission",
+      "possibility": "scope_value:modality:possibility",
+      "obligation": "scope_value:modality:obligation",
+      "conditional": "scope_value:modality:conditional",
+      "future": "scope_value:modality:future"
+    },
+    "tense": {
+      "future": "scope_value:tense:future",
+      "perfect": "scope_value:tense:perfect",
+      "pluperfect": "scope_value:tense:pluperfect",
+      "temporal_qualifier": "scope_value:tense:temporal_qualifier"
+    },
+    "aspect": {
+      "future": "scope_value:aspect:future",
+      "perfect": "scope_value:aspect:perfect",
+      "pluperfect": "scope_value:aspect:pluperfect",
+      "temporal_qualifier": "scope_value:aspect:temporal_qualifier"
+    },
+    "attribution": {
+      "report": "scope_value:attribution:report",
+      "definition_marker": "scope_value:attribution:definition"
+    }
+  },
+  "link_schemas": {
+    "coordination": {"link_type": "link:coordination", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "conjunction": {"link_type": "link:conjunction", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "disjunction": {"link_type": "link:disjunction", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "conditional": {"link_type": "link:condition", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "causal": {"link_type": "link:cause", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "contrast": {"link_type": "link:contrast", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "purpose": {"link_type": "link:purpose", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
+  }
+}
