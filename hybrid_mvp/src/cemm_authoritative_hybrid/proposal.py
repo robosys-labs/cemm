@@ -531,56 +531,36 @@ class BootstrapProposer:
         if not context.designation_slots or not context.application_frames:
             return self._abstained(context, "proposal:no_application_frame", 0)
 
-        contributions_by_role, references_by_role = self._build_role_indexes(context)
-        programs: list[tuple[SemanticSwitchProgram, int, tuple[str, ...]]] = []
-        explored = 0
-        truncated = False
-        blueprints = iter(self._blueprints(context))
-        while True:
-            try:
-                mode, designation, frame = next(blueprints)
-            except StopIteration:
-                break
-            if explored >= self._max_explored:
-                truncated = True
-                break
-            explored += 1
-            built = self._build_program(
-                context,
-                mode,
-                designation,
-                frame,
-                contributions_by_role,
-                references_by_role,
-            )
-            if built is None:
-                continue
-            programs.append(built)
-            if len(programs) >= self._max_candidates:
-                try:
-                    next(blueprints)
-                except StopIteration:
-                    pass
-                else:
-                    truncated = True
-                break
+        from .recursive_composer import RecursiveComposer
 
-        if not programs:
+        composer = RecursiveComposer(
+            context,
+            max_candidates=self._max_candidates,
+            max_explored=self._max_explored,
+            max_provenance=self._max_provenance,
+            max_applications=self._config.max_applications,
+            max_nodes=64,
+        )
+        completed = composer.search()
+
+        if not completed:
             code = (
                 "proposal:budget_exhausted"
-                if truncated
+                if composer.truncated
                 else "proposal:no_complete_candidate"
             )
-            return self._abstained(context, code, explored, truncated=truncated)
+            return self._abstained(
+                context, code, composer.explored, truncated=composer.truncated
+            )
 
         candidates = tuple(
             RankedProgramCandidate.create(
                 rank=rank,
-                score_q=score_q,
-                program=program,
-                provenance_refs=provenance_refs,
+                score_q=result.score_q,
+                program=result.program,
+                provenance_refs=result.provenance,
             )
-            for rank, (program, score_q, provenance_refs) in enumerate(programs)
+            for rank, result in enumerate(completed)
         )
         return ProposalResult.create(
             orientation_ref=context.orientation_ref,
@@ -588,8 +568,8 @@ class BootstrapProposer:
             candidates=candidates,
             status="candidates",
             abstention_code=None,
-            explored_states=explored,
-            truncated=truncated,
+            explored_states=composer.explored,
+            truncated=composer.truncated,
             model_identity=self.model_identity,
             revision_pin=pin,
         )
@@ -614,308 +594,3 @@ class BootstrapProposer:
             revision_pin=context.revision_pin,
         )
 
-    def _blueprints(self, context: ProposalContext) -> Iterable[tuple[Any, Any, Any]]:
-        designations = sorted(
-            context.designation_slots,
-            key=lambda row: (-row.score_q, row.slot_ref),
-        )
-        modes = sorted(context.mode_slots, key=lambda row: row.slot_ref)
-        for mode in modes:
-            for designation in designations:
-                for frame in sorted(
-                    context.frame_for_designation(designation.slot_ref),
-                    key=lambda row: row.slot_ref,
-                ):
-                    yield mode, designation, frame
-
-    @staticmethod
-    def _build_role_indexes(
-        context: ProposalContext,
-    ) -> tuple[
-        dict[str, tuple[_BindingOption, ...]],
-        dict[str, tuple[_BindingOption, ...]],
-    ]:
-        assignment_kinds = {
-            "anchor": "role",
-            "literal": "role",
-            "qualifier": "qualifier",
-        }
-        contribution_rows: dict[str, list[_BindingOption]] = {}
-        for contribution in context.contribution_slots:
-            assignment_kind = assignment_kinds.get(contribution.kind)
-            if assignment_kind is None or not contribution.source_unit_refs:
-                continue
-            supporting = tuple(
-                (source_ref, contribution.slot_ref)
-                for source_ref in contribution.source_unit_refs
-            )
-            for role_ref in contribution.output_ports:
-                contribution_rows.setdefault(role_ref, []).append(
-                    _BindingOption(
-                        action_type="bind_role",
-                        assignment_kind=assignment_kind,
-                        role_ref=role_ref,
-                        action_slot_ref=contribution.slot_ref,
-                        supporting_slots=supporting,
-                        source_unit_refs=contribution.source_unit_refs,
-                        score_q=0,
-                        critical=BootstrapProposer._critical_contribution(
-                            contribution.kind
-                        ),
-                        provenance_refs=contribution.provenance_refs,
-                    )
-                )
-        reference_rows: dict[str, list[_BindingOption]] = {}
-        for reference in context.reference_slots:
-            supporting = BootstrapProposer._reference_support(context, reference)
-            if supporting is None:
-                continue
-            support_refs = {slot_ref for _, slot_ref in supporting}
-            support_provenance = tuple(
-                provenance_ref
-                for slot_ref in sorted(support_refs)
-                for provenance_ref in context.contribution(slot_ref).provenance_refs
-            )
-            for role_ref in reference.compatible_roles:
-                reference_rows.setdefault(role_ref, []).append(
-                    _BindingOption(
-                        action_type="bind_reference",
-                        assignment_kind="reference",
-                        role_ref=role_ref,
-                        action_slot_ref=reference.slot_ref,
-                        supporting_slots=supporting,
-                        source_unit_refs=reference.source_unit_refs,
-                        score_q=reference.score_q,
-                        critical=True,
-                        provenance_refs=(
-                            *reference.provenance_refs,
-                            *support_provenance,
-                        ),
-                    )
-                )
-        return (
-            {
-                role: tuple(
-                    sorted(rows, key=lambda row: (-row.score_q, row.action_slot_ref))
-                )
-                for role, rows in contribution_rows.items()
-            },
-            {
-                role: tuple(
-                    sorted(rows, key=lambda row: (-row.score_q, row.action_slot_ref))
-                )
-                for role, rows in reference_rows.items()
-            },
-        )
-
-    @staticmethod
-    def _reference_support(
-        context: ProposalContext,
-        reference: Any,
-    ) -> tuple[tuple[str, str], ...] | None:
-        if not reference.source_unit_refs:
-            return None
-        supporting: list[tuple[str, str]] = []
-        for source_ref in reference.source_unit_refs:
-            matches = sorted(
-                (
-                    contribution
-                    for contribution in context.contributions_for_source(source_ref)
-                    if contribution.kind == "reference"
-                    and contribution.target_ref == reference.target_ref
-                    and contribution.target_kind == reference.target_kind
-                ),
-                key=lambda row: row.slot_ref,
-            )
-            if not matches:
-                return None
-            supporting.append((source_ref, matches[0].slot_ref))
-        return tuple(supporting)
-    def _build_program(
-        self,
-        context: ProposalContext,
-        mode: Any,
-        designation: Any,
-        frame: Any,
-        contributions_by_role: Mapping[str, tuple[_BindingOption, ...]],
-        references_by_role: Mapping[str, tuple[_BindingOption, ...]],
-    ) -> tuple[SemanticSwitchProgram, int, tuple[str, ...]] | None:
-        predicate = self._predicate_slot(context, frame)
-        if predicate is None:
-            return None
-
-        actions = [
-            ProgramAction.create(
-                action_index=0,
-                action_type="select_context",
-                arguments=(context.context_ref,),
-            ),
-            ProgramAction.create(
-                action_index=1,
-                action_type="select_mode",
-                arguments=(mode.slot_ref,),
-            ),
-            ProgramAction.create(
-                action_index=2,
-                action_type="select_designation",
-                arguments=(designation.slot_ref,),
-            ),
-        ]
-        application_ref = "application:0"
-        instantiate = ProgramAction.create(
-            action_index=len(actions),
-            action_type="instantiate_operator",
-            arguments=(application_ref, frame.slot_ref),
-            source_unit_refs=frame.source_unit_refs,
-        )
-        actions.append(instantiate)
-
-        consumed = set(frame.source_unit_refs)
-        binding_actions: dict[str, tuple[ProgramAction, _BindingOption]] = {}
-        score_q = designation.score_q
-        provenance: list[str] = [
-            context.evidence_packet_ref,
-            context.form_lattice_ref,
-            context.grounding_ref,
-            designation.designation_fact_ref,
-            *designation.provenance_refs,
-            *frame.provenance_refs,
-            *predicate.provenance_refs,
-        ]
-        for role_ref in (*frame.required_roles, *frame.optional_roles):
-            options = (
-                *references_by_role.get(role_ref, ()),
-                *contributions_by_role.get(role_ref, ()),
-            )
-            selected = next(
-                (
-                    option
-                    for option in options
-                    if not consumed.intersection(option.source_unit_refs)
-                ),
-                None,
-            )
-            if selected is None:
-                if role_ref in frame.required_roles:
-                    return None
-                continue
-            action = ProgramAction.create(
-                action_index=len(actions),
-                action_type=selected.action_type,
-                arguments=(application_ref, role_ref, selected.action_slot_ref),
-                source_unit_refs=selected.source_unit_refs,
-            )
-            actions.append(action)
-            consumed.update(selected.source_unit_refs)
-            binding_actions.update(
-                {source_ref: (action, selected) for source_ref in selected.source_unit_refs}
-            )
-            score_q = self._add_score(score_q, selected.score_q)
-            provenance.extend(selected.provenance_refs)
-
-        actions.append(
-            ProgramAction.create(
-                action_index=len(actions),
-                action_type="complete_program",
-                arguments=(),
-            )
-        )
-        assignments: list[SourceAssignment] = []
-        for source_ref in context.source_unit_refs:
-            if source_ref in frame.source_unit_refs:
-                assignments.append(
-                    SourceAssignment.create(
-                        source_unit_ref=source_ref,
-                        contribution_slot_ref=predicate.slot_ref,
-                        assignment_kind="predicate",
-                        target_action_ref=instantiate.action_ref,
-                        target_role_ref=None,
-                        residual_kind=None,
-                        critical=True,
-                    )
-                )
-                continue
-            binding = binding_actions.get(source_ref)
-            if binding is not None:
-                action, option = binding
-                contribution_slot_ref = dict(option.supporting_slots).get(source_ref)
-                if contribution_slot_ref is None:
-                    return None
-                assignments.append(
-                    SourceAssignment.create(
-                        source_unit_ref=source_ref,
-                        contribution_slot_ref=contribution_slot_ref,
-                        assignment_kind=option.assignment_kind,
-                        target_action_ref=action.action_ref,
-                        target_role_ref=option.role_ref,
-                        residual_kind=None,
-                        critical=option.critical,
-                    )
-                )
-                continue
-            residual = context.residual_for_source(source_ref)
-            if residual is not None:
-                assignments.append(
-                    SourceAssignment.create(
-                        source_unit_ref=source_ref,
-                        contribution_slot_ref=residual.residual_ref,
-                        assignment_kind="residual",
-                        target_action_ref=None,
-                        target_role_ref=None,
-                        residual_kind=residual.contribution_kind,
-                        critical=residual.critical,
-                    )
-                )
-                continue
-            # Contribution slots authorize typed action assignments, not
-            # residuals. Without a selected action or exact ResidualEvidence,
-            # this derivation is outside the admitted R1 structural subset.
-            return None
-
-        program = SemanticSwitchProgram.create(
-            orientation_ref=context.orientation_ref,
-            proposal_context_ref=context.context_ref,
-            actions=tuple(actions),
-            root_refs=(application_ref,),
-            mode_slot_ref=mode.slot_ref,
-            goal_refs=(),
-            source_unit_refs=context.source_unit_refs,
-            source_assignments=tuple(assignments),
-            revision_pin=context.revision_pin,
-        )
-        return program, score_q, self._unique_bounded(provenance)
-
-    @staticmethod
-    def _predicate_slot(context: ProposalContext, frame: Any) -> Any | None:
-        matches: dict[str, Any] = {}
-        for source_ref in frame.source_unit_refs:
-            for contribution in context.contributions_for_source(source_ref):
-                if (
-                    contribution.kind == "predicate"
-                    and contribution.target_ref == frame.predicate_target_ref
-                    and contribution.target_kind == frame.predicate_kind
-                ):
-                    matches[contribution.slot_ref] = contribution
-        if not matches:
-            return None
-        return matches[min(matches)]
-
-    def _unique_bounded(self, refs: Iterable[str]) -> tuple[str, ...]:
-        result: list[str] = []
-        seen: set[str] = set()
-        for ref in refs:
-            if ref in seen:
-                continue
-            seen.add(ref)
-            result.append(ref)
-            if len(result) >= self._max_provenance:
-                break
-        return tuple(result)
-
-    @staticmethod
-    def _add_score(left: int, right: int) -> int:
-        return max(-(2**63), min((2**63) - 1, left + right))
-
-    @staticmethod
-    def _critical_contribution(kind: str) -> bool:
-        return kind not in {"discourse", "qualifier"}

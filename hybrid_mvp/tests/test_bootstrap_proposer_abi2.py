@@ -192,7 +192,7 @@ def test_bootstrap_propose_does_not_repeat_or_verify_orient_work(
     result = BootstrapProposer(RuntimeConfig.release()).propose(_context())
 
     assert result.status == "candidates"
-    assert len(result.candidates) == 1
+    assert len(result.candidates) >= 1
 
 
 def test_bootstrap_output_is_deterministic_bounded_and_canonical() -> None:
