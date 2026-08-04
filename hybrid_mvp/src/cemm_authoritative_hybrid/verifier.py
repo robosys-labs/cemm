@@ -830,15 +830,43 @@ def _prefix_state(
     return designations, applications, nodes, bound_roles, terminal
 
 
+def _prefix_budget(
+    prefix: tuple[ProgramAction, ...]
+) -> tuple[int, int, int]:
+    """Track budget use: (application_count, action_count, node_count).
+
+    Per R2 plan section 3.1: track application, action, root, and
+    graph-depth budget use without authority access.
+    """
+    application_count = 0
+    action_count = len(prefix)
+    node_count = 0
+    for action in prefix:
+        if action.action_type == "instantiate_operator":
+            application_count += 1
+            node_count += 1
+        elif action.action_type == "bind_nested_application":
+            if action.arguments[0] != "role":
+                node_count += 1
+        elif action.action_type == "attach_scope":
+            node_count += 1
+        elif action.action_type == "project_variable":
+            node_count += 1
+    return application_count, action_count, node_count
+
+
 class LegalActionIndex:
     """Context-local legality predicate with no authority or vocabulary scan."""
 
-    __slots__ = ("_context",)
+    __slots__ = ("_context", "_max_applications", "_max_actions", "_max_nodes")
 
-    def __init__(self, context: ProposalContext) -> None:
+    def __init__(self, context: ProposalContext, *, max_applications: int = 24, max_actions: int = 256, max_nodes: int = 64) -> None:
         if not isinstance(context, ProposalContext):
             raise ValueError("LegalActionIndex requires one exact ProposalContext")
         self._context = context
+        self._max_applications = max_applications
+        self._max_actions = max_actions
+        self._max_nodes = max_nodes
 
     @property
     def context(self) -> ProposalContext:
@@ -878,6 +906,7 @@ class LegalActionIndex:
         designations, applications, nodes, bound_roles, _ = _prefix_state(
             self._context, rows
         )
+        app_count, action_count, node_count = _prefix_budget(rows)
         args = action.arguments
         if action.action_type == "select_designation":
             return (
@@ -885,6 +914,8 @@ class LegalActionIndex:
                 and args[0] not in designations
             )
         if action.action_type == "instantiate_operator":
+            if app_count >= self._max_applications:
+                return False
             frame = self._context.frame(args[1])
             return (
                 frame is not None
@@ -920,6 +951,8 @@ class LegalActionIndex:
                     and args[3] in nodes
                     and args[2] not in bound_roles.get(args[1], set())
                 )
+            if node_count >= self._max_nodes:
+                return False
             link = self._context.expression_link(args[2])
             arity = len(args) - 3
             return (
@@ -929,12 +962,16 @@ class LegalActionIndex:
                 and all(ref in nodes for ref in args[3:])
             )
         if action.action_type == "attach_scope":
+            if node_count >= self._max_nodes:
+                return False
             return (
                 args[0] not in nodes
                 and self._context.scope(args[1]) is not None
                 and args[2] in nodes
             )
         if action.action_type == "project_variable":
+            if node_count >= self._max_nodes:
+                return False
             variable = self._context.variable(args[1])
             return (
                 args[0] not in nodes
