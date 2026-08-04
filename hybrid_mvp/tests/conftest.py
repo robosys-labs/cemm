@@ -595,7 +595,7 @@ def _default_revision_pin(authority_generation="authority:generation-1"):
         session_revision=0,
         episode_revision=0,
         effect_revision=0,
-        model_identity=None,
+        model_identity="model:test",
     )
 
 
@@ -605,144 +605,193 @@ def _is_punctuation_unit(unit) -> bool:
     return not unit.source_text.strip() or not unit.normalized_forms
 
 
-def _build_program_from_lattice(lattice, *, negate=False, revision_pin=None):
-    """Build a minimal valid :class:`SemanticSwitchProgram` for ``lattice``.
+def _build_context_and_program_from_lattice(
+    lattice, *, negate=False, revision_pin=None
+):
+    """Build a minimal valid ``(ProposalContext, SemanticSwitchProgram)`` pair.
 
-    Every source unit receives exactly one :class:`SourceAssignment`.  Content
-    units are consumed into a ``role`` assignment; punctuation/whitespace units
-    become noncritical ``residual`` assignments of kind ``discourse``.  When
-    ``negate`` is true, the first content unit is instead retained as a
-    critical ``scope`` residual (negation), which must reject execution.
+    The context uses an ``op:event`` application frame with one predicate
+    contribution and one subject contribution.  The program follows the
+    canonical six-action derivation: select_context, select_mode,
+    select_designation, instantiate_operator, bind_role, complete_program.
 
-    The program uses ``op:designation`` with the three required roles
-    ``role:target``, ``role:label_type``, and ``role:surface``.  The first
-    three content units are bound to these roles; any extra content units
-    become noncritical ``qualifier`` residuals.  The ``select_designation``
-    target is ``participant:user`` (a reviewed authority atom).
+    When ``negate`` is true, the first content unit is retained as a critical
+    scope residual, which must reject execution.
     """
+    from cemm_authoritative_hybrid.proposal_context import (
+        ApplicationFrameSlot,
+        ContributionSlot,
+        DesignationSlot,
+        ModeSlot,
+        ProposalContext,
+    )
     from cemm_authoritative_hybrid.programs import (
         ProgramAction,
-        SourceAssignment,
         SemanticSwitchProgram,
+        SourceAssignment,
+    )
+    from cemm_authoritative_hybrid.persistence import RevisionPin
+
+    pin = revision_pin or _default_revision_pin()
+    if not isinstance(pin, RevisionPin):
+        pin = RevisionPin(
+            authority_generation=pin.authority_generation,
+            world_revision=pin.world_revision,
+            session_revision=pin.session_revision,
+            episode_revision=pin.episode_revision,
+            effect_revision=pin.effect_revision,
+            model_identity=pin.model_identity or "model:test",
+        )
+
+    designation = DesignationSlot.create(
+        source_unit_refs=("unit:predicate",),
+        target_ref="event:test",
+        target_kind="event_type",
+        score_q=900_000,
+        designation_fact_ref="designation:test",
+        provenance_refs=("authority:test",),
+    )
+    predicate = ContributionSlot.create(
+        contribution_ref="contribution:predicate",
+        kind="predicate",
+        source_unit_refs=("unit:predicate",),
+        target_ref="event:test",
+        target_kind="event_type",
+        input_ports=("role:subject",),
+        output_ports=("role:event",),
+        constraints=(),
+    )
+    subject = ContributionSlot.create(
+        contribution_ref="contribution:subject",
+        kind="anchor",
+        source_unit_refs=("unit:subject",),
+        target_ref="entity:one",
+        target_kind="entity",
+        input_ports=(),
+        output_ports=("role:subject",),
+        constraints=(),
+        provenance_refs=("designation:one",),
+    )
+    mode = ModeSlot.create(
+        mode="OBSERVE",
+        source_unit_refs=(),
+        construction_ref=None,
+        requested_effect="admission",
+    )
+    frame = ApplicationFrameSlot.create(
+        designation_slot_ref=designation.slot_ref,
+        predicate_target_ref="event:test",
+        predicate_kind="event_type",
+        operator_ref="op:event",
+        structural_role_ref="role:event",
+        required_roles=("role:subject",),
+        optional_roles=(),
+        proposition_roles=(),
+        source_unit_refs=("unit:predicate",),
+        derived_role_targets=(),
+        affordance_frame_ref="frame:event-test",
+        provenance_refs=(designation.slot_ref, "authority:test", "frame:event-test"),
+    )
+    context = ProposalContext.create(
+        orientation_ref="orientation:test",
+        evidence_packet_ref="evidence:test",
+        form_lattice_ref="lattice:test",
+        grounding_ref="grounding:test",
+        designation_slots=(designation,),
+        contribution_slots=(predicate, subject),
+        mode_slots=(mode,),
+        application_frames=(frame,),
+        reference_slots=(),
+        scope_slots=(),
+        expression_link_slots=(),
+        variable_slots=(),
+        transition_slots=(),
+        residual_evidence=(),
+        context_refs=("turn:test",),
+        source_unit_refs=("unit:predicate", "unit:subject"),
+        source_unit_spans=(
+            ("unit:predicate", 0, 4),
+            ("unit:subject", 4, 8),
+        ),
+        revision_pin=pin,
     )
 
-    unit_refs = tuple(u.unit_ref for u in lattice.units)
-    assignments: list[SourceAssignment] = []
-    actions: list[ProgramAction] = [
-        ProgramAction(
-            action_ref="action:select_context",
+    actions = (
+        ProgramAction.create(
+            action_index=0,
             action_type="select_context",
-            arguments=("context:turn",),
-            source_unit_refs=(),
+            arguments=(context.context_ref,),
         ),
-        ProgramAction(
-            action_ref="action:select_mode",
+        ProgramAction.create(
+            action_index=1,
             action_type="select_mode",
-            arguments=("OBSERVE",),
-            source_unit_refs=(),
+            arguments=(context.mode_slots[0].slot_ref,),
         ),
-        ProgramAction(
-            action_ref="action:select_designation",
+        ProgramAction.create(
+            action_index=2,
             action_type="select_designation",
-            arguments=("designation:0", "participant:user"),
-            source_unit_refs=(),
+            arguments=(context.designation_slots[0].slot_ref,),
         ),
-        ProgramAction(
-            action_ref="action:instantiate_operator",
+        ProgramAction.create(
+            action_index=3,
             action_type="instantiate_operator",
-            arguments=("op:designation", "designation:0"),
-            source_unit_refs=(),
+            arguments=("application:main", context.application_frames[0].slot_ref),
+            source_unit_refs=("unit:predicate",),
         ),
-    ]
-
-    # Required roles for op:designation (from authority operator_roles).
-    required_roles = ["role:target", "role:label_type", "role:surface"]
-    role_index = 0
-    consumed_first_content = False
-    for unit in lattice.units:
-        if _is_punctuation_unit(unit):
-            assignments.append(
-                SourceAssignment(
-                    assignment_ref=f"assignment:{unit.unit_ref}",
-                    source_unit_ref=unit.unit_ref,
-                    contribution_ref=f"contribution:{unit.unit_ref}",
-                    assignment_kind="residual",
-                    target_ref=None,
-                    residual_kind="discourse",
-                    critical=False,
-                )
-            )
-            continue
-        if negate and not consumed_first_content:
-            # Retain the first content unit as a critical scope residual.
-            assignments.append(
-                SourceAssignment(
-                    assignment_ref=f"assignment:{unit.unit_ref}",
-                    source_unit_ref=unit.unit_ref,
-                    contribution_ref=f"contribution:{unit.unit_ref}",
-                    assignment_kind="residual",
-                    target_ref=None,
-                    residual_kind="scope",
-                    critical=True,
-                )
-            )
-            consumed_first_content = True
-            continue
-        if role_index < len(required_roles):
-            role_name = required_roles[role_index]
-            assignments.append(
-                SourceAssignment(
-                    assignment_ref=f"assignment:{unit.unit_ref}",
-                    source_unit_ref=unit.unit_ref,
-                    contribution_ref=f"contribution:{unit.unit_ref}",
-                    assignment_kind="role",
-                    target_ref=f"target:{role_index}",
-                    residual_kind=None,
-                    critical=False,
-                )
-            )
-            actions.append(
-                ProgramAction(
-                    action_ref=f"action:bind_role:{unit.unit_ref}",
-                    action_type="bind_role",
-                    arguments=(role_name, unit.unit_ref),
-                    source_unit_refs=(unit.unit_ref,),
-                )
-            )
-            role_index += 1
-        else:
-            # Extra content units become noncritical qualifier residuals.
-            assignments.append(
-                SourceAssignment(
-                    assignment_ref=f"assignment:{unit.unit_ref}",
-                    source_unit_ref=unit.unit_ref,
-                    contribution_ref=f"contribution:{unit.unit_ref}",
-                    assignment_kind="residual",
-                    target_ref=None,
-                    residual_kind="qualifier",
-                    critical=False,
-                )
-            )
-
-    actions.append(
-        ProgramAction(
-            action_ref="action:complete_program",
+        ProgramAction.create(
+            action_index=4,
+            action_type="bind_role",
+            arguments=(
+                "application:main",
+                "role:subject",
+                context.contribution_slots[1].slot_ref,
+            ),
+            source_unit_refs=("unit:subject",),
+        ),
+        ProgramAction.create(
+            action_index=5,
             action_type="complete_program",
             arguments=(),
-            source_unit_refs=(),
-        )
+        ),
     )
+    assignments = (
+        SourceAssignment.create(
+            source_unit_ref="unit:predicate",
+            contribution_slot_ref=context.contribution_slots[0].slot_ref,
+            assignment_kind="predicate",
+            target_action_ref=actions[3].action_ref,
+            target_role_ref=None,
+            residual_kind=None,
+            critical=False,
+        ),
+        SourceAssignment.create(
+            source_unit_ref="unit:subject",
+            contribution_slot_ref=context.contribution_slots[1].slot_ref,
+            assignment_kind="role",
+            target_action_ref=actions[4].action_ref,
+            target_role_ref="role:subject",
+            residual_kind=None,
+            critical=False,
+        ),
+    )
+    program = SemanticSwitchProgram.create(
+        orientation_ref=context.orientation_ref,
+        proposal_context_ref=context.context_ref,
+        actions=actions,
+        root_refs=("application:main",),
+        mode_slot_ref=context.mode_slots[0].slot_ref,
+        goal_refs=("goal:understand",),
+        source_unit_refs=context.source_unit_refs,
+        source_assignments=assignments,
+        revision_pin=context.revision_pin,
+    )
+    return context, program
 
-    program = SemanticSwitchProgram(
-        program_ref="program:test",
-        orientation_ref="orientation:0",
-        actions=tuple(actions),
-        root_graph_refs=("application:0",),
-        mode_ref="mode:OBSERVE",
-        goal_refs=(),
-        source_unit_refs=unit_refs,
-        source_assignments=tuple(assignments),
-        revision_pin=revision_pin or _default_revision_pin(),
+
+def _build_program_from_lattice(lattice, *, negate=False, revision_pin=None):
+    """Backward-compatible wrapper returning only the program."""
+    _context, program = _build_context_and_program_from_lattice(
+        lattice, negate=negate, revision_pin=revision_pin
     )
     return program
 
@@ -759,15 +808,45 @@ def program_factory(form_resolver):
 
 
 @pytest.fixture
-def valid_program(form_resolver, linked_authority):
-    """A well-formed SemanticSwitchProgram with valid source assignments.
+def proposal_context(form_resolver, linked_authority):
+    """A ProposalContext for the valid program."""
+    from cemm_authoritative_hybrid.proposal import BootstrapProposer
 
-    The revision_pin matches the linked authority's generation so that the
-    exact verifier's revision check passes.
-    """
     lattice = form_resolver.resolve("what is your name?")
     pin = _default_revision_pin(authority_generation=linked_authority.generation)
-    return _build_program_from_lattice(lattice, revision_pin=pin)
+    pin = type(pin)(
+        authority_generation=pin.authority_generation,
+        world_revision=pin.world_revision,
+        session_revision=pin.session_revision,
+        episode_revision=pin.episode_revision,
+        effect_revision=pin.effect_revision,
+        model_identity=BootstrapProposer.model_identity,
+    )
+    context, _program = _build_context_and_program_from_lattice(
+        lattice, revision_pin=pin
+    )
+    return context
+
+
+@pytest.fixture
+def valid_program(form_resolver, linked_authority):
+    """A well-formed SemanticSwitchProgram with valid source assignments."""
+    from cemm_authoritative_hybrid.proposal import BootstrapProposer
+
+    lattice = form_resolver.resolve("what is your name?")
+    pin = _default_revision_pin(authority_generation=linked_authority.generation)
+    pin = type(pin)(
+        authority_generation=pin.authority_generation,
+        world_revision=pin.world_revision,
+        session_revision=pin.session_revision,
+        episode_revision=pin.episode_revision,
+        effect_revision=pin.effect_revision,
+        model_identity=BootstrapProposer.model_identity,
+    )
+    _context, program = _build_context_and_program_from_lattice(
+        lattice, revision_pin=pin
+    )
+    return program
 
 
 @pytest.fixture
@@ -780,36 +859,30 @@ def valid_lattice(form_resolver):
 def coverage_verifier():
     """A CoverageVerifier instance bounded by the release config."""
     from cemm_authoritative_hybrid.coverage import CoverageVerifier
-    from cemm_authoritative_hybrid.config import RuntimeConfig
 
-    return CoverageVerifier(RuntimeConfig.release())
+    return CoverageVerifier()
 
 
 @pytest.fixture
-def exact_verifier(linked_authority, coverage_verifier):
-    """An ExactProgramVerifier with the linked authority and coverage verifier."""
+def exact_verifier(coverage_verifier):
+    """An ExactProgramVerifier with the coverage verifier."""
     from cemm_authoritative_hybrid.verifier import ExactProgramVerifier
-    from cemm_authoritative_hybrid.config import RuntimeConfig
 
-    return ExactProgramVerifier(
-        authority=linked_authority,
-        config=RuntimeConfig.release(),
-        coverage_verifier=coverage_verifier,
-    )
+    return ExactProgramVerifier(coverage_verifier=coverage_verifier)
 
 
 @pytest.fixture
 def verifier(exact_verifier):
-    """An ExactProgramVerifier with the linked authority."""
+    """An ExactProgramVerifier (alias for exact_verifier)."""
     return exact_verifier
 
 
 @pytest.fixture
-def masker(verifier):
+def masker(proposal_context):
     """An ActionMasker sharing the same LegalActionIndex as the verifier."""
-    from cemm_authoritative_hybrid.verifier import ActionMasker
+    from cemm_authoritative_hybrid.verifier import ActionMasker, LegalActionIndex
 
-    return ActionMasker(verifier.legal_index)
+    return ActionMasker(LegalActionIndex(proposal_context))
 
 
 @pytest.fixture
@@ -817,6 +890,33 @@ def prefix(valid_program):
     """A tuple of ProgramAction representing a partial program prefix."""
     # Return the first two actions (select_context, select_mode).
     return valid_program.actions[:2]
+
+
+@pytest.fixture
+def proposal(proposal_context, valid_program):
+    """A one-candidate ProposalResult for the valid program."""
+    from cemm_authoritative_hybrid.proposal import (
+        ProposalResult,
+        RankedProgramCandidate,
+    )
+
+    candidate = RankedProgramCandidate.create(
+        rank=0,
+        score_q=900_000,
+        program=valid_program,
+        provenance_refs=("derivation:0",),
+    )
+    return ProposalResult.create(
+        orientation_ref=proposal_context.orientation_ref,
+        proposal_context_ref=proposal_context.context_ref,
+        candidates=(candidate,),
+        status="candidates",
+        abstention_code=None,
+        explored_states=1,
+        truncated=False,
+        model_identity=proposal_context.revision_pin.model_identity,
+        revision_pin=proposal_context.revision_pin,
+    )
 
 
 @pytest.fixture
@@ -836,135 +936,241 @@ def mutate():
         excess_depth: exceed max_graph_depth
         uncovered_unit: leave a source unit unassigned
     """
-    from dataclasses import replace as _replace
-    from cemm_authoritative_hybrid.programs import ProgramAction
+    from cemm_authoritative_hybrid.canonical import stable_ref
+    from cemm_authoritative_hybrid.programs import (
+        ACTION_ABI_HASH,
+        PROGRAM_ABI_VERSION,
+        ProgramAction,
+        SemanticSwitchProgram,
+        SourceAssignment,
+    )
+    from cemm_authoritative_hybrid.persistence import RevisionPin
+
+    def _make_action(action_index, action_type, arguments, source_unit_refs=()):
+        """Create a ProgramAction with correct ref, bypassing schema validation."""
+        material = {
+            "abi_version": PROGRAM_ABI_VERSION,
+            "action_index": action_index,
+            "action_type": action_type,
+            "arguments": list(arguments),
+            "source_unit_refs": list(source_unit_refs),
+        }
+        action_ref = stable_ref("program_action", material)
+        return ProgramAction._from_canonical(
+            action_ref,
+            action_index,
+            action_type,
+            tuple(arguments),
+            tuple(source_unit_refs),
+        )
+
+    def _make_program(
+        program,
+        *,
+        actions=None,
+        source_assignments=None,
+        source_unit_refs=None,
+        revision_pin=None,
+    ):
+        """Create a SemanticSwitchProgram with correct ref, bypassing validation."""
+        acts = actions if actions is not None else program.actions
+        sa = source_assignments if source_assignments is not None else program.source_assignments
+        su = source_unit_refs if source_unit_refs is not None else program.source_unit_refs
+        rp = revision_pin if revision_pin is not None else program.revision_pin
+        material = {
+            "abi_version": PROGRAM_ABI_VERSION,
+            "orientation_ref": program.orientation_ref,
+            "proposal_context_ref": program.proposal_context_ref,
+            "action_abi_hash": ACTION_ABI_HASH,
+            "actions": [a.as_dict() for a in acts],
+            "root_refs": list(program.root_refs),
+            "mode_slot_ref": program.mode_slot_ref,
+            "goal_refs": list(program.goal_refs),
+            "source_unit_refs": list(su),
+            "source_assignments": [a.as_dict() for a in sa],
+            "revision_pin": rp.as_dict(),
+        }
+        program_ref = stable_ref("program", material)
+        return SemanticSwitchProgram._from_canonical(
+            program_ref,
+            orientation_ref=program.orientation_ref,
+            proposal_context_ref=program.proposal_context_ref,
+            actions=acts,
+            root_refs=program.root_refs,
+            mode_slot_ref=program.mode_slot_ref,
+            goal_refs=program.goal_refs,
+            source_unit_refs=su,
+            source_assignments=sa,
+            revision_pin=rp,
+        )
+
+    def _renumber(actions):
+        """Recreate actions with contiguous indices, preserving content."""
+        return tuple(
+            _make_action(
+                i,
+                action.action_type,
+                action.arguments,
+                action.source_unit_refs,
+            )
+            for i, action in enumerate(actions)
+        )
 
     def _mutate(program, mutation):
         if mutation == "stale_revision":
-            old_pin = _replace(
-                program.revision_pin,
+            old_pin = RevisionPin(
                 authority_generation="authority:stale-generation",
+                world_revision=program.revision_pin.world_revision,
+                session_revision=program.revision_pin.session_revision,
+                episode_revision=program.revision_pin.episode_revision,
+                effect_revision=program.revision_pin.effect_revision,
+                model_identity=program.revision_pin.model_identity,
             )
-            return _replace(program, revision_pin=old_pin)
+            return _make_program(program, revision_pin=old_pin)
 
         if mutation == "unknown_ref":
-            # Replace select_designation target with a non-existent ref.
+            # Replace select_designation slot ref with a non-existent one.
             new_actions = []
             for action in program.actions:
                 if action.action_type == "select_designation":
                     new_actions.append(
-                        _replace(
-                            action,
-                            arguments=("designation:0", "entity:nonexistent"),
+                        _make_action(
+                            action.action_index,
+                            "select_designation",
+                            ("designation:nonexistent",),
+                            action.source_unit_refs,
                         )
                     )
                 else:
                     new_actions.append(action)
-            return _replace(program, actions=tuple(new_actions))
+            return _make_program(program, actions=tuple(new_actions))
 
         if mutation == "wrong_kind":
-            # Use an atom that exists but has the wrong kind for designation.
-            # label:name has kind "label_type", not designatable.
+            # Replace bind_role contribution slot ref with a non-existent one.
             new_actions = []
+            old_bind_ref = None
+            new_bind_ref = None
             for action in program.actions:
-                if action.action_type == "select_designation":
-                    new_actions.append(
-                        _replace(
-                            action,
-                            arguments=("designation:0", "label:name"),
+                if action.action_type == "bind_role":
+                    old_bind_ref = action.action_ref
+                    new_action = _make_action(
+                        action.action_index,
+                        "bind_role",
+                        (
+                            action.arguments[0],
+                            action.arguments[1],
+                            "contribution:nonexistent",
+                        ),
+                        action.source_unit_refs,
+                    )
+                    new_bind_ref = new_action.action_ref
+                    new_actions.append(new_action)
+                else:
+                    new_actions.append(action)
+            new_assignments = []
+            for a in program.source_assignments:
+                if a.target_action_ref == old_bind_ref:
+                    new_assignments.append(
+                        SourceAssignment.create(
+                            source_unit_ref=a.source_unit_ref,
+                            contribution_slot_ref=a.contribution_slot_ref,
+                            assignment_kind=a.assignment_kind,
+                            target_action_ref=new_bind_ref,
+                            target_role_ref=a.target_role_ref,
+                            residual_kind=a.residual_kind,
+                            critical=a.critical,
                         )
                     )
                 else:
-                    new_actions.append(action)
-            return _replace(program, actions=tuple(new_actions))
+                    new_assignments.append(a)
+            return _make_program(
+                program,
+                actions=tuple(new_actions),
+                source_assignments=tuple(new_assignments),
+            )
 
         if mutation == "missing_role":
-            # Remove a required role binding (the first bind_role action).
-            new_actions = [
-                a
-                for a in program.actions
-                if not (
-                    a.action_type == "bind_role"
-                    and a.arguments
-                    and a.arguments[0] == "role:target"
-                )
-            ]
-            return _replace(program, actions=tuple(new_actions))
+            # Remove the bind_role action and its source assignment.
+            kept = [a for a in program.actions if a.action_type != "bind_role"]
+            new_actions = _renumber(kept)
+            new_assignments = tuple(
+                a for a in program.source_assignments
+                if a.source_unit_ref != program.source_unit_refs[-1]
+            )
+            new_source_units = program.source_unit_refs[:-1]
+            return _make_program(
+                program,
+                actions=new_actions,
+                source_assignments=new_assignments,
+                source_unit_refs=new_source_units,
+            )
 
         if mutation == "duplicate_role":
-            # Duplicate the first bind_role action with a new action_ref.
-            first_bind = None
-            for a in program.actions:
-                if a.action_type == "bind_role":
-                    first_bind = a
-                    break
-            if first_bind is None:
-                return program
-            dup = _replace(
-                first_bind,
-                action_ref="action:bind_role:dup",
-            )
-            # Insert the duplicate after the original.
+            # Add a second bind_role binding the same role (no source unit).
             new_actions = []
-            for a in program.actions:
-                new_actions.append(a)
-                if a.action_ref == first_bind.action_ref:
-                    new_actions.append(dup)
-            return _replace(program, actions=tuple(new_actions))
+            for action in program.actions:
+                new_actions.append(action)
+                if action.action_type == "bind_role":
+                    new_actions.append(
+                        _make_action(
+                            len(new_actions),
+                            "bind_role",
+                            action.arguments,
+                            (),
+                        )
+                    )
+            new_actions = _renumber(new_actions)
+            return _make_program(program, actions=new_actions)
 
         if mutation == "scope_cycle":
-            # Add bind_nested_application actions that create a cycle.
-            # Two nested applications that reference each other form a cycle.
-            extra_actions = []
-            extra_actions.append(
-                ProgramAction(
-                    action_ref="action:nest_a_to_b",
-                    action_type="bind_nested_application",
-                    arguments=("action:nest_b_to_a",),
-                    source_unit_refs=(),
-                )
-            )
-            extra_actions.append(
-                ProgramAction(
-                    action_ref="action:nest_b_to_a",
-                    action_type="bind_nested_application",
-                    arguments=("action:nest_a_to_b",),
-                    source_unit_refs=(),
-                )
-            )
-            # Insert before complete_program.
-            new_actions = []
-            for a in program.actions:
-                if a.action_type == "complete_program":
-                    new_actions.extend(extra_actions)
-                new_actions.append(a)
-            return _replace(program, actions=tuple(new_actions))
-
-        if mutation == "excess_depth":
-            # Add enough actions to exceed max_applications (24).
-            extra = []
-            for i in range(30):
-                extra.append(
-                    ProgramAction(
-                        action_ref=f"action:extra:{i}",
-                        action_type="project_variable",
-                        arguments=(f"var:extra:{i}",),
-                        source_unit_refs=(),
-                    )
-                )
-            # Insert before complete_program.
+            # Add bind_nested_application actions with invalid arguments.
+            # These cause ValueError in the verifier's replay.
+            extra = [
+                _make_action(
+                    0,
+                    "bind_nested_application",
+                    ("action:nest_b_to_a",),
+                    (),
+                ),
+                _make_action(
+                    1,
+                    "bind_nested_application",
+                    ("action:nest_a_to_b",),
+                    (),
+                ),
+            ]
             new_actions = []
             for a in program.actions:
                 if a.action_type == "complete_program":
                     new_actions.extend(extra)
                 new_actions.append(a)
-            return _replace(program, actions=tuple(new_actions))
+            new_actions = _renumber(new_actions)
+            return _make_program(program, actions=new_actions)
+
+        if mutation == "excess_depth":
+            # Add enough project_variable actions to exceed max_applications.
+            extra = [
+                _make_action(
+                    0,
+                    "project_variable",
+                    (f"binder:extra:{i}", f"variable:nonexistent:{i}", "application:main"),
+                    (),
+                )
+                for i in range(30)
+            ]
+            new_actions = []
+            for a in program.actions:
+                if a.action_type == "complete_program":
+                    new_actions.extend(extra)
+                new_actions.append(a)
+            new_actions = _renumber(new_actions)
+            return _make_program(program, actions=new_actions)
 
         if mutation == "uncovered_unit":
-            # Remove one source assignment so a unit is unassigned.
+            # Remove one source assignment, bypassing create validation.
             if not program.source_assignments:
                 return program
-            return _replace(
+            return _make_program(
                 program,
                 source_assignments=program.source_assignments[:-1],
             )
@@ -1045,35 +1251,12 @@ def orient(linked_authority, memory_stores_fixture):
 
 
 @pytest.fixture
-def bootstrap_proposer(
-    linked_authority,
-    form_resolver,
-    grounder,
-    affordance_index,
-    exact_verifier,
-    coverage_verifier,
-):
-    """A :class:`BootstrapProposer` with all components wired."""
+def bootstrap_proposer():
+    """A :class:`BootstrapProposer` with the release config."""
     from cemm_authoritative_hybrid.config import RuntimeConfig
-    from cemm_authoritative_hybrid.contributions import ContributionExpander
     from cemm_authoritative_hybrid.proposal import BootstrapProposer
-    from cemm_authoritative_hybrid.verifier import LegalActionIndex
 
-    config = RuntimeConfig.release()
-    contribution_expander = ContributionExpander(affordance_index, config)
-    legal_action_index = LegalActionIndex(linked_authority, config)
-
-    return BootstrapProposer(
-        authority=linked_authority,
-        config=config,
-        form_resolver=form_resolver,
-        grounder=grounder,
-        affordance_index=affordance_index,
-        contribution_expander=contribution_expander,
-        verifier=exact_verifier,
-        coverage_verifier=coverage_verifier,
-        legal_action_index=legal_action_index,
-    )
+    return BootstrapProposer(RuntimeConfig.release())
 
 
 # ---------------------------------------------------------------------------

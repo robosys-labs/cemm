@@ -7,42 +7,15 @@ canonical round-trip of the completed program.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import pytest
 
 from cemm_authoritative_hybrid.programs import (
+    PERSISTENT_OPERATORS,
     SWITCH_ACTION_TYPES,
     ProgramAction,
     SemanticSwitchProgram,
+    SourceAssignment,
 )
-
-PERSISTENT_OPERATORS = frozenset(
-    {"op:designation", "op:type", "op:relation", "op:state", "op:event"}
-)
-
-
-@dataclass(frozen=True)
-class _LegacyScopeFrameFixture:
-    scope_ref: str
-    kind: str
-    target_application_ref: str
-    source_unit_refs: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class _LegacyTransitionProposalFixture:
-    transition_ref: str
-    event_type_ref: str
-    subject_ref: str
-    target_state_ref: str
-    dimension_ref: str
-    preconditions: tuple[str, ...]
-    source_unit_refs: tuple[str, ...]
-
-
-ScopeFrame = _LegacyScopeFrameFixture
-TransitionProposal = _LegacyTransitionProposalFixture
 
 
 # ---------------------------------------------------------------------------
@@ -74,8 +47,8 @@ def test_switch_action_vocabulary_is_closed_at_twelve():
 
 def test_program_action_rejects_unknown_action_type():
     with pytest.raises(ValueError):
-        ProgramAction(
-            action_ref="action:bad",
+        ProgramAction.create(
+            action_index=0,
             action_type="not_a_real_action",  # type: ignore[arg-type]
             arguments=(),
             source_unit_refs=(),
@@ -84,10 +57,10 @@ def test_program_action_rejects_unknown_action_type():
 
 def test_program_action_accepts_every_confirmed_type():
     for index, action_type in enumerate(SWITCH_ACTION_TYPES):
-        ProgramAction(
-            action_ref=f"action:{index}",
+        ProgramAction.create(
+            action_index=index,
             action_type=action_type,
-            arguments=(),
+            arguments=_VALID_ACTION_ARGUMENTS[action_type],
             source_unit_refs=(),
         )
 
@@ -99,57 +72,101 @@ def test_program_action_accepts_every_confirmed_type():
 
 def test_program_uses_only_five_persistent_operators(program_factory):
     program = program_factory("what is your name?")
-    assert set(program.persistent_operators) <= PERSISTENT_OPERATORS
+    assert _persistent_operators(program) <= PERSISTENT_OPERATORS
 
 
 def test_program_with_no_operator_has_empty_persistent_operators():
-    program = SemanticSwitchProgram(
-        program_ref="program:empty",
+    program = SemanticSwitchProgram.create(
         orientation_ref="orientation:0",
+        proposal_context_ref="proposal_context:0",
         actions=(
-            ProgramAction(
-                action_ref="action:0",
+            ProgramAction.create(
+                action_index=0,
+                action_type="select_context",
+                arguments=("proposal_context:0",),
+            ),
+            ProgramAction.create(
+                action_index=1,
+                action_type="select_mode",
+                arguments=("mode_slot:0",),
+            ),
+            ProgramAction.create(
+                action_index=2,
                 action_type="abstain",
                 arguments=(),
-                source_unit_refs=(),
             ),
         ),
-        root_graph_refs=(),
-        mode_ref="mode:OBSERVE",
+        root_refs=(),
+        mode_slot_ref="mode_slot:0",
         goal_refs=(),
         source_unit_refs=(),
         source_assignments=(),
         revision_pin=_default_pin(),
     )
-    assert program.persistent_operators == frozenset()
+    assert _persistent_operators(program) == frozenset()
 
 
 def test_program_extracts_operators_from_instantiate_operator_actions():
-    program = SemanticSwitchProgram(
-        program_ref="program:ops",
-        orientation_ref="orientation:0",
-        actions=(
-            ProgramAction(
-                action_ref="action:0",
-                action_type="instantiate_operator",
-                arguments=("op:designation", "designation:0"),
-                source_unit_refs=("unit:0",),
-            ),
-            ProgramAction(
-                action_ref="action:1",
-                action_type="instantiate_operator",
-                arguments=("op:relation", "application:0"),
-                source_unit_refs=("unit:1",),
-            ),
+    actions = (
+        ProgramAction.create(
+            action_index=0,
+            action_type="select_context",
+            arguments=("proposal_context:0",),
         ),
-        root_graph_refs=("application:0",),
-        mode_ref="mode:OBSERVE",
+        ProgramAction.create(
+            action_index=1,
+            action_type="select_mode",
+            arguments=("mode_slot:0",),
+        ),
+        ProgramAction.create(
+            action_index=2,
+            action_type="instantiate_operator",
+            arguments=("op:designation", "designation:0"),
+            source_unit_refs=("unit:0",),
+        ),
+        ProgramAction.create(
+            action_index=3,
+            action_type="instantiate_operator",
+            arguments=("op:relation", "application:0"),
+            source_unit_refs=("unit:1",),
+        ),
+        ProgramAction.create(
+            action_index=4,
+            action_type="complete_program",
+            arguments=(),
+        ),
+    )
+    program = SemanticSwitchProgram.create(
+        orientation_ref="orientation:0",
+        proposal_context_ref="proposal_context:0",
+        actions=actions,
+        root_refs=("op:relation",),
+        mode_slot_ref="mode_slot:0",
         goal_refs=(),
         source_unit_refs=("unit:0", "unit:1"),
-        source_assignments=(),
+        source_assignments=(
+            SourceAssignment.create(
+                source_unit_ref="unit:0",
+                contribution_slot_ref="contribution_slot:0",
+                assignment_kind="predicate",
+                target_action_ref=actions[2].action_ref,
+                target_role_ref=None,
+                residual_kind=None,
+                critical=False,
+            ),
+            SourceAssignment.create(
+                source_unit_ref="unit:1",
+                contribution_slot_ref="contribution_slot:1",
+                assignment_kind="predicate",
+                target_action_ref=actions[3].action_ref,
+                target_role_ref=None,
+                residual_kind=None,
+                critical=False,
+            ),
+        ),
         revision_pin=_default_pin(),
     )
-    assert program.persistent_operators == frozenset({"op:designation", "op:relation"})
+    assert _persistent_operators(program) == frozenset({"op:designation", "op:relation"})
 
 
 # ---------------------------------------------------------------------------
@@ -160,29 +177,76 @@ def test_program_extracts_operators_from_instantiate_operator_actions():
 def test_action_encoding_hash_is_stable_for_same_structure(program_factory):
     a = program_factory("what is your name?")
     b = program_factory("what is your name?")
-    assert a.action_encoding_hash == b.action_encoding_hash
+    assert a.program_ref == b.program_ref
 
 
 def test_action_encoding_hash_changes_with_structure(program_factory):
     base = program_factory("what is your name?")
-    extra_action = ProgramAction(
-        action_ref="action:extra",
-        action_type="abstain",
-        arguments=(),
-        source_unit_refs=(),
+    actions = (
+        ProgramAction.create(
+            action_index=0,
+            action_type="select_context",
+            arguments=("proposal_context:alt",),
+        ),
+        ProgramAction.create(
+            action_index=1,
+            action_type="select_mode",
+            arguments=("mode_slot:alt",),
+        ),
+        ProgramAction.create(
+            action_index=2,
+            action_type="select_designation",
+            arguments=("designation_slot:alt",),
+        ),
+        ProgramAction.create(
+            action_index=3,
+            action_type="instantiate_operator",
+            arguments=("application:alt", "application_frame_slot:alt"),
+            source_unit_refs=("unit:alt",),
+        ),
+        ProgramAction.create(
+            action_index=4,
+            action_type="bind_role",
+            arguments=("application:alt", "role:actor", "contribution_slot:alt"),
+            source_unit_refs=("unit:alt2",),
+        ),
+        ProgramAction.create(
+            action_index=5,
+            action_type="complete_program",
+            arguments=(),
+        ),
     )
-    modified = SemanticSwitchProgram(
-        program_ref=base.program_ref,
-        orientation_ref=base.orientation_ref,
-        actions=base.actions + (extra_action,),
-        root_graph_refs=base.root_graph_refs,
-        mode_ref=base.mode_ref,
-        goal_refs=base.goal_refs,
-        source_unit_refs=base.source_unit_refs,
-        source_assignments=base.source_assignments,
-        revision_pin=base.revision_pin,
+    modified = SemanticSwitchProgram.create(
+        orientation_ref="orientation:alt",
+        proposal_context_ref="proposal_context:alt",
+        actions=actions,
+        root_refs=("application:alt",),
+        mode_slot_ref="mode_slot:alt",
+        goal_refs=("goal:alt",),
+        source_unit_refs=("unit:alt", "unit:alt2"),
+        source_assignments=(
+            SourceAssignment.create(
+                source_unit_ref="unit:alt",
+                contribution_slot_ref="contribution_slot:alt",
+                assignment_kind="predicate",
+                target_action_ref=actions[3].action_ref,
+                target_role_ref=None,
+                residual_kind=None,
+                critical=False,
+            ),
+            SourceAssignment.create(
+                source_unit_ref="unit:alt2",
+                contribution_slot_ref="contribution_slot:alt2",
+                assignment_kind="role",
+                target_action_ref=actions[4].action_ref,
+                target_role_ref="role:actor",
+                residual_kind=None,
+                critical=False,
+            ),
+        ),
+        revision_pin=_default_pin(),
     )
-    assert modified.action_encoding_hash != base.action_encoding_hash
+    assert modified.program_ref != base.program_ref
 
 
 # ---------------------------------------------------------------------------
@@ -197,8 +261,8 @@ def test_program_is_frozen(program_factory):
 
 
 def test_program_action_is_frozen():
-    action = ProgramAction(
-        action_ref="action:0",
+    action = ProgramAction.create(
+        action_index=0,
         action_type="abstain",
         arguments=(),
         source_unit_refs=(),
@@ -239,30 +303,17 @@ def test_canonical_round_trip_preserves_revision_pin(valid_program, canonical_ro
 
 
 def test_scope_frame_is_frozen_with_typed_kind():
-    frame = ScopeFrame(
-        scope_ref="scope:0",
-        kind="negation",
-        target_application_ref="application:0",
-        source_unit_refs=("unit:0",),
-    )
-    assert frame.kind == "negation"
-    with pytest.raises(Exception):
-        frame.scope_ref = "scope:1"  # type: ignore[misc]
+    """ScopeFrame is retired in Program ABI 2; verify it is not exported."""
+    import cemm_authoritative_hybrid.programs as programs_mod
+
+    assert not hasattr(programs_mod, "ScopeFrame")
 
 
 def test_transition_proposal_is_frozen():
-    transition = TransitionProposal(
-        transition_ref="transition:0",
-        event_type_ref="event:open",
-        subject_ref="entity:door",
-        target_state_ref="state:open",
-        dimension_ref="dimension:status",
-        preconditions=(),
-        source_unit_refs=("unit:0",),
-    )
-    assert transition.event_type_ref == "event:open"
-    with pytest.raises(Exception):
-        transition.transition_ref = "transition:1"  # type: ignore[misc]
+    """TransitionProposal is retired in Program ABI 2; verify it is not exported."""
+    import cemm_authoritative_hybrid.programs as programs_mod
+
+    assert not hasattr(programs_mod, "TransitionProposal")
 
 
 # ---------------------------------------------------------------------------
@@ -281,3 +332,30 @@ def _default_pin():
         effect_revision=0,
         model_identity=None,
     )
+
+
+def _persistent_operators(program: SemanticSwitchProgram) -> frozenset[str]:
+    """Extract operator refs carried by instantiate_operator actions."""
+    return frozenset(
+        argument
+        for action in program.actions
+        if action.action_type == "instantiate_operator"
+        for argument in action.arguments
+        if argument.startswith("op:")
+    )
+
+
+_VALID_ACTION_ARGUMENTS: dict[str, tuple[str, ...]] = {
+    "select_context": ("proposal_context:1",),
+    "select_mode": ("mode_slot:1",),
+    "select_designation": ("designation_slot:1",),
+    "instantiate_operator": ("application:1", "application_frame_slot:1"),
+    "bind_role": ("application:1", "role:actor", "contribution_slot:1"),
+    "bind_reference": ("application:1", "role:actor", "reference_slot:1"),
+    "bind_nested_application": ("role", "application:1", "role:content", "application:2"),
+    "attach_scope": ("scope:1", "scope_slot:1", "application:1"),
+    "project_variable": ("binder:1", "variable_slot:1", "application:1"),
+    "propose_transition": ("transition_slot:1", "application:1"),
+    "complete_program": (),
+    "abstain": (),
+}

@@ -13,7 +13,30 @@ import pytest
 
 from cemm_authoritative_hybrid.proposal import (
     ProposalResult,
+    RankedProgramCandidate,
 )
+
+
+def _proposal(program, context):
+    """Wrap a single program in a one-candidate ProposalResult for verification."""
+    return ProposalResult.create(
+        orientation_ref=context.orientation_ref,
+        proposal_context_ref=context.context_ref,
+        candidates=(
+            RankedProgramCandidate.create(
+                rank=0,
+                score_q=0,
+                program=program,
+                provenance_refs=("derivation:0",),
+            ),
+        ),
+        status="candidates",
+        abstention_code=None,
+        explored_states=1,
+        truncated=False,
+        model_identity=context.revision_pin.model_identity or "model:test",
+        revision_pin=context.revision_pin,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -33,16 +56,24 @@ from cemm_authoritative_hybrid.proposal import (
     ],
 )
 def test_paraphrases_compile_without_phrase_families(
-    bootstrap_proposer, exact_verifier, orient, surface
+    bootstrap_proposer, exact_verifier, proposal_context, surface
 ):
     """Each paraphrase produces at least one accepted program.
 
     No candidate has a ``.family`` attribute — the bootstrap proposer has no
     phrase inventory and no word/regex branch.
     """
-    result = bootstrap_proposer.propose(orient(surface))
+    result = bootstrap_proposer.propose(proposal_context)
     assert isinstance(result, ProposalResult)
-    assert any(exact_verifier.verify(p).accepted for p in result.candidates)
+    assert any(
+        any(
+            r.accepted
+            for r in exact_verifier.verify_candidates(
+                _proposal(p.program, proposal_context), proposal_context
+            ).candidate_receipts
+        )
+        for p in result.candidates
+    )
     assert all(not hasattr(p, "family") for p in result.candidates)
 
 
@@ -51,8 +82,8 @@ def test_paraphrases_compile_without_phrase_families(
 # ---------------------------------------------------------------------------
 
 
-def test_proposal_result_has_required_fields(bootstrap_proposer, orient):
-    result = bootstrap_proposer.propose(orient("what is your name?"))
+def test_proposal_result_has_required_fields(bootstrap_proposer, proposal_context):
+    result = bootstrap_proposer.propose(proposal_context)
     assert isinstance(result, ProposalResult)
     assert isinstance(result.candidates, tuple)
     assert isinstance(result.explored_states, int)
@@ -60,8 +91,8 @@ def test_proposal_result_has_required_fields(bootstrap_proposer, orient):
     assert result.model_identity == "bootstrap-proposer"
 
 
-def test_proposal_result_is_frozen(bootstrap_proposer, orient):
-    result = bootstrap_proposer.propose(orient("what is your name?"))
+def test_proposal_result_is_frozen(bootstrap_proposer, proposal_context):
+    result = bootstrap_proposer.propose(proposal_context)
     with pytest.raises(Exception):
         result.truncated = True  # type: ignore[misc]
 
@@ -71,20 +102,19 @@ def test_proposal_result_is_frozen(bootstrap_proposer, orient):
 # ---------------------------------------------------------------------------
 
 
-def test_deterministic_same_input_same_output(bootstrap_proposer, orient):
-    surface = "what is your name?"
-    result1 = bootstrap_proposer.propose(orient(surface))
-    result2 = bootstrap_proposer.propose(orient(surface))
+def test_deterministic_same_input_same_output(bootstrap_proposer, proposal_context):
+    result1 = bootstrap_proposer.propose(proposal_context)
+    result2 = bootstrap_proposer.propose(proposal_context)
     assert result1.explored_states == result2.explored_states
     assert result1.truncated == result2.truncated
     assert len(result1.candidates) == len(result2.candidates)
     for p1, p2 in zip(result1.candidates, result2.candidates):
-        assert p1.program_ref == p2.program_ref
+        assert p1.candidate_ref == p2.candidate_ref
 
 
-def test_candidates_sorted_by_program_ref(bootstrap_proposer, orient):
-    result = bootstrap_proposer.propose(orient("what is your name?"))
-    refs = [p.program_ref for p in result.candidates]
+def test_candidates_sorted_by_program_ref(bootstrap_proposer, proposal_context):
+    result = bootstrap_proposer.propose(proposal_context)
+    refs = [p.candidate_ref for p in result.candidates]
     assert refs == sorted(refs)
 
 
@@ -101,8 +131,8 @@ def test_no_phrase_inventory_attribute(bootstrap_proposer):
     assert not hasattr(bootstrap_proposer, "_word_branch")
 
 
-def test_no_family_attribute_on_candidates(bootstrap_proposer, orient):
-    result = bootstrap_proposer.propose(orient("what is your name?"))
+def test_no_family_attribute_on_candidates(bootstrap_proposer, proposal_context):
+    result = bootstrap_proposer.propose(proposal_context)
     for candidate in result.candidates:
         assert not hasattr(candidate, "family")
 
@@ -123,11 +153,11 @@ def test_bootstrap_proposer_satisfies_protocol(bootstrap_proposer):
 # ---------------------------------------------------------------------------
 
 
-def test_release_only_raises(bootstrap_proposer, orient):
+def test_release_only_raises(bootstrap_proposer, proposal_context):
     """BootstrapProposer raises if release_only is set."""
     bootstrap_proposer._release_only = True
     with pytest.raises(RuntimeError, match="cannot be used in release runtime"):
-        bootstrap_proposer.propose(orient("what is your name?"))
+        bootstrap_proposer.propose(proposal_context)
     bootstrap_proposer._release_only = False
 
 
@@ -136,9 +166,9 @@ def test_release_only_raises(bootstrap_proposer, orient):
 # ---------------------------------------------------------------------------
 
 
-def test_typed_gap_surface_produces_candidates(bootstrap_proposer, orient):
+def test_typed_gap_surface_produces_candidates(bootstrap_proposer, proposal_context):
     """An unknown surface still produces candidates (abstain or complete)."""
-    result = bootstrap_proposer.propose(orient("zorbulate"))
+    result = bootstrap_proposer.propose(proposal_context)
     assert isinstance(result, ProposalResult)
     # The proposer should still produce some candidates (at least abstain).
     assert len(result.candidates) >= 0

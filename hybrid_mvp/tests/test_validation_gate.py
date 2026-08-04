@@ -1572,7 +1572,7 @@ def test_receipt_verification_caches_fixed_evidence_per_pass(
             expected_status="passed",
             run_ref=receipt.run_ref,
         )
-    assert len(calls) == 2
+    assert len(calls) == 1
     validation_gate_module.reset_admission_verification_cache()
     load_verified_admission_receipt(
         tmp_path,
@@ -1580,7 +1580,7 @@ def test_receipt_verification_caches_fixed_evidence_per_pass(
         expected_status="passed",
         run_ref=receipt.run_ref,
     )
-    assert len(calls) == 4
+    assert len(calls) == 2
 
 def test_bounded_process_capture_preserves_fast_output() -> None:
     payload = b"x" * 65_536
@@ -2014,7 +2014,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "2c9c2f00e7554212a79940ea0c163e04e3da00f4445652aea2f0cf79e618b448"
+        "source_ast_sha256": "ff710a300dc086cd4660de909cc80d2897e67a5992958e3b709c73d27a534ab1"
     },
     "tests/test_validation_gate.py::test_receipt_writer_enforces_loader_size_bound": {
         "activation_phase": "G0",
