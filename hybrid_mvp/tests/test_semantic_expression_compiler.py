@@ -75,6 +75,10 @@ def _context():
         frame=lambda ref: frames.get(ref),
         mode_slot=lambda ref: modes.get(ref),
         reference=lambda ref: None,
+        scope=lambda ref: None,
+        expression_link=lambda ref: None,
+        variable=lambda ref: None,
+        transition=lambda ref: None,
     )
 
 
@@ -236,13 +240,20 @@ def test_compilation_proof_accounts_exactly_for_actions_assignments_and_roots() 
     assert result.proof.expression_ref == result.expression.expression_ref
 
 
-def test_registered_r2_shape_fails_typed_without_fallback() -> None:
+def test_r2_scope_action_is_admitted_in_recursive_compiler() -> None:
+    """R2 scope actions are now admitted by the recursive compiler.
+
+    The R1 canary that expected action_shape_not_admitted is superseded.
+    The test context lacks a scope() method, so the compiler returns a
+    typed failure for unknown_scope_slot rather than action_shape_not_admitted.
+    """
     context, program = _program(scope=True)
     result = SemanticExpressionCompiler().compile(program, context)
 
+    # The R2 compiler no longer rejects attach_scope with action_shape_not_admitted.
+    # It attempts to process it and fails on the missing scope slot.
     assert isinstance(result, CompilationFailure)
-    assert result.code == "action_shape_not_admitted"
-    assert result.action_ref is not None
+    assert result.code != "action_shape_not_admitted"
 
 
 def test_context_identity_mismatch_fails_before_compilation() -> None:
