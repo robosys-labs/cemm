@@ -1,0 +1,21 @@
+{
+  "abi_version": 1,
+  "generation": "authority-v1-2026-07-29",
+  "owners": [
+    {
+      "name": "kernel",
+      "path": "kernel.json",
+      "sha256": "749cd077b50891a6e16ceeacc4a609780733002a1a8964e14fe0857a3a9e7ddc"
+    },
+    {
+      "name": "conversation",
+      "path": "conversation.json",
+      "sha256": "1f94749bd76f38bf702e32bb388c53d0347a0aec51c31cf9e5ed730ecf3fe8e2"
+    },
+    {
+      "name": "state_operations",
+      "path": "state_operations.json",
+      "sha256": "23dd44bc4da31443e5af1ba500377d5eeb0d9b67df782a87c17bd3d7bb47e8c4"
+    }
+  ]
+}

@@ -1,0 +1,480 @@
+{
+  "adapters": [],
+  "atoms": [
+    {
+      "kind": "event_type",
+      "ref": "event:conversation_session",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:turn",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:greeting",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:farewell",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:learn_alias",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:say",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:leave",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:teach",
+      "reviewed": true
+    },
+    {
+      "kind": "capability",
+      "ref": "cap:learn_alias",
+      "reviewed": true
+    },
+    {
+      "kind": "permission",
+      "ref": "permission:write_alias",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:alice",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:bob",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:carol",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:mary",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:mother_in_law",
+      "reviewed": true
+    },
+    {
+      "kind": "relation_type",
+      "ref": "rel:has_partner",
+      "reviewed": true
+    },
+    {
+      "kind": "concept",
+      "ref": "concept:mother",
+      "reviewed": true
+    }
+  ],
+  "capabilities": {},
+  "designations": [
+    {
+      "language": "en",
+      "surface": "alice",
+      "target": "entity:alice"
+    },
+    {
+      "language": "en",
+      "surface": "bob",
+      "target": "entity:bob"
+    },
+    {
+      "language": "en",
+      "surface": "carol",
+      "target": "entity:carol"
+    },
+    {
+      "language": "en",
+      "surface": "mary",
+      "target": "entity:mary"
+    },
+    {
+      "language": "en",
+      "surface": "hi",
+      "target": "event:greeting"
+    },
+    {
+      "language": "en",
+      "surface": "hello",
+      "target": "event:greeting"
+    },
+    {
+      "language": "en",
+      "surface": "hey",
+      "target": "event:greeting"
+    },
+    {
+      "language": "en",
+      "surface": "bye",
+      "target": "event:farewell"
+    },
+    {
+      "language": "en",
+      "surface": "goodbye",
+      "target": "event:farewell"
+    },
+    {
+      "language": "en",
+      "surface": "mother-in-law",
+      "target": "rel:mother_in_law"
+    },
+    {
+      "language": "en",
+      "surface": "mother in law",
+      "target": "rel:mother_in_law"
+    },
+    {
+      "language": "en",
+      "surface": "partner",
+      "target": "rel:has_partner"
+    },
+    {
+      "language": "en",
+      "surface": "learn",
+      "target": "event:learn_alias"
+    },
+    {
+      "language": "en",
+      "surface": "teach",
+      "target": "event:teach"
+    },
+    {
+      "language": "en",
+      "surface": "said",
+      "target": "event:say"
+    },
+    {
+      "language": "en",
+      "surface": "says",
+      "target": "event:say"
+    },
+    {
+      "language": "en",
+      "surface": "left",
+      "target": "event:leave"
+    },
+    {
+      "language": "en",
+      "surface": "leave",
+      "target": "event:leave"
+    },
+    {
+      "language": "en",
+      "surface": "Alice",
+      "target": "entity:alice"
+    },
+    {
+      "language": "en",
+      "surface": "Bob",
+      "target": "entity:bob"
+    },
+    {
+      "language": "en",
+      "surface": "Carol",
+      "target": "entity:carol"
+    },
+    {
+      "language": "en",
+      "surface": "Mary",
+      "target": "entity:mary"
+    },
+    {
+      "language": "en",
+      "surface": "learning",
+      "target": "event:learn_alias"
+    },
+    {
+      "language": "en",
+      "surface": "departure",
+      "target": "event:leave"
+    },
+    {
+      "language": "en",
+      "surface": "say",
+      "target": "event:say"
+    },
+    {
+      "language": "en",
+      "surface": "greetings",
+      "target": "event:greeting"
+    },
+    {
+      "language": "en",
+      "surface": "farewell",
+      "target": "event:farewell"
+    },
+    {
+      "language": "en",
+      "surface": "instruction",
+      "target": "event:teach"
+    },
+    {
+      "language": "en",
+      "surface": "instruct",
+      "target": "event:teach"
+    },
+    {
+      "language": "en",
+      "surface": "spouse's mother",
+      "target": "rel:mother_in_law"
+    },
+    {
+      "language": "en",
+      "surface": "progenitor",
+      "target": "concept:mother"
+    }
+  ],
+  "event_signatures": [
+    {
+      "event_type": "event:greeting",
+      "roles": [
+        {
+          "filler_kinds": [
+            "participant",
+            "entity"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "participant",
+            "entity"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:addressee"
+        }
+      ],
+      "valid_session_phases": [
+        "opening",
+        "active"
+      ]
+    },
+    {
+      "event_type": "event:farewell",
+      "roles": [
+        {
+          "filler_kinds": [
+            "participant",
+            "entity"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "participant",
+            "entity"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:addressee"
+        }
+      ],
+      "valid_session_phases": [
+        "opening",
+        "active",
+        "suspended"
+      ]
+    },
+    {
+      "adapter_ref": "adapter:memory",
+      "event_type": "event:learn_alias",
+      "required_capabilities": [
+        "cap:learn_alias"
+      ],
+      "required_permissions": [
+        "permission:write_alias"
+      ],
+      "roles": [
+        {
+          "filler_kinds": [
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "concept",
+            "entity",
+            "event_type",
+            "relation_type",
+            "state_dimension",
+            "state_value"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:target"
+        },
+        {
+          "filler_kinds": [
+            "literal"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:surface"
+        }
+      ]
+    },
+    {
+      "event_type": "event:say",
+      "roles": [
+        {
+          "filler_kinds": [
+            "entity",
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "application"
+          ],
+          "proposition_valued": true,
+          "required": true,
+          "role": "role:content"
+        }
+      ]
+    },
+    {
+      "event_type": "event:leave",
+      "roles": [
+        {
+          "filler_kinds": [
+            "entity",
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        }
+      ]
+    },
+    {
+      "event_type": "event:teach",
+      "roles": [
+        {
+          "filler_kinds": [
+            "entity",
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "entity",
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:learner"
+        },
+        {
+          "filler_kinds": [
+            "application"
+          ],
+          "proposition_valued": true,
+          "required": false,
+          "role": "role:content"
+        }
+      ]
+    }
+  ],
+  "operator_roles": {},
+  "owner": "conversation",
+  "permissions": [
+    [
+      "participant:system",
+      "permission:write_alias",
+      "event:learn_alias"
+    ]
+  ],
+  "rules": [
+    {
+      "antecedent": [
+        {
+          "args": {
+            "role:object": "?person",
+            "role:relation": "rel:mother_in_law",
+            "role:subject": "?mother"
+          },
+          "operator": "op:relation"
+        }
+      ],
+      "confidence": 1.0,
+      "consequent": [
+        {
+          "args": {
+            "role:object": "$partner",
+            "role:relation": "rel:has_partner",
+            "role:subject": "?person"
+          },
+          "operator": "op:relation"
+        }
+      ],
+      "reviewed": true,
+      "rule_ref": "rule:mother-in-law-implies-partner-exists"
+    },
+    {
+      "antecedent": [
+        {
+          "args": {
+            "role:object": "?partner",
+            "role:relation": "rel:has_partner",
+            "role:subject": "?person"
+          },
+          "operator": "op:relation"
+        }
+      ],
+      "confidence": 1.0,
+      "consequent": [
+        {
+          "args": {
+            "role:dimension": "dim:marital_status",
+            "role:subject": "?person",
+            "role:value": "value:married"
+          },
+          "operator": "op:state"
+        }
+      ],
+      "reviewed": true,
+      "rule_ref": "rule:partner-implies-married-state"
+    }
+  ],
+  "source": {
+    "origin": "legacy-authority-json",
+    "reviewed": true
+  },
+  "transitions": [],
+  "value_dimensions": {}
+}

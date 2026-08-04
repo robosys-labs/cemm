@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.test-tmp/
+.pytest-runtime/
+*.pyc
+*.pt
+build/
+dist/
+*.egg-info/
+stores.db
+stores.db-wal
+stores.db-shm

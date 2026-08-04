@@ -1,0 +1,147 @@
+{
+  "language": "en",
+  "abi_version": 7,
+  "tokenization": {
+    "lowercase": true,
+    "split_whitespace": true,
+    "split_punctuation": true,
+    "split_contractions": true,
+    "contractions": ["don't", "can't", "won't", "isn't", "aren't", "wasn't", "weren't", "hasn't", "haven't", "didn't", "doesn't", "wouldn't", "couldn't", "shouldn't"],
+    "punctuation": [".", ",", "!", "?", ";", ":", "'", "\"", "(", ")"]
+  },
+  "morphology": {
+    "plural_suffixes": ["s", "es", "ies"],
+    "past_tense_suffixes": ["ed", "d"],
+    "participle_suffixes": ["ing", "ed"],
+    "comparative_suffixes": ["er", "est"]
+  },
+  "participant_deixis": {
+    "i": {"kind": "reference_user"},
+    "me": {"kind": "reference_user"},
+    "my": {"kind": "possessive_user"},
+    "mine": {"kind": "possessive_user"},
+    "you": {"kind": "reference_system"},
+    "your": {"kind": "possessive_system"},
+    "yours": {"kind": "possessive_system"},
+    "we": {"kind": "reference_group"},
+    "us": {"kind": "reference_group"},
+    "our": {"kind": "possessive_group"},
+    "they": {"kind": "reference_other"},
+    "them": {"kind": "reference_other"},
+    "their": {"kind": "possessive_other"},
+    "this": {"kind": "proximal"},
+    "that": {"kind": "distal"},
+    "these": {"kind": "proximal"},
+    "those": {"kind": "distal"}
+  },
+  "binders": {
+    "is": {"kind": "copula"},
+    "are": {"kind": "copula"},
+    "was": {"kind": "copula"},
+    "were": {"kind": "copula"},
+    "am": {"kind": "copula"},
+    "be": {"kind": "copula"},
+    "been": {"kind": "copula"},
+    "being": {"kind": "copula"}
+  },
+  "query_projection": {
+    "what": {"kind": "query"},
+    "who": {"kind": "query"},
+    "where": {"kind": "query"},
+    "when": {"kind": "query"},
+    "why": {"kind": "query"},
+    "which": {"kind": "query"},
+    "how": {"kind": "query"},
+    "do": {"kind": "query_auxiliary"},
+    "does": {"kind": "query_auxiliary"},
+    "did": {"kind": "query_auxiliary"},
+    "has": {"kind": "query_auxiliary"},
+    "have": {"kind": "query_auxiliary"},
+    "list": {"kind": "query"},
+    "tell": {"kind": "query"},
+    "report": {"kind": "query"}
+  },
+  "polarity": {
+    "not": {"kind": "negation"},
+    "no": {"kind": "negation"},
+    "never": {"kind": "negation"},
+    "n't": {"kind": "negation"},
+    "none": {"kind": "negation"},
+    "nothing": {"kind": "negation"}
+  },
+  "modality": {
+    "can": {"kind": "capability"},
+    "could": {"kind": "capability"},
+    "may": {"kind": "permission"},
+    "might": {"kind": "possibility"},
+    "must": {"kind": "obligation"},
+    "should": {"kind": "obligation"},
+    "would": {"kind": "conditional"},
+    "shall": {"kind": "obligation"},
+    "will": {"kind": "future"},
+    "able": {"kind": "capability"},
+    "possible": {"kind": "possibility"}
+  },
+  "tense_aspect": {
+    "will": {"kind": "future"},
+    "have": {"kind": "perfect"},
+    "has": {"kind": "perfect"},
+    "had": {"kind": "pluperfect"},
+    "currently": {"kind": "temporal_qualifier"},
+    "now": {"kind": "temporal_qualifier"},
+    "then": {"kind": "temporal_qualifier"},
+    "already": {"kind": "temporal_qualifier"},
+    "still": {"kind": "temporal_qualifier"},
+    "yet": {"kind": "temporal_qualifier"}
+  },
+  "connectors": {
+    "because": {"kind": "causal"},
+    "so": {"kind": "causal"},
+    "therefore": {"kind": "causal"},
+    "but": {"kind": "contrast"},
+    "however": {"kind": "contrast"},
+    "although": {"kind": "contrast"},
+    "though": {"kind": "contrast"},
+    "and": {"kind": "coordination"},
+    "or": {"kind": "coordination"},
+    "nor": {"kind": "coordination"},
+    "if": {"kind": "conditional"},
+    "unless": {"kind": "conditional"},
+    "suppose": {"kind": "hypothetical"},
+    "imagine": {"kind": "hypothetical"}
+  },
+  "correction": {
+    "no": {"kind": "correction"},
+    "actually": {"kind": "correction"},
+    "rather": {"kind": "correction"},
+    "instead": {"kind": "correction"},
+    "sorry": {"kind": "correction"}
+  },
+  "discourse": {
+    "said": {"kind": "report"},
+    "told": {"kind": "report"},
+    "asked": {"kind": "report"},
+    "says": {"kind": "report"},
+    "means": {"kind": "definition_marker"},
+    "mean": {"kind": "definition_marker"},
+    "means that": {"kind": "definition_marker"},
+    "there": {"kind": "discourse_particle"}
+  },
+  "determiners": {
+    "the": {"kind": "determiner"},
+    "a": {"kind": "determiner"},
+    "an": {"kind": "determiner"},
+    "some": {"kind": "determiner"},
+    "any": {"kind": "determiner"},
+    "all": {"kind": "determiner"},
+    "every": {"kind": "determiner"}
+  },
+  "linkers": {
+    "to": {"kind": "linker"},
+    "of": {"kind": "linker"},
+    "as": {"kind": "linker"},
+    "for": {"kind": "linker"},
+    "that": {"kind": "content_linker"},
+    "about": {"kind": "linker"}
+  }
+}

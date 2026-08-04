@@ -1,0 +1,15 @@
+{
+  "hidden": 64,
+  "layers": 2,
+  "heads": 4,
+  "max_form_tokens": 32,
+  "max_actions": 24,
+  "epochs": 100,
+  "learning_rate": 0.003,
+  "seed": 3502,
+  "device": "cpu",
+  "target_encoding": "dynamic_pointer_slots",
+  "internal_ref_vocabulary": [],
+  "episodes_path": "data/partitions/train.jsonl",
+  "artifact_dir": "artifacts/proposal_release"
+}

@@ -1,0 +1,303 @@
+{
+  "adapters": [
+    "adapter:state"
+  ],
+  "atoms": [
+    {
+      "kind": "state_dimension",
+      "ref": "dim:operational_status",
+      "reviewed": true
+    },
+    {
+      "kind": "state_dimension",
+      "ref": "dim:availability",
+      "reviewed": true
+    },
+    {
+      "kind": "state_dimension",
+      "ref": "dim:power",
+      "reviewed": true
+    },
+    {
+      "kind": "state_dimension",
+      "ref": "dim:marital_status",
+      "reviewed": true
+    },
+    {
+      "kind": "state_dimension",
+      "ref": "dim:admissibility",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:operating_normally",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:online",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:offline",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:on",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:off",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:married",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:available",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:unavailable",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:enabled",
+      "reviewed": true
+    },
+    {
+      "kind": "state_value",
+      "ref": "value:disabled",
+      "reviewed": true
+    },
+    {
+      "kind": "event_type",
+      "ref": "event:set_state",
+      "reviewed": true
+    },
+    {
+      "kind": "capability",
+      "ref": "cap:set_state",
+      "reviewed": true
+    },
+    {
+      "kind": "permission",
+      "ref": "permission:set_state",
+      "reviewed": true
+    },
+    {
+      "kind": "adapter",
+      "ref": "adapter:state",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:server",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:lamp",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:door",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:router",
+      "reviewed": true
+    },
+    {
+      "kind": "entity",
+      "ref": "entity:light",
+      "reviewed": true
+    }
+  ],
+  "capabilities": {},
+  "designations": [
+    {
+      "language": "en",
+      "surface": "server",
+      "target": "entity:server"
+    },
+    {
+      "language": "en",
+      "surface": "lamp",
+      "target": "entity:lamp"
+    },
+    {
+      "language": "en",
+      "surface": "door",
+      "target": "entity:door"
+    },
+    {
+      "language": "en",
+      "surface": "online",
+      "target": "value:online"
+    },
+    {
+      "language": "en",
+      "surface": "offline",
+      "target": "value:offline"
+    },
+    {
+      "language": "en",
+      "surface": "on",
+      "target": "value:on"
+    },
+    {
+      "language": "en",
+      "surface": "off",
+      "target": "value:off"
+    },
+    {
+      "language": "en",
+      "surface": "married",
+      "target": "value:married"
+    },
+    {
+      "language": "en",
+      "surface": "availability",
+      "target": "dim:availability"
+    },
+    {
+      "language": "en",
+      "surface": "power",
+      "target": "dim:power"
+    },
+    {
+      "language": "en",
+      "surface": "marital status",
+      "target": "dim:marital_status"
+    },
+    {
+      "language": "en",
+      "surface": "status",
+      "target": "dim:operational_status"
+    },
+    {
+      "language": "en",
+      "surface": "router",
+      "target": "entity:router"
+    },
+    {
+      "language": "en",
+      "surface": "light",
+      "target": "entity:light"
+    },
+    {
+      "language": "en",
+      "surface": "available",
+      "target": "value:available"
+    },
+    {
+      "language": "en",
+      "surface": "unavailable",
+      "target": "value:unavailable"
+    },
+    {
+      "language": "en",
+      "surface": "enabled",
+      "target": "value:enabled"
+    },
+    {
+      "language": "en",
+      "surface": "disabled",
+      "target": "value:disabled"
+    },
+    {
+      "language": "en",
+      "surface": "reachability",
+      "target": "dim:availability"
+    },
+    {
+      "language": "en",
+      "surface": "switch state",
+      "target": "dim:power"
+    }
+  ],
+  "event_signatures": [
+    {
+      "adapter_ref": "adapter:state",
+      "event_type": "event:set_state",
+      "required_capabilities": [
+        "cap:set_state"
+      ],
+      "required_permissions": [
+        "permission:set_state"
+      ],
+      "roles": [
+        {
+          "filler_kinds": [
+            "participant"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:actor"
+        },
+        {
+          "filler_kinds": [
+            "entity"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:target"
+        },
+        {
+          "filler_kinds": [
+            "state_dimension"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:dimension"
+        },
+        {
+          "filler_kinds": [
+            "state_value"
+          ],
+          "proposition_valued": false,
+          "required": true,
+          "role": "role:value"
+        }
+      ]
+    }
+  ],
+  "operator_roles": {},
+  "owner": "state_operations",
+  "permissions": [
+    [
+      "participant:system",
+      "permission:set_state",
+      "event:set_state"
+    ]
+  ],
+  "rules": [],
+  "source": {
+    "origin": "legacy-authority-json",
+    "reviewed": true
+  },
+  "transitions": [],
+  "value_dimensions": {
+    "value:available": "dim:availability",
+    "value:disabled": "dim:power",
+    "value:enabled": "dim:power",
+    "value:married": "dim:marital_status",
+    "value:off": "dim:power",
+    "value:offline": "dim:availability",
+    "value:on": "dim:power",
+    "value:online": "dim:availability",
+    "value:operating_normally": "dim:operational_status",
+    "value:unavailable": "dim:availability"
+  }
+}

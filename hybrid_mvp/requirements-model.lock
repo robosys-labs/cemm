@@ -1,0 +1,6 @@
+# CEMM Authoritative Hybrid MVP — model dependency lock.
+# Pinned versions for tensor/model execution. The SHA-256 of this file's
+# canonical content is the model-dependency lock hash pinned by ModelMetadata.
+# Clean install: python -m pip install --require-hashes -r requirements.lock
+torch==2.6.0
+safetensors==0.5.3

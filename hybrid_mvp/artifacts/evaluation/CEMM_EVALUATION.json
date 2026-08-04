@@ -1,0 +1,221 @@
+{
+  "abstention_precision": 0.0,
+  "abstention_recall": 0.0,
+  "bootstrap_delegate_calls": 0,
+  "effect_safety_accuracy": 1.0,
+  "end_to_end_accuracy": 0.75641,
+  "exact_program_accuracy": 0.75641,
+  "expected_calibration_error": 0.05,
+  "illegal_program_rejection": 1.0,
+  "num_episodes": 78,
+  "per_competency_metrics": {
+    "adversarial_programs": {
+      "accuracy": 1.0,
+      "correct": 1,
+      "total": 1
+    },
+    "capability_policy_adapter_effect": {
+      "accuracy": 0.8333333333333334,
+      "correct": 5,
+      "total": 6
+    },
+    "contradiction": {
+      "accuracy": 0.3333333333333333,
+      "correct": 1,
+      "total": 3
+    },
+    "designation_definition": {
+      "accuracy": 0.0,
+      "correct": 0,
+      "total": 4
+    },
+    "gap_kinds": {
+      "accuracy": 1.0,
+      "correct": 11,
+      "total": 11
+    },
+    "learning_security": {
+      "accuracy": 1.0,
+      "correct": 7,
+      "total": 7
+    },
+    "modality": {
+      "accuracy": 0.75,
+      "correct": 3,
+      "total": 4
+    },
+    "multilingual_aliases": {
+      "accuracy": 0.6,
+      "correct": 3,
+      "total": 5
+    },
+    "negation_scope": {
+      "accuracy": 1.0,
+      "correct": 6,
+      "total": 6
+    },
+    "participant_reference": {
+      "accuracy": 0.2,
+      "correct": 1,
+      "total": 5
+    },
+    "polysemy": {
+      "accuracy": 0.0,
+      "correct": 0,
+      "total": 3
+    },
+    "realization_equivalence": {
+      "accuracy": 1.0,
+      "correct": 5,
+      "total": 5
+    },
+    "recursive_family_proof": {
+      "accuracy": 1.0,
+      "correct": 1,
+      "total": 1
+    },
+    "reordered_constructions": {
+      "accuracy": 1.0,
+      "correct": 4,
+      "total": 4
+    },
+    "reported_speech": {
+      "accuracy": 0.5,
+      "correct": 1,
+      "total": 2
+    },
+    "restart": {
+      "accuracy": 0.6666666666666666,
+      "correct": 2,
+      "total": 3
+    },
+    "reviewed_sensor_operation_evidence": {
+      "accuracy": 1.0,
+      "correct": 4,
+      "total": 4
+    },
+    "transition_simulation": {
+      "accuracy": 1.0,
+      "correct": 4,
+      "total": 4
+    }
+  },
+  "per_gap_kind_metrics": {
+    "adapter": {
+      "classifier_owner": "adapter",
+      "count": 0,
+      "expected_owner": "adapter",
+      "owner_correct": true
+    },
+    "authority": {
+      "classifier_owner": "authority",
+      "count": 0,
+      "expected_owner": "authority",
+      "owner_correct": true
+    },
+    "designation": {
+      "classifier_owner": "data",
+      "count": 0,
+      "expected_owner": "data",
+      "owner_correct": true
+    },
+    "evidence": {
+      "classifier_owner": "data",
+      "count": 0,
+      "expected_owner": "data",
+      "owner_correct": true
+    },
+    "implementation": {
+      "classifier_owner": "runtime",
+      "count": 0,
+      "expected_owner": "runtime",
+      "owner_correct": true
+    },
+    "inference": {
+      "classifier_owner": "runtime",
+      "count": 0,
+      "expected_owner": "runtime",
+      "owner_correct": true
+    },
+    "learning": {
+      "classifier_owner": "policy",
+      "count": 0,
+      "expected_owner": "policy",
+      "owner_correct": true
+    },
+    "operation": {
+      "classifier_owner": "adapter",
+      "count": 10,
+      "expected_owner": "training",
+      "owner_correct": false
+    },
+    "performance": {
+      "classifier_owner": "runtime",
+      "count": 0,
+      "expected_owner": "runtime",
+      "owner_correct": true
+    },
+    "permission": {
+      "classifier_owner": "policy",
+      "count": 0,
+      "expected_owner": "policy",
+      "owner_correct": true
+    },
+    "proposal": {
+      "classifier_owner": "training",
+      "count": 0,
+      "expected_owner": "training",
+      "owner_correct": true
+    },
+    "realization": {
+      "classifier_owner": "training",
+      "count": 0,
+      "expected_owner": "training",
+      "owner_correct": true
+    },
+    "reference": {
+      "classifier_owner": "training",
+      "count": 0,
+      "expected_owner": "training",
+      "owner_correct": true
+    },
+    "resource": {
+      "classifier_owner": "data",
+      "count": 0,
+      "expected_owner": "data",
+      "owner_correct": true
+    },
+    "state": {
+      "classifier_owner": "data",
+      "count": 0,
+      "expected_owner": "data",
+      "owner_correct": true
+    },
+    "storage": {
+      "classifier_owner": "runtime",
+      "count": 0,
+      "expected_owner": "runtime",
+      "owner_correct": true
+    },
+    "transition": {
+      "classifier_owner": "authority",
+      "count": 0,
+      "expected_owner": "authority",
+      "owner_correct": true
+    },
+    "verification": {
+      "classifier_owner": "runtime",
+      "count": 0,
+      "expected_owner": "runtime",
+      "owner_correct": true
+    }
+  },
+  "proposal_weight_accuracy_drop": 0.75641,
+  "proposal_zero_weight_accuracy": 0.0,
+  "raw_surface_dispatches": 0,
+  "realization_equivalence": 1.0,
+  "realizer_weight_accuracy_drop": 1.0,
+  "realizer_zero_weight_accuracy": 0.0,
+  "status": "failed",
+  "unreviewed_atom_creations": 0
+}

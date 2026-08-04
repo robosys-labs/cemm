@@ -1,0 +1,51 @@
+{
+  "authority_revision": "authority-v1-2026-07-29",
+  "authority_hash": "authority-content:8981f399f50cdd6e59a9fb60",
+  "model_revision": "model:5f85b7672fb48744e6590480",
+  "dataset_manifest": {
+    "sha256": "0a92d739fd4e7e95bf528449c0919ce87e8071cf6f9ee71f133aa8d8c319899c",
+    "train_count": 62,
+    "test_count": 38,
+    "train_unique": 62,
+    "test_unique": 38,
+    "text_overlap": [],
+    "template_overlap": [],
+    "lexical_value_overlap": [],
+    "train_compositions": [
+      "embedded",
+      "simple"
+    ],
+    "test_compositions": [
+      "embedded",
+      "simple"
+    ],
+    "composition_holdout_families": [
+      "attributed_event_query"
+    ]
+  },
+  "ranker_metrics": {
+    "accuracy": 1.0,
+    "correct": 38,
+    "total": 38,
+    "per_family": {
+      "abstain": 1.0,
+      "alias_learning": 1.0,
+      "attributed_event_query": 1.0,
+      "capability_inventory": 1.0,
+      "event_admissibility": 1.0,
+      "event_observation": 1.0,
+      "event_query": 1.0,
+      "relation_observation": 1.0,
+      "role_relation_query": 1.0,
+      "social_event": 1.0,
+      "state_observation": 1.0,
+      "state_projection": 1.0,
+      "state_query": 1.0,
+      "state_request": 1.0,
+      "state_simulation": 1.0
+    }
+  },
+  "best_epoch": 17,
+  "parameter_count": 438817,
+  "checkpoint_sha256": "7bdee2da614300bf25073d75bf91c28a6e7e9038679373b794c3849ee9ebe627"
+}

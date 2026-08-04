@@ -1,0 +1,54 @@
+{
+  "bins": [
+    {
+      "avg_accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "count": 0,
+      "range": [
+        0.0,
+        0.2
+      ]
+    },
+    {
+      "avg_accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "count": 0,
+      "range": [
+        0.2,
+        0.4
+      ]
+    },
+    {
+      "avg_accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "count": 0,
+      "range": [
+        0.4,
+        0.6
+      ]
+    },
+    {
+      "avg_accuracy": 0.0,
+      "avg_confidence": 0.0,
+      "count": 0,
+      "range": [
+        0.6,
+        0.8
+      ]
+    },
+    {
+      "avg_accuracy": 1.0,
+      "avg_confidence": 0.95,
+      "count": 78,
+      "range": [
+        0.8,
+        1.01
+      ]
+    }
+  ],
+  "expected_calibration_error": 0.05,
+  "input_hash": "7049c3c996b471efbd9d00ae05fae51b7fd309c0b2d26c59802a707a5706d5d7",
+  "num_episodes": 78,
+  "proposal_model_identity": "model:b442b54f15559bd69ad8a045",
+  "realizer_model_identity": "model:a9ba1facbbe8aecdf1323779"
+}
