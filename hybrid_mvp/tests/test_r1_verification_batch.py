@@ -333,6 +333,7 @@ def test_verification_batch_abi2_has_only_canonical_owner_fields() -> None:
         "compilation_proof",
         "coverage_receipt",
         "verification_errors",
+        "transition_previews",
     )
     assert tuple(field.name for field in fields(VerificationBatch)) == (
         "batch_ref",

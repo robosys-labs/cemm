@@ -35,6 +35,7 @@ from .programs import (
     SemanticSwitchProgram,
 )
 from .proposal_context import ProposalContext
+from .transition_preview import TransitionPreview, extract_transition_previews
 from .verifier_reconstruction import reconstruct_expected_expression as _reconstruct_r2_expression
 
 if TYPE_CHECKING:
@@ -160,6 +161,7 @@ def _receipt_material(
     compilation_proof: CompilationProof | None,
     coverage_receipt: CoverageReceipt,
     verification_errors: tuple[VerificationError, ...],
+    transition_previews: tuple[Any, ...] = (),
 ) -> dict[str, Any]:
     return {
         "abi_version": VERIFICATION_BATCH_ABI_VERSION,
@@ -175,7 +177,15 @@ def _receipt_material(
         ),
         "coverage_receipt_ref": coverage_receipt.coverage_receipt_ref,
         "verification_errors": [row.as_dict() for row in verification_errors],
+        "transition_previews": [p.as_dict() for p in transition_previews],
     }
+
+
+def _parse_transition_previews(data: Any) -> tuple[TransitionPreview, ...]:
+    """Parse transition previews from serialized data."""
+    if not isinstance(data, list):
+        return ()
+    return tuple(TransitionPreview.from_dict(item) for item in data)
 
 
 @dataclass(frozen=True, init=False)
@@ -191,6 +201,7 @@ class CandidateVerificationReceipt:
     compilation_proof: CompilationProof | None
     coverage_receipt: CoverageReceipt
     verification_errors: tuple[VerificationError, ...]
+    transition_previews: tuple[Any, ...] = ()
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
         raise TypeError("use CandidateVerificationReceipt.create")
@@ -219,6 +230,7 @@ class CandidateVerificationReceipt:
         compilation_proof: CompilationProof | None,
         coverage_receipt: CoverageReceipt,
         verification_errors: Iterable[VerificationError],
+        transition_previews: Iterable[Any] = (),
     ) -> "CandidateVerificationReceipt":
         candidate_ref = _required(candidate_ref, "candidate_ref")
         program_ref = _required(program_ref, "program_ref")
@@ -329,6 +341,7 @@ class CandidateVerificationReceipt:
             "compilation_proof": compilation_proof,
             "coverage_receipt": coverage_receipt,
             "verification_errors": errors,
+            "transition_previews": tuple(transition_previews),
         }
         return cls._canonical(
             stable_ref("candidate_verification_receipt", _receipt_material(**values)),
@@ -364,6 +377,7 @@ class CandidateVerificationReceipt:
             ),
             "coverage_receipt": self.coverage_receipt.as_dict(),
             "verification_errors": [row.as_dict() for row in self.verification_errors],
+            "transition_previews": [p.as_dict() for p in self.transition_previews],
         }
 
     @classmethod
@@ -384,6 +398,7 @@ class CandidateVerificationReceipt:
                     "compilation_proof",
                     "coverage_receipt",
                     "verification_errors",
+                    "transition_previews",
                 }
             ),
             "CandidateVerificationReceipt",
@@ -430,6 +445,7 @@ class CandidateVerificationReceipt:
                 VerificationError.from_dict(row)
                 for row in _array(data["verification_errors"], "verification_errors")
             ),
+            transition_previews=_parse_transition_previews(data.get("transition_previews", [])),
         )
         if data["receipt_ref"] != rebuilt.receipt_ref:
             raise ValueError("CandidateVerificationReceipt ref mismatch")
@@ -1874,4 +1890,5 @@ class ExactProgramVerifier:
             compilation_proof=proof,
             coverage_receipt=coverage,
             verification_errors=_dedupe_errors(errors),
+            transition_previews=extract_transition_previews(program, context),
         )
