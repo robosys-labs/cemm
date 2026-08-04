@@ -3915,7 +3915,15 @@ _TRANSIENT_SOURCE_DIR_NAMES = frozenset(
         ".pytest-runtime",
         ".ruff_cache",
         ".test-tmp",
+        ".venv",
         "__pycache__",
+    }
+)
+
+_TRANSIENT_SOURCE_FILE_SUFFIXES = frozenset(
+    {
+        ".pyc",
+        ".pyo",
     }
 )
 
@@ -3974,6 +3982,11 @@ def _authenticate_complete_source_snapshot(
                     raise GateConfigError(
                         "source snapshot contains an irregular filesystem entry"
                     )
+                if any(
+                    entry.name.endswith(suffix)
+                    for suffix in _TRANSIENT_SOURCE_FILE_SUFFIXES
+                ):
+                    continue
             except OSError as exc:
                 raise GateConfigError("cannot inspect complete source snapshot") from exc
             relative = _repository_relative(root_path, path)
