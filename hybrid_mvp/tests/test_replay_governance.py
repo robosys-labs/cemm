@@ -394,7 +394,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "governance",
-        "source_ast_sha256": "c9b97c7b430f6b0e59ca33abcef7e266eb911752706c7a766968ce6fb9b999d9"
+        "source_ast_sha256": "1c1d973796193030248e0a4683c32d317c28c8d473f479bf0ceab0e0cf2bd0c5"
     },
     "tests/test_replay_governance.py::test_historical_reconstruction_does_not_verify_current_source_config": {
         "activation_phase": "G0",
@@ -1132,19 +1132,30 @@ def test_hash_chain_uses_one_supplied_snapshot_for_all_governed_bytes(
             raise AssertionError("governed bytes must come from the supplied snapshot")
         return original_read_bytes(path)
 
+    # Build witness blobs for suffix records so the prefix verification passes.
+    ledger_raw = snapshot[ledger_path.resolve()]
+    lines = ledger_raw.splitlines(keepends=True)
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    suffix_blobs: dict[str, bytes] = {}
+    for index in range(expected_anchor.initial_count, len(lines)):
+        revision = json.loads(lines[index])["source_base"]
+        suffix_blobs[revision] = ledger_raw[: offsets[index]]
+
     monkeypatch.setattr(Path, "read_bytes", reject_live_governed_read)
     monkeypatch.setattr(
         governance,
         "_load_git_witnesses",
         lambda _root, _path, _anchor_ref, _prefixes: (
             expected_anchor.source_base,
-            {},
+            suffix_blobs,
         ),
     )
 
     records = read_hash_chain(ledger_path, source_reader=source_reader)
 
-    assert len(records) == expected_anchor.initial_count
+    assert len(records) == len(lines)
     assert calls == [
         ledger_path.resolve(),
         anchor_path.resolve(),
