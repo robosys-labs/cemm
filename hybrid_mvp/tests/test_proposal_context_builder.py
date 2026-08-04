@@ -661,7 +661,7 @@ def test_builder_emits_closed_class_contributions_for_structural_evidence() -> N
             FormUnit("unit:not", "not", ("not",), 3, 6, (("polarity", "negation"),)),
             FormUnit("unit:space-2", " ", (), 6, 7, ()),
             FormUnit(
-                "unit:and", "and", ("and",), 7, 10, (("connector", "coordination"),)
+                "unit:and", "and", ("and",), 7, 10, (("connector", "conjunction"),)
             ),
         ),
         hypotheses=(
@@ -672,10 +672,10 @@ def test_builder_emits_closed_class_contributions_for_structural_evidence() -> N
                 (("polarity", "negation"),),
             ),
             FormHypothesis(
-                "hypothesis:coordination",
+                "hypothesis:conjunction",
                 ("unit:and",),
-                "coordination",
-                (("connector", "coordination"),),
+                "conjunction",
+                (("connector", "conjunction"),),
             ),
         ),
         source_text=source,

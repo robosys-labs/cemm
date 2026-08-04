@@ -1331,10 +1331,27 @@ class ProposalContextBuilder:
         authority: Any,
         affordance_index: Any,
         config: RuntimeConfig,
+        *,
+        form_pack: Mapping[str, Any] | None = None,
     ) -> None:
         self._authority = authority
         self._affordance_index = affordance_index
         self._config = config
+        self._scope_values: Mapping[str, Mapping[str, str]] = {}
+        self._link_schemas: Mapping[str, Mapping[str, Any]] = {}
+        if form_pack is not None:
+            sv = form_pack.get("scope_values", {})
+            if isinstance(sv, dict):
+                self._scope_values = {
+                    k: dict(v) for k, v in sv.items()
+                    if isinstance(v, dict)
+                }
+            ls = form_pack.get("link_schemas", {})
+            if isinstance(ls, dict):
+                self._link_schemas = {
+                    k: dict(v) for k, v in ls.items()
+                    if isinstance(v, dict)
+                }
 
     def build(
         self,
@@ -1409,10 +1426,11 @@ class ProposalContextBuilder:
             predicate_targets,
         )
         mode_slots = (_mode_slot(orientation, form_lattice),)
-        scope_slots = _scope_slots(form_lattice, self._config)
+        scope_slots = _scope_slots(form_lattice, self._config, self._scope_values)
         expression_link_slots = _expression_link_slots(
             form_lattice,
             self._config,
+            self._link_schemas,
         )
         transition_slots = self._transition_slots(
             orientation.mode,
@@ -2250,8 +2268,15 @@ def _mode_slot(
 def _scope_slots(
     form_lattice: FormLattice,
     config: RuntimeConfig,
+    scope_values: Mapping[str, Mapping[str, str]] | None = None,
 ) -> tuple[ScopeSlot, ...]:
-    mapping = {
+    """Derive reviewed scope slots from form evidence.
+
+    Per R2 plan section 2.1: no ``value:`` ref is created by string
+    prefixing. Every scope slot binds a reviewed value ref from the
+    language pack's ``scope_values`` mapping.
+    """
+    feature_to_operator = {
         "polarity": "scope:polarity",
         "modality": "scope:modality",
         "tense": "scope:tense",
@@ -2259,13 +2284,55 @@ def _scope_slots(
         "tense_aspect": "scope:aspect",
         "attribution": "scope:attribution",
     }
+    # Fallback mapping for backward compatibility when no reviewed
+    # scope_values mapping is supplied (e.g. R1 tests without form_pack).
+    # This maps feature values to reviewed scope_value refs directly.
+    fallback_values: Mapping[str, Mapping[str, str]] = {
+        "polarity": {"negation": "scope_value:polarity:negative"},
+        "modality": {
+            "capability": "scope_value:modality:capability",
+            "permission": "scope_value:modality:permission",
+            "possibility": "scope_value:modality:possibility",
+            "obligation": "scope_value:modality:obligation",
+            "conditional": "scope_value:modality:conditional",
+            "future": "scope_value:modality:future",
+        },
+        "tense": {
+            "future": "scope_value:tense:future",
+            "perfect": "scope_value:tense:perfect",
+            "pluperfect": "scope_value:tense:pluperfect",
+            "temporal_qualifier": "scope_value:tense:temporal_qualifier",
+        },
+        "aspect": {
+            "future": "scope_value:aspect:future",
+            "perfect": "scope_value:aspect:perfect",
+            "pluperfect": "scope_value:aspect:pluperfect",
+            "temporal_qualifier": "scope_value:aspect:temporal_qualifier",
+        },
+        "attribution": {
+            "report": "scope_value:attribution:report",
+            "definition_marker": "scope_value:attribution:definition",
+        },
+    }
+    values_map = scope_values if scope_values else fallback_values
     slots: list[ScopeSlot] = []
     for unit in form_lattice.units:
         for feature, value in unit.features:
-            operator = mapping.get(feature)
+            operator = feature_to_operator.get(feature)
             if operator is None:
                 continue
-            value_ref = value if value.startswith("value:") else f"value:{value}"
+            # Look up the reviewed scope value ref from the mapping.
+            # The feature category maps to the scope_values key, and the
+            # feature value maps to the reviewed value ref.
+            category_key = feature
+            if feature == "tense_aspect":
+                category_key = "aspect"
+            value_map = values_map.get(category_key, {})
+            value_ref = value_map.get(value)
+            if value_ref is None:
+                # Unknown scope evidence remains typed unresolved/critical.
+                # Do not manufacture a ref by string prefixing.
+                continue
             slot = ScopeSlot.create(
                 operator_type=operator,
                 value_ref=value_ref,
@@ -2282,29 +2349,44 @@ def _scope_slots(
 def _expression_link_slots(
     form_lattice: FormLattice,
     config: RuntimeConfig,
+    link_schemas: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> tuple[ExpressionLinkSlot, ...]:
-    mapping = {
-        "coordination": ("link:coordination", True),
-        "conjunction": ("link:conjunction", True),
-        "disjunction": ("link:disjunction", True),
-        "conditional": ("link:condition", False),
-        "condition": ("link:condition", False),
-        "causal": ("link:cause", False),
-        "cause": ("link:cause", False),
-        "contrast": ("link:contrast", False),
-        "sequence": ("link:sequence", False),
+    """Derive expression link slots from reviewed link schemas.
+
+    Per R2 plan section 2.2: support the existing expression link registry
+    with reviewed min/max arity and commutativity. Do not infer
+    commutativity from wording at runtime; use the reviewed link schema.
+    """
+    # Fallback mapping for backward compatibility when no reviewed
+    # link_schemas mapping is supplied (e.g. R1 tests without form_pack).
+    fallback_schemas: Mapping[str, Mapping[str, Any]] = {
+        "coordination": {"link_type": "link:coordination", "commutative": True, "min_arity": 2, "max_arity": 2},
+        "conjunction": {"link_type": "link:conjunction", "commutative": True, "min_arity": 2, "max_arity": 2},
+        "disjunction": {"link_type": "link:disjunction", "commutative": True, "min_arity": 2, "max_arity": 2},
+        "conditional": {"link_type": "link:condition", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "condition": {"link_type": "link:condition", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "causal": {"link_type": "link:cause", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "cause": {"link_type": "link:cause", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "contrast": {"link_type": "link:contrast", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "purpose": {"link_type": "link:purpose", "commutative": False, "min_arity": 2, "max_arity": 2},
+        "sequence": {"link_type": "link:sequence", "commutative": False, "min_arity": 2, "max_arity": 2},
     }
+    schemas = link_schemas if link_schemas else fallback_schemas
     slots: list[ExpressionLinkSlot] = []
     for hypothesis in form_lattice.hypotheses:
-        if hypothesis.construction not in mapping:
+        if hypothesis.construction not in schemas:
             continue
-        link_type, commutative = mapping[hypothesis.construction]
+        schema = schemas[hypothesis.construction]
+        link_type = schema.get("link_type", "")
+        commutative = bool(schema.get("commutative", False))
+        min_arity = int(schema.get("min_arity", 2))
+        max_arity = int(schema.get("max_arity", 2))
         slots.append(
             ExpressionLinkSlot.create(
                 link_type=link_type,
                 commutative=commutative,
-                min_arity=2,
-                max_arity=2,
+                min_arity=min_arity,
+                max_arity=max_arity,
                 source_unit_refs=hypothesis.unit_refs,
                 construction_ref=hypothesis.hypothesis_ref,
             )

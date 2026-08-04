@@ -328,7 +328,11 @@ _FORM_FEATURE_MAP: dict[tuple[str, str], tuple[tuple[str, ...], tuple[str, ...]]
     ("connector", "causal"): (("connector",), ()),
     ("connector", "contrast"): (("connector",), ()),
     ("connector", "coordination"): (("connector",), ()),
+    ("connector", "conjunction"): (("connector",), ()),
+    ("connector", "disjunction"): (("connector",), ()),
     ("connector", "conditional"): (("connector",), ()),
+    ("connector", "purpose"): (("connector",), ()),
+    ("connector", "sequence"): (("connector",), ()),
     ("discourse", "report"): (("discourse",), ()),
     ("discourse", "definition_marker"): (("discourse",), ()),
 }

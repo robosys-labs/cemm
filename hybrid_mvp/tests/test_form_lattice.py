@@ -122,7 +122,7 @@ def test_connector_assigned(form_resolver):
     lattice = form_resolver.resolve("alice and bob")
     and_unit = next(u for u in lattice.units if u.source_text == "and")
     features = dict(and_unit.features)
-    assert features.get("connector") == "coordination"
+    assert features.get("connector") == "conjunction"
 
 
 def test_unknown_word_has_no_closed_class_features(form_resolver):

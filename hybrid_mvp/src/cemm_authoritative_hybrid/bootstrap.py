@@ -68,7 +68,7 @@ def load_runtime(
         form_pack_hash=resolver.form_pack_hash,
         designation_store=_DesignationStore(),
     )
-    context_builder = ProposalContextBuilder(authority, affordances, config)
+    context_builder = ProposalContextBuilder(authority, affordances, config, form_pack=form_pack)
     orienter = RuntimeOrientationOwner(
         authority=authority,
         stores=stores,

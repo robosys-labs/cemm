@@ -102,13 +102,21 @@
     "however": {"kind": "contrast"},
     "although": {"kind": "contrast"},
     "though": {"kind": "contrast"},
-    "and": {"kind": "coordination"},
-    "or": {"kind": "coordination"},
-    "nor": {"kind": "coordination"},
+    "and": {"kind": "conjunction"},
+    "or": {"kind": "disjunction"},
+    "nor": {"kind": "disjunction"},
     "if": {"kind": "conditional"},
     "unless": {"kind": "conditional"},
     "suppose": {"kind": "hypothetical"},
-    "imagine": {"kind": "hypothetical"}
+    "imagine": {"kind": "hypothetical"},
+    "in order to": {"kind": "purpose"},
+    "so that": {"kind": "purpose"},
+    "to": {"kind": "purpose"},
+    "for": {"kind": "purpose"},
+    "then": {"kind": "sequence"},
+    "next": {"kind": "sequence"},
+    "after that": {"kind": "sequence"},
+    "subsequently": {"kind": "sequence"}
   },
   "correction": {
     "no": {"kind": "correction"},
@@ -143,5 +151,44 @@
     "for": {"kind": "linker"},
     "that": {"kind": "content_linker"},
     "about": {"kind": "linker"}
+  },
+  "scope_values": {
+    "polarity": {
+      "negation": "scope_value:polarity:negative"
+    },
+    "modality": {
+      "capability": "scope_value:modality:capability",
+      "permission": "scope_value:modality:permission",
+      "possibility": "scope_value:modality:possibility",
+      "obligation": "scope_value:modality:obligation",
+      "conditional": "scope_value:modality:conditional",
+      "future": "scope_value:modality:future"
+    },
+    "tense": {
+      "future": "scope_value:tense:future",
+      "perfect": "scope_value:tense:perfect",
+      "pluperfect": "scope_value:tense:pluperfect",
+      "temporal_qualifier": "scope_value:tense:temporal_qualifier"
+    },
+    "aspect": {
+      "future": "scope_value:aspect:future",
+      "perfect": "scope_value:aspect:perfect",
+      "pluperfect": "scope_value:aspect:pluperfect",
+      "temporal_qualifier": "scope_value:aspect:temporal_qualifier"
+    },
+    "attribution": {
+      "report": "scope_value:attribution:report",
+      "definition_marker": "scope_value:attribution:definition"
+    }
+  },
+  "link_schemas": {
+    "coordination": {"link_type": "link:coordination", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "conjunction": {"link_type": "link:conjunction", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "disjunction": {"link_type": "link:disjunction", "commutative": true, "min_arity": 2, "max_arity": 4},
+    "conditional": {"link_type": "link:condition", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "causal": {"link_type": "link:cause", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "contrast": {"link_type": "link:contrast", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "purpose": {"link_type": "link:purpose", "commutative": false, "min_arity": 2, "max_arity": 2},
+    "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
   }
 }
