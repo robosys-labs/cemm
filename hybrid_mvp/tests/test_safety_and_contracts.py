@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from cemm_authoritative_hybrid.propositions import Application, PropositionGraph
+from legacy_propositions import Application, PropositionGraph
 
 ROOT = Path(__file__).parents[1]
 

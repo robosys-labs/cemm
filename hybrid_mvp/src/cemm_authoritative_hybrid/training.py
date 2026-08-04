@@ -138,12 +138,10 @@ def _build_orientation(
     form_resolver: FormResolver,
 ) -> Orientation:
     """Build an orientation for ``surface`` matching the episode data."""
-    from dataclasses import replace
 
     stores = memory_stores(authority_generation=authority.generation)
     projector = OrientationProjector(authority, stores, config)
     orientation = projector.project("session:bootstrap", surface, mode=SemanticMode.QUERY)
-    orientation = replace(orientation, source_text=surface)
     stores.close()
     return orientation
 

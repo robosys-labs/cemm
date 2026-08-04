@@ -11,11 +11,8 @@ from __future__ import annotations
 import pytest
 
 from cemm_authoritative_hybrid.verifier import (
-    ActionMasker,
-    ExactProgramVerifier,
     LegalActionIndex,
     VerificationError,
-    VerificationResult,
 )
 
 

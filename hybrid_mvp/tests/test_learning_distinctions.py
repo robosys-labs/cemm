@@ -21,7 +21,7 @@ import pytest
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.persistence import memory_stores
-from cemm_authoritative_hybrid.propositions import (
+from legacy_propositions import (
     Application,
     PropositionGraph,
     SemanticSwitchProgram,

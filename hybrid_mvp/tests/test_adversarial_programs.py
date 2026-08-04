@@ -9,6 +9,7 @@ impossible program.
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import Protocol, runtime_checkable
 
 import pytest
 
@@ -16,9 +17,20 @@ from cemm_authoritative_hybrid.programs import (
     PERSISTENT_OPERATORS,
     SWITCH_ACTION_TYPES,
     ProgramAction,
-    SemanticSwitchProgram,
 )
-from cemm_authoritative_hybrid.verifier import VerificationResult
+
+
+@runtime_checkable
+class _LegacyVerificationResultProtocol(Protocol):
+    """Collection-only structural view for the frozen ABI 1 assertion."""
+
+    accepted: bool
+    well_formed: bool
+    errors: tuple[object, ...]
+    verification_hash: str
+
+
+VerificationResult = _LegacyVerificationResultProtocol
 
 
 # ---------------------------------------------------------------------------

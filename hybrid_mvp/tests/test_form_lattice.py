@@ -34,7 +34,10 @@ FORMS_PATH = ROOT / "data" / "languages" / "en" / "forms.json"
 
 def test_form_lattice_preserves_every_source_unit(form_resolver):
     lattice = form_resolver.resolve("And you are called what?")
-    assert "".join(unit.source_text for unit in lattice.units) == "And you are called what?"
+    assert (
+        "".join(unit.source_text for unit in lattice.units)
+        == "And you are called what?"
+    )
     assert all(unit.source_start < unit.source_end for unit in lattice.units)
     assert len(lattice.hypotheses) <= 16
 

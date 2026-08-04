@@ -14,12 +14,22 @@ choose operators and does **not** inspect internal ref spelling.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Any, Mapping
 
 from .canonical import stable_ref
-from .forms import EvidenceItem, FormResolver
+from .forms import (
+    EVIDENCE_MAX_PROVENANCE_REFS,
+    EVIDENCE_MAX_REF_CHARS,
+    EvidenceItem,
+    FormLattice,
+    FormResolver,
+)
+from .persistence import RevisionPin
 
 __all__ = [
+    "GROUNDING_RESULT_ABI_VERSION",
+    "GROUNDING_MAX_DESIGNATIONS",
     "DesignationCandidate",
     "ReferenceRequirement",
     "GroundedItem",
@@ -29,21 +39,122 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
-# Data classes
+# Data classes and strict codecs
 # ---------------------------------------------------------------------------
+
+GROUNDING_RESULT_ABI_VERSION = 1
+GROUNDING_MAX_DESIGNATIONS = 512
+GROUNDING_MAX_UNRESOLVED = 64
+GROUNDING_MAX_GROUNDED_ITEMS = 64
+GROUNDING_MAX_UNIT_REFS = 64
+GROUNDING_MAX_PROVENANCE_REFS = EVIDENCE_MAX_PROVENANCE_REFS
+
+_REFERENCE_KINDS = frozenset(
+    {"designation", "participant", "deictic", "entity", "unknown"}
+)
+_SOURCE_KINDS = frozenset({"text", "sensor", "operation"})
+
+
+def _require_exact_fields(
+    data: Mapping[str, Any], expected: frozenset[str], label: str
+) -> None:
+    if not isinstance(data, Mapping):
+        raise TypeError(f"{label} payload must be a mapping")
+    actual = frozenset(data)
+    if actual != expected:
+        raise ValueError(
+            f"{label} fields mismatch: "
+            f"missing={sorted(expected - actual)}, unknown={sorted(actual - expected)}"
+        )
+
+
+def _bounded_string(
+    value: object,
+    name: str,
+    *,
+    maximum: int = EVIDENCE_MAX_REF_CHARS,
+) -> str:
+    if not isinstance(value, str) or not value:
+        raise TypeError(f"{name} must be a non-empty string")
+    if len(value) > maximum:
+        raise ValueError(f"{name} exceeds {maximum} characters")
+    return value
+
+
+def _optional_bounded_string(value: object, name: str) -> str | None:
+    if value is None:
+        return None
+    return _bounded_string(value, name)
+
+
+def _prebound_tuple(
+    value: object,
+    name: str,
+    *,
+    maximum: int,
+    item_type: type[Any] | None = None,
+) -> tuple[Any, ...]:
+    if not isinstance(value, tuple):
+        raise TypeError(f"{name} must be a tuple")
+    if len(value) > maximum:
+        raise ValueError(f"{name} exceeds {maximum} items")
+    if item_type is not None and any(not isinstance(item, item_type) for item in value):
+        raise TypeError(f"{name} must contain only {item_type.__name__}")
+    return value
+
+
+def _bounded_strings(
+    value: object,
+    name: str,
+    *,
+    maximum: int,
+    unique: bool = True,
+) -> tuple[str, ...]:
+    rows = _prebound_tuple(value, name, maximum=maximum)
+    if any(not isinstance(item, str) or not item for item in rows):
+        raise TypeError(f"{name} must contain non-empty strings")
+    if any(len(item) > EVIDENCE_MAX_REF_CHARS for item in rows):
+        raise ValueError(f"{name} contains an overlong ref")
+    if unique and len(rows) != len(set(rows)):
+        raise ValueError(f"{name} must not contain duplicates")
+    return rows
+
+
+def _wire_strings(value: object, name: str, *, maximum: int) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise TypeError(f"{name} must be a list")
+    if len(value) > maximum:
+        raise ValueError(f"{name} exceeds {maximum} items")
+    return _bounded_strings(tuple(value), name, maximum=maximum)
+
+
+def _require_score(value: object) -> float:
+    if type(value) is not float:
+        raise TypeError("score must be a float")
+    if not isfinite(value):
+        raise ValueError("score must be finite")
+    if value < 0.0 or value > 1.0:
+        raise ValueError("score must be within [0, 1]")
+    if value == 0.0 and value.hex().startswith("-"):
+        raise ValueError("score must use canonical positive zero")
+    return value
+
+
+def _validate_revision_pin(value: object) -> RevisionPin:
+    if not isinstance(value, RevisionPin):
+        raise TypeError("revision_pin must be RevisionPin")
+    rebuilt = RevisionPin.from_dict(value.as_dict())
+    if rebuilt != value:
+        raise ValueError("revision_pin is non-canonical")
+    _bounded_string(value.authority_generation, "authority_generation")
+    if value.model_identity is not None:
+        _bounded_string(value.model_identity, "model_identity")
+    return value
 
 
 @dataclass(frozen=True)
 class DesignationCandidate:
-    """A candidate designation linking units to a semantic target.
-
-    Attributes:
-        unit_refs: tuple of form unit refs that produced this candidate.
-        target_ref: the semantic target ref (e.g. ``"entity:door"``).
-        designation_fact_ref: a stable ref for the designation fact.
-        score: the candidate score (0.0–1.0).
-        provenance_refs: tuple of provenance refs.
-    """
+    """One immutable bounded designation alternative."""
 
     unit_refs: tuple[str, ...]
     target_ref: str
@@ -51,60 +162,360 @@ class DesignationCandidate:
     score: float
     provenance_refs: tuple[str, ...]
 
+    _FIELDS = frozenset(
+        {
+            "unit_refs",
+            "target_ref",
+            "designation_fact_ref",
+            "score",
+            "provenance_refs",
+        }
+    )
+
+    def __post_init__(self) -> None:
+        _bounded_strings(
+            self.unit_refs,
+            "unit_refs",
+            maximum=GROUNDING_MAX_UNIT_REFS,
+        )
+        _bounded_string(self.target_ref, "target_ref")
+        _bounded_string(self.designation_fact_ref, "designation_fact_ref")
+        _require_score(self.score)
+        _bounded_strings(
+            self.provenance_refs,
+            "provenance_refs",
+            maximum=GROUNDING_MAX_PROVENANCE_REFS,
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "unit_refs": list(self.unit_refs),
+            "target_ref": self.target_ref,
+            "designation_fact_ref": self.designation_fact_ref,
+            "score": self.score,
+            "provenance_refs": list(self.provenance_refs),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "DesignationCandidate":
+        _require_exact_fields(data, cls._FIELDS, "DesignationCandidate")
+        target_ref = _bounded_string(data["target_ref"], "target_ref")
+        fact_ref = _bounded_string(data["designation_fact_ref"], "designation_fact_ref")
+        score = _require_score(data["score"])
+        unit_refs = _wire_strings(
+            data["unit_refs"], "unit_refs", maximum=GROUNDING_MAX_UNIT_REFS
+        )
+        provenance_refs = _wire_strings(
+            data["provenance_refs"],
+            "provenance_refs",
+            maximum=GROUNDING_MAX_PROVENANCE_REFS,
+        )
+        rebuilt = cls(unit_refs, target_ref, fact_ref, score, provenance_refs)
+        if rebuilt.as_dict() != dict(data):
+            raise ValueError("non-canonical DesignationCandidate encoding")
+        return rebuilt
+
 
 @dataclass(frozen=True)
 class ReferenceRequirement:
-    """An unresolved reference requirement.
-
-    Attributes:
-        unit_ref: the form unit ref that needs resolution.
-        kind: the requirement kind (``"designation"``, ``"participant"``,
-            ``"deictic"``, ``"entity"``, or ``"unknown"``).
-        required_kind: the required atom kind, or None.
-        resolved_ref: the resolved target ref, or None if unresolved.
-    """
+    """One immutable unresolved reference requirement."""
 
     unit_ref: str
     kind: str
     required_kind: str | None
     resolved_ref: str | None = None
 
+    _FIELDS = frozenset({"unit_ref", "kind", "required_kind", "resolved_ref"})
+
+    def __post_init__(self) -> None:
+        _bounded_string(self.unit_ref, "unit_ref")
+        _bounded_string(self.kind, "kind")
+        if self.kind not in _REFERENCE_KINDS:
+            raise ValueError(f"unsupported reference requirement kind: {self.kind}")
+        _optional_bounded_string(self.required_kind, "required_kind")
+        _optional_bounded_string(self.resolved_ref, "resolved_ref")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "unit_ref": self.unit_ref,
+            "kind": self.kind,
+            "required_kind": self.required_kind,
+            "resolved_ref": self.resolved_ref,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "ReferenceRequirement":
+        _require_exact_fields(data, cls._FIELDS, "ReferenceRequirement")
+        rebuilt = cls(
+            unit_ref=_bounded_string(data["unit_ref"], "unit_ref"),
+            kind=_bounded_string(data["kind"], "kind"),
+            required_kind=_optional_bounded_string(
+                data["required_kind"], "required_kind"
+            ),
+            resolved_ref=_optional_bounded_string(data["resolved_ref"], "resolved_ref"),
+        )
+        if rebuilt.as_dict() != dict(data):
+            raise ValueError("non-canonical ReferenceRequirement encoding")
+        return rebuilt
+
 
 @dataclass(frozen=True)
 class GroundedItem:
-    """A grounded evidence item linked to a semantic target.
-
-    Attributes:
-        source_ref: the source evidence item ref.
-        source_kind: ``"text"``, ``"sensor"``, or ``"operation"``.
-        target_ref: the resolved semantic target ref.
-        unit_refs: tuple of form unit refs involved.
-    """
+    """One immutable evidence item linked to an existing semantic target."""
 
     source_ref: str
     source_kind: str
     target_ref: str
     unit_refs: tuple[str, ...]
 
+    _FIELDS = frozenset({"source_ref", "source_kind", "target_ref", "unit_refs"})
+
+    def __post_init__(self) -> None:
+        _bounded_string(self.source_ref, "source_ref")
+        _bounded_string(self.source_kind, "source_kind")
+        if self.source_kind not in _SOURCE_KINDS:
+            raise ValueError(f"unsupported grounded source kind: {self.source_kind}")
+        _bounded_string(self.target_ref, "target_ref")
+        _bounded_strings(
+            self.unit_refs,
+            "unit_refs",
+            maximum=GROUNDING_MAX_UNIT_REFS,
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "source_ref": self.source_ref,
+            "source_kind": self.source_kind,
+            "target_ref": self.target_ref,
+            "unit_refs": list(self.unit_refs),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "GroundedItem":
+        _require_exact_fields(data, cls._FIELDS, "GroundedItem")
+        rebuilt = cls(
+            source_ref=_bounded_string(data["source_ref"], "source_ref"),
+            source_kind=_bounded_string(data["source_kind"], "source_kind"),
+            target_ref=_bounded_string(data["target_ref"], "target_ref"),
+            unit_refs=_wire_strings(
+                data["unit_refs"], "unit_refs", maximum=GROUNDING_MAX_UNIT_REFS
+            ),
+        )
+        if rebuilt.as_dict() != dict(data):
+            raise ValueError("non-canonical GroundedItem encoding")
+        return rebuilt
+
 
 @dataclass(frozen=True)
 class GroundingResult:
-    """The result of grounding evidence.
+    """Strict content-addressed Grounding Result ABI 1."""
 
-    Attributes:
-        designations: tuple of resolved :class:`DesignationCandidate`.
-        unresolved: tuple of unresolved :class:`ReferenceRequirement`.
-        grounded_items: tuple of :class:`GroundedItem`.
-        created_refs: tuple of refs created by grounding (always empty —
-            the grounder never manufactures atoms).
-        provenance_refs: tuple of provenance refs from all evidence.
-    """
-
+    abi_version: int
+    grounding_ref: str
+    evidence_packet_ref: str
+    form_lattice_ref: str
+    revision_pin: RevisionPin
     designations: tuple[DesignationCandidate, ...]
     unresolved: tuple[ReferenceRequirement, ...]
     grounded_items: tuple[GroundedItem, ...]
     created_refs: tuple[str, ...]
     provenance_refs: tuple[str, ...]
+
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "grounding_ref",
+            "evidence_packet_ref",
+            "form_lattice_ref",
+            "revision_pin",
+            "designations",
+            "unresolved",
+            "grounded_items",
+            "created_refs",
+            "provenance_refs",
+        }
+    )
+
+    def __post_init__(self) -> None:
+        if isinstance(self.abi_version, bool) or not isinstance(self.abi_version, int):
+            raise TypeError("abi_version must be an integer")
+        if self.abi_version != GROUNDING_RESULT_ABI_VERSION:
+            raise ValueError(
+                f"unsupported GroundingResult ABI version: {self.abi_version!r}"
+            )
+        _bounded_string(self.grounding_ref, "grounding_ref")
+        _bounded_string(self.evidence_packet_ref, "evidence_packet_ref")
+        _bounded_string(self.form_lattice_ref, "form_lattice_ref")
+        _validate_revision_pin(self.revision_pin)
+        _prebound_tuple(
+            self.designations,
+            "designations",
+            maximum=GROUNDING_MAX_DESIGNATIONS,
+            item_type=DesignationCandidate,
+        )
+        _prebound_tuple(
+            self.unresolved,
+            "unresolved",
+            maximum=GROUNDING_MAX_UNRESOLVED,
+            item_type=ReferenceRequirement,
+        )
+        _prebound_tuple(
+            self.grounded_items,
+            "grounded_items",
+            maximum=GROUNDING_MAX_GROUNDED_ITEMS,
+            item_type=GroundedItem,
+        )
+        if not isinstance(self.created_refs, tuple):
+            raise TypeError("created_refs must be a tuple")
+        if self.created_refs != ():
+            raise ValueError("created_refs must be exactly empty")
+        _bounded_strings(
+            self.provenance_refs,
+            "provenance_refs",
+            maximum=GROUNDING_MAX_PROVENANCE_REFS,
+        )
+        if self.grounding_ref != stable_ref(
+            "grounding_result", self._identity_material()
+        ):
+            raise ValueError("GroundingResult ref mismatch")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        evidence_packet_ref: str,
+        form_lattice_ref: str,
+        revision_pin: RevisionPin,
+        designations: tuple[DesignationCandidate, ...],
+        unresolved: tuple[ReferenceRequirement, ...],
+        grounded_items: tuple[GroundedItem, ...],
+        provenance_refs: tuple[str, ...],
+    ) -> "GroundingResult":
+        _bounded_string(evidence_packet_ref, "evidence_packet_ref")
+        _bounded_string(form_lattice_ref, "form_lattice_ref")
+        _validate_revision_pin(revision_pin)
+        _prebound_tuple(
+            designations,
+            "designations",
+            maximum=GROUNDING_MAX_DESIGNATIONS,
+            item_type=DesignationCandidate,
+        )
+        _prebound_tuple(
+            unresolved,
+            "unresolved",
+            maximum=GROUNDING_MAX_UNRESOLVED,
+            item_type=ReferenceRequirement,
+        )
+        _prebound_tuple(
+            grounded_items,
+            "grounded_items",
+            maximum=GROUNDING_MAX_GROUNDED_ITEMS,
+            item_type=GroundedItem,
+        )
+        _bounded_strings(
+            provenance_refs,
+            "provenance_refs",
+            maximum=GROUNDING_MAX_PROVENANCE_REFS,
+        )
+        material = {
+            "abi_version": GROUNDING_RESULT_ABI_VERSION,
+            "evidence_packet_ref": evidence_packet_ref,
+            "form_lattice_ref": form_lattice_ref,
+            "revision_pin": revision_pin.as_dict(),
+            "designations": [row.as_dict() for row in designations],
+            "unresolved": [row.as_dict() for row in unresolved],
+            "grounded_items": [row.as_dict() for row in grounded_items],
+            "created_refs": [],
+            "provenance_refs": list(provenance_refs),
+        }
+        return cls(
+            abi_version=GROUNDING_RESULT_ABI_VERSION,
+            grounding_ref=stable_ref("grounding_result", material),
+            evidence_packet_ref=evidence_packet_ref,
+            form_lattice_ref=form_lattice_ref,
+            revision_pin=revision_pin,
+            designations=designations,
+            unresolved=unresolved,
+            grounded_items=grounded_items,
+            created_refs=(),
+            provenance_refs=provenance_refs,
+        )
+
+    def _identity_material(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "evidence_packet_ref": self.evidence_packet_ref,
+            "form_lattice_ref": self.form_lattice_ref,
+            "revision_pin": self.revision_pin.as_dict(),
+            "designations": [row.as_dict() for row in self.designations],
+            "unresolved": [row.as_dict() for row in self.unresolved],
+            "grounded_items": [row.as_dict() for row in self.grounded_items],
+            "created_refs": list(self.created_refs),
+            "provenance_refs": list(self.provenance_refs),
+        }
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"grounding_ref": self.grounding_ref, **self._identity_material()}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "GroundingResult":
+        _require_exact_fields(data, cls._FIELDS, "GroundingResult")
+        abi_version = data["abi_version"]
+        if isinstance(abi_version, bool) or not isinstance(abi_version, int):
+            raise TypeError("abi_version must be an integer")
+        if abi_version != GROUNDING_RESULT_ABI_VERSION:
+            raise ValueError(
+                f"unsupported GroundingResult ABI version: {abi_version!r}"
+            )
+        grounding_ref = _bounded_string(data["grounding_ref"], "grounding_ref")
+        evidence_packet_ref = _bounded_string(
+            data["evidence_packet_ref"], "evidence_packet_ref"
+        )
+        form_lattice_ref = _bounded_string(data["form_lattice_ref"], "form_lattice_ref")
+        revision_pin = RevisionPin.from_dict(data["revision_pin"])
+        _validate_revision_pin(revision_pin)
+
+        collections = (
+            ("designations", GROUNDING_MAX_DESIGNATIONS),
+            ("unresolved", GROUNDING_MAX_UNRESOLVED),
+            ("grounded_items", GROUNDING_MAX_GROUNDED_ITEMS),
+            ("provenance_refs", GROUNDING_MAX_PROVENANCE_REFS),
+        )
+        for name, maximum in collections:
+            value = data[name]
+            if not isinstance(value, list):
+                raise TypeError(f"{name} must be a list")
+            if len(value) > maximum:
+                raise ValueError(f"{name} exceeds {maximum} items")
+        if not isinstance(data["created_refs"], list):
+            raise TypeError("created_refs must be a list")
+        if data["created_refs"] != []:
+            raise ValueError("created_refs must be exactly empty")
+
+        rebuilt = cls.create(
+            evidence_packet_ref=evidence_packet_ref,
+            form_lattice_ref=form_lattice_ref,
+            revision_pin=revision_pin,
+            designations=tuple(
+                DesignationCandidate.from_dict(row) for row in data["designations"]
+            ),
+            unresolved=tuple(
+                ReferenceRequirement.from_dict(row) for row in data["unresolved"]
+            ),
+            grounded_items=tuple(
+                GroundedItem.from_dict(row) for row in data["grounded_items"]
+            ),
+            provenance_refs=_wire_strings(
+                data["provenance_refs"],
+                "provenance_refs",
+                maximum=GROUNDING_MAX_PROVENANCE_REFS,
+            ),
+        )
+        if grounding_ref != rebuilt.grounding_ref:
+            raise ValueError("GroundingResult ref mismatch")
+        if rebuilt.as_dict() != dict(data):
+            raise ValueError("non-canonical GroundingResult encoding")
+        return rebuilt
 
 
 # ---------------------------------------------------------------------------
@@ -149,119 +560,86 @@ class Grounder:
 
     # -- public API -----------------------------------------------------------
 
+    def ground_lattice(
+        self,
+        lattice: FormLattice,
+        revision_pin: RevisionPin,
+    ) -> GroundingResult:
+        """Ground one exact existing lattice without resolver re-entry."""
+        if not isinstance(lattice, FormLattice):
+            raise TypeError("lattice must be FormLattice")
+        _validate_revision_pin(revision_pin)
+        if len(lattice.units) > self._config.max_input_tokens:
+            raise ValueError("form lattice source unit bound violated")
+        word_units = tuple(unit for unit in lattice.units if unit.source_text.strip())
+        return self._ground_units(word_units, lattice, revision_pin)
+
     def ground_text(self, text: str) -> GroundingResult:
-        """Ground a text string via exact-designation lookup."""
-        if self._resolver is None:
-            # No form pack: treat entire text as one surface.
-            return self._ground_surface(text, (), ())
-        lattice = self._resolver.resolve(text)
-        # Collect non-whitespace units for designation lookup.
-        word_units = [u for u in lattice.units if u.source_text.strip()]
-        return self._ground_units(word_units, text)
+        """Unadmitted transition point pending exact runtime lineage migration."""
+        raise NotImplementedError(
+            "ground_text is unadmitted: build one exact EvidencePacket/FormLattice "
+            "and call ground_lattice(lattice, revision_pin)"
+        )
 
     def ground(self, evidence: EvidenceItem) -> GroundingResult:
-        """Ground a single typed evidence item."""
-        if evidence.source == "text":
-            return self.ground_text(evidence.content if isinstance(evidence.content, str) else "")
-        if evidence.source == "sensor":
-            return self._ground_sensor(evidence)
-        if evidence.source == "operation":
-            return self._ground_operation(evidence)
-        # Unknown source kind: treat as unresolved.
-        return GroundingResult(
-            designations=(),
-            unresolved=(ReferenceRequirement(
-                unit_ref=evidence.source_ref,
-                kind="unknown",
-                required_kind=None,
-                resolved_ref=None,
-            ),),
-            grounded_items=(),
-            created_refs=(),
-            provenance_refs=evidence.provenance_refs,
+        """Unadmitted transition point pending modality-lattice lineage."""
+        raise NotImplementedError(
+            "ground(evidence) is unadmitted: grounding requires exact packet, "
+            "lattice, and RevisionPin lineage through ground_lattice"
         )
 
     # -- internal: text grounding --------------------------------------------
 
     def _ground_units(
-        self, units: list, source_text: str
+        self,
+        units: tuple[Any, ...],
+        lattice: FormLattice,
+        revision_pin: RevisionPin,
     ) -> GroundingResult:
         designations: list[DesignationCandidate] = []
         unresolved: list[ReferenceRequirement] = []
-        provenance: list[str] = []
-        max_desig = getattr(self._config, "max_designations_per_span", 8)
+        max_designations = self._config.max_designations_per_span
 
         for unit in units:
             surface = self._lookup_surface(unit)
             targets = self._lookup_designation(surface)
             if targets:
-                for target in targets[:max_desig]:
-                    fact_ref = stable_ref("designation", {
-                        "surface": surface,
-                        "target": target,
-                        "language": self._language,
-                    })
-                    designations.append(DesignationCandidate(
-                        unit_refs=(unit.unit_ref,),
-                        target_ref=target,
-                        designation_fact_ref=fact_ref,
-                        score=1.0,
-                        provenance_refs=(),
-                    ))
+                for target in targets[:max_designations]:
+                    fact_ref = stable_ref(
+                        "designation",
+                        {
+                            "surface": surface,
+                            "target": target,
+                            "language": self._language,
+                        },
+                    )
+                    designations.append(
+                        DesignationCandidate(
+                            unit_refs=(unit.unit_ref,),
+                            target_ref=target,
+                            designation_fact_ref=fact_ref,
+                            score=1.0,
+                            provenance_refs=(),
+                        )
+                    )
             else:
-                unresolved.append(ReferenceRequirement(
-                    unit_ref=unit.unit_ref,
-                    kind="designation",
-                    required_kind=None,
-                    resolved_ref=None,
-                ))
+                unresolved.append(
+                    ReferenceRequirement(
+                        unit_ref=unit.unit_ref,
+                        kind="designation",
+                        required_kind=None,
+                        resolved_ref=None,
+                    )
+                )
 
-        return GroundingResult(
+        return GroundingResult.create(
+            evidence_packet_ref=lattice.evidence_packet_ref,
+            form_lattice_ref=lattice.lattice_ref,
+            revision_pin=revision_pin,
             designations=tuple(designations),
             unresolved=tuple(unresolved),
             grounded_items=(),
-            created_refs=(),
-            provenance_refs=tuple(provenance),
-        )
-
-    def _ground_surface(
-        self, surface: str, unit_refs: tuple[str, ...], provenance: tuple[str, ...]
-    ) -> GroundingResult:
-        targets = self._lookup_designation(surface)
-        if targets:
-            max_desig = getattr(self._config, "max_designations_per_span", 8)
-            designations = tuple(
-                DesignationCandidate(
-                    unit_refs=unit_refs,
-                    target_ref=t,
-                    designation_fact_ref=stable_ref("designation", {
-                        "surface": surface,
-                        "target": t,
-                        "language": self._language,
-                    }),
-                    score=1.0,
-                    provenance_refs=provenance,
-                )
-                for t in targets[:max_desig]
-            )
-            return GroundingResult(
-                designations=designations,
-                unresolved=(),
-                grounded_items=(),
-                created_refs=(),
-                provenance_refs=provenance,
-            )
-        return GroundingResult(
-            designations=(),
-            unresolved=(ReferenceRequirement(
-                unit_ref="unit:0" if not unit_refs else unit_refs[0],
-                kind="designation",
-                required_kind=None,
-                resolved_ref=None,
-            ),),
-            grounded_items=(),
-            created_refs=(),
-            provenance_refs=provenance,
+            provenance_refs=(),
         )
 
     def _lookup_surface(self, unit: Any) -> str:
@@ -286,111 +664,3 @@ class Grounder:
         if self._authority is not None:
             return self._authority.designations.for_surface(surface, self._language)
         return ()
-
-    # -- internal: sensor grounding -------------------------------------------
-
-    def _ground_sensor(self, evidence: EvidenceItem) -> GroundingResult:
-        """Ground sensor evidence via adapter-schema-pinned target ref."""
-        content = evidence.content
-        if not isinstance(content, Mapping):
-            return GroundingResult(
-                designations=(),
-                unresolved=(ReferenceRequirement(
-                    unit_ref=evidence.source_ref,
-                    kind="entity",
-                    required_kind=None,
-                    resolved_ref=None,
-                ),),
-                grounded_items=(),
-                created_refs=(),
-                provenance_refs=evidence.provenance_refs,
-            )
-        target_ref = content.get("target_ref")
-        if not target_ref:
-            return GroundingResult(
-                designations=(),
-                unresolved=(ReferenceRequirement(
-                    unit_ref=evidence.source_ref,
-                    kind="entity",
-                    required_kind=None,
-                    resolved_ref=None,
-                ),),
-                grounded_items=(),
-                created_refs=(),
-                provenance_refs=evidence.provenance_refs,
-            )
-        fact_ref = stable_ref("designation", {
-            "source": "sensor",
-            "target": target_ref,
-            "adapter_receipt": evidence.adapter_receipt_ref,
-        })
-        designation = DesignationCandidate(
-            unit_refs=(),
-            target_ref=target_ref,
-            designation_fact_ref=fact_ref,
-            score=1.0,
-            provenance_refs=evidence.provenance_refs,
-        )
-        grounded = GroundedItem(
-            source_ref=evidence.source_ref,
-            source_kind="sensor",
-            target_ref=target_ref,
-            unit_refs=(),
-        )
-        provenance = evidence.provenance_refs
-        if evidence.adapter_receipt_ref and evidence.adapter_receipt_ref not in provenance:
-            provenance = (*provenance, evidence.adapter_receipt_ref)
-        return GroundingResult(
-            designations=(designation,),
-            unresolved=(),
-            grounded_items=(grounded,),
-            created_refs=(),
-            provenance_refs=provenance,
-        )
-
-    # -- internal: operation grounding ----------------------------------------
-
-    def _ground_operation(self, evidence: EvidenceItem) -> GroundingResult:
-        """Ground prior operation observation evidence."""
-        content = evidence.content
-        if isinstance(content, Mapping):
-            target_ref = content.get("target_ref", "")
-        else:
-            target_ref = ""
-        if not target_ref:
-            return GroundingResult(
-                designations=(),
-                unresolved=(ReferenceRequirement(
-                    unit_ref=evidence.source_ref,
-                    kind="entity",
-                    required_kind=None,
-                    resolved_ref=None,
-                ),),
-                grounded_items=(),
-                created_refs=(),
-                provenance_refs=evidence.provenance_refs,
-            )
-        fact_ref = stable_ref("designation", {
-            "source": "operation",
-            "target": target_ref,
-        })
-        designation = DesignationCandidate(
-            unit_refs=(),
-            target_ref=target_ref,
-            designation_fact_ref=fact_ref,
-            score=1.0,
-            provenance_refs=evidence.provenance_refs,
-        )
-        grounded = GroundedItem(
-            source_ref=evidence.source_ref,
-            source_kind="operation",
-            target_ref=target_ref,
-            unit_refs=(),
-        )
-        return GroundingResult(
-            designations=(designation,),
-            unresolved=(),
-            grounded_items=(grounded,),
-            created_refs=(),
-            provenance_refs=evidence.provenance_refs,
-        )

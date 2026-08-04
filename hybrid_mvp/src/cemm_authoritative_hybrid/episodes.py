@@ -26,9 +26,18 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Mapping
 
 from .canonical import stable_ref
+from .coverage import CoverageReceipt
+from .cycle import Orientation
+from .expressions import VerifiedMeaning
+from .gaps import GapReceipt
+from .persistence import RevisionPin
+from .programs import ACTION_ABI_HASH
+from .proposal import RankedProgramCandidate
+from .runtime import HybridRuntime
 
 __all__ = [
     "EPISODE_ABI_VERSION",
@@ -44,7 +53,7 @@ __all__ = [
 ]
 
 # The active Semantic Episode ABI version.
-EPISODE_ABI_VERSION: int = 1
+EPISODE_ABI_VERSION: int = 2
 
 # Closed set of training source kinds.
 _VALID_SOURCE_KINDS: frozenset[str] = frozenset(
@@ -210,173 +219,479 @@ class TrainingSource:
 # ---------------------------------------------------------------------------
 
 
+_MAX_EPISODE_CANDIDATES = 64
+_MAX_EPISODE_ROWS = 64
+_MAX_EPISODE_TEXT = 4096
+_MAX_EPISODE_DEPTH = 24
+_MAX_EPISODE_NODES = 32768
+_EPISODE_FIELD_ORDER = (
+    "episode_ref",
+    "abi_version",
+    "scenario_ref",
+    "orientation",
+    "legal_proposals",
+    "rejected_proposals",
+    "selected_program",
+    "verified_meaning",
+    "coverage",
+    "evaluation",
+    "effect_or_no_effect",
+    "response_meaning",
+    "realization_receipt",
+    "authority_hash",
+    "action_abi_hash",
+    "generator_lineage",
+    "review_provenance",
+    "gap_receipt",
+    "revisions",
+    "training_source",
+)
+_EPISODE_FIELDS = frozenset(_EPISODE_FIELD_ORDER)
+
+
+def _episode_text(value: object, name: str) -> str:
+    if type(value) is not str or not value:
+        raise TypeError(f"{name} must be an exact nonempty str")
+    if len(value) > _MAX_EPISODE_TEXT:
+        raise ValueError(f"{name} exceeds the episode text bound")
+    return value
+
+
+def _bound_episode_wire(value: object) -> None:
+    remaining = _MAX_EPISODE_NODES
+
+    def visit(item: object, depth: int) -> None:
+        nonlocal remaining
+        remaining -= 1
+        if remaining < 0:
+            raise ValueError("episode wire exceeds the node bound")
+        if depth > _MAX_EPISODE_DEPTH:
+            raise ValueError("episode wire exceeds the depth bound")
+        if item is None or type(item) in {bool, int}:
+            return
+        if type(item) is str:
+            if len(item) > _MAX_EPISODE_TEXT:
+                raise ValueError("episode wire string exceeds the text bound")
+            return
+        if type(item) is list:
+            if len(item) > 256:
+                raise ValueError("episode wire list exceeds the row bound")
+            for child in item:
+                visit(child, depth + 1)
+            return
+        if type(item) is dict:
+            if len(item) > 64:
+                raise ValueError("episode wire object exceeds the field bound")
+            for key, child in item.items():
+                if type(key) is not str or not key or len(key) > 128:
+                    raise TypeError("episode wire keys must be bounded exact strings")
+                visit(child, depth + 1)
+            return
+        raise TypeError("episode wire contains a non-canonical JSON value")
+
+    visit(value, 0)
+
+
+def _freeze_episode_json(value: object) -> object:
+    if type(value) is dict:
+        return MappingProxyType(
+            {key: _freeze_episode_json(item) for key, item in value.items()}
+        )
+    if type(value) is list:
+        return tuple(_freeze_episode_json(item) for item in value)
+    return value
+
+
+def _thaw_episode_json(value: object) -> object:
+    if type(value) is MappingProxyType:
+        return {key: _thaw_episode_json(item) for key, item in value.items()}
+    if type(value) is tuple:
+        return [_thaw_episode_json(item) for item in value]
+    return value
+
+
+def _episode_object(value: object, name: str) -> dict[str, Any]:
+    if type(value) is dict:
+        result = value
+    elif type(value) is MappingProxyType:
+        result = _thaw_episode_json(value)
+    else:
+        raise TypeError(f"{name} must be an exact object")
+    assert type(result) is dict
+    _bound_episode_wire(result)
+    return result
+
+
+def _decode_derivation(value: object, name: str) -> dict[str, Any]:
+    row = _episode_object(value, name)
+    expected = frozenset(
+        {
+            "artifact_role", "candidate_ref", "rank", "score_q",
+            "provenance_refs", "program",
+        }
+    )
+    if frozenset(row) != expected:
+        raise ValueError(f"{name} fields mismatch")
+    if row["artifact_role"] != "derivation_lineage":
+        raise ValueError(f"{name} must be derivation_lineage")
+    candidate = RankedProgramCandidate.from_dict(
+        {
+            "candidate_ref": row["candidate_ref"],
+            "rank": row["rank"],
+            "score_q": row["score_q"],
+            "provenance_refs": row["provenance_refs"],
+            "program": row["program"],
+        }
+    )
+    canonical = _serialize_derivation(candidate)
+    if canonical != row:
+        raise ValueError(f"non-canonical {name} encoding")
+    return canonical
+
+
+def _decode_rejection(value: object) -> dict[str, Any]:
+    row = _episode_object(value, "rejected proposal")
+    if frozenset(row) != frozenset(
+        {"candidate_ref", "program_ref", "rejection_codes"}
+    ):
+        raise ValueError("rejected proposal fields mismatch")
+    candidate_ref = _episode_text(row["candidate_ref"], "candidate_ref")
+    program_ref = _episode_text(row["program_ref"], "program_ref")
+    codes = row["rejection_codes"]
+    if type(codes) is not list or not codes or len(codes) > _MAX_EPISODE_ROWS:
+        raise ValueError("rejection_codes must be a bounded nonempty list")
+    canonical_codes = [_episode_text(code, "rejection_code") for code in codes]
+    if len(canonical_codes) != len(set(canonical_codes)):
+        raise ValueError("rejection_codes must be unique")
+    return {
+        "candidate_ref": candidate_ref,
+        "program_ref": program_ref,
+        "rejection_codes": canonical_codes,
+    }
+
+
+def _exact_episode_projection(
+    value: object, expected: frozenset[str], name: str
+) -> dict[str, Any]:
+    row = _episode_object(value, name)
+    if frozenset(row) != expected:
+        raise ValueError(f"{name} fields mismatch")
+    return row
+
+
+def _canonical_episode_fields(
+    *,
+    scenario_ref: object,
+    orientation: object,
+    legal_proposals: object,
+    rejected_proposals: object,
+    selected_program: object,
+    verified_meaning: object,
+    coverage: object,
+    evaluation: object,
+    effect_or_no_effect: object,
+    response_meaning: object,
+    realization_receipt: object,
+    authority_hash: object,
+    action_abi_hash: object,
+    generator_lineage: object,
+    review_provenance: object,
+    gap_receipt: object,
+    revisions: object,
+    training_source: object,
+) -> dict[str, Any]:
+    scenario = _episode_text(scenario_ref, "scenario_ref")
+    orientation_row = _episode_object(orientation, "orientation")
+    orientation_value = Orientation.from_dict(orientation_row)
+    orientation_canonical = orientation_value.as_dict()
+
+    if type(legal_proposals) is not tuple:
+        raise TypeError("legal_proposals must be an exact tuple")
+    if len(legal_proposals) > _MAX_EPISODE_CANDIDATES:
+        raise ValueError("legal_proposals exceeds the candidate bound")
+    legal = tuple(
+        _decode_derivation(row, "legal proposal") for row in legal_proposals
+    )
+    legal_refs = tuple(row["candidate_ref"] for row in legal)
+    if len(legal_refs) != len(set(legal_refs)):
+        raise ValueError("legal proposal candidate refs must be unique")
+
+    if type(rejected_proposals) is not tuple:
+        raise TypeError("rejected_proposals must be an exact tuple")
+    if len(rejected_proposals) > _MAX_EPISODE_CANDIDATES:
+        raise ValueError("rejected_proposals exceeds the candidate bound")
+    rejected = tuple(_decode_rejection(row) for row in rejected_proposals)
+    rejected_refs = tuple(row["candidate_ref"] for row in rejected)
+    if len(rejected_refs) != len(set(rejected_refs)):
+        raise ValueError("rejected proposal candidate refs must be unique")
+    if set(legal_refs) & set(rejected_refs):
+        raise ValueError("candidate cannot be both legal and rejected")
+
+    selected_row = _episode_object(selected_program, "selected_program")
+    meaning_row = _episode_object(verified_meaning, "verified_meaning")
+    coverage_row = _episode_object(coverage, "coverage")
+    selected = _decode_derivation(selected_row, "selected_program") if selected_row else {}
+    meaning = VerifiedMeaning.from_dict(meaning_row) if meaning_row else None
+    coverage_value = CoverageReceipt.from_dict(coverage_row) if coverage_row else None
+
+    if _episode_object(evaluation, "evaluation") != {}:
+        raise ValueError("EVALUATE is not admitted at R1")
+    effect = _episode_object(effect_or_no_effect, "effect_or_no_effect")
+    if effect != {"status": "not_admitted"}:
+        raise ValueError("EFFECT is not admitted at R1")
+    if _episode_object(response_meaning, "response_meaning") != {}:
+        raise ValueError("response meaning is not admitted at R1")
+    if _episode_object(realization_receipt, "realization_receipt") != {}:
+        raise ValueError("REALIZE is not admitted at R1")
+
+    gap_row = _episode_object(gap_receipt, "gap_receipt")
+    gap = GapReceipt.from_dict(gap_row)
+    revisions_row = _episode_object(revisions, "revisions")
+    pin = RevisionPin.from_dict(revisions_row)
+    if pin != orientation_value.revision_pin:
+        raise ValueError("episode revision pin differs from Orientation")
+
+    if meaning is None:
+        if selected or coverage_value is not None:
+            raise ValueError("unselected episode cannot carry derivation or meaning coverage")
+        if gap.status == "later_owner_not_admitted":
+            raise ValueError("later-owner gap requires VerifiedMeaning")
+    else:
+        if not selected or coverage_value is None:
+            raise ValueError("VerifiedMeaning requires derivation and coverage lineage")
+        candidate_ref = selected["candidate_ref"]
+        if candidate_ref not in legal_refs:
+            raise ValueError("selected derivation is not one legal proposal")
+        program_ref = selected["program"]["program_ref"]
+        if meaning.program_ref != program_ref:
+            raise ValueError("Program derivation and VerifiedMeaning differ")
+        if coverage_value.program_ref != meaning.program_ref:
+            raise ValueError("coverage and VerifiedMeaning program refs differ")
+        if coverage_value.coverage_receipt_ref != meaning.coverage_receipt_ref:
+            raise ValueError("coverage and VerifiedMeaning receipt refs differ")
+        if meaning.revision_pin != pin:
+            raise ValueError("VerifiedMeaning revision pin differs from episode")
+        if gap.status != "later_owner_not_admitted":
+            raise ValueError("selected R1 episode requires later_owner_not_admitted gap")
+        if gap.source_refs != (meaning.verified_meaning_ref,):
+            raise ValueError("later-owner gap does not bind VerifiedMeaning")
+        if gap.missing_contract_refs != ("contract:r3:evaluate",):
+            raise ValueError("later-owner gap does not bind the R3 contract")
+        if gap.safe_response_action != "stop_without_surface":
+            raise ValueError("later-owner gap must stop without surface")
+
+    authority = _episode_text(authority_hash, "authority_hash")
+    expected_authority = stable_ref(
+        "authority", {"generation": pin.authority_generation}
+    )
+    if authority != expected_authority:
+        raise ValueError("authority_hash does not bind the runtime revision pin")
+    if action_abi_hash != ACTION_ABI_HASH:
+        raise ValueError("episode action_abi_hash mismatch")
+
+    generator = _exact_episode_projection(
+        generator_lineage,
+        frozenset(
+            {
+                "seed", "authority_generation", "proposer", "runtime_profile",
+                "surface", "normalized_text",
+            }
+        ),
+        "generator_lineage",
+    )
+    if type(generator["seed"]) is not int or not 0 <= generator["seed"] < 2**63:
+        raise ValueError("generator seed must be a bounded exact int")
+    if generator["authority_generation"] != pin.authority_generation:
+        raise ValueError("generator authority lineage mismatch")
+    _episode_text(generator["proposer"], "generator proposer")
+    _episode_text(generator["runtime_profile"], "runtime profile")
+    if type(generator["surface"]) is not str:
+        raise TypeError("generator surface must be an exact str")
+    if generator["surface"] != orientation_value.source_text:
+        raise ValueError("generator surface differs from Orientation")
+    if generator["normalized_text"] != generator["surface"].strip().lower():
+        raise ValueError("generator normalized_text mismatch")
+
+    review = _exact_episode_projection(
+        review_provenance,
+        frozenset({"review_status", "scenario_ref", "competency_category"}),
+        "review_provenance",
+    )
+    _episode_text(review["review_status"], "review_status")
+    _episode_text(review["competency_category"], "competency_category")
+    if review["scenario_ref"] != scenario:
+        raise ValueError("review provenance scenario mismatch")
+
+    training = _exact_episode_projection(
+        training_source,
+        frozenset(
+            {
+                "source_kind", "source_ref", "reviewed_target_ref",
+                "independently_reverified",
+            }
+        ),
+        "training_source",
+    )
+    if training != {
+        "source_kind": TrainingSourceKind.REVIEWED_SCENARIO.value,
+        "source_ref": scenario,
+        "reviewed_target_ref": None,
+        "independently_reverified": False,
+    }:
+        raise ValueError("R1 diagnostic episode cannot claim training gold")
+
+    canonical = {
+        "scenario_ref": scenario,
+        "orientation": orientation_canonical,
+        "legal_proposals": list(legal),
+        "rejected_proposals": list(rejected),
+        "selected_program": selected,
+        "verified_meaning": meaning.as_dict() if meaning is not None else {},
+        "coverage": coverage_value.as_dict() if coverage_value is not None else {},
+        "evaluation": {},
+        "effect_or_no_effect": {"status": "not_admitted"},
+        "response_meaning": {},
+        "realization_receipt": {},
+        "authority_hash": authority,
+        "action_abi_hash": ACTION_ABI_HASH,
+        "generator_lineage": generator,
+        "review_provenance": review,
+        "gap_receipt": gap.as_dict(),
+        "revisions": pin.as_dict(),
+        "training_source": training,
+    }
+    _bound_episode_wire(canonical)
+    return canonical
+
+
+def _episode_material(fields: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "abi_version": EPISODE_ABI_VERSION,
+        **{key: _thaw_episode_json(value) for key, value in fields.items()},
+    }
+
+
 @dataclass(frozen=True)
 class SemanticEpisode:
-    """A complete semantic episode serializing all six-phase inputs/outputs.
+    """Immutable, content-addressed R1 diagnostic episode (Episode ABI 2).
 
-    Carries orientation, legal and rejected proposals, the selected program,
-    coverage, evaluation, effect-or-no-effect, response meaning, realization
-    receipt, authority/action hashes, generator lineage, review provenance,
-    gap receipt (if any), and the revision pin.
-
-    The ``effect_or_no_effect`` field is the no-effect marker: it is always
-    present (either an effect receipt or an explicit ``{"status": "no_effect"}``
-    marker). Schema validation rejects episodes with a missing no-effect
-    marker.
-
-    Attributes:
-        episode_ref: a stable ref for this episode.
-        abi_version: the Semantic Episode ABI version (always 1).
-        scenario_ref: the source scenario ref.
-        orientation: serialized ORIENT phase output.
-        legal_proposals: tuple of serialized legal proposal dicts.
-        rejected_proposals: tuple of serialized rejected proposal dicts.
-        selected_program: the serialized selected program.
-        coverage: the serialized coverage receipt.
-        evaluation: the serialized EVALUATE phase output.
-        effect_or_no_effect: the effect receipt or no-effect marker.
-        response_meaning: the serialized response meaning.
-        realization_receipt: the serialized realization receipt.
-        authority_hash: the authority generation hash.
-        action_encoding_hash: the selected program's action encoding hash.
-        generator_lineage: lineage metadata for the generator.
-        review_provenance: review provenance metadata.
-        gap_receipt: the serialized gap receipt, or None.
-        revisions: the serialized revision pin.
-        training_source: the typed training source provenance.
+    This artifact records canonical runtime outputs through VERIFY.  Program
+    values are derivation lineage; ``verified_meaning`` is the semantic owner.
+    It is explicitly not R4 training gold and carries no later-phase artifact.
     """
 
     episode_ref: str
     abi_version: int
     scenario_ref: str
-    orientation: dict[str, Any]
-    legal_proposals: tuple[dict[str, Any], ...]
-    rejected_proposals: tuple[dict[str, Any], ...]
-    selected_program: dict[str, Any]
-    coverage: dict[str, Any]
-    evaluation: dict[str, Any]
-    effect_or_no_effect: dict[str, Any]
-    response_meaning: dict[str, Any]
-    realization_receipt: dict[str, Any]
+    orientation: Mapping[str, Any]
+    legal_proposals: tuple[Mapping[str, Any], ...]
+    rejected_proposals: tuple[Mapping[str, Any], ...]
+    selected_program: Mapping[str, Any]
+    verified_meaning: Mapping[str, Any]
+    coverage: Mapping[str, Any]
+    evaluation: Mapping[str, Any]
+    effect_or_no_effect: Mapping[str, Any]
+    response_meaning: Mapping[str, Any]
+    realization_receipt: Mapping[str, Any]
     authority_hash: str
-    action_encoding_hash: str
-    generator_lineage: dict[str, Any]
-    review_provenance: dict[str, Any]
-    gap_receipt: dict[str, Any] | None = None
-    revisions: dict[str, Any] = field(default_factory=dict)
-    training_source: dict[str, Any] = field(default_factory=dict)
+    action_abi_hash: str
+    generator_lineage: Mapping[str, Any]
+    review_provenance: Mapping[str, Any]
+    gap_receipt: Mapping[str, Any]
+    revisions: Mapping[str, Any]
+    training_source: Mapping[str, Any]
 
     def __post_init__(self) -> None:
-        if not isinstance(self.legal_proposals, tuple):
-            object.__setattr__(
-                self, "legal_proposals", tuple(self.legal_proposals)
-            )
-        if not isinstance(self.rejected_proposals, tuple):
-            object.__setattr__(
-                self, "rejected_proposals", tuple(self.rejected_proposals)
-            )
+        if type(self.abi_version) is not int or self.abi_version != EPISODE_ABI_VERSION:
+            raise ValueError("unsupported Semantic Episode ABI version")
+        _episode_text(self.episode_ref, "episode_ref")
+        fields = _canonical_episode_fields(
+            **{
+                name: getattr(self, name)
+                for name in _EPISODE_FIELD_ORDER
+                if name not in {"episode_ref", "abi_version"}
+            }
+        )
+        frozen = {key: _freeze_episode_json(value) for key, value in fields.items()}
+        for name, value in frozen.items():
+            if name in {"legal_proposals", "rejected_proposals"}:
+                assert type(value) is tuple
+            object.__setattr__(self, name, value)
+        expected = stable_ref("episode", _episode_material(frozen))
+        if self.episode_ref != expected:
+            raise ValueError("episode_ref mismatch")
+
+    @staticmethod
+    def _from_canonical(
+        episode_ref: str, fields: Mapping[str, Any]
+    ) -> "SemanticEpisode":
+        value = object.__new__(SemanticEpisode)
+        object.__setattr__(value, "episode_ref", episode_ref)
+        object.__setattr__(value, "abi_version", EPISODE_ABI_VERSION)
+        for name, item in fields.items():
+            object.__setattr__(value, name, _freeze_episode_json(item))
+        return value
+
+    @classmethod
+    def create(cls, **values: Any) -> "SemanticEpisode":
+        if cls is not SemanticEpisode:
+            raise TypeError("SemanticEpisode factories reject subclasses")
+        if frozenset(values) != _EPISODE_FIELDS - {"episode_ref", "abi_version"}:
+            raise ValueError("SemanticEpisode create fields mismatch")
+        fields = _canonical_episode_fields(**values)
+        episode_ref = stable_ref("episode", _episode_material(fields))
+        return SemanticEpisode._from_canonical(episode_ref, fields)
 
     def as_dict(self) -> dict[str, Any]:
+        fields = {
+            name: _thaw_episode_json(getattr(self, name))
+            for name in _EPISODE_FIELD_ORDER
+            if name not in {"episode_ref", "abi_version"}
+        }
         return {
             "episode_ref": self.episode_ref,
-            "abi_version": self.abi_version,
-            "scenario_ref": self.scenario_ref,
-            "orientation": self.orientation,
-            "legal_proposals": list(self.legal_proposals),
-            "rejected_proposals": list(self.rejected_proposals),
-            "selected_program": self.selected_program,
-            "coverage": self.coverage,
-            "evaluation": self.evaluation,
-            "effect_or_no_effect": self.effect_or_no_effect,
-            "response_meaning": self.response_meaning,
-            "realization_receipt": self.realization_receipt,
-            "authority_hash": self.authority_hash,
-            "action_encoding_hash": self.action_encoding_hash,
-            "generator_lineage": self.generator_lineage,
-            "review_provenance": self.review_provenance,
-            "gap_receipt": self.gap_receipt,
-            "revisions": self.revisions,
-            "training_source": self.training_source,
+            "abi_version": EPISODE_ABI_VERSION,
+            **fields,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SemanticEpisode":
-        return cls(
-            episode_ref=data["episode_ref"],
-            abi_version=data["abi_version"],
-            scenario_ref=data["scenario_ref"],
-            orientation=data["orientation"],
-            legal_proposals=tuple(data.get("legal_proposals", ())),
-            rejected_proposals=tuple(data.get("rejected_proposals", ())),
-            selected_program=data["selected_program"],
-            coverage=data["coverage"],
-            evaluation=data["evaluation"],
-            effect_or_no_effect=data["effect_or_no_effect"],
-            response_meaning=data["response_meaning"],
-            realization_receipt=data["realization_receipt"],
-            authority_hash=data["authority_hash"],
-            action_encoding_hash=data["action_encoding_hash"],
-            generator_lineage=data["generator_lineage"],
-            review_provenance=data["review_provenance"],
-            gap_receipt=data.get("gap_receipt"),
-            revisions=data.get("revisions", {}),
-            training_source=data.get("training_source", {}),
-        )
-
-
-# ---------------------------------------------------------------------------
-# Validation
-# ---------------------------------------------------------------------------
+        if cls is not SemanticEpisode:
+            raise TypeError("SemanticEpisode factories reject subclasses")
+        if type(data) is not dict:
+            raise TypeError("SemanticEpisode payload must be an exact dict")
+        if len(data) != len(_EPISODE_FIELDS):
+            raise ValueError("SemanticEpisode fields mismatch")
+        if any(type(key) is not str for key in data):
+            raise TypeError("SemanticEpisode field names must be exact strings")
+        if frozenset(data) != _EPISODE_FIELDS:
+            raise ValueError("SemanticEpisode fields mismatch")
+        _bound_episode_wire(data)
+        if type(data["abi_version"]) is not int or data["abi_version"] != EPISODE_ABI_VERSION:
+            raise ValueError("unsupported Semantic Episode ABI version")
+        if type(data["legal_proposals"]) is not list:
+            raise TypeError("legal_proposals wire value must be an exact list")
+        if type(data["rejected_proposals"]) is not list:
+            raise TypeError("rejected_proposals wire value must be an exact list")
+        stored_ref = _episode_text(data["episode_ref"], "episode_ref")
+        values = {
+            key: data[key]
+            for key in _EPISODE_FIELD_ORDER
+            if key not in {"episode_ref", "abi_version", "legal_proposals", "rejected_proposals"}
+        }
+        values["legal_proposals"] = tuple(data["legal_proposals"])
+        values["rejected_proposals"] = tuple(data["rejected_proposals"])
+        rebuilt = cls.create(**values)
+        if rebuilt.episode_ref != stored_ref:
+            raise ValueError("episode_ref mismatch")
+        if rebuilt.as_dict() != data:
+            raise ValueError("non-canonical SemanticEpisode encoding")
+        return rebuilt
 
 
 def validate_episode(data: dict[str, Any]) -> None:
-    """Validate a serialized episode dict against the Semantic Episode contract.
-
-    Rejects missing no-effect markers and unknown ABI versions.
-
-    Raises:
-        ValueError: if the episode is invalid.
-    """
-    if not isinstance(data, dict):
-        raise ValueError("episode must be a dict")
-    if data.get("abi_version") != EPISODE_ABI_VERSION:
-        raise ValueError(
-            f"unknown or missing ABI version: {data.get('abi_version')!r}"
-        )
-    required = [
-        "episode_ref",
-        "scenario_ref",
-        "orientation",
-        "legal_proposals",
-        "rejected_proposals",
-        "selected_program",
-        "coverage",
-        "evaluation",
-        "effect_or_no_effect",
-        "response_meaning",
-        "realization_receipt",
-        "authority_hash",
-        "action_encoding_hash",
-        "generator_lineage",
-        "review_provenance",
-    ]
-    for key in required:
-        if key not in data:
-            raise ValueError(f"episode missing required field: {key}")
-    # The no-effect marker must always be present.
-    effect = data.get("effect_or_no_effect")
-    if effect is None:
-        raise ValueError("episode missing no-effect marker")
-    if not isinstance(effect, dict):
-        raise ValueError("effect_or_no_effect must be a dict")
-    if "status" not in effect:
-        raise ValueError("effect_or_no_effect missing status")
-    # Authority and action hashes must be non-empty.
-    if not data.get("authority_hash"):
-        raise ValueError("episode missing authority_hash")
-    if not data.get("action_encoding_hash"):
-        raise ValueError("episode missing action_encoding_hash")
-
+    """Authenticate one exact Semantic Episode ABI 2 wire value."""
+    SemanticEpisode.from_dict(data)
 
 def validate_training_source(data: dict[str, Any]) -> None:
     """Validate a serialized training source dict.
@@ -411,122 +726,31 @@ def validate_training_source(data: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _serialize_orientation(orientation: Any) -> dict[str, Any]:
-    """Serialize an Orientation to a JSON-compatible dict."""
-    mode = orientation.mode
-    if hasattr(mode, "value"):
-        mode = mode.value
+def _serialize_orientation(orientation: Orientation) -> dict[str, Any]:
+    """Serialize one exact Orientation ABI 1 value without cache metadata."""
+    if type(orientation) is not Orientation:
+        raise TypeError("orientation must be Orientation")
+    return orientation.as_dict()
+
+def _serialize_derivation(candidate: Any) -> dict[str, Any]:
+    """Serialize a ranked construction derivation without calling it meaning."""
     return {
-        "session_ref": orientation.session_ref,
-        "turn_ref": orientation.turn_ref,
-        "mode": mode,
-        "participant_frame": orientation.participant_frame,
-        "temporal_frame": orientation.temporal_frame,
-        "authority_generation": orientation.authority_generation,
-        "world_revision": orientation.world_revision,
-        "session_revision": orientation.session_revision,
-        "episode_revision": orientation.episode_revision,
-        "effect_revision": orientation.effect_revision,
-        "model_identity": orientation.model_identity,
-        "focus_refs": list(orientation.focus_refs),
-        "obligation_refs": list(orientation.obligation_refs),
-        "capability_summary": list(orientation.capability_summary),
-        "permission_summary": list(orientation.permission_summary),
-        "participants": list(orientation.participants),
-        "active_turn_ref": orientation.active_turn_ref,
-        "event_refs": list(orientation.event_refs),
-        "scanned_atom_count": orientation.scanned_atom_count,
-        "index_probes": list(orientation.index_probes),
-        "visited_refs": list(orientation.visited_refs),
-        "cache_key": orientation.cache_key,
-        "source_text": getattr(orientation, "source_text", ""),
+        "artifact_role": "derivation_lineage",
+        "candidate_ref": candidate.candidate_ref,
+        "rank": candidate.rank,
+        "score_q": candidate.score_q,
+        "provenance_refs": list(candidate.provenance_refs),
+        "program": candidate.program.as_dict(),
     }
-
-
-def _serialize_program(program: Any) -> dict[str, Any]:
-    """Serialize a SemanticSwitchProgram to a JSON-compatible dict."""
-    return program.as_dict()
 
 
 def _serialize_coverage_receipt(receipt: Any) -> dict[str, Any]:
-    """Serialize a CoverageReceipt to a JSON-compatible dict."""
+    """Serialize the complete canonical Coverage Receipt ABI 2 value."""
     if receipt is None:
         return {}
-    return {
-        "program_ref": receipt.program_ref,
-        "assigned_unit_refs": list(receipt.assigned_unit_refs),
-        "residual_unit_refs": list(receipt.residual_unit_refs),
-        "duplicate_unit_refs": list(receipt.duplicate_unit_refs),
-        "missing_unit_refs": list(receipt.missing_unit_refs),
-        "critical_residuals": [
-            {
-                "source_unit_ref": cr.source_unit_ref,
-                "contribution_kind": cr.contribution_kind,
-                "reason": cr.reason,
-            }
-            for cr in receipt.critical_residuals
-        ],
-        "executable": receipt.executable,
-        "coverage_hash": receipt.coverage_hash,
-        "errors": [
-            {"code": e.code, "detail": e.detail} for e in receipt.errors
-        ],
-    }
-
-
-def _serialize_verification_result(verification: Any) -> dict[str, Any]:
-    """Serialize a verifier VerificationResult to a JSON-compatible dict."""
-    return {
-        "program_ref": verification.program_ref,
-        "accepted": verification.accepted,
-        "well_formed": verification.well_formed,
-        "errors": [
-            {"code": e.code, "detail": e.detail, "action_ref": e.action_ref}
-            for e in verification.errors
-        ],
-        "verification_hash": verification.verification_hash,
-    }
-
-
-def _serialize_response_meaning(response_meaning: Any) -> dict[str, Any]:
-    """Serialize a ResponseMeaning to a JSON-compatible dict."""
-    if response_meaning is None:
-        return {}
-    return response_meaning.as_dict()
-
-
-def _serialize_realization_receipt(receipt: Any) -> dict[str, Any]:
-    """Serialize a RealizationReceipt to a JSON-compatible dict."""
-    if receipt is None:
-        return {"status": "no_effect", "surface": None, "model_identity": None}
-    equiv = None
-    if receipt.equivalence_receipt is not None:
-        equiv = {
-            "equivalent": receipt.equivalence_receipt.equivalent,
-            "mismatch_codes": list(receipt.equivalence_receipt.mismatch_codes),
-        }
-    return {
-        "status": receipt.status,
-        "surface": receipt.surface,
-        "model_identity": receipt.model_identity,
-        "semantic_content_ref": receipt.semantic_content_ref,
-        "decoder_invocations": receipt.decoder_invocations,
-        "equivalence_receipt": equiv,
-    }
-
-
-def _serialize_effect_receipt(receipt: Any) -> dict[str, Any]:
-    """Serialize an EffectReceipt to a JSON-compatible dict."""
-    if receipt is None:
-        return {"status": "no_effect"}
-    return {
-        "effect_ref": receipt.effect_ref,
-        "status": receipt.status,
-        "world_revision": receipt.world_revision,
-        "proof_refs": list(receipt.proof_refs),
-        "adapter_receipt_ref": receipt.adapter_receipt_ref,
-    }
-
+    if type(receipt) is not CoverageReceipt:
+        raise TypeError("coverage receipt must be exact CoverageReceipt")
+    return receipt.as_dict()
 
 
 def _serialize_gap_receipt(receipt: Any) -> dict[str, Any] | None:
@@ -537,325 +761,155 @@ def _serialize_gap_receipt(receipt: Any) -> dict[str, Any] | None:
 
 
 class EpisodeBuilder:
-    """Builds :class:`SemanticEpisode` objects from reviewed scenarios.
+    """Build R1 diagnostic episodes through one injected canonical runtime.
 
-    The builder uses the runtime components (authority, form resolver, proposer,
-    verifier, coverage verifier, and the six-phase runtime) to process each
-    scenario and record the full six-phase output. Generation is deterministic:
-    the same seed produces byte-identical output.
-
-    The builder is constructed via :meth:`for_reviewed_scenarios` which wires up
-    all runtime components from the project's authority data.
+    ``SemanticSwitchProgram`` values are serialized only as construction
+    derivation lineage.  ``VerificationBatch.selected_meaning`` owns the
+    canonical meaning.  Because R1 admits no later owner, every cycle retains
+    its typed gap and emits no evaluation, effect, response, or surface.
     """
 
     def __init__(
         self,
         *,
         authority: Any,
-        config: Any,
-        form_resolver: Any,
-        projector: Any,
-        verifier: Any,
-        proposer: Any,
-        runtime_factory: Any,
-        stores: Any,
+        runtime: HybridRuntime,
         seed: int = 1701,
     ) -> None:
+        if type(runtime) is not HybridRuntime:
+            raise TypeError("runtime must be an exact HybridRuntime")
+        if type(seed) is not int:
+            raise TypeError("seed must be an exact int")
+        authority_generation = getattr(authority, "generation", None)
+        runtime_generation = runtime.stores.revision_pin().authority_generation
+        if authority_generation != runtime_generation:
+            raise ValueError("authority generation differs from runtime lineage")
         self._authority = authority
-        self._config = config
-        self._form_resolver = form_resolver
-        self._projector = projector
-        self._verifier = verifier
-        self._proposer = proposer
-        self._runtime_factory = runtime_factory
-        self._stores = stores
+        self._runtime = runtime
         self._seed = seed
 
     @classmethod
-    def for_reviewed_scenarios(cls, *, seed: int = 1701) -> "EpisodeBuilder":
-        """Create a builder wired with the project's runtime components."""
-        import sys
-        from pathlib import Path as _Path
-
-        root = _Path(__file__).resolve().parents[2]
-        if str(root / "src") not in sys.path:
-            sys.path.insert(0, str(root / "src"))
-
-        from .authority import AuthorityLinker
-        from .affordances import SemanticAffordanceIndex
-        from .config import RuntimeConfig
-        from .contributions import ContributionExpander
-        from .cycle import OrientationProjector
-        from .forms import FormResolver
-        from .grounding import Grounder
-        from .persistence import memory_stores
-        from .proposal import BootstrapProposer
-        from .verifier import ExactProgramVerifier, LegalActionIndex
-        from .coverage import CoverageVerifier
-        from .runtime import (
-            FixtureEffectOwner,
-            FixtureEvaluationOwner,
-            FixtureRealizationOwner,
-            FixtureVerificationOwner,
-            HybridRuntime,
-        )
-
-        config = RuntimeConfig.release()
-        authority = AuthorityLinker().link_path(
-            root / "data" / "authority" / "manifest.json"
-        )
-
-        with open(
-            root / "data" / "languages" / "en" / "forms.json", encoding="utf-8"
-        ) as fh:
-            form_pack = json.load(fh)
-
-        form_resolver = FormResolver(form_pack, config)
-        affordance_index = SemanticAffordanceIndex(authority, config)
-        contribution_expander = ContributionExpander(affordance_index, config)
-        coverage_verifier = CoverageVerifier(config)
-        verifier = ExactProgramVerifier(authority, config, coverage_verifier)
-        legal_action_index = LegalActionIndex(authority, config)
-
-        stores = memory_stores(authority_generation=authority.generation)
-        projector = OrientationProjector(authority, stores, config)
-
-        grounder = Grounder(
-            authority=authority,
-            config=config,
-            form_pack=form_pack,
-            form_pack_hash="",
-            designation_store=None,
-        )
-
-        proposer = BootstrapProposer(
-            authority=authority,
-            config=config,
-            form_resolver=form_resolver,
-            grounder=grounder,
-            affordance_index=affordance_index,
-            contribution_expander=contribution_expander,
-            verifier=verifier,
-            coverage_verifier=coverage_verifier,
-            legal_action_index=legal_action_index,
-        )
-
-        def _runtime_factory(program: Any) -> Any:
-            from .propositions import (
-                Application,
-                PropositionGraph,
-                SemanticSwitchProgram,
-            )
-            from .runtime import FixtureProposalOwner
-
-            owners = {
-                "proposal": FixtureProposalOwner(program),
-                "verification": FixtureVerificationOwner(),
-                "evaluation": FixtureEvaluationOwner(),
-                "effect": FixtureEffectOwner(stores),
-                "realization": FixtureRealizationOwner(),
-            }
-            return HybridRuntime(
-                config=config,
-                authority=authority,
-                stores=stores,
-                owners=owners,
-                profile="development",
-            )
-
-        return cls(
-            authority=authority,
-            config=config,
-            form_resolver=form_resolver,
-            projector=projector,
-            verifier=verifier,
-            proposer=proposer,
-            runtime_factory=_runtime_factory,
-            stores=stores,
-            seed=seed,
-        )
-
+    def for_reviewed_scenarios(
+        cls, *, runtime: HybridRuntime, seed: int = 1701
+    ) -> "EpisodeBuilder":
+        """Bind an already activated canonical runtime for reviewed scenarios."""
+        if type(runtime) is not HybridRuntime:
+            raise TypeError("runtime must be an exact HybridRuntime")
+        return cls(authority=runtime.authority, runtime=runtime, seed=seed)
     def build_episode(self, case: ScenarioCase) -> SemanticEpisode:
-        """Build a single :class:`SemanticEpisode` from a reviewed scenario."""
-        from dataclasses import replace
-
-        # Pick the first surface example as the representative surface.
+        """Build one R1 diagnostic episode from a reviewed scenario."""
         surface = case.surface_examples[0] if case.surface_examples else ""
-
-        # Build orientation.
-        orientation = self._projector.project(
-            f"session:{case.scenario_ref}", surface
+        process_result = self._runtime.process(
+            f"session:{case.scenario_ref}", surface, trace=False
         )
-        orientation = replace(orientation, source_text=surface)
+        orientation = process_result.orientation
+        proposal = process_result.proposal
+        verification = process_result.verification
 
-        # Run proposer with detailed results.
-        result, rejected = self._proposer.propose_detailed(orientation)
-
-        # Pick the first accepted candidate (or None if no accepted).
-        accepted_program = None
-        if result.candidates:
-            accepted_program = result.candidates[0]
-
-        # Serialize legal proposals (all accepted candidates).
+        accepted_candidate_refs = frozenset(
+            receipt.candidate_ref
+            for receipt in verification.candidate_receipts
+            if not receipt.verification_errors
+        )
         legal_proposals = tuple(
-            _serialize_program(p) for p in result.candidates
+            _serialize_derivation(candidate)
+            for candidate in proposal.candidates
+            if candidate.candidate_ref in accepted_candidate_refs
         )
-
-        # Serialize rejected alternatives (bounded to first 20 for compactness).
         rejected_serialized = tuple(
             {
-                "action_ids": r["action_ids"],
-                "program_ref": r["program_ref"],
-                "rejection_codes": r["rejection_codes"],
+                "candidate_ref": receipt.candidate_ref,
+                "program_ref": receipt.program_ref,
+                "rejection_codes": [
+                    error.code for error in receipt.verification_errors
+                ],
             }
-            for r in rejected[:20]
+            for receipt in verification.candidate_receipts
+            if receipt.verification_errors
         )
 
-        # Build selected program, coverage, and the full six-phase output.
-        if accepted_program is not None:
-            selected_program = _serialize_program(accepted_program)
-            verification = self._verifier.verify(accepted_program)
-            coverage = _serialize_coverage_receipt(
-                verification.coverage_receipt
-            )
-            verification_dict = _serialize_verification_result(verification)
-
-            # Run the six-phase runtime with the accepted program.
-            runtime = self._runtime_factory(accepted_program)
-            process_result = runtime.process(
-                f"session:{case.scenario_ref}", surface, trace=True
-            )
-
-            evaluation = {
-                "status": process_result.evaluation.status,
-                "output_refs": list(process_result.evaluation.output_refs),
-                "rejection_codes": list(
-                    process_result.evaluation.rejection_codes
+        meaning = verification.selected_meaning
+        selected_candidate = None
+        selected_receipt = None
+        if meaning is not None:
+            selected_candidate = next(
+                (
+                    candidate
+                    for candidate in proposal.candidates
+                    if candidate.candidate_ref
+                    == verification.selected_candidate_ref
+                    and candidate.program.program_ref == meaning.program_ref
                 ),
-            }
-
-            effect_receipt = process_result.effect_receipt
-            effect_or_no_effect = _serialize_effect_receipt(effect_receipt)
-
-            response_meaning = _serialize_response_meaning(
-                process_result.response_meaning
+                None,
             )
-
-            realization_receipt = _serialize_realization_receipt(
-                process_result.realization_receipt
-            )
-
-            gap_receipt = _serialize_gap_receipt(
-                process_result.gap_receipt
-            )
-
-            revisions = process_result.final_revision_pin.as_dict()
-
-            action_encoding_hash = accepted_program.action_encoding_hash
-        else:
-            # No accepted program — the scenario produced a gap.
-            selected_program = {}
-            coverage = {}
-            verification_dict = {}
-            evaluation = {
-                "status": "unsupported",
-                "output_refs": [],
-                "rejection_codes": [],
-            }
-            effect_or_no_effect = {"status": "no_effect"}
-            response_meaning = {}
-            realization_receipt = {
-                "status": "no_effect",
-                "surface": None,
-                "model_identity": None,
-            }
-            gap_receipt = {
-                "gap_ref": stable_ref(
-                    "gap", {"scenario": case.scenario_ref, "kind": "proposal"}
+            selected_receipt = next(
+                (
+                    receipt
+                    for receipt in verification.candidate_receipts
+                    if receipt.receipt_ref == meaning.verification_receipt_ref
+                    and receipt.candidate_ref == verification.selected_candidate_ref
                 ),
-                "kind": case.expected_gap_kind or "proposal",
-                "status": "no_accepted_program",
-                "source_refs": [case.scenario_ref],
-                "blockers": ["no accepted candidate"],
-                "missing_contract_refs": [],
-                "rejected_candidate_refs": [
-                    r["program_ref"] for r in rejected[:20]
-                ],
-                "recommended_owner": "training",
-                "safe_response_action": "request_designation",
-            }
-            revisions = self._stores.revision_pin().as_dict()
-            action_encoding_hash = ""
+                None,
+            )
+            if selected_candidate is None or selected_receipt is None:
+                raise ValueError("VerifiedMeaning derivation lineage is unavailable")
 
-        # Compute authority hash.
+        selected_program = (
+            _serialize_derivation(selected_candidate)
+            if selected_candidate is not None
+            else {}
+        )
+        verified_meaning = meaning.as_dict() if meaning is not None else {}
+        coverage = _serialize_coverage_receipt(
+            selected_receipt.coverage_receipt if selected_receipt is not None else None
+        )
+
         authority_hash = stable_ref(
             "authority", {"generation": self._authority.generation}
         )
-
-        # Build generator lineage.
         generator_lineage = {
             "seed": self._seed,
             "authority_generation": self._authority.generation,
-            "proposer": "BootstrapProposer",
-            "verifier": "ExactProgramVerifier",
+            "proposer": type(self._runtime.proposal_model).__name__,
+            "runtime_profile": self._runtime.profile,
             "surface": surface,
             "normalized_text": surface.strip().lower(),
         }
-
-        # Build review provenance.
         review_provenance = {
             "review_status": case.review_status,
             "scenario_ref": case.scenario_ref,
             "competency_category": case.competency_category,
         }
-
-        # Build training source provenance.
         training_source = TrainingSource(
             source_kind=TrainingSourceKind.REVIEWED_SCENARIO,
             source_ref=case.scenario_ref,
             reviewed_target_ref=None,
-            independently_reverified=True,
+            independently_reverified=False,
         ).as_dict()
-
-        # Build episode ref.
-        episode_ref = stable_ref(
-            "episode",
-            {
-                "scenario": case.scenario_ref,
-                "seed": self._seed,
-                "authority_generation": self._authority.generation,
-            },
-        )
-
-        return SemanticEpisode(
-            episode_ref=episode_ref,
-            abi_version=EPISODE_ABI_VERSION,
+        return SemanticEpisode.create(
             scenario_ref=case.scenario_ref,
             orientation=_serialize_orientation(orientation),
             legal_proposals=legal_proposals,
             rejected_proposals=rejected_serialized,
             selected_program=selected_program,
+            verified_meaning=verified_meaning,
             coverage=coverage,
-            evaluation=evaluation,
-            effect_or_no_effect=effect_or_no_effect,
-            response_meaning=response_meaning,
-            realization_receipt=realization_receipt,
+            evaluation={},
+            effect_or_no_effect={"status": "not_admitted"},
+            response_meaning={},
+            realization_receipt={},
             authority_hash=authority_hash,
-            action_encoding_hash=action_encoding_hash,
+            action_abi_hash=ACTION_ABI_HASH,
             generator_lineage=generator_lineage,
             review_provenance=review_provenance,
-            gap_receipt=gap_receipt,
-            revisions=revisions,
+            gap_receipt=_serialize_gap_receipt(process_result.gap_receipt),
+            revisions=process_result.final_revision_pin.as_dict(),
             training_source=training_source,
         )
 
     def build_all(self, cases: list[ScenarioCase]) -> list[SemanticEpisode]:
-        """Build episodes for all scenarios deterministically.
-
-        Episodes are returned in the same order as the input cases.
-        """
+        """Build episodes deterministically through the injected runtime."""
         return [self.build_episode(case) for case in cases]
-
 
 # ---------------------------------------------------------------------------
 # I/O helpers

@@ -1,9 +1,13 @@
 from __future__ import annotations
-import argparse,json
+
+import argparse
+import json
 from pathlib import Path
+from typing import Any
+
 from .bootstrap import load_runtime
 
-DEMO_TURNS=[
+DEMO_TURNS = (
     "hello",
     "what can you do",
     "can you learn",
@@ -17,45 +21,67 @@ DEMO_TURNS=[
     "imagine server is online",
     "turn lamp on",
     "yoz means hello",
-]
+)
 
-def demo(runtime,trace=False):
-    rows=[]
+
+def _diagnostic(cycle: Any) -> dict[str, Any]:
+    """Return the exact cycle diagnostic; R1 authorizes no response surface."""
+    return cycle.as_dict()
+
+
+def demo(runtime: Any, trace: bool = False) -> list[Any]:
+    rows = []
+    session_ref = "session:demo"
     for text in DEMO_TURNS:
-        row=runtime.process(text,trace=trace); rows.append(row)
+        cycle = runtime.process(session_ref, text, trace=trace)
+        rows.append(cycle)
         print(f"USER: {text}")
-        print(f"CEMM: {row['response']}")
-        print(f"      family={row['selected_family']} status={row['meaning']['status']} session={row['session_phase']}")
-    runtime.new_session()
-    row=runtime.process("yoz",trace=trace); rows.append(row)
-    print("USER: yoz")
-    print(f"CEMM: {row['response']}")
-    print("      dynamic alias reused in a new session")
+        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
     return rows
 
-def interactive(runtime,trace=False):
-    print("CEMM authoritative hybrid MVP. /new, /trace, /state, /quit")
-    tracing=trace
+
+def interactive(runtime: Any, trace: bool = False) -> None:
+    print("CEMM authoritative hybrid MVP. /new, /trace, /quit")
+    tracing = trace
+    session_index = 0
     while True:
-        try: text=input("you> ").strip()
-        except EOFError: print(); break
-        if not text: continue
-        if text=="/quit": break
-        if text=="/new": runtime.new_session(); print("cemm> new root session event"); continue
-        if text=="/trace": tracing=not tracing; print(f"cemm> trace={tracing}"); continue
-        if text=="/state":
-            print(json.dumps({"session":runtime.session.__dict__,"world_revision":runtime.stores.world.revision,"facts":[f.__dict__ for f in runtime.stores.world.facts]},indent=2,default=str)); continue
-        row=runtime.process(text,trace=tracing); print("cemm>",row["response"])
-        if tracing: print(json.dumps(row,indent=2,default=str))
+        try:
+            text = input("you> ").strip()
+        except EOFError:
+            print()
+            break
+        if not text:
+            continue
+        if text == "/quit":
+            break
+        if text == "/new":
+            session_index += 1
+            print("cemm> new session")
+            continue
+        if text == "/trace":
+            tracing = not tracing
+            print(f"cemm> trace={tracing}")
+            continue
+        cycle = runtime.process(
+            f"session:interactive:{session_index}", text, trace=tracing
+        )
+        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
 
-def main():
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--root",default=str(Path(__file__).resolve().parents[2]))
-    parser.add_argument("--demo",action="store_true")
-    parser.add_argument("--interactive",action="store_true")
-    parser.add_argument("--trace",action="store_true")
-    args=parser.parse_args(); runtime=load_runtime(args.root)
-    if args.demo: demo(runtime,args.trace)
-    else: interactive(runtime,args.trace)
 
-if __name__=="__main__": main()
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=str(Path(__file__).resolve().parents[2]))
+    parser.add_argument("--profile", default="development")
+    parser.add_argument("--demo", action="store_true")
+    parser.add_argument("--interactive", action="store_true")
+    parser.add_argument("--trace", action="store_true")
+    args = parser.parse_args()
+    runtime = load_runtime(args.root, profile=args.profile)
+    if args.demo:
+        demo(runtime, args.trace)
+    else:
+        interactive(runtime, args.trace)
+
+
+if __name__ == "__main__":
+    main()

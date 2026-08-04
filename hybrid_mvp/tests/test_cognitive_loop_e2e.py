@@ -52,7 +52,7 @@ from cemm_authoritative_hybrid.gaps import (
     RepairOwner,
     VerificationFailure,
 )
-from cemm_authoritative_hybrid.runtime import (
+from legacy_runtime_fixtures import (
     EffectResult,
     EvaluationResult,
     FixtureEffectOwner,
@@ -60,13 +60,13 @@ from cemm_authoritative_hybrid.runtime import (
     FixtureProposalOwner,
     FixtureRealizationOwner,
     FixtureVerificationOwner,
-    HybridRuntime,
     ProcessResult,
     ProposalResult,
     RealizationResult,
     VerificationResult,
 )
-from cemm_authoritative_hybrid.propositions import (
+from cemm_authoritative_hybrid.runtime import HybridRuntime
+from legacy_propositions import (
     Application,
     PropositionGraph,
     SemanticSwitchProgram,

@@ -284,9 +284,15 @@ class SemanticAffordanceIndex:
 
     def __init__(self, authority: Any, config: Any) -> None:
         self._authority = authority
+        self._authority_generation = authority.generation
         self._config = config
         self._max = getattr(config, "max_affordances_per_target", 4)
         self._frames = self._load_frames()
+
+    @property
+    def authority_generation(self) -> str:
+        """Return the exact authority generation indexed by this instance."""
+        return self._authority_generation
 
     # -- frame loading -------------------------------------------------------
 
@@ -308,7 +314,7 @@ class SemanticAffordanceIndex:
             return frames
 
         generation = data.get("generation", "")
-        if generation != self._authority.generation:
+        if generation != self._authority_generation:
             # Generation mismatch: frames are not pinned to this authority.
             return frames
 
@@ -322,7 +328,11 @@ class SemanticAffordanceIndex:
         """Locate the semantic_affordances.json file."""
         # Try the standard location relative to the project root.
         candidates = [
-            Path(__file__).resolve().parents[2] / "data" / "authority" / "frames" / "semantic_affordances.json",
+            Path(__file__).resolve().parents[2]
+            / "data"
+            / "authority"
+            / "frames"
+            / "semantic_affordances.json",
         ]
         for p in candidates:
             if p.exists():

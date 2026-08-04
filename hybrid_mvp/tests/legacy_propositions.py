@@ -14,8 +14,6 @@ from typing import Any, Iterable, Mapping
 import hashlib
 import json
 
-from .canonical import stable_ref
-
 __all__ = [
     "FIXED_OPERATORS",
     "MAX_APPLICATIONS",

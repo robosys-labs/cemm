@@ -7,10 +7,12 @@ and starts at most one pytest child for an executing tier.
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from contextlib import contextmanager
 import hashlib
+import importlib
 import importlib.metadata
 import importlib.util
 import json
@@ -40,9 +42,13 @@ PYTEST_REPORT_SCHEMA = "cemm-pytest-report-v1"
 PHASES = ("G0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8")
 TIERS = ("owner", "phase", "admission")
 STEP_KINDS = frozenset(
-    {"governance", "compile", "pytest", "pytest_inventory", "authority_link", "sqlite_activation"}
+    {
+        "governance", "compile", "pytest", "pytest_inventory", "authority_link",
+        "sqlite_activation", "r1_structure",
+    }
 )
 PYTEST_KINDS = frozenset({"pytest", "pytest_inventory"})
+ADMISSION_ONLY_KINDS = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
 _CONTENT_REF_RE = re.compile(r"[a-z][a-z0-9_-]*:[0-9a-f]{24}\Z")
 _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -78,6 +84,7 @@ _STEP_FIELDS = MappingProxyType(
         ),
         "authority_link": frozenset({"kind", "depends_on", "inputs"}),
         "sqlite_activation": frozenset({"kind", "depends_on", "inputs"}),
+        "r1_structure": frozenset({"kind", "depends_on", "inputs"}),
     }
 )
 _PHASE_FIELDS = frozenset({"owners", "phase", "admission"})
@@ -94,6 +101,10 @@ class AdmissionValidationError(ValueError):
 def _required_admission_evidence_paths(phase: str) -> tuple[str, ...]:
     if phase == "G0":
         return _G0_ADMISSION_EVIDENCE_PATHS
+    if phase == "R1":
+        # R1 creates no independent external artifact. Its authority, activation,
+        # structure and test evidence is carried by content-bound step results.
+        return ()
     raise AdmissionValidationError(
         f"admission evidence policy is not implemented for phase {phase}"
     )
@@ -869,6 +880,18 @@ class GateGraph:
                 nodes.extend(step.material["exact_nodes"])
         return tuple(sorted(nodes))
 
+    def resolve_all_owner_pytest_nodes(self, phase: str) -> tuple[str, ...]:
+        if phase not in self.phases:
+            raise GateConfigError(f"phase has no validation plan: {phase}")
+        nodes = tuple(
+            node_id
+            for owner in sorted(self.phases[phase].owners)
+            for node_id in self.resolve_pytest_nodes(phase, "owner", owner)
+        )
+        if len(nodes) != len(set(nodes)):
+            raise GateConfigError("owner node overlap is forbidden")
+        return tuple(sorted(nodes))
+
     def pytest_process_count(
         self, phase: str, tier: str, owner: str | None = None
     ) -> int:
@@ -878,7 +901,15 @@ class GateGraph:
         )
 
     def _validate_phase_contracts(self) -> None:
+        admission_only = ADMISSION_ONLY_KINDS
         for phase, plan in self.phases.items():
+            owner_and_phase_steps = {
+                step_id
+                for owner in plan.owners
+                for step_id in self.resolve_phase(phase, "owner", owner)
+            } | set(self.resolve_phase(phase, "phase"))
+            if owner_and_phase_steps & admission_only:
+                raise GateConfigError("R1 authority, activation, and structure steps are admission-only")
             owner_nodes: set[str] = set()
             for owner in plan.owners:
                 if self.pytest_process_count(phase, "owner", owner) != 1:
@@ -893,6 +924,11 @@ class GateGraph:
             if plan.phase and self.pytest_process_count(phase, "phase") != 1:
                 raise GateConfigError("each executing phase tier must contain one pytest process")
             admission_steps = self.resolve_phase(phase, "admission")
+            selected_admission_only = set(admission_steps) & admission_only
+            if selected_admission_only and phase != "R1":
+                raise GateConfigError("R1 admission-only step selected by another phase")
+            if phase == "R1" and selected_admission_only != admission_only:
+                raise GateConfigError("R1 admission requires authority, activation, and structure evidence")
             if self.pytest_process_count(phase, "admission") != 1:
                 raise GateConfigError("admission must contain exactly one pytest process")
             pytest_steps = [
@@ -1861,6 +1897,89 @@ def _nonnegative_exact_int(value: object, label: str) -> int:
     return value
 
 
+def _validate_admission_step_report(kind: str, report: object) -> None:
+    try:
+        item = _canonical_clone(report)
+        if type(item) is not dict:
+            raise GateConfigError("admission step report must be an object")
+        if kind == "authority_link":
+            row = _exact_fields(item, frozenset({
+                "atom_count", "authority_ref", "content_hash", "generation",
+                "model_compatibility_hash", "operator_schema_count", "schema",
+            }), "authority-link step report")
+            if row["schema"] != "cemm-authority-link-step-report-v1":
+                raise GateConfigError("authority-link report schema is invalid")
+            if _nonnegative_exact_int(row["atom_count"], "authority atom count") == 0:
+                raise AdmissionValidationError("authority atom count must be positive")
+            if row["operator_schema_count"] != 5:
+                raise AdmissionValidationError("authority operator schema count is not five")
+            for field in ("authority_ref", "content_hash", "model_compatibility_hash"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"authority report {field} is invalid")
+            _text(row["generation"], "authority generation")
+            identity = dict(row)
+            authority_ref = identity.pop("authority_ref")
+            if authority_ref != content_ref("linked_authority", identity):
+                raise AdmissionValidationError("authority report identity is invalid")
+            return
+        if kind == "sqlite_activation":
+            row = _exact_fields(item, frozenset({
+                "activation_ref", "authority_generation", "database_sha256",
+                "fresh_revisions", "integrity_check", "reopened", "schema",
+                "schema_object_count", "schema_ref",
+            }), "SQLite-activation step report")
+            if row["schema"] != "cemm-sqlite-activation-step-report-v1":
+                raise GateConfigError("SQLite-activation report schema is invalid")
+            if (
+                row["fresh_revisions"]
+                != {"effect": 0, "episode": 0, "session": 0, "world": 0}
+                or row["integrity_check"] != "ok"
+                or row["reopened"] is not True
+            ):
+                raise AdmissionValidationError("SQLite activation observations are invalid")
+            _text(row["authority_generation"], "SQLite authority generation")
+            if type(row["database_sha256"]) is not str or _SHA256_RE.fullmatch(row["database_sha256"]) is None:
+                raise AdmissionValidationError("SQLite database hash is invalid")
+            if _nonnegative_exact_int(row["schema_object_count"], "SQLite schema count") == 0:
+                raise AdmissionValidationError("SQLite schema must be nonempty")
+            for field in ("activation_ref", "schema_ref"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"SQLite report {field} is invalid")
+            identity = dict(row)
+            activation_ref = identity.pop("activation_ref")
+            if activation_ref != content_ref("sqlite_activation", identity):
+                raise AdmissionValidationError("SQLite activation identity is invalid")
+            return
+        if kind == "r1_structure":
+            row = _exact_fields(item, frozenset({
+                "cycle_result_owner", "forbidden_match_count", "process_path",
+                "program_owner", "runtime_owner", "scanned_file_count",
+                "scanned_source_set_ref", "schema", "structure_ref",
+            }), "R1-structure step report")
+            expected = {
+                "cycle_result_owner": "src/cemm_authoritative_hybrid/cycle.py",
+                "forbidden_match_count": 0,
+                "process_path": "src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process",
+                "program_owner": "src/cemm_authoritative_hybrid/programs.py",
+                "runtime_owner": "src/cemm_authoritative_hybrid/runtime.py",
+                "schema": "cemm-r1-structure-step-report-v1",
+            }
+            if any(row[field] != value for field, value in expected.items()):
+                raise AdmissionValidationError("R1 structure ownership is invalid")
+            if _nonnegative_exact_int(row["scanned_file_count"], "R1 source count") == 0:
+                raise AdmissionValidationError("R1 structure scan is empty")
+            for field in ("scanned_source_set_ref", "structure_ref"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"R1 structure report {field} is invalid")
+            identity = dict(row)
+            structure_ref = identity.pop("structure_ref")
+            if structure_ref != content_ref("r1_structure", identity):
+                raise AdmissionValidationError("R1 structure report identity is invalid")
+            return
+        raise AdmissionValidationError("unknown admission step report kind")
+    except GateConfigError as exc:
+        raise AdmissionValidationError(str(exc)) from exc
+
 def _validate_control_step_report(
     kind: str,
     report: object,
@@ -1872,6 +1991,9 @@ def _validate_control_step_report(
             raise AdmissionValidationError("blocked control step may not carry a report")
         return
     if disposition == "passed":
+        if kind in ADMISSION_ONLY_KINDS:
+            _validate_admission_step_report(kind, report)
+            return
         if kind == "governance":
             try:
                 item = _exact_fields(
@@ -2078,14 +2200,14 @@ class StepResult:
                 "not-applicable step result has inconsistent exit/error semantics"
             )
 
-        if kind in {"governance", "compile"}:
+        if kind in {"governance", "compile"} | ADMISSION_ONLY_KINDS:
             if selector_material is not None:
                 raise AdmissionValidationError(
-                    "governance/compile step may not carry a selector"
+                    "control step may not carry a selector"
                 )
             if report_material != observation_material:
                 raise AdmissionValidationError(
-                    "governance/compile observation must equal its semantic report"
+                    "control-step observation must equal its semantic report"
                 )
             _validate_control_step_report(
                 kind, report_material, disposition=disposition
@@ -4015,6 +4137,194 @@ class _HandledStep:
     selector: Mapping[str, object] | None = None
 
 
+def _runtime_owner_symbol(root: Path, module_name: str, symbol_name: str) -> object:
+    """Load one runtime owner only while an admission handler is executing."""
+    package_root = root / "src"
+    expected = package_root / "cemm_authoritative_hybrid" / f"{module_name}.py"
+    expected = expected.resolve(strict=True)
+    qualified = f"cemm_authoritative_hybrid.{module_name}"
+    existing = sys.modules.get(qualified)
+    if existing is not None:
+        loaded_path = Path(str(getattr(existing, "__file__", ""))).resolve()
+        if loaded_path != expected:
+            raise GateConfigError(f"runtime owner module path mismatch: {qualified}")
+        module = existing
+    else:
+        sys.path.insert(0, str(package_root))
+        try:
+            module = importlib.import_module(qualified)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            raise GateConfigError(f"cannot load runtime owner: {qualified}") from exc
+        finally:
+            if sys.path and sys.path[0] == str(package_root):
+                sys.path.pop(0)
+        loaded_path = Path(str(getattr(module, "__file__", ""))).resolve()
+        if loaded_path != expected:
+            raise GateConfigError(f"runtime owner module path mismatch: {qualified}")
+    owner = getattr(module, symbol_name, None)
+    if owner is None:
+        raise GateConfigError(f"runtime owner symbol is unavailable: {qualified}.{symbol_name}")
+    return owner
+
+
+def _ast_call_name(node: ast.Call) -> str | None:
+    if isinstance(node.func, ast.Name):
+        return node.func.id
+    if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+        return f"{node.func.value.id}.{node.func.attr}"
+    return None
+
+
+def _scan_r1_structure(
+    root: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> dict[str, object]:
+    """Reconstruct the bounded R1 production seam from Python ASTs."""
+    root_path = root.resolve()
+    package = root_path / "src" / "cemm_authoritative_hybrid"
+    try:
+        package = package.resolve(strict=True)
+    except OSError as exc:
+        raise GateConfigError("R1 structure validation failed: package root unavailable") from exc
+    if (package / "propositions.py").exists():
+        raise GateConfigError("R1 structure validation failed: propositions.py survives")
+    try:
+        paths = tuple(sorted(package.rglob("*.py")))
+    except OSError as exc:
+        raise GateConfigError("R1 structure validation failed: cannot enumerate sources") from exc
+    if not paths or len(paths) > 512:
+        raise GateConfigError("R1 structure validation failed: source count is unbounded")
+
+    program_owners: list[str] = []
+    result_owners: list[str] = []
+    runtime_owners: list[str] = []
+    process_paths: list[str] = []
+    forbidden: list[str] = []
+    source_rows: list[dict[str, str]] = []
+    seam_files = {"runtime.py", "bootstrap.py", "evaluation.py", "episodes.py", "cli.py"}
+    forbidden_classes = {"KernelCycleResult", "ProcessResult", "LegacyPhaseReceipt"}
+    forbidden_functions = {"process_evidence", "propose_and_verify"}
+    shape_fields = {
+        "kernel", "proposal", "verification", "selected_meaning", "process",
+        "propose", "verify_candidates",
+    }
+
+    for path in paths:
+        if _path_is_link_or_reparse(path):
+            raise GateConfigError("R1 structure validation failed: redirected source")
+        relative = _repository_relative(root_path, path)
+        try:
+            raw = (
+                source_reader(path)
+                if source_reader is not None
+                else _read_bounded_file(path, maximum=_MAX_EXACT_SOURCE_BYTES)
+            )
+            if type(raw) is not bytes or not raw or len(raw) > _MAX_EXACT_SOURCE_BYTES:
+                raise GateConfigError("R1 structure validation failed: invalid source bytes")
+            tree = ast.parse(raw.decode("utf-8"), filename=str(path))
+        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+            raise GateConfigError(
+                f"R1 structure validation failed: cannot parse {relative}"
+            ) from exc
+        source_rows.append({"path": relative, "sha256": hashlib.sha256(raw).hexdigest()})
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                if node.name == "SemanticSwitchProgram":
+                    program_owners.append(relative)
+                if node.name == "CycleResult":
+                    result_owners.append(relative)
+                if node.name == "HybridRuntime":
+                    runtime_owners.append(relative)
+                    methods = [
+                        item for item in node.body
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        and item.name == "process"
+                    ]
+                    for method in methods:
+                        args = method.args
+                        exact_signature = (
+                            not isinstance(method, ast.AsyncFunctionDef)
+                            and not args.posonlyargs
+                            and [item.arg for item in args.args]
+                            == ["self", "session_ref", "text"]
+                            and args.vararg is None
+                            and args.kwarg is None
+                            and [item.arg for item in args.kwonlyargs] == ["trace"]
+                            and len(args.kw_defaults) == 1
+                            and isinstance(args.kw_defaults[0], ast.Constant)
+                            and args.kw_defaults[0].value is True
+                            and not args.defaults
+                        )
+                        if exact_signature:
+                            process_paths.append(f"{relative}:HybridRuntime.process")
+                        else:
+                            forbidden.append(f"{relative}:noncanonical-process-signature")
+                if node.name in forbidden_classes or node.name.startswith(("Fixture", "_Fixture")):
+                    forbidden.append(f"{relative}:class:{node.name}")
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name in forbidden_functions:
+                    forbidden.append(f"{relative}:function:{node.name}")
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                names = (
+                    [alias.name for alias in node.names]
+                    if isinstance(node, ast.Import)
+                    else [node.module or ""]
+                )
+                if path.name in seam_files and any(name == "inspect" for name in names):
+                    forbidden.append(f"{relative}:signature-inspection-import")
+            elif isinstance(node, ast.Call):
+                call_name = _ast_call_name(node)
+                if call_name == "inspect.signature":
+                    forbidden.append(f"{relative}:inspect.signature")
+                if path.name in seam_files and call_name == "hasattr":
+                    forbidden.append(f"{relative}:shape-hasattr")
+                if (
+                    path.name in seam_files
+                    and call_name == "getattr"
+                    and len(node.args) >= 2
+                    and isinstance(node.args[1], ast.Constant)
+                    and node.args[1].value in shape_fields
+                ):
+                    forbidden.append(f"{relative}:shape-getattr:{node.args[1].value}")
+            elif (
+                isinstance(node, ast.Attribute)
+                and path.name in {"runtime.py", "cycle.py"}
+                and node.attr == "kernel"
+            ):
+                forbidden.append(f"{relative}:compatibility-kernel-view")
+
+    expected_program = "src/cemm_authoritative_hybrid/programs.py"
+    expected_result = "src/cemm_authoritative_hybrid/cycle.py"
+    expected_runtime = "src/cemm_authoritative_hybrid/runtime.py"
+    expected_process = f"{expected_runtime}:HybridRuntime.process"
+    defects: list[str] = []
+    if program_owners != [expected_program]:
+        defects.append(f"program-owners={program_owners!r}")
+    if result_owners != [expected_result]:
+        defects.append(f"result-owners={result_owners!r}")
+    if runtime_owners != [expected_runtime]:
+        defects.append(f"runtime-owners={runtime_owners!r}")
+    if process_paths != [expected_process]:
+        defects.append(f"process-paths={process_paths!r}")
+    defects.extend(forbidden)
+    if defects:
+        raise GateConfigError(
+            "R1 structure validation failed: " + "; ".join(defects[:16])
+        )
+    material: dict[str, object] = {
+        "cycle_result_owner": expected_result,
+        "forbidden_match_count": 0,
+        "process_path": expected_process,
+        "program_owner": expected_program,
+        "runtime_owner": expected_runtime,
+        "scanned_file_count": len(source_rows),
+        "scanned_source_set_ref": content_ref("r1_source_set", source_rows),
+        "schema": "cemm-r1-structure-step-report-v1",
+    }
+    material["structure_ref"] = content_ref("r1_structure", material)
+    return material
+
 class _RunContext:
     def __init__(
         self,
@@ -4045,6 +4355,8 @@ class _RunContext:
         self.status_records: tuple[dict[str, object], ...] | None = None
         self.invalidation_records: tuple[dict[str, object], ...] | None = None
         self.pre_admission_status_head_ref: str | None = None
+        self._linked_authority: object | None = None
+        self._admission_step_sequence = 0
 
     def _read(self, path: Path) -> tuple[bytes, str]:
         return self._input_manifest.read(path)
@@ -4153,6 +4465,157 @@ class _RunContext:
             "status_head_ref": self.pre_admission_status_head_ref,
             "status_record_count": len(status),
         }
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=report,
+            observation_report=report, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def _fresh_step_root(self, label: str) -> Path:
+        self._admission_step_sequence += 1
+        target = self.run_root / f"{label}-{self._admission_step_sequence}"
+        try:
+            target.mkdir(parents=True, exist_ok=False)
+        except OSError as exc:
+            raise GateConfigError(f"cannot create fresh {label} workspace") from exc
+        return target
+
+    def run_authority_link(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R1":
+            raise GateConfigError("authority link is available only in R1 admission")
+        started = time.monotonic_ns()
+        manifest_path = self.root / "data" / "authority" / "manifest.json"
+        raw = self._read_bytes(manifest_path)
+        manifest = _load_strict_json_bytes(raw, path=manifest_path)
+        if type(manifest) is not dict or type(manifest.get("owners")) is not list:
+            raise GateConfigError("authority link failed: manifest shape is invalid")
+        stage = self._fresh_step_root("authority-link")
+        try:
+            (stage / "manifest.json").write_bytes(raw)
+            for index, owner in enumerate(manifest["owners"]):
+                if type(owner) is not dict or type(owner.get("path")) is not str:
+                    raise GateConfigError(
+                        f"authority link failed: owner {index} is malformed"
+                    )
+                relative = _safe_relative_path(
+                    owner["path"], f"authority owner {index}", directory=False
+                )
+                source = _resolve_existing_lexical_path(
+                    manifest_path.parent, relative, require_file=True
+                )
+                target = stage / PurePosixPath(relative)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(self._read_bytes(source))
+        except GateConfigError:
+            raise
+        except OSError as exc:
+            raise GateConfigError("authority link failed: cannot stage authenticated inputs") from exc
+
+        linker_type = _runtime_owner_symbol(self.root, "authority", "AuthorityLinker")
+        error_type = _runtime_owner_symbol(self.root, "authority", "AuthorityLinkError")
+        try:
+            authority = linker_type().link_path(stage / "manifest.json")
+        except (error_type, KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as exc:
+            raise GateConfigError(f"authority link failed: {exc}") from exc
+        material: dict[str, object] = {
+            "atom_count": len(authority.atoms),
+            "content_hash": authority.content_hash,
+            "generation": authority.generation,
+            "model_compatibility_hash": authority.model_compatibility_hash,
+            "operator_schema_count": len(authority.operator_roles),
+            "schema": "cemm-authority-link-step-report-v1",
+        }
+        material["authority_ref"] = content_ref("linked_authority", material)
+        self._linked_authority = authority
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=material,
+            observation_report=material, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def run_sqlite_activation(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R1":
+            raise GateConfigError("SQLite activation is available only in R1 admission")
+        authority = self._linked_authority
+        if authority is None:
+            raise GateConfigError("SQLite activation requires linked authority evidence")
+        started = time.monotonic_ns()
+        store_root = self._fresh_step_root("sqlite-activation")
+        open_stores = _runtime_owner_symbol(self.root, "persistence", "open_stores")
+        stores = None
+        reopened = None
+        try:
+            stores = open_stores(store_root, authority_generation=authority.generation)
+            fresh_revisions = stores.revisions()
+            fresh_pin = stores.revision_pin()
+            if fresh_revisions != {
+                "effect": 0, "episode": 0, "session": 0, "world": 0
+            }:
+                raise GateConfigError("fresh SQLite activation has nonzero revisions")
+            if fresh_pin.authority_generation != authority.generation:
+                raise GateConfigError("fresh SQLite activation lost authority generation")
+            stores.close()
+            stores = None
+            reopened = open_stores(store_root, authority_generation=authority.generation)
+            if reopened.revisions() != fresh_revisions:
+                raise GateConfigError("SQLite reopen changed fresh revisions")
+            if reopened.revision_pin() != fresh_pin:
+                raise GateConfigError("SQLite reopen changed the revision pin")
+            reopened.close()
+            reopened = None
+        except GateConfigError:
+            raise
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            raise GateConfigError(f"fresh SQLite activation failed: {exc}") from exc
+        finally:
+            if stores is not None:
+                stores.close()
+            if reopened is not None:
+                reopened.close()
+
+        database = store_root / "semantic.db"
+        try:
+            import sqlite3
+
+            connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            schema_rows = connection.execute(
+                "SELECT type, name, tbl_name FROM sqlite_master "
+                "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name, tbl_name"
+            ).fetchall()
+            connection.close()
+        except (OSError, sqlite3.Error) as exc:
+            raise GateConfigError("fresh SQLite activation cannot be independently inspected") from exc
+        if integrity != ("ok",):
+            raise GateConfigError("fresh SQLite activation failed integrity verification")
+        schema = [
+            {"name": str(row[1]), "table": str(row[2]), "type": str(row[0])}
+            for row in schema_rows
+        ]
+        material: dict[str, object] = {
+            "authority_generation": authority.generation,
+            "database_sha256": _sha256_file_bounded(database),
+            "fresh_revisions": fresh_revisions,
+            "integrity_check": "ok",
+            "reopened": True,
+            "schema": "cemm-sqlite-activation-step-report-v1",
+            "schema_object_count": len(schema),
+            "schema_ref": content_ref("sqlite_schema", schema),
+        }
+        material["activation_ref"] = content_ref("sqlite_activation", material)
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=material,
+            observation_report=material, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def run_r1_structure(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R1":
+            raise GateConfigError("R1 structure scan is available only in R1 admission")
+        started = time.monotonic_ns()
+        report = _scan_r1_structure(
+            self.root, source_reader=lambda path: self._read_bytes(path)
+        )
         return _HandledStep(
             disposition="passed", exit_code=0, error_code=None, report=report,
             observation_report=report, wall_ns=time.monotonic_ns() - started,
@@ -4522,9 +4985,15 @@ def run_validation(
                         handled = context.run_compile(step)
                     elif step.kind in PYTEST_KINDS:
                         handled = context.run_pytest(step)
+                    elif step.kind == "authority_link":
+                        handled = context.run_authority_link()
+                    elif step.kind == "sqlite_activation":
+                        handled = context.run_sqlite_activation()
+                    elif step.kind == "r1_structure":
+                        handled = context.run_r1_structure()
                     else:
                         raise GateConfigError(
-                            f"step kind is declared but not active in G0: {step.kind}"
+                            f"step kind has no execution handler: {step.kind}"
                         )
                 except (GateConfigError, AdmissionValidationError) as exc:
                     handled = _HandledStep(

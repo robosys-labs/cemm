@@ -25,7 +25,7 @@ from cemm_authoritative_hybrid.epistemics import (
     EpistemicEngine,
     EpistemicPlacement,
 )
-from cemm_authoritative_hybrid.propositions import (
+from legacy_propositions import (
     Application,
     PropositionGraph,
     SemanticSwitchProgram,

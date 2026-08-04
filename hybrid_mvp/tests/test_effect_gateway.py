@@ -10,7 +10,7 @@ Tests cover:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
 import pytest
@@ -19,6 +19,7 @@ from cemm_authoritative_hybrid.authority import EventSignature, RoleSpec
 from cemm_authoritative_hybrid.capabilities import (
     CapabilityContext,
     CapabilityEngine,
+    CapabilityResult,
 )
 from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.effects import (
@@ -129,7 +130,9 @@ def _plan(
     idempotency_key: str = "idem:open-door-1",
     actor_ref: str = "participant:system",
     expected_world_revision: int = 0,
+    revision_pin: RevisionPin | None = None,
 ) -> EffectPlan:
+    source_pin = revision_pin or _revision_pin(world_revision=expected_world_revision)
     return EffectPlan(
         effect_ref=effect_ref,
         idempotency_key=idempotency_key,
@@ -138,6 +141,7 @@ def _plan(
         transition_ref="transition:open_door",
         expected_world_revision=expected_world_revision,
         requirement_proof_refs=("proof:cap:open_door",),
+        revision_pin=source_pin,
     )
 
 
@@ -538,3 +542,120 @@ class TestRuntimeDenialIntegration:
         result = denied_runtime.process("s", "open the door")
         assert result.effect_receipt.status == "denied"
         assert result.gap_receipt.kind == GapKind.PERMISSION
+
+
+def test_effect_plan_threads_authentic_revision_pin_to_derived_context() -> None:
+    source_pin = _revision_pin(world_revision=7)
+    plan = EffectPlan(
+        effect_ref="effect:pin-lineage",
+        idempotency_key="idem:pin-lineage",
+        program_ref="program:pin-lineage",
+        actor_ref="participant:system",
+        transition_ref="transition:open_door",
+        expected_world_revision=source_pin.world_revision,
+        requirement_proof_refs=("proof:pin-lineage",),
+        revision_pin=source_pin,
+    )
+
+    context = EffectVerifier._context_from_plan(plan)
+
+    assert context.revisions is source_pin
+    assert context.revisions.revision_ref == source_pin.revision_ref
+
+
+class _EffectRevisionInt(int):
+    pass
+
+
+class _RecordingCapabilityEngine:
+    def __init__(self) -> None:
+        self.contexts: list[CapabilityContext] = []
+
+    def check(
+        self,
+        actor_ref: str,
+        event_type_ref: str,
+        context: CapabilityContext,
+    ) -> CapabilityResult:
+        self.contexts.append(context)
+        return CapabilityResult(
+            status="unknown",
+            proof_refs=(),
+            cache_key="capability-check:recorded",
+        )
+
+
+@pytest.mark.parametrize("pins_match", (True, False), ids=("matching", "mismatched"))
+def test_effect_verifier_authorize_binds_exact_plan_revision_pin(
+    pins_match: bool,
+) -> None:
+    plan_pin = _revision_pin(world_revision=7)
+    default_pin = (
+        plan_pin
+        if pins_match
+        else _revision_pin(
+            authority_generation="authority:default-context",
+            world_revision=3,
+        )
+    )
+    default_context = replace(
+        _capability_context(
+            permissions=("permission:default",),
+            resources=("resource:default",),
+            adapters=("adapter:default",),
+        ),
+        revisions=default_pin,
+    )
+    engine = _RecordingCapabilityEngine()
+    verifier = EffectVerifier(engine, default_context=default_context)
+    plan = _plan(expected_world_revision=7, revision_pin=plan_pin)
+
+    decision = verifier.authorize(plan)
+
+    assert decision.authorized is False
+    assert decision.status == "unknown"
+    if not pins_match:
+        assert decision.proof_refs == ()
+        assert decision.reason == "capability context revision pin mismatch"
+        assert engine.contexts == []
+        return
+
+    assert len(engine.contexts) == 1
+    received = engine.contexts[0]
+    assert received.revisions is plan_pin
+    assert received is default_context
+
+
+def test_effect_plan_rejects_nonexact_or_unequal_expected_world_revision() -> None:
+    source_pin = _revision_pin(world_revision=1)
+    plan = _plan(expected_world_revision=1, revision_pin=source_pin)
+
+    for invalid_revision in (True, _EffectRevisionInt(1), 2):
+        with pytest.raises((TypeError, ValueError)):
+            replace(plan, expected_world_revision=invalid_revision)
+
+
+__cemm_test_inventory__ = {'tests/test_effect_gateway.py::test_effect_plan_rejects_nonexact_or_unequal_expected_world_revision': {'activation_phase': 'R1',
+                                                                                                        'assertion_ref': 'assertion:r1-effect-plan-world-revision-exact-and-equal',
+                                                                                                        'diagnostic_role': 'owner',
+                                                                                                        'introduced_by_task': 'R1-Slice-A',
+                                                                                                        'owner_ref': 'program-verifier',
+                                                                                                        'source_ast_sha256': '2311048b071f0f668465b0a3d34164c22d090542d9d7b488d6f43f226e39ea34'},
+ 'tests/test_effect_gateway.py::test_effect_plan_threads_authentic_revision_pin_to_derived_context': {'activation_phase': 'R1',
+                                                                                                      'assertion_ref': 'assertion:r1-effect-plan-preserves-revision-pin-lineage',
+                                                                                                      'diagnostic_role': 'owner',
+                                                                                                      'introduced_by_task': 'R1-Slice-A',
+                                                                                                      'owner_ref': 'program-verifier',
+                                                                                                      'source_ast_sha256': 'c21ab7aae163ebb707faf606f0e605cb1fb3389a614a6020e29661cd8c1499aa'},
+ 'tests/test_effect_gateway.py::test_effect_verifier_authorize_binds_exact_plan_revision_pin[matching]': {'activation_phase': 'R1',
+                                                                                                          'assertion_ref': 'assertion:r1-effect-verifier-binds-matching-plan-pin',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R1-Slice-A',
+                                                                                                          'owner_ref': 'program-verifier',
+                                                                                                          'source_ast_sha256': '53c3d54af8e5bad9ed4d4d50937e839be06abcb0b05778a7dbcec47b818071df'},
+ 'tests/test_effect_gateway.py::test_effect_verifier_authorize_binds_exact_plan_revision_pin[mismatched]': {'activation_phase': 'R1',
+                                                                                                            'assertion_ref': 'assertion:r1-effect-verifier-rejects-mismatched-default-pin',
+                                                                                                            'diagnostic_role': 'owner',
+                                                                                                            'introduced_by_task': 'R1-Slice-A',
+                                                                                                            'owner_ref': 'program-verifier',
+                                                                                                            'source_ast_sha256': '53c3d54af8e5bad9ed4d4d50937e839be06abcb0b05778a7dbcec47b818071df'}}

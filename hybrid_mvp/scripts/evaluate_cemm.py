@@ -53,9 +53,10 @@ def main() -> None:
     print(f"  Calibration: {calibration_path}")
     print()
 
-    from cemm_authoritative_hybrid.evaluation import Evaluator, build_release_runtime
+    from cemm_authoritative_hybrid.bootstrap import load_runtime
+    from cemm_authoritative_hybrid.evaluation import Evaluator
 
-    runtime = build_release_runtime(ROOT)
+    runtime = load_runtime(ROOT, profile=args.runtime)
     evaluator = Evaluator(
         runtime=runtime,
         test_episodes_path=episodes_path,

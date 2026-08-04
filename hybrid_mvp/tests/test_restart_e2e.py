@@ -23,19 +23,19 @@ from cemm_authoritative_hybrid.persistence import (
     memory_stores,
     open_stores,
 )
-from cemm_authoritative_hybrid.propositions import (
+from legacy_propositions import (
     Application,
     PropositionGraph,
     SemanticSwitchProgram,
 )
-from cemm_authoritative_hybrid.runtime import (
+from legacy_runtime_fixtures import (
     FixtureEffectOwner,
     FixtureEvaluationOwner,
     FixtureProposalOwner,
     FixtureRealizationOwner,
     FixtureVerificationOwner,
-    HybridRuntime,
 )
+from cemm_authoritative_hybrid.runtime import HybridRuntime
 
 
 # ---------------------------------------------------------------------------

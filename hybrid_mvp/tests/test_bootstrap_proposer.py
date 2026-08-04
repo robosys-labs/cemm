@@ -12,8 +12,6 @@ from __future__ import annotations
 import pytest
 
 from cemm_authoritative_hybrid.proposal import (
-    BootstrapProposer,
-    ProposalModel,
     ProposalResult,
 )
 

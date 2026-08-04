@@ -21,7 +21,7 @@ from cemm_authoritative_hybrid.persistence import (
     memory_stores,
     SemanticStores,
 )
-from cemm_authoritative_hybrid.propositions import (
+from legacy_propositions import (
     Application,
     PropositionGraph,
     SemanticSwitchProgram,

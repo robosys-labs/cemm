@@ -35,9 +35,9 @@ The 18 canonical gap kinds and their six repair owners form a closed matrix:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any
 
 from .canonical import stable_ref
 
@@ -47,6 +47,7 @@ __all__ = [
     "GapReceipt",
     "GapClassifier",
     "GapException",
+    "LaterOwnerNotAdmitted",
     "MissingOwner",
     "VerificationFailure",
     "CoverageGap",
@@ -68,6 +69,11 @@ __all__ = [
     "AdapterFailure",
     "StorageFailure",
 ]
+
+
+GAP_RECEIPT_ABI_VERSION = 1
+_MAX_TEXT_CHARS = 256
+_MAX_RECEIPT_ROWS = 64
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +128,21 @@ class GapException(Exception):
     """
 
 
-@dataclass(frozen=True)
+@dataclass
+class LaterOwnerNotAdmitted(GapException):
+    """A verified meaning reached a later semantic owner not admitted in this release."""
+
+    verified_meaning_ref: str
+    contract_ref: str
+
+    def __post_init__(self) -> None:
+        _exact_text(self.verified_meaning_ref, "verified_meaning_ref")
+        _exact_text(self.contract_ref, "contract_ref")
+
+    def __str__(self) -> str:
+        return "LaterOwnerNotAdmitted"
+
+@dataclass
 class MissingOwner(GapException):
     """A required owner was missing for a phase or operation."""
 
@@ -132,7 +152,7 @@ class MissingOwner(GapException):
         return f"MissingOwner({self.owner_name})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class VerificationFailure(GapException):
     """A candidate failed structural, reference, scope, capability or transition legality."""
 
@@ -143,7 +163,7 @@ class VerificationFailure(GapException):
         return f"VerificationFailure({self.code})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class CoverageGap(GapException):
     """A surface span produced no designation or affordance candidate."""
 
@@ -154,7 +174,7 @@ class CoverageGap(GapException):
         return f"CoverageGap({self.span_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class EffectDenied(GapException):
     """An effect was denied because it lacked a verified decision or permission."""
 
@@ -165,7 +185,7 @@ class EffectDenied(GapException):
         return f"EffectDenied({self.effect_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class RealizationFailure(GapException):
     """A response surface could not be realized or verified."""
 
@@ -176,7 +196,7 @@ class RealizationFailure(GapException):
         return f"RealizationFailure({self.response_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class BudgetExhausted(GapException):
     """A configured budget was exhausted."""
 
@@ -187,7 +207,7 @@ class BudgetExhausted(GapException):
         return f"BudgetExhausted({self.budget_name})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class ResourceUnavailable(GapException):
     """A required resource (model, store, adapter) was unavailable."""
 
@@ -198,7 +218,7 @@ class ResourceUnavailable(GapException):
         return f"ResourceUnavailable({self.resource_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class PermissionDenied(GapException):
     """A capability or permission was denied for a participant."""
 
@@ -209,7 +229,7 @@ class PermissionDenied(GapException):
         return f"PermissionDenied({self.capability_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class SemanticConflict(GapException):
     """Two or more candidates conflicted and could not be settled."""
 
@@ -223,7 +243,7 @@ class SemanticConflict(GapException):
 # -- New typed exceptions for the expanded 18-kind matrix --------------------
 
 
-@dataclass(frozen=True)
+@dataclass
 class EvidenceGap(GapException):
     """Evidence was missing or insufficient for a claim."""
 
@@ -234,7 +254,7 @@ class EvidenceGap(GapException):
         return f"EvidenceGap({self.claim_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class ReferenceAmbiguity(GapException):
     """A reference was ambiguous with an existing candidate."""
 
@@ -245,7 +265,7 @@ class ReferenceAmbiguity(GapException):
         return f"ReferenceAmbiguity({self.ref_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class AbsentIdentity(GapException):
     """An identity or frame was absent and could not be resolved."""
 
@@ -256,7 +276,7 @@ class AbsentIdentity(GapException):
         return f"AbsentIdentity({self.identity_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class ProposalGap(GapException):
     """No valid proposal could be generated from orientation."""
 
@@ -267,7 +287,7 @@ class ProposalGap(GapException):
         return f"ProposalGap({self.cycle_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class InferenceBound(GapException):
     """An inference bound was reached before a conclusion could be drawn."""
 
@@ -278,7 +298,7 @@ class InferenceBound(GapException):
         return f"InferenceBound({self.query_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class StateGap(GapException):
     """A state dimension or value was missing."""
 
@@ -289,7 +309,7 @@ class StateGap(GapException):
         return f"StateGap({self.entity_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class MissingTransition(GapException):
     """A transition definition was missing for a requested state change."""
 
@@ -300,7 +320,7 @@ class MissingTransition(GapException):
         return f"MissingTransition({self.from_state}->{self.to_state})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class TransitionBoundExhausted(GapException):
     """A transition proof bound was exhausted."""
 
@@ -311,7 +331,7 @@ class TransitionBoundExhausted(GapException):
         return f"TransitionBoundExhausted({self.transition_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class LearningGap(GapException):
     """A learning obligation could not be fulfilled."""
 
@@ -322,7 +342,7 @@ class LearningGap(GapException):
         return f"LearningGap({self.obligation_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class AdapterFailure(GapException):
     """An adapter failed to invoke or return a valid receipt."""
 
@@ -333,7 +353,7 @@ class AdapterFailure(GapException):
         return f"AdapterFailure({self.adapter_ref})"
 
 
-@dataclass(frozen=True)
+@dataclass
 class StorageFailure(GapException):
     """A storage operation failed."""
 
@@ -349,17 +369,101 @@ class StorageFailure(GapException):
 # ---------------------------------------------------------------------------
 
 
+def _exact_text(value: object, name: str) -> str:
+    if type(value) is not str or not value:
+        raise TypeError(f"{name} must be an exact non-empty str")
+    if len(value) > _MAX_TEXT_CHARS:
+        raise ValueError(f"{name} exceeds {_MAX_TEXT_CHARS} characters")
+    return value
+
+
+def _exact_rows(value: object, name: str) -> tuple[str, ...]:
+    if type(value) is not tuple:
+        raise TypeError(f"{name} must be an exact tuple")
+    if len(value) > _MAX_RECEIPT_ROWS:
+        raise ValueError(f"{name} exceeds {_MAX_RECEIPT_ROWS} rows")
+    rows = value
+    for row in rows:
+        _exact_text(row, f"{name} item")
+    if len(rows) != len(set(rows)):
+        raise ValueError(f"{name} must not contain duplicates")
+    return rows
+
+
+def _wire_rows(value: object, name: str) -> tuple[str, ...]:
+    if type(value) is not list:
+        raise TypeError(f"{name} must be an exact list")
+    if len(value) > _MAX_RECEIPT_ROWS:
+        raise ValueError(f"{name} exceeds {_MAX_RECEIPT_ROWS} rows")
+    rows = tuple(value)
+    return _exact_rows(rows, name)
+
+
+def _gap_material(
+    *,
+    kind: GapKind,
+    status: str,
+    source_refs: tuple[str, ...],
+    blockers: tuple[str, ...],
+    missing_contract_refs: tuple[str, ...],
+    rejected_candidate_refs: tuple[str, ...],
+    recommended_owner: RepairOwner,
+    safe_response_action: str,
+) -> dict[str, Any]:
+    return {
+        "abi_version": GAP_RECEIPT_ABI_VERSION,
+        "kind": kind.value,
+        "status": status,
+        "source_refs": list(source_refs),
+        "blockers": list(blockers),
+        "missing_contract_refs": list(missing_contract_refs),
+        "rejected_candidate_refs": list(rejected_candidate_refs),
+        "recommended_owner": recommended_owner.value,
+        "safe_response_action": safe_response_action,
+    }
+
+
+def _validate_gap_fields(
+    *,
+    kind: object,
+    status: object,
+    source_refs: object,
+    blockers: object,
+    missing_contract_refs: object,
+    rejected_candidate_refs: object,
+    recommended_owner: object,
+    safe_response_action: object,
+) -> tuple[
+    GapKind,
+    str,
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    RepairOwner,
+    str,
+]:
+    if type(kind) is not GapKind:
+        raise TypeError("kind must be an exact GapKind")
+    if type(recommended_owner) is not RepairOwner:
+        raise TypeError("recommended_owner must be an exact RepairOwner")
+    return (
+        kind,
+        _exact_text(status, "status"),
+        _exact_rows(source_refs, "source_refs"),
+        _exact_rows(blockers, "blockers"),
+        _exact_rows(missing_contract_refs, "missing_contract_refs"),
+        _exact_rows(rejected_candidate_refs, "rejected_candidate_refs"),
+        recommended_owner,
+        _exact_text(safe_response_action, "safe_response_action"),
+    )
+
+
 @dataclass(frozen=True)
 class GapReceipt:
-    """A typed receipt for a failed or unresolved cycle.
+    """Strict content-addressed receipt for one failed or unresolved cycle."""
 
-    Every failed or unresolved cycle emits exactly one ``GapReceipt``. The
-    receipt identifies the gap kind, status, source refs, blockers, missing
-    contracts, rejected candidates, the recommended repair owner and the safe
-    response action. No failure becomes generic clarification when a more
-    exact status exists.
-    """
-
+    abi_version: int
     gap_ref: str
     kind: GapKind
     status: str
@@ -370,79 +474,175 @@ class GapReceipt:
     recommended_owner: RepairOwner
     safe_response_action: str
 
+    def __post_init__(self) -> None:
+        if type(self.abi_version) is not int or self.abi_version != GAP_RECEIPT_ABI_VERSION:
+            raise ValueError(f"abi_version must be exactly {GAP_RECEIPT_ABI_VERSION}")
+        _exact_text(self.gap_ref, "gap_ref")
+        fields = _validate_gap_fields(
+            kind=self.kind,
+            status=self.status,
+            source_refs=self.source_refs,
+            blockers=self.blockers,
+            missing_contract_refs=self.missing_contract_refs,
+            rejected_candidate_refs=self.rejected_candidate_refs,
+            recommended_owner=self.recommended_owner,
+            safe_response_action=self.safe_response_action,
+        )
+        expected = stable_ref("gap", _gap_material_from_fields(fields))
+        if self.gap_ref != expected:
+            raise ValueError("gap_ref mismatch")
+
+    @staticmethod
+    def _from_checked(
+        gap_ref: str,
+        fields: tuple[
+            GapKind,
+            str,
+            tuple[str, ...],
+            tuple[str, ...],
+            tuple[str, ...],
+            tuple[str, ...],
+            RepairOwner,
+            str,
+        ],
+    ) -> "GapReceipt":
+        value = object.__new__(GapReceipt)
+        for name, item in zip(
+            (
+                "kind", "status", "source_refs", "blockers",
+                "missing_contract_refs", "rejected_candidate_refs",
+                "recommended_owner", "safe_response_action",
+            ),
+            fields,
+            strict=True,
+        ):
+            object.__setattr__(value, name, item)
+        object.__setattr__(value, "abi_version", GAP_RECEIPT_ABI_VERSION)
+        object.__setattr__(value, "gap_ref", gap_ref)
+        return value
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        kind: GapKind,
+        status: str,
+        source_refs: tuple[str, ...],
+        blockers: tuple[str, ...],
+        missing_contract_refs: tuple[str, ...] = (),
+        rejected_candidate_refs: tuple[str, ...] = (),
+        recommended_owner: RepairOwner,
+        safe_response_action: str,
+    ) -> "GapReceipt":
+        if cls is not GapReceipt:
+            raise TypeError("GapReceipt factories reject subclasses")
+        fields = _validate_gap_fields(
+            kind=kind,
+            status=status,
+            source_refs=source_refs,
+            blockers=blockers,
+            missing_contract_refs=missing_contract_refs,
+            rejected_candidate_refs=rejected_candidate_refs,
+            recommended_owner=recommended_owner,
+            safe_response_action=safe_response_action,
+        )
+        gap_ref = stable_ref("gap", _gap_material_from_fields(fields))
+        return GapReceipt._from_checked(gap_ref, fields)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "gap_ref": self.gap_ref,
-            "kind": self.kind.value,
-            "status": self.status,
-            "source_refs": list(self.source_refs),
-            "blockers": list(self.blockers),
-            "missing_contract_refs": list(self.missing_contract_refs),
-            "rejected_candidate_refs": list(self.rejected_candidate_refs),
-            "recommended_owner": self.recommended_owner.value,
-            "safe_response_action": self.safe_response_action,
+            **_gap_material(
+                kind=self.kind,
+                status=self.status,
+                source_refs=self.source_refs,
+                blockers=self.blockers,
+                missing_contract_refs=self.missing_contract_refs,
+                rejected_candidate_refs=self.rejected_candidate_refs,
+                recommended_owner=self.recommended_owner,
+                safe_response_action=self.safe_response_action,
+            ),
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GapReceipt":
+        if cls is not GapReceipt:
+            raise TypeError("GapReceipt factories reject subclasses")
+        if type(data) is not dict:
+            raise TypeError("GapReceipt payload must be an exact dict")
+        expected_fields = frozenset(
+            {
+                "abi_version", "gap_ref", "kind", "status", "source_refs",
+                "blockers", "missing_contract_refs", "rejected_candidate_refs",
+                "recommended_owner", "safe_response_action",
+            }
+        )
+        if len(data) != len(expected_fields):
+            raise ValueError("GapReceipt payload has wrong field count")
+        if any(type(key) is not str for key in data):
+            raise TypeError("GapReceipt field names must be exact strings")
+        actual_fields = frozenset(data)
+        if actual_fields != expected_fields:
+            raise ValueError("GapReceipt fields mismatch")
+        if type(data["abi_version"]) is not int or data["abi_version"] != GAP_RECEIPT_ABI_VERSION:
+            raise ValueError(f"abi_version must be exactly {GAP_RECEIPT_ABI_VERSION}")
+        gap_ref = _exact_text(data["gap_ref"], "gap_ref")
+        kind_name = _exact_text(data["kind"], "kind")
+        owner_name = _exact_text(data["recommended_owner"], "recommended_owner")
+        try:
+            kind = GapKind(kind_name)
+            recommended_owner = RepairOwner(owner_name)
+        except ValueError as exc:
+            raise ValueError("GapReceipt contains an unknown closed enum value") from exc
+        receipt = cls.create(
+            kind=kind,
+            status=_exact_text(data["status"], "status"),
+            source_refs=_wire_rows(data["source_refs"], "source_refs"),
+            blockers=_wire_rows(data["blockers"], "blockers"),
+            missing_contract_refs=_wire_rows(
+                data["missing_contract_refs"], "missing_contract_refs"
+            ),
+            rejected_candidate_refs=_wire_rows(
+                data["rejected_candidate_refs"], "rejected_candidate_refs"
+            ),
+            recommended_owner=recommended_owner,
+            safe_response_action=_exact_text(
+                data["safe_response_action"], "safe_response_action"
+            ),
+        )
+        if receipt.gap_ref != gap_ref:
+            raise ValueError("gap_ref mismatch")
+        if receipt.as_dict() != data:
+            raise ValueError("non-canonical GapReceipt encoding")
+        return receipt
+
+
+def _gap_material_from_fields(
+    fields: tuple[
+        GapKind,
+        str,
+        tuple[str, ...],
+        tuple[str, ...],
+        tuple[str, ...],
+        tuple[str, ...],
+        RepairOwner,
+        str,
+    ],
+) -> dict[str, Any]:
+    return _gap_material(
+        kind=fields[0],
+        status=fields[1],
+        source_refs=fields[2],
+        blockers=fields[3],
+        missing_contract_refs=fields[4],
+        rejected_candidate_refs=fields[5],
+        recommended_owner=fields[6],
+        safe_response_action=fields[7],
+    )
 
 # ---------------------------------------------------------------------------
 # Classifier
 # ---------------------------------------------------------------------------
-
-
-def _gap_ref(exc: GapException, kind: GapKind) -> str:
-    """Deterministic gap ref from the exception's structured fields."""
-    payload: dict[str, Any] = {
-        "type": type(exc).__name__,
-        "kind": kind.value,
-        "fields": _exc_fields(exc),
-    }
-    return stable_ref("gap", payload)
-
-
-def _exc_fields(exc: GapException) -> dict[str, Any]:
-    """Extract structured fields from a typed exception (not its message)."""
-    if isinstance(exc, MissingOwner):
-        return {"owner_name": exc.owner_name}
-    if isinstance(exc, VerificationFailure):
-        return {"code": exc.code, "cycle_ref": exc.cycle_ref}
-    if isinstance(exc, CoverageGap):
-        return {"span_ref": exc.span_ref, "reason": exc.reason}
-    if isinstance(exc, EffectDenied):
-        return {"effect_ref": exc.effect_ref, "reason": exc.reason}
-    if isinstance(exc, RealizationFailure):
-        return {"response_ref": exc.response_ref, "reason": exc.reason}
-    if isinstance(exc, BudgetExhausted):
-        return {"budget_name": exc.budget_name, "limit": exc.limit}
-    if isinstance(exc, ResourceUnavailable):
-        return {"resource_ref": exc.resource_ref, "reason": exc.reason}
-    if isinstance(exc, PermissionDenied):
-        return {"capability_ref": exc.capability_ref, "participant_ref": exc.participant_ref}
-    if isinstance(exc, SemanticConflict):
-        return {"graph_ref": exc.graph_ref, "reason": exc.reason}
-    if isinstance(exc, EvidenceGap):
-        return {"claim_ref": exc.claim_ref, "reason": exc.reason}
-    if isinstance(exc, ReferenceAmbiguity):
-        return {"ref_ref": exc.ref_ref, "candidate_refs": list(exc.candidate_refs)}
-    if isinstance(exc, AbsentIdentity):
-        return {"identity_ref": exc.identity_ref, "frame_ref": exc.frame_ref}
-    if isinstance(exc, ProposalGap):
-        return {"cycle_ref": exc.cycle_ref, "reason": exc.reason}
-    if isinstance(exc, InferenceBound):
-        return {"query_ref": exc.query_ref, "bound_name": exc.bound_name}
-    if isinstance(exc, StateGap):
-        return {"entity_ref": exc.entity_ref, "dimension_ref": exc.dimension_ref}
-    if isinstance(exc, MissingTransition):
-        return {"from_state": exc.from_state, "to_state": exc.to_state}
-    if isinstance(exc, TransitionBoundExhausted):
-        return {"transition_ref": exc.transition_ref, "bound": exc.bound}
-    if isinstance(exc, LearningGap):
-        return {"obligation_ref": exc.obligation_ref, "reason": exc.reason}
-    if isinstance(exc, AdapterFailure):
-        return {"adapter_ref": exc.adapter_ref, "reason": exc.reason}
-    if isinstance(exc, StorageFailure):
-        return {"store_ref": exc.store_ref, "reason": exc.reason}
-    # Unknown typed exception — fall back to type name only.
-    return {"type": type(exc).__name__}
 
 
 class GapClassifier:
@@ -473,10 +673,19 @@ class GapClassifier:
             blockers=(f"unexpected result: {type(exc).__name__}",),
             recommended_owner=RepairOwner.RUNTIME,
             safe_response_action="activation_failure",
-            ref_payload={"type": type(exc).__name__},
         )
 
     def _classify_exception(self, exc: BaseException) -> GapReceipt:
+        if isinstance(exc, LaterOwnerNotAdmitted):
+            return self._make_gap(
+                GapKind.IMPLEMENTATION,
+                status="later_owner_not_admitted",
+                source_refs=(exc.verified_meaning_ref,),
+                blockers=("later_owner_not_admitted",),
+                missing_contract_refs=(exc.contract_ref,),
+                recommended_owner=RepairOwner.RUNTIME,
+                safe_response_action="stop_without_surface",
+            )
         if isinstance(exc, MissingOwner):
             return self._make_gap(
                 GapKind.IMPLEMENTATION,
@@ -485,7 +694,6 @@ class GapClassifier:
                 blockers=(f"missing owner: {exc.owner_name}",),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="activation_failure",
-                ref_payload={"type": "MissingOwner", "owner_name": exc.owner_name},
             )
         if isinstance(exc, VerificationFailure):
             return self._make_gap(
@@ -495,7 +703,6 @@ class GapClassifier:
                 blockers=(f"rejection: {exc.code}",),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="reject_candidate",
-                ref_payload={"type": "VerificationFailure", "code": exc.code, "cycle_ref": exc.cycle_ref},
             )
         if isinstance(exc, CoverageGap):
             return self._make_gap(
@@ -505,7 +712,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.DATA,
                 safe_response_action="request_designation",
-                ref_payload={"type": "CoverageGap", "span_ref": exc.span_ref},
             )
         if isinstance(exc, EffectDenied):
             return self._make_gap(
@@ -515,7 +721,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.ADAPTER,
                 safe_response_action="hold_effect",
-                ref_payload={"type": "EffectDenied", "effect_ref": exc.effect_ref},
             )
         if isinstance(exc, RealizationFailure):
             return self._make_gap(
@@ -525,7 +730,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.TRAINING,
                 safe_response_action="hold_response",
-                ref_payload={"type": "RealizationFailure", "response_ref": exc.response_ref},
             )
         if isinstance(exc, BudgetExhausted):
             return self._make_gap(
@@ -535,7 +739,6 @@ class GapClassifier:
                 blockers=(f"budget exhausted: {exc.budget_name}={exc.limit}",),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="bound_cycle",
-                ref_payload={"type": "BudgetExhausted", "budget_name": exc.budget_name, "limit": exc.limit},
             )
         if isinstance(exc, ResourceUnavailable):
             return self._make_gap(
@@ -545,7 +748,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.DATA,
                 safe_response_action="retry_or_degrade",
-                ref_payload={"type": "ResourceUnavailable", "resource_ref": exc.resource_ref},
             )
         if isinstance(exc, PermissionDenied):
             return self._make_gap(
@@ -555,7 +757,6 @@ class GapClassifier:
                 blockers=(f"denied for {exc.participant_ref}",),
                 recommended_owner=RepairOwner.POLICY,
                 safe_response_action="deny_operation",
-                ref_payload={"type": "PermissionDenied", "capability_ref": exc.capability_ref},
             )
         if isinstance(exc, SemanticConflict):
             return self._make_gap(
@@ -565,7 +766,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.AUTHORITY,
                 safe_response_action="request_authority_review",
-                ref_payload={"type": "SemanticConflict", "graph_ref": exc.graph_ref},
             )
         # -- New gap kinds --------------------------------------------------
         if isinstance(exc, EvidenceGap):
@@ -576,17 +776,16 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.DATA,
                 safe_response_action="request_evidence",
-                ref_payload={"type": "EvidenceGap", "claim_ref": exc.claim_ref},
             )
         if isinstance(exc, ReferenceAmbiguity):
             return self._make_gap(
                 GapKind.REFERENCE,
                 status="reference_ambiguous",
                 source_refs=(exc.ref_ref,),
-                blockers=(f"candidates: {', '.join(exc.candidate_refs)}",),
+                blockers=("reference_ambiguous",),
+                rejected_candidate_refs=exc.candidate_refs,
                 recommended_owner=RepairOwner.TRAINING,
                 safe_response_action="request_reference_resolution",
-                ref_payload={"type": "ReferenceAmbiguity", "ref_ref": exc.ref_ref},
             )
         if isinstance(exc, AbsentIdentity):
             return self._make_gap(
@@ -596,7 +795,6 @@ class GapClassifier:
                 blockers=(f"frame absent: {exc.frame_ref}",),
                 recommended_owner=RepairOwner.AUTHORITY,
                 safe_response_action="request_identity",
-                ref_payload={"type": "AbsentIdentity", "identity_ref": exc.identity_ref},
             )
         if isinstance(exc, ProposalGap):
             return self._make_gap(
@@ -606,7 +804,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.TRAINING,
                 safe_response_action="request_proposal_review",
-                ref_payload={"type": "ProposalGap", "cycle_ref": exc.cycle_ref},
             )
         if isinstance(exc, InferenceBound):
             return self._make_gap(
@@ -616,7 +813,6 @@ class GapClassifier:
                 blockers=(f"bound: {exc.bound_name}",),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="bound_inference",
-                ref_payload={"type": "InferenceBound", "query_ref": exc.query_ref},
             )
         if isinstance(exc, StateGap):
             return self._make_gap(
@@ -626,7 +822,6 @@ class GapClassifier:
                 blockers=(f"dimension missing: {exc.dimension_ref}",),
                 recommended_owner=RepairOwner.DATA,
                 safe_response_action="request_state_evidence",
-                ref_payload={"type": "StateGap", "entity_ref": exc.entity_ref},
             )
         if isinstance(exc, MissingTransition):
             return self._make_gap(
@@ -636,7 +831,6 @@ class GapClassifier:
                 blockers=(f"no transition to {exc.to_state}",),
                 recommended_owner=RepairOwner.AUTHORITY,
                 safe_response_action="request_transition_definition",
-                ref_payload={"type": "MissingTransition", "from_state": exc.from_state, "to_state": exc.to_state},
             )
         if isinstance(exc, TransitionBoundExhausted):
             return self._make_gap(
@@ -646,7 +840,6 @@ class GapClassifier:
                 blockers=(f"proof bound exhausted: {exc.bound}",),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="bound_transition",
-                ref_payload={"type": "TransitionBoundExhausted", "transition_ref": exc.transition_ref},
             )
         if isinstance(exc, LearningGap):
             return self._make_gap(
@@ -656,7 +849,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.POLICY,
                 safe_response_action="request_learning_review",
-                ref_payload={"type": "LearningGap", "obligation_ref": exc.obligation_ref},
             )
         if isinstance(exc, AdapterFailure):
             return self._make_gap(
@@ -666,7 +858,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.ADAPTER,
                 safe_response_action="retry_adapter",
-                ref_payload={"type": "AdapterFailure", "adapter_ref": exc.adapter_ref},
             )
         if isinstance(exc, StorageFailure):
             return self._make_gap(
@@ -676,7 +867,6 @@ class GapClassifier:
                 blockers=(exc.reason,),
                 recommended_owner=RepairOwner.RUNTIME,
                 safe_response_action="retry_storage",
-                ref_payload={"type": "StorageFailure", "store_ref": exc.store_ref},
             )
         # Unknown exception — implementation gap, never generic clarification.
         return self._make_gap(
@@ -686,7 +876,6 @@ class GapClassifier:
             blockers=(f"unhandled exception: {type(exc).__name__}",),
             recommended_owner=RepairOwner.RUNTIME,
             safe_response_action="activation_failure",
-            ref_payload={"type": type(exc).__name__},
         )
 
     @staticmethod
@@ -696,19 +885,18 @@ class GapClassifier:
         status: str,
         source_refs: tuple[str, ...],
         blockers: tuple[str, ...],
+        missing_contract_refs: tuple[str, ...] = (),
+        rejected_candidate_refs: tuple[str, ...] = (),
         recommended_owner: RepairOwner,
         safe_response_action: str,
-        ref_payload: Mapping[str, Any],
     ) -> GapReceipt:
-        gap_ref = stable_ref("gap", {"kind": kind.value, **dict(ref_payload)})
-        return GapReceipt(
-            gap_ref=gap_ref,
+        return GapReceipt.create(
             kind=kind,
             status=status,
             source_refs=source_refs,
             blockers=blockers,
-            missing_contract_refs=(),
-            rejected_candidate_refs=(),
+            missing_contract_refs=missing_contract_refs,
+            rejected_candidate_refs=rejected_candidate_refs,
             recommended_owner=recommended_owner,
             safe_response_action=safe_response_action,
         )

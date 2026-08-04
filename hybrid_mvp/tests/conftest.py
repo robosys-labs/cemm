@@ -1,17 +1,33 @@
+import importlib.util
 import json
+from dataclasses import dataclass as _fixture_dataclass
 from pathlib import Path
+import sys
 
 import pytest
 
 from cemm_authoritative_hybrid.persistence import (
     open_stores,
     memory_stores,
-    SemanticStores,
     Fact,
 )
-from cemm_authoritative_hybrid.canonical import stable
 
 ROOT = Path(__file__).parents[1]
+
+def _load_legacy_test_support(module_name: str) -> None:
+    """Expose retired fixtures only while collecting old test modules."""
+
+    path = Path(__file__).with_name(f"{module_name}.py")
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"{module_name} test support is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+
+_load_legacy_test_support("legacy_propositions")
+_load_legacy_test_support("legacy_runtime_fixtures")
 
 AUTHORITY_GENERATION = "authority:generation-1"
 
@@ -32,12 +48,16 @@ def store_path(tmp_path):
 @pytest.fixture
 def stores_factory():
     """Callable that takes a path and returns a SQLite ``SemanticStores``."""
-    def _factory(path, *, authority_generation=AUTHORITY_GENERATION, model_identity=None):
+
+    def _factory(
+        path, *, authority_generation=AUTHORITY_GENERATION, model_identity=None
+    ):
         return open_stores(
             path,
             authority_generation=authority_generation,
             model_identity=model_identity,
         )
+
     return _factory
 
 
@@ -60,7 +80,16 @@ def memory_stores_fixture():
 @pytest.fixture
 def fact_factory():
     """Callable that takes a key string and returns a ``Fact``."""
-    def _factory(key, *, operator="op:relation", stance="support", confidence=1.0, derived=False, proof=None):
+
+    def _factory(
+        key,
+        *,
+        operator="op:relation",
+        stance="support",
+        confidence=1.0,
+        derived=False,
+        proof=None,
+    ):
         return Fact(
             fact_ref=f"fact:{key}",
             operator=operator,
@@ -70,17 +99,20 @@ def fact_factory():
             derived=derived,
             proof=proof or {"source": "test"},
         )
+
     return _factory
 
 
 @pytest.fixture
 def effect_factory():
     """Callable that takes a key string and returns an effect record dict."""
+
     def _factory(key, *, payload=None):
         return {
             "effect_key": f"effect:{key}",
             "payload": payload or {"action": "noop", "key": key},
         }
+
     return _factory
 
 
@@ -173,7 +205,11 @@ def authority_factory(tmp_path):
 
         if designation_target:
             kernel["designations"].append(
-                {"surface": "missing_thing", "target": designation_target, "language": "en"}
+                {
+                    "surface": "missing_thing",
+                    "target": designation_target,
+                    "language": "en",
+                }
             )
 
         if duplicate_atom:
@@ -187,9 +223,7 @@ def authority_factory(tmp_path):
         owners = []
         for name, data in [("kernel", kernel), ("conversation", conversation)]:
             p = auth_dir / f"{name}.json"
-            p.write_text(
-                json.dumps(data, sort_keys=True, indent=2), encoding="utf-8"
-            )
+            p.write_text(json.dumps(data, sort_keys=True, indent=2), encoding="utf-8")
             sha = sha256_governed_text(p)
             if corrupt_hash and name == "kernel":
                 sha = "0" * 64
@@ -222,7 +256,9 @@ def linked_authority():
 @pytest.fixture
 def form_pack():
     """The English forms.json language pack as a mapping."""
-    with open(ROOT / "data" / "languages" / "en" / "forms.json", encoding="utf-8") as fh:
+    with open(
+        ROOT / "data" / "languages" / "en" / "forms.json", encoding="utf-8"
+    ) as fh:
         return json.load(fh)
 
 
@@ -263,7 +299,9 @@ def designation_store():
             self._by_surface: dict[tuple[str, str], list[str]] = {}
             self._by_target: dict[tuple[str, str], list[str]] = {}
 
-        def commit_reviewed(self, surface: str, target: str, language: str = "en") -> None:
+        def commit_reviewed(
+            self, surface: str, target: str, language: str = "en"
+        ) -> None:
             key = (surface, language)
             self._by_surface.setdefault(key, []).append(target)
             self._by_target.setdefault((target, language), []).append(surface)
@@ -297,7 +335,7 @@ def door_sensor_evidence():
     """An EvidenceItem from a sensor adapter pinning entity:door."""
     from cemm_authoritative_hybrid.forms import EvidenceItem
 
-    return EvidenceItem(
+    return EvidenceItem.create(
         source="sensor",
         content={"target_ref": "entity:door", "adapter_ref": "adapter:door_sensor"},
         source_ref="sensor:door-0",
@@ -311,17 +349,98 @@ def door_sensor_evidence():
 # ---------------------------------------------------------------------------
 
 
+@_fixture_dataclass(frozen=True)
+class _LegacyPhaseReceipt:
+    cycle_ref: str
+    phase: str
+    input_refs: tuple[str, ...]
+    output_refs: tuple[str, ...]
+    revision_pin: object
+    budget_use: dict[str, int]
+    status: str
+    rejection_codes: tuple[str, ...] = ()
+    duration_ns: int | None = None
+
+    def as_dict(self):
+        return {
+            "cycle_ref": self.cycle_ref,
+            "phase": self.phase,
+            "input_refs": list(self.input_refs),
+            "output_refs": list(self.output_refs),
+            "revision_pin": self.revision_pin.as_dict(),
+            "budget_use": dict(self.budget_use),
+            "status": self.status,
+            "rejection_codes": list(self.rejection_codes),
+            "duration_ns": self.duration_ns,
+        }
+
+
+@_fixture_dataclass(frozen=True)
+class _KernelCycleResult:
+    cycle_ref: str
+    status: object
+    phase_output_refs: dict[object, tuple[str, ...]]
+    gap_receipt: object | None
+    trace: tuple[_LegacyPhaseReceipt, ...]
+    final_revision_pin: object
+
+    def as_dict(self):
+        return {
+            "cycle_ref": self.cycle_ref,
+            "status": self.status.value,
+            "phase_output_refs": {
+                phase.value: list(refs)
+                for phase, refs in self.phase_output_refs.items()
+            },
+            "gap_receipt": None,
+            "trace": [receipt.as_dict() for receipt in self.trace],
+            "final_revision_pin": self.final_revision_pin.as_dict(),
+            "effect_receipt": None,
+        }
+
+
+class _FixtureCycleRunner:
+    def run(self, *, trace=False):
+        from cemm_authoritative_hybrid.cycle import CycleStatus, SemanticPhase
+
+        stores = memory_stores(authority_generation="authority:generation-test")
+        try:
+            pin = stores.revision_pin()
+            cycle_ref = "cycle:fixture"
+            outputs = {
+                phase: (f"artifact:{phase.value.lower()}",)
+                for phase in SemanticPhase
+            }
+            rows = (
+                tuple(
+                    _LegacyPhaseReceipt(
+                        cycle_ref=cycle_ref,
+                        phase=phase.value,
+                        input_refs=(),
+                        output_refs=outputs[phase],
+                        revision_pin=pin,
+                        budget_use={"tokens": 1},
+                        status="ok",
+                    )
+                    for phase in SemanticPhase
+                )
+                if trace
+                else ()
+            )
+            return _KernelCycleResult(
+                cycle_ref=cycle_ref,
+                status=CycleStatus.RESOLVED,
+                phase_output_refs=outputs,
+                gap_receipt=None,
+                trace=rows,
+                final_revision_pin=pin,
+            )
+        finally:
+            stores.close()
+
+
 @pytest.fixture
 def cycle_fixture():
-    """A minimal cycle runner that produces a six-phase KernelCycleResult.
-
-    This is a test fixture only; it does not run the full semantic runtime. It
-    produces a deterministic ``KernelCycleResult`` with all six named phases in
-    the trace (when ``trace=True``), status ``resolved`` and a valid
-    ``RevisionPin`` sourced from an in-memory store.
-    """
-    from cemm_authoritative_hybrid.cycle import _FixtureCycleRunner
-
     return _FixtureCycleRunner()
 
 
@@ -347,7 +466,7 @@ def verified_observation_program():
     This is a typed observation program that the fixture proposal owner returns
     unchanged. It uses a single ``op:event`` application in OBSERVE mode.
     """
-    from cemm_authoritative_hybrid.propositions import (
+    from legacy_propositions import (
         Application,
         PropositionGraph,
         SemanticSwitchProgram,
@@ -385,7 +504,7 @@ def runtime_factory(memory_stores_fixture, linked_authority):
 
     def _factory(*, proposal_fixture=None):
         if proposal_fixture is None:
-            from cemm_authoritative_hybrid.propositions import (
+            from legacy_propositions import (
                 Application,
                 PropositionGraph,
                 SemanticSwitchProgram,
@@ -438,50 +557,29 @@ def affordance_index(linked_authority):
 
 @pytest.fixture
 def runtime(linked_authority, memory_stores_fixture):
-    """A HybridRuntime with the development profile and an orient method."""
+    """A bounded orientation harness backed by the canonical projector.
+
+    Orientation projection tests require only the projector and its exact
+    dependencies. Keeping this fixture independent of ``HybridRuntime``
+    prevents retired six-phase fixture owners from becoming an alternate
+    production runtime path.
+    """
     from cemm_authoritative_hybrid.config import RuntimeConfig
-    from cemm_authoritative_hybrid.runtime import (
-        FixtureEffectOwner,
-        FixtureEvaluationOwner,
-        FixtureProposalOwner,
-        FixtureRealizationOwner,
-        FixtureVerificationOwner,
-        HybridRuntime,
-    )
-    from cemm_authoritative_hybrid.propositions import (
-        Application,
-        PropositionGraph,
-        SemanticSwitchProgram,
-    )
+    from cemm_authoritative_hybrid.cycle import OrientationProjector
 
-    app = Application.create(
-        "op:event",
-        {
-            "role:event": "event-instance:default",
-            "role:type": "event:observation",
-            "role:actor": "participant:user",
-        },
-    )
-    graph = PropositionGraph.create([app], app.application_ref)
-    proposal_fixture = SemanticSwitchProgram.create(
-        "OBSERVE", "event:context:default", graph
-    )
+    class _OrientationHarness:
+        def __init__(self):
+            self._authority = linked_authority
+            self._stores = memory_stores_fixture
+            self._config = RuntimeConfig.release()
+            self._projector = OrientationProjector(
+                self._authority, self._stores, self._config
+            )
 
-    owners = {
-        "proposal": FixtureProposalOwner(proposal_fixture),
-        "verification": FixtureVerificationOwner(),
-        "evaluation": FixtureEvaluationOwner(),
-        "effect": FixtureEffectOwner(memory_stores_fixture),
-        "realization": FixtureRealizationOwner(),
-    }
-    return HybridRuntime(
-        config=RuntimeConfig.release(),
-        authority=linked_authority,
-        stores=memory_stores_fixture,
-        owners=owners,
-        profile="development",
-    )
+        def orient(self, session_ref, source_text):
+            return self._projector.project(session_ref, source_text)
 
+    return _OrientationHarness()
 
 # ---------------------------------------------------------------------------
 # Recursive Semantic Switch Program and coverage fixtures
@@ -668,9 +766,7 @@ def valid_program(form_resolver, linked_authority):
     exact verifier's revision check passes.
     """
     lattice = form_resolver.resolve("what is your name?")
-    pin = _default_revision_pin(
-        authority_generation=linked_authority.generation
-    )
+    pin = _default_revision_pin(authority_generation=linked_authority.generation)
     return _build_program_from_lattice(lattice, revision_pin=pin)
 
 
@@ -925,11 +1021,8 @@ def canonical_round_trip(tmp_path):
 def orient(linked_authority, memory_stores_fixture):
     """Callable that takes a text string and returns an Orientation.
 
-    Uses the :class:`OrientationProjector` to build the orientation, then sets
-    ``source_text`` so the :class:`BootstrapProposer` can resolve the form
-    lattice.
+    Uses :class:`OrientationProjector` to build the source-bound orientation.
     """
-    from dataclasses import replace
     from cemm_authoritative_hybrid.cycle import (
         OrientationProjector,
         SemanticMode,
@@ -946,9 +1039,7 @@ def orient(linked_authority, memory_stores_fixture):
     )
 
     def _orient(text, mode=SemanticMode.QUERY):
-        orientation = projector.project("session:bootstrap", text, mode=mode)
-        orientation = replace(orientation, source_text=text)
-        return orientation
+        return projector.project("session:bootstrap", text, mode=mode)
 
     return _orient
 
@@ -1014,7 +1105,6 @@ def trained_proposer(release_factory):
 @pytest.fixture
 def orientations(linked_authority, form_resolver):
     """A list of orientations for testing the neural proposer."""
-    from dataclasses import replace
     from cemm_authoritative_hybrid.cycle import (
         OrientationProjector,
         SemanticMode,
@@ -1042,8 +1132,9 @@ def orientations(linked_authority, form_resolver):
     ]
     orientations = []
     for text in texts:
-        orientation = projector.project("session:bootstrap", text, mode=SemanticMode.QUERY)
-        orientation = replace(orientation, source_text=text)
+        orientation = projector.project(
+            "session:bootstrap", text, mode=SemanticMode.QUERY
+        )
         orientations.append(orientation)
     stores.close()
     return orientations
@@ -1057,7 +1148,6 @@ def alpha_equivalent_orientations(linked_authority, form_resolver):
     participant refs, ensuring the structural features are identical while
     the ref names differ.
     """
-    from dataclasses import replace
     from cemm_authoritative_hybrid.cycle import (
         OrientationProjector,
         SemanticMode,
@@ -1073,13 +1163,11 @@ def alpha_equivalent_orientations(linked_authority, form_resolver):
     )
     text = "what is your name?"
     orientation1 = projector.project("session:bootstrap", text, mode=SemanticMode.QUERY)
-    orientation1 = replace(orientation1, source_text=text)
 
     # Create an alpha-equivalent orientation with different session ref
     # but the SAME surface text — structural features depend only on form
     # evidence, not session/turn ref names.
     orientation2 = projector.project("session:alt", text, mode=SemanticMode.QUERY)
-    orientation2 = replace(orientation2, source_text=text)
 
     stores.close()
     return (orientation1, orientation2)
@@ -1089,4 +1177,3 @@ def alpha_equivalent_orientations(linked_authority, form_resolver):
 def structural_holdout(orientations):
     """A set of test surfaces for ablation testing."""
     return orientations
-

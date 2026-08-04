@@ -25,7 +25,7 @@ from typing import Any, Literal, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
 from .capabilities import CapabilityContext, CapabilityEngine, CapabilityResult
-from .persistence import CommitReceipt, SemanticStores
+from .persistence import CommitReceipt, RevisionPin, SemanticStores
 
 __all__ = [
     "EffectPlan",
@@ -60,6 +60,7 @@ class EffectPlan:
         transition_ref: the transition to apply (if any).
         expected_world_revision: the world revision expected at commit time.
         requirement_proof_refs: proof refs from capability/verification.
+        revision_pin: exact source revision lineage for authorization.
     """
 
     effect_ref: str
@@ -69,6 +70,15 @@ class EffectPlan:
     transition_ref: str
     expected_world_revision: int
     requirement_proof_refs: tuple[str, ...]
+    revision_pin: RevisionPin
+
+    def __post_init__(self) -> None:
+        if type(self.revision_pin) is not RevisionPin:
+            raise TypeError("revision_pin must be RevisionPin")
+        if type(self.expected_world_revision) is not int:
+            raise TypeError("expected_world_revision must be exact int")
+        if self.expected_world_revision != self.revision_pin.world_revision:
+            raise ValueError("expected_world_revision must match revision_pin")
 
 
 @dataclass(frozen=True)
@@ -227,6 +237,13 @@ class EffectVerifier:
         context = self._default_context
         if context is None:
             context = self._context_from_plan(plan)
+        elif context.revisions != plan.revision_pin:
+            return AuthorizationDecision(
+                authorized=False,
+                status="unknown",
+                proof_refs=(),
+                reason="capability context revision pin mismatch",
+            )
 
         # Derive the event type from the transition ref or program ref.
         event_type_ref = context.event_type_ref
@@ -264,8 +281,6 @@ class EffectVerifier:
     @staticmethod
     def _context_from_plan(plan: EffectPlan) -> CapabilityContext:
         """Build a minimal capability context from a plan (no prerequisites)."""
-        from .persistence import RevisionPin
-
         return CapabilityContext(
             actor_ref=plan.actor_ref,
             event_type_ref="",
@@ -273,14 +288,7 @@ class EffectVerifier:
             resources=(),
             permissions=(),
             adapters=(),
-            revisions=RevisionPin(
-                authority_generation="",
-                world_revision=plan.expected_world_revision,
-                session_revision=0,
-                episode_revision=0,
-                effect_revision=0,
-                model_identity=None,
-            ),
+            revisions=plan.revision_pin,
         )
 
 

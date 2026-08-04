@@ -7,20 +7,42 @@ canonical round-trip of the completed program.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
 from cemm_authoritative_hybrid.programs import (
     SWITCH_ACTION_TYPES,
     ProgramAction,
-    SourceAssignment,
     SemanticSwitchProgram,
-    ScopeFrame,
-    TransitionProposal,
 )
 
 PERSISTENT_OPERATORS = frozenset(
     {"op:designation", "op:type", "op:relation", "op:state", "op:event"}
 )
+
+
+@dataclass(frozen=True)
+class _LegacyScopeFrameFixture:
+    scope_ref: str
+    kind: str
+    target_application_ref: str
+    source_unit_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _LegacyTransitionProposalFixture:
+    transition_ref: str
+    event_type_ref: str
+    subject_ref: str
+    target_state_ref: str
+    dimension_ref: str
+    preconditions: tuple[str, ...]
+    source_unit_refs: tuple[str, ...]
+
+
+ScopeFrame = _LegacyScopeFrameFixture
+TransitionProposal = _LegacyTransitionProposalFixture
 
 
 # ---------------------------------------------------------------------------

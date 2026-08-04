@@ -22,6 +22,16 @@ from cemm_authoritative_hybrid.config import RuntimeConfig
 # ---------------------------------------------------------------------------
 
 
+def test_affordance_index_exposes_exact_authority_generation(
+    affordance_index: SemanticAffordanceIndex, linked_authority
+):
+    indexed_generation = linked_authority.generation
+    assert affordance_index.authority_generation == indexed_generation
+
+    linked_authority.generation = "authority:mutated-after-indexing"
+    assert affordance_index.authority_generation == indexed_generation
+
+
 def test_event_type_derives_event_affordances(affordance_index):
     profiles = affordance_index.for_target("event:greeting")
     assert len(profiles) >= 1
@@ -185,3 +195,10 @@ def test_frame_ref_is_set_for_reviewed_frames(affordance_index):
     profiles = affordance_index.for_target("event:greeting")
     has_frame = any(p.frame_ref is not None for p in profiles)
     assert has_frame
+
+__cemm_test_inventory__ = {'tests/test_affordances.py::test_affordance_index_exposes_exact_authority_generation': {'activation_phase': 'R1',
+                                                                                         'assertion_ref': 'assertion:r1-affordances-test-affordance-index-exposes-exact-authority-generation',
+                                                                                         'diagnostic_role': 'owner',
+                                                                                         'introduced_by_task': 'R1-Task-9',
+                                                                                         'owner_ref': 'runtime-path',
+                                                                                         'source_ast_sha256': '7a2a20412dd3a76532ac4ac8f6eaabcfa2cf77e92f87e6a410cc5d1a25320ae6'}}

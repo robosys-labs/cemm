@@ -1,98 +1,50 @@
-"""CEMM Authoritative Hybrid MVP — lazily resolved public API.
-
-The package boundary stays lightweight so governance and validation tooling can
-import package metadata without initializing the semantic runtime. Public
-objects retain the same import locations and are cached after first access.
-"""
+"""CEMM Authoritative Hybrid MVP lazy public API."""
 
 from importlib import import_module
 
 
 _EXPORTS = {
     "ABIRegistry": (".config", "ABIRegistry"),
+    "CycleFinalizer": (".cycle", "CycleFinalizer"),
     "CycleResult": (".cycle", "CycleResult"),
     "CycleStatus": (".cycle", "CycleStatus"),
-    "EffectOwner": (".runtime", "EffectOwner"),
-    "EffectResult": (".runtime", "EffectResult"),
-    "EvaluationOwner": (".runtime", "EvaluationOwner"),
-    "EvaluationResult": (".runtime", "EvaluationResult"),
-    "FixtureEffectOwner": (".runtime", "FixtureEffectOwner"),
-    "FixtureEvaluationOwner": (".runtime", "FixtureEvaluationOwner"),
-    "FixtureProposalOwner": (".runtime", "FixtureProposalOwner"),
-    "FixtureRealizationOwner": (".runtime", "FixtureRealizationOwner"),
-    "FixtureVerificationOwner": (".runtime", "FixtureVerificationOwner"),
     "GapClassifier": (".gaps", "GapClassifier"),
     "GapReceipt": (".gaps", "GapReceipt"),
     "HybridRuntime": (".runtime", "HybridRuntime"),
-    "KernelCycleResult": (".cycle", "KernelCycleResult"),
     "MissingOwner": (".gaps", "MissingOwner"),
     "Orientation": (".cycle", "Orientation"),
+    "PhaseDisposition": (".cycle", "PhaseDisposition"),
     "PhaseReceipt": (".cycle", "PhaseReceipt"),
-    "ProposalOwner": (".runtime", "ProposalOwner"),
-    "ProposalResult": (".runtime", "ProposalResult"),
-    "RealizationOwner": (".runtime", "RealizationOwner"),
-    "RealizationResult": (".runtime", "RealizationResult"),
+    "ProposalOwner": (".proposal", "ProposalOwner"),
+    "ProposalResult": (".proposal", "ProposalResult"),
     "RevisionPin": (".persistence", "RevisionPin"),
     "RuntimeConfig": (".config", "RuntimeConfig"),
+    "RuntimeOrientationOwner": (".runtime", "RuntimeOrientationOwner"),
+    "SemanticExpression": (".expressions", "SemanticExpression"),
     "SemanticMode": (".cycle", "SemanticMode"),
     "SemanticPhase": (".cycle", "SemanticPhase"),
     "SemanticStores": (".persistence", "SemanticStores"),
-    "VerificationOwner": (".runtime", "VerificationOwner"),
-    "VerificationResult": (".runtime", "VerificationResult"),
+    "SemanticSwitchProgram": (".programs", "SemanticSwitchProgram"),
+    "VerificationBatch": (".verifier", "VerificationBatch"),
+    "VerifiedMeaning": (".expressions", "VerifiedMeaning"),
+    "load_runtime": (".bootstrap", "load_runtime"),
     "open_stores": (".persistence", "open_stores"),
 }
 
-__all__ = [
-    "ABIRegistry",
-    "CycleResult",
-    "CycleStatus",
-    "EffectOwner",
-    "EffectResult",
-    "EvaluationOwner",
-    "EvaluationResult",
-    "FixtureEffectOwner",
-    "FixtureEvaluationOwner",
-    "FixtureProposalOwner",
-    "FixtureRealizationOwner",
-    "FixtureVerificationOwner",
-    "GapClassifier",
-    "GapReceipt",
-    "HybridRuntime",
-    "KernelCycleResult",
-    "MissingOwner",
-    "Orientation",
-    "PhaseReceipt",
-    "ProposalOwner",
-    "ProposalResult",
-    "RealizationOwner",
-    "RealizationResult",
-    "RevisionPin",
-    "RuntimeConfig",
-    "SemanticMode",
-    "SemanticPhase",
-    "SemanticStores",
-    "VerificationOwner",
-    "VerificationResult",
-    "open_stores",
-]
+__all__ = sorted(_EXPORTS)
 
 
 def __getattr__(name: str) -> object:
-    """Resolve and cache one declared public export on first access."""
-
     try:
         module_name, attribute_name = _EXPORTS[name]
     except KeyError:
         raise AttributeError(
             f"module {__name__!r} has no attribute {name!r}"
         ) from None
-
     value = getattr(import_module(module_name, __name__), attribute_name)
     globals()[name] = value
     return value
 
 
 def __dir__() -> list[str]:
-    """Expose declared lazy exports without resolving them."""
-
     return sorted(set(globals()) | set(__all__))

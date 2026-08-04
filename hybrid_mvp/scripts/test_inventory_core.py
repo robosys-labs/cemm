@@ -1582,6 +1582,12 @@ def load_and_verify(
     for node_id, record in later_records.items():
         if node_id not in active_set:
             continue
+        # Owner and phase tiers diagnose only the work introduced by the
+        # requested phase. Prior-phase coverage remains in the active admission
+        # suite, so replaying it here would duplicate pytest execution at every
+        # later milestone.
+        if record.activation_phase != checked_phase:
+            continue
         if record.diagnostic_role == "owner":
             assert record.owner_ref is not None
             owner_groups.setdefault(record.owner_ref, []).append(node_id)

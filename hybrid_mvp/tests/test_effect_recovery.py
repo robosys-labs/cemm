@@ -118,10 +118,10 @@ class TimeoutAdapter:
 # ---------------------------------------------------------------------------
 
 
-def _revision_pin() -> RevisionPin:
+def _revision_pin(*, world_revision: int = 0) -> RevisionPin:
     return RevisionPin(
         authority_generation="authority:recovery-test-v1",
-        world_revision=0,
+        world_revision=world_revision,
         session_revision=0,
         episode_revision=0,
         effect_revision=0,
@@ -154,6 +154,7 @@ def _plan(
         transition_ref="transition:open_door",
         expected_world_revision=expected_world_revision,
         requirement_proof_refs=("proof:cap:open_door",),
+        revision_pin=_revision_pin(world_revision=expected_world_revision),
     )
 
 

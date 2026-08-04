@@ -44,23 +44,25 @@ def _make_orientation(mode="QUERY", focus_refs=("participant:system",)):
         effect_revision=0,
         model_identity=None,
     )
-    return Orientation(
+    return Orientation.create(
         session_ref="session:test",
         turn_ref="turn:test",
+        source_text="",
         mode=SemanticMode[mode] if isinstance(mode, str) else mode,
         participant_frame="participant:user",
         temporal_frame="now",
-        authority_generation="authority:generation-test",
-        world_revision=0,
-        session_revision=0,
-        episode_revision=0,
-        effect_revision=0,
-        model_identity=None,
+        participants=(),
+        active_turn_ref="turn:test",
+        event_refs=(),
         focus_refs=focus_refs,
         obligation_refs=(),
         capability_summary=(),
         permission_summary=(),
         budgets={"input_tokens": 64},
+        scanned_atom_count=0,
+        index_probes=(),
+        visited_refs=(),
+        revision_pin=pin,
     )
 
 

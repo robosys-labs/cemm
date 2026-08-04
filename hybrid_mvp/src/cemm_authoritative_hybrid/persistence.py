@@ -123,10 +123,16 @@ class RevisionPin:
             "model_identity",
         }
     )
+    _MAX_TEXT_LENGTH = 256
+    _MAX_REVISION = 2**63 - 1
 
     def __post_init__(self) -> None:
-        if not isinstance(self.authority_generation, str):
-            raise TypeError("authority_generation must be str")
+        if type(self.authority_generation) is not str:
+            raise TypeError("authority_generation must be exact str")
+        if not self.authority_generation:
+            raise ValueError("authority_generation must be nonempty")
+        if len(self.authority_generation) > self._MAX_TEXT_LENGTH:
+            raise ValueError("authority_generation exceeds 256 characters")
         for name in (
             "world_revision",
             "session_revision",
@@ -134,10 +140,17 @@ class RevisionPin:
             "effect_revision",
         ):
             value = getattr(self, name)
-            if isinstance(value, bool) or not isinstance(value, int):
-                raise TypeError(f"{name} must be int")
-        if self.model_identity is not None and not isinstance(self.model_identity, str):
-            raise TypeError("model_identity must be str or None")
+            if type(value) is not int:
+                raise TypeError(f"{name} must be exact int")
+            if value < 0 or value > self._MAX_REVISION:
+                raise ValueError(f"{name} must be between 0 and 2**63 - 1")
+        if self.model_identity is not None:
+            if type(self.model_identity) is not str:
+                raise TypeError("model_identity must be exact str or None")
+            if not self.model_identity:
+                raise ValueError("model_identity must be nonempty when present")
+            if len(self.model_identity) > self._MAX_TEXT_LENGTH:
+                raise ValueError("model_identity exceeds 256 characters")
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -150,9 +163,13 @@ class RevisionPin:
         }
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> "RevisionPin":
-        if not isinstance(value, Mapping):
-            raise TypeError("revision pin payload must be a mapping")
+    def from_dict(cls, value: dict[str, Any]) -> "RevisionPin":
+        if type(value) is not dict:
+            raise TypeError("revision pin payload must be an exact dict")
+        if len(value) != len(cls._FIELDS):
+            raise ValueError("revision pin payload must have exactly six fields")
+        if any(type(key) is not str for key in value):
+            raise TypeError("revision pin field names must be exact str")
         keys = frozenset(value)
         if keys != cls._FIELDS:
             missing = sorted(cls._FIELDS - keys)
