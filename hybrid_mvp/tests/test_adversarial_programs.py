@@ -591,6 +591,15 @@ def test_nested_application_cycle_rejected():
     declared by an ``instantiate_operator`` action, so
     ``SemanticSwitchProgram.create`` raises ``ValueError`` during action graph
     validation.
+
+    .. note:: This test currently verifies constructor-level rejection of
+       undeclared node references. Once the R2 compiler supports nested
+       applications (Task 5), this test should be enhanced to properly
+       construct the nested applications with ``instantiate_operator``
+       actions first, then add the cycle, so the verifier actually rejects
+       the cycle rather than the construction failing. Per R2 plan section
+       5.1.10: "Some adversarial cycle/depth tests use malformed fixture
+       mutations that do not construct the claimed graph."
     """
     context = _context()
     base = _program(context)
@@ -672,6 +681,14 @@ def test_depth_bound_exceeded_rejected():
 
     Adding many ``project_variable`` actions with fabricated variable slot
     refs causes the verifier to report ``unknown_variable_slot`` for each.
+
+    .. note:: This test currently uses fabricated variable slot refs that
+       don't exist in the context. Once the R2 compiler supports variable
+       projection (Task 5), this test should be enhanced to use real
+       variable slots and construct a graph that actually exceeds the
+       depth bound. Per R2 plan section 5.1.10: "Some adversarial
+       cycle/depth tests use malformed fixture mutations that do not
+       construct the claimed graph."
     """
     context = _context()
     base = _program(context)

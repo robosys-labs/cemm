@@ -47,11 +47,19 @@ def _proposal_for(program, context):
     )
 
 
-# Mutations that cannot produce a valid proposal/program pair and raise
-# ValueError either at ProposalResult.create or during verification.
-_VALUE_ERROR_MUTATIONS = frozenset({"scope_cycle", "stale_revision", "uncovered_unit"})
+# Mutations that produce malformed wire/ABI artifacts that cannot legally
+# cross the owner boundary — these raise ValueError at construction time.
+# Per R2 plan section 1.3: "Use constructor failure only for malformed
+# wire/ABI artifacts that cannot legally cross the owner boundary."
+#
+# scope_cycle: malformed bind_nested_application arguments (wrong arity)
+# stale_revision: revision pin mismatch makes the program a non-canonical wire artifact
+# uncovered_unit: source assignment mismatch makes the program a non-canonical wire artifact
+_CONSTRUCTOR_ERROR_MUTATIONS = frozenset({"scope_cycle", "stale_revision", "uncovered_unit"})
 
 # Mapping from mutation name to the expected verifier error code.
+# These mutations produce semantically invalid programs that pass
+# construction validation but must be rejected by the verifier.
 _ERROR_CODES = {
     "unknown_ref": "unknown_designation_slot",
     "wrong_kind": "unknown_contribution_slot",
@@ -119,11 +127,13 @@ def test_mutated_program_is_rejected(
     verifier, valid_program, proposal_context, mutation, mutate
 ):
     mutated = mutate(valid_program, mutation)
-    if mutation in _VALUE_ERROR_MUTATIONS:
+    if mutation in _CONSTRUCTOR_ERROR_MUTATIONS:
+        # Malformed wire/ABI artifact — constructor failure is the earliest owner
         with pytest.raises(ValueError):
             mutated_proposal = _proposal_for(mutated, proposal_context)
             verifier.verify_candidates(mutated_proposal, proposal_context)
         return
+    # Semantically invalid program — verifier must produce typed error
     batch = verifier.verify_candidates(
         _proposal_for(mutated, proposal_context), proposal_context
     )
@@ -150,11 +160,13 @@ def test_mutated_program_errors_are_typed(
     verifier, valid_program, proposal_context, mutation, mutate
 ):
     mutated = mutate(valid_program, mutation)
-    if mutation in _VALUE_ERROR_MUTATIONS:
+    if mutation in _CONSTRUCTOR_ERROR_MUTATIONS:
+        # Malformed wire/ABI artifact — constructor failure is the earliest owner
         with pytest.raises(ValueError):
             mutated_proposal = _proposal_for(mutated, proposal_context)
             verifier.verify_candidates(mutated_proposal, proposal_context)
         return
+    # Semantically invalid program — verifier must produce typed error
     batch = verifier.verify_candidates(
         _proposal_for(mutated, proposal_context), proposal_context
     )

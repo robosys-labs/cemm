@@ -64,7 +64,12 @@ def test_no_r2_test_asserts_only_class_absence() -> None:
 
 
 def test_no_unused_parametrized_surface_in_r2_tests() -> None:
-    """R2 semantic tests must use their parametrized surface arguments."""
+    """R2 semantic tests must use their parametrized surface arguments.
+
+    A parametrized test that declares a ``surface`` parameter but never
+    references it in the function body is vacuous — it runs the same
+    logic for every parameterized value.
+    """
     offenders: list[str] = []
     for py in _TESTS.glob("test_r2_*.py"):
         text = _read(py)
@@ -75,25 +80,26 @@ def test_no_unused_parametrized_surface_in_r2_tests() -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.FunctionDef):
                 continue
-            # Check for parametrize decorator with "surface"
-            has_surface_param = False
-            for dec in node.decorator_list:
-                if isinstance(dec, ast.Call):
-                    for kw in dec.keywords:
-                        if kw.arg == "params" and isinstance(kw.value, ast.Constant):
-                            # Check if any param is a string that looks like a surface
-                            pass
             # Check if "surface" is a parameter name
-            for arg in node.args.args:
-                if arg.arg == "surface":
-                    has_surface_param = True
+            has_surface_param = any(
+                arg.arg == "surface" for arg in node.args.args
+            )
             if not has_surface_param:
                 continue
-            # Check if "surface" appears in the function body
-            body_text = ast.get_source_segment(text, node)
-            if body_text and "surface" not in body_text.split("def ")[1]:
+            # Check if "surface" is referenced anywhere in the function body
+            # by looking for Name nodes with id="surface" or keyword/attribute
+            # access containing "surface"
+            body_uses_surface = False
+            for child in ast.walk(node):
+                if isinstance(child, ast.Name) and child.id == "surface":
+                    body_uses_surface = True
+                    break
+                if isinstance(child, ast.arg) and child.arg == "surface":
+                    # The parameter declaration itself doesn't count as usage
+                    continue
+            if not body_uses_surface:
                 offenders.append(
-                    f"{py.name}::{node.name}: 'surface' parameter is unused"
+                    f"{py.name}::{node.name}: 'surface' parameter is declared but never referenced"
                 )
     assert not offenders, "Unused parametrized surface arguments:\n" + "\n".join(
         offenders

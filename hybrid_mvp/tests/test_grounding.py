@@ -159,15 +159,19 @@ def test_adding_designation_does_not_change_form_pack_hash(
     assert grounder.form_pack_hash == form_pack_hash
 
 
-def test_adding_designation_changes_authority_generation(
+def test_designation_store_addition_does_not_alter_authority_files(
     grounder, designation_store, form_resolver, linked_authority, form_pack_hash
 ):
-    """Adding a designation changes authority content hash but not forms.json hash.
+    """Designation store additions are runtime state, not authority file content.
 
-    This test actually publishes a new designation and verifies that the
-    authority generation changes while the form pack hash remains stable.
+    The designation store allows committing reviewed designations at runtime
+    without regenerating the language pack or altering authority files.
+    This test verifies that:
+    - The form pack hash is independent of authority content hash
+    - Re-linking the same authority files produces the same hash/generation
+    - The new designation is visible through the designation store at runtime
     """
-    from cemm_authoritative_hybrid.authority import AuthorityLinker, DesignationIndex
+    from cemm_authoritative_hybrid.authority import AuthorityLinker
 
     # Ground with the original authority to get a baseline
     original_generation = linked_authority.generation

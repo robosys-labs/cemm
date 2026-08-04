@@ -70,9 +70,15 @@ def test_program_action_accepts_every_confirmed_type():
 # ---------------------------------------------------------------------------
 
 
-def test_program_uses_only_five_persistent_operators(program_factory):
+def test_program_uses_only_five_persistent_operators(program_factory, proposal_context):
+    """Operators are resolved from ApplicationFrameSlot.operator_ref, not argument spelling.
+
+    Per R2 plan section 5.1.6: the operator must be resolved from the context,
+    not guessed from argument spelling.
+    """
     program = program_factory("what is your name?")
-    assert _persistent_operators(program) <= PERSISTENT_OPERATORS
+    ops = _resolve_operators_from_context(program, proposal_context)
+    assert ops <= PERSISTENT_OPERATORS
 
 
 def test_program_with_no_operator_has_empty_persistent_operators():
@@ -103,7 +109,11 @@ def test_program_with_no_operator_has_empty_persistent_operators():
         source_assignments=(),
         revision_pin=_default_pin(),
     )
-    assert _persistent_operators(program) == frozenset()
+    # No instantiate_operator actions means no operators
+    ops = frozenset(
+        a for a in program.actions if a.action_type == "instantiate_operator"
+    )
+    assert len(ops) == 0
 
 
 def test_program_extracts_operators_from_instantiate_operator_actions():
@@ -328,11 +338,43 @@ def test_scope_frame_is_frozen_with_typed_kind():
     assert not hasattr(programs_mod, "ScopeFrame")
 
 
+def test_attach_scope_action_is_admitted_in_abi():
+    """attach_scope is a valid Program ABI 2 action type.
+
+    Per R2 plan section 5.1.7: scope tests must prove attach_scope
+    works, not just that retired classes are absent.
+    """
+    action = ProgramAction.create(
+        action_index=0,
+        action_type="attach_scope",
+        arguments=("scope:0", "scope_slot:0", "application:main"),
+        source_unit_refs=(),
+    )
+    assert action.action_type == "attach_scope"
+    assert action.arguments == ("scope:0", "scope_slot:0", "application:main")
+
+
 def test_transition_proposal_is_frozen():
     """TransitionProposal is retired in Program ABI 2; verify it is not exported."""
     import cemm_authoritative_hybrid.programs as programs_mod
 
     assert not hasattr(programs_mod, "TransitionProposal")
+
+
+def test_propose_transition_action_is_admitted_in_abi():
+    """propose_transition is a valid Program ABI 2 action type.
+
+    Per R2 plan section 5.1.7: transition tests must prove
+    propose_transition works, not just that retired classes are absent.
+    """
+    action = ProgramAction.create(
+        action_index=0,
+        action_type="propose_transition",
+        arguments=("transition_slot:0", "application:main"),
+        source_unit_refs=(),
+    )
+    assert action.action_type == "propose_transition"
+    assert action.arguments == ("transition_slot:0", "application:main")
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +396,13 @@ def _default_pin():
 
 
 def _persistent_operators(program: SemanticSwitchProgram) -> frozenset[str]:
-    """Extract operator refs carried by instantiate_operator actions."""
+    """Extract operator refs from instantiate_operator actions.
+
+    .. deprecated:: Operators must be resolved through
+       ApplicationFrameSlot.operator_ref from the context, not by
+       inspecting argument spelling. Use
+       :func:`_resolve_operators_from_context` instead.
+    """
     return frozenset(
         argument
         for action in program.actions
@@ -362,6 +410,27 @@ def _persistent_operators(program: SemanticSwitchProgram) -> frozenset[str]:
         for argument in action.arguments
         if argument.startswith("op:")
     )
+
+
+def _resolve_operators_from_context(
+    program: SemanticSwitchProgram, context: object
+) -> frozenset[str]:
+    """Resolve operator refs through ApplicationFrameSlot.operator_ref.
+
+    Per R2 plan section 5.1.6: Program ABI 2 instantiate_operator points
+    to an application frame; the operator must be resolved from the
+    context, not guessed from argument spelling.
+    """
+    operators: set[str] = set()
+    for action in program.actions:
+        if action.action_type != "instantiate_operator":
+            continue
+        # Arguments are (application_local_ref, application_frame_slot_ref)
+        _app_ref, frame_slot_ref = action.arguments
+        frame = context.frame(frame_slot_ref) if hasattr(context, "frame") else None
+        if frame is not None:
+            operators.add(frame.operator_ref)
+    return frozenset(operators)
 
 
 _VALID_ACTION_ARGUMENTS: dict[str, tuple[str, ...]] = {
