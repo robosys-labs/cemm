@@ -1,0 +1,1113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/expected_cycle_contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "contract_ref",
+    "scenario_ref",
+    "case_ref",
+    "surface_ref",
+    "context_ref",
+    "assertion_refs",
+    "outcome_kind",
+    "expected_expressions",
+    "expression_relation",
+    "normalized_assertions",
+    "expected_mode",
+    "situation_constraints",
+    "expected_decision",
+    "expected_effect",
+    "expected_response",
+    "expected_gap",
+    "expected_owner",
+    "authority_generation",
+    "abi_registry_ref",
+    "review_provenance_refs",
+    "revision_pin"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "contract_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "scenario_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "case_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "surface_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "context_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "assertion_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "outcome_kind": {
+      "enum": [
+        "semantic",
+        "ambiguity",
+        "gap",
+        "verification_rejection",
+        "restart",
+        "realization_equivalence"
+      ]
+    },
+    "expected_expressions": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "abi_version",
+          "expression_ref",
+          "applications",
+          "root_refs",
+          "scope_operators",
+          "expression_links",
+          "binders",
+          "unresolved_fillers"
+        ],
+        "properties": {
+          "abi_version": {
+            "const": 1
+          },
+          "expression_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          },
+          "applications": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "application_ref",
+                "operator",
+                "predicate_ref",
+                "roles",
+                "qualifiers"
+              ],
+              "properties": {
+                "application_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "operator": {
+                  "enum": [
+                    "op:designation",
+                    "op:type",
+                    "op:relation",
+                    "op:state",
+                    "op:event"
+                  ]
+                },
+                "predicate_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "roles": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "role_ref",
+                      "filler"
+                    ],
+                    "properties": {
+                      "role_ref": {
+                        "type": "string",
+                        "pattern": "^role:.+"
+                      },
+                      "filler": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "target_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "grounded"
+                              },
+                              "target_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "value_type",
+                              "value"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "literal"
+                              },
+                              "value_type": {
+                                "enum": [
+                                  "string",
+                                  "integer",
+                                  "boolean"
+                                ]
+                              },
+                              "value": {
+                                "oneOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 4096
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              }
+                            },
+                            "allOf": [
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "string"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "integer"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "boolean"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "variable_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "bound_variable"
+                              },
+                              "variable_ref": {
+                                "type": "string",
+                                "pattern": "^\\?.+"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "node_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "expression_node"
+                              },
+                              "node_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "unresolved_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "unresolved"
+                              },
+                              "unresolved_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "qualifiers": {
+                  "type": "array",
+                  "maxItems": 16,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "role_ref",
+                      "filler"
+                    ],
+                    "properties": {
+                      "role_ref": {
+                        "type": "string",
+                        "pattern": "^role:.+"
+                      },
+                      "filler": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "target_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "grounded"
+                              },
+                              "target_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "value_type",
+                              "value"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "literal"
+                              },
+                              "value_type": {
+                                "enum": [
+                                  "string",
+                                  "integer",
+                                  "boolean"
+                                ]
+                              },
+                              "value": {
+                                "oneOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 4096
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              }
+                            },
+                            "allOf": [
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "string"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "integer"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "if": {
+                                  "properties": {
+                                    "value_type": {
+                                      "const": "boolean"
+                                    }
+                                  }
+                                },
+                                "then": {
+                                  "properties": {
+                                    "value": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "variable_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "bound_variable"
+                              },
+                              "variable_ref": {
+                                "type": "string",
+                                "pattern": "^\\?.+"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "node_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "expression_node"
+                              },
+                              "node_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "kind",
+                              "unresolved_ref"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "unresolved"
+                              },
+                              "unresolved_ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "root_refs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            }
+          },
+          "scope_operators": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "scope_ref",
+                "operator_type",
+                "value_ref",
+                "operand_ref"
+              ],
+              "properties": {
+                "scope_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "operator_type": {
+                  "enum": [
+                    "scope:polarity",
+                    "scope:modality",
+                    "scope:tense",
+                    "scope:aspect",
+                    "scope:attribution",
+                    "scope:epistemic",
+                    "scope:quotation",
+                    "scope:simulation"
+                  ]
+                },
+                "value_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "operand_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                }
+              }
+            }
+          },
+          "expression_links": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "link_ref",
+                "link_type",
+                "operand_refs"
+              ],
+              "properties": {
+                "link_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "link_type": {
+                  "enum": [
+                    "link:coordination",
+                    "link:conjunction",
+                    "link:disjunction",
+                    "link:condition",
+                    "link:cause",
+                    "link:purpose",
+                    "link:contrast",
+                    "link:sequence"
+                  ]
+                },
+                "operand_refs": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 24,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                  }
+                }
+              }
+            }
+          },
+          "binders": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "binder_ref",
+                "variable_ref",
+                "body_ref"
+              ],
+              "properties": {
+                "binder_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "variable_ref": {
+                  "type": "string",
+                  "pattern": "^\\?.+"
+                },
+                "body_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                }
+              }
+            }
+          },
+          "unresolved_fillers": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "unresolved_ref",
+                "owner_application_ref",
+                "role_ref",
+                "contribution_kind",
+                "expected_kinds",
+                "critical"
+              ],
+              "properties": {
+                "unresolved_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "owner_application_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "role_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+                },
+                "contribution_kind": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 16384
+                },
+                "expected_kinds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16384
+                  }
+                },
+                "critical": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "expression_relation": {
+      "enum": [
+        "single",
+        "all",
+        "any",
+        "conflict",
+        "ordered_chain",
+        "none"
+      ]
+    },
+    "normalized_assertions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ]
+      }
+    },
+    "expected_mode": {
+      "enum": [
+        "OBSERVE",
+        "QUERY",
+        "REQUEST",
+        "SIMULATE"
+      ]
+    },
+    "situation_constraints": {
+      "type": "object"
+    },
+    "expected_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "action",
+        "binding_constraints",
+        "required_proof_refs",
+        "required_policy_refs",
+        "blocker_refs"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "supported",
+            "contradicted",
+            "conflict",
+            "unknown",
+            "partial",
+            "budget_exhausted",
+            "admitted",
+            "attributed",
+            "contested",
+            "denied",
+            "resource_unavailable",
+            "adapter_missing",
+            "simulation",
+            "pending",
+            "failed"
+          ]
+        },
+        "action": {
+          "enum": [
+            "answer",
+            "acknowledge",
+            "admit_claim",
+            "retain_attribution",
+            "preview_transition",
+            "request_effect",
+            "create_learning_obligation",
+            "request_clarification",
+            "no_op"
+          ]
+        },
+        "binding_constraints": {
+          "type": "array",
+          "maxItems": 512,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required_proof_refs": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          }
+        },
+        "required_policy_refs": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          }
+        },
+        "blocker_refs": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          }
+        }
+      }
+    },
+    "expected_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "status_or_reason",
+        "expected_fact_refs",
+        "required_adapter_ref"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "effect",
+            "no_effect"
+          ]
+        },
+        "status_or_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384
+        },
+        "expected_fact_refs": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          }
+        },
+        "required_adapter_ref": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "expected_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discourse_action",
+        "cycle_status",
+        "polarity_ref",
+        "modality_ref",
+        "epistemic_status_ref",
+        "permitted_omissions"
+      ],
+      "properties": {
+        "discourse_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384
+        },
+        "cycle_status": {
+          "enum": [
+            "resolved",
+            "partial",
+            "ambiguous",
+            "unknown",
+            "conflict",
+            "unsupported",
+            "denied",
+            "resource_unavailable",
+            "budget_exhausted",
+            "operation_failed",
+            "realization_failed"
+          ]
+        },
+        "polarity_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "modality_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "epistemic_status_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "permitted_omissions": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          }
+        }
+      }
+    },
+    "expected_gap": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "status",
+            "recommended_owner",
+            "safe_response_action",
+            "error_code"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16384
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16384
+            },
+            "recommended_owner": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16384
+            },
+            "safe_response_action": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16384
+            },
+            "error_code": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 16384
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "expected_owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "authority_generation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "abi_registry_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "review_provenance_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "revision_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_generation",
+        "world_revision",
+        "session_revision",
+        "episode_revision",
+        "effect_revision",
+        "model_identity"
+      ],
+      "properties": {
+        "authority_generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "world_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "session_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "episode_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model_identity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "expression_relation": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expected_expressions": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "expression_relation": {
+            "const": "single"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "expected_expressions": {
+            "minItems": 1,
+            "maxItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

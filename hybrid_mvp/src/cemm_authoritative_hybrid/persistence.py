@@ -238,6 +238,143 @@ def _payload_hash(payload: Any) -> str:
     return hashlib.sha256(canonical_bytes(payload)).hexdigest()
 
 
+
+def _r3_canonical_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+
+
+def _r3_revision_transaction_ref(
+    store: str, parent_revision: int, delta_hash: str
+) -> str:
+    return stable_ref(
+        "txn",
+        {
+            "store": store,
+            "parent": parent_revision,
+            "delta_hash": delta_hash,
+        },
+    )
+
+
+def _r3_insert_revision(
+    conn: sqlite3.Connection,
+    *,
+    store: str,
+    parent_revision: int,
+    new_revision: int,
+    delta_hash: str,
+) -> None:
+    conn.execute(
+        "INSERT INTO revisions(store, revision, parent_revision, delta_hash, transaction_ref) "
+        "VALUES(?, ?, ?, ?, ?)",
+        (
+            store,
+            new_revision,
+            parent_revision,
+            delta_hash,
+            _r3_revision_transaction_ref(store, parent_revision, delta_hash),
+        ),
+    )
+
+
+def _r3_session_material(
+    *, session_ref: str, turn_index: int, session_phase_ref: str, revision: int
+) -> tuple[Session, dict[str, Any]]:
+    session = Session(
+        session_ref=session_ref,
+        phase=session_phase_ref,
+        turn_index=turn_index,
+        participant_user="participant:user",
+        participant_system="participant:system",
+        focus_refs=[],
+    )
+    session.revision = revision
+    return session, _session_to_payload(session)
+
+
+def _r3_write_session_sqlite(
+    conn: sqlite3.Connection,
+    *,
+    session_ref: str,
+    turn_index: int,
+    session_phase_ref: str,
+    parent_revision: int,
+    new_revision: int,
+) -> None:
+    _session, payload = _r3_session_material(
+        session_ref=session_ref,
+        turn_index=turn_index,
+        session_phase_ref=session_phase_ref,
+        revision=new_revision,
+    )
+    payload_json = _r3_canonical_json(payload)
+    conn.execute(
+        "INSERT INTO sessions(session_ref, revision, payload_json, payload_hash) "
+        "VALUES(?, ?, ?, ?) "
+        "ON CONFLICT(session_ref) DO UPDATE SET "
+        "revision=excluded.revision, payload_json=excluded.payload_json, "
+        "payload_hash=excluded.payload_hash",
+        (session_ref, new_revision, payload_json, _payload_hash(payload)),
+    )
+    conn.execute(
+        "INSERT INTO metadata(key, value) VALUES('session_revision', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (str(new_revision),),
+    )
+    _r3_insert_revision(
+        conn,
+        store="session",
+        parent_revision=parent_revision,
+        new_revision=new_revision,
+        delta_hash=_payload_hash(payload),
+    )
+
+
+def _r3_terminal_turn(entry: Any) -> tuple[str, int, str]:
+    request = entry.request_payload
+    session_ref = request.get("session_ref")
+    turn_index = request.get("turn_index")
+    session_phase_ref = request.get("session_phase_ref", "opening")
+    if type(session_ref) is not str or not session_ref:
+        raise ValueError("terminal effect journal lacks session_ref")
+    if type(turn_index) is not int or isinstance(turn_index, bool) or turn_index < 1:
+        raise ValueError("terminal effect journal lacks a positive turn_index")
+    if type(session_phase_ref) is not str or not session_phase_ref:
+        raise ValueError("terminal effect journal lacks session_phase_ref")
+    return session_ref, turn_index, session_phase_ref
+
+
+def _r3_verify_journal_row(
+    entry_json: str,
+    entry_hash: str,
+    receipt_json: str | None,
+    receipt_hash: str | None,
+) -> dict[str, Any]:
+    entry = json.loads(entry_json)
+    if _payload_hash(entry) != entry_hash:
+        raise StoreActivationError(
+            "R3 effect journal entry hash mismatch",
+            RecoveryReceipt(0, (), "restore the journal from a verified backup"),
+        )
+    receipt = None if receipt_json is None else json.loads(receipt_json)
+    if (receipt is None) != (receipt_hash is None):
+        raise StoreActivationError(
+            "R3 effect journal receipt hash presence mismatch",
+            RecoveryReceipt(0, (), "restore the journal from a verified backup"),
+        )
+    if receipt is not None and _payload_hash(receipt) != receipt_hash:
+        raise StoreActivationError(
+            "R3 effect journal receipt hash mismatch",
+            RecoveryReceipt(0, (), "restore the journal from a verified backup"),
+        )
+    return {"entry": entry, "receipt": receipt}
+
 def _fact_to_row(fact: Fact) -> dict[str, Any]:
     return {
         "fact_ref": fact.fact_ref,
@@ -834,6 +971,14 @@ CREATE TABLE IF NOT EXISTS models (
     payload_hash TEXT NOT NULL,
     revision INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS r3_effect_journal (
+    idempotency_key TEXT PRIMARY KEY,
+    entry_json TEXT NOT NULL,
+    entry_hash TEXT NOT NULL,
+    receipt_json TEXT,
+    receipt_hash TEXT,
+    effect_revision INTEGER NOT NULL
+);
 """
 
 
@@ -908,6 +1053,15 @@ class SQLiteSemanticStore:
             all_corrupt.extend(corrupt)
             if store_obj.revision > last_verified:
                 last_verified = store_obj.revision
+
+        for row in self._conn.execute(
+            "SELECT idempotency_key, entry_json, entry_hash, receipt_json, receipt_hash "
+            "FROM r3_effect_journal ORDER BY idempotency_key"
+        ).fetchall():
+            try:
+                _r3_verify_journal_row(row[1], row[2], row[3], row[4])
+            except StoreActivationError:
+                all_corrupt.append(f"r3_effect_journal:{row[0]}")
 
         if all_corrupt:
             raise StoreActivationError(
@@ -1084,6 +1238,7 @@ class InMemorySemanticStore:
         self.models = _MemoryModelStore()
         self.focus = _MemoryFocusStore()
         self.obligations = _MemoryObligationStore()
+        self._r3_effect_journals: dict[str, dict[str, Any]] = {}
 
     def revision_pin(self) -> RevisionPin:
         return RevisionPin(
@@ -1153,6 +1308,688 @@ class SemanticStores:
             "episode": self.episodes.revision,
             "effect": self.effects.revision,
         }
+
+
+    # ------------------------------------------------------------------
+    # Canonical R3 persistence port
+    # ------------------------------------------------------------------
+
+    def r3_world_snapshot(self, *, maximum: int) -> tuple[Fact, ...]:
+        if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
+            raise ValueError("maximum must be a positive exact int")
+        if isinstance(self._backend, SQLiteSemanticStore):
+            rows = self._backend._conn.execute(
+                "SELECT fact_ref, operator, args_json, stance, confidence, "
+                "derived, proof_json FROM world_facts ORDER BY fact_ref LIMIT ?",
+                (maximum + 1,),
+            ).fetchall()
+            values = tuple(_row_to_fact(row) for row in rows)
+        else:
+            values = tuple(
+                self._backend.world._facts[key]
+                for key in sorted(self._backend.world._facts)[: maximum + 1]
+            )
+        if len(values) > maximum:
+            raise ValueError("world snapshot exceeds its configured bound")
+        return values
+
+    def r3_world_facts(self) -> tuple[Fact, ...]:
+        if isinstance(self._backend, SQLiteSemanticStore):
+            rows = self._backend._conn.execute(
+                "SELECT fact_ref, operator, args_json, stance, confidence, "
+                "derived, proof_json FROM world_facts ORDER BY fact_ref",
+            ).fetchall()
+            return tuple(_row_to_fact(row) for row in rows)
+        return tuple(
+            self._backend.world._facts[key]
+            for key in sorted(self._backend.world._facts)
+        )
+
+    def r3_session_snapshot(self, session_ref: str) -> Mapping[str, Any]:
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
+        session = self.sessions.get(session_ref)
+        if session is None:
+            phase = "opening"
+            turn_index = 0
+            revision = 0
+        else:
+            phase = session.phase
+            turn_index = session.turn_index
+            revision = session.revision
+        material = {
+            "session_ref": session_ref,
+            "session_phase_ref": phase,
+            "turn_index": turn_index,
+            "session_record_revision": revision,
+            "store_revision": self.sessions.revision,
+        }
+        return {
+            "snapshot_ref": stable_ref("r3_session_snapshot", material),
+            **material,
+        }
+
+    def r3_begin_turn(self, session_ref: str) -> Mapping[str, Any]:
+        snapshot = self.r3_session_snapshot(session_ref)
+        turn_index = int(snapshot["turn_index"]) + 1
+        material = {
+            "session_ref": session_ref,
+            "turn_index": turn_index,
+            "session_store_revision": self.sessions.revision,
+        }
+        return {
+            "snapshot_ref": stable_ref("r3_turn_reservation", material),
+            "turn_ref": stable_ref("turn", material),
+            **material,
+        }
+
+    def r3_focus_snapshot(
+        self, session_ref: str, *, maximum: int
+    ) -> Mapping[str, Any]:
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
+        if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
+            raise ValueError("maximum must be a positive exact int")
+        refs: list[str] = []
+        if isinstance(self._backend, SQLiteSemanticStore):
+            rows = self._backend._conn.execute(
+                "SELECT focus_ref, payload_json FROM focus WHERE session_ref=? "
+                "ORDER BY revision DESC, focus_ref LIMIT ?",
+                (session_ref, maximum + 1),
+            ).fetchall()
+            for row in rows:
+                payload = json.loads(row[1])
+                ref = payload.get("target_ref", payload.get("semantic_ref", row[0]))
+                if type(ref) is str and ref and ref not in refs:
+                    refs.append(ref)
+        else:
+            rows = sorted(
+                (
+                    (ref, payload)
+                    for ref, payload in self._backend.focus._focus.items()
+                    if payload.get("session_ref") == session_ref
+                ),
+                key=lambda row: row[0],
+            )
+            for ref, payload in rows[: maximum + 1]:
+                value = payload.get("target_ref", payload.get("semantic_ref", ref))
+                if type(value) is str and value and value not in refs:
+                    refs.append(value)
+        if len(refs) > maximum:
+            raise ValueError("focus snapshot exceeds its configured bound")
+        material = {
+            "session_ref": session_ref,
+            "focus_refs": refs,
+            "focus_store_revision": self.focus.revision,
+        }
+        return {
+            "snapshot_ref": stable_ref("r3_focus_snapshot", material),
+            **material,
+        }
+
+    def r3_obligation_snapshot(
+        self, session_ref: str, *, maximum: int
+    ) -> Mapping[str, Any]:
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
+        if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
+            raise ValueError("maximum must be a positive exact int")
+        refs: list[str] = []
+        if isinstance(self._backend, SQLiteSemanticStore):
+            rows = self._backend._conn.execute(
+                "SELECT obligation_ref FROM obligations WHERE session_ref=? "
+                "AND resolved=0 ORDER BY revision, obligation_ref LIMIT ?",
+                (session_ref, maximum + 1),
+            ).fetchall()
+            refs = [str(row[0]) for row in rows]
+        else:
+            refs = sorted(
+                ref
+                for ref, payload in self._backend.obligations._obligations.items()
+                if payload.get("session_ref") == session_ref
+                and not payload.get("resolved", False)
+            )[: maximum + 1]
+        if len(refs) > maximum:
+            raise ValueError("obligation snapshot exceeds its configured bound")
+        material = {
+            "session_ref": session_ref,
+            "obligation_refs": refs,
+            "obligation_store_revision": self.obligations.revision,
+        }
+        return {
+            "snapshot_ref": stable_ref("r3_obligation_snapshot", material),
+            **material,
+        }
+
+    def r3_effect_journal_get(
+        self, idempotency_key: str
+    ) -> Mapping[str, Any] | None:
+        if type(idempotency_key) is not str or not idempotency_key:
+            raise TypeError("idempotency_key must be exact nonempty str")
+        if isinstance(self._backend, SQLiteSemanticStore):
+            row = self._backend._conn.execute(
+                "SELECT entry_json, entry_hash, receipt_json, receipt_hash "
+                "FROM r3_effect_journal WHERE idempotency_key=?",
+                (idempotency_key,),
+            ).fetchone()
+            if row is None:
+                return None
+            return _r3_verify_journal_row(row[0], row[1], row[2], row[3])
+        stored = self._backend._r3_effect_journals.get(idempotency_key)
+        return None if stored is None else json.loads(_r3_canonical_json(stored))
+
+    def r3_effect_journal_begin(
+        self,
+        *,
+        idempotency_key: str,
+        intent_ref: str,
+        decision_ref: str,
+        request_payload: Mapping[str, Any],
+        expected_effect_revision: int,
+    ) -> Mapping[str, Any]:
+        from .r3_persistence import EffectJournalEntry, EffectJournalState
+
+        existing = self.r3_effect_journal_get(idempotency_key)
+        if existing is not None:
+            entry = EffectJournalEntry.from_dict(existing["entry"])
+            expected_request = json.loads(_r3_canonical_json(request_payload))
+            if (
+                entry.intent_ref != intent_ref
+                or entry.decision_ref != decision_ref
+                or dict(entry.request_payload) != expected_request
+            ):
+                raise ValueError("idempotency key is already bound to another request")
+            return existing
+        if expected_effect_revision != self.effects.revision:
+            raise StaleRevisionError(
+                f"effects: expected {expected_effect_revision}, got {self.effects.revision}"
+            )
+        new_revision = expected_effect_revision + 1
+        entry = EffectJournalEntry.create(
+            idempotency_key=idempotency_key,
+            state=EffectJournalState.PLANNED,
+            attempt_index=0,
+            intent_ref=intent_ref,
+            decision_ref=decision_ref,
+            request_payload=request_payload,
+            observation_payload=None,
+            outcome_ref=None,
+            blocker_refs=(),
+            parent_journal_ref=None,
+            effect_revision=new_revision,
+        )
+        stored = {"entry": entry.as_dict(), "receipt": None}
+        if isinstance(self._backend, SQLiteSemanticStore):
+            conn = self._backend._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute(
+                    "SELECT value FROM metadata WHERE key='effect_revision'"
+                ).fetchone()
+                current = int(row[0]) if row else 0
+                if current != expected_effect_revision:
+                    raise StaleRevisionError(
+                        f"effects: expected {expected_effect_revision}, got {current}"
+                    )
+                entry_json = _r3_canonical_json(entry.as_dict())
+                conn.execute(
+                    "INSERT INTO r3_effect_journal(idempotency_key, entry_json, "
+                    "entry_hash, receipt_json, receipt_hash, effect_revision) "
+                    "VALUES(?, ?, ?, NULL, NULL, ?)",
+                    (
+                        idempotency_key,
+                        entry_json,
+                        _payload_hash(entry.as_dict()),
+                        new_revision,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('effect_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_revision),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="effects",
+                    parent_revision=expected_effect_revision,
+                    new_revision=new_revision,
+                    delta_hash=_payload_hash(stored),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            self.effects.revision = new_revision
+        else:
+            self._backend._r3_effect_journals[idempotency_key] = stored
+            self.effects.revision = new_revision
+        return stored
+
+    def r3_effect_journal_transition(
+        self,
+        *,
+        idempotency_key: str,
+        expected_state: str,
+        next_state: str,
+        observation_payload: Mapping[str, Any] | None,
+        outcome_ref: str | None,
+        receipt_payload: Mapping[str, Any] | None,
+        blocker_refs: tuple[str, ...],
+        expected_effect_revision: int,
+    ) -> Mapping[str, Any]:
+        from .r3_persistence import (
+            EffectJournalEntry,
+            EffectJournalState,
+            StoredEffectJournal,
+            validate_journal_transition,
+        )
+
+        existing = self.r3_effect_journal_get(idempotency_key)
+        if existing is None:
+            raise ValueError("effect journal entry is absent")
+        current_entry = EffectJournalEntry.from_dict(existing["entry"])
+        source = EffectJournalState(expected_state)
+        target = EffectJournalState(next_state)
+        if current_entry.state is not source:
+            raise ValueError(
+                f"effect journal state mismatch: {current_entry.state.value}!={source.value}"
+            )
+        validate_journal_transition(source, target)
+        if expected_effect_revision != self.effects.revision:
+            raise StaleRevisionError(
+                f"effects: expected {expected_effect_revision}, got {self.effects.revision}"
+            )
+        new_effect_revision = expected_effect_revision + 1
+        attempt_index = current_entry.attempt_index
+        if target is EffectJournalState.INVOCATION_STARTED or source is EffectJournalState.PENDING_RECONCILIATION:
+            attempt_index += 1
+        entry = EffectJournalEntry.create(
+            idempotency_key=idempotency_key,
+            state=target,
+            attempt_index=attempt_index,
+            intent_ref=current_entry.intent_ref,
+            decision_ref=current_entry.decision_ref,
+            request_payload=current_entry.request_payload,
+            observation_payload=observation_payload,
+            outcome_ref=outcome_ref,
+            blocker_refs=blocker_refs,
+            parent_journal_ref=current_entry.journal_ref,
+            effect_revision=new_effect_revision,
+        )
+        stored = StoredEffectJournal(entry, receipt_payload).as_dict()
+        terminal = target.terminal
+        if isinstance(self._backend, SQLiteSemanticStore):
+            conn = self._backend._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = conn.execute(
+                    "SELECT entry_json, entry_hash, receipt_json, receipt_hash "
+                    "FROM r3_effect_journal WHERE idempotency_key=?",
+                    (idempotency_key,),
+                ).fetchone()
+                if row is None:
+                    raise ValueError("effect journal entry disappeared")
+                observed = _r3_verify_journal_row(row[0], row[1], row[2], row[3])
+                if observed["entry"]["journal_ref"] != current_entry.journal_ref:
+                    raise StaleRevisionError("effect journal parent changed concurrently")
+                session_parent = self.sessions.revision
+                session_new = session_parent
+                if terminal:
+                    session_ref, turn_index, phase = _r3_terminal_turn(entry)
+                    session_new = session_parent + 1
+                    _r3_write_session_sqlite(
+                        conn,
+                        session_ref=session_ref,
+                        turn_index=turn_index,
+                        session_phase_ref=phase,
+                        parent_revision=session_parent,
+                        new_revision=session_new,
+                    )
+                entry_json = _r3_canonical_json(entry.as_dict())
+                receipt_json = (
+                    None if receipt_payload is None else _r3_canonical_json(receipt_payload)
+                )
+                conn.execute(
+                    "UPDATE r3_effect_journal SET entry_json=?, entry_hash=?, "
+                    "receipt_json=?, receipt_hash=?, effect_revision=? "
+                    "WHERE idempotency_key=?",
+                    (
+                        entry_json,
+                        _payload_hash(entry.as_dict()),
+                        receipt_json,
+                        None if receipt_payload is None else _payload_hash(receipt_payload),
+                        new_effect_revision,
+                        idempotency_key,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('effect_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_effect_revision),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="effects",
+                    parent_revision=expected_effect_revision,
+                    new_revision=new_effect_revision,
+                    delta_hash=_payload_hash(stored),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            self.effects.revision = new_effect_revision
+            if terminal:
+                self.sessions.revision = session_new
+        else:
+            if terminal:
+                session_ref, turn_index, phase = _r3_terminal_turn(entry)
+                session_parent = self.sessions.revision
+                session_new = session_parent + 1
+                session, _payload = _r3_session_material(
+                    session_ref=session_ref,
+                    turn_index=turn_index,
+                    session_phase_ref=phase,
+                    revision=session_new,
+                )
+                self._backend.sessions._sessions[session_ref] = session
+                self.sessions.revision = session_new
+            self._backend._r3_effect_journals[idempotency_key] = stored
+            self.effects.revision = new_effect_revision
+        return stored
+
+    def r3_effect_journal_commit(
+        self,
+        *,
+        idempotency_key: str,
+        expected_state: str,
+        observation_payload: Mapping[str, Any],
+        outcome_ref: str,
+        receipt_payload: Mapping[str, Any],
+        facts: tuple[Fact, ...],
+        expected_revision_pin: RevisionPin,
+    ) -> Mapping[str, Any]:
+        from .r3_persistence import (
+            EffectJournalEntry,
+            EffectJournalState,
+            StoredEffectJournal,
+            validate_journal_transition,
+        )
+
+        if type(facts) is not tuple or not facts or any(type(row) is not Fact for row in facts):
+            raise TypeError("facts must be a nonempty exact Fact tuple")
+        if expected_revision_pin != self.revision_pin():
+            raise StaleRevisionError("atomic effect commit revision pin is stale")
+        existing = self.r3_effect_journal_get(idempotency_key)
+        if existing is None:
+            raise ValueError("effect journal entry is absent")
+        current_entry = EffectJournalEntry.from_dict(existing["entry"])
+        source = EffectJournalState(expected_state)
+        if current_entry.state is not source:
+            raise ValueError("effect journal is not in the expected precommit state")
+        validate_journal_transition(source, EffectJournalState.COMMITTED)
+        new_world = expected_revision_pin.world_revision + 1
+        new_effect = expected_revision_pin.effect_revision + 1
+        new_session = expected_revision_pin.session_revision + 1
+        entry = EffectJournalEntry.create(
+            idempotency_key=idempotency_key,
+            state=EffectJournalState.COMMITTED,
+            attempt_index=current_entry.attempt_index,
+            intent_ref=current_entry.intent_ref,
+            decision_ref=current_entry.decision_ref,
+            request_payload=current_entry.request_payload,
+            observation_payload=observation_payload,
+            outcome_ref=outcome_ref,
+            blocker_refs=(),
+            parent_journal_ref=current_entry.journal_ref,
+            effect_revision=new_effect,
+        )
+        stored = StoredEffectJournal(entry, receipt_payload).as_dict()
+        session_ref, turn_index, phase = _r3_terminal_turn(entry)
+        if isinstance(self._backend, SQLiteSemanticStore):
+            conn = self._backend._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                for key, expected in (
+                    ("world_revision", expected_revision_pin.world_revision),
+                    ("session_revision", expected_revision_pin.session_revision),
+                    ("effect_revision", expected_revision_pin.effect_revision),
+                ):
+                    row = conn.execute(
+                        "SELECT value FROM metadata WHERE key=?", (key,)
+                    ).fetchone()
+                    actual = int(row[0]) if row else 0
+                    if actual != expected:
+                        raise StaleRevisionError(
+                            f"{key}: expected {expected}, got {actual}"
+                        )
+                for fact in facts:
+                    row = _fact_to_row(fact)
+                    payload = _fact_payload(fact)
+                    conn.execute(
+                        "INSERT INTO world_facts(fact_ref, operator, args_json, "
+                        "stance, confidence, derived, proof_json, payload_hash, revision) "
+                        "VALUES(:fact_ref, :operator, :args_json, :stance, :confidence, "
+                        ":derived, :proof_json, :payload_hash, :revision) "
+                        "ON CONFLICT(fact_ref) DO UPDATE SET operator=excluded.operator, "
+                        "args_json=excluded.args_json, stance=excluded.stance, "
+                        "confidence=excluded.confidence, derived=excluded.derived, "
+                        "proof_json=excluded.proof_json, payload_hash=excluded.payload_hash, "
+                        "revision=excluded.revision",
+                        {**row, "payload_hash": _payload_hash(payload), "revision": new_world},
+                    )
+                world_delta = [_fact_payload(row) for row in facts]
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('world_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_world),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="world",
+                    parent_revision=expected_revision_pin.world_revision,
+                    new_revision=new_world,
+                    delta_hash=_payload_hash(world_delta),
+                )
+                _r3_write_session_sqlite(
+                    conn,
+                    session_ref=session_ref,
+                    turn_index=turn_index,
+                    session_phase_ref=phase,
+                    parent_revision=expected_revision_pin.session_revision,
+                    new_revision=new_session,
+                )
+                entry_json = _r3_canonical_json(entry.as_dict())
+                receipt_json = _r3_canonical_json(receipt_payload)
+                conn.execute(
+                    "UPDATE r3_effect_journal SET entry_json=?, entry_hash=?, "
+                    "receipt_json=?, receipt_hash=?, effect_revision=? "
+                    "WHERE idempotency_key=?",
+                    (
+                        entry_json,
+                        _payload_hash(entry.as_dict()),
+                        receipt_json,
+                        _payload_hash(receipt_payload),
+                        new_effect,
+                        idempotency_key,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('effect_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_effect),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="effects",
+                    parent_revision=expected_revision_pin.effect_revision,
+                    new_revision=new_effect,
+                    delta_hash=_payload_hash(stored),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            self.world.revision = new_world
+            self.sessions.revision = new_session
+            self.effects.revision = new_effect
+        else:
+            for fact in facts:
+                self._backend.world._facts[fact.fact_ref] = fact
+            self.world.revision = new_world
+            session, _payload = _r3_session_material(
+                session_ref=session_ref,
+                turn_index=turn_index,
+                session_phase_ref=phase,
+                revision=new_session,
+            )
+            self._backend.sessions._sessions[session_ref] = session
+            self.sessions.revision = new_session
+            self._backend._r3_effect_journals[idempotency_key] = stored
+            self.effects.revision = new_effect
+        pin = self.revision_pin()
+        return {"journal": stored, "revision_pin": pin.as_dict()}
+
+    def r3_commit_learning_outcome(
+        self,
+        *,
+        session_ref: str,
+        obligation_ref: str,
+        obligation_payload: Mapping[str, Any],
+        idempotency_key: str,
+        intent_ref: str,
+        decision_ref: str,
+        receipt_payload: Mapping[str, Any],
+        expected_revision_pin: RevisionPin,
+    ) -> Mapping[str, Any]:
+        from .r3_persistence import (
+            EffectJournalEntry,
+            EffectJournalState,
+            StoredEffectJournal,
+        )
+
+        if expected_revision_pin != self.revision_pin():
+            raise StaleRevisionError("learning outcome revision pin is stale")
+        existing = self.r3_effect_journal_get(idempotency_key)
+        if existing is None:
+            raise ValueError("learning effect journal entry is absent")
+        current_entry = EffectJournalEntry.from_dict(existing["entry"])
+        if current_entry.state is not EffectJournalState.PLANNED:
+            raise ValueError("learning journal is not planned")
+        new_effect = expected_revision_pin.effect_revision + 1
+        new_session = expected_revision_pin.session_revision + 1
+        new_obligation = self.obligations.revision + 1
+        outcome_ref = receipt_payload.get("receipt_ref")
+        if type(outcome_ref) is not str or not outcome_ref:
+            raise ValueError("learning receipt lacks receipt_ref")
+        entry = EffectJournalEntry.create(
+            idempotency_key=idempotency_key,
+            state=EffectJournalState.NO_EFFECT,
+            attempt_index=current_entry.attempt_index,
+            intent_ref=intent_ref,
+            decision_ref=decision_ref,
+            request_payload=current_entry.request_payload,
+            observation_payload=None,
+            outcome_ref=outcome_ref,
+            blocker_refs=(),
+            parent_journal_ref=current_entry.journal_ref,
+            effect_revision=new_effect,
+        )
+        stored = StoredEffectJournal(entry, receipt_payload).as_dict()
+        _session_from_entry, turn_index, phase = _r3_terminal_turn(entry)
+        obligation_data = {
+            **dict(obligation_payload),
+            "obligation_ref": obligation_ref,
+            "session_ref": session_ref,
+            "resolved": False,
+        }
+        if isinstance(self._backend, SQLiteSemanticStore):
+            conn = self._backend._conn
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                _r3_write_session_sqlite(
+                    conn,
+                    session_ref=session_ref,
+                    turn_index=turn_index,
+                    session_phase_ref=phase,
+                    parent_revision=expected_revision_pin.session_revision,
+                    new_revision=new_session,
+                )
+                obligation_json = _r3_canonical_json(obligation_data)
+                conn.execute(
+                    "INSERT INTO obligations(obligation_ref, session_ref, payload_json, "
+                    "payload_hash, revision, resolved) VALUES(?, ?, ?, ?, ?, 0) "
+                    "ON CONFLICT(obligation_ref) DO UPDATE SET "
+                    "payload_json=excluded.payload_json, payload_hash=excluded.payload_hash, "
+                    "revision=excluded.revision, resolved=0",
+                    (
+                        obligation_ref,
+                        session_ref,
+                        obligation_json,
+                        _payload_hash(obligation_data),
+                        new_obligation,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('obligation_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_obligation),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="obligations",
+                    parent_revision=self.obligations.revision,
+                    new_revision=new_obligation,
+                    delta_hash=_payload_hash(obligation_data),
+                )
+                entry_json = _r3_canonical_json(entry.as_dict())
+                receipt_json = _r3_canonical_json(receipt_payload)
+                conn.execute(
+                    "UPDATE r3_effect_journal SET entry_json=?, entry_hash=?, "
+                    "receipt_json=?, receipt_hash=?, effect_revision=? "
+                    "WHERE idempotency_key=?",
+                    (
+                        entry_json,
+                        _payload_hash(entry.as_dict()),
+                        receipt_json,
+                        _payload_hash(receipt_payload),
+                        new_effect,
+                        idempotency_key,
+                    ),
+                )
+                conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('effect_revision', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(new_effect),),
+                )
+                _r3_insert_revision(
+                    conn,
+                    store="effects",
+                    parent_revision=expected_revision_pin.effect_revision,
+                    new_revision=new_effect,
+                    delta_hash=_payload_hash(stored),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            self.sessions.revision = new_session
+            self.obligations.revision = new_obligation
+            self.effects.revision = new_effect
+        else:
+            session, _payload = _r3_session_material(
+                session_ref=session_ref,
+                turn_index=turn_index,
+                session_phase_ref=phase,
+                revision=new_session,
+            )
+            self._backend.sessions._sessions[session_ref] = session
+            self.sessions.revision = new_session
+            self._backend.obligations._obligations[obligation_ref] = obligation_data
+            self.obligations.revision = new_obligation
+            self._backend._r3_effect_journals[idempotency_key] = stored
+            self.effects.revision = new_effect
+        return {"journal": stored, "revision_pin": self.revision_pin().as_dict()}
 
     def close(self) -> None:
         self._backend.close()

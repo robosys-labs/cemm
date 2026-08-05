@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/partition_axis_manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "manifest_ref",
+    "axis",
+    "source_set_ref",
+    "seed",
+    "protected_keys",
+    "source_refs",
+    "components",
+    "train_refs",
+    "validation_refs",
+    "test_refs"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "manifest_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "axis": {
+      "enum": [
+        "general",
+        "lexical",
+        "semantic_target",
+        "topology",
+        "dialogue",
+        "mutation",
+        "realization"
+      ]
+    },
+    "source_set_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "protected_keys": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 16384
+      }
+    },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "component_ref",
+          "protected_value_refs",
+          "member_refs",
+          "split"
+        ],
+        "properties": {
+          "component_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+          },
+          "protected_value_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            }
+          },
+          "member_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            }
+          },
+          "split": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ]
+          }
+        }
+      }
+    },
+    "train_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "validation_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "test_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    }
+  }
+}

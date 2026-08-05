@@ -108,19 +108,35 @@ class AdmissionValidationError(ValueError):
 def _required_admission_evidence_paths(phase: str) -> tuple[str, ...]:
     if phase == "G0":
         return _G0_ADMISSION_EVIDENCE_PATHS
-    if phase == "R1":
-        # R1 creates no independent external artifact. Its authority, activation,
-        # structure and test evidence is carried by content-bound step results.
+    if phase in {"R1", "R2"}:
         return ()
-    if phase == "R2":
-        # R2 creates no independent external artifact. Its authority, activation,
-        # structure and test evidence is carried by content-bound step results,
-        # mirroring the R1 policy.
-        return ()
+    if phase == "R3":
+        return (
+            "artifacts/validation/R3_ACTIVATION_CANARIES.json",
+        )
+    if phase == "R4":
+        return (
+            "artifacts/r4/expected_contracts.jsonl",
+            "artifacts/r4/expected_derivations.jsonl",
+            "artifacts/r4/expanded_cases.jsonl",
+            "artifacts/r4/episodes.jsonl",
+            "artifacts/r4/mutations.jsonl",
+            "artifacts/r4/mutation_observations.jsonl",
+            "artifacts/r4/structural_sufficiency.json",
+            "artifacts/r4/partitions/general.json",
+            "artifacts/r4/partitions/lexical.json",
+            "artifacts/r4/partitions/semantic_target.json",
+            "artifacts/r4/partitions/topology.json",
+            "artifacts/r4/partitions/dialogue.json",
+            "artifacts/r4/partitions/mutation.json",
+            "artifacts/r4/partitions/realization.json",
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/r4/BUILD_RECEIPT.json",
+            "data/review/R4_REVIEW_MANIFEST.json",
+        )
     raise AdmissionValidationError(
         f"admission evidence policy is not implemented for phase {phase}"
     )
-
 
 def _duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
@@ -940,7 +956,8 @@ class GateGraph:
             r1_admission_only = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
             r2_admission_only = frozenset({"authority_link", "sqlite_activation", "r2_structure"})
             r3_admission_only = frozenset({"authority_link", "sqlite_activation", "r3_structure", "r3_activation_canaries"})
-            if selected_admission_only and phase not in {"R1", "R2", "R3"}:
+            r4_admission_only = frozenset({"authority_link", "sqlite_activation"})
+            if selected_admission_only and phase not in {"R1", "R2", "R3", "R4"}:
                 raise GateConfigError("admission-only step selected by a non-admission phase")
             if phase == "R1" and selected_admission_only != r1_admission_only:
                 raise GateConfigError("R1 admission requires authority, activation, and structure evidence")
@@ -948,6 +965,8 @@ class GateGraph:
                 raise GateConfigError("R2 admission requires authority, activation, and structure evidence")
             if phase == "R3" and selected_admission_only != r3_admission_only:
                 raise GateConfigError("R3 admission requires activation, structure, and canary evidence")
+            if phase == "R4" and selected_admission_only != r4_admission_only:
+                raise GateConfigError("R4 admission requires authority and activation evidence")
             if self.pytest_process_count(phase, "admission") != 1:
                 raise GateConfigError("admission must contain exactly one pytest process")
             pytest_steps = [

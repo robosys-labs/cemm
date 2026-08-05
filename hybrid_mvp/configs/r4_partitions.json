@@ -1,0 +1,15 @@
+{
+  "schema": "cemm-r4-independent-partitions-v1",
+  "seed": 1701,
+  "ratios": [60, 20, 20],
+  "axes": {
+    "general": ["scenario_ref", "case_ref"],
+    "lexical": ["surface_family", "surface", "language"],
+    "semantic_target": ["expression_ref", "predicate_refs"],
+    "topology": ["topology_ref"],
+    "dialogue": ["session_ref", "obligation_ref"],
+    "mutation": ["mutation_family", "parent_case_ref"],
+    "realization": ["response_expression_ref", "discourse_action"]
+  },
+  "global_train_policy": "intersection_of_all_axis_train_assignments"
+}

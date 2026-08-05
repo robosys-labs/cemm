@@ -93,3 +93,9 @@ A PyTorch Transformer independently encodes:
 - candidate graph-action token sequence.
 
 A learned cross-encoder-style scorer ranks candidate programs. The model owns ranking only. Exact owners validate and compile programs, group derivational duplicates by expression, and retain truth, effects and semantic realization-equivalence authority. Normal surface choice may be learned but remains constrained and round-trip verified.
+
+## R3 cognition and R4 reviewed-data activation
+
+R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
+
+R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and requires external corpus review. R4 performs no training.

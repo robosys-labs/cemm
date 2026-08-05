@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/learning_plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "plan_ref",
+    "contract_ref",
+    "verified_meaning_ref",
+    "expression_ref",
+    "situation_ref",
+    "decision_ref",
+    "source_query_ref",
+    "goal_ref",
+    "capability_ref",
+    "permission_ref",
+    "commit_operator_ref",
+    "surface_literal",
+    "target_ref",
+    "expected_target_kinds",
+    "answer_contract_ref",
+    "provenance_refs",
+    "revision_pin",
+    "expires_at_turn",
+    "obligation_ref",
+    "nonce"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "plan_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "contract_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "verified_meaning_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "expression_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "situation_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "decision_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "source_query_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "goal_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "capability_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "permission_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "commit_operator_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "surface_literal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "target_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "expected_target_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 16384
+      }
+    },
+    "answer_contract_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "provenance_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "revision_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_generation",
+        "world_revision",
+        "session_revision",
+        "episode_revision",
+        "effect_revision",
+        "model_identity"
+      ],
+      "properties": {
+        "authority_generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "world_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "session_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "episode_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model_identity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "expires_at_turn": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "obligation_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    }
+  }
+}

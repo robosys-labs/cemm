@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/expanded_case.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "case_ref",
+    "scenario_ref",
+    "surface_ref",
+    "context_ref",
+    "contract",
+    "surface",
+    "surface_index",
+    "environment_index",
+    "language",
+    "environment",
+    "trajectory_ref",
+    "turn_index",
+    "lineage_refs"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "case_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "scenario_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "surface_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "context_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "contract": {
+      "$ref": "expected_cycle_contract.schema.json"
+    },
+    "surface": {
+      "type": "string",
+      "maxLength": 16384
+    },
+    "surface_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "environment_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "environment": {
+      "type": "object"
+    },
+    "trajectory_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "turn_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lineage_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    }
+  }
+}

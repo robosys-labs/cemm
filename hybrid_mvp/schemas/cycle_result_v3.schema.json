@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/cycle_result_v3.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "cycle_ref",
+    "input_ref",
+    "status",
+    "orientation",
+    "proposal",
+    "verification",
+    "evaluation",
+    "effect_receipt",
+    "response_meaning",
+    "realization_receipt",
+    "gap_receipt",
+    "phase_material",
+    "trace",
+    "final_revision_pin"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 3
+    },
+    "cycle_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "input_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "status": {
+      "enum": [
+        "resolved",
+        "partial",
+        "ambiguous",
+        "unknown",
+        "conflict",
+        "unsupported",
+        "denied",
+        "resource_unavailable",
+        "budget_exhausted",
+        "operation_failed",
+        "realization_failed"
+      ]
+    },
+    "orientation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "abi_version",
+            "orientation_ref",
+            "revision_pin"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "proposal": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "abi_version",
+            "proposal_ref",
+            "orientation_ref",
+            "proposal_context_ref"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "verification": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "abi_version",
+            "batch_ref",
+            "proposal_ref",
+            "proposal_context_ref",
+            "status"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "evaluation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "abi_version",
+            "evaluation_ref",
+            "decision",
+            "expression",
+            "situation"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "effect_receipt": {
+      "oneOf": [
+        {
+          "$ref": "effect_receipt.schema.json"
+        },
+        {
+          "$ref": "no_effect_receipt.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "response_meaning": {
+      "oneOf": [
+        {
+          "$ref": "response_meaning.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "realization_receipt": {
+      "type": "null"
+    },
+    "gap_receipt": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "abi_version",
+            "gap_ref",
+            "kind",
+            "status"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase_material": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "phase",
+          "input_refs",
+          "output_refs",
+          "input_revision_pin",
+          "output_revision_pin",
+          "disposition",
+          "rejection_codes",
+          "budget_use"
+        ]
+      }
+    },
+    "trace": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "abi_version",
+          "receipt_ref",
+          "cycle_ref",
+          "phase"
+        ]
+      }
+    },
+    "final_revision_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_generation",
+        "world_revision",
+        "session_revision",
+        "episode_revision",
+        "effect_revision",
+        "model_identity"
+      ],
+      "properties": {
+        "authority_generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "world_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "session_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "episode_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model_identity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

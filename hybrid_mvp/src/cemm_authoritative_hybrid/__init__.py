@@ -4,6 +4,20 @@ from importlib import import_module
 
 
 _EXPORTS = {
+    "AuthenticEpisode": (".r4_episodes", "AuthenticEpisode"),
+    "CorpusReviewManifest": (".r4_review", "CorpusReviewManifest"),
+    "Decision": (".decision", "Decision"),
+    "DecisionAction": (".decision", "DecisionAction"),
+    "DecisionStatus": (".decision", "DecisionStatus"),
+    "EffectReceipt": (".r3_effects", "EffectReceipt"),
+    "EvaluationBundle": (".r3_artifacts", "EvaluationBundle"),
+    "ExpectedCycleContract": (".r4_contracts", "ExpectedCycleContract"),
+    "ExpectedDerivationContract": (".r4_contracts", "ExpectedDerivationContract"),
+    "LearningPlan": (".r3_learning", "LearningPlan"),
+    "NoEffectReceipt": (".r3_effects", "NoEffectReceipt"),
+    "PartitionAxisManifest": (".r4_partitions", "PartitionAxisManifest"),
+    "ResponseMeaning": (".r3_response", "ResponseMeaning"),
+    "SituationContext": (".situation", "SituationContext"),
     "ABIRegistry": (".config", "ABIRegistry"),
     "CycleFinalizer": (".cycle", "CycleFinalizer"),
     "CycleResult": (".cycle", "CycleResult"),

@@ -1,0 +1,23 @@
+{
+  "schema": "cemm-r4-structural-sufficiency-v1",
+  "minimums": {
+    "operator:op:type": 1,
+    "operator:op:state": 1,
+    "operator:op:event": 1,
+    "operator:op:relation": 1,
+    "operator:op:designation": 1,
+    "mode:OBSERVE": 1,
+    "mode:QUERY": 1,
+    "mode:REQUEST": 1,
+    "mode:SIMULATE": 1,
+    "roots:multiple": 1,
+    "scope:any": 1,
+    "binder:any": 1,
+    "effect:effect": 1,
+    "effect:no_effect": 1
+  },
+  "maximums": {
+    "share:single_expression": 70,
+    "share:single_predicate": 70
+  }
+}

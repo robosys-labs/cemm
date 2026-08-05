@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/effect_journal.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "journal_ref",
+    "idempotency_key",
+    "state",
+    "attempt_index",
+    "intent_ref",
+    "decision_ref",
+    "request_payload",
+    "observation_payload",
+    "outcome_ref",
+    "blocker_refs",
+    "parent_journal_ref",
+    "effect_revision"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 1
+    },
+    "journal_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "state": {
+      "enum": [
+        "planned",
+        "authorized",
+        "invocation_started",
+        "pending_reconciliation",
+        "observed",
+        "committed",
+        "denied",
+        "no_effect",
+        "failed",
+        "stale"
+      ]
+    },
+    "attempt_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "intent_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "decision_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "request_payload": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "observation_payload": {
+      "oneOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "outcome_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "blocker_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "parent_journal_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "effect_revision": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/mutation_observation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "observation_ref",
+    "mutation_ref",
+    "actual_earliest_owner",
+    "actual_status",
+    "actual_error_code",
+    "observed_artifact_ref",
+    "matched_expectation"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "observation_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "mutation_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "actual_earliest_owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "actual_status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "actual_error_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "observed_artifact_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "matched_expectation": {
+      "type": "boolean"
+    }
+  }
+}

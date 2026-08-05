@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/no_effect_receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "receipt_ref",
+    "reason",
+    "idempotency_key",
+    "journal_origin_ref",
+    "journal_preterminal_ref",
+    "decision_ref",
+    "verified_meaning_ref",
+    "expression_ref",
+    "situation_ref",
+    "program_ref",
+    "learning_plan_ref",
+    "obligation_ref",
+    "proof_refs",
+    "blocker_refs",
+    "input_revision_pin",
+    "output_revision_pin"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 1
+    },
+    "receipt_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "reason": {
+      "enum": [
+        "read_only",
+        "simulation",
+        "attributed_only",
+        "unknown",
+        "conflict",
+        "no_requested_effect",
+        "learning_obligation_only"
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "journal_origin_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "journal_preterminal_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "decision_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "verified_meaning_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "expression_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "situation_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "program_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "learning_plan_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "obligation_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "proof_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "blocker_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    },
+    "input_revision_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_generation",
+        "world_revision",
+        "session_revision",
+        "episode_revision",
+        "effect_revision",
+        "model_identity"
+      ],
+      "properties": {
+        "authority_generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "world_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "session_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "episode_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model_identity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "output_revision_pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_generation",
+        "world_revision",
+        "session_revision",
+        "episode_revision",
+        "effect_revision",
+        "model_identity"
+      ],
+      "properties": {
+        "authority_generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+        },
+        "world_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "session_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "episode_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model_identity": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

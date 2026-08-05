@@ -83,11 +83,34 @@
         "sqlite_activation"
       ],
       "owners": {
-        "governance": [
-          "r3_governance_owner_tests"
+        "effect-learning-response": [
+          "r3_effect_learning_owner_tests"
+        ],
+        "situation-decision": [
+          "r3_situation_decision_owner_tests"
         ]
       },
-      "phase": []
+      "phase": [
+        "r3_phase_tests"
+      ]
+    },
+    "R4": {
+      "admission": [
+        "governance",
+        "pytest_active",
+        "sqlite_activation"
+      ],
+      "owners": {
+        "contract-review": [
+          "r4_contract_review_owner_tests"
+        ],
+        "sufficiency-mutation-partition": [
+          "r4_data_owner_tests"
+        ]
+      },
+      "phase": [
+        "r4_phase_tests"
+      ]
     }
   },
   "schema": "cemm-hybrid-validation-gates-v1",
@@ -1149,6 +1172,27 @@
       ],
       "kind": "r3_activation_canaries"
     },
+    "r3_effect_learning_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r3_effect_receipts.py::test_atomic_effect_transaction_advances_world_and_effect_together",
+        "tests/test_r3_effect_receipts.py::test_committed_receipt_requires_advanced_effect_revision",
+        "tests/test_r3_effect_receipts.py::test_no_effect_round_trip_preserves_reason",
+        "tests/test_r3_learning_response.py::test_learning_plan_abi2_round_trip_binds_semantic_lineage",
+        "tests/test_r3_learning_response.py::test_response_meaning_round_trip_has_no_surface_text"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/r3_effects.py",
+        "src/cemm_authoritative_hybrid/r3_learning.py",
+        "src/cemm_authoritative_hybrid/r3_persistence.py",
+        "src/cemm_authoritative_hybrid/r3_response.py",
+        "tests/test_r3_effect_receipts.py",
+        "tests/test_r3_learning_response.py"
+      ],
+      "kind": "pytest"
+    },
     "r3_governance_owner_tests": {
       "depends_on": [
         "source_compile"
@@ -1167,6 +1211,57 @@
       ],
       "kind": "pytest"
     },
+    "r3_phase_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r3_structure.py::test_cycle_extension_preserves_canonical_cycle_class_owner",
+        "tests/test_r3_structure.py::test_only_atomic_effect_persistence_commits_world_state",
+        "tests/test_r3_structure.py::test_post_verify_owners_do_not_consume_program_graph_or_raw_text",
+        "tests/test_r3_structure.py::test_r3_runtime_has_exact_r5_boundary"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/r3_cycle.py",
+        "src/cemm_authoritative_hybrid/r3_kernel.py",
+        "src/cemm_authoritative_hybrid/runtime.py",
+        "tests/test_r3_structure.py"
+      ],
+      "kind": "pytest"
+    },
+    "r3_situation_decision_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r3_decision_abi.py::test_decision_identity_covers_proof_refs",
+        "tests/test_r3_decision_abi.py::test_evaluate_rejects_raw_program_like_object",
+        "tests/test_r3_decision_abi.py::test_evaluator_requires_all_four_closed_modes",
+        "tests/test_r3_decision_abi.py::test_exact_evaluator_consumes_verified_meaning_and_situation",
+        "tests/test_r3_expression_projection.py::test_projection_indexes_roles_without_ref_spelling_dispatch",
+        "tests/test_r3_expression_projection.py::test_projection_validates_recursive_expression",
+        "tests/test_r3_mode_projection.py::test_closed_modes_are_projected_from_structural_hypotheses",
+        "tests/test_r3_mode_projection.py::test_competing_nonobserve_modes_fail_closed",
+        "tests/test_r3_recursive_query.py::test_query_owner_applies_reviewed_rules_with_proof_lineage",
+        "tests/test_r3_situation_context.py::test_situation_context_identity_covers_source_lineage",
+        "tests/test_r3_situation_context.py::test_situation_context_round_trip_is_exact",
+        "tests/test_r3_situation_context.py::test_situation_rejects_mode_scope_disagreement",
+        "tests/test_r3_situation_context.py::test_situation_requires_distinct_reviewed_participants"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/decision.py",
+        "src/cemm_authoritative_hybrid/expression_projection.py",
+        "src/cemm_authoritative_hybrid/mode.py",
+        "src/cemm_authoritative_hybrid/r3_cognition.py",
+        "src/cemm_authoritative_hybrid/situation.py",
+        "tests/test_r3_decision_abi.py",
+        "tests/test_r3_expression_projection.py",
+        "tests/test_r3_mode_projection.py",
+        "tests/test_r3_recursive_query.py",
+        "tests/test_r3_situation_context.py"
+      ],
+      "kind": "pytest"
+    },
     "r3_structure": {
       "depends_on": [
         "source_compile"
@@ -1175,6 +1270,62 @@
         "src/cemm_authoritative_hybrid/"
       ],
       "kind": "r3_structure"
+    },
+    "r4_contract_review_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases",
+        "tests/test_r4_assertion_compiler.py::test_core_reviewed_assertion_families_compile_without_propose",
+        "tests/test_r4_assertion_compiler.py::test_unknown_assertion_kind_fails_closed",
+        "tests/test_r4_expansion_and_review.py::test_expander_uses_every_reviewed_surface_and_environment",
+        "tests/test_r4_expansion_and_review.py::test_review_manifest_requires_external_signature",
+        "tests/test_r4_expansion_and_review.py::test_review_verifier_uses_injected_external_trust_root"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/r4_contracts.py",
+        "src/cemm_authoritative_hybrid/r4_expansion.py",
+        "src/cemm_authoritative_hybrid/r4_review.py",
+        "tests/test_r4_assertion_compiler.py",
+        "tests/test_r4_expansion_and_review.py"
+      ],
+      "kind": "pytest"
+    },
+    "r4_data_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r4_mutations_and_partitions.py::test_mutations_change_one_declared_dimension_and_use_owner_labels",
+        "tests/test_r4_mutations_and_partitions.py::test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs",
+        "tests/test_r4_sufficiency.py::test_sufficiency_enforces_explicit_minimums",
+        "tests/test_r4_sufficiency.py::test_sufficiency_reports_missing_dimension_without_vacuous_denominator"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/r4_mutations.py",
+        "src/cemm_authoritative_hybrid/r4_partitions.py",
+        "src/cemm_authoritative_hybrid/r4_sufficiency.py",
+        "tests/test_r4_mutations_and_partitions.py",
+        "tests/test_r4_sufficiency.py"
+      ],
+      "kind": "pytest"
+    },
+    "r4_phase_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r4_structure.py::test_episode_builder_executes_public_runtime_for_every_expanded_case",
+        "tests/test_r4_structure.py::test_expected_contract_compiler_does_not_invoke_propose_or_runtime",
+        "tests/test_r4_structure.py::test_r4_pipeline_cannot_self_approve_review_manifest"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/r4_episodes.py",
+        "src/cemm_authoritative_hybrid/r4_pipeline.py",
+        "tests/test_r4_structure.py"
+      ],
+      "kind": "pytest"
     },
     "source_compile": {
       "depends_on": [

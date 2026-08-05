@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/comparison_receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "abi_version",
+    "comparison_ref",
+    "expected_contract_ref",
+    "observed_cycle_ref",
+    "expression_match",
+    "situation_match",
+    "decision_match",
+    "effect_match",
+    "response_match",
+    "gap_match",
+    "mismatch_refs"
+  ],
+  "properties": {
+    "abi_version": {
+      "const": 2
+    },
+    "comparison_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "expected_contract_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "observed_cycle_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+    },
+    "expression_match": {
+      "type": "boolean"
+    },
+    "situation_match": {
+      "type": "boolean"
+    },
+    "decision_match": {
+      "type": "boolean"
+    },
+    "effect_match": {
+      "type": "boolean"
+    },
+    "response_match": {
+      "type": "boolean"
+    },
+    "gap_match": {
+      "type": "boolean"
+    },
+    "mismatch_refs": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
+      }
+    }
+  }
+}

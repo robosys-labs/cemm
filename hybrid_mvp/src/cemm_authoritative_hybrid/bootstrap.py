@@ -1,4 +1,4 @@
-"""Canonical Hybrid MVP composition root."""
+"""Canonical Hybrid MVP composition root through R3."""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ from .grounding import Grounder
 from .persistence import open_stores
 from .proposal import BootstrapProposer
 from .proposal_context import ProposalContextBuilder
+from .r3_effects import AdapterRegistry
+from .r3_kernel import R3Kernel
 from .runtime import HybridRuntime, RuntimeOrientationOwner
 from .verifier import ExactProgramVerifier
 
@@ -31,8 +33,10 @@ def load_runtime(
     store_path: str | Path | None = None,
     proposal_artifact_dir: str | Path | None = None,
     realizer_artifact_dir: str | Path | None = None,
+    adapters: AdapterRegistry | None = None,
+    resource_refs: tuple[str, ...] = (),
 ) -> HybridRuntime:
-    """Link authority and activate exactly one admitted runtime profile."""
+    """Link authority and activate exactly one six-phase composition root."""
     if profile not in {"development", "neural", "release"}:
         raise ValueError(f"unknown profile: {profile}")
     if profile != "development":
@@ -68,7 +72,10 @@ def load_runtime(
         form_pack_hash=resolver.form_pack_hash,
         designation_store=_DesignationStore(),
     )
-    context_builder = ProposalContextBuilder(authority, affordances, config, form_pack=form_pack)
+    context_builder = ProposalContextBuilder(
+        authority, affordances, config, form_pack=form_pack
+    )
+    adapter_registry = adapters or AdapterRegistry()
     orienter = RuntimeOrientationOwner(
         authority=authority,
         stores=stores,
@@ -77,8 +84,17 @@ def load_runtime(
         grounder=grounder,
         contribution_expander=expander,
         context_builder=context_builder,
+        resource_refs=resource_refs,
+        adapter_refs=adapter_registry.refs,
     )
     verifier = ExactProgramVerifier(CoverageVerifier(config))
+    r3 = R3Kernel(
+        authority=authority,
+        stores=stores,
+        config=config,
+        adapters=adapter_registry,
+        resource_refs=resource_refs,
+    )
     return HybridRuntime(
         config,
         authority,
@@ -87,6 +103,7 @@ def load_runtime(
             "orientation": orienter,
             "proposal": proposer,
             "verification": verifier,
+            "r3": r3,
         },
         profile=profile,
     )
