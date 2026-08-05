@@ -50,8 +50,7 @@
       "admission": [
         "governance",
         "pytest_active",
-        "r2_structure",
-        "sqlite_activation"
+        "r2_structure"
       ],
       "owners": {
         "exact-verifier": [
