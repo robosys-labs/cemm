@@ -48,6 +48,7 @@
     },
     "R2": {
       "admission": [
+        "governance",
         "pytest_active",
         "r2_structure",
         "sqlite_activation"
