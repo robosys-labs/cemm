@@ -154,17 +154,24 @@ class EpistemicEngine:
         self._authority = authority
         self._config = config
 
-    def classify(self, program: Any, orientation: Any) -> ClaimOccurrence:
-        """Classify a verified program's epistemic placement.
+    def classify(self, meaning: Any, orientation: Any) -> ClaimOccurrence:
+        """Classify a verified meaning's epistemic placement.
 
-        The epistemic mode is derived from the program's provenance metadata
-        (which is set by the proposer from structural evidence, not lexical
-        tokens).  Reported speech, belief, desire, prediction, quotation, and
-        simulation are classified as nested placements.  Observed claims with
-        evidence are candidates for world admission.
+        The epistemic mode is derived from the verified meaning's provenance
+        metadata (which is set by the proposer from structural evidence, not
+        lexical tokens).  Reported speech, belief, desire, prediction,
+        quotation, and simulation are classified as nested placements.
+        Observed claims with evidence are candidates for world admission.
+
+        Args:
+            meaning: a :class:`VerifiedMeaning` (or compatible object) with
+                ``provenance``, ``modality``, ``expression_root_ref`` and
+                ``verified_meaning_ref`` attributes.  A raw
+                :class:`SemanticSwitchProgram` is not accepted.
+            orientation: the current orientation snapshot.
         """
-        provenance: Mapping[str, Any] = dict(getattr(program.graph, "provenance", {}))
-        evidence: Mapping[str, Any] = dict(getattr(program, "evidence", {}))
+        provenance: Mapping[str, Any] = dict(getattr(meaning, "provenance", {}))
+        evidence: Mapping[str, Any] = dict(getattr(meaning, "evidence", {}))
 
         # Derive epistemic mode from provenance (set structurally by proposer).
         epistemic_mode = provenance.get("epistemic_mode", "observed")
@@ -172,7 +179,7 @@ class EpistemicEngine:
         evidence_refs = tuple(provenance.get("evidence_refs", ()))
         interval = tuple(provenance.get("interval", (0, 0)))
         confidence = float(provenance.get("confidence", 1.0))
-        modality = getattr(program.graph, "modality", "actual")
+        modality = getattr(meaning, "modality", "actual")
         scope = provenance.get("scope", "world")
         revision = getattr(orientation, "world_revision", 0)
 
@@ -187,8 +194,12 @@ class EpistemicEngine:
             revision=revision,
         )
 
-        proposition_ref = getattr(program.graph, "root_application_ref", program.program_ref)
-        claim_ref = provenance.get("claim_ref", program.program_ref)
+        proposition_ref = getattr(
+            meaning, "expression_root_ref", getattr(meaning, "verified_meaning_ref", "")
+        )
+        claim_ref = provenance.get(
+            "claim_ref", getattr(meaning, "verified_meaning_ref", "")
+        )
         occurrence_ref = stable_ref(
             "occurrence",
             {

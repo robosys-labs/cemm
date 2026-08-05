@@ -87,8 +87,13 @@ def _make_program(
     evidence_refs: tuple[str, ...] = (),
     claim_ref: str = "",
     modality: str = "actual",
-) -> SemanticSwitchProgram:
-    """Build a SemanticSwitchProgram with epistemic provenance metadata."""
+) -> Any:
+    """Build a verified-meaning-like object with epistemic provenance metadata.
+
+    R3-01 hard-cut: EpistemicEngine.classify now accepts a VerifiedMeaning-like
+    object (with ``provenance``, ``modality``, ``expression_root_ref`` and
+    ``verified_meaning_ref``) instead of a raw SemanticSwitchProgram.
+    """
     app = Application.create(
         "op:state",
         {
@@ -97,18 +102,25 @@ def _make_program(
             "role:value": "value:open",
         },
     )
-    graph = PropositionGraph.create(
-        [app],
-        app.application_ref,
-        modality=modality,
-        provenance={
-            "epistemic_mode": epistemic_mode,
-            "source_ref": source_ref,
-            "evidence_refs": list(evidence_refs),
-            "claim_ref": claim_ref or f"claim:{epistemic_mode}",
-        },
-    )
-    return SemanticSwitchProgram.create("OBSERVE", "event:context:test", graph)
+
+    class _VerifiedMeaningLike:
+        """Minimal verified-meaning-like object for epistemic classification."""
+
+        def __init__(self) -> None:
+            self.provenance = {
+                "epistemic_mode": epistemic_mode,
+                "source_ref": source_ref,
+                "evidence_refs": list(evidence_refs),
+                "claim_ref": claim_ref or f"claim:{epistemic_mode}",
+                "interval": (0, 0),
+                "confidence": 1.0,
+                "scope": "world",
+            }
+            self.modality = modality
+            self.expression_root_ref = app.application_ref
+            self.verified_meaning_ref = f"meaning:{epistemic_mode}:{source_ref}"
+
+    return _VerifiedMeaningLike()
 
 
 def _placement(
