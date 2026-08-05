@@ -1,7 +1,7 @@
 {
   "baseline_source_ref": "58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
   "case_count": 743,
-  "case_set_ref": "case_set:c2ea71b59cb0f8c688630591",
+  "case_set_ref": "case_set:323e5c04af97ea0bb164d718",
   "classification_counts": {
     "historical": 13,
     "retained": 609,
@@ -246,9 +246,9 @@
       "path": "tests/test_transition_simulation.py"
     }
   ],
-  "inventory_ref": "test_inventory:8a4312e87bdd208c9ebe2345",
+  "inventory_ref": "test_inventory:513776626601cbdc5eaccab6",
   "schema": "cemm-hybrid-test-inventory-v1",
-  "source_set_ref": "source_set:9ac16ac985a869543db03e8c",
+  "source_set_ref": "source_set:0cd27fbc5f88b0588314fc3e",
   "source_test_count": 632,
   "source_tests": [
     {
@@ -1276,11 +1276,11 @@
       "activation_phase": "R1",
       "assertion_ref": "assertion:bootstrap-proposer-candidates-sorted-by-program-ref",
       "case_node_ids": [
-        "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref"
+        "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order"
       ],
       "classification": "retained",
-      "source_ast_sha256": "b777cf694475cbbc2e3a5824fc79ebd07cdc31f8dfcbd0413c7f5f5a28a49e19",
-      "source_test_ref": "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref",
+      "source_ast_sha256": "a3ce802f20be5b8572958d9c366801524b73cbf974e59ad172a35f970810c2d2",
+      "source_test_ref": "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order",
       "successor_node_ids": []
     },
     {
@@ -1388,7 +1388,7 @@
         "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R2",
+      "replacement_phase": "R3",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates",
@@ -4398,17 +4398,6 @@
     },
     {
       "activation_phase": "R2",
-      "assertion_ref": "assertion:grounding-adding-designation-changes-authority-generation",
-      "case_node_ids": [
-        "tests/test_grounding.py::test_adding_designation_changes_authority_generation"
-      ],
-      "classification": "retained",
-      "source_ast_sha256": "c7207622ab66e4bab6ecbf2719712f1bdd406cbf8174748bd1d128876d23619c",
-      "source_test_ref": "tests/test_grounding.py::test_adding_designation_changes_authority_generation",
-      "successor_node_ids": []
-    },
-    {
-      "activation_phase": "R2",
       "assertion_ref": "assertion:grounding-adding-designation-does-not-change-form-pack-hash",
       "case_node_ids": [
         "tests/test_grounding.py::test_adding_designation_does_not_change_form_pack_hash"
@@ -4427,6 +4416,17 @@
       "classification": "retained",
       "source_ast_sha256": "509c1a4b6b35aa681329eb588388aeb88bd81cbaed5c0a9fd20a49831b60ff23",
       "source_test_ref": "tests/test_grounding.py::test_designation_candidate_is_frozen",
+      "successor_node_ids": []
+    },
+    {
+      "activation_phase": "R2",
+      "assertion_ref": "assertion:grounding-adding-designation-changes-authority-generation",
+      "case_node_ids": [
+        "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files"
+      ],
+      "classification": "retained",
+      "source_ast_sha256": "4b68c8358500a8127ff96b2222c50a878b437a74d1fc396059e9b2553e81f997",
+      "source_test_ref": "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files",
       "successor_node_ids": []
     },
     {
@@ -5290,6 +5290,17 @@
     },
     {
       "activation_phase": "R2",
+      "assertion_ref": "assertion:orientation-projection-orientation-traverses-relations-within-depth",
+      "case_node_ids": [
+        "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam"
+      ],
+      "classification": "retained",
+      "source_ast_sha256": "e376cd9732a3b8e65db1797d839e693f226c5debe383e35eb692b09f339f9265",
+      "source_test_ref": "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam",
+      "successor_node_ids": []
+    },
+    {
+      "activation_phase": "R2",
       "assertion_ref": "assertion:orientation-projection-orientation-records-index-probes",
       "case_node_ids": [
         "tests/test_orientation_projection.py::test_orientation_records_index_probes"
@@ -5308,17 +5319,6 @@
       "classification": "retained",
       "source_ast_sha256": "3cf1ccd4b6fa7e17c619af63db85a073ef294ca999eda81b87e6b27543c80f55",
       "source_test_ref": "tests/test_orientation_projection.py::test_orientation_records_visited_refs",
-      "successor_node_ids": []
-    },
-    {
-      "activation_phase": "R2",
-      "assertion_ref": "assertion:orientation-projection-orientation-traverses-relations-within-depth",
-      "case_node_ids": [
-        "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth"
-      ],
-      "classification": "retained",
-      "source_ast_sha256": "f4e56f7e1d80151ad9d4ac3b78a21672f238ac5aaac9b248df2e986e01062c2e",
-      "source_test_ref": "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth",
       "successor_node_ids": []
     },
     {

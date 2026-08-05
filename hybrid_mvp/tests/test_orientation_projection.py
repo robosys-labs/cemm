@@ -246,14 +246,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "runtime-path",
         "source_ast_sha256": "23fc1c6c28d84140cab8fa6af948714f5961b2864c54e2bb5189fc26707e24f3"
     },
-    "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam": {
-        "activation_phase": "R1",
-        "assertion_ref": "assertion:r1-orientation-disabled-adjacency-seam",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R1-Slice-B",
-        "owner_ref": "runtime-path",
-        "source_ast_sha256": "e376cd9732a3b8e65db1797d839e693f226c5debe383e35eb692b09f339f9265"
-    },
     "tests/test_orientation_projection.py::test_projector_cache_key_is_exact_orientation_content_ref": {
         "activation_phase": "R1",
         "assertion_ref": "assertion:r1-orientation-cache-key-exact-content",
