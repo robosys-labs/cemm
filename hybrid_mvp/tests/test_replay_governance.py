@@ -36,6 +36,7 @@ GOVERNING_DOCUMENTS = (
     "docs/ARCHITECTURE.md",
     "docs/ABI_REGISTRY.md",
     "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
 )
 

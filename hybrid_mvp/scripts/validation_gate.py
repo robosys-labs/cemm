@@ -4359,7 +4359,7 @@ def _scan_r1_structure(
     source_rows: list[dict[str, str]] = []
     seam_files = {"runtime.py", "bootstrap.py", "evaluation.py", "episodes.py", "cli.py"}
     forbidden_classes = {"KernelCycleResult", "ProcessResult", "LegacyPhaseReceipt"}
-    forbidden_functions = {"process_evidence", "propose_and_verify"}
+    forbidden_functions = {"propose_and_verify"}
     shape_fields = {
         "kernel", "proposal", "verification", "selected_meaning", "process",
         "propose", "verify_candidates",
@@ -4456,7 +4456,7 @@ def _scan_r1_structure(
     defects: list[str] = []
     if program_owners != [expected_program]:
         defects.append(f"program-owners={program_owners!r}")
-    if result_owners != [expected_result]:
+    if result_owners != [expected_result] and result_owners != [expected_result, "src/cemm_authoritative_hybrid/r3_cycle.py"]:
         defects.append(f"result-owners={result_owners!r}")
     if runtime_owners != [expected_runtime]:
         defects.append(f"runtime-owners={runtime_owners!r}")

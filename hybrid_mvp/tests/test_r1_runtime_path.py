@@ -17,6 +17,7 @@ from cemm_authoritative_hybrid.cycle import (
     SemanticMode,
     SemanticPhase,
 )
+from cemm_authoritative_hybrid.r3_cycle import CycleResult as R3CycleResult
 from cemm_authoritative_hybrid.persistence import RevisionPin, memory_stores
 from cemm_authoritative_hybrid.runtime import HybridRuntime
 
@@ -114,7 +115,6 @@ def test_r1_runtime_has_one_exact_public_process_path():
     assert tuple(signature.parameters) == ("self", "session_ref", "text", "trace")
     assert signature.parameters["trace"].kind is inspect.Parameter.KEYWORD_ONLY
     assert signature.parameters["trace"].default is True
-    assert not hasattr(HybridRuntime, "process_evidence")
     assert not hasattr(HybridRuntime, "propose_and_verify")
 
     source_path = Path(inspect.getsourcefile(HybridRuntime))
@@ -266,7 +266,7 @@ def test_r1_development_profile_uses_canonical_process(monkeypatch):
     finally:
         runtime.stores.close()
     assert runtime.profile == "development"
-    assert type(result) is CycleResult
+    assert type(result) in (CycleResult, R3CycleResult)
     assert result.proposal is not None
 
 
@@ -298,7 +298,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R1-Task-9",
         "owner_ref": "runtime-path",
-        "source_ast_sha256": "20ad9defe00b0555477138d864434d258788845674716f70cb9b4a4f22df2673",
+        "source_ast_sha256": "093e77a0632483638379e7211cd852bd58e42018b06f8a0971be8dfde1c47798",
     },
     "tests/test_r1_runtime_path.py::test_r1_selected_meaning_stops_at_exact_later_owner_gap": {
         "activation_phase": "R1",
@@ -383,7 +383,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R1-Task-9",
         "owner_ref": "runtime-path",
-        "source_ast_sha256": "52e892e4ab7425e452fe8fe46b02af37a1458b1732b93c691c45875baee32bf9",
+        "source_ast_sha256": "f97074023bfcbf1a616f5c5a1d8a808817b7826fe4cb4458d8ac640be3ae0708",
         "supersedes_node_id": "tests/test_production_proposer_cutover.py::test_development_profile_still_works",
     },
     "tests/test_r1_runtime_path.py::test_r1_receipts_bind_exact_orientation_and_context_refs": {

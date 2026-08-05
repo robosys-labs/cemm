@@ -80,6 +80,23 @@ def _canonical(value: object, owner: type[Any], name: str) -> object:
 def _artifact_ref(value: object | None) -> str | None:
     if value is None:
         return None
+    # Type-specific primary ref to avoid returning binding refs (e.g.
+    # ProposalResult.orientation_ref) instead of the artifact's own ref.
+    _PRIMARY: dict[type, str] = {
+        Orientation: "orientation_ref",
+        ProposalResult: "proposal_ref",
+        VerificationBatch: "batch_ref",
+        EvaluationBundle: "evaluation_ref",
+        EffectReceipt: "receipt_ref",
+        NoEffectReceipt: "receipt_ref",
+        ResponseMeaning: "response_meaning_ref",
+        GapReceipt: "gap_ref",
+    }
+    primary = _PRIMARY.get(type(value))
+    if primary is not None:
+        ref = getattr(value, primary, None)
+        if type(ref) is str and ref:
+            return ref
     for field in (
         "orientation_ref",
         "proposal_ref",

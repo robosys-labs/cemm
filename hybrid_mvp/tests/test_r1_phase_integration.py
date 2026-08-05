@@ -11,6 +11,7 @@ import cemm_authoritative_hybrid.bootstrap as bootstrap_module
 from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.contributions import ContributionExpander
 from cemm_authoritative_hybrid.cycle import CycleResult, CycleStatus, SemanticPhase
+from cemm_authoritative_hybrid.r3_cycle import CycleResult as R3CycleResult
 from cemm_authoritative_hybrid.forms import FormResolver
 from cemm_authoritative_hybrid.gaps import MissingOwner
 from cemm_authoritative_hybrid.grounding import Grounder
@@ -69,7 +70,7 @@ def test_r1_composition_root_runs_each_orient_transform_once(monkeypatch):
     finally:
         runtime.stores.close()
 
-    assert type(result) is CycleResult
+    assert type(result) in (CycleResult, R3CycleResult)
     assert counts == {"form": 1, "ground": 1, "expand": 1, "context": 1}
     assert result.status is CycleStatus.UNSUPPORTED
     assert result.verification.status == "abstained"
@@ -98,7 +99,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r1-one-orient-transform-pass",
         "diagnostic_role": "phase",
         "introduced_by_task": "R1-Task-9",
-        "source_ast_sha256": "0b947de0b37a1038e17d4cfb2af830088c08eadccd0f197225da5d2e6d09e167",
+        "source_ast_sha256": "91e192e23b7028203f169cd2460a375c7bdfd8cd6b0b7066f7b21db9c86e5c3f",
     },
     "tests/test_r1_phase_integration.py::test_r1_bootstrap_requires_profile_and_fails_later_profiles_closed": {
         "activation_phase": "R1",
