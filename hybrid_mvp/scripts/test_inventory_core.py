@@ -37,8 +37,8 @@ REVIEWED_COUNTS = MappingProxyType(
         "file_count": 59,
         "source_test_count": 632,
         "case_count": 743,
-        "retained": 606,
-        "rewritten": 13,
+        "retained": 609,
+        "rewritten": 10,
         "historical": 13,
     }
 )

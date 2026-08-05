@@ -4,8 +4,8 @@
   "case_set_ref": "case_set:c2ea71b59cb0f8c688630591",
   "classification_counts": {
     "historical": 13,
-    "retained": 606,
-    "rewritten": 13
+    "retained": 609,
+    "rewritten": 10
   },
   "file_count": 59,
   "files": [
@@ -246,9 +246,9 @@
       "path": "tests/test_transition_simulation.py"
     }
   ],
-  "inventory_ref": "test_inventory:18540e5ff41d612d595b5a8b",
+  "inventory_ref": "test_inventory:8a4312e87bdd208c9ebe2345",
   "schema": "cemm-hybrid-test-inventory-v1",
-  "source_set_ref": "source_set:a01c93943f83bcf9573de6ca",
+  "source_set_ref": "source_set:9ac16ac985a869543db03e8c",
   "source_test_count": 632,
   "source_tests": [
     {
@@ -1273,27 +1273,15 @@
       "successor_node_ids": []
     },
     {
-      "activation_phase": null,
+      "activation_phase": "R1",
       "assertion_ref": "assertion:bootstrap-proposer-candidates-sorted-by-program-ref",
       "case_node_ids": [
         "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref"
       ],
-      "classification": "rewritten",
-      "replacement_phase": "R3",
-      "rewrite_obligations": [
-        {
-          "predecessor_case_node_id": "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref",
-          "required_successor_node_ids": [
-            "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order"
-          ],
-          "rewrite_ref": "rewrite_obligation:d9845bfb158bf7f79e57376f"
-        }
-      ],
+      "classification": "retained",
       "source_ast_sha256": "b777cf694475cbbc2e3a5824fc79ebd07cdc31f8dfcbd0413c7f5f5a28a49e19",
       "source_test_ref": "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref",
-      "successor_node_ids": [
-        "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order"
-      ]
+      "successor_node_ids": []
     },
     {
       "activation_phase": "R1",
@@ -1400,7 +1388,7 @@
         "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R3",
+      "replacement_phase": "R2",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates",
@@ -4409,27 +4397,15 @@
       "successor_node_ids": []
     },
     {
-      "activation_phase": null,
+      "activation_phase": "R2",
       "assertion_ref": "assertion:grounding-adding-designation-changes-authority-generation",
       "case_node_ids": [
         "tests/test_grounding.py::test_adding_designation_changes_authority_generation"
       ],
-      "classification": "rewritten",
-      "replacement_phase": "R3",
-      "rewrite_obligations": [
-        {
-          "predecessor_case_node_id": "tests/test_grounding.py::test_adding_designation_changes_authority_generation",
-          "required_successor_node_ids": [
-            "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files"
-          ],
-          "rewrite_ref": "rewrite_obligation:6861026216886fc7d62999ba"
-        }
-      ],
+      "classification": "retained",
       "source_ast_sha256": "c7207622ab66e4bab6ecbf2719712f1bdd406cbf8174748bd1d128876d23619c",
       "source_test_ref": "tests/test_grounding.py::test_adding_designation_changes_authority_generation",
-      "successor_node_ids": [
-        "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files"
-      ]
+      "successor_node_ids": []
     },
     {
       "activation_phase": "R2",
@@ -5335,27 +5311,15 @@
       "successor_node_ids": []
     },
     {
-      "activation_phase": null,
+      "activation_phase": "R2",
       "assertion_ref": "assertion:orientation-projection-orientation-traverses-relations-within-depth",
       "case_node_ids": [
         "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth"
       ],
-      "classification": "rewritten",
-      "replacement_phase": "R3",
-      "rewrite_obligations": [
-        {
-          "predecessor_case_node_id": "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth",
-          "required_successor_node_ids": [
-            "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam"
-          ],
-          "rewrite_ref": "rewrite_obligation:1982f651f668151ffe3afbc5"
-        }
-      ],
+      "classification": "retained",
       "source_ast_sha256": "f4e56f7e1d80151ad9d4ac3b78a21672f238ac5aaac9b248df2e986e01062c2e",
       "source_test_ref": "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth",
-      "successor_node_ids": [
-        "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam"
-      ]
+      "successor_node_ids": []
     },
     {
       "activation_phase": "R4",

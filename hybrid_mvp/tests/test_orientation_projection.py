@@ -249,9 +249,6 @@ __cemm_test_inventory__ = {
     "tests/test_orientation_projection.py::test_orientation_records_disabled_relation_adjacency_seam": {
         "activation_phase": "R1",
         "assertion_ref": "assertion:r1-orientation-disabled-adjacency-seam",
-        "contributes_to_rewrite_refs": [
-            "rewrite_obligation:1982f651f668151ffe3afbc5"
-        ],
         "diagnostic_role": "owner",
         "introduced_by_task": "R1-Slice-B",
         "owner_ref": "runtime-path",

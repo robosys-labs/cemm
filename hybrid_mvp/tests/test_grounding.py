@@ -30,9 +30,6 @@ __cemm_test_inventory__ = {
     "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files": {
         "activation_phase": "R2",
         "assertion_ref": "assertion:r2-designation-store-addition-does-not-alter-authority-files",
-        "contributes_to_rewrite_refs": [
-            "rewrite_obligation:6861026216886fc7d62999ba"
-        ],
         "diagnostic_role": "phase",
         "introduced_by_task": "R2-Implementation",
         "source_ast_sha256": "4b68c8358500a8127ff96b2222c50a878b437a74d1fc396059e9b2553e81f997"
