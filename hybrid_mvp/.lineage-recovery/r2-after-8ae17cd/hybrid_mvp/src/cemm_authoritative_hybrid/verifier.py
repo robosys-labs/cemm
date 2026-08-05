@@ -20,7 +20,6 @@ from .expressions import (
     CompilationProof,
     CompilationSuccess,
     GroundedReference,
-    ApplicationFiller,
     LiteralValue,
     RoleBinding,
     SemanticApplication,
@@ -36,7 +35,6 @@ from .programs import (
     SemanticSwitchProgram,
 )
 from .proposal_context import ProposalContext
-from .literal_codec import decode_literal_slot
 from .transition_preview import TransitionPreview, extract_transition_previews
 from .verifier_reconstruction import reconstruct_expected_expression as _reconstruct_r2_expression
 
@@ -865,101 +863,20 @@ def _prefix_budget(
         elif action.action_type == "project_variable":
             node_count += 1
     return application_count, action_count, node_count
-def _prefix_completion_is_valid(
-    context: ProposalContext,
-    prefix: tuple[ProgramAction, ...],
-    max_depth: int,
-) -> bool:
-    nodes: list[str] = []
-    parents: dict[str, str] = {}
-    used_sources: set[str] = set()
-    for action in prefix:
-        used_sources.update(action.source_unit_refs)
-        kind = action.action_type
-        args = action.arguments
-        declared: str | None = None
-        edges: tuple[tuple[str, str], ...] = ()
-        if kind == "instantiate_operator":
-            declared = args[0]
-        elif kind == "bind_nested_application":
-            if args[0] == "role":
-                edges = ((args[3], args[1]),)
-            else:
-                declared = args[1]
-                edges = tuple((ref, declared) for ref in args[3:])
-        elif kind == "attach_scope":
-            declared = args[0]
-            edges = ((args[2], declared),)
-        elif kind == "project_variable":
-            declared = args[0]
-            edges = ((args[2], declared),)
-        if declared is not None:
-            if declared in nodes:
-                return False
-            nodes.append(declared)
-        known = set(nodes)
-        for child, parent in edges:
-            if child not in known or parent not in known or child == parent:
-                return False
-            if child in parents:
-                return False
-            parents[child] = parent
-    if not nodes:
-        return False
-    roots = tuple(ref for ref in nodes if ref not in parents)
-    if not roots:
-        return False
-    for ref in nodes:
-        seen: set[str] = set()
-        cursor = ref
-        depth = 1
-        while cursor in parents:
-            if cursor in seen:
-                return False
-            seen.add(cursor)
-            cursor = parents[cursor]
-            depth += 1
-            if depth > max_depth:
-                return False
-        if cursor not in roots:
-            return False
-
-    critical_kinds = {
-        "anchor", "predicate", "binder", "reference", "scope",
-        "connector", "literal", "open_variable",
-    }
-    critical_sources = {
-        source_ref
-        for row in context.contribution_slots
-        if row.kind in critical_kinds
-        for source_ref in row.source_unit_refs
-    }
-    return critical_sources <= used_sources
 
 
 class LegalActionIndex:
     """Context-local legality predicate with no authority or vocabulary scan."""
 
-    __slots__ = (
-        "_context", "_max_applications", "_max_actions", "_max_nodes", "_max_depth"
-    )
+    __slots__ = ("_context", "_max_applications", "_max_actions", "_max_nodes")
 
-    def __init__(
-        self,
-        context: ProposalContext,
-        *,
-        max_applications: int = 24,
-        max_actions: int = 256,
-        max_nodes: int = 64,
-        max_depth: int = 6,
-    ) -> None:
+    def __init__(self, context: ProposalContext, *, max_applications: int = 24, max_actions: int = 256, max_nodes: int = 64) -> None:
         if not isinstance(context, ProposalContext):
             raise ValueError("LegalActionIndex requires one exact ProposalContext")
         self._context = context
         self._max_applications = max_applications
         self._max_actions = max_actions
         self._max_nodes = max_nodes
-        self._max_depth = max_depth
 
     @property
     def context(self) -> ProposalContext:
@@ -1000,8 +917,6 @@ class LegalActionIndex:
             self._context, rows
         )
         app_count, action_count, node_count = _prefix_budget(rows)
-        if action_count >= self._max_actions:
-            return False
         args = action.arguments
         if action.action_type == "select_designation":
             return (
@@ -1087,13 +1002,9 @@ class LegalActionIndex:
                 and mode.mode in transition.compatible_modes
             )
         if action.action_type == "complete_program":
-            if not bool(applications) or not all(
+            return bool(applications) and all(
                 set(frame.required_roles) <= bound_roles.get(local_ref, set())
                 for local_ref, frame in applications.items()
-            ):
-                return False
-            return _prefix_completion_is_valid(
-                self._context, rows, self._max_depth
             )
         return False
 
@@ -1518,8 +1429,7 @@ def _reconstruct_expected_r1_expression(
             if contribution.target_ref is not None:
                 filler = GroundedReference(contribution.target_ref)
             elif contribution.literal_value is not None:
-                literal_kind, literal_value = decode_literal_slot(contribution)
-                filler = LiteralValue(literal_kind, literal_value)
+                filler = LiteralValue("string", contribution.literal_value)
             else:
                 return None
         else:
@@ -1601,14 +1511,15 @@ def _proof_errors(
     root_domain = tuple(row.source_ref for row in proof.root_translations)
     if root_domain != program.root_refs:
         report("root_translation_domain_mismatch")
-    application_by_ref = {
-        row.application_ref: row for row in expression.applications
-    }
-    scope_by_ref = {row.scope_ref: row for row in expression.scope_operators}
-    link_by_ref = {row.link_ref: row for row in expression.expression_links}
-    binder_by_ref = {row.binder_ref: row for row in expression.binders}
-    node_targets: dict[str, str] = {}
+    translated_roots = tuple(
+        target for row in proof.root_translations for target in row.target_refs
+    )
+    if translated_roots != expression.root_refs or any(
+        row.disposition != "translated" for row in proof.root_translations
+    ):
+        report("root_translation_target_mismatch")
 
+    root_targets = {row.source_ref: row.target_refs for row in proof.root_translations}
     if len(proof.action_translations) == len(program.actions):
         for action, row in zip(
             program.actions,
@@ -1627,111 +1538,19 @@ def _proof_errors(
                 expected_disposition = "validated"
                 expected_targets = (action.arguments[0],)
             elif action.action_type == "instantiate_operator":
-                local_ref, frame_ref = action.arguments
                 expected_disposition = "translated"
-                expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
-                target = application_by_ref.get(
-                    row.target_refs[0] if len(row.target_refs) == 1 else ""
-                )
-                frame = context.frame(frame_ref)
-                if (
-                    target is None
-                    or frame is None
-                    or target.operator != frame.operator_ref
-                    or target.predicate_ref != frame.predicate_target_ref
-                ):
-                    expected_targets = ()
-                elif expected_targets:
-                    node_targets[local_ref] = expected_targets[0]
+                expected_targets = root_targets.get(action.arguments[0], ())
             elif action.action_type in {"bind_role", "bind_reference"}:
-                app_ref, role_ref, _slot_ref = action.arguments
+                canonical_application_refs = root_targets.get(action.arguments[0], ())
                 expected_disposition = "translated"
-                canonical_app = node_targets.get(app_ref)
                 expected_targets = (
-                    (canonical_app, role_ref) if canonical_app is not None else ()
-                )
-            elif action.action_type == "bind_nested_application":
-                expected_disposition = "translated"
-                if action.arguments[0] == "role":
-                    _, app_ref, role_ref, child_ref = action.arguments
-                    canonical_app = node_targets.get(app_ref)
-                    canonical_child = node_targets.get(child_ref)
-                    expected_targets = (
-                        (canonical_app, role_ref)
-                        if canonical_app is not None and canonical_child is not None
-                        else ()
+                    (
+                        canonical_application_refs[0],
+                        action.arguments[1],
                     )
-                    app = application_by_ref.get(canonical_app or "")
-                    binding = (
-                        next((item for item in app.roles if item.role_ref == role_ref), None)
-                        if app is not None else None
-                    )
-                    if (
-                        binding is None
-                        or not isinstance(binding.filler, ApplicationFiller)
-                        or binding.filler.node_ref != canonical_child
-                    ):
-                        expected_targets = ()
-                else:
-                    _, local_ref, slot_ref, *operands = action.arguments
-                    expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
-                    target = link_by_ref.get(
-                        row.target_refs[0] if len(row.target_refs) == 1 else ""
-                    )
-                    slot = context.expression_link(slot_ref)
-                    canonical_operands = tuple(node_targets.get(ref, "") for ref in operands)
-                    if (
-                        target is None
-                        or slot is None
-                        or target.link_type != slot.link_type
-                        or any(not ref for ref in canonical_operands)
-                        or (slot.commutative and set(target.operand_refs) != set(canonical_operands))
-                        or (not slot.commutative and target.operand_refs != canonical_operands)
-                    ):
-                        expected_targets = ()
-                    elif expected_targets:
-                        node_targets[local_ref] = expected_targets[0]
-            elif action.action_type == "attach_scope":
-                local_ref, slot_ref, operand_ref = action.arguments
-                expected_disposition = "translated"
-                expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
-                target = scope_by_ref.get(
-                    row.target_refs[0] if len(row.target_refs) == 1 else ""
+                    if len(canonical_application_refs) == 1
+                    else ()
                 )
-                slot = context.scope(slot_ref)
-                canonical_operand = node_targets.get(operand_ref)
-                if (
-                    target is None
-                    or slot is None
-                    or canonical_operand is None
-                    or target.operator_type != slot.operator_type
-                    or target.value_ref != slot.value_ref
-                    or target.operand_ref != canonical_operand
-                ):
-                    expected_targets = ()
-                elif expected_targets:
-                    node_targets[local_ref] = expected_targets[0]
-            elif action.action_type == "project_variable":
-                local_ref, slot_ref, body_ref = action.arguments
-                expected_disposition = "translated"
-                expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
-                target = binder_by_ref.get(
-                    row.target_refs[0] if len(row.target_refs) == 1 else ""
-                )
-                slot = context.variable(slot_ref)
-                canonical_body = node_targets.get(body_ref)
-                if (
-                    target is None
-                    or slot is None
-                    or canonical_body is None
-                    or target.body_ref != canonical_body
-                ):
-                    expected_targets = ()
-                elif expected_targets:
-                    node_targets[local_ref] = expected_targets[0]
-            elif action.action_type == "propose_transition":
-                expected_disposition = "validated"
-                expected_targets = action.arguments
             elif action.action_type == "complete_program":
                 expected_disposition = "translated"
                 expected_targets = (expression.expression_ref,)
@@ -1740,26 +1559,10 @@ def _proof_errors(
                 or row.disposition != expected_disposition
                 or row.target_refs != expected_targets
             ):
-                report("action_translation_target_mismatch", action.action_ref)
-
-        translated_roots: list[str] = []
-        for local_root, root_row in zip(
-            program.root_refs, proof.root_translations, strict=True
-        ):
-            expected = node_targets.get(local_root)
-            if (
-                expected is None
-                or root_row.disposition != "translated"
-                or root_row.target_refs != (expected,)
-            ):
-                report("root_translation_target_mismatch", local_root)
-                continue
-            translated_roots.append(expected)
-        if (
-            len(translated_roots) != len(expression.root_refs)
-            or set(translated_roots) != set(expression.root_refs)
-        ):
-            report("root_translation_target_mismatch")
+                report(
+                    "action_translation_target_mismatch",
+                    action.action_ref,
+                )
 
     if len(proof.assignment_translations) == len(program.source_assignments):
         for assignment, row in zip(

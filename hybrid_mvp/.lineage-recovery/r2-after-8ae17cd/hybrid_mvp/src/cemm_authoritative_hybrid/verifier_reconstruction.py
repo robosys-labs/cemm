@@ -24,7 +24,6 @@ from .expressions import (
     VariableBinder,
 )
 from .programs import PERSISTENT_OPERATORS
-from .literal_codec import decode_literal_slot
 
 _R2_EXPRESSION_ACTIONS = frozenset(
     {
@@ -64,61 +63,6 @@ def _find_frame(program: Any, app_ref: str, context: Any) -> Any | None:
         if a.action_type == "instantiate_operator" and a.arguments[0] == app_ref:
             return context.frame(a.arguments[1])
     return None
-
-
-def _node_children(program: Any) -> dict[str, tuple[str, ...]]:
-    grouped: dict[str, list[str]] = {}
-    for action in program.actions:
-        if action.action_type == "bind_nested_application":
-            if action.arguments[0] == "role":
-                _, parent_ref, _role_ref, child_ref = action.arguments
-                grouped.setdefault(parent_ref, []).append(child_ref)
-            else:
-                _, link_ref, _slot_ref, *operands = action.arguments
-                grouped.setdefault(link_ref, []).extend(operands)
-        elif action.action_type == "attach_scope":
-            scope_ref, _slot_ref, operand_ref = action.arguments
-            grouped.setdefault(scope_ref, []).append(operand_ref)
-        elif action.action_type == "project_variable":
-            binder_ref, _slot_ref, body_ref = action.arguments
-            grouped.setdefault(binder_ref, []).append(body_ref)
-    return {key: tuple(value) for key, value in grouped.items()}
-
-
-def _reachable_nodes(program: Any, body_ref: str) -> tuple[str, ...]:
-    children = _node_children(program)
-    result: list[str] = []
-    stack = [body_ref]
-    seen: set[str] = set()
-    while stack:
-        ref = stack.pop()
-        if ref in seen:
-            continue
-        seen.add(ref)
-        result.append(ref)
-        stack.extend(reversed(children.get(ref, ())))
-    return tuple(result)
-
-
-def _resolve_variable_application(
-    program: Any,
-    context: Any,
-    st: _ReconstructState,
-    body_ref: str,
-    slot: Any,
-) -> str | None:
-    frame_by_application = {
-        action.arguments[0]: action.arguments[1]
-        for action in program.actions
-        if action.action_type == "instantiate_operator"
-    }
-    matches = tuple(
-        ref
-        for ref in _reachable_nodes(program, body_ref)
-        if frame_by_application.get(ref) == slot.application_frame_ref
-        and slot.role_ref not in st.role_bindings.get(ref, {})
-    )
-    return matches[0] if len(matches) == 1 else None
 
 
 def reconstruct_expected_expression(
@@ -187,8 +131,11 @@ def reconstruct_expected_expression(
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
             elif slot.literal_value is not None:
-                literal_kind, literal_value = decode_literal_slot(slot)
-                filler = LiteralValue(literal_kind, literal_value)
+                literal_kind = next(
+                    (value for key, value in slot.constraints if key == "literal_kind"),
+                    "string",
+                )
+                filler = LiteralValue(literal_kind, slot.literal_value)
             else:
                 return None
             st.grounding.update(slot.provenance_refs)
@@ -251,15 +198,14 @@ def reconstruct_expected_expression(
         st.var_counter += 1
         st.binders.append(VariableBinder(binder_ref, var_ref, target_ref))
         st.node_map.add(binder_ref)
-        owner_ref = _resolve_variable_application(
-            program, context, st, target_ref, slot
-        )
-        if owner_ref is None:
-            return None
-        role_ref = slot.role_ref
-        st.role_bindings[owner_ref][role_ref] = RoleBinding(
-            role_ref, BoundVariable(var_ref)
-        )
+        # Fill the target application's role with a BoundVariable
+        role_ref = getattr(slot, "role_ref", None)
+        if role_ref is not None:
+            if target_ref in st.role_bindings and role_ref in st.role_bindings[target_ref]:
+                return None
+            if target_ref not in st.role_bindings:
+                st.role_bindings[target_ref] = {}
+            st.role_bindings[target_ref][role_ref] = RoleBinding(role_ref, BoundVariable(var_ref))
 
     # Build applications
     applications: list[SemanticApplication] = []

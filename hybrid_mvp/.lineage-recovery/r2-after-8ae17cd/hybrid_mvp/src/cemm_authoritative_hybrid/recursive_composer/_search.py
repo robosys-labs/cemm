@@ -149,44 +149,52 @@ class RecursiveComposer:
             arguments=(self._context.context_ref,),
         )
         for mode in sorted(self._context.mode_slots, key=lambda row: row.slot_ref):
-            # Mode is situated ORIENT lineage. Its lexical unit stays available
-            # to the structural action it licenses, such as project_variable.
             mode_action = ProgramAction.create(
                 action_index=1,
                 action_type="select_mode",
                 arguments=(mode.slot_ref,),
-                source_unit_refs=(),
+                source_unit_refs=mode.source_unit_refs,
             )
-            provenance = _unique(
-                (
-                    self._context.evidence_packet_ref,
-                    self._context.form_lattice_ref,
-                    self._context.grounding_ref,
-                    mode.slot_ref,
-                    *((mode.construction_ref,) if mode.construction_ref else ()),
-                    *mode.source_unit_refs,
-                ),
-                self._max_provenance,
+            bundles = _support_bundles(
+                self._context,
+                tuple(mode.source_unit_refs),
+                kinds=_MODE_KINDS,
+                assignment_kind="discourse",
+                action_ref=mode_action.action_ref,
+                role_ref=None,
+                used_sources=set(),
+                branch_bound=self._branch_bound,
             )
-            if provenance is None:
-                self._truncated = True
-                continue
-            states.append(
-                _State(
-                    prefix=(context_action, mode_action),
-                    application_frames=(),
-                    bound_roles=(),
-                    node_order=(),
-                    parents=(),
-                    source_uses=(),
-                    selected_designations=(),
-                    used_frame_slots=(),
-                    used_structure_slots=(),
-                    used_transition_pairs=(),
-                    score_q=0,
-                    provenance=provenance,
+            for bundle in bundles:
+                provenance = _unique(
+                    (
+                        self._context.evidence_packet_ref,
+                        self._context.form_lattice_ref,
+                        self._context.grounding_ref,
+                        *((mode.construction_ref,) if mode.construction_ref else ()),
+                        *(use.contribution_slot_ref for use in bundle),
+                    ),
+                    self._max_provenance,
                 )
-            )
+                if provenance is None:
+                    self._truncated = True
+                    continue
+                states.append(
+                    _State(
+                        prefix=(context_action, mode_action),
+                        application_frames=(),
+                        bound_roles=(),
+                        node_order=(),
+                        parents=(),
+                        source_uses=bundle,
+                        selected_designations=(),
+                        used_frame_slots=(),
+                        used_structure_slots=(),
+                        used_transition_pairs=(),
+                        score_q=0,
+                        provenance=provenance,
+                    )
+                )
         return tuple(states)
 
     def _priority(self, state: _State) -> tuple[int, int, int, int]:
@@ -213,12 +221,6 @@ class RecursiveComposer:
         if set(use_sources) & _used_sources(state):
             return None
         if choice.action.source_unit_refs != use_sources:
-            return None
-        if (
-            choice.declared_node_ref is not None
-            and len(state.node_order) >= self._max_nodes
-        ):
-            self._truncated = True
             return None
         if not _can_add_edges(
             state,

@@ -29,7 +29,6 @@ from .expressions import (
     VariableBinder,
 )
 from .programs import PERSISTENT_OPERATORS
-from .literal_codec import decode_literal_slot
 
 
 class _State:
@@ -198,8 +197,11 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
             elif slot.literal_value is not None:
-                literal_kind, literal_value = decode_literal_slot(slot)
-                filler = LiteralValue(literal_kind, literal_value)
+                literal_kind = next(
+                    (value for key, value in slot.constraints if key == "literal_kind"),
+                    "string",
+                )
+                filler = LiteralValue(literal_kind, slot.literal_value)
             else:
                 return _fail("unresolved_contribution", "contribution has no resolved filler", a.action_ref)
             st.grounding.update(slot.provenance_refs)
@@ -268,59 +270,6 @@ def _collect_links(program: Any, context: Any, st: _State) -> CompilationFailure
         st.action_targets[a.action_ref] = (link_ref,)
     return None
 
-def _node_children(program: Any) -> dict[str, tuple[str, ...]]:
-    grouped: dict[str, list[str]] = {}
-    for action in program.actions:
-        if action.action_type == "bind_nested_application":
-            if action.arguments[0] == "role":
-                _, parent_ref, _role_ref, child_ref = action.arguments
-                grouped.setdefault(parent_ref, []).append(child_ref)
-            else:
-                _, link_ref, _slot_ref, *operands = action.arguments
-                grouped.setdefault(link_ref, []).extend(operands)
-        elif action.action_type == "attach_scope":
-            scope_ref, _slot_ref, operand_ref = action.arguments
-            grouped.setdefault(scope_ref, []).append(operand_ref)
-        elif action.action_type == "project_variable":
-            binder_ref, _slot_ref, body_ref = action.arguments
-            grouped.setdefault(binder_ref, []).append(body_ref)
-    return {key: tuple(value) for key, value in grouped.items()}
-
-
-def _reachable_nodes(program: Any, body_ref: str) -> tuple[str, ...]:
-    children = _node_children(program)
-    result: list[str] = []
-    stack = [body_ref]
-    seen: set[str] = set()
-    while stack:
-        ref = stack.pop()
-        if ref in seen:
-            continue
-        seen.add(ref)
-        result.append(ref)
-        stack.extend(reversed(children.get(ref, ())))
-    return tuple(result)
-
-
-def _resolve_variable_application(
-    program: Any,
-    context: Any,
-    st: _State,
-    body_ref: str,
-    slot: Any,
-) -> str | None:
-    frame_by_application = {
-        action.arguments[0]: action.arguments[1]
-        for action in program.actions
-        if action.action_type == "instantiate_operator"
-    }
-    matches = tuple(
-        ref
-        for ref in _reachable_nodes(program, body_ref)
-        if frame_by_application.get(ref) == slot.application_frame_ref
-        and slot.role_ref not in st.role_bindings.get(ref, {})
-    )
-    return matches[0] if len(matches) == 1 else None
 
 def _collect_binders(program: Any, context: Any, st: _State) -> CompilationFailure | None:
     for a in program.actions:
@@ -337,19 +286,15 @@ def _collect_binders(program: Any, context: Any, st: _State) -> CompilationFailu
         st.binders.append(VariableBinder(binder_ref, var_ref, target_ref))
         st.node_map[binder_ref] = binder_ref
         st.action_targets[a.action_ref] = (binder_ref,)
-        owner_ref = _resolve_variable_application(
-            program, context, st, target_ref, slot
-        )
-        if owner_ref is None:
-            return _fail(
-                "variable_owner_ambiguous",
-                "variable body does not contain exactly one unbound licensed role",
-                a.action_ref,
-            )
-        role_ref = slot.role_ref
-        st.role_bindings[owner_ref][role_ref] = RoleBinding(
-            role_ref, BoundVariable(var_ref)
-        )
+        # Fill the target application's role with a BoundVariable so the
+        # variable actually occurs in the semantic expression.
+        role_ref = getattr(slot, "role_ref", None)
+        if role_ref is not None:
+            if target_ref in st.role_bindings and role_ref in st.role_bindings[target_ref]:
+                return _fail("duplicate_role_binding", "variable target role is already bound", a.action_ref)
+            if target_ref not in st.role_bindings:
+                st.role_bindings[target_ref] = {}
+            st.role_bindings[target_ref][role_ref] = RoleBinding(role_ref, BoundVariable(var_ref))
     return None
 
 
@@ -423,7 +368,7 @@ def compile_recursive(
             unresolved_fillers=st.unresolved,
             bounds=ExpressionBounds(),
         )
-    except ValueError as exc:
+    except (ValueError, TypeError) as exc:
         return _fail("expression_construction_error", str(exc))
 
     # Build mapping from local refs to canonical expression refs

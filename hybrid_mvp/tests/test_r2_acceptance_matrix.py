@@ -112,6 +112,7 @@ def _full_context():
         "variable_slot:who": SimpleNamespace(
             slot_ref="variable_slot:who",
             application_frame_ref="application_frame_slot:love",
+            role_ref="role:subject",
         ),
     }
     transitions = {
@@ -342,9 +343,48 @@ def test_matrix_6_transition_preview():
 def test_matrix_7_variable_binder():
     """Program with variable binder compiles correctly."""
     context = _full_context()
-    actions = _base_actions(context)
-    actions.append(ProgramAction.create(action_index=len(actions), action_type="project_variable", arguments=("variable:0", "variable_slot:who", "application:0")))
-    program = _make_program(context, actions, ("variable:0",))
+    # Build actions without binding role:subject — the variable binder
+    # projects into that role instead of a bind_role contribution.
+    actions = [
+        ProgramAction.create(action_index=0, action_type="select_context", arguments=(context.context_ref,)),
+        ProgramAction.create(action_index=1, action_type="select_mode", arguments=("mode_slot:observe",)),
+        ProgramAction.create(action_index=2, action_type="select_designation", arguments=("designation_slot:love",)),
+        ProgramAction.create(action_index=3, action_type="instantiate_operator", arguments=("application:0", "application_frame_slot:love"), source_unit_refs=("unit:loves",)),
+        ProgramAction.create(action_index=4, action_type="bind_role", arguments=("application:0", "role:object", "contribution_slot:bob"), source_unit_refs=("unit:bob",)),
+        ProgramAction.create(action_index=5, action_type="project_variable", arguments=("variable:0", "variable_slot:who", "application:0")),
+    ]
+    assignments = (
+        SourceAssignment.create(
+            source_unit_ref="unit:loves",
+            contribution_slot_ref="contribution_slot:predicate",
+            assignment_kind="predicate",
+            target_action_ref=actions[3].action_ref,
+            target_role_ref=None,
+            residual_kind=None,
+            critical=True,
+        ),
+        SourceAssignment.create(
+            source_unit_ref="unit:bob",
+            contribution_slot_ref="contribution_slot:bob",
+            assignment_kind="role",
+            target_action_ref=actions[4].action_ref,
+            target_role_ref="role:object",
+            residual_kind=None,
+            critical=True,
+        ),
+    )
+    actions.append(ProgramAction.create(action_index=len(actions), action_type="complete_program", arguments=()))
+    program = SemanticSwitchProgram.create(
+        orientation_ref=context.orientation_ref,
+        proposal_context_ref=context.context_ref,
+        actions=tuple(actions),
+        root_refs=("variable:0",),
+        mode_slot_ref="mode_slot:observe",
+        goal_refs=("goal:understand",),
+        source_unit_refs=("unit:loves", "unit:bob"),
+        source_assignments=assignments,
+        revision_pin=context.revision_pin,
+    )
     compiled = SemanticExpressionCompiler().compile(program, context)
     reconstructed = reconstruct_expected_expression(program, context)
     assert isinstance(compiled, CompilationSuccess)

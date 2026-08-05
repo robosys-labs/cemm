@@ -599,27 +599,11 @@ class Grounder:
         designations: list[DesignationCandidate] = []
         unresolved: list[ReferenceRequirement] = []
         max_designations = self._config.max_designations_per_span
-        max_span_units = min(8, len(units))
-        covered_units: set[str] = set()
 
-        # Bounded exact-span lookup makes reviewed multi-unit designations
-        # reachable without retokenizing or manufacturing phrase identities.
-        for start in range(len(units)):
-            for width in range(max_span_units, 0, -1):
-                end = start + width
-                if end > len(units):
-                    continue
-                span = units[start:end]
-                source = lattice.source_text[
-                    span[0].source_start : span[-1].source_end
-                ]
-                surface = source.strip().casefold()
-                if not surface:
-                    continue
-                targets = self._lookup_designation(surface)
-                if not targets:
-                    continue
-                unit_refs = tuple(row.unit_ref for row in span)
+        for unit in units:
+            surface = self._lookup_surface(unit)
+            targets = self._lookup_designation(surface)
+            if targets:
                 for target in targets[:max_designations]:
                     fact_ref = stable_ref(
                         "designation",
@@ -627,37 +611,26 @@ class Grounder:
                             "surface": surface,
                             "target": target,
                             "language": self._language,
-                            "unit_refs": list(unit_refs),
                         },
                     )
                     designations.append(
                         DesignationCandidate(
-                            unit_refs=unit_refs,
+                            unit_refs=(unit.unit_ref,),
                             target_ref=target,
                             designation_fact_ref=fact_ref,
                             score=1.0,
                             provenance_refs=(),
                         )
                     )
-                    if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                        break
-                covered_units.update(unit_refs)
-                if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                    break
-            if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                break
-
-        for unit in units:
-            if unit.unit_ref in covered_units:
-                continue
-            unresolved.append(
-                ReferenceRequirement(
-                    unit_ref=unit.unit_ref,
-                    kind="designation",
-                    required_kind=None,
-                    resolved_ref=None,
+            else:
+                unresolved.append(
+                    ReferenceRequirement(
+                        unit_ref=unit.unit_ref,
+                        kind="designation",
+                        required_kind=None,
+                        resolved_ref=None,
+                    )
                 )
-            )
 
         return GroundingResult.create(
             evidence_packet_ref=lattice.evidence_packet_ref,

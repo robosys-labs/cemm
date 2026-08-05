@@ -212,22 +212,11 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 kinds=_VARIABLE_KINDS,
                 assignment_kind="role",
                 action_ref=action.action_ref,
-                role_ref=None,
+                role_ref=variable.role_ref,
                 used_sources=used_sources,
                 branch_bound=owner._branch_bound,
             )
-            for raw_uses in bundles:
-                uses = tuple(
-                    _SourceUse(
-                        source_unit_ref=use.source_unit_ref,
-                        contribution_slot_ref=use.contribution_slot_ref,
-                        assignment_kind=use.assignment_kind,
-                        target_action_ref=use.target_action_ref,
-                        target_role_ref=variable.role_ref,
-                        critical=use.critical,
-                    )
-                    for use in raw_uses
-                )
+            for uses in bundles:
                 yield _Choice(
                     action=action,
                     source_uses=uses,
@@ -236,7 +225,9 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                     bound_role=variable_binding,
                     used_structure_slot=variable.slot_ref,
                     provenance_refs=tuple(
-                        use.contribution_slot_ref for use in uses
+                        ref
+                        for use in uses
+                        for ref in (use.contribution_slot_ref,)
                     ),
                 )
 
@@ -425,21 +416,30 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                         for role in transition.required_roles
                     ):
                         continue
-                    # Transition is derived from the already-grounded
-                    # application and must not consume predicate evidence twice.
                     action = ProgramAction.create(
                         action_index=action_index,
                         action_type="propose_transition",
                         arguments=(transition.slot_ref, app_ref),
-                        source_unit_refs=(),
+                        source_unit_refs=transition.source_unit_refs,
                     )
-                    yield _Choice(
-                        action=action,
-                        source_uses=(),
-                        transition_pair=pair,
-                        provenance_refs=(
-                            transition.slot_ref,
-                            transition.event_type_ref,
-                        ),
+                    bundles = _support_bundles(
+                        owner._context,
+                        tuple(transition.source_unit_refs),
+                        kinds=_TRANSITION_KINDS,
+                        assignment_kind="discourse",
+                        action_ref=action.action_ref,
+                        role_ref=None,
+                        used_sources=used_sources,
+                        branch_bound=owner._branch_bound,
                     )
+                    for uses in bundles:
+                        yield _Choice(
+                            action=action,
+                            source_uses=uses,
+                            transition_pair=pair,
+                            provenance_refs=(
+                                transition.slot_ref,
+                                transition.event_type_ref,
+                            ),
+                        )
 

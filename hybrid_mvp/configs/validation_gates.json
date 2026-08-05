@@ -911,6 +911,9 @@
         "source_compile"
       ],
       "exact_nodes": [
+        "tests/test_r2_deep_review_regressions.py::test_literal_decoder_returns_exact_scalar_types",
+        "tests/test_r2_deep_review_regressions.py::test_literal_slot_requires_one_exact_kind",
+        "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_is_grounded_as_one_span",
         "tests/test_r2_structural_slots.py::test_application_frame_slot_has_proposition_roles_field",
         "tests/test_r2_structural_slots.py::test_application_frame_slot_rejects_undeclared_proposition_role",
         "tests/test_r2_structural_slots.py::test_conjunction_connector_produces_link_slot",
@@ -948,7 +951,8 @@
       ],
       "inputs": [
         "src/",
-        "tests/conftest.py"
+        "tests/conftest.py",
+        "tests/test_r2_deep_review_regressions.py"
       ],
       "kind": "pytest"
     },
@@ -957,6 +961,7 @@
         "source_compile"
       ],
       "exact_nodes": [
+        "tests/test_r2_deep_review_regressions.py::test_query_mode_preserves_variable_source_for_projection",
         "tests/test_r2_legal_actions.py::test_abstain_illegal_after_terminal",
         "tests/test_r2_legal_actions.py::test_application_bound_enforced",
         "tests/test_r2_legal_actions.py::test_complete_program_illegal_without_required_roles",
@@ -1000,7 +1005,8 @@
       ],
       "inputs": [
         "src/",
-        "tests/conftest.py"
+        "tests/conftest.py",
+        "tests/test_r2_deep_review_regressions.py"
       ],
       "kind": "pytest"
     },
