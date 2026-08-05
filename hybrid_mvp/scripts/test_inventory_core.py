@@ -34,7 +34,7 @@ CLASSIFICATIONS = frozenset({"retained", "rewritten", "historical"})
 DIAGNOSTIC_ROLES = frozenset({"owner", "phase", "admission_only"})
 REVIEWED_COUNTS = MappingProxyType(
     {
-        "file_count": 59,
+        "file_count": 60,
         "source_test_count": 632,
         "case_count": 743,
         "retained": 609,

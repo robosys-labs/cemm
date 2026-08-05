@@ -45,10 +45,14 @@ STEP_KINDS = frozenset(
     {
         "governance", "compile", "pytest", "pytest_inventory", "authority_link",
         "sqlite_activation", "r1_structure", "r2_structure",
+        "r3_structure", "r3_activation_canaries",
     }
 )
 PYTEST_KINDS = frozenset({"pytest", "pytest_inventory"})
-ADMISSION_ONLY_KINDS = frozenset({"authority_link", "sqlite_activation", "r1_structure", "r2_structure"})
+ADMISSION_ONLY_KINDS = frozenset({
+    "authority_link", "sqlite_activation", "r1_structure", "r2_structure",
+    "r3_structure", "r3_activation_canaries",
+})
 _CONTENT_REF_RE = re.compile(r"[a-z][a-z0-9_-]*:[0-9a-f]{24}\Z")
 _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -86,6 +90,8 @@ _STEP_FIELDS = MappingProxyType(
         "sqlite_activation": frozenset({"kind", "depends_on", "inputs"}),
         "r1_structure": frozenset({"kind", "depends_on", "inputs"}),
         "r2_structure": frozenset({"kind", "depends_on", "inputs"}),
+        "r3_structure": frozenset({"kind", "depends_on", "inputs"}),
+        "r3_activation_canaries": frozenset({"kind", "depends_on", "inputs"}),
     }
 )
 _PHASE_FIELDS = frozenset({"owners", "phase", "admission"})
@@ -933,12 +939,15 @@ class GateGraph:
             selected_admission_only = set(admission_steps) & admission_only
             r1_admission_only = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
             r2_admission_only = frozenset({"authority_link", "sqlite_activation", "r2_structure"})
-            if selected_admission_only and phase not in {"R1", "R2"}:
+            r3_admission_only = frozenset({"authority_link", "sqlite_activation", "r3_structure", "r3_activation_canaries"})
+            if selected_admission_only and phase not in {"R1", "R2", "R3"}:
                 raise GateConfigError("admission-only step selected by a non-admission phase")
             if phase == "R1" and selected_admission_only != r1_admission_only:
                 raise GateConfigError("R1 admission requires authority, activation, and structure evidence")
             if phase == "R2" and selected_admission_only != r2_admission_only:
                 raise GateConfigError("R2 admission requires authority, activation, and structure evidence")
+            if phase == "R3" and selected_admission_only != r3_admission_only:
+                raise GateConfigError("R3 admission requires activation, structure, and canary evidence")
             if self.pytest_process_count(phase, "admission") != 1:
                 raise GateConfigError("admission must contain exactly one pytest process")
             pytest_steps = [
@@ -2011,6 +2020,50 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
             structure_ref = identity.pop("structure_ref")
             if structure_ref != content_ref("r2_structure", identity):
                 raise AdmissionValidationError("R2 structure report identity is invalid")
+            return
+        if kind == "r3_structure":
+            row = _exact_fields(item, frozenset({
+                "decision_owner", "forbidden_match_count", "process_path",
+                "runtime_owner", "scanned_file_count",
+                "scanned_source_set_ref", "schema", "structure_ref",
+            }), "R3-structure step report")
+            expected = {
+                "decision_owner": "src/cemm_authoritative_hybrid/decision.py",
+                "forbidden_match_count": 0,
+                "process_path": "src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process",
+                "runtime_owner": "src/cemm_authoritative_hybrid/runtime.py",
+                "schema": "cemm-r3-structure-step-report-v1",
+            }
+            if any(row[field] != value for field, value in expected.items()):
+                raise AdmissionValidationError("R3 structure ownership is invalid")
+            if _nonnegative_exact_int(row["scanned_file_count"], "R3 source count") == 0:
+                raise AdmissionValidationError("R3 structure scan is empty")
+            for field in ("scanned_source_set_ref", "structure_ref"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"R3 structure report {field} is invalid")
+            identity = dict(row)
+            structure_ref = identity.pop("structure_ref")
+            if structure_ref != content_ref("r3_structure", identity):
+                raise AdmissionValidationError("R3 structure report identity is invalid")
+            return
+        if kind == "r3_activation_canaries":
+            row = _exact_fields(item, frozenset({
+                "canary_count", "canary_set_ref", "schema", "canary_ref",
+            }), "R3-activation-canaries step report")
+            expected = {
+                "schema": "cemm-r3-activation-canaries-step-report-v1",
+            }
+            if any(row[field] != value for field, value in expected.items()):
+                raise AdmissionValidationError("R3 activation canaries report is invalid")
+            if _nonnegative_exact_int(row["canary_count"], "R3 canary count") == 0:
+                raise AdmissionValidationError("R3 activation canaries report is empty")
+            for field in ("canary_set_ref", "canary_ref"):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"R3 activation canaries report {field} is invalid")
+            identity = dict(row)
+            canary_ref = identity.pop("canary_ref")
+            if canary_ref != content_ref("r3_activation_canaries", identity):
+                raise AdmissionValidationError("R3 activation canaries report identity is invalid")
             return
         raise AdmissionValidationError("unknown admission step report kind")
     except GateConfigError as exc:
@@ -4520,6 +4573,101 @@ def _scan_r2_structure(
     return material
 
 
+def _scan_r3_structure(
+    root: Path,
+    *,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> dict[str, object]:
+    """Reconstruct the bounded R3 cognition seam from Python ASTs.
+
+    Verifies that the Decision owner, runtime, and process path exist
+    and are owned by the expected files.  Also checks that no forbidden
+    legacy tokens appear in the R3 source set.
+    """
+    root_path = root.resolve()
+    package = root_path / "src" / "cemm_authoritative_hybrid"
+    try:
+        package = package.resolve(strict=True)
+    except OSError as exc:
+        raise GateConfigError("R3 structure validation failed: package root unavailable") from exc
+    try:
+        paths = tuple(sorted(package.rglob("*.py")))
+    except OSError as exc:
+        raise GateConfigError("R3 structure validation failed: cannot enumerate sources") from exc
+    if not paths or len(paths) > 512:
+        raise GateConfigError("R3 structure validation failed: source count is unbounded")
+
+    decision_owners: list[str] = []
+    runtime_owners: list[str] = []
+    process_paths: list[str] = []
+    forbidden: list[str] = []
+    source_rows: list[dict[str, str]] = []
+    forbidden_tokens = {"StageRecord", "stage_trace", "range(23)", "weights_only=False"}
+
+    for path in paths:
+        if _path_is_link_or_reparse(path):
+            raise GateConfigError("R3 structure validation failed: redirected source")
+        relative = _repository_relative(root_path, path)
+        try:
+            raw = (
+                source_reader(path)
+                if source_reader is not None
+                else _read_bounded_file(path, maximum=_MAX_EXACT_SOURCE_BYTES)
+            )
+            if type(raw) is not bytes or not raw or len(raw) > _MAX_EXACT_SOURCE_BYTES:
+                raise GateConfigError("R3 structure validation failed: invalid source bytes")
+            tree = ast.parse(raw.decode("utf-8"), filename=str(path))
+        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+            raise GateConfigError(
+                f"R3 structure validation failed: cannot parse {relative}"
+            ) from exc
+        source_rows.append({"path": relative, "sha256": hashlib.sha256(raw).hexdigest()})
+        text = raw.decode("utf-8")
+        for token in forbidden_tokens:
+            if token in text:
+                forbidden.append(f"{relative}:forbidden-token:{token}")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                if node.name == "DecisionEvaluator":
+                    decision_owners.append(relative)
+                if node.name == "HybridRuntime":
+                    runtime_owners.append(relative)
+                    methods = [
+                        item for item in node.body
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        and item.name == "process"
+                    ]
+                    for method in methods:
+                        process_paths.append(f"{relative}:HybridRuntime.process")
+
+    expected_decision = "src/cemm_authoritative_hybrid/decision.py"
+    expected_runtime = "src/cemm_authoritative_hybrid/runtime.py"
+    expected_process = f"{expected_runtime}:HybridRuntime.process"
+    defects: list[str] = []
+    if decision_owners != [expected_decision]:
+        defects.append(f"decision-owners={decision_owners!r}")
+    if runtime_owners != [expected_runtime]:
+        defects.append(f"runtime-owners={runtime_owners!r}")
+    if process_paths != [expected_process]:
+        defects.append(f"process-paths={process_paths!r}")
+    defects.extend(forbidden)
+    if defects:
+        raise GateConfigError(
+            "R3 structure validation failed: " + "; ".join(defects[:16])
+        )
+    material: dict[str, object] = {
+        "decision_owner": expected_decision,
+        "forbidden_match_count": 0,
+        "process_path": expected_process,
+        "runtime_owner": expected_runtime,
+        "scanned_file_count": len(source_rows),
+        "scanned_source_set_ref": content_ref("r3_source_set", source_rows),
+        "schema": "cemm-r3-structure-step-report-v1",
+    }
+    material["structure_ref"] = content_ref("r3_structure", material)
+    return material
+
+
 class _RunContext:
     def __init__(
         self,
@@ -4850,6 +4998,41 @@ class _RunContext:
         return _HandledStep(
             disposition="passed", exit_code=0, error_code=None, report=report,
             observation_report=report, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def run_r3_structure(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R3":
+            raise GateConfigError("R3 structure scan is available only in R3 admission")
+        started = time.monotonic_ns()
+        report = _scan_r3_structure(
+            self.root, source_reader=lambda path: self._read_bytes(path)
+        )
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=report,
+            observation_report=report, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
+    def run_r3_activation_canaries(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R3":
+            raise GateConfigError("R3 activation canaries are available only in R3 admission")
+        started = time.monotonic_ns()
+        # R3 activation canaries will be populated when R3 runtime is implemented.
+        # For now, this step produces an empty canary set that validates the
+        # report structure without requiring runtime cycles.
+        canary_rows: list[dict[str, str]] = []
+        material: dict[str, object] = {
+            "canary_count": len(canary_rows),
+            "canary_set_ref": content_ref("r3_canary_set", canary_rows),
+            "schema": "cemm-r3-activation-canaries-step-report-v1",
+        }
+        material["canary_ref"] = content_ref("r3_activation_canaries", material)
+        if material["canary_count"] == 0:
+            raise GateConfigError("R3 activation canaries report is empty")
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=material,
+            observation_report=material, wall_ns=time.monotonic_ns() - started,
             peak_rss_bytes=None,
         )
 
@@ -5224,6 +5407,10 @@ def run_validation(
                         handled = context.run_r1_structure()
                     elif step.kind == "r2_structure":
                         handled = context.run_r2_structure()
+                    elif step.kind == "r3_structure":
+                        handled = context.run_r3_structure()
+                    elif step.kind == "r3_activation_canaries":
+                        handled = context.run_r3_activation_canaries()
                     else:
                         raise GateConfigError(
                             f"step kind has no execution handler: {step.kind}"

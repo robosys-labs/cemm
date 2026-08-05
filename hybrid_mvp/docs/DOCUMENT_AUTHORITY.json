@@ -12,7 +12,8 @@
     "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
     "docs/ARCHITECTURE.md",
     "docs/ABI_REGISTRY.md",
-    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md"
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md"
   ],
   "historical_evidence": [
     "docs/EVALUATION_REPORT.md",
@@ -39,6 +40,6 @@
   ],
   "test_inventory": {
     "path": "governance/test_inventory.json",
-    "sha256": "d8d693d65a1fd7a37a26aae46071806db8e4ba4d55e69522586981ec00f9a917"
+    "sha256": "7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8"
   }
 }

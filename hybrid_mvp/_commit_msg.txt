@@ -1,0 +1,15 @@
+R3-00: establish governance and immutable ABI allocation
+
+Add R3 cognition activation plan to governing documents.
+Add Decision ABI 1 and Activation Canary Receipt ABI 1 to ABI registry.
+Add R3 phase structure to validation gates with admission steps:
+governance, pytest_active, r3_structure, sqlite_activation,
+r3_activation_canaries.
+Add r3_structure and r3_activation_canaries step handlers to
+validation_gate.py with AST-based ownership validation.
+Create test_r3_plan_contract.py with 7 governance contract tests.
+Update test inventory with R3 test file and regenerate G0 receipt.
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>

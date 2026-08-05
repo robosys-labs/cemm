@@ -7,7 +7,7 @@
     "retained": 609,
     "rewritten": 10
   },
-  "file_count": 59,
+  "file_count": 60,
   "files": [
     {
       "baseline_blob_ref": "sha256:369d4487c4f7629e4b213b7fadee18803517e005fb106939ae4cf981716ec1f0",
@@ -190,6 +190,10 @@
       "path": "tests/test_query_engine.py"
     },
     {
+      "baseline_blob_ref": "sha256:c1fb401546a4ab141a01b6534b5214e8529a58fec96c0e65ccc8676320f167b3",
+      "path": "tests/test_r3_plan_contract.py"
+    },
+    {
       "baseline_blob_ref": "sha256:272f4c61aec836b01c94c364b947d8464337bb9c8eaea955de88a24394447ba4",
       "path": "tests/test_realization_verifier.py"
     },
@@ -246,7 +250,7 @@
       "path": "tests/test_transition_simulation.py"
     }
   ],
-  "inventory_ref": "test_inventory:8168fab3585b4a0f82099710",
+  "inventory_ref": "test_inventory:c715e262526c0ea26a6fef90",
   "schema": "cemm-hybrid-test-inventory-v1",
   "source_set_ref": "source_set:1f523751200f058de9fd3cae",
   "source_test_count": 632,

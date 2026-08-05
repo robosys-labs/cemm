@@ -73,6 +73,21 @@
       "phase": [
         "r2_phase_tests"
       ]
+    },
+    "R3": {
+      "admission": [
+        "governance",
+        "pytest_active",
+        "r3_activation_canaries",
+        "r3_structure",
+        "sqlite_activation"
+      ],
+      "owners": {
+        "governance": [
+          "r3_governance_owner_tests"
+        ]
+      },
+      "phase": []
     }
   },
   "schema": "cemm-hybrid-validation-gates-v1",
@@ -1123,6 +1138,43 @@
         "src/cemm_authoritative_hybrid/"
       ],
       "kind": "r2_structure"
+    },
+    "r3_activation_canaries": {
+      "depends_on": [
+        "sqlite_activation"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/",
+        "tests/"
+      ],
+      "kind": "r3_activation_canaries"
+    },
+    "r3_governance_owner_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r3_plan_contract.py::test_r3_abi_registry_includes_activation_canary_receipt_abi_1",
+        "tests/test_r3_plan_contract.py::test_r3_abi_registry_includes_decision_abi_1",
+        "tests/test_r3_plan_contract.py::test_r3_cannot_be_admitted_while_r2_is_non_green",
+        "tests/test_r3_plan_contract.py::test_r3_duplicate_decision_owner_fails",
+        "tests/test_r3_plan_contract.py::test_r3_owner_groups_within_eight_step_limit",
+        "tests/test_r3_plan_contract.py::test_r3_plan_is_committed",
+        "tests/test_r3_plan_contract.py::test_r3_validation_gates_define_r3_phase"
+      ],
+      "inputs": [
+        "tests/"
+      ],
+      "kind": "pytest"
+    },
+    "r3_structure": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "inputs": [
+        "src/cemm_authoritative_hybrid/"
+      ],
+      "kind": "r3_structure"
     },
     "source_compile": {
       "depends_on": [
