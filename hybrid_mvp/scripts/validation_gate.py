@@ -4699,8 +4699,8 @@ class _RunContext:
         return target
 
     def run_authority_link(self) -> _HandledStep:
-        if self.tier != "admission" or self.phase != "R1":
-            raise GateConfigError("authority link is available only in R1 admission")
+        if self.tier != "admission" or self.phase not in {"R1", "R2"}:
+            raise GateConfigError("authority link is available only in R1/R2 admission")
         started = time.monotonic_ns()
         manifest_path = self.root / "data" / "authority" / "manifest.json"
         raw = self._read_bytes(manifest_path)
@@ -4752,8 +4752,8 @@ class _RunContext:
         )
 
     def run_sqlite_activation(self) -> _HandledStep:
-        if self.tier != "admission" or self.phase != "R1":
-            raise GateConfigError("SQLite activation is available only in R1 admission")
+        if self.tier != "admission" or self.phase not in {"R1", "R2"}:
+            raise GateConfigError("SQLite activation is available only in R1/R2 admission")
         authority = self._linked_authority
         if authority is None:
             raise GateConfigError("SQLite activation requires linked authority evidence")
