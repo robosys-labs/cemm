@@ -252,8 +252,9 @@ __cemm_test_inventory__ = {
     "tests/test_r2_structural_slots.py::test_transition_slot_allows_empty_capabilities": {
         "activation_phase": "R2",
         "assertion_ref": "assertion:r2-transition-slot-allows-empty-capabilities",
-        "diagnostic_role": "phase",
+        "diagnostic_role": "owner",
         "introduced_by_task": "R2-Implementation",
+        "owner_ref": "form-context",
         "source_ast_sha256": "66fe9ad349247d141b6c2aaf74319e96a97c4b4644fd3cd8cdcc735cee0797ef"
     },
     "tests/test_r2_structural_slots.py::test_transition_slot_binds_reviewed_fields": {

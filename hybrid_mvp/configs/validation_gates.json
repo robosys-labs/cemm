@@ -54,17 +54,17 @@
         "sqlite_activation"
       ],
       "owners": {
+        "exact-verifier": [
+          "r2_exact_verifier_owner_tests"
+        ],
+        "expression-compiler": [
+          "r2_expression_compiler_owner_tests"
+        ],
         "form-context": [
           "r2_form_context_owner_tests"
         ],
         "recursive-composer": [
           "r2_recursive_composer_owner_tests"
-        ],
-        "expression-compiler": [
-          "r2_expression_compiler_owner_tests"
-        ],
-        "exact-verifier": [
-          "r2_exact_verifier_owner_tests"
         ],
         "runtime-boundary": [
           "r2_runtime_boundary_owner_tests"
@@ -883,29 +883,49 @@
       ],
       "kind": "r1_structure"
     },
-    "source_compile": {
+    "r2_exact_verifier_owner_tests": {
       "depends_on": [
-        "governance"
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_transition_preview.py::test_compiler_admits_propose_transition",
+        "tests/test_r2_transition_preview.py::test_invalid_transition_slot_produces_no_preview",
+        "tests/test_r2_transition_preview.py::test_no_transition_produces_empty_previews",
+        "tests/test_r2_transition_preview.py::test_propose_transition_produces_preview",
+        "tests/test_r2_transition_preview.py::test_transition_preview_has_no_executed_effects",
+        "tests/test_r2_transition_preview.py::test_transition_preview_round_trips",
+        "tests/test_r2_verifier_reconstruction.py::test_link_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_multi_app_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_r1_program_reconstruction_matches_compiler",
+        "tests/test_r2_verifier_reconstruction.py::test_reconstruction_returns_none_for_empty_program",
+        "tests/test_r2_verifier_reconstruction.py::test_scope_reconstruction_matches_compiler"
       ],
       "inputs": [
-        "scripts/",
-        "src/"
+        "src/",
+        "tests/conftest.py"
       ],
-      "kind": "compile",
-      "roots": [
-        "scripts/",
-        "src/"
-      ]
+      "kind": "pytest"
     },
-    "sqlite_activation": {
+    "r2_expression_compiler_owner_tests": {
       "depends_on": [
-        "authority_link"
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_r2_recursive_compiler.py::test_attach_scope_produces_scope_operator",
+        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_link_produces_expression_link",
+        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_role_produces_application_filler",
+        "tests/test_r2_recursive_compiler.py::test_context_mismatch_fails_before_compilation",
+        "tests/test_r2_recursive_compiler.py::test_r2_actions_are_admitted_not_rejected",
+        "tests/test_r2_recursive_compiler.py::test_single_application_compiles_correctly",
+        "tests/test_r2_recursive_compiler.py::test_two_applications_compile_with_multiple_roots",
+        "tests/test_r2_recursive_compiler.py::test_two_derivations_compile_to_same_expression",
+        "tests/test_r2_recursive_compiler.py::test_zero_applications_fails"
       ],
       "inputs": [
-        "data/authority/",
-        "src/cemm_authoritative_hybrid/persistence.py"
+        "src/",
+        "tests/conftest.py"
       ],
-      "kind": "sqlite_activation"
+      "kind": "pytest"
     },
     "r2_form_context_owner_tests": {
       "depends_on": [
@@ -942,8 +962,8 @@
         "tests/test_r2_structural_slots.py::test_second_language_pack_has_same_abi_version",
         "tests/test_r2_structural_slots.py::test_second_language_pack_has_scope_values",
         "tests/test_r2_structural_slots.py::test_second_language_pack_tokenizes",
+        "tests/test_r2_structural_slots.py::test_transition_slot_allows_empty_capabilities",
         "tests/test_r2_structural_slots.py::test_transition_slot_binds_reviewed_fields",
-        "tests/test_r2_structural_slots.py::test_transition_slot_rejects_empty_capabilities",
         "tests/test_r2_structural_slots.py::test_transition_slot_rejects_empty_modes",
         "tests/test_r2_structural_slots.py::test_transition_slot_rejects_invalid_mode",
         "tests/test_r2_structural_slots.py::test_variable_slot_binds_to_frame_role",
@@ -954,6 +974,56 @@
         "src/",
         "tests/conftest.py",
         "tests/test_r2_deep_review_regressions.py"
+      ],
+      "kind": "pytest"
+    },
+    "r2_phase_tests": {
+      "depends_on": [
+        "source_compile"
+      ],
+      "exact_nodes": [
+        "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order",
+        "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files",
+        "tests/test_program_abi.py::test_attach_scope_action_is_admitted_in_abi",
+        "tests/test_program_abi.py::test_propose_transition_action_is_admitted_in_abi",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_10_no_internal_refs_in_expression_refs",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_1_single_application_r1_compatible",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_2_multi_application_multiple_roots",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_3_scope_operators",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_4_expression_links",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_5_proposition_role_nesting",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_6_transition_preview",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_7_variable_binder",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_8_determinism",
+        "tests/test_r2_acceptance_matrix.py::test_matrix_9_compiler_reconstruction_independence",
+        "tests/test_r2_plan_contract.py::test_r2_owners_do_not_import_r3_r8_owners",
+        "tests/test_r2_plan_contract.py::test_r2_plan_is_committed",
+        "tests/test_r2_plan_contract.py::test_r2_predecessor_inventory_is_enumerable",
+        "tests/test_r2_plan_contract.py::test_r2_unknown_frontier_successor_is_required",
+        "tests/test_r2_plan_contract.py::test_r2_validation_phase_is_not_yet_activated",
+        "tests/test_r2_test_integrity.py::test_no_r2_test_asserts_only_class_absence",
+        "tests/test_r2_test_integrity.py::test_no_trivially_true_numeric_bounds",
+        "tests/test_r2_test_integrity.py::test_no_unused_parametrized_surface_in_r2_tests",
+        "tests/test_r2_test_integrity.py::test_r2_plan_contract_test_exists",
+        "tests/test_r2_test_integrity.py::test_r2_unknown_frontier_test_exists",
+        "tests/test_r2_unknown_frontier.py::test_unknown_surface_abstains_or_emits_typed_unresolved_candidate",
+        "tests/test_r2_validation_gate.py::test_r2_admission_graph_is_bounded",
+        "tests/test_r2_validation_gate.py::test_r2_has_five_owner_groups",
+        "tests/test_r2_validation_gate.py::test_r2_owner_nodes_are_disjoint",
+        "tests/test_r2_validation_gate.py::test_r2_owner_steps_depend_on_source_compile",
+        "tests/test_r2_validation_gate.py::test_r2_phase_exists",
+        "tests/test_r2_validation_gate.py::test_r2_phase_nodes_disjoint_from_owners",
+        "tests/test_r2_validation_gate.py::test_r2_phase_step_depends_on_source_compile",
+        "tests/test_r2_validation_gate.py::test_r2_step_count_within_bounds",
+        "tests/test_r2_validation_gate.py::test_r2_structure_scan_finds_owners",
+        "tests/test_r2_validation_gate.py::test_r2_structure_step_exists",
+        "tests/test_r2_validation_gate.py::test_r2_structure_step_kind_is_admitted",
+        "tests/test_semantic_expression_compiler.py::test_r2_scope_action_is_admitted_in_recursive_compiler"
+      ],
+      "inputs": [
+        "src/",
+        "tests/conftest.py",
+        "tests/test_r2_acceptance_matrix.py"
       ],
       "kind": "pytest"
     },
@@ -1011,50 +1081,6 @@
       ],
       "kind": "pytest"
     },
-    "r2_expression_compiler_owner_tests": {
-      "depends_on": [
-        "source_compile"
-      ],
-      "exact_nodes": [
-        "tests/test_r2_recursive_compiler.py::test_attach_scope_produces_scope_operator",
-        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_link_produces_expression_link",
-        "tests/test_r2_recursive_compiler.py::test_bind_nested_application_role_produces_application_filler",
-        "tests/test_r2_recursive_compiler.py::test_context_mismatch_fails_before_compilation",
-        "tests/test_r2_recursive_compiler.py::test_r2_actions_are_admitted_not_rejected",
-        "tests/test_r2_recursive_compiler.py::test_single_application_compiles_correctly",
-        "tests/test_r2_recursive_compiler.py::test_two_applications_compile_with_multiple_roots",
-        "tests/test_r2_recursive_compiler.py::test_two_derivations_compile_to_same_expression",
-        "tests/test_r2_recursive_compiler.py::test_zero_applications_fails"
-      ],
-      "inputs": [
-        "src/",
-        "tests/conftest.py"
-      ],
-      "kind": "pytest"
-    },
-    "r2_exact_verifier_owner_tests": {
-      "depends_on": [
-        "source_compile"
-      ],
-      "exact_nodes": [
-        "tests/test_r2_transition_preview.py::test_compiler_admits_propose_transition",
-        "tests/test_r2_transition_preview.py::test_invalid_transition_slot_produces_no_preview",
-        "tests/test_r2_transition_preview.py::test_no_transition_produces_empty_previews",
-        "tests/test_r2_transition_preview.py::test_propose_transition_produces_preview",
-        "tests/test_r2_transition_preview.py::test_transition_preview_has_no_executed_effects",
-        "tests/test_r2_transition_preview.py::test_transition_preview_round_trips",
-        "tests/test_r2_verifier_reconstruction.py::test_link_reconstruction_matches_compiler",
-        "tests/test_r2_verifier_reconstruction.py::test_multi_app_reconstruction_matches_compiler",
-        "tests/test_r2_verifier_reconstruction.py::test_r1_program_reconstruction_matches_compiler",
-        "tests/test_r2_verifier_reconstruction.py::test_reconstruction_returns_none_for_empty_program",
-        "tests/test_r2_verifier_reconstruction.py::test_scope_reconstruction_matches_compiler"
-      ],
-      "inputs": [
-        "src/",
-        "tests/conftest.py"
-      ],
-      "kind": "pytest"
-    },
     "r2_runtime_boundary_owner_tests": {
       "depends_on": [
         "source_compile"
@@ -1093,29 +1119,6 @@
       ],
       "kind": "pytest"
     },
-    "r2_phase_tests": {
-      "depends_on": [
-        "source_compile"
-      ],
-      "exact_nodes": [
-        "tests/test_r2_acceptance_matrix.py::test_matrix_10_no_internal_refs_in_expression_refs",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_1_single_application_r1_compatible",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_2_multi_application_multiple_roots",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_3_scope_operators",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_4_expression_links",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_5_proposition_role_nesting",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_6_transition_preview",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_7_variable_binder",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_8_determinism",
-        "tests/test_r2_acceptance_matrix.py::test_matrix_9_compiler_reconstruction_independence"
-      ],
-      "inputs": [
-        "src/",
-        "tests/conftest.py",
-        "tests/test_r2_acceptance_matrix.py"
-      ],
-      "kind": "pytest"
-    },
     "r2_structure": {
       "depends_on": [
         "source_compile"
@@ -1124,6 +1127,30 @@
         "src/cemm_authoritative_hybrid/"
       ],
       "kind": "r2_structure"
+    },
+    "source_compile": {
+      "depends_on": [
+        "governance"
+      ],
+      "inputs": [
+        "scripts/",
+        "src/"
+      ],
+      "kind": "compile",
+      "roots": [
+        "scripts/",
+        "src/"
+      ]
+    },
+    "sqlite_activation": {
+      "depends_on": [
+        "authority_link"
+      ],
+      "inputs": [
+        "data/authority/",
+        "src/cemm_authoritative_hybrid/persistence.py"
+      ],
+      "kind": "sqlite_activation"
     }
   }
 }

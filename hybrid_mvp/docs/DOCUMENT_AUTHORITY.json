@@ -39,6 +39,6 @@
   ],
   "test_inventory": {
     "path": "governance/test_inventory.json",
-    "sha256": "3e32e69578372b104f58a627d77f05b80417ea0521bf14683b0850d0222cd2a1"
+    "sha256": "4e999b21f66a9511680c7cedb8a295b62036d8095adc92550a0cdc4e5d6e409c"
   }
 }

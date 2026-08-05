@@ -246,9 +246,9 @@
       "path": "tests/test_transition_simulation.py"
     }
   ],
-  "inventory_ref": "test_inventory:9f482fb59a607a273955c206",
+  "inventory_ref": "test_inventory:18540e5ff41d612d595b5a8b",
   "schema": "cemm-hybrid-test-inventory-v1",
-  "source_set_ref": "source_set:a90742efe0584817478ae513",
+  "source_set_ref": "source_set:a01c93943f83bcf9573de6ca",
   "source_test_count": 632,
   "source_tests": [
     {
@@ -1279,7 +1279,7 @@
         "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R2",
+      "replacement_phase": "R3",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_bootstrap_proposer.py::test_candidates_sorted_by_program_ref",
@@ -1400,7 +1400,7 @@
         "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R2",
+      "replacement_phase": "R3",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_bootstrap_proposer.py::test_typed_gap_surface_produces_candidates",
@@ -4415,7 +4415,7 @@
         "tests/test_grounding.py::test_adding_designation_changes_authority_generation"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R2",
+      "replacement_phase": "R3",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_grounding.py::test_adding_designation_changes_authority_generation",
@@ -5341,7 +5341,7 @@
         "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth"
       ],
       "classification": "rewritten",
-      "replacement_phase": "R2",
+      "replacement_phase": "R3",
       "rewrite_obligations": [
         {
           "predecessor_case_node_id": "tests/test_orientation_projection.py::test_orientation_traverses_relations_within_depth",
