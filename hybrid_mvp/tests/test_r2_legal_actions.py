@@ -20,6 +20,138 @@ from cemm_authoritative_hybrid.verifier import (
     _prefix_budget,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_legal_actions.py::test_abstain_illegal_after_terminal": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-abstain-illegal-after-terminal",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "2a09d3d40d8a2398f1d4d82f80d3fae49774dd24301d65a8b49537368862c629"
+    },
+    "tests/test_r2_legal_actions.py::test_application_bound_enforced": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-application-bound-enforced",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "b684ca91762dd819b0ee16a33a88db8b0e890f148b9cb4e2eaa2a52e604159fc"
+    },
+    "tests/test_r2_legal_actions.py::test_complete_program_illegal_without_required_roles": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-complete-program-illegal-without-required-roles",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "2f597b684e249b6f6238946ca1617732bebf5246ba9a6d694e0721b62aa05394"
+    },
+    "tests/test_r2_legal_actions.py::test_instantiate_operator_illegal_without_designation": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-instantiate-operator-illegal-without-designation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "cf37b7e449fed4d2e4500820868373b6f92f20bd4b5aa1c0904f6e7fdc20e2f2"
+    },
+    "tests/test_r2_legal_actions.py::test_instantiate_operator_legal_after_designation": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-instantiate-operator-legal-after-designation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "d9ba100e230c898c1a34a99ab9191b96194e914024b05b797b9961393088e356"
+    },
+    "tests/test_r2_legal_actions.py::test_is_legal_is_pure_predicate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-is-legal-is-pure-predicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "afd9ef4bdf716230858f9ed48fca40e81327a63e6f7d7a431736dfebe54b9f18"
+    },
+    "tests/test_r2_legal_actions.py::test_masker_matches_legal_index": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-masker-matches-legal-index",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "485451ddf06db79f90923493c620e31118b712e22532f5594b6a5d67bf8248e1"
+    },
+    "tests/test_r2_legal_actions.py::test_node_bound_enforced_for_attach_scope": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-node-bound-enforced-for-attach-scope",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "5df86ca6ce65dc74130722e033c20e38af6f2ab787af75f5937c4a1db182242e"
+    },
+    "tests/test_r2_legal_actions.py::test_prefix_budget_empty": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-prefix-budget-empty",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "b12cb00fca4cdb76782f08a27b4b70c90f317bda665d8d5e926610f08c373901"
+    },
+    "tests/test_r2_legal_actions.py::test_prefix_budget_tracks_applications": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-prefix-budget-tracks-applications",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "5c68f0f3868b88459c778dbe560190b3279556f3bcf087bec38231acfc779795"
+    },
+    "tests/test_r2_legal_actions.py::test_select_context_illegal_with_wrong_ref": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-context-illegal-with-wrong-ref",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "75f0c0c021588e745c994e65bb5d3d0c0c02d710b16e07d1245c978bab89d139"
+    },
+    "tests/test_r2_legal_actions.py::test_select_context_legal_on_empty_prefix": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-context-legal-on-empty-prefix",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "0724db37d1ac014e83ebffe3bc78eb216abb866e4a8abe0b7ef797c6c326870a"
+    },
+    "tests/test_r2_legal_actions.py::test_select_designation_illegal_duplicate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-designation-illegal-duplicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "67fcc962bce673bbe76fe2eb268109548c385e442823cf44bf243f1dd04f5111"
+    },
+    "tests/test_r2_legal_actions.py::test_select_designation_legal_after_mode": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-designation-legal-after-mode",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "c31856bd36381dd8f745c78c0b57efa2a3374358bbcbf8585362d317aba3ad29"
+    },
+    "tests/test_r2_legal_actions.py::test_select_mode_illegal_on_empty_prefix": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-mode-illegal-on-empty-prefix",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "01a889421ab25557656cb048e1afe022ce29d27c19c12c438adc00afe453c638"
+    },
+    "tests/test_r2_legal_actions.py::test_select_mode_legal_after_select_context": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-select-mode-legal-after-select-context",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "f9012c1e97eda27a526278f32872d7afa5e2bd63d403293cc11ad44d1b69afb6"
+    },
+}
+
+
 
 # ---------------------------------------------------------------------------
 # Budget tracking tests

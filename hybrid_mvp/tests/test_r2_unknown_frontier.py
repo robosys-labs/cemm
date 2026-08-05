@@ -26,6 +26,20 @@ from cemm_authoritative_hybrid.proposal_context import (
     ResidualEvidence,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_unknown_frontier.py::test_unknown_surface_abstains_or_emits_typed_unresolved_candidate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unknown-surface-abstains-or-emits-typed-unresolved-candidate",
+        "contributes_to_rewrite_refs": [
+            "rewrite_obligation:e9a17f6cdf7598dc3a9e21fc"
+        ],
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "2ef94baea9ce3ec7be8afe81d3cd770e92ea0121bba6dc591c513c66a43651aa"
+    },
+}
+
+
 ROOT = Path(__file__).resolve().parent.parent
 
 

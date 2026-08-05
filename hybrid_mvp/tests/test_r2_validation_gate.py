@@ -20,6 +20,87 @@ from pathlib import Path
 
 import pytest
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_validation_gate.py::test_r2_admission_graph_is_bounded": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-admission-graph-is-bounded",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "4b43b5f6ecb28eb6d7a00d325c8815e1eed7fc93a072069d73cd6ea9c65c39d8"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_has_five_owner_groups": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-has-five-owner-groups",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "c6d1e226dda136e739a873c9aebcef7a52b197c8b072e81e2ae599ca42c37bc5"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_owner_nodes_are_disjoint": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-owner-nodes-are-disjoint",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "d8ddff9c0dbb0d1583a54863bdd4222b297ff040c015f72a37fb73f202b2fad8"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_owner_steps_depend_on_source_compile": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-owner-steps-depend-on-source-compile",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "0bdfe628eecabd06fd9aa253fcd4bc50af49e028b4d47105064274973537886e"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_phase_exists": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-phase-exists",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "eab877f2ccfb949d9fe5ac0f812ac7835a45ec3f210f32d182eee9aa0179d773"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_phase_nodes_disjoint_from_owners": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-phase-nodes-disjoint-from-owners",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "ca213819fbe58a9d13e7eb6f518b2ae9c92c97315c8fd0f82eef446f127c43c4"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_phase_step_depends_on_source_compile": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-phase-step-depends-on-source-compile",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "4be24a129f52c50930c80a02d25753d5fbe9deb61ddf62088fb1db9521dd8341"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_step_count_within_bounds": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-step-count-within-bounds",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "91862e5ebbd356ce2ff3a3268ae1c0ca053910db8dbe0eb81b7b27bef5ce5a1f"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_structure_scan_finds_owners": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-structure-scan-finds-owners",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "d3944c136f6c9f0067c085e3720b001818d4b7b0474415d02b20796c22f86a5b"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_structure_step_exists": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-structure-step-exists",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "6851d606cf77148e1d79c8fca8b82c2bb269743eba8c85c0861393bcc25661fe"
+    },
+    "tests/test_r2_validation_gate.py::test_r2_structure_step_kind_is_admitted": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-structure-step-kind-is-admitted",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "6ab89e3d6976318bf61a02db0f36215d0a1ba897253b629948bab19d3f871c5c"
+    },
+}
+
+
 ROOT = Path(__file__).parents[1]
 CONFIG_PATH = ROOT / "configs" / "validation_gates.json"
 

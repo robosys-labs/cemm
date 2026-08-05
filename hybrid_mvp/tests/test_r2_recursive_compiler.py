@@ -27,6 +27,82 @@ from cemm_authoritative_hybrid.programs import (
     SourceAssignment,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_recursive_compiler.py::test_attach_scope_produces_scope_operator": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-attach-scope-produces-scope-operator",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "10fdc32c8650a5b785a51ab5410971a532b25f83696a9de8b964ed0939647357"
+    },
+    "tests/test_r2_recursive_compiler.py::test_bind_nested_application_link_produces_expression_link": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-bind-nested-application-link-produces-expression-link",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "c7d33dada8d168324f8555b61ef1dc2b58b5417e3df1441007495c17f4d4610b"
+    },
+    "tests/test_r2_recursive_compiler.py::test_bind_nested_application_role_produces_application_filler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-bind-nested-application-role-produces-application-filler",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "65ee0608a26f2d9e8cb86dbb2cc135893aa405af2f1ffdff0fed304e27dd14ad"
+    },
+    "tests/test_r2_recursive_compiler.py::test_context_mismatch_fails_before_compilation": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-context-mismatch-fails-before-compilation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "651525cc40c1fec0a593f888cf7791ed12b92b0b54f02be63a7940138143cfa8"
+    },
+    "tests/test_r2_recursive_compiler.py::test_r2_actions_are_admitted_not_rejected": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-actions-are-admitted-not-rejected",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "b0705c07f04383e50024374ccae45806aceda96421ff2d50dbb5239dcd18c163"
+    },
+    "tests/test_r2_recursive_compiler.py::test_single_application_compiles_correctly": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-single-application-compiles-correctly",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "f411b157dcc8412b35a643cbbb9c0e7a40e4a4d2bea7c12bd10105314650e769"
+    },
+    "tests/test_r2_recursive_compiler.py::test_two_applications_compile_with_multiple_roots": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-two-applications-compile-with-multiple-roots",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "c9c3bf74fb6481bc6136f2495843b5cf5ea614f09de11d62c05fc1081a138da7"
+    },
+    "tests/test_r2_recursive_compiler.py::test_two_derivations_compile_to_same_expression": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-two-derivations-compile-to-same-expression",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "c12d4ace83cfeee97af9f2bb154d23cf75c6a5f6895877b97a1f2a170b8dcc3c"
+    },
+    "tests/test_r2_recursive_compiler.py::test_zero_applications_fails": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-zero-applications-fails",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "67c106d768f6eda9d7684ac3b9f01b420bba55b8f7a8f181a17d0b9f61bb8301"
+    },
+}
+
+
 
 def _pin() -> RevisionPin:
     return RevisionPin("authority:g1", 1, 2, 3, 4, "model:m1")

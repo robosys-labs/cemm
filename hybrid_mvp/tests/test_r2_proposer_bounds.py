@@ -21,6 +21,66 @@ from cemm_authoritative_hybrid.proposal_context import (
     ProposalContext,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_proposer_bounds.py::test_all_candidates_have_complete_program_terminal": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-all-candidates-have-complete-program-terminal",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "b8265d3fb30a6b8ea98c4c4269919eec2005df0ed1d3fb211232bb28907681da"
+    },
+    "tests/test_r2_proposer_bounds.py::test_all_candidates_have_non_empty_roots": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-all-candidates-have-non-empty-roots",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "cab1a21366b6c2c183b7f575c40853e683245c1905fde798c1938fe71f022cc0"
+    },
+    "tests/test_r2_proposer_bounds.py::test_all_candidates_have_valid_action_indices": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-all-candidates-have-valid-action-indices",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "e9e3c84b5db60ffbac21f9b4f5eda7006329b758b3913e5d8e9e2e024a94ad20"
+    },
+    "tests/test_r2_proposer_bounds.py::test_candidate_count_never_exceeds_max": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-candidate-count-never-exceeds-max",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "4f21e4746a6a9ed837c108367019d2bc20c8512163b9a3cc05a5b5fb9556d0c2"
+    },
+    "tests/test_r2_proposer_bounds.py::test_explored_states_bounded_by_max_explored": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-explored-states-bounded-by-max-explored",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "e6757aa2c33f62e7e49711652d7b2dcb33e0fa5171a5592d351f3fcb0ad694d4"
+    },
+    "tests/test_r2_proposer_bounds.py::test_no_candidate_exceeds_application_bound": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-candidate-exceeds-application-bound",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "a48891b4869f9e3994dc2c971675831ae15b90a909e1f079e37963cb6a1302e0"
+    },
+    "tests/test_r2_proposer_bounds.py::test_truncated_implies_more_candidates_exist": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-truncated-implies-more-candidates-exist",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "2c323b678014c964f71a265ce77f571052671675c653d3ab084b93547fe2250a"
+    },
+}
+
+
 
 def _pin() -> RevisionPin:
     return RevisionPin(

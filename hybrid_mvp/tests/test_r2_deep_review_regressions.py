@@ -22,6 +22,42 @@ from cemm_authoritative_hybrid.proposal_context import (
     VariableSlot,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_deep_review_regressions.py::test_literal_decoder_returns_exact_scalar_types": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-literal-decoder-returns-exact-scalar-types",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "0b4a9c348c9b3d022d7064fe00d40b617d7e900383dd4b46e963241889b00bc0"
+    },
+    "tests/test_r2_deep_review_regressions.py::test_literal_slot_requires_one_exact_kind": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-literal-slot-requires-one-exact-kind",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "ae39c2c826b0da16980cf20e26b7311ba3595bee50d9d6f7c44a0a5ce632754a"
+    },
+    "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_is_grounded_as_one_span": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-multi-unit-designation-is-grounded-as-one-span",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "cd7fd00a8fe53142ba7c650352bdd1fbdb9779a74178a30a69dce46d61892e36"
+    },
+    "tests/test_r2_deep_review_regressions.py::test_query_mode_preserves_variable_source_for_projection": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-query-mode-preserves-variable-source-for-projection",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "b002987c1f66cd685cd6c3148f4fcde4bc913204181eccab9dadf81f33ac4259"
+    },
+}
+
+
 
 def test_literal_decoder_returns_exact_scalar_types():
     assert decode_literal_value("string", "42") == "42"

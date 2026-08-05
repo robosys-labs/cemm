@@ -22,6 +22,50 @@ from cemm_authoritative_hybrid.proposal_context import (
     ProposalContext,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_proposer_determinism.py::test_byte_identical_output_same_context": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-byte-identical-output-same-context",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "03326b53caa387eba92123da3f423441ac0f6b4fba526816ec05cc3e951d17e7"
+    },
+    "tests/test_r2_proposer_determinism.py::test_byte_identical_output_serialized": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-byte-identical-output-serialized",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "97f367dd136fd5de1d18d7c0ec9ad09cfe0901ff516ce9a00e37d51105ac1891"
+    },
+    "tests/test_r2_proposer_determinism.py::test_deterministic_candidate_order": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-deterministic-candidate-order",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "194be4cdcceaa676bca913d5108efe00daca377626519a2df368fbce610ab89b"
+    },
+    "tests/test_r2_proposer_determinism.py::test_deterministic_explored_and_truncated": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-deterministic-explored-and-truncated",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "b8e6c51951bb504085ced71b5bf48b0c3ce81f6a37032b19833f5bba3b010c5e"
+    },
+    "tests/test_r2_proposer_determinism.py::test_different_config_produces_different_output": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-different-config-produces-different-output",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "02009d0d89f3ded4869b8a477b772ac57e681f02c52a32aa5bf90c7c2e5ad496"
+    },
+}
+
+
 
 def _pin() -> RevisionPin:
     return RevisionPin(

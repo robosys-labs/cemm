@@ -34,6 +34,106 @@ from cemm_authoritative_hybrid.proposal_context import (
     VariableSlot,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_recursive_proposer.py::test_candidates_are_canonical_program_abi2": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-candidates-are-canonical-program-abi2",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "0a005949cb86683ee54380994371d77b8ab86e582332d7cab79246023eb1ae71"
+    },
+    "tests/test_r2_recursive_proposer.py::test_explored_states_is_bounded": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-explored-states-is-bounded",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "921fe9b9326d3e09b32cf118a6d1a561550cc6b01e785d4e83f10445e0f4accf"
+    },
+    "tests/test_r2_recursive_proposer.py::test_multi_app_candidate_has_multiple_roots": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-multi-app-candidate-has-multiple-roots",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "89df52dfc0bdd3c9f1c8ae668c84e17d3832eb8ee910906b74642d036e82b830"
+    },
+    "tests/test_r2_recursive_proposer.py::test_no_designation_abstains": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-designation-abstains",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "e37344db781147a5c5dc1fcbd54474553c096cc9c931b9b10301b6d8fdf7caa3"
+    },
+    "tests/test_r2_recursive_proposer.py::test_no_mode_abstains": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-mode-abstains",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "73e2275cafd1c41c5b893a6d260654c1a09f6f50b3afb114693a44445e5303e9"
+    },
+    "tests/test_r2_recursive_proposer.py::test_propose_does_not_invoke_verify": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-propose-does-not-invoke-verify",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "a73cb45e4a468a32cdf6f8d31f0dd3ceb2d1d77acc4de23f3fdf6172ed5bedd0"
+    },
+    "tests/test_r2_recursive_proposer.py::test_proposer_rank_order_preserved": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-proposer-rank-order-preserved",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "1e4834866dc5961bef3d5a36b79a7d2dc0355b661948b47c539f2e3d24eb2e53"
+    },
+    "tests/test_r2_recursive_proposer.py::test_same_context_produces_byte_identical_output": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-same-context-produces-byte-identical-output",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "60ac474c899514ce3958d44acdca89ea8e5b065b743bbd98f50f0d2ee5320ef3"
+    },
+    "tests/test_r2_recursive_proposer.py::test_search_stays_within_candidate_bound": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-search-stays-within-candidate-bound",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "cac678e34412394849ac1f02710ee1d8b00ed1a4387b81259ba3e5e7e9a9c639"
+    },
+    "tests/test_r2_recursive_proposer.py::test_single_application_program_has_one_root": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-single-application-program-has-one-root",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "8e4fbf5c82cbd8fe3f3ab4581bb33358c3067467b0f58b4e22fdb07e973668df"
+    },
+    "tests/test_r2_recursive_proposer.py::test_truncated_when_more_candidates_exist": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-truncated-when-more-candidates-exist",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "135aca4818dc392511de156894f3b14ff71196a3b5c3db58c87fb9a0f7c308ac"
+    },
+    "tests/test_r2_recursive_proposer.py::test_two_designations_produce_multi_app_candidates": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-two-designations-produce-multi-app-candidates",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "11cf645429aaf3ce110e76bd9bc902bde967f3fbd92aefd8213f9d1ffabd59ef"
+    },
+}
+
+
 
 # ---------------------------------------------------------------------------
 # Test context builders

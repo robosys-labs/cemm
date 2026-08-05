@@ -33,6 +33,218 @@ from cemm_authoritative_hybrid.transition_preview import (
     extract_transition_previews,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[adapter-act]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[cap-learn]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[concept-love]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[dim-mood]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[entity-alice]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[event-act]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[label-name]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[op-event]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[participant-speaker]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[relation-love]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[role-subject]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[state-happy]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_internal_ref_prefixes_are_rejected_as_surfaces[state_value-happy]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-internal-ref-prefixes-are-rejected-as-surfaces",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "397b599e9d8732936e583487f352753e403218d03495b57090be5c8a13a446c7"
+    },
+    "tests/test_r2_runtime_boundary.py::test_no_legacy_runtime_branches_in_source": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-legacy-runtime-branches-in-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "62f842ef90910c9645f569801336d6b916460ce7a978d04e424ed3f1f0cce591"
+    },
+    "tests/test_r2_runtime_boundary.py::test_no_legacy_stage_numbers_in_source": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-legacy-stage-numbers-in-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "172f4c8d265741802d6e3decebc7f62809fd2a60a3f2798bac5bf78916d059de"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[Alice]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[a-normal-word]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[happy]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[learning]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[love]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_normal_surfaces_are_not_internal_refs[the-event]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-normal-surfaces-are-not-internal-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "9ebcc3eda004b8c4b3ea4d09c45a77541a006c2c45e5a19586b0cb5c282e77ef"
+    },
+    "tests/test_r2_runtime_boundary.py::test_program_compiles_to_expression_not_meaning": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-program-compiles-to-expression-not-meaning",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "51da74970fa5aa22c3669e2e52a78c71d0703aca8046d3e872db20e048d4dfab"
+    },
+    "tests/test_r2_runtime_boundary.py::test_program_ref_differs_from_expression_ref": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-program-ref-differs-from-expression-ref",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "7de7e0254c49e088080480e60f3392aed5e6e4fdff331fc10e6aebb0db9da06e"
+    },
+    "tests/test_r2_runtime_boundary.py::test_runtime_does_not_branch_on_stage_numbers": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-runtime-does-not-branch-on-stage-numbers",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "6d086698dabf1298e7438bbbd39fbcb7dd7125a0ace067165297fe5465ed5fc8"
+    },
+    "tests/test_r2_runtime_boundary.py::test_six_phases_are_named_not_numbered": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-six-phases-are-named-not-numbered",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "d11088ff2a62d66fb39b007b2792a41f5c0296f4960f6a005dabd7665865134b"
+    },
+    "tests/test_r2_runtime_boundary.py::test_transition_preview_has_no_effect_execution": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-transition-preview-has-no-effect-execution",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "runtime-boundary",
+        "source_ast_sha256": "1031c3262635769053bcb14273141b9478aaf876edb2ac040db6ae071dde126d"
+    },
+}
+
+
 ROOT = Path(__file__).parents[1]
 SRC = ROOT / "src" / "cemm_authoritative_hybrid"
 

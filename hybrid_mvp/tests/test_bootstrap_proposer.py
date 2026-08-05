@@ -16,6 +16,20 @@ from cemm_authoritative_hybrid.proposal import (
     RankedProgramCandidate,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-candidates-preserve-proposer-rank-order",
+        "contributes_to_rewrite_refs": [
+            "rewrite_obligation:d9845bfb158bf7f79e57376f"
+        ],
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "a3ce802f20be5b8572958d9c366801524b73cbf974e59ad172a35f970810c2d2"
+    },
+}
+
+
 
 def _proposal(program, context):
     """Wrap a single program in a one-candidate ProposalResult for verification."""

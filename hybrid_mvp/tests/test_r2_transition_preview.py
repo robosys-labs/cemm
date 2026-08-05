@@ -24,6 +24,58 @@ from cemm_authoritative_hybrid.transition_preview import (
     extract_transition_previews,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_transition_preview.py::test_compiler_admits_propose_transition": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-compiler-admits-propose-transition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "6cc7481eb4dedbfe802073df728dd67ee0deda10041842aa01f75ff42caf90ad"
+    },
+    "tests/test_r2_transition_preview.py::test_invalid_transition_slot_produces_no_preview": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-invalid-transition-slot-produces-no-preview",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "1f9a7cb901b8d526f66f539308798de56752a2b9a6bac1f2005834b1d5c088a4"
+    },
+    "tests/test_r2_transition_preview.py::test_no_transition_produces_empty_previews": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-transition-produces-empty-previews",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "aec9e4dfb2fde3023f6994d6e3ba4a4b4060aa28da0b84133ee4814c056d77db"
+    },
+    "tests/test_r2_transition_preview.py::test_propose_transition_produces_preview": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-propose-transition-produces-preview",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "5a6863f584a9851f3849f784361a55fb57200c8762765df0b7e297fb9fc81704"
+    },
+    "tests/test_r2_transition_preview.py::test_transition_preview_has_no_executed_effects": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-transition-preview-has-no-executed-effects",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "a878832f1e7c6fe80f69e4a8f42d9e84a7a8cc0b5720d9eb3ec1810765269202"
+    },
+    "tests/test_r2_transition_preview.py::test_transition_preview_round_trips": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-transition-preview-round-trips",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "1f828176b4ec1f30b21869c3631f36027cbea2ac80712ed694ac06a16a205801"
+    },
+}
+
+
 
 def _pin() -> RevisionPin:
     return RevisionPin("authority:g1", 1, 2, 3, 4, "model:m1")

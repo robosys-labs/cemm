@@ -264,33 +264,44 @@ def test_context_identity_mismatch_fails_before_compilation() -> None:
     assert isinstance(result, CompilationFailure)
     assert result.code == "proposal_context_mismatch"
 
-__cemm_test_inventory__ = {'tests/test_semantic_expression_compiler.py::test_compilation_proof_accounts_exactly_for_actions_assignments_and_roots': {'activation_phase': 'R1',
-                                                                                                                           'assertion_ref': 'assertion:r1-semantic-expression-compiler-test-compilation-proof-accounts-exactly-for-actions-assignments-and-roots',
-                                                                                                                           'diagnostic_role': 'owner',
-                                                                                                                           'introduced_by_task': 'R1-Task-7',
-                                                                                                                           'owner_ref': 'program-verifier',
-                                                                                                                           'source_ast_sha256': 'ae38a8b7f3d9b4a5f5ea95fa25f194ebc5d31888442142dc68c61e605b30e923'},
- 'tests/test_semantic_expression_compiler.py::test_context_identity_mismatch_fails_before_compilation': {'activation_phase': 'R1',
-                                                                                                         'assertion_ref': 'assertion:r1-semantic-expression-compiler-test-context-identity-mismatch-fails-before-compilation',
-                                                                                                         'diagnostic_role': 'owner',
-                                                                                                         'introduced_by_task': 'R1-Task-7',
-                                                                                                         'owner_ref': 'program-verifier',
-                                                                                                         'source_ast_sha256': '5d485f45316dc5cbac15f8ddfd4540c4edad666eca0f7c1a990449f009f80c05'},
- 'tests/test_semantic_expression_compiler.py::test_registered_r2_shape_fails_typed_without_fallback': {'activation_phase': 'R1',
-                                                                                                       'assertion_ref': 'assertion:r1-semantic-expression-compiler-test-registered-r2-shape-fails-typed-without-fallback',
-                                                                                                       'diagnostic_role': 'owner',
-                                                                                                       'introduced_by_task': 'R1-Task-7',
-                                                                                                       'owner_ref': 'program-verifier',
-                                                                                                       'source_ast_sha256': '8bc557b82dd00e6a7055449364610f7641eb7ddf4af5c515255dd068f5ea502c'},
- 'tests/test_semantic_expression_compiler.py::test_swapped_dynamic_role_pointers_compile_to_different_meaning': {'activation_phase': 'R1',
-                                                                                                                 'assertion_ref': 'assertion:r1-semantic-expression-compiler-test-swapped-dynamic-role-pointers-compile-to-different-meaning',
-                                                                                                                 'diagnostic_role': 'owner',
-                                                                                                                 'introduced_by_task': 'R1-Task-7',
-                                                                                                                 'owner_ref': 'program-verifier',
-                                                                                                                 'source_ast_sha256': '971e6bfa8a1b41319a2b06f7f1905cb6274016a8c9a482cd19e87d1952653c4f'},
- 'tests/test_semantic_expression_compiler.py::test_two_derivations_compile_to_one_canonical_expression': {'activation_phase': 'R1',
-                                                                                                          'assertion_ref': 'assertion:r1-semantic-expression-compiler-test-two-derivations-compile-to-one-canonical-expression',
-                                                                                                          'diagnostic_role': 'owner',
-                                                                                                          'introduced_by_task': 'R1-Task-7',
-                                                                                                          'owner_ref': 'program-verifier',
-                                                                                                          'source_ast_sha256': '0501bea7f4987eb195a8984c4dd8a7c5562392c970e4936ab7dd4a1e1f907efe'}}
+__cemm_test_inventory__ = {
+    "tests/test_semantic_expression_compiler.py::test_compilation_proof_accounts_exactly_for_actions_assignments_and_roots": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-semantic-expression-compiler-test-compilation-proof-accounts-exactly-for-actions-assignments-and-roots",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "ae38a8b7f3d9b4a5f5ea95fa25f194ebc5d31888442142dc68c61e605b30e923"
+    },
+    "tests/test_semantic_expression_compiler.py::test_context_identity_mismatch_fails_before_compilation": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-semantic-expression-compiler-test-context-identity-mismatch-fails-before-compilation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "5d485f45316dc5cbac15f8ddfd4540c4edad666eca0f7c1a990449f009f80c05"
+    },
+    "tests/test_semantic_expression_compiler.py::test_r2_scope_action_is_admitted_in_recursive_compiler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-scope-action-is-admitted-in-recursive-compiler",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "f84b1164d08eb5a52b2b1b9e066a61accaffcf031d54af59bd44c419842e3710"
+    },
+    "tests/test_semantic_expression_compiler.py::test_swapped_dynamic_role_pointers_compile_to_different_meaning": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-semantic-expression-compiler-test-swapped-dynamic-role-pointers-compile-to-different-meaning",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "971e6bfa8a1b41319a2b06f7f1905cb6274016a8c9a482cd19e87d1952653c4f"
+    },
+    "tests/test_semantic_expression_compiler.py::test_two_derivations_compile_to_one_canonical_expression": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-semantic-expression-compiler-test-two-derivations-compile-to-one-canonical-expression",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "0501bea7f4987eb195a8984c4dd8a7c5562392c970e4936ab7dd4a1e1f907efe"
+    },
+}

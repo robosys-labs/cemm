@@ -289,51 +289,69 @@ def test_unrepresentable_qualifier_abstains_without_inventing_residual() -> None
     assert result.candidates == ()
     assert result.abstention_code == "proposal:no_complete_candidate"
 
-__cemm_test_inventory__ = {'tests/test_bootstrap_proposer_abi2.py::test_bootstrap_candidate_reaches_exact_verification_without_repair': {'activation_phase': 'R1',
-                                                                                                               'assertion_ref': 'assertion:r1-bootstrap-candidate-verifies-without-repair',
-                                                                                                               'diagnostic_role': 'owner',
-                                                                                                               'introduced_by_task': 'R1-Task-7',
-                                                                                                               'owner_ref': 'program-verifier',
-                                                                                                               'source_ast_sha256': '595674cecbeeda575ad8e13d7c28588470ab6c389f071602a9c8f1d3e83721a8'},
- 'tests/test_bootstrap_proposer_abi2.py::test_bootstrap_output_is_deterministic_bounded_and_canonical': {'activation_phase': 'R1',
-                                                                                                         'assertion_ref': 'assertion:r1-bootstrap-bounded-canonical-output',
-                                                                                                         'diagnostic_role': 'owner',
-                                                                                                         'introduced_by_task': 'R1-Task-7',
-                                                                                                         'owner_ref': 'program-verifier',
-                                                                                                         'source_ast_sha256': 'b4e25484f2710045e2f2837dc1a4fcf6cf350de5e5d55732c1b066868fa43f88'},
- 'tests/test_bootstrap_proposer_abi2.py::test_bootstrap_propose_does_not_repeat_or_verify_orient_work': {'activation_phase': 'R1',
-                                                                                                         'assertion_ref': 'assertion:r1-bootstrap-no-repeat-orient-or-verify',
-                                                                                                         'diagnostic_role': 'owner',
-                                                                                                         'introduced_by_task': 'R1-Task-7',
-                                                                                                         'owner_ref': 'program-verifier',
-                                                                                                         'source_ast_sha256': '26a4eaf0bcfbcbcd1a2f4abb0c010dc008752ff2a5577d08b36c48a3eb0c528f'},
- 'tests/test_bootstrap_proposer_abi2.py::test_bootstrap_returns_typed_abstention_for_critical_unresolved_input': {'activation_phase': 'R1',
-                                                                                                                  'assertion_ref': 'assertion:r1-bootstrap-critical-residual-abstention',
-                                                                                                                  'diagnostic_role': 'owner',
-                                                                                                                  'introduced_by_task': 'R1-Task-7',
-                                                                                                                  'owner_ref': 'program-verifier',
-                                                                                                                  'source_ast_sha256': '76825b94ca5154549eb164728481821a8d41335db17fd5217493b6f28a35357c'},
- 'tests/test_bootstrap_proposer_abi2.py::test_bound_qualifier_uses_qualifier_assignment_kind': {'activation_phase': 'R1',
-                                                                                                'assertion_ref': 'assertion:r1-bootstrap-qualifier-assignment-kind',
-                                                                                                'diagnostic_role': 'owner',
-                                                                                                'introduced_by_task': 'R1-Task-7',
-                                                                                                'owner_ref': 'program-verifier',
-                                                                                                'source_ast_sha256': '22439f1f7b8bd7bc5c956798dec98517b3cf378ba09a658a6b23f95650461a5c'},
- 'tests/test_bootstrap_proposer_abi2.py::test_proposal_owner_and_bootstrap_accept_exact_proposal_context_only': {'activation_phase': 'R1',
-                                                                                                                 'assertion_ref': 'assertion:r1-bootstrap-proposal-context-signature',
-                                                                                                                 'diagnostic_role': 'owner',
-                                                                                                                 'introduced_by_task': 'R1-Task-7',
-                                                                                                                 'owner_ref': 'program-verifier',
-                                                                                                                 'source_ast_sha256': '9d44ff265a5f5923dab8b70dd5c7fb178881f57942d26e51a2d50560601bf5ca'},
- 'tests/test_bootstrap_proposer_abi2.py::test_reference_binding_uses_supporting_contribution_lineage': {'activation_phase': 'R1',
-                                                                                                        'assertion_ref': 'assertion:r1-bootstrap-reference-supporting-contribution',
-                                                                                                        'diagnostic_role': 'owner',
-                                                                                                        'introduced_by_task': 'R1-Task-7',
-                                                                                                        'owner_ref': 'program-verifier',
-                                                                                                        'source_ast_sha256': '7ae3d33a4b6fbf5e3e51a2b702a908989ae84c6fbe276b3fd61212259dff2c22'},
- 'tests/test_bootstrap_proposer_abi2.py::test_unrepresentable_qualifier_abstains_without_inventing_residual': {'activation_phase': 'R1',
-                                                                                                               'assertion_ref': 'assertion:r1-bootstrap-unrepresentable-qualifier-abstains',
-                                                                                                               'diagnostic_role': 'owner',
-                                                                                                               'introduced_by_task': 'R1-Task-7',
-                                                                                                               'owner_ref': 'program-verifier',
-                                                                                                               'source_ast_sha256': 'cc1e0665938b33b683be81d609c1b09df174686409859816e3c2b040ba0b3ac3'}}
+__cemm_test_inventory__ = {
+    "tests/test_bootstrap_proposer_abi2.py::test_bootstrap_candidate_reaches_exact_verification_without_repair": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-candidate-verifies-without-repair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "595674cecbeeda575ad8e13d7c28588470ab6c389f071602a9c8f1d3e83721a8"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_bootstrap_output_is_deterministic_bounded_and_canonical": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-bounded-canonical-output",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "b4e25484f2710045e2f2837dc1a4fcf6cf350de5e5d55732c1b066868fa43f88"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_bootstrap_propose_does_not_repeat_or_verify_orient_work": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-no-repeat-orient-or-verify",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "bc12073adf1c63d873df54b97a90ff14345da480714cd6f068ada09e32ebb568"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_bootstrap_returns_typed_abstention_for_critical_unresolved_input": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-critical-residual-abstention",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "76825b94ca5154549eb164728481821a8d41335db17fd5217493b6f28a35357c"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_bound_qualifier_uses_qualifier_assignment_kind": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-qualifier-assignment-kind",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "22439f1f7b8bd7bc5c956798dec98517b3cf378ba09a658a6b23f95650461a5c"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_proposal_owner_and_bootstrap_accept_exact_proposal_context_only": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-proposal-context-signature",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "9d44ff265a5f5923dab8b70dd5c7fb178881f57942d26e51a2d50560601bf5ca"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_reference_binding_uses_supporting_contribution_lineage": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-reference-supporting-contribution",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "7ae3d33a4b6fbf5e3e51a2b702a908989ae84c6fbe276b3fd61212259dff2c22"
+    },
+    "tests/test_bootstrap_proposer_abi2.py::test_unrepresentable_qualifier_abstains_without_inventing_residual": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-bootstrap-unrepresentable-qualifier-abstains",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R1-Task-7",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "cc1e0665938b33b683be81d609c1b09df174686409859816e3c2b040ba0b3ac3"
+    },
+}

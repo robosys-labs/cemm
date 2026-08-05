@@ -17,6 +17,24 @@ from cemm_authoritative_hybrid.programs import (
     SourceAssignment,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_program_abi.py::test_attach_scope_action_is_admitted_in_abi": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-attach-scope-action-is-admitted-in-abi",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "9c4b3e8290be23b572ecc8c4770a35b2391e5ea4be6d5d93b84cb31a266bea8d"
+    },
+    "tests/test_program_abi.py::test_propose_transition_action_is_admitted_in_abi": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-propose-transition-action-is-admitted-in-abi",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "a2d59a36c881566a1d9a3436519e331d782dce36984f289a47167c35ffb06fdd"
+    },
+}
+
+
 
 # ---------------------------------------------------------------------------
 # Closed action vocabulary

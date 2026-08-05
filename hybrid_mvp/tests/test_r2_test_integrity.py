@@ -8,6 +8,45 @@ from pathlib import Path
 
 import pytest
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_test_integrity.py::test_no_r2_test_asserts_only_class_absence": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-r2-test-asserts-only-class-absence",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "0b7199f6fbb6838d6746109cbd4af22c877195549c83040b4ae7803ebf868b4e"
+    },
+    "tests/test_r2_test_integrity.py::test_no_trivially_true_numeric_bounds": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-trivially-true-numeric-bounds",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "deec42ec255417f6afa9c740e517c0aa63ad42765ffd5ca3c0fb1e01ff5b6c9b"
+    },
+    "tests/test_r2_test_integrity.py::test_no_unused_parametrized_surface_in_r2_tests": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-no-unused-parametrized-surface-in-r2-tests",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "413253981b1f4c565ceb50ea6a9998461ee26c66c5dd55005de9601cb63e25b1"
+    },
+    "tests/test_r2_test_integrity.py::test_r2_plan_contract_test_exists": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-plan-contract-test-exists",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "d934b3b9d5cad06264af8d8e14b2419be8419c669866003e2b33b45b35bbef76"
+    },
+    "tests/test_r2_test_integrity.py::test_r2_unknown_frontier_test_exists": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-unknown-frontier-test-exists",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "7eb0c135a995a55f1ff21d5d1643b35e331362a98fde2dfdee3d79578f26d8c6"
+    },
+}
+
+
 _TESTS = Path(__file__).resolve().parent
 
 

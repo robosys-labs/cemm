@@ -26,6 +26,50 @@ from cemm_authoritative_hybrid.verifier_reconstruction import (
     reconstruct_expected_expression,
 )
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_verifier_reconstruction.py::test_link_reconstruction_matches_compiler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-link-reconstruction-matches-compiler",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "1e43861468fb99fcf6a51981d633f8492a1c92d1d84465fe9d9734919baa78fc"
+    },
+    "tests/test_r2_verifier_reconstruction.py::test_multi_app_reconstruction_matches_compiler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-multi-app-reconstruction-matches-compiler",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "52adcc07f3aadaaadd9a0007e10bc2136bf6676839a3c46b8c52687309e2f5bd"
+    },
+    "tests/test_r2_verifier_reconstruction.py::test_r1_program_reconstruction_matches_compiler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r1-program-reconstruction-matches-compiler",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "244b491f1fb0eef03e313e40e21602eff06e3bad9278a5faeeee661075c9df1f"
+    },
+    "tests/test_r2_verifier_reconstruction.py::test_reconstruction_returns_none_for_empty_program": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-reconstruction-returns-none-for-empty-program",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "155c728c7776429a0a9a15a0b861044f0716e3801dae837ce15e98b52f1aeb5d"
+    },
+    "tests/test_r2_verifier_reconstruction.py::test_scope_reconstruction_matches_compiler": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-scope-reconstruction-matches-compiler",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Implementation",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "c62a7c627e9d2f44546ab3a71f0d2a37b3b4466cda69b6a113ba99b3c3c90f6e"
+    },
+}
+
+
 
 def _pin() -> RevisionPin:
     return RevisionPin("authority:g1", 1, 2, 3, 4, "model:m1")

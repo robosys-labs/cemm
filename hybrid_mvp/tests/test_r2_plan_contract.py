@@ -8,6 +8,45 @@ from pathlib import Path
 
 import pytest
 
+__cemm_test_inventory__ = {
+    "tests/test_r2_plan_contract.py::test_r2_owners_do_not_import_r3_r8_owners": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-owners-do-not-import-r3-r8-owners",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "fbd03a3ca96830a8879ae3c97b2bb6c569839fa94aef36f4867b6e36deef32e1"
+    },
+    "tests/test_r2_plan_contract.py::test_r2_plan_is_committed": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-plan-is-committed",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "87229b527ab5857eef983ec8a6e45601db2df8bb3a00fa4db94cec4a758be711"
+    },
+    "tests/test_r2_plan_contract.py::test_r2_predecessor_inventory_is_enumerable": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-predecessor-inventory-is-enumerable",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "4d787583b9be4ee8c4786451bf60d20844932182ecf1f99c3bcfacf6660ee872"
+    },
+    "tests/test_r2_plan_contract.py::test_r2_unknown_frontier_successor_is_required": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-unknown-frontier-successor-is-required",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "c889932dfe188ca8490d7071eb82defb2a264f6e859d508e70f02cf4df1da059"
+    },
+    "tests/test_r2_plan_contract.py::test_r2_validation_phase_is_not_yet_activated": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-r2-validation-phase-is-not-yet-activated",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R2-Implementation",
+        "source_ast_sha256": "3b794baecaf0057fba389edb280e5e267fb6d480368d940beb1321dd49d07b81"
+    },
+}
+
+
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src" / "cemm_authoritative_hybrid"
 _INVENTORY = _ROOT / "governance" / "test_inventory.json"
