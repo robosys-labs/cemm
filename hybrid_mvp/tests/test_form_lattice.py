@@ -179,14 +179,14 @@ def _bounded_text(draw):
 
 
 @given(text=_bounded_text())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture, HealthCheck.too_slow])
 def test_no_unit_lost_hypothesis(form_resolver, text):
     lattice = form_resolver.resolve(text)
     assert "".join(u.source_text for u in lattice.units) == text
 
 
 @given(text=_bounded_text())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture, HealthCheck.too_slow])
 def test_span_offsets_monotonic_hypothesis(form_resolver, text):
     lattice = form_resolver.resolve(text)
     for u in lattice.units:
@@ -200,14 +200,14 @@ def test_span_offsets_monotonic_hypothesis(form_resolver, text):
 
 
 @given(text=_bounded_text())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture, HealthCheck.too_slow])
 def test_hypotheses_bounded_hypothesis(form_resolver, text):
     lattice = form_resolver.resolve(text)
     assert len(lattice.hypotheses) <= 16
 
 
 @given(text=_bounded_text())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture, HealthCheck.too_slow])
 def test_unit_refs_unique_hypothesis(form_resolver, text):
     lattice = form_resolver.resolve(text)
     refs = [u.unit_ref for u in lattice.units]

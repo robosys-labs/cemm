@@ -246,9 +246,9 @@
       "path": "tests/test_transition_simulation.py"
     }
   ],
-  "inventory_ref": "test_inventory:513776626601cbdc5eaccab6",
+  "inventory_ref": "test_inventory:8168fab3585b4a0f82099710",
   "schema": "cemm-hybrid-test-inventory-v1",
-  "source_set_ref": "source_set:0cd27fbc5f88b0588314fc3e",
+  "source_set_ref": "source_set:1f523751200f058de9fd3cae",
   "source_test_count": 632,
   "source_tests": [
     {
@@ -3663,7 +3663,7 @@
         "tests/test_form_lattice.py::test_hypotheses_bounded_hypothesis"
       ],
       "classification": "retained",
-      "source_ast_sha256": "9cc6b5aa2987b281f142986ef4b22952a5299f9fd7f1ab7ecc1008c39401adee",
+      "source_ast_sha256": "1b27fcb6cd425c93f666bfe16bc8602a41642598d24f6018d97d566b9361a98a",
       "source_test_ref": "tests/test_form_lattice.py::test_hypotheses_bounded_hypothesis",
       "successor_node_ids": []
     },
@@ -3707,7 +3707,7 @@
         "tests/test_form_lattice.py::test_no_unit_lost_hypothesis"
       ],
       "classification": "retained",
-      "source_ast_sha256": "ef852948cfbdfa420824c0373a30b2eabcfec9e39cdf85e34c663c7d894a7d66",
+      "source_ast_sha256": "8554afa31bab7db881f84272d5e8b93448d10361d767f7bf9570e6363ef17853",
       "source_test_ref": "tests/test_form_lattice.py::test_no_unit_lost_hypothesis",
       "successor_node_ids": []
     },
@@ -3773,7 +3773,7 @@
         "tests/test_form_lattice.py::test_span_offsets_monotonic_hypothesis"
       ],
       "classification": "retained",
-      "source_ast_sha256": "c705380a8252fa1fa52c9f1905b1d7e8d04c27f2d24148780a6a6ca83063d9fe",
+      "source_ast_sha256": "9094ba2cf83106a7f978ebdf0665d070b47f45d0c2c10050d90c9272849a972b",
       "source_test_ref": "tests/test_form_lattice.py::test_span_offsets_monotonic_hypothesis",
       "successor_node_ids": []
     },
@@ -3795,7 +3795,7 @@
         "tests/test_form_lattice.py::test_unit_refs_unique_hypothesis"
       ],
       "classification": "retained",
-      "source_ast_sha256": "566c8b9c9bf357b170e94ce88647ec0aa58f86d349c3b555bd07c92847015af8",
+      "source_ast_sha256": "b1c122513055b8d1840d1c78b3b6e5f2d1f5fad76de014a20fc7dc0f89fa5176",
       "source_test_ref": "tests/test_form_lattice.py::test_unit_refs_unique_hypothesis",
       "successor_node_ids": []
     },
