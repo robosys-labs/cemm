@@ -982,8 +982,6 @@
         "source_compile"
       ],
       "exact_nodes": [
-        "tests/test_bootstrap_proposer.py::test_candidates_preserve_proposer_rank_order",
-        "tests/test_grounding.py::test_designation_store_addition_does_not_alter_authority_files",
         "tests/test_program_abi.py::test_attach_scope_action_is_admitted_in_abi",
         "tests/test_program_abi.py::test_propose_transition_action_is_admitted_in_abi",
         "tests/test_r2_acceptance_matrix.py::test_matrix_10_no_internal_refs_in_expression_refs",
