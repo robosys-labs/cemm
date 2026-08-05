@@ -1,1 +1,21 @@
-{"active_node_count":180,"active_node_set_ref":"active_test_nodes:312d4c08c90e95c624b5204b","baseline_source_ref":"58345240e67bf003e6ac7d5c68752e2e5eee4a7d","collectable_node_count":1373,"collectable_node_set_ref":"collectable_test_nodes:3f37e22e065ce55b1addf42e","command":"python scripts\\check_test_inventory.py --phase G0 --source-only","deferred_rewrite_count":10,"document_authority_path":"docs/DOCUMENT_AUTHORITY.json","document_authority_sha256":"c5215428786d924d8de1a7bd5cb7ec1610716c5cc818b45524c50d7ff15df21d","due_rewrite_count":0,"inventory_path":"governance/test_inventory.json","inventory_ref":"test_inventory:20092cea3b7bfea596226100","inventory_sha256":"6b9e80fc3d352534a77d91f823cbe3a108d987615c21ff06496fb43fc91a1c37","literal_metadata_ref":"literal_test_metadata:9fbf3322e0fd21abd980e18a","parsed_module_count":87,"phase":"G0","receipt_ref":"test_inventory_receipt:a37ffccdd78bb4dac09579f6","schema":"cemm-hybrid-test-inventory-receipt-v1","source_only":true}
+{
+  "active_node_count": 180,
+  "active_node_set_ref": "active_test_nodes:312d4c08c90e95c624b5204b",
+  "baseline_source_ref": "58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
+  "collectable_node_count": 1531,
+  "collectable_node_set_ref": "collectable_test_nodes:ba0515f9f12e5c374f9beecd",
+  "command": "python scripts\\check_test_inventory.py --phase G0 --source-only",
+  "deferred_rewrite_count": 13,
+  "document_authority_path": "docs/DOCUMENT_AUTHORITY.json",
+  "document_authority_sha256": "b8e32f47bc7484ec4b54ff201d9582b71e03c236f9fed2853b7de10fd8b5cfd5",
+  "due_rewrite_count": 0,
+  "inventory_path": "governance/test_inventory.json",
+  "inventory_ref": "test_inventory:18540e5ff41d612d595b5a8b",
+  "inventory_sha256": "4e999b21f66a9511680c7cedb8a295b62036d8095adc92550a0cdc4e5d6e409c",
+  "literal_metadata_ref": "literal_test_metadata:89327898c840f960cd06f64c",
+  "parsed_module_count": 102,
+  "phase": "G0",
+  "receipt_ref": "test_inventory_receipt:f8f9e52aa759c05736b983ce",
+  "schema": "cemm-hybrid-test-inventory-receipt-v1",
+  "source_only": true
+}
