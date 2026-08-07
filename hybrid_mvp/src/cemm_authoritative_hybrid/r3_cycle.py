@@ -455,15 +455,16 @@ class CycleResult:
             raise ValueError("CycleResult cycle_ref mismatch")
         if type(self.trace) is not tuple:
             raise TypeError("trace must be exact tuple")
-        if self.trace and len(self.trace) != len(self.phase_material):
-            raise ValueError("trace must cover every phase material row")
-        for receipt, material in zip(self.trace, self.phase_material, strict=True):
-            if type(receipt) is not PhaseReceipt:
-                raise TypeError("trace rows must be exact PhaseReceipt")
-            if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
-                raise ValueError("trace contains non-canonical PhaseReceipt")
-            if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
-                raise ValueError("trace receipt does not bind exact cycle material")
+        if self.trace:
+            if len(self.trace) != len(self.phase_material):
+                raise ValueError("trace must cover every phase material row")
+            for receipt, material in zip(self.trace, self.phase_material, strict=True):
+                if type(receipt) is not PhaseReceipt:
+                    raise TypeError("trace rows must be exact PhaseReceipt")
+                if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
+                    raise ValueError("trace contains non-canonical PhaseReceipt")
+                if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
+                    raise ValueError("trace receipt does not bind exact cycle material")
 
     def as_dict(self) -> dict[str, Any]:
         return {

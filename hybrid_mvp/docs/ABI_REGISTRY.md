@@ -186,7 +186,6 @@ No descendant generated under the duplicate/legacy program ABI may remain green.
 
 ## R3–R4 implemented ABI allocation
 
-| Decision ABI | **1** | `src/cemm_authoritative_hybrid/decision.py` | Episode-serializable | `ExactDecisionEvaluator` | Binds exact VerifiedMeaning, expression, SituationContext, status/action and proof/policy/blocker lineage; Program ref is lineage only. |
 | Query / Proof ABI | **1** | `src/cemm_authoritative_hybrid/r3_artifacts.py` | Episode-serializable | `ExpressionQueryOwner` | Expression-compiled query patterns, revision-pinned retrieval receipts and bounded proof DAGs; unknown is not false. |
 | Authentic Semantic Episode ABI | **3** | `src/cemm_authoritative_hybrid/r4_episodes.py` | Serialized corpus candidate | `AuthenticEpisodeBuilder` | Keeps expected contract, observed public-runtime cycle and comparison receipt separate; no bootstrap output authors semantic gold. |
 | Expected Cycle Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_contracts.py` | Serialized reviewed contract | `ExpectedCycleContractCompiler` | Total reviewed-assertion compilation with no PROPOSE/runtime dependency and no default-to-designation fallback. |

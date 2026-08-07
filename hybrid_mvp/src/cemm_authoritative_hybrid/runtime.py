@@ -392,6 +392,7 @@ class HybridRuntime:
             "orientation": OrientationOwner,
             "proposal": ProposalOwner,
             "verification": VerificationOwner,
+            "r3": R3Owner,
         }
         for name, contract in requirements.items():
             owner = self._owners.get(name)
@@ -399,9 +400,6 @@ class HybridRuntime:
                 raise MissingOwner(f"{name}_owner")
             if not isinstance(owner, contract):
                 raise TypeError(f"{name} owner violates its exact protocol")
-        r3_owner = self._owners.get("r3")
-        if r3_owner is not None and not isinstance(r3_owner, R3Owner):
-            raise TypeError("r3 owner violates its exact protocol")
 
     @property
     def profile(self) -> str:
@@ -450,122 +448,8 @@ class HybridRuntime:
     def process(
         self, session_ref: str, text: str, *, trace: bool = True
     ) -> CycleResult:
-        if "r3" in self._owners:
-            evidence = self.create_evidence(session_ref, text)
-            return self.process_evidence(session_ref, evidence, trace=trace)
-        return self._process_legacy(session_ref, text, trace=trace)
-
-    def _process_legacy(
-        self, session_ref: str, text: str, *, trace: bool = True
-    ) -> CycleResult:
-        started = time.perf_counter_ns()
-        orientation, context = self.orient(session_ref, text)
-        orient_ns = time.perf_counter_ns() - started
-
-        started = time.perf_counter_ns()
-        proposal = self._owners["proposal"].propose(context)
-        propose_ns = time.perf_counter_ns() - started
-        if type(proposal) is not ProposalResult:
-            raise TypeError("PROPOSE owner returned non-canonical ProposalResult")
-
-        started = time.perf_counter_ns()
-        verification = self._owners["verification"].verify_candidates(
-            proposal, context
-        )
-        verify_ns = time.perf_counter_ns() - started
-        if type(verification) is not VerificationBatch:
-            raise TypeError("VERIFY owner returned non-canonical VerificationBatch")
-
-        verify_disposition, verify_codes, early_status, early_gap = (
-            self._verification_outcome(proposal, verification)
-        )
-        pin = context.revision_pin
-        orient_outputs = (orientation.orientation_ref, context.context_ref)
-        verify_outputs = (verification.batch_ref,)
-        if verification.status == "selected":
-            meaning = verification.selected_meaning
-            if meaning is None:
-                raise AssertionError("selected verification lacks meaning")
-            verify_outputs = (verification.batch_ref, meaning.verified_meaning_ref)
-        materials = (
-            _PhaseMaterial(
-                SemanticPhase.ORIENT,
-                (context.evidence_packet_ref,),
-                orient_outputs,
-                pin,
-                pin,
-                PhaseDisposition.COMPLETED,
-                (),
-                {"input_tokens": len(context.source_unit_refs)},
-            ),
-            _PhaseMaterial(
-                SemanticPhase.PROPOSE,
-                orient_outputs,
-                (proposal.proposal_ref,),
-                pin,
-                pin,
-                PhaseDisposition.COMPLETED,
-                (),
-                {"search_states": proposal.explored_states},
-            ),
-            _PhaseMaterial(
-                SemanticPhase.VERIFY,
-                (proposal.proposal_ref, context.context_ref),
-                verify_outputs,
-                pin,
-                pin,
-                verify_disposition,
-                verify_codes,
-                {"candidates": len(verification.candidate_receipts)},
-            ),
-        )
-        if verification.status != "selected":
-            assert early_gap is not None
-            return _LegacyCycleFinalizer.finalize(
-                input_ref=context.evidence_packet_ref,
-                status=early_status,
-                orientation=orientation,
-                proposal=proposal,
-                verification=verification,
-                evaluation=None,
-                effect_receipt=None,
-                response_meaning=None,
-                realization_receipt=None,
-                gap_receipt=early_gap,
-                phase_material=materials,
-                final_revision_pin=pin,
-                capture_trace=trace,
-                durations_ns=(orient_ns, propose_ns, verify_ns),
-            )
-
-        meaning = verification.selected_meaning
-        assert meaning is not None
-        if self._owners.get("r3") is None:
-            gap = GapClassifier().classify(
-                LaterOwnerNotAdmitted(
-                    meaning.verified_meaning_ref, "contract:r3:evaluate"
-                )
-            )
-            return _LegacyCycleFinalizer.finalize(
-                input_ref=context.evidence_packet_ref,
-                status=CycleStatus.PARTIAL,
-                orientation=orientation,
-                proposal=proposal,
-                verification=verification,
-                evaluation=None,
-                effect_receipt=None,
-                response_meaning=None,
-                realization_receipt=None,
-                gap_receipt=gap,
-                phase_material=materials,
-                final_revision_pin=pin,
-                capture_trace=trace,
-                durations_ns=(orient_ns, propose_ns, verify_ns),
-            )
-        return self._run_r3(
-            session_ref, orientation, context, proposal, verification, meaning,
-            materials, orient_ns, propose_ns, verify_ns, trace,
-        )
+        evidence = self.create_evidence(session_ref, text)
+        return self.process_evidence(session_ref, evidence, trace=trace)
 
     def process_evidence(
         self,
@@ -657,28 +541,6 @@ class HybridRuntime:
 
         meaning = verification.selected_meaning
         assert meaning is not None
-        if self._owners.get("r3") is None:
-            gap = GapClassifier().classify(
-                LaterOwnerNotAdmitted(
-                    meaning.verified_meaning_ref, "contract:r3:evaluate"
-                )
-            )
-            return CycleFinalizer.finalize(
-                input_ref=context.evidence_packet_ref,
-                status=CycleStatus.PARTIAL,
-                orientation=orientation,
-                proposal=proposal,
-                verification=verification,
-                evaluation=None,
-                effect_receipt=None,
-                response_meaning=None,
-                realization_receipt=None,
-                gap_receipt=gap,
-                phase_material=base_materials,
-                final_revision_pin=pin,
-                capture_trace=trace,
-                durations_ns=(orient_ns, propose_ns, verify_ns),
-            )
         return self._run_r3(
             session_ref, orientation, context, proposal, verification, meaning,
             base_materials, orient_ns, propose_ns, verify_ns, trace,

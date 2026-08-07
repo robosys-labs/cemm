@@ -136,25 +136,14 @@ def test_r3_owners_do_not_import_legacy_proposition_fixtures() -> None:
     )
 
 
-def test_r3_evaluate_boundary_rejects_programs() -> None:
-    """The runtime EVALUATE boundary must reject raw programs.
-
-    The runtime must raise ``LaterOwnerNotAdmitted`` for
-    ``contract:r3:evaluate`` when a program is passed instead of a
-    ``VerifiedMeaning``.
-    """
+def test_r3_runtime_owns_evaluate_and_exposes_only_r5_boundary() -> None:
+    """R3 owns EVALUATE; only R5 realization may remain unadmitted."""
     runtime_path = _SRC / "runtime.py"
     assert runtime_path.exists(), "runtime.py not found"
     text = runtime_path.read_text(encoding="utf-8")
-    # The runtime must have the contract:r3:evaluate boundary
-    assert "contract:r3:evaluate" in text, (
-        "runtime.py does not define the contract:r3:evaluate boundary"
-    )
-    # The runtime must not accept SemanticSwitchProgram as EVALUATE input
-    # (it should use VerifiedMeaning)
-    assert "VerifiedMeaning" in text or "verified_meaning" in text, (
-        "runtime.py does not reference VerifiedMeaning"
-    )
+    assert "contract:r3:evaluate" not in text
+    assert text.count("contract:r5:realize_surface") == 1
+    assert "VerifiedMeaning" in text or "verified_meaning" in text
 
 
 def test_r3_owners_are_post_verify() -> None:
