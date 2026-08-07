@@ -869,26 +869,40 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                 blocker_refs=("request:no_application",), policy_refs=("policy:request_transition:v2",),
             ))
         if app.operator == "op:designation":
-            roles = {row.role_ref: _filler_value(row) for row in app.roles}
+            roles = {row.role_ref: _filler_value(row) for row in (*app.roles, *app.qualifiers)}
             surface = roles.get("role:surface")
-            target = roles.get("role:target")
-            if surface is None:
-                return ModeEvaluation(contribution=DecisionContribution(
-                    status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
-                    blocker_refs=("learning:surface_missing",), policy_refs=("policy:learning_directive_requires_review:v2",),
-                ))
-            draft = LearningDraft.create(
-                kind="directive", surface_literal=surface, target_ref=target,
-                expected_target_kinds=(), source_query_ref=None,
-                answer_contract_ref="contract:learning_review_required",
-                proof_refs=(app.application_ref,), revision_pin=situation.revision_pin,
+            target = roles.get("role:target") or roles.get("role:object") or roles.get("role:meaning")
+            missing = tuple(
+                blocker for blocker, value in (
+                    ("learning:surface_missing", surface),
+                    ("learning:target_missing", target),
+                ) if value is None
             )
-            # The kernel materializes the plan/obligation and replaces this
-            # pre-decision contribution before Decision.create.
+            if missing:
+                return ModeEvaluation(contribution=DecisionContribution(
+                    status=DecisionStatus.UNKNOWN,
+                    action=DecisionAction.REQUEST_CLARIFICATION,
+                    blocker_refs=missing,
+                    policy_refs=("policy:learning_directive_requires_review:v2",),
+                ))
+            atom = getattr(self._authority, "atoms", {}).get(target)
+            target_kind = getattr(atom, "kind", "unknown")
+            draft = LearningDraft.create(
+                kind="directive",
+                surface_literal=surface,
+                target_ref=target,
+                expected_target_kinds=(target_kind,),
+                source_query_ref=None,
+                answer_contract_ref="contract:designation_answer:v2",
+                proof_refs=(app.application_ref,),
+                revision_pin=situation.revision_pin,
+            )
             return ModeEvaluation(
                 contribution=DecisionContribution(
-                    status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
-                    blocker_refs=("learning:materialization_pending",),
+                    status=DecisionStatus.PENDING,
+                    action=DecisionAction.CREATE_LEARNING_OBLIGATION,
+                    learning_draft_refs=(draft.learning_draft_ref,),
+                    proof_refs=(app.application_ref,),
                     policy_refs=("policy:learning_directive_requires_review:v2",),
                 ),
                 learning_drafts=(draft,),
@@ -997,6 +1011,7 @@ class R3EvaluationOwner:
             "claim_occurrence_refs": tuple(row.occurrence_ref for row in mode_result.claim_occurrences),
             "admission_decision_refs": tuple(row.admission_ref for row in mode_result.admission_decisions),
             "transition_preview_refs": tuple(row.transition_evaluation_ref for row in mode_result.transition_evaluations),
+            "learning_draft_refs": tuple(row.learning_draft_ref for row in mode_result.learning_drafts),
         }
         for name, refs in exact.items():
             if getattr(contribution, name) != refs:
@@ -1011,7 +1026,4 @@ class R3EvaluationOwner:
         )
 
     def evaluate(self, meaning: Any, situation: SituationContext) -> EvaluationBundle:
-        result = self.evaluate_mode(meaning, situation)
-        if result.learning_drafts:
-            raise ValueError("learning draft must be materialized before Decision creation")
-        return self.finalize(meaning, situation, result)
+        return self.finalize(meaning, situation, self.evaluate_mode(meaning, situation))
