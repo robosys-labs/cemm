@@ -1167,6 +1167,8 @@
         "sqlite_activation"
       ],
       "inputs": [
+        "artifacts/validation/R3_ACTIVATION_CANARIES.json",
+        "scripts/run_r3_canaries.py",
         "src/cemm_authoritative_hybrid/",
         "tests/"
       ],

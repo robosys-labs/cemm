@@ -4866,8 +4866,8 @@ class _RunContext:
         return target
 
     def run_authority_link(self) -> _HandledStep:
-        if self.tier != "admission" or self.phase not in {"R1", "R2"}:
-            raise GateConfigError("authority link is available only in R1/R2 admission")
+        if self.tier != "admission" or self.phase not in {"R1", "R2", "R3", "R4"}:
+            raise GateConfigError("authority link is available only in R1-R4 admission")
         started = time.monotonic_ns()
         manifest_path = self.root / "data" / "authority" / "manifest.json"
         raw = self._read_bytes(manifest_path)
@@ -4919,8 +4919,8 @@ class _RunContext:
         )
 
     def run_sqlite_activation(self) -> _HandledStep:
-        if self.tier != "admission" or self.phase not in {"R1", "R2"}:
-            raise GateConfigError("SQLite activation is available only in R1/R2 admission")
+        if self.tier != "admission" or self.phase not in {"R1", "R2", "R3", "R4"}:
+            raise GateConfigError("SQLite activation is available only in R1-R4 admission")
         authority = self._linked_authority
         if authority is None:
             raise GateConfigError("SQLite activation requires linked authority evidence")
@@ -5036,19 +5036,88 @@ class _RunContext:
     def run_r3_activation_canaries(self) -> _HandledStep:
         if self.tier != "admission" or self.phase != "R3":
             raise GateConfigError("R3 activation canaries are available only in R3 admission")
+        authority = self._linked_authority
+        if authority is None:
+            raise GateConfigError("R3 activation canaries require linked authority evidence")
         started = time.monotonic_ns()
-        # R3 activation canaries will be populated when R3 runtime is implemented.
-        # For now, this step produces an empty canary set that validates the
-        # report structure without requiring runtime cycles.
-        canary_rows: list[dict[str, str]] = []
+        artifact_path = self.root / "artifacts" / "validation" / "R3_ACTIVATION_CANARIES.json"
+        raw = self._read_bytes(artifact_path)
+        artifact = _load_strict_json_bytes(raw, path=artifact_path)
+        artifact = _exact_fields(
+            artifact, frozenset({"schema", "cases"}), "R3 activation canary artifact"
+        )
+        if artifact["schema"] != "cemm-r3-activation-canaries-v1":
+            raise GateConfigError("R3 activation canary artifact schema is invalid")
+        rows = artifact["cases"]
+        if type(rows) is not list or len(rows) < 4:
+            raise GateConfigError("R3 activation canary artifact must contain at least four cases")
+        row_fields = frozenset({
+            "case_ref", "semantic_mode", "cycle_ref", "verified_meaning_ref",
+            "expression_ref", "situation_ref", "evaluation_ref", "decision_ref",
+            "effect_receipt_ref", "response_meaning_ref", "gap_ref",
+            "final_revision_pin",
+        })
+        modes: set[str] = set()
+        case_refs: set[str] = set()
+        for index, raw_row in enumerate(rows):
+            row = _exact_fields(raw_row, row_fields, f"R3 canary row {index}")
+            case_ref = _text(row["case_ref"], f"R3 canary row {index} case_ref")
+            if case_ref in case_refs:
+                raise GateConfigError("R3 activation canary case refs must be unique")
+            case_refs.add(case_ref)
+            mode = row["semantic_mode"]
+            if mode not in {"observe", "query", "request", "simulate"}:
+                raise GateConfigError("R3 activation canary semantic mode is invalid")
+            modes.add(str(mode))
+            for field in (
+                "cycle_ref", "verified_meaning_ref", "expression_ref", "situation_ref",
+                "evaluation_ref", "decision_ref", "effect_receipt_ref",
+                "response_meaning_ref", "gap_ref",
+            ):
+                value = row[field]
+                if type(value) is not str or _CONTENT_REF_RE.fullmatch(value) is None:
+                    raise GateConfigError(f"R3 activation canary {field} is invalid")
+            pin = _exact_fields(
+                row["final_revision_pin"],
+                frozenset({
+                    "authority_generation", "world_revision", "session_revision",
+                    "episode_revision", "effect_revision", "model_identity",
+                }),
+                f"R3 canary row {index} final revision pin",
+            )
+            if pin["authority_generation"] != authority.generation:
+                raise GateConfigError("R3 canary authority generation is stale")
+            for field in ("world_revision", "session_revision", "episode_revision", "effect_revision"):
+                _nonnegative_exact_int(pin[field], f"R3 canary {field}")
+            if pin["model_identity"] is not None and (
+                type(pin["model_identity"]) is not str or not pin["model_identity"]
+            ):
+                raise GateConfigError("R3 canary model identity is invalid")
+        if modes != {"observe", "query", "request", "simulate"}:
+            raise GateConfigError("R3 activation canaries do not cover all four semantic modes")
+
+        # Re-execute the authentic public runtime in a fresh SQLite store and
+        # require exact semantic evidence equality with the committed artifact.
+        runner_path = self.root / "scripts" / "run_r3_canaries.py"
+        runner = _load_exact_module(runner_path, "r3_canary_runner")
+        execute = getattr(runner, "execute_canaries", None)
+        if not callable(execute):
+            raise GateConfigError("R3 canary runner does not expose execute_canaries")
+        store_root = self._fresh_step_root("r3-canaries") / "store"
+        try:
+            observed = execute(self.root, store_root, cases_path=None)
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            raise GateConfigError(f"R3 public-runtime canaries failed: {exc}") from exc
+        if type(observed) is not tuple or any(type(row) is not dict for row in observed):
+            raise GateConfigError("R3 canary runner returned non-canonical evidence")
+        if list(observed) != rows:
+            raise GateConfigError("committed R3 canary evidence differs from fresh public-runtime execution")
         material: dict[str, object] = {
-            "canary_count": len(canary_rows),
-            "canary_set_ref": content_ref("r3_canary_set", canary_rows),
+            "canary_count": len(rows),
+            "canary_set_ref": content_ref("r3_canary_set", rows),
             "schema": "cemm-r3-activation-canaries-step-report-v1",
         }
         material["canary_ref"] = content_ref("r3_activation_canaries", material)
-        if material["canary_count"] == 0:
-            raise GateConfigError("R3 activation canaries report is empty")
         return _HandledStep(
             disposition="passed", exit_code=0, error_code=None, report=material,
             observation_report=material, wall_ns=time.monotonic_ns() - started,
