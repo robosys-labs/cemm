@@ -349,11 +349,7 @@ class ResponseBuilder:
             blocker_refs=evaluation.decision.blocker_refs,
             policy_refs=evaluation.decision.policy_refs,
             permitted_omissions=(),
-            revision_pin=(
-                effect.output_revision_pin
-                if type(effect) is EffectReceipt
-                else effect.revision_pin
-            ),
+            revision_pin=effect.output_revision_pin,
             learning_plan=learning_plan,
             obligation=obligation,
         )
