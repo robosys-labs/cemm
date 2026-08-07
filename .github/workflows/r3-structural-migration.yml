@@ -39,16 +39,8 @@ jobs:
           owner_marker = '            "verification": VerificationOwner,\n        }\n'
           if owner_marker not in runtime:
               raise SystemExit('runtime owner marker changed unexpectedly')
-          runtime = runtime.replace(
-              owner_marker,
-              '            "verification": VerificationOwner,\n            "r3": R3Owner,\n        }\n',
-              1,
-          )
-          optional_r3 = (
-              '        r3_owner = self._owners.get("r3")\n'
-              '        if r3_owner is not None and not isinstance(r3_owner, R3Owner):\n'
-              '            raise TypeError("r3 owner violates its exact protocol")\n'
-          )
+          runtime = runtime.replace(owner_marker, '            "verification": VerificationOwner,\n            "r3": R3Owner,\n        }\n', 1)
+          optional_r3 = ('        r3_owner = self._owners.get("r3")\n' '        if r3_owner is not None and not isinstance(r3_owner, R3Owner):\n' '            raise TypeError("r3 owner violates its exact protocol")\n')
           if optional_r3 not in runtime:
               raise SystemExit('optional R3 owner block changed unexpectedly')
           runtime = runtime.replace(optional_r3, '', 1)
@@ -58,13 +50,7 @@ jobs:
           evidence_start = runtime.find('    def process_evidence(\n', legacy_start)
           if min(process_start, legacy_start, evidence_start) < 0:
               raise SystemExit('runtime method boundary changed unexpectedly')
-          process = (
-              '    def process(\n'
-              '        self, session_ref: str, text: str, *, trace: bool = True\n'
-              '    ) -> CycleResult:\n'
-              '        evidence = self.create_evidence(session_ref, text)\n'
-              '        return self.process_evidence(session_ref, evidence, trace=trace)\n\n'
-          )
+          process = ('    def process(\n' '        self, session_ref: str, text: str, *, trace: bool = True\n' '    ) -> CycleResult:\n' '        evidence = self.create_evidence(session_ref, text)\n' '        return self.process_evidence(session_ref, evidence, trace=trace)\n\n')
           runtime = runtime[:process_start] + process + runtime[evidence_start:]
 
           missing_r3 = runtime.find('        if self._owners.get("r3") is None:')
@@ -73,11 +59,8 @@ jobs:
               if run_r3 < 0:
                   raise SystemExit('R3 continuation boundary not found')
               runtime = runtime[:missing_r3] + runtime[run_r3:]
-
-          if '_process_legacy' in runtime:
-              raise SystemExit('legacy runtime path remains')
-          if 'contract:r3:evaluate' in runtime:
-              raise SystemExit('pre-R3 boundary remains in public runtime')
+          if '_process_legacy' in runtime or 'contract:r3:evaluate' in runtime:
+              raise SystemExit('pre-R3 runtime compatibility remains')
           if runtime.count('contract:r5:realize_surface') != 1:
               raise SystemExit('runtime must expose exactly one R5 boundary')
           runtime_path.write_text(runtime, encoding='utf-8')
@@ -88,20 +71,8 @@ jobs:
           trace_end = cycle.find('\n\n    def as_dict', trace_start)
           if trace_start < 0 or trace_end < 0:
               raise SystemExit('CycleResult trace boundary changed unexpectedly')
-          trace = (
-              '        if self.trace:\n'
-              '            if len(self.trace) != len(self.phase_material):\n'
-              '                raise ValueError("trace must cover every phase material row")\n'
-              '            for receipt, material in zip(self.trace, self.phase_material, strict=True):\n'
-              '                if type(receipt) is not PhaseReceipt:\n'
-              '                    raise TypeError("trace rows must be exact PhaseReceipt")\n'
-              '                if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:\n'
-              '                    raise ValueError("trace contains non-canonical PhaseReceipt")\n'
-              '                if receipt.cycle_ref != self.cycle_ref or receipt.material != material:\n'
-              '                    raise ValueError("trace receipt does not bind exact cycle material")'
-          )
-          cycle = cycle[:trace_start] + trace + cycle[trace_end:]
-          cycle_path.write_text(cycle, encoding='utf-8')
+          trace = ('        if self.trace:\n' '            if len(self.trace) != len(self.phase_material):\n' '                raise ValueError("trace must cover every phase material row")\n' '            for receipt, material in zip(self.trace, self.phase_material, strict=True):\n' '                if type(receipt) is not PhaseReceipt:\n' '                    raise TypeError("trace rows must be exact PhaseReceipt")\n' '                if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:\n' '                    raise ValueError("trace contains non-canonical PhaseReceipt")\n' '                if receipt.cycle_ref != self.cycle_ref or receipt.material != material:\n' '                    raise ValueError("trace receipt does not bind exact cycle material")')
+          cycle_path.write_text(cycle[:trace_start] + trace + cycle[trace_end:], encoding='utf-8')
 
           abi_path = Path('docs/ABI_REGISTRY.md')
           abi = abi_path.read_text(encoding='utf-8')
@@ -112,6 +83,15 @@ jobs:
           if abi.count('Decision ABI |') != 1:
               raise SystemExit('Decision ABI must have exactly one owner row')
           abi_path.write_text(abi, encoding='utf-8')
+
+          test_path = Path('tests/test_r3_owner_structure.py')
+          test = test_path.read_text(encoding='utf-8')
+          start = test.find('def test_r3_evaluate_boundary_rejects_programs() -> None:\n')
+          end = test.find('\n\ndef test_r3_owners_are_post_verify()', start)
+          if start < 0 or end < 0:
+              raise SystemExit('stale R3 boundary test changed unexpectedly')
+          replacement = ('def test_r3_runtime_owns_evaluate_and_exposes_only_r5_boundary() -> None:\n' '    """R3 owns EVALUATE; only R5 realization may remain unadmitted."""\n' '    runtime_path = _SRC / "runtime.py"\n' '    assert runtime_path.exists(), "runtime.py not found"\n' '    text = runtime_path.read_text(encoding="utf-8")\n' '    assert "contract:r3:evaluate" not in text\n' '    assert text.count("contract:r5:realize_surface") == 1\n' '    assert "VerifiedMeaning" in text or "verified_meaning" in text\n')
+          test_path.write_text(test[:start] + replacement + test[end:], encoding='utf-8')
           PY
       - name: Compile and verify structural contracts
         run: |
@@ -123,6 +103,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/cemm_authoritative_hybrid/runtime.py src/cemm_authoritative_hybrid/r3_cycle.py docs/ABI_REGISTRY.md
+          git add src/cemm_authoritative_hybrid/runtime.py src/cemm_authoritative_hybrid/r3_cycle.py docs/ABI_REGISTRY.md tests/test_r3_owner_structure.py
           git commit -m 'fix(r3): hard-cut cognition runtime and cycle ABI'
           git push origin HEAD:codex/hybrid-mvp-r2
