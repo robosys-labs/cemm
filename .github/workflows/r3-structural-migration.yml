@@ -1,0 +1,171 @@
+name: R3 structural migration
+
+on:
+  push:
+    branches:
+      - codex/hybrid-mvp-r2
+    paths:
+      - .github/workflows/r3-structural-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/hybrid-mvp-r2
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Apply R3 hard cut
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('src/cemm_authoritative_hybrid/runtime.py')
+          runtime = runtime_path.read_text(encoding='utf-8')
+
+          old_requirements = '''        requirements = {
+              "orientation": OrientationOwner,
+              "proposal": ProposalOwner,
+              "verification": VerificationOwner,
+          }
+          for name, contract in requirements.items():
+              owner = self._owners.get(name)
+              if owner is None:
+                  raise MissingOwner(f"{name}_owner")
+              if not isinstance(owner, contract):
+                  raise TypeError(f"{name} owner violates its exact protocol")
+          r3_owner = self._owners.get("r3")
+          if r3_owner is not None and not isinstance(r3_owner, R3Owner):
+              raise TypeError("r3 owner violates its exact protocol")
+          '''
+          new_requirements = '''        requirements = {
+              "orientation": OrientationOwner,
+              "proposal": ProposalOwner,
+              "verification": VerificationOwner,
+              "r3": R3Owner,
+          }
+          for name, contract in requirements.items():
+              owner = self._owners.get(name)
+              if owner is None:
+                  raise MissingOwner(f"{name}_owner")
+              if not isinstance(owner, contract):
+                  raise TypeError(f"{name} owner violates its exact protocol")
+          '''
+          if old_requirements not in runtime:
+              raise SystemExit('runtime owner requirement block changed unexpectedly')
+          runtime = runtime.replace(old_requirements, new_requirements, 1)
+
+          old_process = '''    def process(
+          self, session_ref: str, text: str, *, trace: bool = True
+      ) -> CycleResult:
+          if "r3" in self._owners:
+              evidence = self.create_evidence(session_ref, text)
+              return self.process_evidence(session_ref, evidence, trace=trace)
+          return self._process_legacy(session_ref, text, trace=trace)
+
+          '''
+          new_process = '''    def process(
+          self, session_ref: str, text: str, *, trace: bool = True
+      ) -> CycleResult:
+          evidence = self.create_evidence(session_ref, text)
+          return self.process_evidence(session_ref, evidence, trace=trace)
+
+          '''
+          if old_process not in runtime:
+              raise SystemExit('runtime process block changed unexpectedly')
+          runtime = runtime.replace(old_process, new_process, 1)
+
+          legacy_start = runtime.find('    def _process_legacy(')
+          evidence_start = runtime.find('    def process_evidence(', legacy_start)
+          if legacy_start < 0 or evidence_start < 0:
+              raise SystemExit('legacy runtime method boundary not found')
+          runtime = runtime[:legacy_start] + runtime[evidence_start:]
+
+          missing_r3 = runtime.find('        if self._owners.get("r3") is None:')
+          if missing_r3 >= 0:
+              run_r3 = runtime.find('        return self._run_r3(', missing_r3)
+              if run_r3 < 0:
+                  raise SystemExit('R3 continuation boundary not found')
+              runtime = runtime[:missing_r3] + runtime[run_r3:]
+
+          if 'contract:r3:evaluate' in runtime:
+              raise SystemExit('pre-R3 boundary remains in public runtime')
+          if runtime.count('contract:r5:realize_surface') != 1:
+              raise SystemExit('runtime must expose exactly one R5 boundary')
+          runtime_path.write_text(runtime, encoding='utf-8')
+
+          cycle_path = Path('src/cemm_authoritative_hybrid/r3_cycle.py')
+          cycle = cycle_path.read_text(encoding='utf-8')
+          old_trace = '''        if self.trace and len(self.trace) != len(self.phase_material):
+              raise ValueError("trace must cover every phase material row")
+          for receipt, material in zip(self.trace, self.phase_material, strict=True):
+              if type(receipt) is not PhaseReceipt:
+                  raise TypeError("trace rows must be exact PhaseReceipt")
+              if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
+                  raise ValueError("trace contains non-canonical PhaseReceipt")
+              if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
+                  raise ValueError("trace receipt does not bind exact cycle material")
+          '''
+          new_trace = '''        if self.trace:
+              if len(self.trace) != len(self.phase_material):
+                  raise ValueError("trace must cover every phase material row")
+              for receipt, material in zip(self.trace, self.phase_material, strict=True):
+                  if type(receipt) is not PhaseReceipt:
+                      raise TypeError("trace rows must be exact PhaseReceipt")
+                  if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
+                      raise ValueError("trace contains non-canonical PhaseReceipt")
+                  if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
+                      raise ValueError("trace receipt does not bind exact cycle material")
+          '''
+          if old_trace not in cycle:
+              raise SystemExit('CycleResult trace block changed unexpectedly')
+          cycle_path.write_text(cycle.replace(old_trace, new_trace, 1), encoding='utf-8')
+
+          abi_path = Path('docs/ABI_REGISTRY.md')
+          abi = abi_path.read_text(encoding='utf-8')
+          duplicate = '| Decision ABI | **1** | `src/cemm_authoritative_hybrid/decision.py` | Episode-serializable | `ExactDecisionEvaluator` | Binds exact VerifiedMeaning, expression, SituationContext, status/action and proof/policy/blocker lineage; Program ref is lineage only. |\n'
+          if abi.count('Decision ABI |') != 2 or duplicate not in abi:
+              raise SystemExit('Decision ABI registry shape changed unexpectedly')
+          abi = abi.replace(duplicate, '', 1)
+          if abi.count('Decision ABI |') != 1:
+              raise SystemExit('Decision ABI must have exactly one owner row')
+          abi_path.write_text(abi, encoding='utf-8')
+          PY
+      - name: Compile and run R3 contract tests
+        run: |
+          python -m compileall -q src scripts
+          python scripts/check_r3_r4_structure.py
+          pytest -q \
+            tests/test_r3_decision_abi.py \
+            tests/test_r3_effect_receipts.py \
+            tests/test_r3_expression_projection.py \
+            tests/test_r3_learning_response.py \
+            tests/test_r3_mode_projection.py \
+            tests/test_r3_no_program_as_meaning.py \
+            tests/test_r3_owner_structure.py \
+            tests/test_r3_plan_contract.py \
+            tests/test_r3_recursive_query.py \
+            tests/test_r3_situation_context.py \
+            tests/test_r3_structure.py
+      - name: Commit structural hard cut
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py \
+                  hybrid_mvp/src/cemm_authoritative_hybrid/r3_cycle.py \
+                  hybrid_mvp/docs/ABI_REGISTRY.md
+          git commit -m 'fix(r3): hard-cut cognition runtime and cycle ABI'
+          git push origin HEAD:codex/hybrid-mvp-r2
