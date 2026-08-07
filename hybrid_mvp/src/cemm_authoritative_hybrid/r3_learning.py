@@ -8,7 +8,7 @@ from typing import Any, Mapping
 from .canonical import stable_ref
 from .cycle import SemanticMode
 from .decision import DecisionAction
-from .expressions import GroundedReference, LiteralValue, SemanticApplication, VerifiedMeaning
+from .expressions import VerifiedMeaning
 from .persistence import RevisionPin, SemanticStores
 from .r3_artifacts import EvaluationBundle
 from .situation import SituationContext
@@ -301,47 +301,58 @@ class DialogueObligation:
 
 
 class LearningCoordinator:
-    """Create plans/obligations; never publish authority from conversation."""
+    """Materialize the exact evaluated learning draft; never reinterpret meaning."""
 
     def __init__(self, authority: Any, stores: SemanticStores) -> None:
         self._authority = authority
         self._stores = stores
 
-    @staticmethod
-    def _designation(expression: Any) -> tuple[str, str, tuple[str, ...]] | None:
-        for app in expression.applications:
-            if app.operator != "op:designation":
-                continue
-            surface: str | None = None
-            target: str | None = None
-            for binding in (*app.roles, *app.qualifiers):
-                if binding.role_ref == "role:surface" and type(binding.filler) is LiteralValue:
-                    surface = str(binding.filler.value)
-                if binding.role_ref in {"role:target", "role:object", "role:meaning"} and type(binding.filler) is GroundedReference:
-                    target = binding.filler.target_ref
-            if surface and target:
-                atom = getattr(self._authority, "atoms", {}).get(target)
-                kinds = (getattr(atom, "kind", "unknown"),)
-                return surface, target, kinds
-        return None
-
     def materialize(self, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
                     situation: SituationContext) -> tuple[LearningPlan | None, DialogueObligation | None]:
-        designation = self._designation(meaning.expression)
-        if designation is None or situation.mode is not SemanticMode.REQUEST:
+        if type(evaluation) is not EvaluationBundle or type(meaning) is not VerifiedMeaning or type(situation) is not SituationContext:
+            raise TypeError("learning materialization requires exact R3 artifacts")
+        decision = evaluation.decision
+        if decision.verified_meaning_ref != meaning.verified_meaning_ref:
+            raise ValueError("learning materialization meaning lineage mismatch")
+        if decision.situation.situation_ref != situation.situation_ref:
+            raise ValueError("learning materialization situation lineage mismatch")
+        if decision.action is not DecisionAction.CREATE_LEARNING_OBLIGATION:
+            if evaluation.learning_drafts:
+                raise ValueError("non-learning Decision carries learning drafts")
             return None, None
-        surface, target, kinds = designation
-        query_ref = evaluation.query_results[0].query_result_ref if evaluation.query_results else stable_ref("learning_source_query", {"expression_ref": meaning.expression.expression_ref})
+        if situation.mode is not SemanticMode.REQUEST:
+            raise ValueError("learning obligation requires REQUEST mode")
+        if len(evaluation.learning_drafts) != 1:
+            raise ValueError("learning obligation requires exactly one evaluated draft")
+        draft = evaluation.learning_drafts[0]
+        if decision.learning_draft_refs != (draft.learning_draft_ref,):
+            raise ValueError("learning Decision does not bind the evaluated draft")
+        if draft.revision_pin != situation.revision_pin:
+            raise ValueError("learning draft revision pin is stale")
+        if draft.target_ref is None:
+            raise ValueError("materializable learning draft requires target_ref")
+        if not draft.expected_target_kinds:
+            raise ValueError("materializable learning draft requires expected_target_kinds")
+        query_ref = draft.source_query_ref or stable_ref(
+            "learning_source_query",
+            {"expression_ref": meaning.expression.expression_ref},
+        )
         plan = LearningPlan.create(
             verified_meaning_ref=meaning.verified_meaning_ref,
             expression_ref=meaning.expression.expression_ref,
             situation_ref=situation.situation_ref,
-            decision_ref=evaluation.decision.decision_ref,
+            decision_ref=decision.decision_ref,
             source_query_ref=query_ref,
-            surface_literal=surface,
-            target_ref=target,
-            expected_target_kinds=kinds,
-            provenance_refs=(meaning.verification_receipt_ref, meaning.compilation_proof_ref),
+            surface_literal=draft.surface_literal,
+            target_ref=draft.target_ref,
+            expected_target_kinds=draft.expected_target_kinds,
+            answer_contract_ref=draft.answer_contract_ref,
+            provenance_refs=tuple(dict.fromkeys((
+                meaning.verification_receipt_ref,
+                meaning.compilation_proof_ref,
+                draft.learning_draft_ref,
+                *draft.proof_refs,
+            ))),
             revision_pin=situation.revision_pin,
             expires_at_turn=1,
         )
