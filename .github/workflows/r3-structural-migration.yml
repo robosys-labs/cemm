@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   migrate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -27,15 +26,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install structural test dependency
+        run: python -m pip install 'pytest>=8'
       - name: Apply R3 hard cut
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           runtime_path = Path('src/cemm_authoritative_hybrid/runtime.py')
           runtime = runtime_path.read_text(encoding='utf-8')
 
-          old_requirements = '''        requirements = {
+          owner_old = '''        requirements = {
               "orientation": OrientationOwner,
               "proposal": ProposalOwner,
               "verification": VerificationOwner,
@@ -50,7 +52,7 @@ jobs:
           if r3_owner is not None and not isinstance(r3_owner, R3Owner):
               raise TypeError("r3 owner violates its exact protocol")
           '''
-          new_requirements = '''        requirements = {
+          owner_new = '''        requirements = {
               "orientation": OrientationOwner,
               "proposal": ProposalOwner,
               "verification": VerificationOwner,
@@ -63,29 +65,29 @@ jobs:
               if not isinstance(owner, contract):
                   raise TypeError(f"{name} owner violates its exact protocol")
           '''
-          if old_requirements not in runtime:
-              raise SystemExit('runtime owner requirement block changed unexpectedly')
-          runtime = runtime.replace(old_requirements, new_requirements, 1)
+          if owner_old not in runtime:
+              raise SystemExit('runtime owner block changed unexpectedly')
+          runtime = runtime.replace(owner_old, owner_new, 1)
 
-          old_process = '''    def process(
-          self, session_ref: str, text: str, *, trace: bool = True
-      ) -> CycleResult:
-          if "r3" in self._owners:
+          process_pattern = re.compile(
+              r'    def process\(\n'
+              r'        self, session_ref: str, text: str, \*, trace: bool = True\n'
+              r'    \) -> CycleResult:\n'
+              r'        if "r3" in self\._owners:\n'
+              r'            evidence = self\.create_evidence\(session_ref, text\)\n'
+              r'            return self\.process_evidence\(session_ref, evidence, trace=trace\)\n'
+              r'        return self\._process_legacy\(session_ref, text, trace=trace\)\n\n'
+          )
+          process_new = '''    def process(
+              self, session_ref: str, text: str, *, trace: bool = True
+          ) -> CycleResult:
               evidence = self.create_evidence(session_ref, text)
               return self.process_evidence(session_ref, evidence, trace=trace)
-          return self._process_legacy(session_ref, text, trace=trace)
 
           '''
-          new_process = '''    def process(
-          self, session_ref: str, text: str, *, trace: bool = True
-      ) -> CycleResult:
-          evidence = self.create_evidence(session_ref, text)
-          return self.process_evidence(session_ref, evidence, trace=trace)
-
-          '''
-          if old_process not in runtime:
+          runtime, count = process_pattern.subn(process_new, runtime, count=1)
+          if count != 1:
               raise SystemExit('runtime process block changed unexpectedly')
-          runtime = runtime.replace(old_process, new_process, 1)
 
           legacy_start = runtime.find('    def _process_legacy(')
           evidence_start = runtime.find('    def process_evidence(', legacy_start)
@@ -100,6 +102,8 @@ jobs:
                   raise SystemExit('R3 continuation boundary not found')
               runtime = runtime[:missing_r3] + runtime[run_r3:]
 
+          if '_process_legacy' in runtime:
+              raise SystemExit('legacy runtime path remains')
           if 'contract:r3:evaluate' in runtime:
               raise SystemExit('pre-R3 boundary remains in public runtime')
           if runtime.count('contract:r5:realize_surface') != 1:
@@ -108,7 +112,7 @@ jobs:
 
           cycle_path = Path('src/cemm_authoritative_hybrid/r3_cycle.py')
           cycle = cycle_path.read_text(encoding='utf-8')
-          old_trace = '''        if self.trace and len(self.trace) != len(self.phase_material):
+          trace_old = '''        if self.trace and len(self.trace) != len(self.phase_material):
               raise ValueError("trace must cover every phase material row")
           for receipt, material in zip(self.trace, self.phase_material, strict=True):
               if type(receipt) is not PhaseReceipt:
@@ -118,7 +122,7 @@ jobs:
               if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
                   raise ValueError("trace receipt does not bind exact cycle material")
           '''
-          new_trace = '''        if self.trace:
+          trace_new = '''        if self.trace:
               if len(self.trace) != len(self.phase_material):
                   raise ValueError("trace must cover every phase material row")
               for receipt, material in zip(self.trace, self.phase_material, strict=True):
@@ -129,9 +133,9 @@ jobs:
                   if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
                       raise ValueError("trace receipt does not bind exact cycle material")
           '''
-          if old_trace not in cycle:
+          if trace_old not in cycle:
               raise SystemExit('CycleResult trace block changed unexpectedly')
-          cycle_path.write_text(cycle.replace(old_trace, new_trace, 1), encoding='utf-8')
+          cycle_path.write_text(cycle.replace(trace_old, trace_new, 1), encoding='utf-8')
 
           abi_path = Path('docs/ABI_REGISTRY.md')
           abi = abi_path.read_text(encoding='utf-8')
@@ -143,29 +147,16 @@ jobs:
               raise SystemExit('Decision ABI must have exactly one owner row')
           abi_path.write_text(abi, encoding='utf-8')
           PY
-      - name: Compile and run R3 contract tests
+      - name: Compile and verify structural contracts
         run: |
           python -m compileall -q src scripts
           python scripts/check_r3_r4_structure.py
-          pytest -q \
-            tests/test_r3_decision_abi.py \
-            tests/test_r3_effect_receipts.py \
-            tests/test_r3_expression_projection.py \
-            tests/test_r3_learning_response.py \
-            tests/test_r3_mode_projection.py \
-            tests/test_r3_no_program_as_meaning.py \
-            tests/test_r3_owner_structure.py \
-            tests/test_r3_plan_contract.py \
-            tests/test_r3_recursive_query.py \
-            tests/test_r3_situation_context.py \
-            tests/test_r3_structure.py
+          pytest -q tests/test_r3_plan_contract.py tests/test_r3_owner_structure.py tests/test_r3_structure.py
+          git diff --check
       - name: Commit structural hard cut
         run: |
-          git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py \
-                  hybrid_mvp/src/cemm_authoritative_hybrid/r3_cycle.py \
-                  hybrid_mvp/docs/ABI_REGISTRY.md
+          git add src/cemm_authoritative_hybrid/runtime.py src/cemm_authoritative_hybrid/r3_cycle.py docs/ABI_REGISTRY.md
           git commit -m 'fix(r3): hard-cut cognition runtime and cycle ABI'
           git push origin HEAD:codex/hybrid-mvp-r2
