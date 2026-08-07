@@ -12,7 +12,12 @@ dependencies = ["torch>=2.0"]
 cemm-authoritative-hybrid = "cemm_authoritative_hybrid.cli:main"
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+test = [
+  "pytest>=8",
+  "hypothesis>=6",
+  "numpy>=2",
+  "safetensors>=0.4",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

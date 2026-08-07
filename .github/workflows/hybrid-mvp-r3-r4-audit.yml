@@ -23,6 +23,8 @@ jobs:
     defaults:
       run:
         working-directory: hybrid_mvp
+    env:
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,11 +34,15 @@ jobs:
           python-version: '3.13'
           cache: pip
           cache-dependency-path: hybrid_mvp/pyproject.toml
-      - name: Install test runtime
+      - name: Install test dependencies outside governed source
         run: |
           python -m pip install --upgrade pip
           python -m pip install --index-url https://download.pytorch.org/whl/cpu 'torch>=2.0'
-          python -m pip install -e '.[test]'
+          python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.4'
+      - name: Assert clean governed tree after dependency install
+        run: |
+          test -z "$(git status --porcelain -- hybrid_mvp)"
+          test ! -e src/cemm_authoritative_hybrid_mvp.egg-info
       - name: Compile active source
         run: python -m compileall -q src scripts
       - name: Verify R3-R4 metadata
@@ -52,7 +58,6 @@ jobs:
         continue-on-error: true
         run: pytest -q
       - name: Generate authentic R3 canaries
-        id: canaries
         continue-on-error: true
         run: |
           rm -rf /tmp/cemm-r3-canary-store
