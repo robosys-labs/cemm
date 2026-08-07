@@ -98,6 +98,7 @@
       "admission": [
         "governance",
         "pytest_active",
+        "r4_artifact_review",
         "sqlite_activation"
       ],
       "owners": {
@@ -1272,6 +1273,18 @@
         "src/cemm_authoritative_hybrid/"
       ],
       "kind": "r3_structure"
+    },
+    "r4_artifact_review": {
+      "depends_on": [
+        "sqlite_activation"
+      ],
+      "inputs": [
+        "artifacts/r4/",
+        "data/review/R4_REVIEW_MANIFEST.json",
+        "data/scenarios/use_cases.jsonl",
+        "src/cemm_authoritative_hybrid/"
+      ],
+      "kind": "r4_artifact_review"
     },
     "r4_contract_review_owner_tests": {
       "depends_on": [

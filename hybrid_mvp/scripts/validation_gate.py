@@ -45,13 +45,13 @@ STEP_KINDS = frozenset(
     {
         "governance", "compile", "pytest", "pytest_inventory", "authority_link",
         "sqlite_activation", "r1_structure", "r2_structure",
-        "r3_structure", "r3_activation_canaries",
+        "r3_structure", "r3_activation_canaries", "r4_artifact_review",
     }
 )
 PYTEST_KINDS = frozenset({"pytest", "pytest_inventory"})
 ADMISSION_ONLY_KINDS = frozenset({
     "authority_link", "sqlite_activation", "r1_structure", "r2_structure",
-    "r3_structure", "r3_activation_canaries",
+    "r3_structure", "r3_activation_canaries", "r4_artifact_review",
 })
 _CONTENT_REF_RE = re.compile(r"[a-z][a-z0-9_-]*:[0-9a-f]{24}\Z")
 _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
@@ -92,6 +92,7 @@ _STEP_FIELDS = MappingProxyType(
         "r2_structure": frozenset({"kind", "depends_on", "inputs"}),
         "r3_structure": frozenset({"kind", "depends_on", "inputs"}),
         "r3_activation_canaries": frozenset({"kind", "depends_on", "inputs"}),
+        "r4_artifact_review": frozenset({"kind", "depends_on", "inputs"}),
     }
 )
 _PHASE_FIELDS = frozenset({"owners", "phase", "admission"})
@@ -956,7 +957,7 @@ class GateGraph:
             r1_admission_only = frozenset({"authority_link", "sqlite_activation", "r1_structure"})
             r2_admission_only = frozenset({"authority_link", "sqlite_activation", "r2_structure"})
             r3_admission_only = frozenset({"authority_link", "sqlite_activation", "r3_structure", "r3_activation_canaries"})
-            r4_admission_only = frozenset({"authority_link", "sqlite_activation"})
+            r4_admission_only = frozenset({"authority_link", "sqlite_activation", "r4_artifact_review"})
             if selected_admission_only and phase not in {"R1", "R2", "R3", "R4"}:
                 raise GateConfigError("admission-only step selected by a non-admission phase")
             if phase == "R1" and selected_admission_only != r1_admission_only:
@@ -966,7 +967,9 @@ class GateGraph:
             if phase == "R3" and selected_admission_only != r3_admission_only:
                 raise GateConfigError("R3 admission requires activation, structure, and canary evidence")
             if phase == "R4" and selected_admission_only != r4_admission_only:
-                raise GateConfigError("R4 admission requires authority and activation evidence")
+                raise GateConfigError(
+                    "R4 admission requires authority, activation, artifact integrity, and external review evidence"
+                )
             if self.pytest_process_count(phase, "admission") != 1:
                 raise GateConfigError("admission must contain exactly one pytest process")
             pytest_steps = [
@@ -2083,6 +2086,35 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
             canary_ref = identity.pop("canary_ref")
             if canary_ref != content_ref("r3_activation_canaries", identity):
                 raise AdmissionValidationError("R3 activation canaries report identity is invalid")
+            return
+        if kind == "r4_artifact_review":
+            row = _exact_fields(item, frozenset({
+                "schema", "artifact_count", "artifact_set_ref", "build_receipt_ref",
+                "review_manifest_ref", "approval_ref", "reviewer_ref", "verifier_ref",
+                "verifier_sha256", "source_revision", "authority_generation", "integrity_ref",
+            }), "R4-artifact-review step report")
+            if row["schema"] != "cemm-r4-artifact-review-step-report-v1":
+                raise AdmissionValidationError("R4 artifact review report schema is invalid")
+            if _nonnegative_exact_int(row["artifact_count"], "R4 artifact count") == 0:
+                raise AdmissionValidationError("R4 artifact review report is empty")
+            for field in (
+                "artifact_set_ref", "build_receipt_ref", "review_manifest_ref",
+                "approval_ref", "verifier_ref", "integrity_ref",
+            ):
+                if type(row[field]) is not str or _CONTENT_REF_RE.fullmatch(row[field]) is None:
+                    raise AdmissionValidationError(f"R4 artifact review {field} is invalid")
+            if type(row["reviewer_ref"]) is not str or not row["reviewer_ref"]:
+                raise AdmissionValidationError("R4 artifact review reviewer_ref is invalid")
+            if type(row["authority_generation"]) is not str or not row["authority_generation"]:
+                raise AdmissionValidationError("R4 artifact review authority generation is invalid")
+            if type(row["source_revision"]) is not str or _SOURCE_RE.fullmatch(row["source_revision"]) is None:
+                raise AdmissionValidationError("R4 artifact review source revision is invalid")
+            if type(row["verifier_sha256"]) is not str or _SHA256_RE.fullmatch(row["verifier_sha256"]) is None:
+                raise AdmissionValidationError("R4 artifact review verifier SHA-256 is invalid")
+            identity = dict(row)
+            integrity_ref = identity.pop("integrity_ref")
+            if integrity_ref != content_ref("r4_artifact_review", identity):
+                raise AdmissionValidationError("R4 artifact review report identity is invalid")
             return
         raise AdmissionValidationError("unknown admission step report kind")
     except GateConfigError as exc:
@@ -5124,6 +5156,39 @@ class _RunContext:
             peak_rss_bytes=None,
         )
 
+    def run_r4_artifact_review(self) -> _HandledStep:
+        if self.tier != "admission" or self.phase != "R4":
+            raise GateConfigError("R4 artifact review is available only in R4 admission")
+        authority = self._linked_authority
+        if authority is None:
+            raise GateConfigError("R4 artifact review requires linked authority evidence")
+        verifier_spec = os.environ.get("CEMM_R4_REVIEW_VERIFIER")
+        verifier_sha256 = os.environ.get("CEMM_R4_REVIEW_VERIFIER_SHA256")
+        if not verifier_spec or not verifier_sha256:
+            raise GateConfigError(
+                "R4 admission requires externally supplied CEMM_R4_REVIEW_VERIFIER and CEMM_R4_REVIEW_VERIFIER_SHA256"
+            )
+        started = time.monotonic_ns()
+        verify = _runtime_owner_symbol(
+            self.root, "r4_admission", "verify_r4_admission"
+        )
+        try:
+            report = verify(
+                self.root,
+                expected_source_revision=self.source_ref,
+                expected_authority_generation=authority.generation,
+                verifier_spec=verifier_spec,
+                verifier_sha256=verifier_sha256,
+            )
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
+            raise GateConfigError(f"R4 artifact/review verification failed: {exc}") from exc
+        _validate_admission_step_report("r4_artifact_review", report)
+        return _HandledStep(
+            disposition="passed", exit_code=0, error_code=None, report=report,
+            observation_report=report, wall_ns=time.monotonic_ns() - started,
+            peak_rss_bytes=None,
+        )
+
     def run_compile(self, step: GateStep) -> _HandledStep:
         started = time.monotonic_ns()
         compiled: list[dict[str, str]] = []
@@ -5499,6 +5564,8 @@ def run_validation(
                         handled = context.run_r3_structure()
                     elif step.kind == "r3_activation_canaries":
                         handled = context.run_r3_activation_canaries()
+                    elif step.kind == "r4_artifact_review":
+                        handled = context.run_r4_artifact_review()
                     else:
                         raise GateConfigError(
                             f"step kind has no execution handler: {step.kind}"
