@@ -10,12 +10,15 @@ Required mapping entries:
 - ``revision_pin``
 - ``abi_registry_ref``
 - ``runtime_factory(expanded_case)``
-- ``mutation_runner(semantic_mutation)``
+- ``mutation_owner`` implementing ``execute_mutation(semantic_mutation)``
 - ``source_revision``
+
+Optional authentic execution entry:
+- ``restart_executor`` implementing ``execute_restart_case(...)``
 
 Optional reviewed derivation entries must be supplied together:
 - ``derivation_contracts``
-- ``derivation_validator(derivation, expected_contract)``
+- ``derivation_validator`` implementing ``validate_derivation(...)``
 
 This script deliberately has no fixture/default environment.  R4 must not label
 mutations or environmental outcomes by assumption.
@@ -32,6 +35,7 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from cemm_authoritative_hybrid.r4_episodes import PublicRuntimeEpisodeOwner
 from cemm_authoritative_hybrid.r4_pipeline import R4Pipeline
 
 
@@ -72,7 +76,7 @@ def main() -> int:
         raise TypeError("build_environment must return a mapping")
     required = {
         "authority", "revision_pin", "abi_registry_ref", "runtime_factory",
-        "mutation_runner", "source_revision",
+        "mutation_owner", "source_revision",
     }
     missing = sorted(required - set(environment))
     if missing:
@@ -88,12 +92,16 @@ def main() -> int:
         or any(type(value) is not int or value <= 0 for value in ratios_value)
     ):
         raise ValueError("partition ratios must be three positive integers")
+    episode_owner = PublicRuntimeEpisodeOwner(
+        environment["runtime_factory"],
+        restart_executor=environment.get("restart_executor"),
+    )
     pipeline = R4Pipeline(
         authority=environment["authority"],
         revision_pin=environment["revision_pin"],
         abi_registry_ref=environment["abi_registry_ref"],
-        runtime_factory=environment["runtime_factory"],
-        mutation_runner=environment["mutation_runner"],
+        episode_owner=episode_owner,
+        mutation_owner=environment["mutation_owner"],
         source_revision=environment["source_revision"],
         seed=args.seed,
         minimums=config.get("minimums"),
