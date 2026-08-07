@@ -104,7 +104,7 @@ def _situation(pin) -> SituationContext:
         adapter_receipt_refs=(),
         trusted_observation=False,
         source_refs=("evidence:learning",),
-        epistemic_scope_ref="epistemic_scope:request",
+        epistemic_scope_ref="epistemic_scope:requested",
         session_phase_ref="session_phase:active_turn",
         revision_pin=pin,
     )
