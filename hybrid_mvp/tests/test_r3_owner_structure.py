@@ -30,12 +30,12 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R3-Task-1",
         "source_ast_sha256": "a29e55570a0d5b8119f7068b096cf1dd7412a012f5f2ba3d700322cd36733e83",
     },
-    "tests/test_r3_owner_structure.py::test_r3_evaluate_boundary_rejects_programs": {
+    "tests/test_r3_owner_structure.py::test_r3_runtime_owns_evaluate_and_exposes_only_r5_boundary": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:r3-evaluate-boundary-rejects-programs",
         "diagnostic_role": "phase",
         "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "7f51d17b79a75cf568c891c96f021fa9f4e234a14f4efd569a11835f072a19c9",
+        "source_ast_sha256": "a5140ae6b37a1706e3ac4dd04c14a37d97d210f116447b5cbf76a8f3c0cbe362",
     },
     "tests/test_r3_owner_structure.py::test_r3_owners_are_post_verify": {
         "activation_phase": "R3",
@@ -162,7 +162,7 @@ def test_r3_owners_are_post_verify() -> None:
         found = imports & propose_modules
         if found:
             violations.append(
-                f"{owner}.py imports PROPOSE-phase modules: {sorted(found)}"
+                f"{owner}.py imports PROPOSE-phase modules (forbidden): {sorted(found)}"
             )
     assert not violations, (
         "R3 owners import PROPOSE-phase modules (forbidden):\n"
