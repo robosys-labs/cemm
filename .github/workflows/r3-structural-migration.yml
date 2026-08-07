@@ -32,68 +32,40 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           runtime_path = Path('src/cemm_authoritative_hybrid/runtime.py')
           runtime = runtime_path.read_text(encoding='utf-8')
 
-          owner_old = '''        requirements = {
-              "orientation": OrientationOwner,
-              "proposal": ProposalOwner,
-              "verification": VerificationOwner,
-          }
-          for name, contract in requirements.items():
-              owner = self._owners.get(name)
-              if owner is None:
-                  raise MissingOwner(f"{name}_owner")
-              if not isinstance(owner, contract):
-                  raise TypeError(f"{name} owner violates its exact protocol")
-          r3_owner = self._owners.get("r3")
-          if r3_owner is not None and not isinstance(r3_owner, R3Owner):
-              raise TypeError("r3 owner violates its exact protocol")
-          '''
-          owner_new = '''        requirements = {
-              "orientation": OrientationOwner,
-              "proposal": ProposalOwner,
-              "verification": VerificationOwner,
-              "r3": R3Owner,
-          }
-          for name, contract in requirements.items():
-              owner = self._owners.get(name)
-              if owner is None:
-                  raise MissingOwner(f"{name}_owner")
-              if not isinstance(owner, contract):
-                  raise TypeError(f"{name} owner violates its exact protocol")
-          '''
-          if owner_old not in runtime:
-              raise SystemExit('runtime owner block changed unexpectedly')
-          runtime = runtime.replace(owner_old, owner_new, 1)
-
-          process_pattern = re.compile(
-              r'    def process\(\n'
-              r'        self, session_ref: str, text: str, \*, trace: bool = True\n'
-              r'    \) -> CycleResult:\n'
-              r'        if "r3" in self\._owners:\n'
-              r'            evidence = self\.create_evidence\(session_ref, text\)\n'
-              r'            return self\.process_evidence\(session_ref, evidence, trace=trace\)\n'
-              r'        return self\._process_legacy\(session_ref, text, trace=trace\)\n\n'
+          owner_marker = '            "verification": VerificationOwner,\n        }\n'
+          if owner_marker not in runtime:
+              raise SystemExit('runtime owner marker changed unexpectedly')
+          runtime = runtime.replace(
+              owner_marker,
+              '            "verification": VerificationOwner,\n            "r3": R3Owner,\n        }\n',
+              1,
           )
-          process_new = '''    def process(
-              self, session_ref: str, text: str, *, trace: bool = True
-          ) -> CycleResult:
-              evidence = self.create_evidence(session_ref, text)
-              return self.process_evidence(session_ref, evidence, trace=trace)
+          optional_r3 = (
+              '        r3_owner = self._owners.get("r3")\n'
+              '        if r3_owner is not None and not isinstance(r3_owner, R3Owner):\n'
+              '            raise TypeError("r3 owner violates its exact protocol")\n'
+          )
+          if optional_r3 not in runtime:
+              raise SystemExit('optional R3 owner block changed unexpectedly')
+          runtime = runtime.replace(optional_r3, '', 1)
 
-          '''
-          runtime, count = process_pattern.subn(process_new, runtime, count=1)
-          if count != 1:
-              raise SystemExit('runtime process block changed unexpectedly')
-
-          legacy_start = runtime.find('    def _process_legacy(')
-          evidence_start = runtime.find('    def process_evidence(', legacy_start)
-          if legacy_start < 0 or evidence_start < 0:
-              raise SystemExit('legacy runtime method boundary not found')
-          runtime = runtime[:legacy_start] + runtime[evidence_start:]
+          process_start = runtime.find('    def process(\n')
+          legacy_start = runtime.find('    def _process_legacy(\n', process_start)
+          evidence_start = runtime.find('    def process_evidence(\n', legacy_start)
+          if min(process_start, legacy_start, evidence_start) < 0:
+              raise SystemExit('runtime method boundary changed unexpectedly')
+          process = (
+              '    def process(\n'
+              '        self, session_ref: str, text: str, *, trace: bool = True\n'
+              '    ) -> CycleResult:\n'
+              '        evidence = self.create_evidence(session_ref, text)\n'
+              '        return self.process_evidence(session_ref, evidence, trace=trace)\n\n'
+          )
+          runtime = runtime[:process_start] + process + runtime[evidence_start:]
 
           missing_r3 = runtime.find('        if self._owners.get("r3") is None:')
           if missing_r3 >= 0:
@@ -112,30 +84,24 @@ jobs:
 
           cycle_path = Path('src/cemm_authoritative_hybrid/r3_cycle.py')
           cycle = cycle_path.read_text(encoding='utf-8')
-          trace_old = '''        if self.trace and len(self.trace) != len(self.phase_material):
-              raise ValueError("trace must cover every phase material row")
-          for receipt, material in zip(self.trace, self.phase_material, strict=True):
-              if type(receipt) is not PhaseReceipt:
-                  raise TypeError("trace rows must be exact PhaseReceipt")
-              if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
-                  raise ValueError("trace contains non-canonical PhaseReceipt")
-              if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
-                  raise ValueError("trace receipt does not bind exact cycle material")
-          '''
-          trace_new = '''        if self.trace:
-              if len(self.trace) != len(self.phase_material):
-                  raise ValueError("trace must cover every phase material row")
-              for receipt, material in zip(self.trace, self.phase_material, strict=True):
-                  if type(receipt) is not PhaseReceipt:
-                      raise TypeError("trace rows must be exact PhaseReceipt")
-                  if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:
-                      raise ValueError("trace contains non-canonical PhaseReceipt")
-                  if receipt.cycle_ref != self.cycle_ref or receipt.material != material:
-                      raise ValueError("trace receipt does not bind exact cycle material")
-          '''
-          if trace_old not in cycle:
-              raise SystemExit('CycleResult trace block changed unexpectedly')
-          cycle_path.write_text(cycle.replace(trace_old, trace_new, 1), encoding='utf-8')
+          trace_start = cycle.find('        if self.trace and len(self.trace) != len(self.phase_material):\n')
+          trace_end = cycle.find('\n\n    def as_dict', trace_start)
+          if trace_start < 0 or trace_end < 0:
+              raise SystemExit('CycleResult trace boundary changed unexpectedly')
+          trace = (
+              '        if self.trace:\n'
+              '            if len(self.trace) != len(self.phase_material):\n'
+              '                raise ValueError("trace must cover every phase material row")\n'
+              '            for receipt, material in zip(self.trace, self.phase_material, strict=True):\n'
+              '                if type(receipt) is not PhaseReceipt:\n'
+              '                    raise TypeError("trace rows must be exact PhaseReceipt")\n'
+              '                if PhaseReceipt.from_dict(receipt.as_dict()) != receipt:\n'
+              '                    raise ValueError("trace contains non-canonical PhaseReceipt")\n'
+              '                if receipt.cycle_ref != self.cycle_ref or receipt.material != material:\n'
+              '                    raise ValueError("trace receipt does not bind exact cycle material")'
+          )
+          cycle = cycle[:trace_start] + trace + cycle[trace_end:]
+          cycle_path.write_text(cycle, encoding='utf-8')
 
           abi_path = Path('docs/ABI_REGISTRY.md')
           abi = abi_path.read_text(encoding='utf-8')
