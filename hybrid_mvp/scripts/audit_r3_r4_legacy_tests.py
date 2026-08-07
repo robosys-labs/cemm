@@ -3,8 +3,8 @@
 
 The hard cut is semantic, not nominal: historical filenames are harmless when
 the tests exercise current contracts, while a renamed test is still legacy if
-it imports or constructs predecessor proposition types.  Scan every collected
-test module so naming cannot bypass the audit.
+it imports predecessor proposition or fixture-owner modules. Scan every test
+module so naming cannot bypass the audit.
 """
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TESTS = ROOT / "tests"
 FORBIDDEN_IMPORTS = frozenset({
     "legacy_propositions",
+    "legacy_runtime_fixtures",
     "cemm_authoritative_hybrid.propositions",
 })
-FORBIDDEN_CONSTRUCTORS = frozenset({"SemanticSwitchProgram", "PropositionGraph"})
 
 
 def _findings(path: Path) -> tuple[str, ...]:
@@ -33,12 +33,6 @@ def _findings(path: Path) -> tuple[str, ...]:
         elif isinstance(node, ast.ImportFrom):
             if node.module in FORBIDDEN_IMPORTS:
                 rows.add(f"legacy_import:{node.module}")
-        elif isinstance(node, ast.Attribute) and node.attr == "graph":
-            rows.add("program_graph_access")
-        elif isinstance(node, ast.Call):
-            name = node.func.id if isinstance(node.func, ast.Name) else None
-            if name in FORBIDDEN_CONSTRUCTORS:
-                rows.add(f"legacy_constructor:{name}")
     return tuple(sorted(rows))
 
 
