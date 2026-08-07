@@ -40,24 +40,33 @@ jobs:
           python -m pip install --index-url https://download.pytorch.org/whl/cpu 'torch>=2.0'
           python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.4'
       - name: Assert clean governed tree after dependency install
+        id: clean_tree
+        continue-on-error: true
         run: |
           test -z "$(git status --porcelain -- hybrid_mvp)"
           test ! -e src/cemm_authoritative_hybrid_mvp.egg-info
       - name: Compile active source
+        id: compile
+        continue-on-error: true
         run: python -m compileall -q src scripts
       - name: Verify R3-R4 metadata
+        id: metadata
         continue-on-error: true
         run: python scripts/verify_r3_r4_test_metadata.py
       - name: Verify R3-R4 structure
+        id: structure
         continue-on-error: true
         run: python scripts/check_r3_r4_structure.py
       - name: Strict legacy hard-cut audit
+        id: legacy_audit
         continue-on-error: true
         run: python scripts/audit_r3_r4_legacy_tests.py --strict --output /tmp/R3_R4_LEGACY_AUDIT.json
       - name: Full Hybrid MVP suite
+        id: suite
         continue-on-error: true
         run: pytest -q
       - name: Generate authentic R3 canaries
+        id: r3_canaries
         continue-on-error: true
         run: |
           rm -rf /tmp/cemm-r3-canary-store
@@ -65,12 +74,14 @@ jobs:
             --store /tmp/cemm-r3-canary-store \
             --output /tmp/R3_ACTIVATION_CANARIES.json
       - name: R3 owner and phase gates
+        id: r3_gates
         continue-on-error: true
         run: |
           python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-decision
           python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
           python scripts/validate_mvp.py --tier phase --phase R3
       - name: R4 owner and phase gates
+        id: r4_gates
         continue-on-error: true
         run: |
           python scripts/validate_mvp.py --tier owner --phase R4 --owner contract-review
@@ -85,3 +96,36 @@ jobs:
           path: |
             /tmp/R3_ACTIVATION_CANARIES.json
             /tmp/R3_R4_LEGACY_AUDIT.json
+      - name: Enforce fail-closed R3-R4 audit
+        if: always()
+        env:
+          CLEAN_TREE: ${{ steps.clean_tree.outcome }}
+          COMPILE: ${{ steps.compile.outcome }}
+          METADATA: ${{ steps.metadata.outcome }}
+          STRUCTURE: ${{ steps.structure.outcome }}
+          LEGACY_AUDIT: ${{ steps.legacy_audit.outcome }}
+          SUITE: ${{ steps.suite.outcome }}
+          R3_CANARIES: ${{ steps.r3_canaries.outcome }}
+          R3_GATES: ${{ steps.r3_gates.outcome }}
+          R4_GATES: ${{ steps.r4_gates.outcome }}
+        run: |
+          failed=0
+          for result in \
+            "clean_tree=$CLEAN_TREE" \
+            "compile=$COMPILE" \
+            "metadata=$METADATA" \
+            "structure=$STRUCTURE" \
+            "legacy_audit=$LEGACY_AUDIT" \
+            "suite=$SUITE" \
+            "r3_canaries=$R3_CANARIES" \
+            "r3_gates=$R3_GATES" \
+            "r4_gates=$R4_GATES"
+          do
+            name=${result%%=*}
+            outcome=${result#*=}
+            if [ "$outcome" != "success" ]; then
+              echo "::error::$name outcome is $outcome"
+              failed=1
+            fi
+          done
+          exit "$failed"
