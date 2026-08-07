@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - codex/hybrid-mvp-r2
+      - codex/r3-r4-closeout-learning
     paths:
       - 'hybrid_mvp/**'
       - '.github/workflows/hybrid-mvp-r3-r4-audit.yml'
