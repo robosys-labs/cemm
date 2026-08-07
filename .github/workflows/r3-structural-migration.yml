@@ -29,14 +29,16 @@ jobs:
       - name: Install test dependency
         run: python -m pip install 'pytest>=8'
       - name: Migrate legacy tests
-        run: python scripts/migrate_r3_legacy_tests.py
+        run: |
+          python scripts/migrate_r3_legacy_tests.py
+          python scripts/finish_r3_legacy_migration.py
       - name: Verify migrated R3 test surface
         run: |
           python scripts/verify_r3_r4_test_metadata.py
           python scripts/check_test_inventory.py --phase R3 --source-only
           python scripts/audit_r3_r4_legacy_tests.py --strict --output /tmp/R3_LEGACY_AUDIT.json
           python scripts/check_r3_r4_structure.py
-          pytest -q tests/test_r3_predecessor_supersession.py tests/test_r3_plan_contract.py tests/test_r3_owner_structure.py tests/test_r3_structure.py
+          pytest -q tests/test_r3_predecessor_supersession.py tests/test_r3_public_cycle.py tests/test_transition_simulation.py tests/test_r3_plan_contract.py tests/test_r3_owner_structure.py tests/test_r3_structure.py
           git diff --check
       - name: Commit migration
         run: |
