@@ -8,6 +8,7 @@ on:
       - .github/workflows/r3-structural-migration.yml
       - hybrid_mvp/scripts/migrate_r3_legacy_tests.py
       - hybrid_mvp/scripts/finish_r3_legacy_migration.py
+      - hybrid_mvp/scripts/refresh_r3_r4_test_metadata.py
 
 permissions:
   contents: write
@@ -34,6 +35,7 @@ jobs:
         run: |
           python scripts/migrate_r3_legacy_tests.py
           python scripts/finish_r3_legacy_migration.py
+          python scripts/refresh_r3_r4_test_metadata.py
       - name: Verify migrated R3 test surface
         run: |
           python scripts/verify_r3_r4_test_metadata.py
