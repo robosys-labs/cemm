@@ -6,6 +6,8 @@ on:
       - codex/r3-r4-closeout-learning
     paths:
       - .github/workflows/r3-structural-migration.yml
+      - hybrid_mvp/scripts/migrate_r3_legacy_tests.py
+      - hybrid_mvp/scripts/finish_r3_legacy_migration.py
 
 permissions:
   contents: write
