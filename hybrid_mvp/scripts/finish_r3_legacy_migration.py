@@ -86,7 +86,7 @@ def test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation()
     runtime = (ROOT / "src/cemm_authoritative_hybrid/runtime.py").read_text(encoding="utf-8")
     proposal = (ROOT / "src/cemm_authoritative_hybrid/proposal.py").read_text(encoding="utf-8")
     effects = (ROOT / "src/cemm_authoritative_hybrid/r3_effects.py").read_text(encoding="utf-8")
-    assert "verification.status != \"selected\"" in runtime
+    assert 'verification.status != "selected"' in runtime
     assert "CycleStatus.UNSUPPORTED" in runtime
     assert "created_refs" in proposal
     assert "NoEffectReason.UNKNOWN" in effects
