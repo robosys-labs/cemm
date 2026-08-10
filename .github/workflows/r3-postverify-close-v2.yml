@@ -1,6 +1,7 @@
 name: R3 formal close
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [codex/r3-r4-closeout-learning]
     paths: [.github/workflows/r3-postverify-close-v2.yml]
@@ -14,14 +15,138 @@ jobs:
     timeout-minutes: 90
     env:
       PYTHONPATH: hybrid_mvp/src
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/r3-r4-closeout-learning
           fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      - name: Apply verified R3 behavioral hard cut
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          payloads=(.r3-closeout/payload.*)
+          if (( ${#payloads[@]} == 0 )); then
+            echo 'No staged R3 payload; validating existing committed source.'
+            test -z "$(git status --porcelain)"
+            exit 0
+          fi
+          if (( ${#payloads[@]} != 11 )); then
+            printf 'expected 11 closeout payload chunks, found %s\n' "${#payloads[@]}" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          from __future__ import annotations
+
+          import base64
+          import hashlib
+          import io
+          from pathlib import Path, PurePosixPath
+          import tarfile
+
+          expected_chunks = tuple(Path('.r3-closeout') / f'payload.{index:02d}' for index in range(11))
+          if any(not path.is_file() for path in expected_chunks):
+              raise SystemExit('R3 closeout payload chunk set is incomplete')
+          encoded = b''.join(path.read_bytes() for path in expected_chunks)
+          try:
+              archive = base64.b64decode(encoded, validate=False)
+          except Exception as exc:
+              raise SystemExit(f'cannot decode R3 closeout payload: {exc}') from exc
+          expected_sha = '83114ce7554638abc0171a2f0adae026be8a74af4e89a74555f12fbf3a9144bb'
+          actual_sha = hashlib.sha256(archive).hexdigest()
+          if actual_sha != expected_sha:
+              raise SystemExit(
+                  f'R3 closeout payload digest mismatch: expected={expected_sha} actual={actual_sha}'
+              )
+
+          allowed = {
+              'src/cemm_authoritative_hybrid/affordances.py',
+              'src/cemm_authoritative_hybrid/cycle.py',
+              'src/cemm_authoritative_hybrid/dialogue.py',
+              'src/cemm_authoritative_hybrid/persistence.py',
+              'scripts/audit_r3_r4_legacy_tests.py',
+              'scripts/finalize_r3_closeout_tests.py',
+              'tests/r3_successor_contracts.py',
+              'tests/test_r3_closeout_successors.py',
+          }
+          with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as bundle:
+              members = bundle.getmembers()
+              names = [member.name for member in members]
+              if len(names) != len(set(names)):
+                  raise SystemExit('R3 closeout archive contains duplicate members')
+              if set(names) != allowed:
+                  raise SystemExit(
+                      f'R3 closeout archive member set mismatch: expected={sorted(allowed)!r} actual={sorted(names)!r}'
+                  )
+              for member in members:
+                  path = PurePosixPath(member.name)
+                  if path.is_absolute() or '..' in path.parts or not member.isfile():
+                      raise SystemExit(f'unsafe R3 closeout archive member: {member.name!r}')
+              bundle.extractall(Path('hybrid_mvp'), members=members, filter='data')
+          print(f'Applied verified R3 closeout payload sha256:{actual_sha}')
+          PY
+          rm -f \
+            hybrid_mvp/scripts/migrate_r3_legacy_tests.py \
+            hybrid_mvp/scripts/finish_r3_legacy_migration.py \
+            hybrid_mvp/scripts/finalize_r3_test_support.py
+          rm -rf .r3-closeout
+
+          (
+            cd hybrid_mvp
+            export PYTHONPATH=src:.
+            python scripts/audit_r3_r4_legacy_tests.py --strict --output /tmp/r3-active-legacy-audit.json
+            python scripts/check_test_inventory.py --phase R1 --source-only > /tmp/r1-inventory.json
+            python scripts/check_test_inventory.py --phase R2 --source-only > /tmp/r2-inventory.json
+            python scripts/check_test_inventory.py --phase R3 --source-only > /tmp/r3-inventory.json
+            python scripts/verify_r3_r4_test_metadata.py
+            python scripts/check_r3_r4_structure.py
+            python -m compileall -q src scripts tests
+            find . -type d -name __pycache__ -prune -exec rm -rf {} +
+            find . -type f -name '*.pyc' -delete
+          )
+
+          git add -A
+          python - <<'PY'
+          from __future__ import annotations
+
+          import subprocess
+
+          changed = set(
+              subprocess.check_output(
+                  ['git', 'diff', '--cached', '--name-only'], text=True
+              ).splitlines()
+          )
+          expected = {
+              *(f'.r3-closeout/payload.{index:02d}' for index in range(11)),
+              'hybrid_mvp/src/cemm_authoritative_hybrid/affordances.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/dialogue.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/persistence.py',
+              'hybrid_mvp/scripts/audit_r3_r4_legacy_tests.py',
+              'hybrid_mvp/scripts/finalize_r3_closeout_tests.py',
+              'hybrid_mvp/tests/r3_successor_contracts.py',
+              'hybrid_mvp/tests/test_r3_closeout_successors.py',
+              'hybrid_mvp/scripts/migrate_r3_legacy_tests.py',
+              'hybrid_mvp/scripts/finish_r3_legacy_migration.py',
+              'hybrid_mvp/scripts/finalize_r3_test_support.py',
+          }
+          if changed != expected:
+              raise SystemExit(
+                  f'R3 closeout staged-path mismatch: expected={sorted(expected)!r} actual={sorted(changed)!r}'
+              )
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r3): complete behavioral hard cut'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+          test -z "$(git status --porcelain)"
+
       - name: Install pinned admission dependencies
         run: |
           set -euo pipefail
@@ -35,6 +160,7 @@ jobs:
           python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
           python - <<'PY'
           import fastapi, httpx, hypothesis, numpy, pytest, safetensors, torch
+
           expected = {
               'pytest': '8.4.0',
               'hypothesis': '6.163.0',
@@ -56,13 +182,109 @@ jobs:
           if actual != expected:
               raise SystemExit(f'admission dependency drift: expected={expected!r} actual={actual!r}')
           PY
+
+      - name: Run R2 no-regression owner phase and admission gates
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          export PYTHONPATH=src:.
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from validation_gate import run_validation
+
+          root = Path('.').resolve()
+          owners = (
+              'exact-verifier',
+              'expression-compiler',
+              'form-context',
+              'recursive-composer',
+              'runtime-boundary',
+          )
+          for owner in owners:
+              outcome = run_validation(root, phase='R2', tier='owner', owner=owner)
+              print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
+              if outcome.disposition != 'passed':
+                  raise SystemExit(f'R2 owner gate failed: {owner}: {outcome.disposition} {outcome.error_code}')
+
+          phase = run_validation(root, phase='R2', tier='phase')
+          print(json.dumps(phase.to_dict(), sort_keys=True, separators=(',', ':')))
+          if phase.disposition != 'passed':
+              raise SystemExit(f'R2 phase gate failed: {phase.disposition} {phase.error_code}')
+
+          before = {path.resolve() for path in (root / 'artifacts' / 'validation' / 'runs').glob('*.json')}
+          admission = run_validation(root, phase='R2', tier='admission')
+          print(json.dumps(admission.to_dict(), sort_keys=True, separators=(',', ':')))
+          if admission.disposition != 'passed' or not admission.receipt_path:
+              raise SystemExit(f'R2 no-regression admission failed: {admission.disposition} {admission.error_code}')
+          receipt = (root / admission.receipt_path).resolve()
+          after = {path.resolve() for path in (root / 'artifacts' / 'validation' / 'runs').glob('*.json')}
+          created = after - before
+          if created != {receipt}:
+              raise SystemExit(
+                  f'R2 no-regression admission created unexpected files: expected={[str(receipt)]!r} actual={sorted(str(path) for path in created)!r}'
+              )
+          receipt.unlink()
+          PY
+          test -z "$(git status --porcelain)"
+
+      - name: Run R3 owner and phase gates
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          export PYTHONPATH=src:.
+          python scripts/audit_r3_r4_legacy_tests.py --strict --output /tmp/r3-active-legacy-audit-committed.json
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from validation_gate import run_validation
+
+          root = Path('.').resolve()
+          owners = (
+              'capability-effect',
+              'decision-query-proof',
+              'effect-learning-response',
+              'learning-response',
+              'situation-context',
+          )
+          for owner in owners:
+              outcome = run_validation(root, phase='R3', tier='owner', owner=owner)
+              print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
+              if outcome.disposition != 'passed':
+                  raise SystemExit(f'R3 owner gate failed: {owner}: {outcome.disposition} {outcome.error_code}')
+
+          phase = run_validation(root, phase='R3', tier='phase')
+          print(json.dumps(phase.to_dict(), sort_keys=True, separators=(',', ':')))
+          if phase.disposition != 'passed':
+              raise SystemExit(f'R3 phase gate failed: {phase.disposition} {phase.error_code}')
+          PY
+          test -z "$(git status --porcelain)"
+
       - name: Run fresh R3 admission
         working-directory: hybrid_mvp
         run: |
           set -euo pipefail
+          export PYTHONPATH=src:.
           python - <<'PY' > /tmp/r3-outcome.json
           from pathlib import Path
           import json, sys
+
           sys.path.insert(0, 'src')
           sys.path.insert(0, 'scripts')
           from cemm_authoritative_hybrid import process_control as process_control_module
@@ -113,16 +335,19 @@ jobs:
                   f"{outcome.get('error_code')}"
               )
           PY
+
       - name: Consume fresh R3 admission
         working-directory: hybrid_mvp
         run: |
           set -euo pipefail
+          export PYTHONPATH=src:.
           RUN_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-outcome.json"))["run_ref"])')"
           python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --dry-run > /tmp/r3-candidate.json
           cat /tmp/r3-candidate.json
           RECORD_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-candidate.json"))["record_ref"])')"
           python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --append --expect-record-ref "$RECORD_REF"
           python scripts/update_replay_status.py --verify-chain
+
       - name: Upload R3 admission diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -133,7 +358,10 @@ jobs:
           path: |
             /tmp/r3-outcome.json
             /tmp/r3-candidate.json
+            /tmp/r3-active-legacy-audit*.json
+            /tmp/r*-inventory.json
             hybrid_mvp/artifacts/validation/runs/*.json
+
       - name: Commit exact R3 receipt and ledger transition
         run: |
           set -euo pipefail
@@ -144,3 +372,4 @@ jobs:
           git diff --cached --quiet && { echo 'R3 closeout produced no governed changes'; exit 1; }
           git commit -m 'admit(r3): consume fresh closure receipt'
           git push origin HEAD:codex/r3-r4-closeout-learning
+          test -z "$(git status --porcelain)"
