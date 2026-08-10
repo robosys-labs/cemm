@@ -1,0 +1,137 @@
+name: R3 sync governed phase selector
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r3-sync-phase-selector.yml]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Bind R3 phase selector to immutable active lineage
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          export PYTHONPATH=src:.
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'scripts')
+          import test_inventory_core as inventory_core
+
+          root = Path('.').resolve()
+          inventory_path = root / 'governance' / 'test_inventory.json'
+          inventory_sha = inventory_core.verify_document_authority_pin(root, inventory_path)
+          inventory = inventory_core.load_and_verify(
+              root,
+              inventory_path,
+              phase='R3',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          config_path = root / 'configs' / 'validation_gates.json'
+          config = json.loads(config_path.read_text(encoding='utf-8'))
+          step = config['steps']['r3_phase_tests']
+          configured = tuple(step['exact_nodes'])
+          expected = tuple(inventory.phase_node_ids)
+          missing = tuple(sorted(set(expected) - set(configured)))
+          extra = tuple(sorted(set(configured) - set(expected)))
+          if len(configured) != 24 or len(expected) != 190 or len(missing) != 166 or extra:
+              raise SystemExit(
+                  f'unexpected R3 selector migration state: configured={len(configured)} '
+                  f'expected={len(expected)} missing={len(missing)} extra={len(extra)}'
+              )
+          if any(not node.startswith('tests/test_r3_closeout_successors.py::test_r3_successor_') for node in missing):
+              raise SystemExit('R3 phase selector is missing non-successor nodes')
+          step['exact_nodes'] = list(expected)
+          successor_input = 'tests/test_r3_closeout_successors.py'
+          inputs = list(step['inputs'])
+          if successor_input not in inputs:
+              inputs.append(successor_input)
+          step['inputs'] = sorted(inputs)
+          config_path.write_text(
+              json.dumps(config, indent=2, ensure_ascii=False) + '\n',
+              encoding='utf-8',
+          )
+          print(f'R3 phase selector synchronized: {len(configured)} -> {len(expected)} nodes')
+          PY
+          python scripts/check_test_inventory.py --phase R3 --source-only > /tmp/r3-inventory-selector.json
+
+      - name: Verify selector contract and commit
+        run: |
+          set -euo pipefail
+          (
+            cd hybrid_mvp
+            export PYTHONPATH=src:.
+            python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          import test_inventory_core as inventory_core
+          from validation_gate import load_gate_graph, validate_inventory_contract
+
+          root = Path('.').resolve()
+          graph = load_gate_graph(root / 'configs' / 'validation_gates.json')
+          inventory_path = root / 'governance' / 'test_inventory.json'
+          inventory_sha = inventory_core.verify_document_authority_pin(root, inventory_path)
+          inventory = inventory_core.load_and_verify(
+              root,
+              inventory_path,
+              phase='R3',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          selector = validate_inventory_contract(graph, inventory, phase='R3')
+          assert len(inventory.phase_node_ids) == 190
+          assert len(selector.active_node_ids) == 1374
+          print('R3 inventory/gate selector contract verified')
+          PY
+          )
+          rm -f .github/workflows/r3-sync-phase-selector.yml
+          git add -A
+          python - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          expected = {
+              '.github/workflows/r3-sync-phase-selector.yml',
+              'hybrid_mvp/configs/validation_gates.json',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected selector-sync diff: {sorted(changed)!r}')
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r3): bind phase gate to successor lineage'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+
+      - name: Dispatch formal R3 close
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/r3-postverify-close-v2.yml/dispatches" \
+            -f ref='codex/r3-r4-closeout-learning'
