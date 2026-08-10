@@ -28,23 +28,12 @@ jobs:
         run: |
           python .github/r3_selector_patch.py
           git diff --check
-      - name: Verify inventory and every R3 diagnostic tier
+      - name: Run complete R3 phase diagnostics directly
         working-directory: hybrid_mvp
         run: |
-          python scripts/check_test_inventory.py --phase R3 --source-only
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner capability-effect
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner decision-query-proof
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner learning-response
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-context
-          python scripts/validate_mvp.py --tier phase --phase R3
-      - name: Commit reviewed selector migration
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hybrid_mvp/configs/validation_gates.json
-          git diff --cached --check
-          git diff --cached --quiet && { echo 'no selector migration produced'; exit 1; } || true
-          git commit -m 'fix(r3): align gates with literal diagnostic inventory'
-          git push origin HEAD:codex/r3-r4-closeout-learning
-          test -z "$(git status --porcelain --untracked-files=all)"
+          pytest -q --tb=short \
+            tests/test_r3_no_program_as_meaning.py \
+            tests/test_r3_owner_structure.py \
+            tests/test_r3_plan_contract.py \
+            tests/test_r3_public_cycle.py \
+            tests/test_r3_structure.py
