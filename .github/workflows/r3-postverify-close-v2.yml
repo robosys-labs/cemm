@@ -20,23 +20,59 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Print exact admission governance error
+      - name: Reconstruct living G0 test-inventory receipt
         working-directory: hybrid_mvp
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json, sys
+          import sys
           sys.path.insert(0, 'src')
           sys.path.insert(0, 'scripts')
           from cemm_authoritative_hybrid import process_control as process_control_module
           sys.modules['process_control'] = process_control_module
-          from validation_gate import run_validation
-          outcome = run_validation(Path('.'), phase='R3', tier='admission')
-          governance = outcome.step_results[0]
-          print('DISPOSITION=' + outcome.disposition)
-          print('GOVERNANCE=' + json.dumps(governance.to_dict(), sort_keys=True, separators=(',', ':')))
-          if outcome.receipt_path:
-              path = Path(outcome.receipt_path)
-              if path.exists():
-                  print('RECEIPT=' + path.read_text(encoding='utf-8'))
+          import test_inventory_core
+          import validation_gate
+
+          root = Path('.').resolve()
+          inventory_path = root / 'governance' / 'test_inventory.json'
+          inventory_sha = test_inventory_core.verify_document_authority_pin(root, inventory_path)
+          inventory = test_inventory_core.load_and_verify(
+              root,
+              inventory_path,
+              phase='G0',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          graph = validation_gate.load_gate_graph(root / 'configs' / 'validation_gates.json')
+          selector = validation_gate.validate_inventory_contract(graph, inventory, phase='G0')
+          authority_path = root / 'docs' / 'DOCUMENT_AUTHORITY.json'
+          authority_raw = authority_path.read_bytes()
+          expected = validation_gate._expected_g0_inventory_receipt(
+              authority_sha256=validation_gate.hashlib.sha256(authority_raw).hexdigest(),
+              inventory_sha256=inventory_sha,
+              inventory=inventory,
+              selector=selector,
+          )
+          target = root / 'artifacts' / 'validation' / 'TEST_INVENTORY_RECEIPT.json'
+          target.write_bytes(validation_gate.canonical_json_bytes(expected))
+          validation_gate._validate_g0_evidence_material(
+              authority_raw=authority_raw,
+              baseline_raw=(root / 'artifacts' / 'validation' / 'BASELINE_REPLAY_FINDINGS.json').read_bytes(),
+              evaluation_raw=(root / 'artifacts' / 'evaluation' / 'CEMM_EVALUATION.json').read_bytes(),
+              inventory_receipt_raw=target.read_bytes(),
+              inventory_sha256=inventory_sha,
+              inventory=inventory,
+              selector=selector,
+          )
+          print(target.read_text(encoding='utf-8'))
           PY
+          git diff --check
+      - name: Commit refreshed living receipt
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'receipt already current'; exit 1; } || true
+          git commit -m 'chore(governance): refresh G0 inventory receipt'
+          git push origin HEAD:codex/r3-r4-closeout-learning
