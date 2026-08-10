@@ -432,6 +432,12 @@ def _decision_match(contract: ExpectedCycleContract, decision: Decision | None) 
 
 def _effect_match(contract: ExpectedCycleContract, effect: object | None) -> bool:
     expected = contract.expected_effect
+    if effect is None and contract.outcome_kind in {
+        ExpectedOutcomeKind.GAP,
+        ExpectedOutcomeKind.VERIFICATION_REJECTION,
+        ExpectedOutcomeKind.RESTART,
+    }:
+        return expected.kind is ExpectedEffectKind.NO_EFFECT
     if expected.kind is ExpectedEffectKind.EFFECT:
         if type(effect) is not EffectReceipt:
             return False

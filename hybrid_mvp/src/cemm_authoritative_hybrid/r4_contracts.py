@@ -1072,9 +1072,15 @@ class ExpectedCycleContractCompiler:
             if gap is not None:
                 gaps.append(gap)
 
-        outcome, relation, owner = self._outcome(families, expressions)
-        mode = self._mode(modes, families)
         gap = gaps[0] if gaps else None
+        if gap is None:
+            outcome, relation, owner = self._outcome(families, expressions)
+        else:
+            outcome = ExpectedOutcomeKind.GAP
+            relation = ExpressionRelation.NONE
+            owner = gap.recommended_owner
+            expressions = []
+        mode = self._mode(modes, families)
         if len(gaps) > 1 and any(row != gap for row in gaps[1:]):
             raise ValueError("scenario contains conflicting expected gaps")
         if outcome in {
@@ -1220,6 +1226,25 @@ class ExpectedCycleContractCompiler:
             return (
                 self._scope(fields, assertion.assertion_ref, assertion.kind),
             ), normalized, None, None
+        if family == "control" and assertion.kind == "adapter":
+            try:
+                expression = self._control_expression(
+                    fields, assertion.assertion_ref, assertion.kind
+                )
+            except ValueError as exc:
+                if not (
+                    str(exc).startswith("authority ref is absent:")
+                    or str(exc).startswith("adapter is absent from authority index:")
+                ):
+                    raise
+                return (), normalized, self._family_mode(family), ExpectedGapContract(
+                    kind="authority",
+                    status="missing",
+                    recommended_owner="authority-link",
+                    safe_response_action="stop_without_surface",
+                    error_code="authority_ref_missing",
+                )
+            return (expression,), normalized, self._family_mode(family), None
         if family in {
             "evidence",
             "control",
@@ -1515,7 +1540,10 @@ class ExpectedCycleContractCompiler:
         for spec in signature.roles:
             if spec.role in supplied and supplied[spec.role] is not None:
                 value = supplied[spec.role]
-                if type(value) is ApplicationFiller:
+                if isinstance(
+                    value,
+                    (GroundedReference, LiteralValue, BoundVariable, ApplicationFiller, UnresolvedValue),
+                ):
                     filler = value
                 else:
                     filler = GroundedReference(
@@ -1614,9 +1642,22 @@ class ExpectedCycleContractCompiler:
             parent_event = event_value or "event:say"
         child_ref = self._authority.require_ref(child_event, "attributed content")
         if getattr(self._authority.atoms[child_ref], "kind", None) == "event_type":
+            child_supplied: dict[str, Any] = {}
+            child_signature = self._authority.event_signatures.get(child_ref)
+            speaker_kind = getattr(self._authority.atoms[speaker], "kind", None)
+            if child_signature is not None:
+                actor_spec = next(
+                    (row for row in child_signature.roles if row.role == "role:actor"),
+                    None,
+                )
+                if (
+                    actor_spec is not None
+                    and (not actor_spec.filler_kinds or speaker_kind in actor_spec.filler_kinds)
+                ):
+                    child_supplied["role:actor"] = speaker
             child, child_unresolved = self._event_application(
                 child_ref,
-                {"role:actor": speaker},
+                child_supplied,
                 assertion_ref=assertion_ref,
                 suffix="content",
             )
@@ -1776,16 +1817,13 @@ class ExpectedCycleContractCompiler:
             dimension = self._authority.require_ref(
                 dimension, "evidence dimension", kinds=("state_dimension",)
             )
-            qualifiers: list[RoleBinding] = []
+            # Sensor/operation adapter refs are provenance identities, not
+            # necessarily active effect adapters in the admitted authority.
+            # Preserve them in normalized review data/environment evidence rather
+            # than changing the semantic state application signature.
             if fields.get("adapter") is not None:
-                qualifiers.append(
-                    RoleBinding(
-                        "role:source",
-                        GroundedReference(
-                            self._authority.require_adapter(fields["adapter"])
-                        ),
-                    )
-                )
+                exact_text(fields["adapter"], "evidence adapter")
+            qualifiers: list[RoleBinding] = []
             if value is None:
                 variable = "?evidence_" + assertion_ref.rsplit(":", 1)[-1][:16]
                 app = SemanticApplication(
@@ -1913,35 +1951,72 @@ class ExpectedCycleContractCompiler:
         if event is None:
             raise AssertionCompilerError("event_contract_lacks_event", assertion_ref)
         supplied: dict[str, Any] = {}
-        if fields.get("subject") is not None:
-            supplied["role:actor"] = fields["subject"]
-        elif kind in {"learning", "learning_directive", "teaching_claim", "teaching"}:
-            supplied["role:actor"] = "participant:system"
-        if fields.get("target") is not None:
-            supplied["role:target"] = fields["target"]
-        if fields.get("surface") is not None:
-            # Literal-valued event roles are not licensed by all current event
-            # signatures; preserve them as a separate designation application.
-            designation = self._designation(
-                exact_text(fields["surface"], "surface", maximum=16_384),
-                self._authority.require_ref(fields["target"], "learning target"),
-            )
+        if kind == "effect":
+            signature = self._authority.event_signatures.get(event)
+            if signature is None:
+                raise ValueError(f"event signature is absent: {event}")
+            specs = {row.role: row for row in signature.roles}
+            subject_value = fields.get("subject")
+            if subject_value is not None:
+                subject_ref = self._authority.require_ref(subject_value, "effect subject")
+                subject_kind = getattr(self._authority.atoms[subject_ref], "kind", None)
+                compatible = [
+                    role
+                    for role in ("role:actor", "role:target", "role:subject")
+                    if role in specs
+                    and (
+                        not specs[role].filler_kinds
+                        or subject_kind in specs[role].filler_kinds
+                    )
+                ]
+                if not compatible:
+                    raise ValueError("effect subject has no compatible event role")
+                supplied[compatible[0]] = subject_ref
+            actor = specs.get("role:actor")
+            if (
+                "role:actor" not in supplied
+                and actor is not None
+                and (not actor.filler_kinds or "participant" in actor.filler_kinds)
+            ):
+                supplied["role:actor"] = "participant:system"
         else:
-            designation = None
+            if fields.get("subject") is not None:
+                supplied["role:actor"] = fields["subject"]
+            elif kind in {"learning", "learning_directive", "teaching_claim", "teaching"}:
+                supplied["role:actor"] = "participant:system"
+            if fields.get("target") is not None:
+                supplied["role:target"] = fields["target"]
+
+        nested_designation = None
+        if fields.get("surface") is not None:
+            surface = exact_text(fields["surface"], "surface", maximum=16_384)
+            target = self._authority.require_ref(fields["target"], "learning target")
+            signature = self._authority.event_signatures.get(event)
+            roles = {row.role: row for row in signature.roles} if signature is not None else {}
+            if "role:surface" in roles and "literal" in roles["role:surface"].filler_kinds:
+                supplied["role:surface"] = LiteralValue("string", surface)
+            elif "role:content" in roles and roles["role:content"].proposition_valued:
+                nested_designation = self._designation(surface, target)
+                supplied["role:content"] = ApplicationFiller(
+                    nested_designation.root_refs[0]
+                )
+
         app, unresolved = self._event_application(
             event,
             supplied,
             assertion_ref=assertion_ref,
             suffix=kind,
         )
-        applications = (app,) if designation is None else (*designation.applications, app)
-        roots = (app.application_ref,)
+        applications = (
+            (app,)
+            if nested_designation is None
+            else (*nested_designation.applications, app)
+        )
         return SemanticExpression.create(
             applications=applications,
-            root_refs=roots,
+            root_refs=(app.application_ref,),
             unresolved_fillers=unresolved,
         )
-
     def _relation_query(self, subject: str, predicate: str, owner: str) -> SemanticExpression:
         return self._query(
             {"target": subject, "relation": predicate}, owner
@@ -2121,7 +2196,7 @@ class ExpectedCycleContractCompiler:
                 ExpressionRelation.NONE,
                 "response-contract",
             )
-        if "polysemy" in families:
+        if "polysemy" in families and len(expressions) > 1:
             return (
                 ExpectedOutcomeKind.AMBIGUITY,
                 ExpressionRelation.ANY,
