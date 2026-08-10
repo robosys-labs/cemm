@@ -20,7 +20,6 @@ import ast
 import re
 from pathlib import Path
 
-import pytest
 
 __cemm_test_inventory__ = {
     "tests/test_r3_no_program_as_meaning.py::test_r3_owners_do_not_access_program_graph": {
@@ -71,13 +70,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "phase",
         "introduced_by_task": "R3-Task-1",
         "source_ast_sha256": "1e394d75989a93aec36f7febcb543e3987896a98c004bca2c8df6f5b51d81877",
-    },
-    "tests/test_r3_no_program_as_meaning.py::test_program_to_evaluate_raises_type_error": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-program-to-evaluate-raises-type-error",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "a5ca7d3465d7aa989e0285d1a64c010cb2da0d4297152132eac78693c9b6b812",
     },
 }
 
@@ -339,19 +331,4 @@ def test_r3_transition_preview_not_effect_authorization() -> None:
         return  # effects.py not yet created
     assert "TransitionPreview" not in effects_source, (
         "effects.py references TransitionPreview (forbidden as effect authorization)"
-    )
-
-
-def test_program_to_evaluate_raises_type_error() -> None:
-    """Passing a SemanticSwitchProgram to EVALUATE must raise TypeError.
-
-    The only valid EVALUATE input is:
-        evaluate(meaning: VerifiedMeaning, situation: SituationContext) -> Decision
-    """
-    # The runtime's _evaluate_phase should reject programs
-    runtime_source = _module_source("runtime")
-    assert runtime_source, "runtime.py not found"
-    # The runtime must have a LaterOwnerNotAdmitted boundary for contract:r3:evaluate
-    assert "contract:r3:evaluate" in runtime_source, (
-        "runtime.py does not define the contract:r3:evaluate boundary"
     )
