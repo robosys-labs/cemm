@@ -21,34 +21,54 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install 'numpy>=2' 'safetensors>=0.5' 'torch>=2' --extra-index-url https://download.pytorch.org/whl/cpu
-      - name: Probe real runtime
+      - name: Apply reviewed structural mode repair in runner
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          forms = Path('src/cemm_authoritative_hybrid/forms.py')
+          text = forms.read_text()
+          old = '    ("conditional", "connector", "conditional"),\n    ("purpose", "connector", "purpose"),'
+          new = '    ("conditional", "connector", "conditional"),\n    ("hypothetical", "connector", "hypothetical"),\n    ("purpose", "connector", "purpose"),'
+          assert old in text
+          forms.write_text(text.replace(old, new, 1))
+          mode = Path('src/cemm_authoritative_hybrid/mode.py')
+          text = mode.read_text()
+          old = '    "conditional_simulation": SemanticMode.SIMULATE,\n    "declarative": SemanticMode.OBSERVE,'
+          new = '    "conditional_simulation": SemanticMode.SIMULATE,\n    "conditional": SemanticMode.SIMULATE,\n    "declarative": SemanticMode.OBSERVE,'
+          assert old in text
+          mode.write_text(text.replace(old, new, 1))
+          PY
+      - name: Probe canonical runtime cases
         run: |
           python - <<'PY'
           from pathlib import Path
           import json, tempfile
           from cemm_authoritative_hybrid.bootstrap import load_runtime
           phrases = (
+              'Alice likes Bob.',
+              'Who likes Bob?',
+              'Set the lamp power to on.',
               'If the lamp power is set to on, will it be on?',
-              'If the lamp power is set to on, the lamp power is on.',
+              'If the lamp power is on, the lamp power is on.',
               'Suppose the lamp power is on.',
               'Imagine the lamp power is on.',
-              'If Alice likes Bob, Alice likes Bob.',
           )
           for i, text in enumerate(phrases):
-              runtime = load_runtime(Path.cwd(), profile='development', store_path=Path(tempfile.gettempdir()) / f'r3-probe-{i}.db')
+              path = Path(tempfile.gettempdir()) / f'r3-probe-fixed-{i}.db'
+              path.unlink(missing_ok=True)
+              runtime = load_runtime(Path.cwd(), profile='development', store_path=path)
               try:
                   result = runtime.process(f'probe:{i}', text, trace=True)
+                  ctx = runtime.orient(f'orient:{i}', text)[1]
                   print(json.dumps({
-                      'text': text,
-                      'status': result.status.value,
+                      'text': text, 'status': result.status.value,
                       'orientation_mode': None if result.orientation is None else result.orientation.mode.value,
                       'proposal_status': None if result.proposal is None else result.proposal.status,
                       'proposal_abstention': None if result.proposal is None else result.proposal.abstention_code,
                       'candidate_count': 0 if result.proposal is None else len(result.proposal.candidates),
                       'verification_status': None if result.verification is None else result.verification.status,
-                      'selected': bool(result.verification and result.verification.selected_meaning),
-                      'evaluation': result.evaluation is not None,
-                      'effect': result.effect_receipt is not None,
+                      'evaluation': result.evaluation is not None, 'effect': result.effect_receipt is not None,
+                      'critical_residuals': list(ctx.critical_residual_unit_refs),
                   }, sort_keys=True))
               finally:
                   runtime.stores.close()
