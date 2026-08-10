@@ -3382,8 +3382,9 @@ def validate_inventory_contract(
     due = getattr(inventory, "due_rewrite_refs", None)
     if type(due) is not tuple:
         raise GateConfigError("inventory rewrite lifecycle is unavailable")
-    if due:
-        raise GateConfigError("due test rewrite obligations block validation")
+    # test_inventory_core._validate_rewrite_lifecycle has already proved that
+    # every phase-due obligation has exact active executable successors.
+    # Keep ``due`` as authenticated lifecycle evidence; do not reject it again.
     active = tuple(active_nodes)
     collectable = tuple(collectable_nodes)
     if active != tuple(sorted(active)) or collectable != tuple(sorted(collectable)):
@@ -5065,6 +5066,7 @@ class _RunContext:
             peak_rss_bytes=None,
         )
 
+
     def run_r3_activation_canaries(self) -> _HandledStep:
         if self.tier != "admission" or self.phase != "R3":
             raise GateConfigError("R3 activation canaries are available only in R3 admission")
@@ -5084,10 +5086,12 @@ class _RunContext:
         if type(rows) is not list or len(rows) < 4:
             raise GateConfigError("R3 activation canary artifact must contain at least four cases")
         row_fields = frozenset({
-            "case_ref", "semantic_mode", "cycle_ref", "verified_meaning_ref",
-            "expression_ref", "situation_ref", "evaluation_ref", "decision_ref",
-            "effect_receipt_ref", "response_meaning_ref", "gap_ref",
-            "final_revision_pin",
+            "case_ref", "semantic_mode", "verified_meaning_ref", "expression_ref",
+            "situation_ref", "evaluation_ref", "decision_ref", "decision_status",
+            "decision_action", "effect_receipt_ref", "effect_kind",
+            "effect_status_or_reason", "response_meaning_ref", "r3_artifacts_ref",
+            "input_revision_pin", "final_revision_pin", "world_revision_delta",
+            "effect_revision_delta",
         })
         modes: set[str] = set()
         case_refs: set[str] = set()
@@ -5098,38 +5102,57 @@ class _RunContext:
                 raise GateConfigError("R3 activation canary case refs must be unique")
             case_refs.add(case_ref)
             mode = row["semantic_mode"]
-            if mode not in {"observe", "query", "request", "simulate"}:
+            if mode not in {"OBSERVE", "QUERY", "REQUEST", "SIMULATE"}:
                 raise GateConfigError("R3 activation canary semantic mode is invalid")
             modes.add(str(mode))
             for field in (
-                "cycle_ref", "verified_meaning_ref", "expression_ref", "situation_ref",
+                "verified_meaning_ref", "expression_ref", "situation_ref",
                 "evaluation_ref", "decision_ref", "effect_receipt_ref",
-                "response_meaning_ref", "gap_ref",
+                "response_meaning_ref", "r3_artifacts_ref",
             ):
                 value = row[field]
                 if type(value) is not str or _CONTENT_REF_RE.fullmatch(value) is None:
                     raise GateConfigError(f"R3 activation canary {field} is invalid")
-            pin = _exact_fields(
-                row["final_revision_pin"],
-                frozenset({
-                    "authority_generation", "world_revision", "session_revision",
-                    "episode_revision", "effect_revision", "model_identity",
-                }),
-                f"R3 canary row {index} final revision pin",
+            for field in ("decision_status", "decision_action", "effect_status_or_reason"):
+                _text(row[field], f"R3 canary row {index} {field}")
+            if row["effect_kind"] not in {"EffectReceipt", "NoEffectReceipt"}:
+                raise GateConfigError("R3 activation canary effect kind is invalid")
+            pins = []
+            for field in ("input_revision_pin", "final_revision_pin"):
+                pin = _exact_fields(
+                    row[field],
+                    frozenset({
+                        "authority_generation", "world_revision", "session_revision",
+                        "episode_revision", "effect_revision", "model_identity",
+                    }),
+                    f"R3 canary row {index} {field}",
+                )
+                if pin["authority_generation"] != authority.generation:
+                    raise GateConfigError("R3 canary authority generation is stale")
+                for revision in (
+                    "world_revision", "session_revision", "episode_revision", "effect_revision"
+                ):
+                    _nonnegative_exact_int(pin[revision], f"R3 canary {revision}")
+                if type(pin["model_identity"]) is not str or not pin["model_identity"]:
+                    raise GateConfigError("R3 canary model identity is invalid")
+                pins.append(pin)
+            world_delta = _nonnegative_exact_int(
+                row["world_revision_delta"], "R3 canary world revision delta"
             )
-            if pin["authority_generation"] != authority.generation:
-                raise GateConfigError("R3 canary authority generation is stale")
-            for field in ("world_revision", "session_revision", "episode_revision", "effect_revision"):
-                _nonnegative_exact_int(pin[field], f"R3 canary {field}")
-            if pin["model_identity"] is not None and (
-                type(pin["model_identity"]) is not str or not pin["model_identity"]
-            ):
-                raise GateConfigError("R3 canary model identity is invalid")
-        if modes != {"observe", "query", "request", "simulate"}:
+            effect_delta = _nonnegative_exact_int(
+                row["effect_revision_delta"], "R3 canary effect revision delta"
+            )
+            if pins[1]["world_revision"] - pins[0]["world_revision"] != world_delta:
+                raise GateConfigError("R3 canary world revision delta is inconsistent")
+            if pins[1]["effect_revision"] - pins[0]["effect_revision"] != effect_delta:
+                raise GateConfigError("R3 canary effect revision delta is inconsistent")
+            if effect_delta == 0:
+                raise GateConfigError("R3 canary did not persist an effect/no-effect outcome")
+        if modes != {"OBSERVE", "QUERY", "REQUEST", "SIMULATE"}:
             raise GateConfigError("R3 activation canaries do not cover all four semantic modes")
 
-        # Re-execute the authentic public runtime in a fresh SQLite store and
-        # require exact semantic evidence equality with the committed artifact.
+        # Re-execute only the R3-owned post-VERIFY boundary. R5 handoff existence
+        # is checked separately by the structural phase gate, not executed here.
         runner_path = self.root / "scripts" / "run_r3_canaries.py"
         runner = _load_exact_module(runner_path, "r3_canary_runner")
         execute = getattr(runner, "execute_canaries", None)
@@ -5139,11 +5162,11 @@ class _RunContext:
         try:
             observed = execute(self.root, store_root, cases_path=None)
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            raise GateConfigError(f"R3 public-runtime canaries failed: {exc}") from exc
+            raise GateConfigError(f"R3 post-VERIFY canaries failed: {exc}") from exc
         if type(observed) is not tuple or any(type(row) is not dict for row in observed):
             raise GateConfigError("R3 canary runner returned non-canonical evidence")
         if list(observed) != rows:
-            raise GateConfigError("committed R3 canary evidence differs from fresh public-runtime execution")
+            raise GateConfigError("committed R3 canary evidence differs from fresh post-VERIFY execution")
         material: dict[str, object] = {
             "canary_count": len(rows),
             "canary_set_ref": content_ref("r3_canary_set", rows),

@@ -960,6 +960,7 @@ class SimulateDecisionOwner(_TransitionOwnerBase):
         else:
             contribution = DecisionContribution(
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
+                transition_preview_refs=(transition.transition_evaluation_ref,),
                 proof_refs=(transition.transition_evaluation_ref, capability.capability_evaluation_ref),
                 blocker_refs=transition.blocker_refs,
                 policy_refs=("policy:simulation_no_effect:v2",),

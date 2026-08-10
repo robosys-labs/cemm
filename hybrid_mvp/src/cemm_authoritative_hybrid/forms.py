@@ -963,6 +963,7 @@ _CONSTRUCTION_RULES: tuple[tuple[str, str, str | None], ...] = (
     ("contrast", "connector", "contrast"),
     ("causal", "connector", "causal"),
     ("conditional", "connector", "conditional"),
+    ("hypothetical", "connector", "hypothetical"),
     ("purpose", "connector", "purpose"),
     ("sequence", "connector", "sequence"),
     ("discourse_report", "discourse", "report"),

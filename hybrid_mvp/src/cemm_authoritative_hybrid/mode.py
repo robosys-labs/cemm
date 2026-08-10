@@ -122,6 +122,7 @@ _CONSTRUCTION_MODES = {
     "hypothetical": SemanticMode.SIMULATE,
     "counterfactual": SemanticMode.SIMULATE,
     "conditional_simulation": SemanticMode.SIMULATE,
+    "conditional": SemanticMode.SIMULATE,
     "declarative": SemanticMode.OBSERVE,
     "assertion": SemanticMode.OBSERVE,
     "observation": SemanticMode.OBSERVE,

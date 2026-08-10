@@ -15,36 +15,26 @@ from pathlib import Path
 
 import pytest
 
-__cemm_test_inventory__ = {
-    "tests/test_r3_owner_structure.py::test_r3_owners_do_not_import_r4_plus_modules": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-owners-do-not-import-r4-plus-modules",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "0605e4915ddb49e081ff267ab99ce0a42d9225424650ac986e10965430820c79",
-    },
-    "tests/test_r3_owner_structure.py::test_r3_owners_do_not_import_legacy_proposition_fixtures": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-owners-do-not-import-legacy-proposition-fixtures",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "a29e55570a0d5b8119f7068b096cf1dd7412a012f5f2ba3d700322cd36733e83",
-    },
-    "tests/test_r3_owner_structure.py::test_r3_runtime_owns_evaluate_and_exposes_only_r5_boundary": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-evaluate-boundary-rejects-programs",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "a5140ae6b37a1706e3ac4dd04c14a37d97d210f116447b5cbf76a8f3c0cbe362",
-    },
-    "tests/test_r3_owner_structure.py::test_r3_owners_are_post_verify": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-owners-are-post-verify",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-1",
-        "source_ast_sha256": "f527d1e6b7efc6d29f562ac317e101298e514e0505f2ba97d25f397e697a7d0c",
-    },
-}
+__cemm_test_inventory__ = {'tests/test_r3_owner_structure.py::test_r3_owners_do_not_import_r4_plus_modules': {'activation_phase': 'R3',
+                                                                                    'assertion_ref': 'assertion:r3-owners-do-not-import-r4-plus-modules',
+                                                                                    'diagnostic_role': 'phase',
+                                                                                    'introduced_by_task': 'R3-Task-1',
+                                                                                    'source_ast_sha256': '0605e4915ddb49e081ff267ab99ce0a42d9225424650ac986e10965430820c79'},
+ 'tests/test_r3_owner_structure.py::test_r3_owners_do_not_import_legacy_proposition_fixtures': {'activation_phase': 'R3',
+                                                                                                'assertion_ref': 'assertion:r3-owners-do-not-import-legacy-proposition-fixtures',
+                                                                                                'diagnostic_role': 'phase',
+                                                                                                'introduced_by_task': 'R3-Task-1',
+                                                                                                'source_ast_sha256': 'a29e55570a0d5b8119f7068b096cf1dd7412a012f5f2ba3d700322cd36733e83'},
+ 'tests/test_r3_owner_structure.py::test_r3_runtime_owns_evaluate_and_exposes_only_r5_boundary': {'activation_phase': 'R3',
+                                                                                                  'assertion_ref': 'assertion:r3-evaluate-boundary-rejects-programs',
+                                                                                                  'diagnostic_role': 'phase',
+                                                                                                  'introduced_by_task': 'R3-Task-1',
+                                                                                                  'source_ast_sha256': 'a5140ae6b37a1706e3ac4dd04c14a37d97d210f116447b5cbf76a8f3c0cbe362'},
+ 'tests/test_r3_owner_structure.py::test_r3_owners_are_post_verify': {'activation_phase': 'R3',
+                                                                      'assertion_ref': 'assertion:r3-owners-are-post-verify',
+                                                                      'diagnostic_role': 'phase',
+                                                                      'introduced_by_task': 'R3-Task-1',
+                                                                      'source_ast_sha256': 'e5d274466cfc07d2847982457e72100173bdb9f2dcf4d80d284c2183d3002293'}}
 
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src" / "cemm_authoritative_hybrid"
