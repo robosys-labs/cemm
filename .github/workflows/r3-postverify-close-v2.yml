@@ -1,4 +1,4 @@
-name: R3 post-VERIFY close v2
+name: R3 formal close
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
     paths: [.github/workflows/r3-postverify-close-v2.yml]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose-r3-active:
+  close-r3:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -26,10 +26,11 @@ jobs:
         run: |
           python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.5'
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Print exact pytest-active report
+      - name: Run and consume fresh R3 admission
         working-directory: hybrid_mvp
         run: |
-          python - <<'PY'
+          set -euo pipefail
+          python - <<'PY' > /tmp/r3-outcome.json
           from pathlib import Path
           import json, sys
           sys.path.insert(0, 'src')
@@ -37,15 +38,26 @@ jobs:
           from cemm_authoritative_hybrid import process_control as process_control_module
           sys.modules['process_control'] = process_control_module
           from validation_gate import run_validation
+
           outcome = run_validation(Path('.'), phase='R3', tier='admission')
-          print('OUTCOME=' + outcome.disposition)
-          for step in outcome.step_results:
-              if step.step_id == 'pytest_active':
-                  material = step.to_dict()
-                  print('PYTEST_ACTIVE=' + json.dumps(material, sort_keys=True, separators=(',', ':')))
-                  report = material.get('report')
-                  if isinstance(report, dict):
-                      for key in ('errors','collection_errors','counts','disposition','error_codes'):
-                          if key in report:
-                              print(key.upper() + '=' + json.dumps(report[key], sort_keys=True, separators=(',', ':')))
+          print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
+          if outcome.disposition != 'passed' or not outcome.run_ref or not outcome.receipt_path:
+              raise SystemExit(f'R3 admission did not pass: {outcome.disposition} {outcome.error_code}')
           PY
+          cat /tmp/r3-outcome.json
+          RUN_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-outcome.json"))["run_ref"])')"
+          python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --dry-run > /tmp/r3-candidate.json
+          cat /tmp/r3-candidate.json
+          RECORD_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-candidate.json"))["record_ref"])')"
+          python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --append --expect-record-ref "$RECORD_REF"
+          python scripts/update_replay_status.py --verify-chain
+      - name: Commit exact R3 receipt and ledger transition
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hybrid_mvp/artifacts/validation/runs hybrid_mvp/governance/replay_status.jsonl
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'R3 closeout produced no governed changes'; exit 1; }
+          git commit -m 'admit(r3): consume fresh closure receipt'
+          git push origin HEAD:codex/r3-r4-closeout-learning
