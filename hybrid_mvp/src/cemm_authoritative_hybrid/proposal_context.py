@@ -1420,7 +1420,7 @@ class ProposalContextBuilder:
                 raise ValueError("affordance lookup returned an invalid profile")
             profiles_by_target[designation.target_ref] = profiles
 
-        application_frames = self._application_frames(
+        application_frames, event_signatures = self._application_frames(
             designation_slots,
             profiles_by_target,
             predicate_targets,
@@ -1436,13 +1436,26 @@ class ProposalContextBuilder:
             orientation.mode,
             application_frames,
         )
-        designation_references = self._designation_references(
-            designation_slots,
-            profiles_by_target,
-            contribution_slots,
+        reference_contributions, designation_references = (
+            self._designation_reference_evidence(
+                designation_slots,
+                application_frames,
+                event_signatures,
+                contribution_slots,
+            )
+        )
+        contribution_slots = _bounded_unique_contributions(
+            (*reference_contributions, *contribution_slots),
+            self._config,
+        )
+        situated_references = self._situated_participant_references(
+            orientation,
+            application_frames,
+            event_signatures,
+            (*designation_references, *form_references),
         )
         reference_slots = _bounded_unique_slots(
-            (*designation_references, *form_references),
+            (*designation_references, *form_references, *situated_references),
             self._config.max_orientation_alternatives,
         )
         variable_slots = _variable_slots(
@@ -1711,53 +1724,178 @@ class ProposalContextBuilder:
                 )
         return tuple(contributions), tuple(references)
 
-    def _designation_references(
+    def _designation_reference_evidence(
         self,
         designations: tuple[DesignationSlot, ...],
-        profiles_by_target: Mapping[str, tuple[AffordanceProfile, ...]],
-        contributions: tuple[ContributionSlot, ...],
-    ) -> tuple[ReferenceSlot, ...]:
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+        existing_contributions: tuple[ContributionSlot, ...],
+    ) -> tuple[tuple[ContributionSlot, ...], tuple[ReferenceSlot, ...]]:
+        contributions: list[ContributionSlot] = []
         references: list[ReferenceSlot] = []
         for designation in designations:
             if designation.target_kind not in {"entity", "participant"}:
                 continue
-            if not any(
-                row.target_ref == designation.target_ref
-                and row.kind in {"anchor", "reference"}
-                and row.source_unit_refs == designation.source_unit_refs
-                for row in contributions
-            ):
+            roles = self._compatible_reference_roles(
+                designation, frames, event_signatures
+            )
+            if not roles:
                 continue
-            roles = tuple(
+            existing_roles = tuple(
                 dict.fromkeys(
                     role
-                    for profile in profiles_by_target.get(
-                        designation.target_ref,
-                        (),
-                    )
-                    for role in profile.role_candidates
-                    if role.startswith("role:")
-                )
-            ) or _reference_roles(designation.target_kind)
-            references.append(
-                ReferenceSlot.create(
-                    target_ref=designation.target_ref,
-                    target_kind=designation.target_kind,
-                    source_unit_refs=designation.source_unit_refs,
-                    resolution_kind="designation",
-                    compatible_roles=roles,
-                    score_q=designation.score_q,
-                    provenance_refs=(designation.slot_ref,),
+                    for row in existing_contributions
+                    if row.kind == "reference"
+                    and row.target_ref == designation.target_ref
+                    and row.source_unit_refs == designation.source_unit_refs
+                    for role in row.output_ports
                 )
             )
-        return tuple(references)
+            if set(roles) <= set(existing_roles):
+                contribution = next(
+                    row
+                    for row in existing_contributions
+                    if row.kind == "reference"
+                    and row.target_ref == designation.target_ref
+                    and row.source_unit_refs == designation.source_unit_refs
+                )
+            else:
+                contribution = ContributionSlot.create(
+                    contribution_ref=stable_ref(
+                        "designation_reference_contribution",
+                        {
+                            "designation_slot_ref": designation.slot_ref,
+                            "target_ref": designation.target_ref,
+                            "target_kind": designation.target_kind,
+                            "source_unit_refs": list(designation.source_unit_refs),
+                            "compatible_roles": list(roles),
+                        },
+                    ),
+                    kind="reference",
+                    source_unit_refs=designation.source_unit_refs,
+                    target_ref=designation.target_ref,
+                    target_kind=designation.target_kind,
+                    input_ports=(),
+                    output_ports=roles,
+                    constraints=(("resolution_kind", "designation"),),
+                    provenance_refs=tuple(
+                        dict.fromkeys(
+                            (
+                                designation.slot_ref,
+                                designation.designation_fact_ref,
+                                *designation.provenance_refs,
+                            )
+                        )
+                    ),
+                )
+            reference = ReferenceSlot.create(
+                target_ref=designation.target_ref,
+                target_kind=designation.target_kind,
+                source_unit_refs=designation.source_unit_refs,
+                resolution_kind="designation",
+                compatible_roles=roles,
+                score_q=designation.score_q,
+                provenance_refs=(designation.slot_ref, contribution.slot_ref),
+            )
+            contributions.append(contribution)
+            references.append(reference)
+        return tuple(contributions), tuple(references)
+
+    def _compatible_reference_roles(
+        self,
+        designation: DesignationSlot,
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+    ) -> tuple[str, ...]:
+        generic = _reference_roles(designation.target_kind)
+        compatible: list[str] = []
+        for frame in frames:
+            legal_roles = (*frame.required_roles, *frame.optional_roles)
+            if frame.predicate_kind == "event_type":
+                signature = event_signatures.get(frame.predicate_target_ref)
+                if not isinstance(signature, EventSignature):
+                    continue
+                specs = {row.role: row for row in signature.roles}
+                for role in legal_roles:
+                    spec = specs.get(role)
+                    if spec is None or spec.proposition_valued:
+                        continue
+                    if not spec.filler_kinds or designation.target_kind in spec.filler_kinds:
+                        compatible.append(role)
+                continue
+            compatible.extend(role for role in legal_roles if role in generic)
+        return tuple(dict.fromkeys((*compatible, *generic)))
+
+    def _situated_participant_references(
+        self,
+        orientation: Orientation,
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+        explicit_references: tuple[ReferenceSlot, ...],
+    ) -> tuple[ReferenceSlot, ...]:
+        participant_refs = tuple(
+            ref
+            for ref in orientation.participants
+            if isinstance(self._authority.atoms.get(ref), AtomRecord)
+            and self._authority.atoms[ref].kind == "participant"
+        )
+        if not participant_refs:
+            return ()
+        speaker = (
+            orientation.participant_frame
+            if orientation.participant_frame in participant_refs
+            else participant_refs[0]
+        )
+        others = tuple(ref for ref in participant_refs if ref != speaker)
+        actor_roles = frozenset(
+            {"role:actor", "role:subject", "role:speaker", "role:source", "role:participant"}
+        )
+        addressed_roles = frozenset(
+            {"role:addressee", "role:target", "role:object", "role:recipient", "role:beneficiary"}
+        )
+        rows: list[ReferenceSlot] = []
+        for frame in frames:
+            if frame.predicate_kind != "event_type":
+                continue
+            signature = event_signatures.get(frame.predicate_target_ref)
+            if not isinstance(signature, EventSignature):
+                continue
+            specs = {row.role: row for row in signature.roles}
+            for role in frame.required_roles:
+                spec = specs.get(role)
+                if (
+                    spec is None
+                    or spec.proposition_valued
+                    or (spec.filler_kinds and "participant" not in spec.filler_kinds)
+                    or any(role in ref.compatible_roles for ref in explicit_references)
+                ):
+                    continue
+                target = (
+                    speaker
+                    if role in actor_roles
+                    else (others[0] if role in addressed_roles and others else None)
+                )
+                if target is None:
+                    continue
+                rows.append(
+                    ReferenceSlot.create(
+                        target_ref=target,
+                        target_kind="participant",
+                        source_unit_refs=(),
+                        resolution_kind="situated_participant",
+                        compatible_roles=(role,),
+                        score_q=1_000_000,
+                        provenance_refs=(orientation.orientation_ref, frame.slot_ref),
+                    )
+                )
+        return tuple(rows)
 
     def _application_frames(
         self,
         designations: tuple[DesignationSlot, ...],
         profiles_by_target: Mapping[str, tuple[AffordanceProfile, ...]],
         predicate_targets: frozenset[str],
-    ) -> tuple[ApplicationFrameSlot, ...]:
+    ) -> tuple[tuple[ApplicationFrameSlot, ...], Mapping[str, EventSignature]]:
         frames: list[ApplicationFrameSlot] = []
         per_target: dict[str, int] = {}
         event_signature_by_target: dict[str, EventSignature | None] = {}
@@ -1845,7 +1983,16 @@ class ProposalContextBuilder:
                 if all(row.slot_ref != frame.slot_ref for row in frames):
                     frames.append(frame)
                     per_target[target] = per_target.get(target, 0) + 1
-        return tuple(frames)
+        return (
+            tuple(frames),
+            MappingProxyType(
+                {
+                    target: signature
+                    for target, signature in event_signature_by_target.items()
+                    if isinstance(signature, EventSignature)
+                }
+            ),
+        )
 
     def _transition_slots(
         self,

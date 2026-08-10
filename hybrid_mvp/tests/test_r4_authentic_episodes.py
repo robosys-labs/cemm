@@ -21,7 +21,7 @@ __cemm_test_inventory__ = {'tests/test_r4_authentic_episodes.py::test_every_acce
                                                                                                            'contributes_to_rewrite_refs': ['rewrite_obligation:1d2d0b2ddc0508c0d500ab70'],
                                                                                                            'diagnostic_role': 'phase',
                                                                                                            'introduced_by_task': 'R4-Closeout',
-                                                                                                           'source_ast_sha256': '260a5c7f41706b20313a852483962f0a462bde23a47eec74ce14595c0aef8d78'},
+                                                                                                           'source_ast_sha256': 'a6dc5f48ebb3e2fa0ea2fd12ee26e637966d9c50a68a0d1c7622309f9a4428b2'},
  'tests/test_r4_authentic_episodes.py::test_every_episode_binds_exact_authority_and_revision_identity': {'activation_phase': 'R4',
                                                                                                          'assertion_ref': 'assertion:r4-authentic-episodes-bind-authority-revision',
                                                                                                          'contributes_to_rewrite_refs': ['rewrite_obligation:cf2ae32ce7f4e41090dc235e'],
@@ -63,7 +63,7 @@ def test_every_accepted_episode_binds_coverage_program_and_action_identity() -> 
 
 
 def test_every_emitted_episode_contains_complete_six_phase_artifacts() -> None:
-    expected = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "RESPOND")
+    expected = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "REALIZE")
     for episode in _episodes():
         cycle = episode.observed_cycle
         assert cycle.orientation is not None

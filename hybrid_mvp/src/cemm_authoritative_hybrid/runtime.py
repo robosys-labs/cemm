@@ -232,9 +232,11 @@ class RuntimeOrientationOwner:
         capabilities = tuple(
             self._authority.capabilities.get("participant:system", ())
         )
-        permissions = tuple(
-            row if type(row) is str else f"{row[0]}:{row[1]}:{row[2]}"
-            for row in self._authority.permissions
+        permissions = _unique(
+            tuple(
+                row if type(row) is str else f"{row[0]}:{row[1]}:{row[2]}"
+                for row in self._authority.permissions
+            )
         )
         focus_refs = _snapshot_refs(focus, "focus_refs")
         obligation_refs = _snapshot_refs(obligations, "obligation_refs")

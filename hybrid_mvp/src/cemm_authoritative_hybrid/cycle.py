@@ -773,7 +773,6 @@ class _PhaseMaterial:
             target = self.output_revision_pin
             fixed_dimensions = (
                 ("authority_generation", source.authority_generation, target.authority_generation),
-                ("session_revision", source.session_revision, target.session_revision),
                 ("episode_revision", source.episode_revision, target.episode_revision),
                 ("model_identity", source.model_identity, target.model_identity),
             )
@@ -781,14 +780,17 @@ class _PhaseMaterial:
                 raise ValueError("EFFECT revision change altered a fixed dimension")
             if (
                 target.world_revision < source.world_revision
+                or target.session_revision < source.session_revision
                 or target.effect_revision < source.effect_revision
             ):
                 raise ValueError("EFFECT revision changes must be monotonic")
-            if (
-                target != source
-                and self.disposition is not PhaseDisposition.COMMITTED
-            ):
-                raise ValueError("only EFFECT with COMMITTED may change a revision pin")
+            if self.disposition is PhaseDisposition.NO_EFFECT:
+                if target.world_revision != source.world_revision:
+                    raise ValueError("EFFECT with NO_EFFECT may not change world revision")
+                if target.effect_revision <= source.effect_revision:
+                    raise ValueError("persisted NO_EFFECT must advance effect revision")
+            elif target != source and self.disposition is not PhaseDisposition.COMMITTED:
+                raise ValueError("only EFFECT with COMMITTED/NO_EFFECT may change a revision pin")
             if self.disposition is PhaseDisposition.COMMITTED and target == source:
                 raise ValueError("EFFECT with COMMITTED must advance the revision pin")
 
