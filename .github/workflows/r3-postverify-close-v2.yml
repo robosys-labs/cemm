@@ -12,6 +12,8 @@ jobs:
   close-r3:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      PYTHONPATH: hybrid_mvp/src
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,24 +22,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Enumerate exact R3 inventory roles
+      - name: Install R3 test dependencies
+        run: python -m pip install 'pytest>=8' 'hypothesis>=6'
+      - name: Apply literal R3 selector migration
+        run: |
+          python .github/r3_selector_patch.py
+          git diff --check
+      - name: Verify inventory and every R3 diagnostic tier
         working-directory: hybrid_mvp
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, sys
-          sys.path.insert(0, 'scripts')
-          from test_inventory_core import load_and_verify, verify_document_authority_pin
-          root = Path('.').resolve()
-          path = root / 'governance' / 'test_inventory.json'
-          result = load_and_verify(
-              root, path, phase='R3', enforce_reviewed_counts=True,
-              expected_sha256=verify_document_authority_pin(root, path),
-          )
-          print('OWNER_GROUPS=' + json.dumps(
-              {k: list(v) for k, v in result.owner_node_ids.items()},
-              sort_keys=True, separators=(',', ':')
-          ))
-          print('PHASE_NODES=' + json.dumps(list(result.phase_node_ids), separators=(',', ':')))
-          print('ADMISSION_ONLY=' + json.dumps(list(result.admission_only_node_ids), separators=(',', ':')))
-          PY
+          python scripts/check_test_inventory.py --phase R3 --source-only
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner capability-effect
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner decision-query-proof
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner learning-response
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-context
+          python scripts/validate_mvp.py --tier phase --phase R3
+      - name: Commit reviewed selector migration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hybrid_mvp/configs/validation_gates.json
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'no selector migration produced'; exit 1; } || true
+          git commit -m 'fix(r3): align gates with literal diagnostic inventory'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+          test -z "$(git status --porcelain --untracked-files=all)"
