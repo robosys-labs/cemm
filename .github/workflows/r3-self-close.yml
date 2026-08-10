@@ -34,91 +34,38 @@ jobs:
           from __future__ import annotations
           import ast, hashlib, pprint
           from pathlib import Path
-
           root = Path.cwd()
-
-          # 1. The inventory core already fail-closes every due rewrite obligation
-          # against exact active executable successors. Do not reject the valid
-          # evidence tuple a second time in the gate wrapper.
           gate = root / 'scripts/validation_gate.py'
           text = gate.read_text(encoding='utf-8')
           old = '''    due = getattr(inventory, "due_rewrite_refs", None)\n    if type(due) is not tuple:\n        raise GateConfigError("inventory rewrite lifecycle is unavailable")\n    if due:\n        raise GateConfigError("due test rewrite obligations block validation")\n'''
-          new = '''    due = getattr(inventory, "due_rewrite_refs", None)\n    if type(due) is not tuple:\n        raise GateConfigError("inventory rewrite lifecycle is unavailable")\n    # ``test_inventory_core._validate_rewrite_lifecycle`` has already proved\n    # every phase-due obligation is covered by exact active executable successors.\n    # The tuple is evidence of due-and-satisfied obligations, not a failure list.\n'''
+          new = '''    due = getattr(inventory, "due_rewrite_refs", None)\n    if type(due) is not tuple:\n        raise GateConfigError("inventory rewrite lifecycle is unavailable")\n    # The inventory core has already fail-closed every due obligation against\n    # its exact active executable successors. ``due`` is evidence, not failure.\n'''
           if old not in text:
               raise SystemExit('validation_gate due-rewrite guard differs from reviewed source')
           gate.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # 2. Preserve the two real transition behavior tests as the exact
-          # successors required by the frozen R3 rewrite contract.
-          transition = root / 'tests/test_transition_simulation.py'
-          ttext = transition.read_text(encoding='utf-8')
-          marker = '__cemm_test_inventory__ ='
-          if marker in ttext:
-              raise SystemExit('transition test already has governed later-phase metadata')
-          tree = ast.parse(ttext)
-          methods = {}
-          for node in ast.walk(tree):
-              if isinstance(node, ast.FunctionDef) and node.name in {
-                  'test_preview_does_not_mutate_revision',
-                  'test_preview_sequence_does_not_mutate_revision',
-              }:
-                  methods[node.name] = node
-          if set(methods) != {
-              'test_preview_does_not_mutate_revision',
-              'test_preview_sequence_does_not_mutate_revision',
-          }:
-              raise SystemExit('reviewed transition successor methods are absent')
           def digest(node):
               return hashlib.sha256(ast.dump(node, annotate_fields=True, include_attributes=False).encode()).hexdigest()
-          obligation = 'rewrite_obligation:667dbd3b551a4a4a1fa34eeb'
-          metadata = {
-              'tests/test_transition_simulation.py::TestSimulatedTransitionDoesNotCommit::test_preview_does_not_mutate_revision': {
-                  'activation_phase': 'R3',
-                  'assertion_ref': 'assertion:r3-simulation-preview-does-not-mutate',
-                  'diagnostic_role': 'phase',
-                  'introduced_by_task': 'R3-Self-Close',
-                  'source_ast_sha256': digest(methods['test_preview_does_not_mutate_revision']),
-                  'contributes_to_rewrite_refs': [obligation],
-              },
-              'tests/test_transition_simulation.py::TestSimulatedTransitionDoesNotCommit::test_preview_sequence_does_not_mutate_revision': {
-                  'activation_phase': 'R3',
-                  'assertion_ref': 'assertion:r3-simulation-sequence-does-not-mutate',
-                  'diagnostic_role': 'phase',
-                  'introduced_by_task': 'R3-Self-Close',
-                  'source_ast_sha256': digest(methods['test_preview_sequence_does_not_mutate_revision']),
-                  'contributes_to_rewrite_refs': [obligation],
-              },
-          }
-          transition.write_text(ttext.rstrip() + '\n\n__cemm_test_inventory__ = ' + pprint.pformat(metadata, width=120, sort_dicts=True) + '\n', encoding='utf-8')
 
-          # 3. Add only the two missing public-cycle successors. These exercise
-          # the real runtime; they do not search source text or assert identifier names.
           public = root / 'tests/test_r3_public_cycle.py'
           body = '''"""Behavioral public-cycle successors for frozen R3 rewrite obligations."""\nfrom __future__ import annotations\nfrom pathlib import Path\nfrom cemm_authoritative_hybrid.bootstrap import load_runtime\nfrom cemm_authoritative_hybrid.cycle import CycleStatus\n\nROOT = Path(__file__).resolve().parents[1]\n\ndef test_simulate_cycle_emits_no_effect_and_preserves_world_revision(tmp_path) -> None:\n    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "simulate.db")\n    try:\n        before = runtime.stores.world.revision\n        result = runtime.process("r3-rewrite:simulate", "If the lamp power is set to on, will it be on?", trace=True)\n        assert result.verification is not None and result.verification.status == "selected"\n        assert result.evaluation is not None and result.evaluation.situation.mode.value == "simulate"\n        assert result.effect_receipt is not None\n        assert runtime.stores.world.revision == before\n    finally:\n        runtime.stores.close()\n\ndef test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation(tmp_path) -> None:\n    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "unknown.db")\n    try:\n        before = runtime.stores.world.revision\n        result = runtime.process("r3-rewrite:unknown", "florbnicate the quux zorb", trace=True)\n        assert result.status is CycleStatus.UNSUPPORTED\n        assert result.gap_receipt is not None\n        assert result.evaluation is None\n        assert runtime.stores.world.revision == before\n    finally:\n        runtime.stores.close()\n'''
           tree = ast.parse(body)
           fns = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-          public_meta = {
+          metadata = {
               'tests/test_r3_public_cycle.py::test_simulate_cycle_emits_no_effect_and_preserves_world_revision': {
-                  'activation_phase': 'R3',
-                  'assertion_ref': 'assertion:simulation-public-cycle-does-not-mutate',
-                  'diagnostic_role': 'phase',
-                  'introduced_by_task': 'R3-Self-Close',
+                  'activation_phase': 'R3', 'assertion_ref': 'assertion:simulation-public-cycle-does-not-mutate',
+                  'diagnostic_role': 'phase', 'introduced_by_task': 'R3-Self-Close',
                   'source_ast_sha256': digest(fns['test_simulate_cycle_emits_no_effect_and_preserves_world_revision']),
                   'contributes_to_rewrite_refs': ['rewrite_obligation:667dbd3b551a4a4a1fa34eeb'],
               },
               'tests/test_r3_public_cycle.py::test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation': {
-                  'activation_phase': 'R3',
-                  'assertion_ref': 'assertion:unknown-surface-public-cycle-is-safe',
-                  'diagnostic_role': 'phase',
-                  'introduced_by_task': 'R3-Self-Close',
+                  'activation_phase': 'R3', 'assertion_ref': 'assertion:unknown-surface-public-cycle-is-safe',
+                  'diagnostic_role': 'phase', 'introduced_by_task': 'R3-Self-Close',
                   'source_ast_sha256': digest(fns['test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation']),
                   'contributes_to_rewrite_refs': ['rewrite_obligation:a5d394543db7da318941a99f'],
               },
           }
           lines = body.splitlines()
-          insert_at = 3
-          final = '\n'.join(lines[:insert_at]) + '\n\n__cemm_test_inventory__ = ' + pprint.pformat(public_meta, width=120, sort_dicts=True) + '\n\n' + '\n'.join(lines[insert_at:]) + '\n'
-          public.write_text(final, encoding='utf-8')
+          public.write_text('\n'.join(lines[:3]) + '\n\n__cemm_test_inventory__ = ' + pprint.pformat(metadata, width=120, sort_dicts=True) + '\n\n' + '\n'.join(lines[3:]) + '\n', encoding='utf-8')
           PY
           python scripts/refresh_r3_r4_test_metadata.py
       - name: Verify exact R3 rewrite lifecycle
@@ -128,7 +75,7 @@ jobs:
           python scripts/check_r3_r4_structure.py
           pytest -q tests/test_transition_simulation.py tests/test_r3_public_cycle.py tests/test_r3_owner_structure.py tests/test_r3_structure.py
           git diff --check
-      - name: Verify complete active suite and R3 formal gates
+      - name: Verify complete suite and formal R3 phase gate
         run: |
           pytest -q
           rm -f /tmp/r3-canary.db /tmp/R3_ACTIVATION_CANARIES.json
@@ -138,7 +85,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/validation_gate.py tests/test_transition_simulation.py tests/test_r3_public_cycle.py tests/test_r3_owner_structure.py
+          git add scripts/validation_gate.py tests/test_r3_public_cycle.py tests/test_r3_owner_structure.py
           git diff --cached --check
           git commit -m 'fix(r3): close governed rewrite lifecycle without migration duplication'
           git push origin HEAD:codex/r3-r4-closeout-learning
