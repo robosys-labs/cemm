@@ -30,89 +30,101 @@ jobs:
 
           path = Path('scripts/validation_gate.py')
           text = path.read_text(encoding='utf-8')
-          old = '''        self.status_records: tuple[dict[str, object], ...] | None = None
-        self.invalidation_records: tuple[dict[str, object], ...] | None = None
-'''
-          new = '''        self.status_records: tuple[dict[str, object], ...] | None = None
-        self.effective_status: dict[str, str] | None = None
-        self.invalidation_records: tuple[dict[str, object], ...] | None = None
-'''
+          old = "\n".join((
+              '        self.status_records: tuple[dict[str, object], ...] | None = None',
+              '        self.invalidation_records: tuple[dict[str, object], ...] | None = None',
+          ))
+          new = "\n".join((
+              '        self.status_records: tuple[dict[str, object], ...] | None = None',
+              '        self.effective_status: dict[str, str] | None = None',
+              '        self.invalidation_records: tuple[dict[str, object], ...] | None = None',
+          ))
           if text.count(old) != 1:
               raise SystemExit('unexpected RunContext status field layout')
           text = text.replace(old, new, 1)
 
-          old = '''            status = governance.read_hash_chain(
-                self.root / "governance" / "replay_status.jsonl",
-                source_reader=self._read_bytes,
-            )
-            governance.effective_replay_status(status)
-'''
-          new = '''            status = governance.read_hash_chain(
-                self.root / "governance" / "replay_status.jsonl",
-                source_reader=self._read_bytes,
-            )
-            effective_status = governance.effective_replay_status(status)
-'''
+          old = "\n".join((
+              '            status = governance.read_hash_chain(',
+              '                self.root / "governance" / "replay_status.jsonl",',
+              '                source_reader=self._read_bytes,',
+              '            )',
+              '            governance.effective_replay_status(status)',
+          ))
+          new = "\n".join((
+              '            status = governance.read_hash_chain(',
+              '                self.root / "governance" / "replay_status.jsonl",',
+              '                source_reader=self._read_bytes,',
+              '            )',
+              '            effective_status = governance.effective_replay_status(status)',
+          ))
           if text.count(old) != 1:
               raise SystemExit('unexpected governance effective-status call')
           text = text.replace(old, new, 1)
 
-          old = '''        self.status_records = status
-        self.invalidation_records = invalidations
-'''
-          new = '''        self.status_records = status
-        self.effective_status = effective_status
-        self.invalidation_records = invalidations
-'''
+          old = "\n".join((
+              '        self.status_records = status',
+              '        self.invalidation_records = invalidations',
+          ))
+          new = "\n".join((
+              '        self.status_records = status',
+              '        self.effective_status = effective_status',
+              '        self.invalidation_records = invalidations',
+          ))
           if text.count(old) != 1:
               raise SystemExit('unexpected governance status assignment')
           text = text.replace(old, new, 1)
 
-          old = '''        started = time.monotonic_ns()
-        verify = _runtime_owner_symbol(
-            self.root, "r4_admission", "verify_r4_admission"
-        )
-        try:
-            report = verify(
-                self.root,
-                expected_source_revision=self.source_ref,
-                expected_authority_generation=authority.generation,
-                verifier_spec=verifier_spec,
-                verifier_sha256=verifier_sha256,
-            )
-'''
-          new = '''        status_records = self.status_records
-        effective_status = self.effective_status
-        if status_records is None or effective_status is None:
-            raise GateConfigError("R4 artifact review requires authenticated replay governance")
-        if effective_status.get("R3") != "green":
-            raise GateConfigError("R4 artifact review requires an effective green R3 predecessor")
-        r3_records = tuple(row for row in status_records if row.get("phase") == "R3")
-        if not r3_records or r3_records[-1].get("status") != "green":
-            raise GateConfigError("R4 artifact review cannot resolve the governed R3 source")
-        admitted_r3_source = r3_records[-1].get("source_base")
-        if (
-            type(admitted_r3_source) is not str
-            or re.fullmatch(r"[0-9a-f]{40}", admitted_r3_source) is None
-        ):
-            raise GateConfigError("governed R3 source revision is invalid")
-
-        started = time.monotonic_ns()
-        verify = _runtime_owner_symbol(
-            self.root, "r4_admission", "verify_r4_admission"
-        )
-        try:
-            report = verify(
-                self.root,
-                expected_source_revision=admitted_r3_source,
-                expected_authority_generation=authority.generation,
-                verifier_spec=verifier_spec,
-                verifier_sha256=verifier_sha256,
-            )
-'''
-          if text.count(old) != 1:
+          start = text.index('    def run_r4_artifact_review(self) -> _HandledStep:')
+          end = text.index('\n    def run_compile(', start)
+          block = text[start:end]
+          old_fragment = "\n".join((
+              '        started = time.monotonic_ns()',
+              '        verify = _runtime_owner_symbol(',
+              '            self.root, "r4_admission", "verify_r4_admission"',
+              '        )',
+              '        try:',
+              '            report = verify(',
+              '                self.root,',
+              '                expected_source_revision=self.source_ref,',
+              '                expected_authority_generation=authority.generation,',
+              '                verifier_spec=verifier_spec,',
+              '                verifier_sha256=verifier_sha256,',
+              '            )',
+          ))
+          new_fragment = "\n".join((
+              '        status_records = self.status_records',
+              '        effective_status = self.effective_status',
+              '        if status_records is None or effective_status is None:',
+              '            raise GateConfigError("R4 artifact review requires authenticated replay governance")',
+              '        if effective_status.get("R3") != "green":',
+              '            raise GateConfigError("R4 artifact review requires an effective green R3 predecessor")',
+              '        r3_records = tuple(row for row in status_records if row.get("phase") == "R3")',
+              '        if not r3_records or r3_records[-1].get("status") != "green":',
+              '            raise GateConfigError("R4 artifact review cannot resolve the governed R3 source")',
+              '        admitted_r3_source = r3_records[-1].get("source_base")',
+              '        if (',
+              '            type(admitted_r3_source) is not str',
+              '            or re.fullmatch(r"[0-9a-f]{40}", admitted_r3_source) is None',
+              '        ):',
+              '            raise GateConfigError("governed R3 source revision is invalid")',
+              '',
+              '        started = time.monotonic_ns()',
+              '        verify = _runtime_owner_symbol(',
+              '            self.root, "r4_admission", "verify_r4_admission"',
+              '        )',
+              '        try:',
+              '            report = verify(',
+              '                self.root,',
+              '                expected_source_revision=admitted_r3_source,',
+              '                expected_authority_generation=authority.generation,',
+              '                verifier_spec=verifier_spec,',
+              '                verifier_sha256=verifier_sha256,',
+              '            )',
+          ))
+          if block.count(old_fragment) != 1:
               raise SystemExit('unexpected R4 source binding block')
-          text = text.replace(old, new, 1)
+          block = block.replace(old_fragment, new_fragment, 1)
+          text = text[:start] + block + text[end:]
           path.write_text(text, encoding='utf-8')
 
           config_path = Path('configs/validation_gates.json')
@@ -139,14 +151,15 @@ jobs:
 
           source = Path('scripts/validation_gate.py').read_text(encoding='utf-8')
           ast.parse(source)
-          block = source[source.index('    def run_r4_artifact_review'):source.index('    def run_compile', source.index('    def run_r4_artifact_review'))]
+          start = source.index('    def run_r4_artifact_review')
+          block = source[start:source.index('    def run_compile', start)]
           if 'expected_source_revision=self.source_ref' in block:
               raise SystemExit('R4 still binds build receipt to the artifact-bearing commit')
-          required = [
+          required = (
               'effective_status.get("R3") != "green"',
               'r3_records[-1].get("source_base")',
               'expected_source_revision=admitted_r3_source',
-          ]
+          )
           if any(token not in block for token in required):
               raise SystemExit('R4 governed predecessor binding is incomplete')
           ledger = [json.loads(line) for line in Path('governance/replay_status.jsonl').read_text(encoding='utf-8').splitlines() if line]
