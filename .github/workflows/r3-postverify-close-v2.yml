@@ -12,8 +12,6 @@ jobs:
   close-r3:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    env:
-      PYTHONPATH: hybrid_mvp/src
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,66 +20,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install light gate dependencies
-        run: python -m pip install 'pytest>=8' 'hypothesis>=6'
-      - name: Diagnose exact R3 owner governance
+      - name: Enumerate exact R3 inventory roles
         working-directory: hybrid_mvp
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json
-          import sys
-          sys.path.insert(0, 'src')
+          import json, sys
           sys.path.insert(0, 'scripts')
-          from cemm_authoritative_hybrid import process_control as process_control_module
-          sys.modules['process_control'] = process_control_module
-          from validation_gate import run_validation
-          outcome = run_validation(
-              Path('.'), phase='R3', tier='owner', owner='effect-learning-response'
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+          root = Path('.').resolve()
+          path = root / 'governance' / 'test_inventory.json'
+          result = load_and_verify(
+              root, path, phase='R3', enforce_reviewed_counts=True,
+              expected_sha256=verify_document_authority_pin(root, path),
           )
-          for step in outcome.step_results:
-              print(json.dumps(step.to_dict(), sort_keys=True, separators=(',', ':')))
-          if outcome.disposition != 'passed':
-              raise SystemExit(2)
+          print('OWNER_GROUPS=' + json.dumps(
+              {k: list(v) for k, v in result.owner_node_ids.items()},
+              sort_keys=True, separators=(',', ':')
+          ))
+          print('PHASE_NODES=' + json.dumps(list(result.phase_node_ids), separators=(',', ':')))
+          print('ADMISSION_ONLY=' + json.dumps(list(result.admission_only_node_ids), separators=(',', ':')))
           PY
-      - name: Install full admission dependencies
-        run: |
-          python -m pip install 'numpy>=2' 'safetensors>=0.5'
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Verify predecessor and R3 formal gates
-        working-directory: hybrid_mvp
-        run: |
-          python scripts/update_replay_status.py --verify-chain
-          python scripts/validate_mvp.py --tier phase --phase R2
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-decision
-          python scripts/validate_mvp.py --tier phase --phase R3
-      - name: Admit R3 and append green ledger row
-        working-directory: hybrid_mvp
-        run: |
-          python scripts/validate_mvp.py --tier admission --phase R3 | tee /tmp/r3-admission.json
-          RUN_REF="$(python - <<'PY'
-          import json
-          v=json.load(open('/tmp/r3-admission.json', encoding='utf-8'))
-          if v.get('disposition') != 'passed' or not v.get('run_ref'):
-              raise SystemExit('R3 admission did not pass')
-          print(v['run_ref'])
-          PY
-          )"
-          python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --dry-run | tee /tmp/r3-status.json
-          RECORD_REF="$(python - <<'PY'
-          import json
-          v=json.load(open('/tmp/r3-status.json', encoding='utf-8'))
-          if not v.get('record_ref'):
-              raise SystemExit('dry-run did not produce record_ref')
-          print(v['record_ref'])
-          PY
-          )"
-          python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --expect-record-ref "$RECORD_REF" --append
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add artifacts/validation/runs governance/replay_status.jsonl
-          git diff --cached --check
-          git commit -m 'chore(r3): record fresh governed admission'
-          git push origin HEAD:codex/r3-r4-closeout-learning
-          python scripts/update_replay_status.py --verify-chain
