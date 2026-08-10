@@ -4753,6 +4753,7 @@ class _RunContext:
         self.inventory: object | None = None
         self.inventory_selector: InventorySelector | None = None
         self.status_records: tuple[dict[str, object], ...] | None = None
+        self.effective_status: dict[str, str] | None = None
         self.invalidation_records: tuple[dict[str, object], ...] | None = None
         self.pre_admission_status_head_ref: str | None = None
         self._linked_authority: object | None = None
@@ -4781,7 +4782,7 @@ class _RunContext:
                 self.root / "governance" / "replay_status.jsonl",
                 source_reader=self._read_bytes,
             )
-            governance.effective_replay_status(status)
+            effective_status = governance.effective_replay_status(status)
             invalidations = governance.read_hash_chain(
                 self.root / "governance" / "receipt_invalidations.jsonl",
                 source_reader=self._read_bytes,
@@ -4812,6 +4813,7 @@ class _RunContext:
         if not status:
             raise GateConfigError("replay status ledger is empty")
         self.status_records = status
+        self.effective_status = effective_status
         self.invalidation_records = invalidations
         self.pre_admission_status_head_ref = str(status[-1]["record_ref"])
         self.inventory = inventory
@@ -5196,6 +5198,22 @@ class _RunContext:
             raise GateConfigError(
                 "R4 admission requires externally supplied CEMM_R4_REVIEW_VERIFIER and CEMM_R4_REVIEW_VERIFIER_SHA256"
             )
+        status_records = self.status_records
+        effective_status = self.effective_status
+        if status_records is None or effective_status is None:
+            raise GateConfigError("R4 artifact review requires authenticated replay governance")
+        if effective_status.get("R3") != "green":
+            raise GateConfigError("R4 artifact review requires an effective green R3 predecessor")
+        r3_records = tuple(row for row in status_records if row.get("phase") == "R3")
+        if not r3_records or r3_records[-1].get("status") != "green":
+            raise GateConfigError("R4 artifact review cannot resolve the governed R3 source")
+        admitted_r3_source = r3_records[-1].get("source_base")
+        if (
+            type(admitted_r3_source) is not str
+            or re.fullmatch(r"[0-9a-f]{40}", admitted_r3_source) is None
+        ):
+            raise GateConfigError("governed R3 source revision is invalid")
+
         started = time.monotonic_ns()
         verify = _runtime_owner_symbol(
             self.root, "r4_admission", "verify_r4_admission"
@@ -5203,7 +5221,7 @@ class _RunContext:
         try:
             report = verify(
                 self.root,
-                expected_source_revision=self.source_ref,
+                expected_source_revision=admitted_r3_source,
                 expected_authority_generation=authority.generation,
                 verifier_spec=verifier_spec,
                 verifier_sha256=verifier_sha256,
