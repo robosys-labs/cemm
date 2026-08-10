@@ -1,0 +1,55 @@
+name: R3 simulate probe
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r3-simulate-probe.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'numpy>=2' 'safetensors>=0.5' 'torch>=2' --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Probe real runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, tempfile
+          from cemm_authoritative_hybrid.bootstrap import load_runtime
+          phrases = (
+              'If the lamp power is set to on, will it be on?',
+              'If the lamp power is set to on, the lamp power is on.',
+              'Suppose the lamp power is on.',
+              'Imagine the lamp power is on.',
+              'If Alice likes Bob, Alice likes Bob.',
+          )
+          for i, text in enumerate(phrases):
+              runtime = load_runtime(Path.cwd(), profile='development', store_path=Path(tempfile.gettempdir()) / f'r3-probe-{i}.db')
+              try:
+                  result = runtime.process(f'probe:{i}', text, trace=True)
+                  print(json.dumps({
+                      'text': text,
+                      'status': result.status.value,
+                      'orientation_mode': None if result.orientation is None else result.orientation.mode.value,
+                      'proposal_status': None if result.proposal is None else result.proposal.status,
+                      'proposal_abstention': None if result.proposal is None else result.proposal.abstention_code,
+                      'candidate_count': 0 if result.proposal is None else len(result.proposal.candidates),
+                      'verification_status': None if result.verification is None else result.verification.status,
+                      'selected': bool(result.verification and result.verification.selected_meaning),
+                      'evaluation': result.evaluation is not None,
+                      'effect': result.effect_receipt is not None,
+                  }, sort_keys=True))
+              finally:
+                  runtime.stores.close()
+          PY
