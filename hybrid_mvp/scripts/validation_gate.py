@@ -665,14 +665,19 @@ def _safe_relative_path(value: object, context: str, *, directory: bool | None =
 
 
 def _validate_root_path(root: Path, value: str, *, context: str) -> None:
+    """Validate path safety without requiring future-phase material to exist.
+
+    GateGraph loading authenticates the complete reviewed graph, including steps
+    owned by phases that may not yet be built.  Existence is therefore enforced
+    only when a selected step expands its declared inputs.  Here we retain the
+    global invariants that are phase-independent: repository containment and no
+    symlink traversal through any existing path component.
+    """
     candidate = root.joinpath(*PurePosixPath(value.rstrip("/")).parts)
     try:
-        resolved = candidate.resolve(strict=True)
-    except OSError as exc:
-        raise GateConfigError(f"{context} does not exist: {value}") from exc
-    try:
+        resolved = candidate.resolve(strict=False)
         resolved.relative_to(root)
-    except ValueError as exc:
+    except (OSError, ValueError) as exc:
         raise GateConfigError(f"{context} escapes the Hybrid MVP root") from exc
     current = root
     for part in PurePosixPath(value.rstrip("/")).parts:
