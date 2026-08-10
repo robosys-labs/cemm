@@ -1,0 +1,140 @@
+name: R3-R4 predecessor repair v2
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths:
+      - .github/workflows/r3-r4-predecessor-repair-v2.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install governed test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Apply asserted predecessor repair
+        run: |
+          set -euo pipefail
+          python .github/r3_r4_predecessor_repair.py
+
+      - name: Verify repaired source and governed selectors
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/test_r3_r4_predecessor_regressions.py
+          python scripts/verify_r3_r4_test_metadata.py
+          python scripts/check_test_inventory.py --phase G0 --source-only
+          python scripts/check_test_inventory.py --phase R3 --source-only
+          python scripts/check_test_inventory.py --phase R4 --source-only
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          config = json.loads(Path('configs/validation_gates.json').read_text(encoding='utf-8'))
+          groups = (
+              ('r3_situation_context_owner_tests', config['steps']['r3_situation_context_owner_tests']['exact_nodes']),
+              ('r3_phase_tests', config['steps']['r3_phase_tests']['exact_nodes']),
+          )
+          for name, nodes in groups:
+              if not nodes:
+                  raise SystemExit(f'{name} has no exact nodes')
+              completed = subprocess.run([sys.executable, '-m', 'pytest', '-q', *nodes], check=False)
+              if completed.returncode != 0:
+                  raise SystemExit(f'{name} failed with exit {completed.returncode}')
+          PY
+          python -m pytest -q \
+            tests/test_r4_closeout_regressions.py \
+            tests/test_r4_assertion_compiler.py \
+            tests/test_r4_expansion_and_review.py \
+            tests/test_r4_mutations_and_partitions.py \
+            tests/test_r4_sufficiency.py \
+            tests/test_r4_structure.py
+          python -m py_compile \
+            src/cemm_authoritative_hybrid/proposal_context.py \
+            src/cemm_authoritative_hybrid/runtime.py \
+            src/cemm_authoritative_hybrid/cycle.py \
+            tests/test_r4_authentic_episodes.py
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+
+      - name: Commit verified repair
+        run: |
+          set -euo pipefail
+          rm -f .github/r3_r4_predecessor_repair.py
+          rm -f .github/workflows/r3-r4-predecessor-repair.yml
+          rm -f .github/workflows/r3-r4-predecessor-repair-v2.yml
+          git add -A
+          python - <<'PY'
+          import subprocess
+
+          changed = set(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
+          allowed = {
+              '.github/r3_r4_predecessor_repair.py',
+              '.github/workflows/r3-r4-predecessor-repair.yml',
+              '.github/workflows/r3-r4-predecessor-repair-v2.yml',
+              'hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json',
+              'hybrid_mvp/configs/validation_gates.json',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/proposal_context.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py',
+              'hybrid_mvp/tests/test_r4_authentic_episodes.py',
+          }
+          unexpected = changed - allowed
+          required = {
+              'hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/proposal_context.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py',
+              'hybrid_mvp/configs/validation_gates.json',
+              'hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json',
+          }
+          if unexpected:
+              raise SystemExit(f'unexpected predecessor-repair diff: {sorted(unexpected)!r}')
+          if not required.issubset(changed):
+              raise SystemExit(f'predecessor repair omitted required changes: {sorted(required - changed)!r}')
+          print('verified changed paths:', *sorted(changed), sep='\n')
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r3): restore public semantic path exposed by R4'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+
+      - name: Dispatch fresh formal R3 admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/r3-postverify-close-v2.yml/dispatches" \
+            -f ref='codex/r3-r4-closeout-learning'
