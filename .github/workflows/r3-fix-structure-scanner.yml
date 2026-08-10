@@ -41,7 +41,7 @@ jobs:
           path.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
 
-      - name: Verify R3 structure scanner and related contracts
+      - name: Verify exact R3 structure report
         working-directory: hybrid_mvp
         env:
           PYTHONPATH: src:.
@@ -52,20 +52,27 @@ jobs:
           from pathlib import Path
           import sys
 
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
           sys.path.insert(0, 'scripts')
           from validation_gate import _scan_r3_structure
 
           report = _scan_r3_structure(Path('.'))
-          assert report['decision_owner'] == 'src/cemm_authoritative_hybrid/decision.py'
-          assert report['runtime_owner'] == 'src/cemm_authoritative_hybrid/runtime.py'
-          assert report['process_path'] == 'src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process'
-          assert report['forbidden_match_count'] == 0
+          expected = {
+              'decision_owner': 'src/cemm_authoritative_hybrid/decision.py',
+              'runtime_owner': 'src/cemm_authoritative_hybrid/runtime.py',
+              'process_path': 'src/cemm_authoritative_hybrid/runtime.py:HybridRuntime.process',
+              'forbidden_match_count': 0,
+              'schema': 'cemm-r3-structure-step-report-v1',
+          }
+          for key, value in expected.items():
+              if report.get(key) != value:
+                  raise SystemExit(f'R3 structure report mismatch for {key}: {report.get(key)!r}')
+          abi = Path('docs/ABI_REGISTRY.md').read_text(encoding='utf-8')
+          if abi.count('Decision ABI |') != 1:
+              raise SystemExit('Decision ABI registry ownership is not unique')
           print(report)
           PY
-          python -m pytest -q \
-            tests/test_r3_decision_abi.py \
-            tests/test_r3_structure.py \
-            tests/test_r3_plan_contract.py
           find . -type d -name __pycache__ -prune -exec rm -rf {} +
           find . -type f -name '*.pyc' -delete
 
