@@ -55,9 +55,9 @@ jobs:
       - name: Generate deterministic post-VERIFY evidence
         working-directory: hybrid_mvp
         run: |
-          rm -f /tmp/r3-canary-*.sqlite3 /tmp/R3_ACTIVATION_CANARIES.recheck.json
+          rm -rf /tmp/r3-canary-*.sqlite3 /tmp/R3_ACTIVATION_CANARIES.recheck.json
           python scripts/run_r3_canaries.py --root . --store /tmp/r3-canary --output artifacts/validation/R3_ACTIVATION_CANARIES.json
-          rm -f /tmp/r3-canary-*.sqlite3
+          rm -rf /tmp/r3-canary-*.sqlite3
           python scripts/run_r3_canaries.py --root . --store /tmp/r3-canary --output /tmp/R3_ACTIVATION_CANARIES.recheck.json
           cmp artifacts/validation/R3_ACTIVATION_CANARIES.json /tmp/R3_ACTIVATION_CANARIES.recheck.json
           git diff --check
