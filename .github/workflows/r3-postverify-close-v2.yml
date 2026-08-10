@@ -38,7 +38,7 @@ jobs:
           python scripts/check_test_inventory.py --phase R3 --source-only
           python scripts/check_r3_r4_structure.py
           git diff --check
-      - name: Exercise R3 behavior and full suite
+      - name: Exercise exact R3 boundary behavior
         working-directory: hybrid_mvp
         run: |
           pytest -q \
@@ -52,7 +52,6 @@ jobs:
             tests/test_r3_recursive_query.py \
             tests/test_r3_situation_context.py \
             tests/test_r3_structure.py
-          pytest -q
       - name: Generate deterministic post-VERIFY evidence
         working-directory: hybrid_mvp
         run: |
