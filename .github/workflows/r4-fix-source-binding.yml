@@ -1,0 +1,185 @@
+name: R4 repair admitted-R3 source binding
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r4-fix-source-binding.yml]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Bind R4 evidence to governed R3 source
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          path = Path('scripts/validation_gate.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''        self.status_records: tuple[dict[str, object], ...] | None = None
+        self.invalidation_records: tuple[dict[str, object], ...] | None = None
+'''
+          new = '''        self.status_records: tuple[dict[str, object], ...] | None = None
+        self.effective_status: dict[str, str] | None = None
+        self.invalidation_records: tuple[dict[str, object], ...] | None = None
+'''
+          if text.count(old) != 1:
+              raise SystemExit('unexpected RunContext status field layout')
+          text = text.replace(old, new, 1)
+
+          old = '''            status = governance.read_hash_chain(
+                self.root / "governance" / "replay_status.jsonl",
+                source_reader=self._read_bytes,
+            )
+            governance.effective_replay_status(status)
+'''
+          new = '''            status = governance.read_hash_chain(
+                self.root / "governance" / "replay_status.jsonl",
+                source_reader=self._read_bytes,
+            )
+            effective_status = governance.effective_replay_status(status)
+'''
+          if text.count(old) != 1:
+              raise SystemExit('unexpected governance effective-status call')
+          text = text.replace(old, new, 1)
+
+          old = '''        self.status_records = status
+        self.invalidation_records = invalidations
+'''
+          new = '''        self.status_records = status
+        self.effective_status = effective_status
+        self.invalidation_records = invalidations
+'''
+          if text.count(old) != 1:
+              raise SystemExit('unexpected governance status assignment')
+          text = text.replace(old, new, 1)
+
+          old = '''        started = time.monotonic_ns()
+        verify = _runtime_owner_symbol(
+            self.root, "r4_admission", "verify_r4_admission"
+        )
+        try:
+            report = verify(
+                self.root,
+                expected_source_revision=self.source_ref,
+                expected_authority_generation=authority.generation,
+                verifier_spec=verifier_spec,
+                verifier_sha256=verifier_sha256,
+            )
+'''
+          new = '''        status_records = self.status_records
+        effective_status = self.effective_status
+        if status_records is None or effective_status is None:
+            raise GateConfigError("R4 artifact review requires authenticated replay governance")
+        if effective_status.get("R3") != "green":
+            raise GateConfigError("R4 artifact review requires an effective green R3 predecessor")
+        r3_records = tuple(row for row in status_records if row.get("phase") == "R3")
+        if not r3_records or r3_records[-1].get("status") != "green":
+            raise GateConfigError("R4 artifact review cannot resolve the governed R3 source")
+        admitted_r3_source = r3_records[-1].get("source_base")
+        if (
+            type(admitted_r3_source) is not str
+            or re.fullmatch(r"[0-9a-f]{40}", admitted_r3_source) is None
+        ):
+            raise GateConfigError("governed R3 source revision is invalid")
+
+        started = time.monotonic_ns()
+        verify = _runtime_owner_symbol(
+            self.root, "r4_admission", "verify_r4_admission"
+        )
+        try:
+            report = verify(
+                self.root,
+                expected_source_revision=admitted_r3_source,
+                expected_authority_generation=authority.generation,
+                verifier_spec=verifier_spec,
+                verifier_sha256=verifier_sha256,
+            )
+'''
+          if text.count(old) != 1:
+              raise SystemExit('unexpected R4 source binding block')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          config_path = Path('configs/validation_gates.json')
+          config = json.loads(config_path.read_text(encoding='utf-8'))
+          step = config['steps']['r4_artifact_review']
+          if step.get('depends_on') != ['sqlite_activation']:
+              raise SystemExit(f'unexpected R4 artifact dependencies: {step.get("depends_on")!r}')
+          step['depends_on'] = ['governance', 'sqlite_activation']
+          config_path.write_text(
+              json.dumps(config, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n',
+              encoding='utf-8',
+          )
+          PY
+      - name: Verify source-binding invariant
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import ast, json, re
+
+          source = Path('scripts/validation_gate.py').read_text(encoding='utf-8')
+          ast.parse(source)
+          block = source[source.index('    def run_r4_artifact_review'):source.index('    def run_compile', source.index('    def run_r4_artifact_review'))]
+          if 'expected_source_revision=self.source_ref' in block:
+              raise SystemExit('R4 still binds build receipt to the artifact-bearing commit')
+          required = [
+              'effective_status.get("R3") != "green"',
+              'r3_records[-1].get("source_base")',
+              'expected_source_revision=admitted_r3_source',
+          ]
+          if any(token not in block for token in required):
+              raise SystemExit('R4 governed predecessor binding is incomplete')
+          ledger = [json.loads(line) for line in Path('governance/replay_status.jsonl').read_text(encoding='utf-8').splitlines() if line]
+          r3 = [row for row in ledger if row.get('phase') == 'R3'][-1]
+          if r3.get('status') != 'green' or not re.fullmatch(r'[0-9a-f]{40}', str(r3.get('source_base'))):
+              raise SystemExit('current branch does not expose a governed green R3 source')
+          cfg = json.loads(Path('configs/validation_gates.json').read_text(encoding='utf-8'))
+          deps = cfg['steps']['r4_artifact_review']['depends_on']
+          if deps != ['governance', 'sqlite_activation']:
+              raise SystemExit(f'R4 artifact review does not depend on governance: {deps!r}')
+          print('R4 will bind BUILD_RECEIPT to admitted R3 source', r3['source_base'])
+          PY
+          python -m py_compile scripts/validation_gate.py
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+      - name: Commit correction
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/r4-fix-source-binding.yml
+          git add -A
+          python - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          expected = {
+              '.github/workflows/r4-fix-source-binding.yml',
+              'hybrid_mvp/configs/validation_gates.json',
+              'hybrid_mvp/scripts/validation_gate.py',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected R4 source-binding diff: {sorted(changed)!r}')
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r4): bind corpus to governed admitted R3 source'
+          git push origin HEAD:codex/r3-r4-closeout-learning
