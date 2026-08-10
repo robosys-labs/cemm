@@ -1,4 +1,4 @@
-name: R3 payload diagnostic
+name: R3 verified closeout bootstrap
 
 on:
   push:
@@ -7,33 +7,182 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
-  capture:
+  bootstrap:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/r3-r4-closeout-learning
-      - name: Capture exact staged payload bytes
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Repair transport bytes and verify exact R3 payload
         run: |
           set -euo pipefail
-          cat .r3-closeout/payload.* > /tmp/r3-closeout.b64
           python - <<'PY'
-          import base64, hashlib
-          from pathlib import Path
-          encoded = Path('/tmp/r3-closeout.b64').read_bytes()
-          archive = base64.b64decode(encoded, validate=False)
+          from __future__ import annotations
+
+          import base64
+          import hashlib
+          import io
+          from pathlib import Path, PurePosixPath
+          import tarfile
+
+          chunks = tuple(Path('.r3-closeout') / f'payload.{index:02d}' for index in range(11))
+          if any(not path.is_file() for path in chunks):
+              raise SystemExit('R3 closeout payload chunk set is incomplete')
+          encoded = bytearray(b''.join(path.read_bytes() for path in chunks))
+          expected_remote_sha = 'd3ab391d74b14de05f23ccde571bfa7fd0da54ddcd29afed0ac826bfa7b94cca'
+          remote_sha = hashlib.sha256(encoded).hexdigest()
+          if len(encoded) != 83513 or remote_sha != expected_remote_sha:
+              raise SystemExit(
+                  f'unexpected staged transport state: bytes={len(encoded)} sha256={remote_sha}'
+              )
+
+          repairs = ((3783, ord('o'), ord('e')), (66541, ord('a'), ord('u')))
+          for offset, observed, replacement in repairs:
+              if encoded[offset] != observed:
+                  raise SystemExit(
+                      f'R3 transport repair precondition failed at {offset}: '
+                      f'expected={chr(observed)!r} actual={chr(encoded[offset])!r}'
+                  )
+              encoded[offset] = replacement
+          if encoded[72569] != ord('O'):
+              raise SystemExit(
+                  f'R3 transport deletion precondition failed at 72569: actual={chr(encoded[72569])!r}'
+              )
+          del encoded[72569]
+
+          expected_encoded_sha = 'b96b79f858bb37b5fd75b4656c8a8e7da8cc83d0757c04d7a73f273d5271239e'
+          repaired_sha = hashlib.sha256(encoded).hexdigest()
+          if len(encoded) != 83512 or repaired_sha != expected_encoded_sha:
+              raise SystemExit(
+                  f'repaired R3 transport mismatch: bytes={len(encoded)} sha256={repaired_sha}'
+              )
+
+          archive = base64.b64decode(encoded, validate=True)
+          expected_archive_sha = '83114ce7554638abc0171a2f0adae026be8a74af4e89a74555f12fbf3a9144bb'
+          archive_sha = hashlib.sha256(archive).hexdigest()
+          if len(archive) != 62632 or archive_sha != expected_archive_sha:
+              raise SystemExit(
+                  f'R3 closeout archive mismatch: bytes={len(archive)} sha256={archive_sha}'
+              )
+          Path('/tmp/r3-closeout.repaired.b64').write_bytes(encoded)
           Path('/tmp/r3-closeout.tar.gz').write_bytes(archive)
-          print('encoded_bytes', len(encoded))
-          print('archive_bytes', len(archive))
-          print('archive_sha256', hashlib.sha256(archive).hexdigest())
+
+          allowed = {
+              'src/cemm_authoritative_hybrid/affordances.py',
+              'src/cemm_authoritative_hybrid/cycle.py',
+              'src/cemm_authoritative_hybrid/dialogue.py',
+              'src/cemm_authoritative_hybrid/persistence.py',
+              'scripts/audit_r3_r4_legacy_tests.py',
+              'scripts/finalize_r3_closeout_tests.py',
+              'tests/r3_successor_contracts.py',
+              'tests/test_r3_closeout_successors.py',
+          }
+          with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as bundle:
+              members = bundle.getmembers()
+              names = [member.name for member in members]
+              if len(names) != len(set(names)) or set(names) != allowed:
+                  raise SystemExit(
+                      f'R3 closeout archive member mismatch: actual={sorted(names)!r}'
+                  )
+              for member in members:
+                  path = PurePosixPath(member.name)
+                  if path.is_absolute() or '..' in path.parts or not member.isfile():
+                      raise SystemExit(f'unsafe R3 closeout archive member: {member.name!r}')
+              bundle.extractall(Path('hybrid_mvp'), members=members, filter='data')
+          print(f'Applied R3 payload sha256:{archive_sha}')
           PY
-      - uses: actions/upload-artifact@v4
+
+      - name: Validate and commit behavioral hard cut
+        run: |
+          set -euo pipefail
+          rm -f \
+            hybrid_mvp/scripts/migrate_r3_legacy_tests.py \
+            hybrid_mvp/scripts/finish_r3_legacy_migration.py \
+            hybrid_mvp/scripts/finalize_r3_test_support.py
+          rm -rf .r3-closeout
+          rm -f .github/workflows/r3-payload-diagnostic.yml
+
+          (
+            cd hybrid_mvp
+            export PYTHONPATH=src:.
+            export PYTHONDONTWRITEBYTECODE=1
+            python scripts/audit_r3_r4_legacy_tests.py --strict --output /tmp/r3-active-legacy-audit.json
+            python scripts/check_test_inventory.py --phase R1 --source-only > /tmp/r1-inventory.json
+            python scripts/check_test_inventory.py --phase R2 --source-only > /tmp/r2-inventory.json
+            python scripts/check_test_inventory.py --phase R3 --source-only > /tmp/r3-inventory.json
+            python scripts/verify_r3_r4_test_metadata.py
+            python scripts/check_r3_r4_structure.py
+            python -m compileall -q src scripts tests
+            find . -type d -name __pycache__ -prune -exec rm -rf {} +
+            find . -type f -name '*.pyc' -delete
+          )
+
+          git add -A
+          python - <<'PY'
+          from __future__ import annotations
+
+          import subprocess
+
+          changed = set(
+              subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines()
+          )
+          expected = {
+              '.github/workflows/r3-payload-diagnostic.yml',
+              *(f'.r3-closeout/payload.{index:02d}' for index in range(11)),
+              'hybrid_mvp/src/cemm_authoritative_hybrid/affordances.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/dialogue.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/persistence.py',
+              'hybrid_mvp/scripts/audit_r3_r4_legacy_tests.py',
+              'hybrid_mvp/scripts/finalize_r3_closeout_tests.py',
+              'hybrid_mvp/tests/r3_successor_contracts.py',
+              'hybrid_mvp/tests/test_r3_closeout_successors.py',
+              'hybrid_mvp/scripts/migrate_r3_legacy_tests.py',
+              'hybrid_mvp/scripts/finish_r3_legacy_migration.py',
+              'hybrid_mvp/scripts/finalize_r3_test_support.py',
+          }
+          if changed != expected:
+              raise SystemExit(
+                  f'R3 bootstrap staged-path mismatch: expected={sorted(expected)!r} actual={sorted(changed)!r}'
+              )
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r3): complete behavioral hard cut'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+          test -z "$(git status --porcelain)"
+
+      - name: Dispatch formal R3 admission on committed source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api \
+            --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/r3-postverify-close-v2.yml/dispatches" \
+            -f ref='codex/r3-r4-closeout-learning'
+
+      - name: Upload bootstrap diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          name: r3-payload-diagnostic-${{ github.run_id }}
+          name: r3-bootstrap-failure-${{ github.run_id }}
           retention-days: 1
+          if-no-files-found: warn
           path: |
-            /tmp/r3-closeout.b64
+            /tmp/r3-closeout.repaired.b64
             /tmp/r3-closeout.tar.gz
+            /tmp/r3-active-legacy-audit.json
+            /tmp/r*-inventory.json
