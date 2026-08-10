@@ -146,19 +146,33 @@ jobs:
           if not r2_green:
               raise SystemExit('no governed green R2 record exists')
           row = max(r2_green, key=lambda item: int(item['sequence']))
-          run_ref = row.get('run_ref')
+          run_ref = row.get('admission_run_ref')
+          gate_ref = row.get('admission_gate_result_ref')
+          source_ref = row.get('source_base')
           if type(run_ref) is not str or not run_ref.startswith('run:'):
-              raise SystemExit(f'invalid governed R2 run ref: {run_ref!r}')
+              raise SystemExit(f'invalid governed R2 admission run ref: {run_ref!r}')
+          if type(gate_ref) is not str or not gate_ref.startswith('gate_result:'):
+              raise SystemExit(f'invalid governed R2 admission gate ref: {gate_ref!r}')
+          if type(source_ref) is not str or len(source_ref) != 40:
+              raise SystemExit(f'invalid governed R2 source base: {source_ref!r}')
           receipt_path = root / 'artifacts' / 'validation' / 'runs' / f"{run_ref.split(':', 1)[1]}.json"
           receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
           if receipt.get('phase') != 'R2' or receipt.get('tier') != 'admission':
               raise SystemExit('governed R2 receipt is not an R2 admission receipt')
-          if receipt.get('overall_disposition') != 'passed':
-              raise SystemExit('governed R2 receipt is not passed')
-          source_ref = receipt.get('source_ref')
-          if type(source_ref) is not str or len(source_ref) != 40:
-              raise SystemExit(f'invalid governed R2 source ref: {source_ref!r}')
+          if receipt.get('run_ref') != run_ref:
+              raise SystemExit('governed R2 ledger/receipt run binding mismatch')
+          if receipt.get('gate_result_ref') != gate_ref:
+              raise SystemExit('governed R2 ledger/receipt gate binding mismatch')
+          if receipt.get('source_ref') != source_ref:
+              raise SystemExit('governed R2 ledger/receipt source binding mismatch')
+          steps = receipt.get('step_results')
+          if not isinstance(steps, list) or not steps or any(
+              not isinstance(step, dict) or step.get('disposition') != 'passed'
+              for step in steps
+          ):
+              raise SystemExit('governed R2 admission receipt is not fully passed')
           print(f'R2_RUN_REF={shlex.quote(run_ref)}')
+          print(f'R2_GATE_REF={shlex.quote(gate_ref)}')
           print(f'R2_SOURCE_REF={shlex.quote(source_ref)}')
           PY
           source /tmp/r2-baseline.env
@@ -171,15 +185,19 @@ jobs:
             git worktree remove --force /tmp/cemm-r2-replay >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
+          test "$(git -C /tmp/cemm-r2-replay rev-parse HEAD)" = "$R2_SOURCE_REF"
           (
             cd /tmp/cemm-r2-replay/hybrid_mvp
             export PYTHONPATH=src:.
             export PYTHONDONTWRITEBYTECODE=1
+            export EXPECTED_R2_SOURCE_REF="$R2_SOURCE_REF"
             python - <<'PY'
           from __future__ import annotations
 
           import json
+          import os
           from pathlib import Path
+          import subprocess
           import sys
 
           sys.path.insert(0, 'src')
@@ -189,6 +207,14 @@ jobs:
           from validation_gate import run_validation
 
           root = Path('.').resolve()
+          expected_source = os.environ['EXPECTED_R2_SOURCE_REF']
+          actual_source = subprocess.check_output(
+              ['git', 'rev-parse', 'HEAD'], cwd=root, text=True
+          ).strip()
+          if actual_source != expected_source:
+              raise SystemExit(
+                  f'R2 historical worktree source mismatch: expected={expected_source} actual={actual_source}'
+              )
           outcome = run_validation(root, phase='R2', tier='admission')
           print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
           if outcome.disposition != 'passed' or not outcome.receipt_path:
@@ -206,8 +232,9 @@ jobs:
                   f'historical R2 admission replay failed: '
                   f'{outcome.disposition} {outcome.error_code}'
               )
-          if outcome.source_ref != Path('.').resolve().parents[0].joinpath('.').resolve().name:
-              pass
+          replay_receipt = json.loads((root / outcome.receipt_path).read_text(encoding='utf-8'))
+          if replay_receipt.get('source_ref') != expected_source:
+              raise SystemExit('historical R2 replay receipt is not bound to the admitted source')
           PY
           )
           cleanup
