@@ -1,0 +1,11 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+path = Path(__file__).resolve().parents[1] / "hybrid_mvp" / "scripts" / "validation_gate.py"
+text = path.read_text(encoding="utf-8")
+old = '''def _validate_root_path(root: Path, value: str, *, context: str) -> None:\n    candidate = root.joinpath(*PurePosixPath(value.rstrip("/")).parts)\n    try:\n        resolved = candidate.resolve(strict=True)\n    except OSError as exc:\n        raise GateConfigError(f"{context} does not exist: {value}") from exc\n    try:\n        resolved.relative_to(root)\n    except ValueError as exc:\n        raise GateConfigError(f"{context} escapes the Hybrid MVP root") from exc\n    current = root\n    for part in PurePosixPath(value.rstrip("/")).parts:\n        current = current / part\n        if current.is_symlink():\n            raise GateConfigError(f"{context} may not traverse a symlink: {value}")\n'''
+new = '''def _validate_root_path(root: Path, value: str, *, context: str) -> None:\n    \"\"\"Validate path safety without requiring future-phase material to exist.\n\n    GateGraph loading authenticates the complete reviewed graph, including steps\n    owned by phases that may not yet be built.  Existence is therefore enforced\n    only when a selected step expands its declared inputs.  Here we retain the\n    global invariants that are phase-independent: repository containment and no\n    symlink traversal through any existing path component.\n    \"\"\"\n    candidate = root.joinpath(*PurePosixPath(value.rstrip("/")).parts)\n    try:\n        resolved = candidate.resolve(strict=False)\n        resolved.relative_to(root)\n    except (OSError, ValueError) as exc:\n        raise GateConfigError(f"{context} escapes the Hybrid MVP root") from exc\n    current = root\n    for part in PurePosixPath(value.rstrip("/")).parts:\n        current = current / part\n        if current.is_symlink():\n            raise GateConfigError(f"{context} may not traverse a symlink: {value}")\n'''
+if text.count(old) != 1:
+    raise SystemExit(f"phase-local path validation source differs from reviewed input: count={text.count(old)}")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
