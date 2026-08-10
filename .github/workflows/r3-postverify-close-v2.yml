@@ -22,42 +22,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Make gate input existence phase-local
-        run: |
-          python .github/r3_gate_path_patch.py
-          git diff --check
-      - name: Prove future-phase absence does not invalidate R2 graph selection
+      - name: Install light gate dependencies
+        run: python -m pip install 'pytest>=8' 'hypothesis>=6'
+      - name: Diagnose exact R3 owner governance
         working-directory: hybrid_mvp
         run: |
           python - <<'PY'
           from pathlib import Path
+          import json
           import sys
           sys.path.insert(0, 'src')
           sys.path.insert(0, 'scripts')
           from cemm_authoritative_hybrid import process_control as process_control_module
           sys.modules['process_control'] = process_control_module
-          from validation_gate import load_gate_graph
-          graph = load_gate_graph(Path('configs/validation_gates.json'))
-          r2_steps = graph.resolve_phase('R2', 'phase')
-          if 'r4_artifact_review' in r2_steps:
-              raise SystemExit('R2 phase unexpectedly selects R4 artifact review')
-          if 'r4_artifact_review' not in graph.steps:
-              raise SystemExit('reviewed R4 step disappeared from the global graph')
-          print('phase-local gate graph selection verified')
+          from validation_gate import run_validation
+          outcome = run_validation(
+              Path('.'), phase='R3', tier='owner', owner='effect-learning-response'
+          )
+          for step in outcome.step_results:
+              print(json.dumps(step.to_dict(), sort_keys=True, separators=(',', ':')))
+          if outcome.disposition != 'passed':
+              raise SystemExit(2)
           PY
-      - name: Commit control-plane boundary fix
+      - name: Install full admission dependencies
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hybrid_mvp/scripts/validation_gate.py
-          git diff --cached --check
-          git diff --cached --quiet && { echo 'no control-plane fix produced'; exit 1; } || true
-          git commit -m 'fix(validation): defer future-phase input existence checks'
-          git push origin HEAD:codex/r3-r4-closeout-learning
-          test -z "$(git status --porcelain --untracked-files=all)"
-      - name: Install validation dependencies
-        run: |
-          python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.5'
+          python -m pip install 'numpy>=2' 'safetensors>=0.5'
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Verify predecessor and R3 formal gates
         working-directory: hybrid_mvp
@@ -89,6 +78,8 @@ jobs:
           PY
           )"
           python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --expect-record-ref "$RECORD_REF" --append
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add artifacts/validation/runs governance/replay_status.jsonl
           git diff --cached --check
           git commit -m 'chore(r3): record fresh governed admission'
