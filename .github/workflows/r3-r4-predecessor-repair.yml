@@ -1,0 +1,496 @@
+name: R3 predecessor repairs exposed by R4
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r3-r4-predecessor-repair.yml]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Apply exact predecessor ABI repairs
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/cemm_authoritative_hybrid/proposal_context.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''        application_frames = self._application_frames(
+            designation_slots,
+            profiles_by_target,
+            predicate_targets,
+        )
+'''
+          new = '''        application_frames, event_signatures = self._application_frames(
+            designation_slots,
+            profiles_by_target,
+            predicate_targets,
+        )
+'''
+          if text.count(old) != 1:
+              raise SystemExit('application-frame call shape drifted')
+          text = text.replace(old, new, 1)
+
+          old = '''        designation_references = self._designation_references(
+            designation_slots,
+            profiles_by_target,
+            contribution_slots,
+        )
+        reference_slots = _bounded_unique_slots(
+            (*designation_references, *form_references),
+            self._config.max_orientation_alternatives,
+        )
+'''
+          new = '''        reference_contributions, designation_references = (
+            self._designation_reference_evidence(
+                designation_slots,
+                application_frames,
+                event_signatures,
+                contribution_slots,
+            )
+        )
+        contribution_slots = _bounded_unique_contributions(
+            (*reference_contributions, *contribution_slots),
+            self._config,
+        )
+        situated_references = self._situated_participant_references(
+            orientation,
+            application_frames,
+            event_signatures,
+            (*designation_references, *form_references),
+        )
+        reference_slots = _bounded_unique_slots(
+            (*designation_references, *form_references, *situated_references),
+            self._config.max_orientation_alternatives,
+        )
+'''
+          if text.count(old) != 1:
+              raise SystemExit('designation-reference build block drifted')
+          text = text.replace(old, new, 1)
+
+          start = text.index('    def _designation_references(')
+          end = text.index('\n    def _application_frames(', start)
+          old_section = text[start:end]
+          if 'profiles_by_target' not in old_section or 'kind in {"anchor", "reference"}' not in old_section:
+              raise SystemExit('designation-reference predecessor method drifted')
+          new_section = '''    def _designation_reference_evidence(
+        self,
+        designations: tuple[DesignationSlot, ...],
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+        existing_contributions: tuple[ContributionSlot, ...],
+    ) -> tuple[tuple[ContributionSlot, ...], tuple[ReferenceSlot, ...]]:
+        contributions: list[ContributionSlot] = []
+        references: list[ReferenceSlot] = []
+        for designation in designations:
+            if designation.target_kind not in {"entity", "participant"}:
+                continue
+            roles = self._compatible_reference_roles(
+                designation, frames, event_signatures
+            )
+            if not roles:
+                continue
+            existing_roles = tuple(
+                dict.fromkeys(
+                    role
+                    for row in existing_contributions
+                    if row.kind == "reference"
+                    and row.target_ref == designation.target_ref
+                    and row.source_unit_refs == designation.source_unit_refs
+                    for role in row.output_ports
+                )
+            )
+            if set(roles) <= set(existing_roles):
+                contribution = next(
+                    row
+                    for row in existing_contributions
+                    if row.kind == "reference"
+                    and row.target_ref == designation.target_ref
+                    and row.source_unit_refs == designation.source_unit_refs
+                )
+            else:
+                contribution = ContributionSlot.create(
+                    contribution_ref=stable_ref(
+                        "designation_reference_contribution",
+                        {
+                            "designation_slot_ref": designation.slot_ref,
+                            "target_ref": designation.target_ref,
+                            "target_kind": designation.target_kind,
+                            "source_unit_refs": list(designation.source_unit_refs),
+                            "compatible_roles": list(roles),
+                        },
+                    ),
+                    kind="reference",
+                    source_unit_refs=designation.source_unit_refs,
+                    target_ref=designation.target_ref,
+                    target_kind=designation.target_kind,
+                    input_ports=(),
+                    output_ports=roles,
+                    constraints=(("resolution_kind", "designation"),),
+                    provenance_refs=tuple(
+                        dict.fromkeys(
+                            (
+                                designation.slot_ref,
+                                designation.designation_fact_ref,
+                                *designation.provenance_refs,
+                            )
+                        )
+                    ),
+                )
+            reference = ReferenceSlot.create(
+                target_ref=designation.target_ref,
+                target_kind=designation.target_kind,
+                source_unit_refs=designation.source_unit_refs,
+                resolution_kind="designation",
+                compatible_roles=roles,
+                score_q=designation.score_q,
+                provenance_refs=(designation.slot_ref, contribution.slot_ref),
+            )
+            contributions.append(contribution)
+            references.append(reference)
+        return tuple(contributions), tuple(references)
+
+    def _compatible_reference_roles(
+        self,
+        designation: DesignationSlot,
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+    ) -> tuple[str, ...]:
+        generic = _reference_roles(designation.target_kind)
+        compatible: list[str] = []
+        for frame in frames:
+            legal_roles = (*frame.required_roles, *frame.optional_roles)
+            if frame.predicate_kind == "event_type":
+                signature = event_signatures.get(frame.predicate_target_ref)
+                if not isinstance(signature, EventSignature):
+                    continue
+                specs = {row.role: row for row in signature.roles}
+                for role in legal_roles:
+                    spec = specs.get(role)
+                    if spec is None or spec.proposition_valued:
+                        continue
+                    if not spec.filler_kinds or designation.target_kind in spec.filler_kinds:
+                        compatible.append(role)
+                continue
+            compatible.extend(role for role in legal_roles if role in generic)
+        return tuple(dict.fromkeys((*compatible, *generic)))
+
+    def _situated_participant_references(
+        self,
+        orientation: Orientation,
+        frames: tuple[ApplicationFrameSlot, ...],
+        event_signatures: Mapping[str, EventSignature],
+        explicit_references: tuple[ReferenceSlot, ...],
+    ) -> tuple[ReferenceSlot, ...]:
+        participant_refs = tuple(
+            ref
+            for ref in orientation.participants
+            if isinstance(self._authority.atoms.get(ref), AtomRecord)
+            and self._authority.atoms[ref].kind == "participant"
+        )
+        if not participant_refs:
+            return ()
+        speaker = (
+            orientation.participant_frame
+            if orientation.participant_frame in participant_refs
+            else participant_refs[0]
+        )
+        others = tuple(ref for ref in participant_refs if ref != speaker)
+        actor_roles = frozenset(
+            {"role:actor", "role:subject", "role:speaker", "role:source", "role:participant"}
+        )
+        addressed_roles = frozenset(
+            {"role:addressee", "role:target", "role:object", "role:recipient", "role:beneficiary"}
+        )
+        rows: list[ReferenceSlot] = []
+        for frame in frames:
+            if frame.predicate_kind != "event_type":
+                continue
+            signature = event_signatures.get(frame.predicate_target_ref)
+            if not isinstance(signature, EventSignature):
+                continue
+            specs = {row.role: row for row in signature.roles}
+            for role in frame.required_roles:
+                spec = specs.get(role)
+                if (
+                    spec is None
+                    or spec.proposition_valued
+                    or (spec.filler_kinds and "participant" not in spec.filler_kinds)
+                    or any(role in ref.compatible_roles for ref in explicit_references)
+                ):
+                    continue
+                target = (
+                    speaker
+                    if role in actor_roles
+                    else (others[0] if role in addressed_roles and others else None)
+                )
+                if target is None:
+                    continue
+                rows.append(
+                    ReferenceSlot.create(
+                        target_ref=target,
+                        target_kind="participant",
+                        source_unit_refs=(),
+                        resolution_kind="situated_participant",
+                        compatible_roles=(role,),
+                        score_q=1_000_000,
+                        provenance_refs=(orientation.orientation_ref, frame.slot_ref),
+                    )
+                )
+        return tuple(rows)
+'''
+          text = text[:start] + new_section + text[end:]
+
+          old = '    ) -> tuple[ApplicationFrameSlot, ...]:\n        frames: list[ApplicationFrameSlot] = []\n'
+          new = '    ) -> tuple[tuple[ApplicationFrameSlot, ...], Mapping[str, EventSignature]]:\n        frames: list[ApplicationFrameSlot] = []\n'
+          if text.count(old) != 1:
+              raise SystemExit('application-frame return contract drifted')
+          text = text.replace(old, new, 1)
+          old = '        return tuple(frames)\n\n    def _transition_slots(\n'
+          new = '''        return (
+            tuple(frames),
+            MappingProxyType(
+                {
+                    target: signature
+                    for target, signature in event_signature_by_target.items()
+                    if isinstance(signature, EventSignature)
+                }
+            ),
+        )
+
+    def _transition_slots(
+'''
+          if text.count(old) != 1:
+              raise SystemExit('application-frame return site drifted')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          runtime = Path('src/cemm_authoritative_hybrid/runtime.py')
+          text = runtime.read_text(encoding='utf-8')
+          old = '''        permissions = tuple(
+            row if type(row) is str else f"{row[0]}:{row[1]}:{row[2]}"
+            for row in self._authority.permissions
+        )
+'''
+          new = '''        permissions = _unique(
+            tuple(
+                row if type(row) is str else f"{row[0]}:{row[1]}:{row[2]}"
+                for row in self._authority.permissions
+            )
+        )
+'''
+          if text.count(old) != 1:
+              raise SystemExit('permission snapshot predecessor block drifted')
+          runtime.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          cycle = Path('src/cemm_authoritative_hybrid/cycle.py')
+          text = cycle.read_text(encoding='utf-8')
+          old = '''            fixed_dimensions = (
+                ("authority_generation", source.authority_generation, target.authority_generation),
+                ("session_revision", source.session_revision, target.session_revision),
+                ("episode_revision", source.episode_revision, target.episode_revision),
+                ("model_identity", source.model_identity, target.model_identity),
+            )
+'''
+          new = '''            fixed_dimensions = (
+                ("authority_generation", source.authority_generation, target.authority_generation),
+                ("episode_revision", source.episode_revision, target.episode_revision),
+                ("model_identity", source.model_identity, target.model_identity),
+            )
+'''
+          if text.count(old) != 1:
+              raise SystemExit('EFFECT fixed-dimension predecessor block drifted')
+          text = text.replace(old, new, 1)
+          old = '''            if (
+                target.world_revision < source.world_revision
+                or target.effect_revision < source.effect_revision
+            ):
+                raise ValueError("EFFECT revision changes must be monotonic")
+            if (
+                target != source
+                and self.disposition is not PhaseDisposition.COMMITTED
+            ):
+                raise ValueError("only EFFECT with COMMITTED may change a revision pin")
+            if self.disposition is PhaseDisposition.COMMITTED and target == source:
+'''
+          new = '''            if (
+                target.world_revision < source.world_revision
+                or target.session_revision < source.session_revision
+                or target.effect_revision < source.effect_revision
+            ):
+                raise ValueError("EFFECT revision changes must be monotonic")
+            if self.disposition is PhaseDisposition.NO_EFFECT:
+                if target.world_revision != source.world_revision:
+                    raise ValueError("EFFECT with NO_EFFECT may not change world revision")
+                if target.effect_revision <= source.effect_revision:
+                    raise ValueError("persisted NO_EFFECT must advance effect revision")
+            elif target != source and self.disposition is not PhaseDisposition.COMMITTED:
+                raise ValueError("only EFFECT with COMMITTED/NO_EFFECT may change a revision pin")
+            if self.disposition is PhaseDisposition.COMMITTED and target == source:
+'''
+          if text.count(old) != 1:
+              raise SystemExit('EFFECT monotonic predecessor block drifted')
+          cycle.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          r4_test = Path('tests/test_r4_authentic_episodes.py')
+          text = r4_test.read_text(encoding='utf-8')
+          old = '    expected = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "RESPOND")\n'
+          new = '    expected = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "REALIZE")\n'
+          if text.count(old) != 1:
+              raise SystemExit('R4 phase expectation predecessor text drifted')
+          r4_test.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Bind regressions into governed selectors and refresh evidence
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('configs/validation_gates.json')
+          config = json.loads(path.read_text(encoding='utf-8'))
+          owner = config['steps']['r3_situation_context_owner_tests']['exact_nodes']
+          owner_nodes = (
+              'tests/test_r3_r4_predecessor_regressions.py::test_designation_reference_slots_bind_exact_reference_contributions',
+              'tests/test_r3_r4_predecessor_regressions.py::test_event_frames_receive_only_missing_situated_participant_roles',
+              'tests/test_r3_r4_predecessor_regressions.py::test_orientation_permission_snapshot_is_set_like',
+          )
+          for node in owner_nodes:
+              if node not in owner:
+                  owner.append(node)
+          owner.sort()
+          phase = config['steps']['r3_phase_tests']['exact_nodes']
+          phase_node = 'tests/test_r3_r4_predecessor_regressions.py::test_public_greeting_completes_r3_and_persists_no_effect_without_world_mutation'
+          if phase_node not in phase:
+              phase.append(phase_node)
+          phase.sort()
+          for step_name in ('r3_situation_context_owner_tests', 'r3_phase_tests'):
+              inputs = config['steps'][step_name]['inputs']
+              test_file = 'tests/test_r3_r4_predecessor_regressions.py'
+              if test_file not in inputs:
+                  inputs.append(test_file)
+              inputs.sort()
+          path.write_text(json.dumps(config, sort_keys=True, separators=(',', ':')) + '\n', encoding='utf-8')
+          PY
+          python scripts/refresh_r3_r4_test_metadata.py
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+          from validation_gate import _expected_g0_inventory_receipt, canonical_json_bytes
+
+          root = Path('.').resolve()
+          inventory_path = root / 'governance' / 'test_inventory.json'
+          inventory_sha = verify_document_authority_pin(root, inventory_path)
+          inventory = load_and_verify(
+              root,
+              inventory_path,
+              phase='G0',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          authority_raw = (root / 'docs' / 'DOCUMENT_AUTHORITY.json').read_bytes()
+          receipt = _expected_g0_inventory_receipt(
+              authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+              inventory_sha256=inventory_sha,
+              inventory=inventory,
+              selector=inventory,
+          )
+          (root / 'artifacts' / 'validation' / 'TEST_INVENTORY_RECEIPT.json').write_bytes(
+              canonical_json_bytes(receipt)
+          )
+          PY
+
+      - name: Validate predecessor repair before commit
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python -m pip install 'pytest==8.4.0'
+          python -m pytest -q \
+            tests/test_r3_r4_predecessor_regressions.py \
+            tests/test_proposal_context_abi1.py \
+            tests/test_proposal_context_builder.py \
+            tests/test_proposal_context_program_verifier_canary.py \
+            tests/test_bootstrap_proposer_abi2.py \
+            tests/test_r2_recursive_proposer.py \
+            tests/test_r2_recursive_compiler.py \
+            tests/test_r2_runtime_boundary.py \
+            tests/test_r3_effect_receipts.py \
+            tests/test_r3_public_cycle.py
+          python scripts/check_test_inventory.py --phase R3 --source-only
+          python scripts/check_test_inventory.py --phase R4 --source-only
+          python scripts/verify_r3_r4_test_metadata.py
+          python scripts/check_r3_r4_structure.py
+          python -m py_compile \
+            src/cemm_authoritative_hybrid/proposal_context.py \
+            src/cemm_authoritative_hybrid/runtime.py \
+            src/cemm_authoritative_hybrid/cycle.py
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+
+      - name: Commit validated predecessor repair
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/r3-r4-predecessor-repair.yml
+          git add -A
+          git diff --cached --check
+          python - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          expected = {
+              '.github/workflows/r3-r4-predecessor-repair.yml',
+              'hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json',
+              'hybrid_mvp/configs/validation_gates.json',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/proposal_context.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/runtime.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/cycle.py',
+              'hybrid_mvp/tests/test_r4_authentic_episodes.py',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected predecessor-repair diff: {sorted(changed)!r}')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(r3): repair public surface predecessor invariants'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+
+      - name: Dispatch fresh formal R3 admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/r3-postverify-close-v2.yml/dispatches" \
+            -f ref='codex/r3-r4-closeout-learning'
