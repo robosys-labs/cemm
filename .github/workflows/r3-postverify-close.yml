@@ -1,0 +1,131 @@
+name: R3 post-VERIFY close
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r3-postverify-close.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  close-r3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PYTHONPATH: hybrid_mvp/src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install validation dependencies
+        run: |
+          python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.5'
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Apply exact post-VERIFY R3 closure
+        run: python .github/r3_close_apply.py
+
+      - name: Refresh and verify governed R3 metadata
+        working-directory: hybrid_mvp
+        run: |
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/verify_r3_r4_test_metadata.py
+          python scripts/check_test_inventory.py --phase R3 --source-only
+          python scripts/check_r3_r4_structure.py
+          git diff --check
+
+      - name: Exercise R3-owned behavior
+        working-directory: hybrid_mvp
+        run: |
+          pytest -q \
+            tests/test_r3_form_mode_integration.py \
+            tests/test_r3_public_cycle.py \
+            tests/test_r3_mode_projection.py \
+            tests/test_r3_decision_abi.py \
+            tests/test_r3_effect_receipts.py \
+            tests/test_r3_learning_response.py \
+            tests/test_r3_learning_transaction.py \
+            tests/test_r3_recursive_query.py \
+            tests/test_r3_situation_context.py \
+            tests/test_r3_structure.py
+          pytest -q
+
+      - name: Generate deterministic R3 admission evidence
+        working-directory: hybrid_mvp
+        run: |
+          rm -f /tmp/r3-canary-*.sqlite3 /tmp/R3_ACTIVATION_CANARIES.recheck.json
+          python scripts/run_r3_canaries.py \
+            --root . --store /tmp/r3-canary \
+            --output artifacts/validation/R3_ACTIVATION_CANARIES.json
+          rm -f /tmp/r3-canary-*.sqlite3
+          python scripts/run_r3_canaries.py \
+            --root . --store /tmp/r3-canary \
+            --output /tmp/R3_ACTIVATION_CANARIES.recheck.json
+          cmp artifacts/validation/R3_ACTIVATION_CANARIES.json /tmp/R3_ACTIVATION_CANARIES.recheck.json
+          git diff --check
+
+      - name: Commit exact R3 closure source and evidence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            hybrid_mvp/scripts/validation_gate.py \
+            hybrid_mvp/scripts/run_r3_canaries.py \
+            hybrid_mvp/src/cemm_authoritative_hybrid/forms.py \
+            hybrid_mvp/src/cemm_authoritative_hybrid/mode.py \
+            hybrid_mvp/tests/test_r3_form_mode_integration.py \
+            hybrid_mvp/tests/test_r3_public_cycle.py \
+            hybrid_mvp/tests/test_r3_owner_structure.py \
+            hybrid_mvp/artifacts/validation/R3_ACTIVATION_CANARIES.json
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'no R3 closure changes produced'; exit 1; } || true
+          git commit -m 'fix(r3): admit exact post-verify cognition boundary'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Verify predecessor and formal R3 gates
+        working-directory: hybrid_mvp
+        run: |
+          python scripts/update_replay_status.py --verify-chain
+          python scripts/validate_mvp.py --tier phase --phase R2
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
+          python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-decision
+          python scripts/validate_mvp.py --tier phase --phase R3
+
+      - name: Admit R3 and append governed green status
+        working-directory: hybrid_mvp
+        run: |
+          python scripts/validate_mvp.py --tier admission --phase R3 | tee /tmp/r3-admission.json
+          RUN_REF="$(python - <<'PY'
+          import json
+          value=json.load(open('/tmp/r3-admission.json', encoding='utf-8'))
+          if value.get('disposition') != 'passed' or not value.get('run_ref'):
+              raise SystemExit('R3 admission did not pass')
+          print(value['run_ref'])
+          PY
+          )"
+          python scripts/update_replay_status.py \
+            --phase R3 --status green --run-ref "$RUN_REF" --dry-run \
+            | tee /tmp/r3-status-candidate.json
+          RECORD_REF="$(python - <<'PY'
+          import json
+          value=json.load(open('/tmp/r3-status-candidate.json', encoding='utf-8'))
+          record=value.get('record_ref')
+          if not record:
+              raise SystemExit('R3 status dry-run did not produce record_ref')
+          print(record)
+          PY
+          )"
+          python scripts/update_replay_status.py \
+            --phase R3 --status green --run-ref "$RUN_REF" \
+            --expect-record-ref "$RECORD_REF" --append
+          git add artifacts/validation/runs governance/replay_status.jsonl
+          git diff --cached --check
+          git commit -m 'chore(r3): record fresh governed admission'
+          git push origin HEAD:codex/r3-r4-closeout-learning
+          python scripts/update_replay_status.py --verify-chain
