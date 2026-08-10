@@ -1,0 +1,39 @@
+name: R3 payload diagnostic
+
+on:
+  push:
+    branches: [codex/r3-r4-closeout-learning]
+    paths: [.github/workflows/r3-payload-diagnostic.yml]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-r4-closeout-learning
+      - name: Capture exact staged payload bytes
+        run: |
+          set -euo pipefail
+          cat .r3-closeout/payload.* > /tmp/r3-closeout.b64
+          python - <<'PY'
+          import base64, hashlib
+          from pathlib import Path
+          encoded = Path('/tmp/r3-closeout.b64').read_bytes()
+          archive = base64.b64decode(encoded, validate=False)
+          Path('/tmp/r3-closeout.tar.gz').write_bytes(archive)
+          print('encoded_bytes', len(encoded))
+          print('archive_bytes', len(archive))
+          print('archive_sha256', hashlib.sha256(archive).hexdigest())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r3-payload-diagnostic-${{ github.run_id }}
+          retention-days: 1
+          path: |
+            /tmp/r3-closeout.b64
+            /tmp/r3-closeout.tar.gz
