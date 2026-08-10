@@ -4685,7 +4685,7 @@ def _scan_r3_structure(
                 forbidden.append(f"{relative}:forbidden-token:{token}")
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                if node.name == "DecisionEvaluator":
+                if node.name == "ExactDecisionEvaluator":
                     decision_owners.append(relative)
                 if node.name == "HybridRuntime":
                     runtime_owners.append(relative)
