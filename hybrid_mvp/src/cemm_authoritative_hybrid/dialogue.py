@@ -127,20 +127,128 @@ class ReferenceResolution:
 
 
 class ReferenceResolver:
-    def __init__(self, focus_store: FocusStore, authority: Any, *, margin_q: int = 300_000) -> None:
-        self._focus_store = focus_store; self._authority = authority; self._margin_q = exact_int(margin_q, "margin_q", maximum=1_000_000)
+    """Resolve references only from verified focus under explicit constraints.
 
-    def resolve(self, reference_ref: str, constraints: ReferenceConstraints, current_turn_ref: str) -> ReferenceResolution:
-        exact_text(reference_ref, "reference_ref"); exact_text(current_turn_ref, "current_turn_ref")
-        entries = [row for row in self._focus_store.recent_entries(constraints.recency or 512) if row.turn_ref != current_turn_ref]
-        candidates: list[tuple[str, int, str]] = []
+    Person and scope constraints are applied against structural focus metadata.
+    Number constraints are applied when the linked authority carries a reviewed
+    ``number`` metadata value for the candidate; absence of such metadata is
+    treated as unknown rather than as evidence for rejection. Candidate refs
+    are de-duplicated before ranking so repeated focus mentions cannot create
+    non-canonical alternative lists.
+    """
+
+    _EXPRESSION_KINDS = frozenset({"proposition", "content", "claim", "expression"})
+
+    def __init__(
+        self,
+        focus_store: FocusStore,
+        authority: Any,
+        *,
+        margin_q: int = 300_000,
+    ) -> None:
+        if type(focus_store) is not FocusStore:
+            raise TypeError("focus_store must be exact FocusStore")
+        self._focus_store = focus_store
+        self._authority = authority
+        self._margin_q = exact_int(margin_q, "margin_q", maximum=1_000_000)
+
+    @staticmethod
+    def _participant_matches(row: VerifiedSemanticFocus, person: str | None) -> bool:
+        if person is None or person == "third":
+            return True
+        if person == "first":
+            return row.participant_ref == "participant:user"
+        if person == "second":
+            return row.participant_ref == "participant:system"
+        return False
+
+    @staticmethod
+    def _scope_matches(row: VerifiedSemanticFocus, scope_ref: str | None) -> bool:
+        return scope_ref is None or row.session_ref == scope_ref
+
+    def _number_matches(self, ref: str, number: str | None) -> bool:
+        if number is None:
+            return True
+        atoms = getattr(self._authority, "atoms", None)
+        if not isinstance(atoms, Mapping):
+            return True
+        atom = atoms.get(ref)
+        metadata = getattr(atom, "metadata", None)
+        if not isinstance(metadata, Mapping):
+            return True
+        candidate_number = metadata.get("number")
+        if candidate_number is None:
+            return True
+        return candidate_number == number
+
+    @classmethod
+    def _refs_for_kind(
+        cls, row: VerifiedSemanticFocus, kind: str | None
+    ) -> tuple[str, ...]:
+        if kind in cls._EXPRESSION_KINDS:
+            return row.expression_refs
+        if kind == "entity":
+            return row.entity_refs
+        if kind == "event":
+            return row.event_refs
+        if kind is None:
+            return (*row.expression_refs, *row.entity_refs, *row.event_refs)
+        return ()
+
+    def resolve(
+        self,
+        reference_ref: str,
+        constraints: ReferenceConstraints,
+        current_turn_ref: str,
+    ) -> ReferenceResolution:
+        exact_text(reference_ref, "reference_ref")
+        exact_text(current_turn_ref, "current_turn_ref")
+        if type(constraints) is not ReferenceConstraints:
+            raise TypeError("constraints must be exact ReferenceConstraints")
+
+        entries = tuple(
+            row
+            for row in self._focus_store.recent_entries(constraints.recency or 512)
+            if row.turn_ref != current_turn_ref
+            and self._participant_matches(row, constraints.person)
+            and self._scope_matches(row, constraints.scope_ref)
+        )
+        # ref -> (score, proof_focus_ref). Repeated mentions retain the most
+        # recent proof only and never duplicate a canonical alternative.
+        candidates: dict[str, tuple[int, str]] = {}
         for recency, row in enumerate(reversed(entries)):
-            refs = row.expression_refs if constraints.kind in {"proposition", "content", "claim"} else row.entity_refs if constraints.kind == "entity" else row.event_refs if constraints.kind == "event" else (*row.expression_refs, *row.entity_refs, *row.event_refs)
-            for ref in refs: candidates.append((ref, 1_000_000 - recency * 100_000, row.focus_ref))
-        if not candidates: return ReferenceResolution.create(reference_ref=reference_ref, selected_ref=None, alternative_refs=(), proof_refs=())
-        candidates.sort(key=lambda row: (-row[1], row[0])); selected, score, proof = candidates[0]
-        alternatives = tuple(row[0] for row in candidates[1:] if score - row[1] <= self._margin_q)
-        return ReferenceResolution.create(reference_ref=reference_ref, selected_ref=selected, alternative_refs=alternatives, proof_refs=(proof,))
+            score = 1_000_000 - recency * 100_000
+            for ref in self._refs_for_kind(row, constraints.kind):
+                if not self._number_matches(ref, constraints.number):
+                    continue
+                previous = candidates.get(ref)
+                if previous is None or score > previous[0]:
+                    candidates[ref] = (score, row.focus_ref)
+
+        if not candidates:
+            return ReferenceResolution.create(
+                reference_ref=reference_ref,
+                selected_ref=None,
+                alternative_refs=(),
+                proof_refs=(),
+            )
+
+        ranked = sorted(
+            ((ref, score, proof) for ref, (score, proof) in candidates.items()),
+            key=lambda row: (-row[1], row[0]),
+        )
+        selected, score, proof = ranked[0]
+        alternatives = tuple(
+            ref
+            for ref, candidate_score, _ in ranked[1:]
+            if score - candidate_score <= self._margin_q
+        )
+        return ReferenceResolution.create(
+            reference_ref=reference_ref,
+            selected_ref=selected,
+            alternative_refs=alternatives,
+            proof_refs=(proof,),
+        )
 
 
 @dataclass(frozen=True, init=False)
@@ -173,18 +281,116 @@ class DialogueObligation:
 
 
 class DialogueObligationManager:
+    """Own the lifecycle of typed dialogue obligations.
+
+    Completion produces a new content-addressed obligation record and retains a
+    bounded alias from the pending ref to the completed ref. This keeps the
+    record immutable while allowing callers to retrieve the completed logical
+    obligation through the ref they originally received.
+    """
+
     def __init__(self, stores: SemanticStores | None = None) -> None:
-        self._stores = stores; self._rows: dict[str, DialogueObligation] = {}
+        if stores is not None and type(stores) is not SemanticStores:
+            raise TypeError("stores must be exact SemanticStores or None")
+        self._stores = stores
+        self._rows: dict[str, DialogueObligation] = {}
+        self._aliases: dict[str, str] = {}
+
+    def _resolve_ref(self, obligation_ref: str) -> str:
+        exact_text(obligation_ref, "obligation_ref")
+        seen: set[str] = set()
+        current = obligation_ref
+        while current in self._aliases:
+            if current in seen:
+                raise ValueError("obligation alias cycle")
+            seen.add(current)
+            current = self._aliases[current]
+        return current
 
     def add(self, obligation: DialogueObligation) -> None:
-        if type(obligation) is not DialogueObligation: raise TypeError("obligation must be exact DialogueObligation")
-        if obligation.kind is ObligationKind.LEARNING_ANSWER and any(row.kind is ObligationKind.LEARNING_ANSWER and row.completion_receipt_ref is None for row in self._rows.values()): raise ValueError("only one learning obligation may be pending")
-        if self._stores is not None: self._stores.obligations.commit(obligation.obligation_ref, obligation.session_ref, obligation.as_dict(), expected_revision=self._stores.obligations.revision)
+        if type(obligation) is not DialogueObligation:
+            raise TypeError("obligation must be exact DialogueObligation")
+        if obligation.obligation_ref in self._rows or obligation.obligation_ref in self._aliases:
+            raise ValueError("obligation ref already exists")
+        if (
+            obligation.kind is ObligationKind.LEARNING_ANSWER
+            and self.has_learning_obligation()
+        ):
+            raise ValueError("only one learning obligation may be pending")
+        if self._stores is not None:
+            self._stores.obligations.commit(
+                obligation.obligation_ref,
+                obligation.session_ref,
+                obligation.as_dict(),
+                expected_revision=self._stores.obligations.revision,
+                resolved=obligation.completion_receipt_ref is not None,
+            )
         self._rows[obligation.obligation_ref] = obligation
 
-    def pending(self, *, kind: ObligationKind | None = None, turn_index: int | None = None) -> tuple[DialogueObligation, ...]:
-        rows = tuple(row for row in self._rows.values() if row.completion_receipt_ref is None and (kind is None or row.kind is kind) and (turn_index is None or row.expires_turn_index > turn_index))
-        return tuple(sorted(rows, key=lambda row: row.obligation_ref))
+    def get(self, obligation_ref: str) -> DialogueObligation | None:
+        return self._rows.get(self._resolve_ref(obligation_ref))
+
+    def fulfill(
+        self, obligation_ref: str, completion_receipt_ref: str
+    ) -> DialogueObligation:
+        canonical_ref = self._resolve_ref(obligation_ref)
+        current = self._rows.get(canonical_ref)
+        if current is None:
+            raise KeyError(obligation_ref)
+        if current.completion_receipt_ref is not None:
+            raise ValueError("obligation is already fulfilled")
+        completion = exact_text(completion_receipt_ref, "completion_receipt_ref")
+        completed = DialogueObligation.create(
+            kind=current.kind,
+            session_ref=current.session_ref,
+            source_query_ref=current.source_query_ref,
+            expected_answer_contract_ref=current.expected_answer_contract_ref,
+            created_turn_index=current.created_turn_index,
+            expires_turn_index=current.expires_turn_index,
+            source_decision_ref=current.source_decision_ref,
+            completion_receipt_ref=completion,
+            revision_pin=current.revision_pin,
+        )
+        if self._stores is not None:
+            self._stores.obligations.complete(
+                canonical_ref,
+                completed.obligation_ref,
+                completed.session_ref,
+                completed.as_dict(),
+                expected_revision=self._stores.obligations.revision,
+            )
+        del self._rows[canonical_ref]
+        self._rows[completed.obligation_ref] = completed
+        self._aliases[canonical_ref] = completed.obligation_ref
+        if obligation_ref != canonical_ref:
+            self._aliases[obligation_ref] = completed.obligation_ref
+        return completed
+
+    def pending(
+        self,
+        *,
+        kind: ObligationKind | None = None,
+        turn_index: int | None = None,
+    ) -> tuple[DialogueObligation, ...]:
+        if kind is not None and type(kind) is not ObligationKind:
+            raise TypeError("kind must be exact ObligationKind or None")
+        if turn_index is not None:
+            exact_int(turn_index, "turn_index")
+        rows = tuple(
+            row
+            for row in self._rows.values()
+            if row.completion_receipt_ref is None
+            and (kind is None or row.kind is kind)
+            and (turn_index is None or row.expires_turn_index > turn_index)
+        )
+        return tuple(
+            sorted(rows, key=lambda row: (row.expires_turn_index, row.obligation_ref))
+        )
+
+    def has_learning_obligation(self, *, turn_index: int | None = None) -> bool:
+        return bool(
+            self.pending(kind=ObligationKind.LEARNING_ANSWER, turn_index=turn_index)
+        )
 
 
 @dataclass(frozen=True)
@@ -193,10 +399,52 @@ class GoalSelection:
     selected_obligation_ref: str | None
     policy_ref: str
 
+    def __post_init__(self) -> None:
+        optional_text(self.selected_goal_ref, "selected_goal_ref")
+        optional_text(self.selected_obligation_ref, "selected_obligation_ref")
+        exact_text(self.policy_ref, "policy_ref")
+        if (
+            self.selected_goal_ref is not None
+            and self.selected_obligation_ref is not None
+        ):
+            raise ValueError("goal and obligation cannot both control a selection")
+
+    @property
+    def ui_intent_label(self) -> str:
+        """Derived display label with no control authority."""
+        if self.selected_obligation_ref is not None:
+            return "obligation:fulfill"
+        if self.selected_goal_ref is not None:
+            return "goal:pursue"
+        return "idle"
+
 
 class GoalArbiter:
-    def select(self, goals: tuple[str, ...], obligations: tuple[DialogueObligation, ...]) -> GoalSelection:
+    """Select obligations before goals using an explicit structural policy."""
+
+    POLICY_REF = "policy:obligation_first"
+
+    def select(
+        self,
+        goals: tuple[str, ...],
+        obligations: tuple[DialogueObligation, ...],
+    ) -> GoalSelection:
         exact_refs(goals, "goals")
-        pending = tuple(row for row in obligations if row.completion_receipt_ref is None)
-        if pending: return GoalSelection(None, sorted(pending, key=lambda row: (row.expires_turn_index, row.obligation_ref))[0].obligation_ref, "policy:obligation_first")
-        return GoalSelection(goals[0] if goals else None, None, "policy:obligation_first")
+        if type(obligations) is not tuple or any(
+            type(row) is not DialogueObligation for row in obligations
+        ):
+            raise TypeError("obligations must be an exact DialogueObligation tuple")
+        pending = tuple(
+            row for row in obligations if row.completion_receipt_ref is None
+        )
+        if pending:
+            selected = min(
+                pending,
+                key=lambda row: (row.expires_turn_index, row.obligation_ref),
+            )
+            return GoalSelection(None, selected.obligation_ref, self.POLICY_REF)
+        return GoalSelection(
+            goals[0] if goals else None,
+            None,
+            self.POLICY_REF,
+        )

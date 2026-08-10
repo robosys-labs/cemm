@@ -884,6 +884,86 @@ class _SQLiteObligationStore:
         self.revision = new_revision
         return CommitReceipt("obligations", expected_revision, new_revision, delta_hash, transaction_ref)
 
+    def complete(
+        self,
+        pending_ref: str,
+        completed_ref: str,
+        session_ref: str,
+        completed_payload: Mapping[str, Any],
+        *,
+        expected_revision: int,
+    ) -> CommitReceipt:
+        """Atomically resolve one pending row and persist its completed record."""
+        if expected_revision != self.revision:
+            raise StaleRevisionError(
+                f"obligations: expected {expected_revision}, got {self.revision}"
+            )
+        if pending_ref == completed_ref:
+            raise ValueError("completed obligation ref must differ from pending ref")
+        row = self._conn.execute(
+            "SELECT session_ref, payload_json FROM obligations WHERE obligation_ref = ?",
+            (pending_ref,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(pending_ref)
+        if str(row[0]) != session_ref:
+            raise ValueError("pending obligation session mismatch")
+        pending_data = json.loads(row[1])
+        if pending_data.get("resolved") is True:
+            raise ValueError("pending obligation is already resolved")
+        pending_data["resolved"] = True
+        completed_data = {
+            **dict(completed_payload),
+            "obligation_ref": completed_ref,
+            "session_ref": session_ref,
+            "resolved": True,
+        }
+        new_revision = self.revision + 1
+        delta_hash = _payload_hash({
+            "pending_ref": pending_ref,
+            "pending": pending_data,
+            "completed_ref": completed_ref,
+            "completed": completed_data,
+        })
+        transaction_ref = stable_ref(
+            "txn",
+            {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash},
+        )
+        self._conn.execute("BEGIN IMMEDIATE")
+        try:
+            self._conn.execute(
+                "UPDATE obligations SET payload_json=?, payload_hash=?, revision=?, resolved=1 "
+                "WHERE obligation_ref=? AND resolved=0",
+                (
+                    json.dumps(pending_data, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                    _payload_hash(pending_data),
+                    new_revision,
+                    pending_ref,
+                ),
+            )
+            if self._conn.execute("SELECT changes()").fetchone()[0] != 1:
+                raise ValueError("pending obligation could not be resolved")
+            self._conn.execute(
+                "INSERT INTO obligations(obligation_ref, session_ref, payload_json, payload_hash, revision, resolved) "
+                "VALUES(?, ?, ?, ?, ?, 1)",
+                (
+                    completed_ref,
+                    session_ref,
+                    json.dumps(completed_data, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                    _payload_hash(completed_data),
+                    new_revision,
+                ),
+            )
+            self._save_revision(new_revision)
+            self._conn.commit()
+        except Exception:
+            self._conn.rollback()
+            raise
+        self.revision = new_revision
+        return CommitReceipt(
+            "obligations", expected_revision, new_revision, delta_hash, transaction_ref
+        )
+
     def get(self, obligation_ref: str) -> dict[str, Any] | None:
         row = self._conn.execute(
             "SELECT payload_json FROM obligations WHERE obligation_ref = ?", (obligation_ref,)
@@ -1219,6 +1299,53 @@ class _MemoryObligationStore:
         self._obligations[obligation_ref] = {**dict(payload), "obligation_ref": obligation_ref, "session_ref": session_ref, "resolved": resolved}
         self.revision = new_revision
         return CommitReceipt("obligations", expected_revision, new_revision, delta_hash, transaction_ref)
+
+    def complete(
+        self,
+        pending_ref: str,
+        completed_ref: str,
+        session_ref: str,
+        completed_payload: Mapping[str, Any],
+        *,
+        expected_revision: int,
+    ) -> CommitReceipt:
+        if expected_revision != self.revision:
+            raise StaleRevisionError(
+                f"obligations: expected {expected_revision}, got {self.revision}"
+            )
+        if pending_ref == completed_ref:
+            raise ValueError("completed obligation ref must differ from pending ref")
+        pending = self._obligations.get(pending_ref)
+        if pending is None:
+            raise KeyError(pending_ref)
+        if pending.get("session_ref") != session_ref:
+            raise ValueError("pending obligation session mismatch")
+        if pending.get("resolved") is True:
+            raise ValueError("pending obligation is already resolved")
+        pending_data = {**pending, "resolved": True}
+        completed_data = {
+            **dict(completed_payload),
+            "obligation_ref": completed_ref,
+            "session_ref": session_ref,
+            "resolved": True,
+        }
+        delta_hash = _payload_hash({
+            "pending_ref": pending_ref,
+            "pending": pending_data,
+            "completed_ref": completed_ref,
+            "completed": completed_data,
+        })
+        transaction_ref = stable_ref(
+            "txn",
+            {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash},
+        )
+        new_revision = self.revision + 1
+        self._obligations[pending_ref] = pending_data
+        self._obligations[completed_ref] = completed_data
+        self.revision = new_revision
+        return CommitReceipt(
+            "obligations", expected_revision, new_revision, delta_hash, transaction_ref
+        )
 
     def get(self, obligation_ref: str) -> dict[str, Any] | None:
         return self._obligations.get(obligation_ref)

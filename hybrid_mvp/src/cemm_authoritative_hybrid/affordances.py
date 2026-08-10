@@ -353,22 +353,88 @@ class SemanticAffordanceIndex:
             return ()
 
         kind = atom.kind
-        defaults = _default_profiles(target_ref, kind)
+        defaults = self._default_profiles_for_target(target_ref, kind)
 
-        # Apply reviewed frame refinements.
-        frame_list = self._frames.get(target_ref, [])
-        refined = list(defaults)
-        for frame in frame_list:
+        # Reviewed frames refine the kind-derived defaults by contribution kind.
+        # A reviewed frame is authoritative for every contribution kind it covers;
+        # keeping the corresponding generic default would create contradictory
+        # application frames for the same predicate.  Defaults for uncovered
+        # contribution kinds remain available.
+        reviewed: list[AffordanceProfile] = []
+        reviewed_kinds: set[str] = set()
+        for frame in self._frames.get(target_ref, []):
             profile = self._frame_to_profile(target_ref, frame)
-            if profile is not None:
-                # Frame refines: replace the first default with the frame
-                # profile, or append if fewer defaults than frames.
-                if len(refined) < len(defaults):
-                    refined[len(refined)] = profile
-                else:
-                    refined.append(profile)
+            if profile is None:
+                continue
+            self._validate_reviewed_profile(target_ref, kind, profile)
+            reviewed.append(profile)
+            reviewed_kinds.update(profile.contribution_kinds)
 
-        return tuple(refined[: self._max])
+        uncovered_defaults = [
+            profile
+            for profile in defaults
+            if not (set(profile.contribution_kinds) & reviewed_kinds)
+        ]
+        return tuple((*reviewed, *uncovered_defaults)[: self._max])
+
+    def _default_profiles_for_target(
+        self, target_ref: str, kind: str
+    ) -> tuple[AffordanceProfile, ...]:
+        """Derive defaults from linked semantic structure, not ref spelling.
+
+        Event predicates are special: their legal filler roles are owned by the
+        reviewed :class:`EventSignature`.  A generic event-kind default cannot
+        safely guess those roles because greeting, teaching, attributed speech,
+        and other events have different arities and proposition-valued roles.
+        """
+        if kind != "event_type":
+            return _default_profiles(target_ref, kind)
+
+        signature = self._authority.by_event_signature(target_ref)
+        if signature is None:
+            # Linked event atoms without a reviewed signature are not executable
+            # predicates.  The linker normally prevents this for active events;
+            # fail closed here as a second boundary.
+            return ()
+        roles = tuple(role.role for role in signature.roles)
+        return (
+            _profile(
+                target_ref,
+                ("predicate",),
+                inputs=roles,
+                outputs=("role:event",),
+                roles=roles,
+            ),
+            _profile(
+                target_ref,
+                ("anchor",),
+                outputs=("role:event",),
+                roles=("role:event",),
+            ),
+        )
+
+    def _validate_reviewed_profile(
+        self, target_ref: str, kind: str, profile: AffordanceProfile
+    ) -> None:
+        """Reject reviewed affordance data that contradicts linked owners."""
+        if kind != "event_type" or "predicate" not in profile.contribution_kinds:
+            return
+        signature = self._authority.by_event_signature(target_ref)
+        if signature is None:
+            raise ValueError(
+                f"reviewed event affordance lacks linked signature: {target_ref}"
+            )
+        signature_roles = tuple(role.role for role in signature.roles)
+        if profile.input_ports != signature_roles:
+            raise ValueError(
+                "reviewed event affordance input ports disagree with linked "
+                f"signature for {target_ref}"
+            )
+        if not profile.output_ports or profile.output_ports[0] != "role:event":
+            raise ValueError(
+                "reviewed event affordance must emit the structural event role "
+                f"for {target_ref}"
+            )
 
     def for_designation(self, surface: str) -> tuple[AffordanceProfile, ...]:
         """Return affordances for the target(s) designated by ``surface``.

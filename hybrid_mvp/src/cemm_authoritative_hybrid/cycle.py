@@ -86,6 +86,46 @@ class CycleStatus(Enum):
     OPERATION_FAILED = "operation_failed"
     REALIZATION_FAILED = "realization_failed"
 
+    @classmethod
+    def from_gap_receipt(cls, gap: GapReceipt) -> "CycleStatus":
+        """Map a typed gap receipt to the closed external cycle status.
+
+        The mapping is structural and depends only on ``GapKind``.  Surface
+        wording, exception messages and UI labels never participate.
+        """
+        if type(gap) is not GapReceipt:
+            raise TypeError("gap must be exact GapReceipt")
+        if gap.status == "verification_ambiguous":
+            return cls.AMBIGUOUS
+        if gap.status == "identity_absent":
+            return cls.UNKNOWN
+        if gap.status == "later_owner_not_admitted":
+            return cls.PARTIAL
+        mapping = {
+            GapKind.EVIDENCE: cls.UNKNOWN,
+            GapKind.DESIGNATION: cls.PARTIAL,
+            GapKind.REFERENCE: cls.AMBIGUOUS,
+            GapKind.AUTHORITY: cls.CONFLICT,
+            GapKind.PROPOSAL: cls.UNSUPPORTED,
+            GapKind.VERIFICATION: cls.UNSUPPORTED,
+            GapKind.INFERENCE: cls.UNKNOWN,
+            GapKind.STATE: cls.UNKNOWN,
+            GapKind.TRANSITION: cls.UNKNOWN,
+            GapKind.LEARNING: cls.PARTIAL,
+            GapKind.RESOURCE: cls.RESOURCE_UNAVAILABLE,
+            GapKind.PERMISSION: cls.DENIED,
+            GapKind.ADAPTER: cls.OPERATION_FAILED,
+            GapKind.OPERATION: cls.OPERATION_FAILED,
+            GapKind.STORAGE: cls.OPERATION_FAILED,
+            GapKind.REALIZATION: cls.REALIZATION_FAILED,
+            GapKind.PERFORMANCE: cls.BUDGET_EXHAUSTED,
+            GapKind.IMPLEMENTATION: cls.OPERATION_FAILED,
+        }
+        try:
+            return mapping[gap.kind]
+        except KeyError as exc:  # pragma: no cover - GapKind is closed.
+            raise AssertionError("unmapped closed GapKind") from exc
+
 
 class SemanticPhase(Enum):
     """The six semantic kernel phases (mathematical ownership boundaries)."""
