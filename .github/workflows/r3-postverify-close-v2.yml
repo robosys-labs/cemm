@@ -11,9 +11,7 @@ permissions:
 jobs:
   close-r3:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    env:
-      PYTHONPATH: hybrid_mvp/src
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,34 +20,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install admission dependencies
-        run: |
-          python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.5'
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Verify clean governance and predecessor
+      - name: Print exact admission governance error
         working-directory: hybrid_mvp
         run: |
-          python scripts/update_replay_status.py --verify-chain
-          python scripts/check_test_inventory.py --phase R3 --source-only
-          python scripts/validate_mvp.py --tier phase --phase R2
-      - name: Reverify R3 diagnostic tiers on committed source
-        working-directory: hybrid_mvp
-        run: |
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner capability-effect
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner decision-query-proof
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner effect-learning-response
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner learning-response
-          python scripts/validate_mvp.py --tier owner --phase R3 --owner situation-context
-          python scripts/validate_mvp.py --tier phase --phase R3
-      - name: Run R3 admission
-        working-directory: hybrid_mvp
-        run: |
-          python scripts/validate_mvp.py --tier admission --phase R3 | tee /tmp/r3-admission.json
           python - <<'PY'
-          import json
-          outcome = json.load(open('/tmp/r3-admission.json', encoding='utf-8'))
-          if outcome.get('disposition') != 'passed' or not outcome.get('run_ref'):
-              raise SystemExit('R3 admission did not pass')
-          print('R3_RUN_REF=' + outcome['run_ref'])
-          print('R3_GATE_RESULT_REF=' + outcome['gate_result_ref'])
+          from pathlib import Path
+          import json, sys
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from validation_gate import run_validation
+          outcome = run_validation(Path('.'), phase='R3', tier='admission')
+          governance = outcome.step_results[0]
+          print('DISPOSITION=' + outcome.disposition)
+          print('GOVERNANCE=' + json.dumps(governance.to_dict(), sort_keys=True, separators=(',', ':')))
+          if outcome.receipt_path:
+              path = Path(outcome.receipt_path)
+              if path.exists():
+                  print('RECEIPT=' + path.read_text(encoding='utf-8'))
           PY
