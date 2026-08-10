@@ -37,6 +37,8 @@ jobs:
           from pathlib import Path
           import sys
           sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
           from validation_gate import load_gate_graph
           graph = load_gate_graph(Path('configs/validation_gates.json'))
           r2_steps = graph.resolve_phase('R2', 'phase')
