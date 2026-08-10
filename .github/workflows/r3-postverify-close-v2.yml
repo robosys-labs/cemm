@@ -22,11 +22,41 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install admission dependencies
+      - name: Install pinned admission dependencies
         run: |
-          python -m pip install 'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.5'
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Run and consume fresh R3 admission
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+          python - <<'PY'
+          import fastapi, httpx, hypothesis, numpy, pytest, safetensors, torch
+          expected = {
+              'pytest': '8.4.0',
+              'hypothesis': '6.163.0',
+              'numpy': '2.5.2',
+              'safetensors': '0.5.3',
+              'fastapi': '0.115.0',
+              'httpx': '0.27.0',
+              'torch': '2.6.0+cpu',
+          }
+          actual = {
+              'pytest': pytest.__version__,
+              'hypothesis': hypothesis.__version__,
+              'numpy': numpy.__version__,
+              'safetensors': safetensors.__version__,
+              'fastapi': fastapi.__version__,
+              'httpx': httpx.__version__,
+              'torch': torch.__version__,
+          }
+          if actual != expected:
+              raise SystemExit(f'admission dependency drift: expected={expected!r} actual={actual!r}')
+          PY
+      - name: Run fresh R3 admission
         working-directory: hybrid_mvp
         run: |
           set -euo pipefail
@@ -41,16 +71,69 @@ jobs:
 
           outcome = run_validation(Path('.'), phase='R3', tier='admission')
           print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
-          if outcome.disposition != 'passed' or not outcome.run_ref or not outcome.receipt_path:
-              raise SystemExit(f'R3 admission did not pass: {outcome.disposition} {outcome.error_code}')
           PY
           cat /tmp/r3-outcome.json
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          outcome = json.loads(Path('/tmp/r3-outcome.json').read_text(encoding='utf-8'))
+          receipt_path = outcome.get('receipt_path')
+          if receipt_path:
+              receipt = json.loads(Path(receipt_path).read_text(encoding='utf-8'))
+              for step in receipt.get('step_results', []):
+                  if step.get('disposition') == 'passed':
+                      continue
+                  observation = step.get('observation_report')
+                  if isinstance(observation, dict):
+                      observation = {
+                          key: value
+                          for key, value in observation.items()
+                          if key in {
+                              'schema', 'disposition', 'error_codes', 'errors',
+                              'collection_errors', 'collection_mismatch', 'counts',
+                              'selected_node_ids', 'expected_collected_node_ids',
+                              'active_node_ids', 'exit_status'
+                          }
+                      }
+                  print(json.dumps({
+                      'step_id': step.get('step_id'),
+                      'disposition': step.get('disposition'),
+                      'error_code': step.get('error_code'),
+                      'report': step.get('report'),
+                      'observation_report': observation,
+                  }, sort_keys=True, separators=(',', ':')))
+          if (
+              outcome.get('disposition') != 'passed'
+              or not outcome.get('run_ref')
+              or not outcome.get('receipt_path')
+          ):
+              raise SystemExit(
+                  f"R3 admission did not pass: {outcome.get('disposition')} "
+                  f"{outcome.get('error_code')}"
+              )
+          PY
+      - name: Consume fresh R3 admission
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
           RUN_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-outcome.json"))["run_ref"])')"
           python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --dry-run > /tmp/r3-candidate.json
           cat /tmp/r3-candidate.json
           RECORD_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-candidate.json"))["record_ref"])')"
           python scripts/update_replay_status.py --phase R3 --status green --run-ref "$RUN_REF" --append --expect-record-ref "$RECORD_REF"
           python scripts/update_replay_status.py --verify-chain
+      - name: Upload R3 admission diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-formal-close-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 3
+          path: |
+            /tmp/r3-outcome.json
+            /tmp/r3-candidate.json
+            hybrid_mvp/artifacts/validation/runs/*.json
       - name: Commit exact R3 receipt and ledger transition
         run: |
           set -euo pipefail
