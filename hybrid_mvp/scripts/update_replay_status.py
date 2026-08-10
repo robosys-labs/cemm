@@ -165,10 +165,47 @@ _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _ADMISSION_PATH_RE = re.compile(
     r"artifacts/validation/runs/[0-9a-f]{24}\.json\Z"
 )
-_FIXED_EVIDENCE_PATHS = {
-    "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
-    "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
+_PHASE_ADMISSION_EVIDENCE_PATHS = {
+    "G0": frozenset(
+        {
+            "artifacts/validation/BASELINE_REPLAY_FINDINGS.json",
+            "artifacts/validation/TEST_INVENTORY_RECEIPT.json",
+        }
+    ),
+    "R1": frozenset(),
+    "R2": frozenset(),
+    "R3": frozenset(
+        {"artifacts/validation/R3_ACTIVATION_CANARIES.json"}
+    ),
+    "R4": frozenset(
+        {
+            "artifacts/r4/expected_contracts.jsonl",
+            "artifacts/r4/expected_derivations.jsonl",
+            "artifacts/r4/expanded_cases.jsonl",
+            "artifacts/r4/episodes.jsonl",
+            "artifacts/r4/mutations.jsonl",
+            "artifacts/r4/mutation_observations.jsonl",
+            "artifacts/r4/structural_sufficiency.json",
+            "artifacts/r4/partitions/general.json",
+            "artifacts/r4/partitions/lexical.json",
+            "artifacts/r4/partitions/semantic_target.json",
+            "artifacts/r4/partitions/topology.json",
+            "artifacts/r4/partitions/dialogue.json",
+            "artifacts/r4/partitions/mutation.json",
+            "artifacts/r4/partitions/realization.json",
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/r4/BUILD_RECEIPT.json",
+            "data/review/R4_REVIEW_MANIFEST.json",
+        }
+    ),
+    "R5": frozenset(),
+    "R6": frozenset(),
+    "R7": frozenset(),
+    "R8": frozenset(),
 }
+_FIXED_EVIDENCE_PATHS = frozenset().union(
+    *_PHASE_ADMISSION_EVIDENCE_PATHS.values()
+)
 _GIT_PROBE_TIMEOUT_SECONDS = 60
 _MAX_GIT_PROBE_OUTPUT_BYTES = 4 * 1024 * 1024
 
@@ -217,20 +254,20 @@ def _is_syntactically_safe_evidence_path(value: object) -> bool:
 def _static_evidence_candidates(
     phase: str, run_ref: str | None
 ) -> frozenset[str]:
+    if phase not in _PHASE_ADMISSION_EVIDENCE_PATHS:
+        raise GovernanceError("admission phase is invalid")
+    phase_evidence = _PHASE_ADMISSION_EVIDENCE_PATHS[phase]
     if run_ref is None:
-        return frozenset(_FIXED_EVIDENCE_PATHS)
+        return phase_evidence
     if _RUN_REF_RE.fullmatch(run_ref) is None:
         raise GovernanceError("admission run_ref must be an exact run: content ref")
-    if phase not in {"G0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"}:
-        raise GovernanceError("admission phase is invalid")
     digest = run_ref.removeprefix("run:")
     return frozenset(
         {
-            *_FIXED_EVIDENCE_PATHS,
+            *phase_evidence,
             f"artifacts/validation/runs/{digest}.json",
         }
     )
-
 
 def _preflight_owner_import(
     phase: str,
