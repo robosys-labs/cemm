@@ -9,41 +9,42 @@ from cemm_authoritative_hybrid.authority import (
     EventSignature,
     RoleSpec,
 )
+from cemm_authoritative_hybrid.cycle import CycleStatus, SemanticMode
+from cemm_authoritative_hybrid.decision import DecisionAction, DecisionStatus
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     AssertionCompilerError,
     ExpectedCycleContract,
     ExpectedCycleContractCompiler,
+    ExpectedEffectKind,
     ReviewedAssertion,
     ReviewedScenario,
 )
 
-__cemm_test_inventory__ = {
-    "tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-compiler-resets-situated-state-between-cases",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "expected-contract",
-        "source_ast_sha256": "e8c0c525b5fcb8bd409764402774eefc4ff3c7087b9556d1dc5f550cad76992d"
-    },
-    "tests/test_r4_assertion_compiler.py::test_core_reviewed_assertion_families_compile_without_propose": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-core-reviewed-assertion-families-compile-without-propose",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "expected-contract",
-        "source_ast_sha256": "92dc4bd6f5b0c93e8e05cf61acf47e135898e73cec8b82e7ba5996721ce875b9"
-    },
-    "tests/test_r4_assertion_compiler.py::test_unknown_assertion_kind_fails_closed": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-unknown-assertion-kind-fails-closed",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "expected-contract",
-        "source_ast_sha256": "bfb2f2d5bfaa4a240f1c0339001bc8f7979c5b9f698d67d7a21ab38970027ef7"
-    }
-}
+__cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_explicit_cycle_contract_rows_are_complete_and_override_defaults': {'activation_phase': 'R4',
+                                                                                                               'assertion_ref': 'assertion:r4-explicit-cycle-contract-rows-are-complete',
+                                                                                                               'diagnostic_role': 'owner',
+                                                                                                               'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                               'owner_ref': 'expected-contract',
+                                                                                                               'source_ast_sha256': 'ddab9656dd2e73772790653452a6075d7e4b0a91279710ded58eb883d3a7d4be'},
+ 'tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases': {'activation_phase': 'R4',
+                                                                                            'assertion_ref': 'assertion:r4-compiler-resets-situated-state-between-cases',
+                                                                                            'diagnostic_role': 'owner',
+                                                                                            'introduced_by_task': 'R4-Complete',
+                                                                                            'owner_ref': 'expected-contract',
+                                                                                            'source_ast_sha256': 'e8c0c525b5fcb8bd409764402774eefc4ff3c7087b9556d1dc5f550cad76992d'},
+ 'tests/test_r4_assertion_compiler.py::test_core_reviewed_assertion_families_compile_without_propose': {'activation_phase': 'R4',
+                                                                                                        'assertion_ref': 'assertion:r4-core-reviewed-assertion-families-compile-without-propose',
+                                                                                                        'diagnostic_role': 'owner',
+                                                                                                        'introduced_by_task': 'R4-Complete',
+                                                                                                        'owner_ref': 'expected-contract',
+                                                                                                        'source_ast_sha256': '92dc4bd6f5b0c93e8e05cf61acf47e135898e73cec8b82e7ba5996721ce875b9'},
+ 'tests/test_r4_assertion_compiler.py::test_unknown_assertion_kind_fails_closed': {'activation_phase': 'R4',
+                                                                                   'assertion_ref': 'assertion:r4-unknown-assertion-kind-fails-closed',
+                                                                                   'diagnostic_role': 'owner',
+                                                                                   'introduced_by_task': 'R4-Complete',
+                                                                                   'owner_ref': 'expected-contract',
+                                                                                   'source_ast_sha256': 'bfb2f2d5bfaa4a240f1c0339001bc8f7979c5b9f698d67d7a21ab38970027ef7'}}
 
 
 
@@ -67,6 +68,7 @@ class _Authority:
             "value:on": "state_value",
             "value:off": "state_value",
             "participant:system": "participant",
+            "participant:user": "participant",
             "entity:a": "entity",
             "entity:b": "entity",
         }.items()
@@ -76,7 +78,7 @@ class _Authority:
             event_type="event:greeting",
             roles=(
                 RoleSpec(role="role:actor", filler_kinds=(), required=False),
-                RoleSpec(role="role:target", filler_kinds=(), required=False),
+                RoleSpec(role="role:addressee", filler_kinds=(), required=False),
             ),
         ),
         "event:say": EventSignature(
@@ -188,6 +190,103 @@ def test_core_reviewed_assertion_families_compile_without_propose() -> None:
         assert ExpectedCycleContract.from_dict(contract.as_dict()) == contract
         if contract.expected_expressions:
             assert any(expr.applications for expr in contract.expected_expressions)
+
+
+def test_explicit_cycle_contract_rows_are_complete_and_override_defaults() -> None:
+    scenario = ReviewedScenario.from_dict(
+        {
+            "scenario_ref": "scenario:explicit-cycle-contract",
+            "review_status": "reviewed",
+            "competency_category": "designation_definition",
+            "semantic_assertions": [
+                {
+                    "kind": "event",
+                    "event_type": "event:greeting",
+                    "roles": {
+                        "role:actor": "participant:user",
+                        "role:addressee": "participant:system",
+                    },
+                },
+                {"kind": "mode", "mode": "OBSERVE"},
+                {
+                    "kind": "decision",
+                    "status": "contested",
+                    "action": "retain_attribution",
+                },
+                {"kind": "no_effect", "reason": "attributed_only"},
+                {
+                    "kind": "response",
+                    "discourse_action": "acknowledge",
+                    "cycle_status": "partial",
+                    "polarity": "polarity:positive",
+                    "modality": "modality:actual",
+                    "epistemic_status": "epistemic_status:contested",
+                },
+            ],
+            "surface_examples": ["hello"],
+            "expected_gap_kind": None,
+            "metadata": {},
+        }
+    )
+    compiler = ExpectedCycleContractCompiler(_Authority(), abi_registry_ref="abi:test")
+    contract = compiler.compile(
+        scenario_ref=scenario.scenario_ref,
+        case_ref="case:explicit-cycle-contract",
+        surface_ref="surface:explicit-cycle-contract",
+        context_ref="context:explicit-cycle-contract",
+        assertions=scenario.assertions,
+        situation_constraints={},
+        revision_pin=_pin(),
+    )
+    assert contract.expected_mode is SemanticMode.OBSERVE
+    assert len(contract.expected_expressions) == 1
+    assert contract.expected_expressions[0].applications[0].operator == "op:event"
+    assert contract.expected_decision.status is DecisionStatus.CONTESTED
+    assert contract.expected_decision.action is DecisionAction.RETAIN_ATTRIBUTION
+    assert contract.expected_effect.kind is ExpectedEffectKind.NO_EFFECT
+    assert contract.expected_effect.status_or_reason == "attributed_only"
+    assert contract.expected_response.discourse_action == "acknowledge"
+    assert contract.expected_response.cycle_status is CycleStatus.PARTIAL
+    assert contract.expected_response.epistemic_status_ref == "epistemic_status:contested"
+
+    incomplete = ReviewedScenario.from_dict(
+        {
+            "scenario_ref": "scenario:incomplete-cycle-contract",
+            "review_status": "reviewed",
+            "competency_category": "designation_definition",
+            "semantic_assertions": [
+                {
+                    "kind": "event",
+                    "event_type": "event:greeting",
+                    "roles": {
+                        "role:actor": "participant:user",
+                        "role:addressee": "participant:system",
+                    },
+                },
+                {
+                    "kind": "decision",
+                    "status": "contested",
+                    "action": "retain_attribution",
+                },
+            ],
+            "surface_examples": ["hello"],
+            "expected_gap_kind": None,
+            "metadata": {},
+        }
+    )
+    with pytest.raises(
+        ValueError,
+        match="exactly one decision, no_effect and response",
+    ):
+        compiler.compile(
+            scenario_ref=incomplete.scenario_ref,
+            case_ref="case:incomplete-cycle-contract",
+            surface_ref="surface:incomplete-cycle-contract",
+            context_ref="context:incomplete-cycle-contract",
+            assertions=incomplete.assertions,
+            situation_constraints={},
+            revision_pin=_pin(),
+        )
 
 
 def test_compiler_resets_situated_state_between_cases() -> None:

@@ -6,20 +6,42 @@ expectations.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import runpy
 
 from cemm_authoritative_hybrid.authority import AuthorityLinker
+from cemm_authoritative_hybrid.bootstrap import load_runtime
+from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.persistence import RevisionPin
+from cemm_authoritative_hybrid.proposal import BootstrapProposer
 from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContract,
     ExpectedCycleContractCompiler,
     ExpectedOutcomeKind,
     ExpressionRelation,
 )
+from cemm_authoritative_hybrid.r4_episodes import (
+    AuthenticEpisodeBuilder,
+    PublicRuntimeEpisodeOwner,
+)
 from cemm_authoritative_hybrid.r4_expansion import CaseExpander, ExpandedCase
 from cemm_authoritative_hybrid.r4_pipeline import load_reviewed_scenarios
 
-__cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_reviewed_surface_compiles_and_round_trips_canonically': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_reviewed_scenario_source_matches_deterministic_generator': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-reviewed-scenario-source-matches-generator',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                          'owner_ref': 'expected-contract',
+                                                                                                          'source_ast_sha256': 'ae45385ae4668fca755ff60a9ab2d4cc915eb8c5b87b84b21c525cab2bac7e54'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
+                                                                                                                   'diagnostic_role': 'owner',
+                                                                                                                   'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                                   'owner_ref': 'expected-contract',
+                                                                                                                   'source_ast_sha256': 'b57ad5da997eea7893fbf073e2a792009287c65c944b2dca09482da882264d8f'},
+ 'tests/test_r4_closeout_regressions.py::test_every_reviewed_surface_compiles_and_round_trips_canonically': {'activation_phase': 'R4',
                                                                                                              'assertion_ref': 'assertion:r4-reviewed-corpus-compiles-canonically',
                                                                                                              'diagnostic_role': 'owner',
                                                                                                              'introduced_by_task': 'R4-Closeout',
@@ -48,6 +70,27 @@ ROOT = Path(__file__).parents[1]
 SCENARIOS = ROOT / "data" / "scenarios" / "use_cases.jsonl"
 
 
+def test_reviewed_scenario_source_matches_deterministic_generator() -> None:
+    generate_all = runpy.run_path(
+        str(ROOT / "scripts" / "generate_scenarios.py")
+    )["generate_all"]
+    generated = generate_all()
+    expected = (
+        "\n".join(
+            json.dumps(
+                row,
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            for row in generated
+        )
+        + "\n"
+    ).encode("utf-8")
+    assert SCENARIOS.read_bytes() == expected
+
+
 def _expanded_cases() -> tuple[ExpandedCase, ...]:
     authority = AuthorityLinker().link_path(ROOT / "data" / "authority" / "manifest.json")
     compiler = ExpectedCycleContractCompiler(authority, abi_registry_ref="abi:r4-closeout")
@@ -71,6 +114,87 @@ def test_every_reviewed_surface_compiles_and_round_trips_canonically() -> None:
         ExpectedCycleContract.from_dict(row.contract.as_dict()) == row.contract
         for row in cases
     )
+
+
+def test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles(
+    tmp_path: Path,
+) -> None:
+    authority = AuthorityLinker().link_path(
+        ROOT / "data" / "authority" / "manifest.json"
+    )
+    model_identity = BootstrapProposer(RuntimeConfig.release()).model_identity
+    pin = RevisionPin(authority.generation, 0, 0, 0, 0, model_identity)
+    compiler = ExpectedCycleContractCompiler(
+        authority, abi_registry_ref="abi:r4-designation-event"
+    )
+    expander = CaseExpander(compiler)
+    selected = {
+        row.scenario_ref: row
+        for row in load_reviewed_scenarios(SCENARIOS)
+        if row.scenario_ref
+        in {
+            "scenario:designation_definition-0001",
+            "scenario:designation_definition-0002",
+        }
+    }
+    assert set(selected) == {
+        "scenario:designation_definition-0001",
+        "scenario:designation_definition-0002",
+    }
+    expected_targets = {
+        "scenario:designation_definition-0001": "event:greeting",
+        "scenario:designation_definition-0002": "event:farewell",
+    }
+    for scenario_ref, scenario in selected.items():
+        assert tuple(row.kind for row in scenario.assertions) == (
+            "event",
+            "mode",
+            "decision",
+            "no_effect",
+            "response",
+        )
+        assert scenario.assertions[0].fields["event_type"] == expected_targets[scenario_ref]
+
+    def runtime_factory(case: ExpandedCase):
+        store_name = stable_ref("r4_designation_event_store", case.case_ref).split(
+            ":", 1
+        )[1]
+        return load_runtime(
+            ROOT,
+            profile="development",
+            store_path=tmp_path / f"{store_name}.db",
+        )
+
+    builder = AuthenticEpisodeBuilder(PublicRuntimeEpisodeOwner(runtime_factory))
+    episodes = tuple(
+        builder.build(case)
+        for scenario in selected.values()
+        for case in expander.expand(scenario, revision_pin=pin)
+    )
+    assert len(episodes) == 5
+    assert all(row.comparison.passed for row in episodes)
+    for episode in episodes:
+        expected = episode.expected_contract.expected_expressions
+        meaning = episode.observed_cycle.verification.selected_meaning
+        candidate_ref = episode.observed_cycle.verification.selected_candidate_ref
+        assert len(expected) == 1
+        assert meaning is not None
+        assert candidate_ref is not None
+        candidate = episode.observed_cycle.proposal.candidate_by_ref(candidate_ref)
+        assert tuple(
+            action.action_type
+            for action in candidate.program.actions
+            if action.action_type == "select_designation"
+        ) == ("select_designation",)
+        expected_target = expected_targets[episode.expanded_case.scenario_ref]
+        assert expected_target in candidate.provenance_refs
+        assert expected[0].applications[0].operator == "op:event"
+        assert meaning.expression.applications[0].operator == "op:event"
+        assert (
+            expected[0].applications[0].predicate_ref
+            == meaning.expression.applications[0].predicate_ref
+            == expected_target
+        )
 
 
 def test_singleton_polysemy_is_not_fabricated_as_ambiguity() -> None:

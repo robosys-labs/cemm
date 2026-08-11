@@ -15,7 +15,7 @@ language-agnostic and leakage-controlled.
 
 | Category | Count | Description |
 |---|---|---|
-| `designation_definition` | 14 | Designation and definition: surface-to-identity mapping and concept definition queries |
+| `designation_definition` | 14 | Designation-backed interpretation and definition: reviewed surfaces resolve through authority to semantic identities; utterance meaning remains distinct from designation facts |
 | `reordered_constructions` | 12 | Same semantic content with reordered surface word order |
 | `polysemy` | 10 | One surface producing multiple semantic targets or affordance profiles |
 | `modality` | 10 | Modal scope (possible, necessary, conditional) over events and capabilities |
@@ -70,7 +70,25 @@ Each scenario is a JSON object on one line of the JSONL file:
   "review_status": "reviewed",
   "competency_category": "designation_definition",
   "semantic_assertions": [
-    {"kind": "designates", "surface": "hello", "target": "event:greeting"}
+    {
+      "kind": "event",
+      "event_type": "event:greeting",
+      "roles": {
+        "role:actor": "participant:user",
+        "role:addressee": "participant:system"
+      }
+    },
+    {"kind": "mode", "mode": "OBSERVE"},
+    {"kind": "decision", "status": "contested", "action": "retain_attribution"},
+    {"kind": "no_effect", "reason": "attributed_only"},
+    {
+      "kind": "response",
+      "discourse_action": "acknowledge",
+      "cycle_status": "partial",
+      "polarity": "polarity:positive",
+      "modality": "modality:actual",
+      "epistemic_status": "epistemic_status:contested"
+    }
   ],
   "surface_examples": ["hello", "hi", "hey"],
   "expected_gap_kind": null,
@@ -88,6 +106,12 @@ Each scenario is a JSON object on one line of the JSONL file:
 - `expected_gap_kind`: the expected `GapKind` value, or `null` if the scenario
   is expected to resolve.
 - `metadata`: optional metadata (language, polarity, etc.).
+
+For designation-backed utterances such as greetings, the semantic assertion is
+the event that the utterance expresses.  The reviewed designation relation is
+owned by authority data and is verified through the authentic proposal
+lineage; the utterance does not assert a new `op:designation` fact merely by
+using the word.
 
 ## Training source typing
 

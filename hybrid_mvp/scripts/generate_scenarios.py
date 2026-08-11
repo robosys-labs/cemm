@@ -72,6 +72,34 @@ def _assertion(kind: str, **fields) -> dict:
     return d
 
 
+def _contested_observed_event(event_type: str) -> list[dict]:
+    """Return the authored R3 contract for a designation-backed event use."""
+
+    return [
+        _assertion(
+            "event",
+            event_type=event_type,
+            roles={
+                "role:actor": "participant:user",
+                "role:addressee": "participant:system",
+            },
+        ),
+        _assertion("mode", mode="OBSERVE"),
+        _assertion(
+            "decision", status="contested", action="retain_attribution"
+        ),
+        _assertion("no_effect", reason="attributed_only"),
+        _assertion(
+            "response",
+            discourse_action="acknowledge",
+            cycle_status="partial",
+            polarity="polarity:positive",
+            modality="modality:actual",
+            epistemic_status="epistemic_status:contested",
+        ),
+    ]
+
+
 def _case(
     idx: int,
     category: str,
@@ -106,10 +134,12 @@ def generate_all() -> list[dict]:
     # 1. designation/definition (14 cases)
     # ------------------------------------------------------------------
     cat = "designation_definition"
-    _next(cat, [_assertion("designates", surface="hello", target="event:greeting")],
-          ["hello", "hi", "hey"])
-    _next(cat, [_assertion("designates", surface="bye", target="event:farewell")],
-          ["bye", "goodbye"])
+    # Greeting/farewell surfaces *use* reviewed designation authority to
+    # construct event meanings.  They do not assert new op:designation facts.
+    # The explicit cycle rows keep the reviewed expectation independent of the
+    # runtime while documenting the admitted R3 contested-observation outcome.
+    _next(cat, _contested_observed_event("event:greeting"), ["hello", "hi", "hey"])
+    _next(cat, _contested_observed_event("event:farewell"), ["bye", "goodbye"])
     _next(cat, [_assertion("designates", surface="book", target="entity:book")],
           ["book", "the book"])
     _next(cat, [_assertion("designates", surface="server", target="entity:server")],

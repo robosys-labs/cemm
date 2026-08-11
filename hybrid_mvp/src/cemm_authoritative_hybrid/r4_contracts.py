@@ -351,7 +351,10 @@ class AssertionRegistry:
             "policy": _AssertionSpec(frozenset({"event", "permission"}), frozenset({"status", "subject"}), "control"),
             "security": _AssertionSpec(frozenset({"capability", "permission"}), frozenset({"status", "subject"}), "control"),
             "effect": _AssertionSpec(frozenset({"event", "adapter", "subject"}), frozenset({"target", "status"}), "effect"),
-            "no_effect": _AssertionSpec(frozenset({"reason"}), frozenset(), "effect"),
+            # ``no_effect`` describes the expected cycle outcome.  It is not a
+            # semantic input expression and must not be lowered as an effect
+            # request.
+            "no_effect": _AssertionSpec(frozenset({"reason"}), frozenset(), "contract"),
             "learning": _AssertionSpec(frozenset({"event", "surface", "target", "capability"}), frozenset({"semantic_kind"}), "learning_directive"),
             "learning_directive": _AssertionSpec(frozenset({"event", "surface", "target"}), frozenset({"semantic_kind"}), "learning_directive"),
             "teaching": _AssertionSpec(frozenset({"event", "surface", "target"}), frozenset({"semantic_kind"}), "teaching"),
@@ -2256,6 +2259,87 @@ class ExpectedCycleContractCompiler:
         ExpectedEffectContract,
         ExpectedResponseContract,
     ]:
+        explicit_decisions = tuple(
+            row for row in normalized if row.get("kind") == "decision"
+        )
+        explicit_effects = tuple(
+            row for row in normalized if row.get("kind") == "no_effect"
+        )
+        explicit_responses = tuple(
+            row for row in normalized if row.get("kind") == "response"
+        )
+        if explicit_decisions or explicit_effects or explicit_responses:
+            if outcome is not ExpectedOutcomeKind.SEMANTIC:
+                raise ValueError(
+                    "explicit cycle contracts require a semantic outcome"
+                )
+            if not (
+                len(explicit_decisions)
+                == len(explicit_effects)
+                == len(explicit_responses)
+                == 1
+            ):
+                raise ValueError(
+                    "explicit cycle contracts require exactly one decision, "
+                    "no_effect and response assertion"
+                )
+            decision_row = explicit_decisions[0]
+            effect_row = explicit_effects[0]
+            response_row = explicit_responses[0]
+
+            def refs(name: str, row: Mapping[str, Any]) -> tuple[str, ...]:
+                raw = row.get(name, ())
+                return exact_refs(raw, f"explicit {name}")
+
+            bindings = exact_pairs(
+                decision_row.get("bindings", ()),
+                "explicit bindings",
+                unique_first=True,
+            )
+
+            required_response_fields = frozenset(
+                {
+                    "discourse_action",
+                    "cycle_status",
+                    "polarity",
+                    "modality",
+                    "epistemic_status",
+                }
+            )
+            missing_response_fields = required_response_fields - set(response_row)
+            if missing_response_fields:
+                raise ValueError(
+                    "explicit response assertion is incomplete: "
+                    f"{sorted(missing_response_fields)}"
+                )
+            return (
+                ExpectedDecisionContract(
+                    DecisionStatus(str(decision_row["status"])),
+                    DecisionAction(str(decision_row["action"])),
+                    binding_constraints=bindings,
+                    required_proof_refs=refs("proof_refs", decision_row),
+                    required_policy_refs=refs("policy_refs", decision_row),
+                    blocker_refs=refs("blockers", decision_row),
+                ),
+                ExpectedEffectContract(
+                    ExpectedEffectKind.NO_EFFECT,
+                    exact_text(effect_row["reason"], "explicit no-effect reason"),
+                ),
+                ExpectedResponseContract(
+                    exact_text(
+                        response_row["discourse_action"],
+                        "explicit response discourse_action",
+                    ),
+                    CycleStatus(str(response_row["cycle_status"])),
+                    exact_text(response_row["polarity"], "explicit response polarity"),
+                    exact_text(response_row["modality"], "explicit response modality"),
+                    exact_text(
+                        response_row["epistemic_status"],
+                        "explicit response epistemic_status",
+                    ),
+                    refs("permitted_omissions", response_row),
+                ),
+            )
         if outcome in {
             ExpectedOutcomeKind.GAP,
             ExpectedOutcomeKind.VERIFICATION_REJECTION,
