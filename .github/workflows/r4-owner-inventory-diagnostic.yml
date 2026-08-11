@@ -1,0 +1,87 @@
+name: R4 literal owner inventory diagnostic
+
+on:
+  push:
+    branches:
+      - codex/r4-contract-review-tranche
+    paths:
+      - .github/workflows/r4-owner-inventory-diagnostic.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4eb6c2770217e540a7b4446a13b06c8fc74310ab
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Derive exact R4 owner groups from the authoritative inventory
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY' | tee /tmp/r4-owner-inventory.json
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path('.').resolve()
+          sys.path.insert(0, str(root / 'src'))
+          sys.path.insert(0, str(root / 'scripts'))
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+
+          inventory_path = root / 'governance/test_inventory.json'
+          inventory_sha = verify_document_authority_pin(root, inventory_path)
+          inventory = load_and_verify(
+              root,
+              inventory_path,
+              phase='R4',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          config = json.loads(
+              (root / 'configs/validation_gates.json').read_text(encoding='utf-8')
+          )
+          configured = config['phases']['R4']['owners']
+          material = {
+              'active_node_count': len(inventory.active_node_ids),
+              'configured_owner_keys': sorted(configured),
+              'configured_owner_nodes': {
+                  owner: [
+                      node
+                      for step_id in configured[owner]
+                      for node in config['steps'][step_id].get('exact_nodes', [])
+                  ]
+                  for owner in sorted(configured)
+              },
+              'literal_owner_keys': sorted(inventory.owner_node_ids),
+              'literal_owner_nodes': {
+                  owner: list(inventory.owner_node_ids[owner])
+                  for owner in sorted(inventory.owner_node_ids)
+              },
+              'phase_node_count': len(inventory.phase_node_ids),
+          }
+          print(json.dumps(material, sort_keys=True, separators=(',', ':')))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r4-owner-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/r4-owner-inventory.json
+          if-no-files-found: error
+          retention-days: 3
