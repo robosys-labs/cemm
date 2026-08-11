@@ -1,0 +1,110 @@
+name: R4 literal phase selector diagnostic
+
+on:
+  push:
+    branches:
+      - codex/r4-contract-review-tranche
+    paths:
+      - .github/workflows/r4-phase-selector-diagnostic.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      STAGING_SHA: 50fcb3a213ac52f233a376bf5c018a07c5d7db39
+      PATCH_SHA256: c1aa490aebca8e55d45a3948e2d8de9e5d5be6408caaa75ebb203a4165312edf
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4eb6c2770217e540a7b4446a13b06c8fc74310ab
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Reconstruct reviewed patch and derive exact R4 phase selector
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+        run: |
+          set -euo pipefail
+          : > /tmp/r4-contract-review.patch.b64
+          for part in 00 01 02 03 04 05 06 07 08; do
+            git -C .. show "$STAGING_SHA:.github/r4-designation-event-patch/${part}.b64" \
+              >> /tmp/r4-contract-review.patch.b64
+          done
+          tr -d '\n' < /tmp/r4-contract-review.patch.b64 \
+            | base64 --decode > /tmp/r4-contract-review.patch
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('/tmp/r4-contract-review.patch')
+          data = path.read_bytes()
+          corrupt = (
+              b'raw = row.get(nam, ())\n'
+              b'+                return exact_refs(tuple(raw))\n'
+              b'+t_refs(raw, f"explicit {name}")'
+          )
+          exact = (
+              b'raw = row.get(name, ())\n'
+              b'+                return exact_refs(raw, f"explicit {name}")'
+          )
+          if data.count(corrupt) != 1:
+              raise SystemExit('reviewed staging-byte correction did not match exactly once')
+          path.write_bytes(data.replace(corrupt, exact))
+          PY
+          printf '%s  %s\n' "$PATCH_SHA256" /tmp/r4-contract-review.patch | sha256sum -c -
+          git -C .. apply /tmp/r4-contract-review.patch
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/verify_r3_r4_test_metadata.py
+          python - <<'PY' | tee /tmp/r4-phase-selector.json
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path('.').resolve()
+          sys.path.insert(0, str(root / 'src'))
+          sys.path.insert(0, str(root / 'scripts'))
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+
+          inventory_path = root / 'governance/test_inventory.json'
+          inventory_sha = verify_document_authority_pin(root, inventory_path)
+          inventory = load_and_verify(
+              root,
+              inventory_path,
+              phase='R4',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          config = json.loads((root / 'configs/validation_gates.json').read_text(encoding='utf-8'))
+          step = config['steps']['r4_phase_tests']
+          configured = tuple(step['exact_nodes'])
+          literal = tuple(inventory.phase_node_ids)
+          material = {
+              'configured_count': len(configured),
+              'configured_nodes': list(configured),
+              'extra_configured': sorted(set(configured) - set(literal)),
+              'inputs': step['inputs'],
+              'literal_count': len(literal),
+              'literal_nodes': list(literal),
+              'missing_configured': sorted(set(literal) - set(configured)),
+          }
+          print(json.dumps(material, sort_keys=True, separators=(',', ':')))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r4-phase-selector-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/r4-phase-selector.json
+          if-no-files-found: error
+          retention-days: 3
