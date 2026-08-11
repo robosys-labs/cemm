@@ -1,0 +1,358 @@
+name: R3 lineage closeout
+
+on:
+  push:
+    branches:
+      - codex/r3-lineage-closeout
+    paths:
+      - .github/workflows/r3-lineage-closeout.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r3-lineage-closeout
+  cancel-in-progress: false
+
+jobs:
+  close-r3-lineage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r3-lineage-closeout
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install exact admission dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+          python - <<'PY'
+          import fastapi, httpx, hypothesis, numpy, pytest, safetensors, torch
+          expected = {
+              'pytest': '8.4.0',
+              'hypothesis': '6.163.0',
+              'numpy': '2.5.2',
+              'safetensors': '0.5.3',
+              'fastapi': '0.115.0',
+              'httpx': '0.27.0',
+              'torch': '2.6.0+cpu',
+          }
+          actual = {
+              'pytest': pytest.__version__,
+              'hypothesis': hypothesis.__version__,
+              'numpy': numpy.__version__,
+              'safetensors': safetensors.__version__,
+              'fastapi': fastapi.__version__,
+              'httpx': httpx.__version__,
+              'torch': torch.__version__,
+          }
+          if actual != expected:
+              raise SystemExit(f'dependency drift: expected={expected!r} actual={actual!r}')
+          PY
+
+      - name: Register the two successor leaves deterministically
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('configs/validation_gates.json')
+          config = json.loads(path.read_text(encoding='utf-8'))
+          test_path = 'tests/test_r3_lineage_successors.py'
+          owner_node = (
+              test_path
+              + '::test_r3_effect_revision_dimensions_preserve_fixed_identity_and_allow_persisted_learning'
+          )
+          phase_node = (
+              test_path
+              + '::test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_verify'
+          )
+          for step_name, node in (
+              ('r3_effect_learning_owner_tests', owner_node),
+              ('r3_phase_tests', phase_node),
+          ):
+              step = config['steps'][step_name]
+              if test_path not in step['inputs']:
+                  step['inputs'].append(test_path)
+              if node not in step['exact_nodes']:
+                  step['exact_nodes'].append(node)
+              step['inputs'].sort()
+              step['exact_nodes'].sort()
+          path.write_text(
+              json.dumps(
+                  config,
+                  ensure_ascii=False,
+                  allow_nan=False,
+                  separators=(',', ':'),
+                  sort_keys=True,
+              ) + '\n',
+              encoding='utf-8',
+              newline='\n',
+          )
+          PY
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/verify_r3_r4_test_metadata.py
+          python - <<'PY'
+          import hashlib
+          import sys
+          from pathlib import Path
+
+          root = Path('.').resolve()
+          sys.path.insert(0, str(root / 'src'))
+          sys.path.insert(0, str(root / 'scripts'))
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+          from validation_gate import (
+              InventorySelector,
+              _expected_g0_inventory_receipt,
+              canonical_json_bytes,
+          )
+
+          inventory_path = root / 'governance/test_inventory.json'
+          inventory_sha = verify_document_authority_pin(root, inventory_path)
+          inventory = load_and_verify(
+              root,
+              inventory_path,
+              phase='G0',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          selector = InventorySelector(
+              phase='G0',
+              inventory_ref=inventory.inventory_ref,
+              literal_metadata_ref=inventory.literal_metadata_ref,
+              active_node_set_ref=inventory.active_node_set_ref,
+              active_node_ids=inventory.active_node_ids,
+              collectable_node_set_ref=inventory.collectable_node_set_ref,
+              collectable_node_ids=inventory.collectable_node_ids,
+          )
+          authority_raw = (root / 'docs/DOCUMENT_AUTHORITY.json').read_bytes()
+          receipt = _expected_g0_inventory_receipt(
+              authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+              inventory_sha256=inventory_sha,
+              inventory=inventory,
+              selector=selector,
+          )
+          (root / 'artifacts/validation/TEST_INVENTORY_RECEIPT.json').write_bytes(
+              canonical_json_bytes(receipt)
+          )
+          PY
+          python -m pytest -q -p no:cacheprovider tests/test_r3_lineage_successors.py
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+
+      - name: Commit the governed lineage registration
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json \
+            hybrid_mvp/configs/validation_gates.json \
+            hybrid_mvp/tests/test_r3_lineage_successors.py
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'lineage registration produced no changes'; exit 1; }
+          git commit -m 'test(r3): register exact successor lineages'
+          git push origin HEAD:codex/r3-lineage-closeout
+          test -z "$(git status --porcelain)"
+
+      - name: Prove R1 and R2 predecessors and R3 successors
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python scripts/verify_r3_r4_test_metadata.py
+          python scripts/check_test_inventory.py --phase R1 --source-only > /tmp/r1-inventory.json
+          python scripts/check_test_inventory.py --phase R2 --source-only > /tmp/r2-inventory.json
+          python scripts/check_test_inventory.py --phase R3 --source-only > /tmp/r3-inventory.json
+          python - <<'PY'
+          from pathlib import Path
+          from test_inventory_core import load_and_verify, verify_document_authority_pin
+
+          root = Path('.').resolve()
+          path = root / 'governance/test_inventory.json'
+          sha = verify_document_authority_pin(root, path)
+          old = {
+              'tests/test_phase_receipts.py::test_c1_effect_pin_changes_are_dimension_constrained_and_no_unchecked_builder_exists',
+              'tests/test_r1_phase_integration.py::test_r1_composition_root_runs_each_orient_transform_once',
+          }
+          new = {
+              'tests/test_r3_lineage_successors.py::test_r3_effect_revision_dimensions_preserve_fixed_identity_and_allow_persisted_learning',
+              'tests/test_r3_lineage_successors.py::test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_verify',
+          }
+          for phase in ('R1', 'R2'):
+              result = load_and_verify(
+                  root,
+                  path,
+                  phase=phase,
+                  enforce_reviewed_counts=True,
+                  expected_sha256=sha,
+              )
+              active = set(result.active_node_ids)
+              if not old <= active or new & active:
+                  raise SystemExit(f'{phase} predecessor lineage changed incorrectly')
+          result = load_and_verify(
+              root,
+              path,
+              phase='R3',
+              enforce_reviewed_counts=True,
+              expected_sha256=sha,
+          )
+          active = set(result.active_node_ids)
+          if old & active or not new <= active:
+              raise SystemExit('R3 successor lineage is not exact')
+          if len(active) != 1378:
+              raise SystemExit(f'R3 active-node count drifted: {len(active)}')
+          print('R1/R2 predecessors and R3 successors are exact')
+          PY
+          test -z "$(git status --porcelain)"
+
+      - name: Run all R3 owner and phase gates
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from validation_gate import run_validation
+
+          root = Path('.').resolve()
+          owners = (
+              'capability-effect',
+              'decision-query-proof',
+              'effect-learning-response',
+              'learning-response',
+              'situation-context',
+          )
+          for owner in owners:
+              outcome = run_validation(root, phase='R3', tier='owner', owner=owner)
+              print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
+              if outcome.disposition != 'passed':
+                  raise SystemExit(
+                      f'R3 owner failed: {owner}: '
+                      f'{outcome.disposition} {outcome.error_code}'
+                  )
+          phase = run_validation(root, phase='R3', tier='phase')
+          print(json.dumps(phase.to_dict(), sort_keys=True, separators=(',', ':')))
+          if phase.disposition != 'passed':
+              raise SystemExit(
+                  f'R3 phase failed: {phase.disposition} {phase.error_code}'
+              )
+          PY
+          test -z "$(git status --porcelain)"
+
+      - name: Run immutable full R3 admission
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/r3-outcome.json
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, 'src')
+          sys.path.insert(0, 'scripts')
+          from cemm_authoritative_hybrid import process_control as process_control_module
+          sys.modules['process_control'] = process_control_module
+          from validation_gate import run_validation
+
+          outcome = run_validation(Path('.').resolve(), phase='R3', tier='admission')
+          print(json.dumps(outcome.to_dict(), sort_keys=True, separators=(',', ':')))
+          PY
+          cat /tmp/r3-outcome.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          outcome = json.loads(Path('/tmp/r3-outcome.json').read_text(encoding='utf-8'))
+          if outcome.get('disposition') != 'passed' or not outcome.get('receipt_path'):
+              receipt_path = outcome.get('receipt_path')
+              if receipt_path:
+                  receipt = json.loads(Path(receipt_path).read_text(encoding='utf-8'))
+                  for step in receipt.get('step_results', []):
+                      if step.get('disposition') != 'passed':
+                          print(json.dumps({
+                              'step_id': step.get('step_id'),
+                              'disposition': step.get('disposition'),
+                              'error_code': step.get('error_code'),
+                              'report': step.get('report'),
+                          }, sort_keys=True, separators=(',', ':')))
+              raise SystemExit(
+                  f"R3 admission failed: {outcome.get('disposition')} "
+                  f"{outcome.get('error_code')}"
+              )
+          PY
+
+      - name: Append the fresh R3 admission record
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          RUN_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-outcome.json"))["run_ref"])')"
+          python scripts/update_replay_status.py \
+            --phase R3 --status green --run-ref "$RUN_REF" --dry-run \
+            > /tmp/r3-candidate.json
+          RECORD_REF="$(python -c 'import json; print(json.load(open("/tmp/r3-candidate.json"))["record_ref"])')"
+          python scripts/update_replay_status.py \
+            --phase R3 --status green --run-ref "$RUN_REF" --append \
+            --expect-record-ref "$RECORD_REF"
+          python scripts/update_replay_status.py --verify-chain
+
+      - name: Commit the exact R3 receipt and ledger transition
+        run: |
+          set -euo pipefail
+          git add hybrid_mvp/artifacts/validation/runs hybrid_mvp/governance/replay_status.jsonl
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'R3 closeout produced no governed changes'; exit 1; }
+          git commit -m 'admit(r3): close exact successor lineage'
+          git push origin HEAD:codex/r3-lineage-closeout
+
+      - name: Upload R3 closeout diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-lineage-closeout-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 3
+          if-no-files-found: warn
+          path: |
+            /tmp/r1-inventory.json
+            /tmp/r2-inventory.json
+            /tmp/r3-inventory.json
+            /tmp/r3-outcome.json
+            /tmp/r3-candidate.json
+            hybrid_mvp/artifacts/validation/runs/*.json
