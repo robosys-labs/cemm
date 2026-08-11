@@ -324,6 +324,8 @@ class CaseExpander:
                     assertions=scenario.assertions,
                     situation_constraints=self._situation_constraints(environment),
                     revision_pin=revision_pin,
+                    surface_text=surface,
+                    surface_language=language,
                 )
                 rows.append(
                     ExpandedCase.create(

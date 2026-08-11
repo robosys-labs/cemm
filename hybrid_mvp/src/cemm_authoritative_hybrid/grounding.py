@@ -613,7 +613,7 @@ class Grounder:
                 source = lattice.source_text[
                     span[0].source_start : span[-1].source_end
                 ]
-                surface = source.strip().casefold()
+                surface = source.strip()
                 if not surface:
                     continue
                 targets = self._lookup_designation(surface)

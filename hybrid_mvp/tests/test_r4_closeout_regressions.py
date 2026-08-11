@@ -14,6 +14,7 @@ from cemm_authoritative_hybrid.authority import AuthorityLinker
 from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.config import RuntimeConfig
+from cemm_authoritative_hybrid.expressions import GroundedReference, LiteralValue
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.proposal import BootstrapProposer
 from cemm_authoritative_hybrid.r4_contracts import (
@@ -29,19 +30,7 @@ from cemm_authoritative_hybrid.r4_episodes import (
 from cemm_authoritative_hybrid.r4_expansion import CaseExpander, ExpandedCase
 from cemm_authoritative_hybrid.r4_pipeline import load_reviewed_scenarios
 
-__cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_reviewed_scenario_source_matches_deterministic_generator': {'activation_phase': 'R4',
-                                                                                                          'assertion_ref': 'assertion:r4-reviewed-scenario-source-matches-generator',
-                                                                                                          'diagnostic_role': 'owner',
-                                                                                                          'introduced_by_task': 'R4-Designation-Event-Tranche',
-                                                                                                          'owner_ref': 'expected-contract',
-                                                                                                          'source_ast_sha256': 'ae45385ae4668fca755ff60a9ab2d4cc915eb8c5b87b84b21c525cab2bac7e54'},
- 'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
-                                                                                                                   'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
-                                                                                                                   'diagnostic_role': 'owner',
-                                                                                                                   'introduced_by_task': 'R4-Designation-Event-Tranche',
-                                                                                                                   'owner_ref': 'expected-contract',
-                                                                                                                   'source_ast_sha256': 'b57ad5da997eea7893fbf073e2a792009287c65c944b2dca09482da882264d8f'},
- 'tests/test_r4_closeout_regressions.py::test_every_reviewed_surface_compiles_and_round_trips_canonically': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_reviewed_surface_compiles_and_round_trips_canonically': {'activation_phase': 'R4',
                                                                                                              'assertion_ref': 'assertion:r4-reviewed-corpus-compiles-canonically',
                                                                                                              'diagnostic_role': 'owner',
                                                                                                              'introduced_by_task': 'R4-Closeout',
@@ -59,6 +48,24 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_reviewed
                                                                                                                                   'introduced_by_task': 'R4-Closeout',
                                                                                                                                   'owner_ref': 'expected-contract',
                                                                                                                                   'source_ast_sha256': '898793eb96c28d0012ba8494bf1d590b4a71e38c071ba006f6d5b6841b972936'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_designation_aliases_match_authentic_r3_cycles': {'activation_phase': 'R4',
+                                                                                                        'assertion_ref': 'assertion:r4-designation-aliases-match-authentic-r3-cycles',
+                                                                                                        'diagnostic_role': 'owner',
+                                                                                                        'introduced_by_task': 'R4-Authentic-Designation-Tranche',
+                                                                                                        'owner_ref': 'expected-contract',
+                                                                                                        'source_ast_sha256': '488db1e51d5dfbc41b43db0f49e4661494bd4155fa8688a444e3b24027e270e5'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
+                                                                                                                   'diagnostic_role': 'owner',
+                                                                                                                   'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                                   'owner_ref': 'expected-contract',
+                                                                                                                   'source_ast_sha256': 'b57ad5da997eea7893fbf073e2a792009287c65c944b2dca09482da882264d8f'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_scenario_source_matches_deterministic_generator': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-reviewed-scenario-source-matches-generator',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                          'owner_ref': 'expected-contract',
+                                                                                                          'source_ast_sha256': 'ae45385ae4668fca755ff60a9ab2d4cc915eb8c5b87b84b21c525cab2bac7e54'},
  'tests/test_r4_closeout_regressions.py::test_singleton_polysemy_is_not_fabricated_as_ambiguity': {'activation_phase': 'R4',
                                                                                                    'assertion_ref': 'assertion:r4-singleton-polysemy-is-not-fabricated-ambiguity',
                                                                                                    'diagnostic_role': 'owner',
@@ -195,6 +202,118 @@ def test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles(
             == meaning.expression.applications[0].predicate_ref
             == expected_target
         )
+
+
+def test_reviewed_designation_aliases_match_authentic_r3_cycles(
+    tmp_path: Path,
+) -> None:
+    authority = AuthorityLinker().link_path(
+        ROOT / "data" / "authority" / "manifest.json"
+    )
+    model_identity = BootstrapProposer(RuntimeConfig.release()).model_identity
+    pin = RevisionPin(authority.generation, 0, 0, 0, 0, model_identity)
+    compiler = ExpectedCycleContractCompiler(
+        authority, abi_registry_ref="abi:r4-authentic-designations"
+    )
+    expander = CaseExpander(compiler)
+    scenarios = {
+        row.scenario_ref: row
+        for row in load_reviewed_scenarios(SCENARIOS)
+        if len(row.assertions) == 1 and row.assertions[0].kind == "designates"
+    }
+    cases = tuple(
+        case
+        for scenario in scenarios.values()
+        for case in expander.expand(scenario, revision_pin=pin)
+    )
+    linked: list[tuple[ExpandedCase, str, str]] = []
+    unlinked: set[tuple[str, str]] = set()
+    for case in cases:
+        target = scenarios[case.scenario_ref].assertions[0].fields["target"]
+        canonical_surface = authority.designations.canonical_surface_for_target(
+            case.surface,
+            target,
+            case.language,
+        )
+        if canonical_surface is None:
+            unlinked.add((case.surface, target))
+        else:
+            linked.append((case, target, canonical_surface))
+
+    assert len(scenarios) == 10
+    assert len(cases) == 22
+    assert len(linked) == 17
+    assert unlinked == {
+        ("the book", "entity:book"),
+        ("the server", "entity:server"),
+        ("spouse", "rel:has_partner"),
+        ("parent", "concept:mother"),
+        ("the lamp", "entity:lamp"),
+    }
+    assert authority.designations.for_surface("entity:book", "en") == ()
+    assert authority.designations.for_surface(
+        "CEMM", "en"
+    ) == authority.designations.for_surface("cemm", "en")
+    assert (
+        authority.designations.canonical_surface_for_target(
+            "cemm", "participant:system", "en"
+        )
+        == "CEMM"
+    )
+
+    episodes = []
+    for index, (case, target, canonical_surface) in enumerate(linked):
+        runtime = load_runtime(
+            ROOT,
+            profile="development",
+            store_path=tmp_path / f"designation-{index:02d}.db",
+        )
+        try:
+            episode = AuthenticEpisodeBuilder(
+                PublicRuntimeEpisodeOwner(lambda _case, runtime=runtime: runtime)
+            ).build(case)
+        finally:
+            runtime.stores.close()
+        episodes.append((episode, target, canonical_surface))
+
+    assert all(episode.comparison.passed for episode, _, _ in episodes)
+    for episode, target, canonical_surface in episodes:
+        expected = episode.expected_contract.expected_expressions
+        meaning = episode.observed_cycle.verification.selected_meaning
+        candidate_ref = episode.observed_cycle.verification.selected_candidate_ref
+        assert len(expected) == 1
+        assert meaning is not None
+        assert candidate_ref is not None
+        candidate = episode.observed_cycle.proposal.candidate_by_ref(candidate_ref)
+        assert tuple(
+            action.action_type
+            for action in candidate.program.actions
+            if action.action_type == "select_designation"
+        ) == ("select_designation",)
+        expected_application = expected[0].applications[0]
+        observed_application = meaning.expression.applications[0]
+        assert (
+            expected_application.operator
+            == observed_application.operator
+            == "op:designation"
+        )
+        assert (
+            expected_application.predicate_ref
+            == observed_application.predicate_ref
+            == target
+        )
+        expected_roles = {
+            binding.role_ref: binding.filler
+            for binding in expected_application.roles
+        }
+        observed_roles = {
+            binding.role_ref: binding.filler
+            for binding in observed_application.roles
+        }
+        assert expected_roles == observed_roles == {
+            "role:surface": LiteralValue("string", canonical_surface),
+            "role:target": GroundedReference(target),
+        }
 
 
 def test_singleton_polysemy_is_not_fabricated_as_ambiguity() -> None:

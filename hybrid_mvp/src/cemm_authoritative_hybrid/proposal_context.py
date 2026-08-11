@@ -1337,9 +1337,13 @@ class ProposalContextBuilder:
         self._authority = authority
         self._affordance_index = affordance_index
         self._config = config
+        self._language = "en"
         self._scope_values: Mapping[str, Mapping[str, str]] = {}
         self._link_schemas: Mapping[str, Mapping[str, Any]] = {}
         if form_pack is not None:
+            language = form_pack.get("language", "en")
+            if isinstance(language, str) and language:
+                self._language = language
             sv = form_pack.get("scope_values", {})
             if isinstance(sv, dict):
                 self._scope_values = {
@@ -1425,6 +1429,21 @@ class ProposalContextBuilder:
             profiles_by_target,
             predicate_targets,
         )
+        designation_contributions = self._designation_application_contributions(
+            designation_slots,
+            form_lattice,
+            unit_by_ref,
+        )
+        if designation_contributions:
+            contribution_slots = _bounded_unique_contributions(
+                (*contribution_slots, *designation_contributions),
+                self._config,
+            )
+            application_frames = self._with_designation_fallback_frames(
+                application_frames,
+                designation_slots,
+                designation_contributions,
+            )
         mode_slots = (_mode_slot(orientation, form_lattice),)
         scope_slots = _scope_slots(form_lattice, self._config, self._scope_values)
         expression_link_slots = _expression_link_slots(
@@ -1559,6 +1578,166 @@ class ProposalContextBuilder:
             seen.add(row.slot_ref)
             selected.append(row)
         return tuple(selected)
+
+    def _designation_application_contributions(
+        self,
+        designations: tuple[DesignationSlot, ...],
+        form_lattice: FormLattice,
+        unit_by_ref: Mapping[str, Any],
+    ) -> tuple[ContributionSlot, ...]:
+        """Expose one explicit designation fact as a complete kernel relation.
+
+        The designation target and exact reviewed source span are already
+        authenticated by grounding.  This adds no lexical inference: it only
+        provides the structural predicate proof and the literal surface role
+        needed to lower that existing fact to ``op:designation``.
+        """
+        rows: list[ContributionSlot] = []
+        index = getattr(self._authority, "designations", None)
+        canonical_lookup = getattr(index, "canonical_surface_for_target", None)
+        if not callable(canonical_lookup):
+            return ()
+        source_text = form_lattice.source_text
+        source_start = len(source_text) - len(source_text.lstrip())
+        source_end = len(source_text.rstrip())
+        for designation in designations:
+            spans = tuple(
+                (
+                    unit_by_ref[source_ref].source_start,
+                    unit_by_ref[source_ref].source_end,
+                )
+                for source_ref in designation.source_unit_refs
+            )
+            start = min(row[0] for row in spans)
+            end = max(row[1] for row in spans)
+            if start != source_start or end != source_end:
+                continue
+            observed_surface = form_lattice.source_text[start:end].strip()
+            if not observed_surface:
+                raise ValueError("designation source span has no surface value")
+            surface = canonical_lookup(
+                observed_surface,
+                designation.target_ref,
+                self._language,
+            )
+            if surface is None:
+                continue
+            provenance = tuple(
+                dict.fromkeys(
+                    (
+                        designation.slot_ref,
+                        designation.designation_fact_ref,
+                        *designation.provenance_refs,
+                    )
+                )
+            )
+            rows.append(
+                ContributionSlot.create(
+                    contribution_ref=stable_ref(
+                        "designation_application_predicate",
+                        {
+                            "designation_slot_ref": designation.slot_ref,
+                            "target_ref": designation.target_ref,
+                            "target_kind": designation.target_kind,
+                        },
+                    ),
+                    kind="predicate",
+                    source_unit_refs=designation.source_unit_refs,
+                    target_ref=designation.target_ref,
+                    target_kind=designation.target_kind,
+                    input_ports=("role:surface",),
+                    output_ports=("role:label_type",),
+                    constraints=(
+                        ("designation_fact_ref", designation.designation_fact_ref),
+                        ("operator_ref", "op:designation"),
+                    ),
+                    provenance_refs=provenance,
+                )
+            )
+            rows.append(
+                ContributionSlot.create(
+                    contribution_ref=stable_ref(
+                        "designation_surface_literal",
+                        {
+                            "designation_slot_ref": designation.slot_ref,
+                            "surface": surface,
+                            "source_unit_refs": list(designation.source_unit_refs),
+                        },
+                    ),
+                    kind="literal",
+                    source_unit_refs=designation.source_unit_refs,
+                    target_ref=None,
+                    target_kind=None,
+                    input_ports=(),
+                    output_ports=("role:surface",),
+                    constraints=(
+                        ("literal", surface),
+                        ("literal_kind", "string"),
+                    ),
+                    provenance_refs=provenance,
+                    literal_value=surface,
+                )
+            )
+        return tuple(rows)
+
+    def _with_designation_fallback_frames(
+        self,
+        frames: tuple[ApplicationFrameSlot, ...],
+        designations: tuple[DesignationSlot, ...],
+        contributions: tuple[ContributionSlot, ...],
+    ) -> tuple[ApplicationFrameSlot, ...]:
+        """Append bounded designation frames for authenticated full surfaces."""
+        predicate_keys = frozenset(
+            (
+                row.target_ref,
+                row.target_kind,
+                row.source_unit_refs,
+                row.input_ports,
+                row.output_ports,
+            )
+            for row in contributions
+            if row.kind == "predicate" and row.target_ref is not None
+        )
+        rows = list(frames)
+        for designation in designations:
+            if len(rows) >= self._config.max_orientation_alternatives:
+                break
+            key = (
+                designation.target_ref,
+                designation.target_kind,
+                designation.source_unit_refs,
+                ("role:surface",),
+                ("role:label_type",),
+            )
+            if key not in predicate_keys:
+                continue
+            frame = ApplicationFrameSlot.create(
+                designation_slot_ref=designation.slot_ref,
+                predicate_target_ref=designation.target_ref,
+                predicate_kind=designation.target_kind,
+                operator_ref="op:designation",
+                structural_role_ref="role:label_type",
+                required_roles=("role:surface",),
+                optional_roles=(),
+                proposition_roles=(),
+                source_unit_refs=designation.source_unit_refs,
+                derived_role_targets=(
+                    ("role:target", designation.target_ref),
+                ),
+                affordance_frame_ref=None,
+                provenance_refs=tuple(
+                    dict.fromkeys(
+                        (
+                            designation.slot_ref,
+                            designation.designation_fact_ref,
+                            *designation.provenance_refs,
+                        )
+                    )
+                ),
+            )
+            if all(existing.slot_ref != frame.slot_ref for existing in rows):
+                rows.append(frame)
+        return tuple(rows)
 
     def _contribution_slots(
         self,
@@ -2386,6 +2565,25 @@ def _derived_roles_for_kind(
     return ()
 
 
+def _is_designation_application_frame(
+    frame: ApplicationFrameSlot,
+    designation: DesignationSlot,
+) -> bool:
+    """Recognize the one structural lowering owned by a designation fact."""
+    return (
+        frame.operator_ref == "op:designation"
+        and frame.structural_role_ref == "role:label_type"
+        and frame.required_roles == ("role:surface",)
+        and frame.optional_roles == ()
+        and frame.proposition_roles == ()
+        and frame.source_unit_refs == designation.source_unit_refs
+        and frame.derived_role_targets
+        == (("role:target", designation.target_ref),)
+        and frame.affordance_frame_ref is None
+        and designation.designation_fact_ref in frame.provenance_refs
+    )
+
+
 def _mode_slot(
     orientation: Orientation,
     form_lattice: FormLattice,
@@ -2842,10 +3040,19 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             or frame.predicate_kind != designation.target_kind
         ):
             raise ValueError("application frame predicate disagrees with designation")
-        expected_operator = _operator_for_kind(frame.predicate_kind)
+        designation_frame = _is_designation_application_frame(frame, designation)
+        if designation_frame:
+            expected_operator = "op:designation"
+            expected_structural_role = "role:label_type"
+            expected_derived_roles = (("role:target", frame.predicate_target_ref),)
+        else:
+            expected_operator = _operator_for_kind(frame.predicate_kind)
+            expected_structural_role = _structural_role_for_kind(frame.predicate_kind)
+            expected_derived_roles = _derived_roles_for_kind(
+                frame.predicate_kind, frame.predicate_target_ref
+            )
         if expected_operator is None or frame.operator_ref != expected_operator:
             raise ValueError("application frame violates exact operator lowering")
-        expected_structural_role = _structural_role_for_kind(frame.predicate_kind)
         if frame.structural_role_ref != expected_structural_role:
             raise ValueError("application frame has an invalid structural role")
         if frame.structural_role_ref in {
@@ -2855,9 +3062,6 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             raise ValueError(
                 "application frame structural role cannot be a filler role"
             )
-        expected_derived_roles = _derived_roles_for_kind(
-            frame.predicate_kind, frame.predicate_target_ref
-        )
         if frame.derived_role_targets != expected_derived_roles:
             raise ValueError("application frame has invalid derived role targets")
         if frame.predicate_kind != "event_type" and frame.proposition_roles:
@@ -2873,6 +3077,20 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             and bool(contribution.output_ports)
             and contribution.output_ports[0] == frame.structural_role_ref
             and set(contribution.input_ports) == frame_input_roles
+            and (
+                not designation_frame
+                or (
+                    (
+                        "designation_fact_ref",
+                        designation.designation_fact_ref,
+                    )
+                    in contribution.constraints
+                    and ("operator_ref", "op:designation")
+                    in contribution.constraints
+                    and designation.designation_fact_ref
+                    in contribution.provenance_refs
+                )
+            )
             for contribution in predicates_by_target.get(frame.predicate_target_ref, ())
         )
         if not compatible_contribution:
@@ -2880,6 +3098,20 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
                 "application frame roles are not proven by predicate contribution "
                 "input roles and structural output"
             )
+        if designation_frame:
+            if not any(
+                contribution.kind == "literal"
+                and contribution.source_unit_refs == frame.source_unit_refs
+                and contribution.output_ports == ("role:surface",)
+                and contribution.literal_value is not None
+                and designation.designation_fact_ref
+                in contribution.provenance_refs
+                for contribution in context.contribution_slots
+            ):
+                raise ValueError(
+                    "designation application lacks an authenticated surface literal"
+                )
+            continue
         count = frame_target_counts.get(frame.predicate_target_ref, 0) + 1
         frame_target_counts[frame.predicate_target_ref] = count
         if count > config.max_affordances_per_target:

@@ -153,7 +153,7 @@ class DesignationIndex:
     refs are never automatically lexicalized into surfaces.
     """
 
-    __slots__ = ("_by_surface", "_by_target")
+    __slots__ = ("_by_surface", "_by_folded_surface", "_by_target")
 
     def __init__(
         self,
@@ -162,14 +162,53 @@ class DesignationIndex:
     ) -> None:
         self._by_surface = dict(by_surface)
         self._by_target = dict(by_target)
+        folded: dict[tuple[str, str], list[str]] = {}
+        for (surface, language), targets in self._by_surface.items():
+            bucket = folded.setdefault((surface.casefold(), language), [])
+            for target in targets:
+                if target not in bucket:
+                    bucket.append(target)
+        self._by_folded_surface = {
+            key: tuple(targets) for key, targets in folded.items()
+        }
 
     def for_surface(self, surface: str, language: str) -> tuple[str, ...]:
-        """Return target refs designated by ``surface`` in ``language``."""
-        return self._by_surface.get((surface, language), ())
+        """Return target refs designated by ``surface`` in ``language``.
+
+        Exact reviewed identity wins.  A bounded Unicode case-folded lookup is
+        used only when the exact surface is absent; collisions remain explicit
+        alternatives rather than being resolved by spelling heuristics.
+        """
+        exact = self._by_surface.get((surface, language), ())
+        if exact:
+            return exact
+        return self._by_folded_surface.get((surface.casefold(), language), ())
 
     def for_target(self, target: str, language: str) -> tuple[str, ...]:
         """Return surfaces that designate ``target`` in ``language``."""
         return self._by_target.get((target, language), ())
+
+    def canonical_surface_for_target(
+        self,
+        surface: str,
+        target: str,
+        language: str,
+    ) -> str | None:
+        """Return the linked surface identity matching one target.
+
+        Exact target-linked surfaces are preserved.  Case-folded recovery is
+        admitted only when it identifies one canonical reviewed surface for
+        the target; ambiguous folded spellings fail closed.
+        """
+        exact_targets = self._by_surface.get((surface, language), ())
+        if target in exact_targets:
+            return surface
+        matches = tuple(
+            candidate
+            for candidate in self._by_target.get((target, language), ())
+            if candidate.casefold() == surface.casefold()
+        )
+        return matches[0] if len(matches) == 1 else None
 
 
 # ---------------------------------------------------------------------------

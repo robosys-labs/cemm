@@ -922,6 +922,29 @@ class _AuthorityView:
                 f"reviewed designation is absent from authority: {language}:{surface}->{target}"
             )
 
+    def canonical_designation_surface(
+        self,
+        surface: str,
+        target: str,
+        language: str,
+    ) -> str | None:
+        """Return the exact linked surface identity for one reviewed target."""
+        surface = exact_text(surface, "reviewed surface", maximum=16_384)
+        target = exact_text(target, "designation target")
+        language = exact_text(language, "language")
+        index = getattr(self.authority, "designations", None)
+        lookup = getattr(index, "canonical_surface_for_target", None)
+        if not callable(lookup):
+            raise TypeError("linked authority lacks canonical designation lookup")
+        value = lookup(surface, target, language)
+        if value is None:
+            return None
+        return exact_text(
+            value,
+            "canonical designation surface",
+            maximum=16_384,
+        )
+
     def validate_state(self, dimension: str, value: str) -> None:
         dimension = self.require_ref(
             dimension, "state dimension", kinds=("state_dimension",)
@@ -1042,6 +1065,8 @@ class ExpectedCycleContractCompiler:
         assertions: tuple[ReviewedAssertion, ...],
         situation_constraints: Mapping[str, Any],
         revision_pin: RevisionPin,
+        surface_text: str | None = None,
+        surface_language: str | None = None,
     ) -> ExpectedCycleContract:
         if (
             type(assertions) is not tuple
@@ -1052,6 +1077,16 @@ class ExpectedCycleContractCompiler:
         pin = exact_pin(revision_pin)
         if pin.authority_generation != self._authority.generation:
             raise ValueError("compiler revision pin differs from authority generation")
+        case_surface = (
+            None
+            if surface_text is None
+            else exact_text(surface_text, "surface_text", maximum=16_384)
+        )
+        case_language = (
+            None
+            if surface_language is None
+            else exact_text(surface_language, "surface_language")
+        )
 
         expressions: list[SemanticExpression] = []
         normalized: list[Mapping[str, Any]] = []
@@ -1064,7 +1099,10 @@ class ExpectedCycleContractCompiler:
                 raise TypeError("assertions must contain ReviewedAssertion values")
             spec = AssertionRegistry.validate(assertion)
             compiled, normalized_row, mode, gap = self._compile_assertion(
-                assertion, spec
+                assertion,
+                spec,
+                case_surface=case_surface,
+                case_language=case_language,
             )
             families.append(spec.family)
             expressions.extend(compiled)
@@ -1132,7 +1170,12 @@ class ExpectedCycleContractCompiler:
         )
 
     def _compile_assertion(
-        self, assertion: ReviewedAssertion, spec: _AssertionSpec
+        self,
+        assertion: ReviewedAssertion,
+        spec: _AssertionSpec,
+        *,
+        case_surface: str | None,
+        case_language: str | None,
     ) -> tuple[
         tuple[SemanticExpression, ...],
         Mapping[str, Any],
@@ -1154,6 +1197,18 @@ class ExpectedCycleContractCompiler:
             # the new surface to exist in the active authority generation.
             if assertion.kind == "designates":
                 self._authority.require_designation_target(surface, target, language)
+                if case_surface is not None:
+                    matched_surface = self._authority.canonical_designation_surface(
+                        case_surface,
+                        target,
+                        case_language or language,
+                    )
+                    if matched_surface is not None:
+                        surface = matched_surface
+                        normalized = _json_mapping(
+                            {**dict(normalized), "surface": surface},
+                            "normalized assertion",
+                        )
             return (self._designation(surface, target),), normalized, None, None
         if family == "polysemy":
             targets = fields["targets"]
@@ -2571,15 +2626,15 @@ class ExpectedCycleContractCompiler:
             )
         return (
             ExpectedDecisionContract(
-                DecisionStatus.CONTESTED, DecisionAction.ACKNOWLEDGE
+                DecisionStatus.CONTESTED, DecisionAction.RETAIN_ATTRIBUTION
             ),
             ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "attributed_only"),
             ExpectedResponseContract(
-                "acknowledge_claim",
-                CycleStatus.RESOLVED,
+                "acknowledge",
+                CycleStatus.PARTIAL,
                 "polarity:positive",
                 "modality:actual",
-                "epistemic:contested",
+                "epistemic_status:contested",
             ),
         )
 

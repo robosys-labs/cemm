@@ -18,6 +18,7 @@ from ._core import (
     _bound_role_set,
     _next_node_ref,
     _predicate_bundles,
+    _predicate_source_refs,
     _roots,
     _support_bundles,
     _used_sources,
@@ -288,7 +289,7 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                         action_index=action_index,
                         action_type="instantiate_operator",
                         arguments=(app_ref, frame.slot_ref),
-                        source_unit_refs=frame.source_unit_refs,
+                        source_unit_refs=_predicate_source_refs(frame),
                     )
                     for uses in _predicate_bundles(
                         owner._context,

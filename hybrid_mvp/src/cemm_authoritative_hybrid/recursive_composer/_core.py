@@ -277,7 +277,7 @@ def _predicate_bundles(
 ) -> tuple[tuple[_SourceUse, ...], ...]:
     return _support_bundles(
         context,
-        tuple(frame.source_unit_refs),
+        _predicate_source_refs(frame),
         kinds=frozenset({"predicate"}),
         assignment_kind="predicate",
         action_ref=action.action_ref,
@@ -287,6 +287,28 @@ def _predicate_bundles(
         target_ref=frame.predicate_target_ref,
         target_kind=frame.predicate_kind,
     )
+
+
+def _predicate_source_refs(frame: Any) -> tuple[str, ...]:
+    """Return source evidence consumed by operator instantiation.
+
+    A designation application binds the exact surface as its required literal
+    role.  The linked designation fact proves the predicate structurally, so
+    consuming the same source again during instantiation would violate the
+    one-source/one-assignment hard cut.
+    """
+    if (
+        frame.operator_ref == "op:designation"
+        and frame.structural_role_ref == "role:label_type"
+        and frame.required_roles == ("role:surface",)
+        and frame.optional_roles == ()
+        and frame.proposition_roles == ()
+        and frame.derived_role_targets
+        == (("role:target", frame.predicate_target_ref),)
+        and frame.affordance_frame_ref is None
+    ):
+        return ()
+    return tuple(frame.source_unit_refs)
 
 
 def _next_node_ref(kind: str, state: _State) -> str:
