@@ -136,22 +136,16 @@ def test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_
     )
 
 
-__cemm_test_inventory__ = {
-    "tests/test_r3_lineage_successors.py::test_r3_effect_revision_dimensions_preserve_fixed_identity_and_allow_persisted_learning": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r1-c1-effect-pin-dimensions",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R3-Lineage-Closeout",
-        "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-        "supersedes_node_id": "tests/test_phase_receipts.py::test_c1_effect_pin_changes_are_dimension_constrained_and_no_unchecked_builder_exists",
-    },
-    "tests/test_r3_lineage_successors.py::test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_verify": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r1-one-orient-transform-pass",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Lineage-Closeout",
-        "source_ast_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-        "supersedes_node_id": "tests/test_r1_phase_integration.py::test_r1_composition_root_runs_each_orient_transform_once",
-    },
-}
+__cemm_test_inventory__ = {'tests/test_r3_lineage_successors.py::test_r3_effect_revision_dimensions_preserve_fixed_identity_and_allow_persisted_learning': {'activation_phase': 'R3',
+                                                                                                                                  'assertion_ref': 'assertion:r1-c1-effect-pin-dimensions',
+                                                                                                                                  'diagnostic_role': 'owner',
+                                                                                                                                  'introduced_by_task': 'R3-Lineage-Closeout',
+                                                                                                                                  'owner_ref': 'effect-learning-response',
+                                                                                                                                  'source_ast_sha256': '16d051edacf8f2be2e4a4a0c4422e71fe72d1e62d4d385efac0e44e367ff2312',
+                                                                                                                                  'supersedes_node_id': 'tests/test_phase_receipts.py::test_c1_effect_pin_changes_are_dimension_constrained_and_no_unchecked_builder_exists'},
+ 'tests/test_r3_lineage_successors.py::test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_verify': {'activation_phase': 'R3',
+                                                                                                                             'assertion_ref': 'assertion:r1-one-orient-transform-pass',
+                                                                                                                             'diagnostic_role': 'phase',
+                                                                                                                             'introduced_by_task': 'R3-Lineage-Closeout',
+                                                                                                                             'source_ast_sha256': '2fd87bb35f1fef86655bd2370556fb5dca1a886a72c97f4e2c0c2192790e6cae',
+                                                                                                                             'supersedes_node_id': 'tests/test_r1_phase_integration.py::test_r1_composition_root_runs_each_orient_transform_once'}}
