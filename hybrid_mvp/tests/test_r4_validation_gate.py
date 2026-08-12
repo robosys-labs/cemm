@@ -1,6 +1,7 @@
 """R4 repository-owned validation-control tests."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 
@@ -92,6 +93,17 @@ def test_r4_generator_source_rejects_nonartifact_change(monkeypatch) -> None:
         gate._r4_generator_source_revision(ROOT, artifact_commit)
 
 
+def test_historical_receipt_keeps_unselected_retired_step_opaque() -> None:
+    payload = json.loads(
+        (ROOT / "configs" / "validation_gates.json").read_text(encoding="utf-8")
+    )
+    payload["steps"]["r4_artifact_integrity"]["kind"] = "retired_control"
+    graph = gate.GateGraph.from_dict(payload, historical_phase="R3")
+    assert graph.phases["R3"].admission
+    with pytest.raises(gate.GateConfigError, match="unknown kind"):
+        gate.GateGraph.from_dict(payload)
+
+
 __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_report_has_exact_internal_shape': {'activation_phase': 'R4',
                                                                                          'assertion_ref': 'assertion:r4-integrity-report-exact-internal-shape',
                                                                                          'diagnostic_role': 'owner',
@@ -121,4 +133,10 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                            'diagnostic_role': 'owner',
                                                                                            'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                            'owner_ref': 'artifact-integrity',
-                                                                                           'source_ast_sha256': '0ecc7f1b3552d0ff4bb60448b55b43a5df336169af5d0e73852d13a10001d8f2'}}
+                                                                                           'source_ast_sha256': '0ecc7f1b3552d0ff4bb60448b55b43a5df336169af5d0e73852d13a10001d8f2'},
+ 'tests/test_r4_validation_gate.py::test_historical_receipt_keeps_unselected_retired_step_opaque': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:historical-receipt-unselected-step-is-opaque',
+                                                                                                    'diagnostic_role': 'owner',
+                                                                                                    'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                                    'owner_ref': 'artifact-integrity',
+                                                                                                    'source_ast_sha256': '5c2e20bf958cae1b04c08c21d55d40524a4632d6ce6903d4d3632b99616a2812'}}

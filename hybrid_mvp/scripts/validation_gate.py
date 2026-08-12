@@ -724,7 +724,13 @@ class GateGraph:
     config_ref: str
 
     @classmethod
-    def from_dict(cls, raw: object, *, root: Path | None = None) -> "GateGraph":
+    def from_dict(
+        cls,
+        raw: object,
+        *,
+        root: Path | None = None,
+        historical_phase: str | None = None,
+    ) -> "GateGraph":
         top = _exact_fields(raw, _TOP_FIELDS, "gate config")
         if top["schema"] != GATE_CONFIG_SCHEMA:
             raise GateConfigError("gate config schema mismatch")
@@ -741,6 +747,22 @@ class GateGraph:
             raise GateConfigError("slowest-row limit may not exceed the report ABI bound")
         if type(top["steps"]) is not dict or not top["steps"]:
             raise GateConfigError("gate steps must be a non-empty object")
+        selected_historical_steps: set[str] | None = None
+        if historical_phase is not None:
+            if historical_phase not in PHASES:
+                raise GateConfigError("historical receipt phase is invalid")
+            phases_raw = top["phases"]
+            if type(phases_raw) is not dict or type(phases_raw.get(historical_phase)) is not dict:
+                raise GateConfigError("historical receipt phase plan is unavailable")
+            selected = _exact_fields(
+                phases_raw[historical_phase], _PHASE_FIELDS, "historical phase plan"
+            )
+            if type(selected["owners"]) is not dict:
+                raise GateConfigError("historical receipt owners are invalid")
+            selected_historical_steps = set(selected["admission"]) | set(selected["phase"])
+            for roots in selected["owners"].values():
+                if type(roots) is list:
+                    selected_historical_steps.update(roots)
         steps: dict[str, GateStep] = {}
         root_path = root.resolve() if root is not None else None
         for step_id, value in sorted(top["steps"].items()):
@@ -750,6 +772,8 @@ class GateGraph:
                 raise GateConfigError(f"step {step_id} must be an object")
             kind = _text(value.get("kind"), f"step {step_id}.kind")
             if kind not in STEP_KINDS:
+                if selected_historical_steps is not None and step_id not in selected_historical_steps:
+                    continue
                 raise GateConfigError(f"step {step_id} has unknown kind: {kind}")
             item = _exact_fields(value, _STEP_FIELDS[kind], f"step {step_id}")
             depends = _sorted_unique_strings(
@@ -801,6 +825,8 @@ class GateGraph:
             raise GateConfigError("gate phases must be a non-empty object")
         phases: dict[str, PhasePlan] = {}
         for phase, value in sorted(top["phases"].items()):
+            if historical_phase is not None and phase != historical_phase:
+                continue
             if phase not in PHASES:
                 raise GateConfigError(f"unknown replay phase: {phase}")
             item = _exact_fields(value, _PHASE_FIELDS, f"phase {phase}")
@@ -825,7 +851,8 @@ class GateGraph:
             steps=MappingProxyType(steps), phases=MappingProxyType(phases),
             material=_freeze_json(top), config_ref=content_ref("gate_config", top),
         )
-        graph._validate_phase_contracts()
+        if historical_phase is None:
+            graph._validate_phase_contracts()
         return graph
 
     @staticmethod
@@ -2635,6 +2662,7 @@ class GateReceipt:
         started_at_utc: str,
         step_results: Sequence[StepResult],
         tier: str,
+        historical_config: bool = False,
     ) -> "GateReceipt":
         if phase not in PHASES:
             raise AdmissionValidationError("receipt phase is invalid")
@@ -2661,7 +2689,10 @@ class GateReceipt:
             raise AdmissionValidationError("receipt run nonce is invalid")
         try:
             config_material = _canonical_clone(config)
-            graph = GateGraph.from_dict(config_material)
+            graph = GateGraph.from_dict(
+                config_material,
+                historical_phase=phase if historical_config else None,
+            )
             environment_material = _validated_environment_material(
                 _canonical_clone(environment)
             )
@@ -2827,6 +2858,7 @@ class GateReceipt:
                     StepResult.from_dict(row) for row in item["step_results"]
                 ),
                 tier=item["tier"],
+                historical_config=True,
             )
             for field in ("config_ref", "environment_ref", "gate_result_ref"):
                 if getattr(result, field) != item[field]:
