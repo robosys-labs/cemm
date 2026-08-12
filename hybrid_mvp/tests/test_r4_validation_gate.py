@@ -60,7 +60,12 @@ def test_r4_generator_source_is_parent_of_artifact_only_commit(monkeypatch) -> N
             "-r",
             artifact_commit,
         ):
-            return b"artifacts/r4/BUILD_RECEIPT.json\nartifacts/r4/episodes.jsonl\n"
+            return (
+                b"hybrid_mvp/artifacts/r4/BUILD_RECEIPT.json\n"
+                b"hybrid_mvp/artifacts/r4/episodes.jsonl\n"
+            )
+        if arguments == ("rev-parse", "--show-prefix"):
+            return b"hybrid_mvp/\n"
         raise AssertionError(arguments)
 
     monkeypatch.setattr(gate, "_bounded_git_probe", probe)
@@ -86,6 +91,8 @@ def test_r4_generator_source_rejects_nonartifact_change(monkeypatch) -> None:
     def probe(_root: Path, arguments: tuple[str, ...], **_kwargs) -> bytes:
         if arguments[0] == "rev-list":
             return f"{artifact_commit} {generator_commit}\n".encode()
+        if arguments == ("rev-parse", "--show-prefix"):
+            return b"hybrid_mvp/\n"
         return b"artifacts/r4/BUILD_RECEIPT.json\nsrc/cemm_authoritative_hybrid/r4_pipeline.py\n"
 
     monkeypatch.setattr(gate, "_bounded_git_probe", probe)
@@ -133,7 +140,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                                   'diagnostic_role': 'owner',
                                                                                                   'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                                   'owner_ref': 'artifact-integrity',
-                                                                                                  'source_ast_sha256': '5d456c4cd0bf91aca6e1765c1ea8d98b00f78eb9679440b329e3bd38c59c2b6f'},
+                                                                                                  'source_ast_sha256': '7a4b9080f5061b604ffb598e88bb3d3360ae4a24e9d32c106c0503cbae15b9f2'},
  'tests/test_r4_validation_gate.py::test_r4_generator_source_rejects_merge_commit': {'activation_phase': 'R4',
                                                                                      'assertion_ref': 'assertion:r4-generator-source-rejects-merge',
                                                                                      'diagnostic_role': 'owner',
@@ -145,7 +152,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                            'diagnostic_role': 'owner',
                                                                                            'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                            'owner_ref': 'artifact-integrity',
-                                                                                           'source_ast_sha256': '0ecc7f1b3552d0ff4bb60448b55b43a5df336169af5d0e73852d13a10001d8f2'},
+                                                                                           'source_ast_sha256': '8da1fa159bf48d2df86dc483850deda8330df3eca870b060240702be5f060664'},
  'tests/test_r4_validation_gate.py::test_historical_receipt_keeps_unselected_retired_step_opaque': {'activation_phase': 'R4',
                                                                                                     'assertion_ref': 'assertion:historical-receipt-unselected-step-is-opaque',
                                                                                                     'diagnostic_role': 'owner',

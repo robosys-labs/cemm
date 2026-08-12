@@ -4089,9 +4089,33 @@ def _r4_generator_source_revision(root: Path, artifact_commit: str) -> str:
         raise GateConfigError("R4 artifact commit path record is invalid") from exc
     if not changed_text.endswith("\n"):
         raise GateConfigError("R4 artifact commit path record is invalid")
+    raw_prefix = _bounded_git_probe(
+        root,
+        ("rev-parse", "--show-prefix"),
+        context="resolve the R4 project path prefix",
+        timeout_seconds=30,
+    )
+    try:
+        repository_prefix = raw_prefix.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise GateConfigError("R4 project path prefix is invalid") from exc
+    if not repository_prefix.endswith("\n") or repository_prefix.count("\n") != 1:
+        raise GateConfigError("R4 project path prefix is invalid")
+    repository_prefix = repository_prefix[:-1]
+    prefix_path = PurePosixPath(repository_prefix)
+    if (
+        repository_prefix
+        and (
+            not repository_prefix.endswith("/")
+            or prefix_path.as_posix() + "/" != repository_prefix
+            or any(part in {"", ".", ".."} for part in prefix_path.parts)
+        )
+    ):
+        raise GateConfigError("R4 project path prefix is invalid")
     changed_paths = changed_text.splitlines()
+    expected_prefix = f"{repository_prefix}artifacts/r4/"
     if not changed_paths or any(
-        not path.startswith("artifacts/r4/")
+        not path.startswith(expected_prefix)
         or PurePosixPath(path).as_posix() != path
         or any(part in {"", ".", ".."} for part in PurePosixPath(path).parts)
         for path in changed_paths
