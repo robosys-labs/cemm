@@ -276,7 +276,9 @@ Run:
 
 ```powershell
 python scripts/diagnose_r4_cases.py `
-  --environment cemm_authoritative_hybrid.r4_environment:build_environment
+  --environment cemm_authoritative_hybrid.r4_environment:build_environment `
+  --store-root "$env:TEMP\cemm-r1-retirement-r4-diagnostic" `
+  --output "$env:TEMP\cemm-r1-retirement-r4-diagnostic.json"
 ```
 
 Expected: 400 cases, 400 passed, 0 failed, 0 errors.

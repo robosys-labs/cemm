@@ -147,5 +147,4 @@ __cemm_test_inventory__ = {'tests/test_r3_lineage_successors.py::test_r3_effect_
                                                                                                                              'assertion_ref': 'assertion:r1-one-orient-transform-pass',
                                                                                                                              'diagnostic_role': 'phase',
                                                                                                                              'introduced_by_task': 'R3-Lineage-Closeout',
-                                                                                                                             'source_ast_sha256': '2fd87bb35f1fef86655bd2370556fb5dca1a886a72c97f4e2c0c2192790e6cae',
-                                                                                                                             'supersedes_node_id': 'tests/test_r1_phase_integration.py::test_r1_composition_root_runs_each_orient_transform_once'}}
+                                                                                                                             'source_ast_sha256': '2fd87bb35f1fef86655bd2370556fb5dca1a886a72c97f4e2c0c2192790e6cae'}}
