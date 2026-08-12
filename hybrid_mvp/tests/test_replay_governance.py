@@ -38,8 +38,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
-    "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
-    "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
+    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (
@@ -51,6 +51,8 @@ SUPERSEDED_EXECUTION_CLAIMS = (
     "docs/superpowers/plans/2026-07-29-m4-training-failure-competitive-evaluation.md",
     "docs/superpowers/plans/2026-07-29-m5-surfaces-reliable-cutover.md",
     "docs/superpowers/plans/2026-07-30-corrective-replay-plan.md",
+    "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
 )
 
 HISTORICAL_EVIDENCE = (
