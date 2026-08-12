@@ -1,6 +1,6 @@
 # Hybrid MVP R4 Final Admission and Integration Design
 
-**Status:** proposed closeout design; implementation remains gated on review
+**Status:** approved closeout design; implementation remains red until admitted
 **Date:** 2026-08-12
 **Scope:** `hybrid_mvp/` plus repository integration only
 **Starting commit:** `0a52bd6b53244cddd2545b70835b7ab6f2bfed31`

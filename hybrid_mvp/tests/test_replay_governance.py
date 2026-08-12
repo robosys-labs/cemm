@@ -38,6 +38,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
+    "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (
