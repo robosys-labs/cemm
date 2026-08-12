@@ -218,7 +218,9 @@ class AuthenticMutationOwner:
             case = ExpandedCase.from_dict(payload)
         except (TypeError, ValueError) as exc:
             detail = str(exc).lower()
-            if "role" in detail:
+            if mutation.dimension == "decision_action_mismatch":
+                code = "decision_contract_mismatch"
+            elif "role" in detail:
                 code = "invalid_role_ref"
             elif "root" in detail:
                 code = "unknown_root_ref"

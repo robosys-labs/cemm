@@ -17,24 +17,18 @@ from cemm_authoritative_hybrid.r4_sufficiency import (
     StructuralSufficiencyReceipt,
 )
 
-__cemm_test_inventory__ = {
-    "tests/test_r4_sufficiency.py::test_sufficiency_enforces_explicit_minimums": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-sufficiency-enforces-explicit-minimums",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "structural-sufficiency",
-        "source_ast_sha256": "8ed738f166090c0c20f65fa0cd2bdedb91e506f7fdb593d04eafe257e7760fae"
-    },
-    "tests/test_r4_sufficiency.py::test_sufficiency_reports_missing_dimension_without_vacuous_denominator": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-sufficiency-reports-missing-dimension-without-vacuous-denominator",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "structural-sufficiency",
-        "source_ast_sha256": "82e8e4f67ce51bad5b7efd9fd977daa0fc30ae1ce73c3ea4880ee258e1e92294"
-    }
-}
+__cemm_test_inventory__ = {'tests/test_r4_sufficiency.py::test_sufficiency_enforces_explicit_minimums': {'activation_phase': 'R4',
+                                                                               'assertion_ref': 'assertion:r4-sufficiency-enforces-explicit-minimums',
+                                                                               'diagnostic_role': 'owner',
+                                                                               'introduced_by_task': 'R4-Complete',
+                                                                               'owner_ref': 'structural-sufficiency',
+                                                                               'source_ast_sha256': 'f2a034e06d6090a4cfcf7160db50122d247a99d8171ef121f695be8b6f91c739'},
+ 'tests/test_r4_sufficiency.py::test_sufficiency_reports_missing_dimension_without_vacuous_denominator': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-sufficiency-reports-missing-dimension-without-vacuous-denominator',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R4-Complete',
+                                                                                                          'owner_ref': 'structural-sufficiency',
+                                                                                                          'source_ast_sha256': '82e8e4f67ce51bad5b7efd9fd977daa0fc30ae1ce73c3ea4880ee258e1e92294'}}
 
 
 
@@ -48,7 +42,9 @@ class _Authority:
             "value:y": "state_value",
             "event:a": "event_type",
             "rel:r": "relation_type",
+            "rel:s": "relation_type",
             "entity:b": "entity",
+            "entity:c": "entity",
         }.items()
     }
     event_signatures = {
@@ -97,12 +93,36 @@ def _contract(kind: str, fields: dict, index: int):
 
 
 def test_sufficiency_enforces_explicit_minimums() -> None:
+    scenario = ReviewedScenario.from_dict(
+        {
+            "scenario_ref": "scenario:combined",
+            "review_status": "reviewed",
+            "competency_category": "coordination",
+            "semantic_assertions": [
+                {"kind": "relation", "subject": "entity:a", "relation": "rel:r", "object": "entity:b"},
+                {"kind": "relation", "subject": "entity:a", "relation": "rel:s", "object": "entity:c"},
+            ],
+            "surface_examples": ["combined"],
+            "expected_gap_kind": None,
+            "metadata": {},
+        }
+    )
+    combined = ExpectedCycleContractCompiler(_Authority(), abi_registry_ref="abi:test").compile(
+        scenario_ref=scenario.scenario_ref,
+        case_ref="case:combined",
+        surface_ref="surface:combined",
+        context_ref="context:combined",
+        assertions=scenario.assertions,
+        situation_constraints={},
+        revision_pin=RevisionPin("authority:test", 0, 0, 0, 0, "model:test"),
+    )
     contracts = (
         _contract("entity", {"target": "entity:a"}, 1),
         _contract("state", {"subject": "entity:a", "dimension": "dim:x", "value": "value:y"}, 2),
         _contract("event", {"target": "event:a", "actor": "entity:a"}, 3),
         _contract("relation", {"subject": "entity:a", "relation": "rel:r", "object": "entity:b"}, 4),
         _contract("designates", {"surface": "a", "target": "entity:a"}, 5),
+        combined,
     )
     evaluator = StructuralSufficiencyEvaluator(
         minimums={
@@ -111,6 +131,7 @@ def test_sufficiency_enforces_explicit_minimums() -> None:
             "operator:op:event": 1,
             "operator:op:relation": 1,
             "operator:op:designation": 1,
+            "roots:multiple": 1,
         }
     )
     receipt = evaluator.evaluate(contracts)

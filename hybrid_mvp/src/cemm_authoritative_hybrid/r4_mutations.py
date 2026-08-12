@@ -376,9 +376,12 @@ class MutationGenerator:
             return before, expression["root_refs"][0]
         if spec.dimension == "decision_action_mismatch":
             before = contract["expected_decision"]["action"]
-            contract["expected_decision"]["action"] = "request_effect"
+            replacement = (
+                "answer" if before == "request_effect" else "request_effect"
+            )
+            contract["expected_decision"]["action"] = replacement
             contract["expected_decision"]["status"] = "supported"
-            return before, contract["expected_decision"]["action"]
+            return before, replacement
         if spec.dimension == "stale_revision":
             before = contract["revision_pin"]["world_revision"]
             contract["revision_pin"]["world_revision"] = before + 1

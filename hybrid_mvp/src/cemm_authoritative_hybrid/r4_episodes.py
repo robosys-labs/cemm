@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
-from .cycle import SemanticMode
+from .cycle import PhaseReceipt, SemanticMode
 from .decision import Decision
 from .expressions import (
     ApplicationFiller,
@@ -149,7 +149,10 @@ class PublicRuntimeEpisodeOwner:
             result = self._restart.execute_restart_case(case, session_ref=session_ref)
             if type(result) is not EpisodeExecutionResult:
                 raise TypeError("restart executor returned non-canonical result")
-            return result
+            return EpisodeExecutionResult(
+                _without_observational_timing(result.cycle),
+                result.environment_observation_refs,
+            )
         runtime = self._runtime(case)
         raw_items = thaw_json(case.environment).get("evidence_items", [])
         if type(raw_items) is not list:
@@ -174,7 +177,39 @@ class PublicRuntimeEpisodeOwner:
             for item in extra_items
             if item.adapter_receipt_ref is not None
         )
-        return EpisodeExecutionResult(cycle, observations)
+        return EpisodeExecutionResult(_without_observational_timing(cycle), observations)
+
+
+def _without_observational_timing(cycle: CycleResult) -> CycleResult:
+    """Retain exact semantic trace material with deterministic duration values."""
+
+    if type(cycle) is not CycleResult:
+        raise TypeError("cycle must be exact CycleResult")
+    trace = tuple(
+        PhaseReceipt.create(
+            cycle_ref=cycle.cycle_ref,
+            material=receipt.material,
+            duration_ns=0,
+        )
+        for receipt in cycle.trace
+    )
+    return CycleResult(
+        abi_version=cycle.abi_version,
+        cycle_ref=cycle.cycle_ref,
+        input_ref=cycle.input_ref,
+        status=cycle.status,
+        orientation=cycle.orientation,
+        proposal=cycle.proposal,
+        verification=cycle.verification,
+        evaluation=cycle.evaluation,
+        effect_receipt=cycle.effect_receipt,
+        response_meaning=cycle.response_meaning,
+        realization_receipt=None,
+        gap_receipt=cycle.gap_receipt,
+        phase_material=cycle.phase_material,
+        trace=trace,
+        final_revision_pin=cycle.final_revision_pin,
+    )
 
 
 @dataclass(frozen=True, init=False)

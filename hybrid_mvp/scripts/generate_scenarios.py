@@ -331,7 +331,8 @@ def generate_all() -> list[dict]:
                            subject="entity:server", dimension="dim:availability",
                            value="value:online")],
           ["the server must be online", "The server must be online"])
-    _next(cat, _disabled_proposal("conditional event scope is not admitted in R4"),
+    _next(cat, [*_disabled_proposal("conditional event scope is not admitted in R4"),
+                _assertion("mode", mode="simulate")],
           ["if the server is online then proceed", "when the server is online proceed"])
     _next(cat, _disabled_proposal("answer-capability wording is not admitted in R4"),
           ["can you answer?", "could you answer?"])
@@ -343,7 +344,8 @@ def generate_all() -> list[dict]:
           ["can you set state?", "could you set state?"])
     _next(cat, _disabled_proposal("event obligation scope is not admitted in R4"),
           ["you must say goodbye", "you have to say goodbye"])
-    _next(cat, _disabled_proposal("conditional greeting scope is not admitted in R4"),
+    _next(cat, [*_disabled_proposal("conditional greeting scope is not admitted in R4"),
+                _assertion("mode", mode="simulate")],
           ["if alice arrives then greet her", "when alice arrives greet her"])
 
     # ------------------------------------------------------------------

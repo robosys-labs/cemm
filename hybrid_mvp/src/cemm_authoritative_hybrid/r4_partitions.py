@@ -21,6 +21,7 @@ from .r4_mutations import SemanticMutation
 
 PARTITION_AXIS_MANIFEST_ABI_VERSION = 2
 TRAINING_ALLOWLIST_ABI_VERSION = 2
+MAX_PROTECTED_VALUE_REFS = 4_096
 
 AXES = (
     "general",
@@ -88,7 +89,12 @@ class PartitionComponent:
         object.__setattr__(
             self,
             "protected_value_refs",
-            exact_refs(self.protected_value_refs, "protected_value_refs", nonempty=True),
+            exact_refs(
+                self.protected_value_refs,
+                "protected_value_refs",
+                nonempty=True,
+                maximum=MAX_PROTECTED_VALUE_REFS,
+            ),
         )
         object.__setattr__(
             self,
@@ -120,6 +126,7 @@ class PartitionComponent:
             tuple(sorted(protected_value_refs)),
             "protected_value_refs",
             nonempty=True,
+            maximum=MAX_PROTECTED_VALUE_REFS,
         )
         members = exact_refs(tuple(sorted(member_refs)), "member_refs", nonempty=True)
         if split not in {"train", "validation", "test"}:
@@ -147,6 +154,7 @@ class PartitionComponent:
                 row["protected_value_refs"],
                 "protected_value_refs",
                 nonempty=True,
+                maximum=MAX_PROTECTED_VALUE_REFS,
             ),
             member_refs=wire_refs(row["member_refs"], "member_refs", nonempty=True),
             split=row["split"],

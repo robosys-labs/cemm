@@ -268,6 +268,12 @@ class StructuralSufficiencyEvaluator:
             counts[f"decision_status:{contract.expected_decision.status.value}"] += 1
             counts[f"decision_action:{contract.expected_decision.action.value}"] += 1
             counts[f"effect_kind:{contract.expected_effect.kind.value}"] += 1
+            root_count = sum(
+                len(expression.root_refs)
+                for expression in contract.expected_expressions
+            )
+            if root_count > 1:
+                counts["roots:multiple"] += 1
             for normalized in contract.normalized_assertions:
                 kind = normalized.get("kind")
                 if type(kind) is str:

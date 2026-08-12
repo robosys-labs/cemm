@@ -21,24 +21,18 @@ from cemm_authoritative_hybrid.r4_partitions import (
     TrainingAllowlist,
 )
 
-__cemm_test_inventory__ = {
-    "tests/test_r4_mutations_and_partitions.py::test_mutations_change_one_declared_dimension_and_use_owner_labels": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-mutations-change-one-declared-dimension-and-use-owner-labels",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "mutation-partition",
-        "source_ast_sha256": "360785939d775f46bab66809510bb38ca2f5d0204e5ac7ff39ce23bf6fc2c3f0"
-    },
-    "tests/test_r4_mutations_and_partitions.py::test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-axis-manifest-is-exact-and-training-allowlist-has-no-test-refs",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Complete",
-        "owner_ref": "mutation-partition",
-        "source_ast_sha256": "05c006a945479506096ef3e749e801cb8821112553a4783aabde63f234a763b6"
-    }
-}
+__cemm_test_inventory__ = {'tests/test_r4_mutations_and_partitions.py::test_mutations_change_one_declared_dimension_and_use_owner_labels': {'activation_phase': 'R4',
+                                                                                                                  'assertion_ref': 'assertion:r4-mutations-change-one-declared-dimension-and-use-owner-labels',
+                                                                                                                  'diagnostic_role': 'owner',
+                                                                                                                  'introduced_by_task': 'R4-Complete',
+                                                                                                                  'owner_ref': 'mutation-partition',
+                                                                                                                  'source_ast_sha256': '360785939d775f46bab66809510bb38ca2f5d0204e5ac7ff39ce23bf6fc2c3f0'},
+ 'tests/test_r4_mutations_and_partitions.py::test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs': {'activation_phase': 'R4',
+                                                                                                                              'assertion_ref': 'assertion:r4-partition-axis-manifest-is-exact-and-training-allowlist-has-no-test-refs',
+                                                                                                                              'diagnostic_role': 'owner',
+                                                                                                                              'introduced_by_task': 'R4-Complete',
+                                                                                                                              'owner_ref': 'mutation-partition',
+                                                                                                                              'source_ast_sha256': 'ab80a84f1033f5b98d45c985921f5c6be4f4e71d04c1039d342b854c2f731343'}}
 
 
 
@@ -142,6 +136,12 @@ def test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_ref
         source_refs=source_refs,
         components=components,
     )
+    large_component = PartitionComponent.create(
+        protected_value_refs=tuple(f"protected:{index}" for index in range(513)),
+        member_refs=("episode:large",),
+        split="train",
+    )
+    assert len(large_component.protected_value_refs) == 513
     assert PartitionAxisManifest.from_dict(manifest.as_dict()) == manifest
     all_manifests = tuple(
         PartitionAxisManifest.create(

@@ -13,8 +13,8 @@
     "roots:multiple": 1,
     "scope:any": 1,
     "binder:any": 1,
-    "effect:effect": 1,
-    "effect:no_effect": 1
+    "effect_kind:effect": 1,
+    "effect_kind:no_effect": 1
   },
   "maximums": {
     "share:single_expression": 70,

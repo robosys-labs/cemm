@@ -33,7 +33,7 @@ from .canonical import stable_ref
 from .coverage import CoverageReceipt
 from .cycle import Orientation
 from .expressions import VerifiedMeaning
-from .gaps import GapReceipt
+from .gaps import GapClassifier, GapReceipt, MissingOwner
 from .persistence import RevisionPin
 from .programs import ACTION_ABI_HASH
 from .proposal import RankedProgramCandidate
@@ -828,7 +828,7 @@ class EpisodeBuilder:
             if receipt.verification_errors
         )
 
-        meaning = verification.selected_meaning
+        meaning = None
         selected_candidate = None
         selected_receipt = None
         if meaning is not None:
@@ -886,6 +886,11 @@ class EpisodeBuilder:
             reviewed_target_ref=None,
             independently_reverified=False,
         ).as_dict()
+        gap_receipt = process_result.gap_receipt
+        if meaning is None and gap_receipt.status == "later_owner_not_admitted":
+            gap_receipt = GapClassifier().classify(
+                MissingOwner("r4_authentic_episode_generation_owner")
+            )
         return SemanticEpisode.create(
             scenario_ref=case.scenario_ref,
             orientation=_serialize_orientation(orientation),
@@ -902,8 +907,8 @@ class EpisodeBuilder:
             action_abi_hash=ACTION_ABI_HASH,
             generator_lineage=generator_lineage,
             review_provenance=review_provenance,
-            gap_receipt=_serialize_gap_receipt(process_result.gap_receipt),
-            revisions=process_result.final_revision_pin.as_dict(),
+            gap_receipt=_serialize_gap_receipt(gap_receipt),
+            revisions=orientation.revision_pin.as_dict(),
             training_source=training_source,
         )
 

@@ -26,6 +26,7 @@ mutations or environmental outcomes by assumption.
 from __future__ import annotations
 
 import argparse
+import importlib
 import importlib.util
 import json
 from pathlib import Path
@@ -40,7 +41,20 @@ from cemm_authoritative_hybrid.r4_pipeline import R4Pipeline
 
 
 def _load_factory(path: Path):
-    spec = importlib.util.spec_from_file_location("cemm_r4_environment", path)
+    source_root = (ROOT / "src").resolve()
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(source_root)
+    except ValueError:
+        relative = None
+    if relative is not None and relative.suffix == ".py":
+        module_name = ".".join(relative.with_suffix("").parts)
+        module = importlib.import_module(module_name)
+        owner = getattr(module, "build_environment", None)
+        if not callable(owner):
+            raise TypeError("environment module must define build_environment")
+        return owner
+    spec = importlib.util.spec_from_file_location("cemm_r4_environment", resolved)
     if spec is None or spec.loader is None:
         raise RuntimeError("cannot load R4 environment module")
     module = importlib.util.module_from_spec(spec)
