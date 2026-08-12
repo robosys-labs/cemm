@@ -46,6 +46,7 @@ __all__ = [
     "effect_journal_transition",
     "effect_journal_commit",
     "commit_learning_outcome",
+    "install_reviewed_world_facts",
     "commit_effect_transaction",
     "predicted_effect_pin",
 ]
@@ -642,6 +643,19 @@ def commit_effect_transaction(
     stores.world.commit(facts, expected_revision=stores.world.revision)
     stores.effects.commit({"effect_key": effect_key, "payload": dict(effect_payload)})
     return predicted_effect_pin(expected_pin, has_world_delta=bool(facts))
+
+
+def install_reviewed_world_facts(
+    stores: SemanticStores,
+    *,
+    facts: tuple[Fact, ...],
+) -> RevisionPin:
+    """Install externally reviewed fixture facts through the persistence owner."""
+    require_r3_store_port(stores)
+    if type(facts) is not tuple or any(type(row) is not Fact for row in facts):
+        raise TypeError("facts must be an exact Fact tuple")
+    stores.world.commit(facts, expected_revision=stores.world.revision)
+    return stores.revision_pin()
 
 
 def predicted_effect_pin(

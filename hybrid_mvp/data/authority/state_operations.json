@@ -128,6 +128,56 @@
   "designations": [
     {
       "language": "en",
+      "surface": "set state",
+      "target": "cap:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "set_state",
+      "target": "cap:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "set",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "turn",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "switch",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "bring",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "take",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "make",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "enable",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
+      "surface": "disable",
+      "target": "event:set_state"
+    },
+    {
+      "language": "en",
       "surface": "server",
       "target": "entity:server"
     },
@@ -218,6 +268,11 @@
     },
     {
       "language": "en",
+      "surface": "operating normally",
+      "target": "value:operating_normally"
+    },
+    {
+      "language": "en",
       "surface": "reachability",
       "target": "dim:availability"
     },
@@ -287,7 +342,80 @@
     "origin": "legacy-authority-json",
     "reviewed": true
   },
-  "transitions": [],
+  "transitions": [
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:availability",
+      "event_type": "event:set_state",
+      "from_value": "value:offline",
+      "to_value": "value:online",
+      "transition_ref": "transition:set_availability_online"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:availability",
+      "event_type": "event:set_state",
+      "from_value": "value:online",
+      "to_value": "value:offline",
+      "transition_ref": "transition:set_availability_offline"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:power",
+      "event_type": "event:set_state",
+      "from_value": "value:off",
+      "to_value": "value:on",
+      "transition_ref": "transition:set_power_on"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:power",
+      "event_type": "event:set_state",
+      "from_value": "value:on",
+      "to_value": "value:off",
+      "transition_ref": "transition:set_power_off"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:power",
+      "event_type": "event:set_state",
+      "from_value": "value:disabled",
+      "to_value": "value:enabled",
+      "transition_ref": "transition:set_power_enabled"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:power",
+      "event_type": "event:set_state",
+      "from_value": "value:enabled",
+      "to_value": "value:disabled",
+      "transition_ref": "transition:set_power_disabled"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:availability",
+      "event_type": "event:set_state",
+      "from_value": "value:unavailable",
+      "to_value": "value:available",
+      "transition_ref": "transition:set_availability_available"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:availability",
+      "event_type": "event:set_state",
+      "from_value": "value:available",
+      "to_value": "value:unavailable",
+      "transition_ref": "transition:set_availability_unavailable"
+    },
+    {
+      "adapter_ref": "adapter:state",
+      "dimension": "dim:operational_status",
+      "event_type": "event:set_state",
+      "from_value": null,
+      "to_value": "value:operating_normally",
+      "transition_ref": "transition:set_operational_status_normal"
+    }
+  ],
   "value_dimensions": {
     "value:available": "dim:availability",
     "value:disabled": "dim:power",

@@ -95,6 +95,17 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
             ):
                 if role_ref not in reference.compatible_roles:
                     continue
+                scoped_frames = tuple(
+                    ref
+                    for ref in reference.provenance_refs
+                    if ref.startswith("application_frame_slot:")
+                )
+                if (
+                    not reference.source_unit_refs
+                    and scoped_frames
+                    and frame_ref not in scoped_frames
+                ):
+                    continue
                 action = ProgramAction.create(
                     action_index=action_index,
                     action_type="bind_reference",
@@ -241,7 +252,12 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                     ),
                 )
 
-    has_missing_required = owner._missing_required_role_count(state) > 0
+    has_missing_required = (
+        owner._missing_required_role_count(
+            state, include_proposition_roles=False
+        )
+        > 0
+    )
     if not has_missing_required:
         # Select designations whose frame has unused predicate geometry.
         for designation in sorted(
@@ -443,4 +459,3 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                             transition.event_type_ref,
                         ),
                     )
-

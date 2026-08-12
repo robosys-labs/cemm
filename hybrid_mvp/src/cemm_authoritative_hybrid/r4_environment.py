@@ -14,12 +14,20 @@ from .governance import (
     verify_file_invalidation,
 )
 from .persistence import RevisionPin
+from .r3_persistence import install_reviewed_world_facts
 from .proposal import BootstrapProposer
 from .r3_codec import thaw_json
 from .r4_contracts import ExpectedOutcomeKind
 from .r4_episodes import EpisodeExecutionResult
 from .r4_expansion import ExpandedCase
 from .r4_mutations import MutationBoundaryResult, SemanticMutation
+from .r3_effects import (
+    AdapterRegistry,
+    AdapterResult,
+    AdapterStatus,
+    EffectRequest,
+    ObservedDelta,
+)
 
 __all__ = [
     "AuthenticMutationOwner",
@@ -285,6 +293,82 @@ class AuthenticMutationOwner:
         )
 
 
+class _ReviewedStateAdapter:
+    """Return the exact reviewed state delta carried by an EffectRequest."""
+
+    @staticmethod
+    def _result(request: EffectRequest) -> AdapterResult:
+        observed = tuple(
+            ObservedDelta.create(
+                operator_ref=row.operator_ref,
+                predicate_ref=row.predicate_ref,
+                role_values=row.role_values,
+                stance=row.stance,
+                evidence_refs=(request.request_ref,),
+            )
+            for row in request.expected_deltas
+        )
+        return AdapterResult.create(
+            adapter_ref=request.adapter_ref,
+            status=AdapterStatus.SUCCEEDED,
+            idempotency_key=request.idempotency_key,
+            request_ref=request.request_ref,
+            event_type_ref=request.event_type_ref,
+            target_ref=request.target_ref,
+            transition_ref=request.transition_ref,
+            observed_deltas=observed,
+            blocker_refs=(),
+            operation_receipt_ref=stable_ref(
+                "r4_reviewed_state_operation", request.request_ref
+            ),
+        )
+
+    def invoke(self, request: EffectRequest) -> AdapterResult:
+        return self._result(request)
+
+    def reconcile(self, request: EffectRequest) -> AdapterResult:
+        return self._result(request)
+
+
+def _seed_reviewed_world(runtime: Any, case: ExpandedCase) -> None:
+    environment = thaw_json(case.environment)
+    rows = environment.get("world_facts", [])
+    if type(rows) is not list:
+        raise TypeError("R4 environment world_facts must be a list")
+    if not rows:
+        return
+    from .persistence import Fact
+
+    facts: list[Fact] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, Mapping):
+            raise TypeError("R4 environment world fact must be a mapping")
+        roles = row.get("roles")
+        if not isinstance(roles, Mapping):
+            raise TypeError("R4 environment world fact roles must be a mapping")
+        predicate = row.get("predicate_ref")
+        operator = row.get("operator")
+        source = row.get("source_ref")
+        stance = row.get("stance", "support")
+        if any(type(value) is not str or not value for value in (predicate, operator, source, stance)):
+            raise ValueError("R4 environment world fact has incomplete reviewed fields")
+        facts.append(
+            Fact(
+                fact_ref=stable_ref(
+                    "r4_reviewed_world_fact",
+                    {"case_ref": case.case_ref, "index": index, "row": dict(row)},
+                ),
+                operator=operator,
+                args={**{str(key): str(value) for key, value in roles.items()}, "predicate_ref": predicate},
+                stance=stance,
+                confidence=1.0,
+                derived=False,
+                proof={"source": source, "source_refs": [source]},
+            )
+        )
+    install_reviewed_world_facts(runtime.stores, facts=tuple(facts))
+
+
 def build_environment(
     project_root: Path, output_root: Path
 ) -> Mapping[str, object]:
@@ -307,7 +391,9 @@ def build_environment(
             root,
             profile="development",
             store_path=path,
+            adapters=AdapterRegistry({"adapter:state": _ReviewedStateAdapter()}),
         )
+        _seed_reviewed_world(runtime, _case)
         runtimes.append(runtime)
         return runtime
 

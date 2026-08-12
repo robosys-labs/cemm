@@ -199,6 +199,33 @@ class RuntimeOrientationOwner:
         """Refine an unmarked form mode through reviewed effect-frame evidence."""
         if projection.mode is not SemanticMode.OBSERVE:
             return projection
+        capability_mode_refs = tuple(
+            unit.unit_ref
+            for unit in lattice.units
+            if any(
+                category == "modality" and value == "capability"
+                for category, value in unit.features
+            )
+        )
+        capability_designations = tuple(
+            designation
+            for designation in grounding.designations
+            if getattr(
+                self._authority.atoms.get(designation.target_ref), "kind", None
+            )
+            == "capability"
+        )
+        if capability_mode_refs and capability_designations:
+            return ModeProjection.create(
+                form_lattice_ref=lattice.lattice_ref,
+                mode=SemanticMode.QUERY,
+                evidence_unit_refs=capability_mode_refs,
+                construction_refs=projection.construction_refs,
+                feature_refs=(
+                    *projection.feature_refs,
+                    "semantic_frame:capability_query",
+                ),
+            )
         if any(
             category == "modality"
             for unit in lattice.units
@@ -218,6 +245,25 @@ class RuntimeOrientationOwner:
             ):
                 effect_designations.append(designation)
         if not effect_designations:
+            return projection
+        designation_unit_refs = tuple(
+            dict.fromkeys(
+                source_ref
+                for designation in grounding.designations
+                for source_ref in designation.unit_refs
+            )
+        )
+        # A bare designation is lexical evidence, not directive authority.  An
+        # effect-capable event may project REQUEST only when the turn contains
+        # additional grounded structure that can fill or qualify the event.
+        # This keeps a standalone form such as ``learn`` observational while
+        # still allowing composition such as ``turn the light on`` to request
+        # an admitted effect.
+        if set(designation_unit_refs) == {
+            source_ref
+            for designation in effect_designations
+            for source_ref in designation.unit_refs
+        }:
             return projection
         return ModeProjection.create(
             form_lattice_ref=lattice.lattice_ref,
@@ -285,8 +331,11 @@ class RuntimeOrientationOwner:
         )
         permissions = _unique(
             tuple(
-                row if type(row) is str else f"{row[0]}:{row[1]}:{row[2]}"
+                row
+                if type(row) is str
+                else row[1]
                 for row in self._authority.permissions
+                if type(row) is str or row[0] == "participant:system"
             )
         )
         focus_refs = _snapshot_refs(focus, "focus_refs")

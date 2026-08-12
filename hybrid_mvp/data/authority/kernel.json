@@ -90,6 +90,16 @@
   "designations": [
     {
       "language": "en",
+      "surface": "query",
+      "target": "cap:query"
+    },
+    {
+      "language": "en",
+      "surface": "respond",
+      "target": "cap:respond"
+    },
+    {
+      "language": "en",
       "surface": "book",
       "target": "entity:book"
     },

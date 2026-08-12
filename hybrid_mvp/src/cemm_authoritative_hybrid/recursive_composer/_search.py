@@ -16,6 +16,7 @@ from ._core import (
     _MODE_KINDS,
     _Choice,
     _CompletedProgram,
+    _SourceUse,
     _State,
     _bounded_add,
     _bound_role_set,
@@ -149,13 +150,41 @@ class RecursiveComposer:
             arguments=(self._context.context_ref,),
         )
         for mode in sorted(self._context.mode_slots, key=lambda row: row.slot_ref):
-            # Mode is situated ORIENT lineage. Its lexical unit stays available
-            # to the structural action it licenses, such as project_variable.
+            mode_evidence = tuple(
+                row
+                for row in self._context.contribution_slots
+                if row.kind in _MODE_KINDS
+                and set(row.source_unit_refs) <= set(mode.source_unit_refs)
+                and (
+                    ("semantic_mode_evidence", "capability_query")
+                    in row.constraints
+                    or ("discourse", "question") in row.constraints
+                )
+            )
+            mode_sources = tuple(
+                dict.fromkeys(
+                    source_ref
+                    for row in mode_evidence
+                    for source_ref in row.source_unit_refs
+                )
+            )
             mode_action = ProgramAction.create(
                 action_index=1,
                 action_type="select_mode",
                 arguments=(mode.slot_ref,),
-                source_unit_refs=(),
+                source_unit_refs=mode_sources,
+            )
+            mode_uses = tuple(
+                    _SourceUse(
+                        source_unit_ref=source_ref,
+                        contribution_slot_ref=row.slot_ref,
+                        assignment_kind="discourse",
+                        target_action_ref=mode_action.action_ref,
+                        target_role_ref=None,
+                        critical=False,
+                    )
+                    for row in mode_evidence
+                    for source_ref in row.source_unit_refs
             )
             provenance = _unique(
                 (
@@ -178,7 +207,7 @@ class RecursiveComposer:
                     bound_roles=(),
                     node_order=(),
                     parents=(),
-                    source_uses=(),
+                    source_uses=mode_uses,
                     selected_designations=(),
                     used_frame_slots=(),
                     used_structure_slots=(),
@@ -196,14 +225,20 @@ class RecursiveComposer:
         )
         return (-state.score_q, missing_roles, remaining_sources, len(state.prefix))
 
-    def _missing_required_role_count(self, state: _State) -> int:
+    def _missing_required_role_count(
+        self, state: _State, *, include_proposition_roles: bool = True
+    ) -> int:
         bound = _bound_role_set(state)
         result = 0
         for app_ref, frame_ref in state.application_frames:
             frame = self._context.frame(frame_ref)
             if frame is None:
                 return self._max_actions
-            result += sum((app_ref, role) not in bound for role in frame.required_roles)
+            result += sum(
+                (app_ref, role) not in bound
+                for role in frame.required_roles
+                if include_proposition_roles or role not in frame.proposition_roles
+            )
         return result
 
     def _apply(self, state: _State, choice: _Choice) -> _State | None:

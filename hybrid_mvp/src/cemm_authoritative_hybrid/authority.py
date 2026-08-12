@@ -254,6 +254,7 @@ class LinkedAuthority:
         "_by_state_dimension",
         "_by_event_signature",
         "_by_transition",
+        "_by_transition_signature",
     )
 
     def __init__(
@@ -277,6 +278,7 @@ class LinkedAuthority:
         by_state_dimension: dict[str, frozenset[str]],
         by_event_signature: dict[str, EventSignature],
         by_transition: dict[str, dict[str, Any]],
+        by_transition_signature: dict[tuple[str, str, str], dict[str, Any]],
     ) -> None:
         self.content_hash = content_hash
         self.model_compatibility_hash = model_compatibility_hash
@@ -297,6 +299,7 @@ class LinkedAuthority:
         self._by_state_dimension = by_state_dimension
         self._by_event_signature = by_event_signature
         self._by_transition = by_transition
+        self._by_transition_signature = by_transition_signature
 
     def by_kind(self, kind: str) -> frozenset[str]:
         """Return all atom refs of the given kind."""
@@ -321,6 +324,12 @@ class LinkedAuthority:
     def by_transition(self, key: str) -> dict[str, Any] | None:
         """Return the transition for ``key``."""
         return self._by_transition.get(key)
+
+    def transition_for(
+        self, event_type: str, dimension: str, to_value: str
+    ) -> dict[str, Any] | None:
+        """Return the exact reviewed transition matching an application."""
+        return self._by_transition_signature.get((event_type, dimension, to_value))
 
 
 # ---------------------------------------------------------------------------
@@ -507,6 +516,45 @@ class AuthorityLinker:
             if dim not in all_atoms:
                 raise AuthorityLinkError(f"missing dimension atom: {dim}")
 
+        # -- Validate reviewed transitions ---------------------------------
+        transition_signatures: set[tuple[str, str, str]] = set()
+        transition_refs: set[str] = set()
+        for transition in all_transitions:
+            required = ("transition_ref", "event_type", "dimension", "to_value")
+            if any(
+                type(transition.get(field)) is not str or not transition.get(field)
+                for field in required
+            ):
+                raise AuthorityLinkError("transition record is structurally incomplete")
+            transition_ref = transition["transition_ref"]
+            if transition_ref in transition_refs:
+                raise AuthorityLinkError(f"duplicate transition ref: {transition_ref}")
+            transition_refs.add(transition_ref)
+            event_type = transition["event_type"]
+            dimension = transition["dimension"]
+            to_value = transition["to_value"]
+            from_value = transition.get("from_value")
+            if event_type not in all_atoms or all_atoms[event_type][0].kind != "event_type":
+                raise AuthorityLinkError(f"transition event is invalid: {event_type}")
+            if dimension not in all_atoms or all_atoms[dimension][0].kind != "state_dimension":
+                raise AuthorityLinkError(f"transition dimension is invalid: {dimension}")
+            if to_value not in all_atoms or all_value_dimensions.get(to_value) != dimension:
+                raise AuthorityLinkError(f"transition target value is invalid: {to_value}")
+            if from_value is not None and (
+                type(from_value) is not str
+                or all_value_dimensions.get(from_value) != dimension
+            ):
+                raise AuthorityLinkError(f"transition source value is invalid: {from_value}")
+            adapter = transition.get("adapter_ref")
+            if adapter is not None and adapter not in all_adapters:
+                raise AuthorityLinkError(f"transition adapter is invalid: {adapter}")
+            signature = (event_type, dimension, to_value)
+            if signature in transition_signatures:
+                raise AuthorityLinkError(
+                    "duplicate event/dimension/value transition signature"
+                )
+            transition_signatures.add(signature)
+
         for source, target in all_definition_targets.items():
             if source not in all_atoms:
                 raise AuthorityLinkError(f"missing definition source atom: {source}")
@@ -588,9 +636,13 @@ class AuthorityLinker:
 
         # Transition index
         by_transition: dict[str, dict[str, Any]] = {}
+        by_transition_signature: dict[tuple[str, str, str], dict[str, Any]] = {}
         for trans in all_transitions:
             key = trans.get("transition_ref", f"trans:{len(by_transition)}")
             by_transition[key] = trans
+            by_transition_signature[
+                (trans["event_type"], trans["dimension"], trans["to_value"])
+            ] = trans
 
         # -- Compute hashes ------------------------------------------------
         full_payload = {
@@ -658,4 +710,5 @@ class AuthorityLinker:
             by_state_dimension=by_state_dim,
             by_event_signature=event_sigs,
             by_transition=by_transition,
+            by_transition_signature=by_transition_signature,
         )

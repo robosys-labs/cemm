@@ -122,6 +122,8 @@
     "perdón": {"kind": "correction"}
   },
   "discourse": {
+    "?": {"kind": "question"},
+    "Â¿": {"kind": "question"},
     "dijo": {"kind": "report"},
     "contó": {"kind": "report"},
     "preguntó": {"kind": "report"},
@@ -191,6 +193,10 @@
     "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
   },
   "application_role_orders": {
+    "effect_event_target_value": {
+      "target_kinds": ["event_type", "entity", "state_value"],
+      "roles": ["role:event", "role:target", "role:value"]
+    },
     "modal_event_actor_target": {
       "target_kinds": ["participant", "event_type", "participant"],
       "roles": ["role:actor", "role:event", "role:target"],
@@ -229,6 +235,16 @@
       "roles": ["role:actor", "role:event", "role:subject", "role:value"],
       "required_features": ["binder"]
     },
+    "reported_relation_content": {
+      "target_kinds": ["entity", "event_type", "entity", "relation_type", "entity"],
+      "roles": ["role:actor", "role:event", "role:subject", "role:relation", "role:object"],
+      "required_features": ["discourse"]
+    },
+    "reported_event_content": {
+      "target_kinds": ["entity", "event_type", "event_type"],
+      "roles": ["role:actor", "role:event", "role:event"],
+      "required_features": ["discourse"]
+    },
     "definition_nominal_query": {
       "target_kinds": ["concept"],
       "roles": ["role:subject"],
@@ -237,6 +253,11 @@
     "definition_participant_query": {
       "target_kinds": ["participant"],
       "roles": ["role:subject"],
+      "required_features": ["query"]
+    },
+    "label_designation_query": {
+      "target_kinds": ["participant", "label_type"],
+      "roles": ["role:target", "role:label_type"],
       "required_features": ["query"]
     }
   }

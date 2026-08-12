@@ -234,9 +234,9 @@ def _default_profiles(target_ref: str, kind: str) -> tuple[AffordanceProfile, ..
             _profile(
                 target_ref,
                 ("predicate",),
-                inputs=("role:participant",),
-                outputs=("role:capability",),
-                roles=("role:participant", "role:capability"),
+                inputs=("role:subject",),
+                outputs=("role:relation",),
+                roles=("role:subject", "role:relation"),
             ),
         )
 

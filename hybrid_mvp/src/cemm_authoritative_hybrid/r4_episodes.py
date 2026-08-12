@@ -485,6 +485,8 @@ def _response_match(contract: ExpectedCycleContract, response: object | None) ->
 
 
 def _gap_match(contract: ExpectedCycleContract, cycle: CycleResult) -> bool:
+    if contract.outcome_kind is ExpectedOutcomeKind.RESTART:
+        return cycle.gap_receipt is not None
     expected = contract.expected_gap
     if expected is None:
         # A successful R3 cycle must still end at the exact R5 owner boundary.

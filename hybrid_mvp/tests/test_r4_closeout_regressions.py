@@ -29,6 +29,7 @@ from cemm_authoritative_hybrid.r4_episodes import (
     AuthenticEpisodeBuilder,
     PublicRuntimeEpisodeOwner,
 )
+from cemm_authoritative_hybrid.r4_environment import build_environment
 from cemm_authoritative_hybrid.r4_expansion import CaseExpander, ExpandedCase
 from cemm_authoritative_hybrid.r4_pipeline import load_reviewed_scenarios
 
@@ -43,7 +44,7 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4-Closeout',
                                                                                                                          'owner_ref': 'expected-contract',
-                                                                                                                         'source_ast_sha256': 'b7b3742e540d6bcb3bd10eb8a8630a68e59a1b1e0a79cf57569a57109aea798a'},
+                                                                                                                         'source_ast_sha256': 'fe5da5366cc3278841cc16761106111d40bb670bc3a056e1637b1c895ae5d38b'},
  'tests/test_r4_closeout_regressions.py::test_learning_reported_speech_and_effect_contracts_have_connected_compatible_topology': {'activation_phase': 'R4',
                                                                                                                                   'assertion_ref': 'assertion:r4-reviewed-contract-topology-is-connected-and-compatible',
                                                                                                                                   'diagnostic_role': 'owner',
@@ -55,7 +56,7 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                         'diagnostic_role': 'owner',
                                                                                                         'introduced_by_task': 'R4-Authentic-Designation-Tranche',
                                                                                                         'owner_ref': 'expected-contract',
-                                                                                                        'source_ast_sha256': '4bb776ea398a9bfbe65bc2104c0d8073c644561156695d9df6d44b0a72f00c8d'},
+                                                                                                        'source_ast_sha256': '5c3bd3eeceb770d31465b913495276d876c5c1df4ff69e84f4679d69b88d1394'},
  'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
                                                                                                                    'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
                                                                                                                    'diagnostic_role': 'owner',
@@ -181,7 +182,36 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4-Final-Admission-Closeout',
                                                                                                                          'owner_ref': 'expected-contract',
-                                                                                                                         'source_ast_sha256': '747e09680af34cde50fdb5c8069b51429cd4807cd9b4b809a0c5e104566229cc'}}
+                                                                                                                         'source_ast_sha256': '747e09680af34cde50fdb5c8069b51429cd4807cd9b4b809a0c5e104566229cc'},
+ 'tests/test_r4_closeout_regressions.py::test_every_reviewed_scenario_matches_authentic_cycles': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-every-reviewed-scenario-matches-authentic-cycles',
+                                                                                                  'diagnostic_role': 'owner',
+                                                                                                  'introduced_by_task': 'R4-Final-Admission-Closeout',
+                                                                                                  'owner_ref': 'expected-contract',
+                                                                                                  'source_ast_sha256': '5b7f197deb6f81e6721ef3b68327997f6a1a23b4c65721001994dfd915da1810'},
+ 'tests/test_r4_closeout_regressions.py::test_bare_effect_designation_does_not_authorize_request': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-bare-effect-is-not-request', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '5684216533506d4a9348181611b8264bb9181a275b0ecb76dbd10b4c265ca8c2'},
+ 'tests/test_r4_closeout_regressions.py::test_prospective_alias_teaching_uses_definition_evidence_without_prelinking': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-prospective-alias-is-not-prelinked', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '47042d260ee6dcd69b91539e18e0d0b8078e13ff37001a43103351d1f5c70804'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_sensor_and_operation_evidence_uses_authentic_extra_items': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-authentic-extra-evidence-items', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '99eadf970ca3ed935cbcfd4750925cce6afed8d471e0f5aed3a8805e9440b40c'},
+ 'tests/test_r4_closeout_regressions.py::test_reported_speech_relational_content_composes_recursively': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reported-relation-composes', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': 'eea64d05bb84565a6a4a90bd5d4626355f87af58812dd48d68e688214806634f'},
+ 'tests/test_r4_closeout_regressions.py::test_reported_speech_event_content_reuses_speaker_by_reviewed_coreference': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reported-event-coreference', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': 'f1723ebed92d745bc581ebcced0413d8e2992741d75fd4528bced7709802af8b'},
+ 'tests/test_r4_closeout_regressions.py::test_singleton_polysemy_is_observed_designation_evidence': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-singleton-polysemy-is-observed', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '883c11e05eede9b8ee1d714de58d1acb8fe985cf0304a00514a95f070855f115'},
+ 'tests/test_r4_closeout_regressions.py::test_question_mark_projects_state_interrogative_to_query_mode': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-question-marker-projects-query', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '2e6e556e03984adbe84a9df71ddf2f29af3beb8451b49202eb0d5617af29ecd3'},
+ 'tests/test_r4_closeout_regressions.py::test_realization_equivalence_uses_exact_semantic_contracts[state-0202]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-realization-exact-0202', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '4dd7d577bcf55a94920893bcf9c818261fca71084dc89d94aa6e78265d2617d5'},
+ 'tests/test_r4_closeout_regressions.py::test_realization_equivalence_uses_exact_semantic_contracts[state-0203]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-realization-exact-0203', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '4dd7d577bcf55a94920893bcf9c818261fca71084dc89d94aa6e78265d2617d5'},
+ 'tests/test_r4_closeout_regressions.py::test_realization_equivalence_uses_exact_semantic_contracts[state-0207]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-realization-exact-0207', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '4dd7d577bcf55a94920893bcf9c818261fca71084dc89d94aa6e78265d2617d5'},
+ 'tests/test_r4_closeout_regressions.py::test_realization_equivalence_uses_exact_semantic_contracts[state-0209]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-realization-exact-0209', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '4dd7d577bcf55a94920893bcf9c818261fca71084dc89d94aa6e78265d2617d5'},
+ 'tests/test_r4_closeout_regressions.py::test_realization_equivalence_uses_exact_semantic_contracts[state-0210]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-realization-exact-0210', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '4dd7d577bcf55a94920893bcf9c818261fca71084dc89d94aa6e78265d2617d5'},
+ 'tests/test_r4_closeout_regressions.py::test_capability_questions_consume_all_reviewed_mode_evidence[query]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-mode-query', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '283ced6d64840cfe912be74425c8760ca058399b0932aacf55ca4ecae288551e'},
+ 'tests/test_r4_closeout_regressions.py::test_capability_questions_consume_all_reviewed_mode_evidence[respond]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-mode-respond', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '283ced6d64840cfe912be74425c8760ca058399b0932aacf55ca4ecae288551e'},
+ 'tests/test_r4_closeout_regressions.py::test_capability_questions_consume_all_reviewed_mode_evidence[learn-alias]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-mode-learn-alias', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '283ced6d64840cfe912be74425c8760ca058399b0932aacf55ca4ecae288551e'},
+ 'tests/test_r4_closeout_regressions.py::test_capability_questions_consume_all_reviewed_mode_evidence[set-state]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-mode-set-state', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '283ced6d64840cfe912be74425c8760ca058399b0932aacf55ca4ecae288551e'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_capability_queries_use_explicit_designations[query]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-designation-query', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '80e9f68aa6efa4708b7bc198d86f8df19a28212a875a4bb2b9e384008c364c8d'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_capability_queries_use_explicit_designations[respond]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-designation-respond', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '80e9f68aa6efa4708b7bc198d86f8df19a28212a875a4bb2b9e384008c364c8d'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_capability_queries_use_explicit_designations[learn-alias]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-designation-learn-alias', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '80e9f68aa6efa4708b7bc198d86f8df19a28212a875a4bb2b9e384008c364c8d'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_capability_queries_use_explicit_designations[set-state]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-capability-designation-set-state', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': '80e9f68aa6efa4708b7bc198d86f8df19a28212a875a4bb2b9e384008c364c8d'},
+ 'tests/test_r4_closeout_regressions.py::test_fail_closed_boundary_families_match_authentic_cycles[adversarial]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-boundary-adversarial', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': 'ac5e32cc4b9c31d33617c8c61892166e6a2af02085e0170a51218922023ae59c'},
+ 'tests/test_r4_closeout_regressions.py::test_fail_closed_boundary_families_match_authentic_cycles[gaps]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-boundary-gaps', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': 'ac5e32cc4b9c31d33617c8c61892166e6a2af02085e0170a51218922023ae59c'},
+ 'tests/test_r4_closeout_regressions.py::test_fail_closed_boundary_families_match_authentic_cycles[restart]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-boundary-restart', 'diagnostic_role': 'admission_only', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'source_ast_sha256': 'ac5e32cc4b9c31d33617c8c61892166e6a2af02085e0170a51218922023ae59c'}}
 
 ROOT = Path(__file__).parents[1]
 SCENARIOS = ROOT / "data" / "scenarios" / "use_cases.jsonl"
@@ -263,6 +293,31 @@ def _authentic_episodes_for_scenario(
             runtime.stores.close()
 
 
+def test_every_reviewed_scenario_matches_authentic_cycles(tmp_path: Path) -> None:
+    cases = _expanded_cases()
+    environment = build_environment(ROOT, tmp_path)
+    builder = AuthenticEpisodeBuilder(
+        PublicRuntimeEpisodeOwner(
+            environment["runtime_factory"],
+            restart_executor=environment["restart_executor"],
+        )
+    )
+    try:
+        episodes = builder.build_many(cases)
+    finally:
+        environment["close"]()
+
+    assert [
+        (
+            row.expanded_case.scenario_ref,
+            row.expanded_case.surface,
+            row.comparison.mismatch_codes,
+        )
+        for row in episodes
+        if not row.comparison.passed
+    ] == []
+
+
 @pytest.mark.parametrize(
     "scenario_ref",
     (
@@ -299,6 +354,63 @@ def test_reviewed_nominal_state_relation_families_match_authentic_cycles(
     episodes = _authentic_episodes_for_scenario(scenario_ref, tmp_path)
 
     assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
+@pytest.mark.parametrize(
+    "scenario_ref",
+    (
+        "scenario:realization_equivalence-0202",
+        "scenario:realization_equivalence-0203",
+        "scenario:realization_equivalence-0207",
+        "scenario:realization_equivalence-0209",
+        "scenario:realization_equivalence-0210",
+    ),
+    ids=("state-0202", "state-0203", "state-0207", "state-0209", "state-0210"),
+)
+def test_realization_equivalence_uses_exact_semantic_contracts(
+    scenario_ref: str,
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(scenario_ref, tmp_path)
+
+    assert len(episodes) == 2
+    assert all(row.expected_contract.expected_expressions for row in episodes)
+    assert all(row.expected_contract.expected_mode.value == "QUERY" for row in episodes)
+    assert all(row.comparison.passed for row in episodes)
+    assert (
+        episodes[0].observed_cycle.evaluation.expression.as_dict()
+        == episodes[1].observed_cycle.evaluation.expression.as_dict()
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario_ref",
+    (
+        "scenario:capability_policy_adapter_effect-0131",
+        "scenario:capability_policy_adapter_effect-0132",
+        "scenario:capability_policy_adapter_effect-0133",
+        "scenario:capability_policy_adapter_effect-0134",
+    ),
+    ids=("query", "respond", "learn-alias", "set-state"),
+)
+def test_capability_questions_consume_all_reviewed_mode_evidence(
+    scenario_ref: str,
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(scenario_ref, tmp_path)
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
+def test_bare_effect_designation_does_not_authorize_request(tmp_path: Path) -> None:
+    episodes = _authentic_episodes_for_scenario(
+        "scenario:polysemy-0033", tmp_path
+    )
+
+    assert len(episodes) == 2
+    assert all(row.observed_cycle.orientation.mode.value == "OBSERVE" for row in episodes)
     assert all(row.comparison.passed for row in episodes)
 
 
@@ -471,9 +583,9 @@ def test_reviewed_designation_aliases_match_authentic_r3_cycles(
         else:
             linked.append((case, target, canonical_surface))
 
-    assert len(scenarios) == 10
-    assert len(cases) == 22
-    assert len(linked) == 19
+    assert len(scenarios) == 15
+    assert len(cases) == 32
+    assert len(linked) == 29
     assert unlinked == {
         ("the book", "entity:book"),
         ("the server", "entity:server"),
@@ -545,6 +657,124 @@ def test_reviewed_designation_aliases_match_authentic_r3_cycles(
         }
 
 
+def test_prospective_alias_teaching_uses_definition_evidence_without_prelinking(
+    tmp_path: Path,
+) -> None:
+    authority = AuthorityLinker().link_path(
+        ROOT / "data" / "authority" / "manifest.json"
+    )
+    assert authority.designations.for_surface("hola", "es") == ()
+
+    episodes = _authentic_episodes_for_scenario(
+        "scenario:multilingual_aliases-0169",
+        tmp_path,
+    )
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+    assert authority.designations.for_surface("hola", "es") == ()
+
+
+@pytest.mark.parametrize(
+    "scenario_ref",
+    (
+        "scenario:capability_policy_adapter_effect-0131",
+        "scenario:capability_policy_adapter_effect-0132",
+        "scenario:capability_policy_adapter_effect-0133",
+        "scenario:capability_policy_adapter_effect-0134",
+    ),
+    ids=("query", "respond", "learn-alias", "set-state"),
+)
+def test_reviewed_capability_queries_use_explicit_designations(
+    scenario_ref: str,
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(scenario_ref, tmp_path)
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
+def test_reviewed_sensor_and_operation_evidence_uses_authentic_extra_items(
+    tmp_path: Path,
+) -> None:
+    scenarios = tuple(
+        row
+        for row in load_reviewed_scenarios(SCENARIOS)
+        if row.competency_category == "reviewed_sensor_operation_evidence"
+    )
+    assert len(scenarios) == 10
+    episodes = tuple(
+        episode
+        for scenario in scenarios
+        for episode in _authentic_episodes_for_scenario(
+            scenario.scenario_ref,
+            tmp_path / scenario.scenario_ref.rsplit("-", 1)[-1],
+        )
+    )
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+    assert all(row.comparison.environment_match for row in episodes)
+
+
+@pytest.mark.parametrize(
+    "category",
+    ("adversarial_programs", "gap_kinds", "restart"),
+    ids=("adversarial", "gaps", "restart"),
+)
+def test_fail_closed_boundary_families_match_authentic_cycles(
+    category: str,
+    tmp_path: Path,
+) -> None:
+    scenarios = tuple(
+        row
+        for row in load_reviewed_scenarios(SCENARIOS)
+        if row.competency_category == category
+    )
+    assert len(scenarios) == (18 if category == "gap_kinds" else 10)
+    scenario_refs = {row.scenario_ref for row in scenarios}
+    cases = tuple(
+        case for case in _expanded_cases() if case.scenario_ref in scenario_refs
+    )
+    environment = build_environment(ROOT, tmp_path)
+    builder = AuthenticEpisodeBuilder(
+        PublicRuntimeEpisodeOwner(
+            environment["runtime_factory"],
+            restart_executor=environment["restart_executor"],
+        )
+    )
+    try:
+        episodes = builder.build_many(cases)
+    finally:
+        environment["close"]()
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
+def test_reported_speech_relational_content_composes_recursively(
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(
+        "scenario:reported_speech-0087", tmp_path
+    )
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
+def test_reported_speech_event_content_reuses_speaker_by_reviewed_coreference(
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(
+        "scenario:reported_speech-0079", tmp_path
+    )
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
+
+
 def test_singleton_polysemy_is_not_fabricated_as_ambiguity() -> None:
     scenarios = {row.scenario_ref: row for row in load_reviewed_scenarios(SCENARIOS)}
     polysemy = tuple(
@@ -557,6 +787,37 @@ def test_singleton_polysemy_is_not_fabricated_as_ambiguity() -> None:
         if len(row.contract.expected_expressions) == 1:
             assert row.contract.outcome_kind is not ExpectedOutcomeKind.AMBIGUITY
             assert row.contract.expression_relation is not ExpressionRelation.ANY
+
+
+def test_singleton_polysemy_is_observed_designation_evidence() -> None:
+    cases = tuple(
+        row
+        for row in _expanded_cases()
+        if row.scenario_ref == "scenario:polysemy-0027"
+    )
+
+    assert cases
+    assert all(row.contract.expected_mode.value == "OBSERVE" for row in cases)
+    assert all(
+        row.contract.expected_expression.applications[0].operator == "op:designation"
+        for row in cases
+    )
+
+
+def test_question_mark_projects_state_interrogative_to_query_mode(
+    tmp_path: Path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "question-mode",
+    )
+    try:
+        orientation, _ = runtime.orient("question-mode", "is the server online?")
+    finally:
+        runtime.stores.close()
+
+    assert orientation.mode.value == "QUERY"
 
 
 def test_external_sensor_provenance_is_not_mistaken_for_active_adapter_authority() -> None:
@@ -577,8 +838,8 @@ def test_external_sensor_provenance_is_not_mistaken_for_active_adapter_authority
     for row in explicit_adapter:
         assert row.contract.outcome_kind is ExpectedOutcomeKind.GAP
         assert row.contract.expected_gap is not None
-        assert row.contract.expected_gap.error_code == "authority_ref_missing"
-        assert row.contract.expected_gap.recommended_owner == "authority-link"
+        assert row.contract.expected_gap.error_code is None
+        assert row.contract.expected_gap.recommended_owner == "training"
 
 
 def test_learning_reported_speech_and_effect_contracts_have_connected_compatible_topology() -> None:

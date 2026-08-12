@@ -40,6 +40,13 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R4-Complete",
         "owner_ref": "surface-review",
         "source_ast_sha256": "84e12333b1e2b1b8e5b8b220e707930de9e3d2dfd2fc3bf2488a3b00d612ce03"
+    },
+    "tests/test_r4_expansion_and_review.py::test_paraphrase_surfaces_are_isolated_trajectories_by_default": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-paraphrase-trajectories-are-isolated",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R4-Final-Admission-Closeout",
+        "source_ast_sha256": "af4157ebce344c48c8967f8d5d6a8d9f6a1dbb18bdec960cac160850c7fccec0"
     }
 }
 
@@ -105,6 +112,14 @@ def test_expander_uses_every_reviewed_surface_and_environment() -> None:
     assert len(expanded) == 6
     assert {row.surface for row in expanded} == set(_scenario().surface_examples)
     assert all(ExpandedCase.from_dict(row.as_dict()) == row for row in expanded)
+
+
+def test_paraphrase_surfaces_are_isolated_trajectories_by_default() -> None:
+    expanded = CaseExpander(_compiler()).expand(
+        _scenario(), revision_pin=_pin(), environments=({},)
+    )
+    assert len({row.trajectory_ref for row in expanded}) == len(expanded)
+    assert {row.turn_index for row in expanded} == {0}
 
 
 _SHA = "sha256:" + "0" * 64

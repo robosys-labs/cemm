@@ -72,6 +72,34 @@ def _assertion(kind: str, **fields) -> dict:
     return d
 
 
+def _disabled_proposal(description: str) -> list[dict]:
+    """Declare a reviewed construction that intentionally stops at PROPOSE."""
+
+    return [
+        _assertion(
+            "gap",
+            gap_kind="proposal",
+            description=description,
+            error_code=None,
+        )
+    ]
+
+
+def _verification_rejection(description: str) -> list[dict]:
+    return [
+        _assertion(
+            "gap",
+            gap_kind="verification",
+            description=description,
+            observed_kind="verification",
+            status="verification_rejected",
+            recommended_owner="runtime",
+            safe_response_action="reject_candidate",
+            error_code=None,
+        )
+    ]
+
+
 def _contested_observed_event(event_type: str) -> list[dict]:
     """Return the authored R3 contract for a designation-backed event use."""
 
@@ -98,6 +126,66 @@ def _contested_observed_event(event_type: str) -> list[dict]:
             epistemic_status="epistemic_status:contested",
         ),
     ]
+
+
+def _transition_environment(
+    subject: str, dimension: str, from_value: str | None
+) -> dict:
+    """Declare the reviewed initial world state for an authentic transition."""
+
+    facts = []
+    if from_value is not None:
+        facts.append(
+            {
+                "operator": "op:state",
+                "predicate_ref": dimension,
+                "roles": {
+                    "role:subject": subject,
+                    "role:dimension": dimension,
+                    "role:value": from_value,
+                },
+                "stance": "support",
+                "source_ref": "source:r4-reviewed-initial-state",
+            }
+        )
+    return {"environments": [{"world_facts": facts}]}
+
+
+def _trusted_evidence_environment(
+    source: str,
+    adapter: str,
+    target: str,
+    dimension: str,
+    value: str,
+    receipt_suffix: str,
+) -> dict:
+    receipt_ref = f"receipt:r4-reviewed-{receipt_suffix}"
+    return {
+        "environments": [
+            {
+                "evidence_items": [
+                    {
+                        "source": source,
+                        "content": {
+                            "adapter": adapter,
+                            "target": target,
+                            "dimension": dimension,
+                            "value": value,
+                        },
+                        "provenance_refs": [adapter],
+                        "adapter_receipt_ref": receipt_ref,
+                    }
+                ],
+                "required_observation_refs": [receipt_ref],
+                "situation_constraints": {
+                    "trusted_observation": True,
+                    "evidence_policy_refs": [
+                        f"policy:evidence:reviewed_{source}"
+                    ],
+                },
+            }
+        ]
+    }
 
 
 def _case(
@@ -173,25 +261,33 @@ def generate_all() -> list[dict]:
           ["what is your name?", "your name is what?"])
     _next(cat, [_assertion("query", target="participant:system", role="label:name")],
           ["what are you called?", "you are called what?"])
-    _next(cat, [_assertion("query", target="entity:server", dimension="dim:availability")],
+    _next(cat, [_assertion("state", subject="entity:server", dimension="dim:availability", value="value:online"),
+                _assertion("mode", mode="query")],
           ["is the server online?", "online is the server?"])
-    _next(cat, [_assertion("query", target="entity:server", dimension="dim:availability")],
+    _next(cat, [_assertion("state", subject="entity:server", dimension="dim:availability", value="value:offline"),
+                _assertion("mode", mode="query")],
           ["is the server offline?", "offline is the server?"])
-    _next(cat, [_assertion("query", target="entity:lamp", dimension="dim:power")],
+    _next(cat, [_assertion("state", subject="entity:lamp", dimension="dim:power", value="value:on"),
+                _assertion("mode", mode="query")],
           ["is the lamp on?", "on is the lamp?"])
-    _next(cat, [_assertion("query", target="entity:lamp", dimension="dim:power")],
+    _next(cat, [_assertion("state", subject="entity:lamp", dimension="dim:power", value="value:off"),
+                _assertion("mode", mode="query")],
           ["is the lamp off?", "off is the lamp?"])
     _next(cat, [_assertion("relation", subject="entity:alice", relation="rel:likes", object="entity:book")],
           ["alice likes the book", "the book alice likes"])
     _next(cat, [_assertion("relation", subject="entity:alice", relation="rel:owns", object="entity:book")],
           ["alice owns the book", "the book alice owns"])
-    _next(cat, [_assertion("query", target="entity:door", dimension="dim:availability")],
+    _next(cat, [_assertion("state", subject="entity:door", dimension="dim:availability", value="value:available"),
+                _assertion("mode", mode="query")],
           ["is the door available?", "available is the door?"])
-    _next(cat, [_assertion("query", target="entity:router", dimension="dim:availability")],
+    _next(cat, [_assertion("state", subject="entity:router", dimension="dim:availability", value="value:online"),
+                _assertion("mode", mode="query")],
           ["is the router online?", "online the router is?"])
-    _next(cat, [_assertion("query", target="entity:light", dimension="dim:power")],
+    _next(cat, [_assertion("state", subject="entity:light", dimension="dim:power", value="value:on"),
+                _assertion("mode", mode="query")],
           ["is the light on?", "on the light is?"])
-    _next(cat, [_assertion("query", target="entity:server", dimension="dim:operational_status")],
+    _next(cat, [_assertion("state", subject="entity:server", dimension="dim:operational_status", value="value:operating_normally"),
+                _assertion("mode", mode="query")],
           ["is the server operating normally?", "operating normally the server is?"])
 
     # ------------------------------------------------------------------
@@ -199,25 +295,25 @@ def generate_all() -> list[dict]:
     # ------------------------------------------------------------------
     cat = "polysemy"
     _next(cat, [_assertion("polysemy", surface="job", targets=["concept:job_role"])],
-          ["job", "he has a job"])
+          ["job", "the job"])
     _next(cat, [_assertion("polysemy", surface="role", targets=["concept:job_role"])],
-          ["role", "her role is clear"])
+          ["role", "the role"])
     _next(cat, [_assertion("polysemy", surface="status", targets=["dim:operational_status"])],
-          ["status", "the status is online"])
+          ["status", "Status"])
     _next(cat, [_assertion("polysemy", surface="light", targets=["entity:light"])],
-          ["light", "turn on the light"])
+          ["light", "the light"])
     _next(cat, [_assertion("polysemy", surface="left", targets=["event:leave"])],
-          ["left", "she left the room"])
-    _next(cat, [_assertion("polysemy", surface="say", targets=["event:say"])],
-          ["say", "what did she say?"])
-    _next(cat, [_assertion("polysemy", surface="learn", targets=["event:learn_alias"])],
-          ["learn", "learn that yoz means hello"])
-    _next(cat, [_assertion("polysemy", surface="teach", targets=["event:teach"])],
-          ["teach", "teach me something"])
+          ["left", "Left"])
+    _next(cat, [_assertion("designates", surface="say", target="event:say")],
+          ["say", "Say"])
+    _next(cat, [_assertion("designates", surface="learn", target="event:learn_alias")],
+          ["learn", "Learn"])
+    _next(cat, [_assertion("designates", surface="teach", target="event:teach")],
+          ["teach", "Teach"])
     _next(cat, [_assertion("polysemy", surface="available", targets=["value:available"])],
-          ["available", "is the server available?"])
+          ["available", "Available"])
     _next(cat, [_assertion("polysemy", surface="on", targets=["value:on"])],
-          ["on", "the lamp is on"])
+          ["on", "On"])
 
     # ------------------------------------------------------------------
     # 4. modality (10 cases)
@@ -227,23 +323,27 @@ def generate_all() -> list[dict]:
                            actor="participant:user", event_target="participant:system",
                            surface="CEMM")],
           ["can I call you CEMM?", "could I call you CEMM?"])
-    _next(cat, [_assertion("modality", modality_kind="possible", target="event:learn_alias")],
-          ["I can call you CEMM, right?", "I could call you CEMM?"])
-    _next(cat, [_assertion("modality", modality_kind="necessary", target="event:set_state")],
-          ["the server must be online", "the server has to be online"])
-    _next(cat, [_assertion("modality", modality_kind="conditional", target="event:set_state")],
+    _next(cat, [_assertion("modality", modality_kind="capability", target="event:learn_alias",
+                           actor="participant:user", event_target="participant:system",
+                           surface="CEMM")],
+          ["I could call you CEMM?", "i could call you CEMM?"])
+    _next(cat, [_assertion("modality", modality_kind="obligation", target="event:set_state",
+                           subject="entity:server", dimension="dim:availability",
+                           value="value:online")],
+          ["the server must be online", "The server must be online"])
+    _next(cat, _disabled_proposal("conditional event scope is not admitted in R4"),
           ["if the server is online then proceed", "when the server is online proceed"])
-    _next(cat, [_assertion("modality", modality_kind="possible", target="cap:query")],
+    _next(cat, _disabled_proposal("answer-capability wording is not admitted in R4"),
           ["can you answer?", "could you answer?"])
     _next(cat, [_assertion("modality", modality_kind="possible", target="cap:respond")],
           ["can you respond?", "could you respond?"])
-    _next(cat, [_assertion("modality", modality_kind="possible", target="cap:learn_alias")],
+    _next(cat, _disabled_proposal("bare learning-capability wording is not admitted in R4"),
           ["can you learn?", "could you learn?"])
     _next(cat, [_assertion("modality", modality_kind="possible", target="cap:set_state")],
           ["can you set state?", "could you set state?"])
-    _next(cat, [_assertion("modality", modality_kind="necessary", target="event:farewell")],
+    _next(cat, _disabled_proposal("event obligation scope is not admitted in R4"),
           ["you must say goodbye", "you have to say goodbye"])
-    _next(cat, [_assertion("modality", modality_kind="conditional", target="event:greeting")],
+    _next(cat, _disabled_proposal("conditional greeting scope is not admitted in R4"),
           ["if alice arrives then greet her", "when alice arrives greet her"])
 
     # ------------------------------------------------------------------
@@ -254,27 +354,33 @@ def generate_all() -> list[dict]:
                            subject="entity:server", dimension="dim:availability",
                            value="value:online")],
           ["the server is not online", "not online the server is"])
-    _next(cat, [_assertion("negation", scope="dim:power", target="entity:lamp")],
+    _next(cat, [_assertion("negation", scope="dim:power", target="entity:lamp",
+                           subject="entity:lamp", dimension="dim:power", value="value:on")],
           ["the lamp is not on", "not on the lamp is"])
-    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:server")],
+    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:server",
+                           subject="entity:server", dimension="dim:availability", value="value:offline")],
           ["the server is not offline", "not offline the server is"])
-    _next(cat, [_assertion("negation", scope="event:greeting")],
+    _next(cat, _disabled_proposal("negated reported speech is not admitted in R4"),
           ["alice did not say hello", "not hello alice said"])
-    _next(cat, [_assertion("negation", scope="event:farewell")],
+    _next(cat, _disabled_proposal("negated reported speech is not admitted in R4"),
           ["bob did not say goodbye", "not goodbye bob said"])
-    _next(cat, [_assertion("negation", scope="rel:likes")],
+    _next(cat, _disabled_proposal("negated relation scope is not admitted in R4"),
           ["alice does not like the book", "not like the book alice does"])
-    _next(cat, [_assertion("negation", scope="rel:owns")],
+    _next(cat, _disabled_proposal("negated relation scope is not admitted in R4"),
           ["alice does not own the book", "not own the book alice does"])
-    _next(cat, [_assertion("negation", scope="cap:learn_alias")],
+    _next(cat, _disabled_proposal("negated capability scope is not admitted in R4"),
           ["you cannot learn that", "not learn that you can"])
-    _next(cat, [_assertion("negation", scope="cap:set_state")],
-          ["you cannot set state", "not set state you can"])
-    _next(cat, [_assertion("negation", scope="dim:operational_status")],
+    _next(cat, _disabled_proposal("negated capability scope is not admitted in R4"),
+          ["you cannot set state", "You cannot set state"])
+    _next(cat, [_assertion("negation", scope="dim:operational_status",
+                           subject="entity:server", dimension="dim:operational_status",
+                           value="value:operating_normally")],
           ["the server is not operating normally", "not operating normally the server is"])
-    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:door")],
+    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:door",
+                           subject="entity:door", dimension="dim:availability", value="value:available")],
           ["the door is not available", "not available the door is"])
-    _next(cat, [_assertion("negation", scope="dim:power", target="entity:light")],
+    _next(cat, [_assertion("negation", scope="dim:power", target="entity:light",
+                           subject="entity:light", dimension="dim:power", value="value:on")],
           ["the light is not on", "not on the light is"])
 
     # ------------------------------------------------------------------
@@ -286,54 +392,47 @@ def generate_all() -> list[dict]:
           ["alice mother-in-law who?", "mother-in-law alice who?"])
     _next(cat, [_assertion("rule", rule="rule:partner-implies-married-state",
                            subject="entity:alice", relation="rel:has_partner")],
-          ["alice has a partner", "alice is married"])
-    _next(cat, [_assertion("inference", subject="entity:bob", relation="rel:mother_in_law",
-                           consequent="rel:has_partner")],
+          ["alice partner who?", "Alice partner who?"])
+    _next(cat, _disabled_proposal("inverse kinship inference is not admitted in R4"),
           ["bob's mother-in-law is carol", "carol is bob's mother-in-law"])
-    _next(cat, [_assertion("inference", subject="entity:bob", relation="rel:has_partner",
-                           consequent="dim:marital_status")],
-          ["bob has a partner so bob is married", "bob is married"])
-    _next(cat, [_assertion("recursive_proof", depth=2,
-                           subject="entity:alice", chain=["rel:mother_in_law", "rel:has_partner"])],
+    _next(cat, _disabled_proposal("partner-to-marital inference is not admitted in R4"),
+          ["bob has a partner so bob is married", "Bob has a partner so bob is married"])
+    _next(cat, _disabled_proposal("two-hop kinship proof surface is not admitted in R4"),
           ["alice's mother-in-law implies alice has a partner"])
-    _next(cat, [_assertion("recursive_proof", depth=2,
-                           subject="entity:alice", chain=["rel:has_partner", "dim:marital_status"])],
+    _next(cat, _disabled_proposal("two-hop marital proof surface is not admitted in R4"),
           ["alice has a partner implies alice is married"])
-    _next(cat, [_assertion("recursive_proof", depth=3,
-                           subject="entity:carol", chain=["rel:mother_in_law", "rel:has_partner", "dim:marital_status"])],
-          ["carol's mother-in-law implies carol is married"])
-    _next(cat, [_assertion("rule", rule="rule:mother-in-law-implies-partner-exists",
-                           subject="entity:mary", relation="rel:mother_in_law")],
+    _next(cat, _disabled_proposal("three-hop marital proof surface is not admitted in R4"),
+          ["carol mother-in-law implies carol married"])
+    _next(cat, _disabled_proposal("inverse kinship inference is not admitted in R4"),
           ["mary's mother-in-law is carol", "carol is mary's mother-in-law"])
-    _next(cat, [_assertion("inference", subject="entity:mary", relation="rel:has_partner",
-                           consequent="dim:marital_status")],
-          ["mary has a partner so mary is married", "mary is married"])
-    _next(cat, [_assertion("recursive_proof", depth=2,
-                           subject="entity:bob", chain=["rel:mother_in_law", "rel:has_partner"])],
+    _next(cat, _disabled_proposal("partner-to-marital inference is not admitted in R4"),
+          ["mary has a partner so mary is married", "Mary has a partner so mary is married"])
+    _next(cat, _disabled_proposal("two-hop kinship proof surface is not admitted in R4"),
           ["bob's mother-in-law implies bob has a partner"])
 
     # ------------------------------------------------------------------
     # 7. participant/reference (10 cases)
     # ------------------------------------------------------------------
     cat = "participant_reference"
-    _next(cat, [_assertion("reference", target="participant:user", role="role:actor")],
+    _next(cat, _disabled_proposal("participant-relative speech query is not admitted in R4"),
           ["you said what?", "what did you say?"])
-    _next(cat, [_assertion("reference", target="participant:system", role="role:addressee")],
+    _next(cat, _disabled_proposal("participant-relative addressee binding is not admitted in R4"),
           ["I told you", "you I told"])
-    _next(cat, [_assertion("reference", target="entity:alice", role="role:actor")],
-          ["alice said hello", "hello alice said"])
-    _next(cat, [_assertion("reference", target="entity:bob", role="role:actor")],
-          ["bob left", "bob departed"])
-    _next(cat, [_assertion("reference", target="entity:carol", role="role:addressee")],
+    _next(cat, [_assertion("reported_speech", speaker="entity:alice",
+                           event="event:say", content="event:greeting")],
+          ["alice said hello", "alice says hello"])
+    _next(cat, [_assertion("designates", surface="bob", target="entity:bob")],
+          ["bob", "Bob"])
+    _next(cat, _disabled_proposal("event addressee reference binding is not admitted in R4"),
           ["greet carol", "carol greet"])
-    _next(cat, [_assertion("reference", target="entity:mary", role="role:actor")],
+    _next(cat, _disabled_proposal("teaching actor reference binding is not admitted in R4"),
           ["mary teaches bob", "bob mary teaches"])
-    _next(cat, [_assertion("reference", target="participant:user", role="role:learner")],
+    _next(cat, _disabled_proposal("learner-relative reference binding is not admitted in R4"),
           ["teach me", "me teach"])
-    _next(cat, [_assertion("reference", target="participant:system", role="role:actor")],
+    _next(cat, _disabled_proposal("embedded learning actor binding is not admitted in R4"),
           ["you learn that", "that you learn"])
-    _next(cat, [_assertion("reference", target="entity:alice", role="role:subject")],
-          ["alice owns the book", "the book alice owns"])
+    _next(cat, [_assertion("designates", surface="alice", target="entity:alice")],
+          ["alice", "Alice"])
     _next(cat, [_assertion("reference", target="entity:bob", role="role:object",
                            subject="entity:alice", relation="rel:likes",
                            object="entity:bob")],
@@ -350,14 +449,14 @@ def generate_all() -> list[dict]:
                            content="event:farewell")],
           ["bob said goodbye", "bob says goodbye"])
     _next(cat, [_assertion("reported_speech", speaker="entity:alice", event="event:say",
-                           content="event:learn_alias")],
-          ["alice said to learn", "alice says to learn"])
+                           content="event:leave")],
+          ["alice said left", "alice says left"])
     _next(cat, [_assertion("reported_speech", speaker="entity:bob", event="event:leave",
                            content=None)],
-          ["bob said he left", "bob says he left"])
-    _next(cat, [_assertion("reported_speech", speaker="entity:carol", event="event:teach",
+          ["bob said left", "bob says left"])
+    _next(cat, [_assertion("reported_speech", speaker="entity:carol", event="event:say",
                            content="event:greeting")],
-          ["carol said to teach hello", "carol says to teach hello"])
+          ["carol said hello", "carol says hello"])
     _next(cat, [_assertion("reported_speech", speaker="entity:mary", event="event:say",
                            content="event:farewell")],
           ["mary said goodbye", "mary says goodbye"])
@@ -366,13 +465,16 @@ def generate_all() -> list[dict]:
                            content_dimension="dim:availability", content_value="value:online")],
           ["alice said the server is online", "alice says the server is online"])
     _next(cat, [_assertion("reported_speech", speaker="entity:bob", event="event:say",
-                           content="dim:power")],
+                           content="dim:power", content_subject="entity:lamp",
+                           content_dimension="dim:power", content_value="value:on")],
           ["bob said the lamp is on", "bob says the lamp is on"])
     _next(cat, [_assertion("reported_speech", speaker="entity:carol", event="event:say",
-                           content="rel:likes")],
+                           content="rel:likes", content_subject="entity:alice",
+                           content_object="entity:book")],
           ["carol said alice likes the book", "carol says alice likes the book"])
     _next(cat, [_assertion("reported_speech", speaker="entity:mary", event="event:say",
-                           content="rel:owns")],
+                           content="rel:owns", content_subject="entity:bob",
+                           content_object="entity:book")],
           ["mary said bob owns the book", "mary says bob owns the book"])
 
     # ------------------------------------------------------------------
@@ -416,34 +518,44 @@ def generate_all() -> list[dict]:
     cat = "reviewed_sensor_operation_evidence"
     _next(cat, [_assertion("sensor_evidence", adapter="adapter:door_sensor",
                            target="entity:door", value="value:available")],
-          ["the door sensor reports available", "sensor: door available"])
+          ["the door is available", "available the door is"],
+          metadata=_trusted_evidence_environment("sensor", "adapter:door_sensor", "entity:door", "dim:availability", "value:available", "door-available"))
     _next(cat, [_assertion("sensor_evidence", adapter="adapter:door_sensor",
                            target="entity:door", value="value:unavailable")],
-          ["the door sensor reports unavailable", "sensor: door unavailable"])
+          ["the door is unavailable", "unavailable the door is"],
+          metadata=_trusted_evidence_environment("sensor", "adapter:door_sensor", "entity:door", "dim:availability", "value:unavailable", "door-unavailable"))
     _next(cat, [_assertion("operation_evidence", adapter="adapter:state",
-                           target="entity:server", dimension="dim:availability")],
-          ["the state adapter set the server online", "operation: server online"])
+                           target="entity:server", dimension="dim:availability", value="value:online")],
+          ["the server is online", "online the server is"],
+          metadata=_trusted_evidence_environment("operation", "adapter:state", "entity:server", "dim:availability", "value:online", "server-online"))
     _next(cat, [_assertion("operation_evidence", adapter="adapter:state",
-                           target="entity:lamp", dimension="dim:power")],
-          ["the state adapter set the lamp on", "operation: lamp on"])
+                           target="entity:lamp", dimension="dim:power", value="value:on")],
+          ["the lamp is on", "on the lamp is"],
+          metadata=_trusted_evidence_environment("operation", "adapter:state", "entity:lamp", "dim:power", "value:on", "lamp-on"))
     _next(cat, [_assertion("sensor_evidence", adapter="adapter:memory",
                            target="entity:router", value="value:online")],
-          ["the memory adapter reports router online", "sensor: router online"])
+          ["the router is online", "online the router is"],
+          metadata=_trusted_evidence_environment("sensor", "adapter:memory", "entity:router", "dim:availability", "value:online", "router-online"))
     _next(cat, [_assertion("operation_evidence", adapter="adapter:state",
-                           target="entity:light", dimension="dim:power")],
-          ["the state adapter set the light enabled", "operation: light enabled"])
+                           target="entity:light", dimension="dim:power", value="value:enabled")],
+          ["the light is enabled", "enabled the light is"],
+          metadata=_trusted_evidence_environment("operation", "adapter:state", "entity:light", "dim:power", "value:enabled", "light-enabled"))
     _next(cat, [_assertion("sensor_evidence", adapter="adapter:door_sensor",
                            target="entity:door", value="value:available")],
-          ["door sensor: available", "the door is available per sensor"])
+          ["door is available", "available is the door"],
+          metadata=_trusted_evidence_environment("sensor", "adapter:door_sensor", "entity:door", "dim:availability", "value:available", "door-available-repeat"))
     _next(cat, [_assertion("operation_evidence", adapter="adapter:state",
-                           target="entity:server", dimension="dim:operational_status")],
-          ["the state adapter set the server operating normally"])
+                           target="entity:server", dimension="dim:operational_status", value="value:operating_normally")],
+          ["the server is operating normally"],
+          metadata=_trusted_evidence_environment("operation", "adapter:state", "entity:server", "dim:operational_status", "value:operating_normally", "server-operating-normally"))
     _next(cat, [_assertion("sensor_evidence", adapter="adapter:memory",
                            target="entity:server", value="value:offline")],
-          ["memory adapter: server offline", "the server is offline per memory"])
+          ["the server is offline", "offline the server is"],
+          metadata=_trusted_evidence_environment("sensor", "adapter:memory", "entity:server", "dim:availability", "value:offline", "server-offline"))
     _next(cat, [_assertion("operation_evidence", adapter="adapter:state",
-                           target="entity:door", dimension="dim:availability")],
-          ["the state adapter set the door unavailable"])
+                           target="entity:door", dimension="dim:availability", value="value:unavailable")],
+          ["the door is unavailable"],
+          metadata=_trusted_evidence_environment("operation", "adapter:state", "entity:door", "dim:availability", "value:unavailable", "door-operation-unavailable"))
 
     # ------------------------------------------------------------------
     # 11. transition simulation (10 cases)
@@ -452,43 +564,43 @@ def generate_all() -> list[dict]:
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:server", dimension="dim:availability",
                            from_value="value:offline", to_value="value:online")],
-          ["set the server online", "bring the server online"])
+          ["set the server online", "bring the server online"], metadata=_transition_environment("entity:server", "dim:availability", "value:offline"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:server", dimension="dim:availability",
                            from_value="value:online", to_value="value:offline")],
-          ["set the server offline", "take the server offline"])
+          ["set the server offline", "take the server offline"], metadata=_transition_environment("entity:server", "dim:availability", "value:online"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:lamp", dimension="dim:power",
                            from_value="value:off", to_value="value:on")],
-          ["turn the lamp on", "switch the lamp on"])
+          ["turn the lamp on", "switch the lamp on"], metadata=_transition_environment("entity:lamp", "dim:power", "value:off"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:lamp", dimension="dim:power",
                            from_value="value:on", to_value="value:off")],
-          ["turn the lamp off", "switch the lamp off"])
+          ["turn the lamp off", "switch the lamp off"], metadata=_transition_environment("entity:lamp", "dim:power", "value:on"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:light", dimension="dim:power",
                            from_value="value:disabled", to_value="value:enabled")],
-          ["enable the light", "turn the light on"])
+          ["turn the light enabled", "set the light enabled"], metadata=_transition_environment("entity:light", "dim:power", "value:disabled"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:light", dimension="dim:power",
                            from_value="value:enabled", to_value="value:disabled")],
-          ["disable the light", "turn the light off"])
+          ["turn the light disabled", "set the light disabled"], metadata=_transition_environment("entity:light", "dim:power", "value:enabled"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:door", dimension="dim:availability",
                            from_value="value:unavailable", to_value="value:available")],
-          ["make the door available", "set the door available"])
+          ["make the door available", "set the door available"], metadata=_transition_environment("entity:door", "dim:availability", "value:unavailable"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:door", dimension="dim:availability",
                            from_value="value:available", to_value="value:unavailable")],
-          ["make the door unavailable", "set the door unavailable"])
+          ["make the door unavailable", "set the door unavailable"], metadata=_transition_environment("entity:door", "dim:availability", "value:available"))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:server", dimension="dim:operational_status",
                            from_value=None, to_value="value:operating_normally")],
-          ["set the server to operating normally"])
+          ["set the server operating normally"], metadata=_transition_environment("entity:server", "dim:operational_status", None))
     _next(cat, [_assertion("transition", event="event:set_state",
                            subject="entity:router", dimension="dim:availability",
                            from_value="value:offline", to_value="value:online")],
-          ["bring the router online", "set the router online"])
+          ["bring the router online", "set the router online"], metadata=_transition_environment("entity:router", "dim:availability", "value:offline"))
 
     # ------------------------------------------------------------------
     # 12. learning/security (12 cases)
@@ -496,36 +608,33 @@ def generate_all() -> list[dict]:
     cat = "learning_security"
     _next(cat, [_assertion("learning", event="event:learn_alias",
                            capability="cap:learn_alias", surface="yoz", target="event:greeting")],
-          ["learn that yoz means hello", "yoz means hello, learn it"])
+          ["learn that yoz means hello", "Learn that yoz means hello"])
     _next(cat, [_assertion("learning", event="event:learn_alias",
                            capability="cap:learn_alias", surface="saluton", target="event:greeting")],
           ["learn that saluton means hello"])
     _next(cat, [_assertion("learning_directive", event="event:learn_alias",
                            surface="namaste", target="event:greeting")],
           ["learn that namaste means hello"])
-    _next(cat, [_assertion("teaching_claim", event="event:teach",
-                           surface="gracias", target="event:greeting")],
+    _next(cat, _disabled_proposal("teaching claim composition is not admitted in R4"),
           ["teach that gracias means hello"])
-    _next(cat, [_assertion("lookup", target="event:greeting")],
+    _next(cat, _disabled_proposal("designation lookup composition is not admitted in R4"),
           ["what does hello mean?", "what is hello?"])
-    _next(cat, [_assertion("lookup", target="event:farewell")],
+    _next(cat, _disabled_proposal("designation lookup composition is not admitted in R4"),
           ["what does bye mean?", "what is bye?"])
-    _next(cat, [_assertion("learning_event_claim", event="event:learn_alias",
-                           surface="yoz", target="event:greeting")],
+    _next(cat, _disabled_proposal("learning event claims are not admitted in R4"),
           ["I learned that yoz means hello"])
-    _next(cat, [_assertion("learning_event_claim", event="event:learn_alias",
-                           surface="saluton", target="event:greeting")],
+    _next(cat, _disabled_proposal("learning event claims are not admitted in R4"),
           ["I learned that saluton means hello"])
-    _next(cat, [_assertion("security", capability="cap:learn_alias",
-                           permission="permission:write_alias")],
+    _next(cat, _disabled_proposal("permission-over-learning query is not admitted in R4"),
           ["can you learn a new alias?", "do you have permission to learn?"])
-    _next(cat, [_assertion("security", capability="cap:set_state",
-                           permission="permission:set_state")],
-          ["can you set state?", "do you have permission to set state?"])
+    _next(cat, [_assertion("capability", ref="cap:set_state",
+                           participant="participant:system")],
+          ["can you set state?", "could you set state?"])
     _next(cat, [_assertion("learning", event="event:learn_alias",
                            capability="cap:learn_alias", surface="bonjour", target="event:greeting")],
           ["learn that bonjour means hello"])
-    _next(cat, [_assertion("reviewed_acquisition", surface="hola", target="event:greeting")],
+    _next(cat, [_assertion("reviewed_acquisition", surface="reviewed: hola",
+                           target="event:greeting")],
           ["reviewed: hola means hello"])
 
     # ------------------------------------------------------------------
@@ -533,31 +642,28 @@ def generate_all() -> list[dict]:
     # ------------------------------------------------------------------
     cat = "capability_policy_adapter_effect"
     _next(cat, [_assertion("capability", ref="cap:query", participant="participant:system")],
-          ["can you query?", "do you have query capability?"])
+          ["can you query?", "do you have query?"])
     _next(cat, [_assertion("capability", ref="cap:respond", participant="participant:system")],
-          ["can you respond?", "do you have respond capability?"])
+          ["can you respond?", "do you have respond?"])
     _next(cat, [_assertion("capability", ref="cap:learn_alias", participant="participant:system")],
-          ["can you learn aliases?", "do you have learn_alias capability?"])
+          ["can you learn aliases?", "do you have learn_alias?"])
     _next(cat, [_assertion("capability", ref="cap:set_state", participant="participant:system")],
-          ["can you set state?", "do you have set_state capability?"])
-    _next(cat, [_assertion("policy", permission="permission:write_alias", event="event:learn_alias")],
+          ["can you set state?", "do you have set_state?"])
+    _next(cat, _disabled_proposal("permission query syntax is not admitted in R4"),
           ["do you have write_alias permission?", "is write_alias allowed?"])
-    _next(cat, [_assertion("policy", permission="permission:set_state", event="event:set_state")],
+    _next(cat, _disabled_proposal("permission query syntax is not admitted in R4"),
           ["do you have set_state permission?", "is set_state allowed?"])
-    _next(cat, [_assertion("adapter", ref="adapter:memory")],
+    _next(cat, _disabled_proposal("adapter reference syntax is not admitted in R4"),
           ["the memory adapter is available", "use the memory adapter"])
-    _next(cat, [_assertion("adapter", ref="adapter:state")],
+    _next(cat, _disabled_proposal("adapter reference syntax is not admitted in R4"),
           ["the state adapter is available", "use the state adapter"])
-    _next(cat, [_assertion("adapter", ref="adapter:door_sensor")],
+    _next(cat, _disabled_proposal("adapter reference syntax is not admitted in R4"),
           ["the door sensor adapter is available", "use the door sensor"])
-    _next(cat, [_assertion("effect", event="event:set_state", adapter="adapter:state",
-                           subject="entity:server")],
+    _next(cat, _disabled_proposal("explicit adapter effect syntax is not admitted in R4"),
           ["set the server state via the state adapter"])
-    _next(cat, [_assertion("effect", event="event:learn_alias", adapter="adapter:memory",
-                           subject="participant:system")],
+    _next(cat, _disabled_proposal("explicit adapter effect syntax is not admitted in R4"),
           ["learn an alias via the memory adapter"])
-    _next(cat, [_assertion("effect", event="event:set_state", adapter="adapter:state",
-                           subject="entity:lamp")],
+    _next(cat, _disabled_proposal("explicit adapter effect syntax is not admitted in R4"),
           ["set the lamp state via the state adapter"])
 
     # ------------------------------------------------------------------
@@ -570,8 +676,7 @@ def generate_all() -> list[dict]:
     _next(cat, [_assertion("contradiction", subject="entity:lamp",
                            dimension="dim:power", values=["value:on", "value:off"])],
           ["the lamp is on and off", "on and off the lamp is"])
-    _next(cat, [_assertion("contradiction", subject="entity:alice",
-                           dimension="dim:marital_status", values=["value:married", "not married"])],
+    _next(cat, _verification_rejection("mixed state negation is rejected by the exact verifier"),
           ["alice is married and not married"])
     _next(cat, [_assertion("contradiction", subject="entity:door",
                            dimension="dim:availability", values=["value:available", "value:unavailable"])],
@@ -579,14 +684,11 @@ def generate_all() -> list[dict]:
     _next(cat, [_assertion("contradiction", subject="entity:light",
                            dimension="dim:power", values=["value:enabled", "value:disabled"])],
           ["the light is enabled and disabled"])
-    _next(cat, [_assertion("contradiction", subject="entity:server",
-                           dimension="dim:operational_status", values=["value:operating_normally", "not operating"])],
+    _next(cat, _disabled_proposal("compound operational contradiction is not admitted in R4"),
           ["the server is operating normally and not operating"])
-    _next(cat, [_assertion("contradiction", subject="entity:alice",
-                           relation="rel:likes", object="entity:book", stance="deny")],
+    _next(cat, _disabled_proposal("compound relation contradiction is not admitted in R4"),
           ["alice likes and does not like the book"])
-    _next(cat, [_assertion("contradiction", subject="entity:alice",
-                           relation="rel:owns", object="entity:book", stance="deny")],
+    _next(cat, _disabled_proposal("compound relation contradiction is not admitted in R4"),
           ["alice owns and does not own the book"])
 
     # ------------------------------------------------------------------
@@ -603,29 +705,29 @@ def generate_all() -> list[dict]:
     # ------------------------------------------------------------------
     cat = "multilingual_aliases"
     _next(cat, [_assertion("alias", surface="hola", language="es", target="event:greeting")],
-          ["hola means hello", "hola is hello in Spanish"])
+          ["hola means hello", '"hola" means hello'])
     _next(cat, [_assertion("alias", surface="bonjour", language="fr", target="event:greeting")],
-          ["bonjour means hello", "bonjour is hello in French"])
+          ["bonjour means hello", '"bonjour" means hello'])
     _next(cat, [_assertion("alias", surface="saluton", language="eo", target="event:greeting")],
-          ["saluton means hello", "saluton is hello in Esperanto"])
+          ["saluton means hello", '"saluton" means hello'])
     _next(cat, [_assertion("alias", surface="yoz", language="custom", target="event:greeting")],
-          ["yoz means hello", "yoz is hello"])
+          ["yoz means hello", '"yoz" means hello'])
     _next(cat, [_assertion("alias", surface="namaste", language="hi", target="event:greeting")],
-          ["namaste means hello", "namaste is hello in Hindi"])
+          ["namaste means hello", '"namaste" means hello'])
     _next(cat, [_assertion("alias", surface="adios", language="es", target="event:farewell")],
-          ["adios means goodbye", "adios is goodbye in Spanish"])
+          ["adios means goodbye", '"adios" means goodbye'])
     _next(cat, [_assertion("alias", surface="au revoir", language="fr", target="event:farewell")],
-          ["au revoir means goodbye", "au revoir is goodbye in French"])
+          ["au revoir means goodbye", '"au revoir" means goodbye'])
     _next(cat, [_assertion("alias", surface="gracias", language="es", target="event:greeting")],
-          ["gracias means hello", "gracias is hello"])
+          ["gracias means hello", '"gracias" means hello'])
     _next(cat, [_assertion("alias", surface="ciao", language="it", target="event:greeting")],
-          ["ciao means hello", "ciao is hello in Italian"])
+          ["ciao means hello", '"ciao" means hello'])
     _next(cat, [_assertion("alias", surface="hallo", language="de", target="event:greeting")],
-          ["hallo means hello", "hallo is hello in German"])
+          ["hallo means hello", '"hallo" means hello'])
     _next(cat, [_assertion("alias", surface="konnichiwa", language="ja", target="event:greeting")],
-          ["konnichiwa means hello", "konnichiwa is hello in Japanese"])
+          ["konnichiwa means hello", '"konnichiwa" means hello'])
     _next(cat, [_assertion("alias", surface="olá", language="pt", target="event:greeting")],
-          ["olá means hello", "olá is hello in Portuguese"])
+          ["olá means hello", '"olá" means hello'])
 
     # ------------------------------------------------------------------
     # 17. adversarial programs (10 cases)
@@ -681,35 +783,40 @@ def generate_all() -> list[dict]:
     # 19. realization equivalence (10 cases)
     # ------------------------------------------------------------------
     cat = "realization_equivalence"
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="participant:system")],
+    _next(cat, [_assertion("query", target="participant:system", role="label:name")],
           ["what is your name?", "your name what is?"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="entity:server")],
+    _next(cat, [_assertion("state", subject="entity:server",
+                           dimension="dim:availability", value="value:online"),
+                _assertion("mode", mode="query")],
           ["is the server online?", "online is the server?"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="entity:lamp")],
+    _next(cat, [_assertion("state", subject="entity:lamp",
+                           dimension="dim:power", value="value:on"),
+                _assertion("mode", mode="query")],
           ["is the lamp on?", "on is the lamp?"])
-    _next(cat, [_assertion("realization_equiv", status="unknown",
-                           discourse_action="unknown")],
-          ["what is zorbulate?", "zorbulate what is?"])
-    _next(cat, [_assertion("realization_equiv", status="denied",
-                           discourse_action="deny")],
-          ["can I set state without permission?", "set state without permission?"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="acknowledge")],
-          ["learn that yoz means hello", "yoz means hello learn it"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="entity:alice")],
+    _next(cat, [_assertion("gap", gap_kind="proposal",
+                           description="unknown surface remains a typed proposal abstention")],
+          ["what is zorbulate?", "zorbulate what is?"], gap_kind="proposal")
+    _next(cat, [_assertion("gap", gap_kind="proposal",
+                           description="underspecified state request remains a typed proposal abstention")],
+          ["can I set state without permission?", "set state without permission?"],
+          gap_kind="proposal")
+    _next(cat, [_assertion("learning_directive", event="event:learn_alias",
+                           surface="yoz", target="event:greeting")],
+          ["learn that yoz means hello", "Learn that yoz means hello"])
+    _next(cat, [_assertion("state", subject="entity:alice",
+                           dimension="dim:marital_status", value="value:married"),
+                _assertion("mode", mode="query")],
           ["is alice married?", "married is alice?"])
-    _next(cat, [_assertion("realization_equiv", status="ambiguous",
-                           discourse_action="ambiguous")],
+    _next(cat, [_assertion("defines", target="concept:job_role",
+                           semantic_kind="concept")],
           ["what is job?", "job what is?"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="entity:door")],
+    _next(cat, [_assertion("state", subject="entity:door",
+                           dimension="dim:availability", value="value:available"),
+                _assertion("mode", mode="query")],
           ["is the door available?", "available is the door?"])
-    _next(cat, [_assertion("realization_equiv", status="resolved",
-                           discourse_action="answer", target="entity:light")],
+    _next(cat, [_assertion("state", subject="entity:light",
+                           dimension="dim:power", value="value:enabled"),
+                _assertion("mode", mode="query")],
           ["is the light enabled?", "enabled is the light?"])
 
     return cases

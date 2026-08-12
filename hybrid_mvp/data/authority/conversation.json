@@ -91,6 +91,16 @@
   "designations": [
     {
       "language": "en",
+      "surface": "learn aliases",
+      "target": "cap:learn_alias"
+    },
+    {
+      "language": "en",
+      "surface": "learn_alias",
+      "target": "cap:learn_alias"
+    },
+    {
+      "language": "en",
       "surface": "alice",
       "target": "entity:alice"
     },
@@ -263,6 +273,16 @@
       "language": "en",
       "surface": "parent",
       "target": "concept:mother"
+    },
+    {
+      "language": "en",
+      "surface": "name",
+      "target": "label:name"
+    },
+    {
+      "language": "en",
+      "surface": "called",
+      "target": "label:name"
     }
   ],
   "event_signatures": [

@@ -301,11 +301,15 @@ class CaseExpander:
                         "trajectory_ref",
                         stable_ref(
                             "reviewed_trajectory",
-                            {"scenario_ref": scenario.scenario_ref},
+                            {
+                                "scenario_ref": scenario.scenario_ref,
+                                "surface_index": surface_index,
+                                "environment_index": environment_index,
+                            },
                         ),
                     )
                 )
-                turn_index = int(environment.get("turn_index", surface_index))
+                turn_index = int(environment.get("turn_index", 0))
                 material = ExpandedCase.identity_material(
                     scenario_ref=scenario.scenario_ref,
                     surface_ref=language_surface_ref,

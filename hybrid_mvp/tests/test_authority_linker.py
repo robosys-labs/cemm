@@ -19,6 +19,23 @@ from cemm_authoritative_hybrid.authority import (
 
 ROOT = Path(__file__).parents[1]
 
+__cemm_test_inventory__ = {
+    "tests/test_authority_linker.py::test_transition_index_selects_exact_event_dimension_and_value": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-transition-index-selects-exact-value",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R4-Final-Admission-Closeout",
+        "source_ast_sha256": "0503f7c4eb687c5201ee94bc431bf5b5c08757c52684c408ed48e8a1b7c5341e",
+    },
+    "tests/test_authority_linker.py::test_transition_index_does_not_collapse_distinct_target_values": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-transition-index-preserves-distinct-values",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R4-Final-Admission-Closeout",
+        "source_ast_sha256": "d9cfbd87f956f4153cb70a3482599a0efc96ebfc53a82dc21de18176c55055a0",
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # Step 1: atomic-link tests (must fail before implementation)
@@ -166,6 +183,25 @@ def test_state_dimension_index_bounded(linked_authority):
     availability_values = linked_authority.by_state_dimension("dim:availability")
     assert "value:online" in availability_values
     assert "value:offline" in availability_values
+
+
+def test_transition_index_selects_exact_event_dimension_and_value(linked_authority):
+    transition = linked_authority.transition_for(
+        "event:set_state", "dim:availability", "value:online"
+    )
+    assert transition is not None
+    assert transition["transition_ref"] == "transition:set_availability_online"
+
+
+def test_transition_index_does_not_collapse_distinct_target_values(linked_authority):
+    online = linked_authority.transition_for(
+        "event:set_state", "dim:availability", "value:online"
+    )
+    offline = linked_authority.transition_for(
+        "event:set_state", "dim:availability", "value:offline"
+    )
+    assert online is not None and offline is not None
+    assert online["transition_ref"] != offline["transition_ref"]
 
 
 # ---------------------------------------------------------------------------

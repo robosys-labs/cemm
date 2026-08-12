@@ -260,6 +260,8 @@ class ResponseBuilder:
     @staticmethod
     def _status(decision_status: DecisionStatus, effect: EffectReceipt | NoEffectReceipt) -> CycleStatus:
         if type(effect) is EffectReceipt:
+            if effect.status.value == "committed":
+                return CycleStatus.RESOLVED
             if effect.status.value in {"failed", "stale_revision"}:
                 return CycleStatus.OPERATION_FAILED
             if effect.status.value in {"resource_unavailable", "adapter_missing"}:
@@ -281,7 +283,11 @@ class ResponseBuilder:
         return CycleStatus.PARTIAL
 
     @staticmethod
-    def _discourse(decision_status: DecisionStatus, action: DecisionAction) -> str:
+    def _discourse(
+        decision_status: DecisionStatus,
+        action: DecisionAction,
+        effect: EffectReceipt | NoEffectReceipt,
+    ) -> str:
         if decision_status in {DecisionStatus.SUPPORTED, DecisionStatus.CONTRADICTED}:
             return "answer"
         if decision_status is DecisionStatus.DENIED:
@@ -291,11 +297,17 @@ class ResponseBuilder:
         if decision_status is DecisionStatus.UNKNOWN:
             return "unknown"
         if action is DecisionAction.REQUEST_EFFECT:
-            return "acknowledge_operation"
+            return (
+                "report_effect"
+                if type(effect) is EffectReceipt and effect.status.value == "committed"
+                else "acknowledge_operation"
+            )
         if action is DecisionAction.CREATE_LEARNING_OBLIGATION:
             return "request_learning_answer"
         if action is DecisionAction.PREVIEW_TRANSITION:
             return "answer_simulation"
+        if action is DecisionAction.ADMIT_CLAIM:
+            return "acknowledge_observation"
         return "acknowledge"
 
     def build(self, *, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
@@ -309,7 +321,11 @@ class ResponseBuilder:
         polarity = "polarity:negative" if evaluation.decision.status in {
             DecisionStatus.CONTRADICTED, DecisionStatus.DENIED, DecisionStatus.FAILED
         } else "polarity:positive"
-        epistemic = f"epistemic_status:{evaluation.decision.status.value}"
+        epistemic = (
+            "epistemic:observed"
+            if type(effect) is EffectReceipt and effect.status.value == "committed"
+            else f"epistemic_status:{evaluation.decision.status.value}"
+        )
         response_expression = meaning.expression
         if evaluation.decision.action is DecisionAction.ANSWER:
             response_expression = instantiate_bindings(
@@ -339,7 +355,9 @@ class ResponseBuilder:
             obligation_ref=obligation.obligation_ref if obligation else None,
             mode=situation.mode,
             cycle_status=status,
-            discourse_action=self._discourse(evaluation.decision.status, evaluation.decision.action),
+            discourse_action=self._discourse(
+                evaluation.decision.status, evaluation.decision.action, effect
+            ),
             bindings=evaluation.decision.bindings,
             polarity_ref=polarity,
             modality_ref="modality:actual" if situation.mode is not SemanticMode.SIMULATE else "modality:possible",

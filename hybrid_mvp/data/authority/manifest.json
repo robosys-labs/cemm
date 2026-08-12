@@ -5,17 +5,17 @@
     {
       "name": "kernel",
       "path": "kernel.json",
-      "sha256": "7b23acdc43de87786f4bf29e52d983fed2e76607a0018e08699a6b908eec659c"
+      "sha256": "4fb60441f545bb8e80a4afd11747116c9340dfcda18cafcb878233a8573f69cd"
     },
     {
       "name": "conversation",
       "path": "conversation.json",
-      "sha256": "316c7a933200a20b0a736cc31dcba423c909f80017d70c341892a8529124446a"
+      "sha256": "06f19f800a6a10ee2cc04eb74522e322d75a7ed39a22e520ef478a282f67bb9a"
     },
     {
       "name": "state_operations",
       "path": "state_operations.json",
-      "sha256": "23dd44bc4da31443e5af1ba500377d5eeb0d9b67df782a87c17bd3d7bb47e8c4"
+      "sha256": "4fa87c8d03205697407db1c841e7ec4354fcff8fae4ba99b65427fc198888250"
     }
   ]
 }

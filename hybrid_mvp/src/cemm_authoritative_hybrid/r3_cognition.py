@@ -201,6 +201,60 @@ def _authority_type_fact_views(
     return tuple(rows)
 
 
+def _authority_control_fact_views(
+    expression: SemanticExpression,
+    authority: Any,
+    maximum: int,
+) -> tuple[_FactView, ...]:
+    """Expose exact reviewed participant-control facts used by control queries."""
+    atoms = getattr(authority, "atoms", None)
+    capabilities = getattr(authority, "capabilities", None)
+    generation = getattr(authority, "generation", None)
+    # Reviewed query-only authority fixtures may own rules without owning the
+    # independent participant-control plane. Absence of that whole plane
+    # contributes no control facts; a partially present plane remains invalid.
+    if atoms is None and capabilities is None and generation is None:
+        return ()
+    if (
+        not isinstance(atoms, Mapping)
+        or not isinstance(capabilities, Mapping)
+        or type(generation) is not str
+    ):
+        raise TypeError("authority lacks exact control indexes and generation")
+    rows: list[_FactView] = []
+    for app in expression.applications:
+        atom = atoms.get(app.predicate_ref)
+        if app.operator != "op:relation" or getattr(atom, "kind", None) != "capability":
+            continue
+        roles = {binding.role_ref: binding.filler for binding in app.roles}
+        subject = roles.get("role:subject")
+        if not isinstance(subject, GroundedReference):
+            continue
+        allowed = capabilities.get(subject.target_ref, ())
+        if app.predicate_ref not in allowed:
+            continue
+        material = {
+            "authority_generation": generation,
+            "operator": app.operator,
+            "predicate_ref": app.predicate_ref,
+            "roles": [["role:subject", subject.target_ref]],
+        }
+        rows.append(
+            _FactView(
+                fact_ref=stable_ref("r3_authority_control_fact", material),
+                operator=app.operator,
+                predicate_ref=app.predicate_ref,
+                roles=(("role:subject", subject.target_ref),),
+                stance="support",
+                placement="reviewed",
+                source_refs=(generation, app.predicate_ref, subject.target_ref),
+            )
+        )
+        if len(rows) >= maximum:
+            break
+    return tuple(rows)
+
+
 def _filler_value(binding: RoleBinding) -> str | None:
     filler = binding.filler
     if isinstance(filler, GroundedReference):
@@ -603,6 +657,11 @@ class QueryDecisionOwner:
                         self._authority,
                         self._config.max_applications,
                     ),
+                    *_authority_control_fact_views(
+                        expression,
+                        self._authority,
+                        self._config.max_applications,
+                    ),
                 )
             )
         )
@@ -805,7 +864,18 @@ class ObserveDecisionOwner:
                 if conflict
                 else tuple(row.admission_ref for row in admissions)
             ),
-            proof_refs=tuple(dict.fromkeys(row.occurrence_ref for row in occurrences)),
+            proof_refs=tuple(
+                dict.fromkeys(
+                    (
+                        *(row.occurrence_ref for row in occurrences),
+                        *(
+                            ("trusted_evidence",)
+                            if situation.trusted_observation
+                            else ()
+                        ),
+                    )
+                )
+            ),
             source_refs=situation.source_refs,
             policy_refs=tuple(dict.fromkeys(row.policy_ref for row in admissions)),
             blocker_refs=("expected_conflict",) if conflict else (),
@@ -829,9 +899,20 @@ def _role_target(app: SemanticApplication, candidates: tuple[str, ...]) -> str |
     return None
 
 
-def _transition_mapping(authority: Any, event_type_ref: str) -> Mapping[str, Any] | None:
-    method = getattr(authority, "by_transition", None)
-    row = method(event_type_ref) if callable(method) else None
+def _transition_mapping(
+    authority: Any, event_type_ref: str, dimension_ref: str | None, to_value_ref: str | None
+) -> Mapping[str, Any] | None:
+    exact_method = getattr(authority, "transition_for", None)
+    row = (
+        exact_method(event_type_ref, dimension_ref, to_value_ref)
+        if callable(exact_method)
+        and dimension_ref is not None
+        and to_value_ref is not None
+        else None
+    )
+    if row is None:
+        legacy_method = getattr(authority, "by_transition", None)
+        row = legacy_method(event_type_ref) if callable(legacy_method) else None
     return row if isinstance(row, Mapping) else None
 
 
@@ -866,9 +947,13 @@ class _TransitionOwnerBase:
         event_type = app.predicate_ref
         actor = _role_target(app, ("role:actor",)) or situation.actor_ref or situation.addressee_ref
         target = _role_target(app, ("role:target", "role:subject", "role:object"))
+        dimension_ref = _role_target(app, ("role:dimension",))
+        to_value_ref = _role_target(app, ("role:value",))
         signature_method = getattr(self._authority, "by_event_signature", None)
         signature = signature_method(event_type) if callable(signature_method) else None
-        transition = _transition_mapping(self._authority, event_type)
+        transition = _transition_mapping(
+            self._authority, event_type, dimension_ref, to_value_ref
+        )
         if signature is None or transition is None or target is None:
             blockers = tuple(ref for ref, value in (("event_signature:missing", signature), ("transition:missing", transition), ("transition:target_missing", target)) if value is None)
             capability = CapabilityEvaluation.create(
@@ -884,16 +969,28 @@ class _TransitionOwnerBase:
                 revision_pin=situation.revision_pin,
             )
             return evaluation, capability, None
-        required = ("transition_ref", "dimension", "from_value", "to_value")
+        required = ("transition_ref", "event_type", "dimension", "to_value")
         if any(type(transition.get(key)) is not str or not transition.get(key) for key in required):
             raise ValueError("reviewed transition record is structurally incomplete")
         transition_ref = transition["transition_ref"]
         dimension = transition["dimension"]
-        from_value = transition["from_value"]
+        from_value = transition.get("from_value")
         to_value = transition["to_value"]
-        precondition, state_sources = _state_precondition(
-            self._stores, target_ref=target, dimension_ref=dimension, from_value_ref=from_value
-        )
+        if simulate:
+            # Simulation previews the reviewed transition without asserting
+            # that its source-state precondition is admitted world truth.
+            precondition, state_sources = "satisfied", ()
+        elif from_value is None:
+            precondition, state_sources = "satisfied", ()
+        elif type(from_value) is str and from_value:
+            precondition, state_sources = _state_precondition(
+                self._stores,
+                target_ref=target,
+                dimension_ref=dimension,
+                from_value_ref=from_value,
+            )
+        else:
+            raise ValueError("reviewed transition from_value must be exact str or null")
         occurrence_ref = stable_ref("transition_occurrence", {"application_ref": app.application_ref, "situation_ref": situation.situation_ref})
         predicted = StateDelta.create(
             operator_ref="op:state", predicate_ref=dimension,
