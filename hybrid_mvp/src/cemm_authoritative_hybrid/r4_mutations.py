@@ -387,10 +387,14 @@ class MutationGenerator:
         constraints = environment.setdefault("situation_constraints", {})
         if spec.dimension == "permission_removed":
             before = copy.deepcopy(constraints.get("permission_refs", []))
+            if before == []:
+                return None
             constraints["permission_refs"] = []
             return before, []
         if spec.dimension == "adapter_removed":
             before = copy.deepcopy(constraints.get("adapter_refs", []))
+            if before == []:
+                return None
             constraints["adapter_refs"] = []
             return before, []
         before = copy.deepcopy(constraints.get("evidence_policy_refs", []))

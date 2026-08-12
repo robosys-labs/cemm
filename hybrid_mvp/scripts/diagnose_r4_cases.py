@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+import importlib
 import json
 from pathlib import Path
 import sys
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +114,7 @@ def diagnose_cases(
     project_root: Path,
     *,
     store_root: Path,
+    environment_factory: Callable[[Path, Path], Mapping[str, object]] | None = None,
 ) -> dict[str, object]:
     """Execute all reviewed cases and report earliest-owner mismatch families."""
 
@@ -132,7 +134,25 @@ def diagnose_cases(
         runtimes.append(runtime)
         return runtime
 
-    builder = AuthenticEpisodeBuilder(PublicRuntimeEpisodeOwner(runtime_factory))
+    close_environment: Callable[[], object] | None = None
+    if environment_factory is None:
+        owner = PublicRuntimeEpisodeOwner(runtime_factory)
+    else:
+        environment = environment_factory(root, stores)
+        if not isinstance(environment, Mapping):
+            raise TypeError("environment factory must return a mapping")
+        supplied_factory = environment.get("runtime_factory")
+        if not callable(supplied_factory):
+            raise TypeError("environment requires a callable runtime_factory")
+        owner = PublicRuntimeEpisodeOwner(
+            supplied_factory,
+            restart_executor=environment.get("restart_executor"),
+        )
+        candidate_close = environment.get("close")
+        if candidate_close is not None and not callable(candidate_close):
+            raise TypeError("environment close owner must be callable")
+        close_environment = candidate_close
+    builder = AuthenticEpisodeBuilder(owner)
     counts = Counter({"passed": 0, "failed": 0, "errors": 0})
     mismatch_counts: Counter[str] = Counter()
     earliest_owner_counts: Counter[str] = Counter()
@@ -173,6 +193,8 @@ def diagnose_cases(
     finally:
         for runtime in reversed(runtimes):
             runtime.stores.close()
+        if close_environment is not None:
+            close_environment()
 
     return {
         "schema": "cemm-r4-case-diagnostic-v1",
@@ -188,13 +210,36 @@ def diagnose_cases(
     }
 
 
+def _load_environment_factory(locator: str):
+    if type(locator) is not str or locator.count(":") != 1:
+        raise ValueError("environment must use module:function syntax")
+    module_name, owner_name = locator.split(":", 1)
+    if not module_name or not owner_name:
+        raise ValueError("environment must use module:function syntax")
+    module = importlib.import_module(module_name)
+    owner = getattr(module, owner_name, None)
+    if not callable(owner):
+        raise TypeError("environment locator must name a callable")
+    return owner
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--environment")
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
-    report = diagnose_cases(ROOT, store_root=args.store_root)
+    environment_factory = (
+        None
+        if args.environment is None
+        else _load_environment_factory(args.environment)
+    )
+    report = diagnose_cases(
+        ROOT,
+        store_root=args.store_root,
+        environment_factory=environment_factory,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(canonical_report_bytes(report))
     print(canonical_report_bytes(report).decode("utf-8"), end="")

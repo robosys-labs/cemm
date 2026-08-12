@@ -114,12 +114,19 @@ def main() -> int:
         raise ValueError(
             "derivation_contracts and derivation_validator must be supplied together"
         )
-    result = pipeline.build(
-        args.scenarios.resolve(),
-        derivation_contracts=derivations,
-        derivation_validator=derivation_validator,
-    )
-    pipeline.write(result, args.output.resolve())
+    close_environment = environment.get("close")
+    if close_environment is not None and not callable(close_environment):
+        raise TypeError("environment close owner must be callable")
+    try:
+        result = pipeline.build(
+            args.scenarios.resolve(),
+            derivation_contracts=derivations,
+            derivation_validator=derivation_validator,
+        )
+        pipeline.write(result, args.output.resolve())
+    finally:
+        if close_environment is not None:
+            close_environment()
     print(json.dumps(result.receipt.as_dict(), sort_keys=True))
     return 0
 
