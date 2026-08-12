@@ -130,6 +130,9 @@
     }
   ],
   "event_signatures": [],
+  "definition_targets": {
+    "participant:system": "concept:digital_agent"
+  },
   "operator_roles": {
     "op:designation": [
       "role:target",
@@ -152,7 +155,9 @@
     ],
     "op:type": [
       "role:instance",
-      "role:class"
+      "role:class",
+      "role:subject",
+      "role:type"
     ]
   },
   "owner": "kernel",

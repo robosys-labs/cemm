@@ -247,6 +247,7 @@ class LinkedAuthority:
         "adapters",
         "operator_roles",
         "value_dimensions",
+        "definition_targets",
         "_by_kind",
         "_by_frame",
         "_by_rule_signature",
@@ -269,6 +270,7 @@ class LinkedAuthority:
         adapters: tuple[str, ...],
         operator_roles: dict[str, list[str]],
         value_dimensions: dict[str, str],
+        definition_targets: dict[str, str],
         by_kind: dict[str, frozenset[str]],
         by_frame: dict[str, frozenset[str]],
         by_rule_signature: dict[str, dict[str, Any]],
@@ -288,6 +290,7 @@ class LinkedAuthority:
         self.adapters = adapters
         self.operator_roles = operator_roles
         self.value_dimensions = value_dimensions
+        self.definition_targets = definition_targets
         self._by_kind = by_kind
         self._by_frame = by_frame
         self._by_rule_signature = by_rule_signature
@@ -380,6 +383,7 @@ class AuthorityLinker:
         all_adapters: list[str] = []
         all_operator_roles: dict[str, list[str]] = {}
         all_value_dimensions: dict[str, str] = {}
+        all_definition_targets: dict[str, str] = {}
         all_transitions: list[dict[str, Any]] = []
 
         # Load and validate each owner file
@@ -435,6 +439,13 @@ class AuthorityLinker:
 
             for value, dim in owner_data.get("value_dimensions", {}).items():
                 all_value_dimensions[value] = dim
+
+            for source, target in owner_data.get("definition_targets", {}).items():
+                if source in all_definition_targets:
+                    raise AuthorityLinkError(
+                        f"duplicate definition target owner: {source}"
+                    )
+                all_definition_targets[source] = target
 
             all_transitions.extend(owner_data.get("transitions", []))
 
@@ -495,6 +506,16 @@ class AuthorityLinker:
                 raise AuthorityLinkError(f"missing value atom: {value}")
             if dim not in all_atoms:
                 raise AuthorityLinkError(f"missing dimension atom: {dim}")
+
+        for source, target in all_definition_targets.items():
+            if source not in all_atoms:
+                raise AuthorityLinkError(f"missing definition source atom: {source}")
+            if target not in all_atoms:
+                raise AuthorityLinkError(f"missing definition target atom: {target}")
+            if all_atoms[target][0].kind != "concept":
+                raise AuthorityLinkError(
+                    f"definition target must be a concept: {target}"
+                )
 
         # -- Build indexes -------------------------------------------------
         atoms_dict = {ref: record for ref, (record, _owner) in all_atoms.items()}
@@ -589,6 +610,7 @@ class AuthorityLinker:
             "adapters": sorted(all_adapters),
             "operator_roles": all_operator_roles,
             "value_dimensions": all_value_dimensions,
+            "definition_targets": all_definition_targets,
             "transitions": sorted(
                 all_transitions, key=lambda t: json.dumps(t, sort_keys=True)
             ),
@@ -608,6 +630,7 @@ class AuthorityLinker:
                 for es in sorted(all_event_signatures, key=lambda e: e["event_type"])
             ],
             "value_dimensions": all_value_dimensions,
+            "definition_targets": all_definition_targets,
         }
         model_compatibility_hash = stable_ref("authority-compat", structural_payload)
 
@@ -628,6 +651,7 @@ class AuthorityLinker:
             adapters=tuple(all_adapters),
             operator_roles=all_operator_roles,
             value_dimensions=all_value_dimensions,
+            definition_targets=all_definition_targets,
             by_kind=by_kind,
             by_frame={},
             by_rule_signature=by_rule_sig,

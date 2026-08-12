@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 import runpy
 
+import pytest
+
 from cemm_authoritative_hybrid.authority import AuthorityLinker
 from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.canonical import stable_ref
@@ -53,7 +55,7 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                         'diagnostic_role': 'owner',
                                                                                                         'introduced_by_task': 'R4-Authentic-Designation-Tranche',
                                                                                                         'owner_ref': 'expected-contract',
-                                                                                                        'source_ast_sha256': '488db1e51d5dfbc41b43db0f49e4661494bd4155fa8688a444e3b24027e270e5'},
+                                                                                                        'source_ast_sha256': '4bb776ea398a9bfbe65bc2104c0d8073c644561156695d9df6d44b0a72f00c8d'},
  'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
                                                                                                                    'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
                                                                                                                    'diagnostic_role': 'owner',
@@ -71,7 +73,18 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                    'diagnostic_role': 'owner',
                                                                                                    'introduced_by_task': 'R4-Closeout',
                                                                                                    'owner_ref': 'expected-contract',
-                                                                                                   'source_ast_sha256': 'e3537192e23a8bac5019da33aff92a490169470396b3cfa0b53a96dee40f7f88'}}
+                                                                                                   'source_ast_sha256': 'e3537192e23a8bac5019da33aff92a490169470396b3cfa0b53a96dee40f7f88'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[designation-book]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-designation-book', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[designation-server]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-designation-server', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[definition-digital-agent]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-definition-digital-agent', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[definition-mother]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-definition-mother', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[designation-partner]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-designation-partner', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[designation-progenitor]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-designation-progenitor', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[designation-lamp]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-designation-lamp', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[relation-likes]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-likes', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[relation-owns]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-owns', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[state-availability]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-state-availability', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'},
+ 'tests/test_r4_closeout_regressions.py::test_reviewed_nominal_state_relation_families_match_authentic_cycles[state-power]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-reviewed-nominal-state-relation-state-power', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Final-Admission-Closeout', 'owner_ref': 'expected-contract', 'source_ast_sha256': 'b269543190623382e2e18ebe0a535f311aec409ad749053255bdc8e00ddaddeb'}}
 
 ROOT = Path(__file__).parents[1]
 SCENARIOS = ROOT / "data" / "scenarios" / "use_cases.jsonl"
@@ -108,6 +121,88 @@ def _expanded_cases() -> tuple[ExpandedCase, ...]:
         environments = scenario.metadata.get("environments", ({},))
         rows.extend(expander.expand(scenario, revision_pin=pin, environments=environments))
     return tuple(rows)
+
+
+def _authentic_episodes_for_scenario(
+    scenario_ref: str,
+    store_root: Path,
+):
+    authority = AuthorityLinker().link_path(
+        ROOT / "data" / "authority" / "manifest.json"
+    )
+    model_identity = BootstrapProposer(RuntimeConfig.release()).model_identity
+    pin = RevisionPin(authority.generation, 0, 0, 0, 0, model_identity)
+    compiler = ExpectedCycleContractCompiler(
+        authority,
+        abi_registry_ref="abi:r4-nominal-state-relation-canary",
+    )
+    scenario = next(
+        row
+        for row in load_reviewed_scenarios(SCENARIOS)
+        if row.scenario_ref == scenario_ref
+    )
+    cases = CaseExpander(compiler).expand(
+        scenario,
+        revision_pin=pin,
+        environments=scenario.metadata.get("environments", ({},)),
+    )
+    runtimes = []
+
+    def runtime_factory(_case: ExpandedCase):
+        runtime = load_runtime(
+            ROOT,
+            profile="development",
+            store_path=store_root / f"runtime-{len(runtimes):02d}",
+        )
+        runtimes.append(runtime)
+        return runtime
+
+    try:
+        return AuthenticEpisodeBuilder(
+            PublicRuntimeEpisodeOwner(runtime_factory)
+        ).build_many(cases)
+    finally:
+        for runtime in reversed(runtimes):
+            runtime.stores.close()
+
+
+@pytest.mark.parametrize(
+    "scenario_ref",
+    (
+        "scenario:designation_definition-0003",
+        "scenario:designation_definition-0004",
+        "scenario:designation_definition-0006",
+        "scenario:designation_definition-0010",
+        "scenario:designation_definition-0012",
+        "scenario:designation_definition-0013",
+        "scenario:designation_definition-0014",
+        "scenario:reordered_constructions-0021",
+        "scenario:reordered_constructions-0022",
+        "scenario:temporal_state-0089",
+        "scenario:temporal_state-0091",
+    ),
+    ids=(
+        "designation-book",
+        "designation-server",
+        "definition-digital-agent",
+        "definition-mother",
+        "designation-partner",
+        "designation-progenitor",
+        "designation-lamp",
+        "relation-likes",
+        "relation-owns",
+        "state-availability",
+        "state-power",
+    ),
+)
+def test_reviewed_nominal_state_relation_families_match_authentic_cycles(
+    scenario_ref: str,
+    tmp_path: Path,
+) -> None:
+    episodes = _authentic_episodes_for_scenario(scenario_ref, tmp_path)
+
+    assert episodes
+    assert all(row.comparison.passed for row in episodes)
 
 
 def test_every_reviewed_surface_compiles_and_round_trips_canonically() -> None:
@@ -242,12 +337,10 @@ def test_reviewed_designation_aliases_match_authentic_r3_cycles(
 
     assert len(scenarios) == 10
     assert len(cases) == 22
-    assert len(linked) == 17
+    assert len(linked) == 19
     assert unlinked == {
         ("the book", "entity:book"),
         ("the server", "entity:server"),
-        ("spouse", "rel:has_partner"),
-        ("parent", "concept:mother"),
         ("the lamp", "entity:lamp"),
     }
     assert authority.designations.for_surface("entity:book", "en") == ()

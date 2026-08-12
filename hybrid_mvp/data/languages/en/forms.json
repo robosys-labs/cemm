@@ -59,7 +59,8 @@
     "have": {"kind": "query_auxiliary"},
     "list": {"kind": "query"},
     "tell": {"kind": "query"},
-    "report": {"kind": "query"}
+    "report": {"kind": "query"},
+    "define": {"kind": "query"}
   },
   "polarity": {
     "not": {"kind": "negation"},
@@ -190,5 +191,35 @@
     "contrast": {"link_type": "link:contrast", "commutative": false, "min_arity": 2, "max_arity": 2},
     "purpose": {"link_type": "link:purpose", "commutative": false, "min_arity": 2, "max_arity": 2},
     "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
+  },
+  "application_role_orders": {
+    "relation_subject_predicate_object": {
+      "target_kinds": ["entity", "relation_type", "entity"],
+      "roles": ["role:subject", "role:relation", "role:object"]
+    },
+    "relation_object_subject_predicate": {
+      "target_kinds": ["entity", "entity", "relation_type"],
+      "roles": ["role:object", "role:subject", "role:relation"]
+    },
+    "state_subject_value": {
+      "target_kinds": ["entity", "state_value"],
+      "roles": ["role:subject", "role:value"],
+      "required_features": ["binder"]
+    },
+    "state_value_subject": {
+      "target_kinds": ["state_value", "entity"],
+      "roles": ["role:value", "role:subject"],
+      "required_features": ["binder"]
+    },
+    "definition_nominal_query": {
+      "target_kinds": ["concept"],
+      "roles": ["role:subject"],
+      "required_features": ["query"]
+    },
+    "definition_participant_query": {
+      "target_kinds": ["participant"],
+      "roles": ["role:subject"],
+      "required_features": ["query"]
+    }
   }
 }

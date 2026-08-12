@@ -73,6 +73,75 @@ def _required(value: object, field: str) -> str:
     return value
 
 
+def _is_reviewed_state_value_frame(
+    context: ProposalContext,
+    frame: Any,
+    designation: Any,
+) -> bool:
+    """Accept the exact reviewed value→dimension lowering, and no broader one."""
+    return (
+        designation.target_kind == "state_value"
+        and frame.predicate_kind == "state_dimension"
+        and frame.operator_ref == "op:state"
+        and frame.structural_role_ref == "role:dimension"
+        and frame.required_roles == ("role:subject",)
+        and frame.optional_roles == ()
+        and frame.proposition_roles == ()
+        and frame.derived_role_targets
+        == (
+            ("role:dimension", frame.predicate_target_ref),
+            ("role:value", designation.target_ref),
+        )
+        and frame.affordance_frame_ref is None
+        and designation.designation_fact_ref in frame.provenance_refs
+        and any(
+            row.kind == "predicate"
+            and row.target_ref == frame.predicate_target_ref
+            and row.target_kind == frame.predicate_kind
+            and row.source_unit_refs == frame.source_unit_refs
+            and ("state_value_ref", designation.target_ref) in row.constraints
+            and (
+                "value_dimension_ref",
+                frame.predicate_target_ref,
+            )
+            in row.constraints
+            for row in context.contribution_slots
+        )
+    )
+
+
+def _is_reviewed_definition_frame(
+    context: ProposalContext,
+    frame: Any,
+    designation: Any,
+) -> bool:
+    return (
+        frame.predicate_kind == "concept"
+        and frame.operator_ref == "op:type"
+        and frame.structural_role_ref == "role:class"
+        and frame.required_roles == ("role:type",)
+        and frame.optional_roles == ()
+        and frame.proposition_roles == ()
+        and frame.derived_role_targets
+        == (("role:subject", frame.predicate_target_ref),)
+        and frame.affordance_frame_ref is None
+        and designation.designation_fact_ref in frame.provenance_refs
+        and frame.predicate_target_ref in frame.provenance_refs
+        and any(
+            row.kind == "predicate"
+            and row.target_ref == frame.predicate_target_ref
+            and row.target_kind == frame.predicate_kind
+            and row.source_unit_refs == frame.source_unit_refs
+            and ("definition_query", "nominal_type") in row.constraints
+            and ("definition_source_ref", designation.target_ref)
+            in row.constraints
+            and ("definition_target_ref", frame.predicate_target_ref)
+            in row.constraints
+            for row in context.contribution_slots
+        )
+    )
+
+
 def _optional(value: object, field: str) -> str | None:
     return None if value is None else _required(value, field)
 
@@ -1208,6 +1277,14 @@ def _replay_program(
             elif (
                 designation.target_ref != frame.predicate_target_ref
                 or designation.target_kind != frame.predicate_kind
+            ) and not _is_reviewed_state_value_frame(
+                context,
+                frame,
+                designation,
+            ) and not _is_reviewed_definition_frame(
+                context,
+                frame,
+                designation,
             ):
                 report("application_frame_designation_mismatch", action=action)
             if frame.operator_ref not in PERSISTENT_OPERATORS:

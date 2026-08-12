@@ -5,12 +5,12 @@
     {
       "name": "kernel",
       "path": "kernel.json",
-      "sha256": "749cd077b50891a6e16ceeacc4a609780733002a1a8964e14fe0857a3a9e7ddc"
+      "sha256": "7b23acdc43de87786f4bf29e52d983fed2e76607a0018e08699a6b908eec659c"
     },
     {
       "name": "conversation",
       "path": "conversation.json",
-      "sha256": "1f94749bd76f38bf702e32bb388c53d0347a0aec51c31cf9e5ed730ecf3fe8e2"
+      "sha256": "9a4f512285f3465532307da1cf88af452f891948d198b25c915dd68d365ad797"
     },
     {
       "name": "state_operations",

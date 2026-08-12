@@ -2514,10 +2514,10 @@ class ExpectedCycleContractCompiler:
                 ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "read_only"),
                 ExpectedResponseContract(
                     "answer",
-                    CycleStatus.RESOLVED,
+                    CycleStatus.PARTIAL,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:supported",
+                    "epistemic_status:supported",
                 ),
             )
         if mode is SemanticMode.REQUEST:
@@ -2637,4 +2637,3 @@ class ExpectedCycleContractCompiler:
                 "epistemic_status:contested",
             ),
         )
-

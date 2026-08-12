@@ -151,6 +151,11 @@
     },
     {
       "language": "en",
+      "surface": "spouse",
+      "target": "rel:has_partner"
+    },
+    {
+      "language": "en",
       "surface": "learn",
       "target": "event:learn_alias"
     },
@@ -242,6 +247,16 @@
     {
       "language": "en",
       "surface": "progenitor",
+      "target": "concept:mother"
+    },
+    {
+      "language": "en",
+      "surface": "mother",
+      "target": "concept:mother"
+    },
+    {
+      "language": "en",
+      "surface": "parent",
       "target": "concept:mother"
     }
   ],

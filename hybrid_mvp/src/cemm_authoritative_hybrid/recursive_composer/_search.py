@@ -285,6 +285,13 @@ class RecursiveComposer:
     def _complete(self, state: _State) -> _CompletedProgram | None:
         if not state.application_frames or self._missing_required_role_count(state):
             return None
+        used_designations = {
+            frame.designation_slot_ref
+            for _, frame_ref in state.application_frames
+            if (frame := self._context.frame(frame_ref)) is not None
+        }
+        if used_designations != set(state.selected_designations):
+            return None
         if not _topology_is_valid(
             state.node_order, state.parents, self._max_graph_depth
         ):
