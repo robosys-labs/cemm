@@ -109,6 +109,13 @@ def test_r4_admission_evidence_policy_is_sorted_and_unique() -> None:
     assert paths == tuple(sorted(set(paths)))
 
 
+def test_r4_active_inventory_timeout_covers_measured_suite_bound() -> None:
+    payload = json.loads(
+        (ROOT / "configs" / "validation_gates.json").read_text(encoding="utf-8")
+    )
+    assert payload["limits"]["pytest_timeout_seconds"] == 900
+
+
 __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_report_has_exact_internal_shape': {'activation_phase': 'R4',
                                                                                          'assertion_ref': 'assertion:r4-integrity-report-exact-internal-shape',
                                                                                          'diagnostic_role': 'owner',
@@ -150,4 +157,10 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                               'diagnostic_role': 'owner',
                                                                                               'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                               'owner_ref': 'artifact-integrity',
-                                                                                              'source_ast_sha256': 'fe53e4fb36ac33f92bad8ae0839f41e872319a0b8d48b63b8c3d9496577b8cdc'}}
+                                                                                              'source_ast_sha256': 'fe53e4fb36ac33f92bad8ae0839f41e872319a0b8d48b63b8c3d9496577b8cdc'},
+ 'tests/test_r4_validation_gate.py::test_r4_active_inventory_timeout_covers_measured_suite_bound': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:r4-active-inventory-timeout-measured-bound',
+                                                                                                    'diagnostic_role': 'owner',
+                                                                                                    'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                                    'owner_ref': 'artifact-integrity',
+                                                                                                    'source_ast_sha256': 'a7ed45a72f38edde14a45d59e4a049fb22c191330f41473310f67993b9f9ceb0'}}
