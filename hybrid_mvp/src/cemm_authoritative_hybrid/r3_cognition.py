@@ -683,6 +683,12 @@ def _placement_for_root(expression: SemanticExpression, projection: ExpressionPr
         if isinstance(node, VariableBinder):
             current = node.body_ref
             continue
+        if isinstance(node, SemanticApplication) and any(
+            binding.role_ref == "role:content"
+            and isinstance(binding.filler, ApplicationFiller)
+            for binding in node.roles
+        ):
+            return PlacementMode.REPORTED
         break
     return PlacementMode.OBSERVED if situation.mode is SemanticMode.OBSERVE else PlacementMode.SIMULATED
 
@@ -702,6 +708,26 @@ def _state_delta(app: SemanticApplication, occurrence: ClaimOccurrence, pin: Rev
         proof_refs=(occurrence.occurrence_ref,),
         revision_pin=pin,
     )
+
+
+def _contains_state_conflict(expression: SemanticExpression) -> bool:
+    values_by_state: dict[tuple[str, str, str], set[str]] = {}
+    for app in expression.applications:
+        if app.operator != "op:state":
+            continue
+        roles = {
+            binding.role_ref: _filler_value(binding)
+            for binding in app.roles
+        }
+        subject = roles.get("role:subject")
+        dimension = roles.get("role:dimension")
+        value = roles.get("role:value")
+        if subject is None or dimension is None or value is None:
+            continue
+        values_by_state.setdefault(
+            (app.predicate_ref, subject, dimension), set()
+        ).add(value)
+    return any(len(values) > 1 for values in values_by_state.values())
 
 
 class ObserveDecisionOwner:
@@ -754,7 +780,13 @@ class ObserveDecisionOwner:
                     revision_pin=situation.revision_pin,
                 )
             admissions.append(admission)
-        if admissions and all(row.status is AdmissionStatus.ADMITTED for row in admissions):
+        conflict = _contains_state_conflict(expression)
+        if conflict:
+            status, action = (
+                DecisionStatus.CONFLICT,
+                DecisionAction.REQUEST_CLARIFICATION,
+            )
+        elif admissions and all(row.status is AdmissionStatus.ADMITTED for row in admissions):
             status, action = DecisionStatus.ADMITTED, DecisionAction.ADMIT_CLAIM
         elif any(row.status is AdmissionStatus.CONTESTED for row in admissions):
             status, action = DecisionStatus.CONTESTED, DecisionAction.RETAIN_ATTRIBUTION
@@ -763,17 +795,26 @@ class ObserveDecisionOwner:
         contribution = DecisionContribution(
             status=status,
             action=action,
-            claim_occurrence_refs=tuple(row.occurrence_ref for row in occurrences),
-            admission_decision_refs=tuple(row.admission_ref for row in admissions),
+            claim_occurrence_refs=(
+                ()
+                if conflict
+                else tuple(row.occurrence_ref for row in occurrences)
+            ),
+            admission_decision_refs=(
+                ()
+                if conflict
+                else tuple(row.admission_ref for row in admissions)
+            ),
             proof_refs=tuple(dict.fromkeys(row.occurrence_ref for row in occurrences)),
             source_refs=situation.source_refs,
             policy_refs=tuple(dict.fromkeys(row.policy_ref for row in admissions)),
+            blocker_refs=("expected_conflict",) if conflict else (),
         )
         return ModeEvaluation(
             contribution=contribution,
-            claim_occurrences=tuple(occurrences),
-            admission_decisions=tuple(admissions),
-            state_deltas=tuple(deltas),
+            claim_occurrences=() if conflict else tuple(occurrences),
+            admission_decisions=() if conflict else tuple(admissions),
+            state_deltas=() if conflict else tuple(deltas),
         )
 
     def evaluate(self, expression: SemanticExpression, projection: ExpressionProjection,
@@ -936,6 +977,73 @@ class _TransitionOwnerBase:
 
 
 class RequestDecisionOwner(_TransitionOwnerBase):
+    def _learning_directive(
+        self,
+        app: SemanticApplication,
+        situation: SituationContext,
+    ) -> ModeEvaluation | None:
+        signature_method = getattr(self._authority, "by_event_signature", None)
+        signature = (
+            signature_method(app.predicate_ref)
+            if callable(signature_method) and app.operator == "op:event"
+            else None
+        )
+        signature_roles = {
+            row.role: row for row in getattr(signature, "roles", ())
+        }
+        surface_spec = signature_roles.get("role:surface")
+        target_spec = signature_roles.get("role:target")
+        reviewed_naming_event = (
+            surface_spec is not None
+            and target_spec is not None
+            and "literal" in surface_spec.filler_kinds
+        )
+        if app.operator != "op:designation" and not reviewed_naming_event:
+            return None
+        surface = _role_target(app, ("role:surface",))
+        target = _role_target(
+            app, ("role:target", "role:object", "role:meaning")
+        )
+        missing = tuple(
+            blocker
+            for blocker, value in (
+                ("learning:surface_missing", surface),
+                ("learning:target_missing", target),
+            )
+            if value is None
+        )
+        if missing:
+            return ModeEvaluation(
+                contribution=DecisionContribution(
+                    status=DecisionStatus.UNKNOWN,
+                    action=DecisionAction.REQUEST_CLARIFICATION,
+                    blocker_refs=missing,
+                    policy_refs=("policy:learning_directive_requires_review:v2",),
+                )
+            )
+        atom = getattr(self._authority, "atoms", {}).get(target)
+        target_kind = getattr(atom, "kind", "unknown")
+        draft = LearningDraft.create(
+            kind="directive",
+            surface_literal=surface,
+            target_ref=target,
+            expected_target_kinds=(target_kind,),
+            source_query_ref=None,
+            answer_contract_ref="contract:designation_answer:v2",
+            proof_refs=(app.application_ref,),
+            revision_pin=situation.revision_pin,
+        )
+        return ModeEvaluation(
+            contribution=DecisionContribution(
+                status=DecisionStatus.PENDING,
+                action=DecisionAction.CREATE_LEARNING_OBLIGATION,
+                learning_draft_refs=(draft.learning_draft_ref,),
+                proof_refs=(app.application_ref,),
+                policy_refs=("policy:learning_directive_requires_review:v2",),
+            ),
+            learning_drafts=(draft,),
+        )
+
     def evaluate_full(self, expression: SemanticExpression, projection: ExpressionProjection,
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.REQUEST:
@@ -946,45 +1054,9 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
                 blocker_refs=("request:no_application",), policy_refs=("policy:request_transition:v2",),
             ))
-        if app.operator == "op:designation":
-            roles = {row.role_ref: _filler_value(row) for row in (*app.roles, *app.qualifiers)}
-            surface = roles.get("role:surface")
-            target = roles.get("role:target") or roles.get("role:object") or roles.get("role:meaning")
-            missing = tuple(
-                blocker for blocker, value in (
-                    ("learning:surface_missing", surface),
-                    ("learning:target_missing", target),
-                ) if value is None
-            )
-            if missing:
-                return ModeEvaluation(contribution=DecisionContribution(
-                    status=DecisionStatus.UNKNOWN,
-                    action=DecisionAction.REQUEST_CLARIFICATION,
-                    blocker_refs=missing,
-                    policy_refs=("policy:learning_directive_requires_review:v2",),
-                ))
-            atom = getattr(self._authority, "atoms", {}).get(target)
-            target_kind = getattr(atom, "kind", "unknown")
-            draft = LearningDraft.create(
-                kind="directive",
-                surface_literal=surface,
-                target_ref=target,
-                expected_target_kinds=(target_kind,),
-                source_query_ref=None,
-                answer_contract_ref="contract:designation_answer:v2",
-                proof_refs=(app.application_ref,),
-                revision_pin=situation.revision_pin,
-            )
-            return ModeEvaluation(
-                contribution=DecisionContribution(
-                    status=DecisionStatus.PENDING,
-                    action=DecisionAction.CREATE_LEARNING_OBLIGATION,
-                    learning_draft_refs=(draft.learning_draft_ref,),
-                    proof_refs=(app.application_ref,),
-                    policy_refs=("policy:learning_directive_requires_review:v2",),
-                ),
-                learning_drafts=(draft,),
-            )
+        learning = self._learning_directive(app, situation)
+        if learning is not None:
+            return learning
         transition, capability, intent = self._transition(app, situation, simulate=False)
         if capability.status is CapabilityStatus.AVAILABLE and intent is not None:
             status, action = DecisionStatus.PENDING, DecisionAction.REQUEST_EFFECT

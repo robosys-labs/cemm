@@ -161,6 +161,11 @@
     },
     {
       "language": "en",
+      "surface": "call",
+      "target": "event:learn_alias"
+    },
+    {
+      "language": "en",
       "surface": "teach",
       "target": "event:teach"
     },
@@ -339,6 +344,7 @@
             "concept",
             "entity",
             "event_type",
+            "participant",
             "relation_type",
             "state_dimension",
             "state_value"

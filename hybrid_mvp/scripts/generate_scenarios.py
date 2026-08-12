@@ -223,7 +223,9 @@ def generate_all() -> list[dict]:
     # 4. modality (10 cases)
     # ------------------------------------------------------------------
     cat = "modality"
-    _next(cat, [_assertion("modality", modality_kind="possible", target="event:learn_alias")],
+    _next(cat, [_assertion("modality", modality_kind="capability", target="event:learn_alias",
+                           actor="participant:user", event_target="participant:system",
+                           surface="CEMM")],
           ["can I call you CEMM?", "could I call you CEMM?"])
     _next(cat, [_assertion("modality", modality_kind="possible", target="event:learn_alias")],
           ["I can call you CEMM, right?", "I could call you CEMM?"])
@@ -248,7 +250,9 @@ def generate_all() -> list[dict]:
     # 5. negation/scope (12 cases)
     # ------------------------------------------------------------------
     cat = "negation_scope"
-    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:server")],
+    _next(cat, [_assertion("negation", scope="dim:availability", target="entity:server",
+                           subject="entity:server", dimension="dim:availability",
+                           value="value:online")],
           ["the server is not online", "not online the server is"])
     _next(cat, [_assertion("negation", scope="dim:power", target="entity:lamp")],
           ["the lamp is not on", "not on the lamp is"])
@@ -279,7 +283,7 @@ def generate_all() -> list[dict]:
     cat = "recursive_family_proof"
     _next(cat, [_assertion("rule", rule="rule:mother-in-law-implies-partner-exists",
                            subject="entity:alice", relation="rel:mother_in_law")],
-          ["alice's mother-in-law is mary", "mary is alice's mother-in-law"])
+          ["alice mother-in-law who?", "mother-in-law alice who?"])
     _next(cat, [_assertion("rule", rule="rule:partner-implies-married-state",
                            subject="entity:alice", relation="rel:has_partner")],
           ["alice has a partner", "alice is married"])
@@ -330,7 +334,9 @@ def generate_all() -> list[dict]:
           ["you learn that", "that you learn"])
     _next(cat, [_assertion("reference", target="entity:alice", role="role:subject")],
           ["alice owns the book", "the book alice owns"])
-    _next(cat, [_assertion("reference", target="entity:bob", role="role:object")],
+    _next(cat, [_assertion("reference", target="entity:bob", role="role:object",
+                           subject="entity:alice", relation="rel:likes",
+                           object="entity:bob")],
           ["alice likes bob", "bob alice likes"])
 
     # ------------------------------------------------------------------
@@ -356,7 +362,8 @@ def generate_all() -> list[dict]:
                            content="event:farewell")],
           ["mary said goodbye", "mary says goodbye"])
     _next(cat, [_assertion("reported_speech", speaker="entity:alice", event="event:say",
-                           content="dim:availability")],
+                           content="dim:availability", content_subject="entity:server",
+                           content_dimension="dim:availability", content_value="value:online")],
           ["alice said the server is online", "alice says the server is online"])
     _next(cat, [_assertion("reported_speech", speaker="entity:bob", event="event:say",
                            content="dim:power")],
@@ -728,7 +735,9 @@ def main() -> None:
         json.dumps(case, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         for case in cases
     ]
-    args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    args.output.write_text(
+        "\n".join(lines) + "\n", encoding="utf-8", newline="\n"
+    )
     print(f"Generated {len(cases)} scenarios -> {args.output}")
 
 

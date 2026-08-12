@@ -134,6 +134,7 @@
     "means": {"kind": "definition_marker"},
     "mean": {"kind": "definition_marker"},
     "means that": {"kind": "definition_marker"},
+    "it": {"kind": "discourse_particle"},
     "there": {"kind": "discourse_particle"}
   },
   "determiners": {
@@ -193,9 +194,24 @@
     "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
   },
   "application_role_orders": {
+    "modal_event_actor_target": {
+      "target_kinds": ["participant", "event_type", "participant"],
+      "roles": ["role:actor", "role:event", "role:target"],
+      "required_features": ["modality"]
+    },
     "relation_subject_predicate_object": {
       "target_kinds": ["entity", "relation_type", "entity"],
       "roles": ["role:subject", "role:relation", "role:object"]
+    },
+    "relation_subject_predicate_query_object": {
+      "target_kinds": ["entity", "relation_type"],
+      "roles": ["role:subject", "role:relation"],
+      "required_features": ["query"]
+    },
+    "relation_predicate_subject_query_object": {
+      "target_kinds": ["relation_type", "entity"],
+      "roles": ["role:relation", "role:subject"],
+      "required_features": ["query"]
     },
     "relation_object_subject_predicate": {
       "target_kinds": ["entity", "entity", "relation_type"],
@@ -209,6 +225,11 @@
     "state_value_subject": {
       "target_kinds": ["state_value", "entity"],
       "roles": ["role:value", "role:subject"],
+      "required_features": ["binder"]
+    },
+    "reported_state_content": {
+      "target_kinds": ["entity", "event_type", "entity", "state_value"],
+      "roles": ["role:actor", "role:event", "role:subject", "role:value"],
       "required_features": ["binder"]
     },
     "definition_nominal_query": {

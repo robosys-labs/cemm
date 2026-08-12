@@ -316,8 +316,8 @@ class AssertionRegistry:
         {
             "application": _AssertionSpec(frozenset({"operator", "predicate", "roles"}), frozenset(), "application"),
             "entity": _AssertionSpec(frozenset({"target"}), frozenset({"semantic_kind"}), "entity"),
-            "reference": _AssertionSpec(frozenset({"target", "role"}), frozenset(), "entity"),
-            "participant_reference": _AssertionSpec(frozenset({"target", "role"}), frozenset(), "entity"),
+            "reference": _AssertionSpec(frozenset({"target", "role"}), frozenset({"subject", "relation", "object"}), "entity"),
+            "participant_reference": _AssertionSpec(frozenset({"target", "role"}), frozenset({"subject", "relation", "object"}), "entity"),
             "designates": _AssertionSpec(frozenset({"surface", "target"}), frozenset({"language"}), "designation"),
             "alias": _AssertionSpec(frozenset({"surface", "target"}), frozenset({"language"}), "designation"),
             "multilingual_alias": _AssertionSpec(frozenset({"surface", "target", "language"}), frozenset(), "designation"),
@@ -329,7 +329,7 @@ class AssertionRegistry:
             "query": _AssertionSpec(frozenset({"target"}), frozenset({"dimension", "relation", "role", "object", "expected_status"}), "query"),
             "event": _AssertionSpec(frozenset(), frozenset({"target", "event", "event_type", "actor", "addressee", "learner", "content", "roles"}), "event"),
             "reported": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "roles"}), "attribution"),
-            "reported_speech": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "roles"}), "attribution"),
+            "reported_speech": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "content_subject", "content_dimension", "content_value", "roles"}), "attribution"),
             "quoted": _AssertionSpec(frozenset({"speaker", "content"}), frozenset({"event"}), "attribution"),
             "belief": _AssertionSpec(frozenset({"subject", "content"}), frozenset(), "attribution"),
             "desire": _AssertionSpec(frozenset({"subject", "content"}), frozenset(), "attribution"),
@@ -338,8 +338,8 @@ class AssertionRegistry:
             "simulation": _AssertionSpec(frozenset({"content"}), frozenset({"subject"}), "simulation"),
             "transition": _AssertionSpec(frozenset({"event", "subject", "dimension", "from_value", "to_value"}), frozenset({"adapter", "capability", "permission", "resource"}), "transition"),
             "transition_simulation": _AssertionSpec(frozenset({"event", "subject", "dimension", "from_value", "to_value"}), frozenset({"adapter", "capability", "permission", "resource"}), "transition_simulation"),
-            "modality": _AssertionSpec(frozenset({"modality_kind", "target"}), frozenset({"subject"}), "scope"),
-            "negation": _AssertionSpec(frozenset({"scope"}), frozenset({"target", "subject", "dimension", "event"}), "scope"),
+            "modality": _AssertionSpec(frozenset({"modality_kind", "target"}), frozenset({"subject", "actor", "event_target", "surface"}), "scope"),
+            "negation": _AssertionSpec(frozenset({"scope"}), frozenset({"target", "subject", "dimension", "value", "event"}), "scope"),
             "scope": _AssertionSpec(frozenset({"operator_type", "value_ref", "target"}), frozenset({"subject"}), "scope"),
             "evidence": _AssertionSpec(frozenset({"target"}), frozenset({"value", "dimension", "source", "adapter"}), "evidence"),
             "sensor_evidence": _AssertionSpec(frozenset({"adapter", "target", "value"}), frozenset({"dimension"}), "evidence"),
@@ -1234,6 +1234,21 @@ class ExpectedCycleContractCompiler:
         if family == "entity":
             target = self._authority.require_ref(fields["target"], "entity target")
             if fields.get("role") is not None:
+                if fields.get("relation") is not None:
+                    expression = self._relation(fields)
+                    role_ref = self._authority.require_role(fields["role"])
+                    if not any(
+                        binding.role_ref == role_ref
+                        and isinstance(binding.filler, GroundedReference)
+                        and binding.filler.target_ref == target
+                        for app in expression.applications
+                        for binding in app.roles
+                    ):
+                        raise AssertionCompilerError(
+                            "reference_role_target_mismatch",
+                            assertion.assertion_ref,
+                        )
+                    return (expression,), normalized, None, None
                 return (
                     self._reference_expression(
                         target,
@@ -1327,7 +1342,7 @@ class ExpectedCycleContractCompiler:
             return (
                 self._conflict_expressions(fields, assertion.assertion_ref),
                 normalized,
-                SemanticMode.QUERY,
+                None,
                 None,
             )
         if family == "gap":
@@ -1699,7 +1714,17 @@ class ExpectedCycleContractCompiler:
             child_event = content_value or event_value
             parent_event = event_value or "event:say"
         child_ref = self._authority.require_ref(child_event, "attributed content")
-        if getattr(self._authority.atoms[child_ref], "kind", None) == "event_type":
+        if fields.get("content_dimension") is not None:
+            child_expression = self._state(
+                {
+                    "subject": fields["content_subject"],
+                    "dimension": fields["content_dimension"],
+                    "value": fields["content_value"],
+                }
+            )
+            child = child_expression.applications[0]
+            child_unresolved = ()
+        elif getattr(self._authority.atoms[child_ref], "kind", None) == "event_type":
             child_supplied: dict[str, Any] = {}
             child_signature = self._authority.event_signatures.get(child_ref)
             speaker_kind = getattr(self._authority.atoms[speaker], "kind", None)
@@ -1739,14 +1764,14 @@ class ExpectedCycleContractCompiler:
             assertion_ref=assertion_ref,
             suffix="parent",
         )
-        scope_type = (
-            "scope:simulation" if family == "simulation" else "scope:attribution"
-        )
-        value_ref = (
-            "scope_value:simulation:hypothetical"
-            if family == "simulation"
-            else "scope_value:attribution:reported"
-        )
+        if family != "simulation":
+            return SemanticExpression.create(
+                applications=(child, parent),
+                root_refs=(parent.application_ref,),
+                unresolved_fillers=(*child_unresolved, *parent_unresolved),
+            )
+        scope_type = "scope:simulation"
+        value_ref = "scope_value:simulation:hypothetical"
         scope = ScopeOperator(
             stable_ref("expected_scope", {"assertion_ref": assertion_ref}),
             scope_type,
@@ -1806,10 +1831,38 @@ class ExpectedCycleContractCompiler:
     def _scope(
         self, fields: Mapping[str, Any], assertion_ref: str, kind: str
     ) -> SemanticExpression:
+        if (
+            kind == "negation"
+            and fields.get("subject") is not None
+            and fields.get("dimension") is not None
+            and fields.get("value") is not None
+        ):
+            return self._state(fields, force_negative=True)
         target = fields.get("target", fields.get("event", fields.get("scope")))
         target_ref = self._authority.require_ref(target, "scope target")
         subject = fields.get("subject")
-        if fields.get("dimension") is not None and subject is not None:
+        if (
+            getattr(self._authority.atoms[target_ref], "kind", None) == "event_type"
+            and fields.get("actor") is not None
+            and fields.get("event_target") is not None
+            and fields.get("surface") is not None
+        ):
+            app, unresolved = self._event_application(
+                target_ref,
+                {
+                    "role:actor": fields["actor"],
+                    "role:target": fields["event_target"],
+                    "role:surface": LiteralValue("string", fields["surface"]),
+                },
+                assertion_ref=assertion_ref,
+                suffix="scoped_event",
+            )
+            base = SemanticExpression.create(
+                applications=(app,),
+                root_refs=(app.application_ref,),
+                unresolved_fillers=unresolved,
+            )
+        elif fields.get("dimension") is not None and subject is not None:
             base = self._query(
                 {"target": subject, "dimension": fields["dimension"]},
                 assertion_ref + ":scope",
@@ -2220,7 +2273,6 @@ class ExpectedCycleContractCompiler:
                 "proof_chain",
                 "inference",
                 "rule",
-                "conflict",
             )
         ):
             return SemanticMode.QUERY
@@ -2466,23 +2518,23 @@ class ExpectedCycleContractCompiler:
                     "epistemic:supported" if cycle_status is CycleStatus.RESOLVED else "epistemic:unknown",
                 ),
             )
+        if "conflict" in families:
+            return (
+                ExpectedDecisionContract(
+                    DecisionStatus.CONFLICT,
+                    DecisionAction.REQUEST_CLARIFICATION,
+                    blocker_refs=("expected_conflict",),
+                ),
+                ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "conflict"),
+                ExpectedResponseContract(
+                    "clarify",
+                    CycleStatus.CONFLICT,
+                    "polarity:positive",
+                    "modality:actual",
+                    "epistemic_status:conflict",
+                ),
+            )
         if mode is SemanticMode.QUERY:
-            if "conflict" in families:
-                return (
-                    ExpectedDecisionContract(
-                        DecisionStatus.CONFLICT,
-                        DecisionAction.REQUEST_CLARIFICATION,
-                        blocker_refs=("expected_conflict",),
-                    ),
-                    ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "conflict"),
-                    ExpectedResponseContract(
-                        "clarify_conflict",
-                        CycleStatus.CONFLICT,
-                        "polarity:positive",
-                        "modality:actual",
-                        "epistemic:conflict",
-                    ),
-                )
             if outcome is ExpectedOutcomeKind.AMBIGUITY:
                 return (
                     ExpectedDecisionContract(
@@ -2497,6 +2549,24 @@ class ExpectedCycleContractCompiler:
                         "polarity:positive",
                         "modality:actual",
                         "epistemic:unknown",
+                    ),
+                )
+            if "rule" in families:
+                return (
+                    ExpectedDecisionContract(
+                        DecisionStatus.UNKNOWN,
+                        DecisionAction.REQUEST_CLARIFICATION,
+                        blocker_refs=("query:unknown_conjunct",),
+                    ),
+                    ExpectedEffectContract(
+                        ExpectedEffectKind.NO_EFFECT, "unknown"
+                    ),
+                    ExpectedResponseContract(
+                        "unknown",
+                        CycleStatus.UNKNOWN,
+                        "polarity:positive",
+                        "modality:actual",
+                        "epistemic_status:unknown",
                     ),
                 )
             proof_refs = tuple(
@@ -2531,11 +2601,11 @@ class ExpectedCycleContractCompiler:
                         ExpectedEffectKind.NO_EFFECT, "learning_obligation_only"
                     ),
                     ExpectedResponseContract(
-                        "request_learning_evidence",
+                        "request_learning_answer",
                         CycleStatus.PARTIAL,
                         "polarity:positive",
                         "modality:actual",
-                        "epistemic:pending",
+                        "epistemic_status:pending",
                     ),
                 )
             event_ref = next(
@@ -2617,11 +2687,11 @@ class ExpectedCycleContractCompiler:
                     ExpectedEffectKind.NO_EFFECT, "attributed_only"
                 ),
                 ExpectedResponseContract(
-                    "acknowledge_attribution",
-                    CycleStatus.RESOLVED,
+                    "acknowledge",
+                    CycleStatus.PARTIAL,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:attributed",
+                    "epistemic_status:attributed",
                 ),
             )
         return (

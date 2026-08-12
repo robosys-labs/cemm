@@ -10,7 +10,7 @@
     {
       "name": "conversation",
       "path": "conversation.json",
-      "sha256": "9a4f512285f3465532307da1cf88af452f891948d198b25c915dd68d365ad797"
+      "sha256": "316c7a933200a20b0a736cc31dcba423c909f80017d70c341892a8529124446a"
     },
     {
       "name": "state_operations",

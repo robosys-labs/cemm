@@ -19,6 +19,7 @@ from .cycle import (
     CycleStatus,
     Orientation,
     PhaseDisposition,
+    SemanticMode,
     SemanticPhase,
     _PhaseMaterial,
 )
@@ -32,7 +33,7 @@ from .gaps import (
     RepairOwner,
 )
 from .grounding import Grounder
-from .mode import StructuralModeProjector
+from .mode import ModeProjection, StructuralModeProjector
 from .persistence import SemanticStores
 from .proposal import ProposalOwner, ProposalResult
 from .proposal_context import ProposalContext, ProposalContextBuilder
@@ -189,6 +190,52 @@ class RuntimeOrientationOwner:
                 raise ValueError("unsupported evidence kind")
         return tuple(dict.fromkeys(policies))
 
+    def _semantic_mode_projection(
+        self,
+        projection: ModeProjection,
+        lattice: Any,
+        grounding: Any,
+    ) -> ModeProjection:
+        """Refine an unmarked form mode through reviewed effect-frame evidence."""
+        if projection.mode is not SemanticMode.OBSERVE:
+            return projection
+        if any(
+            category == "modality"
+            for unit in lattice.units
+            for category, _ in unit.features
+        ):
+            return projection
+        effect_designations = []
+        for designation in grounding.designations:
+            atom = self._authority.atoms.get(designation.target_ref)
+            signature = self._authority.by_event_signature(
+                designation.target_ref
+            )
+            if (
+                getattr(atom, "kind", None) == "event_type"
+                and signature is not None
+                and signature.adapter_ref is not None
+            ):
+                effect_designations.append(designation)
+        if not effect_designations:
+            return projection
+        return ModeProjection.create(
+            form_lattice_ref=lattice.lattice_ref,
+            mode=SemanticMode.REQUEST,
+            evidence_unit_refs=tuple(
+                dict.fromkeys(
+                    source_ref
+                    for designation in effect_designations
+                    for source_ref in designation.unit_refs
+                )
+            ),
+            construction_refs=projection.construction_refs,
+            feature_refs=(
+                *projection.feature_refs,
+                "semantic_frame:effect_directive",
+            ),
+        )
+
     def orient_turn(
         self, session_ref: str, evidence: EvidencePacket
     ) -> OrientedTurn:
@@ -218,8 +265,12 @@ class RuntimeOrientationOwner:
         pin = self._stores.revision_pin()
 
         lattice = self._form_resolver.resolve_evidence(evidence)
-        mode_projection = self._mode_projector.project(lattice)
         grounding = self._grounder.ground_lattice(lattice, pin)
+        mode_projection = self._semantic_mode_projection(
+            self._mode_projector.project(lattice),
+            lattice,
+            grounding,
+        )
         contributions = self._contribution_expander.expand(grounding, lattice)
 
         participants = tuple(sorted(self._authority.by_kind("participant")))

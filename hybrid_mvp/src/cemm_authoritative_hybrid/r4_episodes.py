@@ -315,7 +315,10 @@ def _filler_material(value: object, visit: Callable[[str], Any]) -> Any:
     raise TypeError("unknown filler")
 
 
-def _root_signatures(expression: SemanticExpression) -> tuple[str, ...]:
+def _root_signatures(
+    expression: SemanticExpression,
+    refs: tuple[str, ...] | None = None,
+) -> tuple[str, ...]:
     nodes: dict[str, object] = {
         **{row.application_ref: row for row in expression.applications},
         **{row.scope_ref: row for row in expression.scope_operators},
@@ -355,7 +358,7 @@ def _root_signatures(expression: SemanticExpression) -> tuple[str, ...]:
         memo[ref] = signature
         return signature
 
-    return tuple(visit(ref) for ref in expression.root_refs)
+    return tuple(visit(ref) for ref in (expression.root_refs if refs is None else refs))
 
 
 def _expression_match(contract: ExpectedCycleContract, cycle: CycleResult) -> bool:
@@ -375,7 +378,13 @@ def _expression_match(contract: ExpectedCycleContract, cycle: CycleResult) -> bo
     if relation is ExpressionRelation.ANY:
         return any(group <= observed or bool(group & observed) for group in expected_groups)
     if relation is ExpressionRelation.CONFLICT:
-        return flattened <= observed
+        observed_applications = set(
+            _root_signatures(
+                meaning.expression,
+                tuple(row.application_ref for row in meaning.expression.applications),
+            )
+        )
+        return flattened <= observed_applications
     if relation is ExpressionRelation.ORDERED_CHAIN:
         expected_order = [sig for group in expected_groups for sig in sorted(group)]
         return all(sig in observed for sig in expected_order)

@@ -1410,6 +1410,15 @@ class ProposalContextBuilder:
             self._application_role_orders,
             self._config,
         )
+        participant_role_bindings = _reviewed_participant_form_role_bindings(
+            orientation,
+            designation_slots,
+            form_lattice,
+            unit_by_ref,
+            self._application_role_orders,
+            self._authority.atoms,
+            self._config,
+        )
         selected_targets = frozenset(row.target_ref for row in designation_slots)
         semantic_contributions = self._contribution_slots(
             contributions,
@@ -1421,6 +1430,7 @@ class ProposalContextBuilder:
         form_contributions, form_references = self._form_evidence_slots(
             orientation,
             form_lattice,
+            participant_role_bindings,
         )
         contribution_slots = _bounded_unique_contributions(
             (*semantic_contributions, *form_contributions),
@@ -1453,6 +1463,17 @@ class ProposalContextBuilder:
             profiles_by_target,
             predicate_targets,
         )
+        learning_surface_contributions = self._learning_surface_evidence(
+            designation_slots,
+            application_frames,
+            form_lattice,
+            unit_by_ref,
+        )
+        if learning_surface_contributions:
+            contribution_slots = _bounded_unique_contributions(
+                (*contribution_slots, *learning_surface_contributions),
+                self._config,
+            )
         state_value_contributions, state_value_frames = (
             self._state_value_application_evidence(
                 designation_slots,
@@ -1527,6 +1548,10 @@ class ProposalContextBuilder:
                 reviewed_role_bindings,
             )
         )
+        coordinated_references = self._coordinated_reference_slots(
+            designation_references,
+            expression_link_slots,
+        )
         contribution_slots = _bounded_unique_contributions(
             (*reference_contributions, *contribution_slots),
             self._config,
@@ -1538,7 +1563,12 @@ class ProposalContextBuilder:
             (*designation_references, *form_references),
         )
         reference_slots = _bounded_unique_slots(
-            (*designation_references, *form_references, *situated_references),
+            (
+                *designation_references,
+                *coordinated_references,
+                *form_references,
+                *situated_references,
+            ),
             self._config.max_orientation_alternatives,
         )
         variable_slots = _variable_slots(
@@ -1834,6 +1864,11 @@ class ProposalContextBuilder:
             for unit in form_lattice.units
             if any(category == "binder" for category, _ in unit.features)
         )
+        coordination_refs = tuple(
+            unit.unit_ref
+            for unit in form_lattice.units
+            if any(category == "connector" for category, _ in unit.features)
+        )
         if not binder_refs:
             return (), ()
         for designation in designations:
@@ -1925,7 +1960,158 @@ class ProposalContextBuilder:
             )
             predicate_rows.append(predicate)
             frames.append(frame)
+            if coordination_refs:
+                coordinated_provenance = tuple(
+                    dict.fromkeys((*provenance, *binder_refs, *coordination_refs))
+                )
+                coordinated_predicate = ContributionSlot.create(
+                    contribution_ref=stable_ref(
+                        "coordinated_state_value_dimension_predicate",
+                        {
+                            "designation_slot_ref": designation.slot_ref,
+                            "value_ref": designation.target_ref,
+                            "dimension_ref": dimension_ref,
+                            "coordination_refs": list(coordination_refs),
+                        },
+                    ),
+                    kind="predicate",
+                    source_unit_refs=designation.source_unit_refs,
+                    target_ref=dimension_ref,
+                    target_kind="state_dimension",
+                    input_ports=("role:subject",),
+                    output_ports=("role:dimension",),
+                    constraints=(
+                        ("state_value_ref", designation.target_ref),
+                        ("value_dimension_ref", dimension_ref),
+                        ("binder_inheritance", "coordinated"),
+                    ),
+                    provenance_refs=coordinated_provenance,
+                )
+                coordinated_frame = ApplicationFrameSlot.create(
+                    designation_slot_ref=designation.slot_ref,
+                    predicate_target_ref=dimension_ref,
+                    predicate_kind="state_dimension",
+                    operator_ref="op:state",
+                    structural_role_ref="role:dimension",
+                    required_roles=("role:subject",),
+                    optional_roles=(),
+                    proposition_roles=(),
+                    source_unit_refs=designation.source_unit_refs,
+                    derived_role_targets=(
+                        ("role:dimension", dimension_ref),
+                        ("role:value", designation.target_ref),
+                    ),
+                    affordance_frame_ref=None,
+                    provenance_refs=coordinated_provenance,
+                )
+                predicate_rows.append(coordinated_predicate)
+                frames.append(coordinated_frame)
         return tuple(predicate_rows), tuple(frames)
+
+    def _learning_surface_evidence(
+        self,
+        designations: tuple[DesignationSlot, ...],
+        frames: tuple[ApplicationFrameSlot, ...],
+        form_lattice: FormLattice,
+        unit_by_ref: Mapping[str, Any],
+    ) -> tuple[ContributionSlot, ...]:
+        """Expose bounded label literals only inside a reviewed naming frame."""
+        naming_frames = tuple(
+            frame
+            for frame in frames
+            if frame.predicate_kind == "event_type"
+            and {"role:surface", "role:target"} <= set(frame.required_roles)
+        )
+        if not naming_frames:
+            return ()
+        designated_sources = {
+            source_ref
+            for designation in designations
+            for source_ref in designation.source_unit_refs
+        }
+        definition_support = tuple(
+            unit.unit_ref
+            for unit in form_lattice.units
+            if any(
+                (category, value)
+                in {
+                    ("discourse", "definition_marker"),
+                    ("linker", "content_linker"),
+                }
+                for category, value in unit.features
+            )
+        )
+        literal_sources: list[tuple[tuple[str, ...], tuple[str, ...]]] = []
+        if definition_support:
+            for unit in form_lattice.units:
+                if (
+                    unit.unit_ref not in designated_sources
+                    and not unit.features
+                    and any(character.isalnum() for character in unit.source_text)
+                ):
+                    literal_sources.append(
+                        ((unit.unit_ref,), definition_support)
+                    )
+        else:
+            naming_designation_refs = {
+                frame.designation_slot_ref for frame in naming_frames
+            }
+            for designation in designations:
+                if designation.slot_ref in naming_designation_refs:
+                    continue
+                literal_sources.append(
+                    (
+                        designation.source_unit_refs,
+                        (designation.slot_ref, designation.designation_fact_ref),
+                    )
+                )
+        rows: list[ContributionSlot] = []
+        for source_refs, support_refs in literal_sources:
+            units = tuple(unit_by_ref[ref] for ref in source_refs)
+            start = min(unit.source_start for unit in units)
+            end = max(unit.source_end for unit in units)
+            literal = form_lattice.source_text[start:end].strip()
+            if not literal:
+                continue
+            contribution_source_refs = (
+                tuple(dict.fromkeys((*source_refs, *support_refs)))
+                if definition_support
+                else source_refs
+            )
+            for frame in naming_frames:
+                provenance = tuple(
+                    dict.fromkeys(
+                        (frame.slot_ref, *frame.provenance_refs, *support_refs)
+                    )
+                )
+                rows.append(
+                    ContributionSlot.create(
+                        contribution_ref=stable_ref(
+                            "reviewed_naming_surface_literal",
+                            {
+                                "frame_slot_ref": frame.slot_ref,
+                                "source_unit_refs": list(contribution_source_refs),
+                                "literal": literal,
+                            },
+                        ),
+                        kind="literal",
+                        source_unit_refs=contribution_source_refs,
+                        target_ref=None,
+                        target_kind=None,
+                        input_ports=(),
+                        output_ports=("role:surface",),
+                        constraints=(
+                            ("literal", literal),
+                            ("literal_kind", "string"),
+                            ("naming_frame_ref", frame.slot_ref),
+                        ),
+                        provenance_refs=provenance,
+                        literal_value=literal,
+                    )
+                )
+                if len(rows) >= self._config.max_orientation_alternatives:
+                    return tuple(rows)
+        return tuple(rows)
 
     def _definition_application_evidence(
         self,
@@ -1958,7 +2144,7 @@ class ProposalContextBuilder:
             definition_target_ref = (
                 designation.target_ref
                 if designation.target_kind == "concept"
-                else self._authority.definition_targets.get(
+                else getattr(self._authority, "definition_targets", {}).get(
                     designation.target_ref
                 )
             )
@@ -2127,6 +2313,7 @@ class ProposalContextBuilder:
         self,
         orientation: Orientation,
         form_lattice: FormLattice,
+        participant_role_bindings: Mapping[str, tuple[str, ...]],
     ) -> tuple[tuple[ContributionSlot, ...], tuple[ReferenceSlot, ...]]:
         contributions: list[ContributionSlot] = []
         references: list[ReferenceSlot] = []
@@ -2153,6 +2340,8 @@ class ProposalContextBuilder:
         }
         for unit in form_lattice.units:
             for category, value in unit.features:
+                if category == "discourse" and value == "discourse_particle":
+                    continue
                 if category == "participant":
                     target = _participant_feature_target(
                         value,
@@ -2164,7 +2353,9 @@ class ProposalContextBuilder:
                     atom = self._authority.atoms.get(target)
                     if not isinstance(atom, AtomRecord):
                         continue
-                    compatible_roles = _reference_roles(atom.kind)
+                    compatible_roles = participant_role_bindings.get(
+                        unit.unit_ref, _reference_roles(atom.kind)
+                    )
                     reference = ReferenceSlot.create(
                         target_ref=target,
                         target_kind=atom.kind,
@@ -2187,7 +2378,7 @@ class ProposalContextBuilder:
                             target_ref=target,
                             target_kind=atom.kind,
                             input_ports=input_ports,
-                            output_ports=output_ports,
+                            output_ports=compatible_roles,
                             constraints=((category, value),),
                             provenance_refs=(unit.unit_ref,),
                         )
@@ -2227,7 +2418,15 @@ class ProposalContextBuilder:
         contributions: list[ContributionSlot] = []
         references: list[ReferenceSlot] = []
         for designation in designations:
-            if designation.target_kind not in {"entity", "participant"}:
+            if designation.target_kind not in {
+                "concept",
+                "entity",
+                "event_type",
+                "participant",
+                "relation_type",
+                "state_dimension",
+                "state_value",
+            }:
                 continue
             source_unit_refs = nominal_source_refs.get(
                 designation.slot_ref,
@@ -2310,6 +2509,11 @@ class ProposalContextBuilder:
         generic = _reference_roles(designation.target_kind)
         compatible: list[str] = []
         for frame in frames:
+            if (
+                frame.designation_slot_ref == designation.slot_ref
+                or set(frame.source_unit_refs) & set(designation.source_unit_refs)
+            ):
+                continue
             legal_roles = (*frame.required_roles, *frame.optional_roles)
             if frame.predicate_kind == "event_type":
                 signature = event_signatures.get(frame.predicate_target_ref)
@@ -2324,7 +2528,8 @@ class ProposalContextBuilder:
                         compatible.append(role)
                 continue
             compatible.extend(role for role in legal_roles if role in generic)
-        return tuple(dict.fromkeys((*compatible, *generic)))
+        fallback = generic if designation.target_kind in {"entity", "participant"} else ()
+        return tuple(dict.fromkeys((*compatible, *fallback)))
 
     def _situated_participant_references(
         self,
@@ -2371,7 +2576,11 @@ class ProposalContextBuilder:
                 ):
                     continue
                 target = (
-                    speaker
+                    (
+                        others[0]
+                        if orientation.mode is SemanticMode.REQUEST and others
+                        else speaker
+                    )
                     if role in actor_roles
                     else (others[0] if role in addressed_roles and others else None)
                 )
@@ -2388,6 +2597,45 @@ class ProposalContextBuilder:
                         provenance_refs=(orientation.orientation_ref, frame.slot_ref),
                     )
                 )
+        return tuple(rows)
+
+    def _coordinated_reference_slots(
+        self,
+        explicit_references: tuple[ReferenceSlot, ...],
+        link_slots: tuple[ExpressionLinkSlot, ...],
+    ) -> tuple[ReferenceSlot, ...]:
+        """Expose bounded source-free co-reference for coordinated predicates."""
+        coordinating_refs = tuple(
+            row.slot_ref
+            for row in link_slots
+            if row.commutative and row.min_arity >= 2
+        )
+        if not coordinating_refs:
+            return ()
+        rows: list[ReferenceSlot] = []
+        for reference in explicit_references:
+            if not reference.source_unit_refs:
+                continue
+            roles = tuple(
+                role
+                for role in reference.compatible_roles
+                if role in {"role:subject", "role:object"}
+            )
+            if not roles:
+                continue
+            rows.append(
+                ReferenceSlot.create(
+                    target_ref=reference.target_ref,
+                    target_kind=reference.target_kind,
+                    source_unit_refs=(),
+                    resolution_kind="coordinated_coreference",
+                    compatible_roles=roles,
+                    score_q=reference.score_q,
+                    provenance_refs=(reference.slot_ref, *coordinating_refs),
+                )
+            )
+            if len(rows) >= self._config.max_orientation_alternatives:
+                break
         return tuple(rows)
 
     def _application_frames(
@@ -2666,9 +2914,23 @@ def _variable_slots(
         "role:surface": ("literal",),
         "role:type": ("concept", "event_type"),
     }
+    reviewed_definition_designations = {
+        frame.designation_slot_ref
+        for frame in frames
+        if frame.affordance_frame_ref is None
+        and any(role == "role:subject" for role, _ in frame.derived_role_targets)
+        and any(source_ref in frame.provenance_refs for source_ref in variable_sources)
+    }
     slots: list[VariableSlot] = []
     for source_ref in variable_sources:
         for frame in frames:
+            if (
+                frame.designation_slot_ref in reviewed_definition_designations
+                or
+                frame.affordance_frame_ref is None
+                and source_ref in frame.provenance_refs
+            ):
+                continue
             for role_ref in (*frame.required_roles, *frame.optional_roles):
                 required_kinds = role_kinds.get(role_ref)
                 if required_kinds is None:
@@ -3138,6 +3400,87 @@ def _expanded_nominal_source_refs(
             (unit_by_ref[ref] for ref in refs),
             key=lambda unit: (unit.source_start, unit.source_end, unit.unit_ref),
         )
+    )
+
+
+def _reviewed_participant_form_role_bindings(
+    orientation: Orientation,
+    designations: tuple[DesignationSlot, ...],
+    form_lattice: FormLattice,
+    unit_by_ref: Mapping[str, Any],
+    schemas: Mapping[str, Mapping[str, Any]],
+    atoms: Mapping[str, Any],
+    config: RuntimeConfig,
+) -> Mapping[str, tuple[str, ...]]:
+    """Constrain participant deixis only through a reviewed typed role order."""
+    if len(schemas) > config.max_orientation_alternatives:
+        raise ValueError("application role-order schema bound exceeded")
+    rows: list[tuple[int, str, tuple[str, ...], str | None]] = []
+    for designation in designations:
+        rows.append(
+            (
+                min(
+                    unit_by_ref[ref].source_start
+                    for ref in designation.source_unit_refs
+                ),
+                designation.target_kind,
+                designation.source_unit_refs,
+                None,
+            )
+        )
+    for unit in form_lattice.units:
+        for category, value in unit.features:
+            if category != "participant":
+                continue
+            target = _participant_feature_target(value, orientation, atoms)
+            atom = atoms.get(target) if target is not None else None
+            if isinstance(atom, AtomRecord):
+                rows.append(
+                    (
+                        unit.source_start,
+                        atom.kind,
+                        (unit.unit_ref,),
+                        unit.unit_ref,
+                    )
+                )
+    ordered = tuple(sorted(rows, key=lambda row: (row[0], row[2], row[3] or "")))
+    available_features = {
+        category for unit in form_lattice.units for category, _ in unit.features
+    }
+    bindings: dict[str, list[str]] = {}
+    for schema_ref, schema in sorted(schemas.items()):
+        raw_kinds = schema.get("target_kinds")
+        raw_roles = schema.get("roles")
+        raw_required = schema.get("required_features", [])
+        if (
+            type(raw_kinds) is not list
+            or type(raw_roles) is not list
+            or type(raw_required) is not list
+            or len(raw_kinds) != len(raw_roles)
+            or not raw_kinds
+        ):
+            raise ValueError(
+                f"application role-order schema is invalid: {schema_ref}"
+            )
+        if not set(raw_required) <= available_features:
+            continue
+        matches = 0
+        for selected in combinations(ordered, len(raw_kinds)):
+            if matches >= config.max_orientation_alternatives:
+                raise ValueError("application role-order match bound exceeded")
+            if tuple(row[1] for row in selected) != tuple(raw_kinds):
+                continue
+            if len({ref for row in selected for ref in row[2]}) < len(selected):
+                continue
+            for row, role_ref in zip(selected, raw_roles, strict=True):
+                if row[3] is not None:
+                    bindings.setdefault(row[3], []).append(role_ref)
+            matches += 1
+    return MappingProxyType(
+        {
+            source_ref: tuple(dict.fromkeys(role_refs))
+            for source_ref, role_refs in bindings.items()
+        }
     )
 
 

@@ -1230,6 +1230,35 @@ def _replay_program(
     if any(row.action_type in {"complete_program", "abstain"} for row in actions[:-1]):
         report("nonfinal_terminal_action")
 
+    children: dict[str, list[str]] = {}
+    for row in actions:
+        if row.action_type == "bind_nested_application":
+            if row.arguments[0] == "role":
+                _, parent_ref, _role_ref, child_ref = row.arguments
+                children.setdefault(parent_ref, []).append(child_ref)
+            else:
+                _, link_ref, _slot_ref, *operand_refs = row.arguments
+                children.setdefault(link_ref, []).extend(operand_refs)
+        elif row.action_type == "attach_scope":
+            scope_ref, _slot_ref, operand_ref = row.arguments
+            children.setdefault(scope_ref, []).append(operand_ref)
+        elif row.action_type == "project_variable":
+            binder_ref, _slot_ref, body_ref = row.arguments
+            children.setdefault(binder_ref, []).append(body_ref)
+
+    def descendants(root_ref: str) -> tuple[str, ...]:
+        result: list[str] = []
+        pending = [root_ref]
+        seen: set[str] = set()
+        while pending:
+            ref = pending.pop()
+            if ref in seen:
+                continue
+            seen.add(ref)
+            result.append(ref)
+            pending.extend(reversed(children.get(ref, ())))
+        return tuple(result)
+
     selected_designations: set[str] = set()
     applications: dict[str, Any] = {}
     nodes: set[str] = set()
@@ -1362,10 +1391,18 @@ def _replay_program(
             slot = context.variable(slot_ref)
             if slot is None:
                 report("unknown_variable_slot", action=action)
-            elif slot.application_frame_ref not in {
-                frame.slot_ref for frame in applications.values()
-            }:
-                report("variable_frame_mismatch", action=action)
+            else:
+                owners = tuple(
+                    ref
+                    for ref in descendants(body_ref)
+                    if ref in applications
+                    and applications[ref].slot_ref == slot.application_frame_ref
+                    and slot.role_ref not in bound_roles[ref]
+                )
+                if len(owners) != 1:
+                    report("variable_frame_mismatch", action=action)
+                else:
+                    bound_roles[owners[0]].add(slot.role_ref)
             if body_ref not in nodes:
                 report("unknown_variable_body", action=action)
             if local_ref in nodes:
@@ -1895,6 +1932,10 @@ def _proof_errors(
             if reference is not None:
                 expected_grounding.add(reference.target_ref)
                 expected_grounding.update(reference.provenance_refs)
+        elif action.action_type == "attach_scope":
+            scope = context.scope(action.arguments[1])
+            if scope is not None:
+                expected_grounding.add(scope.value_ref)
     if proof.grounding_refs != tuple(sorted(expected_grounding)):
         report("compilation_grounding_mismatch")
     return tuple(errors)
