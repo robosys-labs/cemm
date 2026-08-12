@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
+import sys
 
 from cemm_authoritative_hybrid.authority import AuthorityLinker
 from cemm_authoritative_hybrid.config import RuntimeConfig
@@ -57,12 +59,30 @@ def _cases_for(scenario_ref: str):
 
 
 def test_environment_factory_returns_exact_committed_owners(tmp_path: Path) -> None:
-    environment = build_environment(ROOT, tmp_path)
+    environment = build_environment(ROOT, tmp_path, source_revision="1" * 40)
 
-    assert environment["source_revision"] == admitted_source_for_phase(ROOT, "R3")
+    assert environment["source_revision"] == "1" * 40
     assert callable(environment["runtime_factory"])
     assert hasattr(environment["restart_executor"], "execute_restart_case")
     assert hasattr(environment["mutation_owner"], "execute_mutation")
+
+
+def test_build_cli_requires_explicit_source_revision(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/build_r4_artifacts.py",
+            "--environment",
+            "src/cemm_authoritative_hybrid/r4_environment.py",
+            "--output",
+            str(tmp_path / "build"),
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode != 0
+    assert "the following arguments are required: --source-revision" in completed.stderr
 
 
 def test_restart_executor_reopens_persistent_state_and_emits_cycle_result(
@@ -107,7 +127,7 @@ __cemm_test_inventory__ = {'tests/test_r4_environment.py::test_environment_facto
                                                                                            'diagnostic_role': 'owner',
                                                                                            'introduced_by_task': 'R4-Final-Admission-Closeout',
                                                                                            'owner_ref': 'mutation-partition',
-                                                                                           'source_ast_sha256': '6dc78e81abb47f3533a8fba2076f80187aebe0be9b0e9fb9c71bed1e613ddc76'},
+                                                                                           'source_ast_sha256': '50cad1812768fd684a6ccdc805bb84ae85e7919e9bb914b88e0e702a963cfea7'},
  'tests/test_r4_environment.py::test_restart_executor_reopens_persistent_state_and_emits_cycle_result': {'activation_phase': 'R4',
                                                                                                          'assertion_ref': 'assertion:r4-restart-executor-reopens-persistent-state',
                                                                                                          'diagnostic_role': 'owner',
@@ -119,4 +139,10 @@ __cemm_test_inventory__ = {'tests/test_r4_environment.py::test_environment_facto
                                                                                                      'diagnostic_role': 'owner',
                                                                                                      'introduced_by_task': 'R4-Final-Admission-Closeout',
                                                                                                      'owner_ref': 'mutation-partition',
-                                                                                                     'source_ast_sha256': '1d34ee412ea235df7da8bb1febf44d2e5e19bd413195318ec6ba80250d198b90'}}
+                                                                                                     'source_ast_sha256': '1d34ee412ea235df7da8bb1febf44d2e5e19bd413195318ec6ba80250d198b90'},
+ 'tests/test_r4_environment.py::test_build_cli_requires_explicit_source_revision': {'activation_phase': 'R4',
+                                                                                    'assertion_ref': 'assertion:r4-build-cli-requires-source-revision',
+                                                                                    'diagnostic_role': 'owner',
+                                                                                    'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                    'owner_ref': 'mutation-partition',
+                                                                                    'source_ast_sha256': 'fef5756285cb4bc34fdaf3c1d2869c55b7a0f3ea7b8b3b78929522d56eb00bf6'}}

@@ -1,14 +1,7 @@
-"""Fail-closed R4 artifact graph and external-review admission verification.
-
-This module is admission-only infrastructure.  It never signs a review and it
-contains no trust root.  The operator must supply an external verifier object
-and an independently pinned SHA-256 for the verifier module.
-"""
+"""Fail-closed repository-owned R4 artifact-integrity verification."""
 from __future__ import annotations
 
 import hashlib
-import importlib
-import inspect
 import json
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, TypeVar
@@ -18,13 +11,7 @@ from .r4_episodes import AuthenticEpisode
 from .r4_expansion import ExpandedCase
 from .r4_mutations import MutationObservation, SemanticMutation
 from .r4_partitions import AXES, PartitionAxisManifest, TrainingAllowlist
-from .r4_pipeline import (
-    ApprovedR4Build,
-    R4BuildReceipt,
-    R4BuildResult,
-    load_reviewed_scenarios,
-)
-from .r4_review import CorpusReviewManifest, ReviewManifestVerifier
+from .r4_pipeline import R4BuildReceipt, load_reviewed_scenarios
 from .r4_sufficiency import StructuralSufficiencyReceipt
 
 __all__ = ["R4AdmissionError", "verify_r4_admission"]
@@ -145,55 +132,15 @@ def _assertion_registry_hash() -> str:
     return _sha(_canonical_json(material))
 
 
-def _load_external_verifier(spec: str, expected_sha256: str):
-    if type(spec) is not str or spec.count(":") != 1:
-        raise R4AdmissionError("external verifier spec must be module:attribute")
-    if type(expected_sha256) is not str or len(expected_sha256) != 64:
-        raise R4AdmissionError("external verifier SHA-256 must be 64 lowercase hex")
-    try:
-        int(expected_sha256, 16)
-    except ValueError as exc:
-        raise R4AdmissionError("external verifier SHA-256 is not lowercase hex") from exc
-    if expected_sha256 != expected_sha256.lower():
-        raise R4AdmissionError("external verifier SHA-256 must be lowercase")
-    module_name, attribute_name = spec.split(":", 1)
-    module = importlib.import_module(module_name)
-    source_path_text = inspect.getsourcefile(module) or getattr(module, "__file__", None)
-    if not source_path_text:
-        raise R4AdmissionError("external verifier module has no inspectable source file")
-    source_path = Path(source_path_text).resolve(strict=True)
-    if not source_path.is_file():
-        raise R4AdmissionError("external verifier source is not a regular file")
-    actual_sha256 = hashlib.sha256(source_path.read_bytes()).hexdigest()
-    if actual_sha256 != expected_sha256:
-        raise R4AdmissionError("external verifier source hash differs from pinned hash")
-    candidate = getattr(module, attribute_name, None)
-    if candidate is None:
-        raise R4AdmissionError("external verifier attribute does not exist")
-    if not hasattr(candidate, "verify_signature"):
-        if not callable(candidate):
-            raise R4AdmissionError("external verifier attribute is neither owner nor factory")
-        candidate = candidate()
-    verifier = ReviewManifestVerifier(candidate)
-    verifier_ref = _content_ref(
-        "external_review_verifier",
-        {"spec": spec, "sha256": actual_sha256},
-    )
-    return verifier, verifier_ref, actual_sha256
-
-
 def verify_r4_admission(
     root: str | Path,
     *,
     expected_source_revision: str,
     expected_authority_generation: str,
-    verifier_spec: str,
-    verifier_sha256: str,
 ) -> dict[str, object]:
     project = Path(root).resolve(strict=True)
     artifacts = project / "artifacts" / "r4"
     scenarios_path = project / "data" / "scenarios" / "use_cases.jsonl"
-    review_path = project / "data" / "review" / "R4_REVIEW_MANIFEST.json"
 
     contracts = _load_jsonl(artifacts / "expected_contracts.jsonl", ExpectedCycleContract.from_dict)
     derivations = _load_jsonl(
@@ -220,10 +167,6 @@ def verify_r4_admission(
         artifacts / "training_allowlist.json", TrainingAllowlist.from_dict
     )
     receipt = _load_json(artifacts / "BUILD_RECEIPT.json", R4BuildReceipt.from_dict)
-    # A reviewer is free to choose JSON whitespace; semantic canonicalization is
-    # enforced by CorpusReviewManifest.from_dict and its content identity.
-    manifest = _load_json(review_path, CorpusReviewManifest.from_dict, canonical_bytes=False)
-
     if not contracts or not cases or not episodes:
         raise R4AdmissionError("R4 corpus evidence is empty")
     if tuple(row.axis for row in manifests) != AXES:
@@ -260,34 +203,15 @@ def verify_r4_admission(
         structural_sufficiency_sha256=_sha(_canonical_json(sufficiency.as_dict())),
         partition_manifest_sha256s=partition_hashes,
         training_allowlist_sha256=_sha(_canonical_json(allowlist.as_dict())),
-        review_state="external_review_required",
+        admission_state="candidate",
     )
     if rebuilt.as_dict() != receipt.as_dict():
         raise R4AdmissionError("R4 BUILD_RECEIPT does not reconstruct from committed artifacts")
 
-    build = R4BuildResult(
-        scenarios=scenarios,
-        contracts=contracts,
-        derivation_contracts=derivations,
-        expanded_cases=cases,
-        episodes=episodes,
-        mutations=mutations,
-        mutation_observations=observations,
-        sufficiency=sufficiency,
-        partition_manifests=manifests,
-        training_allowlist=allowlist,
-        receipt=receipt,
-    )
-    verifier, verifier_ref, verifier_hash = _load_external_verifier(
-        verifier_spec, verifier_sha256
-    )
-    approval = ApprovedR4Build.create(build=build, manifest=manifest, verifier=verifier)
     artifact_refs = tuple(
         sorted(
             (
                 receipt.receipt_ref,
-                manifest.manifest_ref,
-                approval.approval_ref,
                 *(row.contract_ref for row in contracts),
                 *(row.case_ref for row in cases),
                 *(row.episode_ref for row in episodes),
@@ -300,17 +224,12 @@ def verify_r4_admission(
         )
     )
     material: dict[str, object] = {
-        "schema": "cemm-r4-artifact-review-step-report-v1",
+        "schema": "cemm-r4-artifact-integrity-step-report-v1",
         "artifact_count": len(artifact_refs),
         "artifact_set_ref": _content_ref("r4_admission_artifact_set", list(artifact_refs)),
         "build_receipt_ref": receipt.receipt_ref,
-        "review_manifest_ref": manifest.manifest_ref,
-        "approval_ref": approval.approval_ref,
-        "reviewer_ref": manifest.reviewer_ref,
-        "verifier_ref": verifier_ref,
-        "verifier_sha256": verifier_hash,
         "source_revision": receipt.source_revision,
         "authority_generation": receipt.authority_generation,
     }
-    material["integrity_ref"] = _content_ref("r4_artifact_review", material)
+    material["integrity_ref"] = _content_ref("r4_artifact_integrity", material)
     return material

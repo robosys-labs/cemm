@@ -842,3 +842,6 @@ delete historical branches, or alter unrelated worktrees as part of this merge.
   `SemanticMutation`, `MutationBoundaryResult`, `R4BuildReceipt`, and
   `CorpusReviewManifest` use their active ABI owners and signatures.
 - Scope: root runtime adoption and R5+ remain excluded.
+# Superseded
+
+Superseded by [R4 Repository-Owned Admission Plan](2026-08-12-r4-repository-owned-admission-plan.md). Retained as historical evidence only.

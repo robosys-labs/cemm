@@ -379,6 +379,35 @@ class TrainingAllowlist:
             "train_refs": list(self.train_refs),
         }
 
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "TrainingAllowlist":
+        row = exact_fields(value, cls._FIELDS, "TrainingAllowlist")
+        if row["abi_version"] != TRAINING_ALLOWLIST_ABI_VERSION:
+            raise ValueError("unsupported Training Allowlist ABI")
+        source_set_ref = exact_text(row["source_set_ref"], "source_set_ref")
+        axis_manifest_refs = wire_refs(
+            row["axis_manifest_refs"], "axis_manifest_refs", nonempty=True
+        )
+        train_refs = wire_refs(row["train_refs"], "train_refs")
+        material = {
+            "abi_version": TRAINING_ALLOWLIST_ABI_VERSION,
+            "source_set_ref": source_set_ref,
+            "axis_manifest_refs": list(axis_manifest_refs),
+            "train_refs": list(train_refs),
+        }
+        allowlist_ref = stable_ref("training_allowlist_v2", material)
+        if row["allowlist_ref"] != allowlist_ref:
+            raise ValueError("non-canonical TrainingAllowlist")
+        obj = object.__new__(cls)
+        object.__setattr__(obj, "abi_version", TRAINING_ALLOWLIST_ABI_VERSION)
+        object.__setattr__(obj, "allowlist_ref", allowlist_ref)
+        object.__setattr__(obj, "source_set_ref", source_set_ref)
+        object.__setattr__(obj, "axis_manifest_refs", axis_manifest_refs)
+        object.__setattr__(obj, "train_refs", train_refs)
+        if obj.as_dict() != dict(row):
+            raise ValueError("non-canonical TrainingAllowlist")
+        return obj
+
 
 class IndependentAxisPartitioner:
     """Build one transitive connected-component partition per protected axis."""

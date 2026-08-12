@@ -15,7 +15,6 @@ SRC = ROOT / "src"
 PUBLIC_EXPORTS = (
     "ABIRegistry",
     "AuthenticEpisode",
-    "CorpusReviewManifest",
     "CycleFinalizer",
     "CycleResult",
     "CycleStatus",

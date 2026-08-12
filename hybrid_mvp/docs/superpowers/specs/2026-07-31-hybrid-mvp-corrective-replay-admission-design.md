@@ -518,3 +518,6 @@ A phase ends in exactly one state:
 
 There is no partial-green profile, profile-label promotion, inherited pass
 count, or release claim based on a future installer run.
+# R4 supersession notice
+
+The R4 external-review and signed-manifest requirements in this document are superseded by [R4 Repository-Owned Admission Design](2026-08-12-r4-repository-owned-admission-design.md). All non-R4 governance and admission requirements remain authoritative where they do not conflict with that design.

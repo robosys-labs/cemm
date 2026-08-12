@@ -3,7 +3,7 @@
 
 The factory module must expose:
 
-``build_environment(project_root, output_root) -> mapping``
+``build_environment(project_root, output_root, *, source_revision) -> mapping``
 
 Required mapping entries:
 - ``authority``
@@ -68,6 +68,7 @@ def _load_factory(path: Path):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--environment", type=Path, required=True)
+    parser.add_argument("--source-revision", required=True)
     parser.add_argument(
         "--scenarios", type=Path,
         default=ROOT / "data" / "scenarios" / "use_cases.jsonl",
@@ -85,7 +86,11 @@ def main() -> int:
     args = parser.parse_args()
 
     build_environment = _load_factory(args.environment.resolve())
-    environment = build_environment(ROOT, args.output.resolve())
+    environment = build_environment(
+        ROOT,
+        args.output.resolve(),
+        source_revision=args.source_revision,
+    )
     if not isinstance(environment, Mapping):
         raise TypeError("build_environment must return a mapping")
     required = {

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any, Mapping
 
 from .authority import AuthorityLinker
@@ -372,8 +373,13 @@ def _seed_reviewed_world(runtime: Any, case: ExpandedCase) -> None:
 
 
 def build_environment(
-    project_root: Path, output_root: Path
+    project_root: Path,
+    output_root: Path,
+    *,
+    source_revision: str,
 ) -> Mapping[str, object]:
+    if type(source_revision) is not str or re.fullmatch(r"[0-9a-f]{40}", source_revision) is None:
+        raise ValueError("source_revision must be exact 40-character lowercase hex")
     root = Path(project_root).resolve()
     output = Path(output_root).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -410,6 +416,6 @@ def build_environment(
         "runtime_factory": runtime_factory,
         "restart_executor": AuthenticRestartExecutor(root, output),
         "mutation_owner": AuthenticMutationOwner(root, output),
-        "source_revision": admitted_source_for_phase(root, "R3"),
+        "source_revision": source_revision,
         "close": close,
     }

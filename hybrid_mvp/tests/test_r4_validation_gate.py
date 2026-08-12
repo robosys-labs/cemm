@@ -1,0 +1,124 @@
+"""R4 repository-owned validation-control tests."""
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+import pytest
+
+
+ROOT = Path(__file__).parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+from cemm_authoritative_hybrid import process_control as process_control_module  # noqa: E402
+
+sys.modules["process_control"] = process_control_module
+import validation_gate as gate  # noqa: E402
+
+
+def _valid_report() -> dict[str, object]:
+    material: dict[str, object] = {
+        "schema": "cemm-r4-artifact-integrity-step-report-v1",
+        "artifact_count": 401,
+        "artifact_set_ref": gate.content_ref("artifact_set", ["x"]),
+        "build_receipt_ref": gate.content_ref("build_receipt", {"x": 1}),
+        "source_revision": "1" * 40,
+        "authority_generation": "authority:test",
+    }
+    material["integrity_ref"] = gate.content_ref("r4_artifact_integrity", material)
+    return material
+
+
+def test_r4_integrity_report_has_exact_internal_shape() -> None:
+    gate._validate_admission_step_report(
+        "r4_artifact_integrity",
+        _valid_report(),
+    )
+
+
+def test_r4_integrity_report_rejects_retired_review_fields() -> None:
+    report = _valid_report()
+    report["reviewer_ref"] = "reviewer:test"
+    with pytest.raises(gate.AdmissionValidationError):
+        gate._validate_admission_step_report("r4_artifact_integrity", report)
+
+
+def test_r4_generator_source_is_parent_of_artifact_only_commit(monkeypatch) -> None:
+    artifact_commit = "2" * 40
+    generator_commit = "1" * 40
+
+    def probe(_root: Path, arguments: tuple[str, ...], **_kwargs) -> bytes:
+        if arguments == ("rev-list", "--parents", "-n", "1", artifact_commit):
+            return f"{artifact_commit} {generator_commit}\n".encode()
+        if arguments == (
+            "diff-tree",
+            "--no-commit-id",
+            "--name-only",
+            "-r",
+            artifact_commit,
+        ):
+            return b"artifacts/r4/BUILD_RECEIPT.json\nartifacts/r4/episodes.jsonl\n"
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(gate, "_bounded_git_probe", probe)
+    assert gate._r4_generator_source_revision(ROOT, artifact_commit) == generator_commit
+
+
+def test_r4_generator_source_rejects_merge_commit(monkeypatch) -> None:
+    artifact_commit = "3" * 40
+
+    monkeypatch.setattr(
+        gate,
+        "_bounded_git_probe",
+        lambda *_args, **_kwargs: f"{artifact_commit} {'1' * 40} {'2' * 40}\n".encode(),
+    )
+    with pytest.raises(gate.GateConfigError, match="exactly one parent"):
+        gate._r4_generator_source_revision(ROOT, artifact_commit)
+
+
+def test_r4_generator_source_rejects_nonartifact_change(monkeypatch) -> None:
+    artifact_commit = "2" * 40
+    generator_commit = "1" * 40
+
+    def probe(_root: Path, arguments: tuple[str, ...], **_kwargs) -> bytes:
+        if arguments[0] == "rev-list":
+            return f"{artifact_commit} {generator_commit}\n".encode()
+        return b"artifacts/r4/BUILD_RECEIPT.json\nsrc/cemm_authoritative_hybrid/r4_pipeline.py\n"
+
+    monkeypatch.setattr(gate, "_bounded_git_probe", probe)
+    with pytest.raises(gate.GateConfigError, match="only artifacts/r4"):
+        gate._r4_generator_source_revision(ROOT, artifact_commit)
+
+
+__cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_report_has_exact_internal_shape': {'activation_phase': 'R4',
+                                                                                         'assertion_ref': 'assertion:r4-integrity-report-exact-internal-shape',
+                                                                                         'diagnostic_role': 'owner',
+                                                                                         'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                         'owner_ref': 'artifact-integrity',
+                                                                                         'source_ast_sha256': '5d272acc451aebd4303796cdc020e7fdc74eeeb855e78974e4183e0c07c3d5ac'},
+ 'tests/test_r4_validation_gate.py::test_r4_integrity_report_rejects_retired_review_fields': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-integrity-report-rejects-review-fields',
+                                                                                              'diagnostic_role': 'owner',
+                                                                                              'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                              'owner_ref': 'artifact-integrity',
+                                                                                              'source_ast_sha256': '89a399b7ee2116ca9521f63a8ca47431bccf5c6cee297ca1df11087da556dfbe'},
+ 'tests/test_r4_validation_gate.py::test_r4_generator_source_is_parent_of_artifact_only_commit': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-generator-source-is-artifact-parent',
+                                                                                                  'diagnostic_role': 'owner',
+                                                                                                  'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                                  'owner_ref': 'artifact-integrity',
+                                                                                                  'source_ast_sha256': '5d456c4cd0bf91aca6e1765c1ea8d98b00f78eb9679440b329e3bd38c59c2b6f'},
+ 'tests/test_r4_validation_gate.py::test_r4_generator_source_rejects_merge_commit': {'activation_phase': 'R4',
+                                                                                     'assertion_ref': 'assertion:r4-generator-source-rejects-merge',
+                                                                                     'diagnostic_role': 'owner',
+                                                                                     'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                     'owner_ref': 'artifact-integrity',
+                                                                                     'source_ast_sha256': 'e6a83d271f044d38be245eab614833b7e1f8b5a48d33680e64490662e07c1294'},
+ 'tests/test_r4_validation_gate.py::test_r4_generator_source_rejects_nonartifact_change': {'activation_phase': 'R4',
+                                                                                           'assertion_ref': 'assertion:r4-generator-source-rejects-nonartifact-change',
+                                                                                           'diagnostic_role': 'owner',
+                                                                                           'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                           'owner_ref': 'artifact-integrity',
+                                                                                           'source_ast_sha256': '0ecc7f1b3552d0ff4bb60448b55b43a5df336169af5d0e73852d13a10001d8f2'}}

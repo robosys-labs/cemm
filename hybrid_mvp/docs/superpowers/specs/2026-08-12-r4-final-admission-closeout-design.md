@@ -248,3 +248,6 @@ This closeout is complete only when:
 - the full lineage is merged into `main` without history rewriting;
 - post-merge governed and repository tests pass; and
 - the pushed `main` commit is the exact verified merge commit.
+# Superseded
+
+Superseded by [R4 Repository-Owned Admission Design](2026-08-12-r4-repository-owned-admission-design.md). Retained as historical evidence only.

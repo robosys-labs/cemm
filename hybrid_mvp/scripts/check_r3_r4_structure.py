@@ -40,9 +40,27 @@ def main() -> int:
     for token in ("BootstrapProposer", ".propose(", "HybridRuntime"):
         if token in expected:
             raise ValueError(f"expected-contract compiler depends on {token}")
-    review = _text("r4_review.py")
-    if "private_key" in review or "def sign(" in review:
-        raise ValueError("R4 review owner can self-approve")
+    retired_paths = (
+        SRC / "r4_review.py",
+        ROOT / "scripts" / "prepare_r4_review_request.py",
+        ROOT / "scripts" / "verify_r4_review_manifest.py",
+        ROOT / "schemas" / "corpus_review_manifest.schema.json",
+        ROOT / "data" / "review" / "R4_REVIEW_MANIFEST.template.json",
+    )
+    if any(path.exists() for path in retired_paths):
+        raise ValueError("retired R4 external-review file remains active")
+    retired_tokens = (
+        "CorpusReviewManifest", "ApprovedR4Build", "CEMM_R4_REVIEW",
+        "R4_REVIEW_MANIFEST", "external_review_required",
+    )
+    for relative in ("r4_pipeline.py", "r4_admission.py"):
+        for token in retired_tokens:
+            if token in _text(relative):
+                raise ValueError(f"retired R4 external-review token remains: {relative}:{token}")
+    validation = (ROOT / "scripts" / "validation_gate.py").read_text(encoding="utf-8")
+    for token in retired_tokens:
+        if token in validation:
+            raise ValueError(f"retired R4 external-review token remains in validation gate: {token}")
     for path in SRC.glob("*.py"):
         ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     print("R3/R4 structural hard-cut checks passed")

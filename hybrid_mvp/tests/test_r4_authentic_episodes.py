@@ -8,7 +8,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from cemm_authoritative_hybrid.r4_episodes import AuthenticEpisode
+from cemm_authoritative_hybrid.r4_pipeline import (
+    R4_BUILD_RECEIPT_ABI_VERSION,
+    R4BuildReceipt,
+)
 
 __cemm_test_inventory__ = {'tests/test_r4_authentic_episodes.py::test_every_accepted_episode_binds_coverage_program_and_action_identity': {'activation_phase': 'R4',
                                                                                                                  'assertion_ref': 'assertion:r4-authentic-episodes-bind-coverage-program-action',
@@ -27,7 +33,17 @@ __cemm_test_inventory__ = {'tests/test_r4_authentic_episodes.py::test_every_acce
                                                                                                          'contributes_to_rewrite_refs': ['rewrite_obligation:cf2ae32ce7f4e41090dc235e'],
                                                                                                          'diagnostic_role': 'phase',
                                                                                                          'introduced_by_task': 'R4-Closeout',
-                                                                                                         'source_ast_sha256': '8ac7df266c0f4c285e404fa86692b65516516c071272cbd04daa682a18efd4b6'}}
+                                                                                                         'source_ast_sha256': '8ac7df266c0f4c285e404fa86692b65516516c071272cbd04daa682a18efd4b6'},
+ 'tests/test_r4_authentic_episodes.py::test_r4_build_receipt_is_an_exact_admission_candidate': {'activation_phase': 'R4',
+                                                                                                'assertion_ref': 'assertion:r4-build-receipt-is-exact-admission-candidate',
+                                                                                                'diagnostic_role': 'phase',
+                                                                                                'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                                'source_ast_sha256': '6f478cf5f46fb3e7b1377a63e2ec5e415f662fd2f0c3aeb4a40371538320ef91'},
+ 'tests/test_r4_authentic_episodes.py::test_r4_build_receipt_rejects_retired_review_state': {'activation_phase': 'R4',
+                                                                                             'assertion_ref': 'assertion:r4-build-receipt-rejects-retired-review-state',
+                                                                                             'diagnostic_role': 'phase',
+                                                                                             'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                             'source_ast_sha256': 'e0afd888f2d3859aa9a1b469d79d4af6dc93c3dfa7b50ae02ee9704bd40f3c5e'}}
 
 ROOT = Path(__file__).parents[1]
 EPISODES = ROOT / "artifacts" / "r4" / "episodes.jsonl"
@@ -44,6 +60,45 @@ def _episodes() -> tuple[AuthenticEpisode, ...]:
     )
     assert rows, "R4 authentic episode corpus is empty"
     return rows
+
+
+def _candidate_receipt() -> R4BuildReceipt:
+    sha = "sha256:" + "0" * 64
+    return R4BuildReceipt.create(
+        source_revision="1" * 40,
+        authority_generation="authority:test",
+        abi_registry_ref="abi:test",
+        scenario_source_sha256=sha,
+        assertion_registry_sha256=sha,
+        contract_set_sha256=sha,
+        derivation_contract_set_sha256=sha,
+        expanded_case_set_sha256=sha,
+        episode_set_sha256=sha,
+        mutation_set_sha256=sha,
+        mutation_observation_set_sha256=sha,
+        structural_sufficiency_sha256=sha,
+        partition_manifest_sha256s=tuple(
+            "sha256:" + f"{index:064x}" for index in range(1, 8)
+        ),
+        training_allowlist_sha256=sha,
+        admission_state="candidate",
+    )
+
+
+def test_r4_build_receipt_is_an_exact_admission_candidate() -> None:
+    value = _candidate_receipt().as_dict()
+    assert R4_BUILD_RECEIPT_ABI_VERSION == 3
+    assert value["abi_version"] == 3
+    assert value["admission_state"] == "candidate"
+    assert "review_state" not in value
+    assert R4BuildReceipt.from_dict(value).as_dict() == value
+
+
+def test_r4_build_receipt_rejects_retired_review_state() -> None:
+    value = _candidate_receipt().as_dict()
+    value["review_state"] = value.pop("admission_state")
+    with pytest.raises(ValueError, match="R4BuildReceipt"):
+        R4BuildReceipt.from_dict(value)
 
 
 def test_every_accepted_episode_binds_coverage_program_and_action_identity() -> None:

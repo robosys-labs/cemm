@@ -125,3 +125,6 @@ This implementation bundle allocates the active code owners as follows:
 The installer does not append green R3/R4 ledger records.  Technical gates,
 committed deterministic artifacts and independent corpus approval must be run
 on the applied checkout before those transitions are permitted.
+# R4 supersession notice
+
+The R4 external-review and signed-manifest tasks in this plan are superseded by [R4 Repository-Owned Admission Plan](2026-08-12-r4-repository-owned-admission-plan.md). Its R3 implementation history remains authoritative where it does not conflict with that plan.

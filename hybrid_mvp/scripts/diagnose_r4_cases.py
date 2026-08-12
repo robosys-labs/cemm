@@ -114,7 +114,8 @@ def diagnose_cases(
     project_root: Path,
     *,
     store_root: Path,
-    environment_factory: Callable[[Path, Path], Mapping[str, object]] | None = None,
+    environment_factory: Callable[..., Mapping[str, object]] | None = None,
+    source_revision: str | None = None,
 ) -> dict[str, object]:
     """Execute all reviewed cases and report earliest-owner mismatch families."""
 
@@ -136,9 +137,17 @@ def diagnose_cases(
 
     close_environment: Callable[[], object] | None = None
     if environment_factory is None:
+        if source_revision is not None:
+            raise ValueError("source_revision requires an environment factory")
         owner = PublicRuntimeEpisodeOwner(runtime_factory)
     else:
-        environment = environment_factory(root, stores)
+        if type(source_revision) is not str:
+            raise ValueError("source_revision is required with an environment factory")
+        environment = environment_factory(
+            root,
+            stores,
+            source_revision=source_revision,
+        )
         if not isinstance(environment, Mapping):
             raise TypeError("environment factory must return a mapping")
         supplied_factory = environment.get("runtime_factory")
@@ -226,9 +235,14 @@ def _load_environment_factory(locator: str):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--environment")
+    parser.add_argument("--source-revision")
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.environment is not None and args.source_revision is None:
+        parser.error("--source-revision is required with --environment")
+    if args.environment is None and args.source_revision is not None:
+        parser.error("--source-revision requires --environment")
 
     environment_factory = (
         None
@@ -239,6 +253,7 @@ def main() -> int:
         ROOT,
         store_root=args.store_root,
         environment_factory=environment_factory,
+        source_revision=args.source_revision,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(canonical_report_bytes(report))

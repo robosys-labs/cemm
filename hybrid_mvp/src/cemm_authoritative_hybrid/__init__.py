@@ -5,7 +5,6 @@ from importlib import import_module
 
 _EXPORTS = {
     "AuthenticEpisode": (".r4_episodes", "AuthenticEpisode"),
-    "CorpusReviewManifest": (".r4_review", "CorpusReviewManifest"),
     "Decision": (".decision", "Decision"),
     "DecisionAction": (".decision", "DecisionAction"),
     "DecisionStatus": (".decision", "DecisionStatus"),

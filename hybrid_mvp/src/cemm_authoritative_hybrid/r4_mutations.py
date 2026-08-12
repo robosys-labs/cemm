@@ -12,6 +12,7 @@ from typing import Any, Iterable, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
 from .r3_codec import (
+    exact_bool,
     exact_fields,
     exact_refs,
     exact_text,
@@ -286,6 +287,39 @@ class MutationObservation:
             "observed_artifact_ref": self.observed_artifact_ref,
             "matched_expectation": self.matched_expectation,
         }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "MutationObservation":
+        row = exact_fields(value, cls._FIELDS, "MutationObservation")
+        if row["abi_version"] != MUTATION_OBSERVATION_ABI_VERSION:
+            raise ValueError("unsupported Mutation Observation ABI")
+        material = {
+            "abi_version": MUTATION_OBSERVATION_ABI_VERSION,
+            "mutation_ref": exact_text(row["mutation_ref"], "mutation_ref"),
+            "actual_earliest_owner": exact_text(
+                row["actual_earliest_owner"], "actual_earliest_owner"
+            ),
+            "actual_status": exact_text(row["actual_status"], "actual_status"),
+            "actual_error_code": exact_text(
+                row["actual_error_code"], "actual_error_code"
+            ),
+            "observed_artifact_ref": exact_text(
+                row["observed_artifact_ref"], "observed_artifact_ref"
+            ),
+            "matched_expectation": exact_bool(
+                row["matched_expectation"], "matched_expectation"
+            ),
+        }
+        observation_ref = stable_ref("mutation_observation_v2", material)
+        if row["observation_ref"] != observation_ref:
+            raise ValueError("non-canonical MutationObservation")
+        obj = object.__new__(cls)
+        object.__setattr__(obj, "observation_ref", observation_ref)
+        for name, item in material.items():
+            object.__setattr__(obj, name, item)
+        if obj.as_dict() != dict(row):
+            raise ValueError("non-canonical MutationObservation")
+        return obj
 
 
 @dataclass(frozen=True)

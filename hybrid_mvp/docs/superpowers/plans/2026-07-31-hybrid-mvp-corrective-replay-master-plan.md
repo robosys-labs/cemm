@@ -404,3 +404,6 @@ Stop implementation and record a red or externally blocked receipt when:
 - integration would detach, rewrite or discard a ledger-referenced commit.
 
 A red receipt is useful evidence. It is never promoted by changing a label.
+# R4 supersession notice
+
+The R4 external-review and signed-manifest requirements in this plan are superseded by [R4 Repository-Owned Admission Plan](2026-08-12-r4-repository-owned-admission-plan.md). All non-R4 governance and implementation history remains authoritative where it does not conflict with that plan.

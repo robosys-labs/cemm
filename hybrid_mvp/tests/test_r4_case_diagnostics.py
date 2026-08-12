@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import subprocess
+import sys
 
 ROOT = Path(__file__).parents[1]
 SCRIPT = ROOT / "scripts" / "diagnose_r4_cases.py"
@@ -51,6 +53,28 @@ def test_report_is_byte_deterministic(tmp_path: Path) -> None:
     assert first == second
 
 
+def test_environment_diagnostic_requires_explicit_source_revision(
+    tmp_path: Path,
+) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--environment",
+            "cemm_authoritative_hybrid.r4_environment:build_environment",
+            "--store-root",
+            str(tmp_path / "stores"),
+            "--output",
+            str(tmp_path / "report.json"),
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode != 0
+    assert "--source-revision is required with --environment" in completed.stderr
+
+
 __cemm_test_inventory__ = {'tests/test_r4_case_diagnostics.py::test_report_groups_by_earliest_comparison_owner': {'activation_phase': 'R4',
                                                                                         'assertion_ref': 'assertion:r4-case-diagnostic-groups-earliest-owner',
                                                                                         'diagnostic_role': 'owner',
@@ -62,4 +86,10 @@ __cemm_test_inventory__ = {'tests/test_r4_case_diagnostics.py::test_report_group
                                                                           'diagnostic_role': 'owner',
                                                                           'introduced_by_task': 'R4-Final-Admission-Closeout',
                                                                           'owner_ref': 'expected-contract',
-                                                                          'source_ast_sha256': 'a82b4be5e8d1f6cfea5fae59985f43fc34bcbac7ce82708f9c0cf2479934f22b'}}
+                                                                          'source_ast_sha256': 'a82b4be5e8d1f6cfea5fae59985f43fc34bcbac7ce82708f9c0cf2479934f22b'},
+ 'tests/test_r4_case_diagnostics.py::test_environment_diagnostic_requires_explicit_source_revision': {'activation_phase': 'R4',
+                                                                                                      'assertion_ref': 'assertion:r4-diagnostic-requires-source-revision',
+                                                                                                      'diagnostic_role': 'owner',
+                                                                                                      'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                                      'owner_ref': 'expected-contract',
+                                                                                                      'source_ast_sha256': 'd38c6552be5c0b80ac4e6ebde0717631e88b330119b0d62dfd3061c27e941270'}}

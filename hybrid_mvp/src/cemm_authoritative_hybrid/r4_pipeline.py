@@ -35,21 +35,17 @@ from .r4_partitions import (
     PartitionAxisManifest,
     TrainingAllowlist,
 )
-from .r4_review import CorpusReviewManifest, ReviewManifestVerifier
 from .r4_sufficiency import (
     StructuralSufficiencyEvaluator,
     StructuralSufficiencyReceipt,
 )
 
-R4_BUILD_RECEIPT_ABI_VERSION = 2
-R4_APPROVAL_ABI_VERSION = 1
+R4_BUILD_RECEIPT_ABI_VERSION = 3
 
 __all__ = [
     "R4_BUILD_RECEIPT_ABI_VERSION",
-    "R4_APPROVAL_ABI_VERSION",
     "R4BuildReceipt",
     "R4BuildResult",
-    "ApprovedR4Build",
     "R4Pipeline",
     "load_reviewed_scenarios",
     "write_jsonl",
@@ -126,7 +122,7 @@ class R4BuildReceipt:
     structural_sufficiency_sha256: str
     partition_manifest_sha256s: tuple[str, ...]
     training_allowlist_sha256: str
-    review_state: str
+    admission_state: str
 
     _FIELDS = frozenset(
         {
@@ -146,7 +142,7 @@ class R4BuildReceipt:
             "structural_sufficiency_sha256",
             "partition_manifest_sha256s",
             "training_allowlist_sha256",
-            "review_state",
+            "admission_state",
         }
     )
 
@@ -164,8 +160,8 @@ class R4BuildReceipt:
                 canonical[name] = exact_refs(value, name, nonempty=True)
             else:
                 canonical[name] = exact_text(value, name)
-        if canonical["review_state"] != "external_review_required":
-            raise ValueError("R4 build receipt cannot self-approve")
+        if canonical["admission_state"] != "candidate":
+            raise ValueError("R4 build receipt must remain an admission candidate")
         material = {
             "abi_version": R4_BUILD_RECEIPT_ABI_VERSION,
             **{
@@ -175,7 +171,7 @@ class R4BuildReceipt:
         }
         obj = object.__new__(cls)
         object.__setattr__(obj, "abi_version", R4_BUILD_RECEIPT_ABI_VERSION)
-        object.__setattr__(obj, "receipt_ref", stable_ref("r4_build_v2", material))
+        object.__setattr__(obj, "receipt_ref", stable_ref("r4_build_v3", material))
         for name, value in canonical.items():
             object.__setattr__(obj, name, value)
         return obj
@@ -198,7 +194,7 @@ class R4BuildReceipt:
             "structural_sufficiency_sha256": self.structural_sufficiency_sha256,
             "partition_manifest_sha256s": list(self.partition_manifest_sha256s),
             "training_allowlist_sha256": self.training_allowlist_sha256,
-            "review_state": self.review_state,
+            "admission_state": self.admission_state,
         }
 
     @classmethod
@@ -234,72 +230,6 @@ class R4BuildResult:
     partition_manifests: tuple[PartitionAxisManifest, ...]
     training_allowlist: TrainingAllowlist
     receipt: R4BuildReceipt
-
-
-@dataclass(frozen=True, init=False)
-class ApprovedR4Build:
-    abi_version: int
-    approval_ref: str
-    build_receipt_ref: str
-    review_manifest_ref: str
-
-    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-        raise TypeError("use ApprovedR4Build.create")
-
-    @classmethod
-    def create(
-        cls,
-        *,
-        build: R4BuildResult,
-        manifest: CorpusReviewManifest,
-        verifier: ReviewManifestVerifier,
-    ) -> "ApprovedR4Build":
-        if type(build) is not R4BuildResult:
-            raise TypeError("build must be exact R4BuildResult")
-        if type(manifest) is not CorpusReviewManifest:
-            raise TypeError("manifest must be exact CorpusReviewManifest")
-        if type(verifier) is not ReviewManifestVerifier:
-            raise TypeError("verifier must be exact ReviewManifestVerifier")
-        verifier.verify(manifest)
-        receipt = build.receipt
-        comparisons = {
-            "scenario_source_sha256": receipt.scenario_source_sha256,
-            "assertion_registry_sha256": receipt.assertion_registry_sha256,
-            "expected_contract_set_sha256": receipt.contract_set_sha256,
-            "derivation_contract_set_sha256": receipt.derivation_contract_set_sha256,
-            "expanded_case_set_sha256": receipt.expanded_case_set_sha256,
-            "structural_sufficiency_sha256": receipt.structural_sufficiency_sha256,
-            "episode_set_sha256": receipt.episode_set_sha256,
-            "mutation_set_sha256": receipt.mutation_set_sha256,
-            "mutation_observation_set_sha256": receipt.mutation_observation_set_sha256,
-            "partition_manifest_sha256s": receipt.partition_manifest_sha256s,
-            "training_allowlist_sha256": receipt.training_allowlist_sha256,
-            "authority_generation": receipt.authority_generation,
-            "abi_registry_ref": receipt.abi_registry_ref,
-            "source_revision": receipt.source_revision,
-        }
-        for field, expected in comparisons.items():
-            if getattr(manifest, field) != expected:
-                raise ValueError(f"review manifest does not bind exact build field: {field}")
-        material = {
-            "abi_version": R4_APPROVAL_ABI_VERSION,
-            "build_receipt_ref": receipt.receipt_ref,
-            "review_manifest_ref": manifest.manifest_ref,
-        }
-        obj = object.__new__(cls)
-        object.__setattr__(obj, "abi_version", R4_APPROVAL_ABI_VERSION)
-        object.__setattr__(obj, "approval_ref", stable_ref("approved_r4_build", material))
-        object.__setattr__(obj, "build_receipt_ref", receipt.receipt_ref)
-        object.__setattr__(obj, "review_manifest_ref", manifest.manifest_ref)
-        return obj
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "abi_version": self.abi_version,
-            "approval_ref": self.approval_ref,
-            "build_receipt_ref": self.build_receipt_ref,
-            "review_manifest_ref": self.review_manifest_ref,
-        }
 
 
 class R4Pipeline:
@@ -446,7 +376,7 @@ class R4Pipeline:
             training_allowlist_sha256=_sha256_bytes(
                 _canonical_json(allowlist.as_dict())
             ),
-            review_state="external_review_required",
+            admission_state="candidate",
         )
         return R4BuildResult(
             scenarios=scenarios,

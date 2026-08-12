@@ -5,96 +5,45 @@
   "additionalProperties": false,
   "required": [
     "abi_version",
-    "build_ref",
+    "receipt_ref",
     "source_revision",
     "authority_generation",
     "abi_registry_ref",
     "scenario_source_sha256",
-    "expected_contract_set_sha256",
-    "expected_derivation_set_sha256",
+    "assertion_registry_sha256",
+    "contract_set_sha256",
+    "derivation_contract_set_sha256",
     "expanded_case_set_sha256",
     "episode_set_sha256",
     "mutation_set_sha256",
     "mutation_observation_set_sha256",
-    "sufficiency_sha256",
+    "structural_sufficiency_sha256",
     "partition_manifest_sha256s",
     "training_allowlist_sha256",
-    "review_state"
+    "admission_state"
   ],
   "properties": {
-    "abi_version": {
-      "const": 2
-    },
-    "build_ref": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 512,
-      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
-    },
-    "source_revision": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 512,
-      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
-    },
-    "authority_generation": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 512,
-      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
-    },
-    "abi_registry_ref": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 512,
-      "pattern": "^[A-Za-z?][A-Za-z0-9_.:/?@+\\-]*$"
-    },
-    "scenario_source_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "expected_contract_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "expected_derivation_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "expanded_case_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "episode_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "mutation_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "mutation_observation_set_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "sufficiency_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
+    "abi_version": {"const": 3},
+    "receipt_ref": {"type": "string", "pattern": "^r4_build_v3:[0-9a-f]{24}$"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "authority_generation": {"type": "string", "minLength": 1},
+    "abi_registry_ref": {"type": "string", "minLength": 1},
+    "scenario_source_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "assertion_registry_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "contract_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "derivation_contract_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "expanded_case_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "episode_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "mutation_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "mutation_observation_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "structural_sufficiency_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "partition_manifest_sha256s": {
-      "type": "object",
-      "minProperties": 7,
-      "additionalProperties": {
-        "type": "string",
-        "pattern": "^[0-9a-f]{64}$"
-      }
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
     },
-    "training_allowlist_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "review_state": {
-      "const": "external_review_required"
-    }
+    "training_allowlist_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "admission_state": {"const": "candidate"}
   }
 }

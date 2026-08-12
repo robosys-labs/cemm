@@ -195,7 +195,6 @@ _PHASE_ADMISSION_EVIDENCE_PATHS = {
             "artifacts/r4/partitions/realization.json",
             "artifacts/r4/training_allowlist.json",
             "artifacts/r4/BUILD_RECEIPT.json",
-            "data/review/R4_REVIEW_MANIFEST.json",
         }
     ),
     "R5": frozenset(),
