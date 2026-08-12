@@ -31,6 +31,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -86,11 +87,16 @@ def main() -> int:
     args = parser.parse_args()
 
     build_environment = _load_factory(args.environment.resolve())
-    environment = build_environment(
-        ROOT,
-        args.output.resolve(),
-        source_revision=args.source_revision,
-    )
+    execution_state = TemporaryDirectory(prefix="cemm-r4-build-state-")
+    try:
+        environment = build_environment(
+            ROOT,
+            Path(execution_state.name),
+            source_revision=args.source_revision,
+        )
+    except BaseException:
+        execution_state.cleanup()
+        raise
     if not isinstance(environment, Mapping):
         raise TypeError("build_environment must return a mapping")
     required = {
@@ -146,6 +152,7 @@ def main() -> int:
     finally:
         if close_environment is not None:
             close_environment()
+        execution_state.cleanup()
     print(json.dumps(result.receipt.as_dict(), sort_keys=True))
     return 0
 
