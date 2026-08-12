@@ -87,11 +87,15 @@ def test_episode_generator_requires_injected_runtime_and_missing_r4_owner(
         )
 
 
-def test_episode_abi2_r1_shape_supersedes_complete_six_phase_claim(
+def test_episode_abi2_r1_shape_preserves_derivation_lineage_without_later_truth(
     diagnostic_episode,
 ):
     assert diagnostic_episode.orientation
-    assert diagnostic_episode.legal_proposals == ()
+    assert diagnostic_episode.legal_proposals
+    assert all(
+        row["artifact_role"] == "derivation_lineage"
+        for row in diagnostic_episode.legal_proposals
+    )
     assert diagnostic_episode.selected_program == {}
     assert diagnostic_episode.verified_meaning == {}
     assert diagnostic_episode.coverage == {}
@@ -99,7 +103,7 @@ def test_episode_abi2_r1_shape_supersedes_complete_six_phase_claim(
     assert diagnostic_episode.effect_or_no_effect == {"status": "not_admitted"}
     assert diagnostic_episode.response_meaning == {}
     assert diagnostic_episode.realization_receipt == {}
-    assert diagnostic_episode.gap_receipt["status"] == "proposal_abstained"
+    assert diagnostic_episode.training_source["independently_reverified"] is False
 
 
 def test_episode_abi2_preserves_diagnostic_lineage_without_gold_claim(
@@ -194,12 +198,12 @@ __cemm_test_inventory__ = {
         "owner_ref": "runtime-path",
         "source_ast_sha256": "2daa3699fba931ec0b14c34194ac71903c240ffaba29ff919e7e9fbd0670226c",
     },
-    "tests/test_episode_generation_hard_cut.py::test_episode_abi2_r1_shape_supersedes_complete_six_phase_claim": {
+    "tests/test_episode_generation_hard_cut.py::test_episode_abi2_r1_shape_preserves_derivation_lineage_without_later_truth": {
         "activation_phase": "R4",
         "assertion_ref": "assertion:semantic-episode-episode-contains-every-phase-and-revision",
         "diagnostic_role": "phase",
         "introduced_by_task": "R1-Task-9-Episode-Hard-Cut",
-        "source_ast_sha256": "2f1fbb41e2d9ae57ab768f8659d1463a81af170a1dc495a8c02b676fa49b8357",
+        "source_ast_sha256": "d53de647de351aabfe329ed608ba1fa0d113d5091d1a55c36658b94d76586b6b",
         "supersedes_node_id": "tests/test_semantic_episode.py::test_episode_contains_every_phase_and_revision",
     },
     "tests/test_episode_generation_hard_cut.py::test_episode_abi2_preserves_diagnostic_lineage_without_gold_claim": {
