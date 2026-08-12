@@ -117,22 +117,22 @@ def _required_admission_evidence_paths(phase: str) -> tuple[str, ...]:
         )
     if phase == "R4":
         return (
+            "artifacts/r4/BUILD_RECEIPT.json",
+            "artifacts/r4/episodes.jsonl",
+            "artifacts/r4/expanded_cases.jsonl",
             "artifacts/r4/expected_contracts.jsonl",
             "artifacts/r4/expected_derivations.jsonl",
-            "artifacts/r4/expanded_cases.jsonl",
-            "artifacts/r4/episodes.jsonl",
-            "artifacts/r4/mutations.jsonl",
             "artifacts/r4/mutation_observations.jsonl",
-            "artifacts/r4/structural_sufficiency.json",
+            "artifacts/r4/mutations.jsonl",
+            "artifacts/r4/partitions/dialogue.json",
             "artifacts/r4/partitions/general.json",
             "artifacts/r4/partitions/lexical.json",
-            "artifacts/r4/partitions/semantic_target.json",
-            "artifacts/r4/partitions/topology.json",
-            "artifacts/r4/partitions/dialogue.json",
             "artifacts/r4/partitions/mutation.json",
             "artifacts/r4/partitions/realization.json",
+            "artifacts/r4/partitions/semantic_target.json",
+            "artifacts/r4/partitions/topology.json",
+            "artifacts/r4/structural_sufficiency.json",
             "artifacts/r4/training_allowlist.json",
-            "artifacts/r4/BUILD_RECEIPT.json",
         )
     raise AdmissionValidationError(
         f"admission evidence policy is not implemented for phase {phase}"

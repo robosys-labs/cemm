@@ -104,6 +104,11 @@ def test_historical_receipt_keeps_unselected_retired_step_opaque() -> None:
         gate.GateGraph.from_dict(payload)
 
 
+def test_r4_admission_evidence_policy_is_sorted_and_unique() -> None:
+    paths = gate._required_admission_evidence_paths("R4")
+    assert paths == tuple(sorted(set(paths)))
+
+
 __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_report_has_exact_internal_shape': {'activation_phase': 'R4',
                                                                                          'assertion_ref': 'assertion:r4-integrity-report-exact-internal-shape',
                                                                                          'diagnostic_role': 'owner',
@@ -139,4 +144,10 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                                     'diagnostic_role': 'owner',
                                                                                                     'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                                     'owner_ref': 'artifact-integrity',
-                                                                                                    'source_ast_sha256': '5c2e20bf958cae1b04c08c21d55d40524a4632d6ce6903d4d3632b99616a2812'}}
+                                                                                                    'source_ast_sha256': '5c2e20bf958cae1b04c08c21d55d40524a4632d6ce6903d4d3632b99616a2812'},
+ 'tests/test_r4_validation_gate.py::test_r4_admission_evidence_policy_is_sorted_and_unique': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-admission-evidence-policy-canonical-order',
+                                                                                              'diagnostic_role': 'owner',
+                                                                                              'introduced_by_task': 'R4-Repository-Owned-Admission',
+                                                                                              'owner_ref': 'artifact-integrity',
+                                                                                              'source_ast_sha256': 'fe53e4fb36ac33f92bad8ae0839f41e872319a0b8d48b63b8c3d9496577b8cdc'}}
