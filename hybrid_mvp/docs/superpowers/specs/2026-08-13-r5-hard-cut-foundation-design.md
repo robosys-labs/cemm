@@ -16,6 +16,7 @@ The frozen predecessor inventory remains immutable evidence. Deleting a test
 file does not erase its assertion lineage. Each of the 43 frozen R5 source-test
 assertions must receive exactly one reviewed disposition: a current successor,
 an explicit retirement, or a deferral to the neural-activation increment.
+The inventory-derived partition is exact: 17 successors, 25 deferrals, and 1 explicit retirement.
 
 This foundation does not make R5 green. It makes R5 truthfully red for one
 reason: selected neural proposal and realization owners and their admitted
@@ -57,14 +58,14 @@ The frozen inventory contains 43 R5 source-test assertions across nine modules:
 
 | Frozen module | Assertion count | Foundation treatment |
 |---|---:|---|
-| `tests/test_artifact_security.py` | 11 | Preserve valid artifact safety requirements through current R5 owner tests; retire obsolete loader/file-format expectations. |
+| `tests/test_artifact_security.py` | 11 | Preserve all 11 artifact safety requirements through current R5 owner tests. |
 | `tests/test_model_reproducibility.py` | 6 | Defer selected-model byte reproduction to neural activation; preserve the deterministic identity contract. |
-| `tests/test_neural_realizer_weight_use.py` | 6 | Defer authentic weight-use proof to neural activation; remove tests tied to retired realizer APIs. |
+| `tests/test_neural_realizer_weight_use.py` | 6 | Retire the one safe-fallback assertion forbidden by the completion contract; defer the other five authentic weight-use requirements. |
 | `tests/test_canonical.py` | 4 | Preserve canonical serialization requirements under the current artifact owner. |
 | `tests/test_neural_proposer.py` | 4 | Defer authentic proposal behavior; preserve legal-action and abstention boundaries as current contracts. |
 | `tests/test_training_isolation.py` | 4 | Preserve partition isolation through current partition loaders; remove the retired trainer fixture stack. |
 | `tests/test_calibration.py` | 3 | Defer measured calibration; preserve selection/calibration partition separation. |
-| `tests/test_neural_weight_use.py` | 3 | Defer model-derived behavior and ablation proof; retire obsolete checkpoint APIs. |
+| `tests/test_neural_weight_use.py` | 3 | Preserve the release-path exclusion as a successor and defer the two model-derived weight-use requirements. |
 | `tests/test_production_proposer_cutover.py` | 2 | Defer production cutover until a selected current proposer exists. |
 
 The implementation plan must enumerate every source-test reference, its exact
@@ -95,6 +96,12 @@ API, fixture, artifact format, compatibility identity, or architecture. The
 retirement record must name the exact predecessor and a concrete historical
 reason. Retirement cannot be used to hide an unimplemented current
 requirement.
+
+The sole R5 retirement is
+`tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback`.
+Its requirement is incompatible with `hybrid_mvp/AGENTS.md` section 7, which
+requires zero fallback paths in the final release gates. No replacement may
+reintroduce a safe, template, bootstrap, or UI fallback.
 
 ### 5.3 Deferral
 
@@ -185,6 +192,10 @@ for each row:
 - concrete retirement reason when applicable;
 - future activation task and owner when deferred.
 
+The generated count invariant is exactly 17 `successor`, 25 `deferred`, and
+1 `retired`. Those counts are derived from the pinned inventory rows, not from
+test filenames or a hand-maintained replacement list.
+
 Validation rejects missing, duplicate, unknown, or multiply disposed
 predecessors; assertion-identity drift; successors outside R5; vague retirement
 reasons; and deferred rows without a concrete future owner. The generator must
@@ -241,7 +252,8 @@ There is no permissive fallback.
 
 Completion requires fresh evidence that:
 
-1. all 43 frozen R5 assertions have exactly one valid disposition;
+1. all 43 frozen R5 assertions have exactly one valid disposition, partitioned
+   as 17 successors, 25 deferrals, and one explicit retirement;
 2. the disposition generator is byte-deterministic;
 3. no active test imports or loads retired fixture support;
 4. retired support files and preservation-only tests are absent;

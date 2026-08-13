@@ -40,6 +40,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
     "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
+    "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (
@@ -53,6 +55,7 @@ SUPERSEDED_EXECUTION_CLAIMS = (
     "docs/superpowers/plans/2026-07-30-corrective-replay-plan.md",
     "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
     "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md",
 )
 
 HISTORICAL_EVIDENCE = (
@@ -690,6 +693,14 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
         "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
+    },
+    "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-governing-plan-uses-exact-frozen-inventory-partition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Task-0",
+        "owner_ref": "governance",
+        "source_ast_sha256": "7fa96cdc2a7afb4cc1fc41dd945cd63312599e23b21914b9f4c115568db1f4c4"
     }
 }
 
@@ -740,6 +751,57 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     root_authority = (ROOT / str(authority["root_runtime_authority"])).resolve()
     assert root_authority == (ROOT.parent / "AGENTS.md").resolve()
     assert root_authority.is_file()
+
+
+def test_r5_governing_plan_uses_exact_frozen_inventory_partition() -> None:
+    inventory = json.loads(
+        (ROOT / "governance/test_inventory.json").read_text(encoding="utf-8")
+    )
+    rows = tuple(
+        row for row in inventory["source_tests"] if row["activation_phase"] == "R5"
+    )
+    source_refs = {row["source_test_ref"] for row in rows}
+    successor_refs = {
+        ref
+        for ref in source_refs
+        if ref.startswith("tests/test_artifact_security.py::")
+        or ref.startswith("tests/test_canonical.py::")
+    } | {
+        "tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer",
+        "tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap",
+    }
+    retired_refs = {
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback"
+    }
+    deferred_refs = source_refs - successor_refs - retired_refs
+
+    assert len(rows) == 43
+    assert len(successor_refs) == 17
+    assert len(deferred_refs) == 25
+    assert len(retired_refs) == 1
+    assert source_refs == successor_refs | deferred_refs | retired_refs
+
+    plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    design = (
+        ROOT / "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md"
+    ).read_text(encoding="utf-8")
+    appendix = plan.split("## Appendix A: Exact frozen R5 disposition", 1)[1]
+    appendix = appendix.split("## Appendix B: Forbidden implementation shortcuts", 1)[0]
+
+    assert "17 `successor`, 25 `deferred`, 1 `retired`" in plan
+    assert "counts `17/25/1`" in plan
+    assert "17 successors, 25 deferrals, and 1 explicit retirement" in design
+    assert "17 `successor`, 26 `deferred`, 0 `retired`" not in plan
+    assert "17/26/0" not in plan
+    for row in rows:
+        source_ref = row["source_test_ref"]
+        matching_lines = [
+            line for line in appendix.splitlines() if f"`{source_ref}`" in line
+        ]
+        assert len(matching_lines) == 1, source_ref
+        assert f"`{row['assertion_ref']}`" in matching_lines[0], source_ref
 
 
 def test_governing_pointers_make_no_old_admission_claim() -> None:

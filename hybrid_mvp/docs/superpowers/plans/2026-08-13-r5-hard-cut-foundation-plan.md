@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove retired test/runtime-fixture paths, preserve every active G0-R4 assertion, replace the 43 frozen R5 source-test records with 17 current foundation successors plus 26 explicit deferred neural obligations, update active documentation, and make the R5 source/owner/phase foundation gates pass while R5 admission remains unavailable and replay status remains red.
+**Goal:** Remove retired test/runtime-fixture paths, preserve every active G0-R4 assertion, and give the 43 frozen R5 source-test records exactly 17 current foundation successors, 25 explicit deferred neural obligations, and 1 explicit fallback retirement; then update active documentation and make the R5 source/owner/phase foundation gates pass while R5 admission remains unavailable and replay status remains red.
 
-**Architecture:** Keep `governance/test_inventory.json` immutable and introduce one reviewed R5 test-disposition source plus a deterministic receipt. The inventory verifier accepts a missing frozen R5 source only when an exact successor lineage or exact deferred obligation covers it; it never treats deferral as execution evidence. Current R5 foundation tests own five boundaries—artifact contract, proposal contract, realization contract, data isolation, and legacy hard cut—while neural model quality, calibration, reproducibility, and weight-use evidence remain reserved for `R5-Neural-Activation`. Remove compatibility test support only after active-node and import audits prove no G0-R4 owner depends on it.
+**Architecture:** Keep `governance/test_inventory.json` immutable and introduce one reviewed R5 test-disposition source plus a deterministic receipt. The inventory verifier accepts a missing frozen R5 source only when an exact successor lineage, exact deferred obligation, or reviewed retirement covers it; neither deferral nor retirement is execution evidence. Current R5 foundation tests own five boundaries—artifact contract, proposal contract, realization contract, data isolation, and legacy hard cut—while neural model quality, calibration, reproducibility, and weight-use evidence remain reserved for `R5-Neural-Activation`. Remove compatibility test support only after active-node and import audits prove no G0-R4 owner depends on it.
 
 **Tech Stack:** Python 3, pytest, canonical JSON/JSONL, literal test metadata, SHA-256 content references, PowerShell, Git worktrees.
 
@@ -14,7 +14,7 @@
 
 - `governance/test_inventory.json` remains byte-identical with SHA-256 `7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`.
 - G0, R1, R2, R3, and R4 source-only active assertion identities remain satisfied by executable current leaves.
-- The 43 frozen R5 records have exactly one reviewed disposition each: 17 `successor`, 26 `deferred`, 0 `retired`.
+- The 43 frozen R5 records have exactly one reviewed disposition each: 17 `successor`, 25 `deferred`, 1 `retired`.
 - A deferred row cannot satisfy a rewrite obligation, owner selector, phase selector, admission selector, or pytest collection requirement.
 - The rewritten `assertion:release-path-excludes-bootstrap-proposer` obligation has all three required executable successors at R5.
 - R5 owner and phase tiers may pass the foundation contract; R5 admission must still return a structured error and must not append a green status.
@@ -28,7 +28,7 @@
 - `artifacts/validation/R5_TEST_DISPOSITIONS.json` — deterministic receipt generated from the reviewed source and literal successor metadata.
 - `scripts/r5_test_dispositions.py` — bounded loader, validator, and canonical receipt builder.
 - `scripts/generate_r5_test_dispositions.py` — deterministic generator CLI.
-- `scripts/test_inventory_core.py` — apply exact R5 successor/deferred coverage without mutating the frozen inventory.
+- `scripts/test_inventory_core.py` — apply exact R5 successor/deferred/retired coverage without mutating the frozen inventory.
 - `scripts/check_test_inventory.py` — report exact R5 disposition counts and receipt ref.
 - `tests/test_test_inventory.py` — fail-closed disposition and lineage tests.
 - `configs/r5_foundation.json` — reviewed owner/data/status boundary for this increment.
@@ -50,6 +50,40 @@
 - `docs/ARCHITECTURE.md`, `docs/ABI_REGISTRY.md`, `docs/IMPLEMENTATION_PLAN.md` — state the hard-cut boundary and current R5 status.
 - `docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md` — add a narrow R5 supersession notice.
 - `../NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_STATUS.md`, `../NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_PLAN.md`, `../V1_ACCEPTANCE.md` — remove stale present-tense claims that conflict with the closed R4/current R5 boundary.
+
+### Task 0: Promote the corrected R5 authority and freeze the exact partition
+
+**Files:**
+- Modify: `tests/test_replay_governance.py`
+- Modify: `docs/DOCUMENT_AUTHORITY.json`
+- Modify: `docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md`
+- Modify: `docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md`
+
+- [ ] **Step 1: Add the focused governance regression first**
+
+Require the R5 design and plan to be governing, classify
+`docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md` as a
+superseded execution claim, derive all R5 rows from the pinned inventory, and
+require the exact 17/25/1 partition plus one literal Appendix A occurrence for
+every predecessor source-test ref.
+
+- [ ] **Step 2: Observe RED**
+
+Run the two focused governance tests. Both must fail: one because R5 authority
+is missing, and one because the plan still states the old zero-retirement
+partition and contains fictional
+Appendix A names.
+
+- [ ] **Step 3: Repair authority and the governing documents**
+
+Promote the corrected R5 design and plan before disposition-ABI implementation.
+Do not edit `governance/test_inventory.json`, implement the disposition ABI, or
+touch remote refs in this task.
+
+- [ ] **Step 4: Observe GREEN and commit one governance/docs change**
+
+Run the focused tests, strict JSON parsing, the exact 43-row/count check, and
+verify the pinned inventory SHA-256 before committing.
 
 ### Task 1: Reconfirm the clean baseline and freeze the removal set
 
@@ -119,7 +153,7 @@ Add tests that construct minimal reviewed payloads and require:
 }
 ```
 
-Reject unknown fields, duplicate predecessor refs, non-R5 predecessors, assertion mismatches, empty successor lists, successor rows with deferral fields, deferred rows without `future_owner_ref` and `future_task_ref`, a `retired` value, and any row count other than 43 for the real reviewed file.
+Reject unknown fields, duplicate predecessor refs, non-R5 predecessors, assertion mismatches, empty successor lists, successor rows with deferral or retirement fields, deferred rows without `future_owner_ref` and `future_task_ref`, retired rows without an exact predecessor and concrete `retirement_reason`, and any row count other than 43 for the real reviewed file.
 
 - [ ] **Step 2: Run the tests to see the missing owner**
 
@@ -145,7 +179,7 @@ The loader validates syntax and predecessor coverage. The receipt builder additi
 
 - [ ] **Step 4: Check in the exact 43-row reviewed source**
 
-Use the classification in Appendix A. Every deferred row uses `future_task_ref: "R5-Neural-Activation"`; owner refs are `proposal-contract`, `realization-contract`, `data-isolation`, `artifact-contract`, or `calibration-contract` as appropriate. The reviewed source has exactly 17 successor rows, 26 deferred rows, and no retired rows.
+Use the classification in Appendix A. Every deferred row uses `future_task_ref: "R5-Neural-Activation"` and the exact concrete owner shown there. The reviewed source has exactly 17 successor rows, 25 deferred rows, and 1 retired row. The retirement reason must cite the Hybrid MVP definition of completion and must not create a future activation obligation.
 
 - [ ] **Step 5: Run focused tests**
 
@@ -162,7 +196,7 @@ git add schemas/r5_test_dispositions.schema.json scripts/r5_test_dispositions.py
 git commit -m "governance(r5): define frozen test dispositions"
 ```
 
-### Task 3: Teach the immutable inventory verifier about exact R5 deferrals
+### Task 3: Teach the immutable inventory verifier about exact R5 dispositions
 
 **Files:**
 - Modify: `scripts/test_inventory_core.py`
@@ -175,11 +209,12 @@ Cover these cases with temporary repositories:
 
 1. a missing frozen R5 leaf with no disposition still fails;
 2. a deferred R5 leaf is absent from `active_node_ids` only at R5 and appears in `deferred_r5_assertion_refs`;
-3. a deferred row cannot satisfy a due rewrite obligation;
-4. a successor row without literal executable metadata fails;
-5. a successor row follows normal supersession to an executable current leaf;
-6. a missing or extra reviewed row fails exact 43-row coverage in the real repository;
-7. G0-R4 results are unchanged by the R5 overlay.
+3. a retired R5 leaf is absent from `active_node_ids` only at R5 and appears in `retired_r5_assertion_refs`;
+4. neither a deferred nor retired row can satisfy a due rewrite obligation;
+5. a successor row without literal executable metadata fails;
+6. a successor row follows normal supersession to an executable current leaf;
+7. a missing or extra reviewed row fails exact 43-row coverage in the real repository;
+8. G0-R4 results are unchanged by the R5 overlay.
 
 - [ ] **Step 2: Run the focused failures**
 
@@ -196,13 +231,14 @@ Load the reviewed source only when `phase == "R5"`. Validate it after frozen sou
 ```python
 r5_disposition_receipt_ref: str | None
 deferred_r5_assertion_refs: tuple[str, ...]
+retired_r5_assertion_refs: tuple[str, ...]
 ```
 
-Successor rows use the existing lineage graph; do not create synthetic executable nodes. Deferred predecessor case-node IDs may be skipped by active selection only after exact coverage validation. Keep them out of collectable, owner, phase, admission-only, and rewrite-satisfaction sets. Preserve the existing G0-R4 code path byte-for-byte where practical.
+Successor rows use the existing lineage graph; do not create synthetic executable nodes. Deferred and retired predecessor case-node IDs may be skipped by active selection only after exact coverage validation. Keep them out of collectable, owner, phase, admission-only, and rewrite-satisfaction sets. Preserve the existing G0-R4 code path byte-for-byte where practical.
 
 - [ ] **Step 4: Extend source-only output**
 
-For R5 only, add `r5_disposition_receipt_ref`, `r5_successor_count`, and `r5_deferred_count` to the canonical CLI payload. Keep the existing schema name and existing fields so G0-R4 consumers remain compatible.
+For R5 only, add `r5_disposition_receipt_ref`, `r5_successor_count`, `r5_deferred_count`, and `r5_retired_count` to the canonical CLI payload. Keep the existing schema name and existing fields so G0-R4 consumers remain compatible.
 
 - [ ] **Step 5: Run inventory unit and baseline checks**
 
@@ -221,7 +257,7 @@ Expected: unit and G0-R4 checks pass with the same active-node refs recorded in 
 
 ```powershell
 git add scripts/test_inventory_core.py scripts/check_test_inventory.py tests/test_test_inventory.py
-git commit -m "feat(r5): verify exact deferred test obligations"
+git commit -m "feat(r5): verify exact test dispositions"
 ```
 
 ### Task 4: Replace the valid frozen R5 artifact assertions with current successors
@@ -233,7 +269,7 @@ git commit -m "feat(r5): verify exact deferred test obligations"
 
 - [ ] **Step 1: Create 15 literal successor tests**
 
-Move behavior, not compatibility scaffolding, from the 11 artifact-security tests and four R5 tensor-canonicalization tests into `test_r5_artifact_contract.py`. Use the current `safetensors`/canonical artifact APIs and temporary files. Give every test R5 literal metadata with:
+Move behavior, not compatibility scaffolding, from the exact 11 artifact-security tests and four R5 tensor-canonicalization tests listed in Appendix A into `test_r5_artifact_contract.py`. Use the current `safetensors`/canonical artifact APIs and temporary files. Give every test R5 literal metadata with:
 
 ```python
 {
@@ -247,7 +283,13 @@ Move behavior, not compatibility scaffolding, from the 11 artifact-security test
 }
 ```
 
-The successors must retain strict safe-deserialization, exact schema, tamper, dtype, shape, finite-value, size-bound, no-pickle, CPU-load, digest, and tensor-identity behavior. Do not add an old `.pt`/pickle decoder.
+The successors must retain the inventory-owned requirements exactly: current
+model-lock stability; current and mismatched Python ABI handling; identity,
+manifest, metadata, dependency-lock, and tail tamper rejection before tensor
+use; source-scan rejection of unsafe `torch.load` while allowing the safe
+`safetensors` loader; valid artifact loading; and byte-, dtype-, and
+shape-sensitive deterministic tensor identity. Do not add an old `.pt`/pickle
+decoder or invent a replacement assertion absent from the frozen rows.
 
 - [ ] **Step 2: Remove only the four R5 tests from the mixed canonical module**
 
@@ -329,7 +371,10 @@ Require exact values:
 }
 ```
 
-The schema has `additionalProperties: false`. Keep `calibration-contract` only as a future owner in deferred dispositions; it is not a current foundation gate owner.
+The schema has `additionalProperties: false`. Keep `calibration-contract`,
+`reproduction-contract`, `selection-contract`, and `weight-use-contract` only
+as future owners in deferred dispositions; they are not current foundation gate
+owners.
 
 - [ ] **Step 2: Add current realization/data/foundation tests**
 
@@ -367,7 +412,7 @@ Expected: owner and phase calls pass; admission exits 2 with a canonical structu
 
 - [ ] **Step 1: Create the deterministic generator CLI**
 
-The CLI reads the immutable inventory, reviewed disposition source, and literal current test metadata; it writes only `artifacts/validation/R5_TEST_DISPOSITIONS.json` when `--output` names that exact path. The receipt contains inventory ref, disposition-source SHA-256, literal metadata ref, 43 ordered rows, counts `17/26/0`, and a content-derived `receipt_ref`.
+The CLI reads the immutable inventory, reviewed disposition source, and literal current test metadata; it writes only `artifacts/validation/R5_TEST_DISPOSITIONS.json` when `--output` names that exact path. The receipt contains inventory ref, disposition-source SHA-256, literal metadata ref, 43 ordered rows, counts `17/25/1`, and a content-derived `receipt_ref`.
 
 - [ ] **Step 2: Add determinism and tamper tests**
 
@@ -383,7 +428,7 @@ python scripts/generate_r5_test_dispositions.py --output artifacts/validation/R5
 python scripts/generate_r5_test_dispositions.py --check artifacts/validation/R5_TEST_DISPOSITIONS.json
 ```
 
-Expected: exact `17` successor, `26` deferred, `0` retired; subsequent refresher and generator runs make no changes.
+Expected: exact `17` successor, `25` deferred, `1` retired; subsequent refresher and generator runs make no changes.
 
 ### Task 8: Remove retired tests and compatibility fixture support
 
@@ -422,7 +467,7 @@ The source-only auditor must fail on:
 - any missing G0-R4 active leaf;
 - any missing R5 disposition row;
 - any current R5 test whose assertion identity is not in literal metadata;
-- any deferred assertion appearing in an owner/phase/admission selector.
+- any deferred or retired assertion appearing in an owner/phase/admission selector.
 
 Do not fail merely because a historical document names an old test.
 
@@ -523,7 +568,7 @@ python scripts/generate_r5_test_dispositions.py --check artifacts/validation/R5_
 python scripts/check_test_inventory.py --phase R5 --source-only
 ```
 
-Expected: no refresh diff, generated receipt exact, R5 source-only passes with 17 successors and 26 deferred obligations.
+Expected: no refresh diff, generated receipt exact, R5 source-only passes with 17 successors, 25 deferred obligations, and 1 explicit retirement.
 
 - [ ] **Step 2: Run all owner and phase tiers**
 
@@ -585,84 +630,75 @@ Do not merge or push from this plan unless the user separately authorizes integr
 
 ## Appendix A: Exact frozen R5 disposition
 
+This table is derived row-for-row from the immutable
+`governance/test_inventory.json` R5 records. The predecessor source-test and
+assertion refs are copied exactly. No filename stem or proposed successor name
+is treated as inventory evidence.
+
 ### Successor now — 17
 
-All 11 records in `tests/test_artifact_security.py` become literal successors in `tests/test_r5_artifact_contract.py`:
+| # | Exact predecessor source-test ref | Exact assertion ref | Current successor node / owner |
+|---:|---|---|---|
+| 1 | `tests/test_artifact_security.py::test_current_model_lock_hash_is_stable` | `assertion:artifact-security-current-model-lock-hash-is-stable` | `tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` / `artifact-contract` |
+| 2 | `tests/test_artifact_security.py::test_current_python_abi_matches_runtime` | `assertion:artifact-security-current-python-abi-matches-runtime` | `tests/test_r5_artifact_contract.py::test_current_python_abi_matches_runtime` / `artifact-contract` |
+| 3 | `tests/test_artifact_security.py::test_identity_mismatch_fails_before_tensor_use` | `assertion:artifact-security-identity-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_identity_mismatch_fails_before_tensor_use` / `artifact-contract` |
+| 4 | `tests/test_artifact_security.py::test_manifest_tamper_fails_before_tensor_use` | `assertion:artifact-security-manifest-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_manifest_tamper_fails_before_tensor_use` / `artifact-contract` |
+| 5 | `tests/test_artifact_security.py::test_metadata_tamper_fails_before_tensor_use` | `assertion:artifact-security-metadata-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_metadata_tamper_fails_before_tensor_use` / `artifact-contract` |
+| 6 | `tests/test_artifact_security.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` | `assertion:artifact-security-model-dependency-lock-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` / `artifact-contract` |
+| 7 | `tests/test_artifact_security.py::test_no_production_module_calls_unsafe_torch_load` | `assertion:artifact-security-no-production-module-calls-unsafe-torch-load` | `tests/test_r5_artifact_contract.py::test_no_production_module_calls_unsafe_torch_load` / `artifact-contract` |
+| 8 | `tests/test_artifact_security.py::test_python_abi_mismatch_fails_before_tensor_use` | `assertion:artifact-security-python-abi-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_python_abi_mismatch_fails_before_tensor_use` / `artifact-contract` |
+| 9 | `tests/test_artifact_security.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` | `assertion:artifact-security-safe-safetensors-load-file-is-allowed-in-source-scan` | `tests/test_r5_artifact_contract.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` / `artifact-contract` |
+| 10 | `tests/test_artifact_security.py::test_tail_tamper_fails_before_tensor_use` | `assertion:artifact-security-tail-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_tail_tamper_fails_before_tensor_use` / `artifact-contract` |
+| 11 | `tests/test_artifact_security.py::test_valid_artifact_loads` | `assertion:artifact-security-valid-artifact-loads` | `tests/test_r5_artifact_contract.py::test_valid_artifact_loads` / `artifact-contract` |
+| 12 | `tests/test_canonical.py::test_tensor_identity_changes_on_byte_tamper` | `assertion:canonical-tensor-identity-changes-on-byte-tamper` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_byte_tamper` / `artifact-contract` |
+| 13 | `tests/test_canonical.py::test_tensor_identity_changes_on_dtype` | `assertion:canonical-tensor-identity-changes-on-dtype` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_dtype` / `artifact-contract` |
+| 14 | `tests/test_canonical.py::test_tensor_identity_changes_on_shape` | `assertion:canonical-tensor-identity-changes-on-shape` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_shape` / `artifact-contract` |
+| 15 | `tests/test_canonical.py::test_tensor_identity_is_byte_and_shape_deterministic` | `assertion:canonical-tensor-identity-is-byte-and-shape-deterministic` | `tests/test_r5_artifact_contract.py::test_tensor_identity_is_byte_and_shape_deterministic` / `artifact-contract` |
+| 16 | `tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer` | `assertion:neural-proposer-release-runtime-requires-neural-switch-proposer` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_requires_selected_neural_proposer` / `proposal-contract` |
+| 17 | `tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap` | `assertion:neural-weight-use-release-path-does-not-delegate-to-bootstrap` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_does_not_delegate_to_bootstrap` / `proposal-contract` |
 
-1. `test_artifact_digest_is_enforced`
-2. `test_artifact_loads_on_cpu`
-3. `test_artifact_rejects_infinite_values`
-4. `test_artifact_rejects_oversized_payload`
-5. `test_artifact_rejects_pickle_format`
-6. `test_artifact_rejects_shape_mismatch`
-7. `test_artifact_rejects_tampered_weights`
-8. `test_artifact_rejects_unexpected_dtype`
-9. `test_artifact_schema_is_exact`
-10. `test_artifact_uses_safe_deserialization`
-11. `test_valid_artifact_loads`
+The additional public-runtime test required by rewrite obligation
+`rewrite_obligation:1961f2f12d4a3f36b41db460` is new current evidence, not one
+of the 43 disposition rows.
 
-All four R5 records in `tests/test_canonical.py` become literal successors in `tests/test_r5_artifact_contract.py`:
+### Explicit retirement — 1
 
-12. `test_tensor_canonical_identity_distinguishes_dtype`
-13. `test_tensor_canonical_identity_distinguishes_shape`
-14. `test_tensor_canonical_identity_uses_full_contents`
-15. `test_tensor_canonical_identity_rejects_nonfinite_values`
+| # | Exact predecessor source-test ref | Exact assertion ref | Concrete reason |
+|---:|---|---|---|
+| 18 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-failure-meaning-uses-safe-fallback` | `hybrid_mvp/AGENTS.md` section 7 requires zero fallback paths in final release gates; preserving this requirement would reintroduce forbidden fallback behavior. |
 
-The two release-selection records become literal successors in `tests/test_r5_public_runtime_selection.py`:
+### Deferred to R5-Neural-Activation — 25
 
-16. `tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer`
-17. `tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap`
+Every row below has `future_task_ref: "R5-Neural-Activation"` and the concrete
+`future_owner_ref` shown in the final column.
 
-The additional public-runtime test required by rewrite obligation `rewrite_obligation:1961f2f12d4a3f36b41db460` is new current evidence, not one of the 43 disposition rows.
-
-### Deferred to R5-Neural-Activation — 26
-
-All six in `tests/test_model_reproducibility.py`:
-
-1. `test_deterministic_inference_for_same_input`
-2. `test_dropout_disabled_during_inference`
-3. `test_model_architecture_is_pinned`
-4. `test_model_config_is_strictly_parsed`
-5. `test_model_config_rejects_extra_fields`
-6. `test_model_config_rejects_missing_fields`
-
-All six in `tests/test_neural_realizer_weight_use.py`:
-
-7. `test_generation_is_deterministic`
-8. `test_neural_realizer_requires_weights`
-9. `test_realizer_allows_unseen_expression`
-10. `test_realizer_changes_when_weights_change`
-11. `test_realizer_does_not_delegate_to_template`
-12. `test_realizer_is_semantically_constrained`
-
-Three neural behavior records in `tests/test_neural_proposer.py`:
-
-13. `test_invalid_actions_are_masked`
-14. `test_neural_proposer_is_not_bootstrap_capacity`
-15. `test_neural_proposer_returns_logits_and_selected_action`
-
-All four R5 records in `tests/test_training_isolation.py`:
-
-16. `test_combined_reranker_capacity_cannot_improve_frozen_test`
-17. `test_dynamic_training_slots_scale_with_reviewed_train_partition`
-18. `test_realizer_artifact_pins_authentic_episode_source`
-19. `test_release_artifact_pins_authentic_episode_source`
-
-Two remaining weight-use records in `tests/test_neural_weight_use.py`:
-
-20. `test_proposal_changes_when_weights_change`
-21. `test_release_path_masks_invalid_actions`
-
-All three in `tests/test_calibration.py`:
-
-22. `test_calibration_bins_include_high_confidence_error`
-23. `test_calibration_report_is_deterministic`
-24. `test_calibration_threshold_is_enforced`
-
-Both R5 records in `tests/test_production_proposer_cutover.py`:
-
-25. `test_release_profile_defaults_to_hard_cutover`
-26. `test_template_fallback_requires_explicit_opt_in`
+| # | Exact predecessor source-test ref | Exact assertion ref | Future owner ref |
+|---:|---|---|---|
+| 19 | `tests/test_calibration.py::test_calibration_error_within_threshold` | `assertion:calibration-calibration-error-within-threshold` | `calibration-contract` |
+| 20 | `tests/test_calibration.py::test_calibration_pins_model_identities` | `assertion:calibration-calibration-pins-model-identities` | `calibration-contract` |
+| 21 | `tests/test_calibration.py::test_calibration_records_confidence_bins` | `assertion:calibration-calibration-records-confidence-bins` | `calibration-contract` |
+| 22 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_exists` | `assertion:model-reproducibility-reproducibility-receipt-exists` | `reproduction-contract` |
+| 23 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_proposal_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-proposal-identity` | `reproduction-contract` |
+| 24 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_realizer_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-realizer-identity` | `reproduction-contract` |
+| 25 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_scratch_outside_repo` | `assertion:model-reproducibility-reproducibility-receipt-records-scratch-outside-repo` | `reproduction-contract` |
+| 26 | `tests/test_model_reproducibility.py::test_retraining_produces_same_proposal_identity` | `assertion:model-reproducibility-retraining-produces-same-proposal-identity` | `reproduction-contract` |
+| 27 | `tests/test_model_reproducibility.py::test_retraining_produces_same_realizer_identity` | `assertion:model-reproducibility-retraining-produces-same-realizer-identity` | `reproduction-contract` |
+| 28 | `tests/test_neural_proposer.py::test_internal_ref_spelling_does_not_affect_model_logits` | `assertion:neural-proposer-internal-ref-spelling-does-not-affect-model-logits` | `proposal-contract` |
+| 29 | `tests/test_neural_proposer.py::test_neural_decoder_never_emits_masked_action` | `assertion:neural-proposer-neural-decoder-never-emits-masked-action` | `proposal-contract` |
+| 30 | `tests/test_neural_proposer.py::test_proposal_model_capacity_is_bounded` | `assertion:neural-proposer-proposal-model-capacity-is-bounded` | `proposal-contract` |
+| 31 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_answer_cannot_fall_back_when_network_fails` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-answer-cannot-fall-back-when-network-fails` | `weight-use-contract` |
+| 32 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_invokes_loaded_weights` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-invokes-loaded-weights` | `weight-use-contract` |
+| 33 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_decoder_invocations` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-decoder-invocations` | `weight-use-contract` |
+| 34 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_model_identity` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-model-identity` | `weight-use-contract` |
+| 35 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_zero_weight_realizer_loses_domain_generation_accuracy` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-zero-weight-realizer-loses-domain-generation-accuracy` | `weight-use-contract` |
+| 36 | `tests/test_neural_weight_use.py::test_release_proposal_invokes_loaded_weights` | `assertion:neural-weight-use-release-proposal-invokes-loaded-weights` | `weight-use-contract` |
+| 37 | `tests/test_neural_weight_use.py::test_weight_ablation_breaks_learned_selection` | `assertion:neural-weight-use-weight-ablation-breaks-learned-selection` | `weight-use-contract` |
+| 38 | `tests/test_production_proposer_cutover.py::test_compatible_new_designation_keeps_model_active` | `assertion:production-proposer-cutover-compatible-new-designation-keeps-model-active` | `selection-contract` |
+| 39 | `tests/test_production_proposer_cutover.py::test_neural_profile_loads_from_artifact` | `assertion:production-proposer-cutover-neural-profile-loads-from-artifact` | `selection-contract` |
+| 40 | `tests/test_training_isolation.py::test_combined_trainable_capacity_is_bounded` | `assertion:training-isolation-combined-trainable-capacity-is-bounded` | `selection-contract` |
+| 41 | `tests/test_training_isolation.py::test_model_uses_dynamic_semantic_slots_not_ref_spelling` | `assertion:training-isolation-model-uses-dynamic-semantic-slots-not-ref-spelling` | `proposal-contract` |
+| 42 | `tests/test_training_isolation.py::test_realizer_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-realizer-release-artifact-pins-all-semantic-inputs` | `realization-contract` |
+| 43 | `tests/test_training_isolation.py::test_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-release-artifact-pins-all-semantic-inputs` | `proposal-contract` |
 
 ## Appendix B: Forbidden implementation shortcuts
 
