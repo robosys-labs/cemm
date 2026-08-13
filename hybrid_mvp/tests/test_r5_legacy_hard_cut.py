@@ -493,39 +493,41 @@ def test_r5_legacy_auditor_bounded_reader_rejects_growth_and_short_read(
     path = tmp_path / "source.py"
     path.write_bytes(b"abc")
 
-    monkeypatch.setattr(auditor.os, "fstat", lambda _fd: type("S", (), {"st_mode": 0o100000, "st_size": 1, "st_dev": 1, "st_ino": 1})())
-    monkeypatch.setattr(auditor.os, "stat", lambda _path, **_kwargs: type("S", (), {"st_mode": 0o100000, "st_size": 1, "st_dev": 1, "st_ino": 1, "st_file_attributes": 0})())
+    monkeypatch.setattr(auditor.os, "read", lambda _fd, _limit: b"ab")
     with pytest.raises(ValueError, match="grew while reading"):
         auditor._bounded_bytes(path, 1)
 
     monkeypatch.undo()
-    real_open = Path.open
-
-    class ShortReader:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def fileno(self):
-            return 0
-
-        def read(self, _limit):
-            return b"ab"
-
-    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: ShortReader() if self == path else real_open(self, *args, **kwargs))
-    monkeypatch.setattr(
-        auditor.os,
-        "fstat",
-        lambda _fd: type(
-            "S",
-            (),
-            {"st_mode": 0o100000, "st_size": 3, "st_dev": 1, "st_ino": 1},
-        )(),
-    )
+    chunks = iter((b"ab", b""))
+    monkeypatch.setattr(auditor.os, "read", lambda _fd, _limit: next(chunks))
     with pytest.raises(ValueError, match="short read|changed while reading"):
         auditor._bounded_bytes(path, 10)
+
+
+def test_r5_legacy_auditor_rejects_link_swap_at_open_boundary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_open_swap")
+    source = tmp_path / "source.py"
+    external = tmp_path / "external.py"
+    source.write_bytes(b"inside")
+    external.write_bytes(b"external-must-not-change")
+    real_open = auditor.os.open
+
+    def swap_then_open(path, flags, *args, **kwargs):
+        source.unlink()
+        try:
+            source.symlink_to(external)
+        except OSError as exc:
+            pytest.skip(f"symlink creation unavailable: {exc}")
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(auditor.os, "open", swap_then_open)
+
+    with pytest.raises(ValueError, match="redirected|identity|same regular object"):
+        auditor._bounded_bytes(source, 1024)
+    assert external.read_bytes() == b"external-must-not-change"
 
 
 def test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes(
@@ -808,7 +810,15 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
-        "source_ast_sha256": '87461484d4985497cc2a873ee5b38c7ac6c4f1d02ad7b6ccec72401753c495bd',
+        "source_ast_sha256": 'd0087555a04457c9cd05d0ea751e6b1e206a312201266237c45cbb0d53b3139b',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_link_swap_at_open_boundary": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-link-swap-at-open",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '63bd7fde4155ddec8dba695f312b914b50351f02521aa75fd4c84c3500a503f3',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes": {
         "activation_phase": "R5",

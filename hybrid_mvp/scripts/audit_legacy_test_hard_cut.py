@@ -77,26 +77,78 @@ def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 
 def _bounded_bytes(path: Path, limit: int) -> bytes:
+    fd: int | None = None
     try:
-        if _is_link_or_reparse(path):
+        before_path = path.lstat()
+        if _stat_is_link_or_reparse(before_path):
             raise ValueError(f"untrusted redirected path: {path}")
-        with path.open("rb") as stream:
-            before = os.fstat(stream.fileno())
-            if not stat.S_ISREG(before.st_mode):
-                raise ValueError(f"source is not a regular file: {path}")
-            data = stream.read(limit + 1)
-            after = os.fstat(stream.fileno())
+        before_identity = _regular_identity(before_path, path)
+        flags = os.O_RDONLY
+        flags |= getattr(os, "O_BINARY", 0)
+        flags |= getattr(os, "O_CLOEXEC", 0)
+        flags |= getattr(os, "O_NOINHERIT", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(path, flags)
+        except OSError as exc:
+            raise ValueError(
+                f"cannot prove same regular object; redirected open rejected: {path}"
+            ) from exc
+        opened = os.fstat(fd)
+        if _stat_is_link_or_reparse(opened):
+            raise ValueError(f"opened source is redirected: {path}")
+        opened_identity = _regular_identity(opened, path)
+        if opened_identity != before_identity:
+            raise ValueError(f"source identity changed before open: {path}")
+        chunks: list[bytes] = []
+        total = 0
+        while total <= limit:
+            chunk = os.read(fd, limit + 1 - total)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+        data = b"".join(chunks)
+        after = os.fstat(fd)
+        post_path = path.lstat()
     except OSError as exc:
         raise ValueError(f"cannot read {path}: {exc}") from exc
+    finally:
+        if fd is not None:
+            os.close(fd)
     if len(data) > limit:
         raise ValueError(f"source grew while reading or exceeds byte bound: {path}")
-    before_identity = (before.st_dev, before.st_ino, before.st_size)
-    after_identity = (after.st_dev, after.st_ino, after.st_size)
-    if before_identity != after_identity:
+    if _stat_is_link_or_reparse(post_path):
+        raise ValueError(f"source became redirected while reading: {path}")
+    after_identity = _regular_identity(after, path)
+    post_identity = _regular_identity(post_path, path)
+    if (
+        opened_identity != after_identity
+        or opened_identity != post_identity
+        or before_path.st_size != opened.st_size
+        or opened.st_size != after.st_size
+        or after.st_size != post_path.st_size
+    ):
         raise ValueError(f"source changed while reading: {path}")
     if len(data) != after.st_size:
         raise ValueError(f"short read or source changed while reading: {path}")
     return data
+
+
+def _stat_is_link_or_reparse(info: os.stat_result) -> bool:
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & 0x400
+    )
+
+
+def _regular_identity(info: os.stat_result, path: Path) -> tuple[int, int]:
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError(f"source is not a regular file: {path}")
+    device = int(info.st_dev)
+    inode = int(info.st_ino)
+    if inode == 0:
+        raise ValueError(f"cannot prove same regular object identity: {path}")
+    return device, inode
 
 
 def _is_link_or_reparse(path: Path) -> bool:
@@ -104,9 +156,7 @@ def _is_link_or_reparse(path: Path) -> bool:
         info = path.lstat()
     except OSError as exc:
         raise ValueError(f"cannot inspect trusted path: {path}") from exc
-    return stat.S_ISLNK(info.st_mode) or bool(
-        getattr(info, "st_file_attributes", 0) & 0x400
-    )
+    return _stat_is_link_or_reparse(info)
 
 
 def _trusted_path(root: Path, path: Path) -> Path:
