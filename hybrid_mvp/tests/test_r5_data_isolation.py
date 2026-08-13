@@ -3,8 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from dataclasses import replace
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 
 import pytest
 
@@ -106,6 +108,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "data-isolation",
         "source_ast_sha256": "81e25ca60f9724c6942a149260f779480213a9626b7f662540828ace8455896c",
     },
+    "tests/test_r5_data_isolation.py::test_release_trainer_metadata_uses_authenticated_fit_snapshot": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-release-trainer-metadata-binds-fit-snapshot",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "data-isolation",
+        "source_ast_sha256": "29cd347df56a902e991ec934d5dc148406be3a04af62e261e7e5cb52db48b31b",
+    },
 }
 
 
@@ -148,9 +158,16 @@ def _trainer_stopping_after_episode_load(trainer_type, root: Path):
     trainer = object.__new__(trainer_type)
     trainer._root = root
     trainer._seed = 1701
+    trainer._authority = SimpleNamespace(model_compatibility_hash="authority:test")
+    trainer._epochs = 0
+    trainer._learning_rate = 0.0
+    trainer._device = "cpu"
     if trainer_type is ReleaseProposalTrainer:
         trainer._legal_action_index = object()
         trainer._max_form_tokens = 1
+        trainer._max_actions = 1
+        trainer._hidden = 1
+        trainer._layers = 1
     else:
         trainer._hidden = 1
         trainer._layers = 1
@@ -337,3 +354,92 @@ def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monke
                 with pytest.raises(PartitionAccessError):
                     trainer.fit(path)
     assert seed_calls == 0
+
+
+def test_release_trainer_metadata_uses_authenticated_fit_snapshot(tmp_path, monkeypatch):
+    train, _, _ = _write_partition_root(tmp_path)
+    expected_dataset_hash = _sha256(train)
+    original_train_bytes = train.read_bytes()
+    original_load = training_module._load_partition_episodes_with_hash
+
+    class FakeVocabulary:
+        size = 1
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def add_action(self, _action):
+            pass
+
+        def index_for_action(self, _action):
+            return 0
+
+    class FakeNetwork:
+        output_head = SimpleNamespace(out_features=1)
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def to(self, _device):
+            return self
+
+        def parameters(self):
+            return ()
+
+        def train(self):
+            pass
+
+        def eval(self):
+            pass
+
+    class FakeOptimizer:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+    def load_with_proposal_action(*args, **kwargs):
+        episodes, digest = original_load(*args, **kwargs)
+        return [replace(episodes[0], action_sequence=({"action_type": "test"},))], digest
+
+    for trainer_type in (ReleaseProposalTrainer, ReleaseRealizerTrainer):
+        with monkeypatch.context() as context:
+            context.setattr(training_module, "_set_deterministic_seeds", lambda _seed: None)
+            context.setattr(training_module.torch.optim, "Adam", FakeOptimizer)
+            context.setattr(training_module, "_ActionVocabulary", FakeVocabulary)
+            context.setattr(training_module, "ProposalNetwork", FakeNetwork)
+            context.setattr(training_module, "RealizerNetwork", FakeNetwork)
+            context.setattr(training_module, "_action_from_dict", lambda *_args: object())
+            context.setattr(training_module, "_build_orientation", lambda *_args: object())
+            context.setattr(training_module, "_encode_form_units", lambda *_args: object())
+            context.setattr(
+                training_module, "_encode_orientation_structural", lambda *_args: object()
+            )
+            context.setattr(
+                training_module, "_encode_response_meaning_features", lambda *_args: object()
+            )
+            context.setattr(training_module, "_surface_to_target", lambda *_args: 0)
+            context.setattr(
+                training_module, "_compute_action_encoding_hash", lambda _index: "action:test"
+            )
+            if trainer_type is ReleaseProposalTrainer:
+                context.setattr(
+                    training_module,
+                    "_load_partition_episodes_with_hash",
+                    load_with_proposal_action,
+                )
+            trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
+            trainer._form_resolver = SimpleNamespace(resolve=lambda _surface: object())
+            if trainer_type is ReleaseProposalTrainer:
+                trainer._config = object()
+            with pytest.raises(AttributeError):
+                trainer.build_metadata()
+            trainer.fit(train)
+            train.write_text('{"episode_ref":"episode:mutated"}\n', encoding="utf-8")
+            context.setattr(
+                training_module,
+                "_file_sha256",
+                lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                    AssertionError("build_metadata reopened the train partition")
+                ),
+            )
+            assert trainer.build_metadata()["dataset_hash"] == expected_dataset_hash
+        train.write_bytes(original_train_bytes)

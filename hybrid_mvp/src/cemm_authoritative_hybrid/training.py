@@ -864,6 +864,13 @@ def load_partition_episodes_for_training(
     Raises :class:`PartitionAccessError` unless ``path`` is the exact regular,
     non-symlink train file authenticated by the pinned partition manifest.
     """
+    episodes, _dataset_hash = _load_partition_episodes_with_hash(path, root)
+    return episodes
+
+
+def _load_partition_episodes_with_hash(
+    path: str | Path, root: str | Path
+) -> tuple[list[PartitionEpisode], str]:
     snapshot = _check_partition_access(path, Path(root))
     episodes: list[PartitionEpisode] = []
     for line in snapshot.decode("utf-8", errors="strict").splitlines():
@@ -886,7 +893,7 @@ def load_partition_episodes_for_training(
                 seed_category=row.get("training_source", {}).get("source_kind", ""),
             )
         )
-    return episodes
+    return episodes, hashlib.sha256(snapshot).hexdigest()
 
 
 def partition_dataset_hash(episodes: Sequence[PartitionEpisode]) -> str:
@@ -991,7 +998,9 @@ class ReleaseProposalTrainer:
         Raises :class:`PartitionAccessError` if ``episodes_path`` is a sealed
         validation or test partition.
         """
-        episodes = load_partition_episodes_for_training(episodes_path, self._root)
+        episodes, dataset_hash = _load_partition_episodes_with_hash(
+            episodes_path, self._root
+        )
         _set_deterministic_seeds(self._seed)
         vocab = _ActionVocabulary(self._legal_action_index, self._max_form_tokens)
 
@@ -1078,6 +1087,7 @@ class ReleaseProposalTrainer:
         self._episodes = episodes
         self._loss_history = loss_history
         self._train_path = Path(episodes_path)
+        self._train_dataset_hash = dataset_hash
 
         return {
             "episodes": len(episodes),
@@ -1094,14 +1104,13 @@ class ReleaseProposalTrainer:
 
     def build_metadata(self) -> dict:
         """Build the metadata template for the trained release model."""
-        ds_hash = _file_sha256(self._train_path)
         action_encoding_hash = _compute_action_encoding_hash(self._legal_action_index)
 
         return {
             "model_kind": "proposal",
             "authority_compatibility_hash": self._authority.model_compatibility_hash,
             "action_encoding_hash": action_encoding_hash,
-            "dataset_hash": ds_hash,
+            "dataset_hash": self._train_dataset_hash,
             "config": {
                 "hidden": self._hidden,
                 "layers": self._layers,
@@ -1149,7 +1158,9 @@ class ReleaseRealizerTrainer:
 
     def fit(self, episodes_path: str | Path) -> dict:
         """Train on ``episodes_path`` and return a training report."""
-        episodes = load_partition_episodes_for_training(episodes_path, self._root)
+        episodes, dataset_hash = _load_partition_episodes_with_hash(
+            episodes_path, self._root
+        )
         _set_deterministic_seeds(self._seed)
 
         network = RealizerNetwork(
@@ -1192,6 +1203,7 @@ class ReleaseRealizerTrainer:
         self._episodes = episodes
         self._loss_history = loss_history
         self._train_path = Path(episodes_path)
+        self._train_dataset_hash = dataset_hash
 
         return {
             "episodes": len(episodes),
@@ -1208,7 +1220,6 @@ class ReleaseRealizerTrainer:
 
     def build_metadata(self) -> dict:
         """Build the metadata template for the trained release realizer."""
-        ds_hash = _file_sha256(self._train_path)
         response_encoding_hash = stable_ref(
             "response_encoding",
             sorted(_ACTION_MAP.keys()) + sorted(_EPISTEMIC_MAP.keys()),
@@ -1217,7 +1228,7 @@ class ReleaseRealizerTrainer:
             "model_kind": "realization",
             "authority_compatibility_hash": self._authority.model_compatibility_hash,
             "action_encoding_hash": response_encoding_hash,
-            "dataset_hash": ds_hash,
+            "dataset_hash": self._train_dataset_hash,
             "config": {
                 "hidden": self._hidden,
                 "layers": self._layers,
