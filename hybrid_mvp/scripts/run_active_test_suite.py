@@ -4,13 +4,17 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 import json
+import os
 from pathlib import Path
+import shutil
+import stat
 import sys
 import tempfile
 from types import MappingProxyType
-from typing import Callable, Mapping, Sequence
+from typing import Callable, ContextManager, Mapping, Sequence
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
@@ -64,6 +68,9 @@ class ActiveSuiteFailure(ActiveSuiteError):
 
 @dataclass(frozen=True)
 class ActiveSuiteContract:
+    root_path: str
+    source_ref: str
+    source_tree_ref: str
     phase: str
     inventory_ref: str
     inventory_sha256: str
@@ -74,6 +81,56 @@ class ActiveSuiteContract:
     collectable_node_ids: tuple[str, ...]
     r5_disposition_receipt_ref: str
     inactive_node_ids_by_reason: Mapping[str, tuple[str, ...]]
+
+
+def _git_source_identity(root: Path) -> tuple[str, bool, str]:
+    """Bind one checkout to its commit and complete regular-file tree."""
+
+    source_ref, dirty = validation_gate._clean_git_snapshot(root)
+    blobs = validation_gate._tracked_source_blobs(root, source_ref)
+    tree_ref = content_ref(
+        "source_tree",
+        {"blobs": [[path, object_id] for path, object_id in sorted(blobs.items())]},
+    )
+    return source_ref, dirty, tree_ref
+
+
+def _authenticate_snapshot_files(root: Path, source_ref: str) -> None:
+    """Reconstruct every executable checkout byte from the committed blob map."""
+
+    blobs = validation_gate._tracked_source_blobs(root, source_ref)
+    manifest = validation_gate._InputManifestCache(root, committed_blobs=blobs)
+    validation_gate._authenticate_complete_source_snapshot(root, manifest, blobs)
+
+
+def _set_snapshot_writable(root: Path, writable: bool) -> None:
+    """Seal/unseal every regular source file while keeping directories usable."""
+
+    for directory, _names, filenames in os.walk(root):
+        for filename in filenames:
+            path = Path(directory) / filename
+            if path.is_symlink():
+                raise ActiveSuiteError("authenticated snapshot contains a symlink")
+            mode = path.stat().st_mode
+            if writable:
+                path.chmod(mode | stat.S_IWRITE)
+            else:
+                path.chmod(mode & ~(stat.S_IWRITE | stat.S_IWGRP | stat.S_IWOTH))
+
+
+def _git_worktree_command(root: Path, arguments: Sequence[str]):
+    try:
+        return validation_gate.capture_bounded_process(
+            ["git", "--no-replace-objects", "-C", str(root), *arguments],
+            max_stdout_bytes=2 * 1024 * 1024,
+            max_stderr_bytes=2 * 1024 * 1024,
+            max_combined_output_bytes=2 * 1024 * 1024,
+            timeout_seconds=120,
+            env=validation_gate._sanitized_git_environment(),
+        )
+    except (OSError, ValueError, validation_gate.ProcessControlError) as exc:
+        reason = getattr(getattr(exc, "reason", None), "value", "start_failed")
+        raise ActiveSuiteError(f"bounded Git worktree error: {reason}") from exc
 
 
 def _phase_index(phase: str) -> int:
@@ -164,10 +221,14 @@ def authenticate_r5_active_suite(
     root: Path,
     *,
     source_reader: Callable[[Path], bytes] | None = None,
+    source_identity_provider: Callable[[Path], tuple[str, bool, str]] = _git_source_identity,
 ) -> ActiveSuiteContract:
     """Authenticate the immutable inventory and its complete R5 overlay."""
 
     root_path = root.resolve()
+    source_ref, dirty, source_tree_ref = source_identity_provider(root_path)
+    if dirty:
+        raise ActiveSuiteError("R5 active suite requires a clean committed source")
     inventory_path = root_path / "governance" / "test_inventory.json"
     inventory_sha256 = verify_document_authority_pin(
         root_path,
@@ -186,6 +247,9 @@ def authenticate_r5_active_suite(
         raise ActiveSuiteError("R5 disposition receipt is unavailable")
     inactive = classify_inactive_nodes(result, phase=PHASE)
     return ActiveSuiteContract(
+        root_path=str(root_path),
+        source_ref=source_ref,
+        source_tree_ref=source_tree_ref,
         phase=PHASE,
         inventory_ref=result.inventory_ref,
         inventory_sha256=inventory_sha256,
@@ -197,6 +261,102 @@ def authenticate_r5_active_suite(
         r5_disposition_receipt_ref=result.r5_disposition_receipt_ref,
         inactive_node_ids_by_reason=inactive,
     )
+
+
+def _contracts_match_snapshot(
+    expected: ActiveSuiteContract,
+    observed: ActiveSuiteContract,
+) -> bool:
+    return replace(expected, root_path=observed.root_path) == observed
+
+
+@contextmanager
+def _detached_git_snapshot(
+    root: Path,
+    source_ref: str,
+    temporary_parent: Path | None,
+):
+    """Materialize and remove a detached worktree at the authenticated commit."""
+
+    if temporary_parent is None:
+        raise ActiveSuiteError("detached source snapshot requires a temporary parent")
+    raw_prefix = validation_gate._bounded_git_probe(
+        root,
+        ("rev-parse", "--show-prefix"),
+        context="resolve the Hybrid MVP project prefix",
+        timeout_seconds=30,
+    )
+    try:
+        prefix = raw_prefix.decode("utf-8", errors="strict").rstrip("\n")
+    except UnicodeDecodeError as exc:
+        raise ActiveSuiteError("Hybrid MVP project prefix is not UTF-8") from exc
+    if (
+        not raw_prefix.endswith(b"\n")
+        or raw_prefix.count(b"\n") != 1
+        or not prefix
+        or not prefix.endswith("/")
+        or "\\" in prefix
+        or any(part in {"", ".", ".."} for part in Path(prefix).parts)
+    ):
+        raise ActiveSuiteError("Hybrid MVP project prefix is not canonical")
+
+    worktree = temporary_parent / "source-worktree"
+    added = False
+    add_attempted = False
+    try:
+        add_attempted = True
+        completed = _git_worktree_command(
+            root,
+            ("worktree", "add", "--detach", "--force", str(worktree), source_ref),
+        )
+        if completed.returncode != 0:
+            raise ActiveSuiteError("cannot materialize authenticated source snapshot")
+        added = True
+        snapshot_root = worktree.joinpath(*prefix.rstrip("/").split("/"))
+        try:
+            resolved = snapshot_root.resolve(strict=True)
+            resolved.relative_to(worktree.resolve(strict=True))
+        except (OSError, ValueError) as exc:
+            raise ActiveSuiteError("authenticated source snapshot root is unavailable") from exc
+        yield resolved
+    finally:
+        cleanup_errors: list[str] = []
+        if add_attempted:
+            if added and worktree.exists():
+                try:
+                    _set_snapshot_writable(worktree, True)
+                except (OSError, ActiveSuiteError):
+                    cleanup_errors.append("restore-write")
+            try:
+                removed = _git_worktree_command(
+                    root, ("worktree", "remove", "--force", str(worktree))
+                )
+                if added and removed.returncode != 0:
+                    cleanup_errors.append("remove")
+            except ActiveSuiteError:
+                cleanup_errors.append("remove")
+            if worktree.exists():
+                try:
+                    resolved_worktree = worktree.resolve(strict=True)
+                    parent_path = temporary_parent.resolve(strict=True)
+                    if resolved_worktree.parent != parent_path:
+                        raise ValueError("worktree is not the exact cleanup target")
+                    shutil.rmtree(resolved_worktree)
+                except (OSError, ValueError):
+                    cleanup_errors.append("fallback-delete")
+            try:
+                pruned = _git_worktree_command(
+                    root, ("worktree", "prune", "--expire", "now")
+                )
+                if pruned.returncode != 0:
+                    cleanup_errors.append("prune")
+            except ActiveSuiteError:
+                cleanup_errors.append("prune")
+        if cleanup_errors:
+            raise ActiveSuiteError(
+                "cannot clean authenticated source snapshot: "
+                + ",".join(sorted(set(cleanup_errors)))
+            )
 
 
 def build_selector(
@@ -324,14 +484,19 @@ def run_authenticated_suite(
     process_runner: Callable[..., object] = _default_process_runner,
     report_parser: Callable[..., object] = validation_gate.parse_pytest_report,
     temporary_parent: Path | None = None,
+    snapshot_provider: Callable[[Path, str, Path | None], ContextManager[Path]] = _detached_git_snapshot,
+    source_identity_provider: Callable[[Path], tuple[str, bool, str]] = _git_source_identity,
+    snapshot_authenticator: Callable[[Path, str], None] = _authenticate_snapshot_files,
+    snapshot_sealer: Callable[[Path, bool], None] = _set_snapshot_writable,
 ) -> dict[str, object]:
-    """Run one ephemeral, manifest-bound pytest process and return only a summary."""
+    """Run one immutable, manifest-bound pytest process and return only a summary."""
 
     root_path = root.resolve()
-    graph = validation_gate.load_gate_graph(
-        root_path / "configs" / "validation_gates.json"
-    )
-    limits = graph.limits
+    if str(root_path) != contract.root_path:
+        raise ActiveSuiteError("authenticated suite root differs from contract root")
+    source_ref, dirty, source_tree_ref = source_identity_provider(root_path)
+    if dirty or source_ref != contract.source_ref or source_tree_ref != contract.source_tree_ref:
+        raise ActiveSuiteError("live source differs from authenticated suite contract")
     selector = build_selector(contract)
     parent = None if temporary_parent is None else str(temporary_parent.resolve())
     with tempfile.TemporaryDirectory(
@@ -339,22 +504,55 @@ def run_authenticated_suite(
         dir=parent,
     ) as temporary:
         run_root = Path(temporary)
-        manifest_path = run_root / "selector.json"
-        report_path = run_root / "pytest-report.json"
-        manifest_path.write_bytes(validation_gate.canonical_json_bytes(selector))
-        process_result = process_runner(
-            root=root_path,
-            run_root=run_root,
-            manifest_path=manifest_path,
-            report_path=report_path,
-            limits=limits,
-        )
-        parsed = report_parser(
-            report_path,
-            max_bytes=limits["max_report_bytes"],
-            expected_selector=selector,
-        )
-        _validate_passed_report(contract, selector, process_result, parsed)
+        with snapshot_provider(root_path, contract.source_ref, run_root) as snapshot_root:
+            snapshot_path = snapshot_root.resolve()
+            observed = authenticate_r5_active_suite(
+                snapshot_path,
+                source_identity_provider=source_identity_provider,
+            )
+            if not _contracts_match_snapshot(contract, observed):
+                raise ActiveSuiteError("detached source snapshot differs from contract")
+            snapshot_authenticator(snapshot_path, contract.source_ref)
+            graph = validation_gate.load_gate_graph(
+                snapshot_path / "configs" / "validation_gates.json"
+            )
+            limits = graph.limits
+            snapshot_sealer(snapshot_path, False)
+            snapshot_authenticator(snapshot_path, contract.source_ref)
+
+            control_root = run_root / "control"
+            control_root.mkdir()
+            manifest_path = control_root / "selector.json"
+            report_path = control_root / "pytest-report.json"
+            manifest_path.write_bytes(validation_gate.canonical_json_bytes(selector))
+            try:
+                process_result = process_runner(
+                    root=snapshot_path,
+                    run_root=control_root,
+                    manifest_path=manifest_path,
+                    report_path=report_path,
+                    limits=limits,
+                )
+            except validation_gate.ProcessControlError as exc:
+                reason = getattr(exc.reason, "value", str(exc.reason))
+                raise ActiveSuiteError(
+                    f"bounded pytest process error: {reason}; "
+                    f"termination_confirmed={exc.termination_confirmed}"
+                ) from exc
+            parsed = report_parser(
+                report_path,
+                max_bytes=limits["max_report_bytes"],
+                expected_selector=selector,
+            )
+            _validate_passed_report(contract, selector, process_result, parsed)
+            snapshot_authenticator(snapshot_path, contract.source_ref)
+            report_ref = getattr(parsed, "report_ref", None)
+            if (
+                type(report_ref) is not str
+                or not report_ref.startswith("pytest_report:")
+                or len(report_ref) != len("pytest_report:") + 24
+            ):
+                raise ActiveSuiteError("authenticated pytest report identity is unavailable")
 
     inactive_counts = {
         reason: len(nodes)
@@ -376,6 +574,9 @@ def run_authenticated_suite(
         "r5_disposition_receipt_ref": contract.r5_disposition_receipt_ref,
         "schema": SUMMARY_SCHEMA,
         "selector_ref": selector["selector_ref"],
+        "source_ref": contract.source_ref,
+        "source_tree_ref": contract.source_tree_ref,
+        "pytest_report_ref": report_ref,
     }
     summary["result_ref"] = content_ref("r5_active_suite_result", summary)
     return summary
@@ -396,10 +597,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         contract = authenticate_r5_active_suite(root)
         summary = run_authenticated_suite(root, contract)
     except ActiveSuiteFailure as exc:
-        print(f"R5 active suite failed: {exc}", file=sys.stderr)
+        print(json.dumps({
+            "disposition": "failed",
+            "error": str(exc)[:4096],
+            "phase": PHASE,
+            "schema": SUMMARY_SCHEMA,
+        }, separators=(",", ":"), sort_keys=True), file=sys.stderr)
         return 1
     except (ActiveSuiteError, validation_gate.GateConfigError) as exc:
-        print(f"R5 active suite error: {exc}", file=sys.stderr)
+        print(json.dumps({
+            "disposition": "error",
+            "error": str(exc)[:4096],
+            "phase": PHASE,
+            "schema": SUMMARY_SCHEMA,
+        }, separators=(",", ":"), sort_keys=True), file=sys.stderr)
         return 2
     print(
         json.dumps(

@@ -4,9 +4,14 @@ import ast
 import hashlib
 import json
 from pathlib import Path
+import stat
+import subprocess
+from contextlib import contextmanager
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
+import scripts.run_active_test_suite as active_suite
 
 from scripts.run_active_test_suite import (
     ActiveSuiteError,
@@ -15,6 +20,7 @@ from scripts.run_active_test_suite import (
     build_selector,
     classify_inactive_nodes,
     run_authenticated_suite,
+    validation_gate,
 )
 from scripts.test_inventory_core import (
     InventoryError,
@@ -51,6 +57,41 @@ def _snapshot_reader(overrides: dict[Path, bytes]):
         return normalized.get(target, target.read_bytes())
 
     return read
+
+
+def _unit_source_identity(root: Path) -> tuple[str, bool, str]:
+    del root
+    return "1" * 40, False, "source_tree:" + "2" * 24
+
+
+def _contract():
+    return authenticate_r5_active_suite(
+        ROOT,
+        source_identity_provider=_unit_source_identity,
+    )
+
+
+@contextmanager
+def _same_root_snapshot(root: Path, source_ref: str, temporary_parent: Path | None):
+    del source_ref, temporary_parent
+    yield root
+
+
+def _noop_snapshot_authenticator(root: Path, source_ref: str) -> None:
+    del root, source_ref
+
+
+def _noop_snapshot_sealer(root: Path, writable: bool) -> None:
+    del root, writable
+
+
+def _parsed_report(disposition: str, payload: dict[str, object]):
+    return SimpleNamespace(
+        disposition=disposition,
+        error_code=None,
+        payload=payload,
+        report_ref="pytest_report:" + "3" * 24,
+    )
 
 
 def _independent_inventory():
@@ -146,7 +187,7 @@ python_classes = ["Test*"]
 
 def test_r5_active_suite_contract_equals_authenticated_inventory() -> None:
     expected = _independent_inventory()
-    contract = authenticate_r5_active_suite(ROOT)
+    contract = _contract()
     selector = build_selector(contract)
 
     assert contract.phase == "R5"
@@ -318,11 +359,12 @@ def test_r5_active_suite_authentication_rejects_tampered_governed_source(
         authenticate_r5_active_suite(
             ROOT,
             source_reader=_snapshot_reader({path: raw}),
+            source_identity_provider=_unit_source_identity,
         )
 
 
 def test_r5_selector_rejects_tampered_identity_and_node_sets() -> None:
-    contract = authenticate_r5_active_suite(ROOT)
+    contract = _contract()
     selector = build_selector(contract)
 
     forged_ref = dict(selector)
@@ -340,7 +382,7 @@ def test_r5_selector_rejects_tampered_identity_and_node_sets() -> None:
 def test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once(
     tmp_path: Path,
 ) -> None:
-    contract = authenticate_r5_active_suite(ROOT)
+    contract = _contract()
     calls: list[dict[str, object]] = []
     run_roots: list[Path] = []
 
@@ -355,10 +397,9 @@ def test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once(
 
     def fake_parser(_path, *, expected_selector, max_bytes):
         del max_bytes
-        return SimpleNamespace(
-            disposition="passed",
-            error_code=None,
-            payload={
+        return _parsed_report(
+            "passed",
+            {
                 "active_node_ids": expected_selector["active_node_ids"],
                 "collected_node_ids": expected_selector["collectable_node_ids"],
                 "counts": {
@@ -384,6 +425,10 @@ def test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once(
         process_runner=fake_runner,
         report_parser=fake_parser,
         temporary_parent=tmp_path,
+        snapshot_provider=_same_root_snapshot,
+        source_identity_provider=_unit_source_identity,
+        snapshot_authenticator=_noop_snapshot_authenticator,
+        snapshot_sealer=_noop_snapshot_sealer,
     )
 
     assert len(calls) == 1
@@ -396,7 +441,7 @@ def test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once(
 def test_r5_runner_rejects_tampered_report_and_removes_temporary_root(
     tmp_path: Path,
 ) -> None:
-    contract = authenticate_r5_active_suite(ROOT)
+    contract = _contract()
     run_roots: list[Path] = []
 
     def fake_runner(*, root, run_root, manifest_path, report_path, limits):
@@ -406,10 +451,9 @@ def test_r5_runner_rejects_tampered_report_and_removes_temporary_root(
 
     def tampered_parser(_path, *, expected_selector, max_bytes):
         del max_bytes
-        return SimpleNamespace(
-            disposition="passed",
-            error_code=None,
-            payload={
+        return _parsed_report(
+            "passed",
+            {
                 "active_node_ids": expected_selector["active_node_ids"],
                 "collected_node_ids": expected_selector["collectable_node_ids"],
                 "counts": {
@@ -433,6 +477,10 @@ def test_r5_runner_rejects_tampered_report_and_removes_temporary_root(
             process_runner=fake_runner,
             report_parser=tampered_parser,
             temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert all(not path.exists() for path in run_roots)
 
@@ -440,7 +488,7 @@ def test_r5_runner_rejects_tampered_report_and_removes_temporary_root(
 def test_r5_runner_failure_names_bounded_failed_nodes_and_cleans(
     tmp_path: Path,
 ) -> None:
-    contract = authenticate_r5_active_suite(ROOT)
+    contract = _contract()
     failed_node = contract.active_node_ids[0]
     run_roots: list[Path] = []
 
@@ -451,10 +499,9 @@ def test_r5_runner_failure_names_bounded_failed_nodes_and_cleans(
 
     def failed_parser(_path, *, expected_selector, max_bytes):
         del max_bytes
-        return SimpleNamespace(
-            disposition="failed",
-            error_code=None,
-            payload={
+        return _parsed_report(
+            "failed",
+            {
                 "active_node_ids": expected_selector["active_node_ids"],
                 "collected_node_ids": expected_selector["collectable_node_ids"],
                 "counts": {
@@ -484,8 +531,209 @@ def test_r5_runner_failure_names_bounded_failed_nodes_and_cleans(
             process_runner=fake_runner,
             report_parser=failed_parser,
             temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert all(not path.exists() for path in run_roots)
+
+
+def test_r5_runner_rejects_contract_root_substitution(tmp_path: Path) -> None:
+    contract = _contract()
+    with pytest.raises(ActiveSuiteError, match="root"):
+        run_authenticated_suite(
+            tmp_path,
+            contract,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
+        )
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        validation_gate.ProcessErrorReason.TIMEOUT,
+        validation_gate.ProcessErrorReason.OUTPUT_LIMIT,
+    ],
+    ids=["timeout", "output-limit"],
+)
+def test_r5_runner_translates_process_control_failure_and_cleans(
+    tmp_path: Path,
+    reason: validation_gate.ProcessErrorReason,
+) -> None:
+    contract = _contract()
+    run_roots: list[Path] = []
+
+    def failed_runner(*, root, run_root, manifest_path, report_path, limits):
+        del root, manifest_path, report_path, limits
+        run_roots.append(run_root)
+        raise validation_gate.ProcessControlError(
+            reason,
+            f"bounded {reason.value}",
+            termination_confirmed=True,
+        )
+
+    with pytest.raises(ActiveSuiteError, match=reason.value):
+        run_authenticated_suite(
+            ROOT,
+            contract,
+            process_runner=failed_runner,
+            temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
+        )
+    assert all(not path.exists() for path in run_roots)
+
+
+def test_r5_runner_rejects_live_source_drift_after_authentication(
+    tmp_path: Path,
+) -> None:
+    contract = _contract()
+
+    def drifted_source(root: Path) -> tuple[str, bool, str]:
+        del root
+        return "4" * 40, False, contract.source_tree_ref
+
+    with pytest.raises(ActiveSuiteError, match="live source"):
+        run_authenticated_suite(
+            ROOT,
+            contract,
+            temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=drifted_source,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
+        )
+
+
+def test_r5_runner_rejects_snapshot_swap_before_pytest(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract = _contract()
+    called = False
+
+    def swapped_authentication(*args, **kwargs):
+        del args, kwargs
+        return replace(contract, literal_metadata_ref="literal_test_metadata:" + "5" * 24)
+
+    def forbidden_runner(**kwargs):
+        nonlocal called
+        del kwargs
+        called = True
+
+    monkeypatch.setattr(
+        "scripts.run_active_test_suite.authenticate_r5_active_suite",
+        swapped_authentication,
+    )
+    with pytest.raises(ActiveSuiteError, match="snapshot differs"):
+        run_authenticated_suite(
+            ROOT,
+            contract,
+            process_runner=forbidden_runner,
+            temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=_noop_snapshot_authenticator,
+            snapshot_sealer=_noop_snapshot_sealer,
+        )
+    assert called is False
+
+
+def test_r5_snapshot_cleanup_attempts_prune_after_remove_exception(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q", str(repository)], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "user.email", "test@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "user.name", "CEMM Test"],
+        check=True,
+    )
+    (repository / "hybrid_mvp").mkdir()
+    (repository / "hybrid_mvp" / "tracked.txt").write_text("tracked\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repository), "commit", "-qm", "fixture"], check=True)
+    source_ref = subprocess.check_output(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"], text=True
+    ).strip()
+    temporary_parent = tmp_path / "control"
+    temporary_parent.mkdir()
+    actual = active_suite._git_worktree_command
+    calls: list[str] = []
+
+    def fail_remove(root: Path, arguments):
+        operation = arguments[1]
+        calls.append(operation)
+        if operation == "remove":
+            raise ActiveSuiteError("injected remove error")
+        return actual(root, arguments)
+
+    monkeypatch.setattr(active_suite, "_git_worktree_command", fail_remove)
+    with pytest.raises(ActiveSuiteError, match="remove"):
+        with active_suite._detached_git_snapshot(
+            repository / "hybrid_mvp", source_ref, temporary_parent
+        ):
+            pass
+    assert calls == ["add", "remove", "prune"]
+    worktrees = subprocess.check_output(
+        ["git", "-C", str(repository), "worktree", "list", "--porcelain"],
+        text=True,
+    )
+    assert "source-worktree" not in worktrees
+
+
+def test_r5_snapshot_is_sealed_before_pytest_spawn(tmp_path: Path) -> None:
+    contract = _contract()
+    snapshot = tmp_path / "snapshot"
+    (snapshot / "configs").mkdir(parents=True)
+    config = snapshot / "configs" / "validation_gates.json"
+    config.write_bytes((ROOT / "configs" / "validation_gates.json").read_bytes())
+    marker = snapshot / "tracked.py"
+    marker.write_text("VALUE = 1\n", encoding="utf-8")
+
+    @contextmanager
+    def snapshot_provider(root: Path, source_ref: str, temporary_parent: Path | None):
+        del root, source_ref, temporary_parent
+        yield snapshot
+
+    def snapshot_contract(*args, **kwargs):
+        del args, kwargs
+        return replace(contract, root_path=str(snapshot.resolve()))
+
+    def sealed_runner(**kwargs):
+        assert marker.stat().st_mode & stat.S_IWRITE == 0
+        raise validation_gate.ProcessControlError(
+            validation_gate.ProcessErrorReason.TIMEOUT,
+            "stop after seal check",
+            termination_confirmed=True,
+        )
+
+    try:
+        with pytest.MonkeyPatch.context() as patcher:
+            patcher.setattr(active_suite, "authenticate_r5_active_suite", snapshot_contract)
+            with pytest.raises(ActiveSuiteError, match="timeout"):
+                run_authenticated_suite(
+                    ROOT,
+                    contract,
+                    process_runner=sealed_runner,
+                    temporary_parent=tmp_path,
+                    snapshot_provider=snapshot_provider,
+                    source_identity_provider=_unit_source_identity,
+                    snapshot_authenticator=_noop_snapshot_authenticator,
+                )
+    finally:
+        active_suite._set_snapshot_writable(snapshot, True)
 
 
 def test_r5_task10_uses_governed_active_suite_as_release_gate() -> None:
@@ -506,7 +754,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-suite-equals-authenticated-inventory",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '216e6caf1bf8ecb6351b714a8e6657e4b5a7065c9b2efe663de919e05a3ef6c3',
+        "source_ast_sha256": 'c7eeaaadad16916680ecd77795d1efc22ba3e8b43a02bcaeed98310e0624e2e4',
     },
     "tests/test_r5_active_regression.py::test_r5_collectable_inactive_partition_is_exhaustive_and_derived": {
         "activation_phase": "R5",
@@ -562,49 +810,98 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-suite-rejects-tampered-inventory",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '71efc336ba13de51c6863979607f832604690ab05d2d7df2abe659e6bf240b58',
+        "source_ast_sha256": '59eeab6a013d8c6bd5bfa7e4edd93afb7bff3474f1f58214db559c14cc0a3998',
     },
     "tests/test_r5_active_regression.py::test_r5_active_suite_authentication_rejects_tampered_governed_source[source]": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-rejects-tampered-source",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '71efc336ba13de51c6863979607f832604690ab05d2d7df2abe659e6bf240b58',
+        "source_ast_sha256": '59eeab6a013d8c6bd5bfa7e4edd93afb7bff3474f1f58214db559c14cc0a3998',
     },
     "tests/test_r5_active_regression.py::test_r5_active_suite_authentication_rejects_tampered_governed_source[disposition]": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-rejects-tampered-disposition",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '71efc336ba13de51c6863979607f832604690ab05d2d7df2abe659e6bf240b58',
+        "source_ast_sha256": '59eeab6a013d8c6bd5bfa7e4edd93afb7bff3474f1f58214db559c14cc0a3998',
     },
     "tests/test_r5_active_regression.py::test_r5_selector_rejects_tampered_identity_and_node_sets": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-selector-is-exact",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'c2c15c085bacef52e947346c795dc628884d14e90ed55babda5c924372d9e54a',
+        "source_ast_sha256": '1f12316257903af72c3ed3b0da2c6afb8752b5abe7c96757045f2f1c77bd73b3',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-runs-one-process-without-inactive-errors",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'dfde370a86a018a1126dc1df631ec28b012c6286b07509e19299d8d25c3d59e4',
+        "source_ast_sha256": 'd47fe10c19dd5de3193e3699d85a0549d7fea0e13f7329739d9327b82b7f9074',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_rejects_tampered_report_and_removes_temporary_root": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-report-is-authenticated-and-ephemeral",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'a7f6d6d5e3fb33be6d6a9eb8fbdd0202f1dac83a4ac292f92f3bae6f3761f860',
+        "source_ast_sha256": 'c4e773b7dc5e681a2c7bd248931325678c0ed8baa62a52bcf2d8c70c02c1e41b',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_failure_names_bounded_failed_nodes_and_cleans": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-failure-summary-is-bounded",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'c056855d4a30e885d14566f58b60fb978e8bc83b648016f3aaea3de0ef2bb477',
+        "source_ast_sha256": 'c0759e2301a46c0e130d5866a15c6f74c3ccb9563cefa7e737191c7b112227af',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_rejects_contract_root_substitution": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-contract-binds-root",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": 'fc8b163bfcd1bcef72956d23f93863da99a98923bf1ef2360047dcb35ddfa75a',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_translates_process_control_failure_and_cleans[timeout]": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-timeout-is-controlled",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '5891d1c9e434fb0cacc993530851c95f4e91bf460ce2a1136eaf575e87629719',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_translates_process_control_failure_and_cleans[output-limit]": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-output-limit-is-controlled",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '5891d1c9e434fb0cacc993530851c95f4e91bf460ce2a1136eaf575e87629719',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_rejects_live_source_drift_after_authentication": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-rejects-live-source-drift",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '3d7d99751adcb9017740199ffc3dff86527c05df9022d5fc839946d1467a8615',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_rejects_snapshot_swap_before_pytest": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-rejects-snapshot-swap",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '6d99d9a455cfe59c0c0a6269faebec7c2f5dcd1cf02254a80907470325722efd',
+    },
+    "tests/test_r5_active_regression.py::test_r5_snapshot_cleanup_attempts_prune_after_remove_exception": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-cleanup-prunes-after-remove-error",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '44789a1f4d63bf680731ad06a754e03f4861c5bce25256b43ce3a50ca32c906b',
+    },
+    "tests/test_r5_active_regression.py::test_r5_snapshot_is_sealed_before_pytest_spawn": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-source-is-sealed-before-spawn",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": 'd2c49202f2a634a65f073218e9bc38e2e55029457dfe6c63ee44de39fce4b49e',
     },
     "tests/test_r5_active_regression.py::test_r5_task10_uses_governed_active_suite_as_release_gate": {
         "activation_phase": "R5",
