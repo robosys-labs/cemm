@@ -991,7 +991,6 @@ class ReleaseProposalTrainer:
         Raises :class:`PartitionAccessError` if ``episodes_path`` is a sealed
         validation or test partition.
         """
-        _check_partition_access(episodes_path, self._root)
         _set_deterministic_seeds(self._seed)
 
         episodes = load_partition_episodes_for_training(episodes_path, self._root)
@@ -1151,7 +1150,6 @@ class ReleaseRealizerTrainer:
 
     def fit(self, episodes_path: str | Path) -> dict:
         """Train on ``episodes_path`` and return a training report."""
-        _check_partition_access(episodes_path, self._root)
         _set_deterministic_seeds(self._seed)
 
         episodes = load_partition_episodes_for_training(episodes_path, self._root)

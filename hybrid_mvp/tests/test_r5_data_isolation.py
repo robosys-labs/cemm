@@ -8,8 +8,13 @@ import shutil
 
 import pytest
 
+import cemm_authoritative_hybrid.training as training_module
 from cemm_authoritative_hybrid.partitions import PartitionAccessError
-from cemm_authoritative_hybrid.training import load_partition_episodes_for_training
+from cemm_authoritative_hybrid.training import (
+    ReleaseProposalTrainer,
+    ReleaseRealizerTrainer,
+    load_partition_episodes_for_training,
+)
 
 
 __cemm_test_inventory__ = {
@@ -85,6 +90,22 @@ __cemm_test_inventory__ = {
         "owner_ref": "data-isolation",
         "source_ast_sha256": "bc45b09feb5296d947f55843167e9d0e9d33f4e9837b337f18eb1e23c20f59d1",
     },
+    "tests/test_r5_data_isolation.py::test_release_trainers_authenticate_train_once": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-release-trainers-authenticate-train-once",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "data-isolation",
+        "source_ast_sha256": "26881a8b61a63c68b6128e5128868337d4b0905f03c304317750927ae18e411b",
+    },
+    "tests/test_r5_data_isolation.py::test_release_trainers_reject_nontrain_before_downstream_work": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-release-trainers-reject-nontrain-at-loader",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "data-isolation",
+        "source_ast_sha256": "674123638ae0527f80bf7bae94561ed5894e0ee2027659517c3ac07af44dca44",
+    },
 }
 
 
@@ -121,6 +142,21 @@ def _write_partition_root(root: Path) -> tuple[Path, Path, Path]:
         json.dumps(manifest, sort_keys=True, separators=(",", ":")), encoding="utf-8"
     )
     return train, validation, test
+
+
+def _trainer_stopping_after_episode_load(trainer_type, root: Path):
+    trainer = object.__new__(trainer_type)
+    trainer._root = root
+    trainer._seed = 1701
+    if trainer_type is ReleaseProposalTrainer:
+        trainer._legal_action_index = object()
+        trainer._max_form_tokens = 1
+    else:
+        trainer._hidden = 1
+        trainer._layers = 1
+        trainer._feature_dim = 1
+        trainer._vocab_size = 1
+    return trainer
 
 
 def test_training_loader_accepts_only_manifest_bound_train(tmp_path):
@@ -237,3 +273,53 @@ def test_training_loader_parses_authenticated_snapshot_without_second_read(
     monkeypatch.setattr(Path, "read_text", mutate_train_before_second_read)
     episodes = load_partition_episodes_for_training(train, tmp_path)
     assert [episode.episode_ref for episode in episodes] == ["episode:train"]
+
+
+def test_release_trainers_authenticate_train_once(tmp_path, monkeypatch):
+    train, _, _ = _write_partition_root(tmp_path)
+    original_check = training_module._check_partition_access
+    monkeypatch.setattr(training_module, "_set_deterministic_seeds", lambda _seed: None)
+
+    class LoadedEpisodes(RuntimeError):
+        pass
+
+    for trainer_type, downstream_name in (
+        (ReleaseProposalTrainer, "_ActionVocabulary"),
+        (ReleaseRealizerTrainer, "RealizerNetwork"),
+    ):
+        calls = 0
+
+        def counted_check(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            return original_check(*args, **kwargs)
+
+        def stop_after_load(*_args, **_kwargs):
+            raise LoadedEpisodes
+
+        with monkeypatch.context() as context:
+            context.setattr(training_module, "_check_partition_access", counted_check)
+            context.setattr(training_module, downstream_name, stop_after_load)
+            trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
+            with pytest.raises(LoadedEpisodes):
+                trainer.fit(train)
+        assert calls == 1
+
+
+def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monkeypatch):
+    _, validation, test = _write_partition_root(tmp_path)
+    monkeypatch.setattr(training_module, "_set_deterministic_seeds", lambda _seed: None)
+
+    def downstream_must_not_run(*_args, **_kwargs):
+        raise AssertionError("trainer reached downstream work for a non-train partition")
+
+    for trainer_type, downstream_name in (
+        (ReleaseProposalTrainer, "_ActionVocabulary"),
+        (ReleaseRealizerTrainer, "RealizerNetwork"),
+    ):
+        with monkeypatch.context() as context:
+            context.setattr(training_module, downstream_name, downstream_must_not_run)
+            trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
+            for path in (validation, test):
+                with pytest.raises(PartitionAccessError):
+                    trainer.fit(path)
