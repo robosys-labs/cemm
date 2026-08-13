@@ -1,10 +1,10 @@
 # R4 Partition Corrective Replay Progress Tracker
 
-**Tracker date:** 2026-08-14  
-**Tracker role:** operational evidence; never replay-status authority  
-**Effective status owner:** [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl)  
-**Working branch:** `codex/r4-partition-corrective-replay`  
-**Base commit:** `107c5189353564ce8b66317c897bc28a62cfd403`  
+**Tracker date:** 2026-08-14
+**Tracker role:** operational evidence; never replay-status authority
+**Effective status owner:** [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl)
+**Working branch:** `codex/r4-partition-corrective-replay`
+**Base commit:** `107c5189353564ce8b66317c897bc28a62cfd403`
 **Remote target:** `origin/codex/r4-partition-corrective-replay`
 
 ## 1. Executive summary
@@ -69,7 +69,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 |---|---|---|---|---|
 | P0 | R5 foundation closeout and remote publication | complete | Published base commit | 1,641-test governed pass; Task 10 closeout |
 | P1 | R4/R5 entry audit | complete | Empty allowlist and stale neural artifacts | Root-cause reports and approved repair direction |
-| P2 | Written R4 corrective design | in_progress | Approved architecture | Written spec reviewed by user |
+| P2 | Written R4 corrective design | complete | Approved architecture | Written spec and independent contract review passed |
 | P3 | Governing implementation plan | pending | Approved written spec | Detailed TDD plan reviewed and committed |
 | P4 | Governance authority and R4 invalidation | pending | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
 | P5 | Partition ABI and algorithm implementation | pending | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
@@ -212,9 +212,9 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ## 11. Current checkpoint
 
-**Current work:** P2, written design and tracker publication.  
-**Next required decision:** user review of the written design.  
-**Implementation authorization:** not yet granted; no source, ledger, ABI, or artifact mutation may begin before the written spec and implementation plan are reviewed.  
+**Current work:** P3, governing implementation plan.
+**Next required decision:** review of the detailed implementation plan before source or ledger mutation.
+**Implementation authorization:** design approved; source, ledger, ABI, and artifact mutation remain gated on the detailed implementation plan.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence

@@ -1,7 +1,7 @@
 # R4 Partition Corrective Replay Design
 
-**Date:** 2026-08-14  
-**Status:** approved architecture; written specification awaiting review  
+**Date:** 2026-08-14
+**Status:** approved and independently reviewed specification
 **Scope:** `hybrid_mvp/` R4 data partition evidence, artifacts, admission, and descendant reset only
 
 ## 1. Decision
