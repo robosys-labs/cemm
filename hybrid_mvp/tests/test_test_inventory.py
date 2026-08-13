@@ -1192,18 +1192,19 @@ def test_r5_overlay_defers_absent_leaf_without_admitting_it(
         [_overlay_row(predecessor, "assertion:frozen", "deferred")],
     )
 
-    verified = _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        verified = _verify(root, inventory_path, phase=phase)
 
-    assert predecessor not in verified.active_node_ids
-    assert predecessor not in verified.collectable_node_ids
-    assert verified.deferred_r5_assertion_refs == ("assertion:frozen",)
-    assert verified.retired_r5_assertion_refs == ()
-    assert verified.r5_disposition_receipt_ref.startswith(
-        "r5_test_disposition_receipt:"
-    )
-    assert not verified.owner_node_ids
-    assert not verified.phase_node_ids
-    assert not verified.admission_only_node_ids
+        assert predecessor not in verified.active_node_ids
+        assert predecessor not in verified.collectable_node_ids
+        assert verified.deferred_r5_assertion_refs == ("assertion:frozen",)
+        assert verified.retired_r5_assertion_refs == ()
+        assert verified.r5_disposition_receipt_ref.startswith(
+            "r5_test_disposition_receipt:"
+        )
+        assert not verified.owner_node_ids
+        assert not verified.phase_node_ids
+        assert not verified.admission_only_node_ids
 
     without_overlay = _verify(root, inventory_path, phase="R4")
     assert without_overlay.deferred_r5_assertion_refs == ()
@@ -1257,15 +1258,19 @@ def test_r5_overlay_retires_only_the_exact_absent_fallback_leaf(
         [_overlay_row(source_ref, assertion_ref, "retired")],
     )
 
-    verified = _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        verified = _verify(root, inventory_path, phase=phase)
 
-    assert source_ref not in verified.active_node_ids
-    assert source_ref not in verified.collectable_node_ids
-    assert verified.deferred_r5_assertion_refs == ()
-    assert verified.retired_r5_assertion_refs == (assertion_ref,)
-    assert not verified.owner_node_ids
-    assert not verified.phase_node_ids
-    assert not verified.admission_only_node_ids
+        assert source_ref not in verified.active_node_ids
+        assert source_ref not in verified.collectable_node_ids
+        assert verified.deferred_r5_assertion_refs == ()
+        assert verified.retired_r5_assertion_refs == (assertion_ref,)
+        assert verified.r5_disposition_receipt_ref.startswith(
+            "r5_test_disposition_receipt:"
+        )
+        assert not verified.owner_node_ids
+        assert not verified.phase_node_ids
+        assert not verified.admission_only_node_ids
 
 
 @pytest.mark.parametrize(
@@ -1339,11 +1344,12 @@ def test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites(
         [_overlay_row(target_source_ref, target_assertion, disposition)],
     )
 
-    with pytest.raises(
-        CORE.InventoryError,
-        match="rewrite|non-executable|executable descendant",
-    ):
-        _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        with pytest.raises(
+            CORE.InventoryError,
+            match="rewrite|non-executable|executable descendant",
+        ):
+            _verify(root, inventory_path, phase=phase)
 
 
 def test_r5_deferred_predecessor_rejects_literal_executable_descendant(
@@ -1375,14 +1381,15 @@ def test_r5_deferred_predecessor_rejects_literal_executable_descendant(
         [_overlay_row(predecessor, "assertion:frozen", "deferred")],
     )
 
-    with pytest.raises(
-        CORE.InventoryError,
-        match=(
-            "deferred R5 predecessor .*test_frozen has executable descendant "
-            ".*test_descendant"
-        ),
-    ):
-        _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        with pytest.raises(
+            CORE.InventoryError,
+            match=(
+                "deferred R5 predecessor .*test_frozen has executable descendant "
+                ".*test_descendant"
+            ),
+        ):
+            _verify(root, inventory_path, phase=phase)
 
 
 def test_r5_retired_predecessor_rejects_multihop_executable_descendant(
@@ -1447,14 +1454,15 @@ def test_r5_retired_predecessor_rejects_multihop_executable_descendant(
         [_overlay_row(predecessor, assertion_ref, "retired")],
     )
 
-    with pytest.raises(
-        CORE.InventoryError,
-        match=(
-            "retired R5 predecessor .*safe_fallback has executable descendant "
-            ".*test_intermediate"
-        ),
-    ):
-        _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        with pytest.raises(
+            CORE.InventoryError,
+            match=(
+                "retired R5 predecessor .*safe_fallback has executable descendant "
+                ".*test_intermediate"
+            ),
+        ):
+            _verify(root, inventory_path, phase=phase)
 
 
 def test_r5_due_rewrite_cannot_use_descendant_of_deferred_predecessor(
@@ -1511,14 +1519,15 @@ def test_r5_due_rewrite_cannot_use_descendant_of_deferred_predecessor(
         [_overlay_row(predecessor, "assertion:predecessor", "deferred")],
     )
 
-    with pytest.raises(
-        CORE.InventoryError,
-        match=(
-            "deferred R5 predecessor .*test_predecessor has executable descendant "
-            ".*test_descendant"
-        ),
-    ):
-        _verify(root, inventory_path, phase="R5")
+    for phase in ("R5", "R6", "R8"):
+        with pytest.raises(
+            CORE.InventoryError,
+            match=(
+                "deferred R5 predecessor .*test_predecessor has executable descendant "
+                ".*test_descendant"
+            ),
+        ):
+            _verify(root, inventory_path, phase=phase)
 
 
 def test_r5_successor_requires_literal_executable_metadata(tmp_path: Path) -> None:
@@ -1723,12 +1732,17 @@ def test_inventory_cli_adds_only_r5_disposition_fields(
         with patch.object(cli, "load_and_verify", return_value=r5_result):
             assert cli.main(["--phase", "R5", "--source-only"]) == 0
         r5_payload = json.loads(capsys.readouterr().out)
-    assert r5_payload["r5_disposition_receipt_ref"] == (
-        "r5_test_disposition_receipt:" + "1" * 24
-    )
-    assert r5_payload["r5_successor_count"] == 17
-    assert r5_payload["r5_deferred_count"] == 25
-    assert r5_payload["r5_retired_count"] == 1
+
+        with patch.object(cli, "load_and_verify", return_value=r5_result):
+            assert cli.main(["--phase", "R8", "--source-only"]) == 0
+        r8_payload = json.loads(capsys.readouterr().out)
+    for payload in (r5_payload, r8_payload):
+        assert payload["r5_disposition_receipt_ref"] == (
+            "r5_test_disposition_receipt:" + "1" * 24
+        )
+        assert payload["r5_successor_count"] == 17
+        assert payload["r5_deferred_count"] == 25
+        assert payload["r5_retired_count"] == 1
 
 
 R5_TEST_INVENTORY_REF = "test_inventory:c715e262526c0ea26a6fef90"
@@ -2134,7 +2148,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "5540e021ab71a71c513d10ac538477ec4fb6c284a3428fd69cae6dd0e902273e",
+        "source_ast_sha256": "dc7f38097fb55fac683cea8e568341df297b657ac22735035dd551c39adbd1a6",
     },
     "tests/test_test_inventory.py::test_r5_overlay_retires_only_the_exact_absent_fallback_leaf": {
         "assertion_ref": "assertion:r5-test-inventory-retirement-is-non-executable",
@@ -2142,7 +2156,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "418f91894cdde40dcaa3888a3bf236bb1f3cf5513849e0a938379e8665e54b4d",
+        "source_ast_sha256": "4398977b1fc9f982736de78723d29bee17dacf0a1d3fba232e5559595f0e9641",
     },
     "tests/test_test_inventory.py::test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites[deferred]": {
         "assertion_ref": "assertion:r5-test-inventory-deferred-cannot-satisfy-rewrite",
@@ -2150,7 +2164,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "d48f7666094ca7cd899e28c55c605961d0683acaf1f7ad30b10558336286c606",
+        "source_ast_sha256": "cae48d7ae9635193051a3471aef16d6fa6b77f6a4dd93d6a94ed12519f77150b",
     },
     "tests/test_test_inventory.py::test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites[retired]": {
         "assertion_ref": "assertion:r5-test-inventory-retired-cannot-satisfy-rewrite",
@@ -2158,7 +2172,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "d48f7666094ca7cd899e28c55c605961d0683acaf1f7ad30b10558336286c606",
+        "source_ast_sha256": "cae48d7ae9635193051a3471aef16d6fa6b77f6a4dd93d6a94ed12519f77150b",
     },
     "tests/test_test_inventory.py::test_r5_deferred_predecessor_rejects_literal_executable_descendant": {
         "assertion_ref": "assertion:r5-test-inventory-deferred-lineage-has-no-descendant",
@@ -2166,7 +2180,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3-Review-Fix",
-        "source_ast_sha256": "10b168270cb070a7a84cb3621563d5f650f8b4ce2fcca0546eef77bd8171b3a5",
+        "source_ast_sha256": "f164819d78eaa8af506fa18bda4e83f36d7c648098adacb36c35eb3e5afaa55c",
     },
     "tests/test_test_inventory.py::test_r5_retired_predecessor_rejects_multihop_executable_descendant": {
         "assertion_ref": "assertion:r5-test-inventory-retired-lineage-has-no-descendant",
@@ -2174,7 +2188,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3-Review-Fix",
-        "source_ast_sha256": "e8f4df77bdf85a8dc06fe5b6bcb3dba487eb37c26d2b8cafe7d87e8c1705a72c",
+        "source_ast_sha256": "2d25514d4d6af2e3d471a02eafb88ff260c5d2a4c048fb2e08966d9aa0ec8348",
     },
     "tests/test_test_inventory.py::test_r5_due_rewrite_cannot_use_descendant_of_deferred_predecessor": {
         "assertion_ref": "assertion:r5-test-inventory-deferred-descendant-cannot-satisfy-rewrite",
@@ -2182,7 +2196,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3-Review-Fix",
-        "source_ast_sha256": "79e466abaf1d4098ed2ea3588aa20e4785d09659b641946946bcdbb6d92266c2",
+        "source_ast_sha256": "8f1f879c88173e5924bddcbb0b454241069cb811e6af9024b0657636cea10420",
     },
     "tests/test_test_inventory.py::test_r5_successor_requires_literal_executable_metadata": {
         "assertion_ref": "assertion:r5-test-inventory-successor-metadata-is-literal",
@@ -2222,7 +2236,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "e491af91b46d9f526fe0ba5e6b23fdc053804fbed218aa1c02fe936b9c5abf85",
+        "source_ast_sha256": "8afcb222b76a4a92af0fee7186b27dbdefe03a4d1c7241d4599850f0296dc40a",
     },
     "tests/test_test_inventory.py::test_r5_disposition_receipt_rejects_forged_dataclasses": {
         "assertion_ref": "assertion:r5-test-disposition-receipt-rejects-forgery",

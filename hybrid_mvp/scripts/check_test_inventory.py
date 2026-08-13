@@ -58,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         "due_rewrite_count": len(result.due_rewrite_refs),
         "parsed_module_count": result.parsed_module_count,
     }
-    if args.phase == "R5":
+    if PHASES.index(args.phase) >= PHASES.index("R5"):
         deferred_count = len(result.deferred_r5_assertion_refs)
         retired_count = len(result.retired_r5_assertion_refs)
         r5_predecessor_count = sum(

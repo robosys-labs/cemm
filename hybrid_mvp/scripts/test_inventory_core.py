@@ -1706,7 +1706,7 @@ def load_and_verify(
     excluded_r5_nodes = frozenset()
     deferred_r5_assertion_refs: tuple[str, ...] = ()
     retired_r5_assertion_refs: tuple[str, ...] = ()
-    if checked_phase == "R5":
+    if _phase_index(checked_phase) >= _phase_index("R5"):
         (
             r5_disposition_receipt_ref,
             excluded_r5_nodes,
