@@ -712,6 +712,7 @@ _VALIDATION_PARTITION = "data/partitions/validation.jsonl"
 _TEST_PARTITION = "data/partitions/test.jsonl"
 _PARTITION_MANIFEST = "data/partitions/manifest.json"
 _PARTITION_MANIFEST_MAX_BYTES = 64 * 1024
+_TRAIN_PARTITION_MAX_BYTES = 32 * 1024 * 1024
 _PARTITION_MANIFEST_FIELDS = frozenset(
     {
         "seed",
@@ -783,12 +784,19 @@ def _load_training_partition_manifest(root: Path) -> dict[str, object]:
             raise ValueError("partition manifest fields mismatch")
         if type(manifest["seed"]) is not int:
             raise TypeError("partition manifest seed must be an exact int")
-        for split in ("train", "validation", "test"):
+        canonical_paths = {
+            "train": _TRAIN_PARTITION,
+            "validation": _VALIDATION_PARTITION,
+            "test": _TEST_PARTITION,
+        }
+        for split, canonical_path in canonical_paths.items():
             path_value = manifest[f"{split}_path"]
             digest = manifest[f"{split}_sha256"]
             count = manifest[f"{split}_count"]
-            if type(path_value) is not str or not path_value:
-                raise TypeError(f"partition manifest {split}_path must be an exact string")
+            if type(path_value) is not str or path_value != canonical_path:
+                raise ValueError(
+                    f"partition manifest {split}_path must be exactly {canonical_path}"
+                )
             if type(digest) is not str or len(digest) != 64 or any(
                 character not in "0123456789abcdef" for character in digest
             ):
@@ -800,8 +808,8 @@ def _load_training_partition_manifest(root: Path) -> dict[str, object]:
     return manifest
 
 
-def _check_partition_access(path: str | Path, root: Path) -> Path:
-    """Return the one manifest-bound train file or raise ``PartitionAccessError``."""
+def _check_partition_access(path: str | Path, root: Path) -> bytes:
+    """Return one authenticated train-file snapshot or raise ``PartitionAccessError``."""
     from .partitions import PartitionAccessError
 
     root = Path(root).resolve()
@@ -822,9 +830,16 @@ def _check_partition_access(path: str | Path, root: Path) -> Path:
         or not canonical_train.is_file()
     ):
         raise PartitionAccessError("trainer may open only the manifest-bound train partition")
-    if _file_sha256(canonical_train) != manifest["train_sha256"]:
+    try:
+        with canonical_train.open("rb") as handle:
+            snapshot = handle.read(_TRAIN_PARTITION_MAX_BYTES + 1)
+    except OSError as exc:
+        raise PartitionAccessError(f"manifest-bound train partition read failed: {exc}") from exc
+    if len(snapshot) > _TRAIN_PARTITION_MAX_BYTES:
+        raise PartitionAccessError("manifest-bound train partition exceeds read bound")
+    if hashlib.sha256(snapshot).hexdigest() != manifest["train_sha256"]:
         raise PartitionAccessError("manifest-bound train partition hash mismatch")
-    return canonical_train
+    return snapshot
 
 
 @dataclass(frozen=True)
@@ -849,9 +864,9 @@ def load_partition_episodes_for_training(
     Raises :class:`PartitionAccessError` unless ``path`` is the exact regular,
     non-symlink train file authenticated by the pinned partition manifest.
     """
-    p = _check_partition_access(path, Path(root))
+    snapshot = _check_partition_access(path, Path(root))
     episodes: list[PartitionEpisode] = []
-    for line in p.read_text(encoding="utf-8").splitlines():
+    for line in snapshot.decode("utf-8", errors="strict").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)

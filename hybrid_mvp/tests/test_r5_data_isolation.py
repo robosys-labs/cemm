@@ -69,6 +69,22 @@ __cemm_test_inventory__ = {
         "owner_ref": "data-isolation",
         "source_ast_sha256": "b819ff42b0bb4707a953c3e622485b1b8436bf726cd50e866915fd1df177cf42",
     },
+    "tests/test_r5_data_isolation.py::test_training_loader_requires_exact_canonical_manifest_paths": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-training-loader-requires-canonical-manifest-paths",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "data-isolation",
+        "source_ast_sha256": "b115d301453f6087e991a4bb2d5c23766df14b86687880bfd4cad9a003c78598",
+    },
+    "tests/test_r5_data_isolation.py::test_training_loader_parses_authenticated_snapshot_without_second_read": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-training-loader-parses-authenticated-snapshot",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "data-isolation",
+        "source_ast_sha256": "bc45b09feb5296d947f55843167e9d0e9d33f4e9837b337f18eb1e23c20f59d1",
+    },
 }
 
 
@@ -183,3 +199,41 @@ def test_training_loader_rejects_manifest_path_and_symlink_escape(tmp_path):
             load_partition_episodes_for_training(link, tmp_path)
     finally:
         outside.unlink(missing_ok=True)
+
+
+def test_training_loader_requires_exact_canonical_manifest_paths(tmp_path):
+    train, _, _ = _write_partition_root(tmp_path)
+    manifest = tmp_path / "data" / "partitions" / "manifest.json"
+    original = json.loads(manifest.read_text(encoding="utf-8"))
+    alternate = train.with_name("alternate.jsonl")
+    shutil.copyfile(train, alternate)
+    mutations = (
+        ("train_path", "data/partitions/alternate.jsonl"),
+        ("validation_path", "data/partitions/train.jsonl"),
+        ("test_path", "data/partitions/validation.jsonl"),
+    )
+    for field, value in mutations:
+        row = dict(original)
+        row[field] = value
+        manifest.write_text(
+            json.dumps(row, sort_keys=True, separators=(",", ":")), encoding="utf-8"
+        )
+        requested = alternate if field == "train_path" else train
+        with pytest.raises(PartitionAccessError):
+            load_partition_episodes_for_training(requested, tmp_path)
+
+
+def test_training_loader_parses_authenticated_snapshot_without_second_read(
+    tmp_path, monkeypatch
+):
+    train, _, _ = _write_partition_root(tmp_path)
+    original_read_text = Path.read_text
+
+    def mutate_train_before_second_read(path, *args, **kwargs):
+        if path.resolve() == train.resolve():
+            path.write_text('{"episode_ref":"episode:mutated"}\n', encoding="utf-8")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", mutate_train_before_second_read)
+    episodes = load_partition_episodes_for_training(train, tmp_path)
+    assert [episode.episode_ref for episode in episodes] == ["episode:train"]
