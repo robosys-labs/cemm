@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from typing import Callable
 
 
 DISPOSITION_SCHEMA = "cemm-r5-test-dispositions-v1"
@@ -120,11 +121,21 @@ def _strict_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _read_json(path: Path, *, maximum: int) -> tuple[object, bytes]:
+def _read_json(
+    path: Path,
+    *,
+    maximum: int,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> tuple[object, bytes]:
     try:
-        with path.open("rb") as stream:
-            raw = stream.read(maximum + 1)
-    except OSError as exc:
+        if source_reader is None:
+            with path.open("rb") as stream:
+                raw = stream.read(maximum + 1)
+        else:
+            raw = source_reader(path)
+            if type(raw) is not bytes:
+                raise TypeError("source reader returned non-bytes")
+    except (OSError, TypeError, ValueError) as exc:
         raise R5TestDispositionError(f"cannot read {path}") from exc
     if not raw:
         raise R5TestDispositionError(f"{path} is empty")
@@ -283,9 +294,16 @@ def _r5_inventory_assertions(
     root: Path,
     *,
     expected_inventory_ref: str,
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> tuple[dict[str, str], frozenset[str]]:
-    inventory_path = _resolve_contained_regular_file(root, _INVENTORY_PATH)
-    inventory, _raw = _read_json(inventory_path, maximum=MAX_JSON_BYTES)
+    inventory_path = root / _INVENTORY_PATH
+    if source_reader is None:
+        inventory_path = _resolve_contained_regular_file(root, _INVENTORY_PATH)
+    inventory, _raw = _read_json(
+        inventory_path,
+        maximum=MAX_JSON_BYTES,
+        source_reader=source_reader,
+    )
     if type(inventory) is not dict:
         raise R5TestDispositionError("test inventory must be an object")
     if inventory.get("inventory_ref") != expected_inventory_ref:
@@ -328,6 +346,7 @@ def load_r5_test_dispositions(
     root: Path,
     *,
     expected_inventory_ref: str,
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> R5TestDispositions:
     """Load reviewed dispositions and prove exact frozen-R5 predecessor coverage."""
 
@@ -335,8 +354,14 @@ def load_r5_test_dispositions(
     expected = _text(expected_inventory_ref, context="expected_inventory_ref")
     if _INVENTORY_REF_RE.fullmatch(expected) is None:
         raise R5TestDispositionError("expected_inventory_ref is invalid")
-    disposition_path = _resolve_contained_regular_file(root_path, _DISPOSITION_PATH)
-    value, raw = _read_json(disposition_path, maximum=MAX_JSON_BYTES)
+    disposition_path = root_path / _DISPOSITION_PATH
+    if source_reader is None:
+        disposition_path = _resolve_contained_regular_file(root_path, _DISPOSITION_PATH)
+    value, raw = _read_json(
+        disposition_path,
+        maximum=MAX_JSON_BYTES,
+        source_reader=source_reader,
+    )
     top = _exact_object(value, _TOP_FIELDS, context="R5 test dispositions")
     if top["schema"] != DISPOSITION_SCHEMA:
         raise R5TestDispositionError("R5 test dispositions schema is not exact")
@@ -355,6 +380,7 @@ def load_r5_test_dispositions(
     inventory_assertions, all_predecessors = _r5_inventory_assertions(
         root_path,
         expected_inventory_ref=expected,
+        source_reader=source_reader,
     )
     for row in rows:
         predecessor = row.predecessor_source_test_ref

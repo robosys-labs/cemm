@@ -142,8 +142,9 @@ def _trusted_path(root: Path, path: Path) -> Path:
     return path_absolute
 
 
-def _strict_json(path: Path) -> object:
-    raw = _bounded_bytes(path, MAX_CONFIG_BYTES)
+def _strict_json(path: Path, raw: bytes | None = None) -> object:
+    if raw is None:
+        raw = _bounded_bytes(path, MAX_CONFIG_BYTES)
     try:
         return json.loads(
             raw,
@@ -188,6 +189,34 @@ def _python_paths(root: Path) -> tuple[Path, ...]:
     return tuple(sorted(paths))
 
 
+def _build_source_reader(
+    root: Path,
+    paths: Iterable[Path],
+):
+    cache: dict[Path, bytes] = {}
+    aggregate_bytes = 0
+    for path in sorted(set(paths)):
+        trusted = _trusted_path(root, path)
+        raw = _bounded_bytes(trusted, MAX_SOURCE_BYTES)
+        aggregate_bytes += len(raw)
+        if aggregate_bytes > MAX_AGGREGATE_SOURCE_BYTES:
+            raise ValueError("aggregate snapshot byte bound exceeded")
+        cache[trusted] = raw
+
+    def source_reader(path: Path) -> bytes:
+        requested = Path(path).absolute()
+        try:
+            return cache[requested]
+        except KeyError as exc:
+            try:
+                relative = requested.relative_to(root.absolute()).as_posix()
+            except ValueError:
+                relative = str(requested)
+            raise ValueError(f"unknown snapshot path: {relative}") from exc
+
+    return source_reader
+
+
 def _tree(path: Path, raw: bytes | None = None) -> ast.Module:
     if raw is None:
         raw = _bounded_bytes(path, MAX_SOURCE_BYTES)
@@ -201,6 +230,7 @@ def _tree(path: Path, raw: bytes | None = None) -> ast.Module:
 def _support_reference_findings(
     root: Path,
     python_paths: tuple[Path, ...] | None = None,
+    source_reader=None,
 ) -> tuple[str, ...]:
     findings: set[str] = set()
     auditor = Path(__file__).resolve()
@@ -211,7 +241,11 @@ def _support_reference_findings(
     sources: list[tuple[Path, bytes]] = []
     aggregate_bytes = 0
     for path in python_paths if python_paths is not None else _python_paths(root):
-        raw = _bounded_bytes(path, MAX_SOURCE_BYTES)
+        raw = (
+            _bounded_bytes(path, MAX_SOURCE_BYTES)
+            if source_reader is None
+            else source_reader(path)
+        )
         aggregate_bytes += len(raw)
         if aggregate_bytes > MAX_AGGREGATE_SOURCE_BYTES:
             raise ValueError("aggregate source byte bound exceeded during read")
@@ -221,6 +255,20 @@ def _support_reference_findings(
             continue
         relative = path.relative_to(root).as_posix()
         tree = _tree(path, raw)
+        importlib_names = {
+            alias.asname or alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Import)
+            for alias in node.names
+            if alias.name == "importlib"
+        }
+        import_module_names = {
+            alias.asname or alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module == "importlib"
+            for alias in node.names
+            if alias.name == "import_module"
+        }
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
@@ -248,7 +296,44 @@ def _support_reference_findings(
                         findings.add(
                             f"forbidden_support_load:{relative}:{value.value}"
                         )
+                dynamic_import = (
+                    isinstance(node.func, ast.Name)
+                    and node.func.id in ({"__import__"} | import_module_names)
+                    or isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "import_module"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id in importlib_names
+                )
+                if dynamic_import and node.args:
+                    target = _static_string(node.args[0])
+                    components = (
+                        target.split(".")
+                        if target is not None
+                        else [
+                            part
+                            for child in ast.walk(node.args[0])
+                            if isinstance(child, ast.Constant)
+                            and type(child.value) is str
+                            for part in child.value.split(".")
+                        ]
+                    )
+                    for module in components:
+                        if module in FORBIDDEN_SUPPORT_MODULES:
+                            findings.add(
+                                f"forbidden_support_load:{relative}:{module}"
+                            )
     return tuple(sorted(findings))
+
+
+def _static_string(value: ast.expr) -> str | None:
+    if isinstance(value, ast.Constant) and type(value.value) is str:
+        return value.value
+    if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+        left = _static_string(value.left)
+        right = _static_string(value.right)
+        if left is not None and right is not None:
+            return left + right
+    return None
 
 
 def _is_pytest_fixture(
@@ -329,9 +414,9 @@ def _module_statements(body: Iterable[ast.stmt]) -> tuple[ast.stmt, ...]:
     return tuple(statements)
 
 
-def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
+def _compatibility_fixture_findings(root: Path, source_reader=None) -> tuple[str, ...]:
     path = root / "tests" / "conftest.py"
-    tree = _tree(path)
+    tree = _tree(path, None if source_reader is None else source_reader(path))
     findings: set[str] = set()
     statements = _module_statements(tree.body)
     pytest_names = frozenset(
@@ -341,13 +426,30 @@ def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
         for alias in node.names
         if alias.name == "pytest"
     )
-    fixture_names = frozenset(
+    fixture_name_set = {
         alias.asname or alias.name
         for node in statements
         if isinstance(node, ast.ImportFrom) and node.module == "pytest"
         for alias in node.names
         if alias.name == "fixture"
-    )
+    }
+    changed = True
+    while changed:
+        changed = False
+        for node in statements:
+            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+                continue
+            value = node.value
+            if not _is_pytest_fixture(
+                value, pytest_names, frozenset(fixture_name_set)
+            ):
+                continue
+            targets = node.targets if isinstance(node, ast.Assign) else (node.target,)
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id not in fixture_name_set:
+                    fixture_name_set.add(target.id)
+                    changed = True
+    fixture_names = frozenset(fixture_name_set)
     for node in statements:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in COMPATIBILITY_FIXTURES:
@@ -406,13 +508,13 @@ def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
     return tuple(sorted(findings))
 
 
-def _carrier_findings(root: Path) -> tuple[str, ...]:
+def _carrier_findings(root: Path, source_reader=None) -> tuple[str, ...]:
     path = root / REVIEWED_CARRIER_PATH
     try:
         _trusted_path(root, path)
         if not path.is_file():
             return (f"lineage_carrier_missing:{REVIEWED_CARRIER_PATH}",)
-        tree = _tree(path)
+        tree = _tree(path, None if source_reader is None else source_reader(path))
     except (OSError, SyntaxError, ValueError) as exc:
         return (f"lineage_carrier_invalid:{type(exc).__name__}:{exc}",)
     findings: set[str] = set()
@@ -579,9 +681,10 @@ def _gate_input_findings(config: dict[str, object]) -> tuple[str, ...]:
     return tuple(sorted(findings))
 
 
-def _selector_findings(root: Path, result: object) -> tuple[str, ...]:
+def _selector_findings(root: Path, result: object, source_reader=None) -> tuple[str, ...]:
+    path = _trusted_path(root, root / "configs" / "validation_gates.json")
     config = _strict_json(
-        _trusted_path(root, root / "configs" / "validation_gates.json")
+        path, None if source_reader is None else source_reader(path)
     )
     if not isinstance(config, dict) or not isinstance(config.get("steps"), dict):
         raise ValueError("validation gates have no exact steps object")
@@ -614,6 +717,33 @@ def _selector_findings(root: Path, result: object) -> tuple[str, ...]:
     return tuple(sorted(findings))
 
 
+def _load_replays(root: Path, inventory_path: Path, source_reader):
+    parsed: dict[str, tuple[str, ast.AST]] = {}
+
+    def parse_source(source: str, *, filename: str) -> ast.AST:
+        cached = parsed.get(filename)
+        if cached is not None:
+            if cached[0] != source:
+                raise ValueError(f"snapshot source changed between replays: {filename}")
+            return cached[1]
+        tree = ast.parse(source, filename=filename)
+        parsed[filename] = (source, tree)
+        return tree
+
+    return {
+        phase: load_and_verify(
+            root,
+            inventory_path,
+            phase=phase,
+            enforce_reviewed_counts=True,
+            expected_sha256=INVENTORY_SHA256,
+            parse_source=parse_source,
+            source_reader=source_reader,
+        )
+        for phase in (*REPLAY_PHASES, "R5")
+    }
+
+
 def audit(root: Path = ROOT) -> tuple[str, ...]:
     findings: set[str] = set()
     try:
@@ -622,6 +752,7 @@ def audit(root: Path = ROOT) -> tuple[str, ...]:
         inventory_path = _trusted_path(
             root, root / "governance" / "test_inventory.json"
         )
+        direct_paths = [inventory_path]
         for relative in (
             "configs/validation_gates.json",
             "governance/r5_test_dispositions.json",
@@ -631,39 +762,33 @@ def audit(root: Path = ROOT) -> tuple[str, ...]:
             "scripts/test_inventory_core.py",
             "tests/conftest.py",
         ):
-            _trusted_path(root, root / relative)
+            direct_paths.append(_trusted_path(root, root / relative))
         python_paths = _python_paths(root)
+        source_reader = _build_source_reader(
+            root, (*python_paths, *direct_paths)
+        )
+        replays = _load_replays(root, inventory_path, source_reader)
         candidate_set = set(DELETION_CANDIDATES)
         for phase in REPLAY_PHASES:
-            replay = load_and_verify(
-                root,
-                inventory_path,
-                phase=phase,
-                enforce_reviewed_counts=True,
-                expected_sha256=INVENTORY_SHA256,
-            )
+            replay = replays[phase]
             for node_id in replay.active_node_ids:
                 source_path = node_id.split("::", 1)[0]
                 if source_path in candidate_set:
                     findings.add(f"active_{phase.lower()}_leaf:{node_id}")
-        r5 = load_and_verify(
-            root,
-            inventory_path,
-            phase="R5",
-            enforce_reviewed_counts=True,
-            expected_sha256=INVENTORY_SHA256,
-        )
+        r5 = replays["R5"]
         config = _strict_json(
-            _trusted_path(root, root / "configs" / "validation_gates.json")
+            direct_paths[1], source_reader(direct_paths[1])
         )
         if not isinstance(config, dict):
             raise ValueError("validation gates are not an exact object")
         findings.update(_gate_input_findings(config))
-        findings.update(_selector_findings(root, r5))
+        findings.update(_selector_findings(root, r5, source_reader))
         findings.update(_nonfrozen_predecessor_findings(r5))
-        findings.update(_support_reference_findings(root, python_paths))
-        findings.update(_compatibility_fixture_findings(root))
-        findings.update(_carrier_findings(root))
+        findings.update(
+            _support_reference_findings(root, python_paths, source_reader)
+        )
+        findings.update(_compatibility_fixture_findings(root, source_reader))
+        findings.update(_carrier_findings(root, source_reader))
         for relative in DELETION_CANDIDATES:
             if (root / relative).exists():
                 findings.add(f"retired_candidate_exists:{relative}")

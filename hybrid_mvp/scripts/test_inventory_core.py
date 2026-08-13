@@ -1427,12 +1427,31 @@ def _validate_rewrite_lifecycle(
     return tuple(sorted(deferred)), tuple(sorted(due))
 
 
-def _load_r5_disposition_module() -> object:
+def _load_r5_disposition_module(
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> object:
     module_name = "_cemm_r5_test_dispositions_for_inventory"
     loaded = sys.modules.get(module_name)
-    if loaded is not None:
+    if loaded is not None and source_reader is None:
         return loaded
     module_path = Path(__file__).with_name("r5_test_dispositions.py")
+    if source_reader is not None:
+        try:
+            raw = source_reader(module_path)
+        except (OSError, ValueError) as exc:
+            raise InventoryError("cannot read the R5 disposition verifier") from exc
+        if type(raw) is not bytes:
+            raise InventoryError("source reader returned non-bytes")
+        module = type(sys)(module_name)
+        module.__file__ = str(module_path)
+        module.__package__ = "scripts"
+        sys.modules[module_name] = module
+        try:
+            exec(compile(raw, str(module_path), "exec"), module.__dict__)
+        except Exception:
+            sys.modules.pop(module_name, None)
+            raise
+        return module
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
         raise InventoryError("cannot load the R5 disposition verifier")
@@ -1456,12 +1475,14 @@ def _validate_r5_disposition_overlay(
     successor_by_node: Mapping[str, str],
     executable_nodes: frozenset[str],
     literal_metadata_ref: str,
+    source_reader: Callable[[Path], bytes] | None = None,
 ) -> tuple[str, frozenset[str], tuple[str, ...], tuple[str, ...]]:
-    module = _load_r5_disposition_module()
+    module = _load_r5_disposition_module(source_reader)
     try:
         dispositions = module.load_r5_test_dispositions(  # type: ignore[attr-defined]
             root,
             expected_inventory_ref=inventory_ref,
+            source_reader=source_reader,
         )
     except ValueError as exc:
         raise InventoryError(f"R5 disposition coverage is invalid: {exc}") from exc
@@ -1721,6 +1742,7 @@ def load_and_verify(
             successor_by_node=successor_by_node,
             executable_nodes=executable_nodes,
             literal_metadata_ref=literal_metadata_ref,
+            source_reader=source_reader,
         )
         executable_nodes -= excluded_r5_nodes
         collectable_nodes -= excluded_r5_nodes
