@@ -96,7 +96,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "data-isolation",
-        "source_ast_sha256": "26881a8b61a63c68b6128e5128868337d4b0905f03c304317750927ae18e411b",
+        "source_ast_sha256": "2a46da66af92f620132bcbd9cd727d0abb3c1bf791f606c2f6212ec8e0857d7e",
     },
     "tests/test_r5_data_isolation.py::test_release_trainers_reject_nontrain_before_downstream_work": {
         "activation_phase": "R5",
@@ -104,7 +104,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "data-isolation",
-        "source_ast_sha256": "674123638ae0527f80bf7bae94561ed5894e0ee2027659517c3ac07af44dca44",
+        "source_ast_sha256": "81e25ca60f9724c6942a149260f779480213a9626b7f662540828ace8455896c",
     },
 }
 
@@ -278,7 +278,6 @@ def test_training_loader_parses_authenticated_snapshot_without_second_read(
 def test_release_trainers_authenticate_train_once(tmp_path, monkeypatch):
     train, _, _ = _write_partition_root(tmp_path)
     original_check = training_module._check_partition_access
-    monkeypatch.setattr(training_module, "_set_deterministic_seeds", lambda _seed: None)
 
     class LoadedEpisodes(RuntimeError):
         pass
@@ -288,27 +287,40 @@ def test_release_trainers_authenticate_train_once(tmp_path, monkeypatch):
         (ReleaseRealizerTrainer, "RealizerNetwork"),
     ):
         calls = 0
+        seed_calls = 0
 
         def counted_check(*args, **kwargs):
             nonlocal calls
             calls += 1
             return original_check(*args, **kwargs)
 
+        def counted_seed(_seed):
+            nonlocal seed_calls
+            seed_calls += 1
+
         def stop_after_load(*_args, **_kwargs):
             raise LoadedEpisodes
 
         with monkeypatch.context() as context:
             context.setattr(training_module, "_check_partition_access", counted_check)
+            context.setattr(training_module, "_set_deterministic_seeds", counted_seed)
             context.setattr(training_module, downstream_name, stop_after_load)
             trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
             with pytest.raises(LoadedEpisodes):
                 trainer.fit(train)
         assert calls == 1
+        assert seed_calls == 1
 
 
 def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monkeypatch):
     _, validation, test = _write_partition_root(tmp_path)
-    monkeypatch.setattr(training_module, "_set_deterministic_seeds", lambda _seed: None)
+    arbitrary = tmp_path / "arbitrary.jsonl"
+    arbitrary.write_text('{"episode_ref":"episode:arbitrary"}\n', encoding="utf-8")
+    seed_calls = 0
+
+    def counted_seed(_seed):
+        nonlocal seed_calls
+        seed_calls += 1
 
     def downstream_must_not_run(*_args, **_kwargs):
         raise AssertionError("trainer reached downstream work for a non-train partition")
@@ -318,8 +330,10 @@ def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monke
         (ReleaseRealizerTrainer, "RealizerNetwork"),
     ):
         with monkeypatch.context() as context:
+            context.setattr(training_module, "_set_deterministic_seeds", counted_seed)
             context.setattr(training_module, downstream_name, downstream_must_not_run)
             trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
-            for path in (validation, test):
+            for path in (validation, test, arbitrary):
                 with pytest.raises(PartitionAccessError):
                     trainer.fit(path)
+    assert seed_calls == 0
