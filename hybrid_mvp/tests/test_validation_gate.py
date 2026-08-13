@@ -20,6 +20,7 @@ if str(SCRIPTS) not in sys.path:
 from cemm_authoritative_hybrid import process_control as process_control_module  # noqa: E402
 sys.modules["process_control"] = process_control_module
 import validation_gate as validation_gate_module  # noqa: E402
+import test_inventory_core as inventory_core_module  # noqa: E402
 from cemm_authoritative_hybrid.process_control import (  # noqa: E402
     ProcessControlError,
     ProcessErrorReason,
@@ -1771,10 +1772,20 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     graph = validation_gate_module.load_gate_graph(
         ROOT / "configs" / "validation_gates.json"
     )
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="R5",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_core_module.verify_document_authority_pin(
+            ROOT, inventory_path
+        ),
+    )
     expected_counts = {
         "artifact-contract": 15,
         "data-isolation": 12,
-        "legacy-hard-cut": 26,
+        "legacy-hard-cut": 55,
         "proposal-contract": 3,
         "realization-contract": 1,
     }
@@ -1789,6 +1800,9 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
         )
         assert graph.pytest_process_count("R5", "owner", owner) == 1
         assert len(graph.resolve_pytest_nodes("R5", "owner", owner)) == expected_count
+        assert graph.resolve_pytest_nodes("R5", "owner", owner) == (
+            inventory.owner_node_ids[owner]
+        )
         assert len(resolved) <= graph.limits["max_steps_per_tier"]
 
     assert graph.resolve_phase("R5", "phase") == (
@@ -1799,6 +1813,7 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     assert graph.pytest_process_count("R5", "phase") == 1
     phase_nodes = set(graph.resolve_pytest_nodes("R5", "phase"))
     assert len(phase_nodes) == 7
+    assert graph.resolve_pytest_nodes("R5", "phase") == inventory.phase_node_ids
     assert {
         "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary",
         "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations",
@@ -2093,7 +2108,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
-        "source_ast_sha256": "09477526de429eda29877ba907f89b03daebca7a5bb8ad07f958bb9849c9ae50"
+        "source_ast_sha256": "2362ca641def2f18e5b0e32f1760832e12d229769006b47bb5908dd3098b175d"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",
