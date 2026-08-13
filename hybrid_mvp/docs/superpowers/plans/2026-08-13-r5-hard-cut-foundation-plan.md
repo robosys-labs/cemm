@@ -637,25 +637,25 @@ is treated as inventory evidence.
 
 ### Successor now — 17
 
-| # | Exact predecessor source-test ref | Exact assertion ref | Current successor node / owner |
-|---:|---|---|---|
-| 1 | `tests/test_artifact_security.py::test_current_model_lock_hash_is_stable` | `assertion:artifact-security-current-model-lock-hash-is-stable` | `tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` / `artifact-contract` |
-| 2 | `tests/test_artifact_security.py::test_current_python_abi_matches_runtime` | `assertion:artifact-security-current-python-abi-matches-runtime` | `tests/test_r5_artifact_contract.py::test_current_python_abi_matches_runtime` / `artifact-contract` |
-| 3 | `tests/test_artifact_security.py::test_identity_mismatch_fails_before_tensor_use` | `assertion:artifact-security-identity-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_identity_mismatch_fails_before_tensor_use` / `artifact-contract` |
-| 4 | `tests/test_artifact_security.py::test_manifest_tamper_fails_before_tensor_use` | `assertion:artifact-security-manifest-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_manifest_tamper_fails_before_tensor_use` / `artifact-contract` |
-| 5 | `tests/test_artifact_security.py::test_metadata_tamper_fails_before_tensor_use` | `assertion:artifact-security-metadata-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_metadata_tamper_fails_before_tensor_use` / `artifact-contract` |
-| 6 | `tests/test_artifact_security.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` | `assertion:artifact-security-model-dependency-lock-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` / `artifact-contract` |
-| 7 | `tests/test_artifact_security.py::test_no_production_module_calls_unsafe_torch_load` | `assertion:artifact-security-no-production-module-calls-unsafe-torch-load` | `tests/test_r5_artifact_contract.py::test_no_production_module_calls_unsafe_torch_load` / `artifact-contract` |
-| 8 | `tests/test_artifact_security.py::test_python_abi_mismatch_fails_before_tensor_use` | `assertion:artifact-security-python-abi-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_python_abi_mismatch_fails_before_tensor_use` / `artifact-contract` |
-| 9 | `tests/test_artifact_security.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` | `assertion:artifact-security-safe-safetensors-load-file-is-allowed-in-source-scan` | `tests/test_r5_artifact_contract.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` / `artifact-contract` |
-| 10 | `tests/test_artifact_security.py::test_tail_tamper_fails_before_tensor_use` | `assertion:artifact-security-tail-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_tail_tamper_fails_before_tensor_use` / `artifact-contract` |
-| 11 | `tests/test_artifact_security.py::test_valid_artifact_loads` | `assertion:artifact-security-valid-artifact-loads` | `tests/test_r5_artifact_contract.py::test_valid_artifact_loads` / `artifact-contract` |
-| 12 | `tests/test_canonical.py::test_tensor_identity_changes_on_byte_tamper` | `assertion:canonical-tensor-identity-changes-on-byte-tamper` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_byte_tamper` / `artifact-contract` |
-| 13 | `tests/test_canonical.py::test_tensor_identity_changes_on_dtype` | `assertion:canonical-tensor-identity-changes-on-dtype` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_dtype` / `artifact-contract` |
-| 14 | `tests/test_canonical.py::test_tensor_identity_changes_on_shape` | `assertion:canonical-tensor-identity-changes-on-shape` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_shape` / `artifact-contract` |
-| 15 | `tests/test_canonical.py::test_tensor_identity_is_byte_and_shape_deterministic` | `assertion:canonical-tensor-identity-is-byte-and-shape-deterministic` | `tests/test_r5_artifact_contract.py::test_tensor_identity_is_byte_and_shape_deterministic` / `artifact-contract` |
-| 16 | `tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer` | `assertion:neural-proposer-release-runtime-requires-neural-switch-proposer` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_requires_selected_neural_proposer` / `proposal-contract` |
-| 17 | `tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap` | `assertion:neural-weight-use-release-path-does-not-delegate-to-bootstrap` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_does_not_delegate_to_bootstrap` / `proposal-contract` |
+| # | Exact predecessor source-test ref | Exact assertion ref | Current successor node | Current owner |
+|---:|---|---|---|---|
+| 1 | `tests/test_artifact_security.py::test_current_model_lock_hash_is_stable` | `assertion:artifact-security-current-model-lock-hash-is-stable` | `tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` | `artifact-contract` |
+| 2 | `tests/test_artifact_security.py::test_current_python_abi_matches_runtime` | `assertion:artifact-security-current-python-abi-matches-runtime` | `tests/test_r5_artifact_contract.py::test_current_python_abi_matches_runtime` | `artifact-contract` |
+| 3 | `tests/test_artifact_security.py::test_identity_mismatch_fails_before_tensor_use` | `assertion:artifact-security-identity-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_identity_mismatch_fails_before_tensor_use` | `artifact-contract` |
+| 4 | `tests/test_artifact_security.py::test_manifest_tamper_fails_before_tensor_use` | `assertion:artifact-security-manifest-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_manifest_tamper_fails_before_tensor_use` | `artifact-contract` |
+| 5 | `tests/test_artifact_security.py::test_metadata_tamper_fails_before_tensor_use` | `assertion:artifact-security-metadata-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_metadata_tamper_fails_before_tensor_use` | `artifact-contract` |
+| 6 | `tests/test_artifact_security.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` | `assertion:artifact-security-model-dependency-lock-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_model_dependency_lock_mismatch_fails_before_tensor_use` | `artifact-contract` |
+| 7 | `tests/test_artifact_security.py::test_no_production_module_calls_unsafe_torch_load` | `assertion:artifact-security-no-production-module-calls-unsafe-torch-load` | `tests/test_r5_artifact_contract.py::test_no_production_module_calls_unsafe_torch_load` | `artifact-contract` |
+| 8 | `tests/test_artifact_security.py::test_python_abi_mismatch_fails_before_tensor_use` | `assertion:artifact-security-python-abi-mismatch-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_python_abi_mismatch_fails_before_tensor_use` | `artifact-contract` |
+| 9 | `tests/test_artifact_security.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` | `assertion:artifact-security-safe-safetensors-load-file-is-allowed-in-source-scan` | `tests/test_r5_artifact_contract.py::test_safe_safetensors_load_file_is_allowed_in_source_scan` | `artifact-contract` |
+| 10 | `tests/test_artifact_security.py::test_tail_tamper_fails_before_tensor_use` | `assertion:artifact-security-tail-tamper-fails-before-tensor-use` | `tests/test_r5_artifact_contract.py::test_tail_tamper_fails_before_tensor_use` | `artifact-contract` |
+| 11 | `tests/test_artifact_security.py::test_valid_artifact_loads` | `assertion:artifact-security-valid-artifact-loads` | `tests/test_r5_artifact_contract.py::test_valid_artifact_loads` | `artifact-contract` |
+| 12 | `tests/test_canonical.py::test_tensor_identity_changes_on_byte_tamper` | `assertion:canonical-tensor-identity-changes-on-byte-tamper` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_byte_tamper` | `artifact-contract` |
+| 13 | `tests/test_canonical.py::test_tensor_identity_changes_on_dtype` | `assertion:canonical-tensor-identity-changes-on-dtype` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_dtype` | `artifact-contract` |
+| 14 | `tests/test_canonical.py::test_tensor_identity_changes_on_shape` | `assertion:canonical-tensor-identity-changes-on-shape` | `tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_shape` | `artifact-contract` |
+| 15 | `tests/test_canonical.py::test_tensor_identity_is_byte_and_shape_deterministic` | `assertion:canonical-tensor-identity-is-byte-and-shape-deterministic` | `tests/test_r5_artifact_contract.py::test_tensor_identity_is_byte_and_shape_deterministic` | `artifact-contract` |
+| 16 | `tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer` | `assertion:neural-proposer-release-runtime-requires-neural-switch-proposer` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_requires_selected_neural_proposer` | `proposal-contract` |
+| 17 | `tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap` | `assertion:neural-weight-use-release-path-does-not-delegate-to-bootstrap` | `tests/test_r5_public_runtime_selection.py::test_release_runtime_does_not_delegate_to_bootstrap` | `proposal-contract` |
 
 The additional public-runtime test required by rewrite obligation
 `rewrite_obligation:1961f2f12d4a3f36b41db460` is new current evidence, not one
@@ -669,36 +669,36 @@ of the 43 disposition rows.
 
 ### Deferred to R5-Neural-Activation — 25
 
-Every row below has `future_task_ref: "R5-Neural-Activation"` and the concrete
-`future_owner_ref` shown in the final column.
+The future task and owner are explicit per row so documentation governance can
+reject task or ownership drift before the disposition ABI exists.
 
-| # | Exact predecessor source-test ref | Exact assertion ref | Future owner ref |
-|---:|---|---|---|
-| 19 | `tests/test_calibration.py::test_calibration_error_within_threshold` | `assertion:calibration-calibration-error-within-threshold` | `calibration-contract` |
-| 20 | `tests/test_calibration.py::test_calibration_pins_model_identities` | `assertion:calibration-calibration-pins-model-identities` | `calibration-contract` |
-| 21 | `tests/test_calibration.py::test_calibration_records_confidence_bins` | `assertion:calibration-calibration-records-confidence-bins` | `calibration-contract` |
-| 22 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_exists` | `assertion:model-reproducibility-reproducibility-receipt-exists` | `reproduction-contract` |
-| 23 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_proposal_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-proposal-identity` | `reproduction-contract` |
-| 24 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_realizer_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-realizer-identity` | `reproduction-contract` |
-| 25 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_scratch_outside_repo` | `assertion:model-reproducibility-reproducibility-receipt-records-scratch-outside-repo` | `reproduction-contract` |
-| 26 | `tests/test_model_reproducibility.py::test_retraining_produces_same_proposal_identity` | `assertion:model-reproducibility-retraining-produces-same-proposal-identity` | `reproduction-contract` |
-| 27 | `tests/test_model_reproducibility.py::test_retraining_produces_same_realizer_identity` | `assertion:model-reproducibility-retraining-produces-same-realizer-identity` | `reproduction-contract` |
-| 28 | `tests/test_neural_proposer.py::test_internal_ref_spelling_does_not_affect_model_logits` | `assertion:neural-proposer-internal-ref-spelling-does-not-affect-model-logits` | `proposal-contract` |
-| 29 | `tests/test_neural_proposer.py::test_neural_decoder_never_emits_masked_action` | `assertion:neural-proposer-neural-decoder-never-emits-masked-action` | `proposal-contract` |
-| 30 | `tests/test_neural_proposer.py::test_proposal_model_capacity_is_bounded` | `assertion:neural-proposer-proposal-model-capacity-is-bounded` | `proposal-contract` |
-| 31 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_answer_cannot_fall_back_when_network_fails` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-answer-cannot-fall-back-when-network-fails` | `weight-use-contract` |
-| 32 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_invokes_loaded_weights` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-invokes-loaded-weights` | `weight-use-contract` |
-| 33 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_decoder_invocations` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-decoder-invocations` | `weight-use-contract` |
-| 34 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_model_identity` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-model-identity` | `weight-use-contract` |
-| 35 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_zero_weight_realizer_loses_domain_generation_accuracy` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-zero-weight-realizer-loses-domain-generation-accuracy` | `weight-use-contract` |
-| 36 | `tests/test_neural_weight_use.py::test_release_proposal_invokes_loaded_weights` | `assertion:neural-weight-use-release-proposal-invokes-loaded-weights` | `weight-use-contract` |
-| 37 | `tests/test_neural_weight_use.py::test_weight_ablation_breaks_learned_selection` | `assertion:neural-weight-use-weight-ablation-breaks-learned-selection` | `weight-use-contract` |
-| 38 | `tests/test_production_proposer_cutover.py::test_compatible_new_designation_keeps_model_active` | `assertion:production-proposer-cutover-compatible-new-designation-keeps-model-active` | `selection-contract` |
-| 39 | `tests/test_production_proposer_cutover.py::test_neural_profile_loads_from_artifact` | `assertion:production-proposer-cutover-neural-profile-loads-from-artifact` | `selection-contract` |
-| 40 | `tests/test_training_isolation.py::test_combined_trainable_capacity_is_bounded` | `assertion:training-isolation-combined-trainable-capacity-is-bounded` | `selection-contract` |
-| 41 | `tests/test_training_isolation.py::test_model_uses_dynamic_semantic_slots_not_ref_spelling` | `assertion:training-isolation-model-uses-dynamic-semantic-slots-not-ref-spelling` | `proposal-contract` |
-| 42 | `tests/test_training_isolation.py::test_realizer_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-realizer-release-artifact-pins-all-semantic-inputs` | `realization-contract` |
-| 43 | `tests/test_training_isolation.py::test_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-release-artifact-pins-all-semantic-inputs` | `proposal-contract` |
+| # | Exact predecessor source-test ref | Exact assertion ref | Future task ref | Future owner ref |
+|---:|---|---|---|---|
+| 19 | `tests/test_calibration.py::test_calibration_error_within_threshold` | `assertion:calibration-calibration-error-within-threshold` | `R5-Neural-Activation` | `calibration-contract` |
+| 20 | `tests/test_calibration.py::test_calibration_pins_model_identities` | `assertion:calibration-calibration-pins-model-identities` | `R5-Neural-Activation` | `calibration-contract` |
+| 21 | `tests/test_calibration.py::test_calibration_records_confidence_bins` | `assertion:calibration-calibration-records-confidence-bins` | `R5-Neural-Activation` | `calibration-contract` |
+| 22 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_exists` | `assertion:model-reproducibility-reproducibility-receipt-exists` | `R5-Neural-Activation` | `reproduction-contract` |
+| 23 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_proposal_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-proposal-identity` | `R5-Neural-Activation` | `reproduction-contract` |
+| 24 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_realizer_identity` | `assertion:model-reproducibility-reproducibility-receipt-records-realizer-identity` | `R5-Neural-Activation` | `reproduction-contract` |
+| 25 | `tests/test_model_reproducibility.py::test_reproducibility_receipt_records_scratch_outside_repo` | `assertion:model-reproducibility-reproducibility-receipt-records-scratch-outside-repo` | `R5-Neural-Activation` | `reproduction-contract` |
+| 26 | `tests/test_model_reproducibility.py::test_retraining_produces_same_proposal_identity` | `assertion:model-reproducibility-retraining-produces-same-proposal-identity` | `R5-Neural-Activation` | `reproduction-contract` |
+| 27 | `tests/test_model_reproducibility.py::test_retraining_produces_same_realizer_identity` | `assertion:model-reproducibility-retraining-produces-same-realizer-identity` | `R5-Neural-Activation` | `reproduction-contract` |
+| 28 | `tests/test_neural_proposer.py::test_internal_ref_spelling_does_not_affect_model_logits` | `assertion:neural-proposer-internal-ref-spelling-does-not-affect-model-logits` | `R5-Neural-Activation` | `proposal-contract` |
+| 29 | `tests/test_neural_proposer.py::test_neural_decoder_never_emits_masked_action` | `assertion:neural-proposer-neural-decoder-never-emits-masked-action` | `R5-Neural-Activation` | `proposal-contract` |
+| 30 | `tests/test_neural_proposer.py::test_proposal_model_capacity_is_bounded` | `assertion:neural-proposer-proposal-model-capacity-is-bounded` | `R5-Neural-Activation` | `proposal-contract` |
+| 31 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_answer_cannot_fall_back_when_network_fails` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-answer-cannot-fall-back-when-network-fails` | `R5-Neural-Activation` | `weight-use-contract` |
+| 32 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_invokes_loaded_weights` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-invokes-loaded-weights` | `R5-Neural-Activation` | `weight-use-contract` |
+| 33 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_decoder_invocations` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-decoder-invocations` | `R5-Neural-Activation` | `weight-use-contract` |
+| 34 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_model_identity` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-normal-realization-records-model-identity` | `R5-Neural-Activation` | `weight-use-contract` |
+| 35 | `tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_zero_weight_realizer_loses_domain_generation_accuracy` | `assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-zero-weight-realizer-loses-domain-generation-accuracy` | `R5-Neural-Activation` | `weight-use-contract` |
+| 36 | `tests/test_neural_weight_use.py::test_release_proposal_invokes_loaded_weights` | `assertion:neural-weight-use-release-proposal-invokes-loaded-weights` | `R5-Neural-Activation` | `weight-use-contract` |
+| 37 | `tests/test_neural_weight_use.py::test_weight_ablation_breaks_learned_selection` | `assertion:neural-weight-use-weight-ablation-breaks-learned-selection` | `R5-Neural-Activation` | `weight-use-contract` |
+| 38 | `tests/test_production_proposer_cutover.py::test_compatible_new_designation_keeps_model_active` | `assertion:production-proposer-cutover-compatible-new-designation-keeps-model-active` | `R5-Neural-Activation` | `selection-contract` |
+| 39 | `tests/test_production_proposer_cutover.py::test_neural_profile_loads_from_artifact` | `assertion:production-proposer-cutover-neural-profile-loads-from-artifact` | `R5-Neural-Activation` | `selection-contract` |
+| 40 | `tests/test_training_isolation.py::test_combined_trainable_capacity_is_bounded` | `assertion:training-isolation-combined-trainable-capacity-is-bounded` | `R5-Neural-Activation` | `selection-contract` |
+| 41 | `tests/test_training_isolation.py::test_model_uses_dynamic_semantic_slots_not_ref_spelling` | `assertion:training-isolation-model-uses-dynamic-semantic-slots-not-ref-spelling` | `R5-Neural-Activation` | `proposal-contract` |
+| 42 | `tests/test_training_isolation.py::test_realizer_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-realizer-release-artifact-pins-all-semantic-inputs` | `R5-Neural-Activation` | `realization-contract` |
+| 43 | `tests/test_training_isolation.py::test_release_artifact_pins_all_semantic_inputs` | `assertion:training-isolation-release-artifact-pins-all-semantic-inputs` | `R5-Neural-Activation` | `proposal-contract` |
 
 ## Appendix B: Forbidden implementation shortcuts
 

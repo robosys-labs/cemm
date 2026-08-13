@@ -700,7 +700,15 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Task-0",
         "owner_ref": "governance",
-        "source_ast_sha256": "7fa96cdc2a7afb4cc1fc41dd945cd63312599e23b21914b9f4c115568db1f4c4"
+        "source_ast_sha256": "51d3975e9ebf074c3b68b816112b5883abe1c90a846b7c837b5c5c6ccf4dd3c3"
+    },
+    "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-appendix-guard-rejects-wrong-section-and-owner-mutations",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Task-0-Review-Fix",
+        "owner_ref": "governance",
+        "source_ast_sha256": "7eefb5752b86c7ae24fad2ad5d38003ed6c472062df52bba56f207ff10cd6295"
     }
 }
 
@@ -753,55 +761,193 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert root_authority.is_file()
 
 
+_R5_SUCCESSOR_CONTRACT = {
+    "tests/test_artifact_security.py::test_current_model_lock_hash_is_stable": ("tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable", "artifact-contract"),
+    "tests/test_artifact_security.py::test_current_python_abi_matches_runtime": ("tests/test_r5_artifact_contract.py::test_current_python_abi_matches_runtime", "artifact-contract"),
+    "tests/test_artifact_security.py::test_identity_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_identity_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_manifest_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_manifest_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_metadata_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_metadata_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_model_dependency_lock_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_model_dependency_lock_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_no_production_module_calls_unsafe_torch_load": ("tests/test_r5_artifact_contract.py::test_no_production_module_calls_unsafe_torch_load", "artifact-contract"),
+    "tests/test_artifact_security.py::test_python_abi_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_python_abi_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_safe_safetensors_load_file_is_allowed_in_source_scan": ("tests/test_r5_artifact_contract.py::test_safe_safetensors_load_file_is_allowed_in_source_scan", "artifact-contract"),
+    "tests/test_artifact_security.py::test_tail_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_tail_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_valid_artifact_loads": ("tests/test_r5_artifact_contract.py::test_valid_artifact_loads", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_byte_tamper": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_byte_tamper", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_dtype": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_dtype", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_shape": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_shape", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_is_byte_and_shape_deterministic": ("tests/test_r5_artifact_contract.py::test_tensor_identity_is_byte_and_shape_deterministic", "artifact-contract"),
+    "tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer": ("tests/test_r5_public_runtime_selection.py::test_release_runtime_requires_selected_neural_proposer", "proposal-contract"),
+    "tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap": ("tests/test_r5_public_runtime_selection.py::test_release_runtime_does_not_delegate_to_bootstrap", "proposal-contract"),
+}
+
+_R5_DEFERRED_BY_OWNER = {
+    "calibration-contract": {
+        "tests/test_calibration.py::test_calibration_error_within_threshold",
+        "tests/test_calibration.py::test_calibration_pins_model_identities",
+        "tests/test_calibration.py::test_calibration_records_confidence_bins",
+    },
+    "reproduction-contract": {
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_exists",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_proposal_identity",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_realizer_identity",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_scratch_outside_repo",
+        "tests/test_model_reproducibility.py::test_retraining_produces_same_proposal_identity",
+        "tests/test_model_reproducibility.py::test_retraining_produces_same_realizer_identity",
+    },
+    "proposal-contract": {
+        "tests/test_neural_proposer.py::test_internal_ref_spelling_does_not_affect_model_logits",
+        "tests/test_neural_proposer.py::test_neural_decoder_never_emits_masked_action",
+        "tests/test_neural_proposer.py::test_proposal_model_capacity_is_bounded",
+        "tests/test_training_isolation.py::test_model_uses_dynamic_semantic_slots_not_ref_spelling",
+        "tests/test_training_isolation.py::test_release_artifact_pins_all_semantic_inputs",
+    },
+    "weight-use-contract": {
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_answer_cannot_fall_back_when_network_fails",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_invokes_loaded_weights",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_decoder_invocations",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_model_identity",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_zero_weight_realizer_loses_domain_generation_accuracy",
+        "tests/test_neural_weight_use.py::test_release_proposal_invokes_loaded_weights",
+        "tests/test_neural_weight_use.py::test_weight_ablation_breaks_learned_selection",
+    },
+    "selection-contract": {
+        "tests/test_production_proposer_cutover.py::test_compatible_new_designation_keeps_model_active",
+        "tests/test_production_proposer_cutover.py::test_neural_profile_loads_from_artifact",
+        "tests/test_training_isolation.py::test_combined_trainable_capacity_is_bounded",
+    },
+    "realization-contract": {
+        "tests/test_training_isolation.py::test_realizer_release_artifact_pins_all_semantic_inputs",
+    },
+}
+
+_R5_RETIRED_CONTRACT = {
+    "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback": "`hybrid_mvp/AGENTS.md` section 7 requires zero fallback paths in final release gates; preserving this requirement would reintroduce forbidden fallback behavior."
+}
+
+
+def _markdown_code(cell: str) -> str:
+    assert cell.startswith("`") and cell.endswith("`")
+    return cell[1:-1]
+
+
+def _parse_r5_appendix(plan: str) -> dict[str, dict[str, str]]:
+    appendix = plan.split("## Appendix A: Exact frozen R5 disposition", 1)[1]
+    appendix = appendix.split("## Appendix B: Forbidden implementation shortcuts", 1)[0]
+    section = ""
+    parsed: dict[str, dict[str, str]] = {}
+    headings = {
+        "### Successor now — 17": "successor",
+        "### Explicit retirement — 1": "retired",
+        "### Deferred to R5-Neural-Activation — 25": "deferred",
+    }
+    for line in appendix.splitlines():
+        if line in headings:
+            section = headings[line]
+            continue
+        if not line.startswith("|") or line.startswith("|---") or "| # |" in line:
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        assert section
+        if section == "successor":
+            assert len(cells) == 5
+            _, source, assertion, successor, owner = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "successor_node": _markdown_code(successor), "current_owner": _markdown_code(owner)}
+        elif section == "deferred":
+            assert len(cells) == 5
+            _, source, assertion, future_task, future_owner = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "future_task": _markdown_code(future_task), "future_owner": _markdown_code(future_owner)}
+        else:
+            assert len(cells) == 4
+            _, source, assertion, reason = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "retirement_reason": reason}
+        source_ref = _markdown_code(source)
+        assert source_ref not in parsed
+        parsed[source_ref] = record
+    return parsed
+
+
+def _validate_r5_appendix(plan: str, inventory: dict[str, object]) -> None:
+    inventory_rows = {
+        row["source_test_ref"]: row
+        for row in inventory["source_tests"]
+        if row["activation_phase"] == "R5"
+    }
+    deferred_contract = {
+        source_ref: owner
+        for owner, source_refs in _R5_DEFERRED_BY_OWNER.items()
+        for source_ref in source_refs
+    }
+    expected_refs = (
+        set(_R5_SUCCESSOR_CONTRACT)
+        | set(deferred_contract)
+        | set(_R5_RETIRED_CONTRACT)
+    )
+    parsed = _parse_r5_appendix(plan)
+
+    assert len(inventory_rows) == 43
+    assert len(_R5_SUCCESSOR_CONTRACT) == 17
+    assert len(deferred_contract) == 25
+    assert len(_R5_RETIRED_CONTRACT) == 1
+    assert expected_refs == set(inventory_rows) == set(parsed)
+    for source_ref, inventory_row in inventory_rows.items():
+        record = parsed[source_ref]
+        assert record["assertion_ref"] == inventory_row["assertion_ref"]
+        if source_ref in _R5_SUCCESSOR_CONTRACT:
+            successor, owner = _R5_SUCCESSOR_CONTRACT[source_ref]
+            assert record == {"disposition": "successor", "assertion_ref": inventory_row["assertion_ref"], "successor_node": successor, "current_owner": owner}
+        elif source_ref in deferred_contract:
+            assert record == {"disposition": "deferred", "assertion_ref": inventory_row["assertion_ref"], "future_task": "R5-Neural-Activation", "future_owner": deferred_contract[source_ref]}
+        else:
+            assert record == {"disposition": "retired", "assertion_ref": inventory_row["assertion_ref"], "retirement_reason": _R5_RETIRED_CONTRACT[source_ref]}
+
+
 def test_r5_governing_plan_uses_exact_frozen_inventory_partition() -> None:
     inventory = json.loads(
         (ROOT / "governance/test_inventory.json").read_text(encoding="utf-8")
     )
-    rows = tuple(
-        row for row in inventory["source_tests"] if row["activation_phase"] == "R5"
-    )
-    source_refs = {row["source_test_ref"] for row in rows}
-    successor_refs = {
-        ref
-        for ref in source_refs
-        if ref.startswith("tests/test_artifact_security.py::")
-        or ref.startswith("tests/test_canonical.py::")
-    } | {
-        "tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer",
-        "tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap",
-    }
-    retired_refs = {
-        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback"
-    }
-    deferred_refs = source_refs - successor_refs - retired_refs
-
-    assert len(rows) == 43
-    assert len(successor_refs) == 17
-    assert len(deferred_refs) == 25
-    assert len(retired_refs) == 1
-    assert source_refs == successor_refs | deferred_refs | retired_refs
-
     plan = (
         ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
     ).read_text(encoding="utf-8")
     design = (
         ROOT / "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md"
     ).read_text(encoding="utf-8")
-    appendix = plan.split("## Appendix A: Exact frozen R5 disposition", 1)[1]
-    appendix = appendix.split("## Appendix B: Forbidden implementation shortcuts", 1)[0]
 
+    _validate_r5_appendix(plan, inventory)
     assert "17 `successor`, 25 `deferred`, 1 `retired`" in plan
     assert "counts `17/25/1`" in plan
     assert "17 successors, 25 deferrals, and 1 explicit retirement" in design
     assert "17 `successor`, 26 `deferred`, 0 `retired`" not in plan
     assert "17/26/0" not in plan
-    for row in rows:
-        source_ref = row["source_test_ref"]
-        matching_lines = [
-            line for line in appendix.splitlines() if f"`{source_ref}`" in line
-        ]
-        assert len(matching_lines) == 1, source_ref
-        assert f"`{row['assertion_ref']}`" in matching_lines[0], source_ref
+
+
+def test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations() -> None:
+    inventory = json.loads(
+        (ROOT / "governance/test_inventory.json").read_text(encoding="utf-8")
+    )
+    plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    successor_row = next(
+        line
+        for line in plan.splitlines()
+        if "tests/test_artifact_security.py::test_current_model_lock_hash_is_stable"
+        in line
+    )
+    moved_to_deferred = plan.replace(successor_row + "\n", "", 1).replace(
+        "### Deferred to R5-Neural-Activation — 25",
+        "### Deferred to R5-Neural-Activation — 25\n\n" + successor_row,
+        1,
+    )
+    wrong_owner = plan.replace(
+        "`tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` | `artifact-contract`",
+        "`tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` | `proposal-contract`",
+        1,
+    )
+
+    for mutated in (moved_to_deferred, wrong_owner):
+        with pytest.raises(AssertionError):
+            _validate_r5_appendix(mutated, inventory)
 
 
 def test_governing_pointers_make_no_old_admission_claim() -> None:
