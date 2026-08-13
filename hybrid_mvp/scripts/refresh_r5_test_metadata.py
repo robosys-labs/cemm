@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import ast
+import os
 from pathlib import Path
+import stat
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +28,70 @@ from scripts.test_inventory_core import (  # noqa: E402
 
 MAX_R5_MODULES = 64
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
+
+
+class R5MetadataRefreshError(ValueError):
+    """Raised when bounded transactional metadata refresh fails."""
+
+
+def _is_reparse_point(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    if callable(is_junction) and is_junction():
+        return True
+    try:
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    except OSError:
+        return False
+    marker = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(attributes & marker)
+
+
+def _read_bounded(path: Path) -> bytes:
+    try:
+        with path.open("rb") as stream:
+            raw = stream.read(MAX_SOURCE_BYTES + 1)
+    except OSError as exc:
+        raise R5MetadataRefreshError(f"cannot read R5 test module: {path.name}") from exc
+    if len(raw) > MAX_SOURCE_BYTES:
+        raise R5MetadataRefreshError(f"{path.name} exceeds the R5 source byte bound")
+    return raw
+
+
+def _atomic_write(path: Path, data: bytes) -> None:
+    if type(data) is not bytes:
+        raise R5MetadataRefreshError("atomic metadata payload must be bytes")
+    if _is_reparse_point(path.parent) or _is_reparse_point(path):
+        raise R5MetadataRefreshError("metadata path cannot cross a reparse point")
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+        )
+    except OSError as exc:
+        raise R5MetadataRefreshError(
+            f"cannot stage atomic metadata write: {path.name}"
+        ) from exc
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, path.stat().st_mode)
+        os.replace(temporary, path)
+    except BaseException as exc:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+        if isinstance(exc, OSError):
+            raise R5MetadataRefreshError(
+                f"atomic replace failed for metadata: {path.name}"
+            ) from exc
+        raise
 
 
 def _inventory_assignment(tree: ast.Module, path: Path) -> ast.Assign:
@@ -105,10 +172,12 @@ def _metadata_nodes(
 def metadata_hashes(path: Path) -> dict[str, str]:
     """Return canonical AST hashes for one literal R5 metadata module."""
 
+    if _is_reparse_point(path):
+        raise R5MetadataRefreshError(f"R5 test module is a reparse point: {path}")
     resolved = path.resolve()
-    if path.is_symlink() or not resolved.is_file():
+    if not resolved.is_file():
         raise ValueError(f"R5 test module is not a regular file: {path}")
-    hashes, _nodes = _metadata_nodes(resolved, resolved.read_bytes())
+    hashes, _nodes = _metadata_nodes(resolved, _read_bounded(resolved))
     return hashes
 
 
@@ -121,10 +190,9 @@ def _offsets(raw: bytes) -> list[int]:
     return starts
 
 
-def _refresh(path: Path) -> int:
-    if path.is_symlink():
-        raise ValueError(f"R5 test module cannot be a symlink: {path.name}")
-    raw = path.read_bytes()
+def _build_candidate(path: Path) -> tuple[bytes, bytes, int]:
+    raw = _read_bounded(path)
+    original = raw
     hashes, nodes = _metadata_nodes(path, raw)
     replacements: list[tuple[int, int, bytes]] = []
     starts = _offsets(raw)
@@ -145,29 +213,69 @@ def _refresh(path: Path) -> int:
         replacements.append((start, end, repr(digest).encode("ascii")))
     for start, end, replacement in sorted(replacements, reverse=True):
         raw = raw[:start] + replacement + raw[end:]
-    if replacements:
-        path.write_bytes(raw)
-    return len(replacements)
+    candidate_hashes, candidate_nodes = _metadata_nodes(path, raw)
+    for node_id, digest in candidate_hashes.items():
+        if ast.literal_eval(candidate_nodes[node_id]) != digest:
+            raise R5MetadataRefreshError(
+                f"candidate metadata hash is stale after refresh: {node_id}"
+            )
+    return original, raw, len(replacements)
 
 
 def refresh_r5_test_metadata(root: Path = ROOT) -> tuple[int, int]:
     """Refresh exact R5 modules and return ``(changed_hashes, file_count)``."""
 
-    root_path = Path(root).resolve()
-    tests = root_path / "tests"
-    if tests.is_symlink() or not tests.is_dir():
+    root_input = Path(os.path.abspath(root))
+    if _is_reparse_point(root_input):
+        raise R5MetadataRefreshError("Hybrid MVP root cannot be a reparse point")
+    root_path = root_input.resolve()
+    tests_input = root_input / "tests"
+    if _is_reparse_point(tests_input):
+        raise R5MetadataRefreshError("tests directory cannot be a junction or reparse point")
+    tests = tests_input.resolve()
+    try:
+        tests.relative_to(root_path)
+    except ValueError as exc:
+        raise R5MetadataRefreshError("resolved tests directory escapes the root") from exc
+    if not tests.is_dir():
         raise ValueError("tests directory must be a contained regular directory")
     files = tuple(sorted(tests.glob("test_r5_*.py")))
     if len(files) > MAX_R5_MODULES:
         raise ValueError("R5 test module count exceeds its bound")
-    changed = 0
+    candidates: list[tuple[Path, bytes, bytes, int]] = []
     for path in files:
+        if _is_reparse_point(path):
+            raise R5MetadataRefreshError(
+                f"R5 test module cannot be a junction or reparse point: {path.name}"
+            )
         resolved = path.resolve()
         try:
-            resolved.relative_to(tests.resolve())
+            resolved.relative_to(tests)
         except ValueError as exc:
             raise ValueError(f"R5 test module escapes tests: {path.name}") from exc
-        changed += _refresh(path)
+        original, candidate, changed = _build_candidate(resolved)
+        candidates.append((resolved, original, candidate, changed))
+
+    replaced: list[tuple[Path, bytes]] = []
+    try:
+        for path, original, candidate, changed in candidates:
+            if not changed:
+                continue
+            _atomic_write(path, candidate)
+            replaced.append((path, original))
+    except BaseException as exc:
+        rollback_errors: list[str] = []
+        for path, original in reversed(replaced):
+            try:
+                _atomic_write(path, original)
+            except BaseException as rollback_exc:
+                rollback_errors.append(f"{path.name}: {rollback_exc}")
+        if rollback_errors:
+            raise R5MetadataRefreshError(
+                f"metadata rollback failed: {rollback_errors}"
+            ) from exc
+        raise
+    changed = sum(candidate[3] for candidate in candidates)
     return changed, len(files)
 
 

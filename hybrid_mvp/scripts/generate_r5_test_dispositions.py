@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+import stat
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +41,55 @@ _RECEIPT_FIELDS = frozenset(
 
 class R5DispositionReceiptError(ValueError):
     """Raised when receipt generation or checking fails closed."""
+
+
+def _is_reparse_point(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    if callable(is_junction) and is_junction():
+        return True
+    try:
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    except OSError:
+        return False
+    marker = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(attributes & marker)
+
+
+def _atomic_write(path: Path, data: bytes) -> None:
+    """Durably stage bytes beside ``path`` and replace it atomically."""
+
+    if type(data) is not bytes:
+        raise R5DispositionReceiptError("atomic receipt payload must be bytes")
+    parent = path.parent
+    if _is_reparse_point(parent) or _is_reparse_point(path):
+        raise R5DispositionReceiptError("receipt path cannot cross a reparse point")
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=parent,
+        )
+    except OSError as exc:
+        raise R5DispositionReceiptError("cannot stage atomic receipt write") from exc
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if path.exists():
+            os.chmod(temporary, path.stat().st_mode)
+        os.replace(temporary, path)
+    except BaseException as exc:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+        if isinstance(exc, OSError):
+            raise R5DispositionReceiptError("atomic replace failed for receipt") from exc
+        raise
 
 
 def _canonical_bytes(value: object) -> bytes:
@@ -115,7 +167,10 @@ def validate_receipt(root: Path, candidate: object) -> None:
 
 
 def _exact_artifact_path(root: Path, supplied: Path) -> Path:
-    root_path = root.resolve()
+    root_input = Path(os.path.abspath(root))
+    if _is_reparse_point(root_input):
+        raise R5DispositionReceiptError("receipt root cannot be a reparse point")
+    root_path = root_input.resolve()
     expected = root_path / RECEIPT_RELATIVE_PATH
     if supplied.is_absolute():
         exact_name = supplied == expected
@@ -125,17 +180,19 @@ def _exact_artifact_path(root: Path, supplied: Path) -> Path:
         raise R5DispositionReceiptError(
             f"receipt path must be exactly {RECEIPT_RELATIVE_PATH.as_posix()}"
         )
-    current = root_path
+    current = root_input
     for part in RECEIPT_RELATIVE_PATH.parts:
         current = current / part
-        if current.is_symlink():
+        if _is_reparse_point(current):
             raise R5DispositionReceiptError(
-                "receipt artifact path must be contained without symlinks"
+                "receipt artifact path must be contained without reparse points"
             )
-    if expected.resolve() != expected:
+    try:
+        expected.resolve().relative_to(root_path)
+    except ValueError as exc:
         raise R5DispositionReceiptError(
-            "receipt artifact path must be contained without symlinks"
-        )
+            "receipt artifact path must remain contained"
+        ) from exc
     return expected
 
 
@@ -170,8 +227,7 @@ def main(argv: list[str] | None = None) -> int:
         assert supplied is not None
         target = _exact_artifact_path(ROOT, supplied)
         if args.output is not None:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(canonical_receipt_bytes(ROOT))
+            _atomic_write(target, canonical_receipt_bytes(ROOT))
         else:
             validate_receipt(ROOT, _read_checked_artifact(target))
     except R5DispositionReceiptError as exc:

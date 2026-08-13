@@ -102,6 +102,25 @@ def test_r5_disposition_output_rejects_symlinked_parent(tmp_path: Path) -> None:
         generator._exact_artifact_path(root, generator.RECEIPT_RELATIVE_PATH)
 
 
+def test_r5_disposition_atomic_replace_failure_preserves_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generator = _load_script(GENERATOR_PATH, "_r5_disposition_generator_atomic")
+    target = tmp_path / "receipt.json"
+    target.write_bytes(b"original")
+
+    def fail_replace(_source: object, _target: object) -> None:
+        raise OSError("injected replace failure")
+
+    monkeypatch.setattr(generator.os, "replace", fail_replace)
+    with pytest.raises(generator.R5DispositionReceiptError, match="atomic replace"):
+        generator._atomic_write(target, b"replacement")
+
+    assert target.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [target]
+
+
 def test_r5_metadata_refresher_changes_only_r5_ast_hash_literals(tmp_path: Path) -> None:
     refresher = _load_script(REFRESHER_PATH, "_r5_metadata_refresher_test")
     tests = tmp_path / "tests"
@@ -193,6 +212,115 @@ def test_r5_metadata_refresher_rejects_duplicate_literal_metadata_keys(
         refresher.metadata_hashes(path)
 
 
+def test_r5_metadata_refresher_reads_sources_with_a_hard_byte_bound(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    refresher = _load_script(REFRESHER_PATH, "_r5_metadata_refresher_bound")
+    path = tmp_path / "test_r5_oversize.py"
+    path.write_bytes(b"x" * (refresher.MAX_SOURCE_BYTES + 1))
+
+    def forbid_unbounded_read(_path: Path) -> bytes:
+        raise AssertionError("unbounded Path.read_bytes was used")
+
+    monkeypatch.setattr(Path, "read_bytes", forbid_unbounded_read)
+    with pytest.raises(ValueError, match="source byte bound"):
+        refresher.metadata_hashes(path)
+
+
+def test_r5_metadata_refresher_late_validation_failure_writes_nothing(
+    tmp_path: Path,
+) -> None:
+    refresher = _load_script(REFRESHER_PATH, "_r5_metadata_refresher_late_invalid")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    first = tests / "test_r5_a_valid.py"
+    zero = "0" * 64
+    first.write_text(
+        "def test_valid() -> None:\n    assert True\n\n"
+        "__cemm_test_inventory__ = {\n"
+        "    'tests/test_r5_a_valid.py::test_valid': {\n"
+        f"        'source_ast_sha256': '{zero}',\n"
+        "    },\n}\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    original = first.read_bytes()
+    (tests / "test_r5_z_invalid.py").write_text(
+        "def test_invalid(:\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(SyntaxError):
+        refresher.refresh_r5_test_metadata(tmp_path)
+
+    assert first.read_bytes() == original
+
+
+def test_r5_metadata_refresher_replace_failure_rolls_back_prior_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    refresher = _load_script(REFRESHER_PATH, "_r5_metadata_refresher_rollback")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    zero = "0" * 64
+    paths = []
+    originals = {}
+    for letter in ("a", "b"):
+        path = tests / f"test_r5_{letter}.py"
+        path.write_text(
+            f"def test_{letter}() -> None:\n    assert True\n\n"
+            "__cemm_test_inventory__ = {\n"
+            f"    'tests/test_r5_{letter}.py::test_{letter}': {{\n"
+            f"        'source_ast_sha256': '{zero}',\n"
+            "    },\n}\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        paths.append(path)
+        originals[path] = path.read_bytes()
+    real_replace = refresher.os.replace
+    calls = 0
+
+    def fail_second_replace(source: object, target: object) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected second replace failure")
+        real_replace(source, target)
+
+    monkeypatch.setattr(refresher.os, "replace", fail_second_replace)
+    with pytest.raises(ValueError, match="atomic replace"):
+        refresher.refresh_r5_test_metadata(tmp_path)
+
+    assert {path: path.read_bytes() for path in paths} == originals
+    assert sorted(path.name for path in tests.iterdir()) == [path.name for path in paths]
+
+
+def test_r5_metadata_refresher_rejects_reparse_boundary_before_writes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    refresher = _load_script(REFRESHER_PATH, "_r5_metadata_refresher_reparse")
+    root = tmp_path / "root"
+    tests = root / "tests"
+    tests.mkdir(parents=True)
+    sentinel = tests / "test_r5_sentinel.py"
+    sentinel.write_bytes(b"external-must-not-change")
+    monkeypatch.setattr(
+        refresher,
+        "_is_reparse_point",
+        lambda path: path == tests,
+    )
+
+    with pytest.raises(ValueError, match="reparse|junction"):
+        refresher.refresh_r5_test_metadata(root)
+
+    assert sentinel.read_bytes() == b"external-must-not-change"
+
+
 __cemm_test_inventory__ = {
     "tests/test_r5_legacy_hard_cut.py::test_r5_disposition_receipt_is_deterministic_and_checked_in": {
         "activation_phase": "R5",
@@ -273,5 +401,45 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
         "source_ast_sha256": 'a4c844cd057484ffc7fedc1dd9ef16edf702d5126d82e9b1e4367231fdcbf368',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_disposition_atomic_replace_failure_preserves_receipt": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-test-disposition-atomic-failure-preserves-receipt",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '8d12fbeb9c316c575e19b291ef487e176d314a7f25ba7e6f04d14a1049ab3e2c',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_metadata_refresher_reads_sources_with_a_hard_byte_bound": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-test-metadata-refresher-bounds-source-reads",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '7e0b694398364cf2d9dcb6dbe8f2327c80dbc419aa14da50c2241ecfa7deac0c',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_metadata_refresher_late_validation_failure_writes_nothing": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-test-metadata-refresher-validates-before-writing",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '4d986d07d4a7bb5237e1e0a259b1c6fc267060780ec6c8ebc82de55773a0b0af',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_metadata_refresher_replace_failure_rolls_back_prior_files": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-test-metadata-refresher-replace-failure-rolls-back",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '91df474ee087d512f6287213d2275a72d29ed8683873b1dd407a041857ab5ccb',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_metadata_refresher_rejects_reparse_boundary_before_writes": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-test-metadata-refresher-rejects-reparse-boundary",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '86813bb9387392d292386088d7ed7d93b0223d4cdcd84447a8e468bdcd920d5f',
     },
 }
