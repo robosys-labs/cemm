@@ -161,6 +161,7 @@ class _ParsedModule:
     source_nodes: Mapping[str, ast.FunctionDef | ast.AsyncFunctionDef]
     case_node_ids: Mapping[str, tuple[str, ...]]
     metadata: Mapping[str, Mapping[str, object]]
+    pytest_collectable: bool
 
 
 def _canonical_json_bytes(value: object) -> bytes:
@@ -937,6 +938,56 @@ def _literal_metadata(
     return MappingProxyType(result)
 
 
+def _reject_class_test_control(node: ast.ClassDef, *, path: str) -> None:
+    for statement in node.body:
+        visitor = _TopLevelBindingVisitor()
+        visitor.visit(statement)
+        if "__test__" in visitor.names:
+            raise InventoryError(
+                f"{path} class {node.name} cannot bind pytest __test__ control"
+            )
+        if isinstance(statement, ast.ClassDef):
+            _reject_class_test_control(statement, path=path)
+
+
+def _module_pytest_collectable(tree: ast.Module, *, path: str) -> bool:
+    """Return pytest's exact literal module collection switch.
+
+    Only one top-level ``__test__ = <bool>`` assignment is statically
+    representable.  Dynamic, rebound, annotated, conditional, imported, or
+    class-local controls are rejected rather than guessed.
+    """
+
+    assignments: list[ast.Assign] = []
+    for statement in tree.body:
+        if (
+            isinstance(statement, ast.Assign)
+            and len(statement.targets) == 1
+            and isinstance(statement.targets[0], ast.Name)
+            and statement.targets[0].id == "__test__"
+        ):
+            assignments.append(statement)
+            continue
+        visitor = _TopLevelBindingVisitor()
+        visitor.visit(statement)
+        if "__test__" in visitor.names:
+            raise InventoryError(
+                f"{path} has dynamic or ambiguous pytest __test__ control"
+            )
+        if isinstance(statement, ast.ClassDef):
+            _reject_class_test_control(statement, path=path)
+    if len(assignments) > 1:
+        raise InventoryError(f"{path} rebinds pytest __test__ control")
+    if not assignments:
+        return True
+    value = assignments[0].value
+    if not isinstance(value, ast.Constant) or type(value.value) is not bool:
+        raise InventoryError(
+            f"{path} pytest __test__ control must be one literal bool"
+        )
+    return bool(value.value)
+
+
 def _verify_pytest_collection_contract(
     root: Path,
     *,
@@ -1030,6 +1081,7 @@ def _read_and_parse_modules(
             source_nodes=MappingProxyType(source_nodes),
             case_node_ids=MappingProxyType(case_ids),
             metadata=_literal_metadata(tree, path=relative),
+            pytest_collectable=_module_pytest_collectable(tree, path=relative),
         )
     return MappingProxyType(modules), parse_count
 
@@ -1181,6 +1233,12 @@ def _validate_current_source(
     frozenset[str],
 ]:
     current_sources, case_ids, metadata = _current_sources(modules)
+    physically_collectable_sources = frozenset(
+        source_ref
+        for module in modules.values()
+        if module.pytest_collectable
+        for source_ref in module.source_nodes
+    )
     frozen_source_refs = frozenset(source_records)
 
     for source_ref, frozen in source_records.items():
@@ -1189,9 +1247,12 @@ def _validate_current_source(
             raise InventoryError(f"same-ID source mutation detected for {source_ref}")
 
     current_later_nodes: set[str] = set()
+    collectable_later_nodes: set[str] = set()
     later_source_refs = sorted(set(current_sources) - set(frozen_source_refs))
     for source_ref in later_source_refs:
         current_later_nodes.update(case_ids[source_ref])
+        if source_ref in physically_collectable_sources:
+            collectable_later_nodes.update(case_ids[source_ref])
     metadata_nodes = set(metadata)
     if metadata_nodes & set(predecessor_cases):
         raise InventoryError(
@@ -1224,14 +1285,16 @@ def _validate_current_source(
     for source_ref, frozen in source_records.items():
         if source_ref not in current_sources:
             continue
+        if source_ref not in physically_collectable_sources:
+            continue
         collectable_frozen.update(frozen.case_node_ids)
         if frozen.classification == "retained":
             executable_frozen.update(frozen.case_node_ids)
     return (
         MappingProxyType(later_records),
         frozenset(executable_frozen),
-        frozenset(current_later_nodes),
-        frozenset(collectable_frozen | current_later_nodes),
+        frozenset(collectable_later_nodes),
+        frozenset(collectable_frozen | collectable_later_nodes),
     )
 
 

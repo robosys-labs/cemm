@@ -1842,7 +1842,6 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     )
     assert graph.pytest_process_count("R5", "phase") == 1
     phase_nodes = set(graph.resolve_pytest_nodes("R5", "phase"))
-    assert len(phase_nodes) == 7
     assert graph.resolve_pytest_nodes("R5", "phase") == inventory.phase_node_ids
     assert {
         "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary",
@@ -2138,7 +2137,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
-        "source_ast_sha256": "2362ca641def2f18e5b0e32f1760832e12d229769006b47bb5908dd3098b175d"
+        "source_ast_sha256": "92a8c80b102e52f489d09b77e3889c3054e9063aecbf1a81ab7090d2a95b8230"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",

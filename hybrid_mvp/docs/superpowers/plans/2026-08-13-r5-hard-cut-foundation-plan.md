@@ -610,13 +610,28 @@ python scripts/validate_mvp.py --tier phase --phase R1
 python scripts/validate_mvp.py --tier phase --phase R2
 python scripts/validate_mvp.py --tier phase --phase R3
 python scripts/validate_mvp.py --tier phase --phase R4
-python -m pytest -q -p no:cacheprovider
+python scripts/run_active_test_suite.py
 python scripts/check_r3_r4_structure.py
 python scripts/audit_legacy_test_hard_cut.py
 git diff --check
 ```
 
-Expected: every command passes. Test count may fall because retired source files were deleted; acceptance is exact active-node coverage and the full current suite, not preservation of historical test count.
+Expected: every command passes. `run_active_test_suite.py` authenticates the
+immutable inventory pin, literal current-source metadata, and R5 dispositions;
+compares the complete physical collection; deselects every classified inactive
+node; and executes the exact R5 active union in one bounded pytest process.
+Test count may fall because retired source files were deleted; acceptance is
+exact active-node coverage, not preservation of historical test count.
+
+An optional raw collection diagnostic may be run separately when investigating
+test topology:
+
+```powershell
+python -m pytest --collect-only -q -p no:cacheprovider
+```
+
+It is diagnostic evidence only. Raw historical collection or execution is not
+a release gate and must not replace the governed active-suite command.
 
 - [ ] **Step 5: Final review and commit**
 
