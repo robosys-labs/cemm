@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
 from cemm_authoritative_hybrid.governance import (
@@ -22,15 +23,23 @@ EXPECTED_OWNERS = [
     "realization-contract",
 ]
 EXPECTED_ACCESS_CLASSES = ["calibration", "frozen_test", "selection", "train"]
+MAX_FOUNDATION_JSON_BYTES = 64 * 1024
 
 
 __cemm_test_inventory__ = {
+    "tests/test_r5_foundation.py::test_r5_foundation_loader_rejects_untrusted_json_bytes": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-foundation-loader-rejects-untrusted-json",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "source_ast_sha256": "af8cdb6cb754711e0c559671dd20a79db3ebbda3717523f8a23b4e9140f449a1",
+    },
     "tests/test_r5_foundation.py::test_r5_foundation_contract_is_strict_and_exact": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-foundation-contract-strict-and-exact",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
-        "source_ast_sha256": "c60242b6e90fbc482bb9d98f20821b199cab9b10cf11dfaf4db673d8416d6fca",
+        "source_ast_sha256": "32fd79013d6ca4c2ac3664f5c6bc93232daeaa842394c66dfdb2a90f2ef02b57",
     },
     "tests/test_r5_foundation.py::test_r5_foundation_declares_future_data_authorization_vocabulary": {
         "activation_phase": "R5",
@@ -49,12 +58,61 @@ __cemm_test_inventory__ = {
 }
 
 
+def _reject_duplicate_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value: dict[str, object] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON key: {key}")
+        value[key] = item
+    return value
+
+
+def _reject_nonfinite(value: str) -> object:
+    raise ValueError(f"non-finite JSON number: {value}")
+
+
+def _load_strict_json(path: Path) -> dict[str, object]:
+    with path.open("rb") as handle:
+        raw = handle.read(MAX_FOUNDATION_JSON_BYTES + 1)
+    if len(raw) > MAX_FOUNDATION_JSON_BYTES:
+        raise ValueError("foundation JSON exceeds byte bound")
+    try:
+        text = raw.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise ValueError("foundation JSON is not strict UTF-8") from exc
+    value = json.loads(
+        text,
+        object_pairs_hook=_reject_duplicate_pairs,
+        parse_constant=_reject_nonfinite,
+    )
+    if type(value) is not dict:
+        raise ValueError("foundation JSON root must be an object")
+    return value
+
+
 def _foundation() -> dict[str, object]:
-    return json.loads(FOUNDATION_PATH.read_text(encoding="utf-8"))
+    return _load_strict_json(FOUNDATION_PATH)
+
+
+def test_r5_foundation_loader_rejects_untrusted_json_bytes(tmp_path: Path) -> None:
+    invalid_cases = (
+        (b'{"schema":"first","schema":"second"}', "duplicate JSON key"),
+        (b'{"value":NaN}', "non-finite JSON number"),
+        (b'{"value":"\xff"}', "not strict UTF-8"),
+        (
+            b'{"padding":"' + b"x" * MAX_FOUNDATION_JSON_BYTES + b'"}',
+            "exceeds byte bound",
+        ),
+    )
+    for index, (payload, error_match) in enumerate(invalid_cases):
+        path = tmp_path / f"invalid-{index}.json"
+        path.write_bytes(payload)
+        with pytest.raises(ValueError, match=error_match):
+            _load_strict_json(path)
 
 
 def test_r5_foundation_contract_is_strict_and_exact() -> None:
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    schema = _load_strict_json(SCHEMA_PATH)
     Draft202012Validator.check_schema(schema)
     assert schema["additionalProperties"] is False
     Draft202012Validator(schema).validate(_foundation())
