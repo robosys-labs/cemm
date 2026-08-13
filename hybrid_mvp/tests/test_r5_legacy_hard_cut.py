@@ -350,6 +350,71 @@ def test_r5_legacy_auditor_distinguishes_scanner_data_from_dynamic_load(
     )
 
 
+def test_r5_legacy_auditor_rejects_qualified_support_imports(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_qualified_imports")
+    for name in ("tests", "scripts", "src"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "tests" / "qualified.py").write_text(
+        "import tests.legacy_propositions\n"
+        "from tests import legacy_runtime_fixtures\n"
+        "import tests.not_legacy_propositions\n",
+        encoding="utf-8",
+    )
+
+    assert auditor._support_reference_findings(tmp_path) == (
+        "forbidden_support_import:tests/qualified.py:legacy_propositions",
+        "forbidden_support_import:tests/qualified.py:legacy_runtime_fixtures",
+    )
+
+
+def test_r5_legacy_auditor_rejects_aliased_and_assigned_compatibility_fixtures(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_fixture_aliases")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "conftest.py").write_text(
+        "import pytest\n"
+        "@pytest.fixture(name='runtime_factory')\n"
+        "def compat():\n"
+        "    return None\n"
+        "def observation():\n"
+        "    return None\n"
+        "alias = pytest.fixture(name='verified_observation_program')(observation)\n"
+        "runtime_factory = pytest.fixture(observation)\n"
+        "SIX_PHASES = ()\n",
+        encoding="utf-8",
+    )
+
+    assert auditor._compatibility_fixture_findings(tmp_path) == (
+        "compatibility_constant:SIX_PHASES",
+        "compatibility_fixture:runtime_factory",
+        "compatibility_fixture:verified_observation_program",
+    )
+
+    (tests / "conftest.py").write_text(
+        "import custom\n"
+        "@custom.fixture(name='runtime_factory')\n"
+        "def unrelated():\n"
+        "    return None\n",
+        encoding="utf-8",
+    )
+    assert auditor._compatibility_fixture_findings(tmp_path) == ()
+
+    (tests / "conftest.py").write_text(
+        "import pytest as pt\n"
+        "def observation():\n"
+        "    return None\n"
+        "pt.fixture(name='verified_observation_program')(observation)\n",
+        encoding="utf-8",
+    )
+    assert auditor._compatibility_fixture_findings(tmp_path) == (
+        "compatibility_fixture:verified_observation_program",
+    )
+
+
 def test_r5_legacy_auditor_checks_every_pre_r5_replay_phase() -> None:
     auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_phases")
 
@@ -532,6 +597,22 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
         "source_ast_sha256": 'ee1f64afc8a086668397a1d567e86c2abfa2e3d4fb1288eb1bd95ca66bd416bb',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_qualified_support_imports": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-qualified-support-imports",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '9d29749062c071691d88e3591f9b5f40d8d4d0db9d682698a256ba05d453502f',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_aliased_and_assigned_compatibility_fixtures": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-fixture-registration-aliases",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '2ec46e17325ee002bff6c15e15ac5d0ecb88c092ac6d1b9749918303e94206a1',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_checks_every_pre_r5_replay_phase": {
         "activation_phase": "R5",

@@ -135,11 +135,19 @@ def _support_reference_findings(root: Path) -> tuple[str, ...]:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name in FORBIDDEN_SUPPORT_MODULES:
-                        findings.add(f"forbidden_support_import:{relative}:{alias.name}")
+                    module = alias.name.rsplit(".", 1)[-1]
+                    if module in FORBIDDEN_SUPPORT_MODULES:
+                        findings.add(f"forbidden_support_import:{relative}:{module}")
             elif isinstance(node, ast.ImportFrom):
-                if node.module in FORBIDDEN_SUPPORT_MODULES:
-                    findings.add(f"forbidden_support_import:{relative}:{node.module}")
+                module = (node.module or "").rsplit(".", 1)[-1]
+                if module in FORBIDDEN_SUPPORT_MODULES:
+                    findings.add(f"forbidden_support_import:{relative}:{module}")
+                for alias in node.names:
+                    imported = alias.name.rsplit(".", 1)[-1]
+                    if imported in FORBIDDEN_SUPPORT_MODULES:
+                        findings.add(
+                            f"forbidden_support_import:{relative}:{imported}"
+                        )
             elif isinstance(node, ast.Call):
                 for argument in (*node.args, *node.keywords):
                     value = argument.value if isinstance(argument, ast.keyword) else argument
@@ -150,20 +158,119 @@ def _support_reference_findings(root: Path) -> tuple[str, ...]:
     return tuple(sorted(findings))
 
 
+def _is_pytest_fixture(
+    value: ast.expr,
+    pytest_names: frozenset[str],
+    fixture_names: frozenset[str],
+) -> bool:
+    return (
+        (isinstance(value, ast.Name) and value.id in fixture_names)
+        or (
+            isinstance(value, ast.Attribute)
+            and value.attr == "fixture"
+            and isinstance(value.value, ast.Name)
+            and value.value.id in pytest_names
+        )
+    )
+
+
+def _fixture_export_name(
+    value: ast.expr,
+    default: str,
+    *,
+    pytest_names: frozenset[str],
+    fixture_names: frozenset[str],
+) -> str | None:
+    registration: ast.Call | None = None
+    if isinstance(value, ast.Call) and _is_pytest_fixture(
+        value.func, pytest_names, fixture_names
+    ):
+        registration = value
+    elif (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Call)
+        and _is_pytest_fixture(value.func.func, pytest_names, fixture_names)
+    ):
+        registration = value.func
+    if registration is None:
+        return None
+    for keyword in registration.keywords:
+        if (
+            keyword.arg == "name"
+            and isinstance(keyword.value, ast.Constant)
+            and type(keyword.value.value) is str
+        ):
+            return keyword.value.value
+    return default
+
+
 def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
     path = root / "tests" / "conftest.py"
     tree = _tree(path)
     findings: set[str] = set()
+    pytest_names = frozenset(
+        alias.asname or alias.name
+        for node in tree.body
+        if isinstance(node, ast.Import)
+        for alias in node.names
+        if alias.name == "pytest"
+    )
+    fixture_names = frozenset(
+        alias.asname or alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "pytest"
+        for alias in node.names
+        if alias.name == "fixture"
+    )
     for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in COMPATIBILITY_FIXTURES:
                 findings.add(f"compatibility_fixture:{node.name}")
+            for decorator in node.decorator_list:
+                exported = _fixture_export_name(
+                    decorator,
+                    node.name,
+                    pytest_names=pytest_names,
+                    fixture_names=fixture_names,
+                )
+                if exported in COMPATIBILITY_FIXTURES:
+                    findings.add(f"compatibility_fixture:{exported}")
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets: Iterable[ast.expr]
             targets = node.targets if isinstance(node, ast.Assign) else (node.target,)
+            value = node.value
             for target in targets:
-                if isinstance(target, ast.Name) and target.id in COMPATIBILITY_CONSTANTS:
-                    findings.add(f"compatibility_constant:{target.id}")
+                if isinstance(target, ast.Name):
+                    if target.id in COMPATIBILITY_CONSTANTS:
+                        findings.add(f"compatibility_constant:{target.id}")
+                    if (
+                        target.id in COMPATIBILITY_FIXTURES
+                        and _fixture_export_name(
+                            value,
+                            target.id,
+                            pytest_names=pytest_names,
+                            fixture_names=fixture_names,
+                        )
+                        is not None
+                    ):
+                        findings.add(f"compatibility_fixture:{target.id}")
+                    exported = _fixture_export_name(
+                        value,
+                        target.id,
+                        pytest_names=pytest_names,
+                        fixture_names=fixture_names,
+                    )
+                    if exported in COMPATIBILITY_FIXTURES:
+                        findings.add(f"compatibility_fixture:{exported}")
+        elif isinstance(node, ast.Expr):
+            exported = _fixture_export_name(
+                node.value,
+                "",
+                pytest_names=pytest_names,
+                fixture_names=fixture_names,
+            )
+            if exported in COMPATIBILITY_FIXTURES:
+                findings.add(f"compatibility_fixture:{exported}")
     return tuple(sorted(findings))
 
 
